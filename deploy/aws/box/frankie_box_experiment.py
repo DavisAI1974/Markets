@@ -918,11 +918,17 @@ def all99_admission(code_root, day, calc_dir, calc, plan_policy, policy_mismatch
                rule='no entry rejects the timeline or the day: an absent layer thins the picture with its reason; '
                     'disabled producers are listed, never activated; integrity failures stay separate and visible')
     calc = calc or {}
-    derive, derive_why = {}, None
+    derive, derive_why, derive_sha, derive_problem = {}, None, None, None
     try:
         dpath = (calc.get('derivation') or {}).get('path')
-        derive = json.loads(Path(dpath).read_bytes()) if dpath else {}
-        if not dpath:
+        if dpath:
+            raw = Path(dpath).read_bytes()             # derive.json: a sealed record, read once (bytes and sha256 here)
+            derive_sha = hashlib.sha256(raw).hexdigest()
+            derive = json.loads(raw)
+            pinned = (calc.get('derivation') or {}).get('sha256')
+            if pinned and pinned != derive_sha:
+                derive_problem = 'derive.json differs from the ROOT receipt\'s derivation pin'
+        else:
             derive_why = 'the ROOT receipt names no derivation'
     except (OSError, ValueError) as error:
         derive_why = 'derive.json unreadable: %s: %s' % (type(error).__name__, error)
@@ -932,14 +938,14 @@ def all99_admission(code_root, day, calc_dir, calc, plan_policy, policy_mismatch
     # the per-layer native records Session.derive writes right after derive.json (work/native-layer-records.json,
     # FRANKIE_ROOT_NATIVE_LAYER_RECORDS_V1; correction_consumer 2026-10-07): one record per native registry layer, bound to
     # derive.json's bytes; used only when that binding holds (else listed, never trusted)
-    native_records, native_records_why = {}, None
+    native_records, native_records_why, nl_doc = {}, None, None
     nl_path = Path(calc_dir) / 'work' / 'native-layer-records.json' if calc_dir else None
     if nl_path is not None and nl_path.is_file():
         try:
             nl = json.loads(nl_path.read_bytes())
-            dpath = (calc.get('derivation') or {}).get('path')
-            bound = dpath and (nl.get('derive') or {}).get('sha256') == sha256_file(dpath)
+            bound = derive_sha is not None and (nl.get('derive') or {}).get('sha256') == derive_sha
             if nl.get('status') == 'built' and bound:
+                nl_doc = nl
                 native_records = {r['entry']: r for r in nl.get('records') or [] if isinstance(r, dict) and r.get('entry')}
             else:
                 native_records_why = 'native-layer-records.json is %s%s' % (nl.get('status'), '' if bound else ', not bound to this derive.json')
@@ -967,18 +973,35 @@ def all99_admission(code_root, day, calc_dir, calc, plan_policy, policy_mismatch
         else:
             carriers['root.' + role] = dict(status='present', pin={k: spool.get(k) for k in ('path', 'bytes', 'sha256')} if isinstance(spool, dict) else spool)
     native_done = bool(bedrock) and not bedrock.get('skipped')
-    try:
-        from frankie_box_experiment_native import selected_files
-        selected = {item['native_role']: item for item in selected_files(calc_dir, str(day))} if calc_dir else {}
-        for role, name in (('exact_member_rows.jsonl', 'native.member'), ('exact_lifecycle_rows.jsonl', 'native.lifecycle')):
-            item = selected.get(role)
-            carriers[name] = (dict(status='present', pin=dict(path=item['source'], **item['expected'])) if item else
-                              dict(status='absent', reason=('the native pass did not run in this ROOT (%s)' % (
-                                  bedrock.get('reason') if bedrock.get('skipped') else 'no bedrock record in derive.json'))
-                                  if not selected else 'native ledger not selected'))
-    except Exception as error:  # noqa: BLE001 - altered or incomplete native evidence is an integrity failure, listed as such
-        for name in ('native.member', 'native.lifecycle'):
-            carriers[name] = dict(status='integrity', reason='%s: %s' % (type(error).__name__, str(error)[:300]))
+    # THE NATIVE CARRIERS FROM THE SEALED RECORDS ONLY (session 9, Greg 2026-10-08: "Stop it now and eliminate it"): no
+    # native ledger is read or hashed here (frankie_box_all99_coverage.sealed_native_carriers: derive.json's bedrock block,
+    # the bound bedrock receipt, the bound native-layer records, the projection plan, one stat per ledger). A carrier no
+    # record covers is 'not_measured' and the day proceeds. The old whole re-hash (selected_files: a2's 193.7 GB member
+    # ledger, ~25 min) runs only with FRANKIE_ALL99_SCAN=on, default off: the second pass Greg removed.
+    scan = os.environ.get(getattr(A99, 'SCAN_SETTING', 'FRANKIE_ALL99_SCAN'), 'off') == 'on'
+    record_reads = []
+    if scan:
+        try:
+            from frankie_box_experiment_native import selected_files
+            selected = {item['native_role']: item for item in selected_files(calc_dir, str(day))} if calc_dir else {}
+            for role, name in (('exact_member_rows.jsonl', 'native.member'), ('exact_lifecycle_rows.jsonl', 'native.lifecycle')):
+                item = selected.get(role)
+                carriers[name] = (dict(status='present', basis='scan', pin=dict(path=item['source'], **item['expected'])) if item else
+                                  dict(status='absent', basis='scan', reason=('the native pass did not run in this ROOT (%s)' % (
+                                      bedrock.get('reason') if bedrock.get('skipped') else 'no bedrock record in derive.json'))
+                                      if not selected else 'native ledger not selected'))
+        except Exception as error:  # noqa: BLE001 - altered or incomplete native evidence is an integrity failure, listed as such
+            for name in ('native.member', 'native.lifecycle'):
+                carriers[name] = dict(status='integrity', basis='scan', reason='%s: %s' % (type(error).__name__, str(error)[:300]))
+    else:
+        try:
+            sealed, record_reads = A99.sealed_native_carriers(calc_dir, derive, derive_problem=derive_problem,
+                                                              records_doc=nl_doc, records_why=native_records_why)
+            carriers.update(sealed)
+        except Exception as error:  # noqa: BLE001 - informational: the carriers read not measured, the day proceeds
+            for name in ('native.member', 'native.lifecycle'):
+                carriers[name] = dict(status='not_measured', basis='not_measured', reason='%s (the record reader failed: %s: %s)' % (
+                    getattr(A99, 'NOT_MEASURED', 'not measured'), type(error).__name__, str(error)[:300]))
     carriers['completed'] = dict(status='completed_only', note='post_stream_only: the aggregate has no exact contributor cursor '
                                                               'provenance (the timeline lists it so; never a live value)')
     brain_present = bool(brain) and Path(brain).is_dir()
@@ -1031,9 +1054,20 @@ def all99_admission(code_root, day, calc_dir, calc, plan_policy, policy_mismatch
                 row.update(produced=produced, producer_record=how, basis=basis or 'no_record')
                 state = carriers.get(first, {}).get('status')
                 thin_state = carriers.get(thinner, {}).get('status') if thinner else None
+                if first in ('native.member', 'native.lifecycle'):
+                    # per native-carried entry: which sealed record answered (frankie_box_all99_coverage.BASIS_TEXT)
+                    kind = ('scan' if scan else 'not_measured' if state == 'not_measured' or (basis is None and native_done)
+                            else 'receipt' if basis == 'group_proxy' else 'record')
+                    row.update(coverage_basis=kind, coverage_basis_text=getattr(A99, 'BASIS_TEXT', {}).get(kind, kind))
                 if state == 'integrity':
                     row.update(disposition='integrity', integrity=True,
                                reason='INTEGRITY (separate, visible; not missing coverage): ' + str(carriers[first].get('reason')))
+                elif state == 'not_measured' or (row.get('coverage_basis') == 'not_measured' and not scan):
+                    row.update(disposition='not_measured', canonical='unknown',
+                               reason=str(carriers.get(first, {}).get('reason') if state == 'not_measured' else
+                                          getattr(A99, 'NOT_MEASURED', 'not measured') + ' (no per-layer record and no group '
+                                          'record for this entry: %s)' % how)
+                               + ('; the thinner carrier %s is %s' % (thinner, thin_state) if thinner else ''))
                 elif produced and in_picture and state == 'present':
                     row.update(disposition='admitted', reason='produced and carried by its own carrier %s' % first)
                 elif in_picture and thin_state == 'present':
@@ -1084,6 +1118,18 @@ def all99_admission(code_root, day, calc_dir, calc, plan_policy, policy_mismatch
         out['entries'].append(row)
         rows.append(row)
     native18 = sorted(native_entries)
+    basis_counts = dict(record=0, receipt=0, scan=0, not_measured=0)
+    for r in rows:
+        if r.get('coverage_basis') in basis_counts:
+            basis_counts[r['coverage_basis']] += 1
+    out.update(basis_counts=basis_counts,
+               native_basis=dict(setting='%s=%s' % (getattr(A99, 'SCAN_SETTING', 'FRANKIE_ALL99_SCAN'), 'on' if scan else 'off'),
+                                 records_read=record_reads,
+                                 carriers={k: carriers.get(k, {}).get('basis') for k in ('native.member', 'native.lifecycle')},
+                                 rule='the native carriers come from the sealed records only (derive.json bedrock block, '
+                                      'the bound bedrock receipt, the bound native-layer records, the projection plan, a '
+                                      'stat per ledger); no ledger is read; an entry no record covers is not_measured and '
+                                      'the day proceeds; ' + getattr(A99, 'SCAN_RULE', 'FRANKIE_ALL99_SCAN=on scans')))
     out.update(listed=len(out['entries']), carriers=carriers, in_picture=in_picture, picture_why=picture_why,
                derivation=dict(path=(calc.get('derivation') or {}).get('path'), failure_count=failures, read_error=derive_why,
                                bedrock=('skipped: %s' % bedrock.get('reason')) if bedrock.get('skipped') else
@@ -1104,7 +1150,8 @@ def all99_admission(code_root, day, calc_dir, calc, plan_policy, policy_mismatch
                   for r in rows]
     try:
         coverage = A99.field('root', day, field_rows, code_root=code_root, stage='root', registry_doc=reg,
-                             basis=dict(plan_policy=plan_policy, in_picture=in_picture, derivation=out['derivation']))
+                             basis=dict(plan_policy=plan_policy, in_picture=in_picture, derivation=out['derivation'],
+                                        basis_counts=basis_counts))
         coverage['validation'] = A99.validate(coverage) if hasattr(A99, 'validate') else 'no validator in this checkout'
     except Exception as error:  # noqa: BLE001 - the field is accounting; its failure is recorded, never hidden
         coverage = dict(schema='FRANKIE_ALL99_COVERAGE_V1', error='%s: %s' % (type(error).__name__, error),

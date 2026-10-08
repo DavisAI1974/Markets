@@ -298,6 +298,7 @@ LEGACY_WORDS = {
     'append_only_output': 'output_not_written_here', 'output': 'output_not_written_here',
     'unmapped': 'unrouted', 'unrouted': 'unrouted',
     'integrity': 'integrity_failure', 'integrity_failure': 'integrity_failure',
+    'not_measured': 'unknown',
     'stamped_at_boundary': 'arrived', 'stamped_not_committed': 'thin', 'discovery_only': 'thin',
     'stamped_from_model_calls': 'arrived', 'no_model_call_this_day': 'absent',
 }
@@ -406,6 +407,131 @@ NATIVE_SERIES = {
                                    sections=()),
 }
 NATIVE_ENTRIES = tuple(NATIVE_SERIES)
+
+# ---- the native carriers from the ROOT's OWN sealed records (session 9, 2026-10-08; Greg: "Stop it now and eliminate it.
+# And then take out the gate that says we have to have that 2nd pass done to move on."). The ROOT's all-99 list used to
+# take native.member / native.lifecycle presence from frankie_box_experiment_native.selected_files, which re-hashes every
+# native ledger and section product whole (a2: the 193.7 GB exact_member_rows.jsonl at 131 MB/s, ~25 min in the queue
+# worker after the ROOT receipt, on the fresh AND the reused branch of Run.root, every day of the fleet). That re-hash is
+# the second pass: the ROOT measured the same bytes at its seal. The list now reads ONLY the sealed records:
+#   derive.json bedrock block    ledgers{name: path, bytes, sha256, rows}, receipt pin, result pin, the section products
+#                                (bedrock_section_4_2 / 4_4 layer records), skipped/reason
+#   work/bedrock/receipt.json    (FRANKIE_BOX_BEDROCK_RUN_RECEIPT_V1, bound by derive's receipt pin) ledgers{name: path,
+#                                bytes, sha256, rows = rows_read_back_from_disk}, result
+#   work/native-layer-records.json  (FRANKIE_ROOT_NATIVE_LAYER_RECORDS_V1, status built, bound to derive.json's sha256)
+#                                native_pass.ledgers, records[entry].status / reason / projection / crosswalk
+#   work/derived/.projection-v2/plan.json  ledgers.member / lifecycle path, bytes, sha256 (when present)
+# plus one stat per ledger (a regular file of the sealed size; nothing is read). What the scan computed that the records do
+# not hold: a fresh sha256 of the ledger bytes as they are on disk NOW (that nothing rewrote them after the seal); the
+# records hold the seal's sha256 and its reconciled read-back row count; the stat holds size only. A carrier no record
+# covers is 'not_measured' (NOT_MEASURED), never scanned, and the day proceeds. The old scan stays only behind
+# FRANKIE_ALL99_SCAN=on (default off): the second pass Greg removed.
+NATIVE_CARRIER_LEDGERS = {'native.member': 'exact_member_rows.jsonl', 'native.lifecycle': 'exact_lifecycle_rows.jsonl'}
+NATIVE_LEDGER_FILES = ('exact_member_rows.jsonl', 'exact_lifecycle_rows.jsonl', 'legacy_observable_rows.jsonl')
+NATIVE_SECTION_LAYERS = ('bedrock_section_4_2', 'bedrock_section_4_4')
+NOT_MEASURED = 'not measured: no sealed record (no ledger scan by rule)'
+SCAN_SETTING = 'FRANKIE_ALL99_SCAN'
+SCAN_RULE = ('FRANKIE_ALL99_SCAN=on re-hashes every native ledger and section product whole (the second pass Greg removed, '
+             '2026-10-08); default off: the native carriers come from the sealed records only')
+BASIS_TEXT = dict(record='sealed native-layer record', receipt='bedrock receipt count',
+                  scan='ledger scan: FRANKIE_ALL99_SCAN=on (the second pass Greg removed)', not_measured=NOT_MEASURED)
+
+
+def sealed_native_carriers(calc_dir, derive, *, derive_problem=None, records_doc=None, records_why=None):
+    """({carrier: dict(status, reason, basis, ...)} for native.member / native.lifecycle, [the sealed records read]) from
+    the ROOT's sealed records only (see the block above). status: present (basis 'record' when a bound built
+    native-layer-records.json names the same ledger pins, else 'receipt' when the bound bedrock receipt does), absent
+    (the native pass did not run, or the sealed ledger file is gone), integrity (the records disagree with each other, or
+    the ledger's size differs from its pin: the same conditions selected_files raised on, a separate visible failure),
+    not_measured (no record covers it: NOT_MEASURED; never scanned). Never raises; never reads a ledger."""
+    reads = []
+
+    def every(status, reason, basis):
+        return {c: dict(status=status, reason=reason, basis=basis) for c in NATIVE_CARRIER_LEDGERS}, reads
+    if derive_problem:
+        return every('integrity', 'INTEGRITY: %s' % derive_problem, 'record')
+    if not isinstance(derive, dict) or not derive:
+        return every('not_measured', '%s (derive.json not read)' % NOT_MEASURED, 'not_measured')
+    bedrock = derive.get('bedrock') if isinstance(derive.get('bedrock'), dict) else None
+    if not bedrock:
+        return every('absent', 'the native pass did not run in this ROOT (no bedrock record in derive.json)', 'record')
+    if bedrock.get('skipped'):
+        return every('absent', 'the native pass did not run in this ROOT (%s)' % bedrock.get('reason'), 'record')
+    ledgers = bedrock.get('ledgers') if isinstance(bedrock.get('ledgers'), dict) else {}
+    problems = []
+    if set(ledgers) != set(NATIVE_LEDGER_FILES) or not bedrock.get('result'):
+        problems.append('native derivation lacks its completed authoritative ledgers')
+    for name in NATIVE_SECTION_LAYERS:
+        entry = (derive.get('layers') or {}).get(name)
+        if not isinstance(entry, dict) or not entry.get('bedrock') or entry.get('encoding') != 'gzip-json':
+            problems.append('native derivation lacks its exact compressed section product: ' + name)
+    root = Path(calc_dir).resolve() if calc_dir else None
+    for name in NATIVE_LEDGER_FILES:
+        try:
+            path = Path((ledgers.get(name) or {})['path'])
+            if path.name != name or root is None or not path.is_absolute() or '..' in path.parts \
+                    or not path.relative_to(root).is_relative_to('work/bedrock'):
+                problems.append('native artifact is outside its selected scientific directory: %s' % path)
+        except (KeyError, TypeError, ValueError):
+            problems.append('native ledger %s has no owner-local path in derive.json' % name)
+    receipt, receipt_why = None, None
+    pin = bedrock.get('receipt') if isinstance(bedrock.get('receipt'), dict) else {}
+    try:
+        raw = Path(pin['path']).read_bytes()
+        reads.append(dict(path=pin['path'], bytes=len(raw), what='the bedrock receipt (sealed record)'))
+        if (len(raw), hashlib.sha256(raw).hexdigest()) != (pin.get('bytes'), pin.get('sha256')):
+            problems.append('the bedrock receipt differs from derive.json\'s pin')
+        else:
+            receipt = json.loads(raw)
+            if receipt.get('ledgers') != ledgers or receipt.get('result') != bedrock.get('result'):
+                problems.append('native completion and derivation disagree on scientific artifacts')
+    except (KeyError, TypeError, OSError, ValueError) as error:
+        receipt_why = 'the bedrock receipt unreadable (%s: %s)' % (type(error).__name__, error)
+    if isinstance(records_doc, dict):
+        if (records_doc.get('native_pass') or {}).get('ledgers') != ledgers:
+            problems.append('native-layer-records.json names other native ledgers than derive.json')
+    plan_path = root / 'work/derived/.projection-v2/plan.json' if root is not None else None
+    if plan_path is not None and plan_path.is_file() and not plan_path.is_symlink():
+        try:
+            raw = plan_path.read_bytes()
+            reads.append(dict(path=str(plan_path), bytes=len(raw), what='the projection plan (sealed record)'))
+            plan = json.loads(raw)
+            for kind, name in (('member', NATIVE_LEDGER_FILES[0]), ('lifecycle', NATIVE_LEDGER_FILES[1])):
+                if {k: ((plan.get('ledgers') or {}).get(kind) or {}).get(k) for k in ('path', 'bytes', 'sha256')} != \
+                        {k: (ledgers.get(name) or {}).get(k) for k in ('path', 'bytes', 'sha256')}:
+                    problems.append('the projection plan names other native ledgers than the selected derivation')
+                    break
+        except (OSError, ValueError, AttributeError) as error:
+            problems.append('the projection plan unreadable (%s: %s)' % (type(error).__name__, error))
+    if problems:
+        return every('integrity', 'INTEGRITY (from the sealed records; nothing scanned): ' + '; '.join(problems), 'record')
+    if isinstance(records_doc, dict):
+        basis, via = 'record', ('work/native-layer-records.json (built, bound to derive.json) and derive.json name the same '
+                                'ledger pins%s' % ('' if receipt is not None else '; ' + str(receipt_why)))
+    elif receipt is not None:
+        basis, via = 'receipt', ('the bedrock receipt (bound to derive.json) and derive.json name the same ledger pins; no '
+                                 'native-layer record used (%s)' % (records_why or 'not given'))
+    else:
+        return every('not_measured', '%s (%s; %s)' % (NOT_MEASURED, records_why or 'no native-layer records', receipt_why),
+                     'not_measured')
+    out = {}
+    for carrier, name in NATIVE_CARRIER_LEDGERS.items():
+        lpin = ledgers[name]
+        rows = (((receipt or {}).get('ledgers') or {}).get(name) or {}).get('rows', lpin.get('rows'))
+        try:
+            st = Path(lpin['path']).stat()
+        except OSError as error:
+            out[carrier] = dict(status='absent', basis=basis, reason='the sealed ledger %s is not on disk (%s: %s)' % (
+                lpin['path'], type(error).__name__, error))
+            continue
+        if st.st_size != lpin.get('bytes'):
+            out[carrier] = dict(status='integrity', basis=basis, reason='INTEGRITY: the ledger %s is %d bytes, its sealed pin '
+                                'says %s (stat; nothing scanned)' % (lpin['path'], st.st_size, lpin.get('bytes')))
+            continue
+        out[carrier] = dict(status='present', basis=basis, via=via, rows=rows,
+                            pin={k: lpin.get(k) for k in ('path', 'bytes', 'sha256')},
+                            checked='stat: a regular file of the sealed size; the bytes are not re-hashed (%s)' % SCAN_RULE)
+    return out, reads
 
 
 def _member_head(path):
