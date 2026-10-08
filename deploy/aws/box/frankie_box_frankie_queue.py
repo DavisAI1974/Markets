@@ -801,6 +801,11 @@ def class_day(entry, previous, school_day, code_root, commit, log):
                 facts['stages']['reports'] = dict(status=rep['status'], reason=rep.get('reason'),
                                                   receipt=str(run.receipt_path('reports', day)))
             return 'failed', '%s %s: %s' % (stage, r['status'], r.get('reason'))
+        # session 6: the stage-boundary sequence after every passed class-side step (validate -> save -> clean ->
+        # trigger); the class worker stops on the owner's marker it shares (its acknowledgment follows, unchanged)
+        if _boundary(run, e, receipt_stage, receipt_key, run.receipt(receipt_stage, receipt_key), code_root, commit, log, facts):
+            return 'failed', '%s: handoff failed: %s' % (stage, (facts.get('handoff') or {}).get(receipt_stage, {}).get('reason'))
+        run.check_save()
         return None, None
 
     # 1. Frankie learns immediately after the BOSS teacher's read.
@@ -1337,6 +1342,24 @@ def _inspect(run, day, outcome, log):
         return dict(status='failed', reason='%s: %s' % (type(error).__name__, error))
 
 
+def _boundary(run, e, stage, key, record, code_root, commit, log, facts):
+    """Session 6 (Greg, 2026-10-08): the one stage-boundary sequence after a finished step, every piece alike
+    (frankie_box_stage_handoff.boundary: validate every pinned artifact once on the lane -> request the day's own save
+    marker -> the detached clean on the retained lane -> its trigger resumes and kicks the day on the launching
+    checkout). Returns 'failed' when validation failed (the successor never starts on unvalidated data), else None;
+    the caller's next run.check_save() honours the save requested here (exit 75: the day saved, the stage stopped)."""
+    import frankie_box_stage_handoff as H
+    try:
+        h = H.boundary(run, e, stage, key, record, code_root=code_root, commit=commit, log=log)
+    except Exception as error:  # noqa: BLE001 - the handoff's own error is named on the day, never a silent pass
+        h = dict(status='failed', reason='handoff error: %s: %s' % (type(error).__name__, error))
+    facts.setdefault('handoff', {})[stage] = {k: h.get(k) for k in ('status', 'reason', 'switch', 'clean_plan', 'save', 'clean_unit')}
+    if h.get('status') == 'failed':
+        log('%s %s %s: handoff FAILED: %s' % (stage, run.plan['run'], e['day'], h.get('reason')))
+        return 'failed'
+    return None
+
+
 def _finish_steps(run, e, code_root, commit, log):
     """The day's steps after its ROOT, in the held slot; (status, facts), status in finished / waiting / failed.
 
@@ -1349,7 +1372,9 @@ def _finish_steps(run, e, code_root, commit, log):
     import frankie_box_experiment as X
     facts = {}
     run.successors(e['day'])
-    run.check_save()
+    if _boundary(run, e, 'root', e['day'], run.receipt('root', e['day']), code_root, commit, log, facts):
+        return 'failed', facts            # session 6: ROOT validated once on the lane; a mismatch stops the day here
+    run.check_save()                      # the save the boundary requested is honoured here (ROOT stays stopped)
 
     # BOSS teacher: whole journal, every level, day-local rows.
     rows, source, why = run.day_rows(e)               # the one gate: rows the plan's shared policy refuses are none
@@ -1391,6 +1416,11 @@ def _finish_steps(run, e, code_root, commit, log):
         t = run.teacher('day-%s' % e['day'], [e])
         facts['teacher'] = dict(status=t['status'], rows=str(rows), source=source,
                                 brain_entries=t.get('brain_entries'))
+
+    if _boundary(run, e, 'teacher', 'day-%s' % e['day'], run.receipt('teacher', 'day-%s' % e['day']), code_root, commit,
+                 log, facts):
+        return 'failed', facts
+    run.check_save()
 
     if e['classroom_arm'] and os.environ.get('FRANKIE_LANE_MAILBOX'):
         import frankie_box_lane_state as LS
@@ -1476,6 +1506,9 @@ def _finish_steps(run, e, code_root, commit, log):
             facts[stage] = dict(status=r.get('status'), reason=r.get('reason'), target=r.get('target'), log=r.get('log'))
             if r.get('status') not in X.FINISHED:
                 return ('waiting' if r.get('status') == 'waiting' else 'failed'), facts
+            if _boundary(run, e, stage, e['day'], r, code_root, commit, log, facts):
+                return 'failed', facts
+            run.check_save()
         key = run.batch_of(e['day'])
         if key and key.startswith('discovery') and not run.finished('lessons', key):
             run.check_save()
@@ -1484,6 +1517,9 @@ def _finish_steps(run, e, code_root, commit, log):
             facts['lessons'] = dict(batch=key, status=r.get('status'), reason=r.get('reason'))
             if r.get('status') not in X.FINISHED:
                 return ('waiting' if r.get('status') == 'waiting' else 'failed'), facts
+            if _boundary(run, e, 'lessons', key, r, code_root, commit, log, facts):
+                return 'failed', facts
+            run.check_save()
         if key and key.startswith('discovery') and run.finished('lessons', key) and not run.finished('survivors', key):
             # stage 10 at the batch boundary (Run.lessons runs it after recording the lessons; this covers a batch whose
             # lessons finished earlier); never a gate on the day: its outcome is listed in the facts
@@ -1492,6 +1528,9 @@ def _finish_steps(run, e, code_root, commit, log):
         if key and key.startswith('discovery'):
             r = run.receipt('survivors', key) or {}
             facts['survivors'] = dict(batch=key, status=r.get('status'), reason=r.get('reason'))
+            if _boundary(run, e, 'survivors', key, r, code_root, commit, log, facts):
+                return 'failed', facts
+            run.check_save()
 
     # Jev remains blind: his stage reads only the governed classroom material, never Frankie's answers (sealed first).
     if not e['classroom_arm']:
@@ -1508,6 +1547,9 @@ def _finish_steps(run, e, code_root, commit, log):
                         dispatches=j.get('dispatches'), receipt_read_back=already or None)
     if j.get('status') not in X.FINISHED:
         return ('waiting' if j.get('status') == 'waiting' else 'failed'), facts
+    if _boundary(run, e, 'jev', e['day'], j, code_root, commit, log, facts):
+        return 'failed', facts
+    run.check_save()
     # R-A (fresh review): Jev finishes after the class line rendered the reports; their 99-layer join now has a late
     # piece (Jev's lists, a candidates update). A revision under the same number, in this same slot, no model call;
     # its outcome is listed in the facts and never gates the day's close
@@ -2190,7 +2232,9 @@ def owner_status(run, day):
                            if released.is_file() else 'no ledger record')
     marker = Path(owner['marker']) if owner else None
     ack_path = Path(str(marker) + '.class-ack.json') if marker else None
+    clean_note = Path(str(marker) + '.clean.json') if marker else None     # session 6: the clean unit's outcome, if any
     return dict(schema='FRANKIE_QUEUE_OWNER_STATUS_V1', run=run, day=day, owner=owner,
+                clean=json.loads(clean_note.read_bytes()) if clean_note and clean_note.is_file() else None,
                 root_entry={k: (root or {}).get(k) for k in ('seq', 'state', 'reason', 'finish', 'save_request', 'child',
                                                            'retained_booking', 'retain_error', 'attempts')},
                 class_entry={k: (cls or {}).get(k) for k in ('seq', 'state', 'reason', 'school_day', 'slot_booking', 'save_ack',
