@@ -37,9 +37,10 @@ used at least 5% of a CPU in the window. A CPU in either set is never booked.
 
 CPU 0 is the host / ordered-consumer CPU. A job's PARENT CPU is the lowest CPU of its booking (worker_budget reserves
 cpus[0] of the affinity for the ordered consumer and host; the workers take cpus[1:]), so CPU 0, when a booking holds it,
-is that job's parent CPU and the job owns it; it is never a worker CPU and never in two bookings. A day run books lowest
-CPUs first (0-15 on an idle box: sixteen distinct physical cores), an ingest highest first, so the two kinds do not
-fragment each other.
+is that job's parent CPU and the job owns it; it is never a worker CPU and never in two bookings. A day run books WHOLE
+PHYSICAL CORES first (Greg, session 8: allocate_day_slot; 0-15,32-47 for a 32 slot on an idle 64-vCPU box, the next slot
+16-31,48-63; lowest-first only when no whole core is free, recorded as the fallback), an ingest highest first, so the two
+kinds do not fragment each other.
 
 LAUNCH INSIDE THE BOOKING. `run` books, starts the job under `taskset -c <booked cpus>` (every worker it pins then pins
 inside the booking, and every unpinned child inherits it), adds the job's pid to the booking, waits, and releases. A job
@@ -281,6 +282,32 @@ def shared_cores(cpus, others, cmap):
     return sorted(c for c in cpus if any(s in others for s in cmap['siblings'].get(c, [])))
 
 
+def allocate_day_slot(free, size, cmap):
+    """The CPUs a NEW day slot of `size` takes from `free` (Greg, session 8, decision 5: WHOLE CORES FIRST): every
+    physical core all of whose online threads are free, in core order, both threads of each, until the size is reached
+    (a 32 slot on an idle 64-vCPU box = 0-15,32-47: 16 whole cores, the 8xlarge's verified shape; the next 32 slot gets
+    16-31,48-63, never the siblings of a held booking while whole cores are free); when no more whole cores are free,
+    the remaining CPUs lowest-first (the old rule) = the FALLBACK, said on the record. (cpus, basis, fallback)."""
+    free = set(free)
+    whole = [g for g in cmap['cores'] if g and all(c in free for c in g)]
+    take = []
+    for g in whole:
+        if len(take) >= size:
+            break
+        take.extend(g)
+    take = take[:size]
+    cores_taken = len({core_of(c, cmap) for c in take})
+    basis = 'whole cores first: %d whole core(s) (every thread free) = %d CPUs' % (cores_taken, len(take))
+    fallback = False
+    if len(take) < size:
+        rest = sorted(c for c in free if c not in take)[:size - len(take)]
+        take += rest
+        fallback = True
+        basis += '; no more whole cores free: %d CPU(s) lowest-first (%s), siblings of held CPUs (FALLBACK)' % (
+            len(rest), cpu_list(rest))
+    return sorted(take), basis, fallback
+
+
 LANE_STEPS = ('day-slot', 'step-inside', 'classroom-day', 'teacher-lanes', 'jev', 'digest-render')
 CLASSROOM_CPUS_SETTING = 'FRANKIE_CLASSROOM_CPUS'     # held (default) | all | one of DAY_RUN_SIZES: a run setting (FA-6)
 
@@ -358,15 +385,11 @@ def lane_for(step, plan_size=None, run=None, day=None, days=None, bookings=None,
         if len(free) < plan_size:
             raise PlanRefused('day-slot: %d free of %d needed (booked: %s); the slot waits, it is never cut smaller'
                               % (len(free), plan_size, cpu_list(booked) or 'none'))
-        # the ledger books lowest-first for a day run (book_locked); the resolver names the same set so the two agree
-        cpus = sorted(free)[:plan_size]
-        order = whole_cores_first(free, cmap)
-        basis.append('lowest %d free CPUs (the ledger\'s day-run rule)' % plan_size)
-        notes = []
-        if sorted(order[:plan_size]) != cpus:
-            notes.append('whole-cores-first would be %s (%d physical cores)' % (
-                cpu_list(order[:plan_size]), len({core_of(c, cmap) for c in order[:plan_size]})))
-        return answer(cpus, size=plan_size, notes=notes, retained=False)
+        # the same allocation the ledger books (book_locked -> allocate_day_slot), so the two always agree
+        cpus, how, fallback = allocate_day_slot(free, plan_size, cmap)
+        basis.append(how)
+        return answer(cpus, size=plan_size, notes=(['FALLBACK: part of this slot sits on hyperthread siblings of held CPUs']
+                                                  if fallback else []), retained=False, fallback=fallback)
 
     if step == 'digest-render':
         free = [c for c in online if c not in booked]
@@ -391,12 +414,29 @@ def lane_for(step, plan_size=None, run=None, day=None, days=None, bookings=None,
             return answer(wanted)
         order = whole_cores_first(free, cmap)
         basis.append('every CPU outside the bookings (%d free of %d), whole cores first' % (len(free), cmap['nproc']))
-        return answer(order)
+        out = answer(order)
+        if out['shares_cores_with']:
+            out['notes'].append('runs beside the day\'s steps on the hyperthread siblings of held CPUs (Greg, session 8: '
+                                'the render DURING the teacher on 32-63): CPUs %s share a physical core with a booking'
+                                % cpu_list(out['shares_cores_with']))
+        return out
 
     # the stages of a day that holds its booking
     b = held if held is not None else next(iter(mine()), None)
     if step == 'classroom-day':
         given = environ.get(CLASSROOM_CPUS_SETTING)
+        source = 'given'
+        if given in (None, ''):
+            # Greg, session 8, decision 1: ALL is the default for a classroom day when the box has more CPUs than the
+            # held booking (a forgotten env still grows); a user-set value (held | all | size) wins; recorded on the plan
+            source = 'default (%s unset)' % CLASSROOM_CPUS_SETTING
+            held_size = len(b['cpus']) if b is not None else 0
+            lawful = [s for s in DAY_RUN_SIZES if s <= cmap['nproc'] and s > held_size]
+            given = str(max(lawful)) if lawful and cmap['nproc'] > held_size else 'held'
+            if given == str(cmap['nproc']):
+                given = 'all'
+            basis.append('%s unset: default %s (the box has %d CPUs, the held booking %d; Greg: a classroom day gets all 64)'
+                         % (CLASSROOM_CPUS_SETTING, given, cmap['nproc'], held_size))
         if given not in (None, '', 'held'):
             if given == 'all':
                 size = cmap['nproc']
@@ -418,7 +458,7 @@ def lane_for(step, plan_size=None, run=None, day=None, days=None, bookings=None,
                                   'booking never shrinks' % (b['booking'], len(have), size))
             if len(have) == size:
                 basis.append('held booking %s already holds %d' % (b['booking'], size))
-                return answer(have, booking=b['booking'], grow_to=None, grow_cpus=[], waits_for=0)
+                return answer(have, booking=b['booking'], grow_to=None, grow_cpus=[], waits_for=0, setting=given, setting_source=source)
             taken = {c for x in bookings for c in x.get('cpus') or [] if x['booking'] != b['booking']}
             free = [c for c in online if c not in taken and c not in have]
             need = size - len(have)
@@ -428,8 +468,8 @@ def lane_for(step, plan_size=None, run=None, day=None, days=None, bookings=None,
             else:
                 basis.append('the %d extra CPUs are free now: %s' % (need, cpu_list(sorted(free)[:need])))
             return answer(have + sorted(free)[:need], size=size, booking=b['booking'], grow_to=size,
-                          grow_cpus=sorted(free)[:need], waits_for=max(0, need - len(free)))
-        basis.append('%s unset/held: the classroom runs on the day\'s held booking, unchanged' % CLASSROOM_CPUS_SETTING)
+                          grow_cpus=sorted(free)[:need], waits_for=max(0, need - len(free)), setting=given, setting_source=source)
+        basis.append('%s=held (%s): the classroom runs on the day\'s held booking, unchanged' % (CLASSROOM_CPUS_SETTING, source))
     if b is None:
         raise PlanRefused('%s: %s %s holds no live or retained day-run booking; a stage never runs outside its day\'s '
                           'booking' % (step, run, day))
@@ -439,8 +479,9 @@ def lane_for(step, plan_size=None, run=None, day=None, days=None, bookings=None,
         threads, note = None, ''
         try:
             import frankie_box_jev_cpu as J
-            threads = min(int(J.JEV_THREADS), len(cpus))
-            note = 'llama-server threads: JEV_THREADS %d clamped to the lane = %d' % (J.JEV_THREADS, threads)
+            threads = min(int(J.JEV_THREADS), len(cpus)) if J.JEV_THREADS else len(cpus)
+            note = 'llama-server threads: %s = %d' % ('JEV_THREADS %d clamped to the lane' % J.JEV_THREADS if J.JEV_THREADS
+                                                       else 'JEV_THREADS None = the lane size (Greg, session 8)', threads)
         except Exception as error:  # noqa: BLE001 - toys without the module
             note = 'JEV_THREADS unavailable here (%s)' % type(error).__name__
         return answer(cpus, booking=b['booking'], threads=threads, notes=[note])
@@ -457,7 +498,7 @@ def lane_for(step, plan_size=None, run=None, day=None, days=None, bookings=None,
             at += take
         basis.append('%d day(s): %d CPUs each (+1 on the first %d), whole cores first, every CPU used' % (n, share, spare))
         return answer(cpus, booking=b['booking'], lanes=lanes, lane_lists=[cpu_list(lane) for lane in lanes])
-    return answer(cpus, booking=b['booking'], grow_to=None)
+    return answer(cpus, booking=b['booking'], grow_to=None, setting='held', setting_source=source if step == 'classroom-day' else None)
 
 
 def online_cpus(sys_root=SYS_CPU):
@@ -812,7 +853,15 @@ def book_locked(kind, size, pid, meta, window):
                           booked_cpus=cpu_list(booked), in_use_unbooked=cpu_list(held), reaped=[r['booking'] for r in reaped],
                           reason='waiting: %d free of %d needed (booked by the ledger: %s; in use by Frankie processes not '
                                  'in the ledger: %s)' % (len(free), size, cpu_list(booked) or 'none', cpu_list(held) or 'none'))
-    cpus = sorted(requested if requested is not None else (free[:size] if kind == 'day-run' else free[-size:]))
+    placement = None
+    if requested is not None:
+        cpus = sorted(requested)
+    elif kind == 'day-run':
+        # Greg, session 8, decision 5: whole cores first, the lowest-first rule only as the recorded fallback
+        cpus, how, fallback = allocate_day_slot(free, size, core_map(online=online))
+        placement = dict(rule='whole cores first (allocate_day_slot)', basis=how, fallback=fallback)
+    else:
+        cpus = sorted(free[-size:])
     stamp = time.time()
     booking = '%s-%s-%s-%d-%d' % (kind, re.sub('[^A-Za-z0-9_]', '_', meta.get('day') or 'box'),
                                   re.sub('[^A-Za-z0-9_]', '_', meta.get('stage') or kind), int(stamp), pid)
@@ -826,7 +875,7 @@ def book_locked(kind, size, pid, meta, window):
                 demand=(size if kind == 'day-run' else ingest_demand(kind, meta.get('workers') or 0, meta.get('verify'))),
                 pids=[dict(pid=pid, start=start, role='booking holder')], started=now_iso(), started_at=stamp,
                 nproc=len(online), free_before=len(free), booked_before=cpu_list(booked), in_use_unbooked_before=cpu_list(held),
-                reaped_before=[r['booking'] for r in reaped], host=os.uname().nodename)
+                reaped_before=[r['booking'] for r in reaped], host=os.uname().nodename, placement=placement)
     body['_path'] = str(LEDGER / (booking + '.json'))
     write_json(body['_path'], body, exclusive=True)
     return body, dict(status='booked', booking=booking, cpus=cpu_list(cpus), parent_cpu=cpus[0])

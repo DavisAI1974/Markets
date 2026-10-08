@@ -99,13 +99,46 @@ class Resolver(unittest.TestCase):
         with self.assertRaises(C.PlanRefused):
             self.lane('day-slot', plan_size=48, bookings=[])
 
-    def test_day_slot_idle_box(self):
+    def test_day_slot_idle_box_whole_cores_first(self):
         out = self.lane('day-slot', plan_size=32, bookings=[])
-        self.assertEqual(R(out['cpu_list']), R('0-31'))
-        self.assertEqual(out['physical_cores'], 32)
+        self.assertEqual(R(out['cpu_list']), R('0-15,32-47'))       # 16 whole cores, both threads (decision 5)
+        self.assertEqual(out['physical_cores'], 16)
+        self.assertFalse(out['fallback'])
         self.assertEqual(out['shares_cores_with'], [])
         out = self.lane('day-slot', plan_size=64, bookings=[])
         self.assertEqual(R(out['cpu_list']), R('0-63'))
+        out = self.lane('day-slot', plan_size=16, bookings=[])
+        self.assertEqual(R(out['cpu_list']), R('0-7,32-39'))
+
+    def test_second_day_slot_takes_whole_cores_before_siblings(self):
+        a = booking('day-a', R('0-15,32-47'), run='fleet', day='20231019', retained=False, alive=True)
+        out = self.lane('day-slot', plan_size=32, run='fleet', day='20231020', bookings=[a])
+        self.assertEqual(R(out['cpu_list']), R('16-31,48-63'))
+        self.assertFalse(out['fallback'])
+        self.assertEqual(out['shares_cores_with'], [])
+
+    def test_day_slot_fallback_when_no_whole_cores_free(self):
+        # a2 retained on 0-31 (one thread of every core): only siblings are free -> the old lowest-first rule, said so
+        out = self.lane('day-slot', plan_size=32, run='fleet', day='20231020', bookings=[self.a2])
+        self.assertEqual(R(out['cpu_list']), R('32-63'))
+        self.assertTrue(out['fallback'])
+        self.assertTrue(any('FALLBACK' in n for n in out['notes']))
+        self.assertEqual(out['shares_cores_with'], list(range(32, 64)))
+        # a mix: 8 whole cores free (24-31 with 56-63) and 24 single threads (0-23): 16 from whole cores, 16 lowest-first
+        held = booking('ingest-x', R('32-55'), run='r', day='d', kind='ingest', retained=False, alive=True)
+        out = self.lane('day-slot', plan_size=32, run='fleet', day='20231020', bookings=[held])
+        self.assertEqual(R(out['cpu_list']), R('0-15,24-31,56-63'))
+        self.assertTrue(out['fallback'])
+
+    def test_allocate_day_slot_pure(self):
+        cpus, how, fallback = C.allocate_day_slot(range(64), 32, self.m)
+        self.assertEqual(cpus, sorted(R('0-15,32-47')))
+        self.assertIn('16 whole core', how)
+        self.assertFalse(fallback)
+        cpus, how, fallback = C.allocate_day_slot(range(32), 16, self.m)
+        self.assertEqual(cpus, list(range(16)))
+        self.assertTrue(fallback)
+        self.assertIn('FALLBACK', how)
 
     def test_day_slot_retained_exactly(self):
         out = self.lane('day-slot', plan_size=32, bookings=[self.a2])
@@ -136,6 +169,7 @@ class Resolver(unittest.TestCase):
         out = self.lane('digest-render', bookings=[self.a2])
         self.assertEqual(R(out['cpu_list']), R('32-63'))
         self.assertEqual(out['shares_cores_with'], list(range(32, 64)))   # the siblings of a2's lane: said, not hidden
+        self.assertTrue(any('DURING the teacher' in n for n in out['notes']))   # decision 2, on the plan
         with self.assertRaises(C.PlanRefused) as cm:
             self.lane('digest-render', bookings=[self.a2], environ={'FRANKIE_LANE_CPUS': '16-31'})
         self.assertIn('overlaps', str(cm.exception))
@@ -156,9 +190,22 @@ class Resolver(unittest.TestCase):
         out = self.lane('classroom-day', bookings=[self.a2, other], environ={'FRANKIE_CLASSROOM_CPUS': 'all'})
         self.assertEqual(out['waits_for'], 8)
         self.assertTrue(any('WAITS' in line for line in out['basis']))
+        # decision 1: unset = ALL by default when the box has more CPUs than the held booking; recorded as the default
         out = self.lane('classroom-day', bookings=[self.a2], environ={})
+        self.assertEqual(out['grow_to'], 64)
+        self.assertEqual(out['setting'], 'all')
+        self.assertIn('default', out['setting_source'])
+        self.assertTrue(any('default all' in line for line in out['basis']))
+        # a user-set value still wins
+        out = self.lane('classroom-day', bookings=[self.a2], environ={'FRANKIE_CLASSROOM_CPUS': 'held'})
         self.assertIsNone(out['grow_to'])
         self.assertEqual(R(out['cpu_list']), R('0-31'))
+        self.assertEqual(out['setting_source'], 'given')
+        # a booking that already holds the whole box: unset = held, nothing to grow
+        whole = booking('day-64', range(64), run='r64', day='20231021')
+        out = self.lane('classroom-day', run='r64', day='20231021', bookings=[whole], environ={})
+        self.assertIsNone(out['grow_to'])
+        self.assertEqual(out['setting'], 'held')
         with self.assertRaises(C.PlanRefused):
             self.lane('classroom-day', bookings=[self.a2], environ={'FRANKIE_CLASSROOM_CPUS': '16'})
         with self.assertRaises(C.PlanRefused):
@@ -179,7 +226,11 @@ class Resolver(unittest.TestCase):
         out = self.lane('jev', bookings=[self.a2])
         self.assertEqual(R(out['cpu_list']), R('0-31'))
         if out['threads'] is not None:
-            self.assertEqual(out['threads'], 32)
+            self.assertEqual(out['threads'], 32)                      # the lane size (JEV_THREADS None)
+        whole = booking('day-64', range(64), run='r64', day='20231021')
+        out = self.lane('jev', run='r64', day='20231021', bookings=[whole])
+        if out['threads'] is not None:
+            self.assertEqual(out['threads'], 64)                      # decision 3: 64 on a 64 lane
 
     def test_unknown_step(self):
         with self.assertRaises(C.PlanRefused):
@@ -199,12 +250,25 @@ class Grow(unittest.TestCase):
         C.LEDGER.mkdir()
         C.online_cpus = lambda sys_root=None: list(range(64))
         C.usage = lambda window, exclude=(): ({}, [], {}, [b for b in C.live_bookings() if b['_alive'] or b['_retained']])
+        self.saved_core_map = C.core_map
+        self.m = C.core_map(sys_root=self.d.name)                  # the fake 16xlarge map, read once before the stub
+        C.core_map = lambda sys_root=None, online=None: self.m
         self.a2 = booking('day-run-20231018-day_slot_root-1791402822-3111', range(32))
         self.write(self.a2)
 
     def tearDown(self):
         C.LEDGER, C.RELEASED, C.WAITING, C.SYS_CPU, C.online_cpus, C.usage = self.saved
+        C.core_map = self.saved_core_map
         self.d.cleanup()
+
+    def test_ledger_books_whole_cores_first(self):
+        meta = dict(run='fleet', day='20231019', stage='day-slot-root', commit='c', size=32)
+        b, out = C.book('day-run', os.getpid(), meta, 0.1)
+        self.assertEqual(out['status'], 'booked')
+        self.assertEqual(R(out['cpus']), R('32-63'))               # a2 holds 0-31: only siblings are free -> the fallback
+        again = json.loads((C.LEDGER / (b['booking'] + '.json')).read_bytes())
+        self.assertTrue(again['placement']['fallback'])
+        self.assertIn('whole cores first', again['placement']['rule'])
 
     def write(self, b):
         body = {k: v for k, v in b.items() if not k.startswith('_')}
