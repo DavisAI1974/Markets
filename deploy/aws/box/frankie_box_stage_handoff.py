@@ -60,6 +60,15 @@ WAIT_SAVED_SECONDS = 1800
 WAIT_POLL_SECONDS = 10
 VENV_PYTHON = '/opt/frankie-box/venv/bin/python'
 
+
+def floor_bytes():
+    """The clean's floor (frankie_box_root_move.FLOOR_BYTES, 1 GiB); FRANKIE_CLEAN_FLOOR_BYTES overrides it (toy tests)."""
+    import frankie_box_root_move as M
+    try:
+        return int(os.environ.get('FRANKIE_CLEAN_FLOOR_BYTES') or M.FLOOR_BYTES)
+    except ValueError:
+        return M.FLOOR_BYTES
+
 # Per stage: roots = step-receipt fields naming an output directory (or a file inside it); inner = receipt files under
 # each root to collect pins from (besides the Run's own step receipt); guarded = prefixes (relative to each root) that
 # a safe_path reader of the next stage opens (a symlink there would be refused: those files stay); successor = the
@@ -243,7 +252,7 @@ def start_clean_unit(run, e, stage, key, out_dir, roots, receipts, lane, code_ro
                MARKETS_SHA=commit, CODE_ROOT=str(code_root))
     for name in ('FRANKIE_QUEUE_DIR', 'FRANKIE_QUEUE_SH', 'FRANKIE_HANDOFF_PYTHON', 'FRANKIE_ZSTD', 'FRANKIE_ARCHIVE_ROOT',
                  'FRANKIE_BOX_ROOT', 'FRANKIE_HANDOFF_NO_KEEP_RUNNING', 'FRANKIE_HANDOFF_WAIT_SAVED_SECONDS',
-                 'FRANKIE_HANDOFF_DETACH', SWITCH):
+                 'FRANKIE_HANDOFF_DETACH', 'FRANKIE_CLEAN_FLOOR_BYTES', SWITCH):
         if os.environ.get(name):
             env[name] = os.environ[name]
     pinned = (['taskset', '-c', lane] if lane and shutil.which('taskset') else [])
@@ -327,7 +336,7 @@ def boundary(run, e, stage, key, record, *, code_root, commit, log=print):
     try:
         pins = collect(stage, step_receipt, roots)
         items = M.plan(roots, {real: job['expected'] for real, job in pins.jobs.items()},
-                       guarded=STAGES.get(stage, {}).get('guarded', ()),
+                       guarded=STAGES.get(stage, {}).get('guarded', ()), floor=floor_bytes(),
                        archive_root=Path(os.environ.get('FRANKIE_ARCHIVE_ROOT') or M.ARCHIVE_ROOT),
                        box_root=Path(os.environ.get('FRANKIE_BOX_ROOT') or M.BOX_ROOT))
     except ValueError as error:
@@ -494,7 +503,7 @@ def clean_action(args):
     archive_root = Path(os.environ.get('FRANKIE_ARCHIVE_ROOT') or M.ARCHIVE_ROOT)
     box_root = Path(os.environ.get('FRANKIE_BOX_ROOT') or M.BOX_ROOT)
     receipt = M.clean(roots, expected, out_dir=clean_dir, cpus=cpus, guarded=STAGES.get(args.stage, {}).get('guarded', ()),
-                      archive_root=archive_root, box_root=box_root, say=say)
+                      floor=floor_bytes(), archive_root=archive_root, box_root=box_root, say=say)
     receipt.update(stage=args.stage, run=args.run, day=args.day, key=args.key, switch='on' if on() else 'off')
     _write(clean_dir / 'clean-receipt.json', receipt)
     say('clean %s %s %s: %s, %d moved, %d failed, %d bytes freed' % (
