@@ -288,3 +288,13 @@ Skill full-run-orchestrator invoked first. AWS via the Aws connector only; GitHu
   checkout runs exactly 5bf723f4's box code. ACCEPTED as the staged tip.
 - NOTE on probing: the Aws connector's run_script has a 60 s wall; a probe with a 90 s sleep inside timed out (no command
   reached the box). Probes are sent without a sleep from here on.
+- 15:29:42Z PROBE 1 (read-only, SSM ee568bc7-63db-48ba-b23b-7f6440f3f4d9): receipt ABSENT; marker standing (15:27:22Z);
+  child 1834 Dl 25:07 elapsed, read_bytes 196,780,892,160, fd 3 exact_member_rows.jsonl pos 179,935,641,600; entry seq 2
+  running, save_request true, reason "its whole day in the held box slot ...-3111"; ROOT log 94 lines (last 15:05:48Z);
+  stage transfer dir transfer-46cfe907...-37800918122-1 landing; units root worker + cpu-watch; watchdog 15:28:30Z
+  findings 1 (unbooked 1) repins 0.
+- 15:30:38Z PROBE 2 (read-only, SSM 597e7d5b-8235-401a-94ed-6d91badc944c): receipt ABSENT; marker standing; child 1834 Dl
+  26:02, read_bytes 203,403,698,176, member ledger pos 186,562,641,920 of 193,743,650,444 (ends ~15:31:3xZ); entry running,
+  save_request true. Stage: /opt/frankie-box/code/46cfe9074bec6094653cf1f6df72d6bee76f05e6-37800918122-1 being written by
+  the stage python 2513 ("Stage exact reviewed source in a fresh inactive Linux checkout; never run it"); no
+  staging-receipt.json yet; run 37800918122 in_progress on GitHub.
