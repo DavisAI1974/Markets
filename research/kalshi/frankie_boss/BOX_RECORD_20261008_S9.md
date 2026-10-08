@@ -216,3 +216,15 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   sizes helpers from this run's count (63 on 64); (2) a committed repair tool frankie_box_queue_repoint.py: re-point the
   entry to attempt -a1 on a retained booking rebooked for the owner and grown to 64, owner binding as _bind_owner mints
   it, state unknown; then ACTION=resume + kick/handover on the restaged tip.
+- 17:08:52Z parent probe (SSM 14294853): entry failed, ownerless; worker 5059 ended stopped_at_failed 17:06:10Z, lock free;
+  both bookings released; only frankie-cpu-watch (27109f4d) runs; -a1 intact, -a2 28 MB kept.
+- 17:1xZ source role returned 1c59623: save_or_match(run_size=('data_workers',)) for the source binding only (a
+  difference recorded as a run-size rebind in checkout-rebinds and the receipt; the saved binding stays the identity);
+  Session._data_workers() takes requested_data_workers (none of the three sites run on the resume route; the resume
+  digest sizes from the lane: 62 table helpers + main/side on the coordinator core of a 64 lane, 63 parts); the repair
+  tool frankie_box_queue_repoint.{py,sh} (rebook_for_owner at the plan's 32, grow to 64, owner binding as _bind_owner
+  mints it, state unknown; refuses on a live owner/booking or a wrong state). Parent review: ok.
+- 17:13:12Z RESTAGE dispatched: run 37814850954 (run_number 848) bound to 1c59623c81287c43b0ff45b95c50d0f6b79947bc.
+  CODE_ROOT: /opt/frankie-box/code/1c59623c81287c43b0ff45b95c50d0f6b79947bc-37814850954-1/markets.
+- Operator (opus) continued: stage -> repoint -a1 SIZE=64 -> ACTION=resume -> ACTION=kick (digest on, classroom all) ->
+  watch the child's first minute, the receipt (claim decisions), the digest start, then the teacher.
