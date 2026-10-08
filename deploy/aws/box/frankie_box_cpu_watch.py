@@ -26,7 +26,9 @@ written on the record with the estimate behind it; every kick of a queue line st
                                  more) and the step declares a resume mechanism (RESUMABLE, named from the code):
       root           the day-bound save marker (frankie_box_frankie_queue request_save): ROOT stops at its next save
                      point with SystemExit 75, the entry reads saved, the booking is RETAINED; then grow the booking to
-                     the plan (frankie_box_cores grow), resume_owner + kick on the same checkout; the ROOT resumes at its
+                     the plan (frankie_box_cores grow), resume_owner + kick on the NEWEST STAGED checkout on the box
+                     (session 9: newest_staged_checkout; never the owner's older checkout; none staged = refused and
+                     recorded, nothing grown or resumed; both commits on the request); the ROOT resumes at its
                      last save point and its pools size from the grown lane (FRANKIE_LANE_CPUS). Redone: the work since
                      that save point (the ROOT's own progress since its last save, read from its probe when readable).
       digest-render  FRANKIE_DIGEST_STOP_FILE (frankie_box_digest_parallel.step checks it between passes): the render
@@ -80,7 +82,8 @@ REPIN_LIMIT = ('re-pinning widens affinity but cannot grow a pool that sized its
 RESUMABLE = {
     'root': dict(mechanism='day-bound save marker (frankie_box_frankie_queue.request_save; ROOT SystemExit 75 at its next '
                            'save point; the booking is retained)',
-                 resume='frankie_box_cores grow --size <plan>, then frankie_box_frankie_queue resume + kick on the same checkout',
+                 resume='frankie_box_cores grow --size <plan>, then frankie_box_frankie_queue resume + kick on the newest '
+                        'staged checkout (newest_staged_checkout)',
                  redo='the ROOT\'s work since its last save point'),
     'digest_render': dict(mechanism='FRANKIE_DIGEST_STOP_FILE, read by frankie_box_digest_parallel.step between passes; exit 75 '
                                     'after the per-pass checkpoint (scratch/passes.pkl)',
@@ -301,6 +304,40 @@ def remaining_seconds(booking):
         return None
 
 
+CODE_PARENT = Path('/opt/frankie-box/code')
+
+
+def newest_staged_checkout(code_parent=CODE_PARENT):
+    """The newest staged checkout on the box: dict(code_root, commit, staged_at, receipt) of the
+    <code_parent>/<40-hex sha>-<run id>/markets whose staging-receipt.json says status 'staged' for that same commit and
+    code_root (frankie_box_stage_code.stage writes it last), newest by the receipt's mtime (the order
+    frankie_box_cleanup_code.sh keeps as 'newest'). Raises ValueError naming what was seen when none qualifies."""
+    import re
+    seen, best = [], None
+    parent = Path(code_parent)
+    for path in sorted(parent.iterdir()) if parent.is_dir() else []:
+        m = re.fullmatch(r'([0-9a-f]{40})-([A-Za-z0-9_-]{1,96})', path.name)
+        if not m or path.is_symlink() or not path.is_dir():
+            continue
+        receipt = path / 'staging-receipt.json'
+        try:
+            value = json.loads(receipt.read_bytes())
+            at = receipt.stat().st_mtime
+        except (OSError, ValueError):
+            seen.append('%s: no readable staging-receipt.json' % path.name)
+            continue
+        code_root = path / 'markets'
+        if not (value.get('status') == 'staged' and value.get('commit') == m.group(1)
+                and value.get('code_root') == str(code_root) and code_root.is_dir()):
+            seen.append('%s: receipt status %s commit %s' % (path.name, value.get('status'), str(value.get('commit'))[:12]))
+            continue
+        if best is None or at > best['staged_at']:
+            best = dict(code_root=str(code_root), commit=m.group(1), staged_at=at, receipt=str(receipt))
+    if best is None:
+        raise ValueError('no staged checkout under %s (%s)' % (parent, '; '.join(seen) or 'nothing there'))
+    return best
+
+
 def resize_requests(work_dir):
     out = {}
     for path in sorted(Path(work_dir).glob('resize-*.json')):
@@ -314,7 +351,8 @@ def resize_requests(work_dir):
 def drive_resize(finding, work_dir, record, actions):
     """RESIZE=on: the lawful stop-and-resume for a plan_wider_than_lane finding whose decision is 'resize'. actions =
     dict(request_save(run, day) -> text, owner_state(run, day) -> 'running'|'saved'|..., grow(booking, size) -> outcome,
-    resume(run, day) -> text, kick(run, day) -> text, stop_render(pid) -> path, render_stopped(pid) -> bool,
+    resume(run, day) -> text, kick_target(run, day) -> dict (owner and newest staged commits; raises when none is staged),
+    kick(run, day, target) -> text, stop_render(pid) -> path, render_stopped(pid) -> bool,
     restart_render(request) -> text); every call's outcome is appended to record['resize']. The request file carries
     the state so the next pass continues it."""
     b = finding['booking']
@@ -356,13 +394,23 @@ def drive_resize(finding, work_dir, record, actions):
             state = actions['owner_state'](finding['run'], finding['day'])
             req['log'].append(dict(at=now, did='owner_state', out=state))
             if state == 'saved':
-                size = len(C.parse_list(finding['planned']))
-                out = actions['grow'](b, size)
-                req['log'].append(dict(at=now, did='grow', out=out))
-                if out.get('status') == 'grown':
-                    req['log'].append(dict(at=now, did='resume', out=actions['resume'](finding['run'], finding['day'])))
-                    req['log'].append(dict(at=now, did='kick', out=actions['kick'](finding['run'], finding['day'])))
-                    req['state'] = 'done'
+                # session 9: the kick goes at the NEWEST staged checkout (never the owner's older one); with none staged
+                # the resize is refused here, recorded, and nothing is grown or resumed (the next pass tries again)
+                try:
+                    target = actions['kick_target'](finding['run'], finding['day'])
+                except Exception as error:  # noqa: BLE001 - recorded; the request stays for the next pass
+                    req['log'].append(dict(at=now, did='refused', out='no staged checkout to kick at: %s: %s'
+                                                                     % (type(error).__name__, error)))
+                    target = None
+                if target is not None:
+                    req['kick_target'] = target
+                    size = len(C.parse_list(finding['planned']))
+                    out = actions['grow'](b, size)
+                    req['log'].append(dict(at=now, did='grow', out=out))
+                    if out.get('status') == 'grown':
+                        req['log'].append(dict(at=now, did='resume', out=actions['resume'](finding['run'], finding['day'])))
+                        req['log'].append(dict(at=now, did='kick', out=actions['kick'](finding['run'], finding['day'], target)))
+                        req['state'] = 'done'
         elif stage == 'digest-render':
             if actions['render_stopped'](req.get('step_pid') or finding.get('step_pid')):
                 req['log'].append(dict(at=now, did='restart_render', out=actions['restart_render'](req)))
@@ -400,9 +448,17 @@ def live_actions():
         Q, _s, _o = _queue_py(run, day)
         return json.dumps(Q.resume_owner(run, day, by='cpu-watch resize'), sort_keys=True)[:400]
 
-    def kick(run, day):
-        Q, _s, owner = _queue_py(run, day)
-        return json.dumps(Q.kick('root', owner['code_root'], owner['commit'], 43200, 60, 'cpu-watch resize',
+    def kick_target(run, day):
+        # both commits on the record: the owner's (the checkout it ran on) and the newest staged one the kick uses
+        _Q, _s, owner = _queue_py(run, day)
+        newest = newest_staged_checkout()
+        return dict(owner_commit=owner.get('commit'), owner_code_root=owner.get('code_root'),
+                    kick_commit=newest['commit'], kick_code_root=newest['code_root'], kick_staged_at=newest['staged_at'],
+                    kick_receipt=newest['receipt'], same_as_owner=newest['commit'] == owner.get('commit'))
+
+    def kick(run, day, target):
+        Q, _s, _owner = _queue_py(run, day)
+        return json.dumps(Q.kick('root', target['kick_code_root'], target['kick_commit'], 43200, 60, 'cpu-watch resize',
                                  scope='%s:%s' % (run, day)), sort_keys=True)[:400]
 
     def stop_render(pid):
@@ -435,7 +491,7 @@ def live_actions():
         log = open(Path(env['OUTPUT_ROOT']) / 'work' / 'render-cpu-watch-restart.log', 'ab')
         child = subprocess.Popen(cmd, env=full, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
         return 'restarted as pid %d on the resolver\'s lane' % child.pid
-    return dict(request_save=request_save, owner_state=owner_state, grow=grow, resume=resume, kick=kick,
+    return dict(request_save=request_save, owner_state=owner_state, grow=grow, resume=resume, kick=kick, kick_target=kick_target,
                 stop_render=stop_render, render_stopped=render_stopped, restart_render=restart_render,
                 render_environment=render_environment)
 
