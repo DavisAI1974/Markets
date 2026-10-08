@@ -63,6 +63,13 @@ tip before acting (record: BOX_RECORD_20261008_S9.md). Two facts changed step 4(
 - Parent self check-in armed for 17:29Z (trig_01PHZXgJGTQVMqyDgdPNkjBh). The 18:20Z volume raise stays session 8's timer;
   the parent verifies it after 18:25Z and does it if it did not fire (cooldown from 12:08Z ends 18:08Z).
 
+- Greg, 16:4xZ (usage): "when workflow launches, switch down to opus." Rule for this session from the launch on: every
+  role spawned after the restart's kick runs with model "opus"; the parent probes sparsely (self check-ins, no 3-minute
+  loops); fable only for the two roles already running (box-operator, source-fix). Greg's go (16:4xZ, verbatim): "a go for
+  any changes you might do getting to the workflow launch and then a go for workflow launch when it's ready. And fix spool
+  before it starts". The child was stopped 16:34:31Z (entry SAVED, everything retained, nothing grown/resumed/kicked); the
+  spool whole-count fix is in the source role's hands; then restage, then grow+resume+kick on the new checkout.
+
 ## The box NOW (16:1xZ 2026-10-08)
 - Main box i-035994afa8bdf66a5, us-east-1d, RESIZED to r7i.16xlarge (64 vCPU) this session, RUNNING, SSM Online,
   KeepRunning=true. Volumes vol-0d36715924f03b86c (root) and vol-004b68c077be09cc9 (archive) at BASELINE 3,000 IOPS /
