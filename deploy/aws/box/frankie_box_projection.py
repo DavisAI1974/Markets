@@ -65,34 +65,43 @@ def _ready():
 
 
 class Workers:
-    def __init__(self, configuration=None):
+    def __init__(self, configuration=None, cpus=None):
+        # Session 6 (Greg, 2026-10-08: "We definitely need CPUs in every step of this ending process of root"): the pool
+        # is sized from the lane this process holds (frankie_box_lane_pin: FRANKIE_LANE_CPUS / the affinity, placed by
+        # physical core), not the constant fourteen helpers on CPUs 2-15 with the coordinator on CPU 1 that left 17 of
+        # a2's 32 lane CPUs idle for the whole member and lifecycle read. The coordinator takes the first CPU of the core
+        # order, every other lane CPU one pinned helper. Placement only: the jobs are the same fixed CHUNK byte ranges,
+        # and a range archive's bytes do not depend on which helper writes it or on how many there are.
+        import frankie_box_lane_pin as lane_pin
         self.owner = threading.get_native_id()
         self.original = os.sched_getaffinity(self.owner)
-        cores = []
-        for cpu in range(16):
-            root = Path('/sys/devices/system/cpu') / ('cpu%d' % cpu) / 'topology'
-            cores.append(((root/'physical_package_id').read_text(), (root/'core_id').read_text()))
-        if len(set(cores)) != 16:
-            raise ValueError('sixteen designated physical cores required')
+        lane = sorted(cpus) if cpus is not None else lane_pin.lane_cpus()
+        if len(lane) > 1:
+            coordinator, helper_cpus, basis = lane_pin.placement(len(lane) - 1, lane)
+        else:
+            coordinator, helper_cpus, basis = lane[0], [lane[0]], 'a single-CPU lane: the helper shares the coordinator CPU'
+        helper_cpus = list(helper_cpus)
+        self.lane, self.coordinator, self.basis = list(lane), coordinator, basis
+        self.pending = 2 * len(helper_cpus)
         ctx = multiprocessing.get_context('spawn')
-        self.queue, self.barrier = ctx.Queue(), ctx.Barrier(14)
-        for cpu in range(2,16):
+        self.queue, self.barrier = ctx.Queue(), ctx.Barrier(len(helper_cpus))
+        for cpu in helper_cpus:
             self.queue.put(cpu)
-        os.sched_setaffinity(self.owner, {1})
-        if os.sched_getaffinity(self.owner) != {1}:
+        os.sched_setaffinity(self.owner, {coordinator})
+        if os.sched_getaffinity(self.owner) != {coordinator}:
             raise ValueError('projection coordinator affinity differs')
-        self.pool = ProcessPoolExecutor(14, mp_context=ctx, initializer=_initialize,
+        self.pool = ProcessPoolExecutor(len(helper_cpus), mp_context=ctx, initializer=_initialize,
                                        initargs=(self.queue,self.barrier,configuration))
-        # The initializer barrier guarantees all fourteen processes are started.
+        # The initializer barrier guarantees every helper process is started.
         try:
-            starts = [self.pool.submit(_ready) for _ in range(14)]
+            starts = [self.pool.submit(_ready) for _ in range(len(helper_cpus))]
             for future in starts:
                 future.result()
             self.helpers = sorted([dict(pid=p.pid, cpu=next(iter(os.sched_getaffinity(p.pid))))
                                    for p in self.pool._processes.values()],key=lambda p:p['cpu'])
-            if [p['cpu'] for p in self.helpers] != list(range(2,16)):
+            if [p['cpu'] for p in self.helpers] != sorted(helper_cpus):
                 raise ValueError('projection process assignment readback differs')
-    
+
         except BaseException:
             self.close()
             raise
@@ -100,7 +109,7 @@ class Workers:
     def ordered(self, function, items):
         source, pending, exhausted = iter(items), deque(), False
         while pending or not exhausted:
-            while len(pending) < PENDING and not exhausted:
+            while len(pending) < self.pending and not exhausted:
                 try:
                     item = next(source)
                 except StopIteration:
@@ -111,8 +120,10 @@ class Workers:
                 yield pending.popleft().result()
 
     def receipt(self):
-        return dict(coordinator_cpu=1,reserved_cpu=0,helpers=self.helpers,
-                    maximum_pending=PENDING,affinity_readback_verified=True)
+        # reserved_cpu was the constant 0 of the fixed CPU 1-15 layout; the lane layout reserves none (session 6)
+        return dict(coordinator_cpu=self.coordinator,reserved_cpu=None,helpers=self.helpers,
+                    maximum_pending=self.pending,affinity_readback_verified=True,
+                    lane=self.lane,placement_basis=self.basis)
 
     def close(self):
         try:

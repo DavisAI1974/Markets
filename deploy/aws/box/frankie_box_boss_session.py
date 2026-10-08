@@ -3443,11 +3443,29 @@ class Session:
                     raise ValueError('completed native stage source or implementation changed; retained outputs preserved')
                 self.note('bedrock: completed native stage saved in the whole-file wrapper form; accepted because '
                           'frankie_box_bedrock.py is byte-identical to the saving checkout')
+            # session 6 (Greg: CPUs in every ending step; the parent: carry the claim): the artifacts' whole-file read
+            # here (the 193.7 GB native ledgers on a2, serial: a SHA-256 is one chain, and one core already runs it at
+            # the volume's rate) is replaced by the claim the child saved with its native-stage.json (stat identity + the
+            # sha256 of the last 64 KiB, the rule the data export takes) when it still holds; a file without a claim, a
+            # changed stat or tail, or FRANKIE_ROOT_NATIVE_REUSE_CHECK=full is read whole as before. Recorded on
+            # derive.json's bedrock.stage_reuse_check.
+            mode = os.environ.get(NATIVE_REUSE_CHECK_SETTING, 'claim')
+            if mode not in ('claim', 'full'):
+                raise ValueError('%s must be claim or full' % NATIVE_REUSE_CHECK_SETTING)
+            checks = []
             for item in saved['artifacts']:
-                if witness(Path(item['path'])) != {k: item[k] for k in ('bytes', 'sha256')}:
-                    raise ValueError('completed native stage artifact changed: ' + item['path'])
+                basis = _claim_still_holds(item.get('claim')) if mode == 'claim' else None
+                if basis is None:
+                    if witness(Path(item['path'])) != {k: item[k] for k in ('bytes', 'sha256')}:
+                        raise ValueError('completed native stage artifact changed: ' + item['path'])
+                    basis = 'read whole: bytes and sha256 equal to the saved artifact'
+                checks.append(dict(path=item['path'], bytes=item['bytes'], basis=basis))
+            self._native_stage_reuse_check = dict(schema='FRANKIE_NATIVE_REUSE_CHECK_V1', setting=mode, artifacts=checks)
             run = saved['run']
-            self.note('bedrock: completed native results reused in place; no traversal or finalization replay')
+            self.note('bedrock: completed native results reused in place; no traversal or finalization replay (%d '
+                      'artifacts: %d by their saved claim, %d read whole)'
+                      % (len(checks), sum(c['basis'].startswith('the saved claim') for c in checks),
+                         sum(c['basis'].startswith('read whole') for c in checks)))
         else:
             run = B.run(records, container, self.work / 'bedrock', PRODUCERS, self.cycle, code_commit, self.day, progress=probe,
                         source_manifest=self.source_binding['manifest'] if self.source_binding else None,
@@ -3459,8 +3477,19 @@ class Session:
                 receipt_path = Path(run['result']['path']).parent / 'receipt.json'
                 artifacts = [dict(path=str(receipt_path), **witness(receipt_path)), run['result']]
                 artifacts.extend(run['ledgers'].values())
+                # session 6: each artifact also carries its FRANKIE_FILE_CLAIM_V1 row (stat identity + last 64 KiB), so
+                # the parent's reuse can take the claim instead of reading the ledgers whole (additive; absent on error)
+                try:
+                    claims, _ = _file_claim_rows([], [{k: item[k] for k in ('path', 'bytes', 'sha256')} for item in artifacts])
+                except Exception as error:  # noqa: BLE001 - the claim is optional; the parent then reads whole as before
+                    claims = []
+                    self.note('native stage: file claims not recorded (%s: %s)' % (type(error).__name__, error))
+                by_path = {row['path']: row for row in claims}
                 write_json(native_stage, dict(identity=stage_identity, run=run,
-                    artifacts=[{k: item[k] for k in ('path', 'bytes', 'sha256')} for item in artifacts]))
+                    artifacts=[dict({k: item[k] for k in ('path', 'bytes', 'sha256')},
+                                    **({'claim': by_path[str(Path(item['path']).resolve())]}
+                                       if str(Path(item['path']).resolve()) in by_path else {}))
+                               for item in artifacts]))
         return B, layers, code_commit, run
 
     def _native_projection(self, B, layers, code_commit, run, pin, derived, receipt_layers):
@@ -3488,6 +3517,7 @@ class Session:
                   + ', '.join(f'{name[-3:].replace("_", ".")} {e["status"]} ({e["count"]} rows)' for name, e in sections.items()))
         return dict(schema='FRANKIE_BOX_DERIVE_BEDROCK_V1', layers=layers, sections={name: e['status'] for name, e in sections.items()},
                     emission=run.get('emission'),
+                    stage_reuse_check=getattr(self, '_native_stage_reuse_check', None),     # session 6, additive
                     bedrock_groups=pin_groups(pin), producers_commit=code_commit,
                     cadence_policy=run['cadence_policy'], receipt=dict(witness(native_directory / 'receipt.json'), path=str(native_directory / 'receipt.json')),
                     result=run['result'], ledgers=run['ledgers'], reconciliation=run['reconciliation'], sections_fed=run['sections_fed'],
