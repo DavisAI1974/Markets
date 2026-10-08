@@ -286,3 +286,20 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   /opt/frankie-box/work/frankie-queue/save/e2e-20231018-a2-20231018.save-request.json, 693 B, 17:23:16, sha256
   73c902f3992af8e71db03a19ae90dbb969005402938f7d06e5ef15c882d74338; status marker identity = that sha / requested_at
   1791480196.7406182; entry still `running` (the child renders on; it exits 75 after _calculate_day returns). Receipt not yet.
+
+## Parent: the two rules landed in source (17:3xZ)
+- 48d31e5 (validator role): the ROOT boundary validator takes the file claims (FRANKIE_ROOT_VALIDATE_CHECK=claim default;
+  full restores the reads): a pinned artifact whose row's bytes/sha256 equal the pin and whose stat + 64 KiB tail hold is
+  verified by claim (serially, first; the rest go to the lane pool); recorded per file (validate.json check/totals, the
+  handoff line). On a2: the five spools, every layer (incl. the 472 GB inline one) and the native ledgers by claim; still
+  whole: the small documents, the INPUT container (~24 GB) and derivation-digest-full.md (no rows yet) -> the role adds
+  rows for those two from the attempt's own receipt pins (in progress).
+- 2ce40e8 (no-retry role): an OWNED day is never retried from scratch: a failed or refused ROOT resume -> entry unknown,
+  owner/attempt/CPUs/booking retained, resume_failures recorded, worker ends waiting_owner; an identity refusal on resume
+  exits 65 with <attempt>/work/resume-refused.json (FRANKIE_ROOT_RESUME_REFUSED_V1) and Run.root records 'refused'; an
+  owned day coming back 'queued' (disk floor / not ready) keeps its owner via _rebook_owner. Parent: py_compile ok on all
+  five touched files at the tip.
+- Operator told (17:3xZ): ACTION=save NOW on CR3 so the ROOT child stops lawfully after its receipt + digest (SAVED,
+  retained); the resume + kick then run on the next staged checkout (validator by claim, no-retry rule, the sweep's
+  fixes). Look-ahead audit role (opus) assigned for the later stages (A exact-set, B run-size identity, C second passes,
+  D retry/kill gates, E worker literals); record LOOKAHEAD_SWEEP_20261008_S9.md.
