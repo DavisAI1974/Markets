@@ -214,6 +214,13 @@ PRE-LAUNCH CHECKLIST for this box (in this order, each one connector call; nothi
 a2 settings at start: resume/validate/teacher on the retained 0-31 (DAY_CPUS stays 32: the queue resume never reads it, a changed
 plan on the same run is refused); render on 32-63 concurrently; classroom on 0-63. ALL RUNTIME-UNVERIFIED until the box runs.
 
+## Clone volumes CREATED 14:03Z (snapshots completed 13:5xZ): vol-0c53052c4a6b38bfe (root clone, from snap-099dba434c7c58222) and
+vol-0025eb0f8dc9d97b9 (archive clone, from snap-088e77e04676ab8d9), us-east-1d, gp3 2048 GiB at baseline 3,000 / 125, encrypted with
+the account CMK, initialization 300 MiB/s, tags Name=frankie-a2-clone-{root,archive}-20261008 / Purpose=frankie-a2-clone / Project=frankie /
+TargetInstance=i-0d17573dbce871520. NOT attached, no box started. The two snapshots are the durable copy of a2 (keep). Session note: the
+session container was RESUMED at ~14:0xZ; the build agent (fleet source) and the AWS-apply agent were lost with it before any durable
+output (no worktree branch, no record file, the account unchanged by the read-only sweep); both relaunched with the same briefs.
+
 ## Run state (UNCHANGED since the session-7 drop-in; verified 03:17Z 2026-10-08, re-verified read-only later in session 7)
 - All three instances STOPPED, no Elastic IPs, only EBS storage accrues. Main box KeepRunning=false.
 - Day e2e-20231018-a2/20231018: SAVED on its day-bound marker, booking retained (CPUs 0-31), owner commit 6076950, NO
