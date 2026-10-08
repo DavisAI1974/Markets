@@ -42,6 +42,13 @@ end of `E2E_ONE_DAY_20231018.md`.
   lane after release.
 - Toys: `tests/test_frankie_fleet_status.py` (7). Pass.
 
+### (d) Greg's five decisions applied
+See "Decisions - ALL RESOLVED" below: staging pins a full commit hash + writes a receipt; a Spot/ClassroomEligible=false
+box is refused the classroom lease and fleet-launch refuses --spot for day boxes without --allow-spot-days; the gate
+stage and the gate clean-on-save are kept as built; --run has no default and a missing run is refused. Plus the
+`claim-day` CLI the user-data calls. Toys added: ineligible gate, claim-day CLI, missing-run refusal,
+spot-refused-without-allow, spot-with-allow, launch-template needs-location, user-data rev-parse/receipt assertions.
+
 ## Commit hashes (on ccr-d2f8f826-iefeah-frankie; rebased onto the parent's box records; hashes are the current ones)
 - `eb1bafe3` - the fleet module + its 14 toys.
 - `7bbdae02` - the handoff hooks (gate + release) + 4 toys.
@@ -49,45 +56,40 @@ end of `E2E_ONE_DAY_20231018.md`.
   fake-store fix.
 - `33f777fa` - the first docs (E2E section + this status file's first version).
 - `e984ec33` - (c) the fleet workflow + status probe + full-day stage tracking + 7 toys.
+- `33f777fa` / `764366a5` - the (a-c) docs.
+- `b35b6939` - (d) Greg's five decisions applied + the claim-day CLI + 5 more toys.
 - (this docs update lands in a following commit.)
 Verification on every touched file: py_compile + ast.parse on .py, YAML safe_load on the workflow, bash -n on the pure
-run blocks, git diff --check clean; 35/35 toys pass (`python -m unittest tests.test_frankie_box_fleet
-tests.test_frankie_box_fleet_handoff tests.test_frankie_aws_stack_fleet tests.test_frankie_fleet_status`).
+run blocks AND the rendered user-data, git diff --check clean; 40/40 toys pass (`python -m unittest
+tests.test_frankie_box_fleet tests.test_frankie_box_fleet_handoff tests.test_frankie_aws_stack_fleet
+tests.test_frankie_fleet_status`).
 
-## Open decisions for Greg
-1. **Self-driving stage vs. the SSM reviewed-helper stage.** The fleet user-data stages the commit by `git clone/checkout`
-   under `/opt/frankie-box/code/<commit>`, not the `frankie_box_stage_code.sh` reviewed-helper path (that path needs the
-   CODE_B64/PACK_* inputs the SSM dispatcher supplies, which a box has no way to produce at boot). The clone needs the
-   GitHub token from SSM (`/markets/frankie/github-token`, us-east-2) and the repo being reachable. Confirm this is the
-   staging you want for a self-driving fleet box, or whether fleet-launch should instead leave the box idle and the
-   staging be driven by the workflow as today (`frankie_box_run.yml` ACTION=stage) before the days start.
-2. **Spot boxes and the classroom.** Spot is lawful for ROOT only (resumable), so a `--spot` box's two days' classrooms
-   must run on an On-Demand box. The S3 lease serialises classrooms fleet-wide and a Spot box reaching the gate still
-   waits in line, but nothing yet STOPS a Spot box from holding the lease and being reclaimed mid-classroom. If that
-   matters, the gate should refuse the lease to a box tagged `ClassroomEligible=false` (a few lines; needs the box to
-   read its own tag). Named, not built, pending your call.
-3. **The gate stage.** The classroom gate is placed at the `teacher`->classroom boundary (`FRANKIE_FLEET_CLASSROOM_GATE_STAGES`
-   default `teacher`), on the reading that the teacher is the box's own parallel work and the classroom is the serial
-   shared phase. If the serial phase should begin earlier or later, set that env to the right stage(s).
-4. **Clean-on-save at the gate stage.** In fleet mode the gate stage (teacher) does NOT run the clean-on-save optimisation
-   (a save+resume there would race the lease). The teacher outputs are cleaned later by their own day's chain / the
-   archive step, not at the gate. Accept, or we wire a post-classroom clean of the teacher outputs.
-5. **The day-list prefix and the run name.** `FRANKIE_FLEET_DAY_LIST` defaults the bucket to the granite bucket; the day
-   list is seeded by `frankie_box_fleet.py seed-day-list` or an operator. The launch steps default `--run e2e-20231018-a2`
-   and `--fleet-day-list fleet/<run>`. Confirm the run name and prefix for the real fleet.
-6. **The fleet box instance profile (scope note 2).** The launch template defaults `--instance-profile Ssm` -- the SAME
-   profile the main box i-035994afa8bdf66a5 runs under, which per the session records carries SSM, Bedrock in us-east-1
-   (the Granite voice meeting calls Bedrock as the teacher-logic helper) and S3 (the data + frankie-granite42 buckets).
-   Reused by name; I made NO IAM change (source/plan only). The one thing to confirm before launch: S3 access to the NEW
-   us-east-1 frankie-archive bucket (the parent's 85ce2827 created it) in the Ssm role -- if the role's S3 statement is
-   bucket-scoped and does not include it, add it, or switch to the day-scoped profile AWS_TOOLS_STACK section 3.9
-   sketches (s3 Get on the day prefix, Put on the archive prefix, ssm:UpdateInstanceInformation, cloudwatch:PutMetricData,
-   ec2:TerminateInstances on self). Your call; I did not touch IAM.
-7. **A day's full sequence after the classroom (scope note 1) is honoured, not dropped.** The lease covers ONLY the
-   classroom; data/search -> scientific-teacher -> the Granite voice meeting -> jev -> end run per-box on the grown 64
-   lane after the lease is released, as ordinary stages, and the day-list state + the status probe mark a day done only
-   at jev/end. Nothing to decide unless you want the "done" tail stage to be something other than `jev`
-   (FLEET_DONE_STAGES in frankie_box_fleet.py).
+## Decisions - ALL RESOLVED (Greg, 2026-10-08, "Do what is best for science and speed"; relayed by the parent; applied in b35b6939)
+1. **Staging = self-driving git, pinned to a full commit hash.** DECIDED: keep the self-driving boot-time stage, but it
+   MUST pin a full 40-hex commit (a branch name or short hash is refused), verify `git rev-parse HEAD` equals it, and
+   write a staging receipt (FRANKIE_FLEET_STAGE_V1: status staged, commit, tree_sha, file_count) so every box's receipt
+   names the identical commit. Built in the user-data; the SSM reviewed-helper dispatch is NOT used for a self-driving box.
+2. **Spot = never the classroom.** DECIDED: a ClassroomEligible=false box is REFUSED the classroom lease (the gate
+   returns 'ineligible', takes no lease, starts no WAIT unit, and the handoff saves the day at the gate for an operator
+   to run its classroom on an On-Demand box). fleet-launch tags every --spot box ClassroomEligible=false AND refuses
+   --spot for day boxes unless --allow-spot-days is given. Spot is for stateless burst work (the digest render), not day
+   boxes.
+3. **Gate stage = teacher->classroom.** DECIDED: kept as built (FRANKIE_FLEET_CLASSROOM_GATE_STAGES default `teacher`).
+4. **Clean-on-save at the gate.** DECIDED: kept skipped at the gate stage (a save+resume there would race the lease);
+   the day's chain cleans later.
+5. **Run name = no default, refused when missing.** DECIDED: --run has no default in fleet-launch (and launch-template
+   refuses without --run or --fleet-day-list to form the day-list location; the workflow's run input is required;
+   seed-day-list already requires --run), so no fleet reuses the one-box a2 run e2e-20231018-a2.
+
+Two scope notes from the parent (also applied, in e984ec33):
+- **Full day sequence (not just the classroom).** The lease covers ONLY the classroom; data/search -> scientific-teacher
+  -> the Granite voice meeting -> jev -> end run per-box on the grown 64 lane after the lease is released. The day-list
+  state + the status probe mark a day done only at jev/end (FLEET_DONE_STAGES).
+- **Instance profile = reuse Ssm by name.** The launch template defaults `--instance-profile Ssm` (the main box's
+  profile; per the session records it carries SSM, Bedrock in us-east-1, and S3). No IAM was created or changed. ONE
+  thing to confirm before launch (the only residual item): that the Ssm role's S3 statement includes the new us-east-1
+  frankie-archive bucket (85ce2827); if it is bucket-scoped and omits it, add it, or switch to the day-scoped profile
+  AWS_TOOLS_STACK section 3.9 sketches. I did not touch IAM.
 
 ## RUNTIME-UNVERIFIED (everything; the container has 4 CPUs, no ledger, no S3)
 The real S3Store against the bucket (412 handling, paging); classroom_gate + the WAIT unit end to end on the box; the
