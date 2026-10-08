@@ -380,3 +380,10 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   path (native_pass_facts / all99 / brain_stage / inline_spool_layer_bytes: being located) re-reading data the ROOT just
   took by claim: shape C (second pass). Not killed (the receipt is written; it ends on its own); the day's step record
   root.json is written after it, then the boundary -> teacher. Fix assigned for the reused branch and every later day.
+- 17:53:56Z Greg: "Take that read out and stop it and don't restart it. The bottleneck issue." -> the worker 6551 (the
+  all-99 ledger scan runs inside it; 69.3 GB of 193.7 GB read) SIGKILLed (SSM b476accd). After: only cpu-watch runs; entry
+  still reads 'running' until the next worker's reconciliation turns it 'unknown' (owner gone, attempt -a1 and the booking
+  retained); the booking ...repoint-1791479892-5613 on 0-63 has no live holder (alive false, not yet retained). The
+  receipt (17:46Z) stands. NOT restarted until the all-99 fix (coverage from the sealed native records, no ledger scan)
+  is staged; then kick (reconcile -> unknown, worker ends waiting_owner) -> ACTION=resume -> kick: root REUSED (receipt
+  present) -> all99 from records -> boundary by claim -> teacher on 64.
