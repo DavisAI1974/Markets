@@ -86,6 +86,11 @@ NEW SESSION -- Frankie (Greg). THE AGENTS ARE THE ONLY WAY WORK RUNS.
    its good data with it on its box. Sizing fact from a2: one day's ROOT wrote ~497 GB frames spool + ~497 GB whole-spool
    layer copy (old form) + ~290 GB native ledgers + digest (unmeasured) on a 2 TB root volume and ran out; the streamed
    reference layer (in flight) removes the copy. Decide the per-box disk and the archive policy (f) together.
+   Greg's option (2026-10-08 00:2xZ): for pieces with big outputs, RUN -> PAUSE (the queue save marker: exit 75 at the piece's
+   next boundary, every piece now carries ROOT's save/restore contract) -> CLEAN (MOVE finished data to the archive volume,
+   zip it, symlink/reference at the old path so pins and receipts still resolve; never delete pinned inputs) -> RESTART on
+   the same day's data; possibly twice per piece. Not the routine once the streamed reference layer lands; the fallback
+   for inherently large outputs (frames spool, native ledgers, search columns).
 6. Cross-owner requests recorded in each STACKS_PASS file (school R2 one teacher child per batch needs a repeatable
    ledger CLI; exchange X6 Jev request binds the commit; teacher anchor-pictures hand-off; reports 99-layer join pool).
 
