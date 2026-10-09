@@ -425,7 +425,7 @@ class FrontierHasher:
                     with self.condition:
                         while not self.stopped and self.bytes >= self.frontier + self.lead:
                             self.throttle_waits += 1
-                            self.condition.wait(1.0)
+                            self.condition.wait()     # advance() and stop() notify: no 1 s re-check (2026-10-09)
                         if self.stopped:
                             return
                     block = handle.read(self.BLOCK)
