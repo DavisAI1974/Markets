@@ -20,8 +20,10 @@ SCHEMA = 'FRANKIE_NATIVE_FULL_STATE_V1'
 RUNTIME_SCHEMA = 'FRANKIE_NATIVE_RUNTIME_CODE_V2'
 # Greg, 2026-10-09 (standing): the code version is RECORDED, NEVER COMPARED. A saved full state is accepted on the
 # FORMAT of its saved bytes only: NATIVE_STATE_FORMAT (a small integer, bumped ONLY when the pickled object graph, the
-# descriptor or the ledger-storage layout a save carries changes FORMAT) plus the exact Python and cloudpickle
-# versions (a pickled object graph is a real format concern). Every code identity below (serializer_code,
+# descriptor or the ledger-storage layout a save carries changes FORMAT) plus the Python major.minor (the pickle
+# compatibility key: a pickled object graph's code objects and protocol belong to a minor version). The full Python
+# version string and the cloudpickle version are recorded, never compared (a patch rebuild of the venv keeps every
+# save). Every code identity below (serializer_code,
 # ledger_storage_code, finalization_code, finalization_sha256 and the earlier whole-file *_sha256 forms) is recorded
 # beside them and never refuses a save. A save written before this field existed (every V1 and V2 runtime form up to
 # 2026-10-09) carries format 1: the object graph, the descriptor and the segment storage are those of format 1.
@@ -37,9 +39,9 @@ NATIVE_VALUE_CODE = ('SCHEMA', 'sink_items', 'ledger_state', 'copy_ledger_prefix
 
 
 def runtime_identity():
-    """The runtime a full state is written under: schema, NATIVE_STATE_FORMAT, Python and cloudpickle exactly (the
-    compared fields), and the code identities of this file, frankie_box_segmented_ledger and frankie_box_finalization
-    (recorded only)."""
+    """The runtime a full state is written under: schema, NATIVE_STATE_FORMAT and the Python major.minor (the compared
+    fields), the full Python version, cloudpickle and the code identities of this file, frankie_box_segmented_ledger
+    and frankie_box_finalization (recorded only)."""
     from frankie_box_bedrock import code_identity
     return dict(schema=RUNTIME_SCHEMA, format=NATIVE_STATE_FORMAT, python=sys.version,
                 cloudpickle=cloudpickle.__version__,
@@ -49,18 +51,29 @@ def runtime_identity():
                 finalization_code=finalization.native_code_identity()['sha256'])
 
 
+def python_minor(version):
+    """'3.12' of a sys.version string ('3.12.3 (main, ...) [GCC ...]'), or None."""
+    try:
+        major, minor = str(version).split()[0].split('.')[:2]
+        return '%d.%d' % (int(major), int(minor))
+    except (ValueError, IndexError):
+        return None
+
+
 def runtime_acceptance(saved):
     """Why a saved descriptor's runtime is accepted, or None (refused). Compared: the saved format (absent = 1) against
-    NATIVE_STATE_FORMAT, and Python and cloudpickle exactly. Code identities are recorded, never compared: the label
-    names any recorded code field that differs from the current code ('format_1; code recorded: serializer_code')."""
+    NATIVE_STATE_FORMAT, and the Python major.minor (the pickle compatibility key). The full Python version, the
+    cloudpickle version and the code identities are recorded, never compared: the label names any recorded field that
+    differs ('format_1; code recorded: serializer_code, python')."""
     if not isinstance(saved, dict):
         return None
     current = runtime_identity()
     if saved.get('format', 1) != NATIVE_STATE_FORMAT:
         return None
-    if saved.get('python') != current['python'] or saved.get('cloudpickle') != current['cloudpickle']:
+    if python_minor(saved.get('python')) != python_minor(current['python']):
         return None
-    differs = sorted(k for k in RECORDED_CODE if k in saved and saved.get(k) != current.get(k))
+    differs = sorted(k for k in RECORDED_CODE + ('python', 'cloudpickle')
+                     if k in saved and saved.get(k) != current.get(k))
     label = 'format_%d' % NATIVE_STATE_FORMAT
     return label + ('; code recorded: ' + ', '.join(differs) if differs else '')
 
