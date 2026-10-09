@@ -4641,36 +4641,84 @@ def _block_session(teacher_rows, out, n, *, day, brain, previous, day_file, day_
 
 
 class _BlockExternal:
-    """The block's external section on its own thread beside the main chain (both start from the snapshot, the key
-    binding and the learner context; neither reads the other). Its step seconds go on external['seconds']."""
+    """The block's external section beside the main chain (both start from the snapshot, the key binding and the
+    learner context; neither reads the other), in a FORKED CHILD of the block worker (2026-10-09 gauge: as a thread it
+    fought the main chain for one interpreter, cpu 119 s of wall 146 s). The child computes and hands its values back
+    through a pipe; this process writes them through the block store after the main chain (one writer to the store).
+    A child that cannot start runs the same computation on a thread, as before (recorded). Its step seconds go on
+    external['seconds'], its process wall/cpu on external['process']."""
 
     def __init__(self, out, n, **inputs):
         self.out, self.n, self.inputs = out, n, inputs
-        self.value, self.thread = None, None
+        self.value, self.thread, self.proc, self.recv, self.how = None, None, None, None, None
 
     def start(self):
-        import threading
-        self.thread = threading.Thread(target=self._run, name='block-%d-external' % self.n, daemon=True)
-        self.thread.start()
+        try:
+            import multiprocessing as MP
+            context = MP.get_context('fork')
+            self.recv, send = context.Pipe(duplex=False)
+            self.proc = context.Process(target=self._child, args=(send,), name='block-%d-external' % self.n)
+            self.proc.start()
+            send.close()
+            self.how = dict(runs_in='forked child', pid=self.proc.pid)
+        except Exception as error:  # noqa: BLE001 - the same computation on a thread (recorded)
+            import threading
+            self.proc, self.recv = None, None
+            self.how = dict(runs_in='thread', reason='no forked child: %s: %s' % (type(error).__name__, error))
+            self.thread = threading.Thread(target=self._thread, name='block-%d-external' % self.n, daemon=True)
+            self.thread.start()
         return self
 
-    def join(self):
-        self.thread.join()
-        return self.value
-
-    def _run(self):
+    def _measured(self, clock):
         import time
-        wall, cpu = time.monotonic(), time.thread_time()
+        wall, cpu = time.monotonic(), clock()
         try:
-            self.value = self._section(**self.inputs)
+            value = self._compute(**{k: v for k, v in self.inputs.items() if k not in ('written', 'listed', 'store')})
         except BaseException as error:  # noqa: BLE001 - listed; the Dipole session stands
-            self.value = dict(status='failed', reason='%s: %s' % (type(error).__name__, error))
-        self.value['thread'] = dict(wall_seconds=round(time.monotonic() - wall, 3),
-                                    cpu_seconds=round(time.thread_time() - cpu, 3),
-                                    rule='cpu well below wall: the thread waited for the GIL (or for I/O)')
+            value = dict(external=dict(status='failed', reason='%s: %s' % (type(error).__name__, error)), files=[],
+                         rendered=None, listed=[dict(piece='external section', why='%s: %s' % (type(error).__name__,
+                                                                                               error))])
+        value['external']['process'] = dict(wall_seconds=round(time.monotonic() - wall, 3),
+                                            cpu_seconds=round(clock() - cpu, 3))
+        return value
 
-    def _section(self, *, day, day_file, day_sha256, snapshot, pkg, mode, prior_external_grade, external_history,
-                 visible, learner_context, knowledge, school, session_id, model, written, listed, store):
+    def _child(self, send):
+        import time
+        try:
+            send.send(self._measured(time.process_time))
+        finally:
+            send.close()
+
+    def _thread(self):
+        import time
+        self.value = self._measured(time.thread_time)
+
+    def join(self):
+        if self.proc is not None:
+            try:
+                value = self.recv.recv()
+            except Exception as error:  # noqa: BLE001 - the child died before handing its values back
+                value = dict(external=dict(status='failed', reason='the external child ended without its values (%s: '
+                                                                   '%s; exit %s)' % (type(error).__name__, error,
+                                                                                    self.proc.exitcode)),
+                             files=[], rendered=None, listed=[])
+            self.proc.join()
+            self.recv.close()
+        else:
+            self.thread.join()
+            value = self.value
+        written, listed, store = self.inputs['written'], self.inputs['listed'], self.inputs['store']
+        for name, body in value['files']:
+            written[name] = _block_dump(self.out / ('%s.json' % name), body, store)
+        if value.get('rendered') is not None:
+            written['classroom-external.md'] = value['rendered']
+        listed.extend(value.get('listed') or ())
+        external = value['external']
+        external['runs_in'] = self.how
+        return external
+
+    def _compute(self, *, day, day_file, day_sha256, snapshot, pkg, mode, prior_external_grade, external_history,
+                 visible, learner_context, knowledge, school, session_id, model):
         import time
         import frankie_box_classroom as C
         from research.kalshi.frankie_boss import dipole_classroom_external as EXT
@@ -4683,45 +4731,37 @@ class _BlockExternal:
             seconds[name] = round(now - last[0], 3)
             last[0] = now
         if day_file is None or not day_sha256:
-            return dict(status='not_run', reason='no day file given to the block session')
-        if day_file is not None and day_sha256:
-            try:
-                key, section = EXT.ensure_external_section(out, snapshot, day_file, day_sha256, trading_day=day,
-                                                           built_by='classroom block %d' % n)
-                mark('external.section')
-                pre = EXT.build_external_pre_message(key, mode=mode, prior_grade=prior_external_grade)
-                binding = EXT.build_external_binding(key, pre, v1_binding=pkg['binding'])
-                ext_visible = EXT.model_visible_external(binding, pre)
-                import frankie_box_classroom_external_code as KX
-                ledgers = KX.answers(ext_visible, dipole_visible=visible, learner_context=learner_context,
-                                     independent_evidence=None, knowledge=knowledge, school=school)
-                mark('external.answers')
-                ext_grade = EXT.grade_external(key, ledgers)
-                request_v2 = {'attachment': {'dipole_classroom': visible, 'dipole_external': ext_visible}}
-                ext_correction = EXT.correction_request(original_request_sha256=digest(request_v2), session_id=session_id,
-                                                        model_identity=model, grade=ext_grade)
-                ext_parsed = C.parse_correction(json.dumps(correction_answer(ext_correction)), ext_correction)
-                ext_reply = C.correction_response(ext_correction, ext_parsed, session_id=session_id, model_identity=model)
-                ext_ack, ext_completion = EXT.finish_external(binding=binding, key=key, pre=pre, ledgers=ledgers,
-                                                              grade=ext_grade, correction=ext_correction, reply=ext_reply,
-                                                              initial_session_id=session_id, model_identity=model)
-                mark('external.grade_correction')
-                for name, body in (('external-code-answers', dict(ledgers=ledgers, model_calls=0)),
-                                   ('external-post-grade', ext_grade), ('external-correction-request', ext_correction),
-                                   ('external-correction-response', ext_reply), ('external-acknowledgement', ext_ack),
-                                   ('external-completion', ext_completion)):
-                    written[name] = _block_dump(out / ('%s.json' % name), body, store)
-                written['classroom-external.md'] = _block_rendered(EXT.render_markdown(ledgers, ext_grade),
-                                                                   'classroom-external.md',
-                                                                   'dipole_classroom_external.render_markdown')
-                mark('external.render_md')
-                external = dict(status='complete', section=section.get('section_sha256'), cutoff_ns=key['cutoff_ns'],
-                                history_entries=len(external_history))
-            except Exception as error:  # noqa: BLE001 - listed; the Dipole session stands
-                external = dict(status='failed', reason='%s: %s' % (type(error).__name__, error))
-                listed.append(dict(piece='external section', why=external['reason']))
-        external['seconds'] = seconds
-        return external
+            return dict(external=dict(status='not_run', reason='no day file given to the block session', seconds={}),
+                        files=[], rendered=None, listed=[])
+        key, section = EXT.ensure_external_section(out, snapshot, day_file, day_sha256, trading_day=day,
+                                                   built_by='classroom block %d' % n)
+        mark('external.section')
+        pre = EXT.build_external_pre_message(key, mode=mode, prior_grade=prior_external_grade)
+        binding = EXT.build_external_binding(key, pre, v1_binding=pkg['binding'])
+        ext_visible = EXT.model_visible_external(binding, pre)
+        import frankie_box_classroom_external_code as KX
+        ledgers = KX.answers(ext_visible, dipole_visible=visible, learner_context=learner_context,
+                             independent_evidence=None, knowledge=knowledge, school=school)
+        mark('external.answers')
+        ext_grade = EXT.grade_external(key, ledgers)
+        request_v2 = {'attachment': {'dipole_classroom': visible, 'dipole_external': ext_visible}}
+        ext_correction = EXT.correction_request(original_request_sha256=digest(request_v2), session_id=session_id,
+                                                model_identity=model, grade=ext_grade)
+        ext_parsed = C.parse_correction(json.dumps(correction_answer(ext_correction)), ext_correction)
+        ext_reply = C.correction_response(ext_correction, ext_parsed, session_id=session_id, model_identity=model)
+        ext_ack, ext_completion = EXT.finish_external(binding=binding, key=key, pre=pre, ledgers=ledgers,
+                                                      grade=ext_grade, correction=ext_correction, reply=ext_reply,
+                                                      initial_session_id=session_id, model_identity=model)
+        mark('external.grade_correction')
+        rendered = _block_rendered(EXT.render_markdown(ledgers, ext_grade), 'classroom-external.md',
+                                   'dipole_classroom_external.render_markdown')
+        mark('external.render_md')
+        files = [('external-code-answers', dict(ledgers=ledgers, model_calls=0)), ('external-post-grade', ext_grade),
+                 ('external-correction-request', ext_correction), ('external-correction-response', ext_reply),
+                 ('external-acknowledgement', ext_ack), ('external-completion', ext_completion)]
+        external = dict(status='complete', section=section.get('section_sha256'), cutoff_ns=key['cutoff_ns'],
+                        history_entries=len(external_history), seconds=seconds)
+        return dict(external=external, files=files, rendered=rendered, listed=[])
 
 
 def block_work(teacher_rows, directory, n, day, brain, previous, day_file, day_sha256):
