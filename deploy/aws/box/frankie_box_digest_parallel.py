@@ -44,7 +44,6 @@ import frankie_box_digest_stream as TS  # noqa: E402
 
 # ---- helpers ------------------------------------------------------------------------------------------------------
 
-POOL_PIN_WAIT_SECONDS = 5.0      # a helper's wait for its CPU before it takes the pool's whole CPU set instead
 
 
 # Session 9 (Greg, 2026-10-08: "Do the fixes now"): the digest's helpers read the source at LOW best-effort I/O priority
@@ -102,18 +101,18 @@ def block_schedulers():
     return out
 
 
-def _init(box, cpus, fallback=()):
+def _init(box, handout, cpus=()):
     """Each helper takes one CPU of the pool's hand-out (in the order given: one thread per physical core first) and is
-    pinned to it. A helper that finds the hand-out empty never blocks there: it is pinned to the pool's whole CPU set.
+    pinned to it. The hand-out is a shared counter (no wait, Greg 2026-10-09: no coded waits): the first len(cpus)
+    helpers take cpus[0], cpus[1], ... in turn; a helper that finds them all taken is pinned to the pool's whole CPU set.
     Session 9: each helper sets its own I/O priority to HELPER_IO_PRIORITY (no change where unavailable)."""
     if box not in sys.path:
         sys.path.insert(0, box)
     set_io_priority(*HELPER_IO_PRIORITY)
-    import queue as queue_module
-    try:
-        cpu = {cpus.get(timeout=POOL_PIN_WAIT_SECONDS)}
-    except queue_module.Empty:
-        cpu = set(fallback) or set(os.sched_getaffinity(0))
+    with handout.get_lock():
+        index = handout.value
+        handout.value = index + 1
+    cpu = {cpus[index]} if index < len(cpus) else (set(cpus) or set(os.sched_getaffinity(0)))
     os.sched_setaffinity(0, cpu)
 
 
@@ -208,11 +207,9 @@ def _bounded_executor_stop(executor, graceful):
 
 def _pool(cpus):
     context = multiprocessing.get_context('spawn')
-    queue = context.Queue()
-    for cpu in cpus:
-        queue.put(cpu)
+    handout = context.Value('i', 0)
     return ProcessPoolExecutor(max_workers=len(cpus), mp_context=context, initializer=_init,
-                               initargs=(str(BOX), queue, tuple(cpus)))
+                               initargs=(str(BOX), handout, tuple(cpus)))
 
 
 class PinnedPool:

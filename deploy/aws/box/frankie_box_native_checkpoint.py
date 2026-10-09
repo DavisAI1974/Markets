@@ -173,6 +173,36 @@ class FullCheckpointer(P.PeriodicCheckpointer):
         self.stop_checkpoint = None
         self.low_space_stop = False
         self.last_state_bytes = 0
+        self.total_records = kwargs.get('total_mbo_records')
+        self.last_disk = None
+
+    def disk_projection(self):
+        """The free space against what the rest of this traversal will write (Greg, 2026-10-09: a gate never stops a
+        run on fine data; stop only when the work demonstrably cannot fit): the next full-state save (the last save's
+        size) plus the exact ledgers' remaining bytes, projected from the bytes written so far per record. Recorded at
+        every save (the descriptor's `disk`, recorded only) and read by maybe_save; never raises."""
+        try:
+            free = shutil.disk_usage(self.checkpoint_dir if self.checkpoint_dir.exists()
+                                     else self.checkpoint_dir.parent).free
+        except OSError:
+            return None
+        written = done = None
+        try:
+            sinks = self.driver.sinks
+            written = sum(int(getattr(getattr(sinks, name), '_bytes', 0) or 0) for name in ('member', 'lifecycle', 'legacy'))
+            done = int(self.driver.counters.records_seen)
+        except (AttributeError, TypeError, ValueError):
+            pass
+        remaining = None
+        if written is not None and done and isinstance(self.total_records, int) and self.total_records >= done:
+            remaining = written * (self.total_records - done) // done
+        projected = self.last_state_bytes + (remaining or 0)
+        self.last_disk = dict(free_bytes=free, next_save_bytes=self.last_state_bytes, ledger_bytes_written=written,
+                              records_done=done, records_total=self.total_records,
+                              ledger_bytes_remaining_projected=remaining, projected_bytes=projected,
+                              fits=projected <= free, at_ns=time.time_ns(),
+                              rule='stop only when projected (next save + remaining ledger bytes) exceeds free')
+        return self.last_disk
 
     def externals(self):
         return dict(sinks=self.driver.sinks, checkpointer=self, stage_spawn=self.driver.stage_spawn)
@@ -211,6 +241,9 @@ class FullCheckpointer(P.PeriodicCheckpointer):
             driver_identity=self.driver_identity, driver_state=state_pin,
             ledgers=ledgers, completed_mbo_records=completed_mbo_records,
             finalized=locked, parent_checkpoint=self.parent_checkpoint)
+        disk = self.disk_projection()
+        if disk is not None:
+            descriptor['disk'] = disk                  # recorded at every save, never compared
         if self.continuation_binding is not None:
             descriptor['continuation_binding'] = self.continuation_binding
         checkpoint = super()._write(adapter, completed_mbo_records=completed_mbo_records,
@@ -237,8 +270,11 @@ class FullCheckpointer(P.PeriodicCheckpointer):
         # Neither a periodic nor a requested save may serialize that boundary.
         if kwargs.get('event_group_open') or any(book.event_group for book in adapter.books.values()):
             return None
-        reserve = max(32 << 30, 3 * self.last_state_bytes)
-        if shutil.disk_usage(self.checkpoint_dir).free < reserve:
+        # Greg, 2026-10-09: no reserve gate. The traversal keeps running while the rest of its work fits; only when the
+        # projected bytes (the next save plus the ledgers' remaining bytes) exceed the free space is the next closed
+        # group saved and the traversal stopped (an actual ENOSPC also stops it, as any crash does)
+        disk = self.disk_projection()
+        if disk is not None and not disk['fits'] and not self.low_space_stop:
             self._last_saved_at = 0  # Save the next closed group before stopping.
             self.low_space_stop = True
         requested = (self.save_requested is not None and self.save_requested()
@@ -362,7 +398,8 @@ def consume_recovery(driver, records, total, progress, checkpoint=None, descript
             progress.update('root-native-reconstruct' if target else 'root-native-records', done, total)
         for record in iterator:
             if driver.checkpointer.low_space_stop:
-                raise OSError('low disk reserve; full checkpoint saved before controlled stop')
+                raise OSError('the rest of the native traversal does not fit the free space (%s); full checkpoint '
+                              'saved before controlled stop' % driver.checkpointer.last_disk)
             yield record
             done += 1
             if target is not None and done == target:

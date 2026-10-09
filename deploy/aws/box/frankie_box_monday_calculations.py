@@ -19,7 +19,7 @@ REPOSITORY = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPOSITORY))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from frankie_box_prepare_trading_day import read_pin, require_checkout, save_new, witness, safe_path
+from frankie_box_prepare_trading_day import read_pin, save_new, witness, safe_path
 from frankie_box_author_monday_launch import fresh, sync_directory
 
 PARENT = Path('/opt/frankie-box/work/monday-calculations')
@@ -347,7 +347,9 @@ def calculate(commit, authorship_path, authorship_sha256, output_root, data_work
     2026-10-07: the experiment runs the native pass); off is an explicit caller choice only."""
     if resume_checkpoint and not bedrock:
         raise ValueError('a resume checkpoint belongs to the bedrock traversal; it cannot resume a bedrock-off ROOT')
-    require_checkout(commit)
+    # the Markets checkout is recorded, never compared (Greg, 2026-10-09): the experiment ROOT's checkout_recorded
+    from frankie_box_experiment_root import checkout_recorded
+    checkout = checkout_recorded(commit)
     from research.kalshi.frankie_boss.frankie_journal_reader import worker_budget
     worker_budget(data_workers)  # Existing reader validates and caps to available CPUs.
     authorship_pin = witness(Path(authorship_path))
@@ -402,13 +404,14 @@ def calculate(commit, authorship_path, authorship_sha256, output_root, data_work
     from frankie_box_boss_session import Session
     session = Session(output, '20211004', '00', None)
     session.request_sha256 = witness(output / 'source-binding.json')['sha256']
+    session.note('checkout (recorded, never compared): %s' % json.dumps(checkout, sort_keys=True))
     session.phase('deriving', 'complete Monday roots and all producer groups; sealed source only')
     session.native_resume_checkpoint = resume_checkpoint
     session.native_reconstruct_missing = reconstruct_missing
     result = resume_legacy(session, recovered) if resume_checkpoint else session.derive(source=recovered, bedrock=bedrock, digest=digest)
     if result['failure_count']:
         raise ValueError('Monday producer failures are retained in derive.json; no completion is declared')
-    receipt = dict(schema='FRANKIE_MONDAY_CALCULATIONS_V1', commit=commit,
+    receipt = dict(schema='FRANKIE_MONDAY_CALCULATIONS_V1', commit=commit, checkout=checkout,
         source_binding=witness(output / 'source-binding.json'),
         calculation_pins=witness(output / 'calculation-pins.json'),
         derivation=witness(session.work / 'derive.json'),
