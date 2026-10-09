@@ -3,7 +3,12 @@ place it just kicks in after a couple of minutes?"; "we would want to increase h
 by WALL-CLOCK to reach the planned CPU set, never by dollars: "it must never pick a 4.5 h run over a 1 h run to save a
 dollar").
 
-Every INTERVAL seconds (120) one pass: read the bookings (frankie_box_cores.live_bookings), every Frankie process's
+EVENT-DRIVEN (Greg, 2026-10-09: no coded wait times; frankie_box_wake): a pass runs when the booking ledger changes
+(a booking made, grown, retained, released, a step's claim or attach), when a booked process (a booking holder or a day's
+step) or a watched render exits (pidfd), when the queue writes a wake file (<queue>/wake: a stage status, a queue entry's
+state, a save marker) or when a kick writes one into <work dir>/wake. No interval and no lifetime cap: the watch ends when
+no booking is live (no day's process runs), no render runs and no resize request is open, and the next kick starts it
+again. One pass: read the bookings (frankie_box_cores.live_bookings), every Frankie process's
 affinity (os.sched_getaffinity per thread over the process tree of each booking's holder and steps), the box's live core
 map and the resolver's answer for the running step (frankie_box_cores.lane_for), and RECORD every process that sits
 outside its booking, every step root that holds fewer CPUs than its lane, every Frankie process with no booking, every
@@ -44,14 +49,19 @@ written on the record with the estimate behind it; every kick of a queue line st
     dollars is NOT an input anywhere here.
     A resize is a state machine across passes (a request file resize-<booking>.json): pass N writes the marker, a later
     pass sees the step stopped and triggers grow + resume + kick (ROOT) or the restart (render); every transition on
-    the record; a request older than RESIZE_STALE_SECONDS without a stop is listed and dropped.
+    the record; a request older than RESIZE_STALE_SECONDS without a stop is listed and dropped. An open request is
+    continued from the request itself on every pass (its step has stopped by then, so the pass has no finding for it).
 
 Standard library only (python -I -S). Its own flock (/opt/frankie-box/work/cpu-watch/.lock): two watchers never run a
 pass at once. Nothing here kills, signals or re-sizes a running pool; nothing stops a process except through its own
 save/stop mechanism. Placement only: no value, order, hash or identity depends on where a process runs.
 
-CLI: frankie_box_cpu_watch.py [--once | --loop] [--interval 120] [--max-seconds N] [--work-dir D] [--window 1.0]
-     exit 0 = pass done (findings or not; the record says), 3 = another watcher holds the lock, 2 = refused.
+CLI: frankie_box_cpu_watch.py [--once | --loop] [--max-seconds N] [--work-dir D] [--window 1.0]
+     frankie_box_cpu_watch.py --kick-wake [--work-dir D]: write the kick's wake, then exit 0 when a watcher holds the
+     lock (it re-checks on that wake) or 4 when none does (the caller starts one). The wake is written BEFORE the lock
+     test and an ending watcher releases its lock BEFORE its last event check, so a kick never falls between them.
+     exit 0 = pass done / the watch ended (findings or not; the record says), 3 = another watcher holds the lock,
+     2 = refused.
 """
 import argparse
 import fcntl
@@ -68,8 +78,10 @@ if str(HERE) not in sys.path:
 import frankie_box_cores as C  # noqa: E402
 
 SCHEMA = 'FRANKIE_CPU_WATCH_V1'
-INTERVAL = 120.0
 WORK_DIR = Path('/opt/frankie-box/work/cpu-watch')
+QUEUE_WAKE = Path('/opt/frankie-box/work/frankie-queue/wake')   # frankie_box_frankie_queue.wake_dir()
+KICK_WAKE = 'wake'                 # <work dir>/wake: a kick's wake for a running watcher
+NOT_LIVE_EXIT = 4                  # --kick-wake: no watcher holds the lock
 CORRECT_ENV = 'FRANKIE_CPU_WATCH_CORRECT'
 RESIZE_ENV = 'FRANKIE_CPU_WATCH_RESIZE'
 RESIZE_RATIO = 1.5                 # the planned lane must be at least this many times the running lane
@@ -362,7 +374,8 @@ def drive_resize(finding, work_dir, record, actions):
     now = time.time()
     if req is None:
         req = dict(schema='FRANKIE_CPU_WATCH_RESIZE_V1', booking=b, stage=stage, planned=finding['planned'], running=finding['running'],
-                   decision=finding['decision'], requested_at=now, state='requested', log=[])
+                   decision=finding['decision'], requested_at=now, state='requested', log=[], run=finding.get('run'),
+                   day=finding.get('day'))
         try:
             if stage == 'root':
                 req['log'].append(dict(at=now, did='request_save', out=actions['request_save'](finding['run'], finding['day'])))
@@ -380,6 +393,7 @@ def drive_resize(finding, work_dir, record, actions):
         C.write_json(path, req)
         record['resize'].append(dict(req, step='requested'))
         return
+    stage = req.get('stage') or stage      # the request's step: once it has stopped, the pass sees no step for it
     if req.get('state') in ('done', 'not_resizable', 'request_failed', 'stale'):
         record['resize'].append(dict(booking=b, state=req['state'], note='nothing more to do'))
         return
@@ -421,6 +435,26 @@ def drive_resize(finding, work_dir, record, actions):
         req['log'].append(dict(at=now, did='continue', error='%s: %s' % (type(error).__name__, error)))
     C.write_json(path, req)
     record['resize'].append(dict(req, step='continued'))
+
+
+def continue_open_requests(work_dir, record, actions, bookings, handled):
+    """Every resize request still 'requested' that no finding of this pass drove: continued from the request itself.
+    The step it asked to stop has stopped (a ROOT saved: its booking retained, its step gone; a render exited), so the
+    audit has no plan_wider_than_lane finding for it any more; without this the save would never be followed by the
+    grow + resume + kick (or the render's restart)."""
+    for path, req in sorted(resize_requests(work_dir).items()):
+        if req.get('state') != 'requested' or req.get('booking') in handled:
+            continue
+        b = next((x for x in bookings if x.get('booking') == req.get('booking')), {})
+        finding = dict(kind='plan_wider_than_lane', booking=req['booking'], stage=req.get('stage'), planned=req['planned'],
+                       running=req['running'], decision=req.get('decision'), run=req.get('run') or b.get('run'),
+                       day=req.get('day') or b.get('day'), step_pid=req.get('step_pid'), from_request=path.name)
+        drive_resize(finding, work_dir, record, actions)
+
+
+def open_requests(work_dir):
+    """The resize requests still in flight (state 'requested')."""
+    return [req for req in resize_requests(work_dir).values() if req.get('state') == 'requested']
 
 
 def live_actions():
@@ -530,8 +564,9 @@ def corrections_enabled(environ=None):
     return environ.get(CORRECT_ENV, 'on') != 'off', environ.get(RESIZE_ENV, 'on') != 'off'
 
 
-def one_pass(work_dir=WORK_DIR, window=1.0, environ=None, now=None):
-    """One live pass: collect, audit, correct (when asked), record. Returns the record."""
+def one_pass(work_dir=WORK_DIR, window=1.0, environ=None, now=None, trigger='once'):
+    """One live pass: collect, audit, correct (when asked), record. Returns the record; its _live (what keeps a watch
+    going) and _pids (the processes whose exit wakes it) are not written."""
     environ = os.environ if environ is None else environ
     work_dir = Path(work_dir)
     work_dir.mkdir(parents=True, exist_ok=True)
@@ -555,19 +590,25 @@ def one_pass(work_dir=WORK_DIR, window=1.0, environ=None, now=None):
     remaining = {b['booking']: remaining_seconds(b) for b in bookings}
     out = audit(bookings + renders, procs, live_affinity, live_threads, cmap, cmap['online'], plans=plans, remaining=remaining)
     correct, resize = corrections_enabled(environ)
-    record = dict(schema=SCHEMA, at=stamp, host=os.uname().nodename, interval=INTERVAL, correct=correct, resize=[],
+    record = dict(schema=SCHEMA, at=stamp, host=os.uname().nodename, trigger=trigger, correct=correct, resize=[],
                   resize_enabled=resize, settings={CORRECT_ENV: environ.get(CORRECT_ENV, 'unset = on'),
                                                    RESIZE_ENV: environ.get(RESIZE_ENV, 'unset = on')},
                   plan_refusals=plan_reasons, **out)
     if record['correct']:
         record['repins'] = apply_repins(record['findings'], os.sched_setaffinity)
     if record['resize_enabled']:
-        actions = live_actions()
+        actions, handled = live_actions(), set()
         for f in record['findings']:
             if f['kind'] == 'plan_wider_than_lane' and f['decision']['choice'] == 'resize':
                 b = next((x for x in bookings + renders if x['booking'] == f['booking']), {})
                 f.update(run=b.get('run'), day=b.get('day'), step_pid=step_of(b)[1] if b else None)
                 drive_resize(f, work_dir, record, actions)
+                handled.add(f['booking'])
+        continue_open_requests(work_dir, record, actions, bookings, handled)
+    live = [b['booking'] for b in bookings if b.get('_alive')] + [r['booking'] for r in renders]
+    record['_live'] = dict(bookings=live, open_requests=[r.get('booking') for r in open_requests(work_dir)])
+    record['_pids'] = sorted({(p['pid'], p.get('start')) for b in bookings + renders for p in b.get('pids') or []
+                              if C.alive(p)})
     path = work_dir / ('%s.json' % stamp)
     C.write_json(path, record)
     kinds = {}
@@ -586,26 +627,115 @@ def one_pass(work_dir=WORK_DIR, window=1.0, environ=None, now=None):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument('--loop', action='store_true', help='pass every --interval seconds until --max-seconds (default: one pass)')
-    p.add_argument('--interval', type=float, default=INTERVAL)
-    p.add_argument('--max-seconds', type=float, default=43200.0)
+    p.add_argument('--loop', action='store_true', help='a pass on every event until nothing is live (default: one pass)')
+    p.add_argument('--kick-wake', action='store_true', help='write the kick wake; exit 0 when a watcher runs, %d when none'
+                                                             % NOT_LIVE_EXIT)
+    p.add_argument('--max-seconds', type=float, default=None, help='an optional bound on the watch (default: none)')
     p.add_argument('--work-dir', default=str(WORK_DIR))
     p.add_argument('--window', type=float, default=1.0)
     a = p.parse_args()
     work_dir = Path(a.work_dir)
     work_dir.mkdir(parents=True, exist_ok=True)
+    if a.kick_wake:
+        return kick_wake(work_dir)
     lock = open(work_dir / '.lock', 'w')
     try:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except OSError:
         print('another cpu watcher holds %s; nothing run' % (work_dir / '.lock'), file=sys.stderr)
         return 3
-    started = time.time()
-    while True:
+    if not a.loop:
         one_pass(work_dir, a.window)
-        if not a.loop or time.time() - started + a.interval > a.max_seconds:
+        return 0
+    return watch(work_dir, lock, a.window, a.max_seconds)
+
+
+def _wake():
+    import frankie_box_wake as WAKE
+    return WAKE
+
+
+def kick_wake(work_dir):
+    """A kick (frankie_box_cpu_watch.sh ACTION=loop): the wake FIRST, then the lock test. A watcher holding the lock
+    re-checks on that wake (exit 0); a watcher that is ending released its lock before its last event check, so it either
+    sees this wake and takes the lock back or the lock is free here (exit NOT_LIVE_EXIT: the caller starts a watcher;
+    two starting at once settle on the lock, the second exits 3)."""
+    _wake().notify(Path(work_dir) / KICK_WAKE, 'kick', by='cpu-watch kick')
+    with open(Path(work_dir) / '.lock', 'w') as probe:
+        try:
+            fcntl.flock(probe, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            print('a cpu watcher runs (it holds %s); it re-checks on the kick wake' % (Path(work_dir) / '.lock'))
             return 0
-        time.sleep(a.interval)
+        fcntl.flock(probe, fcntl.LOCK_UN)
+    return NOT_LIVE_EXIT
+
+
+def watch(work_dir, lock, window=1.0, max_seconds=None):
+    """The event-driven watch (no interval, no lifetime cap unless max_seconds is given): the waiter is armed on the
+    ledger, the queue's wake directory and the kick wake BEFORE each pass, the pass runs, the booked processes' exits are
+    added, then it blocks until any of them fires. When nothing is live (no booking with a running process, no render,
+    no open resize request) the watch ends: the lock is released FIRST, then any event that arrived meanwhile takes it
+    back (another watcher may have it: then this one ends)."""
+    W = _wake()
+    work_dir = Path(work_dir)
+    # the kick wake directory exists before the watch is armed: a missing one would put the watch on work_dir itself,
+    # where every pass writes its record (a pass waking the next)
+    (work_dir / KICK_WAKE).mkdir(parents=True, exist_ok=True)
+    waiter = W.Waiter([C.LEDGER, QUEUE_WAKE, work_dir / KICK_WAKE])
+    deadline = None if max_seconds is None else time.time() + float(max_seconds)
+    trigger, gone, starts = 'start', set(), {}
+    try:
+        while True:
+            waiter.fired.clear()
+            waiter.exited.clear()
+            record = one_pass(work_dir, window, trigger=trigger)
+            live = record.get('_live') or {}
+            if live.get('bookings') or live.get('open_requests'):
+                exited_meanwhile = []
+                for pid, start in record.get('_pids') or []:
+                    if (pid, start) in gone:
+                        continue        # its exit already woke a pass (a zombie still reads alive to the ledger)
+                    if not W.alive(pid):
+                        gone.add((pid, start))
+                        exited_meanwhile.append(pid)
+                        continue
+                    starts[pid] = start
+                    waiter.watch_pid(pid)
+                if exited_meanwhile:    # gone between the pass and its watch: one pass more, never a loop
+                    trigger = '; '.join('exit %d (before its watch)' % p for p in exited_meanwhile)
+                    continue
+                remaining = None if deadline is None else deadline - time.time()
+                if remaining is not None and remaining <= 0:
+                    print('cpu watch: the given bound of %s s passed; ended' % max_seconds, flush=True)
+                    return 0
+                woke = waiter.wait(remaining)
+                gone.update((pid, starts.get(pid)) for pid in waiter.exited)
+                trigger = describe_trigger(waiter, woke)
+                continue
+            fcntl.flock(lock, fcntl.LOCK_UN)
+            if not waiter.wait(0):
+                print('cpu watch: no booking live, no day running, no render, no open resize: ended (the next kick '
+                      'starts it again)', flush=True)
+                return 0
+            try:
+                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except OSError:
+                print('cpu watch: an event arrived while ending and another watcher holds the lock; this one ended',
+                      flush=True)
+                return 0
+            trigger = describe_trigger(waiter, True)
+    finally:
+        waiter.close()
+
+
+def describe_trigger(waiter, woke):
+    """What woke the watch (on the record): the directories that fired and the pids that exited."""
+    if not woke:
+        return 'bound'
+    parts = ['dir %s' % d for d in sorted(waiter.fired)] + ['exit %d' % p for p in sorted(waiter.exited)]
+    return '; '.join(parts) or 'event'
+
 
 
 if __name__ == '__main__':
