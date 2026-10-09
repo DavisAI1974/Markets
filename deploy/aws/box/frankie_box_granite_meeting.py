@@ -1048,6 +1048,14 @@ class LlamaServer:
             self.stop()
             raise
         deadline = time.monotonic() + wait
+        # event-driven (2026-10-09: no coded wait times): /health is asked again when the server writes to its stderr
+        # file (it logs as it loads and when it starts listening) or exits (pidfd), never on an interval; the deadline
+        # is the meeting's own budget. Without a stderr file (no evidence directory) the old 2 s step is kept: the
+        # server then gives no event to wake on.
+        import frankie_box_wake as WAKE
+        waiter = WAKE.Waiter([self.stderr_path.parent] if self.stderr_path is not None else [], pids=[self.process.pid],
+                             modify=True)
+        evented = self.stderr_path is not None and waiter.fd is not None
         while time.monotonic() < deadline:
             if self.process.poll() is not None:
                 code = self.process.returncode
@@ -1071,7 +1079,12 @@ class LlamaServer:
                 raise
             except (MeetingCallFailed, ValueError, AttributeError, TypeError):
                 pass          # not healthy yet; the loop re-checks the clock and the process
-            time.sleep(min(2.0, max(0.0, deadline - time.monotonic())))
+            if evented:
+                waiter.fired.clear()
+                waiter.wait(max(0.0, deadline - time.monotonic()))
+            else:
+                time.sleep(min(2.0, max(0.0, deadline - time.monotonic())))
+        waiter.close()
         self.stop()
         if self.remaining() is not None and self.remaining() <= 0:
             raise MeetingBudgetExpired('meeting time budget spent while llama-server was starting; stderr retained at %s'

@@ -31,6 +31,7 @@ import sys
 import time
 from pathlib import Path
 
+IN_MODIFY = 0x2                 # opt-in only (Waiter(modify=True)): a file written in place through a held handle
 IN_ATTRIB, IN_CLOSE_WRITE, IN_MOVED_FROM, IN_MOVED_TO = 0x4, 0x8, 0x40, 0x80
 IN_CREATE, IN_DELETE, IN_DELETE_SELF, IN_MOVE_SELF = 0x100, 0x200, 0x400, 0x800
 IN_ONLYDIR = 0x01000000
@@ -92,8 +93,9 @@ class Waiter:
     """Blocks until a watched directory changes or a watched pid exits (or the optional lifetime timeout). Build it before
     checking the condition it guards; wait(); check again."""
 
-    def __init__(self, dirs=(), pids=()):
+    def __init__(self, dirs=(), pids=(), modify=False):
         self.fd, self.watched, self.missing, self.pids, self.fresh, self.exited = None, {}, [], {}, False, set()
+        self.mask = MASK | (IN_MODIFY if modify else 0)   # modify: also wake when a file there grows (a log written live)
         self.fired = set()                         # the watched directories that had an event (cleared by the caller)
         lib = _lib()
         if lib:
@@ -109,7 +111,7 @@ class Waiter:
         path = str(path)
         if path in self.watched or self.fd is None:
             return
-        wd = _lib().inotify_add_watch(self.fd, path.encode(), MASK | IN_ONLYDIR)
+        wd = _lib().inotify_add_watch(self.fd, path.encode(), self.mask | IN_ONLYDIR)
         if wd >= 0:
             self.watched[path] = wd
             if path in self.missing:
