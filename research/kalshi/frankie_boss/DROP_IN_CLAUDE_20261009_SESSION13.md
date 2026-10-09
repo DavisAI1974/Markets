@@ -87,6 +87,14 @@ Options Greg was given before the profile (now secondary): (1) external part onc
 the section once per day file, slice per cutoff (verify: block 1 section sha
 052d6fe90ba24d753b3029388105d812ea6644e307e755e0959913f310caecc7 must reproduce); (3) one external section in the
 hub for all spokes; (4) incremental per block ("latest replaces in place").
+WHAT THE EXTERNAL PART REUSES TODAY (read from the code at close, Greg's question): within a block the section is
+built once and the answers computed once, then the same key and pre-message are hashed 13 times (bookkeeping, not
+science). Across blocks only the parsed, checked day file is reused inside the worker process (commit 7); each block
+rebuilds its own section at its own cutoff, its own answers and grade; the prior-external-grade/history chain runs
+day to day (`previous`, external-history.json), never block to block. Across pieces nothing is shared: the day-end
+classroom builds its own section in its own directory (reused only if one already stands there, which the blocks
+never write); the school reads the day-end one; Jev and the exchange read none. Options 3 and 4 above are what
+would close that.
 Greg's open questions at close: "the piece that speeds it up 250 M per sec" (unidentified: ask him which); "the
 other 8 on 8 consecutive days" (unclarified: which eight; nothing scheduled).
 
