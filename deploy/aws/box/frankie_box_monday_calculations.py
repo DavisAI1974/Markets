@@ -317,7 +317,15 @@ def whole_day_pin_document(source, rule='One complete Monday delivery; all regis
     2026-09-29 no-bedrock decision on 2026-10-07; only an older saved legacy plan ran it off). Shared by the Monday ROOT and
     frankie_box_experiment_root.py so the pin is built in one place."""
     historical_path = REPOSITORY / 'research/kalshi/frankie_boss/knowledge/CYCLE_CALCULATION_PINS.json'
-    historical = json.loads(historical_path.read_bytes())
+    from frankie_box_prepare_trading_day import read_raw
+    raw = read_raw(historical_path)                       # one read: the raw witness and the parsed pins from it
+    historical = json.loads(raw)
+    # Greg, 2026-10-09: a resume compares the parsed pin CONTENT (content_sha256: canonical JSON, sort_keys, compact
+    # separators), so a formatting-only rewrite of the file never refuses; the raw bytes' sha256 is recorded beside it
+    # (frankie_box_experiment_root.pin_document_forms). The compared pin values are unchanged.
+    definition = dict(path=str(historical_path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest(),
+                      content_sha256=hashlib.sha256(json.dumps(historical, sort_keys=True,
+                                                               separators=(',', ':')).encode()).hexdigest())
     groups = []
     for item in historical['pins']:
         item = copy.deepcopy(item)
@@ -329,7 +337,7 @@ def whole_day_pin_document(source, rule='One complete Monday delivery; all regis
                      for name in ('derived_geometry', 'prebirth_opportunity', 'causal_clocks')]
     return dict(schema='FRANKIE_WHOLE_DAY_CALCULATION_PIN_V1',
         forecast_mode='whole_day_next_session', source_binding=source, pin=pin, groups=groups,
-        historical_definition_file=witness(historical_path), rule=rule)
+        historical_definition_file=definition, rule=rule)
 
 
 def calculate(commit, authorship_path, authorship_sha256, output_root, data_workers=1, resume_checkpoint=None, reconstruct_missing=False, binding_sha256=None,

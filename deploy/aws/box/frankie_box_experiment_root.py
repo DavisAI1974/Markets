@@ -467,6 +467,28 @@ def binding_meaning(document):
     return out
 
 
+def pin_document_forms(saved, built):
+    """(saved, built) calculation-pins documents in their compared form, plus the recorded differences. The historical
+    definition file (CYCLE_CALCULATION_PINS.json) is compared by its parsed content (content_sha256) when both carry
+    it; a save written before content_sha256 existed carries only the raw witness and matches on an equal raw sha256.
+    The raw bytes/sha256 are otherwise recorded, never compared (Greg, 2026-10-09: a formatting-only rewrite never
+    refuses a resume). Every other field of the document is compared as before."""
+    if not (isinstance(saved, dict) and isinstance(built, dict)):
+        return saved, built, []
+    a, b = saved.get('historical_definition_file'), built.get('historical_definition_file')
+    if not (isinstance(a, dict) and isinstance(b, dict)):
+        return saved, built, []
+    keep = ('path',)
+    if 'content_sha256' in a and 'content_sha256' in b:
+        keep += ('content_sha256',)
+    else:
+        keep += ('sha256',)
+    recorded = [dict(at='$.historical_definition_file.' + k, saved=a.get(k), this_run=b.get(k))
+                for k in sorted(set(a) | set(b)) if k not in keep and a.get(k) != b.get(k)]
+    return (dict(saved, historical_definition_file={k: a.get(k) for k in keep}),
+            dict(built, historical_definition_file={k: b.get(k) for k in keep}), recorded)
+
+
 def receipt_file_changes(saved, built):
     """The receipt-file hashes in which the saved binding differs from this run's: recorded, never refused."""
     out = []
@@ -603,7 +625,7 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
     output.mkdir(mode=0o700, exist_ok=resume)
     sync_directory(PARENT)
     rebinds = []
-    def save_or_match(path, body, run_size=(), receipt_files=False):
+    def save_or_match(path, body, run_size=(), receipt_files=False, pin_document=False):
         """The saved document when this checkout builds the same content (equal, or equal but for the checkout prefix
         of recorded file paths: content_rebinds); it stays the identity, never rewritten. Any other difference refuses
         (retained, never discarded). A fresh ROOT publishes the built document.
@@ -628,7 +650,12 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
             # attempt's checkout-rebinds record, never refused, and the saved document stays the identity.
             from frankie_box_boss_session import without_recorded_code, recorded_code_changes
             code = recorded_code_changes(saved, built)
-            if receipt_files:
+            if pin_document:
+                # the calculation pins: CYCLE_CALCULATION_PINS.json by its parsed content (pin_document_forms)
+                compared_saved, compared_built, recorded = pin_document_forms(saved, built)
+                code += recorded
+                moves = content_rebinds(without_recorded_code(compared_saved), without_recorded_code(compared_built))
+            elif receipt_files:
                 # the source binding: receipt-file hashes recorded, never compared (binding_meaning)
                 code += receipt_file_changes(saved, built)
                 moves = content_rebinds(without_recorded_code(binding_meaning(saved)),
@@ -654,7 +681,7 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
             'compressed projections retained, giant bedrock rendering omitted. Source route only; consumer coverage separate.'
             if bedrock else 'One complete day delivery for the experiment; the complete registry; the bedrock groups '
             'are named by the pin but not derived (bedrock off).')
-    save_or_match(output / 'calculation-pins.json', whole_day_pin_document(source, rule=rule))
+    save_or_match(output / 'calculation-pins.json', whole_day_pin_document(source, rule=rule), pin_document=True)
     from frankie_box_boss_session import Session, FRAME_SECTIONS_SCHEMA, NATIVE_RECOVERY_SCHEMA
     binding = dict(schema='FRANKIE_EXPERIMENT_DAY_CALCULATION_SOURCE_V1', source=source, data_workers=data_workers,
                    frame_sections_schema=FRAME_SECTIONS_SCHEMA,
