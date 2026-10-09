@@ -4158,7 +4158,10 @@ def block_lesson(teacher_rows, directory, n, *, day_file=None, manifest=None):
     import frankie_box_teacher_rows as TR
     manifest = manifest if manifest is not None else TR.blocks(teacher_rows)
     block = TR.block_record(teacher_rows, n, manifest)
+    import time as _time
+    lesson_clock = _time.monotonic()
     rows = list(TR.iter_block(teacher_rows, n, select=('cursor', 'target_hash', 'components'), manifest=manifest))
+    read_seconds = round(_time.monotonic() - lesson_clock, 3)
     anchors = block_component_anchors(rows)
     cursors = sorted({c for chosen in anchors.values() for c, _ in chosen.values()})
     out = Path(directory) / 'blocks' / str(n)
@@ -4169,7 +4172,9 @@ def block_lesson(teacher_rows, directory, n, *, day_file=None, manifest=None):
     except Exception as error:  # noqa: BLE001 - listed; the next block goes on
         lesson = dict(schema=TR.SECOND_SET_LEDGER_SCHEMA, status='failed', reason='%s: %s' % (type(error).__name__, error))
     lesson['component_anchors'] = {name: {k: list(v) for k, v in chosen.items()} for name, chosen in anchors.items()}
-    store = _BlockStore(out)                       # whole (the session's learner context), each large part once
+    store = _BlockStore(out)
+    lesson['seconds'] = dict(block_read=read_seconds,
+                             second_set_lesson=round(_time.monotonic() - lesson_clock - read_seconds, 3))                       # whole (the session's learner context), each large part once
     try:
         _block_dump(out / 'second_set.json', lesson, store)
     finally:
@@ -4347,7 +4352,37 @@ def _block_rendered(text, name, renderer):
                 rule='rendered on request from the stored answers (block_render(<block dir>, %r)); not written' % name)
 
 
+class _StepClock:
+    """Wall seconds per step of a block session (instrumentation only): mark(name) books the time since the last mark
+    to name, less the time spent in _block_dump, which goes to store_writes."""
+
+    def __init__(self, steps):
+        import time
+        self.time, self.steps = time, steps
+        self.last, self.dump = time.monotonic(), 0.0
+
+    def mark(self, name):
+        now = self.time.monotonic()
+        self.steps[name] = round(self.steps.get(name, 0.0) + (now - self.last - self.dump), 3)
+        self.steps['store_writes'] = round(self.steps.get('store_writes', 0.0) + self.dump, 3)
+        self.last, self.dump = now, 0.0
+
+
+_BLOCK_CLOCK = [None]
+
+
 def _block_dump(path, body, store=None):
+    import os
+    import time
+    began = time.monotonic()
+    try:
+        return _block_dump_timed(path, body, store)
+    finally:
+        if _BLOCK_CLOCK[0] is not None:
+            _BLOCK_CLOCK[0].dump += time.monotonic() - began
+
+
+def _block_dump_timed(path, body, store=None):
     import os
     from research.kalshi.frankie_boss.frankie_principal_adapter import json_form
     body = json_form(body)
@@ -4405,7 +4440,10 @@ def block_session(teacher_rows, directory, n, *, day, brain, previous=None, day_
     out.mkdir(parents=True, exist_ok=True)
     began = time.monotonic()
     written, listed = {}, []
+    steps = {}
+    clock = _BLOCK_CLOCK[0] = _StepClock(steps)
     store = _BlockStore(out)
+    clock.mark('store_open')
     try:
         record = _block_session(teacher_rows, out, n, day=day, brain=brain, previous=previous, day_file=day_file,
                                 day_sha256=day_sha256, manifest=manifest, written=written, listed=listed, store=store)
@@ -4415,6 +4453,7 @@ def block_session(teacher_rows, directory, n, *, day, brain, previous=None, day_
                       trace=traceback.format_exc()[-4000:])
     finally:
         store.close()
+        clock.mark('store_close')
     record['store'] = dict(file=BLOCK_STORE, index=BLOCK_STORE_INDEX, min_bytes=BLOCK_STORE_MIN,
                            bytes_written=store.written, bytes_referenced_again=store.reused, parts=len(store.seen),
                            rule='every part of at least min_bytes compact JSON written once; the files hold it by '
@@ -4428,6 +4467,11 @@ def block_session(teacher_rows, directory, n, *, day, brain, previous=None, day_
         written['TEACHER_REPORT.md'] = str(out / 'TEACHER_REPORT.md')
     except Exception as error:  # noqa: BLE001
         record['teacher_report_error'] = '%s: %s' % (type(error).__name__, error)
+    clock.mark('teacher_report')
+    record['steps'] = steps
+    record['steps_rule'] = ('wall seconds per step as it ran (instrumentation only); store_writes = every _block_dump; '
+                            'session.json itself is written after this record')
+    _BLOCK_CLOCK[0] = None
     _block_dump(out / 'session.json', record)
     return record
 
@@ -4442,7 +4486,10 @@ def _block_session(teacher_rows, out, n, *, day, brain, previous, day_file, day_
     from research.kalshi.frankie_boss import dipole_classroom_external as EXT
     from research.kalshi.frankie_boss.frankie_principal_adapter import digest, json_form
     model = "Frankie's code (computed; no model)"
+    clock = _BLOCK_CLOCK[0] or _StepClock({})
+    clock.mark('imports')
     snapshot, block = block_snapshot(teacher_rows, n, day=day, manifest=manifest)
+    clock.mark('snapshot')
     if snapshot is None:
         return dict(status='empty', reason='block %d holds no rows (a sealed span of the clock with no row)' % n)
     history, prior_grade, external_history, prior_external_grade = [], None, [], None
@@ -4453,11 +4500,14 @@ def _block_session(teacher_rows, out, n, *, day, brain, previous, day_file, day_
         if (prev / 'external-history.json').is_file() and (prev / 'external-post-grade.json').is_file():
             external_history = json.loads((prev / 'external-history.json').read_bytes())
             prior_external_grade = json.loads((prev / 'external-post-grade.json').read_bytes())
+    clock.mark('previous_history')
     pkg = I.prepare_integrated_cycle_from_snapshot(
         snapshot, request_id=snapshot['request_id'], cycle_index=0, cycle_count=1, source_hash=snapshot['source_hash'],
         as_of=snapshot['as_of'], through_cursor=snapshot['through_cursor'], history=history, prior_grade=prior_grade)
+    clock.mark('key_pre_message_binding')
     for part in ('teacher_key', 'pre_message', 'binding'):
         written['package.%s' % part] = _block_dump(out / ('package.%s.json' % part), pkg[part], store)
+    clock.mark('package_files')
     mode = pkg['binding']['mode']
     base = dict(status='complete', mode=mode, rows=len(snapshot['rows']), cursor_range=block['cursor_range'],
                 clock_range=block['clock_range'], teacher_as_of=block['teacher_as_of'],
@@ -4470,25 +4520,34 @@ def _block_session(teacher_rows, out, n, *, day, brain, previous, day_file, day_
                            'whole sealed journal: runs at day end' % mode))
         return dict(base, status='day_end_mode')
     visible = F.final_model_visible_classroom(pkg)
+    clock.mark('model_visible')
     selected = LS.learner_knowledge(day, 'classroom', brain=brain, classroom_mode=mode)
     school, school_listed = LS.learner_school(day, brain=brain, versions=selected['versions'])
     knowledge = selected['documents']
+    clock.mark('learner_inputs')
     if mode == 'GUIDED':
         _EVIDENCE_CACHE[visible['pre_message']['teacher_message_hash']] = _evidence(visible)
+        clock.mark('guided_evidence')
     knowledge_check = stage_knowledge_reproduction(visible, knowledge)
     school_check = school_reproduction(visible, school)
+    clock.mark('knowledge_school_checks')
     lesson_path = out / 'second_set.json'
     lesson = block_load(lesson_path) if lesson_path.is_file() else dict(
         status='absent', reason='no block lesson second set at %s' % lesson_path)
+    clock.mark('second_set_load')
     account = dict(checks=[], listed=[dict(teacher_account='day_end', reason=BLOCK_DAY_END[3]['why'])])
     learner_context = dict(stage_knowledge=knowledge_check, school=school_check, second_set=second_set_context(lesson),
                            teacher_account=account)
+    clock.mark('second_set_context')
     names = [c['name'] for c in C.components(visible)]
     outputs = {name: component_answer(visible, C.component(visible, name), [q['right'] for q in C.pairs_of(visible, name)],
                                       learner_context=learner_context) for name in names}
+    clock.mark('answers_components')
     summary = summary_answer(visible, outputs, learner_context=learner_context)
+    clock.mark('answers_summary')
     built = C.assemble(visible, outputs, summary)
     report = C.validate(visible, built['ledgers'])
+    clock.mark('assembly_validation')
     written['code-answers'] = _block_dump(out / 'code-answers.json', dict(
         schema=SCHEMA, outputs=outputs, summary=summary, school=school_check, stage_knowledge=knowledge_check,
         knowledge=dict(documents=[{k: doc.get(k) for k in ('label', 'day', 'kind', 'sha256')} for doc in knowledge],
@@ -4496,28 +4555,40 @@ def _block_session(teacher_rows, out, n, *, day, brain, previous, day_file, day_
         second_set=lesson.get('status'), answer_report=report, dropped_findings=built['dropped_findings'],
         model_calls=0), store)
     written['ledgers'] = _block_dump(out / 'ledgers.json', built['ledgers'], store)
+    clock.mark('answer_files')
     written['classroom.md'] = _block_rendered(C.render_markdown(built['ledgers'], built['dropped_findings']),
                                               'classroom.md', 'frankie_box_classroom.render_markdown')
+    clock.mark('render_classroom_md')
     request = {'attachment': {'dipole_classroom': visible}}
     request_sha256 = digest(request)
+    clock.mark('request_digest')
     session_id = 'experiment-%s-block-%02d' % (day, n)
     response = dict(built['ledgers'], request_sha256=request_sha256, session_id=session_id,
                     model_identity_as_reported_by_session=model)
     teachback, initial_grade = S.grade_initial_response(pkg, response)
+    clock.mark('initial_grade')
     grade = F.apply_relationship_view_crosscheck(initial_grade, response)
+    clock.mark('relationship_crosscheck')
     novel = F.validate_novel_findings(response.get('dipole_novel_findings'), pkg['pre_message'])
+    clock.mark('novel_findings')
     novelty = F.investigate_novel_findings(pkg['teacher_key'], novel, mode=mode,
                                            learning_policy=pkg['binding'].get('learning_policy'))
+    clock.mark('novelty_investigation')
     correction = F.bind_final_resolution_requirement(F.build_final_correction_request(
         original_request_sha256=request_sha256, response=response, grade=grade, key=pkg['teacher_key'],
         teachback=teachback, novelty_investigation=novelty))
+    clock.mark('correction_request')
     parsed = C.parse_correction(json.dumps(correction_answer(correction)), correction)
     reply = C.correction_response(correction, parsed, session_id=session_id, model_identity=model)
+    clock.mark('correction_answer')
     checked = S.validate_correction_response(correction=correction, response=reply, initial_response=response, grade=grade)
+    clock.mark('correction_check')
     ack = R.validate_correction_resolutions(reply.get('dipole_acknowledgement'), grade, checked)
     completion = S.finish(pkg, teachback=teachback, grade=grade, acknowledgement=ack)
+    clock.mark('acknowledgement_completion')
     transcript = F.render_final_transcript(pkg['pre_message'], teachback, novel, correction, ack,
                                            reply.get('dipole_scientific_exchange'))
+    clock.mark('render_transcript_md')
     files = {'teachback': teachback, 'post-grade': grade, 'novel-findings': list(novel),
              'novelty-investigation': novelty, 'correction-request': correction, 'correction-response': reply,
              'acknowledgement': ack, 'completion': completion}
@@ -4525,17 +4596,21 @@ def _block_session(teacher_rows, out, n, *, day, brain, previous, day_file, day_
         written[name] = _block_dump(out / ('%s.json' % name), body, store)
     written['transcript.md'] = _block_rendered(transcript, 'transcript.md',
                                                'dipole_classroom_final_review.render_final_transcript')
+    clock.mark('transcript_sha')
     external = dict(status='not_run', reason='no day file given to the block session')
+    clock.mark('grade_files')
     if day_file is not None and day_sha256:
         try:
             key, section = EXT.ensure_external_section(out, snapshot, day_file, day_sha256, trading_day=day,
                                                        built_by='classroom block %d' % n)
+            clock.mark('external.section')
             pre = EXT.build_external_pre_message(key, mode=mode, prior_grade=prior_external_grade)
             binding = EXT.build_external_binding(key, pre, v1_binding=pkg['binding'])
             ext_visible = EXT.model_visible_external(binding, pre)
             import frankie_box_classroom_external_code as KX
             ledgers = KX.answers(ext_visible, dipole_visible=visible, learner_context=learner_context,
                                  independent_evidence=None, knowledge=knowledge, school=school)
+            clock.mark('external.answers')
             ext_grade = EXT.grade_external(key, ledgers)
             request_v2 = {'attachment': {'dipole_classroom': visible, 'dipole_external': ext_visible}}
             ext_correction = EXT.correction_request(original_request_sha256=digest(request_v2), session_id=session_id,
@@ -4545,6 +4620,7 @@ def _block_session(teacher_rows, out, n, *, day, brain, previous, day_file, day_
             ext_ack, ext_completion = EXT.finish_external(binding=binding, key=key, pre=pre, ledgers=ledgers,
                                                           grade=ext_grade, correction=ext_correction, reply=ext_reply,
                                                           initial_session_id=session_id, model_identity=model)
+            clock.mark('external.grade_correction')
             for name, body in (('external-code-answers', dict(ledgers=ledgers, model_calls=0)),
                                ('external-post-grade', ext_grade), ('external-correction-request', ext_correction),
                                ('external-correction-response', ext_reply), ('external-acknowledgement', ext_ack),
@@ -4553,11 +4629,13 @@ def _block_session(teacher_rows, out, n, *, day, brain, previous, day_file, day_
             written['classroom-external.md'] = _block_rendered(EXT.render_markdown(ledgers, ext_grade),
                                                                'classroom-external.md',
                                                                'dipole_classroom_external.render_markdown')
+            clock.mark('external.render_md')
             external = dict(status='complete', section=section.get('section_sha256'), cutoff_ns=key['cutoff_ns'],
                             history_entries=len(external_history))
         except Exception as error:  # noqa: BLE001 - listed; the Dipole session stands
             external = dict(status='failed', reason='%s: %s' % (type(error).__name__, error))
             listed.append(dict(piece='external section', why=external['reason']))
+    clock.mark('external.rest')
     # the checked lesson he carries into his brain (published once per day: BLOCK_DAY_END)
     written['brain-update'] = _block_dump(out / 'brain-update.json', store=store, body=dict(
         schema='FRANKIE_CLASSROOM_BLOCK_BRAIN_UPDATE_V1', day=day, block=n, mode=mode, checked=True,
@@ -4566,7 +4644,10 @@ def _block_session(teacher_rows, out, n, *, day, brain, previous, day_file, day_
         rule='the checked lesson of this block (graded, corrected, acknowledged); filed into Frankie\'s brain with the '
              'day\'s entry <day>-cycle-00 (one entry per day, R16)'))
     store.flush()
-    return dict(base, answer_report=report, external=external, components=len(names))
+    clock.mark('brain_update')
+    resolver = ((lesson.get('anchors_resolved') or {}).get('resolver') if isinstance(lesson, dict) else None)
+    return dict(base, answer_report=report, external=external, components=len(names),
+                second_set_resolver=resolver, lesson_seconds=lesson.get('seconds') if isinstance(lesson, dict) else None)
 
 
 def block_teacher_report(teacher_rows, out, n, *, day, session=None, manifest=None):
