@@ -709,6 +709,16 @@ def _af(name):
     return ACCOUNT_FIELDS[name]
 
 
+def whole_list(pin, *path):
+    """A whole list the teacher wrote beside its receipt (frankie_box_experiment_teacher._write_list: {file, count,
+    sha256}): 'every one is a line of <file> (<count> lines, sha256 <sha256>) [field]', or not recorded, never raised."""
+    if not isinstance(pin, dict):
+        return 'the whole list is not recorded by my step (%s)%s' % (rec(pin), _cite(*path))
+    return 'every one is a line of %s (%s lines, sha256 %s)%s' % (
+        rec(pin.get('file') or pin.get('path')), rec(pin.get('count', pin.get('lines'))), rec(pin.get('sha256')),
+        _cite(*path))
+
+
 def _cite(*path):
     return ' [%s]' % '.'.join(str(p) for p in path)
 
@@ -762,10 +772,12 @@ def teacher_account_lines(d):
                 clock, rec((clocks.get(_af('clock_rows')) or {}).get(clock, 0)), rec(rows),
                 _cite(A, _af('read_together'), _af('clocks'), _af('clock_rows'), clock)))
         lock = (teacher.get('teacher_second_set') or {}).get('clock_lock_time')
-        lock = lock if isinstance(lock, dict) else dict(value=lock)
-        L.append('- clock_lock_time is my as_of, %s, stamped once at publication (%s): lock time does not exist before '
-                 'Frankie reads%s.' % (rec(lock.get('value')), rec(lock.get('basis')),
-                                       _cite('teacher_second_set', 'clock_lock_time')))
+        # the teacher's second-set header stamps {label, teacher_as_of, basis} (frankie_box_experiment_teacher._second_set)
+        lock = lock if isinstance(lock, dict) else dict(teacher_as_of=lock)
+        L.append('- clock_lock_time is my as_of, %s (%s), stamped once at publication (%s): lock time does not exist '
+                 'before Frankie reads%s.' % (rec(lock.get('teacher_as_of', lock.get('value'))), rec(lock.get('label')),
+                                              rec(lock.get('basis')),
+                                              _cite('teacher_second_set', 'clock_lock_time', 'teacher_as_of')))
         L += ['- I read these book columns beside the pinned functions: %s%s.' % (
             listing(R.get(_af('book_columns')) or []) or 'none', _cite(A, _af('read_together'), _af('book_columns')))]
         split = R.get(_af('state_split')) or {}
@@ -787,12 +799,10 @@ def teacher_account_lines(d):
                  listing('%s (%d)' % (why, n) for why, n in sorted((v.get('absent_reasons') or {}).items())) or 'none')
                 for entry, v in partial.items()]) + ['']
     cm = M.get(_af('clock_mismatches')) or {}
-    examples = cm.get('examples') or []
-    L += ['On %s rows the picture\'s clocks or identity did not match my row%s; the account records %d of them as '
-          'examples%s:' % (rec(cm.get('rows')), _cite(A, _af('missing'), _af('clock_mismatches'), 'rows'), len(examples),
-                           _cite(A, _af('missing'), _af('clock_mismatches'), 'examples')), '']
-    L += table(['cursor', 'field', 'the picture', 'my row'],
-               [tuple(rec(x) for x in (list(e) + [None] * 4)[:4]) for e in examples]) + ['']
+    L += ['On %s rows the picture\'s clocks or identity did not match my row%s; %s.' % (
+        rec(cm.get('rows')), _cite(A, _af('missing'), _af('clock_mismatches'), 'rows'),
+        whole_list(cm.get('all') or (teacher.get('teacher_second_set') or {}).get('mismatches'),
+                   A, _af('missing'), _af('clock_mismatches'), 'all')), '']
     L += ['I read %s rows in my own walk, restored %s from a save and merged %s at publication%s%s%s.' % (
         rec(M.get(_af('walk_rows'))), rec(M.get(_af('restored'))), rec(M.get(_af('merged'))),
         _cite(A, _af('missing'), _af('walk_rows')), _cite(A, _af('missing'), _af('restored')),
@@ -802,16 +812,13 @@ def teacher_account_lines(d):
         L += ['How I read the book (every recorded field)%s:' % _cite(A, _af('missing'), _af('book_read')), '']
         L += table(['field', 'value'], _flat_rows(book)) + ['']
     rc = M.get(_af('reconciliation')) or {}
-    L += ['Book and event counts differed %s times%s; by measure and reason%s:' % (
-        rec(rc.get('differences')), _cite(A, _af('missing'), _af('reconciliation'), 'differences'),
-        _cite(A, _af('missing'), _af('reconciliation'), 'by_measure_reason')), '']
+    L += ['Book and event counts differed with %s measure:reason counts (a difference with several reasons counts once '
+          'per reason)%s; by measure and reason%s:' % (
+              rec(rc.get('differences')), _cite(A, _af('missing'), _af('reconciliation'), 'differences'),
+              _cite(A, _af('missing'), _af('reconciliation'), 'by_measure_reason')), '']
     L += table(['measure:reason', 'count'], sorted((rc.get('by_measure_reason') or {}).items())) + ['']
-    largest = rc.get('largest') or []
-    L += ['The account records %d of the %s differences with their values%s:' % (
-        len(largest), rec(rc.get('all_differences')), _cite(A, _af('missing'), _af('reconciliation'), 'largest')), '']
-    L += table(['cursor', 'side', 'measure', 'book', 'events', 'reasons'],
-               [(rec(x.get('cursor')), rec(x.get('side')), rec(x.get('measure')), rec(x.get('book')),
-                 rec(x.get('events')), listing(x.get('reasons') or [])) for x in largest]) + ['']
+    L += ['The book-event differences themselves, with their values (%s): %s.' % (
+        rec(rc.get('order')), whole_list(rc.get('all'), A, _af('missing'), _af('reconciliation'), 'all')), '']
     guard = M.get(_af('guard'))
     L += ['My guard (every recorded field)%s:' % _cite(A, _af('missing'), _af('guard')), '']
     L += (table(['field', 'value'], _flat_rows(guard)) if guard else ['- none recorded.']) + ['']

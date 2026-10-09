@@ -62,10 +62,11 @@ DSTATE_FIELDS = ('anchor_dir', 'armed', 'broken')
 DSTATE_DIMS = (DSTATE_STATUS,) + tuple('teacher.dstate|state.' + name for name in DSTATE_FIELDS)
 STATE_NAMES = {0: 'PRESENT', 1: 'MISSING', 2: 'INVALID', 3: 'ABLATED'}    # c15_normalizer.State
 CELL_FIELDS = ('count', 'p50', 'p90', 'max', 'min')
-# The md renders every pinned cell of every bucket of every dimension. The book-derived cells and the co-occurrence per
-# bucket are rendered for these dimensions (all rows and the teacher's own DState); for the plane state-label dimensions
-# they are every one in teacher-findings.json, named with their cell counts. True renders every cell in the md too.
-MD_EVERY_CELL = False
+# The md renders every cell of every bucket of every dimension (Greg: no size-based decision weakens the science; the
+# classroom reads the md as Frankie's lesson input): the pinned cells, the book-derived cells and the co-occurrence,
+# each table with the findings file and its cell count beside it. False (never the default) would leave the plane
+# state-label dimensions' book cells and co-occurrence in teacher-findings.json only, named with their counts.
+MD_EVERY_CELL = True
 MD_CELL_DIMS = (ALL_ROWS,) + DSTATE_DIMS
 # A pinned column's MISSING / INVALID reason -> the data or depth that would remove it (one place). Matched exactly
 # first, then by the longest token the reason contains; a reason not named here is listed as having no named want.
@@ -637,7 +638,8 @@ def _found_lines(findings, F):
             book_rows = [[value, cell.get('rows'), name] + _cell(d) for value, cell in by_value.items()
                          for name, d in (cell.get('book') or {}).items()]
             if book_rows:
-                L += ['%s: every book-derived column a bucket\'s rows carry a number for%s:' % (dim, _c(F, 'distributions', dim)), '']
+                L += ['%s: every book-derived column a bucket\'s rows carry a number for (%d cells over %d buckets, every '
+                      'one also in %s)%s:' % (dim, len(book_rows), len(by_value), F, _c(F, 'distributions', dim)), '']
                 L += _table(['bucket', 'rows', 'book-derived column', 'rows with a value', 'p50', 'p90', 'max', 'min'],
                             book_rows) + ['']
         else:
@@ -656,7 +658,8 @@ def _found_lines(findings, F):
         if MD_EVERY_CELL or dim in MD_CELL_DIMS:
             rows = [(value, name, c['state'], c['reason'] or '-', c['rows']) for value, by_name in by_value.items()
                     for name, cells in by_name.items() for c in cells]
-            L += ['%s%s:' % (dim, _c(F, 'cooccurrence', dim)), '']
+            L += ['%s (%d cells over %d buckets, every one also in %s)%s:' % (dim, len(rows), len(by_value), F,
+                                                                           _c(F, 'cooccurrence', dim)), '']
             L += _table(['bucket', 'pinned column', 'state', 'reason', 'rows'], rows) + ['']
         else:
             cells = sum(len(cells) for by_name in by_value.values() for cells in by_name.values())
