@@ -16,13 +16,13 @@ try:
     from .causal_prefix_records import RecordInput, RecordPrefixChain
     from .c15_journal import EvidenceJournal, OBSERVATION_SENTINEL, PrePacked, SCHEMA, SerializedObservation, evidence_hash, pack, unpack
     from .c15_observer import IncrementalObservation, observe_book, order_rank
-    from .c15_registry import implementation_identity
+    from .c15_registry import implementation_identity, implementation_accepts
     from .mbo_resume_state import export_adapter_state, restore_adapter_state
 except ImportError:
     from causal_prefix_records import RecordInput, RecordPrefixChain
     from c15_journal import EvidenceJournal, OBSERVATION_SENTINEL, PrePacked, SCHEMA, SerializedObservation, evidence_hash, pack, unpack
     from c15_observer import IncrementalObservation, observe_book, order_rank
-    from c15_registry import implementation_identity
+    from c15_registry import implementation_identity, implementation_accepts
     from mbo_resume_state import export_adapter_state, restore_adapter_state
 
 
@@ -238,10 +238,12 @@ class C15Builder:
         body = {k: v for k, v in state.items() if k != "state_hash"}
         if (state["state_hash"] != expected_hash or evidence_hash(body) != expected_hash
                 or state["schema"] != SCHEMA or state["scope_genesis_hash"] != scope.genesis_hash()
-                or state["implementation"] != implementation_identity()):
+                or not implementation_accepts(state["implementation"])):
             raise ValueError("full-evidence checkpoint identity mismatch")
         builder = cls.__new__(cls)
-        builder.scope, builder.identity = scope, implementation_identity()
+        # the saved code identity is recorded (Greg, 2026-10-09: never compared): the readback below reproduces the
+        # saved state with it; the checkpoints this builder writes afterwards record this checkout's identity
+        builder.scope, builder.identity = scope, state["implementation"]
         builder.chain = RecordPrefixChain.restore(scope, state["prefix"])
         builder.adapter = restore_adapter_state(state["adapter"])
         builder._sessions = dict(state["sessions"])
@@ -253,6 +255,7 @@ class C15Builder:
                 raise ValueError("checkpoint does not account for every input and applied record")
             if builder.export_state() != state:
                 raise ValueError("checkpoint state is inconsistent or noncanonical")
+            builder.identity = implementation_identity()
         except Exception:
             builder.journal.close()
             raise

@@ -36,18 +36,12 @@ CODE_ORDER = tuple(ORIGINAL_CODE_BLOBS)
 
 
 def original_identity(code_blobs, *, require_adapter_semantics=True):
-    current = implementation_identity()['code_blobs']
-    if code_blobs != ORIGINAL_CODE_BLOBS and code_blobs != current:
+    """The checkpoint's original implementation identity with `code_blobs` RECORDED (Greg, 2026-10-09: the code version
+    is recorded, never compared): the blobs must name exactly the CODE_ORDER files; whether they equal this checkout's
+    is not compared (c15_registry.IMPLEMENTATION_FORMAT carries the format). require_adapter_semantics is kept for the
+    callers' signature; it no longer selects compared files."""
+    if not isinstance(code_blobs, dict) or set(code_blobs) != set(CODE_ORDER):
         raise ValueError('unsupported original implementation')
-    # Reconstruction restores adapter state and must retain its exact semantics.
-    # A completed-evidence reader never restores or calls an adapter: it still
-    # requires the original identity and unchanged journal/prefix codecs.
-    unused = {'c15_builder.py', 'c15_observer.py'}
-    if not require_adapter_semantics:
-        unused.add('ng_exhaustion_mbo_v4_state_adapter_20260820.py')
-    for name in CODE_ORDER:
-        if name not in unused and code_blobs[name] != current[name]:
-            raise ValueError('recovery state semantics differ: ' + name)
     return dict(schema=SCHEMA, code_blobs={name: code_blobs[name] for name in CODE_ORDER},
                 contract_hash=evidence_hash(dict(schema=SCHEMA, retention='all supplied evidence',
                                                  reductions=[], fields='all original fields')))

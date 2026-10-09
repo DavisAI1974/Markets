@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 from .c15_journal import SCHEMA, unpack, evidence_hash
-from .c15_registry import implementation_identity
+from .c15_registry import implementation_accepts
 from .causal_prefix_records import RecordPrefixChain
 from .verified_journal_reader import VerifiedJournalReader
 
@@ -51,7 +51,9 @@ def open_completed_schedule_view(scope,journal_path,state_path,expected_state_sh
     if (state['state_hash']!=expected_state_hash or
             evidence_hash({k:v for k,v in state.items() if k!='state_hash'})!=expected_state_hash):
         raise ValueError('completed state hash mismatch')
-    expected_implementation=implementation_identity()
+    # the code identity is recorded, never compared (Greg, 2026-10-09): accepted on its format (c15_registry.
+    # implementation_accepts); a recovered view still names the recovered state's identity exactly (saved vs saved)
+    expected_implementation=None
     if recovery_descriptor is not None:
         from .recovered_ingestion import load_recovered_ingestion
         recovered=load_recovered_ingestion(recovery_descriptor)
@@ -63,7 +65,8 @@ def open_completed_schedule_view(scope,journal_path,state_path,expected_state_sh
             raise ValueError('completed view differs from independently verified recovery')
         expected_implementation=recovered.state['implementation']
     if (state['schema']!=SCHEMA or state['scope_genesis_hash']!=scope.genesis_hash()
-            or state['implementation']!=expected_implementation):
+            or (state['implementation']!=expected_implementation if expected_implementation is not None
+                else not implementation_accepts(state['implementation']))):
         raise ValueError('completed state source implementation identity mismatch')
     chain=RecordPrefixChain.restore(scope,state['prefix'])
     if chain.next_cursor!=sum(member.mbo_records for member in scope.members):

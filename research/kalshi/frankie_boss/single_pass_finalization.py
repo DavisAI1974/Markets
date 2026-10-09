@@ -12,7 +12,7 @@ import time
 try:
     from .c15_builder import C15Builder
     from .c15_journal import SCHEMA, evidence_hash, pack, unpack
-    from .c15_registry import implementation_identity
+    from .c15_registry import implementation_identity, implementation_accepts
     from .causal_prefix_records import RecordPrefixChain
     from .mbo_resume_state import restore_adapter_state
     from .source_conformance import SourceConformanceDriver
@@ -20,7 +20,7 @@ try:
 except ImportError:
     from c15_builder import C15Builder
     from c15_journal import SCHEMA, evidence_hash, pack, unpack
-    from c15_registry import implementation_identity
+    from c15_registry import implementation_identity, implementation_accepts
     from causal_prefix_records import RecordPrefixChain
     from mbo_resume_state import restore_adapter_state
     from source_conformance import SourceConformanceDriver
@@ -69,10 +69,12 @@ def finalize_snapshot(path, scope, state, *, expected_scope_hash,
     body = {k: v for k, v in state.items() if k != 'state_hash'}
     if (state['state_hash'] != expected_state_hash or evidence_hash(body) != expected_state_hash
             or state['schema'] != SCHEMA or state['scope_genesis_hash'] != scope.genesis_hash()
-            or state['implementation'] != implementation_identity()):
+            or not implementation_accepts(state['implementation'])):
         raise ValueError('full-evidence checkpoint identity mismatch')
     builder = C15Builder.__new__(C15Builder)
-    builder.scope, builder.identity = scope, implementation_identity()
+    # the saved code identity is retained and recorded, never compared (Greg, 2026-10-09): the finalization completes
+    # the saved state itself, so its completion names the saved state_hash
+    builder.scope, builder.identity = scope, state['implementation']
     builder.chain = RecordPrefixChain.restore(scope, state['prefix'])
     builder.adapter = restore_adapter_state(state['adapter'])
     builder._sessions, builder._failed = dict(state['sessions']), False
