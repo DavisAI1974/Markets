@@ -672,7 +672,12 @@ STAGE_CLAIM_THRESHOLD = 256 << 20     # a source at or over this many bytes, rea
 
 def _claims_work_of(path):
     """<D>/work for the nearest ancestor D of `path` holding work/file-claims.jsonl (the attempt the source belongs to:
-    a ROOT attempt's calculations-receipt.json, derive.json, digest, layers and spools all sit under it), else None."""
+    a ROOT attempt's calculations-receipt.json, derive.json, digest, layers and spools all sit under it), else None.
+    One pass (2026-10-09): the source's own directory comes first when it holds file-claims.jsonl (the ingest writes
+    its journal claim beside its receipt; the teacher-only step writes its rows file's claim in its rows directory)."""
+    own = Path(path).resolve().parent
+    if (own / FILE_CLAIMS_NAME).is_file() and _claim_row_of(own, path) is not None:
+        return own
     for parent in Path(path).resolve().parents:
         if (parent / 'work' / FILE_CLAIMS_NAME).is_file():
             return parent / 'work'
@@ -850,11 +855,42 @@ def _checked_entry(directory, expected_hash=None):
                 or path.stat().st_size != entry.get('bytes')):
             raise ValueError('included historical knowledge missing or changed: ' + name)
         included.append((entry, path))
-    # streamed and hashed on threads (a digest runs to many GB); same check as before
-    for (entry, path), digest in zip(included, sha256_files([p for _, p in included])):
+    # one pass (Greg, 2026-10-09): a file with a holding claim row in the entry's own file-claims.jsonl (the digest:
+    # hard-linked from the ROOT's work at write_entry, its sha256 from the digest writer's claim; identity, filesystem
+    # and last 64 KiB checked) takes the claim's sha256; every other included file is streamed and hashed on threads
+    for (entry, path), (digest, _) in zip(included, file_witnesses([p for _, p in included], file_claims(directory))):
         if digest != entry.get('sha256'):
             raise ValueError('included historical knowledge missing or changed: ' + entry.get('name', ''))
     return manifest, sha256_bytes(raw)
+
+
+def _link_or_copy(source, destination):
+    """os.link (same filesystem: no bytes written), else shutil.copy2. Entries are immutable once written."""
+    import shutil
+    try:
+        os.link(source, destination)
+    except OSError:
+        shutil.copy2(source, destination)
+    return destination
+
+
+def _linked_claim(source):
+    """(bytes, sha256, basis) of `source` from a holding claim row in its own directory's file-claims.jsonl or the
+    nearest <D>/work/file-claims.jsonl above it (the ROOT's work: the digest writer appends the digest's row there),
+    else None. Never raises."""
+    try:
+        from research.kalshi.frankie_boss.operations.ingest_block_sources import claim_still_holds
+        work = _claims_work_of(source)
+        row = _claim_row_of(work, source) if work is not None else None
+        if row is None or row.get('bytes') != os.stat(source).st_size or not row.get('sha256'):
+            return None
+        held = claim_still_holds(row, source)
+        if held is None:
+            return None
+        return int(row['bytes']), str(row['sha256']), dict(basis='by claim', claim_file=str(work / FILE_CLAIMS_NAME),
+                                                           claim_schema=held['basis'], claimed_by=row.get('claimed_by'))
+    except Exception:  # noqa: BLE001 - a claim is a hint
+        return None
 
 
 def capture_base(brain, request_identity):
@@ -888,7 +924,9 @@ def capture_base(brain, request_identity):
             continue
         destination = history / ('entry-' + digest)
         if not destination.exists():
-            shutil.copytree(path.parent, destination)
+            # one pass (2026-10-09): hard links (no second write of a many-GB digest; the claim rows still hold on
+            # the shared inode), a copy only where a link fails
+            shutil.copytree(path.parent, destination, copy_function=_link_or_copy)
         _checked_entry(destination, digest)
         entries[digest] = dict(path=str(destination.relative_to(brain)), sha256=digest,
                                cycle=manifest.get('cycle'), day=manifest.get('day'), source_schema=manifest.get('schema'))
@@ -1027,15 +1065,49 @@ def write_entry(work, out, brain, cycle, include_analysis=True, principal_direct
         (entry_dir / name).write_bytes(data)
         entries.append(dict(name=name, bytes=len(data), sha256=sha256_bytes(data), source=str(source), kind=kind, include=include))
 
+    claim_rows = []
+
     def put_file(name, source, kind, include=True):
-        # streamed copy and hash in one pass (the digest runs to many GB; same bytes and entry as put)
-        hashed, size = hashlib.sha256(), 0
-        with Path(source).open('rb') as reader, (entry_dir / name).open('xb') as writer:
-            while block := reader.read(64 * 1024 * 1024):
-                writer.write(block)
-                hashed.update(block)
-                size += len(block)
-        entries.append(dict(name=name, bytes=size, sha256=hashed.hexdigest(), source=str(source), kind=kind, include=include))
+        # one pass (Greg, 2026-10-09): hard-link the file into the entry (same filesystem: no copy) and take its sha256
+        # from the source's claim row (the digest writer's write-stream sha256); a link with no holding claim is hashed
+        # once; where a link fails, a streamed copy and hash in one pass as before. The entry's own file-claims.jsonl
+        # gets the file's claim row so _checked_entry takes it instead of hashing the file again.
+        target = entry_dir / name
+        try:
+            os.link(source, target)
+            linked = True
+        except OSError:
+            linked = False
+        if linked:
+            claimed = _linked_claim(source)
+            if claimed is not None:
+                size, sha256, basis = claimed
+            else:
+                try:
+                    import frankie_box_filehash as F
+                except ImportError:
+                    from deploy.aws.box import frankie_box_filehash as F
+                seen = F.witness(target)
+                size, sha256, basis = seen['bytes'], seen['sha256'], dict(basis='linked; hashed once here')
+            if os.stat(target).st_size != size:
+                raise ValueError('linked brain entry file changed size while linked: ' + str(source))
+            basis['placed'] = 'hard link'
+        else:
+            hashed, size = hashlib.sha256(), 0
+            with Path(source).open('rb') as reader, target.open('xb') as writer:
+                while block := reader.read(64 * 1024 * 1024):
+                    writer.write(block)
+                    hashed.update(block)
+                    size += len(block)
+            sha256, basis = hashed.hexdigest(), dict(basis='copied and hashed in one pass', placed='copy')
+        entries.append(dict(name=name, bytes=size, sha256=sha256, source=str(source), kind=kind, include=include,
+                            sha256_basis=basis))
+        try:
+            from research.kalshi.frankie_boss.operations.ingest_block_sources import file_claim
+            claim_rows.append(file_claim(target, size, sha256, 'brain entry (frankie_box_brain.write_entry) at %s'
+                                         % time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())))
+        except Exception:  # noqa: BLE001 - a claim is a hint: without it the reader hashes
+            pass
 
     digest = work / 'derivation-digest-full.md'
     if not digest.is_file():
@@ -1123,6 +1195,12 @@ def write_entry(work, out, brain, cycle, include_analysis=True, principal_direct
                     cycle_complete=False if final_files else None,
                     note='Greg, 2026-09-21: the calculation findings of cycles 0 and 1 are in the brain without a doubt; other documents '
                          'case by case: set include to false to keep an entry out of the next corpus, add a file with include true to bring one in.')
+    if claim_rows:
+        try:
+            from research.kalshi.frankie_boss.operations.ingest_block_sources import write_file_claims
+            write_file_claims(entry_dir, claim_rows)
+        except Exception:  # noqa: BLE001 - a claim is a hint
+            pass
     (entry_dir / 'MANIFEST.json').write_text(json.dumps(manifest, indent=1, sort_keys=True) + '\n', encoding='utf-8')
     return manifest
 
