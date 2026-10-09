@@ -188,8 +188,8 @@ def reach_of(piece_word, klass):
     if klass in ('thin', 'completed_only'):
         return 'computation_thin'
     return klass
-KINDS = ('classroom', 'frankie', 'teacher')
-FILE_RE = re.compile(r'^(classroom|frankie|teacher)-report-(\d{4,})(?:-r(\d+))?\.md$')
+KINDS = ('classroom', 'frankie', 'teacher', 'root')
+FILE_RE = re.compile(r'^(classroom|frankie|teacher|root)-report-(\d{4,})(?:-r(\d+))?\.md$')
 CLASS_OF_WEEKDAY = {0: 'monday', 1: 'midweek', 2: 'midweek', 3: 'thursday', 4: 'friday'}   # the orchestrator's classes
 JSON_FILES = ('code-answers.json', 'ledgers.json', 'post-grade.json', 'novel-findings.json', 'novelty-investigation.json',
               'correction-request.json', 'correction-response.json', 'acknowledgement.json', 'completion.json',
@@ -437,6 +437,37 @@ class Day:
                 self.absent.append((name, 'the file is not readable JSON (%s)' % error))
         self.dropped = self._dropped_from_markdown()
         self.brain, self.brain_why = self._brain()
+
+    def load_pieces(self, run_dir):
+        """What the pieces' own accounts read (each file read once and witnessed): the ROOT's calculations receipt,
+        derive.json, the native runtime-workers receipt and pre-traversal gates, and every stage heartbeat of the day
+        (<run>/days/<day>/progress/<stage>.jsonl). A file that is not there is None (its account says so)."""
+        import frankie_box_piece_accounts as PA
+        self.run_dir = Path(run_dir)
+        calc = self.receipt.get('calculations') or (self.receipt.get('received') or {}).get('calculations')
+        self.root_dir = Path(calc) if calc else self.dir.parent.parent
+        self.root_sources, self.root_docs = {}, {}
+
+        def load(role, path):
+            self.root_sources[role] = str(path)
+            try:
+                self.root_docs[role] = json.loads(self._read('ROOT ' + role, path)) if Path(path).is_file() else None
+            except (OSError, ValueError) as error:
+                self.root_docs[role] = None
+                self.absent.append((str(path), 'not readable (%s)' % error))
+        load('receipt', self.root_dir / PA.ROOT_FIELDS['receipt'])
+        load('derive', self.root_dir / PA.ROOT_FIELDS['derive'])
+        for role in ('workers', 'gates'):
+            name = PA.ROOT_FIELDS[role]
+            found = sorted((self.root_dir / 'work').glob('*/' + name)) + sorted((self.root_dir / 'work').glob('*/*/' + name))
+            load(role, found[0] if found else self.root_dir / 'work' / 'bedrock' / name)
+        self.root_sha256 = next((i['sha256'] for i in reversed(self.inputs) if i['kind'] == 'ROOT receipt'), None)
+        progress = self.run_dir / 'days' / str(self.day) / 'progress'
+        self.beats, self.beat_paths = {}, {}
+        for stage in PA.HEARTBEAT_STAGE.values():
+            path = progress / ('%s.jsonl' % stage)
+            self.beat_paths[stage] = str(path)
+            self.beats[stage] = PA.read_heartbeats(path)
 
     def _teacher(self, join_only):
         """The teacher receipt beside the teacher rows the classroom receipt names (read once, witnessed): the TEACHER
@@ -848,10 +879,32 @@ def teacher_report(d, number, revision, run, cls, files):
     L += ['The teacher\'s own account of the day, in its words: every sentence is a recorded number or a listed name of '
           'the teacher receipt\'s account, and the field it came from is given in brackets.', '']
     L += teacher_account_lines(d)
+    import frankie_box_piece_accounts as PA
+    acc = PA.Account()
+    source = (getattr(d, 'teacher_pin', None) or {}).get('path') or 'teacher receipt.json'
+    PA.teacher_actions(acc, getattr(d, 'teacher', None), source, getattr(d, 'beats', {}).get('teacher'),
+                       getattr(d, 'beat_paths', {}).get('teacher', 'progress/teacher.jsonl'))
+    L += acc.lines()
     teacher_pin = getattr(d, 'teacher_pin', None)
     L += ['## Evidence', '', '- The teacher receipt: %s.' % (
         '%s (sha256 %s, %s bytes)' % (teacher_pin['path'], teacher_pin['sha256'], teacher_pin['bytes'])
         if teacher_pin else 'not read (%s)' % rec(getattr(d, 'teacher_why', None))), '']
+    return L
+
+
+def root_report(d, number, revision, run, cls, files):
+    import frankie_box_piece_accounts as PA
+    title = '# ROOT REPORT #%d%s' % (number, '' if revision == 1 else ' (revision %d)' % revision)
+    L = header(title, d, run, cls, 'CLASSROOM REPORT #%d' % number, files['classroom'])
+    docs, sources = getattr(d, 'root_docs', {}), dict(getattr(d, 'root_sources', {}))
+    sources['heartbeat'] = getattr(d, 'beat_paths', {}).get('root', 'progress/root.jsonl')
+    L += ['The ROOT\'s own account of the day: every sentence is a recorded fact of its receipts, derive.json and '
+          'heartbeats, with the field it came from in brackets.', '']
+    acc = PA.root_account(docs.get('receipt'), docs.get('derive'), docs.get('workers'), docs.get('gates'),
+                          getattr(d, 'beats', {}).get('root'), sources)
+    L += acc.lines()
+    L += PA.root_found(docs.get('receipt'), docs.get('derive'), sources)
+    L += ['## Evidence', ''] + ['- %s: %s' % (role, path) for role, path in sorted(sources.items())] + ['']
     return L
 
 
@@ -924,8 +977,12 @@ def classroom_counts(d, comps, wrong_pairs, pairs, points):
 def classroom_report(d, number, revision, run, cls, frankie_file):
     title = '# CLASSROOM REPORT #%d%s' % (number, '' if revision == 1 else ' (revision %d)' % revision)
     L = header(title, d, run, cls, 'FRANKIE REPORT #%d' % number, frankie_file)
+    import frankie_box_piece_accounts as PA
+    piece = PA.classroom_account(d.receipt, str(d.dir / 'receipt.json'), getattr(d, 'beats', {}).get('classroom'),
+                                 getattr(d, 'beat_paths', {}).get('classroom', 'progress/classroom.jsonl')).lines()
     if d.status != 'complete':
-        return L + refused_lines(d) + exchange_lines(d, False) + glossary_lines() + evidence(d)
+        return L + refused_lines(d) + piece + exchange_lines(d, False) + glossary_lines() + evidence(d)
+    L += piece
     comps = component_facts(d)
     pairs, wrong_pairs, recorded = pair_facts(d)
     points = point_facts(d)
@@ -2613,6 +2670,8 @@ def _render_one(kind):
         return classroom_report(d, number, revision, run_name, cls, files['frankie'])
     if kind == 'teacher':
         return teacher_report(d, number, revision, run_name, cls, files)
+    if kind == 'root':
+        return root_report(d, number, revision, run_name, cls, files)
     return frankie_report(d, number, revision, run_name, cls, files['classroom'])
 
 
@@ -2718,7 +2777,8 @@ def _save_identity(d, number, revision):
     return dict(number=number, revision=revision, code_sha256=_code_sha256(),
                 source_sha256=d.source['sha256'], exchange_sha256=d.exchange_sha256,
                 meeting_sha256=d.meeting_sha256, meeting_status=d.meeting['status'], school_sha256=d.school_sha256,
-                school_status=d.school_status, all99_sha256=d.all99_sha256, teacher_sha256=d.teacher_sha256)
+                school_status=d.school_status, all99_sha256=d.all99_sha256, teacher_sha256=d.teacher_sha256,
+                root_sha256=d.root_sha256)
 
 
 def load_save(reports, run_name, day, identity):
@@ -2765,6 +2825,7 @@ def _run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, 
          school=None, school_listed=None, run_dir=None, piece_receipts=None):
     started = time.monotonic()
     d = Day(day, classroom, refused_reason, exchange, exchange_listed, school, school_listed)
+    d.load_pieces(Path(run_dir) if run_dir else RUNS / run_name)
     timings = dict(read_inputs=round(time.monotonic() - started, 6))
     # the 99 layers: every piece's recorded list read once (pinned files checked), then joined; no recomputation
     collect_all99(d, run_name, Path(run_dir) if run_dir else RUNS / run_name, dict(piece_receipts or {}))
@@ -2799,7 +2860,8 @@ def _run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, 
                          school=bool(latest[k]) and latest[k].get('school_sha256') == d.school_sha256
                                 and latest[k].get('school_status', 'not given') == d.school_status,
                          all99=bool(latest[k]) and latest[k].get('all99_sha256') == d.all99_sha256,
-                         teacher=bool(latest[k]) and latest[k].get('teacher_sha256') == d.teacher_sha256)
+                         teacher=bool(latest[k]) and latest[k].get('teacher_sha256') == d.teacher_sha256,
+                         root=bool(latest[k]) and latest[k].get('root_sha256') == d.root_sha256)
                  for k in KINDS}
         reuse = all(all(m.values()) for m in match.values())
         reuse_why = ('the existing reports were built from the same classroom receipt, exchange, meeting, school file and '
@@ -2890,7 +2952,8 @@ def _run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, 
                              commit=os.environ.get('MARKETS_SHA'), exchange_sha256=d.exchange_sha256,
                              meeting_sha256=d.meeting_sha256, meeting_status=d.meeting['status'],
                              school=d.school_path, school_sha256=d.school_sha256, school_status=d.school_status,
-                             all99_sha256=d.all99_sha256, teacher_sha256=d.teacher_sha256)
+                             all99_sha256=d.all99_sha256, teacher_sha256=d.teacher_sha256,
+                             root_sha256=d.root_sha256)
                 index['reports'].append(entry)
                 printed.append((k, raw.decode('utf-8')))
                 out.append(dict(kind=k, number=number, revision=revision, file=str(central), classroom_copy=copy,
