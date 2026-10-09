@@ -497,13 +497,13 @@ def _native_entry_files(root, files, missing):
     the search reads the ledgers once, so the projection is availability for the teachers, never a second observation).
     Nothing produced is listed missing with the ROOT's reason; nothing is recomputed."""
     import frankie_box_all99_coverage as ALL99
-    from frankie_box_experiment_native import PROJECTION_PLAN, entry_carriers
+    from frankie_box_experiment_native import PROJECTION_PLAN, entry_carriers, plan_document
     roles = {f.get('native_role'): f for f in files if f.get('native_role')}
     derive_path = root / 'work' / 'derive.json'
     derive = json.loads(derive_path.read_bytes()) if derive_path.is_file() else {}
     layers = derive.get('layers') or {}
     plan_item = roles.get(PROJECTION_PLAN)
-    carriers = entry_carriers(json.loads(Path(plan_item['source']).read_bytes())) if plan_item else None
+    carriers = entry_carriers(plan_document(plan_item['source'])[1]) if plan_item else None    # parsed once (T3)
     out = {}
     for name in ALL99.NATIVE_ENTRIES:
         spec = (carriers or {}).get(name) or dict(ALL99.NATIVE_SERIES[name], source='retained crosswalk carrier text (NATIVE_SERIES)')

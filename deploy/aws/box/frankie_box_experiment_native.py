@@ -65,8 +65,48 @@ def evidence_contract(role):
 
 
 def _witness(path):
-    from frankie_box_durable import witness
-    return witness(path)
+    # one pass (2026-10-09): the process-cached witness (frankie_box_filehash: once per unchanged file per process)
+    try:
+        import frankie_box_filehash as F
+    except ImportError:
+        try:
+            from deploy.aws.box import frankie_box_filehash as F
+        except ImportError:
+            from frankie_box_durable import witness
+            return witness(path)
+    return F.witness(path)
+
+
+_PLAN_CACHE = {}
+
+
+def plan_document(path):
+    """(pin {path, bytes, sha256}, parsed document) of the ROOT projection plan (~150 MB), read ONCE per unchanged file
+    per process (Greg, 2026-10-09: one pass): the same bytes are hashed and parsed; the witness is remembered in
+    frankie_box_filehash so a later witness() of the unchanged file reads nothing. selected_files, the shared market
+    timeline and the data export all take it here."""
+    path = Path(path)
+    info = os.stat(path)
+    key = (str(path.resolve()), info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns)
+    hit = _PLAN_CACHE.get(key)
+    if hit is not None:
+        return dict(hit[0]), hit[1]
+    raw = path.read_bytes()
+    pin = dict(path=str(path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+    if (os.stat(path).st_ino, os.stat(path).st_size, os.stat(path).st_mtime_ns) != key[2:]:
+        raise ValueError('the projection plan changed while it was read: ' + str(path))
+    document = json.loads(raw)
+    _PLAN_CACHE.clear()                  # one plan per process at a time (the day's)
+    _PLAN_CACHE[key] = (pin, document)
+    try:
+        try:
+            import frankie_box_filehash as F
+        except ImportError:
+            from deploy.aws.box import frankie_box_filehash as F
+        F.remember(path, {k: pin[k] for k in ('bytes', 'sha256')})
+    except Exception:  # noqa: BLE001 - the cache is a convenience
+        pass
+    return dict(pin), document
 
 
 def _check(path, pin, measured=None):
@@ -271,7 +311,9 @@ def selected_files(root, day):
         raise ValueError('native derivation lacks its completed authoritative ledgers')
     selected = []
     layers = derive.get('layers') or {}
+    # one pass (T3, 2026-10-09): result.json (~225 MB) takes the ROOT's claim with the ledgers and sections
     pool, measured = _prefetch_witnesses(root, [(native['ledgers'].get(name), name, 'work/bedrock') for name in LEDGERS]
+                                         + [(native.get('result'), 'result.json', 'work/bedrock')]
                                          + [(layers.get(name), name + '.json.gz', 'work/derived/.projection-v2')
                                             for name in SECTIONS])
     try:
@@ -319,8 +361,9 @@ def _take_all(root, binding, native, derive, policy, selected, measured):
     plan_path = root / 'work/derived/.projection-v2/plan.json'
     if plan_path.is_file() and not plan_path.is_symlink():
         # the producers' per-layer crosswalk; it must name the very ledgers selected above (else integrity, raised)
-        plan_pin = dict(path=str(plan_path), **_witness(plan_path))
-        plan_doc = json.loads(plan_path.read_bytes())
+        plan_pin, plan_doc = plan_document(plan_path)      # read once per process: hashed and parsed from one read
+        measured[plan_pin['path']] = _Known({k: plan_pin[k] for k in ('bytes', 'sha256')},
+                                            'read once (plan_document: hashed and parsed from the same bytes)')
         for kind, name in (('member', LEDGERS[0]), ('lifecycle', LEDGERS[1])):
             if {k: (plan_doc.get('ledgers') or {}).get(kind, {}).get(k) for k in ('path', 'bytes', 'sha256')} != \
                     {k: native['ledgers'][name][k] for k in ('path', 'bytes', 'sha256')}:

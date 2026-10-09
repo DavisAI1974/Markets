@@ -635,9 +635,15 @@ class SharedMarketTimeline:
                                        'never promoted to a fresh observation')
         # The native-only entries' own carriers: the producers' per-layer crosswalk from the ROOT projection plan when
         # it was selected (bound to the same ledgers by selected_files), else the retained crosswalk's carrier text.
-        from frankie_box_experiment_native import PROJECTION_PLAN, entry_carriers
+        from frankie_box_experiment_native import PROJECTION_PLAN, entry_carriers, plan_document
         plan_item = selected.get(PROJECTION_PLAN)
-        plan_carriers = entry_carriers(_json(dict(path=plan_item['source'], **plan_item['expected']))) if plan_item else None
+        plan_carriers = None
+        if plan_item:
+            # one pass (T3): the plan selected_files just read and parsed in this process (plan_document), not re-read
+            plan_pin, plan_doc = plan_document(_local(plan_item['source']))
+            if {k: plan_pin[k] for k in ('bytes', 'sha256')} != plan_item['expected']:
+                raise ValueError('shared market metadata differs from its source pin: ' + plan_item['source'])
+            plan_carriers = entry_carriers(plan_doc)
         self.native_carriers = {name: (dict(plan_carriers[name]) if plan_carriers and name in plan_carriers else
                                        dict(ALL99.NATIVE_SERIES[name], source='retained crosswalk carrier text '
                                             '(frankie_box_all99_coverage.NATIVE_SERIES)'))
