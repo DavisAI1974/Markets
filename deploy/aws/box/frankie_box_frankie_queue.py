@@ -2437,11 +2437,32 @@ def _retain_quietly(x):
 
 
 def _wake_after(job, *args):
-    """A day thread: its job, then one wake, so the ROOT worker's main loop handles the end at once (2026-10-09)."""
+    """A day thread: its job, then one wake, so the ROOT worker's main loop handles the end at once (2026-10-09). The
+    holder (the last argument) is marked ended BEFORE the wake, so the main loop never reads the thread as alive in the
+    instant between the wake and the thread's exit (it would then wait with no further event)."""
     try:
         job(*args)
     finally:
+        if args and isinstance(args[-1], dict):
+            args[-1]['ended'] = True
         notify('root-thread-end')
+
+
+_OWN_WAKES = ('root-thread-end', 'line-root')   # the ROOT worker's own writes: never a reason to retry a waiting day
+
+
+def _wake_marks():
+    """{name: (inode, mtime_ns, size)} of the wake directory's files now: compared after a wait, it names the hand-offs
+    that happened (a booking released, a clean ended, a stage status), never the worker's own thread end or line save."""
+    out = {}
+    try:
+        for p in wake_dir().iterdir():
+            if not p.name.startswith('.'):
+                st = p.stat()
+                out[p.name] = (st.st_ino, st.st_mtime_ns, st.st_size)
+    except OSError:
+        pass
+    return out
 
 
 def _root_waiter(doc, running):
@@ -2512,13 +2533,16 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
     while True:
         if deadline is not None and time.monotonic() >= deadline:
             stop.setdefault('reason', 'the time bound (%d s)' % max_seconds)
-        finished = [seq for seq, job in running.items() if not job['thread'].is_alive()]
+        finished = [seq for seq, job in running.items() if not job['thread'].is_alive() or job['holder'].get('ended')]
+        for seq in finished:
+            running[seq]['thread'].join()           # it ended (marked before its wake): the join returns at once
         after, owner_waiting = [], []
         with locked():
             doc = load('root')
             if waiter is not None:
                 waiter.close()
             waiter = _root_waiter(doc, running)     # built BEFORE this pass's checks: no change after them is missed
+            marks = _wake_marks()                   # with it: the hand-offs after this point re-admit a waiting day
             for seq in finished:
                 job = running.pop(seq)
                 y = find(doc, seq)
@@ -2605,6 +2629,10 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                 elif result == 'queued':
                     y.update(state='queued', where=None, reason='back in line at its own place: %s' % reason,
                              wait=wait_of(y, reason, facts))
+                    # 2026-10-09: no busy retry. Like a failed or waiting finish, it is admitted again only when an awaited
+                    # input on disk changes (wait_changed) or another hand-off on the box happens (a booking released, a
+                    # clean ended: the wake directory), never on its own thread's end
+                    retried.add(seq)
 
                     if _owned_root(y):
                         # session 9: an OWNED day (a resume, or its ROOT directory exists) keeps its owner binding and
@@ -2703,6 +2731,8 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                         blocked = x
                         break                               # the line stops at a failed entry (never skipped)
                     retried.add(x['seq'])                   # retried once per worker start
+                elif x['state'] == 'queued' and x['seq'] in retried:
+                    continue                                # back in line waiting: admitted again on its event (below)
                 if stop:
                     break
                 slot, cpus, why = _book_slot(x, 'root', commit)
@@ -2798,6 +2828,13 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
         for seq, waits in getattr(waiter, 'waits', {}).items():
             if seq in retried and any(wait_changed(w) for w in waits):
                 retried.discard(seq)                # its awaited input appeared or changed: retried once more now
+        now_marks = _wake_marks()
+        if any(now_marks.get(name) != mark for name, mark in list(marks.items()) + [(n, None) for n in now_marks]
+               if name not in _OWN_WAKES and now_marks.get(name) != marks.get(name)):
+            with locked():                          # another hand-off happened: every day back in line is re-admitted
+                for x in load('root').get('entries') or []:
+                    if x.get('state') == 'queued':
+                        retried.discard(x['seq'])
     if waiter is not None:
         waiter.close()
     return code
