@@ -13,7 +13,8 @@ counts are keyed by the sha256 of the candidate's text, so a part's counts are a
 merge (table-wide counts and first-occurrence numbering, on digests), final (each part planned again from its seed and
 written as row text, plus the text of the dictionary entries it numbers first), copy (the parts appended to the table,
 each part deleted as soon as it is appended), inverse proof (streamed per part). Every helper stops cleanly before the
-scratch filesystem's free space falls under DISK_RESERVE. Each pass is a save point keyed by the code it depends on.
+scratch filesystem's free space falls under DISK_RESERVE. Each pass is a save point keyed by the table's data identity and
+its PASS_FORMAT integer; the code is recorded beside it, never compared (Greg, 2026-10-09).
 
 Row sources are described, not passed: ('members', database, group keys) or ('rows', database, query, parameters,
 excluded, start, count), so each helper reads its own range of a finished sources.sqlite read-only.
@@ -698,9 +699,56 @@ def _source_witness(spec):
     return [st.st_size, st.st_mtime_ns]
 
 
-def _part_token(key, code, label, index, spec, extra=None):
+# The per-part progress record's format (the state pickled at each chunk). Like PASS_FORMAT, bumped by hand ONLY when the
+# record's bytes or meaning change; the code is never in the token.
+PART_FORMAT = 1
+
+
+def _part_token(key, label, index, spec, extra=None):
+    """A part's progress token: the table's checkpoint key (data identity), the pass and part formats, the pass, the
+    part's index, the source file as it stands and the pass's extra data. No code: a code edit never discards progress."""
+    return hashlib.sha256(json.dumps([key, dict(part=PART_FORMAT, passes=PASS_FORMAT[label]), label, index,
+                                      _source_witness(spec), extra], sort_keys=True, default=str).encode()).hexdigest()
+
+
+def _legacy_part_token(key, code, label, index, spec, extra=None):
+    """The token a runtime before the format keys wrote (its pass code hash in place of the formats). Such a progress
+    record is taken when its token equals this one under the current code record (the part's state format is
+    PART_FORMAT 1 in both). A record whose code hash differs cannot be recognised from its opaque token: its files are
+    MOVED aside by the coordinator (write_table_parallel.durable), never deleted, and the part starts fresh."""
     return hashlib.sha256(json.dumps([key, code[label], label, index, _source_witness(spec), extra],
                                      sort_keys=True, default=str).encode()).hexdigest()
+
+
+def _part_pass_files(directory, label):
+    """The files a part's durable progress of this pass consists of (snapshot: the record and its cross chunks; plan:
+    the count database with its log, the cells and the digests)."""
+    directory = Path(directory)
+    if label == 'snapshot':
+        return [directory / SNAPSHOT_PROGRESS] + sorted(directory.glob('cross-*.pkl'))
+    if label == 'plan':
+        return [directory / name for name in PLAN_FILES]
+    return []
+
+
+def _saved_part_token(directory, label):
+    """The token on a part's saved progress record of this pass, read-only (None when there is none)."""
+    directory = Path(directory)
+    try:
+        if label == 'snapshot':
+            saved = _load_pickle(directory / SNAPSHOT_PROGRESS)
+            return saved.get('token') if isinstance(saved, dict) else None
+        if label == 'plan' and (directory / 'freq.sqlite').is_file():
+            probe = sqlite3.connect(directory / 'freq.sqlite')      # as the plan helper itself reads it (WAL)
+            try:
+                found = probe.execute('SELECT blob FROM progress WHERE id=0').fetchone()
+            finally:
+                probe.close()
+            saved = pickle.loads(found[0]) if found else None
+            return saved.get('token') if isinstance(saved, dict) else None
+    except (sqlite3.Error, pickle.UnpicklingError, EOFError, ValueError, OSError, AttributeError, TypeError):
+        return None
+    return None
 
 
 def _sync_dir(directory):
@@ -1279,10 +1327,21 @@ def _verify(job):
 CHECKPOINT_SCHEMA = 'FRANKIE_PARALLEL_TABLE_PASSES_V3'   # V3: snapshots carry the DG.Observer (V8 facts)
 
 
+# THE CODE VERSION IS RECORDED, NEVER COMPARED (Greg, 2026-10-09). A saved pass is reused while the table's checkpoint
+# key (name, part specs, pass modes: data identity) matches and its PASS_FORMAT integer, and every earlier pass's, is the
+# current one. A format is bumped by hand ONLY when the pass's saved result (or the files it leaves for the next pass)
+# changes for the same inputs; a code edit never refuses, discards or reruns a saved pass. The insertion order is the
+# pass order.
+PASS_FORMAT = dict(snapshot=1, plan=1, merge=1, final=1, copy=1)
+# A passes.pkl written before the format integers existed carries the pass code hashes instead: every such pass is
+# format 1 (the saved results and the table bytes were verified identical across the changes up to the format keys).
+FORMAT_BEFORE_FORMATS = 1
+
+
 def _pass_code():
-    """What each pass's saved result depends on, cumulatively (a pass's result is reused only while its own code and
-    the code of every earlier pass are unchanged): V2 keys passes by these sources, not by the whole file's bytes, so a
-    fix in a later pass or in the orchestration keeps the passes before it."""
+    """A RECORD of the code each pass's saved result came from, cumulatively, written beside the formats in passes.pkl
+    (never compared; the hash a runtime before the format keys keyed passes and part progress by, so _legacy_part_token
+    can recognise that runtime's progress records while the code is unchanged)."""
     import inspect
     import frankie_box_digest_sources as S
     base = [hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest() for m in (TS, DG)]
@@ -1305,26 +1364,31 @@ def _checkpoint_key(name, specs):
     return dict(schema=CHECKPOINT_SCHEMA, name=name, specs=hashlib.sha256(pickle.dumps(specs, protocol=4)).hexdigest())
 
 
-def _load_checkpoint(scratch, key, code):
-    """The saved passes whose code still matches, in pass order up to the first that does not (None: nothing usable)."""
+def _load_checkpoint(scratch, key):
+    """The saved passes of this key (data identity) whose format is the current one, in pass order up to the first that
+    is not (None: nothing usable). The code recorded beside them is never compared; a passes.pkl from before the format
+    integers (code hashes only) is read as FORMAT_BEFORE_FORMATS for every pass."""
     try:
         value = pickle.loads((scratch / 'passes.pkl').read_bytes())
-    except (OSError, ValueError, EOFError, pickle.UnpicklingError):
+    except (OSError, ValueError, EOFError, pickle.UnpicklingError, AttributeError, ImportError):
         return None
     if not isinstance(value, dict) or value.get('key') != key:
         return None
-    passes, saved, codes = {}, value.get('passes') or {}, value.get('code') or {}
-    for label in code:
-        if label not in saved or codes.get(label) != code[label]:
+    passes, saved = {}, value.get('passes') or {}
+    formats = value.get('format') if isinstance(value.get('format'), dict) else {}
+    for label in PASS_FORMAT:
+        if label not in saved or formats.get(label, FORMAT_BEFORE_FORMATS) != PASS_FORMAT[label]:
             break
         passes[label] = saved[label]
     return passes or None
 
 
 def _save_checkpoint(scratch, key, code, passes):
+    """passes.pkl: the key, each saved pass's format (compared on reuse) and the code record (never compared)."""
     tmp = scratch / 'passes.pkl.tmp'
     with tmp.open('wb') as handle:
-        pickle.dump(dict(key=key, code={label: code[label] for label in passes}, passes=passes), handle, protocol=4)
+        pickle.dump(dict(key=key, format={label: PASS_FORMAT[label] for label in passes},
+                         code={label: code[label] for label in passes if label in code}, passes=passes), handle, protocol=4)
         handle.flush()
         os.fsync(handle.fileno())
     os.replace(tmp, scratch / 'passes.pkl')
@@ -1342,13 +1406,13 @@ def _same_device(directory, scratch):
         return False
 
 
-def _adopt_checkpoint(scratch, key, code):
+def _adopt_checkpoint(scratch, key):
     """Session 9: the pass save points of THIS table left by an earlier stopped attempt of the same calculation root.
     Every digest call writes into a fresh <root>/work/derived/.digest-<uuid4> (frankie_box_boss_session.Session._write_digest),
     so this table's scratch (<that>/table-NNNN.parallel) is new on every start, and before this a stopped render (the stop
     file, a kill, the ROOT child's in-process digest) never found its own passes.pkl again. Here the sibling
     .digest-*/<the same table directory name> whose passes.pkl holds the most passes usable under exactly this key (the
-    table's name and part specs, the pass modes) and this pass code is MOVED to `scratch` (one rename on the same
+    table's name and part specs, the pass modes) and the current pass formats is MOVED to `scratch` (one rename on the same
     filesystem: nothing copied, nothing deleted; the earlier scratch keeps everything else). Returns the passes, or None.
     The caller's lock (the calculation root's single digest writer) keeps two writers off one directory."""
     scratch = Path(scratch)
@@ -1357,7 +1421,7 @@ def _adopt_checkpoint(scratch, key, code):
         directory = saved.parent
         if directory.parent == scratch.parent or directory.is_symlink() or not _same_device(directory, scratch):
             continue
-        passes = _load_checkpoint(directory, key, code)
+        passes = _load_checkpoint(directory, key)
         if passes and (best is None or len(passes) > len(best[1])):
             best = (directory, passes)
     if best is None:
@@ -1366,10 +1430,10 @@ def _adopt_checkpoint(scratch, key, code):
     os.rename(best[0], scratch)
     with (scratch / 'adopted.json').open('a', encoding='utf-8') as handle:
         handle.write(json.dumps(dict(schema='FRANKIE_PARALLEL_TABLE_ADOPTED_V1', moved_from=str(best[0]),
-                                     passes=[label for label in code if label in best[1]], at=time.time()),
+                                     passes=[label for label in PASS_FORMAT if label in best[1]], at=time.time()),
                                 sort_keys=True) + '\n')
     _stage_phase('root-digest: table %s resumes from %s (saved passes: %s)' % (
-        key.get('name'), best[0], ', '.join(label for label in code if label in best[1])))
+        key.get('name'), best[0], ', '.join(label for label in PASS_FORMAT if label in best[1])))
     return best[1]
 
 
@@ -1416,24 +1480,43 @@ def _adopt_progress(scratch, key):
     return True
 
 
+def _aside(scratch):
+    """A new sibling directory a non-matching save is MOVED into (never deleted: Greg, 2026-10-09)."""
+    scratch = Path(scratch)
+    for attempt in range(1000):
+        target = scratch.with_name('%s.aside-%d-%d' % (scratch.name, time.time_ns(), attempt))
+        if not target.exists():
+            return target
+    raise FileExistsError('no free aside name next to %s' % scratch)
+
+
 def _clear_scratch(scratch, key):
-    """No usable pass save point: the scratch starts over, except the part directories when the scratch's progress key
-    is exactly this key (session 9: each helper keeps or discards its own part's progress by its token)."""
+    """No usable pass save point: the scratch starts over. Nothing is deleted (Greg, 2026-10-09: a save is never
+    discarded because a key differs): when the scratch's progress key is another table key, the whole scratch is MOVED
+    aside (<scratch>.aside-<ns>-<n>, one rename); when it is exactly this key, the part directories stay (session 9: each
+    helper keeps or starts its own part's progress by its token, and adopted.json, the adoption log, stays) and everything
+    else is moved into one aside directory. Returns the aside directory, or None when nothing was moved."""
     marker = scratch / PROGRESS_KEY
     try:
         same = json.loads(marker.read_text()).get('key') == _key_digest(key)
     except (OSError, ValueError, AttributeError):
         same = False
     if not same:
-        shutil.rmtree(scratch)
-        return
-    for path in scratch.iterdir():
-        if path.name == PROGRESS_KEY or (path.is_dir() and path.name.startswith('part-')):
-            continue
-        if path.is_dir() and not path.is_symlink():
-            shutil.rmtree(path)
-        else:
-            path.unlink()
+        target = _aside(scratch)
+        os.rename(scratch, target)
+        _stage_phase('root-digest: table scratch %s set aside to %s (another table key; nothing deleted)' % (scratch, target))
+        return target
+    moving = [path for path in scratch.iterdir()
+              if not (path.name in (PROGRESS_KEY, 'adopted.json') or (path.is_dir() and path.name.startswith('part-')))]
+    if not moving:
+        return None
+    target = _aside(scratch)
+    target.mkdir()
+    for path in moving:
+        os.rename(path, target / path.name)
+    _stage_phase('root-digest: table scratch %s: %d saved entries without a usable pass set aside to %s (nothing deleted)'
+                 % (scratch, len(moving), target))
+    return target
 
 
 def _seeds(snaps):
@@ -1562,8 +1645,9 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
     helper and the copy keep free on the scratch filesystem.
 
     Save points per pass (Greg, 2026-09-28: stop, fix and restart without losing work): each finished pass records its
-    result in scratch/passes.pkl, keyed by the table's parts and the code the pass depends on (_pass_code); a rerun with
-    the same scratch directory resumes at the first pass not saved under the current code, and a rerun in a NEW digest
+    result in scratch/passes.pkl, keyed by the table's parts and modes and the pass's PASS_FORMAT (the code it ran is
+    recorded beside it, _pass_code, never compared); a rerun with the same scratch directory resumes at the first pass
+    not saved under the current formats, and a rerun in a NEW digest
     scratch (every digest call makes one) first adopts the sibling table directory with the most usable passes
     (_adopt_checkpoint, session 9). A pass's files are deleted
     only once the pass that reads them is saved.
@@ -1592,12 +1676,13 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
     canon = modes['canonical_verify'] and canon_ok
     key, code = _checkpoint_key(name, specs), _pass_code()
     key = dict(key, modes=dict(fuse_context=fused, one_decode=one, canonical_verify=canon))
-    passes = _load_checkpoint(scratch, key, code) if scratch.is_dir() else _adopt_checkpoint(scratch, key, code)
+    passes = _load_checkpoint(scratch, key) if scratch.is_dir() else _adopt_checkpoint(scratch, key)
     if passes is None and not scratch.exists():
         _adopt_progress(scratch, key)         # session 9: a stop inside the first pass left per-part progress only
     if passes is None:
         if scratch.exists():
-            _clear_scratch(scratch, key)      # no usable save point: starts over, except matching per-part progress
+            _clear_scratch(scratch, key)      # no usable save point: starts over (moved aside, never deleted),
+                                              # except matching per-part progress
         scratch.mkdir(parents=True, exist_ok=True)
         passes = {}
     marker = scratch / PROGRESS_KEY
@@ -1606,9 +1691,30 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
     # session 9: per-part durable progress inside the source-reading passes (chunking and stop file are orchestration)
     chunking, stop_file = chunk_setting(), os.environ.get(STOP_FILE_ENV)
 
+    aside = []
+
     def durable(label, index, spec, extra=None):
-        return dict(token=_part_token(key, code, label, index, spec, extra), chunking=chunking, stop=stop_file,
-                    reserve=reserve)
+        # the part's token: the format-keyed one; a part whose saved record carries the token a runtime before the
+        # format keys wrote (its code hash, the same code) keeps that token so the helper resumes it. A part's saved
+        # progress of this pass under any other token is MOVED aside here (never deleted by the helper's fresh start)
+        token = _part_token(key, label, index, spec, extra)
+        legacy = _legacy_part_token(key, code, label, index, spec, extra)
+        stored = _saved_part_token(parts[index], label)
+        if stored == legacy:
+            token = legacy
+        elif stored != token:
+            files = [path for path in _part_pass_files(parts[index], label) if path.exists()]
+            if files:
+                if not aside:
+                    aside.append(_aside(scratch))
+                    aside[0].mkdir()
+                    _stage_phase('root-digest: table %s: part progress under another token set aside to %s '
+                                 '(nothing deleted)' % (name, aside[0]))
+                target = aside[0] / parts[index].name / label
+                target.mkdir(parents=True)
+                for path in files:
+                    os.rename(path, target / path.name)
+        return dict(token=token, chunking=chunking, stop=stop_file, reserve=reserve)
     given = progress or (lambda *a: None)
     labels = ('snapshot', 'plan', 'merge', 'final', 'copy', 'verify')
 
@@ -1627,7 +1733,7 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
             for filename in filenames:
                 (p / filename).unlink(missing_ok=True)
 
-    order = list(code)
+    order = list(PASS_FORMAT)
 
     def resume_from(label):
         nonlocal passes
@@ -1927,15 +2033,18 @@ def split_specs(spec, parts):
 # ---- reuse of a finished sources.sqlite ---------------------------------------------------------------------------
 
 SOURCES_SAVE_SCHEMA = 'FRANKIE_SOURCES_SAVE_V1'
+# sources.sqlite's format: bumped by hand ONLY when its bytes (or the rows read from it) change for the same layers.
+# The code is recorded beside it (sources_code), never compared (Greg, 2026-10-09). A receipt written before the format
+# integer (its key carries the code hashes) is format 1.
+SOURCES_FORMAT = 1
 
 
 def sources_code():
-    """The code whose change could change sources.sqlite or the rows read from it: the merge (MERGE_CODE, which also
-    covers layer preparation), the per-layer copy, the row queries and readers. BedrockSources.__init__ is not keyed
-    here: since b35e79b7 it differs only by the save-point identity it passes to _merge_sharded (2026-09-27)."""
+    """A RECORD of the code that shapes sources.sqlite or the rows read from it (never compared): the merge
+    (MERGE_CODE, which also covers layer preparation), the per-layer copy, the row queries and readers."""
     import inspect
     import frankie_box_digest_sources as S
-    code = dict(S.merge_shard_key([])['code'])
+    code = dict(S.merge_code())
     for name, function in (('BedrockSources._merge', S.BedrockSources._merge), ('BedrockSources._rows', S.BedrockSources._rows),
                            ('_Rows', S._Rows), ('_Members', S._Members), ('_compare_groups', S._compare_groups),
                            ('_reusable_prepared', S._reusable_prepared)):
@@ -1945,19 +2054,30 @@ def sources_code():
 
 def sources_key(entries):
     identity = [[i, name, pin.get('sha256')] for i, (name, pin) in enumerate(entries.items())]
-    return json.loads(json.dumps(dict(schema=SOURCES_SAVE_SCHEMA, layers=identity, code=sources_code())))
+    return json.loads(json.dumps(dict(schema=SOURCES_SAVE_SCHEMA, layers=identity, format=SOURCES_FORMAT)))
+
+
+def _sources_identity(key):
+    """A sources key's data identity: the code dropped (recorded, never compared), the format named (1 for a key
+    written before the format integer)."""
+    if not isinstance(key, dict):
+        return key
+    out = {k: v for k, v in key.items() if k != 'code'}
+    out.setdefault('format', 1)
+    return out
 
 
 def saved_sources(entries, layers_root):
-    """A finished sources.sqlite an earlier digest attempt of this calculation root left, receipted with this key and
-    unchanged since (bytes and mtime), or None."""
-    key = sources_key(entries)
+    """A finished sources.sqlite an earlier digest attempt of this calculation root left, receipted under this key's
+    data identity (layers, format; the code recorded on an older receipt is not compared) and unchanged since (bytes
+    and mtime), or None."""
+    key = _sources_identity(sources_key(entries))
     for receipt in sorted(Path(layers_root).parent.parent.glob('.digest-*/calculation-layers/sources.save.json')):
         try:
             value = json.loads(receipt.read_bytes())
             path = Path(value['path'])
             info = path.stat()
-            if (value.get('key') == key and path.parent == receipt.parent and path.name == 'sources.sqlite'
+            if (_sources_identity(value.get('key')) == key and path.parent == receipt.parent and path.name == 'sources.sqlite'
                     and not path.is_symlink() and info.st_size == value['bytes'] and info.st_mtime_ns == value['mtime_ns']
                     and not (path.parent / 'sources.sqlite-journal').exists()):
                 return path.parent

@@ -113,12 +113,21 @@ def per_second_rows(first, buys, sells, roll, window=20):
 
 TABLE_SAVE_SCHEMA = 'FRANKIE_DIGEST_TABLE_SAVE_V2'   # V2: every module that shapes a table, the inputs, sha256-checked reuse
 
+# THE CODE VERSION IS RECORDED, NEVER COMPARED (Greg, 2026-10-09). A save point (a table receipt, a pending.json entry)
+# is keyed by DATA identity only: the table's name and context, its input layers' sha256s (legacy) or its layer pins
+# and row query (bedrock), and TABLE_FORMAT, an explicit integer bumped by hand ONLY when a table's bytes for the same
+# inputs change (the serializer/renderer format, or the rows the readers produce). A code edit never refuses, discards
+# or rebuilds a saved table. _code_identity() is written BESIDE the key on every receipt, as a record.
+TABLE_FORMAT = 1
+# Every save written before the format integer existed (its key carries the code hashes instead) is format 1: the
+# digest bytes were verified byte-identical across every change up to the format keys (2026-10-09).
+FORMAT_BEFORE_FORMATS = 1
+
 
 def _code_identity():
-    """The code whose change could change a table's bytes: the serializer and renderer (the format), and the code that
-    produces the rows (the row readers over sources.sqlite, the per-second rows, the bedrock job transform, the parallel
-    row reader). Orchestration (document assembly, save lookup, the parallel coordinator's scheduling) is not keyed, so
-    a fix there reuses every finished table; the parallel writer's bytes equal write_table's by construction."""
+    """A RECORD of the code that can shape a table's bytes, written beside each save key (never compared): the
+    serializer and renderer, and the code that produces the rows (the row readers over sources.sqlite, the per-second
+    rows, the bedrock job transform, the parallel row reader)."""
     import inspect
     import frankie_box_digest_sources as S
     import frankie_box_digest_parallel as P
@@ -137,26 +146,28 @@ def _canonical(value):
     return json.loads(json.dumps(value, sort_keys=True))
 
 
-# A legacy table is written by TS.write_table from the legacy layers: only the codec, the renderer and the per-second rows
-# reach its bytes. The bedrock row readers in _code_identity key the bedrock tables only (2026-09-28: the members reader
-# changed and must not rebuild the five legacy save points).
-LEGACY_CODE = ('frankie_box_digest_stream.py', 'frankie_box_digest_render.py', 'document.per_second_rows')
+def legacy_key(name, context, inputs):
+    return _canonical(dict(kind='legacy', name=name, context=sorted(context or {}), format=TABLE_FORMAT, inputs=inputs))
 
 
-def legacy_key(name, context, code, inputs):
-    return _canonical(dict(kind='legacy', name=name, context=sorted(context or {}), code={k: code[k] for k in LEGACY_CODE},
-                           inputs=inputs))
+def _data_identity(key):
+    """A key with its code dropped (an older save's key carried the code hashes; they are a record now) and its format
+    named (FORMAT_BEFORE_FORMATS for a key written before the format integer)."""
+    if not isinstance(key, dict):
+        return key
+    out = {k: v for k, v in key.items() if k != 'code'}
+    out.setdefault('format', FORMAT_BEFORE_FORMATS)
+    return out
 
 
 def _key_matches(stored, key):
-    """A receipt's key equals this key. A legacy receipt written before legacy_key carries the whole code identity; it
-    matches when its legacy code entries (and everything else) do."""
+    """A receipt's key names the same data as this key: equal once the code is dropped from both (code is recorded,
+    never compared) and an older key without a format is read as FORMAT_BEFORE_FORMATS. An older receipt's key thus maps
+    to this key when its data identity (kind, name, context, inputs or layers and spec) matches and its format is the
+    current one."""
     if stored == key:
         return True
-    if not (isinstance(stored, dict) and isinstance(key, dict) and key.get('kind') == 'legacy' and stored.get('kind') == 'legacy'
-            and isinstance(stored.get('code'), dict) and all(k in stored['code'] for k in LEGACY_CODE)):
-        return False
-    return dict(stored, code={k: stored['code'][k] for k in LEGACY_CODE}) == key
+    return isinstance(stored, dict) and isinstance(key, dict) and _data_identity(_canonical(stored)) == _data_identity(key)
 
 
 CLAIM_TAIL = 64 << 10
@@ -183,7 +194,7 @@ def _claim_holds(path, claim):
 
 def _saved_table(scratch, ordinal, key, context=False):
     """Save point for reruns: the table at this ordinal that an earlier digest attempt of this calculation root wrote,
-    proved and receipted with exactly this key (name, inputs, code). One pass (2026-10-09): a receipt that carries the
+    proved and receipted under this key (name, inputs, format; the code is recorded, never compared). One pass (2026-10-09): a receipt that carries the
     table's stat claim (_stat_claim, written when it was proved) is taken while the claim holds, one 64 KiB read, never
     a whole re-hash; an older receipt without one is hashed whole as before. The same for a legacy table's context
     database. Otherwise the next candidate is tried or the table is rebuilt. Its bytes are read once more only by the
@@ -221,13 +232,14 @@ def _saved_table(scratch, ordinal, key, context=False):
     return None
 
 
-def _save_table(scratch, ordinal, key, entry, context=None, context_claim=None):
+def _save_table(scratch, ordinal, key, entry, context=None, context_claim=None, code=None):
     """The table's save receipt: its digest when known (None for a serial table: its bytes are hashed once, by the
-    assembly copy), and its stat claim, which a rerun takes instead of re-hashing it (_saved_table)."""
+    assembly copy), and its stat claim, which a rerun takes instead of re-hashing it (_saved_table). code: the code
+    record (_code_identity), written beside the key, never compared."""
     _save_new(scratch/('table-%04d.save.json' % ordinal),
               dict(schema=TABLE_SAVE_SCHEMA, key=key, name=entry['name'], rows=entry['rows'],
                    path=str(entry['path']), digest=entry.get('digest'), claim=_stat_claim(entry['path']),
-                   context=context, context_claim=context_claim))
+                   context=context, context_claim=context_claim, code=code))
 
 
 def _bedrock_table_job(job):
@@ -265,8 +277,8 @@ def bedrock_spec(rows, root):
                 parameters=rows.parameters, excluded=getattr(rows, 'excluded', None))
 
 
-def bedrock_key(name, code, layers_identity, spec):
-    return _canonical(dict(kind='bedrock', name=name, code=code, layers=layers_identity,
+def bedrock_key(name, layers_identity, spec):
+    return _canonical(dict(kind='bedrock', name=name, format=TABLE_FORMAT, layers=layers_identity,
                            spec={k: v for k, v in spec.items() if k != 'database'}))
 
 
@@ -447,7 +459,7 @@ class _Assembly:
         with self.cond:
             entry = self.adopted[0] if self.adopted else None
             if (entry is None or self.cut or self.next != ordinal or entry['ordinal'] != ordinal
-                    or entry.get('key') != _canonical(key)):
+                    or not _key_matches(entry.get('key'), _canonical(key))):
                 self.cut = True
                 return None
             if entry.get('status') != 'verified':
@@ -465,7 +477,7 @@ class _Assembly:
         with self.cond:
             entry = self.adopted[0] if self.adopted else None
             if (entry is not None and not self.cut and self.next == ordinal and entry['ordinal'] == ordinal
-                    and entry.get('key') == _canonical(key) and entry.get('status') == 'copied'):
+                    and _key_matches(entry.get('key'), _canonical(key)) and entry.get('status') == 'copied'):
                 return entry
             return None
 
@@ -843,7 +855,7 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
         for key, count in db.execute('SELECT name,count FROM families ORDER BY count DESC,first_ordinal'):
             yield dict(action_string=key,count=count)
 
-    code = _code_identity()
+    code = _code_identity()               # a record beside every save key, never compared
     # The legacy tables' inputs are the legacy layer files the derivation receipt witnessed (prices, frames, structures
     # and the per-second series are read from them), so their sha256s key every legacy table.
     legacy_inputs = {name: entry.get('sha256') for name, entry in sorted((receipt.get('layers') or {}).items())
@@ -905,13 +917,13 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
             raise ValueError('proved table changed before its byte witness')
         context = dict(path=str(root/'table.sqlite'), claim=_stat_claim(root/'table.sqlite'))
         legacy_stages[ordinal] = dict(name=name, rows=rows, path=path, digest=None)
-        _save_table(scratch, ordinal, key, legacy_stages[ordinal], context_claim=context['claim'])
+        _save_table(scratch, ordinal, key, legacy_stages[ordinal], context_claim=context['claim'], code=code)
         assembly.offer(ordinal, dict(legacy_stages[ordinal], identity=identity, key=key, context=context))
 
     def serial_table(ordinal, name, rows, context):
         root = scratch/('table-%04d' % ordinal)
         path = scratch/('table-%04d.txt' % ordinal)
-        key = legacy_key(name, context, code, legacy_inputs)
+        key = legacy_key(name, context, legacy_inputs)
         entry = timed(ordinal, name, 'serial')
         proof = TS.write_table(path, name, rows, root, context=context)
         if TS._identity(path) != proof['verified_identity']:
@@ -960,7 +972,7 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
         # or FRANKIE_DIGEST_PARTS_DIR / the archive volume when the scratch volume cannot hold them: _disk_plan).
         entry = timed(ordinal, name, 'parallel')
         path = scratch/('table-%04d.txt' % ordinal)          # never created with into; the writer's name for the table
-        key = legacy_key(name, None, code, legacy_inputs)
+        key = legacy_key(name, None, legacy_inputs)
         # the context columns are handed over whether or not they are fused (the writer fuses only under its
         # setting; given them it counts the separate cross-context decode on its proof: source_decodes 5 at =5)
         columns = cross_columns_of(name) or None
@@ -1006,7 +1018,7 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
         # one pass: the table's witness is the writer's write-stream hash (an older copy save point lacks it: read)
         digest = {k: proof[k] for k in ('bytes', 'sha256')} if 'sha256' in proof else _witness(path)
         bedrock['stages'][index] = dict(name=name, rows=proof['rows'], path=path, digest=digest)
-        _save_table(scratch, ordinal, key, bedrock['stages'][index])
+        _save_table(scratch, ordinal, key, bedrock['stages'][index], code=code)
         assembly.offer(ordinal, dict(bedrock['stages'][index], identity=proof['verified_identity'], key=key, context=None))
         entry['passes'] = proof.get('passes')          # session 9: the pass reductions and the per-part chunk progress
         entry['ended'] = time.time()
@@ -1024,7 +1036,7 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
             for index, (name, rows) in enumerate(tables):
                 ordinal = LEGACY_TABLES + index
                 spec = bedrock_spec(rows, sources.root)
-                key = bedrock_key(name, code, layers_identity, spec)
+                key = bedrock_key(name, layers_identity, spec)
                 held = assembly.accept(ordinal, key)
                 if held is not None:
                     bedrock['stages'][index] = dict(name=held['name'], rows=held['rows'], path=None,
@@ -1044,7 +1056,7 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
     try:
         assembly = _Assembly(scratch, DG.digest_header(receipt).encode('utf-8'), separator, notes, place)
         for ordinal, name in enumerate(names):
-            key = legacy_key(name, context_of[ordinal], code, legacy_inputs)
+            key = legacy_key(name, context_of[ordinal], legacy_inputs)
             held = assembly.accept(ordinal, key)
             if held is not None and held.get('context'):
                 legacy_stages[ordinal] = dict(name=held['name'], rows=held['rows'], path=None,
@@ -1128,7 +1140,7 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
         result = dict(schema='FRANKIE_STREAMED_DIGEST_V1', path=str(destination), verified=True,
                       **staged, tables=[dict(name=e['name'], rows=e['rows'], bytes=e['bytes'], sha256=e['sha256'])
                                         for e in entries],
-                      scratch_directory=str(scratch), disk=disk,
+                      scratch_directory=str(scratch), disk=disk, table_format=TABLE_FORMAT, code_record=code,
                       cpu_schedule=dict(schema='FRANKIE_DIGEST_CPU_SCHEDULE_V1', placement=place, parts=parts,
                                         table_threads=table_threads, helpers=pool.record(), notes=list(notes),
                                         timeline=sorted(timeline, key=lambda e: (e['ordinal'], e['name'])),

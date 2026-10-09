@@ -38,7 +38,7 @@ def _own_saved(side, ordinal, key):
     try:
         value = json.loads(receipt.read_bytes())
         path = Path(value['path'])
-        if (value.get('schema') == D.TABLE_SAVE_SCHEMA and value.get('key') == key and path.parent == side
+        if (value.get('schema') == D.TABLE_SAVE_SCHEMA and D._key_matches(value.get('key'), key) and path.parent == side
                 and path.name == 'table-%04d.txt' % ordinal and path.is_file() and D._witness(path) == value.get('digest')):
             return dict(name=value['name'], rows=value['rows'], path=path, digest=value['digest'], saved=str(receipt))
     except (OSError, ValueError, KeyError, TypeError):
@@ -73,7 +73,7 @@ def main():
     receipt = json.loads((work / 'derive.json').read_bytes())
     entries = {name: entry for name, entry in receipt['layers'].items() if entry.get('bedrock')}
     entries = P.recorded_order(entries, layers_root / 'sources.sqlite')   # derive.json keys are sorted
-    code = D._code_identity()
+    code = D._code_identity()                 # a record beside each save key, never compared
     layers_identity = D.layers_identity_of(entries)
     progress = side / 'progress.jsonl'
 
@@ -91,7 +91,7 @@ def main():
             name, rows = tables[i]
             ordinal = LEGACY_TABLES + i
             spec = D.bedrock_spec(rows, sources.root)
-            key = D.bedrock_key(name, code, layers_identity, spec)
+            key = D.bedrock_key(name, layers_identity, spec)
             saved = _own_saved(side, ordinal, key) or D._saved_table(side, ordinal, key)
             if saved is not None:
                 note(name, 'reused', ordinal=ordinal, saved=saved['saved'])
@@ -106,7 +106,7 @@ def main():
             if D.TS._identity(path) != proof['verified_identity']:
                 raise ValueError('proved table changed before its byte witness')
             entry = dict(name=name, rows=proof['rows'], path=path, digest=digest)
-            D._save_table(side, ordinal, key, entry)
+            D._save_table(side, ordinal, key, entry, code=code)
             note(name, 'saved', ordinal=ordinal, rows=proof['rows'], bytes=digest['bytes'], seconds=round(time.time() - started, 1))
         note(None, 'done')
 

@@ -559,23 +559,39 @@ def _merge_shard(job):
     return output
 
 
-# The code a merge shard's bytes depend on: the shard merge, the helpers it calls, and the layer preparation that
-# writes the rows and the group-key shard assignment it reads. The bedrock TABLE code is deliberately not here, so a
-# table change reuses the merge; any change here rebuilds it.
+# The code a merge shard's bytes come from: the shard merge, the helpers it calls, and the layer preparation that
+# writes the rows and the group-key shard assignment it reads. RECORDED beside each shard's save key, NEVER COMPARED
+# (Greg, 2026-10-09): a shard is keyed by its data identity (the keyed layers' pins, the shard count) and MERGE_FORMAT,
+# an integer bumped by hand ONLY when a shard's bytes change for the same layers.
 MERGE_CODE = {'_merge_shard': _merge_shard, '_decoded': _decoded, '_payload': _payload, '_dump': _dump,
               '_group_key': _group_key, '_member_row': _member_row, '_prepare_layer': _prepare_layer,
               '_prepare_fragments': _prepare_fragments, '_fragment_rows': _fragment_rows,
               '_prepared_database': _prepared_database, '_prepare_published': _prepare_published,
               'DG._same': DG._same, 'DG._leaf_count': DG._leaf_count}
-MERGE_SAVE_SCHEMA = 'FRANKIE_MERGE_SHARD_SAVE_V2'   # V2: narrow code key, sha256 recorded and checked before reuse
+MERGE_SAVE_SCHEMA = 'FRANKIE_MERGE_SHARD_SAVE_V2'   # V2: sha256 recorded and checked before reuse
+MERGE_FORMAT = 1          # a shard receipt written before the format integer (its key carries the code hashes) is 1
+
+
+def merge_code():
+    """The code record of MERGE_CODE (sha256 of each function's source), written beside a shard's key, never compared."""
+    import inspect
+    return {name: hashlib.sha256(inspect.getsource(function).encode()).hexdigest()
+            for name, function in sorted(MERGE_CODE.items())}
 
 
 def merge_shard_key(identity):
-    """identity: [[index, name, pinned layer sha256], ...] of the keyed derived layers, in merge order."""
-    import inspect
-    code = {name: hashlib.sha256(inspect.getsource(function).encode()).hexdigest()
-            for name, function in sorted(MERGE_CODE.items())}
-    return dict(schema=MERGE_SAVE_SCHEMA, shards=SHARDS, layers=json.loads(json.dumps(identity)), code=code)
+    """identity: [[index, name, pinned layer sha256], ...] of the keyed derived layers, in merge order. Data identity
+    and MERGE_FORMAT only: the code is recorded on the receipt (merge_code), never in the key."""
+    return dict(schema=MERGE_SAVE_SCHEMA, shards=SHARDS, layers=json.loads(json.dumps(identity)), format=MERGE_FORMAT)
+
+
+def _merge_identity(key):
+    """A shard key's data identity: the code dropped, the format named (MERGE_FORMAT 1 for an older key)."""
+    if not isinstance(key, dict):
+        return key
+    out = {k: v for k, v in key.items() if k != 'code'}
+    out.setdefault('format', 1)
+    return out
 
 
 def _file_sha256(path):
@@ -587,15 +603,17 @@ def _file_sha256(path):
 
 
 def _saved_shard(root, shard, key):
-    """A merge shard an earlier digest attempt of this calculation root completed under exactly this key, whose bytes
-    still hash to its receipt; None otherwise (the shard is then merged again)."""
+    """A merge shard an earlier digest attempt of this calculation root completed under this key's data identity (an
+    older receipt's code hashes are not compared), whose bytes still hash to its receipt; None otherwise (the shard is
+    then merged again)."""
     for receipt in sorted(Path(root).parent.parent.glob('.digest-*/calculation-layers/merge-%02d.save.json' % shard)):
         if receipt.parent == Path(root):
             continue
         try:
             value = json.loads(receipt.read_bytes())
             output = Path(value.get('output') or '')
-            if (value.get('key') != key or output.parent != receipt.parent or output.name != 'merge-%02d.sqlite' % shard
+            if (_merge_identity(value.get('key')) != _merge_identity(key)
+                    or output.parent != receipt.parent or output.name != 'merge-%02d.sqlite' % shard
                     or not output.is_file() or output.is_symlink() or output.stat().st_size != value.get('bytes')
                     or (output.parent / (output.name + '-journal')).exists()):
                 continue
@@ -610,8 +628,10 @@ def _saved_shard(root, shard, key):
 def _save_shard(root, shard, key, output, **evidence):
     receipt = Path(root)/('merge-%02d.save.json' % shard)
     with receipt.open('x') as handle:
-        json.dump(dict(key=key, shard=shard, output=str(output), bytes=Path(output).stat().st_size,
-                       sha256=_file_sha256(output), **evidence), handle, sort_keys=True)
+        record = dict(key=key, shard=shard, output=str(output), bytes=Path(output).stat().st_size,
+                      sha256=_file_sha256(output), **evidence)
+        record.setdefault('code', merge_code())       # the code record beside the key, never compared
+        json.dump(record, handle, sort_keys=True)
         handle.flush()
         os.fsync(handle.fileno())
     descriptor = os.open(receipt.parent, os.O_RDONLY | os.O_DIRECTORY)
@@ -806,7 +826,7 @@ class BedrockSources:
         return metadata, counts
 
     def _merge_sharded(self, layers, identity):
-        """identity: [[index, name, pinned layer sha256], ...]; with the merge code (MERGE_CODE) it keys each shard's
+        """identity: [[index, name, pinned layer sha256], ...]; with MERGE_FORMAT it keys each shard's
         save point, so a rerun of this calculation root reuses shards an earlier digest attempt completed."""
         from concurrent.futures import ThreadPoolExecutor
         from frankie_box_projection import Workers

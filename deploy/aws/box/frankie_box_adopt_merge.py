@@ -5,8 +5,9 @@ A runtime before the merge save points (b35e79b7) wrote merge-NN.sqlite and no r
 that is provably complete, the receipt the current runtime looks for (frankie_box_digest_sources._saved_shard):
 
 - the ROOT is not running (the calculation root's lock is taken here, non-blocking);
-- the old runtime's merge code (every function in MERGE_CODE) is byte-identical to this checkout's, so the shard is
-  what this runtime's merge would write;
+- the code version is RECORDED, NEVER COMPARED (Greg, 2026-10-09): the old runtime's merge code (every function in
+  MERGE_CODE) and this checkout's are both written on the report and each receipt (a difference is listed, never
+  refused); the key carries MERGE_FORMAT, bumped only when a shard's bytes change for the same layers;
 - the shard is complete: _merge_shard writes a shard in ONE transaction committed at its end, so a shard with no hot
   journal, a passing quick_check and committed groups and members rows is the whole shard;
 - the receipt carries the shard's bytes and sha256; reuse hashes it again.
@@ -42,11 +43,12 @@ print(json.dumps(code, sort_keys=True))
 
 
 def old_merge_code(old_box, python=sys.executable):
+    """The old runtime's merge code record, or {'unreadable': reason}: a record only, never a refusal."""
     names = sorted(S.MERGE_CODE)
     result = subprocess.run([python, '-B', '-c', OLD_CODE, str(old_box), json.dumps(names)],
                             capture_output=True, text=True, check=False)
     if result.returncode:
-        raise ValueError('the old runtime merge code could not be read: ' + result.stderr.strip()[-400:])
+        return dict(unreadable='the old runtime merge code could not be read: ' + result.stderr.strip()[-400:])
     return json.loads(result.stdout)
 
 
@@ -107,9 +109,9 @@ def adopt(directory, digest, old_code_root, python=sys.executable):
         old = old_merge_code(Path(old_code_root) / 'deploy/aws/box', python)
         identity = shard_identity(work, layers)
         key = S.merge_shard_key(identity)
-        if old != key['code']:
-            differ = sorted(n for n in key['code'] if old.get(n) != key['code'][n])
-            raise ValueError('the old runtime merge code differs from this checkout (%s); its shards are not adopted' % ', '.join(differ))
+        new = S.merge_code()
+        code = dict(old_runtime=old, this_checkout=new,
+                    differs=sorted(n for n in set(old) | set(new) if old.get(n) != new.get(n)))   # recorded, never compared
         shards = [layers / ('merge-%02d.sqlite' % shard) for shard in range(S.SHARDS)]
         with ThreadPoolExecutor(S.SHARDS) as pool:
             checked = list(pool.map(shard_evidence, shards))
@@ -121,10 +123,11 @@ def adopt(directory, digest, old_code_root, python=sys.executable):
             elif not complete:
                 report.append(dict(shard=shard, adopted=False, **evidence))
             else:
-                S._save_shard(layers, shard, key, path, adopted=dict(old_code_root=str(old_code_root), **evidence))
+                S._save_shard(layers, shard, key, path, adopted=dict(old_code_root=str(old_code_root), **evidence),
+                              code=code)
                 report.append(dict(shard=shard, adopted=True, **evidence))
         return dict(schema='FRANKIE_MERGE_SHARD_ADOPTION_V1', directory=str(directory), digest=digest,
-                    layers=len(identity), adopted=sum(r['adopted'] for r in report), shards=report)
+                    layers=len(identity), adopted=sum(r['adopted'] for r in report), shards=report, code_record=code)
     finally:
         fcntl.flock(lock, fcntl.LOCK_UN)
         lock.close()
