@@ -146,6 +146,7 @@ def _assemble(connection, parts, append_path, destination, prefix_sha, placehold
         if digest.hexdigest() != prefix_sha:
             raise ValueError('materialized prefix hash differs')
         final = None
+        waiter = None
         with open(append_path, 'rb') as source:
             while True:
                 if connection.poll():
@@ -172,7 +173,16 @@ def _assemble(connection, parts, append_path, destination, prefix_sha, placehold
                 elif final is not None:
                     raise ValueError('frozen append segment is shorter than its receipt')
                 else:
-                    connection.poll(0.1)
+                    # caught up with the live append segment: block, with no timeout (Greg, 2026-10-09: no coded
+                    # waits), until the coordinator sends a command or the segment's directory changes (inotify
+                    # IN_MODIFY: the sink wrote more), then read again
+                    if waiter is None:
+                        waiter = _append_waiter(append_path)    # armed first, then the segment read once more
+                        if waiter is not None:
+                            continue
+                    _wait_append(connection, waiter)
+            if waiter is not None:
+                waiter.close()
             if os.fstat(source.fileno()).st_size != final['append_bytes']:
                 raise ValueError('append segment changed across final materialization')
         if (prefix_bytes + appended != final['bytes']
@@ -190,6 +200,37 @@ def _assemble(connection, parts, append_path, destination, prefix_sha, placehold
         append_bytes=appended, pid=os.getpid(), cpu=cpu,
         phase='materialized_prefix_before_finalizer',
         original_segments_preserved=True, byte_order_verified=True)))
+
+
+def _append_waiter(append_path):
+    """An inotify watch (frankie_box_wake.Waiter, modify=True) on the append segment's directory, or None when the
+    module or inotify is unavailable (not a Linux box)."""
+    try:
+        import frankie_box_wake
+    except ImportError:
+        try:
+            from deploy.aws.box import frankie_box_wake
+        except ImportError:
+            return None
+    waiter = frankie_box_wake.Waiter([Path(append_path).parent], modify=True)
+    if waiter.fd is None:
+        waiter.close()
+        return None
+    return waiter
+
+
+def _wait_append(connection, waiter):
+    """Block until the coordinator's pipe is readable or the watched directory had an event. Without inotify (not a
+    Linux box) the wait is the pipe's with a one-second bound, the only interval left, and only off the box."""
+    import select
+    if waiter is None:
+        connection.poll(1.0)
+        return
+    poll = select.poll()
+    poll.register(connection.fileno(), select.POLLIN)
+    poll.register(waiter.fd, select.POLLIN)
+    poll.poll()
+    waiter._drain()
 
 
 class _Placement:
@@ -364,7 +405,8 @@ class _Materializer:
                 result = self._published(value, why)
                 break
             self._redo(why)
-        self.process.join(timeout=5)
+        # the worker exits right after its receipt: its own orderly end, joined with no bound (no coded waits)
+        self.process.join()
         clean = not self.process.is_alive() and self.process.exitcode == 0
         self.close()
         result = dict(result, redone=list(self.redone), clean_exit=clean)
