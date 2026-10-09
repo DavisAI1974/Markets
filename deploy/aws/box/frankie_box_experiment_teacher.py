@@ -1061,15 +1061,21 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                 if last[0][1] is not None:
                     PJ._SUBSETS.pop(last[0][1], None)
                 last[0] = None
+            PT.ROW_BYTES.clear()
             if entry[2] is None:
                 return
             if entry[1] is None:
                 flush()
             values = pre.values(entry[1])
+            e = entry[0]['evidence']
+            payload = pre.payload(entry[1], entry[2])
+            if payload is not None:
+                # the payload's one pickle, handed on to the raw streams (parallel_teacher.ROW_BYTES): its rows reach
+                # the raw-batch workers whole without the payload being pickled again
+                PT.ROW_BYTES[id(e)] = (e, payload)
             if values is None:
                 return
             body, subset = values[entry[2]]
-            e = entry[0]['evidence']
             if entry[2] == 0:
                 # guard: the first row of every batch is encoded the original way here and must be equal
                 PT.PRECOMPUTE_RECORD['guard_checked'] += 1
@@ -1216,6 +1222,7 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                         cutoff_walk['save_error'] = '%s: %s' % (type(error).__name__, error)
             finally:
                 PT.RESUME_POSITION_SOURCE[0] = None
+                PT.ROW_BYTES.clear()
                 if cpu_pinning['outcome'] in ('pinned', 'fallback') and 'restored' not in cpu_pinning:
                     cpu_pinning['restored'] = LP.restore_mask(cpu_pinning['original_mask'])
     collector = _WalkCollector()
