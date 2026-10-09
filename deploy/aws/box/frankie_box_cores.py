@@ -630,12 +630,31 @@ def is_frankie(info):
     return python and under and 'frankie_box_cores.py' not in info['cmdline']
 
 
-HELPER_SCRIPTS = ('frankie_box_stage_handoff.py', 'frankie_box_render_digest.py')
+# 2026-10-09 (a2/20231018 11:37Z, a resumed day stalled): the CPU watchdog is a helper too. It wakes on the same queue
+# events as the ROOT worker and walks /proc, so a one-instant sample read it as holding the CPU it ran on, and a retained
+# whole-box set (0-63) could never be taken back while it lived
+HELPER_SCRIPTS = ('frankie_box_stage_handoff.py', 'frankie_box_render_digest.py', 'frankie_box_cpu_watch.py')
+QUEUE_SCRIPT = 'frankie_box_frankie_queue.py'   # its control calls (any --action but worker) are helpers; its workers are not
+
+
+def is_queue_control(info):
+    """A queue control call: frankie_box_frankie_queue.py with any --action other than worker (kick, resume, save, status,
+    show, enqueue, handover, retire, parked-watch). It reads and writes the queue and the ledger for a moment and wakes
+    the workers; the workers (--action worker) hold their days' bookings and stay ordinary processes."""
+    argv = (info.get('cmdline') or '').split()
+    if not any(a.endswith(QUEUE_SCRIPT) for a in argv):
+        return False
+    try:
+        return argv[argv.index('--action') + 1] != 'worker'
+    except (ValueError, IndexError):
+        return False
 
 
 def is_helper(info):
-    """A known helper unit (the clean/upload of frankie_box_stage_handoff, the digest render): never a CPU holder."""
-    return any(name in info['cmdline'] for name in HELPER_SCRIPTS)
+    """A known helper unit (the clean/upload of frankie_box_stage_handoff, the digest render, the CPU watchdog) or a queue
+    control call: never a CPU holder. Every other holder rule stands (a pinned or running Frankie process outside the
+    ledger holds its CPUs)."""
+    return any(name in info['cmdline'] for name in HELPER_SCRIPTS) or is_queue_control(info)
 
 
 def descendants(procs, roots):
