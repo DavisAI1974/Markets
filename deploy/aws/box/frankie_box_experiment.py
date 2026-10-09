@@ -167,6 +167,8 @@ ROOTS = WORK / 'experiment-roots'
 DIGEST_FILE = 'derivation-digest-full.md'     # Frankie's full-depth digest under <ROOT>/work (the classroom reads it)
 RESUME_REFUSED_EXIT = 65    # frankie_box_experiment_root.RESUME_REFUSED_EXIT: a resume refused on identity (session 9)
 TEACHER_ROWS = WORK / 'experiment-teacher-rows'
+BLOCK_LESSONS_AT_ONCE = 1      # Greg, 2026-10-09: only one lesson (block session) at a time, in seal order
+
 DATA = WORK / 'experiment-data'
 SEARCH = WORK / 'experiment-search'
 REPORTS = WORK / 'experiment-reports'     # the day reports: CLASSROOM / FRANKIE REPORT #N (one number per trade day)
@@ -2750,14 +2752,15 @@ class Run:
         dirs = [rows_dir, rows_dir / 'blocks', Q.wake_dir()] + ([Path(self.stop_marker).parent] if self.stop_marker else [])
         waiter = W.Waiter(dirs)
 
-        # Everything at once except what needs another piece's output first (Greg, 2026-10-09): block n's lesson and
-        # session read nothing of block n-1 (previous = the prior DAY's classroom, brain = the day's brain), so the
-        # sealed blocks run side by side, one worker process per block up to the classroom's CPUs, each block's lesson
-        # right before its own session in the same worker, submitted in seal order as they seal (follow_blocks keeps
-        # feeding; its waiter stays event-driven). Each block's files are its result (session.json last).
+        # ONE LESSON AT A TIME (Greg, 2026-10-09 16:1xZ: "only run one lesson at a time"; the science is never
+        # weakened for speed): the sealed blocks' lessons and sessions run in seal order, one block session at a time,
+        # the next block only after the previous one's session is written. The one worker process runs each block's
+        # lesson right before its own session; blocks are submitted as they seal (follow_blocks keeps feeding; its
+        # waiter stays event-driven). Inside one lesson the pieces that need nothing from each other still run at once
+        # (the external section beside the main chain). Each block's files are its result (session.json last).
         import concurrent.futures as CF
         import multiprocessing as MP
-        workers = max(1, len(K.lane_cpus()))
+        workers = BLOCK_LESSONS_AT_ONCE
         ready, waited, why = K._fork_ready()
         context = 'fork' if ready else 'spawn'
         pool = CF.ProcessPoolExecutor(max_workers=workers, mp_context=MP.get_context(context))
