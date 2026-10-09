@@ -257,6 +257,96 @@ def columns(total):
                 event_incomplete=dict(sorted(total['incomplete'].items())), reconciliation=reconciliation)
 
 
+# ---- the per-state split (Greg, 2026-10-09: the pinned measures split by the bedrock state present at that moment).
+# A split, not a new formula: each group's own parts (the event-derived counts the pinned functions sum: added,
+# removed, modifies, priority lost, fills and the absorption's removed quantity, plus the book counts) go to the bucket
+# of the label its closing instant carries, for every label field separately; every field's buckets sum back to the
+# window's totals (recorded per row). A group whose closing instant carries no row of that plane goes to
+# STATE_UNKNOWN, never dropped. Bucket keys are the labels' own values, JSON-encoded (a tuple of several rows' values
+# as a list); nothing is renamed or binned. The dipole state is the teacher row's own DState (teacher.dstate|...).
+SPLIT_FORMAT = 1
+STATE_UNKNOWN = '__state_unknown__'
+EVENT_PARTS = ('added', 'removed', 'modifies', 'lost', 'fills', 'absorption_removed')
+BOOK_PARTS = ('added', 'removed', 'modifies', 'fills')
+
+
+def label_key(value):
+    import json
+    return json.dumps(value, sort_keys=True, default=repr)
+
+
+def state_split(results, labels, side):
+    """The split of one window on `side`: results and labels are the window's groups in order (a result None: the group
+    was not read; it is counted apart, in no bucket and not in the totals)."""
+    fields = sorted({name for label in labels if label for name in label})
+    totals = dict(groups=0, events=Counter(), book=Counter())
+    not_read = 0
+    split = {}
+    for result, label in zip(results, labels):
+        if result is None:
+            not_read += 1
+            continue
+        part = result['sides'][side]
+        totals['groups'] += 1
+        totals['events'].update({k: part['events'][k] for k in EVENT_PARTS})
+        totals['book'].update({k: part['book'][k] for k in BOOK_PARTS})
+        for name in fields:
+            key = label_key(label[name]) if label and name in label else STATE_UNKNOWN
+            bucket = split.setdefault(name, {}).setdefault(key, dict(groups=0, events=Counter(), book=Counter()))
+            bucket['groups'] += 1
+            bucket['events'].update({k: part['events'][k] for k in EVENT_PARTS})
+            bucket['book'].update({k: part['book'][k] for k in BOOK_PARTS})
+    out = {}
+    for name, buckets in split.items():
+        events, book, groups = Counter(), Counter(), 0
+        for bucket in buckets.values():
+            events.update(bucket['events'])
+            book.update(bucket['book'])
+            groups += bucket['groups']
+        sums_back = (events == totals['events'] and book == totals['book'] and groups == totals['groups'])
+        out[name] = dict(buckets={key: dict(groups=b['groups'], events=dict(sorted(b['events'].items())),
+                                            book=dict(sorted(b['book'].items())))
+                                  for key, b in sorted(buckets.items())},
+                         unknown_groups=buckets.get(STATE_UNKNOWN, {}).get('groups', 0), sums_back=sums_back)
+    return dict(format=SPLIT_FORMAT, side=side, totals=dict(groups=totals['groups'],
+                                                            events=dict(sorted(totals['events'].items())),
+                                                            book=dict(sorted(totals['book'].items()))),
+                groups_not_read=not_read, fields=out,
+                all_sum_back=all(field['sums_back'] for field in out.values()),
+                unknown_rule='a group whose closing instant carries no row of that plane: %s' % STATE_UNKNOWN)
+
+
+def pinned_check(split, combined, length):
+    """The pinned short-window values recomputed from the split's totals with the pinned arithmetic (control dynamics
+    balance and priority-loss rate, R3 absorption share): equal, or listed with the reason."""
+    from .c15_teacher import value
+    from .c15_normalizer import State
+    events = split['totals']['events']
+    if not split['totals']['groups']:
+        return dict(status='no group read')
+    if length != 64:
+        return dict(status='not compared', reason='the window holds %d groups; the pinned 64-group windows of the '
+                                                  'first groups differ (the absorption reads groups[-64:])' % length)
+    added, removed = events.get('added', 0), events.get('removed', 0)
+    modifies, lost = events.get('modifies', 0), events.get('lost', 0)
+    fills, absorbed = events.get('fills', 0), events.get('absorption_removed', 0)
+    recomputed = dict(
+        control_balance_64=value(math.log1p(added) - math.log1p(removed)),
+        control_priority_loss_64=value(lost / modifies) if modifies else value(state=State.MISSING, reason='NO_MODIFIES'),
+        r3_absorption_64=value(fills / absorbed) if absorbed else value(state=State.MISSING, reason='NO_REMOVALS'))
+    columns = dict(control_balance_64=3, control_priority_loss_64=5, r3_absorption_64=7)
+    out = {}
+    for name, index in columns.items():
+        pinned = combined[index] if index < len(combined) else None
+        mine = recomputed[name]
+        equal = (isinstance(pinned, dict) and pinned.get('state') == mine['state']
+                 and pinned.get('value') == mine['value'])
+        out[name] = dict(pinned=None if pinned is None else dict(value=pinned.get('value'), state=pinned.get('state'),
+                                                                 reason=pinned.get('reason')),
+                         from_parts=mine, equal=equal)
+    return dict(status='compared', columns=out, all_equal=all(item['equal'] for item in out.values()))
+
+
 def window(results, side):
     total = _empty()
     for result in results:
@@ -264,7 +354,7 @@ def window(results, side):
     return columns(total)
 
 
-def assemble(rows, cursor_group, groups, windows, *, whole_day):
+def assemble(rows, cursor_group, groups, windows, *, whole_day, group_labels=None):
     """Per teacher row (in order), its book read: the group it closes (receipt rows) and each window the pinned R3
     called on it (slot -> (key, end ordinal, length, side)); `whole_day` adds the whole-day running window on the
     short window's side (the teacher changes' long horizon). A row that closes no group reads NOT_F_LAST and a receipt
@@ -284,8 +374,14 @@ def assemble(rows, cursor_group, groups, windows, *, whole_day):
         slots = windows.get(cursor) or {}
         reads = {}
         for slot, (wkey, end, length, side) in sorted(slots.items()):
-            reads[slot] = dict(side=side, length=length,
-                               **window([groups.get((wkey, o)) for o in range(end - length + 1, end + 1)], side))
+            ordinals = range(end - length + 1, end + 1)
+            results = [groups.get((wkey, o)) for o in ordinals]
+            reads[slot] = dict(side=side, length=length, **window(results, side))
+            if group_labels is not None:
+                split = state_split(results, [group_labels.get((wkey, o)) for o in ordinals], side)
+                split['pinned_check'] = pinned_check(split, combined, length) if slot == 'short' else dict(
+                    status='not compared', reason='the pinned long horizon is the running whole-day total')
+                reads[slot]['state_split'] = split
         if whole_day and 'short' in slots and key is not None:
             wkey, end, _, side = slots['short']
             held = running.setdefault(wkey, dict(upto=-1, totals={s: _empty() for s in SIDES}))
