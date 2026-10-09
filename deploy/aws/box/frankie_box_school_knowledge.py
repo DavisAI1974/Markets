@@ -288,6 +288,9 @@ def build(day, run, report_number, classroom, exchange_view, exchange_listed, le
     import frankie_box_teacher_rows as TR
     bt.pointer('rows_sidecar', TR.sidecar_of(rows_dir) if rows_dir else None,
                'the teacher\'s rows with their second set, one row per line (large; never copied)', digests=digests)
+    # the BOSS teacher's own whole reading of its second set (Greg, 2026-10-09: BOTH teachers get it), beside its key
+    bt.whole('boss_teacher_second_set_reading', rows_dir / TR.READING_FILES['boss_teacher'] if rows_dir else None,
+             why='the BOSS teacher\'s knowledge step wrote no second-set reading beside the rows')
     bt.pointer('second_set_rows', classroom / 'package.second_set.jsonl',
                'the second set the classroom handed Frankie, aligned on its rows (large; never copied)')
     second_path = classroom / 'package.second_set.json'
@@ -336,6 +339,10 @@ def build(day, run, report_number, classroom, exchange_view, exchange_listed, le
         sc.subset('untested', lessons, [dict(claim_id=r.get('claim_id'), untested=r.get('untested') or [],
                                              cannot_test_yet=r.get('cannot_test_yet') or []) for r in doc.get('results') or []],
                   'per claim, the untested combinations and what cannot be tested yet (listed, never dropped: R13)')
+    # the scientific teacher's own whole reading of the teacher's second set for this day (its lessons call)
+    sc.whole('scientific_teacher_second_set_reading',
+             Path('/opt/frankie-box/work/experiment-teacher') / 'teacher-second-set' / ('%s.json' % day),
+             why='the scientific teacher\'s lessons call wrote no second-set reading for this day')
     withheld.append(dict(section='scientific_teacher', item='JEV_LESSONS_V1',
                          reason='Jev\'s claims stay out of Frankie\'s brain (the lessons wall)'))
 

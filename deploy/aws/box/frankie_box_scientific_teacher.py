@@ -2594,6 +2594,48 @@ def publish_lessons(path, brain_dir='/opt/frankie-box/brain', log=print):
             log('teacher knowledge published into %s' % entry)
 
 
+def teacher_second_set_reads(day_names, brain, out_dir, *, single=None):
+    """The scientific teacher's own reading of the BOSS teacher's WHOLE second set for each day it works on (Greg,
+    2026-10-09: BOTH teachers get the second set): the day's teacher rows are found through its <day>-teacher brain
+    entry (summary.rows: learner-legal knowledge at this stage), and frankie_box_teacher_rows.second_set_reading streams
+    every sidecar row (key, clocks, the plane references to the ROOT's stream rows, the book columns, the per-row state
+    split) and reads the day's state split, the account and the full lists whole, written to
+    <out_dir>/teacher-second-set/<day>.json (single: that one file instead; the same files reuse it). Read beside the
+    claim tests, never changing a lesson's bytes or a test; {day: reference}; an absent part or day is listed, never
+    fatal."""
+    import frankie_box_teacher_rows as TR
+    out = {}
+    for day in day_names:
+        try:
+            rows, looked = None, []
+            try:
+                import frankie_box_lane_state as LS
+                roots = [Path(r) for r in LS.knowledge_roots(brain)]
+            except Exception:  # noqa: BLE001 - the owning brain alone
+                roots = [Path(brain)]
+            for root in roots:
+                entry = root / ('%s-teacher' % day) / 'stage-knowledge.json'
+                looked.append(str(entry))
+                if entry.is_file():
+                    rows = (json.loads(entry.read_bytes()).get('summary') or {}).get('rows')
+                    if rows:
+                        break
+            if not rows:
+                out[day] = dict(status='absent', reason='no <day>-teacher brain entry names the teacher rows of this day',
+                                looked=looked)
+                print('teacher second set %s (scientific teacher): absent (no teacher entry names its rows)' % day,
+                      flush=True)
+                continue
+            target = Path(single) if single else Path(out_dir) / 'teacher-second-set' / ('%s.json' % day)
+            record, pin, how = TR.second_set_reading_file(Path(rows).parent, target, 'scientific_teacher')
+            out[day] = TR.reading_reference(record, pin, how)
+            print('teacher second set %s (scientific teacher): %s; %s' % (day, how, TR.reading_sentence(record)),
+                  flush=True)
+        except Exception as error:  # noqa: BLE001 - added knowledge: listed, never the call's failure
+            out[day] = dict(status='failed', reason='%s: %s' % (type(error).__name__, error))
+    return out
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument('--search', action='append', required=True, help='a completed experiment search directory (repeat per day)')
@@ -2623,6 +2665,8 @@ def main():
         from frankie_box_durable import write_json, witness
         out = Path(a.accumulated_out)
         started = time.time()
+        second_set = teacher_second_set_reads([a.accumulated_day], a.brain, out,
+                                              single=out / 'teacher-second-set-read.json')
         result = TK.teach_accumulated(a.accumulated_day, a.search[0], a.brain, out)
         receipt = dict(schema='FRANKIE_ACCUMULATED_LESSONS_V1', day=a.accumulated_day, status='complete',
                        search=witness(Path(a.search[0]) / 'MANIFEST.json'), accumulated_claim_tests=result,
@@ -2632,6 +2676,8 @@ def main():
         # deaths, tasks redone, seconds); the result files and their bytes are untouched
         receipt['pools'] = list(POOL_NOTES)
         receipt['workflow_report'].setdefault('use', {})['pools'] = list(POOL_NOTES)
+        # added field (2026-10-09): what this teacher read of the BOSS teacher's second set (whole; listed when absent)
+        receipt['teacher_second_set_read'] = second_set
         write_json(out / 'receipt.json', receipt)
         print(json.dumps(receipt, sort_keys=True), flush=True)
         return
@@ -2654,6 +2700,7 @@ def main():
     if not (a.jev_claims or a.frankie_ledgers or a.historical_claims or a.search_findings):
         raise SystemExit('give --jev-claims / --jev-stamp, --frankie-ledgers, --historical-claims and/or --search-findings')
     days = load_searches(a.search)
+    second_set = teacher_second_set_reads([d['day'] for d in days], a.brain, a.out_dir)
     # The claim documents are read first (pure reads: nothing is written before the native evidence, as before), so the
     # native evidence of every day and the search-part scan of every document to be tested run side by side on ONE pinned
     # lane pool (pre_read; Greg, 2026-10-07: sub-steps side by side, every part read and hashed once per stage). The
@@ -2791,7 +2838,7 @@ def main():
         operations.append(record)
     for save in _LAST_SAVE:
         save.finish()                 # every document written: the save is complete (a later call sets it aside)
-    _write_teacher_receipt(a, days, native, operations, listed, code_root, shared_read=shared)
+    _write_teacher_receipt(a, days, native, operations, listed, code_root, shared_read=shared, second_set=second_set)
 
 
 def _knowledge_inputs_of(documents):
@@ -2871,7 +2918,7 @@ def _print_saved(a, days, boundary, reason, documents_left=None, operations=None
                                  'unchanged files are reused, the rest runs'), sort_keys=True, default=str), flush=True)
 
 
-def _write_teacher_receipt(a, days, native, operations, listed, code_root, shared_read=None):
+def _write_teacher_receipt(a, days, native, operations, listed, code_root, shared_read=None, second_set=None):
     """The standalone call's receipt (FRANKIE_SCIENTIFIC_TEACHER_RECEIPT_V1): every operation of this call (written or
     reused), its lessons pin, dispositions, the all-99 coverage pins per searched day, what the read did, and the
     FRANKIE_PIECE_WORKFLOW_REPORT_V1 for the one-day reporter. Printed as the last line (the caller records it) and
@@ -2906,6 +2953,11 @@ def _write_teacher_receipt(a, days, native, operations, listed, code_root, share
     if shared_read is not None:
         receipt['shared_read'] = shared_read      # added field (how the parts were read); absent on a caller without it
     receipt['pools'] = list(POOL_NOTES)           # added field: every pinned pool of this call (CPU map, deaths, redo)
+    if second_set is not None:
+        # added field (2026-10-09): per searched day, what this teacher read of the BOSS teacher's whole second set
+        receipt['teacher_second_set_read'] = second_set
+        report['inputs']['teacher_second_set'] = {day: (ref.get('reading') if isinstance(ref, dict) else None)
+                                                  for day, ref in second_set.items()}
     data = (json.dumps(receipt, indent=1, sort_keys=True, default=str) + '\n').encode()
     path = Path(a.out_dir) / 'receipts' / (sha256_bytes(data) + '.json')
     if not path.exists():

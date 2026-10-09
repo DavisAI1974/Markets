@@ -873,12 +873,64 @@ def teacher_legacy_lines(teacher):
     return table(['field (teacher receipt)', 'value'], rows) + ['']
 
 
+def both_teachers_second_set_lines(d):
+    """What each teacher read of the teacher's second set (Greg, 2026-10-09: BOTH teachers get it), one sentence each
+    from its own recorded reading (frankie_box_teacher_rows.reading_sentence): the BOSS teacher's knowledge step (the
+    reading beside the rows), the exchange's two teacher seats (the exchange's teacher_second_set_read) and the
+    scientific teacher's lessons (its reading of the day under the lessons root, or the accumulated reader's)."""
+    import frankie_box_teacher_rows as TR
+    L = ['## The second set each teacher read', '']
+
+    def kept(kind, path):
+        if not Path(path).is_file():
+            return None, 'not written at %s' % path
+        doc, _, why = _json_once(d, kind, path)
+        return doc, why
+    rows_dir = d.receipt.get('teacher_rows') if isinstance(d.receipt, dict) else None
+    if rows_dir:
+        path = Path(rows_dir) / TR.READING_FILES['boss_teacher']
+        doc, why = kept('BOSS teacher second-set reading', path)
+        L.append('- The BOSS teacher (its knowledge step, beside its pinned key; filed as the brain entry %s-teacher-'
+                 'second-set): %s [%s].' % (d.day, TR.reading_sentence(doc) if doc else 'not recorded (%s)' % why, path))
+    else:
+        L.append('- The BOSS teacher: not recorded (the classroom receipt names no teacher rows).')
+    x = getattr(d, 'exchange', None)
+    if isinstance(x, dict) and isinstance(x.get('teacher_second_set_read'), dict):
+        ref = x['teacher_second_set_read']
+        L.append('- Both teacher seats of the three-way exchange (the BOSS teacher\'s turn and the scientific teacher\'s '
+                 'turn each carry it, and each seat\'s voice says it to the meeting): %s [%s].' % (
+                     TR.reading_sentence(ref), (ref.get('reading') or {}).get('path')))
+    else:
+        L.append('- The teacher seats of the three-way exchange: not recorded (%s).' % (
+            'no exchange was given for this day' if not isinstance(x, dict) else
+            'this exchange carries no teacher_second_set_read (an exchange before it)'))
+    run_dir = getattr(d, 'run_dir', None)
+    found = None
+    for path in [LESSONS_ROOT / 'teacher-second-set' / ('%s.json' % d.day)] + (
+            [Path(run_dir) / 'scientific-knowledge' / str(d.day) / 'teacher-second-set-read.json'] if run_dir else []):
+        if Path(path).is_file():
+            found = path
+            break
+    if found is not None:
+        doc, why = kept('scientific teacher second-set reading', found)
+        L.append('- The scientific teacher (its lessons call, beside its claim tests): %s [%s].' % (
+            TR.reading_sentence(doc) if doc else 'not readable (%s)' % why, found))
+    else:
+        L.append('- The scientific teacher (its lessons call): not recorded yet for this day (no reading under %s).'
+                 % (LESSONS_ROOT / 'teacher-second-set'))
+    return L + ['']
+
+
 def teacher_report(d, number, revision, run, cls, files):
     title = '# TEACHER REPORT #%d%s' % (number, '' if revision == 1 else ' (revision %d)' % revision)
     L = header(title, d, run, cls, 'CLASSROOM REPORT #%d' % number, files['classroom'])
     L += ['The teacher\'s own account of the day, in its words: every sentence is a recorded number or a listed name of '
           'the teacher receipt\'s account, and the field it came from is given in brackets.', '']
     L += teacher_account_lines(d)
+    try:
+        L += both_teachers_second_set_lines(d)
+    except Exception as error:  # noqa: BLE001 - the report states it; the other sections stand
+        L += ['## The second set each teacher read', '', '- Not rendered: %s: %s.' % (type(error).__name__, error), '']
     import frankie_box_teacher_findings as TF
     teacher = getattr(d, 'teacher', None)
     rows_dir = Path(d.receipt.get('teacher_rows')) if d.receipt.get('teacher_rows') else None
@@ -2444,6 +2496,10 @@ def exchange_lines(d, with_frankie):
               fmt(c.get('frankie_resolutions')), rec(c.get('teachers_findings')), fmt(c.get('teachers_findings_by_kind'))), '']
     if x.get('sources', {}).get('teacher_rows_listed'):
         L += ['The BOSS teacher\'s rows (recorded): %s.' % x['sources']['teacher_rows_listed'], '']
+    if isinstance(x.get('teacher_second_set_read'), dict):
+        import frankie_box_teacher_rows as TR
+        L += ['The teacher\'s second set, as both teacher seats read it (recorded on each seat\'s turn): %s.' %
+              TR.reading_sentence(x['teacher_second_set_read']), '']
     for item in x.get('items') or []:
         claim = item.get('claim') or {}
         L += ['### Item %s (%s)' % (item.get('item_id'), rec(item.get('author_label'))), '',

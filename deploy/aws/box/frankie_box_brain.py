@@ -27,12 +27,16 @@ SCHEMA = 'FRANKIE_BOX_BRAIN_ENTRY_V1'
 # every day and every cycle, except its own day+cycle (Greg: the cycles replay the day and restart earlier, so his
 # reasoning may carry later data; only the actual run data ahead of time is walled, and that is the cycle being run).
 ENTRY_GLOBS = ('cycle-*', '[0-9]' * 8 + '-cycle-*', '[0-9]' * 8 + '-ingest', '[0-9]' * 8 + '-day-file',
-               '[0-9]' * 8 + '-root', '[0-9]' * 8 + '-teacher', '[0-9]' * 8 + '-teacher-account', '[0-9]' * 8 + '-search',
+               '[0-9]' * 8 + '-root', '[0-9]' * 8 + '-teacher', '[0-9]' * 8 + '-teacher-account',
+               '[0-9]' * 8 + '-teacher-second-set', '[0-9]' * 8 + '-search',
                '[0-9]' * 8 + '-lessons', '[0-9]' * 8 + '-jev-tested', '[0-9]' * 8 + '-exchange',
                '[0-9]' * 8 + '-meeting', '[0-9]' * 8 + '-meeting-*',
                '[0-9]' * 8 + '-survivors', '[0-9]' * 8 + '-confirmation')
 # Non-cycle knowledge entries, ordered inside one day. They become readable as soon as each stage writes them.
-DAY_KINDS = {'ingest': -40, 'day-file': -30, 'root': -20, 'teacher': -10, 'teacher-account': -10,
+# teacher-second-set (2026-10-09): the BOSS teacher's whole reading of its published second set, filed by its
+# knowledge step; ordered after the classroom (5 > 0) so the same day's classroom (which reads the second set itself,
+# frankie_box_classroom_code.second_set_lesson) never takes it as a brain entry in any mode; search on reads it
+DAY_KINDS = {'ingest': -40, 'day-file': -30, 'root': -20, 'teacher': -10, 'teacher-account': -10, 'teacher-second-set': 5,
              'search': 10, 'lessons': 20, 'jev-tested': 30, 'exchange': 40,
              'meeting': 45, 'survivors': 50, 'confirmation': 60}
 
@@ -50,7 +54,7 @@ def parse_entry_name(name):
     """(day or None, cycle) of an entry directory name, or None when the name is not an entry. A day's lessons entry
     (<day>-lessons: the scientific teacher's test results on Frankie's claims) parses as (day, 'lessons'); a day's
     exchange entry (<day>-exchange: the three-way exchange of the two teachers and Frankie) as (day, 'exchange')."""
-    kind = re.fullmatch(r'([0-9]{8})-(ingest|day-file|root|teacher|teacher-account|search|lessons|jev-tested|exchange|meeting|survivors|confirmation)', name)
+    kind = re.fullmatch(r'([0-9]{8})-(ingest|day-file|root|teacher|teacher-account|teacher-second-set|search|lessons|jev-tested|exchange|meeting|survivors|confirmation)', name)
     if kind:
         return kind.group(1), kind.group(2)
     meeting = re.fullmatch(r'([0-9]{8})-meeting-([0-9a-f]{64})', name)
@@ -67,7 +71,7 @@ def write_stage_entry(brain, day, stage, sources, summary=None, inline_limit=2 *
     evidence stays at its retained path and is represented by exact bytes + sha256 + path, so no giant duplicate is
     created and nothing is silently dropped. A repeat with identical bytes reuses the entry; different bytes decline.
     """
-    allowed = {'ingest', 'day-file', 'root', 'teacher', 'teacher-account', 'search', 'jev-tested', 'survivors',
+    allowed = {'ingest', 'day-file', 'root', 'teacher', 'teacher-account', 'teacher-second-set', 'search', 'jev-tested', 'survivors',
                'confirmation'}
     if stage not in allowed:
         raise ValueError('stage knowledge must be one of %s' % sorted(allowed))
