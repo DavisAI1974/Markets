@@ -49,7 +49,7 @@ written on the record with the estimate behind it; every kick of a queue line st
     dollars is NOT an input anywhere here.
     A resize is a state machine across passes (a request file resize-<booking>.json): pass N writes the marker, a later
     pass sees the step stopped and triggers grow + resume + kick (ROOT) or the restart (render); every transition on
-    the record; a request older than RESIZE_STALE_SECONDS without a stop is listed and dropped. An open request is
+    the record; a request stays open until its step stops or exits (never dropped on a timer). An open request is
     continued from the request itself on every pass (its step has stopped by then, so the pass has no finding for it).
 
 Standard library only (python -I -S). Its own flock (/opt/frankie-box/work/cpu-watch/.lock): two watchers never run a
@@ -85,7 +85,6 @@ NOT_LIVE_EXIT = 4                  # --kick-wake: no watcher holds the lock
 CORRECT_ENV = 'FRANKIE_CPU_WATCH_CORRECT'
 RESIZE_ENV = 'FRANKIE_CPU_WATCH_RESIZE'
 RESIZE_RATIO = 1.5                 # the planned lane must be at least this many times the running lane
-RESIZE_STALE_SECONDS = 6 * 3600    # a resize request whose step never stopped is listed and dropped after this
 RESTART_SECONDS = dict(root=300.0, digest_render=120.0)   # the cost of the stop + start itself (process start, reads); an
                                                           # estimate, on the record, never a measurement
 REPIN_LIMIT = ('re-pinning widens affinity but cannot grow a pool that sized itself at start (its helper count is fixed): '
@@ -397,12 +396,6 @@ def drive_resize(finding, work_dir, record, actions):
     if req.get('state') in ('done', 'not_resizable', 'request_failed', 'stale'):
         record['resize'].append(dict(booking=b, state=req['state'], note='nothing more to do'))
         return
-    if now - req['requested_at'] > RESIZE_STALE_SECONDS:
-        req['state'] = 'stale'
-        req['log'].append(dict(at=now, did='drop', out='the step never stopped within %d s' % RESIZE_STALE_SECONDS))
-        C.write_json(path, req)
-        record['resize'].append(dict(req, step='stale'))
-        return
     try:
         if stage == 'root':
             state = actions['owner_state'](finding['run'], finding['day'])
@@ -457,6 +450,14 @@ def open_requests(work_dir):
     return [req for req in resize_requests(work_dir).values() if req.get('state') == 'requested']
 
 
+def _queue_kick_defaults(Q):
+    """The (max_seconds, poll_seconds) positions of the queue's kick, filled with the queue's OWN settings (as its CLI
+    kick does), never a lifetime or poll value of the watchdog's: the queue ignores the lifetime (worker_limit) and
+    its workers wait on events."""
+    settings = getattr(Q, 'SETTINGS', {}) or {}
+    return settings.get('queue_worker_seconds', 0), settings.get('queue_poll_seconds', 0)
+
+
 def live_actions():
     """The box's real stop/resume calls (ROOT through the queue's own CLI on the day's code root; the render through
     its stop file and wrapper). Each returns the text of what happened; a failure raises and lands on the record."""
@@ -492,8 +493,8 @@ def live_actions():
 
     def kick(run, day, target):
         Q, _s, _owner = _queue_py(run, day)
-        return json.dumps(Q.kick('root', target['kick_code_root'], target['kick_commit'], 43200, 60, 'cpu-watch resize',
-                                 scope='%s:%s' % (run, day)), sort_keys=True)[:400]
+        return json.dumps(Q.kick('root', target['kick_code_root'], target['kick_commit'], *_queue_kick_defaults(Q),
+                                 'cpu-watch resize', scope='%s:%s' % (run, day)), sort_keys=True)[:400]
 
     def stop_render(pid):
         env = Path('/proc/%d/environ' % pid).read_bytes().split(b'\0')
