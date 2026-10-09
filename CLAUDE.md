@@ -5,6 +5,20 @@ a2/20231018 must run end to end (Greg); the teacher's second set (all 99 planes 
 clocks) and its first-person report are the deliverables Greg wants to read. Greg's session-11 rules are in the drop-in's
 box. Box RUNNING; teacher running; digest render running; no infrastructure change calls at a session's end.
 
+HUB DESIGN (Greg, 2026-10-09 session 12; build AFTER the a2/20231018 classroom report lands, with the ROOT fix and the
+one-pass build, ahead of the 30-day start; nothing on the a2 day moves): ONE teacher core, one ingestion stream, the BOSS
+and classroom roles as two prompts over one store (separate only in role and in their own initial calculations, the pinned
+grading key never built from the other role's findings). The teacher is a HUB with a spoke to each workflow piece (ROOT,
+teacher, classroom/Frankie, exchange, Jev, school); each spoke is read-calc-write under ONE TURN LOCK (one piece in or out
+at a time; a waiter is recorded by name and woken event-driven when the holder releases, never timed out or killed; the
+order is the workflow order; a second lap only when a piece has something new). Frankie INGESTS the hub's merged set (not
+the pieces reading his); everyone's plane ingestion layer is the same except Frankie's trade logic, Jev's cutoff and the
+per-lesson reveal (answers/outcomes hidden from Frankie for the lesson in progress and lessons not reached, revealed at that
+lesson's discussion and visible from then on, with a reveal record). No provenance machinery: a name at the top of each
+piece's JSON. Brain improvements go TO FRANKIE, who updates his own brain after a checked lesson; the teachers' store is
+written by the teachers. LIVE (Greg, note for go-live, not now): live data is fed to the teacher hub, and the teacher feeds
+Frankie with any improvements; the same hub and spokes, with the live feed as ROOT's spoke.
+
 # Claude session drop-in — session 11 (from session 10, 2026-10-09): READ FIRST `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261009_SESSION11.md`
 
 Branch `ccr-d2f8f826-iefeah-frankie` (SHALLOW: `git fetch --deepen=400`). Every session-10 fix is committed and ON THE
