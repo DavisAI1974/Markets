@@ -24,6 +24,35 @@ from frankie_box_finalization import file_identity
 CHUNK = 64 << 20
 PENDING = 28
 _STATE = None
+# Greg, 2026-10-09 (standing): the code version is RECORDED, NEVER COMPARED. A retained projection plan (plan.json) is
+# compared on its data identity and PROJECTION_FORMAT, an integer bumped ONLY when the bytes of the range archives,
+# receipts or published layers change FORMAT; this module's sha256 (code_sha256) is written in the plan as a record.
+# A plan saved before this field (absent) carries format 1. The saved plan stays the identity (its sha256 keys every
+# retained range and publication), never rewritten.
+PROJECTION_FORMAT = 1
+RECORDED_CODE = ('code_sha256',)
+
+
+def plan_meaning(plan):
+    """A projection plan in its compared form: without its recorded-only code fields, the format defaulted to 1."""
+    if not isinstance(plan, dict):
+        return plan
+    out = {k: v for k, v in plan.items() if k not in RECORDED_CODE}
+    out.setdefault('format', 1)
+    return out
+
+
+def build_plan(receipt, layers, crosswalk, result=None):
+    """The projection plan this checkout builds for a native receipt (project() and the reuse save point share it)."""
+    pins = {kind: receipt['ledgers'][name] for kind, name in
+            (('member', 'exact_member_rows.jsonl'), ('lifecycle', 'exact_lifecycle_rows.jsonl'))}
+    if result is None:
+        result = json.loads(Path(receipt['result']['path']).read_bytes())
+    return dict(schema='FRANKIE_COMPRESSED_PROJECTION_V1', format=PROJECTION_FORMAT, chunk_bytes=CHUNK,
+                layers=layers, crosswalk=crosswalk, code_sha256=sha(__file__),
+                ledgers={k: {x: v[x] for x in ('path', 'bytes', 'sha256')} for k, v in pins.items()},
+                sections=result['layers']['exact_lifecycle_and_runway_ledger']['section_summaries'],
+                averages=result['layers']['averaged_companions'])
 
 
 def encoded(value):
@@ -277,15 +306,12 @@ def project(receipt,layers,crosswalk,out_dir,progress):
     root.mkdir(exist_ok=True)
     pins = {kind:receipt['ledgers'][name] for kind,name in
             (('member','exact_member_rows.jsonl'),('lifecycle','exact_lifecycle_rows.jsonl'))}
-    result = json.loads(Path(receipt['result']['path']).read_bytes())
-    spec = dict(schema='FRANKIE_COMPRESSED_PROJECTION_V1',chunk_bytes=CHUNK,
-                layers=layers,crosswalk=crosswalk,code_sha256=sha(__file__),
-                ledgers={k:{x:v[x] for x in ('path','bytes','sha256')} for k,v in pins.items()},
-                sections=result['layers']['exact_lifecycle_and_runway_ledger']['section_summaries'],
-                averages=result['layers']['averaged_companions'])
+    spec = build_plan(receipt,layers,crosswalk)
     manifest = root/'plan.json'
     if manifest.exists():
-        if json.loads(manifest.read_bytes()) != spec:
+        # compared on data identity and PROJECTION_FORMAT; code_sha256 is recorded, never compared (the saved plan
+        # stays the identity: its sha256 keys the retained ranges and publications)
+        if plan_meaning(json.loads(manifest.read_bytes())) != plan_meaning(spec):
             raise ValueError('retained projection plan differs')
     else:
         save(manifest,spec)

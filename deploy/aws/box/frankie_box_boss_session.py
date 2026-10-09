@@ -240,23 +240,16 @@ def recorded_code_changes(saved, current, where='$'):
 
 def _reusable_projection(projection, receipt, layers, crosswalk, out_dir, section_names):
     """Save point for reruns: the published layers of a completed earlier publication of exactly this projection plan,
-    or None (then projection.project runs and decides). Kept OUT of frankie_box_projection.py on purpose: the plan pins
-    that module's own bytes (code_sha256), so any edit there makes the retained plan differ and refuses the root. The
-    plan below is built exactly as project() builds it and must equal the retained plan.json; every published file must
-    be present at its recorded size. Consumers still verify fragments against the range receipts before reading."""
+    or None (then projection.project runs and decides). The plan is built as project() builds it (projection.build_plan)
+    and compared with the retained plan.json on its data identity and PROJECTION_FORMAT (projection.plan_meaning; the
+    module's code_sha256 is recorded in the plan, never compared: Greg, 2026-10-09); every published file must be
+    present at its recorded size. Consumers still verify fragments against the range receipts before reading."""
     root = Path(out_dir) / '.projection-v2'
     manifest = root / 'plan.json'
     if not manifest.is_file():
         return None
-    pins = {kind: receipt['ledgers'][name] for kind, name in
-            (('member', 'exact_member_rows.jsonl'), ('lifecycle', 'exact_lifecycle_rows.jsonl'))}
-    result = json.loads(Path(receipt['result']['path']).read_bytes())
-    spec = dict(schema='FRANKIE_COMPRESSED_PROJECTION_V1', chunk_bytes=projection.CHUNK,
-                layers=layers, crosswalk=crosswalk, code_sha256=projection.sha(projection.__file__),
-                ledgers={k: {x: v[x] for x in ('path', 'bytes', 'sha256')} for k, v in pins.items()},
-                sections=result['layers']['exact_lifecycle_and_runway_ledger']['section_summaries'],
-                averages=result['layers']['averaged_companions'])
-    if json.loads(manifest.read_bytes()) != spec:
+    spec = projection.build_plan(receipt, layers, crosswalk)
+    if projection.plan_meaning(json.loads(manifest.read_bytes())) != projection.plan_meaning(spec):
         return None
     plan = projection.sha(manifest)
     names = sorted(list(layers) + list(section_names))
