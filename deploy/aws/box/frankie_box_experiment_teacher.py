@@ -78,7 +78,16 @@ def _journal_prefetch(receipt_path):
         began = time.monotonic()
         try:
             rc = json.loads(Path(receipt_path).read_bytes())
-            _box_module('frankie_box_filehash').witness(Path(receipt_path).parent / rc['journal_file'])
+            journal = Path(receipt_path).parent / rc['journal_file']
+            # one pass (Greg, 2026-10-09): the ingest's FRANKIE_FILE_CLAIM_V2 row beside the receipt, naming the
+            # receipt's journal bytes and sha256 and still holding (stat, filesystem, last 64 KiB), is the witness:
+            # it goes into the process cache (frankie_box_filehash.remember) and the journal is not read whole
+            pin = dict(bytes=rc['journal_bytes'], sha256=rc['journal_sha256'])
+            claim = _box_module('frankie_box_experiment_journal')._holding_claim(journal, pin, [journal.parent])
+            if claim is not None and _box_module('frankie_box_filehash').remember(journal, pin):
+                PREFETCH.update(outcome='by claim', claim=claim, seconds=round(time.monotonic() - began, 3))
+                return
+            _box_module('frankie_box_filehash').witness(journal)
             PREFETCH.update(outcome='measured', seconds=round(time.monotonic() - began, 3))
         except Exception as error:  # noqa: BLE001 - re-measured and raised at the original place
             PREFETCH.update(outcome='error', seconds=round(time.monotonic() - began, 3),
@@ -270,6 +279,47 @@ def _finish_attachment_writer(writer, attachment_path, body):
         except OSError:
             pass
     return _write_attachment(attachment_path, body)
+
+
+def _body_identity(body):
+    """The attachment body's identity fields (everything but the attachment object), as JSON-safe values."""
+    return json.loads(json.dumps({k: v for k, v in body.items() if k != 'attachment'}, sort_keys=True, default=str))
+
+
+def _write_teacher_claims(out, items):
+    """out/file-claims.jsonl: one FRANKIE_FILE_CLAIM_V2 row per (path, sha256, body identity) whose sha256 this step
+    took on the write stream or one read; a hint for later stages, never the step's outcome. Returns the note."""
+    try:
+        from research.kalshi.frankie_boss.operations.ingest_block_sources import file_claim, write_file_claims
+        rows = []
+        for path, sha256, identity in items:
+            if not sha256 or not Path(path).is_file():
+                continue
+            row = file_claim(path, Path(path).stat().st_size, sha256,
+                             'teacher-only step (frankie_box_experiment_teacher) at %s'
+                             % time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()))
+            if identity is not None:
+                row['body_identity'] = identity
+            rows.append(row)
+        return write_file_claims(out, rows)
+    except Exception as error:  # noqa: BLE001 - a claim is a hint
+        return dict(status='not_written', reason='%s: %s' % (type(error).__name__, error))
+
+
+def _attachment_claim(out, attachment_path, body):
+    """The retained attachment's claim row when it names this body's identity and still holds (claim_still_holds),
+    else None (the retained attachment is unpickled, compared and hashed as before). Never raises."""
+    try:
+        from research.kalshi.frankie_boss.operations.ingest_block_sources import claim_still_holds, FILE_CLAIMS_NAME
+        want = str(Path(attachment_path).resolve())
+        for line in (Path(out) / FILE_CLAIMS_NAME).read_text(encoding='utf-8').splitlines():
+            row = json.loads(line)
+            if (isinstance(row, dict) and row.get('path') == want and row.get('body_identity') == _body_identity(body)
+                    and claim_still_holds(row, attachment_path) is not None):
+                return row
+    except Exception:  # noqa: BLE001 - without a holding claim the attachment is read as before
+        return None
+    return None
 
 
 def _publish(out, result):
@@ -747,6 +797,7 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
     evidence = None
     shared_read = None
     market_state = out / 'shared-market-state.pkl'
+    saved_market_state = {}          # one pass (2026-10-09): the shared read saved in this process, kept in memory
     # The pinned R3 equation's operands are the original APPLIED payloads with every adapter
     # cursor from zero (c15_teacher_r3.iter_raw). It runs on exactly that prefix. An instant
     # without its operand (failed, unpaired, unreadable, or past a cursor gap) is listed here
@@ -927,7 +978,9 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                     precompute.update(record=dict(PT.PRECOMPUTE_RECORD))
                 ahead.clear()
                 pictures.close()
-                PT._save_raw_state(market_state, dict(market.report, equation=dict(equation)))
+                state = dict(market.report, equation=dict(equation))
+                PT._save_raw_state(market_state, state)
+                saved_market_state['value'] = state
             finally:
                 if cpu_pinning['outcome'] in ('pinned', 'fallback') and 'restored' not in cpu_pinning:
                     cpu_pinning['restored'] = LP.restore_mask(cpu_pinning['original_mask'])
@@ -945,7 +998,10 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
         if market is not None:
             # A completed raw recovery may reuse its saved read. Never describe an
             # unstarted current iterator as a fresh complete evidence delivery.
-            shared_read = PT._load_raw_state(market_state) if market_state.exists() else None
+            # one pass (2026-10-09): the read this process just saved is the dict in memory (the file holds its
+            # pickle); only a resume that did not walk loads the saved file (hash-checked, once)
+            shared_read = (saved_market_state['value'] if 'value' in saved_market_state else
+                           PT._load_raw_state(market_state) if market_state.exists() else None)
             if not shared_read or not shared_read.get('complete') or not _identity_matches(
                     shared_read.get('identity'), market.identity, out, 'saved shared read identity'):
                 raise ValueError('completed teacher raw state lacks its matching complete shared read; preserved')
@@ -1069,7 +1125,13 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
         if box['error'] is not None:
             raise box['error']
         return box['sha256']
-    if attachment_path.exists():
+    retained_claim = _attachment_claim(out, attachment_path, body) if attachment_path.exists() else None
+    if retained_claim is not None:
+        # one pass (2026-10-09): this code wrote the attachment and its FRANKIE_FILE_CLAIM_V2 row with the same body
+        # identity; stat, filesystem and last 64 KiB unchanged: not unpickled, re-snapshotted or hashed again
+        attachment_sha[0] = retained_claim['sha256']
+        SE._save(out / ROWS_FILE, source)
+    elif attachment_path.exists():
         with attachment_path.open('rb') as f:
             retained = pickle.load(f)
         if any(retained[key] != body[key] for key in body if key != 'attachment') or \
@@ -1082,7 +1144,9 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
         SE._save(out / ROWS_FILE, source)               # beside the side process writing the attachment
         attachment_sha[0] = _finish_attachment_writer(attachment_writer, attachment_path, body)
     cpu_pinning['attachment_writer'] = attachment_writer['record'] if attachment_writer else dict(
-        outcome='not_started', reason='a retained attachment stands (resume); it is hashed on a thread instead')
+        outcome='not_started', reason=('a retained attachment stands (resume); its claim row holds, not read again'
+                                       if retained_claim is not None else
+                                       'a retained attachment stands (resume); it is hashed on a thread instead'))
     hash_on_thread('rows', out / ROWS_FILE)
     phase('snapshot_rows_attachment')
     result = dict(schema='FRANKIE_EXPERIMENT_TEACHER_ROWS_V1', day=day, request_id=request_id, entity=list(entity),
@@ -1119,6 +1183,12 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
     result['rows_file']['sha256'] = hashed('rows')
     if 'attachment' in hashers:
         result['attachment_file']['sha256'] = hashed('attachment')
+    # one pass (Greg, 2026-10-09): FRANKIE_FILE_CLAIM_V2 rows for the rows file and the attachment in this directory
+    # (out/file-claims.jsonl), so the data export and the brain take them instead of hashing them again, and a
+    # resume takes the attachment's (with its body identity) instead of unpickling it
+    result['file_claims'] = _write_teacher_claims(out, [(out / ROWS_FILE, result['rows_file']['sha256'], None),
+                                                        (attachment_path, result['attachment_file']['sha256'],
+                                                         _body_identity(body))])
     phase('hash_publications')
     result['external_section'] = external
     # the per-point summary of the 13 points (the day reports' 99-layer join reads it): from the key above only
