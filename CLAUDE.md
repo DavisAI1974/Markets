@@ -17,7 +17,8 @@ per-lesson reveal (answers/outcomes hidden from Frankie for the lesson in progre
 lesson's discussion and visible from then on, with a reveal record). No provenance machinery: a name at the top of each
 piece's JSON. Brain improvements go TO FRANKIE, who updates his own brain after a checked lesson; the teachers' store is
 written by the teachers. LIVE (Greg, note for go-live, not now): live data is fed to the teacher hub, and the teacher feeds
-Frankie with any improvements; the same hub and spokes, with the live feed as ROOT's spoke.
+Frankie with any improvements; Frankie sends his own improvements back to the teacher hub, and the hub feeds the
+FORECASTER; the same hub and spokes, with the live feed as ROOT's spoke and the forecaster as the last spoke.
 
 # Claude session drop-in — session 11 (from session 10, 2026-10-09): READ FIRST `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261009_SESSION11.md`
 
