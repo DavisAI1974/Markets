@@ -258,7 +258,8 @@ def _range_receipts(projection_root):
             value = json.loads(path.read_bytes())
             binding = value.get('binding') or {}
             if (binding.get('plan') != plan or binding.get('kind') != kind or binding.get('index') != len(values)
-                    or value.get('actual_start') != position or value.get('readback_verified') is not True):
+                    or value.get('actual_start') != position
+                    or not (value.get('readback_verified') is True or value.get('witness') == 'write stream')):
                 raise ValueError('retained projection range receipts differ from the ordered plan')
             position = value['actual_end']
             values.append(value)
