@@ -2763,8 +2763,9 @@ class Session:
         free space (2026-10-08): a spool reference layer is its other keys plus a few hundred bytes and one index entry
         per INDEX_EVERY rows (no row is re-encoded); an inline one (FRANKIE_ROOT_LAYER_SPOOLS=inline) is at least its
         spools' bytes again (a2's frames layer was ~1.9x its spool); every other layer is its own encoding. Refuses,
-        writing nothing, when the free space is below the projection plus FRANKIE_ROOT_DISK_FLOOR_GB (the Run's floor,
-        default 0). The receipt carries the projection; written_bytes is added after the writes."""
+        writing nothing, only when the projection does not fit the free space (Greg, 2026-10-09: a gate never blocks fine
+        data; no floor on top of a fit: FRANKIE_ROOT_DISK_FLOOR_GB is recorded, never added). The receipt carries the
+        projection; written_bytes is added after the writes."""
         import shutil
         B = _box_module('frankie_box_bedrock')
         LS = _box_module('frankie_box_layer_spool')
@@ -2784,11 +2785,11 @@ class Session:
         floor = int(float(os.environ.get('FRANKIE_ROOT_DISK_FLOOR_GB') or 0) * 1024 ** 3)
         projection = dict(schema=self.FINALIZE_PROJECTION_SCHEMA, spool_form=spool_form, projected_bytes=projected,
                           per_layer=per_layer, free_bytes_before=free, floor_bytes=floor,
-                          rule='the legacy layer files only (the spools are already written); refuse below projection + '
-                               'floor, nothing written')
-        if free < projected + floor:
-            raise ValueError(f'finalize would write ~{projected} bytes of legacy layers with {free} free (floor '
-                             f'{floor}); nothing written, the saved legacy state retained for a resume')
+                          rule='the legacy layer files only (the spools are already written); refuse only when the '
+                               'projection exceeds the free space, nothing written; the floor is recorded, never added')
+        if projected > free:
+            raise ValueError(f'finalize would write ~{projected} bytes of legacy layers with {free} free; nothing '
+                             f'written, the saved legacy state retained for a resume')
         return projection
 
     def _derive(self, *, source=None, bedrock=True, digest=True, opening_adapter_state=None, opening_book=None,
