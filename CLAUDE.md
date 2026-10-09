@@ -24,7 +24,10 @@ records are the TRADE (date, time, price: sealed, never a calculation, never wri
 (what was decided and why). A DEAD PIECE IS REVIVED, NEVER SKIPPED (Greg): if a piece dies mid-turn, its lock is taken over and
 recorded, the pieces after it keep WAITING (values queue until it is healthy), and a DOCTOR helper resumes it from its own save so
 it finishes its part; successors never proceed on a partial part, because the experiment's findings would be silently wrong.
-LIVE (Greg, note for go-live, not now): live data is fed to the teacher hub, and the teacher feeds
+FORWARD READS ARE NOT A CONCERN (Greg 2026-10-09): days process in any order (later days before earlier ones) and knowledge
+flows across them; the blind-wall items in HUB_CALC_ORDER_MAP_20261009.md section 4 are information, not work. The ONLY piece kept
+a little blind is the FORECASTER while it builds its initial forecast. Frankie's per-lesson reveal (above) is a lesson rule, not a
+clock rule, and stays. LIVE (Greg, note for go-live, not now): live data is fed to the teacher hub, and the teacher feeds
 Frankie with any improvements; Frankie sends his own improvements back to the teacher hub, and the hub feeds the
 FORECASTER; the same hub and spokes, with the live feed as ROOT's spoke and the forecaster as the last spoke.
 
