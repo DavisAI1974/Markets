@@ -3625,13 +3625,22 @@ class Run:
                 current = receipt_path.read_bytes() if receipt_path.is_file() else None
                 if (current is None or current == prior_receipt
                         or json.loads(current).get('status') != 'runtime_failed'):
-                    return self.record('voice', day, 'failed', exit_code=code, log=log,
-                                       reason='meeting child failed; retained artifacts are kept for recovery',
+                    # 2026-10-09 (Greg: the meeting never blocks the classroom): a failed meeting child is LISTED on a
+                    # non-blocking receipt (meeting_status runtime_failed, the class side passes it); school and the
+                    # reports go on, the retained artifacts stay for the next attempt, the reports are rebuilt when the
+                    # meeting arrives
+                    return self.record('voice', day, 'waiting', non_blocking=True, meeting_status='runtime_failed',
+                                       meeting_child_failed=True, exit_code=code, log=log,
+                                       refused_to_run=['the meeting child exited %s (its log %s)' % (code, log)],
+                                       reason='meeting child failed (exit %s); listed, the day goes on; retained artifacts are '
+                                              'kept for recovery' % code,
                                        inspection=dict(inputs=inputs, use=use,
                                                        outputs=dict(exit_code=code, meeting_receipt_changed=current != prior_receipt)))
         result = BR.read_meeting_for_exchange(x['frankie_view'], owner_dir=self.dir)
         if result['status'] == 'missing':
-            return self.record('voice', day, 'failed', exit_code=code, log=log, reason=result['reason'],
+            return self.record('voice', day, 'waiting', non_blocking=True, meeting_status='runtime_failed',
+                               meeting_child_failed=True, exit_code=code, log=log, refused_to_run=[result['reason']],
+                               reason='%s; listed, the day goes on' % result['reason'],
                                inspection=dict(inputs=inputs, use=use, outputs=dict(exit_code=code, meeting='missing')))
         r = result['receipt']
         fields = dict(exit_code=code, log=log, meeting_status=result['status'], meeting=result['path'],
