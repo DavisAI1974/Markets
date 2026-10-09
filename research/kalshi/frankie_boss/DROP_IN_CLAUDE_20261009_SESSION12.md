@@ -113,9 +113,19 @@ of a session, let things land; new session after everything lands.
    to Greg whole.
 
 ## Open items for the next session (NO fixes were deferred by choice; these are the ones not reachable this session)
-- ONE PASS for teacher + digest: both read the same ROOT layers (the teacher per event, the render into the pinned
-  byte-exact digest tables); a single pass yielding both is a one-pass improvement to design (not a tweak: the digest's
-  construction is pinned and resumes from saved tables). Today they run concurrently in the same booking.
+- ONE PASS for teacher + digest (Greg 2026-10-09 12:2xZ, DIRECTION for session 12): "When we get past the point of
+  messing anything up we could start on the one pass build so it's ready for the bigger normal passes that we'll be
+  starting for the 30 day. And also see if we can get more workflow pieces to get their info they need from the altered
+  pass. It feels like that could save us time. But the calc, derived layers that we derive won't be candidates for
+  that." So: (1) not before the a2/20231018 classroom session is through (nothing on this day is touched); (2) design
+  one streaming pass over ROOT's layers that yields the teacher's rows AND the digest's pinned byte-exact tables (the
+  digest's construction stays pinned and still resumes from saved tables; the pass is a second producer of the same
+  bytes, proven byte-exact against today's render before it replaces anything); (3) survey every workflow piece that
+  re-reads ROOT's stream files or the day file (class worker steps: classroom, data, search, batch lessons, exchange,
+  voice, school, reports; Jev; the consumers in frankie_box_teacher_rows / adviser_market) and list which could take
+  their inputs from the altered pass instead of their own read; (4) EXCLUDED by Greg: the calculated / derived layers
+  (bedrock's producers, the derived geometry, anything computed rather than read) stay as they are produced today.
+  Today teacher and render run concurrently in the same booking.
 - Teacher report, deeper: LANDED (dec04c8e, on the box). Still open inside it: the account writer's own lists stay at 20
   entries (clock-mismatch examples, largest reconciliation differences) while teacher-reconciliation-differences.jsonl
   lists every one; the teacher side still lacks the carry-anchor calls (enable_anchors / note_row). The brief was: discovery and correlations as
