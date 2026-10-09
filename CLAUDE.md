@@ -17,7 +17,7 @@ scratch; a box keeps its days end to end; fixes made ahead of the chain. Record:
 # Claude session drop-in — 2026-10-08, session 9: READ FIRST `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261008_SESSION9.md`
 
 Branch `ccr-d2f8f826-iefeah-frankie` (SHALLOW clone: `git fetch --deepen=400` first). Parent-only; agents (model "fable");
-long source work in a CLOUD SESSION; every role writes its record incrementally. Greg (session 8): best for SCIENCE and SPEED;
+long source work in a CLOUD SESSION; no records of code changes (Greg 2026-10-09: commits only). Greg (session 8): best for SCIENCE and SPEED;
 STOP building more tests and validators, fix what breaks in the run. Main box RUNNING (r7i.16xlarge), a2 at/near SAVED on
 the retained 0-31 booking with the claim-fix tip staged; GREG'S DIRECTIVE: grow the booking to all 64 now, restart from exactly
 the same spot retaining everything (ROOT renders its own full-depth digest). Session 8 is passive (only its 18:20Z volume raise). No fleet launch

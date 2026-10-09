@@ -23,19 +23,22 @@ i-035994afa8bdf66a5 STOPPED, a2/20231018 finish SAVED, receipt in place, digest 
    route is a direct push to the box in seconds; the GitHub stage is a fallback only.
 8. CODE VERSION IS RECORDED, NEVER COMPARED. A running day picks up the newest code at its next step; no save/restage/
    resume just to change code. Data identity (sealed sources, pins, counts, data receipts) stays bound.
-9. Standing from session 9: one pass everywhere; no gates that re-check receipted data; an owned day is never retried
+9. NO RECORDS OF CODE CHANGES (Greg 2026-10-09): the commits are the record. The only records kept are the run's own
+   outputs per piece after it has run (the day reports: classroom report #N and Frankie report #N, written by
+   frankie_box_experiment_day_reports.py, plus the stage receipts), read to check the piece gave the outputs and
+   answered the questions it was meant to; and the parent's box record of what was done on the box.
+10. Standing from session 9: one pass everywhere; no gates that re-check receipted data; an owned day is never retried
    from scratch; a box keeps its days end to end.
 
 ## Session 10 work (in flight; records below)
-- Run-flow role: no coded waits (job 1) + code version recorded not compared (job 2). Record S10_RUNFLOW_20261009.md.
+- Run-flow role: no coded waits (job 1) + code version recorded not compared (job 2).
 - Code-push role: direct push to the box (git bundle -> S3 presigned URL -> SSM; /opt/frankie-box/code/current symlink).
-  Record S10_CODE_PUSH_20261009.md.
 - Three read-only auditors: duplicate/triplicate passes under other names (ROOT..teacher; classroom/data/search;
   scientific teacher..end). Findings go to fix roles, then everything lands BEFORE the relaunch (Greg 2026-10-09:
   "Make all of these changes and do a check for more duplicate and triplicate passes ... and get them out before we do
   the launch again"). Includes the classroom brain re-hash of the digest (frankie_box_brain.py ~971) and the render without
   FRANKIE_RENDER_BOOKING rewriting the receipt.
 - Fleet role: a box keeps its days end to end, ENFORCED (claim_day refuses a non-owner box; the progress record's box is
-  never rewritten). Record S10_FLEET_OWNER_20261009.md.
+  never rewritten).
 - Relaunch after those land: StartInstances, KeepRunning=true, check the root volume's modification state and raise it
   before any render, direct push of the tip, resume + kick to the teacher (session-9 resume box, steps 1-5).

@@ -13,7 +13,7 @@ point. Fix problem and restart from exactly the same spot." Then: "Will fix in n
    BOX_RECORD_20261008_S8_START.md (the live box timeline, newest section last), FLEET_SOURCE_STATUS_SESSION8.md and the two
    REVIEW_20261008_FLEET_SOURCE*.md files.
 3. Session = parent only; agents model "fable"; api-and-interface-design first; AWS via the Aws connector (one read-only
-   STS call first). Every role writes its record incrementally; long source work in a CLOUD SESSION; a self check-in
+   STS call first). No records of code changes (Greg 2026-10-09: commits only); long source work in a CLOUD SESSION; a self check-in
    (send_later) re-reads the records and continues from them.
 4. SESSION 8 IS PASSIVE ON THE RUN: its box-operator stops at SAVED (no resume, no kick); its a2 check-in is DELETED; the one
    timer left in session 8 is the 18:20Z ModifyVolume raise of the two main-box volumes (harmless to the run; it appends a
