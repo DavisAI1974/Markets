@@ -4168,6 +4168,9 @@ def block_lesson(teacher_rows, directory, n, *, day_file=None, manifest=None):
                                       day_file=day_file, blocks=[n])
     except Exception as error:  # noqa: BLE001 - listed; the next block goes on
         lesson = dict(schema=TR.SECOND_SET_LEDGER_SCHEMA, status='failed', reason='%s: %s' % (type(error).__name__, error))
+    lesson['component_anchors'] = {name: {k: list(v) for k, v in chosen.items()} for name, chosen in anchors.items()}
+    with (out / 'second_set.json').open('w', encoding='utf-8') as handle:      # whole (the session's learner context)
+        json.dump(lesson, handle, sort_keys=True, default=str)
     entry = manifest['blocks'][n - 1]
     doc = dict(schema=BLOCK_LESSON_SCHEMA, day=manifest.get('day'), block=n,
                block_pin=dict(file=entry['file'], sha256=entry['sha256'], sidecar_sha256=entry['sidecar_sha256'],
@@ -4187,3 +4190,347 @@ def block_lesson(teacher_rows, directory, n, *, day_file=None, manifest=None):
     os.replace(pending, out / 'lesson.json')
     return dict(block=n, rows=len(rows), lesson=str(out / 'lesson.json'), sha256=hashlib.sha256(data).hexdigest(),
                 second_set=lesson.get('status'), anchors=len(cursors))
+
+
+# ---- the WHOLE classroom session per sealed block (Greg, 2026-10-09: "the first 5 minutes of the day is the only thing
+# that matters right now; nothing on block 1 may wait for the end of the day"). As soon as block n's lesson exists:
+# Frankie's answers on block n's rows and second set, the grade against the pinned key built from block n's rows exactly
+# as the day's key is built (dipole_classroom_integration.prepare_integrated_cycle_from_snapshot: build_teacher_key +
+# the re-pin, the mode from the carried history, the pre-message, the binding; never from Frankie's findings), the
+# correction and his acknowledgement, the external section on the block's cutoff, the checked lesson he carries into
+# his brain, and the teacher's first-person report of the block. Every output under <classroom>/blocks/<n>/. The
+# day-level functions are called on a block-scoped row set; nothing is rebuilt. What runs at day end only, and why, is
+# listed in session.json and in the report.
+BLOCK_SESSION_SCHEMA = 'FRANKIE_CLASSROOM_BLOCK_SESSION_V1'
+BLOCK_DAY_END = (
+    dict(piece='learner reading (SOCRATIC / VERIFY)',
+         why='these modes read Frankie\'s own walk of the whole sealed journal (frankie_box_classroom_reader.read_day); '
+             'a block session in those modes is listed, not run'),
+    dict(piece='shared market context and the native entry arithmetic (K.market_context)',
+         why='one full ordered read of the shared market timeline to the day\'s last anchor picture; the block answers '
+             'take the second set at the block\'s anchors instead'),
+    dict(piece='exhaustion/D facts (K.exhaustion_d_facts)',
+         why='computed from the ROOT\'s whole-day bedrock layers (not block-scoped data)'),
+    dict(piece='the teacher\'s account (teacher-account.json) as a lesson input',
+         why='written by the teacher\'s final publication from the whole day\'s second set'),
+    dict(piece='the brain entry <day>-cycle-00',
+         why='one entry per day (R16: a second entry of the same day declines); each block\'s checked lesson is kept in '
+             'blocks/<n>/brain-update.json for it and the entry is published once the day\'s classroom completes'),
+    dict(piece='Jev\'s material, the exchange, the meeting, the school and the day reports',
+         why='per day after the last block (they read the complete teacher publication)'),
+)
+
+
+def _block_dump(path, body):
+    import os
+    from research.kalshi.frankie_boss.frankie_principal_adapter import json_form
+    data = (json.dumps(json_form(body), indent=1, sort_keys=True, default=str) + '\n').encode()
+    pending = Path(str(path) + '.pending')
+    with pending.open('wb') as handle:
+        handle.write(data)
+        handle.flush()
+        os.fsync(handle.fileno())
+    os.replace(pending, path)
+    return dict(path=str(path), bytes=len(data), sha256=hashlib.sha256(data).hexdigest())
+
+
+def _block_text(path, text):
+    import os
+    pending = Path(str(path) + '.pending')
+    pending.write_text(text, encoding='utf-8')
+    os.replace(pending, path)
+    return str(path)
+
+
+def block_snapshot(teacher_rows, n, *, day, manifest=None):
+    """Block n's Dipole source snapshot (dipole_classroom SOURCE_SCHEMA) from its sealed sidecar lines: the snapshot row
+    fields of every row of the block (the teacher wrote them with the same _target_row as the day's snapshot), the
+    block's cutoff (its teacher as_of) and cursor, the source prefix hash through its last row. The attachment and
+    candidate fields name the block's sealed bytes (the day's attachment is built at day end)."""
+    import frankie_box_teacher_rows as TR
+    from research.kalshi.frankie_boss import dipole_classroom as DC
+    manifest = manifest if manifest is not None else TR.blocks(teacher_rows)
+    record = TR.block_record(teacher_rows, n, manifest)
+    entry = manifest['blocks'][n - 1]
+    rows = tuple(TR.iter_block(teacher_rows, n, select=TR.FIRST_SET_ROW_KEYS, manifest=manifest))
+    if not rows:
+        return None, record
+    body = {"schema": DC.SOURCE_SCHEMA, "request_id": 'experiment-%s-block-%02d' % (day, n), "cycle_index": 0,
+            "cycle_count": 1, "source_hash": rows[-1]['source_prefix_hash'], "as_of": int(record['teacher_as_of']),
+            "through_cursor": record['cursor_range'][1] - 1,
+            "teacher_attachment_hash": entry['sidecar_sha256'], "candidate_digest": entry['sha256'],
+            "processed_records": record['cursor_range'][1], "context_cursors": tuple(r['cursor'] for r in rows),
+            "rows": rows, "coverage_columns": tuple(DC.COLUMNS), "coverage_count": len(DC.COLUMNS)}
+    body["source_snapshot_hash"] = DC.evidence_hash(body)
+    return body, record
+
+
+def block_session(teacher_rows, directory, n, *, day, brain, previous=None, day_file=None, day_sha256=None,
+                  manifest=None):
+    """The whole classroom session on block n (see BLOCK_SESSION_SCHEMA above). Writes <directory>/blocks/<n>/ and
+    session.json last; returns its record. Raises nothing for the data: a failure is session.json's status."""
+    import time
+    out = Path(directory) / 'blocks' / str(n)
+    out.mkdir(parents=True, exist_ok=True)
+    began = time.monotonic()
+    written, listed = {}, []
+    try:
+        record = _block_session(teacher_rows, out, n, day=day, brain=brain, previous=previous, day_file=day_file,
+                                day_sha256=day_sha256, manifest=manifest, written=written, listed=listed)
+    except Exception as error:  # noqa: BLE001 - the next block goes on; the reason is the record
+        import traceback
+        record = dict(status='failed', reason='%s: %s' % (type(error).__name__, error),
+                      trace=traceback.format_exc()[-4000:])
+    record = dict(schema=BLOCK_SESSION_SCHEMA, day=day, block=n, **record, written=written, listed=listed,
+                  day_end=list(BLOCK_DAY_END), seconds=round(time.monotonic() - began, 3),
+                  written_utc=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()))
+    try:
+        _block_text(out / 'TEACHER_REPORT.md', '\n'.join(block_teacher_report(teacher_rows, out, n, day=day,
+                                                                             session=record, manifest=manifest)) + '\n')
+        written['TEACHER_REPORT.md'] = str(out / 'TEACHER_REPORT.md')
+    except Exception as error:  # noqa: BLE001
+        record['teacher_report_error'] = '%s: %s' % (type(error).__name__, error)
+    _block_dump(out / 'session.json', record)
+    return record
+
+
+def _block_session(teacher_rows, out, n, *, day, brain, previous, day_file, day_sha256, manifest, written, listed):
+    import frankie_box_classroom as C
+    import frankie_box_lane_state as LS
+    from research.kalshi.frankie_boss import dipole_classroom_final_review as F
+    from research.kalshi.frankie_boss import dipole_classroom_session as S, dipole_classroom_resolution as R
+    from research.kalshi.frankie_boss import dipole_classroom_integration as I
+    from research.kalshi.frankie_boss import dipole_classroom_external as EXT
+    from research.kalshi.frankie_boss.frankie_principal_adapter import digest, json_form
+    model = "Frankie's code (computed; no model)"
+    snapshot, block = block_snapshot(teacher_rows, n, day=day, manifest=manifest)
+    if snapshot is None:
+        return dict(status='empty', reason='block %d holds no rows (a sealed span of the clock with no row)' % n)
+    history, prior_grade, external_history, prior_external_grade = [], None, [], None
+    if previous:
+        prev = Path(previous)
+        history = json.loads((prev / 'history.json').read_bytes())
+        prior_grade = json.loads((prev / 'post-grade.json').read_bytes())
+        if (prev / 'external-history.json').is_file() and (prev / 'external-post-grade.json').is_file():
+            external_history = json.loads((prev / 'external-history.json').read_bytes())
+            prior_external_grade = json.loads((prev / 'external-post-grade.json').read_bytes())
+    pkg = I.prepare_integrated_cycle_from_snapshot(
+        snapshot, request_id=snapshot['request_id'], cycle_index=0, cycle_count=1, source_hash=snapshot['source_hash'],
+        as_of=snapshot['as_of'], through_cursor=snapshot['through_cursor'], history=history, prior_grade=prior_grade)
+    for part in ('teacher_key', 'pre_message', 'binding'):
+        written['package.%s' % part] = _block_dump(out / ('package.%s.json' % part), pkg[part])
+    mode = pkg['binding']['mode']
+    base = dict(status='complete', mode=mode, rows=len(snapshot['rows']), cursor_range=block['cursor_range'],
+                clock_range=block['clock_range'], teacher_as_of=block['teacher_as_of'],
+                source_snapshot_hash=snapshot['source_snapshot_hash'], teacher_key_hash=pkg['teacher_key']['teacher_key_hash'],
+                previous=str(previous) if previous else None, history_entries=len(history),
+                key_rule='built from block %d\'s rows with the day\'s functions (build_teacher_key + the re-pin); never '
+                         'from Frankie\'s findings' % n)
+    if mode in ('SOCRATIC', 'VERIFY'):
+        listed.append(dict(piece='answers, grade and correction', why='mode %s needs the learner\'s own reading of the '
+                           'whole sealed journal: runs at day end' % mode))
+        return dict(base, status='day_end_mode')
+    visible = F.final_model_visible_classroom(pkg)
+    selected = LS.learner_knowledge(day, 'classroom', brain=brain, classroom_mode=mode)
+    school, school_listed = LS.learner_school(day, brain=brain, versions=selected['versions'])
+    knowledge = selected['documents']
+    if mode == 'GUIDED':
+        _EVIDENCE_CACHE[visible['pre_message']['teacher_message_hash']] = _evidence(visible)
+    knowledge_check = stage_knowledge_reproduction(visible, knowledge)
+    school_check = school_reproduction(visible, school)
+    lesson_path = out / 'second_set.json'
+    lesson = json.loads(lesson_path.read_bytes()) if lesson_path.is_file() else dict(
+        status='absent', reason='no block lesson second set at %s' % lesson_path)
+    account = dict(checks=[], listed=[dict(teacher_account='day_end', reason=BLOCK_DAY_END[3]['why'])])
+    learner_context = dict(stage_knowledge=knowledge_check, school=school_check, second_set=second_set_context(lesson),
+                           teacher_account=account)
+    names = [c['name'] for c in C.components(visible)]
+    outputs = {name: component_answer(visible, C.component(visible, name), [q['right'] for q in C.pairs_of(visible, name)],
+                                      learner_context=learner_context) for name in names}
+    summary = summary_answer(visible, outputs, learner_context=learner_context)
+    built = C.assemble(visible, outputs, summary)
+    report = C.validate(visible, built['ledgers'])
+    written['code-answers'] = _block_dump(out / 'code-answers.json', dict(
+        schema=SCHEMA, outputs=outputs, summary=summary, school=school_check, stage_knowledge=knowledge_check,
+        knowledge=dict(documents=[{k: doc.get(k) for k in ('label', 'day', 'kind', 'sha256')} for doc in knowledge],
+                       versions=selected['versions'], listed=selected['listed'], school_listed=school_listed),
+        second_set=lesson.get('status'), answer_report=report, model_calls=0))
+    written['ledgers'] = _block_dump(out / 'ledgers.json', built['ledgers'])
+    written['classroom.md'] = _block_text(out / 'classroom.md', C.render_markdown(built['ledgers'], built['dropped_findings']))
+    request = {'attachment': {'dipole_classroom': visible}}
+    request_sha256 = digest(request)
+    session_id = 'experiment-%s-block-%02d' % (day, n)
+    response = dict(built['ledgers'], request_sha256=request_sha256, session_id=session_id,
+                    model_identity_as_reported_by_session=model)
+    teachback, initial_grade = S.grade_initial_response(pkg, response)
+    grade = F.apply_relationship_view_crosscheck(initial_grade, response)
+    novel = F.validate_novel_findings(response.get('dipole_novel_findings'), pkg['pre_message'])
+    novelty = F.investigate_novel_findings(pkg['teacher_key'], novel, mode=mode,
+                                           learning_policy=pkg['binding'].get('learning_policy'))
+    correction = F.bind_final_resolution_requirement(F.build_final_correction_request(
+        original_request_sha256=request_sha256, response=response, grade=grade, key=pkg['teacher_key'],
+        teachback=teachback, novelty_investigation=novelty))
+    parsed = C.parse_correction(json.dumps(correction_answer(correction)), correction)
+    reply = C.correction_response(correction, parsed, session_id=session_id, model_identity=model)
+    checked = S.validate_correction_response(correction=correction, response=reply, initial_response=response, grade=grade)
+    ack = R.validate_correction_resolutions(reply.get('dipole_acknowledgement'), grade, checked)
+    completion = S.finish(pkg, teachback=teachback, grade=grade, acknowledgement=ack)
+    transcript = F.render_final_transcript(pkg['pre_message'], teachback, novel, correction, ack,
+                                           reply.get('dipole_scientific_exchange'))
+    files = {'teachback': teachback, 'post-grade': grade, 'novel-findings': list(novel),
+             'novelty-investigation': novelty, 'correction-request': correction, 'correction-response': reply,
+             'acknowledgement': ack, 'completion': completion}
+    for name, body in files.items():
+        written[name] = _block_dump(out / ('%s.json' % name), body)
+    written['transcript.md'] = _block_text(out / 'transcript.md', transcript)
+    external = dict(status='not_run', reason='no day file given to the block session')
+    if day_file is not None and day_sha256:
+        try:
+            key, section = EXT.ensure_external_section(out, snapshot, day_file, day_sha256, trading_day=day,
+                                                       built_by='classroom block %d' % n)
+            pre = EXT.build_external_pre_message(key, mode=mode, prior_grade=prior_external_grade)
+            binding = EXT.build_external_binding(key, pre, v1_binding=pkg['binding'])
+            ext_visible = EXT.model_visible_external(binding, pre)
+            import frankie_box_classroom_external_code as KX
+            ledgers = KX.answers(ext_visible, dipole_visible=visible, learner_context=learner_context,
+                                 independent_evidence=None, knowledge=knowledge, school=school)
+            ext_grade = EXT.grade_external(key, ledgers)
+            request_v2 = {'attachment': {'dipole_classroom': visible, 'dipole_external': ext_visible}}
+            ext_correction = EXT.correction_request(original_request_sha256=digest(request_v2), session_id=session_id,
+                                                    model_identity=model, grade=ext_grade)
+            ext_parsed = C.parse_correction(json.dumps(correction_answer(ext_correction)), ext_correction)
+            ext_reply = C.correction_response(ext_correction, ext_parsed, session_id=session_id, model_identity=model)
+            ext_ack, ext_completion = EXT.finish_external(binding=binding, key=key, pre=pre, ledgers=ledgers,
+                                                          grade=ext_grade, correction=ext_correction, reply=ext_reply,
+                                                          initial_session_id=session_id, model_identity=model)
+            for name, body in (('external-code-answers', dict(ledgers=ledgers, model_calls=0)),
+                               ('external-post-grade', ext_grade), ('external-correction-request', ext_correction),
+                               ('external-correction-response', ext_reply), ('external-acknowledgement', ext_ack),
+                               ('external-completion', ext_completion)):
+                written[name] = _block_dump(out / ('%s.json' % name), body)
+            written['classroom-external.md'] = _block_text(out / 'classroom-external.md',
+                                                           EXT.render_markdown(ledgers, ext_grade))
+            external = dict(status='complete', section=section.get('section_sha256'), cutoff_ns=key['cutoff_ns'],
+                            history_entries=len(external_history))
+        except Exception as error:  # noqa: BLE001 - listed; the Dipole session stands
+            external = dict(status='failed', reason='%s: %s' % (type(error).__name__, error))
+            listed.append(dict(piece='external section', why=external['reason']))
+    # the checked lesson he carries into his brain (published once per day: BLOCK_DAY_END)
+    written['brain-update'] = _block_dump(out / 'brain-update.json', dict(
+        schema='FRANKIE_CLASSROOM_BLOCK_BRAIN_UPDATE_V1', day=day, block=n, mode=mode, checked=True,
+        completion=completion, acknowledgement=ack, history_entry=completion,
+        corrected_ledgers=reply, novel_findings=list(novel), novelty_investigation=novelty,
+        rule='the checked lesson of this block (graded, corrected, acknowledged); filed into Frankie\'s brain with the '
+             'day\'s entry <day>-cycle-00 (one entry per day, R16)'))
+    return dict(base, answer_report=report, external=external, components=len(names))
+
+
+def block_teacher_report(teacher_rows, out, n, *, day, session=None, manifest=None):
+    """TEACHER REPORT, block n (the day report's first person, scoped to the block): what I read in the block, the
+    second set beside every row, the planes present and absent, the clocks, the book columns, the pinned sums, the carry
+    into the next block; every sentence ends with the field it came from in brackets. What the day report adds at day
+    end (my account from the receipt, discovery and correlations, my actions) is named, not invented."""
+    import frankie_box_teacher_rows as TR
+    manifest = manifest if manifest is not None else TR.blocks(teacher_rows)
+    block = TR.block_record(teacher_rows, n, manifest)
+    lesson_path = Path(out) / 'second_set.json'
+    lesson = json.loads(lesson_path.read_bytes()) if lesson_path.is_file() else {}
+
+    def at(ns):
+        import datetime
+        return datetime.datetime.fromtimestamp(ns / 1e9, datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%fZ') \
+            if isinstance(ns, int) else str(ns)
+    B = 'blocks/%d.json' % n
+    side = block.get('sidecar') or {}
+    L = ['# TEACHER REPORT, %s block %d' % (day, n), '',
+         'My own account of block %d of the trading day %s, in my words: every sentence is a recorded number or a listed '
+         'name of my sealed block or of the second set Frankie read beside it, and the field it came from is given in '
+         'brackets.' % (n, day), '',
+         '## What I read in this block', '',
+         '- I read the teacher rows with cursors %s to %s, %d rows in all [%s cursor_range, rows].' % (
+             block['cursor_range'][0], block['cursor_range'][1] - 1, block['rows'], B),
+         '- The block covers the receive clock from %s up to (not including) %s [%s clock_range].' % (
+             at(block['clock_range'][0]), at(block['clock_range'][1]), B),
+         '- The first row I read was received at %s and the last at %s; my as_of for this block is %s [%s '
+         'first_row_clock, last_row_clock, teacher_as_of].' % (at(block.get('first_row_clock')),
+                                                               at(block.get('last_row_clock')),
+                                                               at(block.get('teacher_as_of')), B),
+         '- %d rows arrived out of receive order and are listed, not moved [%s late_rows].' % (
+             len(block.get('late_rows') or ()), B),
+         '- I published %d Dipole rows of the day\'s instrument in this block, as sidecar bytes %s to %s with sha256 %s '
+         '[%s sidecar].' % (side.get('lines', 0), (side.get('bytes') or [None, None])[0],
+                            (side.get('bytes') or [None, None])[1], side.get('sha256'), B),
+         '- Sealed in %s seconds, mode %s [%s seal_seconds, mode].' % (block.get('seal_seconds'), block.get('mode'), B), '']
+    sums = block.get('pinned_sums') or {}
+    if sums:
+        L += ['## The pinned columns in this block', '', '| component | PRESENT rows | sum of PRESENT values | states |',
+              '|---|---|---|---|']
+        for name in sorted(sums):
+            s = sums[name]
+            L.append('| %s | %s | %r | %s |' % (name, s.get('present'), s.get('sum'),
+                                                 ', '.join('%s %s' % kv for kv in sorted((s.get('states') or {}).items()))))
+        L += ['', '[%s pinned_sums]' % B, '']
+    L += ['## The second set beside every row', '']
+    if lesson.get('status') != 'carried':
+        L += ['- The second set of this block was not read: %s (%s) [blocks/%d/second_set.json status].' % (
+            lesson.get('status'), lesson.get('reason'), n), '']
+    else:
+        L.append('- Frankie read %s rows of my second set for this block; each row carries every role but the counts '
+                 'below [second_set.json rows, carried].' % lesson.get('rows'))
+        for role, count in sorted((lesson.get('carried') or {}).items()):
+            L.append('  - %s on %s rows [second_set.json carried.%s].' % (role, count, role))
+        for role, listing in sorted((lesson.get('absent') or {}).items()):
+            L.append('  - %s absent on %s rows (ordinal ranges %s) [second_set.json absent.%s].' % (
+                role, listing.get('rows'), listing.get('ordinal_ranges'), role))
+        L.append('- Match status of the pictures against my rows: %s; %d rows mismatched [second_set.json match_status, '
+                 'mismatched_rows].' % (json.dumps(lesson.get('match_status'), sort_keys=True),
+                                        len(lesson.get('mismatched_rows') or ())))
+        L += ['', '### The planes, present and absent', '', '| plane entry | rows with references | references | rows '
+              'carried by the row itself | rows absent | absent reasons |', '|---|---|---|---|---|---|']
+        for entry, slot in sorted((lesson.get('planes') or {}).items()):
+            L.append('| %s | %s | %s | %s | %s | %s |' % (
+                entry, slot.get('rows_with_references'), slot.get('references'), slot.get('rows_element'),
+                slot.get('rows_absent'), '; '.join('%s (%s)' % kv for kv in sorted((slot.get('absent_reasons') or {})
+                                                                                   .items()))))
+        L += ['', '[second_set.json planes]', '', '### The clocks', '']
+        clocks = lesson.get('clocks') or {}
+        for clock, count in sorted((clocks.get('carried_rows') or {}).items()):
+            reasons = (clocks.get('absent_reasons') or {}).get(clock) or {}
+            L.append('- %s carried on %s rows%s [second_set.json clocks].' % (
+                clock, count, ('; absent: %s' % '; '.join('%s on %s rows' % kv for kv in sorted(reasons.items())))
+                if reasons else ''))
+        L.append('- My lock time on these rows is my as_of for this block (lock time does not exist before Frankie reads) '
+                 '[second_set.json clock_lock_time].')
+        L += ['', '### The book columns', '', '- Book read status per row: %s [second_set.json book_columns.status_rows].'
+              % json.dumps((lesson.get('book_columns') or {}).get('status_rows'), sort_keys=True)]
+        resolver = (lesson.get('anchors_resolved') or {}).get('resolver') or {}
+        L.append('- At the %d anchor rows of the block (each component\'s first, last, minimum and maximum PRESENT row) '
+                 'the planes were read by their references: %s [second_set.json anchors_resolved.resolver].' % (
+                     len((lesson.get('anchors_resolved') or {}).get('rows') or {}),
+                     json.dumps(resolver.get('counts'), sort_keys=True)))
+        if lesson.get('entries_not_carried'):
+            L.append('- The entries the picture does not carry, with the reason, are listed whole in my header: %d '
+                     'entries [second_set.json entries_not_carried].' % len(lesson['entries_not_carried']))
+        L.append('')
+    carry = block.get('carried_state') or {}
+    L += ['## What I carry into the next block', '']
+    for name, value in sorted(carry.items()):
+        L.append('- %s: %s [%s carried_state.%s].' % (name, json.dumps(value, sort_keys=True, default=str)
+                                                      if not isinstance(value, str) else value, B, name))
+    L.append('')
+    if session:
+        L += ['## The classroom session on this block', '',
+              '- Status %s, mode %s, %s rows, %s components answered; key %s built from this block\'s rows '
+              '[blocks/%d/session.json].' % (session.get('status'), session.get('mode'), session.get('rows'),
+                                              session.get('components'), session.get('teacher_key_hash'), n),
+              '- The external section: %s [blocks/%d/session.json external].' % (
+                  json.dumps(session.get('external'), sort_keys=True, default=str), n), '']
+        if session.get('reason'):
+            L += ['- Not completed: %s [blocks/%d/session.json reason].' % (session['reason'], n), '']
+    L += ['## What the day report adds at day end', '']
+    for item in BLOCK_DAY_END:
+        L.append('- %s: %s.' % (item['piece'], item['why']))
+    L += ['- My account from the receipt (FRANKIE_TEACHER_ACCOUNT_V1), discovery and correlations '
+          '(frankie_box_teacher_findings) and my actions: written by my final publication from the whole day\'s second '
+          'set and rendered in TEACHER REPORT #N.', '']
+    return L

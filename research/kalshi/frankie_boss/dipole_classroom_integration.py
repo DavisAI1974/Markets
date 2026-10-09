@@ -117,6 +117,30 @@ def prepare_integrated_cycle(
         as_of=as_of,
         through_cursor=through_cursor,
     )
+    return prepare_integrated_cycle_from_snapshot(
+        snapshot, request_id=request_id, cycle_index=cycle_index, cycle_count=cycle_count, source_hash=source_hash,
+        as_of=as_of, through_cursor=through_cursor, previous_snapshot=previous_snapshot, history=history,
+        prior_grade=prior_grade, learning_history=learning_history, shared_knowledge=shared_knowledge)
+
+
+def prepare_integrated_cycle_from_snapshot(
+    snapshot: Mapping[str, Any],
+    *,
+    request_id: str,
+    cycle_index: int,
+    cycle_count: int,
+    source_hash: str,
+    as_of: int,
+    through_cursor: int,
+    previous_snapshot: Mapping[str, Any] | None = None,
+    history: Sequence[Mapping[str, Any]] = (),
+    prior_grade: Mapping[str, Any] | None = None,
+    learning_history: Mapping[str, Any] | None = None,
+    shared_knowledge: Mapping[str, Any] | None = None,
+) -> dict:
+    """prepare_integrated_cycle from a snapshot already made (the teacher's sealed blocks, 2026-10-09: a block's
+    snapshot rows come from its sealed sidecar lines). The key, the mode, the pre-message and the binding exactly as
+    prepare_integrated_cycle builds them."""
     key = _repin_teacher_key_correlations(
         classroom.build_teacher_key(snapshot, previous_snapshot)
     )

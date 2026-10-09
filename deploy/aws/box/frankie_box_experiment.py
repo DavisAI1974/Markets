@@ -2651,7 +2651,7 @@ class Run:
             # (no interval, no timeout), until the teacher's manifest is complete; then the whole-day lesson below
             import frankie_box_frankie_queue as Q
             with Q.class_running(self.log):
-                block_lessons = self.class_blocks(e, TEACHER_ROWS / day, d)
+                block_lessons = self.class_blocks(e, TEACHER_ROWS / day, d, previous=previous)
             if block_lessons.get('status') != 'complete' and self.day_rows(e)[0] is None:
                 # a failed block publication with the whole-day rows published goes on to the whole-day lesson (listed)
                 return self.record('classroom', day, 'waiting', block_lessons=block_lessons,
@@ -2730,7 +2730,7 @@ class Run:
         return dict(blocks=len(manifest['blocks']), complete=bool(manifest.get('complete')), status=manifest.get('status'),
                     schedule=(manifest.get('schedule') or {}).get('minutes'))
 
-    def class_blocks(self, e, rows_dir, d):
+    def class_blocks(self, e, rows_dir, d, previous=None):
         """The classroom block by block (frankie_box_classroom_code.block_lesson): block 1 (the canary) first, then each
         block as it seals, waiting between blocks on the rows directory, its blocks directory, the box's wake directory
         and the day's save marker (frankie_box_wake: no interval, no timeout). A lesson already written is kept. Returns
@@ -2743,19 +2743,33 @@ class Run:
         d.mkdir(parents=True, exist_ok=True)
         try:
             directory = self.ingest_dir(e)
-            day_file = attached_day_file(directory)[0] if directory is not None else None
+            day_file, day_sha = attached_day_file(directory)[:2] if directory is not None else (None, None)
         except (OSError, ValueError, KeyError, TypeError):
-            day_file = None
+            day_file, day_sha = None, None
+        brain = self.plan.get('brain') or str(BRAIN)
         dirs = [rows_dir, rows_dir / 'blocks', Q.wake_dir()] + ([Path(self.stop_marker).parent] if self.stop_marker else [])
         waiter = W.Waiter(dirs)
 
         def lesson(n, manifest):
-            done = d / 'blocks' / str(n) / 'lesson.json'
-            if done.is_file():
-                return dict(block=n, lesson=str(done), status='kept')
-            made = K.block_lesson(rows_dir, d, n, day_file=day_file, manifest=manifest)
-            self.log('classroom %s: block %d lesson (%s rows, second set %s)' % (e['day'], n, made['rows'],
-                                                                                 made['second_set']))
+            # the lesson (the second set of the block), then the WHOLE session on the block at once (answers, grade
+            # against the block's pinned key, correction, external section, the checked lesson, the teacher's report)
+            here = d / 'blocks' / str(n)
+            if (here / 'lesson.json').is_file() and (here / 'second_set.json').is_file():
+                made = dict(block=n, lesson=str(here / 'lesson.json'), status='kept')
+            else:
+                made = K.block_lesson(rows_dir, d, n, day_file=day_file, manifest=manifest)
+                self.log('classroom %s: block %d lesson (%s rows, second set %s)' % (e['day'], n, made['rows'],
+                                                                                     made['second_set']))
+            if (here / 'session.json').is_file():
+                made['session'] = 'kept'
+                return made
+            session = K.block_session(rows_dir, d, n, day=e['day'], brain=brain, previous=previous, day_file=day_file,
+                                      day_sha256=day_sha, manifest=manifest)
+            made['session'] = dict(status=session.get('status'), mode=session.get('mode'), reason=session.get('reason'),
+                                   seconds=session.get('seconds'))
+            self.log('classroom %s: block %d session %s (mode %s, %s s)%s; report %s' % (
+                e['day'], n, session.get('status'), session.get('mode'), session.get('seconds'),
+                (': ' + str(session.get('reason'))) if session.get('reason') else '', here / 'TEACHER_REPORT.md'))
             return made
         try:
             return TR.follow_blocks(rows_dir, lesson, waiter, check=self.check_save)
