@@ -2275,6 +2275,7 @@ POOL_RECOVERY = dict(worker_deaths=[], redone=[])
 PART_DIGESTS = {}         # coupling part -> sha256 its job recorded for the bytes it wrote (the part's pin)
 PART_READS = {}           # coupling part -> (bytes, sha256) of the discovery read of it (an integrity cross-check)
 PART_REVIEWS = {}         # coupling part -> (bytes, review sidecar pin) its job recorded (one pass, 2026-10-09)
+PART_NOMINATIONS = {}     # coupling part -> (bytes, nominations sidecar pin) its job recorded (one pass, 2026-10-09)
 
 
 def _part_digest(part):
@@ -2290,6 +2291,8 @@ def _part_digest(part):
         return None
     if type(state.get('bytes')) is int and isinstance(state.get('review'), dict):
         PART_REVIEWS[part] = (state['bytes'], state['review'])
+    if type(state.get('bytes')) is int and isinstance(state.get('nominations'), dict):
+        PART_NOMINATIONS[part] = (state['bytes'], state['nominations'])
     return state.get('sha256')
 
 
@@ -2639,11 +2642,26 @@ def _review_entry(ordinal, raw):
     return None
 
 
-def _write_review(part, entries, rows, part_bytes, part_sha256):
-    """<part>.review.jsonl beside the part (written whole, fsynced, renamed): the review's listed rows and findings for
-    this part, computed as the rows were written, and a last line naming the rows checked and the part's pin. The
-    step-5 review reads this small file instead of re-reading, re-hashing and re-parsing the part. Returns its pin."""
-    target = Path(part + REVIEW_SUFFIX)
+NOMINATIONS_SUFFIX = '.nominations.jsonl'
+
+
+def _nomination_entry(ordinal, row):
+    """One coupling row's discovery-nomination candidate (one pass, 2026-10-09): the fields _part_nominations takes
+    from a row found beyond chance, written by the worker as the row is written. The lag filter (an int best_lag > 0)
+    is applied by the reader on the JSON-decoded value, exactly as on the part's own line. None for a row not beyond
+    chance."""
+    if not row.get('beyond_chance'):
+        return None
+    return dict(row=ordinal, cell=row['cell'], cell_value=row.get('cell_value'), y=row['y'], x=row['x'],
+                best_lag=row.get('best_lag'), x_transform=row.get('x_transform'), y_transform=row.get('y_transform'),
+                same_way=row.get('same_way'), opposite=row.get('opposite'), both_moving=row.get('both_moving'),
+                null_shifts=row.get('null_shifts'))
+
+
+def _write_sidecar(target, entries, rows, part_bytes, part_sha256):
+    """A small JSONL beside a part (written whole, fsynced, renamed): the entries, then a last line naming the rows
+    checked and the part's pin. Returns its pin."""
+    target = Path(target)
     temporary = Path(str(target) + '.tmp')
     hashed, size = hashlib.sha256(), 0
     with temporary.open('wb') as out:
@@ -2658,13 +2676,27 @@ def _write_review(part, entries, rows, part_bytes, part_sha256):
     return dict(path=target.name, bytes=size, sha256=hashed.hexdigest(), rows=rows)
 
 
+def _write_nominations(part, entries, rows, part_bytes, part_sha256):
+    """<part>.nominations.jsonl beside the part: every row beyond chance with the fields discovery nominates from,
+    written as the rows were written. Discovery reads this small file instead of re-reading the part."""
+    return _write_sidecar(part + NOMINATIONS_SUFFIX, entries, rows, part_bytes, part_sha256)
+
+
+def _write_review(part, entries, rows, part_bytes, part_sha256):
+    """<part>.review.jsonl beside the part (written whole, fsynced, renamed): the review's listed rows and findings for
+    this part, computed as the rows were written, and a last line naming the rows checked and the part's pin. The
+    step-5 review reads this small file instead of re-reading, re-hashing and re-parsing the part. Returns its pin."""
+    return _write_sidecar(part + REVIEW_SUFFIX, entries, rows, part_bytes, part_sha256)
+
+
 def _cell_job(args):
     """One cell/x job; retain its exact next partner and all completed candidate rows on save.
 
     One pass (Greg, 2026-10-09): the part is hashed as its rows are written (no read-back for its pin); a resumed
     partial is read ONCE (its hash continued from that read, compared with the saved one); a completed or ready part is
     taken on a resume by its saved pin plus stat and last 64 KiB (no re-hash); the review's per-row checks are made as
-    the rows are written and saved beside the part (<part>.review.jsonl)."""
+    the rows are written and saved beside the part (<part>.review.jsonl), and so are discovery's nomination rows
+    (<part>.nominations.jsonl), so discovery does not re-read the part."""
     _worker_default_sigterm()
     part, cell_col, cell_value, tx, x, lags, survivors, header = args
     identity = dict(search=_JOB['identity'], job=args)
@@ -2685,11 +2717,11 @@ def _cell_job(args):
         result = (part, saved['count'], saved['beyond'], None)
         _save_state(state_path, dict(identity=identity, complete=True, result=result, sha256=saved['sha256'],
                                      bytes=saved['bytes'], stat=saved.get('stat'), tail=saved.get('tail'),
-                                     review=saved.get('review')))
+                                     review=saved.get('review'), nominations=saved.get('nominations')))
         return result
     steps, idx = _JOB['steps'], _JOB['cells'][(cell_col, cell_value)]
     pick = (lambda v: v) if idx is None else (lambda v: v[idx])
-    hashed, review, written = hashlib.sha256(), [], 0
+    hashed, review, nominated, written = hashlib.sha256(), [], [], 0
     if saved:
         sx, fx = saved['sx'], saved['fx']
         count, beyond, cursor = saved['count'], saved['beyond'], saved['cursor']
@@ -2701,6 +2733,9 @@ def _cell_job(args):
                 entry = _review_entry(written, raw)
                 if entry is not None:
                     review.append(entry)
+                entry = _nomination_entry(written, json.loads(raw))
+                if entry is not None:
+                    nominated.append(entry)
                 written += 1
         if hashed.hexdigest() != saved['sha256']:
             raise ValueError('unfinished search part differs from saved cursor: %s' % partial)
@@ -2736,6 +2771,9 @@ def _cell_job(args):
             entry = _review_entry(written, raw)
             if entry is not None:
                 review.append(entry)
+            entry = _nomination_entry(written, row)
+            if entry is not None:
+                nominated.append(entry)
             written += 1
             count += 1
             beyond += row['beyond_chance']
@@ -2747,13 +2785,14 @@ def _cell_job(args):
     size = partial.stat().st_size
     stat, tail = _file_identity(partial)
     review_pin = _write_review(part, review, written, size, digest)
+    nominations_pin = _write_nominations(part, nominated, written, size, digest)
     _save_state(state_path, dict(identity=identity, complete=False,
                                 count=count, beyond=beyond, cursor=len(partners),
                                 bytes=size, sha256=digest, ready_to_publish=True, stat=stat, tail=tail,
-                                review=review_pin))
+                                review=review_pin, nominations=nominations_pin))
     os.replace(partial, part)
     _save_state(state_path, dict(identity=identity, complete=True, result=result, sha256=digest, bytes=size, stat=stat,
-                                 tail=tail, review=review_pin))
+                                 tail=tail, review=review_pin, nominations=nominations_pin))
     # The fifth element is this worker's cache accounting at the end of a freshly computed job (never saved in the
     # retained result: a recovered job reports none); the caller aggregates it for MANIFEST.fft_cache.
     return result + (_fft_cache_stats(),)
@@ -2781,12 +2820,59 @@ DISCOVERY_SCHEMA = 'FRANKIE_SEARCH_DISCOVERY_INDEX_V1'
 DISCOVERY_NITERATIONS, DISCOVERY_MAXSIZE = 40, 12            # odcore.symbolic.discover defaults
 
 
+def _nomination_found(path, staging, ordinal, row):
+    """(key, feature, provenance) of a coupling row beyond chance with x leading y at an int best lag > 0, else None.
+    The one filter both the sidecar and the part readings apply."""
+    lag = row.get('best_lag')
+    if not row.get('beyond_chance') or type(lag) is not int or lag <= 0:
+        return None
+    return ((row['cell'], row.get('cell_value'), row['y']), (row['x'], lag), dict(
+        part=str(path.relative_to(staging)), row=ordinal, x_transform=row.get('x_transform'),
+        y_transform=row.get('y_transform'), same_way=row.get('same_way'), opposite=row.get('opposite'),
+        both_moving=row.get('both_moving'), null_shifts=row.get('null_shifts')))
+
+
+def _sidecar_nominations(path, staging, recorded, part_sha256):
+    """(rows, found) from the part's nominations sidecar (one pass, 2026-10-09), or None when there is none or it
+    does not hold: the part's size equals the bytes its job recorded, the sidecar's bytes and sha256 equal its pin,
+    and its last line names the part's bytes and sha256 (the part's pin). The part itself is not read."""
+    if recorded is None or not part_sha256:
+        return None
+    part_bytes, pin = recorded
+    try:
+        side = path.parent / pin['path']
+        if path.stat().st_size != part_bytes:
+            return None
+        raw = side.read_bytes()
+        if len(raw) != pin['bytes'] or hashlib.sha256(raw).hexdigest() != pin['sha256']:
+            return None
+        lines = [json.loads(line) for line in raw.splitlines()]
+        last = lines.pop()
+        if (last.get('part_bytes'), last.get('part_sha256')) != (part_bytes, part_sha256):
+            return None
+        found = []
+        for entry in lines:
+            row = dict(entry, beyond_chance=True)
+            hit = _nomination_found(path, staging, entry['row'], row)
+            if hit is not None:
+                found.append(hit)
+        return last['rows_checked'], found
+    except (OSError, ValueError, KeyError, TypeError, IndexError):
+        return None
+
+
 def _part_nominations(args):
-    """(rows read, [(key, feature, provenance)] in row order) of one coupling part (the reading discovery_nominations
-    has always done, one part per call)."""
+    """(rows, [(key, feature, provenance)] in row order, (bytes, sha256) of the part read or None) of one coupling
+    part. One pass (2026-10-09): the worker that wrote the part wrote its nomination rows beside it
+    (<part>.nominations.jsonl); that small file is read and the part is not. A part without it (written before the
+    sidecar existed, or one whose sidecar does not hold) is read whole as before, every line hashed as read."""
     _worker_default_sigterm()
-    part, staging = args
+    part, staging = args[:2]
     path, found, read = Path(part), [], 0
+    if len(args) > 2:
+        sidecar = _sidecar_nominations(path, staging, args[2], args[3])
+        if sidecar is not None:
+            return sidecar[0], sidecar[1], None
     hashed, size = hashlib.sha256(), 0
     # read as bytes, every line hashed as read (the part's one read also checks its pin); json.loads decodes UTF-8
     # bytes exactly as the text read did (json.dumps lines carry no carriage return, so no newline translation applied)
@@ -2795,14 +2881,9 @@ def _part_nominations(args):
             hashed.update(line)
             size += len(line)
             read += 1
-            row = json.loads(line)
-            lag = row.get('best_lag')
-            if not row.get('beyond_chance') or type(lag) is not int or lag <= 0:
-                continue
-            found.append(((row['cell'], row.get('cell_value'), row['y']), (row['x'], lag), dict(
-                part=str(path.relative_to(staging)), row=ordinal, x_transform=row.get('x_transform'),
-                y_transform=row.get('y_transform'), same_way=row.get('same_way'), opposite=row.get('opposite'),
-                both_moving=row.get('both_moving'), null_shifts=row.get('null_shifts'))))
+            hit = _nomination_found(path, staging, ordinal, json.loads(line))
+            if hit is not None:
+                found.append(hit)
     return read, found, (size, hashed.hexdigest())
 
 
@@ -2811,7 +2892,8 @@ def discovery_nominations(parts, staging, workers=1, context=None):
     The parts are read side by side by the lane's pinned workers and merged in part order, so the mapping, its key
     order and every provenance list are those of one reader going through the parts in order."""
     out, read = {}, 0
-    jobs = [(part, staging) for part in sorted(parts) if Path(part).is_file()]
+    jobs = [(part, staging, PART_NOMINATIONS.get(part), PART_DIGESTS.get(part))
+            for part in sorted(parts) if Path(part).is_file()]
     if workers > 1 and len(jobs) > 1:
         import multiprocessing
         started, count = time.time(), min(workers, len(jobs))
@@ -2820,14 +2902,20 @@ def discovery_nominations(parts, staging, workers=1, context=None):
     else:
         started, count = None, 1
         results = ((job, _part_nominations(job)) for job in jobs)
+    from_sidecar = 0
     for job, (rows, found, pinned) in results:
         read += rows
-        PART_READS[job[0]] = pinned
+        if pinned is None:
+            from_sidecar += 1                       # the part was not read: its nominations sidecar was
+        else:
+            PART_READS[job[0]] = pinned
         for key, feature, provenance in found:
             out.setdefault(key, {}).setdefault(feature, []).append(provenance)
     if started is not None:
         SOURCE_PASSES.append(dict(what='discovery nominations (coupling parts read)', parts=len(jobs), rows=read,
-                                  workers=count, seconds=round(time.time() - started, 3)))
+                                  parts_from_write_time_sidecar=from_sidecar,
+                                  parts_read_whole=len(jobs) - from_sidecar, workers=count,
+                                  seconds=round(time.time() - started, 3)))
     return out, read
 
 
@@ -3146,7 +3234,8 @@ SEARCH_VALUE_CODE = (
     'disk_spool_columns', '_spool_range_rows', 'decoded_spool', 'known_time_rows', 'asof_source_rows', 'asof_values',
     'root_row_columns', 'build_series', 'leakage_gate', 'leakage_gate_batch', 'leakage_gates', '_gate_job',
     'transforms', 'couple', '_partner_transforms', '_step_job_compute', 'y_transforms', 'build_cell_index',
-    'build_jobs', '_cell_job', '_part_nominations', 'discovery_nominations', '_discovery_compute', 'DISCOVERY_SCHEMA',
+    'build_jobs', '_cell_job', '_nomination_entry', '_nomination_found', '_sidecar_nominations', '_part_nominations',
+    'discovery_nominations', '_discovery_compute', 'DISCOVERY_SCHEMA',
     'discovery')
 
 
