@@ -22,7 +22,16 @@ import traceback
 from pathlib import Path
 
 _CURRENT = [None]
-POLL_SECONDS = 0.5
+
+
+def _wake():
+    """frankie_box_wake (event-driven waits, Greg 2026-10-09: no coded wait times): inotify on the hand-off directory,
+    a pidfd on the teacher process; no poll interval."""
+    try:
+        import frankie_box_wake as W
+    except ImportError:
+        from deploy.aws.box import frankie_box_wake as W
+    return W
 
 
 def _atomic(path, data):
@@ -40,14 +49,17 @@ class Handle:
         """Hand the context over and wait for the finished attachment."""
         _atomic(self.directory / 'context.pkl', pickle.dumps(spec, protocol=pickle.HIGHEST_PROTOCOL))
         result, error = self.directory / 'result.pkl', self.directory / 'error.txt'
-        while True:
-            if error.exists():
-                raise RuntimeError('concurrent teacher failed:\n' + error.read_text())
-            if result.exists():
-                return pickle.loads(result.read_bytes())
-            if not self.process.is_alive():
-                raise RuntimeError('concurrent teacher exited (code %s) without a result' % self.process.exitcode)
-            time.sleep(POLL_SECONDS)
+        # armed before the first check: the result/error landing (atomic rename) or the process exiting wakes it
+        with _wake().Waiter([self.directory], pids=[self.process.pid]) as waiter:
+            while True:
+                if error.exists():
+                    raise RuntimeError('concurrent teacher failed:\n' + error.read_text())
+                if result.exists():
+                    return pickle.loads(result.read_bytes())
+                if not self.process.is_alive():
+                    raise RuntimeError('concurrent teacher exited (code %s) without a result' % self.process.exitcode)
+                waiter.fired.clear()
+                waiter.wait()
 
     def stop(self):
         if self.process.is_alive():
@@ -128,8 +140,10 @@ def _run(spec_blob):
         print('concurrent teacher: row pass done, %d rows in %.1f s; waiting for the context' % (
             processed, time.time() - started), flush=True)
         path = directory / 'context.pkl'
-        while not path.exists():
-            time.sleep(POLL_SECONDS)
+        with _wake().Waiter([directory]) as waiter:      # the hand-over's atomic rename wakes it; no poll
+            while not path.exists():
+                waiter.fired.clear()
+                waiter.wait()
         context = pickle.loads(path.read_bytes())
         result = PT.finish(teacher, rows, processed, hashes, context, source_manifest_hash=spec['source'])
         _atomic(directory / 'result.pkl', pickle.dumps(result, protocol=pickle.HIGHEST_PROTOCOL))
