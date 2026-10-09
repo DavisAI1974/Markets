@@ -383,11 +383,24 @@ def knowledge_correction_response(request, initial_response):
 
 
 def knowledge_correction_consumer():
-    """Pin the existing analytical reader without selecting new learning mathematics."""
+    """Name the existing analytical reader without selecting new learning mathematics. adapter_sha256 and reader_sha256
+    (the whole bytes of this file and of frankie_box_classroom_code.py) are RECORDED, never compared (Greg, 2026-10-09):
+    a request's consumer is accepted on its schema (consumer_matches)."""
     reader = Path(__file__).resolve().parents[3] / 'deploy/aws/box/frankie_box_classroom_code.py'
     return dict(schema=KNOWLEDGE_CORRECTION_CONSUMER,
                 adapter_sha256=file_witness(__file__)['sha256'],
                 reader_sha256=file_witness(reader)['sha256'])
+
+
+CONSUMER_RECORDED_CODE = ('adapter_sha256', 'reader_sha256')
+
+
+def consumer_matches(carried):
+    """A request's learner_consumer compared with this checkout's without its recorded-only code fields."""
+    if not isinstance(carried, dict):
+        return False
+    strip = lambda value: {k: v for k, v in value.items() if k not in CONSUMER_RECORDED_CODE}
+    return strip(carried) == strip(knowledge_correction_consumer())
 
 
 def consume_knowledge_correction(request, scope_response, original_request):
@@ -401,7 +414,7 @@ def consume_knowledge_correction(request, scope_response, original_request):
     from deploy.aws.box import frankie_box_classroom as CLASSROOM
     from deploy.aws.box import frankie_box_classroom_code as CODE
     from deploy.aws.box import frankie_box_experiment_review as REVIEW
-    if (request['learner_consumer'] != knowledge_correction_consumer()
+    if (not consumer_matches(request['learner_consumer'])
             or digest(original_request) != request['original_request_sha256']
             or original_request['request_id'] != request['request_id']
             or original_request['attachment']['feedback_contract'] != request['original_feedback_contract']
