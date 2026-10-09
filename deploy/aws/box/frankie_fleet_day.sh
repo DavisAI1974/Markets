@@ -51,7 +51,7 @@ for D in "${SAVED[@]}"; do
   # B3: claim with an exit-code split -- 0 won / idempotent-own, 1 lost to another box (skip), >=2 error (STOP loudly)
   "$PY" -B "$FLEET" claim-day --run "$RUN" --day "$D" --stage root --commit "$COMMIT"; cc=$?
   if [ "$cc" -ge 2 ]; then echo "claim error for $D (exit $cc); stopping the driver"; exit "$cc"; fi
-  if [ "$cc" -eq 1 ]; then echo "day $D is claimed by another box; skipping"; continue; fi
+  if [ "$cc" -eq 1 ]; then echo "day $D is owned or claimed by another box (a box keeps its days end to end); skipping"; continue; fi
   # resume the saved day on the staged checkout; REBOOK=on (B4: the day re-books its CPUs fresh when it proceeds)
   if ! CODE_ROOT="$CODE_ROOT" MARKETS_SHA="$COMMIT" ACTION=resume RUN="$RUN" DAY="$D" REBOOK=on bash "$QUEUE"; then
     echo "resume $D failed (exit $?)"; rc=3; continue

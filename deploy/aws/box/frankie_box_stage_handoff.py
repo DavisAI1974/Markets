@@ -467,6 +467,17 @@ def boundary(run, e, stage, key, record, *, code_root, commit, log=print):
             why = 'validation exit %d: no validator receipt or an unlisted refusal (see %s)' % (code, vlog)
         return _write(out_dir / 'handoff.json', dict(base, status='failed', reason=why))
     if fleet is not None:
+        # Greg (2026-10-09): a fleet box keeps its days end to end. A stage that finished on a box other than the day's
+        # owner (a wrong-box dispatch) never hands off to its successor here: the day is saved for an operator. The first
+        # boundary of a day with no box on the day list pins it to this box. A store error is recorded, not a stop.
+        try:
+            base['fleet_owner'] = owner = fleet.check_day_owner(run.plan['run'], e['day'], stage)
+        except Exception as error:  # noqa: BLE001
+            base['fleet_owner'] = owner = dict(ok=True, error='%s: %s' % (type(error).__name__, str(error)[:200]))
+        if not owner.get('ok'):
+            saved = request_own_save(run, e, by='%s boundary: %s (fleet)' % (stage, owner.get('reason')))
+            return _write(out_dir / 'handoff.json', dict(base, status='fleet_not_owner', save=saved,
+                          reason='validated; %s; the day is saved here and never goes on on this box' % owner.get('reason')))
         # record this stage DONE on the day's own progress object (advisory): the day is carried through its full
         # sequence (classroom -> data/search -> scientific-teacher -> voice meeting -> jev -> end), done only at the
         # tail -- jev for an arm day, accumulated_lessons/survivors for a non-arm day (S3)
@@ -485,6 +496,11 @@ def boundary(run, e, stage, key, record, *, code_root, commit, log=print):
         #    unit classroom_gate started resume+kick it when the lease frees. A visible WAIT, like the digest WAIT.
         gate = fleet.classroom_gate(run.plan['run'], e['day'], stage, out_dir, code_root, commit, log=log)
         base['fleet_gate'] = gate
+        if gate.get('decision') == 'not_owner':
+            saved = request_own_save(run, e, by='%s boundary: %s (fleet gate)' % (stage, gate.get('reason')))
+            return _write(out_dir / 'handoff.json', dict(base, status='fleet_not_owner', save=saved,
+                          reason='validated; %s; the day is saved at the gate and never goes on on this box'
+                                 % gate.get('reason')))
         if gate.get('decision') == 'ineligible':
             # a Spot / ClassroomEligible=false box: refused the lease; the day is saved at the gate for an operator
             saved = request_own_save(run, e, by='%s boundary: validated; this box is ClassroomEligible=false; the day '

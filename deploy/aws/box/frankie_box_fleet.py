@@ -82,6 +82,7 @@ WAIT_SCHEMA = 'FRANKIE_FLEET_WAIT_V1'
 GATE_SCHEMA = 'FRANKIE_FLEET_GATE_V1'
 TAKEOVER_SCHEMA = 'FRANKIE_FLEET_TAKEOVER_V1'
 PROGRESS_SCHEMA = 'FRANKIE_FLEET_PROGRESS_V1'
+OWNER_SCHEMA = 'FRANKIE_FLEET_OWNER_V1'
 
 DAY_LIST_KEY = 'day-list.json'
 LEASE_KEY = 'classroom.lease.json'
@@ -391,6 +392,11 @@ def waiting_key(run, day):
     return 'waiting/%s/%s.json' % (run, day)
 
 
+def owner_key(run, day):
+    # the create-only pin of a day with no assigned box on the day list: the first claim of any stage writes it
+    return 'owners/%s/%s.json' % (run, day)
+
+
 # ----------------------------------------------------------------------------------------------- the day list
 def read_day_list(st=None):
     return (st or store()).get(DAY_LIST_KEY)
@@ -409,11 +415,74 @@ def seed_day_list(run, assignments, commit, *, st=None):
         return dict(status='exists', day_list=read_day_list(st))
 
 
-def _update_progress(run, day, *, st, instance, mutate):
-    """Read-modify-write THIS day's own progress object (S4: one writer per day, no cross-box contention)."""
+# ----------------------------------------------------------------------------------------------- the day's owner box
+# Greg (2026-10-08, reaffirmed 2026-10-09): A FLEET BOX KEEPS THE DAYS ASSIGNED TO IT FROM THE FIRST STAGE TO THE END.
+# No box switching; no day or stage of a day ever runs on another box; the classroom lease only orders WHICH box's day
+# goes next. The owner is the day's box on the seeded day list; a day with no box there is pinned (create-only) to the
+# box of its first claim of ANY stage. Every claim, lease take, gate, progress write and handoff boundary checks it.
+class NotDayOwner(Exception):
+    """A claim or write for a day from a box that is not the day's owner (a box keeps its days end to end)."""
+
+
+def not_owner_reason(day, owner):
+    return 'day %s is assigned to box %s; a box keeps its days end to end' % (day, owner)
+
+
+def assigned_box(day, *, st=None):
+    """The day's box on the seeded day list, or None (no list, the day not on it, or its box unset)."""
+    doc = (st or store()).get(DAY_LIST_KEY) or {}
+    for entry in doc.get('days') or []:
+        if isinstance(entry, dict) and entry.get('day') == day and entry.get('box'):
+            return entry['box']
+    return None
+
+
+def day_owner(run, day, *, st=None):
+    """(owner, basis): the day list's box ('day-list'), else the create-only pin ('pin'), else (None, None)."""
     st = st or store()
+    box = assigned_box(day, st=st)
+    if box:
+        return box, 'day-list'
+    pinned = (st.get(owner_key(run, day)) or {}).get('instance')
+    return (pinned, 'pin') if pinned else (None, None)
+
+
+def check_day_owner(run, day, stage, *, st=None, instance=None, pin=True):
+    """May THIS box run (run, day)'s `stage`? {ok, owner, basis, reason}. With no owner yet and pin=True, the first
+    caller pins the day to itself (create-only: two racers see exactly one owner). A store error raises (the callers
+    fail closed or record it); an unreadable pin after a lost create refuses."""
+    st = st or store()
+    instance = instance or instance_id()
+    owner, basis = day_owner(run, day, st=st)
+    if owner is None and pin:
+        body = dict(schema=OWNER_SCHEMA, run=run, day=day, instance=instance, first_stage=stage, pinned_utc=_utc(),
+                    basis='no box for this day on the day list: the first claim of any stage pins it')
+        try:
+            st.put_if_absent(owner_key(run, day), body)
+            owner, basis = instance, 'pinned-now'
+        except ConditionalExists:
+            owner, basis = (st.get(owner_key(run, day)) or {}).get('instance'), 'pin'
+            if owner is None:
+                return dict(ok=False, owner=None, basis='pin', instance=instance,
+                            reason='day %s has an owner pin that could not be read; refused' % day)
+    if owner is None:
+        return dict(ok=True, owner=None, basis=None, instance=instance, reason='no owner yet (not pinned by this call)')
+    ok = owner == instance
+    return dict(ok=ok, owner=owner, basis=basis, instance=instance, reason=None if ok else not_owner_reason(day, owner))
+
+
+def _update_progress(run, day, *, st, instance, mutate):
+    """Read-modify-write THIS day's own progress object (S4: one writer per day, no cross-box contention). The box on
+    it is never rewritten: a write from a box other than the day's owner (or the box already on the object) raises
+    NotDayOwner, which the callers record."""
+    st = st or store()
+    owner, _basis = day_owner(run, day, st=st)
+    if owner and owner != instance:
+        raise NotDayOwner(not_owner_reason(day, owner))
     key = progress_key(run, day)
     doc = st.get(key) or dict(schema=PROGRESS_SCHEMA, run=run, day=day, box=instance, stages={})
+    if doc.get('box') and doc['box'] != instance:
+        raise NotDayOwner(not_owner_reason(day, doc['box']))
     doc['box'] = instance
     mutate(doc)
     st.put(key, doc)
@@ -493,10 +562,15 @@ def box_saved_days(run, *, queue_dir=None):
 
 def claim_day(run, day, stage, commit, *, st=None, instance=None):
     """Claim a (run, day, stage) with a conditional write: exactly one box can win. Returns {won, holder, record}.
-    The days are pre-assigned on the list; this is the hard guarantee that two boxes never run the same day."""
+    Only the day's OWNER can win (its box on the day list, else the box its first claim of any stage pinned it to);
+    any other box is refused with won=False before it writes anything. The conditional write is then the hard
+    guarantee that two boxes never run the same day."""
     st = st or store()
     instance = instance or instance_id()
     key = claim_key(run, day, stage)
+    owner = check_day_owner(run, day, stage, st=st, instance=instance)
+    if not owner['ok']:
+        return dict(won=False, holder=owner['owner'], key=key, reason=owner['reason'], not_owner=True, owner=owner)
     body = dict(schema=CLAIM_SCHEMA, run=run, day=day, stage=stage, instance=instance, commit=commit, claimed_utc=_utc())
     try:
         st.put_if_absent(key, body)
@@ -605,6 +679,10 @@ def acquire_classroom_lease(run, day, commit, *, st=None, instance=None, fair=Tr
     st = st or store()
     instance = instance or instance_id()
     fair_wait = _int_setting(FAIR_WAIT_SETTING, DEFAULT_FAIR_WAIT_SECONDS) if fair_wait is None else fair_wait
+    # the lease orders WHICH box's day goes next; it never moves a day: only the day's owner may take it for that day
+    owner = check_day_owner(run, day, 'classroom', st=st, instance=instance)
+    if not owner['ok']:
+        return dict(acquired=False, holder=None, reason=owner['reason'], not_owner=True, owner=owner)
     cur = lease_holder(st=st)
     if cur and cur.get('holder_instance') == instance and cur.get('run') == run and cur.get('day') == day:
         return dict(acquired=True, holder=instance, reason='already held by this box', lease=cur)
@@ -690,7 +768,10 @@ def takeover_classroom_lease(run, day, commit, by, *, force=False, st=None, inst
     if not force:
         return dict(status='refused', reason='a lease takeover is an explicit operator action: pass force=True',
                     current=cur)
+    # the takeover moves the ORDER token only, never the day: it is recorded with the day's owner, and only the owner's
+    # gate/WAIT unit can run the day (acquire refuses any other box for it)
     audit = dict(schema=TAKEOVER_SCHEMA, at=_utc(), by=by, new_holder=instance, run=run, day=day, commit=commit,
+                 day_owner=_try(lambda: day_owner(run, day, st=st)[0]),
                  prior=cur, warning='N2: if the prior holder is still alive its classroom keeps running -- there may '
                  'be TWO classrooms until it ends. Only force a takeover once the prior holder is confirmed dead.')
     st.put('classroom.lease.takeover-%d.json' % int(time.time()), audit)
@@ -747,6 +828,17 @@ def classroom_gate(run, day, stage, out_dir, code_root, commit, *, log=print, st
         _try(lambda: set_day_stage_state(run, day, 'classroom', 'ineligible', st=st))
         _write_json(out_dir / 'fleet-gate.json', rec)
         log('fleet gate %s %s/%s: ineligible (%s)' % (stage, run, day, rec['reason']))
+        return rec
+    try:
+        owner = check_day_owner(run, day, 'classroom', st=st, instance=instance)
+    except Exception as error:  # noqa: BLE001 - unreadable: fall through; the lease take re-checks it (fail closed)
+        owner = dict(ok=True, error='%s: %s' % (type(error).__name__, str(error)[:200]))
+    if not owner['ok']:
+        # a box keeps its days end to end: a non-owner never marks itself in line, takes the lease or starts a WAIT unit
+        rec = dict(schema=GATE_SCHEMA, run=run, day=day, stage=stage, instance=instance, commit=commit, at=time.time(),
+                   decision='not_owner', holder=None, owner=owner, reason=owner['reason'])
+        _write_json(out_dir / 'fleet-gate.json', rec)
+        log('fleet gate %s %s/%s: not_owner (%s)' % (stage, run, day, rec['reason']))
         return rec
     try:
         # NEW-1: stamp whether this box can give its classroom the CPUs right now on the waiting marker, so the fleet
@@ -957,6 +1049,9 @@ def wait_action(args):
             _write_json(out_dir / 'fleet-gate.json', dict(schema=GATE_SCHEMA, run=args.run, day=args.day,
                         stage=args.stage, instance=instance_id(), decision='proceed' if got['acquired'] else 'waiting',
                         lease=got, at=time.time(), in_wait_unit=True))
+            if got.get('not_owner'):
+                say('fleet wait: %s; this box never resumes it; exiting' % got['reason'])
+                return 3
             if got['acquired']:
                 _try(lambda: set_day_stage_state(args.run, args.day, 'classroom', 'lease_held', st=st))
                 res = fleet_resume(args.run, args.day, args.code_root, args.commit, out_dir, log=say)
