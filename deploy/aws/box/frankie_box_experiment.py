@@ -4966,7 +4966,8 @@ class Run:
             reused = self.teacher_entry_reuse(day, rows_path, source_sha, path)
             if reused is not None:
                 return dict(reused, source_basis=source_basis, producer_note=producer_note,
-                            teacher_account=self.teacher_account_entry(day, rows_path))
+                            teacher_account=self.teacher_account_entry(day, rows_path),
+                            teacher_second_set=self.teacher_second_set_entry(day, rows_path))
         else:
             # the rows streamed one at a time with only the fields the key reads (frankie_box_teacher_rows); the
             # snapshot hash is computed on the same stream over the file's own bytes (the same check, never a whole load)
@@ -5005,8 +5006,50 @@ class Run:
         out = self.brain_stage(day, 'teacher', [rows_path, path],
                                summary=dict(rows=str(rows_path)), inline_limit=path.stat().st_size)
         account = self.teacher_account_entry(day, rows_path)
-        return (dict(out, source_basis=source_basis, producer_note=producer_note, teacher_account=account)
+        second = self.teacher_second_set_entry(day, rows_path)
+        return (dict(out, source_basis=source_basis, producer_note=producer_note, teacher_account=account,
+                     teacher_second_set=second)
                 if isinstance(out, dict) else out)
+
+    def teacher_second_set_entry(self, day, rows_path):
+        """The BOSS teacher's own reading of its published second set (Greg, 2026-10-09: BOTH teachers get the second
+        set), beside its pinned key (which it never rebuilds from it): every sidecar row streamed whole (key, clocks, the
+        plane references to the ROOT's stream rows, the book columns, the per-row state split), the day's state split, the
+        account and the full lists (frankie_box_teacher_rows.second_set_reading), written once beside the rows
+        (teacher-second-set-read.boss.json; the same files reuse it) and filed with every part it read as the brain entry
+        <day>-teacher-second-set (small files inline, large ones by the pins this reading took: nothing read again). An
+        absent part is listed; a failure is recorded, never the day's."""
+        try:
+            import frankie_box_teacher_rows as TR
+            rows_dir = Path(rows_path).parent
+            record, pin, how = TR.second_set_reading_file(rows_dir, rows_dir / TR.READING_FILES['boss_teacher'],
+                                                          'boss_teacher')
+            reference = TR.reading_reference(record, pin, how)
+            self.log('teacher second set %s (BOSS teacher): %s' % (day, how))
+            if pin is None:
+                return dict(reference, status='failed')
+            if not record.get('read'):
+                return dict(reference, status='not_published',
+                            reason='no part of the second set is on disk beside the rows (listed in the reading)')
+            sources, known = [Path(pin['path'])], {}
+            for name, part in sorted((record.get('parts') or {}).items()):
+                path = part.get('path')
+                if part.get('status') != 'read' or name == 'account' or not path or not Path(path).is_file():
+                    continue
+                if part.get('sha256') and part.get('bytes') is not None:
+                    # the second-set file's sha256 is the teacher receipt's pin: it holds while the file is not newer
+                    # than that receipt (the rest were hashed on this reading's own stream)
+                    after = ((rows_dir / TR.TEACHER_RECEIPT_FILE).stat().st_mtime_ns
+                             if name == 'second_set_file' and (rows_dir / TR.TEACHER_RECEIPT_FILE).is_file() else None)
+                    known[str(path)] = dict(bytes=part['bytes'], sha256=part['sha256'], not_after_ns=after,
+                                            basis='the BOSS teacher\'s second-set reading (%s)' % pin['path'])
+                sources.append(Path(path))
+            entry = self.brain_stage(day, 'teacher-second-set', sources, known=known,
+                                     summary=dict(rows=str(rows_path), reader='boss_teacher', reading=pin))
+            return dict(reference, brain_entry=entry)
+        except Exception as error:  # noqa: BLE001 - the second set is added knowledge; its failure is listed
+            self.log('teacher second set %s: not filed (%s: %s)' % (day, type(error).__name__, error))
+            return dict(status='failed', reason='%s: %s' % (type(error).__name__, error))
 
     def teacher_account_entry(self, day, rows_path):
         """The teacher's own account for Frankie (Greg, 2026-10-09): teacher-account.json (its receipt's account),

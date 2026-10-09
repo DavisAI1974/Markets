@@ -878,6 +878,18 @@ def retained_evidence_counts(measure, names):
     return out
 
 
+def _second_set_voice(reference):
+    """([line], [cite]) each teacher seat's voice carries about its whole second-set reading (none without one): the
+    sentence of what was read (frankie_box_teacher_rows.reading_sentence) and a cite of the reading file's sha256."""
+    if not reference or not reference.get('reading'):
+        return [], []
+    import frankie_box_teacher_rows as TR
+    line = 'The teacher\'s second set, read whole beside this turn: %s.' % TR.reading_sentence(reference)
+    rows = ((reference.get('parts') or {}).get('rows_sidecar') or {}).get('rows')
+    return [line], [dict(value=str(rows), source_sha256=reference['reading']['sha256'],
+                         what='rows of the teacher\'s second set read whole (rows sidecar)')]
+
+
 # a second-set claim name: dipole.second_set.<role>.<dotted leaf> for key / clocks / book_columns / state_split, and
 # dipole.second_set.planes[<entry>].<dotted leaf inside the referenced row> for a plane (entry names carry dots)
 SECOND_SET_PREFIX = 'dipole.second_set.'
@@ -1726,6 +1738,23 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
                                                      if at_cutoff is not None else at_cutoff_why)
     if notes is not None:
         notes['shared_market_context_listed'] = shared_market_why
+    # Greg, 2026-10-09 (BOTH teachers get the second set): the two teacher seats' own reading of the teacher's WHOLE
+    # second set (frankie_box_teacher_rows.second_set_reading: every sidecar row streamed, the plane references to the
+    # ROOT's stream rows, the book columns, the per-row and day state split, the account, the full lists), written once
+    # beside this exchange's retained context (the same files reuse it) and carried by reference on each teacher seat's
+    # turn and voice; read beside the seats' pinned measurements, never used to rebuild them. Absent parts are listed.
+    second_set_read = None
+    if rows_path:
+        import frankie_box_teacher_rows as TR
+        target = (Path(input_path).parent if input_path is not None else Path(rows_path).parent / 'exchange') \
+            / 'teacher-second-set-read.json'
+        record, pin, how = TR.second_set_reading_file(Path(rows_path).parent, target, 'exchange teacher seats',
+                                                      reuse_on=('rows_sidecar', 'second_set_file', 'state_split_day',
+                                                                'receipt'))
+        second_set_read = TR.reading_reference(record, pin, None)
+        if notes is not None:
+            notes['teacher_second_set_read'] = how
+    second_turn = {} if second_set_read is None else dict(teacher_second_set=second_set_read)
     rows_id = 'teacher-dipole-rows:%s' % day
     request = dict(shared_knowledge=dict(sources=[dict(source_id=rows_id)] + [dict(source_id=s['source_id']) for _, s in docs]))
     items, findings, seen, seen_results = [], [], set(), set()
@@ -1830,15 +1859,18 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
                           responds_to='the scientific teacher\'s lessons result on the claim', record=boss,
                           measured=finite(measured), components=components, proposals=proposals,
                           shared_accounting=finite(shared), origin_accounting=finite(origin), research_rework=rework,
-                          **market_turn),
+                          **market_turn, **second_turn),
                      dict(turn=2, seat='scientific_teacher', author=D.CLASSROOM_ROLE, author_label=SCIENCE_AUTHOR,
                           responds_to='the BOSS teacher\'s turn', record=science, research_rework=rework,
-                          origin_accounting=finite(origin), **finite(side), **market_turn)]
+                          origin_accounting=finite(origin), **finite(side), **market_turn, **second_turn)]
+            second_line, second_cites = _second_set_voice(second_set_read)
             voice = [dict(seat='boss_teacher', author=D.BOSS_ROLE, author_label=BOSS_AUTHOR, text=boss['reasoning'],
-                          lines=[c['check'] for c in boss['evidence_checks']] + boss['next_tests'], cites=boss_cites),
+                          lines=[c['check'] for c in boss['evidence_checks']] + boss['next_tests'] + second_line,
+                          cites=boss_cites + second_cites),
                      dict(seat='scientific_teacher', author=D.CLASSROOM_ROLE, author_label=SCIENCE_AUTHOR,
-                          text=science['reasoning'], lines=[c['check'] for c in science['evidence_checks']] + science['next_tests'],
-                          cites=science_cites)]
+                          text=science['reasoning'],
+                          lines=[c['check'] for c in science['evidence_checks']] + science['next_tests'] + second_line,
+                          cites=science_cites + second_cites)]
             blind_jev = src['author'] == 'jev' and not src.get('accumulated')
             if blind_jev:
                 turns.append(dict(turn=3, seat='frankie', author='frankie', withheld=True, reason=JEV_WALL))
@@ -1950,6 +1982,7 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
                              **({} if shared_market is None else dict(shared_market_context=shared_market))),
                 items=items, lesson_contexts=lesson_contexts,
                 teachers_findings=findings, counts=counts, listed=listed, model_calls=0,
+                **({} if second_set_read is None else dict(teacher_second_set_read=second_set_read)),
                 rule='each turn labelled with its author (R11); counts per day, never pooled or averaged (R04, R05); '
                      'the disposition word is orientation only (R14); no future-outcome claim (R02)')
     if knowledge is not None:

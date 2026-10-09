@@ -746,3 +746,330 @@ def second_set_leaf_ledger(rows_dir, name, *, through_cursor=None, day_file=None
                         available=available, unavailable=reasons, direction=DC._direction(ledger),
                         through_cursor=through_cursor, rows_after_cutoff_excluded=after,
                         representation='the teacher\'s second set (rows sidecar); a plane read by its reference')
+
+
+# ---- a teacher's own reading of the whole second set (Greg, 2026-10-09: "BOTH teachers are getting the 2nd group")
+# Each teacher (the BOSS teacher's knowledge step, the exchange's two teacher seats, the scientific teacher's lessons)
+# reads the teacher publication's second set WHOLE beside its own work: every sidecar row streamed (key, clocks, the
+# plane references, the book columns, the per-row state split), the day's state split read whole, the account read
+# whole from the receipt, and the full lists (clock mismatches, book-event differences) streamed whole. Plane VALUES
+# stay references to the ROOT's stream rows (only copies avoided); each stream file named by them is checked on disk.
+# Nothing is cut, capped or sampled; an absent part is listed with its reason and the reader goes on (never fatal).
+# The pinned key (19 columns, 171 pairs) is never rebuilt from any of this: the second set is read beside it.
+READING_SCHEMA = 'FRANKIE_TEACHER_SECOND_SET_READING_V1'
+TEACHER_RECEIPT_FILE = 'receipt.json'
+SECOND_SET_PKL = 'teacher-second-set.pkl'
+STATE_SPLIT_DAY_FILE = 'teacher-state-split.json'
+MISMATCHES_LIST = 'teacher-second-set-mismatches.jsonl'
+BOOK_DIFFERENCES_LIST = 'teacher-book-event-differences.jsonl'
+RECONCILIATION_LIST = 'teacher-reconciliation-differences.jsonl'   # written by the teacher findings (account entry)
+READ_ROLES = ('key', 'clocks', 'planes', 'book_columns', 'state_split')
+READING_FILES = dict(boss_teacher='teacher-second-set-read.boss.json')
+PART_WORDS = dict(rows_sidecar='every row of the rows sidecar (key, clocks, plane references, book columns, per-row '
+                               'state split)',
+                  second_set_file='the second-set file (the same records, pinned)',
+                  state_split_day='the day\'s state split', account='the account',
+                  mismatches_list='the full clock-mismatch list',
+                  book_event_differences_list='the full book-event difference list',
+                  reconciliation_differences_list='the full reconciliation-difference list')
+
+
+def _file_identity(path):
+    try:
+        st = Path(path).stat()
+    except OSError:
+        return None
+    return dict(bytes=st.st_size, mtime_ns=st.st_mtime_ns, inode=st.st_ino)
+
+
+def _stream_lines(path):
+    """(bytes, sha256, lines) of a file read whole in fixed chunks."""
+    digest, size, lines = hashlib.sha256(), 0, 0
+    with Path(path).open('rb') as handle:
+        while True:
+            chunk = handle.read(CHUNK_BYTES)
+            if not chunk:
+                break
+            digest.update(chunk)
+            size += len(chunk)
+            lines += chunk.count(b'\n')
+    return size, digest.hexdigest(), lines
+
+
+def _pinned_list(rows_dir, pin, name):
+    """A full list beside the receipt ({file, count, sha256}) streamed whole and checked against its pin."""
+    pin = pin if isinstance(pin, dict) else None
+    path = Path(rows_dir) / ((pin or {}).get('file') or name)
+    if not path.is_file():
+        return dict(status='absent', path=str(path), reason='not on disk' + ('' if pin else ' and no receipt pin names it'))
+    size, sha, lines = _stream_lines(path)
+    check = ('no_pin' if not (pin or {}).get('sha256') else
+             'equal' if pin['sha256'] == sha and pin.get('count') in (None, lines) else 'differs')
+    return dict(status='read', path=str(path), bytes=size, sha256=sha, lines=lines, check=check,
+                pinned=dict(sha256=pin.get('sha256'), count=pin.get('count')) if pin else None, how='streamed whole')
+
+
+def second_set_reading(rows_dir, reader):
+    """The whole second set as read by one teacher (`reader` names it): READING_SCHEMA record. Never raises for a part:
+    a part that cannot be read is listed with its reason. Deterministic for the same files (no clock, no timing)."""
+    rows_dir = Path(rows_dir)
+    out = dict(schema=READING_SCHEMA, reader=reader, rows_dir=str(rows_dir), parts={}, listed=[],
+               rule='read whole beside the teacher\'s own work; plane values by reference to the ROOT\'s stream rows '
+                    '(only copies avoided); never cut, capped or sampled; an absent part is listed, never fatal; the '
+                    'pinned key is never rebuilt from it')
+    receipt_path = rows_dir / TEACHER_RECEIPT_FILE
+    receipt = {}
+    try:
+        raw = receipt_path.read_bytes()
+        receipt = json.loads(raw)
+        out['receipt'] = dict(path=str(receipt_path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+    except (OSError, ValueError) as error:
+        out['receipt'] = dict(status='absent', path=str(receipt_path), reason='%s: %s' % (type(error).__name__, error))
+        out['listed'].append(dict(part='receipt', reason=out['receipt']['reason']))
+    if not isinstance(receipt, dict):
+        receipt = {}
+    second = receipt.get('teacher_second_set') if isinstance(receipt.get('teacher_second_set'), dict) else {}
+    parts = out['parts']
+
+    def guarded(name, fn):
+        try:
+            parts[name] = fn()
+        except Exception as error:  # noqa: BLE001 - one part's failure is listed; the others are read
+            parts[name] = dict(status='unreadable', reason='%s: %s' % (type(error).__name__, error))
+        if parts[name].get('status') != 'read':
+            out['listed'].append(dict(part=name, status=parts[name].get('status'), reason=parts[name].get('reason')))
+
+    def sidecar():
+        side = sidecar_of(rows_dir)
+        if not side.is_file():
+            return dict(status='absent', path=str(side), reason='no rows sidecar beside the teacher rows (%s)' % (
+                (receipt.get('rows_sidecar') or {}).get('reason') or 'a teacher before the second set'))
+        stream = SidecarStream(side)
+        roles = {role: stream.role(role) for role in READ_ROLES}
+        carrying = {role: 0 for role in READ_ROLES}
+        without = {role: [] for role in READ_ROLES}
+        entries, references, element_rows, empty_rows, book_status = {}, 0, 0, 0, {}
+        for ordinal, row in enumerate(stream):
+            for role, key in roles.items():
+                if key is not None and row.get(key) is not None:
+                    carrying[role] += 1
+                else:
+                    without[role].append(ordinal)
+            planes = row.get(roles['planes']) if roles['planes'] else None
+            for entry, value in (planes or {}).items():
+                slot = entries.setdefault(entry, dict(rows_with_references=0, references=0, rows_element=0,
+                                                      rows_without=0))
+                if isinstance(value, list):
+                    if value:
+                        slot['rows_with_references'] += 1
+                        slot['references'] += len(value)
+                        references += len(value)
+                    else:
+                        slot['rows_without'] += 1
+                        empty_rows += 1
+                else:
+                    slot['rows_element'] += 1
+                    element_rows += 1
+            book = row.get(roles['book_columns']) if roles['book_columns'] else None
+            status = book.get('status') if isinstance(book, dict) else None
+            book_status[str(status)] = book_status.get(str(status), 0) + 1
+        record = stream.record()
+        streams = {}
+        for name, pin in sorted((stream.header.get('streams') or {}).items()):
+            named = pin.get('path') if isinstance(pin, dict) else None
+            ident = _file_identity(named) if named else None
+            streams[name] = dict(path=named, pinned_bytes=(pin or {}).get('bytes') if isinstance(pin, dict) else None,
+                                 sha256=(pin or {}).get('sha256') if isinstance(pin, dict) else None,
+                                 on_disk=ident is not None and pin.get('bytes') in (None, ident['bytes']),
+                                 reason=None if ident is not None else 'the pinned stream file is not on disk')
+        absent_streams = sorted(n for n, s in streams.items() if not s['on_disk'])
+        return dict(status='read', how='streamed whole, row by row', path=record['path'], bytes=record['bytes'],
+                    sha256=record['sha256'], rows=record['rows'], format=record['format'],
+                    check=sidecar_check(stream, receipt), roles=roles, carrying=carrying,
+                    without={r: dict(rows=len(o), ordinal_ranges=_ranges(o)) for r, o in without.items()},
+                    planes=dict(entries=len(entries), references=references, element_rows=element_rows,
+                                rows_without=empty_rows, per_entry=entries),
+                    book_columns_status=book_status, streams=streams, streams_not_on_disk=absent_streams,
+                    clock_lock_time=stream.header.get('clock_lock_time'),
+                    entries_not_carried=stream.header.get('entries_not_carried'),
+                    plane_values='by reference: each [source, source_ordinal, ...] names a row of a ROOT stream file '
+                                 '(read at use by PlaneResolver); not copied')
+
+    def second_file():
+        path = rows_dir / (second.get('file') or SECOND_SET_PKL)
+        ident = _file_identity(path)
+        if ident is None:
+            return dict(status='absent', path=str(path), reason=second.get('reason') or 'not on disk')
+        return dict(status='read', path=str(path), bytes=ident['bytes'], sha256=second.get('sha256'),
+                    how='pinned by the teacher receipt (teacher_second_set.sha256); the same '
+                    'records are read row by row in the rows sidecar, so it is not read a second time')
+
+    def state_split():
+        split = second.get('state_split') if isinstance(second.get('state_split'), dict) else {}
+        pinned = split.get('day_file_sha256')
+        path = rows_dir / (split.get('day_file') or STATE_SPLIT_DAY_FILE)
+        if not path.is_file():
+            return dict(status='absent', path=str(path), reason='not on disk')
+        data = path.read_bytes()
+        sha = hashlib.sha256(data).hexdigest()
+        doc = json.loads(data)
+        sides = doc.get('sides') or {}
+        return dict(status='read', how='read whole', path=str(path), bytes=len(data), sha256=sha,
+                    check='no_pin' if not pinned else 'equal' if pinned == sha else 'differs', pinned=pinned,
+                    schema=doc.get('schema'), summary=doc.get('summary'),
+                    sides={side: dict(fields=len((value or {}).get('fields') or {}),
+                                      buckets=sum(len((f or {}).get('buckets') or {})
+                                                  for f in ((value or {}).get('fields') or {}).values()),
+                                      all_sum_back=(value or {}).get('all_sum_back')) for side, value in sides.items()})
+
+    def account():
+        value = receipt.get('account')
+        if not isinstance(value, dict):
+            return dict(status='absent', reason='the teacher receipt carries no account (a teacher before it)')
+        canonical = json.dumps(value, sort_keys=True, default=str).encode()
+        read_together = value.get('read_together') if isinstance(value.get('read_together'), dict) else {}
+        return dict(status='read', how='read whole from the teacher receipt', path=str(receipt_path),
+                    sha256=hashlib.sha256(canonical).hexdigest(), sections=sorted(value),
+                    format=value.get('format'), planes=len(read_together.get('planes') or {}),
+                    book_columns=read_together.get('book_columns'),
+                    state_split=(read_together.get('state_split') or {}).get('status'))
+
+    guarded('rows_sidecar', sidecar)
+    guarded('second_set_file', second_file)
+    guarded('state_split_day', state_split)
+    guarded('account', account)
+    guarded('mismatches_list', lambda: _pinned_list(rows_dir, second.get('mismatches') or second.get('mismatches_file'),
+                                                    MISMATCHES_LIST))
+    missing = ((receipt.get('account') or {}).get('missing_or_thin') or {}) if isinstance(receipt.get('account'), dict) else {}
+    reconciliation = missing.get('reconciliation') if isinstance(missing.get('reconciliation'), dict) else {}
+    guarded('book_event_differences_list', lambda: _pinned_list(rows_dir, reconciliation.get('all'), BOOK_DIFFERENCES_LIST))
+    guarded('reconciliation_differences_list', lambda: _pinned_list(rows_dir, None, RECONCILIATION_LIST))
+    out['read'] = sorted(name for name, part in parts.items() if part.get('status') == 'read')
+    out['absent'] = sorted(name for name, part in parts.items() if part.get('status') != 'read')
+    return out
+
+
+def _identity_of(rows_dir, parts, receipt_sha256):
+    """The files a reading read (stats) and the receipt's sha256: equal identity = the same reading (reuse)."""
+    ident = {name: _file_identity(Path(part['path'])) for name, part in sorted(parts.items())
+             if part.get('path') and name != 'account'}
+    ident['receipt'] = receipt_sha256
+    return ident
+
+
+def second_set_reading_file(rows_dir, out_path, reader, *, reuse_on=None):
+    """(record, pin {path, bytes, sha256}, how) of one teacher's reading written to out_path (JSON; its bytes depend
+    only on what was read, never on file stats or clocks). A reading already written there by the same reader for the
+    same files (the stats kept in <out_path>.identity.json and the receipt's sha256 unchanged) is reused, not read
+    again; else the second set is read whole and the file written (the same content gives the same bytes). Never
+    raises: a failure is (record with status failed, None, reason). reuse_on (names of identity keys, e.g. the rows
+    sidecar and the receipt): only those decide a reuse (a reader whose document a restart must reproduce byte for byte
+    keeps its first reading while the second set itself is unchanged; a list written later is not taken in then)."""
+    import os
+    out_path = Path(out_path)
+    identity_path = out_path.with_name(out_path.name + '.identity.json')
+
+    def receipt_sha():
+        try:
+            return hashlib.sha256((Path(rows_dir) / TEACHER_RECEIPT_FILE).read_bytes()).hexdigest()
+        except OSError:
+            return None
+
+    def write(path, data):
+        pending = path.with_name(path.name + '.pending')
+        with pending.open('wb') as handle:
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(pending, path)
+    try:
+        if out_path.is_file() and identity_path.is_file():
+            data = out_path.read_bytes()
+            kept = json.loads(data)
+            then = json.loads(identity_path.read_bytes())
+            now = _identity_of(rows_dir, kept.get('parts') or {}, receipt_sha())
+            if reuse_on is not None:
+                then, now = ({k: v.get(k) for k in reuse_on} for v in (then, now))
+            if kept.get('schema') == READING_SCHEMA and kept.get('reader') == reader and then == now:
+                return kept, dict(path=str(out_path), bytes=len(data), sha256=hashlib.sha256(data).hexdigest()), \
+                    'reused (the same files: stats and the receipt unchanged)'
+        record = second_set_reading(rows_dir, reader)
+        data = (json.dumps(record, sort_keys=True, indent=1, default=str) + '\n').encode()
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        if not out_path.is_file() or out_path.read_bytes() != data:
+            write(out_path, data)
+        identity = _identity_of(rows_dir, record['parts'], (record.get('receipt') or {}).get('sha256'))
+        write(identity_path, (json.dumps(identity, sort_keys=True) + '\n').encode())
+        return record, dict(path=str(out_path), bytes=len(data), sha256=hashlib.sha256(data).hexdigest()), 'read whole'
+    except Exception as error:  # noqa: BLE001 - the reading is added knowledge; its failure is listed, never the day's
+        return (dict(schema=READING_SCHEMA, reader=reader, rows_dir=str(rows_dir), status='failed',
+                     reason='%s: %s' % (type(error).__name__, error), parts={}, read=[], absent=[], listed=[]),
+                None, 'failed (%s: %s)' % (type(error).__name__, error))
+
+
+def reading_reference(record, pin, how):
+    """The compact reference a teacher's turn or receipt carries: the reading file's pin and, per part, what was read
+    (counts and pins; the whole reading is the file). how=None leaves out the read-or-reused note (a document whose
+    bytes a restart must reproduce)."""
+    parts = {}
+    for name, part in sorted(((record or {}).get('parts') or {}).items()):
+        parts[name] = {k: part.get(k) for k in ('status', 'how', 'path', 'bytes', 'sha256', 'rows', 'lines', 'check',
+                                                 'carrying', 'sections', 'reason') if part.get(k) is not None}
+        if name == 'rows_sidecar' and isinstance(part.get('planes'), dict):
+            parts[name]['planes'] = {k: part['planes'].get(k) for k in ('entries', 'references', 'element_rows',
+                                                                        'rows_without')}
+            parts[name]['streams_not_on_disk'] = part.get('streams_not_on_disk')
+    record = record or {}
+    out = dict(schema=READING_SCHEMA, reader=record.get('reader'), reading=pin,
+               status=record.get('status') or ('read' if record.get('read') else 'nothing read'),
+               read=record.get('read'), absent=record.get('absent'), parts=parts, listed=record.get('listed'),
+               reason=record.get('reason'))
+    if how is not None:            # how differs between a first read and a reuse: kept off a document a restart rewrites
+        out['how'] = how
+    return out
+
+
+def reading_sentence(record):
+    """One plain sentence of what a teacher read of the second set (the day reports): a reading record or its
+    reading_reference."""
+    if not isinstance(record, dict):
+        return 'no reading recorded'
+    if record.get('status') == 'failed':
+        return 'the reading failed (%s)' % record.get('reason')
+    parts = record.get('parts') or {}
+    said = []
+    side = parts.get('rows_sidecar') or {}
+    if side.get('status') == 'read':
+        carrying = side.get('carrying') or {}
+        planes = side.get('planes') or {}
+        check = side.get('check')
+        said.append('%s rows of the rows sidecar streamed whole (sha256 %s; against the teacher receipt: %s): key on %s '
+                    'rows, clocks on %s, the planes on %s (%s references over %s plane entries; %s entry-rows '
+                    'carried by the row itself; %s entry-rows with no plane row at that instant), book columns on %s, '
+                    'the per-row state split on %s' % (
+                        side.get('rows'), side.get('sha256'), check.get('status') if isinstance(check, dict) else check,
+                        carrying.get('key'), carrying.get('clocks'), carrying.get('planes'), planes.get('references'),
+                        planes.get('entries'), planes.get('element_rows'), planes.get('rows_without'),
+                        carrying.get('book_columns'), carrying.get('state_split')))
+        if side.get('streams_not_on_disk'):
+            said.append('stream files named by plane references and not on disk: %s' % ', '.join(side['streams_not_on_disk']))
+    for name, noun in (('state_split_day', 'the day\'s state split'), ('account', 'the account'),
+                       ('mismatches_list', 'the full clock-mismatch list'),
+                       ('book_event_differences_list', 'the full book-event difference list'),
+                       ('reconciliation_differences_list', 'the full reconciliation-difference list'),
+                       ('second_set_file', 'the second-set file')):
+        part = parts.get(name) or {}
+        if part.get('status') != 'read':
+            continue
+        if part.get('lines') is not None:
+            said.append('%s streamed whole (%s lines; against its pin: %s)' % (noun, part['lines'], part.get('check')))
+        elif name == 'account':
+            said.append('%s read whole (sections: %s)' % (noun, ', '.join(part.get('sections') or []) or 'recorded'))
+        elif name == 'second_set_file':
+            said.append('%s pinned (sha256 %s)' % (noun, part.get('sha256')))
+        else:
+            said.append('%s read whole (against its pin: %s)' % (noun, part.get('check')))
+    absent = ['%s (%s)' % (PART_WORDS.get(x.get('part'), x.get('part')), x.get('reason') or x.get('status'))
+              for x in record.get('listed') or []]
+    text = '; '.join(said) if said else 'nothing of the second set was read'
+    return text + ('. Not read, listed: %s' % '; '.join(absent) if absent else '')
