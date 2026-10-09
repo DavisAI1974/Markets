@@ -122,6 +122,13 @@ def prefetch_pointer_digests(classroom, teacher_rows):
     wanted = []
     if teacher_rows:
         wanted.append((Path(teacher_rows) / TEACHER_ROWS_FILE, None, None))
+        try:                       # the rows sidecar: its sha256 as the teacher receipt records it (rows_sidecar)
+            import frankie_box_teacher_rows as TR
+            teacher_receipt = Path(teacher_rows) / 'receipt.json'
+            pinned = (json.loads(teacher_receipt.read_bytes()).get('rows_sidecar') or {}).get('sha256')
+            wanted.append((TR.sidecar_of(teacher_rows), pinned, teacher_receipt if pinned else None))
+        except (OSError, ValueError, AttributeError):
+            pass
     try:
         receipt_path = Path(classroom) / 'receipt.json'
         receipt = json.loads(receipt_path.read_bytes())
@@ -275,6 +282,23 @@ def build(day, run, report_number, classroom, exchange_view, exchange_listed, le
                'the teacher\'s Dipole rows of the day (large; read by the teachers and the search, never copied)',
                digests=digests)
     bt.whole('teacher_rows_receipt', rows_dir / 'receipt.json' if rows_dir else None)
+    # the teacher's second set (key, the seven clocks, the 99 planes by reference, book columns) beside every row: the
+    # teacher's sidecar and the classroom's aligned per-row file by pointer (large, never copied), and what was carried
+    # and absent per role, the anchors' resolved planes and every listing inline
+    import frankie_box_teacher_rows as TR
+    bt.pointer('rows_sidecar', TR.sidecar_of(rows_dir) if rows_dir else None,
+               'the teacher\'s rows with their second set, one row per line (large; never copied)', digests=digests)
+    bt.pointer('second_set_rows', classroom / 'package.second_set.jsonl',
+               'the second set the classroom handed Frankie, aligned on its rows (large; never copied)')
+    second_path = classroom / 'package.second_set.json'
+    if second_path.is_file():
+        bt.subset('second_set', second_path, json.loads(second_path.read_bytes()),
+                  'the second set as handed to Frankie: carried / absent per role (listed by rows), alignment, key and '
+                  'picture-identity checks, clocks and planes per entry with reasons, the clock_lock_time (the teacher\'s '
+                  'as_of) and the anchor rows\' planes read by their references')
+    else:
+        missing.append(dict(section='boss_teacher', item='second_set', path=str(second_path),
+                            reason='no second set in the classroom directory (classroom %s)' % (status or 'not run')))
     key_path = classroom / 'package.teacher_key.c15.json'
     if key_path.is_file():
         from research.kalshi.frankie_boss.c15_journal import unpack

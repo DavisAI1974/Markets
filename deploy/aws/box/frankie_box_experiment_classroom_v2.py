@@ -987,7 +987,7 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     REVIEW.require_current(
         list(knowledge) + [dict(row, content=doc) for row, doc in school],
         REVIEW.corrections(LS.knowledge_roots(brain)))
-    learner_reading, independent_external = None, None
+    learner_reading, independent_external, learner_snapshot = None, None, None
     try:
         if mode in ('SOCRATIC', 'VERIFY'):
             # one pass (Greg, 2026-10-09): the learner reading takes the host teacher's completed walk of this day
@@ -995,6 +995,7 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
             snapshot, learner_reading = phase('learner_reading', lambda: KR.read_day(
                 day, calculations, visible['binding'], day_file=day_file, day_sha256=day_sha,
                 save_requested=save_requested, teacher_rows=teacher_rows, teacher_body=p))
+            learner_snapshot = snapshot
             own_evidence = phase('independent_evidence', lambda: K.independent_evidence(visible, snapshot, learner_reading))
             # Keep request/Jev material unchanged. Only Frankie's answer consumers get his own reading.
             visible = dict(visible, learner_evidence=own_evidence)
@@ -1013,10 +1014,9 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         market_reading = None
         native_entries = dict(schema=K.NATIVE_ENTRY_SCHEMA, status='unavailable',
                               reason='no shared market policy on this ROOT: no picture was read, so no native value was placed')
-        # The cutoff of the native entry arithmetic (Greg, 2026-10-07 night, binding for the one-day run): wall time and
-        # resident memory, from the environment the plan sets for this step, else the defaults (60 min, 48 GB); recorded
-        # here whether or not it is reached. A reached cutoff keeps what was computed and lists the rest; the rest of
-        # the classroom is not affected.
+        # The former cutoff of the native entry arithmetic is retired (Greg, 2026-10-09: no size- or time-based stop
+        # that makes science weaker): every series is computed; the limits a plan or environment names are recorded as
+        # given (applied: False), and the result records the elapsed native work and the peak resident memory.
         native_limits = K.native_cutoff_limits(os.environ)
         received['native_cutoff'] = native_limits
         # Side by side (Greg, 2026-10-07 night: the September 29 pattern for every piece): the exhaustion/D facts read
@@ -1090,7 +1090,21 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                                        lambda: K.stage_knowledge_reproduction(visible, knowledge))
         reproduction = phase('school_reproduction', side['school_reproduction'].result if 'school_reproduction' in side
                              else lambda: K.school_reproduction(visible, school))
-        learner_context = dict(stage_knowledge=knowledge_reproduction, school=reproduction)
+        # the teacher's second set (key, clocks, the 99 planes by reference, book columns) beside every Dipole row,
+        # whole in package.second_set.jsonl; at each component's anchor rows its planes are read by their references
+        # and handed to the answers; every absence is listed (an older teacher: listed absent on every row)
+        # SOCRATIC/VERIFY: the second set of the walk Frankie's reading came from (his own walk's sidecar, or the host
+        # teacher's when the reading took that same walk), aligned on that reading's own rows
+        own_walk = (learner_reading or {}).get('second_set') or {}
+        second_dir = Path(own_walk['directory']) if own_walk.get('directory') else teacher_rows
+        second_rows = learner_snapshot['rows'] if learner_snapshot is not None else pkg['source']['rows']
+        second_set = phase('second_set', lambda: K.second_set_lesson(
+            second_dir, d, visible, second_rows, teacher_receipt=teacher_receipt if second_dir == teacher_rows else None,
+            day_file=day_file, as_of=p['as_of']))
+        import frankie_box_teacher_rows as TR
+        received['second_set'] = TR.second_set_summary(second_set)
+        learner_context = dict(stage_knowledge=knowledge_reproduction, school=reproduction,
+                               second_set=K.second_set_context(second_set))
         # All-99 (Greg, 2026-10-07: the 99 layers combined for Frankie FIRST): every registry entry routed to the
         # picture element the component answers compute beside, or to its own consumer here, or named sealed /
         # disabled / output / retired, with this day's arrivals; on the receipt and in the inspection markdown.
@@ -1203,7 +1217,7 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
             shared_market=shared_market.summary() if shared_market is not None else None,
             shared_market_external=shared_external, all99_coverage=all99,
             exhaustion_d=K._exhaustion_d_receipt(exhaustion_d),
-            native_entries=native_entries))}
+            native_entries=native_entries, second_set=received.get('second_set')))}
     def write_learner_knowledge():
         return {str(d / 'learner-knowledge.json'): _dump(d / 'learner-knowledge.json', dict(
             day=day, stage='classroom', documents=knowledge,
@@ -1348,7 +1362,9 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                        # the whole exhaustion/D facts (listed, not pinned, on a day they were not computed)
                        'exhaustion-d-facts.json',
                        # the six native entries' whole arithmetic (listed when no shared market was read)
-                       'native-entry-arithmetic.json']
+                       'native-entry-arithmetic.json',
+                       # the teacher's second set beside the rows (listed when the teacher carried none)
+                       'package.second_set.json', 'package.second_set.jsonl']
                       + [f'package.{part}.c15.json' for part in ('source', 'teacher_key', 'pre_message', 'binding')]
                       + [f'{name}.json' for name in files])
     outputs_pinned, outputs_listed = _pin_outputs(d, produced_names)

@@ -85,6 +85,16 @@ def _teacher_walk(teacher_rows, teacher_body, *, day, ingest, own, shared_policy
     return receipt, path
 
 
+def _second_set_witness(rows_dir, whose):
+    """Where the second set of the walk that made this snapshot is (its rows sidecar, header only): the runner aligns it
+    on the classroom rows (package.second_set.jsonl) and resolves its planes at the anchors; absent is listed."""
+    import frankie_box_teacher_rows as TR
+    side, header, why = TR.sidecar_header(rows_dir)
+    return dict(directory=str(rows_dir), sidecar=str(side), whose=whose, status='carried' if header else 'absent',
+                reason=why, format=(header or {}).get('format'), rows=(header or {}).get('rows'),
+                row_keys=(header or {}).get('row_keys'), bytes=side.stat().st_size if header else None)
+
+
 def read_day(day, calculations, binding, *, day_file, day_sha256, save_requested, teacher_rows=None,
              teacher_body=None):
     """Use ROOT's sealed source descriptor; never accept a teacher snapshot/key/path.
@@ -164,6 +174,7 @@ def read_day(day, calculations, binding, *, day_file, day_sha256, save_requested
             shared_market_arithmetic=result.get('shared_market_arithmetic'),
             coverage=coverage, lane=dict(cpus=cpus, count=len(cpus), expected=len(booked)),
             walked_now=False, retained_receipt_reused=False, identity_pin_created_now=pin_created,
+            second_set=_second_set_witness(Path(teacher_rows), 'the host teacher\'s walk (the same walk this reading takes)'),
             walk_basis=('one pass (Greg, 2026-10-09): the host teacher\'s completed walk of this day (%s) is the walk this '
                         'reading would make (same sealed source, equation, cutoff); its attachment snapshotted under the '
                         'learner binding; no second walk of the source' % teacher_receipt_path),
@@ -219,6 +230,7 @@ def read_day(day, calculations, binding, *, day_file, day_sha256, save_requested
         # walk was computed now or a retained receipt was reused; both for the one-day inspection report
         lane=dict(cpus=cpus, count=len(cpus), expected=len(booked)),
         walked_now=walked_now, retained_receipt_reused=not walked_now, identity_pin_created_now=pin_created,
+        second_set=_second_set_witness(directory, 'Frankie\'s own walk of the day'),
         independent_scientific_verification=False,
         purpose='current evidence for accumulated-knowledge recognition before host grading')
     return snapshot, witness

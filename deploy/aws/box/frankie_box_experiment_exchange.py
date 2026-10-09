@@ -612,7 +612,6 @@ def teacher_rows(path, retain_dir=None, notes=None):
     parse plus one re-hash). notes (optional dict) receives what happened. The returned value is identical either way."""
     notes = notes if notes is not None else {}
     from research.kalshi.frankie_boss import dipole_classroom as DC
-    from research.kalshi.frankie_boss.c15_journal import unpack, evidence_hash
     from research.kalshi.frankie_boss.c15_normalizer import COLUMNS
     if not path:
         return None, 'no Dipole rows of the day were given (the teacher-only step has not written them)'
@@ -632,25 +631,41 @@ def teacher_rows(path, retain_dir=None, notes=None):
                 return saved, None
             notes['rows_claim'] = (notes.get('rows_claim') or '') + ('; the saved measurement itself was not usable, '
                                                                      'so the rows are read (parsed) in full')
-    raw = path.read_bytes()            # the parse read; the bytes are hashed only when no claim of the teacher holds
-    if teacher_claim is not None and teacher_claim['bytes'] == len(raw):
+    # the rows streamed one at a time (frankie_box_teacher_rows: never the whole file, its packed tree and the snapshot
+    # at once); the file's sha256 and the snapshot hash are computed on the same stream. With a teacher claim the saved
+    # measurement is looked up before any read (the claim's bytes equal the file's size); without one, a saved
+    # measurement is looked up after the stream's own hash, as the whole read did.
+    import frankie_box_teacher_rows as TR
+    size = path.stat().st_size
+    if teacher_claim is not None and teacher_claim['bytes'] == size:
         raw_pin, notes['rows_hash_basis'] = dict(teacher_claim), 'claim (the teacher\'s rows claim; parsed, not hashed)'
+        if retain_dir is not None:
+            saved = _load_ledger_save(retain_dir, raw_pin, notes)
+            if saved is not None and saved.get('path') == str(path):
+                return saved, None
     else:
-        raw_pin, notes['rows_hash_basis'] = dict(bytes=len(raw), sha256=sha256_bytes(raw)), 'hashed'
-    if retain_dir is not None:
-        saved = _load_ledger_save(retain_dir, raw_pin, notes)
-        if saved is not None and saved.get('path') == str(path):
-            return saved, None
+        raw_pin = None
     try:
-        snapshot = unpack(json.loads(raw))
+        snapshot, stream = TR.load(path)
+        notes['rows_read'] = stream.record()
+        if raw_pin is None:
+            raw_pin, notes['rows_hash_basis'] = dict(bytes=stream.bytes, sha256=stream.sha256), 'hashed (on the stream)'
+            if retain_dir is not None:
+                saved = _load_ledger_save(retain_dir, raw_pin, notes)
+                if saved is not None and saved.get('path') == str(path):
+                    return saved, None
+        elif stream.sha256 != raw_pin['sha256']:
+            notes['rows_hash_basis'] += '; the stream hashed to %s (the claim names %s): the stream\'s value is used' % (
+                stream.sha256, raw_pin['sha256'])
+            raw_pin = dict(bytes=stream.bytes, sha256=stream.sha256)
         if snapshot.get('schema') != DC.SOURCE_SCHEMA or tuple(snapshot.get('coverage_columns') or ()) != tuple(COLUMNS):
             return None, '%s is not a complete %s' % (path, DC.SOURCE_SCHEMA)
-        if evidence_hash({k: v for k, v in snapshot.items() if k != 'source_snapshot_hash'}) != snapshot.get('source_snapshot_hash'):
+        if not stream.snapshot_ok:
             return None, '%s differs from its own source_snapshot_hash' % path
         ledgers = _ledgers(snapshot, COLUMNS)
     except (ValueError, KeyError, TypeError) as error:
         return None, '%s could not be read (%s: %s)' % (path, type(error).__name__, error)
-    measure = dict(path=str(path), sha256=raw_pin['sha256'], bytes=len(raw), rows=len(snapshot['rows']),
+    measure = dict(path=str(path), sha256=raw_pin['sha256'], bytes=stream.bytes, rows=len(snapshot['rows']),
                    source_snapshot_hash=snapshot['source_snapshot_hash'], as_of=snapshot['as_of'],
                    through_cursor=snapshot['through_cursor'], ledgers=ledgers, columns=tuple(COLUMNS),
                    retained_rows=snapshot['rows'])

@@ -1114,7 +1114,7 @@ def school_day_of(doc, entry):
     line. The line starts after the numbers the reports index held when it first numbered a class (school_day_base,
     recorded with those days); a number another day took in the reports index meanwhile (a class run with the queue off)
     is passed over and recorded (school_days_outside_line), so no number is ever given to two days and none is left
-    unused."""
+    unused. A run/day the reports index already numbers keeps that number."""
     if entry.get('school_day'):
         return entry['school_day']
     import frankie_box_experiment as X
@@ -1131,6 +1131,13 @@ def school_day_of(doc, entry):
         doc['school_day_base_days'] = [dict(number=n, **{k: v for k, v in d.items() if k in ('run', 'day', 'file')})
                                        for n, d in sorted(held.items())]
         doc['next_school_day'] = doc['school_day_base'] + 1
+    own = [n for n, d in held.items() if d.get('run') == entry['run'] and d.get('day') == entry['day']]
+    if own:
+        # The reports index already holds a number for this run/day (an earlier take, or a class run with the queue
+        # off): the day keeps it. reserve_number never renumbers, so handing it any other number refuses at take.
+        entry['school_day'] = min(own)
+        entry['school_day_from_index'] = True
+        return entry['school_day']
     while doc['next_school_day'] in held and not (held[doc['next_school_day']].get('run') == entry['run'] and
                                                   held[doc['next_school_day']].get('day') == entry['day']):
         n = doc['next_school_day']

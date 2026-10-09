@@ -449,9 +449,9 @@ def load_plan(a, code_root):
     # nor keeps them): an explicit persisted flag, decided here once and saved with the plan, never inferred at call time.
     # 'auto' = one_day when the plan holds exactly one day, else off; one_day / off = the operator's explicit override.
     # None (a saved plan from before the flag) keeps the plan without the key, read as off by Run.inspection_on
-    # the classroom's native-entry cutoff (Greg, 2026-10-07 night; frankie_box_classroom_code.native_cutoff_limits): saved
-    # only when given, so an older plan without the keys keeps its digest; absent = the classroom's defaults (3600 s,
-    # 48 GB, every 10000 pictures)
+    # the classroom's former native-entry cutoff (frankie_box_classroom_code.native_cutoff_limits; retired 2026-10-09:
+    # recorded as given, never applied; check_every stays the probe cadence): saved only when given, so an older plan
+    # without the keys keeps its digest
     for key in NATIVE_CUTOFF_PLAN_KEYS:
         if getattr(a, key, None) is not None:
             plan[key] = getattr(a, key)
@@ -4933,7 +4933,6 @@ class Run:
         the current one, or is not established (an older summary without one), is NOT reused and NOT regenerated here: the
         old result is preserved and an explicit checked successor (the correction route) is required."""
         from research.kalshi.frankie_boss import dipole_classroom as DC, dipole_classroom_integration as I
-        from research.kalshi.frankie_boss.c15_journal import unpack
         from research.kalshi.frankie_boss.frankie_principal_adapter import json_form
         import frankie_box_lane_state as LS
         rows_path = Path(rows_path)
@@ -4968,8 +4967,17 @@ class Run:
             if reused is not None:
                 return dict(reused, source_basis=source_basis, producer_note=producer_note)
         else:
-            snapshot = unpack(json.loads(rows_path.read_bytes()))
-            key = I._repin_teacher_key_correlations(DC.build_teacher_key(snapshot))
+            # the rows streamed one at a time with only the fields the key reads (frankie_box_teacher_rows); the
+            # snapshot hash is computed on the same stream over the file's own bytes (the same check, never a whole load)
+            import frankie_box_teacher_rows as TR
+            snapshot, stream = TR.load(rows_path, select=('cursor', 'ts_recv_ns', 'target_hash', 'components'))
+            if not stream.snapshot_ok:
+                raise ValueError('classroom source snapshot changed')
+            if stream.sha256 != source_sha:
+                self.log('teacher knowledge %s: the rows streamed hash to %s, the recorded sha256 (%s) is %s; the '
+                         'recorded one is kept on the entry' % (day, stream.sha256, source_basis, source_sha))
+            key = I._repin_teacher_key_correlations(DC.build_teacher_key(
+                snapshot, snapshot_hash_verified=stream.snapshot_hash))
             findings = []
             for dimension in key['dimensions']:
                 # These are the reviewed teacher's measured outputs, not a summary replacing the retained observations.
