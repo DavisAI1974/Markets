@@ -638,7 +638,55 @@ def _run(request, request_path, out, brain, jev_brain):
                     unavailable=[dict(item='survivors', reason='only survivors already in the governed classroom material apply')])
     if shared_context is not None:
         material['material']['shared_market_context'] = shared_context
+    # The teacher's second set (Greg, 2026-10-09: Jev gets it; his wall is the cutoff): the last teacher row at or before
+    # the classroom binding's through_cursor (key, clocks, planes read by their references, planes_absent, book_columns,
+    # state_split when present) and every dipole.second_set.* leaf the day's exchange names, ledgered over the rows up
+    # to the cutoff. The blind-wall audit inside it counts the rows after the cutoff (0, or it is never handed on).
+    second_set_receipt = None
+    cut = (attachment.get('dipole_classroom') or {}).get('binding') or {}
+    teacher_dir = classroom.get('teacher_rows')
+    if teacher_dir and type(cut.get('through_cursor')) is int:
+        import frankie_box_adviser_market as AM
+        day_file = ((classroom.get('external') or {}).get('day_file') or {}).get('path')
+        exchange_dir = out.parents[3] / 'exchange' / request['day']
+        texts = [p.read_text(errors='replace') for p in (exchange_dir / 'exchange.json', exchange_dir / 'exchange-frankie.json')
+                 if p.is_file()]
+        names = list(request.get('second_set_claims') or []) + AM.second_set_claim_names(*texts)
+        second_path = out / 'second-set-at-cutoff.json'
+        if second_path.is_file():
+            # an earlier attempt's record stands as written (the material it went into is retained too); never redone
+            second = json.loads(second_path.read_bytes())
+            names = second.get('claim_names', names)
+            second_pin = pin(second_path)
+        else:
+            second = AM.jev_second_set(teacher_dir, cut['through_cursor'], cut.get('as_of'), names=names,
+                                       day_file=day_file if day_file and Path(day_file).is_file() else None)
+            second['claim_names'] = names
+            second_pin = retain_json(second_path, second)
+        material['material']['teacher_second_set'] = second
+        at = second['at_cutoff']
+        second_set_receipt = dict(schema=second['schema'], format=second['format'], file=second_pin,
+                                  counts=second['counts'], blind_wall_audit=second['blind_wall_audit'],
+                                  cutoff_row=dict(cursor=at.get('cursor'), key=at.get('key'), clocks=at.get('clocks'),
+                                                  clock_lock_time=at.get('clock_lock_time'), status=at.get('status'),
+                                                  reason=at.get('reason')),
+                                  claim_names=names, claim_names_from=[str(p) for p in (exchange_dir / 'exchange.json',
+                                                                                        exchange_dir / 'exchange-frankie.json')
+                                                                       if p.is_file()],
+                                  day_file=second['day_file'])
+    else:
+        second_set_receipt = dict(status='absent', reason=('the classroom receipt names no teacher rows' if not teacher_dir
+                                                           else 'the governed material carries no binding through_cursor'))
     material_file = out / 'material.json'
+    if material_file.is_file() and 'teacher_second_set' in material['material']:
+        kept = json.loads(material_file.read_bytes())
+        without = dict(material, material={k: v for k, v in material['material'].items() if k != 'teacher_second_set'})
+        if canonical(kept) == canonical(without):
+            # material retained by an attempt before the second set: it stands as written (never rewritten); listed
+            material = kept
+            second_set_receipt['in_material'] = ('not in the retained material.json (written before the second set); '
+                                                 'the record is beside it at second-set-at-cutoff.json')
+    second_set_receipt.setdefault('in_material', 'teacher_second_set' in material['material'])
     retain_json(material_file, material)
     config_path = out / 'client-config.json'
     if config_path.exists():
@@ -899,6 +947,9 @@ def _run(request, request_path, out, brain, jev_brain):
                    client_receipt=pin(out / 'client-receipt.json'), report=report,
                    report_number=request['report_number'], pending=pending,
                    unparsed=dict(claims=client['unparsed'], comparison=len(comparison.get('unparsed') or [])),
+                   # what the teacher's second set added to Jev's material (FORMAT, counts, the cutoff row's key and
+                   # clocks, the pin of second-set-at-cutoff.json, the blind-wall audit: 0 rows after the cutoff)
+                   teacher_second_set=second_set_receipt,
                    workflow_report=workflow_report)
     write_json(out / 'receipt.json', receipt)
     return receipt
