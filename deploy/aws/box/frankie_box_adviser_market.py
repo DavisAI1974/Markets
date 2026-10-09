@@ -2158,6 +2158,28 @@ def from_teacher(rows_path, day, measure, *, retain=None, check_save=lambda: Non
     return context, None
 
 
+def teacher_second_set_at_cutoff(rows_path, measure):
+    """(record, None) or (None, why): the teacher's second set at its own explicit cutoff (the last teacher row at or
+    before measure['through_cursor']), its planes read by their references (frankie_box_teacher_rows), aligned on the
+    row key and clocks; the record states the clock_lock_time (the teacher's as_of). Beside the cutoff context, never
+    inside it (the retained context's bytes are unchanged)."""
+    import frankie_box_teacher_rows as TR
+    if measure is None:
+        return None, 'shared teacher rows were not readable'
+    try:
+        record, why = TR.second_set_at_cutoff(Path(rows_path).parent, measure['through_cursor'])
+    except (OSError, ValueError, KeyError) as error:
+        return None, 'the teacher second set could not be read (%s: %s)' % (type(error).__name__, error)
+    if record is None:
+        return None, why
+    key = record.get('key') or {}
+    record['alignment'] = dict(
+        key_cursor=key.get(TR.KEY_CURSOR), row_cursor=record['cursor'], through_cursor=measure['through_cursor'],
+        as_of=measure['as_of'], key_matches_row=key.get(TR.KEY_CURSOR) == record['cursor'],
+        rule='the row key names the row; the cutoff is the teacher\'s own explicit through_cursor / as_of')
+    return record, None
+
+
 def render_summary(context):
     """The render's facts without its text (for references and reports)."""
     render = (context or {}).get('picture_render')

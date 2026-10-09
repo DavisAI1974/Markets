@@ -783,6 +783,19 @@ def retained_evidence_counts(measure, names):
     cache = {}  # Per claim only: do not retain a whole-day ledger for every discovered field.
     selected = {}
     for name in dict.fromkeys(names):
+        if str(name).startswith(SECOND_SET_PREFIX):
+            if name not in cache:
+                cache[name] = _second_set_ledger(measure, name)
+            ledger, summary = cache[name]
+            if ledger is None:
+                out['listed'].append(dict(series=name, reason=summary))
+                continue
+            out['fields'].append(summary)
+            if summary['available']:
+                selected[name] = (ledger, summary)
+            else:
+                out['listed'].append(dict(series=name, reason='no available numeric observation for this exact field'))
+            continue
         if not str(name).startswith('dipole.group'):
             continue  # The unchanged target/non-Dipole paths account for other names.
         match = re.fullmatch(r'dipole\.group_close\.by_entity\.(-?\d+):(-?\d+)\.(raw_components\..+|dstate\.state\..+)', str(name))
@@ -865,6 +878,46 @@ def retained_evidence_counts(measure, names):
     return out
 
 
+SECOND_SET_PREFIX = 'dipole.second_set.'
+# a second-set claim name: dipole.second_set.<role>.<dotted leaf> for key / clocks / book_columns, and
+# dipole.second_set.planes[<entry>].<dotted leaf inside the referenced row> for a plane (entry names carry dots)
+SECOND_SET_NAME = re.compile(r'dipole\.second_set\.(?:(planes)\[([^\]]+)\](?:\.(.+))?|(key|clocks|book_columns)\.(.+))')
+
+
+def _second_set_ledger(measure, name):
+    """(ledger, summary) of one second-set leaf over every teacher row, streamed from the rows sidecar beside the rows
+    (planes read by their references), or (None, why). A row without the value is MISSING with its reason counted;
+    a plane with several references at one row is not reduced to one value (listed with the count)."""
+    from research.kalshi.frankie_boss import dipole_classroom as DC
+    import frankie_box_teacher_rows as TR
+    match = SECOND_SET_NAME.fullmatch(str(name))
+    if match is None:
+        return None, 'not a second-set leaf name (dipole.second_set.<key|clocks|book_columns>.<leaf> or planes[<entry>].<leaf>)'
+    role, entry, leaf = (('planes', match[2], match[3] or '') if match[1] else (match[4], None, match[5]))
+    rows_dir = Path(measure['path']).parent
+    if not TR.sidecar_of(rows_dir).is_file():
+        return None, 'no rows sidecar beside the teacher rows (a teacher before the second set)'
+    ledger, reasons = [], {}
+    for cursor, value, why in TR.second_set_field(rows_dir, role, leaf, entry=entry):
+        if why is None and role == 'planes':
+            numeric = [v for v in value if type(v) in (int, float) and math.isfinite(v)]
+            if len(value) != 1:
+                why = '%d references at this row: not reduced to one value' % len(value)
+            elif not numeric:
+                why = 'the referenced row carries no finite number at this leaf'
+            else:
+                value = numeric[0]
+        elif why is None and (type(value) not in (int, float) or isinstance(value, bool) or not math.isfinite(value)):
+            why = 'not a finite number (%s)' % type(value).__name__
+        if why is not None:
+            reasons[why] = reasons.get(why, 0) + 1
+        ledger.append(dict(cursor=cursor, value=value if why is None else None, state='PRESENT' if why is None else 'MISSING'))
+    available = sum(p['state'] == 'PRESENT' for p in ledger)
+    return ledger, dict(series=name, entity=None, leaf=leaf, role=role, entry=entry, rows=len(ledger),
+                        available=available, unavailable=reasons, direction=DC._direction(ledger),
+                        representation='the teacher\'s second set (rows sidecar); a plane read by its reference')
+
+
 def _evidence_producers(measure):
     """The arithmetic sources' file hashes, recorded on the measure once (the same assignment the count made inline)."""
     from research.kalshi.frankie_boss import dipole_classroom as DC
@@ -905,7 +958,7 @@ def _prefetch_tasks(docs, measure):
         for result in doc.get('results') or []:
             names = claimed_names(finite(result))
             key = tuple(names)
-            if key not in evidence and any(str(n).startswith('dipole.group') for n in key):
+            if key not in evidence and any(str(n).startswith(('dipole.group', SECOND_SET_PREFIX)) for n in key):
                 evidence.append(key)
             comps = {n: component_of(n, columns) for n in names}
             for c in comps.values():
@@ -1676,6 +1729,29 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
         return copy.deepcopy(value) if ok else retained_evidence_counts(measure, names)
     market_reference = AM.reference(shared_market) if shared_market is not None else None
     market_turn = {} if market_reference is None else dict(market_context=market_reference)
+    # the teacher's second set at the cutoff (its last row at or before through_cursor: key, clocks, book columns, the
+    # planes read by their references), beside the cutoff context the seats read; absent is listed, never filled in
+    if measure is not None and rows_path:
+        at_cutoff, at_cutoff_why = AM.teacher_second_set_at_cutoff(rows_path, measure)
+        if at_cutoff is not None:
+            # whole in one file beside the retained context (written once per exchange); each turn carries its pin,
+            # row and key (the record is never repeated per turn)
+            target = (Path(input_path).parent if input_path is not None else Path(rows_path).parent / 'exchange') \
+                / 'teacher-second-set-at-cutoff.json'
+            target.parent.mkdir(parents=True, exist_ok=True)
+            data = (json.dumps(at_cutoff, sort_keys=True, default=str) + '\n').encode()
+            if not target.is_file() or target.read_bytes() != data:
+                from frankie_box_durable import write_bytes
+                write_bytes(target, data)
+            market_turn['teacher_second_set_at_cutoff'] = dict(
+                path=str(target), sha256=sha256_bytes(data), bytes=len(data), cursor=at_cutoff['cursor'],
+                key=at_cutoff.get('key'), alignment=at_cutoff.get('alignment'),
+                clock_lock_time=at_cutoff.get('clock_lock_time'), resolver=(at_cutoff.get('resolver') or {}).get('note'))
+        else:
+            market_turn['teacher_second_set_at_cutoff'] = dict(status='absent', reason=at_cutoff_why)
+        if notes is not None:
+            notes['teacher_second_set_at_cutoff'] = (dict(cursor=at_cutoff['cursor'], resolver=at_cutoff['resolver'])
+                                                     if at_cutoff is not None else at_cutoff_why)
     if notes is not None:
         notes['shared_market_context_listed'] = shared_market_why
     rows_id = 'teacher-dipole-rows:%s' % day
