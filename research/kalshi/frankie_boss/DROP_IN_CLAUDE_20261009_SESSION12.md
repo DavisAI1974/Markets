@@ -22,8 +22,11 @@ of a session, let things land; new session after everything lands.
 - Main box i-035994afa8bdf66a5 (r7i.16xlarge, us-east-1) RUNNING, KeepRunning=true. Root vol-0d36715924f03b86c
   16,000 IOPS / 1,250 MiB/s (accepted 11:19:57Z; let it finish optimizing; NO volume changes this day). Archive
   vol-004b68c077be09cc9 10,000/1,000 (revert to baseline when the day is done, not before).
-- Code on the box: 2fb5ea06 (push 12:00:44Z) is `current`; GitHub tip f1b75ec4 (adds 26da953f: the CPU watchdog and the
-  queue's control calls are helpers for every booker; push it with the next box change). Push route: build the pack
+- Code on the box: 4447d0fb (push 12:17:50Z, 10.9 s, delta over 2fb5ea06) is `current` = the GitHub tip. It carries
+  26da953f (the CPU watchdog and the queue's control calls are helpers for every booker) and dec04c8e (the deeper
+  TEACHER REPORT: frankie_box_teacher_findings.py, the <day>-teacher-account brain entry, learner_context
+  ['teacher_account'] in TEACH). The running teacher (pid 10141) keeps 2fb5ea06; the class worker and the reports pick
+  up 4447d0fb. Push route: build the pack
   (frankie_box_push_bundle.py build --base <box commit>), upload by presigned PUT to
   s3://frankie-granite42-568968024170-us-east-1/readiness/20260923/code-push/<sha>/<pack sha>.pack, presign GET, SSM:
   export the pin variables + BUNDLE_URL and `sh "$(readlink -f /opt/frankie-box/code/current)/deploy/aws/box/
@@ -48,12 +51,12 @@ of a session, let things land; new session after everything lands.
    slip): never pin a probe onto CPUs the day holds (the booking is 0-63 = the whole box); a pinned probe is a legitimate
    CPU holder and the slot booking waits on it (now recorded as finish_slot_waiting). Use `systemd-run` without
    CPUAffinity or a short foreground command.
-2. Check the branch for the report-deepening helper's work (it was in flight at the hand-over in the session-11
-   container): look for commits after 6fadb637 touching frankie_box_experiment_day_reports.py /
-   frankie_box_piece_accounts.py / frankie_box_classroom_reader.py with "discovery", "blocks my signal", "teacher_account".
-   If absent, re-brief a helper from the "Teacher report, deeper" item below and push it before the classroom reports run.
-3. Push the GitHub tip to the box (f1b75ec4 or later) with the route above. A running step keeps its code; the next step
-   picks up the newest.
+2. DONE in session 11 after the hand-over: the report-deepening helper landed dec04c8e (merged 4447d0fb, pushed to
+   GitHub and to the box 12:17:50Z). It was checked on synthetic files only; the first real render is this day's TEACHER
+   REPORT. Its assumptions to verify on the box: the sidecar's dstate layout (`status` / `state`), book_columns
+   (`group.depth` / `group.sides.*.differs`), the MISSING/INVALID reason wording REASON_WANTS matches by token, that
+   teacher-knowledge.json exists when the report renders. Every failure path is listed in the report, never fatal.
+3. Nothing to push at the start: the box is on the GitHub tip. Any new fix: the route above.
 4. Watch the teacher to publication (rows/s, memory; the publication merges planes onto the earlier rows and writes the
    sidecar, teacher-second-set.pkl, teacher-state-split.json, the full-list files, the receipt with `account`), then the
    class door opening on the digest, then the class worker's steps (first run of every one), then the reports:
@@ -113,7 +116,9 @@ of a session, let things land; new session after everything lands.
 - ONE PASS for teacher + digest: both read the same ROOT layers (the teacher per event, the render into the pinned
   byte-exact digest tables); a single pass yielding both is a one-pass improvement to design (not a tweak: the digest's
   construction is pinned and resumes from saved tables). Today they run concurrently in the same booking.
-- Teacher report, deeper (Greg 2026-10-09, assigned to the consumer helper at hand-over): discovery and correlations as
+- Teacher report, deeper: LANDED (dec04c8e, on the box). Still open inside it: the account writer's own lists stay at 20
+  entries (clock-mismatch examples, largest reconciliation differences) while teacher-reconciliation-differences.jsonl
+  lists every one; the teacher side still lacks the carry-anchor calls (enable_anchors / note_row). The brief was: discovery and correlations as
   per-cell distributions (count, p50, p90, max per pinned/book column per state bucket; the teacher key's recorded
   correlation tables whole; co-occurrence of state labels vs pinned states/reasons; reconciliation classes), "what
   blocks my signal" (MISSING/INVALID reason counts per column with the want each maps to), "depth I lack" (top-3 history
