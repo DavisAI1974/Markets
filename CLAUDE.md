@@ -3,8 +3,8 @@
 Branch `ccr-d2f8f826-iefeah-frankie` (SHALLOW: `git fetch --deepen=400`). Greg 2026-10-09: launching and keeping the
 workflow running is priority one; our own gates never block a run when the data is fine (an eliminated pass's missing
 receipt is overridden on the spot); no coded waits (event-driven hand-offs); no staging points (fixes go on the box the
-moment they are pushed; the 6-minute GitHub stage is a fallback only); code version recorded, never compared; the fix
-list is temporary, emptied while running or at any stop. Box still STOPPED at session start (session-9 PAUSE state).
+moment they are pushed; the 6-minute GitHub stage is a fallback only); code version recorded, never compared; NO
+list: a needed fix is made the moment it is found (the session-9 IMPROVEMENTS sheet is ELIMINATED). Box still STOPPED at session start (session-9 PAUSE state).
 
 # Claude session drop-in — 2026-10-08, session 9 PAUSED (box STOPPED 18:20Z): READ FIRST `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261008_SESSION9.md` (the PAUSE STATE box at its top)
 
@@ -12,7 +12,7 @@ Branch `ccr-d2f8f826-iefeah-frankie` (SHALLOW: `git fetch --deepen=400`). Greg: 
 i-035994afa8bdf66a5 STOPPED, KeepRunning=false; day e2e-20231018-a2/20231018 SAVED (finish) with the ROOT receipt, attempt -a1
 and its 64-CPU booking retained; digest not rendered. Every fix of session 9 is on the tip (stage it first at the restart).
 Standing calls: one pass, no multiple passes; gates that re-check receipted data are off; an owned day is never retried from
-scratch; a box keeps its days end to end; fixes made ahead of the chain. Records: BOX_RECORD_20261008_S9.md, IMPROVEMENTS_20261008_S9.md.
+scratch; a box keeps its days end to end; fixes made ahead of the chain. Record: BOX_RECORD_20261008_S9.md (IMPROVEMENTS_20261008_S9.md ELIMINATED 2026-10-09).
 
 # Claude session drop-in — 2026-10-08, session 9: READ FIRST `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261008_SESSION9.md`
 

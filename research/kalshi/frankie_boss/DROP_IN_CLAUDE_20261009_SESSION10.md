@@ -13,11 +13,10 @@ i-035994afa8bdf66a5 STOPPED, a2/20231018 finish SAVED, receipt in place, digest 
    legitimate code concern (data actually missing or corrupt, a crash) stops the run.
 3. FORWARD FIXES ARE MADE WHILE THE WORKFLOW RUNS, before the chain reaches that step. Never hold a launch for fixes to
    steps already passed or not yet reached.
-4. THE FIX LIST IS TEMPORARY. It is emptied while the run is going, or all at once if the run has to stop. Nothing is
-   parked for the end.
+4. NO LIST (Greg 2026-10-09). A needed fix is made the moment it is found, running or stopped; nothing is written down
+   for later. The session-9 IMPROVEMENTS sheet is ELIMINATED (deleted; its open items were assigned to roles 2026-10-09).
 5. NO STAGING POINTS. A fix that matters goes onto the box the moment it is committed and pushed. A non-critical fix
-   rides the next box change, together with everything else on the list (fixes for steps already passed and not yet
-   reached).
+   rides the next box change, together with every other fix made since (steps already passed and not yet reached).
 6. NO CODED WAIT TIMES. No fixed sleeps, no timed polls, no bounded lock waits on the chain: every hand-off is
    event-driven (the next stage starts the instant the previous one ends; a waiter wakes the instant its condition holds).
 7. THE 6-MINUTE STAGE WAS OUR OWN DESIGN (GitHub Actions runner + pack + S3 + SSM + box helper), NOT AWS. The normal
@@ -34,15 +33,9 @@ i-035994afa8bdf66a5 STOPPED, a2/20231018 finish SAVED, receipt in place, digest 
 - Three read-only auditors: duplicate/triplicate passes under other names (ROOT..teacher; classroom/data/search;
   scientific teacher..end). Findings go to fix roles, then everything lands BEFORE the relaunch (Greg 2026-10-09:
   "Make all of these changes and do a check for more duplicate and triplicate passes ... and get them out before we do
-  the launch again"). Includes IMPROVEMENTS_20261008_S9.md "not done" #5 (classroom brain re-hash of the digest) and #6
-  (render without FRANKIE_RENDER_BOOKING rewrites the receipt).
+  the launch again"). Includes the classroom brain re-hash of the digest (frankie_box_brain.py ~971) and the render without
+  FRANKIE_RENDER_BOOKING rewriting the receipt.
+- Fleet role: a box keeps its days end to end, ENFORCED (claim_day refuses a non-owner box; the progress record's box is
+  never rewritten). Record S10_FLEET_OWNER_20261009.md.
 - Relaunch after those land: StartInstances, KeepRunning=true, check the root volume's modification state and raise it
   before any render, direct push of the tip, resume + kick to the teacher (session-9 resume box, steps 1-5).
-
-## Temporary fix list (emptied while running or at any stop; never parked for the end)
-- FLEET: a box keeps its days end to end (Greg, asked again 2026-10-09). Checked: no code moves a day or a stage to
-  another box; the only shared object is the classroom lease (ORDER only; each day's classroom runs on its own box).
-  Not ENFORCED: frankie_box_fleet.claim_day claims per (run, day, stage) without checking the day list's assigned box,
-  and _update_progress rewrites doc['box'] with the latest writer. Fix: the first claim pins the day to its assigned
-  box for every stage; a claim from any other box is refused with the reason; the progress box is never rewritten.
-  After the current work (fleet code is inert; does not block the a2 relaunch).

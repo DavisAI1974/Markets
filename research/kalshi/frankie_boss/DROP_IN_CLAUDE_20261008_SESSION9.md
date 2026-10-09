@@ -44,7 +44,7 @@ Resume box for the next session (paste):
 ```
 NEW SESSION -- Frankie (Greg). Parent only; roles (model opus) do the work; AWS via the Aws connector (one read-only STS call
 first). Branch ccr-d2f8f826-iefeah-frankie; SHALLOW: git fetch --deepen=400. Read research/kalshi/frankie_boss/
-BOX_RECORD_20261008_S9.md (newest sections last), IMPROVEMENTS_20261008_S9.md, then this file.
+BOX_RECORD_20261008_S9.md (newest sections last), then this file (IMPROVEMENTS_20261008_S9.md ELIMINATED 2026-10-09).
 STATE: main box i-035994afa8bdf66a5 (r7i.16xlarge, us-east-1) STOPPED, KeepRunning=false. Day e2e-20231018-a2/20231018:
 ROOT-line entry done, finish SAVED on its marker (18:15Z), attempt e2e-20231018-a2-20231018-a1 with its receipt (17:46Z;
 digest NOT rendered: process 4 skipped), booking day-run-20231018-day_slot_repoint-1791479892-5613 retained on 0-63.
