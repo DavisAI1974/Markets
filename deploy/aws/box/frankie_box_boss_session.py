@@ -2737,7 +2737,8 @@ class Session:
             stage = self.work / 'legacy-stage.json'
             if stage.is_file():
                 saved_stage = load_json(stage)
-                if saved_stage.get('identity') != identity:
+                # compared without recorded-only code (the source binding's embedded policies), Greg 2026-10-09
+                if without_recorded_code(saved_stage.get('identity')) != without_recorded_code(identity):
                     raise ValueError('completed legacy stage belongs to another native source/policy; retained')
                 # session 6: each spool artifact is read ONCE here (before: its witness, then load_retained_layers
                 # reopened it by counting every line, a second full pass over the frames spool among them). A spool
@@ -3825,7 +3826,8 @@ class Session:
             return True, 'derive.json carries no pin identity'
         if identity.get('sha256') != pin['pins_witness']['sha256']:
             return True, 'the calculation pin moved since the derivation'
-        if self.source_binding and recorded.get('source_binding') != self.source_binding:
+        if self.source_binding and (without_recorded_code(recorded.get('source_binding'))
+                                    != without_recorded_code(self.source_binding)):
             raise ValueError('retained calculation work belongs to another source binding')
         if self.source_binding and (recorded.get('failure_count') or not recorded.get('bedrock')):
             raise ValueError('retained whole-day calculations are incomplete; inspect their existing receipts')

@@ -543,14 +543,22 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
                                       rule='the worker count is a run-size parameter (Greg\'s CPU add), not calculation '
                                            'identity; the saved binding stays the identity'))
                     built[field] = saved[field]
-            moves = content_rebinds(saved, built)
+            # Greg, 2026-10-09: the code version is recorded, never compared. The shared-market policy's
+            # implementation_sha256 and the native emission helper's helper_sha256 embedded in a saved document are
+            # compared out (frankie_box_boss_session.without_recorded_code: frankie_box_market_timeline.
+            # without_recorded_code + frankie_box_native_emission.meaning); a difference there is recorded in this
+            # attempt's checkout-rebinds record, never refused, and the saved document stays the identity.
+            from frankie_box_boss_session import without_recorded_code, recorded_code_changes
+            code = recorded_code_changes(saved, built)
+            moves = content_rebinds(without_recorded_code(saved), without_recorded_code(built))
             if moves is None:
                 # session 9: an identity refusal on a resume is its own visible outcome (exit RESUME_REFUSED_EXIT and
                 # work/resume-refused.json, main below), never a generic failure; the saved document is untouched
                 raise ResumeRefused('retained ROOT source/pin differs: %s' % path, document=str(path),
                                     differs=_differs(saved, built))
-            if moves or sized:
-                rebinds.append(dict(document=str(path), sha256=_sha256_file(path), moves=moves, run_size=sized))
+            if moves or sized or code:
+                rebinds.append(dict(document=str(path), sha256=_sha256_file(path), moves=moves, run_size=sized,
+                                    code_recorded=code))
             return saved
         _save_new_complete(path, body)
         return body
@@ -594,9 +602,11 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
             schema=CHECKOUT_REBIND_SCHEMA, at=time.time(), commit=commit, current_checkout=str(REPOSITORY),
             saved_checkouts=sorted({m['saved_checkout'] for r in rebinds for m in r['moves']}), documents=rebinds,
             run_size=[x for r in rebinds for x in r.get('run_size') or []],
+            code_recorded=[dict(x, document=r['document']) for r in rebinds for x in r.get('code_recorded') or []],
             rule='the saved documents differ from this checkout\'s only in the checkout prefix of recorded file paths '
                  'whose bytes and sha256 are equal, and/or in a run-size parameter (data_workers: this run\'s CPU '
-                 'booking); the saved documents stay the identity'))
+                 'booking), and/or in recorded-only code identities (code_recorded: Greg, 2026-10-09, the code version '
+                 'is recorded, never compared); the saved documents stay the identity'))
     session = Session(output, day, '00', None)
     # session 9: the Session sizes its helpers from the worker count THIS process was started with (the grown lane),
     # never the saved binding's (the identity, which may name the smaller booking the attempt began on)
@@ -635,8 +645,9 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
                                                          dict(seen, path=str(path))))
                 retained_checks.append(dict(path=str(path), bytes=item['bytes'], basis=basis))
                 witnessed[str(path.resolve())] = dict(path=str(path), bytes=item['bytes'], sha256=item['sha256'])
-            if result.get('source_binding') != binding or result.get('pin_identity', {}).get('sha256') != \
-                    witness(output / 'calculation-pins.json')['sha256']:
+            from frankie_box_boss_session import without_recorded_code
+            if without_recorded_code(result.get('source_binding')) != without_recorded_code(binding) or \
+                    result.get('pin_identity', {}).get('sha256') != witness(output / 'calculation-pins.json')['sha256']:
                 raise ResumeRefused('saved derivation belongs to another source/pin', document=str(retained),
                                     differs=_differs(dict(source_binding=result.get('source_binding'),
                                                           pin_sha256=result.get('pin_identity', {}).get('sha256')),
@@ -654,7 +665,9 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
                 raise ResumeRefused('saved derivation lacks completed native calculations; retained outputs preserved', document=str(retained))
             if bedrock:
                 native = result['bedrock']
-                if native.get('emission') != binding['native_calculation_policy']['emission']:
+                from frankie_box_native_emission import meaning as emission_meaning
+                # the emission helper by its meaning (schema); its helper_sha256 is recorded, never compared
+                if emission_meaning(native.get('emission')) != emission_meaning(binding['native_calculation_policy']['emission']):
                     raise ResumeRefused('saved native emission provenance policy differs; retained outputs preserved',
                                         document=str(retained),
                                         differs=_differs(dict(emission=native.get('emission')),
