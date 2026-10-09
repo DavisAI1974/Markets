@@ -8,7 +8,8 @@ inotify + pidfd). Not wired into any chain: a spoke calls it.
 
 LAYOUT: <hub_root>/<run>/<day>/
   hub.json          schema FRANKIE_HUB_V1: run, day, created_utc, pinned_sources {name: {path, sha256, bytes}}, round
-                    (int, starts 1), pieces (workflow order), laps [lap records], pin_differences [..], done (bool).
+                    (int, starts 1), pieces, prerequisites {piece: [pieces whose write this round it needs]}, laps
+                    [lap records], pin_differences [..], done (bool).
   pieces/<p>.json   written only by piece <p> under its turn: its CURRENT additions only (Greg: NO STACK OF OLD CALCS;
                     the latest and greatest per (kind, key) until a refinement replaces it in place):
                     {"piece", "schema": "FRANKIE_HUB_PIECE_V1", "round", "written_utc", "additions": [...]}.
@@ -69,11 +70,22 @@ that took no turn this round (listed, never a refusal), increments round, and ma
 THE WAIT (no fixed sleep, no timed poll, no bounded wait, no timeout anywhere): a waiter appends itself to turn.json's
 waiters, then blocks in frankie_box_wake.Waiter (inotify on the hub directory: turn.lock's removal and turn.json's replace
 wake it; a pidfd on the holder and on every waiter ahead of it: their exit wakes it). Every wake is a hint: it re-checks
-under the flock. It takes the turn when the lock is free and it is the first LIVE eligible waiter in FIFO order. A holder
+under the flock. It takes the turn when the lock is free and it is the first LIVE ELIGIBLE waiter in arrival order. A holder
 whose pid is gone (crashed, SIGKILLed; pid identity = pid + its /proc start time, so a reused pid is not mistaken for the
 holder) is taken over with a 'takeover' event naming the dead piece; a waiter whose pid is gone is pruned with a
-'waiter-gone' event. take_turn(ordered=True) additionally waits until every piece before it in the workflow order has
-written the current round (the pieces/ directory is watched too). A waiter interrupted by a signal removes itself and
+'waiter-gone' event.
+
+PREREQUISITES, NOT A FIXED ORDER (Greg): there is no workflow order except where a piece needs another piece's output
+first. hub.json carries `prerequisites` {piece: [pieces whose write THIS ROUND it needs]} (default: PREREQUISITES, derived
+from HUB_CALC_ORDER_MAP_20261009.md sections 1, 2 and 6 and cited beside each entry; a prerequisite naming a piece the hub
+does not have is dropped from that hub's set and listed in hub.json `prerequisites_dropped` and an event). A waiter is
+ELIGIBLE once each of its prerequisites has written the current round; eligible waiters take the lock in arrival order,
+so independent pieces proceed in whichever order they arrive. The 'wait' event names the outstanding prerequisites (a
+new 'wait' line whenever what it waits on changes); the pieces/ directory is watched, so a prerequisite's write wakes it.
+A DEAD PREREQUISITE IS REVIVED, NEVER SKIPPED: its dependents keep waiting (the hub doctor, frankie_box_hub_doctor.py,
+revives it). The teacher's second turn in a round (after the classroom) is the piece "teacher-2": its own name, its own
+pieces/teacher-2.json (Frankie's lessons, the novelty investigation), its own prerequisites. take_turn's `ordered`
+argument is kept for compatibility and means the same thing (prerequisites always apply). A waiter interrupted by a signal removes itself and
 records 'wait-abandoned'. Without inotify or pidfd (not the box) take_turn raises before waiting, recorded, rather than
 fall back to a timed poll.
 
@@ -81,8 +93,9 @@ PINS: open_hub on an existing hub compares the pins BY CONTENT (sha256; bytes wh
 recorded in hub.json pin_differences and as an event, never a refusal; the hub keeps the pins it was opened on.
 
 CLI: python3 frankie_box_hub.py {open,status,take,release,write,read,next-lap} (--hub-dir, or --hub-root --run --day).
-  open     --pins <json file {name: {path, sha256, bytes}}> [--pieces a,b,c] [--hash-missing]   prints the hub dir
-  take     --piece P [--pid PID] [--ordered]     blocks until held; prints {"token": ...}. PID defaults to the CALLER'S
+  open     --pins <json file {name: {path, sha256, bytes}}> [--pieces a,b,c] [--prerequisites <json file
+           {piece: [pieces]}>] [--hash-missing]   prints the hub dir
+  take     --piece P [--pid PID] [--ordered]     blocks until held (--ordered: accepted, prerequisites always apply); prints {"token": ...}. PID defaults to the CALLER'S
            parent (the shell step that runs the piece), since this CLI process exits at once; pass the long-lived pid
            (inside $(...) the parent is a subshell that exits at once: there, always pass --pid $$).
   write    --piece P --token T --additions <json file: a list of additions>
@@ -109,8 +122,30 @@ import frankie_box_wake as W  # noqa: E402 - the box's stdlib-only event waker, 
 
 HUB_SCHEMA = 'FRANKIE_HUB_V1'
 PIECE_SCHEMA = 'FRANKIE_HUB_PIECE_V1'
-DEFAULT_PIECES = ('root', 'teacher', 'classroom', 'exchange', 'jev', 'school', 'forecaster')
-CLEAN_PIECE = 'hub-clean'           # the turn name clean() takes; never a workflow piece, never ordered
+DEFAULT_PIECES = ('root', 'teacher', 'classroom', 'teacher-2', 'exchange', 'jev', 'school', 'reports', 'forecaster')
+CLEAN_PIECE = 'hub-clean'           # the turn name clean() takes; never a workflow piece, no prerequisites
+# Who needs whose write THIS ROUND before taking the turn (Greg: no fixed workflow order except where a piece needs
+# another piece's output first). Derived from research/kalshi/frankie_boss/HUB_CALC_ORDER_MAP_20261009.md; a piece absent
+# here has none. Each line cites the map (section 1 = the dependency graph, 2 = the calc steps, 6 = the proposed order).
+PREREQUISITES = {
+    'root': (),                                   # 1.4: reads the sealed base only; 6 turn 1 "pinned sources"
+    'teacher': ('root',),                         # 1.3 M1, M5; 1.4 "ROOT -> BOSS teacher walk"; 6 turn 2 "base + ROOT"
+    'classroom': ('teacher',),                    # 1.4 C1 (rows, attachment, carry, sidecar, account, external section;
+                                                  #   inventory rows 41-48, 63-65); M22 digest render sits in ROOT's turn
+                                                  #   (6 turn 1), reached through the teacher; 6 turn 3
+    'teacher-2': ('classroom',),                  # the teacher's SECOND turn in the same round: 1.4 C1, 1.3 M9 (his
+                                                  #   ledgers.json novel findings), M13; 2.2; 6 turn 4 "needs turn 3"
+    'exchange': ('teacher', 'classroom', 'teacher-2'),   # 6 turn 5 "teacher (both turns)", "needs turn 4"; 1.4 piece level
+                                                  #   "classroom -> teacher -> exchange"; 1.3 M15/M16 are its outputs
+    'jev': ('teacher', 'classroom', 'exchange'),  # 6 turn 6: classroom material, teacher second set + leaf ledgers and the
+                                                  #   search (teacher turn 1), exchange names and context; 1.4 C2 (the
+                                                  #   exchange -> Jev edge); 1.1 step 5 "Jev after the class line"
+    'school': ('classroom', 'exchange', 'jev'),   # 6 turn 7 "all", "last of the day's calc pieces"; 1.4 "exchange ->
+                                                  #   voice -> school"; 1.3 M21
+    'reports': ('root', 'teacher', 'classroom', 'teacher-2', 'exchange', 'jev', 'school'),   # 1.3 M25 "every piece ->
+                                                  #   reports", rendered once after Jev (6, reports row, F5)
+    'forecaster': ('school',),                    # 6 turn 8 (stub; go-live: the hub feeds the forecaster, CLAUDE.md)
+}
 SEALED_TRADE_KIND = 'sealed-trade'  # the teacher's sealed trade record: one addition per trade, its key the trade pin
 
 
@@ -309,24 +344,66 @@ def _normal_pins(pinned_sources, hash_missing):
     return pins
 
 
-def open_hub(hub_root, run, day, pinned_sources, pieces=None, hash_missing=False):
+def _normal_prerequisites(order, prerequisites):
+    """(the hub's prerequisites over its own pieces, the dropped entries). Refuses a cycle (it could never be met)."""
+    given = PREREQUISITES if prerequisites is None else prerequisites
+    out, dropped = {}, []
+    for piece in order:
+        need = []
+        for q in given.get(piece) or ():
+            if q in order and q != piece:
+                need.append(q)
+            else:
+                dropped.append(dict(piece=piece, prerequisite=q,
+                                    reason='itself' if q == piece else 'not one of this hub\'s pieces'))
+        out[piece] = need
+    state = {}
+
+    def visit(p, path):
+        if state.get(p) == 'done':
+            return None
+        if state.get(p) == 'open':
+            return path[path.index(p):] + [p]
+        state[p] = 'open'
+        for q in out.get(p, []):
+            cycle = visit(q, path + [p])
+            if cycle:
+                return cycle
+        state[p] = 'done'
+        return None
+    for p in order:
+        cycle = visit(p, [])
+        if cycle:
+            raise HubError('the prerequisites form a cycle %s: it could never be met' % ' -> '.join(cycle))
+    return out, dropped
+
+
+def open_hub(hub_root, run, day, pinned_sources, pieces=None, hash_missing=False, prerequisites=None):
     """Create the day's hub, or reuse the existing one. Returns the hub directory (a Path). On reuse the pins are
-    compared by content and every difference is recorded (pin_differences + an event), never refused."""
+    compared by content and every difference is recorded (pin_differences + an event), never refused.
+    prerequisites: {piece: [pieces whose write this round it needs]} (default PREREQUISITES)."""
     hub_dir = hub_dir_of(hub_root, run, day)
     (hub_dir / 'pieces').mkdir(parents=True, exist_ok=True)
     pins = _normal_pins(pinned_sources, hash_missing)
     order = list(pieces) if pieces else list(DEFAULT_PIECES)
     for p in order:
         _safe_name(hub_root, 'piece', p)
+    try:
+        prereqs, dropped = _normal_prerequisites(order, prerequisites)
+    except HubError as error:
+        _fail(hub_dir, str(error), None)
     with _meta(hub_dir):
         doc = _load(hub_dir / 'hub.json')
         if doc is None:
             doc = dict(schema=HUB_SCHEMA, run=str(run), day=str(day), created_utc=utc(), pinned_sources=pins, round=1,
-                       pieces=order, laps=[], pin_differences=[], done=False)
+                       pieces=order, prerequisites=prereqs, prerequisites_dropped=dropped, laps=[], pin_differences=[],
+                       done=False)
             _dump(hub_dir / 'hub.json', doc)
             if not (hub_dir / 'turn.json').exists():
                 _dump(hub_dir / 'turn.json', _empty_turn())
-            event(hub_dir, 'open', None, created=True, round=1, pieces=order, pins=sorted(pins))
+            event(hub_dir, 'open', None, created=True, round=1, pieces=order, prerequisites=prereqs, pins=sorted(pins))
+            for d in dropped:
+                event(hub_dir, 'prerequisite-dropped', d['piece'], prerequisite=d['prerequisite'], reason=d['reason'])
             return hub_dir
         differences = []
         old = doc.get('pinned_sources') or {}
@@ -339,7 +416,10 @@ def open_hub(hub_root, run, day, pinned_sources, pieces=None, hash_missing=False
                 differences.append(dict(name=name, was=old[name], now=pins[name], reason='content differs'))
         if pieces and list(pieces) != doc.get('pieces'):
             differences.append(dict(name='pieces', was=doc.get('pieces'), now=list(pieces),
-                                    reason='piece order differs; the hub keeps its own'))
+                                    reason='piece list differs; the hub keeps its own'))
+        if prerequisites is not None and 'prerequisites' in doc and prereqs != doc['prerequisites']:
+            differences.append(dict(name='prerequisites', was=doc['prerequisites'], now=prereqs,
+                                    reason='prerequisites differ; the hub keeps its own'))
         if differences:
             stamp = utc()
             doc.setdefault('pin_differences', []).extend(dict(d, utc=stamp, pid=os.getpid()) for d in differences)
@@ -364,12 +444,26 @@ def _round_written(hub_dir, piece, rnd):
     return bool(doc) and doc.get('round') == rnd
 
 
+def prerequisites_of(hub_doc, piece):
+    """The pieces whose write this round `piece` needs: hub.json's `prerequisites` (a hub opened before they existed:
+    PREREQUISITES over its own pieces)."""
+    table = hub_doc.get('prerequisites')
+    if table is None:
+        order = hub_doc.get('pieces') or []
+        return [q for q in PREREQUISITES.get(piece, ()) if q in order and q != piece]
+    return list(table.get(piece) or [])
+
+
+def outstanding(hub_dir, hub_doc, piece):
+    """The prerequisites of `piece` that have not written the current round (empty: it may take the turn)."""
+    if piece == CLEAN_PIECE:
+        return []
+    rnd = hub_doc.get('round')
+    return [q for q in prerequisites_of(hub_doc, piece) if not _round_written(hub_dir, q, rnd)]
+
+
 def _eligible(hub_dir, w, hub_doc):
-    if not w.get('ordered'):
-        return True
-    order, rnd = hub_doc.get('pieces') or [], hub_doc.get('round')
-    before = order[:order.index(w['piece'])] if w['piece'] in order else []
-    return all(_round_written(hub_dir, p, rnd) for p in before)
+    return not outstanding(hub_dir, hub_doc, w['piece'])
 
 
 def _reap(hub_dir, turn, lock):
@@ -426,8 +520,10 @@ def _create_lock(hub_dir, record):
 
 
 def take_turn(hub_dir, piece, pid=None, ordered=False):
-    """Block (event-driven, never timed) until `piece` holds the hub's one turn; return the turn token. pid is the
-    process whose life holds the turn (default this process); if it dies, the next waiter takes the turn over."""
+    """Block (event-driven, never timed) until `piece` holds the hub's one turn; return the turn token. It waits until
+    each of its prerequisites has written the current round and the lock is free, then takes it in arrival order among
+    the eligible waiters. pid is the process whose life holds the turn (default this process); if it dies, the next
+    waiter takes the turn over. `ordered` is kept for compatibility: prerequisites always apply."""
     hub_dir = Path(hub_dir)
     _check_piece(hub_dir, piece)
     pid = int(pid) if pid is not None else os.getpid()
@@ -447,7 +543,7 @@ def take_turn(hub_dir, piece, pid=None, ordered=False):
     except OSError as error:
         waiter.close()
         _fail(hub_dir, 'no pidfd on this host (%s): a crashed holder could not wake its waiters' % error, piece)
-    waited, enrolled = False, False
+    waited, enrolled, last_wait = False, False, None
     try:
         while True:
             with _meta(hub_dir):
@@ -481,7 +577,7 @@ def take_turn(hub_dir, piece, pid=None, ordered=False):
                               after_release_ns=(now - released_ns) if released_ns else None,
                               waited_since=me['since_utc'])
                     event(hub_dir, 'take', piece, token=token, holder_pid=pid, round=hub_doc.get('round'),
-                          waited=waited, ordered=bool(ordered))
+                          waited=waited, prerequisites=prerequisites_of(hub_doc, piece))
                     return token
                 if changed:
                     _dump(hub_dir / 'turn.json', turn)
@@ -490,14 +586,20 @@ def take_turn(hub_dir, piece, pid=None, ordered=False):
                     if w['ticket'] == ticket:
                         break
                     ahead.append(w)
-                if not waited:
-                    waited = True
-                    reason = ('held by %s' % lock.get('piece')) if lock else (
-                        'earlier pieces have not written this round' if not _eligible(hub_dir, me, hub_doc)
-                        else 'behind earlier waiters')
+                missing = outstanding(hub_dir, hub_doc, piece)
+                if missing:
+                    reason = 'waiting for prerequisite%s %s to write round %s' % (
+                        '' if len(missing) == 1 else 's', ', '.join(missing), hub_doc.get('round'))
+                elif lock:
+                    reason = 'held by %s' % lock.get('piece')
+                else:
+                    reason = 'behind earlier eligible waiters'
+                if (reason, tuple(missing)) != last_wait:      # one line per change of what it waits on, never a loop
+                    waited, last_wait = True, (reason, tuple(missing))
                     event(hub_dir, 'wait', piece, ticket=ticket, holder=(lock or {}).get('piece'),
                           holder_pid=(lock or {}).get('pid'), position=len(ahead) + 1,
-                          ahead=[w['piece'] for w in ahead], reason=reason, ordered=bool(ordered))
+                          ahead=[w['piece'] for w in ahead], outstanding=missing, reason=reason,
+                          round=hub_doc.get('round'))
                 watch = ([lock.get('pid')] if lock else []) + [w.get('pid') for w in ahead]
             for p in watch:
                 if p is not None:
@@ -968,7 +1070,13 @@ def status(hub_dir):
                 waiters=[dict(piece=w.get('piece'), since_utc=w.get('since_utc'), pid=w.get('pid'),
                               alive=_live(w.get('pid'), w.get('pid_start')), ordered=w.get('ordered'))
                          for w in turn_doc.get('waiters') or []],
-                next_in_order=next((p for p in doc.get('pieces') or [] if not _round_written(hub_dir, p, rnd)), None),
+                prerequisites={p: prerequisites_of(doc, p) for p in doc.get('pieces') or []},
+                ready=[p for p in doc.get('pieces') or []
+                       if not _round_written(hub_dir, p, rnd) and not outstanding(hub_dir, doc, p)],
+                blocked={p: outstanding(hub_dir, doc, p) for p in doc.get('pieces') or []
+                         if not _round_written(hub_dir, p, rnd) and outstanding(hub_dir, doc, p)},
+                next_in_order=next((p for p in doc.get('pieces') or []
+                                    if not _round_written(hub_dir, p, rnd) and not outstanding(hub_dir, doc, p)), None),
                 laps=len(doc.get('laps') or []), last_lap=last_lap, pieces=pieces,
                 pin_differences=len(doc.get('pin_differences') or []))
 
@@ -995,7 +1103,8 @@ def main(argv=None):
     ap.add_argument('--token')
     ap.add_argument('--ordered', action='store_true')
     ap.add_argument('--pins', help='JSON file {name: {path, sha256, bytes}}')
-    ap.add_argument('--pieces', help='comma-separated workflow order (default %s)' % ','.join(DEFAULT_PIECES))
+    ap.add_argument('--pieces', help='comma-separated pieces (default %s)' % ','.join(DEFAULT_PIECES))
+    ap.add_argument('--prerequisites', help='JSON file {piece: [pieces whose write this round it needs]}')
     ap.add_argument('--hash-missing', action='store_true', help='hash pins given without a sha256')
     ap.add_argument('--additions', help='JSON file: a list of additions')
     ap.add_argument('--since-round', type=int)
@@ -1009,7 +1118,11 @@ def main(argv=None):
             except (OSError, ValueError) as error:
                 raise HubError('the pins file %s is unreadable: %s' % (a.pins, error))
             pieces = [p for p in a.pieces.split(',') if p] if a.pieces else None
-            print(open_hub(a.hub_root, a.run, a.day, pins, pieces, hash_missing=a.hash_missing))
+            try:
+                prereqs = json.loads(Path(a.prerequisites).read_text(encoding='utf-8')) if a.prerequisites else None
+            except (OSError, ValueError) as error:
+                raise HubError('the prerequisites file %s is unreadable: %s' % (a.prerequisites, error))
+            print(open_hub(a.hub_root, a.run, a.day, pins, pieces, hash_missing=a.hash_missing, prerequisites=prereqs))
             return 0
         hub_dir = _hub_dir_arg(a)
         if a.command == 'status':
