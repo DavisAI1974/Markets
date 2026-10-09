@@ -1013,10 +1013,9 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         market_reading = None
         native_entries = dict(schema=K.NATIVE_ENTRY_SCHEMA, status='unavailable',
                               reason='no shared market policy on this ROOT: no picture was read, so no native value was placed')
-        # The cutoff of the native entry arithmetic (Greg, 2026-10-07 night, binding for the one-day run): wall time and
-        # resident memory, from the environment the plan sets for this step, else the defaults (60 min, 48 GB); recorded
-        # here whether or not it is reached. A reached cutoff keeps what was computed and lists the rest; the rest of
-        # the classroom is not affected.
+        # The former cutoff of the native entry arithmetic is retired (Greg, 2026-10-09: no size- or time-based stop
+        # that makes science weaker): every series is computed; the limits a plan or environment names are recorded as
+        # given (applied: False), and the result records the elapsed native work and the peak resident memory.
         native_limits = K.native_cutoff_limits(os.environ)
         received['native_cutoff'] = native_limits
         # Side by side (Greg, 2026-10-07 night: the September 29 pattern for every piece): the exhaustion/D facts read

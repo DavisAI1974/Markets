@@ -1020,16 +1020,18 @@ IDENTITY_RULE = ('instrument_id and raw_symbol are identities, not signals: reco
                  'and every change (cursor, before, after) in native-entry-arithmetic.json; no numeric series or cell')
 
 
-# The cutoff (Greg, 2026-10-07 night, binding for the one-day run): the native entry arithmetic stops at a wall-time or a
-# resident-memory limit, keeps what it completed, and lists the rest unavailable: cutoff. A named limit, never an integrity
-# failure; the rest of the classroom is not affected. Settable through the environment (the plan sets it for the step).
+# The former cutoff (Greg, 2026-10-07 night) is RETIRED (Greg, 2026-10-09: "we can't make a size-based decision that
+# makes science weaker"): the native entry arithmetic computes every series over every Dipole row, whatever the time or
+# the memory it takes, and records both (elapsed native work, peak resident memory). The limits below are kept only as a
+# recorded reading (a plan or an environment may still name them; they are listed, never applied); check_every is the
+# probe's cadence in the pass. A series is listed unavailable only when its data is actually absent.
 NATIVE_CUTOFF_DEFAULTS = dict(seconds=3600.0, rss_gb=48.0, check_every=10000)
 NATIVE_CUTOFF_ENV = dict(seconds='FRANKIE_NATIVE_CUTOFF_SECONDS', rss_gb='FRANKIE_NATIVE_CUTOFF_RSS_GB',
                          check_every='FRANKIE_NATIVE_CUTOFF_CHECK_EVERY')
-NATIVE_CUTOFF_RULE = ('the native entry work (its own time inside the pass, closing the rows and the pairs after it) is '
-                      'checked every check_every pictures in the pass and before every series after it: at the wall-time '
-                      'or resident-memory limit it stops feeding, computes what it holds over the Dipole rows it closed, '
-                      'and lists every series not computed as unavailable: cutoff (never zero, never done)')
+NATIVE_CUTOFF_RULE = ('no cutoff: the native entry work computes every series over every Dipole row; its time and '
+                      'resident memory are read every check_every pictures in the pass and before every series after it, '
+                      'for the probe and the record (elapsed native work, peak resident memory), never to stop it. The '
+                      'seconds / rss_gb values are recorded as given and not applied (Greg, 2026-10-09)')
 
 
 def native_cutoff_limits(environ=None):
@@ -1053,6 +1055,7 @@ def native_cutoff_limits(environ=None):
     out['check_every'] = max(1, int(out['check_every']))
     out['rss_bytes'] = int(out['rss_gb'] * 2 ** 30)
     out['listed'] = listed or None
+    out['applied'] = False           # recorded, never a stop (NATIVE_CUTOFF_RULE)
     return out
 
 
@@ -1134,6 +1137,7 @@ class _NativeEntryArithmetic:
         self.online = online
         self.limits = limits or native_cutoff_limits({})
         self.cutoff, self.pictures, self.finish_clock = None, 0, None
+        self.peak_rss, self.peak_rss_basis, self.peak_rss_phase = 0, None, None     # the largest reading _check took
         import threading
         self._probe_lock, self._probe_at = threading.Lock(), float('-inf')    # the stage-progress probe (_check)
         self.components = [(c['name'], c['observations']) for c in components]
@@ -1351,13 +1355,14 @@ class _NativeEntryArithmetic:
         seen.update(leaves)
 
     def _check(self, phase):
-        """True when the cutoff is (or was already) reached; records which limit, the elapsed native work, the memory and
-        the cursor reached. Elapsed = this work's own time in the pass plus the time since finish() began."""
+        """The probe and the record, never a stop (the cutoff is retired, NATIVE_CUTOFF_RULE): reads the elapsed native
+        work and the resident memory, reports them on the heartbeat, keeps the peak reading, and returns False. Elapsed =
+        this work's own time in the pass plus the time since finish() began."""
         import time
-        if self.cutoff is not None:
-            return True
         elapsed = self.note_seconds + (time.monotonic() - self.finish_clock if self.finish_clock is not None else 0.0)
         rss, basis = _rss_bytes()
+        if rss > self.peak_rss:
+            self.peak_rss, self.peak_rss_basis, self.peak_rss_phase = rss, basis, phase
         # Greg's probes on every step: the stage's own phase for the parent's heartbeat. _check also runs in the pair
         # threads (before every series), so the report is throttled to one per second under a lock (one writer of the
         # pid's pending file at a time). A probe never changes the pass.
@@ -1377,18 +1382,7 @@ class _NativeEntryArithmetic:
                     heartbeat('classroom native entries: series', getattr(self, 'series_done', 0),
                            getattr(self, 'series_total', None), unit='series', rss_bytes=rss,
                            native_elapsed_s=round(elapsed, 1))
-        hit = ('wall_time' if elapsed >= self.limits['seconds'] else
-               'resident_memory' if rss >= self.limits['rss_bytes'] else None)
-        if hit is None:
-            return False
-        self.cutoff = dict(limit=hit, phase=phase, elapsed_seconds=round(elapsed, 3), rss_bytes=rss, rss_basis=basis,
-                           cursor_reached=self.last_cursor, dipole_rows_closed=self.k, dipole_rows=self.n,
-                           pictures_fed=self.pictures, limits={k: self.limits[k] for k in ('seconds', 'rss_gb', 'check_every')})
-        self.status = 'cutoff'
-        self.reason = ('cutoff (%s) in the %s after %.1f s of native work at %.2f GB resident; adapter cursor reached %s, '
-                       '%d of %s Dipole rows closed; a named limit, not an integrity failure'
-                       % (hit, phase, elapsed, rss / 2 ** 30, self.last_cursor, self.k, self.n))
-        return True
+        return False
 
     # ---- one pass (Greg, 2026-10-09): the teacher's walk feeds this pass; the classroom computes
     PASS_FIELDS = ('status', 'reason', 'cutoff', 'pictures', 'k', 'last_cursor', 'at_cursor', 'num', 'cat', 'cnt',
@@ -1420,7 +1414,8 @@ class _NativeEntryArithmetic:
     def pass_state(self):
         """The pass's state (picklable), with the roster and the carriers/layers it was made against."""
         state = {name: getattr(self, name) for name in self.PASS_FIELDS}
-        state.update(cursors=list(self.cursors), carriers=self.carriers, layers=self.layers, limits=self.limits)
+        state.update(cursors=list(self.cursors), carriers=self.carriers, layers=self.layers, limits=self.limits,
+                     peak_rss=self.peak_rss, peak_rss_basis=self.peak_rss_basis, peak_rss_phase=self.peak_rss_phase)
         return state
 
     def load_pass_state(self, state):
@@ -1434,9 +1429,16 @@ class _NativeEntryArithmetic:
                 return False, 'the teacher walk\'s roster differs from this classroom\'s Dipole roster'
             if state['carriers'] != self.carriers or state['layers'] != self.layers:
                 return False, 'the teacher walk\'s native carriers or layers differ from this classroom\'s'
+            if state.get('cutoff') is not None or state.get('status') == 'cutoff':
+                # a pass saved under the retired cutoff stopped feeding early: never computed over a part of the day
+                return False, ('the teacher walk\'s pass stopped at the retired cutoff (%s); the classroom makes its own '
+                               'full pass' % (state.get('reason') or state.get('cutoff')))
             values = {name: state[name] for name in self.PASS_FIELDS}       # every field present before any is set
             for name, value in values.items():
                 setattr(self, name, value)
+            if (state.get('peak_rss') or 0) > self.peak_rss:
+                self.peak_rss, self.peak_rss_basis = state['peak_rss'], state.get('peak_rss_basis')
+                self.peak_rss_phase = 'teacher walk: %s' % state.get('peak_rss_phase')
         except (KeyError, TypeError) as error:
             return False, 'the teacher carry is malformed (%s: %s)' % (type(error).__name__, error)
         return True, None
@@ -1504,8 +1506,17 @@ class _NativeEntryArithmetic:
         out['hot_path_seconds'] = round(self.note_seconds, 3)
         out['pair_threads'] = getattr(self, 'pair_threads', None)
         out['queue_level_cost'] = QUEUE_LEVEL_COST
-        out['cutoff'] = self.cutoff                     # None = no limit reached
-        out['cutoff_limits'] = self.limits
+        out['cutoff'] = self.cutoff                     # always None: the cutoff is retired (NATIVE_CUTOFF_RULE)
+        out['cutoff_limits'] = self.limits              # recorded as given, applied: False
+        import resource
+        out['peak_rss'] = dict(
+            sampled_bytes=self.peak_rss or None, sampled_basis=self.peak_rss_basis, sampled_phase=self.peak_rss_phase,
+            process_max_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024,
+            largest_worker_max_bytes=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss * 1024 or None,
+            basis=('sampled: the largest _check reading (every check_every pictures in the pass, before every series '
+                   'after it); process_max: getrusage ru_maxrss of this process; largest_worker_max: ru_maxrss of the '
+                   'largest waited-for child (a forked series worker counts the pages it shares with this process)'))
+        out['elapsed_native_seconds'] = round(self.note_seconds + (time.monotonic() - started), 3)
         out['status'] = self.status or 'computed'       # a cutoff reached after the pass shows here too
         out['reason'] = self.reason
         out['timing'] = ('hot_path_seconds: note() inside the classroom\'s one ordered pass (part of read.seconds); seconds: '

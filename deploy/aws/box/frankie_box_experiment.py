@@ -449,9 +449,9 @@ def load_plan(a, code_root):
     # nor keeps them): an explicit persisted flag, decided here once and saved with the plan, never inferred at call time.
     # 'auto' = one_day when the plan holds exactly one day, else off; one_day / off = the operator's explicit override.
     # None (a saved plan from before the flag) keeps the plan without the key, read as off by Run.inspection_on
-    # the classroom's native-entry cutoff (Greg, 2026-10-07 night; frankie_box_classroom_code.native_cutoff_limits): saved
-    # only when given, so an older plan without the keys keeps its digest; absent = the classroom's defaults (3600 s,
-    # 48 GB, every 10000 pictures)
+    # the classroom's former native-entry cutoff (frankie_box_classroom_code.native_cutoff_limits; retired 2026-10-09:
+    # recorded as given, never applied; check_every stays the probe cadence): saved only when given, so an older plan
+    # without the keys keeps its digest
     for key in NATIVE_CUTOFF_PLAN_KEYS:
         if getattr(a, key, None) is not None:
             plan[key] = getattr(a, key)
