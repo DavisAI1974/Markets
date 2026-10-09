@@ -238,8 +238,29 @@ def recover_request():
         return dict(op=op, result=request(op, **body))
 
 
+def _stat(path):
+    try:
+        st = os.stat(path)
+        return (st.st_ino, st.st_mtime_ns, st.st_size)
+    except OSError:
+        return None
+
+
+def _await_mailbox(config, before):
+    """Block until the mailbox file is rewritten (the controller's renewal, made right after it answers a coordination)
+    or the lane stop file appears; `before` is the mailbox's stat taken BEFORE the attempt that failed, so a rewrite
+    during that attempt is never missed. Event-driven (inotify on their directories), no interval (2026-10-09)."""
+    import frankie_box_wake as W
+    stop = os.environ.get('FRANKIE_LANE_STOP_FILE')
+    dirs = {str(Path(config).parent)} | ({str(Path(stop).parent)} if stop else set())
+    with W.Waiter(sorted(dirs)) as waiter:
+        while _stat(config) == before and not (stop and Path(stop).exists()):
+            waiter.wait()
+
+
 def request(op, **payload):
-    """One durable mailbox request. A controller outage leaves the held day waiting on the same box/lane."""
+    """One durable mailbox request. A controller outage leaves the held day waiting on the same box/lane: a failed PUT
+    or an unanswered GET waits for the controller's next mailbox rewrite (renewal or answer), never an interval."""
     config = os.environ.get('FRANKIE_LANE_MAILBOX')
     if not config:
         raise RuntimeError('remote lane mailbox not configured')
@@ -261,6 +282,7 @@ def request(op, **payload):
             raise SystemExit(75)  # the complete request is durable; resume replays the same id
     while True:
         check_save()
+        before = _stat(config)
         cfg = json.loads(Path(config).read_bytes())
         try:
             urllib.request.urlopen(urllib.request.Request(cfg['request_put'], raw, method='PUT'), timeout=120).close()
@@ -270,10 +292,11 @@ def request(op, **payload):
                 raise
         except (urllib.error.URLError, TimeoutError):
             pass
-        time.sleep(5)  # controller renews signed slots; ownership is retained while unavailable
+        _await_mailbox(config, before)  # controller renews signed slots; ownership is retained while unavailable
     write(pending, dict(id=ident, op=op, body=body, at=time.time(), waiting=True, uploaded=True))
     while True:
         check_save()
+        before = _stat(config)
         cfg = json.loads(Path(config).read_bytes())
         try:
             response = json.loads(urllib.request.urlopen(cfg['response_get'], timeout=120).read())
@@ -287,7 +310,7 @@ def request(op, **payload):
                 raise
         except (urllib.error.URLError, TimeoutError):
             pass
-        time.sleep(5)
+        _await_mailbox(config, before)  # the controller rewrites the mailbox right after it answers
 
 
 def boundary(day, stage, publish=True, brain=BRAIN):

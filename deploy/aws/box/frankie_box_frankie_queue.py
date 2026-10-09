@@ -525,20 +525,24 @@ def entry_of(line, run, day):
     return next((x for x in doc['entries'] if x['run'] == run and x['day'] == day), None)
 
 
+def behind_other_run(doc, x):
+    """The earlier entry of the same day from ANOTHER run that has not left the line (not done, not failed, not
+    retired), or None. 2026-10-09 (Greg: fastest runtime, science unchanged): such a day is admitted to the line QUEUED
+    BEHIND it and starts the moment it leaves (its save of the line wakes every worker; no poll)."""
+    return next((y for y in ordered(doc) if y['seq'] < x['seq'] and y['day'] == x['day'] and y['run'] != x['run']
+                 and y['state'] not in ('done', 'failed')), None)
+
+
 def enqueue(line, run, day, commit, code_root, plan_sha256, settings, readiness, by):
     """(entry, 'enqueued' | 'existing') or (None, why refused). One entry per (day, run); a day already in the line from
-    another run (not failed) is declined: duplicate data (the same day's ROOT or class twice)."""
+    another run (not failed) is admitted QUEUED BEHIND that run's entry (2026-10-09; was declined): it starts when the
+    earlier entry leaves the line (done, failed or retired), the ordering reason recorded on the entry."""
     with locked():
         doc = load(line)
         for x in doc['entries']:
             if x['run'] == run and x['day'] == day:
                 return x, 'existing'
         others = [x for x in doc['entries'] if x['day'] == day and x['state'] != 'failed']
-        if others:
-            why = ('%s is in the %s line already from run %s (seq %d, %s): duplicate data declines a second entry of the '
-                   'day' % (day, line, others[0]['run'], others[0]['seq'], others[0]['state']))
-            event(line, 'enqueue_refused', run=run, day=day, reason=why, by=by)
-            return None, why
         now = time.time()
         seq = doc['next_seq']
         doc['next_seq'] = seq + 1
@@ -547,9 +551,14 @@ def enqueue(line, run, day, commit, code_root, plan_sha256, settings, readiness,
                                                                       pid=os.getpid(), host=socket.gethostname()),
                      plan_sha256=plan_sha256, settings={k: settings.get(k, v) for k, v in SETTINGS.items()},
                      readiness=readiness, attempts=[], stages={}, receipts=[])
+        if others:
+            entry['behind'] = [dict(seq=y['seq'], run=y['run'], state=y['state']) for y in others]
+            entry['reason'] = ('in line (seq %d), queued behind run %s\'s entry of %s (seq %d, %s): it starts when that '
+                               'entry leaves the line' % (seq, others[0]['run'], day, others[0]['seq'], others[0]['state']))
         doc['entries'].append(entry)
         save(line, doc)
-        event(line, 'enqueued', seq=seq, run=run, day=day, by=by, readiness=readiness)
+        event(line, 'enqueued', seq=seq, run=run, day=day, by=by, readiness=readiness,
+              **(dict(behind=entry['behind']) if others else {}))
         return entry, 'enqueued'
 
 
@@ -1521,7 +1530,7 @@ def box_slots(settings):
     except ImportError:
         return None, max(1, int(settings.get('parallel_days') or 1)), 'PARALLEL_DAYS (frankie_box_cores.py not on the box)'
     me = os.getpid()
-    held, _, _, bookings = C.usage(1.0, exclude=C.ancestors(C.processes(), me) | {me})
+    held, _, _, bookings = C.usage(0.0, exclude=C.ancestors(C.processes(), me) | {me})
     booked = {c for b in bookings for c in b['cpus']}
     free = [c for c in C.online_cpus() if c not in booked and c not in held]
     return len(free) // C.DAY_RUN_CPUS, len(C.online_cpus()) // C.DAY_RUN_CPUS, \
@@ -1543,6 +1552,10 @@ def root_gate(run, day):
         return False, 'not_in_root_line: %s enters the ROOT line when it is ROOT-ready (orchestrator)' % day
     if mine['state'] == 'done':
         return False, 'root_line_done: the day\'s ROOT line entry is done (seq %d)' % mine['seq']
+    earlier = behind_other_run(doc, mine)
+    if earlier is not None:
+        return False, 'behind_other_run: run %s\'s entry of %s (seq %d, %s) has not left the ROOT line' % (
+            earlier['run'], day, earlier['seq'], earlier['state'])
     for x in ordered(doc):
         if x['seq'] >= mine['seq']:
             break
@@ -1581,7 +1594,7 @@ def _book_slot(x, stage, commit):
     # the run's day slot size (plan day_cpus: 32 = both main-box lanes as one booking; default 16)
     size = int(_plan_of(x['run']).get('day_cpus') or C.DAY_RUN_CPUS)
     b, outcome = C.book('day-run', os.getpid(), dict(day=x['day'], run=x['run'], stage='day-slot-' + stage, commit=commit,
-                                                  cpus=cpus, size=size), 1.0)
+                                                  cpus=cpus, size=size), 0.0)
     if not b:
         _SLOT_HELD_PIDS.update(outcome.get('held_pids') or [])   # the root worker wakes on their exit (2026-10-09)
     return (b['booking'], b['cpus'], None) if b else (None, None, outcome.get('reason'))
@@ -1833,11 +1846,12 @@ def _finish_steps(run, e, code_root, commit, log):
     if e['classroom_arm'] and os.environ.get('FRANKIE_LANE_MAILBOX'):
         import frankie_box_lane_state as LS
         while True:
+            # no interval (2026-10-09): each request waits inside LS.request for the controller's answer (its mailbox
+            # rewrite), so a 'waiting' answer is re-asked at the controller's next coordination, never on a timer
             run.check_save()
             lease = LS.request('class_take', settings=settings_of(run.a))
             if not lease['waiting']:
                 break
-            time.sleep(15)
         if lease['files']:
             LS.restore_classroom_carry(lease['previous'][0], lease['files'], [X.ROOTS])
         run.check_save()
@@ -2437,11 +2451,32 @@ def _retain_quietly(x):
 
 
 def _wake_after(job, *args):
-    """A day thread: its job, then one wake, so the ROOT worker's main loop handles the end at once (2026-10-09)."""
+    """A day thread: its job, then one wake, so the ROOT worker's main loop handles the end at once (2026-10-09). The
+    holder (the last argument) is marked ended BEFORE the wake, so the main loop never reads the thread as alive in the
+    instant between the wake and the thread's exit (it would then wait with no further event)."""
     try:
         job(*args)
     finally:
+        if args and isinstance(args[-1], dict):
+            args[-1]['ended'] = True
         notify('root-thread-end')
+
+
+_OWN_WAKES = ('root-thread-end', 'line-root')   # the ROOT worker's own writes: never a reason to retry a waiting day
+
+
+def _wake_marks():
+    """{name: (inode, mtime_ns, size)} of the wake directory's files now: compared after a wait, it names the hand-offs
+    that happened (a booking released, a clean ended, a stage status), never the worker's own thread end or line save."""
+    out = {}
+    try:
+        for p in wake_dir().iterdir():
+            if not p.name.startswith('.'):
+                st = p.stat()
+                out[p.name] = (st.st_ino, st.st_mtime_ns, st.st_size)
+    except OSError:
+        pass
+    return out
 
 
 def _root_waiter(doc, running):
@@ -2512,13 +2547,16 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
     while True:
         if deadline is not None and time.monotonic() >= deadline:
             stop.setdefault('reason', 'the time bound (%d s)' % max_seconds)
-        finished = [seq for seq, job in running.items() if not job['thread'].is_alive()]
+        finished = [seq for seq, job in running.items() if not job['thread'].is_alive() or job['holder'].get('ended')]
+        for seq in finished:
+            running[seq]['thread'].join()           # it ended (marked before its wake): the join returns at once
         after, owner_waiting = [], []
         with locked():
             doc = load('root')
             if waiter is not None:
                 waiter.close()
             waiter = _root_waiter(doc, running)     # built BEFORE this pass's checks: no change after them is missed
+            marks = _wake_marks()                   # with it: the hand-offs after this point re-admit a waiting day
             for seq in finished:
                 job = running.pop(seq)
                 y = find(doc, seq)
@@ -2605,6 +2643,10 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                 elif result == 'queued':
                     y.update(state='queued', where=None, reason='back in line at its own place: %s' % reason,
                              wait=wait_of(y, reason, facts))
+                    # 2026-10-09: no busy retry. Like a failed or waiting finish, it is admitted again only when an awaited
+                    # input on disk changes (wait_changed) or another hand-off on the box happens (a booking released, a
+                    # clean ended: the wake directory), never on its own thread's end
+                    retried.add(seq)
 
                     if _owned_root(y):
                         # session 9: an OWNED day (a resume, or its ROOT directory exists) keeps its owner binding and
@@ -2698,11 +2740,18 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                 if why:
                     x['reason'] = source = why
                     break                                   # FIFO: a retained-source refusal never admits its successor
+                earlier = behind_other_run(doc, x)
+                if earlier is not None:
+                    x['reason'] = ('queued behind run %s\'s entry of %s (seq %d, %s): it starts when that entry leaves the '
+                                   'line' % (earlier['run'], x['day'], earlier['seq'], earlier['state']))
+                    continue                                # woken by that entry's line save (the wake directory)
                 if x['state'] == 'failed':
                     if x['seq'] in retried:
                         blocked = x
                         break                               # the line stops at a failed entry (never skipped)
                     retried.add(x['seq'])                   # retried once per worker start
+                elif x['state'] == 'queued' and x['seq'] in retried:
+                    continue                                # back in line waiting: admitted again on its event (below)
                 if stop:
                     break
                 slot, cpus, why = _book_slot(x, 'root', commit)
@@ -2798,6 +2847,13 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
         for seq, waits in getattr(waiter, 'waits', {}).items():
             if seq in retried and any(wait_changed(w) for w in waits):
                 retried.discard(seq)                # its awaited input appeared or changed: retried once more now
+        now_marks = _wake_marks()
+        if any(now_marks.get(name) != mark for name, mark in list(marks.items()) + [(n, None) for n in now_marks]
+               if name not in _OWN_WAKES and now_marks.get(name) != marks.get(name)):
+            with locked():                          # another hand-off happened: every day back in line is re-admitted
+                for x in load('root').get('entries') or []:
+                    if x.get('state') == 'queued':
+                        retried.discard(x['seq'])
     if waiter is not None:
         waiter.close()
     return code
@@ -2966,12 +3022,31 @@ def resume_owner(run, day, by, rebook=False):
             x.setdefault('owner_rebooks', []).append(decision)
             retained = b.get('retained')
         if retained is None and owner.get('cpus') and not rebook:
+            # 2026-10-09 (Greg: a gate we coded never blocks fine data): the retained booking is gone from the ledger; the
+            # day is re-booked automatically at the SAME size through the ledger (the same attempt resumes on the new
+            # set), the decision recorded; when no lane of that size is free now, the next admission books any free
+            # slot of the plan's size for the same owner binding (the REBOOK=on route), recorded the same way
             released = C.RELEASED / ('%s.json' % owner.get('booking'))
-            raise SystemExit('the retained booking %s of %s %s is not in the ledger any more (%s): the exact CPU set cannot be '
-                             'reused; an explicit owner decision is required: REBOOK=on resumes the same attempt %s on any '
-                             'free 16 CPUs' % (owner.get('booking'), run, day,
-                                                json.loads(released.read_bytes()).get('release_reason') if released.is_file()
-                                                else 'no ledger record', owner['attempt']))
+            why = (json.loads(released.read_bytes()).get('release_reason') if released.is_file() else 'no ledger record')
+            cpus_then = owner['cpus'] if isinstance(owner['cpus'], (list, tuple)) else C.parse_list(owner['cpus'])
+            size = len(cpus_then) if len(cpus_then) in C.DAY_RUN_SIZES else int(_plan_of(run).get('day_cpus') or C.DAY_RUN_CPUS)
+            b, outcome = C.rebook_for_owner(run, day, owner['attempt'], size, 'day-slot-resume', owner.get('commit'),
+                                            reason='resumed by %s: the retained booking %s (CPUs %s) left the ledger (%s); '
+                                                   're-booked at the same size' % (by, owner.get('booking'),
+                                                                                   owner.get('cpus'), why))
+            decision = dict(by=by, at_utc=utc(), previous_cpus=owner.get('cpus'), previous_booking=owner.get('booking'),
+                            previous_release_reason=why, size=size, automatic=True,
+                            rule='re-booked automatically at resume: the retained booking was gone (2026-10-09)')
+            if b is not None:
+                decision.update(booking=b['booking'], cpus=sorted(b['cpus']), resolver=outcome.get('resolver'),
+                                fallback=outcome.get('fallback'))
+                x['owner'] = owner = dict(owner, cpus=sorted(b['cpus']), booking=b['booking'], rebooked=decision)
+                retained = b.get('retained')
+            else:
+                decision.update(booking=None, cpus=None, waiting=outcome.get('reason'),
+                                note='no %d-CPU lane free now: the next admission books any free slot for this owner' % size)
+                x['owner'] = owner = dict(owner, cpus=None, booking=None, rebooked=decision)
+            x.setdefault('owner_rebooks', []).append(decision)
         if rebook and retained is None:
             x['owner'] = owner = dict(owner, cpus=None, booking=None,
                                       rebooked=dict(by=by, at_utc=utc(), previous_cpus=owner.get('cpus'),

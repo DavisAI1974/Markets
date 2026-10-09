@@ -515,21 +515,63 @@ def sealed_ingests(day):
     return out
 
 
-def ingest_of(entry):
-    """(receipt path, None) or (None, reason)."""
+DUPLICATES = {}     # day -> {'ingest'|'root': the duplicate candidates and the choice} (recorded on the day's step records)
+
+
+def _mtime(path):
+    try:
+        return os.stat(path).st_mtime_ns
+    except OSError:
+        return -1
+
+
+def _referenced(run, day, stage, field):
+    """The path this run's own step receipt of the day names (its earlier choice), or None."""
+    if not run:
+        return None
+    try:
+        r = json.loads((RUNS / run / 'days' / day / ('%s.json' % stage)).read_bytes())
+        return str(Path(r[field])) if r.get(field) else None
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+
+
+def _choose(kind, day, candidates, referenced, label):
+    """2026-10-09 (Greg: fastest runtime, science unchanged): never a stop on duplicates. The one the owner binding or
+    this run's own step receipt references, else the newest (receipt mtime); every candidate and the choice recorded
+    (DUPLICATES, carried on the day's step records)."""
+    by_path = {str(c): c for c in candidates}
+    if referenced in by_path:
+        chosen, why = by_path[referenced], 'referenced by %s' % label
+    else:
+        chosen = max(candidates, key=lambda c: (_mtime(c), str(c)))
+        why = 'the newest sealed/receipted one (receipt mtime); none is referenced by %s' % label
+    DUPLICATES.setdefault(day, {})[kind] = dict(duplicates=len(candidates), candidates=[str(c) for c in candidates],
+                                                chosen=str(chosen), why=why)
+    return chosen
+
+
+def ingest_of(entry, run=None):
+    """(receipt path, None) or (None, reason). Two or more sealed ingests of the day: one is chosen (_choose: the one
+    this run's ingest step receipt names, else the newest), recorded, never a refusal."""
     if entry.get('ingest'):
         receipt = Path(entry['ingest']) / 'ingestion-receipt.json'
         return (receipt, None) if receipt.is_file() else (None, 'the plan names %s but it holds no ingestion-receipt.json'
                                                                 % entry['ingest'])
     found = sealed_ingests(entry['day'])
     if len(found) > 1:
-        return None, 'two or more sealed ingests of %s (%s): duplicate data declines the day; name one in the plan' % (
-            entry['day'], ', '.join(str(p.parent) for p in found))
+        named = _referenced(run, entry['day'], 'ingest', 'receipt')
+        if named is None:
+            ingest_dir = _referenced(run, entry['day'], 'ingest', 'ingest')
+            named = str(Path(ingest_dir) / 'ingestion-receipt.json') if ingest_dir else None
+        return _choose('ingest', entry['day'], found, named, 'this run\'s ingest step receipt'), None
     return (found[0], None) if found else (None, None)
 
 
-def root_of(entry, run):
-    """(calculations directory, attempts listed) of the day's finished ROOT, or (None, attempts)."""
+def root_of(entry, run, prefer=None):
+    """(calculations directory, attempts listed) of the day's finished ROOT, or (None, attempts). Two or more finished
+    ROOTs: one is chosen (_choose: the owner binding's attempt `prefer`, else the one this run's root step receipt
+    names, else the newest), recorded, never a refusal; the others are listed with the attempts."""
     remote = RUNS / run / 'days' / entry['day'] / 'root.json'
     if remote.is_file():
         receipt = json.loads(remote.read_bytes())
@@ -540,7 +582,11 @@ def root_of(entry, run):
     attempts = sorted(ROOTS.glob('%s-%s*' % (run, entry['day'])))
     done = [p for p in attempts if (p / 'calculations-receipt.json').is_file()]
     if len(done) > 1:
-        raise SystemExit('two finished ROOTs of %s (%s): duplicate data declines the run' % (entry['day'], done))
+        named = str(ROOTS / prefer) if prefer else _referenced(run, entry['day'], 'root', 'calculations')
+        receipts = [p / 'calculations-receipt.json' for p in done]
+        chosen = _choose('root', entry['day'], receipts, str(Path(named) / 'calculations-receipt.json') if named else None,
+                         'the owner binding (attempt %s)' % prefer if prefer else 'this run\'s root step receipt').parent
+        return chosen, [str(p) for p in attempts if p != chosen]
     return (done[0] if done else None), [str(p) for p in attempts if p not in done]
 
 
@@ -566,14 +612,29 @@ def rows_of(entry):
     return None, None
 
 
+_ATTACHED_CHECKED = {}      # {(day file, receipt, ingest receipt) stat keys: sha256} checked in this process
+
+
+def _stat_key(path):
+    try:
+        st = os.stat(path)
+        return (str(path), st.st_ino, st.st_size, st.st_mtime_ns)
+    except OSError:
+        return (str(path), None)
+
+
 def attached_day_file(ingest_dir):
     """(day file, sha256, None) beside a sealed ingest when it and its receipt agree; (None, None, why) otherwise, and
-    why starts with DIFFERS when a file is there but differs from its receipt (never overwritten: refused)."""
+    why starts with DIFFERS when a file is there but differs from its receipt (never overwritten: refused). One pass:
+    a check that passed in this process is reused while the three files' stat keys are unchanged (every Run object)."""
     path, receipt = Path(ingest_dir) / DAY_FILE, Path(ingest_dir) / DAY_FILE_RECEIPT
     if not path.is_file():
         return None, None, 'no %s beside the sealed ingest %s' % (DAY_FILE, ingest_dir)
     if not receipt.is_file():
         return None, None, '%s beside %s has no %s' % (DAY_FILE, ingest_dir, DAY_FILE_RECEIPT)
+    key = (_stat_key(path), _stat_key(receipt), _stat_key(Path(ingest_dir) / 'ingestion-receipt.json'))
+    if key in _ATTACHED_CHECKED:
+        return path, _ATTACHED_CHECKED[key], None
     want = json.loads(receipt.read_bytes()).get('sha256')
     have = sha256_file(path)
     if have != want:
@@ -587,6 +648,7 @@ def attached_day_file(ingest_dir):
                 body.get('trading_day'), expected_day)
     from research.kalshi.frankie_boss.operations.frankie_day_external import check_day_file
     check_day_file(body)
+    _ATTACHED_CHECKED[key] = have
     return path, have, None
 
 
@@ -893,7 +955,7 @@ def all99_crosswalk(code_root):
     return reg, pin
 
 
-def all99_admission(code_root, day, calc_dir, calc, plan_policy, policy_mismatch, ingest, brain):
+def all99_admission(code_root, day, calc_dir, calc, plan_policy, policy_mismatch, ingest, brain, derive_doc=None):
     """Per day: every one of the 99 registry entries with its disposition for THIS ROOT (ALL99_SCHEMA), its own words:
       admitted   produced AND carried into the shared market timeline picture by the entry's OWN settled carrier
                  (frankie_box_all99_coverage.MARKET_CARRIERS: input / opening / clock / availability through the sealed
@@ -921,7 +983,11 @@ def all99_admission(code_root, day, calc_dir, calc, plan_policy, policy_mismatch
     derive, derive_why, derive_sha, derive_problem = {}, None, None, None
     try:
         dpath = (calc.get('derivation') or {}).get('path')
-        if dpath:
+        pinned = (calc.get('derivation') or {}).get('sha256')
+        if dpath and derive_doc is not None and derive_doc[0] is not None and pinned:
+            # 2026-10-09 (one pass): the caller's one parse of derive.json; its sha256 is the receipt's derivation pin
+            derive, derive_sha = derive_doc[0], pinned
+        elif dpath:
             raw = Path(dpath).read_bytes()             # derive.json: a sealed record, read once (bytes and sha256 here)
             derive_sha = hashlib.sha256(raw).hexdigest()
             derive = json.loads(raw)
@@ -1191,7 +1257,34 @@ def last_json_line(log):
         return None
 
 
-def native_pass_facts(output, calc, policy, child_seconds):
+def load_derive(output):
+    """(derive.json parsed, None) or (None, why) of a ROOT output: read and parsed ONCE per Run.root, then passed along."""
+    try:
+        return json.loads((Path(output) / 'work' / 'derive.json').read_bytes()), None
+    except (OSError, ValueError) as error:
+        return None, '%s: %s' % (type(error).__name__, error)
+
+
+def receipt_pins(calc, receipt_path, receipt_sha256):
+    """{path: {bytes, sha256, not_after_ns}} of the files a ROOT receipt pins (derivation, digest, external computation)
+    plus the receipt itself (hashed once by the caller): the brain stage takes them by claim (size and recorded sha256,
+    the file not newer than the receipt) and reads nothing whole (2026-10-09, one pass)."""
+    out = {}
+    try:
+        not_after = os.stat(receipt_path).st_mtime_ns
+        out[str(receipt_path)] = dict(bytes=os.stat(receipt_path).st_size, sha256=receipt_sha256, not_after_ns=not_after,
+                                      basis='hashed once by Run.root')
+    except OSError:
+        return out
+    for field in ('derivation', 'digest', 'external_computation'):
+        pin = (calc or {}).get(field)
+        if isinstance(pin, dict) and pin.get('path') and isinstance(pin.get('bytes'), int) and pin.get('sha256'):
+            out[str(pin['path'])] = dict(bytes=pin['bytes'], sha256=pin['sha256'], not_after_ns=not_after,
+                                         basis='the ROOT receipt\'s %s pin' % field)
+    return out
+
+
+def native_pass_facts(output, calc, policy, child_seconds, derive=None):
     """What the ROOT's native pass (bedrock on under the shared policy) did, for the receipt and the one-day inspection:
     requested on/off, the derivation's own bedrock record (skipped/reason, its timings when recorded, the ledgers it
     produced), and the ROOT child's wall seconds on the held 16-CPU lane. The ADDED time of the native pass is this ROOT's
@@ -1199,10 +1292,9 @@ def native_pass_facts(output, calc, policy, child_seconds):
     here). A failed native pass is listed with its reason; it never rejects the day by this caller."""
     out = dict(requested='on' if policy else 'off (legacy plan)', root_child_seconds=child_seconds, cpus=16,
                added_seconds='unmeasured: compare with a bedrock-off ROOT of the same day (none run)')
-    try:
-        derive = json.loads((Path(output) / 'work' / 'derive.json').read_bytes())
-    except (OSError, ValueError) as error:
-        out.update(derive='unreadable or absent: %s: %s' % (type(error).__name__, error))
+    derive, why = derive if derive is not None else load_derive(output)
+    if derive is None:
+        out.update(derive='unreadable or absent: %s' % why)
         return out
     b = derive.get('bedrock') if isinstance(derive.get('bedrock'), dict) else None
     if b is None:
@@ -1411,7 +1503,7 @@ class Run:
         return self.record(stage, key, 'waiting', owner=root['owner'],
                            reason='the owning AWS lane has not published a completed %s receipt; its artifacts stay there' % stage)
 
-    def brain_stage(self, day, stage, sources, summary=None, inline_limit=2 * 1024 * 1024, declined='record'):
+    def brain_stage(self, day, stage, sources, summary=None, inline_limit=2 * 1024 * 1024, declined='record', known=None):
         """Immediately commit newly available stage knowledge to Frankie's brain before advancing. Session 9: each
         source's sha256 comes from its attempt's FRANKIE_FILE_CLAIM row when the claim still holds (stat + last 64 KiB;
         the ROOT's digest, layers, spools and ledgers), else from one whole read, after which a large source's claim row
@@ -1424,7 +1516,8 @@ class Run:
         brain = Path(self.plan.get('brain') or str(BRAIN))
         entry = brain / ('%s-%s' % (day, stage))
         try:
-            manifest, reused = BR.write_stage_entry(brain, day, stage, sources, summary=summary, inline_limit=inline_limit)
+            manifest, reused = BR.write_stage_entry(brain, day, stage, sources, summary=summary, inline_limit=inline_limit,
+                                                    known=known)
         except ValueError as error:
             if declined == 'raise' or 'different' not in str(error) or 'stage knowledge' not in str(error):
                 raise
@@ -1468,6 +1561,9 @@ class Run:
         noted = self._identity_recorded.get(key[4:] if key.startswith('day-') else key)
         if noted:
             fields.setdefault('identity_recorded', list(noted))       # what differed; the run proceeded (Greg, 2026-10-09)
+        chosen = DUPLICATES.get(key[4:] if key.startswith('day-') else key)
+        if chosen:
+            fields.setdefault('duplicates_chosen', dict(chosen))     # duplicate ingests/ROOTs: candidates and the choice
         body = dict(schema='FRANKIE_EXPERIMENT_STEP_V1', run=self.plan['run'], stage=stage, key=key, status=status,
                     at=time.time(), commit=self.commit, plan_sha256=plan_digest(self.plan),
                     directive_sha256=(self.plan.get('directive') or {}).get('sha256'), **fields)
@@ -1533,12 +1629,20 @@ class Run:
                 continue
         return total
 
-    def disk_ok(self, stage):
+    def disk_ok(self, stage, resume=False):
+        """False (self.stopped names why) only when the step's measured size would take free space below the floor. The
+        numbers are recorded on self.disk_facts either way. 2026-10-09 (Greg: a gate we coded never blocks fine data):
+        an owned ROOT RESUME is never gated (its bytes are on disk already), and a fresh ROOT reserves only what ROOTs
+        measured on the current form wrote (a record carrying inline_spool_layer_bytes, since 2026-10-08); an older
+        form's pre-clean size is listed, never reserved."""
         free = shutil.disk_usage(BOX_ROOT).free
-        sizes, adjusted = [], 0
+        sizes, adjusted, old_form = [], 0, []
         for p in (self.dir / 'days').glob('*/%s.json' % stage) if (self.dir / 'days').is_dir() else ():
             r = json.loads(p.read_bytes())
             if r.get('status') == 'done' and isinstance(r.get('new_bytes'), int):
+                if stage == 'root' and 'inline_spool_layer_bytes' not in r:
+                    old_form.append(dict(day=p.parent.name, new_bytes=r['new_bytes']))
+                    continue
                 inline = self.inline_spool_layer_bytes(r) if stage == 'root' else 0
                 adjusted += inline
                 sizes.append(r['new_bytes'] - inline)
@@ -1547,9 +1651,16 @@ class Run:
             if r.get('status') == 'done' and isinstance(r.get('new_bytes'), int):
                 sizes.append(r['new_bytes'])
         largest = max(sizes) if sizes else 0
+        self.disk_facts = dict(stage=stage, free_bytes=free, largest_measured_step_bytes=largest, floor_bytes=self.floor,
+                               measured_steps=len(sizes), old_form_not_reserved=old_form, resume=resume)
+        if resume:
+            self.disk_facts['decision'] = 'an owned resume: its bytes are on disk already; not gated'
+            return True
+        self.disk_facts['decision'] = 'gated' if free - largest < self.floor else 'fits'
         if free - largest < self.floor:
             self.stopped = dict(stage=stage, free_bytes=free, largest_measured_step_bytes=largest, floor_bytes=self.floor,
                                 measured_steps=len(sizes), inline_spool_layer_bytes_not_reserved=adjusted,
+                                old_form_not_reserved=old_form,
                                 reason='the step would take free space below the floor (largest measured %s step %d '
                                        'bytes, free %d, floor %d)' % (stage, largest, free, self.floor))
             return False
@@ -1653,7 +1764,7 @@ class Run:
                     use=use, outputs=outputs)
 
     def fetch(self, e):
-        receipt, why = ingest_of(e)
+        receipt, why = ingest_of(e, self.plan['run'])
         if receipt or why:
             return self.record('fetch', e['day'], 'skipped' if receipt else 'refused',
                                reason='the day is ingested already: %s' % receipt.parent if receipt else why,
@@ -1679,7 +1790,7 @@ class Run:
                                dict(exit_code=code, log=pin_or_listed(log))))
 
     def ingest(self, e):
-        receipt, why = ingest_of(e)
+        receipt, why = ingest_of(e, self.plan['run'])
         if why:
             return self.record('ingest', e['day'], 'refused', reason=why)
         if receipt:
@@ -1728,7 +1839,7 @@ class Run:
         before = set(WORK.glob('ingest-*'))
         code, log = self.child('ingest', e['day'], 'frankie_box_ingest_block.sh', env)
         made = sorted(set(WORK.glob('ingest-*')) - before)
-        receipt, why = ingest_of(e)
+        receipt, why = ingest_of(e, self.plan['run'])
         cpu = self._cpu.get(('ingest', e['day']))     # the ledger's own line of this dispatch (booked / waiting / refused)
         if code == self.cores.WAITING_EXIT and (cpu or {}).get('status') == 'waiting' and not receipt:
             # not started: the day's CPUs were not free (a ROOT or another day holds them); visible, retried on a later
@@ -1781,7 +1892,7 @@ class Run:
         remote = self.remote_root(e['day'])
         if remote is not None:
             return remote
-        calc, attempts = root_of(e, self.plan['run'])
+        calc, attempts = root_of(e, self.plan['run'], prefer=self.owned_attempt)
         owned_output = None
         if os.environ.get('FRANKIE_LANE_MAILBOX'):
             attempt = os.environ.get('FRANKIE_LANE_ATTEMPT', '')
@@ -1806,7 +1917,8 @@ class Run:
                 raise ValueError('the owned ROOT output is not a retained directory: %s' % owned_output)
         policy = self.plan.get('shared_market_policy')
         if calc:
-            retained = json.loads((calc / 'calculations-receipt.json').read_bytes())
+            retained_raw = (calc / 'calculations-receipt.json').read_bytes()     # read once: parsed and hashed
+            retained = json.loads(retained_raw)
             if retained.get('day') != e['day'] or retained.get('day_role') != e['role']:
                 raise ValueError('retained ROOT receipt belongs to another day/role')
             mismatch = self.shared_policy_mismatch(retained.get('shared_market_policy')) if policy else None
@@ -1825,7 +1937,9 @@ class Run:
                 sources.append(digest_path)
             if (calc / 'external-computation.json').is_file():
                 sources.append(calc / 'external-computation.json')
-            brain_entry = self.brain_stage(e['day'], 'root', sources,
+            receipt_path = calc / 'calculations-receipt.json'
+            receipt_sha = hashlib.sha256(retained_raw).hexdigest()   # hashed once, from the bytes parsed above (2026-10-09)
+            brain_entry = self.brain_stage(e['day'], 'root', sources, known=receipt_pins(retained, receipt_path, receipt_sha),
                                            summary=dict(calculations=str(calc), role=e['role'],
                                                         root_status=retained.get('status'),
                                                         producer_failures=retained.get('failure_count'),
@@ -1833,14 +1947,12 @@ class Run:
                                                                 self.DIGEST_NOT_BUILT)))
             all99 = self.all99(e['day'], calc, retained, policy, None)
             return self.record('root', e['day'], 'reused', calculations=str(calc), interrupted_attempts=attempts,
-                               receipt_sha256=sha256_file(calc / 'calculations-receipt.json')
-                               if (calc / 'calculations-receipt.json').is_file() else None,
+                               receipt_sha256=receipt_sha,
                                shared_market_policy=retained.get('shared_market_policy'), plan_policy=policy,
                                policy_recorded=mismatch, brain_entry=brain_entry, all99=all99,
                                # the one-day inspection: a reused ROOT received the retained receipt and produced the
                                # same all-99 list; operator review only
-                               inspection=dict(inputs=dict(calculations=str(calc), receipt_sha256=sha256_file(calc / 'calculations-receipt.json')
-                                                           if (calc / 'calculations-receipt.json').is_file() else None),
+                               inspection=dict(inputs=dict(calculations=str(calc), receipt_sha256=receipt_sha),
                                                use=dict(reused=True, plan_policy=policy or 'none (an older saved legacy plan, kept as saved: native pass off; every NEW run has it ON)',
                                                         interrupted_attempts=attempts),
                                                outputs=dict(root_status=retained.get('status'), producer_failures=retained.get('failure_count'),
@@ -1852,11 +1964,11 @@ class Run:
         ready, why = self.external_ready(e)
         if not ready:
             return self.record('root', e['day'], 'waiting', reason=why)
-        if not self.disk_ok('root'):
-            return None
-        output = owned_output or ROOTS / ('%s-%s-a%d' % (self.plan['run'], e['day'], len(attempts) + 1))
         # First dispatch and resume both use the central claim's exact directory.
         resume = owned_output is not None and owned_output.is_dir()
+        if not self.disk_ok('root', resume=resume):
+            return None
+        output = owned_output or ROOTS / ('%s-%s-a%d' % (self.plan['run'], e['day'], len(attempts) + 1))
         held = self.claim_root(e, output)          # None = no claim store on the box: exactly as before
         if held is not None and not held[0]:
             return self.record('root', e['day'], 'waiting', reason=held[1], claim=held[2])
@@ -1885,8 +1997,10 @@ class Run:
         child_started = time.time()
         code, log = self.child('root', e['day'], 'frankie_box_experiment_root.sh', env)
         child_seconds = round(time.time() - child_started, 1)
+        derive = load_derive(output)                 # derive.json parsed ONCE for this ROOT step (2026-10-09, one pass)
         saved = self.child_saved('root', e['day'], code, log, output_root=str(output), interrupted_attempts=attempts,
-                                 seconds=child_seconds, native_pass=native_pass_facts(output, None, policy, child_seconds),
+                                 seconds=child_seconds, native_pass=native_pass_facts(output, None, policy, child_seconds,
+                                                                                      derive=derive),
                                  claim='kept: the attempt resumes under it (claim_root retakes this box\'s own claim when no '
                                        'ROOT of the day runs)' if held else 'no claim store')
         if saved:
@@ -1915,35 +2029,38 @@ class Run:
             self.claim_end(e, output, None, 'the box ROOT attempt ended without calculations-receipt.json (exit %s)' % code)
             return self.record('root', e['day'], 'failed', exit_code=code, log=log, output_root=str(output),
                                interrupted_attempts=attempts, seconds=child_seconds, resume=resume,
-                               native_pass=native_pass_facts(output, None, policy, child_seconds),
+                               native_pass=native_pass_facts(output, None, policy, child_seconds, derive=derive),
                                reason='no calculations-receipt.json (the attempt is kept)%s' % (
                                    '; the native pass was ON (policy %s): its failure, if it is the cause, is named in the '
                                    'log and native_pass; no bedrock-off retry is substituted' % policy if policy else ''))
-        calc = json.loads((output / 'calculations-receipt.json').read_bytes())
-        native = native_pass_facts(output, calc, policy, child_seconds)
-        self.claim_end(e, output, sha256_file(output / 'calculations-receipt.json'), None)
+        receipt_path = output / 'calculations-receipt.json'
+        receipt_raw = receipt_path.read_bytes()      # read once: parsed here, its sha256 from the same bytes
+        calc = json.loads(receipt_raw)
+        receipt_sha = hashlib.sha256(receipt_raw).hexdigest()
+        native = native_pass_facts(output, calc, policy, child_seconds, derive=derive)
+        self.claim_end(e, output, receipt_sha, None)
         # the 99 layers combined for Frankie: per entry produced / admitted / absent (thinner picture, the day stays) /
         # knowledge / retired / sealed / disabled / output, on this receipt and in the one-day inspection (Greg, 2026-10-07)
-        all99 = self.all99(e['day'], output, calc, policy, self.shared_policy_mismatch(calc.get('shared_market_policy')) if policy else None)
+        all99 = self.all99(e['day'], output, calc, policy, self.shared_policy_mismatch(calc.get('shared_market_policy')) if policy else None,
+                           derive=derive)
         digest_path = output / 'work' / 'derivation-digest-full.md'      # session 6: absent on a day with no digest reader
+        # 2026-10-09 (one pass): the receipt's own pins (derivation, digest, external computation) and its sha256 are
+        # taken by claim; the brain stage reads none of them whole again
         brain_entry = self.brain_stage(e['day'], 'root',
-                                       [output / 'calculations-receipt.json', output / 'work' / 'derive.json'] +
+                                       [receipt_path, output / 'work' / 'derive.json'] +
                                        ([digest_path] if digest_path.is_file() else []) +
                                        ([output / 'external-computation.json']
                                         if (output / 'external-computation.json').is_file() else []),
+                                       known=receipt_pins(calc, receipt_path, receipt_sha),
                                        summary=dict(calculations=str(output), role=e['role'],
                                                     root_status=calc.get('status'),
                                                     producer_failures=calc.get('failure_count'),
                                                     digest=('attached' if digest_path.is_file() else
                                                             self.DIGEST_NOT_BUILT)))
-        finalize = None
-        try:
-            finalize = json.loads((output / 'work' / 'derive.json').read_bytes()).get('finalize_projection')
-        except (OSError, ValueError):
-            finalize = None
+        finalize = (derive[0] or {}).get('finalize_projection')
         measured = dict(calculations=str(output))
         return self.record('root', e['day'], 'done', exit_code=code, log=log, calculations=str(output),
-                           receipt_sha256=sha256_file(output / 'calculations-receipt.json'), new_bytes=new_bytes(output),
+                           receipt_sha256=receipt_sha, new_bytes=new_bytes(output),
                            # 2026-10-08: what the ROOT's finalize projected and wrote, and its inline spool-layer bytes
                            # (0 on reference layers), which the root disk gate does not reserve again
                            finalize_projection=finalize, inline_spool_layer_bytes=self.inline_spool_layer_bytes(measured),
@@ -1953,6 +2070,7 @@ class Run:
                            native_pass=native, shared_market_policy=calc.get('shared_market_policy'),
                            root_status=calc.get('status'), producer_failures=calc.get('failure_count'),
                            brain_entry=brain_entry, owner_binding=self.owner, all99=all99,
+                           disk=getattr(self, 'disk_facts', None),
                            # the one-day inspection (frankie_box_workflow_inspection.py): what the ROOT child received,
                            # how this caller used it, what it produced; operator review only, never knowledge or a gate
                            inspection=dict(inputs=dict(ingestion_receipt=dict(path=ing['receipt'], sha256=ing['receipt_sha256']),
@@ -1961,18 +2079,18 @@ class Run:
                                            use=dict(resume=resume, plan_policy=policy or 'none (an older saved legacy plan, kept as saved: native pass off; every NEW run has it ON)',
                                                     interrupted_attempts=attempts, claim=held[2] if held else 'no claim store'),
                                            outputs=dict(calculations=str(output), exit_code=code,
-                                                        receipt_sha256=sha256_file(output / 'calculations-receipt.json'),
+                                                        receipt_sha256=receipt_sha,
                                                         root_status=calc.get('status'), producer_failures=calc.get('failure_count'),
                                                         shared_market_policy=calc.get('shared_market_policy'),
                                                         native_pass=native, seconds=child_seconds,
                                                         all99=all99_summary(all99))))
 
-    def all99(self, day, calc_dir, calc, policy, mismatch):
+    def all99(self, day, calc_dir, calc, policy, mismatch, derive=None):
         """The day's all-99 production/admission list (all99_admission), never raising out of the ROOT step: a failure
         to build the list is itself listed (schema, error) so the receipt shows it instead of a missing field."""
         try:
             return all99_admission(self.code_root, day, calc_dir, calc, policy, mismatch, self.receipt('ingest', day),
-                                   self.plan.get('brain') or str(BRAIN))
+                                   self.plan.get('brain') or str(BRAIN), derive_doc=derive)
         except Exception as error:  # noqa: BLE001 - the list is operator-visible accounting; its failure is recorded, not hidden
             self.log('all99 %s: the list could not be built (%s: %s)' % (day, type(error).__name__, error))
             return dict(schema=ALL99_SCHEMA, day=day, listed=0, counts={}, entries=[],
@@ -2017,7 +2135,7 @@ class Run:
         ing = self.receipt('ingest', e['day'])
         if ing and ing['status'] in FINISHED and ing.get('ingest'):
             return Path(ing['ingest'])
-        receipt, _ = ingest_of(e)
+        receipt, _ = ingest_of(e, self.plan['run'])
         return receipt.parent if receipt else None
 
     def external_ready(self, e):
@@ -2026,34 +2144,36 @@ class Run:
         step receipt must be finished AND say which file: the verified S3 file swapped in (action s3) or confirmed equal
         (s3.same_as_attached), or S3 holds none (s3.status absent: the attached or rebuilt file stands), or this run's
         ROOT/teacher/classroom already used the attached file (the recorded s3_day_file_differs_after_use finding). And
-        the attached file's sha256 must be the one the step recorded. A waiting, refused or failed step, an S3 state
-        present/integrity/unknown without that outcome, or a receipt from before the S3 check: waits, with the reason."""
+        the attached file's sha256 must be the one the step recorded. 2026-10-09 (Greg: a gate we coded never blocks fine
+        data): without such a settled step (a waiting step, an S3 state unknown for want of a presigned map, a receipt
+        from before the S3 check), an attached day file that matches its receipt is used and "S3 not checked" recorded;
+        only a day file actually missing (or differing from its receipt) waits."""
         if not self.plan.get('external_wait', True):
             return True, None
         day = e['day']
         step = self.receipt('external', day) or {}
-        if step.get('status') not in FINISHED:
-            return False, 'the day file is not settled by this run\'s external step (%s%s)' % (
-                step.get('status') or 'not run', (': ' + str(step['reason'])) if step.get('reason') else '')
         s3 = step.get('s3') if isinstance(step.get('s3'), dict) else {}
-        settled = (step.get('action') == 's3' or s3.get('same_as_attached') is True or s3.get('status') == 'absent'
-                   or any(isinstance(f, dict) and f.get('kind') == 's3_day_file_differs_after_use'
-                          for f in step.get('findings') or []))
-        if not settled:
-            return False, ('this run\'s external step (%s) does not show the attached file is the verified S3 file or that '
-                           'S3 holds none (S3 %s); it is run again on a dispatch carrying the day\'s S3 listing' % (
-                               step.get('status'), s3.get('status') or 'not checked'))
-        if day in self._attached and self._attached[day][1] == step.get('sha256'):
-            return True, None
-        directory = self.ingest_dir(e)
-        if directory is None:
-            return False, 'the day has no sealed ingest yet, so no day file beside it (stages ingest, external)'
-        path, sha, why = attached_day_file(directory)
-        if path is None:
-            return False, 'the day file of the historical data points is not attached (stage external): %s' % why
-        if sha != step.get('sha256'):
+        settled = step.get('status') in FINISHED and (
+            step.get('action') == 's3' or s3.get('same_as_attached') is True or s3.get('status') == 'absent'
+            or any(isinstance(f, dict) and f.get('kind') == 's3_day_file_differs_after_use' for f in step.get('findings') or []))
+        if day in self._attached:
+            path, sha = self._attached[day]       # checked once per Run object (attached_day_file read it whole)
+        else:
+            directory = self.ingest_dir(e)
+            if directory is None:
+                return False, 'the day has no sealed ingest yet, so no day file beside it (stages ingest, external)'
+            path, sha, why = attached_day_file(directory)
+            if path is None:
+                return False, 'the day file of the historical data points is not attached (stage external): %s' % why
+        if settled and sha != step.get('sha256'):
             return False, ('the attached day file (sha256 %s) is not the one this run\'s external step settled (%s); the '
                            'external step runs again' % (sha, step.get('sha256')))
+        if not settled:
+            # 2026-10-09 (Greg: a gate we coded never blocks fine data): the attached day file matches its receipt, so
+            # the day proceeds on it; that S3 was not checked is RECORDED on the day's steps, never a wait
+            self.note_identity(day, 'external', 'S3 not checked: the attached day file %s (sha256 %s) matches its receipt '
+                                                'and is used (external step %s, S3 %s)' % (
+                                                    path, sha, step.get('status') or 'not run', s3.get('status') or 'not checked'))
         self._attached[day] = (str(path), sha)
         return True, None
 
@@ -2117,20 +2237,23 @@ class Run:
                                                outputs={}))
         if s3['status'] == 'present':
             return self.external_from_s3(day, directory, s3)
-        if s3['status'] == 'unknown':
-            # E-1 (fifth follow-up review): an unknown S3 state never lets the day proceed on whatever is attached (it
-            # may be an older file than the verified one on S3): the step waits with the reason, retried on a dispatch
-            # whose presigned map carries the day's frankie/day_external/<day>/ listing (ACTION=plan's presign string)
-            return self.record('external', day, 'waiting', s3=s3,
-                               reason='the S3 state of the day file is unknown (%s); the day waits rather than use an '
-                                      'attached file that may be older than S3\'s verified one' % s3['reason'],
-                               inspection=dict(inputs=dict(ingest=str(directory), s3=s3),
-                                               use='waiting: S3 state unknown', outputs={}))
         path, sha, why = attached_day_file(directory)
+        if s3['status'] == 'unknown' and path is None:
+            # an unknown S3 state with NO usable attached file: the step waits with the reason, retried on a dispatch
+            # whose presigned map carries the day's frankie/day_external/<day>/ listing (ACTION=plan's presign string).
+            # 2026-10-09 (Greg): an attached file that matches its receipt proceeds below, "S3 not checked" recorded
+            return self.record('external', day, 'waiting', s3=s3,
+                               reason='the S3 state of the day file is unknown (%s) and no day file is attached (%s)' % (
+                                   s3['reason'], why),
+                               inspection=dict(inputs=dict(ingest=str(directory), s3=s3),
+                                               use='waiting: S3 state unknown, no attached day file', outputs={}))
+        if s3['status'] == 'unknown':
+            s3 = dict(s3, not_checked=True, note='S3 not checked: the attached day file matches its receipt and is used')
         if path is not None:
             day_receipt = directory / DAY_FILE_RECEIPT
             brain_entry = self.brain_stage(day, 'day-file', [path, day_receipt],
                                            summary=dict(day_file=str(path), sha256=sha))
+            self._attached[day] = (str(path), sha)    # external_ready reuses this check (one read per Run object)
             return self.record('external', day, 'reused', day_file=str(path), sha256=sha, ingest=str(directory),
                                brain_entry=brain_entry, s3=s3,
                                inspection=dict(inputs=dict(ingest=str(directory), s3=s3),

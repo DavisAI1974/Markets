@@ -1015,6 +1015,12 @@ class Controller:
                        url_map=dict(rpc=dict(url=self.sign.get(TRANSFER_BUCKET, prefix + '/request.json')),
                                     reply=dict(url=self.sign.put(TRANSFER_BUCKET, prefix + '/response.json'))))
         self.event(worker=w.where, day=job['day'], step='coordinate', id=response.get('id'), error=response.get('error'))
+        # 2026-10-09: the worker waits on its mailbox file being rewritten (frankie_box_lane_state._await_mailbox, no
+        # interval): a renewal right after the answer wakes it at once. A failed renewal is named; the next one wakes it
+        try:
+            self.renew(w, job)
+        except Exception as error:  # noqa: BLE001
+            self.event(worker=w.where, day=job['day'], step='coordinate_wake', result='retry', error=type(error).__name__)
 
     def renew(self, w, job, resume=False):
         if not self.lease_established('resume' if resume else 'renew'):

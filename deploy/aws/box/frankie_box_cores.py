@@ -31,9 +31,10 @@ SIZES (hard):
 
 FREE = the online CPUs, less the CPUs of live bookings, less the CPUs actually in use by any running Frankie process tree
 that is NOT in the ledger: every python process whose executable, command line or working directory is under
-/opt/frankie-box, and every descendant of one. Per thread (read from /proc twice, WINDOW seconds apart): a thread pinned
-to fewer than all online CPUs holds every CPU of its affinity; an unpinned thread holds the CPU it last ran on when it
-used at least 5% of a CPU in the window. A CPU in either set is never booked.
+/opt/frankie-box, and every descendant of one. Per thread (ONE /proc read, no wait, 2026-10-09; `show` alone samples twice,
+WINDOW seconds apart): a thread pinned to fewer than all online CPUs holds every CPU of its affinity; an unpinned thread
+holds the CPU it is running on this instant (show: when it used at least 5% of a CPU in the window). A CPU in either set
+is never booked.
 
 CPU 0 is the host / ordered-consumer CPU. A job's PARENT CPU is the lowest CPU of its booking (worker_budget reserves
 cpus[0] of the affinity for the ordered consumer and host; the workers take cpus[1:]), so CPU 0, when a booking holds it,
@@ -66,7 +67,7 @@ WORKER CPUs of the booking (never its parent/coordinator CPU). The claim stays s
 class worker's step and an owner school recovery's) never run at once on the lane: the second waits, visibly. A claim
 is recorded under the booking's `steps` (stage, slot, cpus, pid with its start time, at) under
 the ledger lock before the step runs, and moved to `steps_released` with its exit code when it ends; a claim whose pid
-is gone (or never recorded within UNATTACHED_CLAIM_SECONDS) is released by the next claim. While another live claim holds
+is gone (or, never recorded, whose claimant process is gone) is released by the next claim. While another live claim holds
 the slot, the step WAITS in place (woken by the ledger change or the holder's exit, 2026-10-09) and its CPU_BOOKING line names the holder and the
 seconds waited. The CPU never leaves the day's booking, so no other day can take it and nothing is double booked.
 
@@ -164,7 +165,6 @@ DAY_RUN_STAGES = ('root', 'teacher', 'classroom', 'data', 'search', 'lessons', '
 STAGE_SLOTS = {'voice': 'adviser'}
 SLOT_CPUS = {'adviser': None}           # None = every CPU of the day's held booking (the whole lane); N = N worker CPUs
 STAGE_CPUS = {stage: SLOT_CPUS[slot] for stage, slot in STAGE_SLOTS.items()}
-UNATTACHED_CLAIM_SECONDS = 120.0        # a claim whose step pid was never recorded is stale after this
 INGEST_RULE = ('an ingest, canary or conform day process runs ONE pool at a time (the encode pool ends at the seal before '
                'the conformance reader starts; the parallel writer\'s replay/encode pool closes before its reader): WORKERS + 1 '
                'CPUs, the parent included; the day process books --size CPUs (one of %s, default %d) and a demand above '
@@ -630,6 +630,14 @@ def is_frankie(info):
     return python and under and 'frankie_box_cores.py' not in info['cmdline']
 
 
+HELPER_SCRIPTS = ('frankie_box_stage_handoff.py', 'frankie_box_render_digest.py')
+
+
+def is_helper(info):
+    """A known helper unit (the clean/upload of frankie_box_stage_handoff, the digest render): never a CPU holder."""
+    return any(name in info['cmdline'] for name in HELPER_SCRIPTS)
+
+
 def descendants(procs, roots):
     children = {}
     for pid, info in procs.items():
@@ -652,8 +660,9 @@ def ancestors(procs, pid):
     return out
 
 
-def threads(pids):
-    """{(pid, tid): (ticks, last cpu, affinity)} of every thread of the pids."""
+def threads(pids, states=None):
+    """{(pid, tid): (ticks, last cpu, affinity)} of every thread of the pids. states: a dict filled with {(pid, tid): the
+    thread's /proc state letter now} (R = running or runnable this instant)."""
     out = {}
     for pid in pids:
         try:
@@ -670,12 +679,25 @@ def threads(pids):
             except OSError:
                 continue
             out[(pid, tid)] = (s[1], s[3], affinity)
+            if states is not None:
+                try:
+                    states[(pid, tid)] = Path('/proc/%d/task/%d/stat' % (pid, tid)).read_text().rsplit(')', 1)[1].split()[0]
+                except (OSError, IndexError):
+                    states[(pid, tid)] = '?'
     return out
 
 
 def sample(pids, window):
-    """[(pid, tid, busy share of one CPU over the window, last cpu, affinity)] for every thread of the pids."""
+    """[(pid, tid, busy share of one CPU over the window, last cpu, affinity)] for every thread of the pids. window <= 0
+    (every booking, grow and free since 2026-10-09: no timed wait under the ledger and queue locks): ONE /proc read, no
+    sleep; an unpinned thread's busy share is 1.0 when it is running this instant (state R) and 0.0 otherwise; a pinned
+    thread holds its affinity either way. A positive window (the read-only show) samples twice, window seconds apart."""
     tick = os.sysconf('SC_CLK_TCK')
+    if not window or window <= 0:
+        states = {}
+        now = threads(pids, states)
+        return [(key[0], key[1], 1.0 if states.get(key) == 'R' else 0.0, cpu, affinity)
+                for key, (ticks, cpu, affinity) in now.items()]
     first = threads(pids)
     started = time.monotonic()
     time.sleep(max(0.2, window))
@@ -810,6 +832,10 @@ def usage(window, exclude=()):
     frankie = descendants(procs, [pid for pid, info in procs.items() if is_frankie(info)])
     frankie |= set(owner)
     frankie -= set(exclude)
+    # 2026-10-09 (Greg: a gate we coded never blocks fine data): the known helper units outside the ledger (the stage
+    # handoff's clean unit, pinned to the day's own retained lane; its unpinned Glacier upload; the digest render) and
+    # their children never hold a CPU against a booking
+    frankie -= descendants(procs, [pid for pid, info in procs.items() if pid not in owner and is_helper(info)])
     held, rows = {}, []
     for pid, tid, busy, cpu, affinity in sample(sorted(frankie), window):
         who = owner.get(pid)
@@ -1029,7 +1055,7 @@ def grow_locked(b, size, reason, window):
     return b, dict(status='grown', booking=b['booking'], cpus=b['cpu_list'], added=cpu_list(added), from_size=len(have), to_size=size)
 
 
-def grow(booking, size, reason, window=1.0):
+def grow(booking, size, reason, window=0.0):
     """Widen a live or retained day-run booking (session 8, Greg: "a classroom day gets all 64"; the fleet: two ROOTs at
     32, then the classroom one day at a time on all 64). Returns (booking record, outcome); outcome status grown |
     waiting | refused, the reason on it."""
@@ -1089,7 +1115,7 @@ def retain(booking, run, day, attempt=None, reason=None):
         return _retain_locked(b, run, day, attempt=attempt, reason=reason)
 
 
-def rebook_for_owner(run, day, attempt, size, stage, commit, window=1.0, reason=None):
+def rebook_for_owner(run, day, attempt, size, stage, commit, window=0.0, reason=None):
     """Session 8 (B4, the queue half): a saved day whose booking was RELEASED at the fleet classroom gate re-books under
     ONE ledger lock at its resume: the resolver (lane_for day-slot = allocate_day_slot, whole cores first) names the
     lane and refuses loudly when none is free; the same lane is booked (the same allocation, so the two agree) for this
@@ -1178,8 +1204,8 @@ def held_booking(booking):
 def claim_step(booking, stage):
     """Under the ledger lock: claim the stage's slot CPU(s) of the live held booking (STAGE_SLOTS): every CPU of the
     booking when SLOT_CPUS is None (the whole lane), else the highest worker CPU(s) of the booking; shared by every stage
-    of the same slot. Stale claims (pid gone, or never attached within
-    UNATTACHED_CLAIM_SECONDS) are moved to steps_released first. Returns (claim, None, None), or (None, why, holder) while
+    of the same slot. Stale claims (pid gone, or never attached and its claimant gone: an event, never a timer,
+    2026-10-09) are moved to steps_released first. Returns (claim, None, None), or (None, why, holder) while
     another live claim holds the slot, or (None, why, None) when the booking is not a live held slot."""
     slot = STAGE_SLOTS[stage]
     with Lock():
@@ -1191,7 +1217,7 @@ def claim_step(booking, stage):
             return None, 'booking %s is not a live held slot' % booking, None
         steps, gone, now = [], [], time.time()
         for s in b.get('steps') or []:
-            stale = (not alive(s['pid'])) if s.get('pid') else (now - float(s.get('at_epoch') or 0) > UNATTACHED_CLAIM_SECONDS)
+            stale = (not alive(s['pid'])) if s.get('pid') else not _claimant_alive(s)
             (gone if stale else steps).append(s)
         for s in gone:
             s.update(released=now_iso(), release_reason='stale: its pid is gone or was never recorded (released by the next claim)')
@@ -1228,6 +1254,21 @@ def _claim_pid(claim):
         return int(str(claim.get('claim_id') or '').rsplit('-', 1)[1])
     except (IndexError, ValueError):
         return None
+
+
+def _claimant_alive(claim):
+    """True while the process that made an unattached claim runs (the pid in its claim id, started no later than the
+    claim, so a reused pid is not it). It either attaches its step (a ledger write) or exits: both wake a waiter."""
+    pid = _claim_pid(claim)
+    start = start_time(pid) if pid else None
+    if start is None:
+        return False
+    try:
+        with open('/proc/stat') as f:
+            boot = next(float(line.split()[1]) for line in f if line.startswith('btime '))
+    except (OSError, StopIteration, ValueError, IndexError):
+        return True
+    return boot + start / os.sysconf('SC_CLK_TCK') <= float(claim.get('at_epoch') or 0) + 1.0
 
 
 def attach_step(booking, claim_id, pid, exit_code=None, end=False):
@@ -1310,12 +1351,8 @@ def cmd_run_step(a, b, command):
         if not announced:
             print('### stage %s waits for the shared slot: %s' % (a.stage, why), flush=True)
             announced = True
-        waiter.watch_pid(_claim_pid(holder))
-        # an unattached claim (its step pid never recorded) is stale after UNATTACHED_CLAIM_SECONDS: that one moment is
-        # the only timed wake, and only for such a claim
-        unattached = None if holder.get('pid') else max(0.0, float(holder.get('at_epoch') or 0) + UNATTACHED_CLAIM_SECONDS
-                                                         - time.time()) + 0.1
-        waiter.wait(unattached)
+        waiter.watch_pid(_claim_pid(holder))       # its exit (or its attach, a ledger write) wakes this wait; no timer
+        waiter.wait()
     waiter.close()
     waited = round(time.time() - started, 1)
     cpus = cpu_list(claim['cpus'])
@@ -1575,7 +1612,8 @@ def main():
         s.add_argument('--commit')
         s.add_argument('--workers', type=int)
         s.add_argument('--verify', choices=('inline', 'deferred'))
-        s.add_argument('--window', type=float, default=1.0, help='seconds between the two /proc samples')
+        s.add_argument('--window', type=float, default=0.0, help='seconds between two /proc samples (default 0: one read, '
+                                                                 'no wait; a thread running this instant holds its CPU)')
         s.add_argument('--outcome', help='write the booking outcome (booked | waiting | refused) as JSON here')
         s.add_argument('--cpus', help='a saved day\'s resume: exactly its retained CPU list (comma list / ranges)')
         s.add_argument('--size', type=int, help='day-run slot size: one of %s (default %d; the run\'s plan day_cpus); '
@@ -1608,7 +1646,7 @@ def main():
     s.add_argument('--booking', required=True)
     s.add_argument('--size', type=int, required=True, help='one of %s, larger than the booking holds' % (DAY_RUN_SIZES,))
     s.add_argument('--reason')
-    s.add_argument('--window', type=float, default=1.0)
+    s.add_argument('--window', type=float, default=0.0)
     s.add_argument('--outcome')
     s = sub.add_parser('plan', help='READ-ONLY: the resolver (lane_for) for a step')
     s.add_argument('--step', required=True, choices=LANE_STEPS)
@@ -1618,7 +1656,7 @@ def main():
     s.add_argument('--days', help='teacher-lanes: the batch days, comma list')
     s.add_argument('--attempt', help='digest-render with FRANKIE_RENDER_BOOKING: the output root\'s attempt name')
     s = sub.add_parser('free')
-    s.add_argument('--window', type=float, default=1.0)
+    s.add_argument('--window', type=float, default=0.0)
     a = p.parse_args()
     if getattr(a, 'booking', None) and not re.fullmatch('[A-Za-z0-9_.-]{1,160}', a.booking):
         raise SystemExit('--booking: a booking id from the ledger')

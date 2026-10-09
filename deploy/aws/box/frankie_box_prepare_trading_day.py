@@ -95,21 +95,25 @@ def save_new(path, value):
 
 
 def require_checkout(commit):
-    if not re.fullmatch('[0-9a-f]{40}', str(commit)):
-        raise ValueError('full reviewed commit required')
+    """The checkout's facts, RECORDED and never compared (Greg 2026-10-09: code version is recorded, never compared; a
+    gate we coded never blocks fine data): HEAD, the commit the caller names (MARKETS_SHA), whether they match, tracked
+    changes and untracked files (ignored files such as __pycache__ are not listed). Never raises."""
     def git(*args):
-        return subprocess.run(['git', '--no-optional-locks', '-C', str(REPOSITORY), *args],
-                              capture_output=True, text=True, check=False)
+        try:
+            return subprocess.run(['git', '--no-optional-locks', '-C', str(REPOSITORY), *args],
+                                  capture_output=True, text=True, check=False)
+        except OSError as error:
+            return subprocess.CompletedProcess(args, 127, '', str(error))
     head = git('rev-parse', 'HEAD')
-    if head.returncode or head.stdout.strip() != commit:
-        raise ValueError('checkout differs from reviewed commit')
-    if git('diff', '--quiet', 'HEAD', '--').returncode:
-        raise ValueError('tracked checkout changes refused')
-    if git('ls-files', '--error-unmatch', 'deploy/aws/box/frankie_box_prepare_trading_day.py').returncode:
-        raise ValueError('preparation adapter must be tracked at reviewed commit')
-    untracked = git('ls-files', '--others')
-    if untracked.returncode or untracked.stdout.strip():
-        raise ValueError('untracked checkout files refused')
+    head = head.stdout.strip() if not head.returncode else None
+    tracked = git('diff', '--quiet', 'HEAD', '--').returncode
+    untracked = git('ls-files', '--others', '--exclude-standard')
+    listed = untracked.stdout.split() if not untracked.returncode else None
+    return dict(head=head, markets_sha=commit, head_matches=head == commit if head else None,
+                commit_well_formed=bool(re.fullmatch('[0-9a-f]{40}', str(commit))),
+                tracked_changes=None if tracked not in (0, 1) else tracked == 1,
+                untracked=len(listed) if listed is not None else None, untracked_sample=(listed or [])[:20],
+                basis='recorded, never compared (2026-10-09)')
 
 
 def reject_credentials(value):
