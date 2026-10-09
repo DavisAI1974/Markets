@@ -190,7 +190,7 @@ class SendIndex:
         for i, a in enumerate(send):
             if a.get('path'):
                 self.by_path.setdefault(_resolved(a['path']), i)
-                self.by_base.setdefault(Path(a['path']).name, []).append(i)
+                self.by_base.setdefault('/'.join(Path(a['path']).parts[-2:]), []).append(i)
             if a.get('sha256'):
                 self.by_sha.setdefault(a['sha256'], i)
             self.by_name.setdefault(a.get('name'), i)
@@ -303,7 +303,7 @@ def _compare_file(row, item, native, index, hashes, stream_max):
 def _compare_by_name(row, path, index, basis, native_sha):
     """No addition at this path or with this content: a hub file of the same name (another version) is compared by
     value (JSON field by field, JSON lines row by row); otherwise the input is absent from the send (LESS)."""
-    for i in index.by_base.get(path.name, []):
+    for i in index.by_base.get('/'.join(path.parts[-2:]), []):     # same file name in a directory of the same name
         a = index.send[i]
         other = Path(a['path'])
         if not other.is_file():
