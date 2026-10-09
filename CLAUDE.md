@@ -1,3 +1,11 @@
+# Claude session drop-in — 2026-10-09, session 10: READ FIRST `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261009_SESSION10.md` (Greg's operating rules at its top)
+
+Branch `ccr-d2f8f826-iefeah-frankie` (SHALLOW: `git fetch --deepen=400`). Greg 2026-10-09: launching and keeping the
+workflow running is priority one; our own gates never block a run when the data is fine (an eliminated pass's missing
+receipt is overridden on the spot); no coded waits (event-driven hand-offs); no staging points (fixes go on the box the
+moment they are pushed; the 6-minute GitHub stage is a fallback only); code version recorded, never compared; the fix
+list is temporary, emptied while running or at any stop. Box still STOPPED at session start (session-9 PAUSE state).
+
 # Claude session drop-in — 2026-10-08, session 9 PAUSED (box STOPPED 18:20Z): READ FIRST `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261008_SESSION9.md` (the PAUSE STATE box at its top)
 
 Branch `ccr-d2f8f826-iefeah-frankie` (SHALLOW: `git fetch --deepen=400`). Greg: stopping here, boxes ended for a while. Main box
