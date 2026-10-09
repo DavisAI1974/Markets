@@ -38,8 +38,39 @@ def producer_hashes():
     return {p: sha256(root / p) for p in paths}
 
 
-def read_day(day, calculations, binding, *, day_file, day_sha256, save_requested):
-    """Use ROOT's sealed source descriptor; never accept a teacher snapshot/key/path."""
+def _teacher_walk(teacher_rows, teacher_body, *, day, ingest, own, shared_policy):
+    """(receipt, receipt path) of the host teacher's completed walk when it IS the walk this learner reading would make
+    (Greg, 2026-10-09: one pass; a SOCRATIC/VERIFY day reads the source once): same day, same sealed ingestion receipt,
+    the shared market read when the ROOT carries the policy, rows published (no equation_not_run), the attachment body
+    in hand whose sha256 the classroom checked against this receipt, and the learner binding's as_of / through_cursor /
+    source_hash equal to the walk's (as_of only bounds the evidence, `future teacher evidence`; it never enters a value,
+    so the attachment the learner walk would compute is this one). Else None (the learner walks the day itself)."""
+    if teacher_rows is None or not isinstance(teacher_body, dict) or 'attachment' not in teacher_body:
+        return None
+    path = Path(teacher_rows) / 'receipt.json'
+    try:
+        receipt = json.loads(path.read_bytes())
+    except (OSError, ValueError):
+        return None
+    if (receipt.get('schema') != 'FRANKIE_EXPERIMENT_TEACHER_ROWS_V1' or receipt.get('day') != day
+            or receipt.get('learner_binding') is not None or receipt.get('status') != 'rows_published'
+            or receipt.get('equation_not_run') or (receipt.get('ingestion_receipt') or {}).get('sha256') != ingest['sha256']
+            or receipt.get('as_of') != own['as_of'] or receipt.get('through_cursor') != own['through_cursor']
+            or teacher_body.get('as_of') != own['as_of'] or teacher_body.get('through_cursor') != own['through_cursor']
+            or teacher_body.get('source_hash') != own['source_hash']
+            or (shared_policy and receipt.get('shared_market_read') is None)):
+        return None
+    return receipt, path
+
+
+def read_day(day, calculations, binding, *, day_file, day_sha256, save_requested, teacher_rows=None,
+             teacher_body=None):
+    """Use ROOT's sealed source descriptor; never accept a teacher snapshot/key/path.
+
+    One pass (Greg, 2026-10-09: "shares the ONE pass and makes no walk of its own"): when the host teacher's completed
+    walk is the walk this reading would make (_teacher_walk), the learner snapshot is built from that walk's attachment
+    under the learner binding (the same pinned function, DC.snapshot_teacher_attachment, the walk path applies to its
+    own attachment); the teacher KEY and the host answers are never read. Otherwise the learner walks the day itself."""
     import frankie_box_experiment_teacher as T
     from research.kalshi.frankie_boss import dipole_classroom as DC
     from research.kalshi.frankie_boss.parallel_teacher import _save_raw_state, _load_raw_state
@@ -65,9 +96,9 @@ def read_day(day, calculations, binding, *, day_file, day_sha256, save_requested
     import frankie_box_classroom_code as K
     booked = K.lane_cpus()
     # the booked length (the day's 32 CPUs, or a 16-CPU lane): the walk runs on its own held booking, nothing smaller
-    if len(cpus) not in (16, 32) or cpus != booked:
-        raise ValueError('lane: learner walk requires its owning held booking (16 or 32 CPUs, the affinity equal to '
-                         'the booked list); affinity %d CPUs, booked %d' % (len(cpus), len(booked)))
+    lane_refusal = (None if len(cpus) in (16, 32) and cpus == booked else
+                    'lane: learner walk requires its owning held booking (16 or 32 CPUs, the affinity equal to '
+                    'the booked list); affinity %d CPUs, booked %d' % (len(cpus), len(booked)))
     own = {k: binding[k] for k in ('source_hash', 'as_of', 'through_cursor', 'request_id',
                                   'cycle_index', 'cycle_count')}
     if own['cycle_index'] != 0 or own['cycle_count'] != 1:
@@ -85,7 +116,36 @@ def read_day(day, calculations, binding, *, day_file, day_sha256, save_requested
     else:
         _save_raw_state(pin, identity)
     result_path = directory / 'receipt.json'
+    shared_walk = (None if result_path.exists() else
+                   _teacher_walk(teacher_rows, teacher_body, day=day, ingest=ingest, own=own,
+                                 shared_policy=bool(source.get('shared_market_policy'))))
+    if shared_walk is not None:
+        result, teacher_receipt_path = shared_walk
+        snapshot = DC.snapshot_teacher_attachment(teacher_body['attachment'],
+            **{k: own[k] for k in ('request_id', 'cycle_index', 'cycle_count', 'source_hash', 'as_of', 'through_cursor')})
+        shared_read = result.get('shared_market_read')
+        coverage = (K.coverage_disposition(shared_read, journal_count=rc.get('journal_count'),
+                                           record_count=rc.get('record_count'))
+                    if shared_read is not None else
+                    dict(schema=COVERAGE_ABSENT, reason='legacy no-policy source: the walk read the sealed journal directly'))
+        witness = dict(schema='FRANKIE_LEARNER_READING_V1', author='frankie',
+            source_binding_sha256=identity['source_binding_sha256'], ingestion_receipt=ingest,
+            receipt=dict(path=str(teacher_receipt_path), sha256=sha256(teacher_receipt_path)),
+            source_snapshot_hash=snapshot['source_snapshot_hash'], producers=own['producers'],
+            walk_seconds=0.0, seconds=0.0, shared_market_read=shared_read,
+            shared_market_use=result.get('shared_market_use'),
+            shared_market_arithmetic=result.get('shared_market_arithmetic'),
+            coverage=coverage, lane=dict(cpus=cpus, count=len(cpus), expected=len(booked)),
+            walked_now=False, retained_receipt_reused=False, identity_pin_created_now=pin_created,
+            walk_basis=('one pass (Greg, 2026-10-09): the host teacher\'s completed walk of this day (%s) is the walk this '
+                        'reading would make (same sealed source, equation, cutoff); its attachment snapshotted under the '
+                        'learner binding; no second walk of the source' % teacher_receipt_path),
+            independent_scientific_verification=False,
+            purpose='current evidence for accumulated-knowledge recognition before host grading')
+        return snapshot, witness
     walked_now = not result_path.exists()
+    if walked_now and lane_refusal is not None:
+        raise ValueError(lane_refusal)          # the lane rule binds the walk; the shared walk above makes none
     if walked_now:
         environment = {k: os.environ.get(k) for k in ('FRANKIE_WALK_CACHE', 'FRANKIE_TEACHER_CHANGES')}
         try:

@@ -920,9 +920,11 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     learner_reading, independent_external = None, None
     try:
         if mode in ('SOCRATIC', 'VERIFY'):
+            # one pass (Greg, 2026-10-09): the learner reading takes the host teacher's completed walk of this day
+            # under the learner binding when it is the same walk (KR._teacher_walk), instead of walking the day again
             snapshot, learner_reading = phase('learner_reading', lambda: KR.read_day(
                 day, calculations, visible['binding'], day_file=day_file, day_sha256=day_sha,
-                save_requested=save_requested))
+                save_requested=save_requested, teacher_rows=teacher_rows, teacher_body=p))
             own_evidence = phase('independent_evidence', lambda: K.independent_evidence(visible, snapshot, learner_reading))
             # Keep request/Jev material unchanged. Only Frankie's answer consumers get his own reading.
             visible = dict(visible, learner_evidence=own_evidence)
