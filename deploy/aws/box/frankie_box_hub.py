@@ -9,11 +9,13 @@ inotify + pidfd). Not wired into any chain: a spoke calls it.
 LAYOUT: <hub_root>/<run>/<day>/
   hub.json          schema FRANKIE_HUB_V1: run, day, created_utc, pinned_sources {name: {path, sha256, bytes}}, round
                     (int, starts 1), pieces (workflow order), laps [lap records], pin_differences [..], done (bool).
-  pieces/<p>.json   written only by piece <p> under its turn. Top of the file is the CURRENT round:
-                    {"piece", "schema": "FRANKIE_HUB_PIECE_V1", "round", "written_utc", "additions": [...]}
-                    and "rounds": the PRIOR rounds, oldest first, each {"round", "written_utc", "additions"} (the
-                    history lives in the same file; no per-round files). A second write in the same round EXTENDS that
-                    round's additions (nothing is replaced or lost) and is recorded as such.
+  pieces/<p>.json   written only by piece <p> under its turn: its CURRENT additions only (Greg: NO STACK OF OLD CALCS;
+                    the latest and greatest per (kind, key) until a refinement replaces it in place):
+                    {"piece", "schema": "FRANKIE_HUB_PIECE_V1", "round", "written_utc", "additions": [...]}.
+                    A write carries the piece's FULL current set: same (kind, key) with a new content_sha256 REPLACES
+                    the old in place (one 'replace' event with the old and new hash: the record, not a copy); a (kind,
+                    key) absent from the write is REMOVED (one 'remove' event with its last hash). Each stored addition
+                    carries "key" (resolved) and "since_round" (the round its current content was written).
   turn.lock         the atomic take (the record written whole to a temp file, then link()ed to turn.lock: EEXIST when
                     held, the same exclusivity as O_CREAT|O_EXCL, never half-written): {piece, pid, pid_start, token,
                     since_utc}.
@@ -21,25 +23,47 @@ LAYOUT: <hub_root>/<run>/<day>/
                     pid, pid_start, ticket, ordered}]}.
   turn.meta         an empty file flock()ed (opened read-only, so it never wakes a watcher) for the microseconds a
                     turn.json read-modify-write takes; the kernel releases it if its process dies.
-  events.jsonl      one line per take / release / wait / wake / takeover / waiter-gone / write / lap / open /
-                    pin-difference / error. Every failure is an 'error' event AND a raised HubError: never a silent None.
+  events.jsonl      one line per take / release / wait / wake / takeover / waiter-gone / write / replace / remove /
+                    unlink / keep-file / clean / temps / lap / open / pin-difference / error.
 
-AN ADDITION: a dict with at least {"kind": str, "content_sha256": str} and EITHER
+SELF-CLEANING (Greg: the data as small as possible, by construction; only replaced versions and copies are ever removed,
+never a size-based cut of a value): in the same write that replaces or removes an addition, the superseded addition's
+file is deleted when the hub owns it (inside the hub directory, or marked "hub_owned": true by its piece), no current
+addition of any piece points at it, and it is not a sealed base file (a pinned source). Every temp file the hub creates
+is removed before the turn is released, success or failure (the atomic writes unlink their temp on any failure; release
+sweeps the hub's temps of this process and of dead pids). clean(hub_dir) (CLI `clean`) takes the turn itself and
+removes only orphans: hub temp files and files inside the hub directory no current addition points at, reporting each
+with its size. A piece writes its hub-owned files under its turn, so clean never sees one in flight. Every failure is an 'error' event AND a raised HubError: never a silent None.
+
+AN ADDITION: a dict with at least {"kind": str, "key": str, "content_sha256": str} and EITHER
   {"path": absolute path, "bytes": int, "sha256": str}  a file the piece wrote; the hub never copies it and never reads
                                                          its contents (a stat confirms it exists at that size), OR
   {"value": JSON}                                        a value carried inline.
-  "known_by" (a clock) is carried when the piece gives one. Any other key is carried as given. No provenance machinery:
+  The stable identity is (kind, key). "key" is EITHER a trade pin {"ts": <timestamp>, "value": <trade value>, ...}
+  (an addition that refines a calc for a trade) OR a string the piece gives; it defaults to the file "path", else the
+  addition's "name", and an addition with none is refused (listed).
+  TRADE PINS (Greg): the pin is held ONCE, in the sealed trade record the teacher publishes: additions of kind
+  "sealed-trade" whose key is the pin (the base; its payload by reference or value). Any other addition keyed by a pin
+  carries the pin only to find its slot: on write the hub matches it to the sealed pin, stores the payload with
+  "pin_ref" (a short hash reference to the sealed pin) and DROPS the incoming copy of the pin (timestamp and value are
+  never duplicated as data); per (kind, pin) a piece's file holds one current payload and its content_sha256, and a
+  refinement replaces it in place. A pin that matches no sealed trade is an 'unmatched-pin' event (listed, never fatal)
+  and that addition is kept under its full key ("key" + "unmatched_pin": true) so nothing is lost. read() returns
+  "pins": {pin_ref: pin} from the sealed record beside the additions. "hub_owned": true marks a file outside the hub directory the piece hands to
+  the hub for removal once superseded. "known_by" (a clock) is carried when the piece gives one. Any other key is carried as given. No provenance machinery:
   the piece's name at the top of its file is enough. Helpers: value_addition(), file_addition(), value_sha256().
 
 THE SPOKE CONTRACT (each piece, each round):
   token = take_turn(hub_dir, piece, pid)    blocks, event-driven, until this piece holds the turn
   view  = read(hub_dir, piece, token, since_round=None)   hub.json + every piece's additions AS REFERENCES
   ... calc: the piece opens whatever referenced files it needs itself (the hub never reads file contents) ...
-  write(hub_dir, piece, token, additions)   atomic; an empty list when the piece has nothing new this round
+  write(hub_dir, piece, token, additions)   atomic; the piece's FULL current set (unchanged ones again, unchanged:
+                                            they keep their since_round and count as nothing new)
   release(hub_dir, piece, token)            the next waiter (FIFO) wakes the instant the lock goes
   or, the same in one block: `with turn(hub_dir, piece) as token: ...`
 Then whoever closes the lap calls next_lap(hub_dir) -> True while any piece added a content_sha256 the hub had not seen in
-an earlier round (content fixed point, not a size rule). It closes the lap, records new hashes per piece and any piece
+an earlier round (content fixed point, not a size rule; the hub keeps no old calcs, so "seen" is the content held from
+earlier rounds at the lap's close). It closes the lap, records new hashes per piece and any piece
 that took no turn this round (listed, never a refusal), increments round, and marks done=true at the fixed point.
 
 THE WAIT (no fixed sleep, no timed poll, no bounded wait, no timeout anywhere): a waiter appends itself to turn.json's
@@ -65,6 +89,7 @@ CLI: python3 frankie_box_hub.py {open,status,take,release,write,read,next-lap} (
   read     --piece P --token T [--since-round N]
   release  --piece P --token T
   next-lap [--token T]                           prints {"another_lap": bool, "round": n}
+  clean    [--pid PID]                           removes orphans (takes the turn); prints {"removed": [...], "bytes": n}
   status                                         prints the probe dict
 Exit 0 on success, 1 on a HubError (its message as JSON on stderr), 2 on usage.
 """
@@ -85,6 +110,8 @@ import frankie_box_wake as W  # noqa: E402 - the box's stdlib-only event waker, 
 HUB_SCHEMA = 'FRANKIE_HUB_V1'
 PIECE_SCHEMA = 'FRANKIE_HUB_PIECE_V1'
 DEFAULT_PIECES = ('root', 'teacher', 'classroom', 'exchange', 'jev', 'school', 'forecaster')
+CLEAN_PIECE = 'hub-clean'           # the turn name clean() takes; never a workflow piece, never ordered
+SEALED_TRADE_KIND = 'sealed-trade'  # the teacher's sealed trade record: one addition per trade, its key the trade pin
 
 
 class HubError(Exception):
@@ -130,11 +157,17 @@ def _dump(path, doc):
     """Atomic: temp file in the same directory, fsync, rename."""
     path = Path(path)
     tmp = path.parent / ('.%s.%d.%s.tmp' % (path.name, os.getpid(), uuid.uuid4().hex[:8]))
-    with open(tmp, 'w', encoding='utf-8') as f:
-        f.write(json.dumps(doc, indent=1, sort_keys=False, default=str) + '\n')
-        f.flush()
-        os.fsync(f.fileno())
-    os.replace(tmp, path)
+    try:
+        with open(tmp, 'w', encoding='utf-8') as f:
+            f.write(json.dumps(doc, indent=1, sort_keys=False, default=str) + '\n')
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, path)
+    finally:
+        try:
+            os.unlink(tmp)          # gone already after a successful replace; removed here after any failure
+        except FileNotFoundError:
+            pass
 
 
 def _load(path, default=None):
@@ -145,9 +178,12 @@ def _load(path, default=None):
         return default
 
 
-def event(hub_dir, kind, piece=None, **facts):
-    """One line in events.jsonl (O_APPEND, one write: lines from many processes never interleave)."""
-    line = dict(utc=utc(), t_ns=time.time_ns(), pid=os.getpid(), event=kind, piece=piece, **facts)
+def event(hub_dir, name, piece=None, /, **facts):
+    """One line in events.jsonl (O_APPEND, one write: lines from many processes never interleave). The event's own
+    fields come first; a fact that shares a field name (an addition's "kind", say) is kept under "fact_<name>"."""
+    line = dict(utc=utc(), t_ns=time.time_ns(), pid=os.getpid(), event=name, piece=piece)
+    for k, v in facts.items():
+        line['fact_' + k if k in line else k] = v
     data = (json.dumps(line, sort_keys=True, default=str) + '\n').encode('utf-8')
     fd = os.open(str(Path(hub_dir) / 'events.jsonl'), os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o644)
     try:
@@ -236,9 +272,26 @@ def _pin_key(pin):
     return ('unknown', None)
 
 
+def _pin_items(pinned_sources):
+    """(name, pin) pairs from a dict {name: pin} or a list of pins named by their "name" (else path, else position); a
+    repeated name gets a '#n' suffix so no pin is dropped."""
+    if isinstance(pinned_sources, dict):
+        return list(pinned_sources.items())
+    out, used = [], set()
+    for i, pin in enumerate(pinned_sources or []):
+        base = str((pin.get('name') or pin.get('path') or i) if isinstance(pin, dict) else pin)
+        name, n = base, 1
+        while name in used:
+            n += 1
+            name = '%s#%d' % (base, n)
+        used.add(name)
+        out.append((name, pin))
+    return out
+
+
 def _normal_pins(pinned_sources, hash_missing):
     pins = {}
-    for name, pin in (pinned_sources or {}).items():
+    for name, pin in _pin_items(pinned_sources):
         pin = dict(pin) if isinstance(pin, dict) else dict(path=str(pin))
         path = pin.get('path')
         if path:
@@ -301,7 +354,7 @@ def open_hub(hub_root, run, day, pinned_sources, pieces=None, hash_missing=False
 
 def _check_piece(hub_dir, piece):
     order = _hub(hub_dir).get('pieces') or []
-    if piece not in order:
+    if piece not in order and piece != CLEAN_PIECE:
         _fail(hub_dir, 'piece %r is not one of this hub\'s pieces %s' % (piece, order), piece)
     return order
 
@@ -354,19 +407,22 @@ def _create_lock(hub_dir, record):
     EEXIST when the lock exists, the same exclusivity as O_CREAT|O_EXCL, and a reader never sees a half-written lock).
     True when taken, False when the lock already existed."""
     tmp = Path(hub_dir) / ('.turn.lock.%d.%s.tmp' % (os.getpid(), uuid.uuid4().hex[:8]))
-    fd = os.open(str(tmp), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
     try:
-        os.write(fd, (json.dumps(record) + '\n').encode('utf-8'))
-        os.fsync(fd)
-    finally:
-        os.close(fd)
-    try:
+        fd = os.open(str(tmp), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
+        try:
+            os.write(fd, (json.dumps(record) + '\n').encode('utf-8'))
+            os.fsync(fd)
+        finally:
+            os.close(fd)
         os.link(tmp, Path(hub_dir) / 'turn.lock')
         return True
     except FileExistsError:
         return False
     finally:
-        os.unlink(tmp)
+        try:
+            os.unlink(tmp)
+        except FileNotFoundError:
+            pass
 
 
 def take_turn(hub_dir, piece, pid=None, ordered=False):
@@ -499,6 +555,9 @@ def release(hub_dir, piece, token, reason=None):
     with _meta(hub_dir):
         lock = _holder(hub_dir, piece, token, 'release')
         turn = _turn(hub_dir) or _empty_turn()
+        swept = _sweep_temps(hub_dir)
+        if swept:
+            event(hub_dir, 'temps', piece, removed=swept, reason='hub temp files left at the turn\'s end')
         os.unlink(hub_dir / 'turn.lock')
         turn.update(holder=None, holder_pid=None, holder_pid_start=None, since_utc=None, token=None)
         hub_doc = _hub(hub_dir)
@@ -529,26 +588,58 @@ def _piece_doc(hub_dir, piece):
     return _load(Path(hub_dir) / 'pieces' / ('%s.json' % piece))
 
 
-def _rounds_of(doc):
-    """Every round of a piece file, oldest first: the prior rounds then the current one."""
-    if not doc:
-        return []
-    current = dict(round=doc.get('round'), written_utc=doc.get('written_utc'), additions=doc.get('additions') or [])
-    return list(doc.get('rounds') or []) + [current]
-
-
 def read(hub_dir, piece, token, since_round=None):
-    """The hub's current set, as references (paths, hashes, values); no file content is read or copied.
-    since_round=n returns only rounds after n (a delta)."""
+    """The hub's current set, as references (paths, hashes, values); no file content is read or copied. Every piece's
+    CURRENT additions only (no old calcs are kept). A pinned addition carries "pin_ref" only; "pins" maps each pin_ref to
+    the trade pin the sealed trade record holds ONCE. since_round=n returns only the additions whose current content was
+    written after round n (a delta)."""
     hub_dir = Path(hub_dir)
     _holder(hub_dir, piece, token, 'read')
     hub_doc = _hub(hub_dir)
     pieces = {}
     for p in hub_doc.get('pieces') or []:
-        rounds = [r for r in _rounds_of(_piece_doc(hub_dir, p))
-                  if since_round is None or (r.get('round') or 0) > int(since_round)]
-        pieces[p] = dict(rounds=rounds)
-    return dict(hub=hub_doc, pieces=pieces, since_round=since_round, read_utc=utc())
+        doc = _piece_doc(hub_dir, p) or {}
+        additions = [a for a in doc.get('additions') or []
+                     if since_round is None or (a.get('since_round') or 0) > int(since_round)]
+        pieces[p] = dict(round=doc.get('round'), written_utc=doc.get('written_utc'), additions=additions)
+    return dict(hub=hub_doc, pieces=pieces, pins=_sealed_pins(hub_dir, hub_doc), since_round=since_round,
+                read_utc=utc())
+
+
+def pin_ref(pin):
+    """The stable reference of a trade pin {"ts", "value", ...}: 'pin:' + the first 24 hex of the sha256 of its canonical
+    JSON. Pieces' files carry this reference; the pin itself is held once, in the sealed trade record."""
+    return 'pin:' + value_sha256(pin)[:24]
+
+
+def addition_key(a):
+    """An addition's stable key id: pin_ref of a trade pin key {"ts", "value", ...}; else its own string "key"; else its
+    file path; else its "name"; None when it has none. A stored addition answers with its pin_ref."""
+    if not isinstance(a, dict):
+        return None
+    if isinstance(a.get('pin_ref'), str) and a['pin_ref']:
+        return a['pin_ref']
+    if isinstance(a.get('key'), dict):
+        return pin_ref(a['key'])
+    for field in ('key', 'path', 'name'):
+        v = a.get(field)
+        if isinstance(v, str) and v:
+            return v
+    return None
+
+
+def _sealed_pins(hub_dir, hub_doc, extra=()):
+    """{pin_ref: pin} from the sealed trade record: every current addition of kind SEALED_TRADE_KIND (the teacher
+    publishes it; its key is the trade pin, held there once), plus `extra` such additions about to be written."""
+    out = {}
+    for p in hub_doc.get('pieces') or []:
+        for a in (_piece_doc(hub_dir, p) or {}).get('additions') or []:
+            if a.get('kind') == SEALED_TRADE_KIND and isinstance(a.get('key'), dict):
+                out[pin_ref(a['key'])] = a['key']
+    for a in extra:
+        if a.get('kind') == SEALED_TRADE_KIND and isinstance(a.get('key'), dict):
+            out[pin_ref(a['key'])] = a['key']
+    return out
 
 
 def _problems(additions):
@@ -563,6 +654,19 @@ def _problems(additions):
             out.append('[%d] kind must be a non-empty str' % i)
         if not isinstance(a.get('content_sha256'), str) or not a['content_sha256']:
             out.append('[%d] content_sha256 must be a non-empty str' % i)
+        if isinstance(a.get('key'), dict):
+            if 'ts' not in a['key'] or 'value' not in a['key']:
+                out.append('[%d] a trade pin key carries "ts" and "value"' % i)
+            else:
+                try:
+                    json.dumps(a['key'])
+                except (TypeError, ValueError) as error:
+                    out.append('[%d] the pin key is not JSON: %s' % (i, error))
+        elif 'pin_ref' in a:
+            out.append('[%d] "pin_ref" is the hub\'s own field; give the pin as "key"' % i)
+        elif addition_key(a) is None:
+            out.append('[%d] no stable key: give "key" (a trade pin {"ts", "value"} or a string), a file "path", '
+                       'or a "name"' % i)
         has_path, has_value = 'path' in a, 'value' in a
         if has_path == has_value:
             out.append('[%d] needs exactly one of path (a file) or value (JSON)' % i)
@@ -586,38 +690,224 @@ def _problems(additions):
     return out
 
 
+# --------------------------------------------------------------------------------------------------------- self-cleaning
+
+def _inside(hub_dir, path):
+    try:
+        hub, p = os.path.realpath(str(hub_dir)), os.path.realpath(str(path))
+        return os.path.commonpath([hub, p]) == hub and p != hub
+    except ValueError:
+        return False
+
+
+def _hub_files(hub_dir, hub_doc):
+    """The hub's own files (never cleaned): hub.json, the turn files, the event log, each piece's file."""
+    hub_dir = Path(hub_dir)
+    own = {hub_dir / n for n in ('hub.json', 'turn.json', 'turn.lock', 'turn.meta', 'events.jsonl')}
+    own.update(hub_dir / 'pieces' / ('%s.json' % p) for p in hub_doc.get('pieces') or [])
+    return {os.path.realpath(str(p)) for p in own}
+
+
+def _sealed(hub_doc):
+    """The sealed base files: every pinned source's path (never removed, wherever it lives)."""
+    pins = hub_doc.get('pinned_sources') or {}
+    return {os.path.realpath(str(p['path'])) for p in pins.values() if isinstance(p, dict) and p.get('path')}
+
+
+def _referenced(hub_dir, hub_doc, extra=()):
+    """Every file path a CURRENT addition of any piece points at (plus `extra` additions)."""
+    out = set()
+    for p in hub_doc.get('pieces') or []:
+        for a in list((_piece_doc(hub_dir, p) or {}).get('additions') or []):
+            if a.get('path'):
+                out.add(os.path.realpath(a['path']))
+    for a in extra:
+        if a.get('path'):
+            out.add(os.path.realpath(a['path']))
+    return out
+
+
+def _owned(hub_dir, a):
+    """A superseded addition's file the hub may remove: inside the hub directory, or marked hub_owned by its piece."""
+    return bool(a.get('path')) and (_inside(hub_dir, a['path']) or a.get('hub_owned') is True)
+
+
+def _unlink_superseded(hub_dir, piece, superseded, hub_doc):
+    """Remove each superseded addition's file when the hub owns it, nothing current points at it and it is not a sealed
+    base file. Every removal and every refusal to remove is an event (the write itself stands)."""
+    referenced, sealed = _referenced(hub_dir, hub_doc), _sealed(hub_doc)
+    for a, why in superseded:
+        if not _owned(hub_dir, a):
+            continue
+        real = os.path.realpath(a['path'])
+        if real in referenced or real in sealed or real in _hub_files(hub_dir, hub_doc):
+            reason = ('still referenced by a current addition' if real in referenced else
+                      'a sealed base file' if real in sealed else 'a hub file')
+            event(hub_dir, 'keep-file', piece, path=a['path'], reason=reason, superseded_by=why)
+            continue
+        try:
+            size = os.stat(real).st_size
+            os.unlink(real)
+            event(hub_dir, 'unlink', piece, path=a['path'], bytes=size, old_sha256=a.get('content_sha256'),
+                  reason='superseded (%s)' % why)
+        except FileNotFoundError:
+            event(hub_dir, 'unlink', piece, path=a['path'], bytes=0, reason='superseded (%s); already gone' % why)
+        except OSError as error:
+            event(hub_dir, 'error', piece, message='could not remove the superseded file %s: %s' % (a['path'], error))
+
+
+def _is_hub_temp(name):
+    return name.startswith('.') and name.endswith('.tmp')
+
+
+def _temp_pid(name):
+    """The pid a hub temp name carries ('.<base>.<pid>.<hex>.tmp'), or None."""
+    parts = name[1:-4].rsplit('.', 2)
+    try:
+        return int(parts[-2]) if len(parts) >= 3 else None
+    except ValueError:
+        return None
+
+
+def _sweep_temps(hub_dir, everything=False):
+    """Under the flock: remove the hub's temp files. A temp of a live other process may be one in flight (a waiter's
+    turn.json write happens under the same flock, so none is in flight here; a piece file temp belongs to the holder),
+    so by default only temps of this process or of dead pids go; everything=True (clean, holding the turn and the flock)
+    removes every hub temp. Returns [{path, bytes}]."""
+    removed = []
+    for d in (Path(hub_dir), Path(hub_dir) / 'pieces'):
+        try:
+            names = os.listdir(d)
+        except OSError:
+            continue
+        for name in names:
+            if not _is_hub_temp(name):
+                continue
+            pid = _temp_pid(name)
+            if not everything and pid is not None and pid != os.getpid() and W.alive(pid):
+                continue
+            try:
+                size = os.stat(d / name).st_size
+                os.unlink(d / name)
+                removed.append(dict(path=str(d / name), bytes=size))
+            except OSError:
+                pass
+    return removed
+
+
 def write(hub_dir, piece, token, additions):
-    """Write this piece's additions for the current round (atomic temp + rename). The prior rounds move under "rounds";
-    a second write in the same round extends that round's list. Returns the piece file's path."""
+    """Write this piece's FULL CURRENT SET (atomic temp + rename). No stack of old calcs (Greg): the file holds only the
+    latest addition per (kind, key). Against the piece's previous set:
+      same (kind, key), same content_sha256    kept as is (its since_round stays);
+      same (kind, key), new content_sha256     REPLACED in place: one 'replace' event with the old and new hash;
+      new (kind, key)                          added (since_round = this round);
+      (kind, key) absent from this write       REMOVED: one 'remove' event with its last hash.
+    In the same write, a superseded (replaced or removed) addition's file is deleted when the hub owns it (inside the
+    hub directory, or marked "hub_owned": true), no current addition points at it, and it is not a sealed base file.
+    Exact duplicates in one write collapse to one (an event); two different contents under one (kind, key) refuse.
+    Returns the piece file's path."""
     hub_dir = Path(hub_dir)
     _holder(hub_dir, piece, token, 'write')
     problems = _problems(additions)
+    if not problems:
+        firsts = {}
+        for i, a in enumerate(additions):
+            k = (a['kind'], addition_key(a))
+            if k in firsts and additions[firsts[k]]['content_sha256'] != a['content_sha256']:
+                problems.append('[%d] (kind %r, key %r) repeats [%d] with different content' % (i, k[0], k[1], firsts[k]))
+            firsts.setdefault(k, i)
     if problems:
         _fail(hub_dir, 'write by %s refused: %d malformed additions' % (piece, len(problems)), piece, problems=problems)
-    rnd = _hub(hub_dir).get('round')
+    hub_doc = _hub(hub_dir)
+    rnd = hub_doc.get('round')
     path = hub_dir / 'pieces' / ('%s.json' % piece)
-    doc = _piece_doc(hub_dir, piece)
-    extended = False
-    if doc and doc.get('round') == rnd:
-        current = list(doc.get('additions') or []) + list(additions)
-        prior, extended = list(doc.get('rounds') or []), True
-    else:
-        current = list(additions)
-        prior = _rounds_of(doc)
-    new = dict(piece=piece, schema=PIECE_SCHEMA, round=rnd, written_utc=utc(), additions=current, rounds=prior)
-    _dump(path, new)
-    event(hub_dir, 'write', piece, round=rnd, additions=len(additions), round_total=len(current), extended=extended,
-          kinds=sorted({a['kind'] for a in additions}))
+    old = {(a.get('kind'), addition_key(a)): a for a in (_piece_doc(hub_dir, piece) or {}).get('additions') or []}
+    sealed = _sealed_pins(hub_dir, hub_doc, extra=additions)
+    unmatched = 0
+    current, seen, superseded = [], set(), []
+    added = replaced = kept = 0
+    for a in additions:
+        k = (a['kind'], addition_key(a))
+        if k in seen:
+            event(hub_dir, 'duplicate-collapsed', piece, kind=k[0], key=k[1], content_sha256=a['content_sha256'])
+            continue
+        seen.add(k)
+        if isinstance(a.get('key'), dict) and a['kind'] != SEALED_TRADE_KIND:
+            # a calc for a trade: find its slot by the pin, keep only the reference (the pin lives once, sealed)
+            stored = {f: v for f, v in a.items() if f != 'key'}
+            stored['pin_ref'] = k[1]
+            if k[1] not in sealed:
+                stored['key'], stored['unmatched_pin'] = a['key'], True     # kept under its key: nothing lost
+                unmatched += 1
+                event(hub_dir, 'unmatched-pin', piece, kind=k[0], pin_ref=k[1], pin=a['key'],
+                      reason='no sealed trade carries this pin; kept under its key')
+        elif isinstance(a.get('key'), dict):
+            stored = dict(a, pin_ref=k[1])          # the sealed trade record: the pin's one home
+        else:
+            stored = dict(a, key=k[1])
+        prior = old.get(k)
+        if prior is None:
+            stored['since_round'] = rnd
+            added += 1
+        elif prior.get('content_sha256') == a['content_sha256']:
+            stored['since_round'] = prior.get('since_round', rnd)
+            kept += 1
+        else:
+            stored['since_round'] = rnd
+            replaced += 1
+            event(hub_dir, 'replace', piece, kind=k[0], key=k[1], old_sha256=prior.get('content_sha256'),
+                  new_sha256=a['content_sha256'], round=rnd)
+            superseded.append((prior, 'replaced'))
+        current.append(stored)
+    removed = [k for k in old if k not in seen]
+    for k in removed:
+        event(hub_dir, 'remove', piece, kind=k[0], key=k[1], old_sha256=old[k].get('content_sha256'), round=rnd,
+              reason='absent from the piece\'s current set')
+        superseded.append((old[k], 'removed'))
+    _dump(path, dict(piece=piece, schema=PIECE_SCHEMA, round=rnd, written_utc=utc(), additions=current))
+    _unlink_superseded(hub_dir, piece, superseded, hub_doc)
+    event(hub_dir, 'write', piece, round=rnd, additions=len(current), added=added, replaced=replaced, kept=kept,
+          removed=len(removed), unmatched_pins=unmatched, kinds=sorted({a['kind'] for a in current}))
     return path
+
+
+def clean(hub_dir, pid=None):
+    """Remove only ORPHANS: the hub's temp files, and files inside the hub directory that no current addition points at
+    (never a hub file, never a sealed base file, never anything outside the hub, never a cut of a value). Takes the turn
+    itself (as CLEAN_PIECE), so it is safe while another piece holds it: it waits its turn. Returns {removed: [{path,
+    bytes, reason}], bytes}."""
+    hub_dir = Path(hub_dir)
+    token = take_turn(hub_dir, CLEAN_PIECE, pid=pid)
+    removed = []
+    try:
+        with _meta(hub_dir):
+            removed.extend(dict(r, reason='hub temp file') for r in _sweep_temps(hub_dir, everything=True))
+            hub_doc = _hub(hub_dir)
+            keep = _hub_files(hub_dir, hub_doc) | _sealed(hub_doc) | _referenced(hub_dir, hub_doc)
+            for root, _dirs, files in os.walk(hub_dir):
+                for name in files:
+                    real = os.path.realpath(os.path.join(root, name))
+                    if real in keep:
+                        continue
+                    try:
+                        size = os.stat(real).st_size
+                        os.unlink(real)
+                        removed.append(dict(path=real, bytes=size, reason='hub-owned, no current addition points at it'))
+                    except OSError as error:
+                        event(hub_dir, 'error', CLEAN_PIECE, message='could not remove orphan %s: %s' % (real, error))
+        event(hub_dir, 'clean', CLEAN_PIECE, removed=removed, bytes=sum(r['bytes'] for r in removed))
+    finally:
+        release(hub_dir, CLEAN_PIECE, token)
+    return dict(removed=removed, bytes=sum(r['bytes'] for r in removed))
 
 
 # ----------------------------------------------------------------------------------------------------------------- laps
 
 def next_lap(hub_dir, token=None):
-    """Close the current lap. Records, per piece, the content hashes it added this round that the hub had not seen in
-    any earlier round, and the pieces that took no turn this round (listed, not refused). Increments round. Returns
-    True when another lap is needed (any new hash), False at the content fixed point (hub done=true). If a piece holds
-    the turn, its token is required (the lap must not close under a write)."""
+    """Close the current lap. Records, per piece, the content hashes written this round (since_round == round) that no
+    addition held from an earlier round carries, and the pieces that took no turn this round (listed, not refused).
+    Increments round. Returns True when another lap is needed (any new hash), False at the content fixed point (hub
+    done=true). If a piece holds the turn, its token is required (the lap must not close under a write)."""
     hub_dir = Path(hub_dir)
     with _meta(hub_dir):
         lock = _read_lock(hub_dir)
@@ -626,23 +916,25 @@ def next_lap(hub_dir, token=None):
                   None, holder=lock.get('piece'))
         doc = _hub(hub_dir)
         rnd = doc.get('round')
-        seen, current = set(), {}
+        held_before, written_now, wrote = set(), {}, []
         for p in doc.get('pieces') or []:
-            for r in _rounds_of(_piece_doc(hub_dir, p)):
-                hashes = [a.get('content_sha256') for a in r.get('additions') or []]
-                if r.get('round') == rnd:
-                    current[p] = hashes
-                elif (r.get('round') or 0) < rnd:
-                    seen.update(hashes)
+            pd = _piece_doc(hub_dir, p) or {}
+            if pd.get('round') == rnd:
+                wrote.append(p)
+            for a in pd.get('additions') or []:
+                if (a.get('since_round') or 0) < rnd:
+                    held_before.add(a.get('content_sha256'))
+                elif a.get('since_round') == rnd:
+                    written_now.setdefault(p, []).append(a.get('content_sha256'))
         new_by_piece, counted = {}, set()
         for p in doc.get('pieces') or []:
-            fresh = [h for h in current.get(p, []) if h not in seen and h not in counted]
+            fresh = [h for h in written_now.get(p, []) if h not in held_before and h not in counted]
             counted.update(fresh)
             new_by_piece[p] = fresh
         another = any(new_by_piece.values())
-        missing = [p for p in doc.get('pieces') or [] if p not in current]
-        lap = dict(round=rnd, closed_utc=utc(), wrote=[p for p in doc.get('pieces') or [] if p in current],
-                   missing_turns=missing, new_by_piece=new_by_piece, new_total=len(counted), another_lap=another)
+        missing = [p for p in doc.get('pieces') or [] if p not in wrote]
+        lap = dict(round=rnd, closed_utc=utc(), wrote=wrote, missing_turns=missing, new_by_piece=new_by_piece,
+                   new_total=len(counted), another_lap=another)
         doc.setdefault('laps', []).append(lap)
         doc['round'] = rnd + 1
         doc['done'] = not another
@@ -663,11 +955,10 @@ def status(hub_dir):
     last_lap = (doc.get('laps') or [None])[-1]
     pieces = {}
     for p in doc.get('pieces') or []:
-        pd = _piece_doc(hub_dir, p)
-        rounds = _rounds_of(pd)
-        pieces[p] = dict(last_round=(pd or {}).get('round'), last_round_additions=len((pd or {}).get('additions') or []),
-                         total_additions=sum(len(r.get('additions') or []) for r in rounds),
-                         rounds_written=[r.get('round') for r in rounds],
+        pd = _piece_doc(hub_dir, p) or {}
+        adds = pd.get('additions') or []
+        pieces[p] = dict(last_round=pd.get('round'), additions=len(adds),
+                         changed_in_last_round=sum(1 for a in adds if a.get('since_round') == pd.get('round')),
                          new_hashes_last_lap=len(((last_lap or {}).get('new_by_piece') or {}).get(p, [])))
     rnd = doc.get('round')
     return dict(hub_dir=str(hub_dir), run=doc.get('run'), day=doc.get('day'), round=rnd, done=doc.get('done'),
@@ -694,7 +985,7 @@ def _hub_dir_arg(a):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description='The teacher hub core (frankie_box_hub.py).')
-    ap.add_argument('command', choices=['open', 'status', 'take', 'release', 'write', 'read', 'next-lap'])
+    ap.add_argument('command', choices=['open', 'status', 'take', 'release', 'write', 'read', 'next-lap', 'clean'])
     ap.add_argument('--hub-dir')
     ap.add_argument('--hub-root')
     ap.add_argument('--run')
@@ -723,6 +1014,10 @@ def main(argv=None):
         hub_dir = _hub_dir_arg(a)
         if a.command == 'status':
             print(json.dumps(status(hub_dir), indent=1, default=str))
+            return 0
+        if a.command == 'clean':
+            pid = a.pid if a.pid is not None else os.getpid()
+            print(json.dumps(clean(hub_dir, pid=pid), indent=1))
             return 0
         if a.command == 'next-lap':
             another = next_lap(hub_dir, a.token)
