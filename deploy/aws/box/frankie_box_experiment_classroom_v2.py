@@ -257,6 +257,26 @@ def _saved_journal_witness(directory, path, pin):
     return None, None, why
 
 
+def _teacher_carry(teacher_rows, teacher_receipt, received):
+    """The teacher walk's classroom carry (one pass, Greg 2026-10-09: frankie_box_classroom_code.TeacherPassCarry,
+    <teacher rows>/classroom-carry.pkl, hash-bound) when its receipt lists it written or retained; else None and the
+    classroom makes its own whole pass (an older teacher, or none saved). The reason is on received['teacher_carry']."""
+    listed = teacher_receipt.get('classroom_carry') or {}
+    path = Path(teacher_rows) / str(listed.get('file') or 'classroom-carry.pkl')
+    if listed.get('status') not in ('written', 'retained') or not path.is_file():
+        received['teacher_carry'] = dict(taken=False, reason='the teacher receipt lists no classroom carry (%s)'
+                                         % (listed.get('reason') or listed.get('status') or 'an older teacher'))
+        return None
+    try:
+        from research.kalshi.frankie_boss.parallel_teacher import _load_raw_state
+        carry = _load_raw_state(path)
+    except Exception as error:  # noqa: BLE001 - the classroom then reads the whole source itself
+        received['teacher_carry'] = dict(taken=False, reason='unreadable (%s: %s)' % (type(error).__name__, error))
+        return None
+    received['teacher_carry'] = dict(path=str(path), status=listed.get('status'), loaded=True)
+    return carry
+
+
 def _pin_outputs(directory, names):
     """{name: pin} for the produced files on disk, and the names that are not (listed, never pinned). The files are
     hashed side by side on pinned threads over the booked lane (frankie_box_lane_pin.executor; hashlib releases the GIL
@@ -978,7 +998,9 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         side_exhaustion = side.get('exhaustion_d_facts')
         if market is not None:
             market_reading = phase('shared_market_context', lambda: K.market_context(
-                visible, market, save_requested=save_requested, native_limits=native_limits))
+                visible, market, save_requested=save_requested, native_limits=native_limits,
+                carry=_teacher_carry(teacher_rows, teacher_receipt, received),
+                teacher_report=teacher_receipt.get('shared_market_read')))
             if market_reading['identity'] != market.identity:
                 raise ValueError('retained classroom market reading differs from its original source')
             shared_market = K.ClassroomMarketContext(calculations, day, market_reading)
