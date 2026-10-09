@@ -188,8 +188,8 @@ def reach_of(piece_word, klass):
     if klass in ('thin', 'completed_only'):
         return 'computation_thin'
     return klass
-KINDS = ('classroom', 'frankie')
-FILE_RE = re.compile(r'^(classroom|frankie)-report-(\d{4,})(?:-r(\d+))?\.md$')
+KINDS = ('classroom', 'frankie', 'teacher')
+FILE_RE = re.compile(r'^(classroom|frankie|teacher)-report-(\d{4,})(?:-r(\d+))?\.md$')
 CLASS_OF_WEEKDAY = {0: 'monday', 1: 'midweek', 2: 'midweek', 3: 'thursday', 4: 'friday'}   # the orchestrator's classes
 JSON_FILES = ('code-answers.json', 'ledgers.json', 'post-grade.json', 'novel-findings.json', 'novelty-investigation.json',
               'correction-request.json', 'correction-response.json', 'acknowledgement.json', 'completion.json',
@@ -420,6 +420,7 @@ class Day:
             raise SystemExit('%s holds no receipt.json: the classroom has not run for this day (give --refused-reason '
                              'when the orchestrator refused it)' % self.dir)
         self.status = self.receipt.get('status')
+        self._teacher(join_only)
         self.dropped, self.brain, self.brain_why = None, None, None
         if self.status != 'complete' or join_only:
             return                              # a refused day: the answers, grade and completion were never written
@@ -436,6 +437,27 @@ class Day:
                 self.absent.append((name, 'the file is not readable JSON (%s)' % error))
         self.dropped = self._dropped_from_markdown()
         self.brain, self.brain_why = self._brain()
+
+    def _teacher(self, join_only):
+        """The teacher receipt beside the teacher rows the classroom receipt names (read once, witnessed): the TEACHER
+        REPORT renders its account. Not read for the join-only view (the 99-layer join reads it elsewhere)."""
+        self.teacher, self.teacher_sha256, self.teacher_pin, self.teacher_why = None, None, None, None
+        if join_only:
+            self.teacher_why = 'not read for the join-only view'
+            return
+        rows_dir = self.receipt.get('teacher_rows')
+        if not rows_dir:
+            self.teacher_why = 'the classroom receipt names no teacher rows directory'
+            return
+        path = Path(rows_dir) / TEACHER_RECEIPT
+        try:
+            raw = self._read('teacher receipt', path)
+            self.teacher = json.loads(raw)
+        except (OSError, ValueError) as error:
+            self.teacher_why = '%s: %s (%s)' % (type(error).__name__, error, path)
+            return
+        self.teacher_sha256 = sha256_bytes(raw)
+        self.teacher_pin = dict(path=str(path), sha256=self.teacher_sha256, bytes=len(raw))
 
     def _read(self, kind, path):
         """Read a file ONCE and witness it (bytes, sha256) in self.inputs; the caller parses the same bytes."""
@@ -633,6 +655,244 @@ def refused_lines(d):
             'brain entry are recorded for it.', '']
 
 
+# ------------------------------------------------------------------------------------------------ the teacher report
+# TEACHER REPORT #N (Greg, 2026-10-09: the teacher's own account of the day): rendered from the teacher receipt's
+# `account` (FRANKIE_TEACHER_ACCOUNT_V1, written by frankie_box_experiment_teacher._teacher_account) in the teacher's
+# first person. Every sentence carries a recorded number or a listed name of the account, and ends with the field it came
+# from in brackets. Lists are rendered whole (tables), never cut to a top-N here; where the account itself records only
+# part of a list, the sentence says how many it records of how many. The field names are read through ACCOUNT_FIELDS:
+# a rename on the teacher side is one place here.
+ACCOUNT_FIELDS = dict(
+    account='account', format='format',
+    read_together='read_together', rows='rows', planes='planes', clocks='clocks', clock_rows='carried_rows',
+    clock_fields='fields', book_columns='book_columns', state_split='state_split',
+    missing='missing_or_thin', never='planes_never_carried', partial='planes_partial',
+    clock_mismatches='clock_mismatches', walk_rows='rows_read_in_walk', restored='rows_restored_from_save',
+    merged='rows_merged_at_publication', book_read='book_read', reconciliation='reconciliation', guard='guard',
+    wants='wants', want_list='wants', questions='questions',
+    runtime='runtime', science='science', pinned='pinned_columns', book_vs_events='book_vs_events')
+TEACHER_RECEIPT = 'receipt.json'
+
+
+def _af(name):
+    return ACCOUNT_FIELDS[name]
+
+
+def _cite(*path):
+    return ' [%s]' % '.'.join(str(p) for p in path)
+
+
+def _flat_rows(value, prefix=''):
+    """Every leaf of a nested record as (dotted field, value) rows, in order (nothing dropped)."""
+    if isinstance(value, dict):
+        out = []
+        for key, item in value.items():
+            out += _flat_rows(item, '%s.%s' % (prefix, key) if prefix else str(key))
+        return out or [(prefix, '{}')]
+    if isinstance(value, (list, tuple)) and value and all(isinstance(v, (dict, list, tuple)) for v in value):
+        out = []
+        for i, item in enumerate(value):
+            out += _flat_rows(item, '%s[%d]' % (prefix, i))
+        return out
+    return [(prefix, json.dumps(value, sort_keys=True, default=str) if not isinstance(value, str) else value)]
+
+
+def teacher_account_lines(d):
+    """The teacher's own account, as headed sections in its first person."""
+    teacher = getattr(d, 'teacher', None)
+    if teacher is None:
+        return ['The teacher receipt was not read: %s.' % rec(getattr(d, 'teacher_why', None)), '']
+    account = teacher.get(_af('account'))
+    if not isinstance(account, dict):
+        return ['The teacher receipt carries no account (a teacher before FRANKIE_TEACHER_ACCOUNT_V1); its recorded '
+                'content follows.', ''] + teacher_legacy_lines(teacher)
+    A = _af('account')
+    L = ['Account format (recorded): %s%s.' % (rec(account.get(_af('format'))), _cite(A, _af('format'))),
+         'How it was counted (recorded): %s%s.' % (rec(account.get('basis')), _cite(A, 'basis')), '']
+    # ---- what I read together
+    R = account.get(_af('read_together')) or {}
+    L += ['## I read these together', '']
+    if R.get('status'):
+        L += ['I did not read a second set on this day: %s (%s)%s.' % (rec(R.get('status')), rec(R.get('reason')),
+                                                                    _cite(A, _af('read_together'))), '']
+    else:
+        rows = R.get(_af('rows'))
+        L += ['I read %s rows together with the 99 planes on the same clocks%s.' % (rec(rows), _cite(A, _af('read_together'), _af('rows'))), '']
+        planes = R.get(_af('planes')) or {}
+        L += ['I read %d plane entries per row; for each, the rows I had it on, the rows I did not, and why I did not%s:' % (
+            len(planes), _cite(A, _af('read_together'), _af('planes'))), '']
+        L += table(['entry', 'carrier', 'rows I had it', 'rows I did not', 'why I did not (rows)'],
+                   [(entry, rec(v.get('carrier')), rec(v.get('rows_present')), rec(v.get('rows_absent')),
+                     listing('%s (%d)' % (why, n) for why, n in sorted((v.get('absent_reasons') or {}).items())) or 'none')
+                    for entry, v in planes.items()]) + ['']
+        clocks = R.get(_af('clocks')) or {}
+        for clock in clocks.get(_af('clock_fields')) or []:
+            L.append('- I carried the clock %s on %s of %s rows%s.' % (
+                clock, rec((clocks.get(_af('clock_rows')) or {}).get(clock, 0)), rec(rows),
+                _cite(A, _af('read_together'), _af('clocks'), _af('clock_rows'), clock)))
+        lock = (teacher.get('teacher_second_set') or {}).get('clock_lock_time')
+        lock = lock if isinstance(lock, dict) else dict(value=lock)
+        L.append('- clock_lock_time is my as_of, %s, stamped once at publication (%s): lock time does not exist before '
+                 'Frankie reads%s.' % (rec(lock.get('value')), rec(lock.get('basis')),
+                                       _cite('teacher_second_set', 'clock_lock_time')))
+        L += ['- I read these book columns beside the pinned functions: %s%s.' % (
+            listing(R.get(_af('book_columns')) or []) or 'none', _cite(A, _af('read_together'), _af('book_columns')))]
+        split = R.get(_af('state_split')) or {}
+        L += ['- The per-state split: %s (%s)%s.' % (rec(split.get('status')), rec(split.get('reason')),
+                                                     _cite(A, _af('read_together'), _af('state_split'))), '']
+    # ---- what I did not see
+    M = account.get(_af('missing')) or {}
+    L += ['## I did not see', '']
+    never = M.get(_af('never')) or []
+    L += ['I did not see %d registry entries on any row; each with its recorded reason%s:' % (
+        len(never), _cite(A, _af('missing'), _af('never'))), '']
+    L += table(['entry', 'group', 'role', 'reason'],
+               [((n.get('entry'), n.get('group'), n.get('role'), n.get('reason')) if isinstance(n, dict) else (n, '', '', ''))
+                for n in never]) + ['']
+    partial = M.get(_af('partial')) or {}
+    L += ['I saw %d entries on some rows and not on others%s:' % (len(partial), _cite(A, _af('missing'), _af('partial'))), '']
+    L += table(['entry', 'carrier', 'rows I had it', 'rows I did not', 'why I did not (rows)'],
+               [(entry, rec(v.get('carrier')), rec(v.get('rows_present')), rec(v.get('rows_absent')),
+                 listing('%s (%d)' % (why, n) for why, n in sorted((v.get('absent_reasons') or {}).items())) or 'none')
+                for entry, v in partial.items()]) + ['']
+    cm = M.get(_af('clock_mismatches')) or {}
+    examples = cm.get('examples') or []
+    L += ['On %s rows the picture\'s clocks or identity did not match my row%s; the account records %d of them as '
+          'examples%s:' % (rec(cm.get('rows')), _cite(A, _af('missing'), _af('clock_mismatches'), 'rows'), len(examples),
+                           _cite(A, _af('missing'), _af('clock_mismatches'), 'examples')), '']
+    L += table(['cursor', 'field', 'the picture', 'my row'],
+               [tuple(rec(x) for x in (list(e) + [None] * 4)[:4]) for e in examples]) + ['']
+    L += ['I read %s rows in my own walk, restored %s from a save and merged %s at publication%s%s%s.' % (
+        rec(M.get(_af('walk_rows'))), rec(M.get(_af('restored'))), rec(M.get(_af('merged'))),
+        _cite(A, _af('missing'), _af('walk_rows')), _cite(A, _af('missing'), _af('restored')),
+        _cite(A, _af('missing'), _af('merged'))), '']
+    book = M.get(_af('book_read'))
+    if book:
+        L += ['How I read the book (every recorded field)%s:' % _cite(A, _af('missing'), _af('book_read')), '']
+        L += table(['field', 'value'], _flat_rows(book)) + ['']
+    rc = M.get(_af('reconciliation')) or {}
+    L += ['Book and event counts differed %s times%s; by measure and reason%s:' % (
+        rec(rc.get('differences')), _cite(A, _af('missing'), _af('reconciliation'), 'differences'),
+        _cite(A, _af('missing'), _af('reconciliation'), 'by_measure_reason')), '']
+    L += table(['measure:reason', 'count'], sorted((rc.get('by_measure_reason') or {}).items())) + ['']
+    largest = rc.get('largest') or []
+    L += ['The account records %d of the %s differences with their values%s:' % (
+        len(largest), rec(rc.get('all_differences')), _cite(A, _af('missing'), _af('reconciliation'), 'largest')), '']
+    L += table(['cursor', 'side', 'measure', 'book', 'events', 'reasons'],
+               [(rec(x.get('cursor')), rec(x.get('side')), rec(x.get('measure')), rec(x.get('book')),
+                 rec(x.get('events')), listing(x.get('reasons') or [])) for x in largest]) + ['']
+    guard = M.get(_af('guard'))
+    L += ['My guard (every recorded field)%s:' % _cite(A, _af('missing'), _af('guard')), '']
+    L += (table(['field', 'value'], _flat_rows(guard)) if guard else ['- none recorded.']) + ['']
+    # ---- what I would want
+    W = account.get(_af('wants')) or {}
+    wants = W.get(_af('want_list')) or []
+    L += ['## I would want', '', 'I would want %d things, each from what I did not see%s:' % (
+        len(wants), _cite(A, _af('wants'), _af('want_list'))), '']
+    L += table(['I would want', 'because'], [(rec(w.get('want')), rec(w.get('reason'))) for w in wants]) + ['']
+    questions = W.get(_af('questions')) or []
+    L += ['I would ask %d questions%s:' % (len(questions), _cite(A, _af('wants'), _af('questions'))), '']
+    L += table(['question', 'rows'], [(rec(q.get('question')), rec(q.get('rows'))) for q in questions]) + ['']
+    if W.get('rule'):
+        L += ['How the wants were derived (recorded): %s%s.' % (W['rule'], _cite(A, _af('wants'), 'rule')), '']
+    # ---- what would give better outputs
+    T = account.get(_af('runtime')) or {}
+    L += ['## What would give better outputs', '',
+          'I worked %s rows in %s seconds of walk, %s rows per second%s%s%s.' % (
+              rec(T.get('rows')), rec(T.get('walk_seconds')), rec(T.get('rows_per_second')),
+              _cite(A, _af('runtime'), 'rows'), _cite(A, _af('runtime'), 'walk_seconds'),
+              _cite(A, _af('runtime'), 'rows_per_second')),
+          'My memory peak was %s KiB%s.' % (rec(T.get('memory_peak_kib')), _cite(A, _af('runtime'), 'memory_peak_kib')), '']
+    L += ['Where my time went, by phase (seconds)%s:' % _cite(A, _af('runtime'), 'phase_seconds'), '']
+    L += table(['phase', 'seconds'], list((T.get('phase_seconds') or {}).items())) + ['']
+    for name in ('raw_batches', 'evidence_precompute', 'saves', 'one_pass'):
+        value = T.get(name)
+        L += ['%s (every recorded field)%s:' % (name.replace('_', ' ').capitalize(), _cite(A, _af('runtime'), name)), '']
+        L += (table(['field', 'value'], _flat_rows(value)) if value else ['- none recorded.']) + ['']
+    # ---- what I found
+    S = account.get(_af('science')) or {}
+    L += ['## What I found', '']
+    pinned = S.get(_af('pinned')) or {}
+    L += ['Each of my %d pinned columns over every row: its states and the reasons recorded%s:' % (
+        len(pinned), _cite(A, _af('science'), _af('pinned'))), '']
+    L += table(['column', 'states (rows)', 'reasons (rows)'],
+               [(name, counts_text(v.get('states') or {}), listing('%s (%d)' % (r, n) for r, n in (v.get('reasons') or {}).items()) or 'none')
+                for name, v in pinned.items()]) + ['']
+    sides = S.get(_af('book_vs_events')) or {}
+    for side, v in sides.items():
+        measures = sorted(set(v.get('book') or {}) | set(v.get('events') or {}))
+        L += ['Side %s: what the book shows against what the events show, per measure%s:' % (
+            side, _cite(A, _af('science'), _af('book_vs_events'), side)), '']
+        L += table(['measure', 'book', 'events'], [(m, rec((v.get('book') or {}).get(m)), rec((v.get('events') or {}).get(m)))
+                                                   for m in measures]) + ['']
+    split = S.get(_af('state_split')) or {}
+    if split:
+        L += ['The per-state split of my sums: %s%s.' % (rec(split.get('status')), _cite(A, _af('science'), _af('state_split'))), '']
+    return L
+
+
+def teacher_legacy_lines(teacher):
+    """An older teacher receipt (no account): its recorded top-level counts and records, every field as recorded."""
+    keep = ('status', 'day', 'rows', 'processed', 'entity_rows', 'as_of', 'through_cursor', 'walk_seconds', 'seconds',
+            'teacher_second_set', 'rows_sidecar', 'equation_not_run')
+    rows = []
+    for key in keep:
+        if key in teacher:
+            rows += _flat_rows(teacher[key], key)
+    return table(['field (teacher receipt)', 'value'], rows) + ['']
+
+
+def teacher_report(d, number, revision, run, cls, files):
+    title = '# TEACHER REPORT #%d%s' % (number, '' if revision == 1 else ' (revision %d)' % revision)
+    L = header(title, d, run, cls, 'CLASSROOM REPORT #%d' % number, files['classroom'])
+    L += ['The teacher\'s own account of the day, in its words: every sentence is a recorded number or a listed name of '
+          'the teacher receipt\'s account, and the field it came from is given in brackets.', '']
+    L += teacher_account_lines(d)
+    teacher_pin = getattr(d, 'teacher_pin', None)
+    L += ['## Evidence', '', '- The teacher receipt: %s.' % (
+        '%s (sha256 %s, %s bytes)' % (teacher_pin['path'], teacher_pin['sha256'], teacher_pin['bytes'])
+        if teacher_pin else 'not read (%s)' % rec(getattr(d, 'teacher_why', None))), '']
+    return L
+
+
+def second_set_received_lines(d):
+    """The classroom report's view of the teacher's second set it received (the classroom receipt's second_set)."""
+    second = d.receipt.get('second_set') or (d.receipt.get('received') or {}).get('second_set')
+    L = ['## The teacher\'s second set received', '']
+    if not isinstance(second, dict):
+        return L + ['Not recorded: the classroom receipt carries no second_set (a classroom before it).', '']
+    if second.get('status') != 'carried':
+        return L + ['Second set status (recorded): %s. Reason (recorded): %s.' % (rec(second.get('status')),
+                                                                                  rec(second.get('reason'))), '']
+    rows = second.get('rows')
+    L += ['Rows received with the second set (recorded): %s; classroom rows: %s; rows aligned on cursor and target '
+          'hash: %s; rows that differ: %s.' % (rec(rows), rec(second.get('classroom_rows')),
+                                               rec((second.get('alignment') or {}).get('matched')),
+                                               len((second.get('alignment') or {}).get('differs') or [])), '']
+    L += table(['part of the second set', 'rows carrying it', 'rows without it'],
+               [(role, rec(n), rec(((second.get('absent') or {}).get(role) or {}).get('rows', 0)))
+                for role, n in (second.get('carried') or {}).items()]) + ['']
+    L += ['Picture identity per row (recorded): %s. Key cursor different from the row cursor: %d rows.' % (
+        counts_text(second.get('match_status') or {}), len(second.get('key_cursor_differs') or [])), '']
+    clocks = second.get('clocks') or {}
+    L += table(['clock', 'rows carrying it', 'absent: reason (rows)'],
+               [(c, rec(n), listing('%s (%d)' % (r, k) for r, k in ((clocks.get('absent_reasons') or {}).get(c) or {}).items()) or 'none')
+                for c, n in (clocks.get('carried_rows') or {}).items()]) + ['']
+    lock = second.get('clock_lock_time') or {}
+    L += ['clock_lock_time (recorded): %s, the teacher\'s as_of (lock time does not exist before Frankie reads).' %
+          rec(lock.get('value')), '']
+    planes = second.get('planes') or {}
+    L += ['Plane entries received: %d; per entry the rows with plane references, the references, the rows carried by '
+          'the row itself, and the rows without it with their reasons:' % len(planes), '']
+    L += table(['entry', 'rows with references', 'references', 'rows (element)', 'rows without', 'reasons (rows)'],
+               [(e, rec(v.get('rows_with_references')), rec(v.get('references')), rec(v.get('rows_element')),
+                 rec(v.get('rows_absent')), listing('%s (%d)' % (r, k) for r, k in (v.get('absent_reasons') or {}).items()) or 'none')
+                for e, v in planes.items()]) + ['']
+    resolver = ((second.get('anchors_resolved') or {}).get('resolver') or {})
+    L += ['Anchor rows whose planes were read by their references: %s.' % rec(resolver.get('note')), '']
+    return L
+
+
 # ------------------------------------------------------------------------------------------------ the classroom report
 def classroom_counts(d, comps, wrong_pairs, pairs, points):
     """The opening summary: recorded counts in fixed sentences."""
@@ -685,6 +945,7 @@ def classroom_report(d, number, revision, run, cls, frankie_file):
               'grade file.' % (carried['directory'], rec(carried.get('history_entries'))), '']
     else:
         L += ['Carried in from the previous classroom day (recorded): none.', '']
+    L += second_set_received_lines(d)
 
     grade = d.doc('post-grade.json')
     L += ['## The grade', '']
@@ -2350,6 +2611,8 @@ def _render_one(kind):
     d, number, revision, run_name, cls, files = _RENDER['args']
     if kind == 'classroom':
         return classroom_report(d, number, revision, run_name, cls, files['frankie'])
+    if kind == 'teacher':
+        return teacher_report(d, number, revision, run_name, cls, files)
     return frankie_report(d, number, revision, run_name, cls, files['classroom'])
 
 
@@ -2455,7 +2718,7 @@ def _save_identity(d, number, revision):
     return dict(number=number, revision=revision, code_sha256=_code_sha256(),
                 source_sha256=d.source['sha256'], exchange_sha256=d.exchange_sha256,
                 meeting_sha256=d.meeting_sha256, meeting_status=d.meeting['status'], school_sha256=d.school_sha256,
-                school_status=d.school_status, all99_sha256=d.all99_sha256)
+                school_status=d.school_status, all99_sha256=d.all99_sha256, teacher_sha256=d.teacher_sha256)
 
 
 def load_save(reports, run_name, day, identity):
@@ -2535,7 +2798,8 @@ def _run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, 
                                  and latest[k].get('meeting_status') == d.meeting['status'],
                          school=bool(latest[k]) and latest[k].get('school_sha256') == d.school_sha256
                                 and latest[k].get('school_status', 'not given') == d.school_status,
-                         all99=bool(latest[k]) and latest[k].get('all99_sha256') == d.all99_sha256)
+                         all99=bool(latest[k]) and latest[k].get('all99_sha256') == d.all99_sha256,
+                         teacher=bool(latest[k]) and latest[k].get('teacher_sha256') == d.teacher_sha256)
                  for k in KINDS}
         reuse = all(all(m.values()) for m in match.values())
         reuse_why = ('the existing reports were built from the same classroom receipt, exchange, meeting, school file and '
@@ -2626,7 +2890,7 @@ def _run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, 
                              commit=os.environ.get('MARKETS_SHA'), exchange_sha256=d.exchange_sha256,
                              meeting_sha256=d.meeting_sha256, meeting_status=d.meeting['status'],
                              school=d.school_path, school_sha256=d.school_sha256, school_status=d.school_status,
-                             all99_sha256=d.all99_sha256)
+                             all99_sha256=d.all99_sha256, teacher_sha256=d.teacher_sha256)
                 index['reports'].append(entry)
                 printed.append((k, raw.decode('utf-8')))
                 out.append(dict(kind=k, number=number, revision=revision, file=str(central), classroom_copy=copy,
