@@ -782,8 +782,9 @@ def _second_set(out, open_market, market, second, rows, SS):  # noqa: C901
                   plane_reference=SS.PLANE_REFERENCE, state_reference=SS.STATE_REFERENCE,
                   key_rule='record i is teacher row i: key.adapter_cursor == the row cursor, its picture the one the '
                            'walk read that row with (picture.original_applied is the row\'s payload)',
-                  clock_lock_time=dict(value=lock, basis='the teacher\'s as_of (the latest receive clock of its rows), '
-                                                         'stamped once: not a picture element'),
+                  clock_lock_time=dict(label=SS.LOCK_LABEL, teacher_as_of=lock,
+                                       basis='the teacher\'s as_of (the latest receive clock of its rows), stamped once: '
+                                             'not a picture element and never Frankie\'s lock'),
                   streams={stream.name: dict(pin=dict(stream.pin), kind=stream.kind) for stream in market.streams},
                   plane_values='by reference: (source, source_ordinal) names the row of that stream\'s pinned file the '
                                'picture handed over; the values are the ROOT\'s receipted rows, not copied',
@@ -862,6 +863,7 @@ def _write_rows_sidecar(out, source, records, header, SS):
     carried = header['entries_carried']
     path, temporary = out / ROWS_SIDECAR, out / (ROWS_SIDECAR + '.pending')
     digest, lines, unjoined = hashlib.sha256(), 0, []
+    lock = header['clock_lock_time']['teacher_as_of']
 
     def refuse(value):
         raise TypeError('row value of type %s is not JSON' % type(value).__name__)
@@ -883,7 +885,8 @@ def _write_rows_sidecar(out, source, records, header, SS):
                 unjoined.append(row['cursor'])
                 continue
             planes, absent = _sidecar_planes(record, carried)
-            write(dict(row, key=record['key'], clocks=record['clocks'], clocks_absent=record['clocks_absent'],
+            clocks = dict(record['clocks'], clock_lock_time=dict(label=SS.LOCK_LABEL, teacher_as_of=lock))
+            write(dict(row, key=record['key'], clocks=clocks, clocks_absent=record['clocks_absent'],
                        planes=planes, planes_state=record['state'], planes_absent=absent,
                        invalidated=record['invalidated'], coverage=record['coverage'], match=record['match'],
                        book_columns=_sidecar_book(record['book'])))
