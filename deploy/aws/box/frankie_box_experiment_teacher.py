@@ -285,6 +285,41 @@ CARRY_FILE = 'classroom-carry.pkl'
 WALK_POSITION_SCHEMA = 'FRANKIE_TEACHER_WALK_POSITION_V1'     # a raw save's reader_position (teacher resume, 2026-10-09)
 
 
+class _WalkCollector:
+    """Value-neutral collector settings for the shared raw walk (2026-10-09, a2/20231018: a parent heap of 100+ GB of
+    live decoded rows, pictures and teacher rows, where every full collection walks all of it; the native traversal's
+    _CollectorPolicy, frankie_box_native_parallel, is the precedent). The state built before the walk is frozen
+    (gc.freeze: never walked again), the youngest generation collects every YOUNG container allocations and a full
+    collection waits for OLD collections of the middle one. Reference counting frees every acyclic object at once
+    either way; only WHEN cyclic garbage is reclaimed changes, never a value, an order or an identity. Restored when the
+    row pass ends (thresholds; unfreeze). enter() returns the record for the receipt."""
+    YOUNG, OLD = 100_000, 100
+
+    def __init__(self):
+        self.saved = None
+
+    def enter(self):
+        import gc
+        if self.saved is not None:
+            return None
+        self.saved = gc.get_threshold()
+        gc.collect()
+        gc.freeze()
+        young, middle, old = self.saved
+        gc.set_threshold(max(young, self.YOUNG), middle, max(old, self.OLD))
+        return dict(schema='FRANKIE_TEACHER_WALK_COLLECTOR_V1', previous_thresholds=list(self.saved),
+                    thresholds=list(gc.get_threshold()), frozen=gc.get_freeze_count(),
+                    basis='value-neutral: only when cyclic garbage is reclaimed changes; restored after the row pass')
+
+    def exit(self):
+        import gc
+        if self.saved is None:
+            return
+        gc.set_threshold(*self.saved)
+        gc.unfreeze()
+        self.saved = None
+
+
 def walked_now(carry):
     """Whether this attempt's walk fed the carry at least one picture."""
     value = carry.get('value')
@@ -1183,7 +1218,10 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                 PT.RESUME_POSITION_SOURCE[0] = None
                 if cpu_pinning['outcome'] in ('pinned', 'fallback') and 'restored' not in cpu_pinning:
                     cpu_pinning['restored'] = LP.restore_mask(cpu_pinning['original_mask'])
+    collector = _WalkCollector()
     try:
+        if market is not None:
+            cpu_pinning['collector'] = collector.enter()
         evidence = shared_evidence() if market else PJ.parallel_journal_prefix(builder, through, None)
         rows, processed, hashes = PT.row_pass(teacher, evidence, as_of=bound, source_manifest_hash=rc['manifest_hash'],
             recovery_path=out / 'teacher-raw-state.pkl',
@@ -1192,6 +1230,7 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                                    **({'learner_binding': learner_binding} if learner_binding is not None else {}),
                                    **({'shared_market_identity': market.identity} if market is not None else {})),
             save_requested=save_requested, retain_dstate=True)
+        collector.exit()
         if cpu_pinning['outcome'] in ('pinned', 'fallback') and 'restored' not in cpu_pinning:
             cpu_pinning['restored'] = LP.restore_mask(cpu_pinning['original_mask'])     # before finish sizes its pool
         if market is not None:
@@ -1253,6 +1292,7 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                 cpu_pinning['original_mask'] = sorted(cpu_pinning['original_mask'])
             if cpu_pinning['outcome'] == 'waiting':
                 cpu_pinning.update(outcome='not_pinned', reason='the reader streams never all started in this walk')
+            collector.exit()
             TC.restore()
             T.evidence_hash = h0
             PJ._ENTITY[0] = None
