@@ -45,6 +45,7 @@ sys.path.insert(0, str(ROOT))
 OUT = Path('/opt/frankie-box/work/experiment-teacher-rows')
 ROWS_FILE = 'host-dipole-classroom-source.c15.json'
 NG_TICK_RAW = 1_000_000            # NG tick 0.001 in the DBN fixed-point price (1e-9)
+SECOND_SET_FILE = 'teacher-second-set.pkl'
 
 
 
@@ -670,6 +671,81 @@ def _all99_use(field):
                      'teachers within the teacher\'s role and walls); the pinned equations read original APPLIED fields only')
 
 
+def _second_set_prefix(open_market, needed, SS):
+    """Join records for the first `needed` rows of the equation prefix, read from a fresh shared reader of the same ROOT:
+    the same pictures in the same order, the same equation filter as the walk (present APPLIED payloads, adapter
+    cursors contiguous from zero). Only pictures are read; no teacher value is computed."""
+    reader = open_market()
+    pictures = reader.iter_applied()
+    records, expected = [], 0
+    try:
+        for item in pictures:
+            if expected >= needed:
+                break
+            if item['arithmetic']['status'] != 'present':
+                continue
+            if item['evidence'].get('cursor') != expected:
+                break                       # the equation prefix ends here (the rows hold more: refused by the caller)
+            records.append(SS.join_record(item['evidence'], item['picture']))
+            expected += 1
+    finally:
+        close = getattr(pictures, 'close', None)
+        if close is not None:
+            close()
+    return records
+
+
+def _second_set(out, open_market, market, second, rows, SS):  # noqa: C901
+    """The teacher's second set for every row, written beside the rows (teacher-second-set.pkl, hash-bound) and
+    summarized for the receipt. The rows the walk read carry their join from the walk; rows read by an earlier process
+    whose save holds no join are joined here from a fresh reader of the same ROOT (merged at publication). A row left
+    without its join refuses the publication (the reason listed); a join whose picture identity or clocks differ from
+    the row's own is listed with both values, never aligned."""
+    import frankie_box_all99_coverage as ALL99
+    needed = len(rows) - len(second['records'])
+    if needed < 0:
+        raise ValueError('the teacher second set holds %d joins for %d rows; the rows do not leave the teacher'
+                         % (len(second['records']), len(rows)))
+    prefix = _second_set_prefix(open_market, needed, SS) if needed else []
+    records = prefix + second['records']
+    check = SS.check_rows(records, rows)
+    if check['rows_without_record'] or len(records) != len(rows):
+        raise ValueError('the teacher second set holds %d joins for %d rows (the shared reader yielded %d of the %d rows '
+                         'before the walk\'s own joins); a row without its joined planes does not leave the teacher'
+                         % (len(records), len(rows), len(prefix), needed))
+    carried = {name: dict(carrier=first, thinner=thin) for name, (first, thin) in ALL99.MARKET_CARRIERS.items()}
+    not_carried = [dict(entry=layer['entry'], group=layer['group'], role=layer['role'],
+                        reason=ALL99.NOT_MARKET_CARRIED.get(layer['entry']) or (
+                            'withheld by role (R09/R10: no teacher reads an answer key or a sealed target)'
+                            if layer['role'] in ('answer', 'target') else
+                            'not market evidence: the registry role %s is not carried by the picture' % layer['role']))
+                   for layer in ALL99.entries() if layer['entry'] not in carried]
+    lock = max(row[4] for row in rows)
+    header = dict(schema=SS.SCHEMA, format=SS.FORMAT, key_fields=SS.KEY_FIELDS, clock_fields=SS.CLOCK_FIELDS,
+                  plane_reference=SS.PLANE_REFERENCE, state_reference=SS.STATE_REFERENCE,
+                  key_rule='record i is teacher row i: key.adapter_cursor == the row cursor, its picture the one the '
+                           'walk read that row with (picture.original_applied is the row\'s payload)',
+                  clock_lock_time=dict(value=lock, basis='the teacher\'s as_of (the latest receive clock of its rows), '
+                                                         'stamped once: not a picture element'),
+                  streams={stream.name: dict(pin=dict(stream.pin), kind=stream.kind) for stream in market.streams},
+                  plane_values='by reference: (source, source_ordinal) names the row of that stream\'s pinned file the '
+                               'picture handed over; the values are the ROOT\'s receipted rows, not copied',
+                  carriers=market.layer_entries(), entries_carried=carried, entries_not_carried=not_carried,
+                  rows_total=len(rows), rows_matched=check['rows_matched'], rows_mismatched=check['rows_mismatched'],
+                  mismatches=check['mismatches'], clocks_compared=check['clocks_compared'],
+                  joined_in_walk=len(second['records']) - second['restored'], restored_from_save=second['restored'],
+                  merged_at_publication=len(prefix))
+    from research.kalshi.frankie_boss import parallel_teacher as PT
+    path = out / SECOND_SET_FILE
+    PT._save_raw_state(path, dict(header, records=records))
+    return dict({k: v for k, v in header.items() if k not in ('carriers', 'entries_carried', 'mismatches', 'streams')},
+                file=SECOND_SET_FILE, sha256=_sha256(path), mismatches_first=check['mismatches'][:20],
+                streams={name: value['pin'] for name, value in header['streams'].items()},
+                entries_not_carried=[item['entry'] for item in not_carried],
+                file_format='64 hex digits of the sha256 of the bytes after them, then the pickle of the header with '
+                            '`records` (parallel_teacher._load_raw_state reads it)')
+
+
 def teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_external_sha256=None,
           *, calculations=None, shared_market_policy=None):
     # Keep the cooperative handler through publication too: an orderly stop must not
@@ -755,7 +831,7 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
     if journal_witness != dict(bytes=rc['journal_bytes'], sha256=rc['journal_sha256']):
         raise SystemExit('the sealed journal differs from its ingestion receipt')
     phase('verify_sealed_journal')
-    market = None
+    market = open_market = None
     if calculations is not None or shared_market_policy is not None:
         from frankie_box_market_timeline import SCHEMA, SharedMarketTimeline
         if calculations is None or shared_market_policy != SCHEMA:
@@ -764,11 +840,13 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
         # is not hashed a second time in this process; the reader re-reads it itself if the witness differs.
         # bound to THE file measured (review N1): its path, device and inode travel with the bytes and sha256; the reader
         # accepts the measurement only for the very file its pin names, else hashes the file itself
-        market = SharedMarketTimeline(calculations, day=day, workers=workers,
-                                      input_witness=dict(journal_witness, path=str(journal), dev=journal_stat.st_dev,
-                                                         ino=journal_stat.st_ino,
-                                                         **(dict(basis='claim', claim=PREFETCH.get('claim'))
-                                                            if PREFETCH.get('outcome') == 'by claim' else {})))
+        def open_market():
+            return SharedMarketTimeline(calculations, day=day, workers=workers,
+                                        input_witness=dict(journal_witness, path=str(journal), dev=journal_stat.st_dev,
+                                                           ino=journal_stat.st_ino,
+                                                           **(dict(basis='claim', claim=PREFETCH.get('claim'))
+                                                              if PREFETCH.get('outcome') == 'by claim' else {})))
+        market = open_market()
         phase('open_shared_picture')
         if (market.source['ingestion_receipt']['sha256'] != receipt_sha256
                 or market.input_pin['sha256'] != rc['journal_sha256']):
@@ -847,6 +925,7 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
     from research.kalshi.frankie_boss import parallel_journal as PJ, context_session as CS, c15_teacher_r3 as T
     from research.kalshi.frankie_boss import parallel_teacher as PT, teacher_changes as TC, dipole_classroom as DC
     from research.kalshi.frankie_boss import sunday_execution as SE
+    from research.kalshi.frankie_boss import teacher_second_set as SS
     from research.kalshi.frankie_boss.c15_normalizer_r3 import IdentityNormalizerR3
     from research.kalshi.frankie_boss.frankie_journal_reader import FrankieCompactReader
     from research.kalshi.frankie_boss.compact_journal import CompactReader
@@ -892,6 +971,13 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
     # six native entries' pass) made on THIS walk (frankie_box_classroom_code.TeacherPassCarry), saved beside the
     # receipt (classroom-carry.pkl); the classroom then reads the shared source only to its last anchor picture.
     carry = dict(value=None, first_input_cursor=None, error=None)
+    # The second set (Greg, 2026-10-09: the teacher reads all of Frankie's 99 planes pinned together with the event flow
+    # and builds a second set): every row the walk yields is joined, in the same step, to the picture it was read with
+    # (teacher_second_set.join_record: the row key, the seven causal clocks and every plane row the picture placed or
+    # carried, as references to the ROOT's receipted rows). The records travel with the walk's save position; rows a
+    # resumed walk did not read itself (a save written before this) are joined at publication from the same reader.
+    second = dict(records=[], read_in_walk=0, restored=0)
+    second_set = None
     carry_path = out / CARRY_FILE
     if market is not None:
         try:
@@ -1050,7 +1136,8 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                                      cutoff_walk=dict({k: v for k, v in cutoff_walk.items() if k != 'tracker'},
                                                       tracker=packed(cutoff_walk['tracker'])),
                                      carry=dict(value=packed(carry['value']), first_input_cursor=carry['first_input_cursor'],
-                                                error=carry['error'])))
+                                                error=carry['error']),
+                                     second_set=dict(format=SS.FORMAT, records=second['records'])))
         PT.RESUME_POSITION_SOURCE[0] = position
 
         def register(entry):
@@ -1115,6 +1202,11 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                 seek_record.update(pictures=seek['market'].get('pictures'), ahead=len(seek['ahead']), rows=mine['rows'],
                                    market_exhausted=bool(seek['market'].get('exhausted')))
                 PT.RESUME_SEEKED[0] = mine['rows']
+                kept = mine.get('second_set')
+                if isinstance(kept, dict) and len(kept.get('records') or ()) == mine['rows']:
+                    second['records'] = list(kept['records'])
+                    second['restored'] = len(second['records'])
+                # else (a save written before the second set): the rows before the seek are joined at publication
             while True:
                 if len(ahead) * 2 <= limit:
                     fill()
@@ -1197,6 +1289,8 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                 teacher.control.market_picture = item['picture']
                 teacher.raw_teacher.market_picture = item['picture']
                 register(entry)
+                second['records'].append(SS.join_record(item['evidence'], item['picture']))
+                second['read_in_walk'] += 1
                 yield item['evidence']
         finally:
             try:
@@ -1252,6 +1346,9 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                 raise ValueError('completed teacher raw state lacks its matching complete shared read; preserved')
         if save_requested():
             raise PT.TeacherSaved('teacher raw pass saved; attachment assembly has not started')
+        if market is not None and rows:
+            second_set = _second_set(out, open_market, market, second, rows, SS)
+            phase('second_set')
         walked = time.time() - started
         phase('raw_pass_rows')
         if not rows:
@@ -1408,6 +1505,10 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                   identity_rebinds=list(IDENTITY_REBINDS))
     if teacher_context is not None:
         result['shared_market_context'] = teacher_context
+    # the second set (teacher_second_set FORMAT): every row joined to its picture of the 99 planes on the same clocks
+    result['teacher_second_set'] = second_set if second_set is not None else dict(
+        status='not_built', format=None,
+        reason='no shared market reader on this ROOT (the legacy journal walk): no picture to join the rows to')
     if market is not None:
         # the classroom loads the file and checks its identity and roster itself; a missing or other carry makes the
         # classroom's own whole pass, so an older teacher (no field) never blocks it
