@@ -668,35 +668,32 @@ def _ledger_task(snapshot, index):
 
 # PASS DEDUPE (Greg, 2026-10-07 night: "Did we dedup in every step too?"): the 19 per-component ledgers were 19 separate
 # passes over every retained row (one per column, on a fork pool whose results were pickled back). They are built in ONE
-# pass with one accumulator per column, the exact dict per point dipole_classroom._dimension_ledger builds, in the same
-# row order. Bound to that function's own source: when its text differs from the one this pass mirrors, or the one pass
-# raises anything, the serial per-column comprehension runs instead (the same values, or the same error at the same
-# place: the first column that raises, as before). Values, order and errors unchanged; placement/record only.
-DIMENSION_LEDGER_SOURCE_SHA256 = 'e14080f5d945a550c7e9b8a2b3116fa12642fd1e38a65c4159e71daf418a8a72'
+# pass with one accumulator per column, each point made by dipole_classroom._ledger_point, the per-row step
+# _dimension_ledger itself runs (one source, 2026-10-09: the two cannot diverge), in the same row order. The source
+# sha256 of _dimension_ledger is recorded beside this constant, never compared; when the one pass raises anything, the
+# serial per-column comprehension runs instead (the same error at the same place: the first column that raises, as
+# before). Values, order and errors unchanged; placement/record only.
+DIMENSION_LEDGER_SOURCE_SHA256 = '09b8b671436baa4ef259bdda6a35ed260c8f67a3b7e87ed7d60f6f2fc5c0e5ec'
 
 
 def _ledgers_one_pass(snapshot, columns):
-    """{column: tuple(points)} in ONE pass over the rows, each point exactly dipole_classroom._dimension_ledger's."""
+    """{column: tuple(points)} in ONE pass over the rows. Each point is made by dipole_classroom._ledger_point, the
+    same per-row step _dimension_ledger runs (one source: the two paths cannot diverge, whatever that step becomes)."""
+    from research.kalshi.frankie_boss import dipole_classroom as DC
+    point = DC._ledger_point
     columns = tuple(columns)
     acc = [[] for _ in columns]
     for row in snapshot["rows"]:
-        components = row["components"]
-        cursor, ts_recv_ns, target_hash = row["cursor"], row["ts_recv_ns"], row["target_hash"]
         for index, name in enumerate(columns):
-            component = components[index]
-            if component["name"] != name:
-                raise ValueError("teacher row column order changed")
-            acc[index].append({"cursor": cursor, "ts_recv_ns": ts_recv_ns, "target_hash": target_hash,
-                               "state": component["state"], "value": component["value"],
-                               "raw_reason": component["raw_reason"]})
+            acc[index].append(point(row, index, name))
     return {name: tuple(points) for name, points in zip(columns, acc)}
 
 
 def _ledgers(snapshot, columns):
     """{column: ledger} exactly as the serial comprehension {c: DC._dimension_ledger(snapshot, i)} built them: one pass
-    with per-column accumulators (_ledgers_one_pass) when the columns are dipole_classroom.COLUMNS (the source sha256 of
-    dipole_classroom._dimension_ledger is recorded beside DIMENSION_LEDGER_SOURCE_SHA256, the one it mirrors, never
-    compared: Greg, 2026-10-09); otherwise, or on any error in the one pass, the serial per-column passes (the same
+    with per-column accumulators (_ledgers_one_pass, built from dipole_classroom._ledger_point, the per-row step of
+    _dimension_ledger itself) when the columns are dipole_classroom.COLUMNS (the source sha256 of _dimension_ledger is
+    recorded beside DIMENSION_LEDGER_SOURCE_SHA256, never compared: Greg, 2026-10-09); otherwise, or on any error in the one pass, the serial per-column passes (the same
     values, the same first error). The record says which ran and why."""
     import hashlib
     import inspect
@@ -710,8 +707,9 @@ def _ledgers(snapshot, columns):
     except (OSError, TypeError) as error:
         source = 'unreadable (%s)' % type(error).__name__
     why = None
-    # the mirrored source sha256 is RECORDED, never compared (Greg, 2026-10-09: the code version is recorded, never
-    # compared); the one pass runs on the columns it mirrors, any error in it falls to the serial passes
+    # the source sha256 is RECORDED, never compared (Greg, 2026-10-09): the one pass calls dipole_classroom.
+    # _ledger_point, the same per-row step as _dimension_ledger, so it cannot diverge from the serial passes; it runs on
+    # the columns _dimension_ledger names, and any error in it falls to the serial passes
     record['dimension_ledger_source'] = dict(sha256=source, mirrored=DIMENSION_LEDGER_SOURCE_SHA256,
                                              same=source == DIMENSION_LEDGER_SOURCE_SHA256)
     if tuple(columns) != tuple(getattr(DC, 'COLUMNS', ())):

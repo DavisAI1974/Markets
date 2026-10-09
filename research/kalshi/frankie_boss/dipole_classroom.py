@@ -264,14 +264,18 @@ def snapshot_teacher_attachment(teacher: Mapping[str, Any], *, request_id: str, 
     return body
 
 
+def _ledger_point(row: Mapping[str, Any], index: int, name: str) -> dict:
+    """One teacher row's ledger point for column `index` (named `name`): the single per-row step of _dimension_ledger,
+    also used by frankie_box_experiment_exchange's one-pass ledgers so the two cannot diverge."""
+    component = row["components"][index]
+    if component["name"] != name:raise ValueError("teacher row column order changed")
+    return {"cursor": row["cursor"],"ts_recv_ns": row["ts_recv_ns"],"target_hash": row["target_hash"],
+        "state": component["state"],"value": component["value"],"raw_reason": component["raw_reason"]}
+
+
 def _dimension_ledger(snapshot: Mapping[str, Any], index: int) -> tuple[dict, ...]:
-    name = COLUMNS[index];result = []
-    for row in snapshot["rows"]:
-        component = row["components"][index]
-        if component["name"] != name:raise ValueError("teacher row column order changed")
-        result.append({"cursor": row["cursor"],"ts_recv_ns": row["ts_recv_ns"],"target_hash": row["target_hash"],
-            "state": component["state"],"value": component["value"],"raw_reason": component["raw_reason"]})
-    return tuple(result)
+    name = COLUMNS[index]
+    return tuple(_ledger_point(row, index, name) for row in snapshot["rows"])
 
 
 def _first_last_present(ledger: Sequence[Mapping[str, Any]]):
