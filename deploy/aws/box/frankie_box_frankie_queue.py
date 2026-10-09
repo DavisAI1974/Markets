@@ -470,7 +470,7 @@ def load(line):
     return doc
 
 
-WAKE_VOLATILE_ENTRY = ('reason', 'wait')       # a waiter's own re-recorded reason / waits are not a state change
+WAKE_VOLATILE_ENTRY = ('reason', 'wait', 'slot_wait')   # a waiter's own re-recorded reason / waits: not a state change
 WAKE_VOLATILE_ATTEMPT = ('polls', 'last_wait')
 
 
@@ -1595,7 +1595,7 @@ def box_slots(settings):
     back to its own place in the line. Without the ledger module on the box: the enqueuer's PARALLEL_DAYS. Returns (free
     slots now or None, total or None, source)."""
     try:
-        import frankie_box_cores as C
+        C = _cores()
     except ImportError:
         return None, max(1, int(settings.get('parallel_days') or 1)), 'PARALLEL_DAYS (frankie_box_cores.py not on the box)'
     me = os.getpid()
@@ -1657,19 +1657,73 @@ def _book_slot(x, stage, commit):
     re-books between steps, so no other day can take the CPUs while the day is between two steps. A day with an owner
     binding (a resume) books EXACTLY its retained CPU set, or the set it was grown to (same booking id): the ledger hands
     the owner its retained booking back and nobody else (session 9; _bind_owner then records the grown set). Returns
-    (booking id, cpus, None) or (None, None, the ledger's waiting/refused reason)."""
-    import frankie_box_cores as C
+    (booking id, cpus, None) or (None, None, the ledger's waiting/refused reason, with the holders and the ledger's
+    waiting record named)."""
+    C = _cores()
     cpus = (x.get('owner') or {}).get('cpus') or x.get('cpus')
     # the run's day slot size (plan day_cpus: 32 = both main-box lanes as one booking; default 16)
     size = int(_plan_of(x['run']).get('day_cpus') or C.DAY_RUN_CPUS)
     b, outcome = C.book('day-run', os.getpid(), dict(day=x['day'], run=x['run'], stage='day-slot-' + stage, commit=commit,
                                                   cpus=cpus, size=size), 0.0)
-    if not b:
-        _SLOT_HELD_PIDS.update(outcome.get('held_pids') or [])   # the root worker wakes on their exit (2026-10-09)
-    return (b['booking'], b['cpus'], None) if b else (None, None, outcome.get('reason'))
+    if b:
+        return b['booking'], b['cpus'], None
+    held = sorted(int(p) for p in outcome.get('held_pids') or [] if int(p) != os.getpid())
+    _SLOT_HELD_PIDS.update(held)                    # the root worker wakes on their exit (watched by THIS pass's wait)
+    why = '%s: %s' % (outcome.get('status') or 'not booked', outcome.get('reason'))
+    if held:
+        why += '; held outside the ledger by pid(s) %s (%s)' % (held, '; '.join(_proc_line(p) for p in held[:4]))
+    if outcome.get('record'):
+        why += '; ledger record %s' % outcome['record']
+    return None, None, why
 
 
 _SLOT_HELD_PIDS = set()     # processes holding CPUs outside the ledger when a slot could not be booked (this worker)
+
+
+def _queue_control_process(info):
+    """A queue control call (frankie_box_frankie_queue.py with any --action but worker: kick, resume, save, status, show,
+    enqueue, handover, retire, parked-watch) or the CPU watchdog (frankie_box_cpu_watch.py). Neither runs a day's work:
+    they read and write the queue and the ledger for a moment, or (the watchdog) walk /proc on every wake."""
+    argv = (info.get('cmdline') or '').split()
+    if any(a.endswith('frankie_box_cpu_watch.py') for a in argv):
+        return True
+    if not any(a.endswith('frankie_box_frankie_queue.py') for a in argv):
+        return False
+    try:
+        return argv[argv.index('--action') + 1] != 'worker'
+    except (ValueError, IndexError):
+        return False
+
+
+def _cores():
+    """frankie_box_cores for the queue's own bookings, with the queue's control calls and the CPU watchdog read as the
+    ledger's known helpers (never a CPU holder against a booking; frankie_box_cores.is_helper, extended in this process).
+
+    2026-10-09, a2/20231018 11:37Z (the live stall): the slot book samples once (window 0): an unpinned Frankie thread in
+    state R at that instant holds the CPU it runs on. The resumed day's retained set is the WHOLE box (0-63), so ANY such
+    thread anywhere blocks the take-over ('the retained lane CPU set is in use by a Frankie process not in the ledger').
+    The processes running at that instant are the ones that woke the worker: the resume/kick CLI that wrote the wake,
+    and the CPU watchdog, which watches the same wake directory and walks /proc on the same event (every kick starts or
+    wakes it). The worker's pass made no booking and waited (no event, no reason on the entry); every later kick woke
+    both again: the same collision. A gate we coded never blocks fine data: a control call is not a day's work."""
+    import frankie_box_cores as C
+    if not getattr(C.is_helper, 'queue_control', False):
+        base = C.is_helper
+
+        def is_helper(info, _base=base):
+            return _base(info) or _queue_control_process(info)
+        is_helper.queue_control = True
+        C.is_helper = is_helper
+    return C
+
+
+def _proc_line(pid):
+    """'pid: command' of a live process for a record ('pid: gone' once it exited)."""
+    try:
+        cmd = Path('/proc/%d/cmdline' % int(pid)).read_bytes().replace(b'\0', b' ').decode('utf-8', 'replace').strip()
+    except OSError:
+        return '%s: gone' % pid
+    return '%s: %s' % (pid, cmd[:160])
 
 
 def marker_of(run, day):
@@ -2548,6 +2602,18 @@ def _wake_marks():
     return out
 
 
+def _note_slot_wait(x, stage, why):
+    """A day the worker could not book a slot for, in this pass (under the queue lock): the ledger's reason on the entry
+    (reason: never a wake of its own) and one event per distinct reason (the ledger's per-attempt record path aside), so a
+    pending day with nothing running always says what it waits on (2026-10-09: the a2 stall said nothing)."""
+    key = str(why).split('; ledger record ')[0]
+    if x.get('slot_wait') != key:
+        event('root', '%s_slot_waiting' % stage, seq=x['seq'], day=x['day'], run=x['run'], reason=why,
+              booking=(x.get('owner') or {}).get('booking'), cpus=(x.get('owner') or {}).get('cpus'))
+    x['slot_wait'] = key
+    x['reason'] = 'waiting for its %s slot: %s' % (stage, why)
+
+
 def _root_waiter(doc, running):
     """The ROOT worker's one wait (2026-10-09; was a 60 s poll): the wake directory (any state change on the box: a
     queue entry, a stage status, a save marker, a booking released, a day thread ending, a stop), the Pod claims
@@ -2786,6 +2852,7 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                 slot, cpus, why = _book_slot(x, 'finish', commit)
                 if slot is None:
                     source = why
+                    _note_slot_wait(x, 'finish', why)       # on the entry and the events, never silent
                     break                                   # no free slot: the days behind wait
                 holder = dict(slot=slot)
                 _bind_source(x, code_root, commit)
@@ -2797,6 +2864,7 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                     _release_owner(x, 'owner binding refused on the finish path')
                     event('root', 'finish_refused', seq=x['seq'], day=x['day'], run=x['run'], reason=str(error))
                     continue
+                x.pop('slot_wait', None)
                 x['finish'] = dict(state='running', started_utc=utc(), pid=os.getpid(), commit=commit, slot_booking=slot)
                 x['reason'] = 'its day (after the ROOT) in the held box slot %s' % slot
                 save('root', doc)                            # retain source before the child thread can do work
@@ -2837,6 +2905,7 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                 slot, cpus, why = _book_slot(x, 'root', commit)
                 if slot is None:
                     source = why
+                    _note_slot_wait(x, 'root', why)         # on the entry and the events, never silent
                     break                                   # no free slot: everything behind the front waits
                 holder = dict(slot=slot)
                 _bind_source(x, code_root, commit)
@@ -2852,6 +2921,7 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                                                          started=time.time(), started_utc=utc(), slot_booking=slot,
                                                          attempt=owner['attempt'], cpus=owner['cpus'],
                                                          owner_resumed=owner_resumed))
+                x.pop('slot_wait', None)
                 x.update(state='running', where='box-slot', reason='its whole day in the held box slot %s' % slot)
                 save('root', doc)                            # intent is durable before scientific work starts
                 t = threading.Thread(target=_wake_after, args=(_root_job, dict(x), code_root, commit, log, holder), daemon=True)
@@ -2939,6 +3009,13 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
         _worker_status('root', state='running', commit=commit, running=sorted(running), stop=stop.get('reason'),
                        pending=len(pending), scope=scope['text'], run_settings=_run_settings_env())
         probe.update('root:running %d' % len(running), n_done, len(mine) or None, in_flight=len(running))
+        # 2026-10-09 (a2/20231018 11:37Z): the processes THIS pass found holding CPUs outside the ledger (a slot not
+        # booked) are watched by THIS wait. The waiter was built before the pass (so no change after its checks is
+        # missed); _SLOT_HELD_PIDS was only read there, i.e. one pass late: a pass whose booking failed on a holder
+        # that then exited waited on nothing and the day sat. One already gone wakes the wait at once (watch_pid)
+        for pid in sorted(_SLOT_HELD_PIDS):
+            if pid != os.getpid():
+                waiter.watch_pid(pid)
         # 2026-10-09: no poll interval; the worker wakes on the next event (see _root_waiter), or at its own lifetime
         # bound when nothing stops it yet
         waiter.wait(None if (stop or deadline is None) else max(0.0, deadline - time.monotonic()))
@@ -3092,7 +3169,7 @@ def resume_owner(run, day, by, rebook=False):
         if owner is None:
             raise SystemExit('%s %s has no owner binding; nothing to resume' % (run, day))
         finish = x.get('finish') or {}
-        import frankie_box_cores as C
+        C = _cores()
         ledger = C.LEDGER / ('%s.json' % owner.get('booking'))
         retained = json.loads(ledger.read_bytes()).get('retained') if ledger.is_file() else None
         if owner.get('booking_released') and retained is None:
