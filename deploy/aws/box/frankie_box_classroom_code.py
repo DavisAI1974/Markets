@@ -4160,7 +4160,8 @@ def block_lesson(teacher_rows, directory, n, *, day_file=None, manifest=None):
     block = TR.block_record(teacher_rows, n, manifest)
     import time as _time
     lesson_clock = _time.monotonic()
-    rows = list(TR.iter_block(teacher_rows, n, select=('cursor', 'target_hash', 'components'), manifest=manifest))
+    rows = list(TR.iter_block(teacher_rows, n, select=TR.FIRST_SET_ROW_KEYS, manifest=manifest))
+    _BLOCK_ROWS[(str(teacher_rows), n)] = rows          # the same worker's session builds its snapshot from these
     read_seconds = round(_time.monotonic() - lesson_clock, 3)
     anchors = block_component_anchors(rows)
     cursors = sorted({c for chosen in anchors.values() for c, _ in chosen.values()})
@@ -4422,6 +4423,9 @@ def _block_text(path, text):
     return str(path)
 
 
+_BLOCK_ROWS = {}        # (teacher rows, block) -> the first-set rows the lesson read in this process (one read)
+
+
 def block_snapshot(teacher_rows, n, *, day, manifest=None):
     """Block n's Dipole source snapshot (dipole_classroom SOURCE_SCHEMA) from its sealed sidecar lines: the snapshot row
     fields of every row of the block (the teacher wrote them with the same _target_row as the day's snapshot), the
@@ -4432,7 +4436,9 @@ def block_snapshot(teacher_rows, n, *, day, manifest=None):
     manifest = manifest if manifest is not None else TR.blocks(teacher_rows)
     record = TR.block_record(teacher_rows, n, manifest)
     entry = manifest['blocks'][n - 1]
-    rows = tuple(TR.iter_block(teacher_rows, n, select=TR.FIRST_SET_ROW_KEYS, manifest=manifest))
+    kept = _BLOCK_ROWS.pop((str(teacher_rows), n), None)      # the lesson's read in this process (verified, same keys)
+    rows = tuple(kept) if kept is not None else tuple(
+        TR.iter_block(teacher_rows, n, select=TR.FIRST_SET_ROW_KEYS, manifest=manifest))
     if not rows:
         return None, record
     body = {"schema": DC.SOURCE_SCHEMA, "request_id": 'experiment-%s-block-%02d' % (day, n), "cycle_index": 0,
@@ -4653,10 +4659,15 @@ class _BlockExternal:
         return self.value
 
     def _run(self):
+        import time
+        wall, cpu = time.monotonic(), time.thread_time()
         try:
             self.value = self._section(**self.inputs)
         except BaseException as error:  # noqa: BLE001 - listed; the Dipole session stands
             self.value = dict(status='failed', reason='%s: %s' % (type(error).__name__, error))
+        self.value['thread'] = dict(wall_seconds=round(time.monotonic() - wall, 3),
+                                    cpu_seconds=round(time.thread_time() - cpu, 3),
+                                    rule='cpu well below wall: the thread waited for the GIL (or for I/O)')
 
     def _section(self, *, day, day_file, day_sha256, snapshot, pkg, mode, prior_external_grade, external_history,
                  visible, learner_context, knowledge, school, session_id, model, written, listed, store):

@@ -2758,6 +2758,18 @@ class Run:
         import concurrent.futures as CF
         import multiprocessing as MP
         workers = max(1, len(K.lane_cpus()))
+        warm = {}
+        try:                        # once here, inherited by every forked block worker (never per block)
+            from research.kalshi.frankie_boss import dipole_classroom_external as EXT
+            began = time.monotonic()
+            warm['blas'] = EXT.blas_reduction().get('mode')
+            if day_file is not None and day_sha:
+                EXT.open_day_external(day_file, day_sha, 0, trading_day=e['day'])
+                warm['day_file'] = str(day_file)
+            warm['seconds'] = round(time.monotonic() - began, 3)
+        except Exception as error:  # noqa: BLE001 - each worker then does it itself, as before
+            warm['error'] = '%s: %s' % (type(error).__name__, error)
+        self.log('classroom %s: warmed for the block workers: %s' % (e['day'], json.dumps(warm, default=str)))
         ready, waited, why = K._fork_ready()
         context = 'fork' if ready else 'spawn'
         pool = CF.ProcessPoolExecutor(max_workers=workers, mp_context=MP.get_context(context))
