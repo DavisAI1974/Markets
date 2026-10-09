@@ -52,7 +52,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(BOX))
 SCHEMA = 'FRANKIE_EXPERIMENT_CLASSROOM_RECEIPT_V2'
 MODEL_IDENTITY = "Frankie's code (computed; no model)"
-STOP_POLL_SECONDS = 1.0   # the lane stop file is polled at most this often (SIGTERM is immediate)
+STOP_WATCH = 'inotify on the stop file\'s directory (frankie_box_wake), no poll interval'
 BRAIN_PUBLICATION_SCHEMA = 'FRANKIE_CLASSROOM_BRAIN_PUBLICATION_V1'
 
 
@@ -532,23 +532,48 @@ def _owner_sigterm(requested, owner):
     return handler
 
 
+def _watch_stop_file(stop_file):
+    """[latched]: becomes [True] the instant stop_file exists. A daemon thread arms a frankie_box_wake.Waiter on the
+    file's directory FIRST, then checks the file, then blocks until that directory changes, and checks again (a wake
+    is a hint, never the condition); no interval anywhere (off a Linux box the Waiter's own one-second fallback)."""
+    import threading
+    import frankie_box_wake as WAKE
+    flag, path = [False], Path(stop_file)
+
+    def watch():
+        waiter = WAKE.Waiter([path.parent])
+        try:
+            while not path.exists():
+                waiter.fired.clear()
+                waiter.wait()
+            flag[0] = True
+        finally:
+            waiter.close()
+    if path.exists():
+        flag[0] = True
+        return flag
+    threading.Thread(target=watch, name='classroom-stop-file', daemon=True).start()
+    return flag
+
+
 def run(day, calculations, teacher_rows, previous, brain, day_external, day_external_sha256):
     requested = [False]
     previous_handler = signal.signal(signal.SIGTERM, _owner_sigterm(requested, os.getpid()))
     stop_file = os.environ.get('FRANKIE_LANE_STOP_FILE')
-    # Efficiency (Greg, 2026-10-07): the stop file is polled at most once per STOP_POLL_SECONDS, not once per
-    # picture (one stat call per picture is millions of syscalls on a big day); SIGTERM is immediate. A stop is
-    # honoured within one poll interval plus the operation in hand. Recorded on the receipt (received.stop_polling).
-    polled = [float('-inf'), False]
+    # Event-driven (Greg, 2026-10-09: no coded wait times): the stop file is not polled. A watcher thread per process
+    # blocks on inotify on the stop file's directory (frankie_box_wake) and latches the request the instant the file
+    # lands; save_requested() reads that flag at the same boundaries the poll fed (no syscall per picture). SIGTERM is
+    # immediate. Recorded on the receipt (received.stop_polling).
+    watches = {}
     def save_requested():
         if requested[0]:
             return True
         if not stop_file:
             return False
-        now = time.monotonic()
-        if now - polled[0] >= STOP_POLL_SECONDS:
-            polled[0], polled[1] = now, Path(stop_file).exists()
-        return polled[1]
+        flag = watches.get(os.getpid())
+        if flag is None:                         # first boundary in this process (a forked child starts its own watch)
+            flag = watches[os.getpid()] = _watch_stop_file(stop_file)
+        return flag[0]
     attempt = dict(directory=None, received=None, timings=None, phases=None, stage='opening', progress=None)
     try:
         return _run(day, calculations, teacher_rows, previous, brain, day_external, day_external_sha256,
@@ -789,7 +814,7 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         journal_witness=journal_witness, shared_market_disposition=shared_market_disposition,
         teacher_shared_read=teacher_shared_read,
         stop_polling=dict(signal='SIGTERM immediate', stop_file=os.environ.get('FRANKIE_LANE_STOP_FILE'),
-                          poll_seconds=STOP_POLL_SECONDS,
+                          watch=STOP_WATCH,
                           forked_children=('SIGTERM ends a process forked from the classroom (side tasks, pinned pool '
                                            'workers): a pool terminate() is never caught as a save mark, so no join '
                                            'after terminate() can wait forever (_owner_sigterm)')),
