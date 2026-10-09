@@ -178,18 +178,19 @@ case "$ACTION" in
       -E HOME="$HOME" -E PYTHONDONTWRITEBYTECODE=1 -E PYTHONNOUSERSITE=1 -E PYTHONPATH="$CODE_ROOT" -E CPU_CONTROLLER_UNIT="$UNIT" \
       "$PY" -B "$CONTROLLER" --action loop --commit "$MARKETS_SHA" --budget-minutes 0 --fallback-route worker_box "$@"
     echo "controller of $RUN started as unit $UNIT, log $LOG, state $STATE"
-    sleep 10
+    # 2026-10-09: no fixed 10 s wait; the unit's state is read at once (an active unit = started; its outcome is on its
+    # log and controller.json); a unit that already ended is judged by its outcome as before
     if ! systemctl is-active "$UNIT"; then
       ENDED="$(find "$STATE" -maxdepth 1 -name 'outcome-*.json' -newer "$MARK" | head -n 1)"
       rm -f "$MARK"
       if [ -n "$ENDED" ]; then
-        echo "the controller ended on its own within 10 s; its outcome $ENDED:"; cat "$ENDED"; tail -n 20 "$LOG"
+        echo "the controller ended on its own at once; its outcome $ENDED:"; cat "$ENDED"; tail -n 20 "$LOG"
         # no_remaining_work is a clean end (nothing for the Linux lane); anything else means the start did not take
         OUTCOME="$("$PY" -c 'import json,sys; print(json.load(open(sys.argv[1])).get("outcome") or "")' "$ENDED" 2>/dev/null)"
         [ "$OUTCOME" = no_remaining_work ] && exit 0
         echo "the start did not take (outcome $OUTCOME); read the outcome and the log above" >&2; exit 3
       fi
-      echo "the unit is not active 10 s after start and wrote no outcome; log tail:"; tail -n 40 "$LOG"; exit 3
+      echo "the unit is not active after start and wrote no outcome; log tail:"; tail -n 40 "$LOG"; exit 3
     fi
     rm -f "$MARK"
     tail -n 20 "$LOG"
