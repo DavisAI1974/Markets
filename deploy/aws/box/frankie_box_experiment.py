@@ -4965,7 +4965,8 @@ class Run:
                 self.log('teacher knowledge %s: %s' % (day, producer_note))
             reused = self.teacher_entry_reuse(day, rows_path, source_sha, path)
             if reused is not None:
-                return dict(reused, source_basis=source_basis, producer_note=producer_note)
+                return dict(reused, source_basis=source_basis, producer_note=producer_note,
+                            teacher_account=self.teacher_account_entry(day, rows_path))
         else:
             # the rows streamed one at a time with only the fields the key reads (frankie_box_teacher_rows); the
             # snapshot hash is computed on the same stream over the file's own bytes (the same check, never a whole load)
@@ -5003,7 +5004,23 @@ class Run:
         # instead of declining it as different knowledge. The label stays in the step receipt (days=[... source]).
         out = self.brain_stage(day, 'teacher', [rows_path, path],
                                summary=dict(rows=str(rows_path)), inline_limit=path.stat().st_size)
-        return dict(out, source_basis=source_basis, producer_note=producer_note) if isinstance(out, dict) else out
+        account = self.teacher_account_entry(day, rows_path)
+        return (dict(out, source_basis=source_basis, producer_note=producer_note, teacher_account=account)
+                if isinstance(out, dict) else out)
+
+    def teacher_account_entry(self, day, rows_path):
+        """The teacher's own account for Frankie (Greg, 2026-10-09): teacher-account.json (its receipt's account),
+        teacher-account.md (its account rendered as the TEACHER REPORT renders it, with its findings) and
+        teacher-findings.json, written beside the rows (frankie_box_teacher_findings.publish) and filed as the brain entry
+        <day>-teacher-account: small files inline as content, a large one by its pin (the brain's size rule); the
+        per-event differences stay in their file, named inside. A failure is recorded, never the day's."""
+        try:
+            import frankie_box_teacher_findings as TF
+            sources = [p for p in TF.publish(Path(rows_path).parent, day) if Path(p).is_file()]
+            return self.brain_stage(day, 'teacher-account', sources, summary=dict(rows=str(rows_path)))
+        except Exception as error:  # noqa: BLE001 - the account is added knowledge; its failure is listed
+            self.log('teacher account %s: not filed (%s: %s)' % (day, type(error).__name__, error))
+            return dict(status='failed', reason='%s: %s' % (type(error).__name__, error))
 
     @staticmethod
     def teacher_rows_sha256(rows_path):

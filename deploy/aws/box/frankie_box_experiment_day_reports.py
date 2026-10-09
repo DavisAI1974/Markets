@@ -879,6 +879,22 @@ def teacher_report(d, number, revision, run, cls, files):
     L += ['The teacher\'s own account of the day, in its words: every sentence is a recorded number or a listed name of '
           'the teacher receipt\'s account, and the field it came from is given in brackets.', '']
     L += teacher_account_lines(d)
+    import frankie_box_teacher_findings as TF
+    teacher = getattr(d, 'teacher', None)
+    rows_dir = Path(d.receipt.get('teacher_rows')) if d.receipt.get('teacher_rows') else None
+    if rows_dir is not None and teacher is not None:
+        try:
+            findings = TF.load_or_compute(rows_dir)
+            pairs, pairs_why = TF.correlations(rows_dir)
+            L += TF.finding_lines(findings, pairs, pairs_why, teacher.get('account'), teacher,
+                                  str(rows_dir / TF.FINDINGS_FILE), (getattr(d, 'teacher_pin', None) or {}).get('path')
+                                  or 'teacher receipt.json')
+        except Exception as error:  # noqa: BLE001 - the report states it; the other sections stand
+            L += ['## What I found: discovery and correlations', '',
+                  '- Not rendered: %s: %s.' % (type(error).__name__, error), '']
+    else:
+        L += ['## What I found: discovery and correlations', '', '- Not recorded by my step: %s.' % (
+            'the classroom receipt names no teacher rows' if rows_dir is None else getattr(d, 'teacher_why', None)), '']
     import frankie_box_piece_accounts as PA
     acc = PA.Account()
     source = (getattr(d, 'teacher_pin', None) or {}).get('path') or 'teacher receipt.json'
