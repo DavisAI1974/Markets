@@ -1699,152 +1699,279 @@ def bounded_pool_close(pool, seconds=30.0):
     return record
 
 
-_JOURNAL = ' journal'        # the hasher's key for the sealed journal (no layer name starts with a space)
-
-
-def _early_pins(identity):
-    """{name: pin} hashed before the shared reader opens, in hand-out order: the sealed journal first (the reader's
-    constructor waits for it), then the non-native layer spools and the attached day file largest first. The native
-    ledgers wait: the reader's own selected_files check hashes them whole in this process. Anything malformed is left to
-    the reader and the verdict loop, which raise exactly as before; nothing is raised here."""
-    out = {}
+# ---- the pins before the read: one pass over the data (Greg, 2026-10-09) ------------------------------------------
+# Every byte this context names was read and receipted by an earlier step: the ingest hashed the sealed journal whole
+# beside its drain and left its FRANKIE_FILE_CLAIM_V2 row in file-claims.jsonl beside the receipt; the ROOT witnessed
+# every layer spool and native ledger whole and left their rows in R/work/file-claims.jsonl. The former _PinHasher
+# hashed the journal and every non-native layer whole again in every process that built a context (~521 GB on a2: the
+# frames spool alone 496.7 GB), before the reuse check. Now: the journal is taken from the ingest claim when it holds
+# (stat, filesystem and last 64 KiB unchanged; one 64 KiB read) and handed to the reader as its input_witness; each
+# layer spool from the ROOT's claim when it holds; only a pin with no holding claim is read whole (pinned lane threads),
+# and that read, equal to its pin with the stat unchanged across it, appends its claim for the next consumer
+# (frankie_box_experiment_native._whole_then_claim). The native ledgers stay with the reader's selected_files (claim
+# or one whole read) and the external day file with the reader's _Publications (read whole and checked against its
+# pin when it is decoded): neither is read a second time here. FRANKIE_ROOT_LEGACY_REUSE_CHECK=full (or
+# FRANKIE_ROOT_NATIVE_REUSE_CHECK=full) restores the whole reads. A difference is still an integrity error.
+def _native():
     try:
-        journal = identity.get('journal')
-        if isinstance(journal, dict) and isinstance(journal.get('path'), str):
-            out[_JOURNAL] = journal
-        sources = dict(identity.get('sources') or {})
-        if (identity.get('external') or {}).get('status') == 'attached':
-            sources['external'] = identity['external']
-        rest = []
-        for name, pin in sources.items():
-            if not str(name).startswith('native.') and isinstance(pin, dict) and isinstance(pin.get('path'), str):
-                size = pin.get('bytes')
-                rest.append((-(size if type(size) is int else 0), str(name), pin))
-        out.update((name, pin) for _, name, pin in sorted(rest, key=lambda item: item[:2]))
-    except Exception:  # noqa: BLE001 - the reader and the verdict loop raise the integrity error in their order
-        pass
-    return out
+        import frankie_box_experiment_native as N
+    except ImportError:
+        from deploy.aws.box import frankie_box_experiment_native as N
+    return N
 
 
-class _PinHasher:
-    """Whole-file sha256 of pinned files on threads pinned one per lane CPU in physical-core order (hashlib and file
-    reads release the GIL; two threads on a one-CPU slot so a disk wait overlaps a hash). Values are what
-    frankie_box_durable.witness returns ({bytes, sha256} of every byte), read in larger blocks; each file's outcome is
-    (True, witness) or (False, the exception), raised by the caller in its own order. Placement only; never a value."""
+def _claims_in(directory):
+    """{resolved path: claim row} of <directory>/file-claims.jsonl; {} when absent or unreadable (a claim is a hint)."""
+    try:
+        return _native()._session_claims()._load_file_claims(directory)
+    except Exception:  # noqa: BLE001 - no claims: the file is read whole
+        return {}
 
-    BLOCK = 8 << 20
 
-    def __init__(self, placement):
-        import queue
-        import threading
-        self.placement, self.queue, self.halt = placement, queue.Queue(), threading.Event()
-        self.seen, self.done, self.stats, self.paths, self.threads = {}, {}, {}, {}, []
-        self.record = None
+def _journal_witness_by_claim(pin, root):
+    """(input_witness or None, basis) for the sealed journal: the ingest's claim row (file-claims.jsonl beside the
+    journal and its ingestion receipt), else a ROOT claim row naming it, when one names the pin's bytes and sha256 and
+    still holds; the witness carries the file's device and inode so the reader binds it to THE pinned file
+    (_caller_witness). None: the reader hashes the journal itself (one whole read). Never raises."""
+    N = _native()
+    try:
+        if N._claims_mode() == 'full':
+            return None, 'FRANKIE_ROOT_LEGACY_REUSE_CHECK=full: the reader hashes the journal whole'
+        if not isinstance(pin, dict) or not isinstance(pin.get('path'), str):
+            return None, 'no journal pin in the identity: the reader hashes the journal itself'
+        path = Path(pin['path'])
+        why = None
+        for directory in (path.parent, Path(root) / 'work'):
+            held, why = N._claim_basis(path, pin, _claims_in(directory), directory)
+            if held is not None:
+                stat = path.stat()
+                return (dict(path=str(path), bytes=pin['bytes'], sha256=pin['sha256'], dev=stat.st_dev, ino=stat.st_ino),
+                        'by claim (%s): %s' % (directory / 'file-claims.jsonl', held))
+        return None, 'no holding claim (%s): the reader hashes the journal whole' % why
+    except Exception as error:  # noqa: BLE001 - a claim is a hint: without one the reader hashes the journal
+        return None, 'claim not taken (%s: %s): the reader hashes the journal whole' % (type(error).__name__, error)
 
-    def _put(self, name, pin):
-        import threading
-        if name in self.done:
-            return
-        self.done[name] = threading.Event()
-        if not isinstance(pin, dict) or 'path' not in pin:
-            # a malformed pin: the same lookup error the serial check raised, in the caller's pin order
-            try:
-                pin['path']
-            except BaseException as error:  # noqa: BLE001
-                self.seen[name] = (False, error)
+
+def _layer_witnesses(root, pins, record):
+    """{name: {bytes, sha256}} for the non-native layer spools: the ROOT's claim row where it holds (no read), else one
+    whole read per file on pinned lane threads (two or more files) that appends its claim when it equals the pin.
+    record (the placement dict) gets each pin's basis. Raises the read's own error, in the pin order."""
+    N = _native()
+    work = Path(root) / 'work'
+    full = N._claims_mode() == 'full'
+    claims = {} if full else _claims_in(work)
+    seen, whole, bases = {}, [], {}
+    for name, pin in pins.items():
+        if not isinstance(pin, dict) or not isinstance(pin.get('path'), str):
+            raise ValueError('malformed pin for %s' % name)
+        held, why = ((None, 'FRANKIE_ROOT_LEGACY_REUSE_CHECK=full') if full
+                     else N._claim_basis(pin['path'], pin, claims, work))
+        if held is not None:
+            seen[name], bases[name] = {k: pin[k] for k in ('bytes', 'sha256')}, 'by claim: ' + held
+        else:
+            whole.append(name)
+            bases[name] = 'read whole: ' + why
+    record['pin_witness'] = dict(by_claim=sorted(seen), read_whole=list(whole), basis=bases,
+                                 not_here=dict(journal='the ingest claim handed to the reader, or the reader\'s own read',
+                                               native='the reader\'s selected_files (claim or one whole read)',
+                                               external='the reader\'s _Publications (read whole against its pin)'))
+    if len(whole) == 1:
+        name = whole[0]
+        seen[name] = N._whole_then_claim(pins[name]['path'], pins[name], work)
+    elif whole:
+        import frankie_box_lane_pin as LP
+        lane = LP.lane_cpus()
+        pool = LP.executor('thread', max(1, min(len(whole), len(lane))), lane)
+        try:
+            futures = {name: pool.submit(N._whole_then_claim, pins[name]['path'], pins[name], work) for name in whole}
+            for name in whole:
+                seen[name] = futures[name].result()
+        finally:
+            pool.shutdown(wait=True)
+    return seen
+
+
+def _pinned_sources(identity):
+    pinned = dict(identity.get('sources') or {})
+    if (identity.get('external') or {}).get('status') == 'attached':
+        pinned['external'] = identity['external']
+    return pinned
+
+
+def _scope(day, source_hash, as_of, through_cursor, ingestion):
+    record_count = ingestion['record_count']
+    if ingestion['source_prefix_hash'] != source_hash:
+        raise ValueError('adviser cutoff names another sealed source')
+    if type(record_count) is not int or not through_cursor < record_count:
+        raise ValueError('adviser cutoff lies outside the sealed source record count')
+    return dict(day=str(day), source_hash=source_hash, as_of=as_of, through_cursor=through_cursor,
+                record_count=record_count,
+                position=('last_sealed_input' if through_cursor == record_count - 1 else 'before_sealed_source_end'),
+                origin='the measurement\'s own explicit source scope; no target-derived selection')
+
+
+def cutoff_scope(identity, *, day, source_hash, as_of, through_cursor):
+    """The scope a context of this identity and cutoff carries, from the identity's own small pinned records
+    (source-binding.json, then its ingestion receipt pin), with the constructor's refusals; no journal, layer or ledger
+    byte is read. A retained context is loaded against it (load_context) BEFORE any reader is opened."""
+    from frankie_box_market_timeline import _json
+    if type(as_of) is not int or type(through_cursor) is not int or through_cursor < 0:
+        raise ValueError('adviser cutoff requires the original explicit integer as_of and through_cursor')
+    source = _json(identity['source_binding'])
+    return _scope(day, source_hash, as_of, through_cursor, _json(source['ingestion_receipt']))
+
+
+TEACHER_CONTEXT_NAME = 'shared-market-context.json'   # the teacher-kept cutoff context, beside its receipt.json
+
+
+class CutoffTracker:
+    """The cutoff selection of one ordered walk of the shared pictures, fed one picture at a time (read() below, or the
+    teacher's own full walk of the same reader: one pass, 2026-10-09). see(picture) returns True when nothing after
+    the cutoff is needed (a cutoff before the sealed end); at the last sealed INPUT it never stops, so the walk is
+    exhausted for the sealed-count check exactly as read() did. strict=False (the teacher) records the first error on
+    `.error` instead of raising, and walk_context then returns no context: the teacher's walk is never refused for it.
+    Holds only plain values and copied pictures: picklable with a walk's save point."""
+
+    def __init__(self, through_cursor, record_count, *, strict=True):
+        self.wanted, self.strict, self.error = through_cursor, strict, None
+        self.exhaust = through_cursor == record_count - 1
+        self.selected, self.matched, self.cursorless, self.presented = None, 0, 0, 0
+        # The thinner tail (core request, 2026-10-07): the last instant at or before the cutoff that carries an
+        # original APPLIED operand, and every instant after it.
+        self.last_applied, self.tail_after = None, {}
+
+    def _refuse(self, message):
+        if self.strict:
+            raise ValueError(message)
+        if self.error is None:
+            self.error = message
+        return False
+
+    def see(self, picture):
+        if self.error is not None:
+            return False
+        self.presented += 1
+        wanted = self.wanted
+        cursor = picture['at']['adapter_cursor']
+        if type(cursor) is not int:
+            self.cursorless += 1
+            return False
+        if cursor > wanted and self.selected is None:
+            return self._refuse('sealed source has no INPUT at the adviser cutoff adapter cursor %d (%d INPUT envelopes '
+                                'without an adapter cursor seen)' % (wanted, self.cursorless))
+        if cursor <= wanted:
+            if picture['original_applied'] is not None:
+                # the reference only (the reader builds a fresh `at` per picture and never touches it after the
+                # yield); copied once by walk_context, not at every applied instant on the serial path
+                self.last_applied = (picture['at'], picture['source_status'])
+                self.tail_after = {}
             else:
-                self.seen[name] = (False, TypeError('malformed pin for %s' % name))
-            self.done[name].set()
-            return
-        self.paths[name] = pin['path']
-        self.record['files'] += 1
-        self.record['bytes'] += pin['bytes'] if type(pin.get('bytes')) is int else 0
-        self.queue.put(name)
+                status = picture['source_status']
+                self.tail_after[status] = self.tail_after.get(status, 0) + 1
+        if cursor == wanted:
+            self.matched += 1
+            if self.matched > 1:
+                return self._refuse('adviser cutoff adapter cursor %d names more than one original INPUT' % wanted)
+            # Any disposition is kept: applied, failed, unpaired or unknown. The instant is the teacher's own scope
+            # boundary and is never rejected.
+            self.selected = copy.deepcopy(picture)
+            return not self.exhaust
+        return False
 
-    def _run(self, cpu):
-        import hashlib
-        import os
-        import threading
-        if cpu is not None:
-            try:
-                os.sched_setaffinity(threading.get_native_id(), {cpu})
-            except (OSError, ValueError) as error:
-                self.record.setdefault('affinity_fallbacks', []).append(dict(cpu=cpu, error=repr(error)))
-        while True:
-            name = self.queue.get()
-            if name is None:
-                return
-            try:
-                if self.halt.is_set():
-                    raise RuntimeError('pin hashing stopped: the reader raised before this pin was needed')
-                hashed, size = hashlib.sha256(), 0
-                with open(self.paths[name], 'rb') as source:
-                    stat = os.fstat(source.fileno())
-                    for block in iter(lambda: source.read(self.BLOCK), b''):
-                        if self.halt.is_set():
-                            raise RuntimeError('pin hashing stopped: the reader raised before this pin was needed')
-                        hashed.update(block)
-                        size += len(block)
-                self.stats[name] = (stat.st_dev, stat.st_ino)
-                self.seen[name] = (True, dict(bytes=size, sha256=hashed.hexdigest()))
-            except BaseException as error:  # noqa: BLE001 - raised in pin order by the caller
-                self.seen[name] = (False, error)
-            finally:
-                self.done[name].set()
 
-    def start(self, early):
-        import threading
-        from time import perf_counter
-        ordered, _, basis = core_order(lane_cpus())
-        threads = max(1, min(max(2, len(ordered)), len(early) + 2))
-        cpus = [ordered[i % len(ordered)] for i in range(threads)] if ordered else None
-        self.record = dict(threads=threads, cpus=cpus, placement_basis=basis, files=0, bytes=0,
-                           order='the sealed journal first (the reader waits for it), then the layer spools largest first, '
-                                 'beside the reader\'s own constructor; verdicts taken in the pin order',
-                           before_reader=[n.strip() for n in early], verified_by_reader=[], started=perf_counter())
-        self.placement['pin_hashing'] = self.record
-        for name, pin in early.items():
-            self._put(name, pin)
-        self.threads = [threading.Thread(target=self._run, args=(cpus[i] if cpus else None,),
-                                         name='adviser-pin-sha256-%d' % i, daemon=True) for i in range(threads)]
-        for thread in self.threads:
-            thread.start()
+def _coverage(picture, scope, reader):
+    """What is present and what is thin at this instant, from the picture alone; nothing invented."""
+    at = picture['at']
+    boundary = at['input_cursor']
+    last_observed = {}
+    for update in picture['last_observed_state']:
+        age = ('observed_at_this_boundary' if update.get('input_cursor') == boundary
+               else 'previously_known_last_observed_value')
+        last_observed.setdefault(update['source'], []).append(dict(
+            instrument_id=update.get('instrument_id'), input_cursor=update.get('input_cursor'),
+            known_at_ns=update.get('known_at_ns'), age=age))
+    updates = {}
+    for update in picture['updates']:
+        updates[update['source']] = updates.get(update['source'], 0) + 1
+    clock, frontier, as_of = at['ts_recv_ns'], at['publication_frontier_ns'], scope['as_of']
+    clocks = dict(
+        receive_clock='exact' if type(clock) is int else 'no_exact_receive_clock_at_cutoff_input',
+        raw_receive_clock_present=at.get('raw_receive_clock') is not None,
+        receive_clock_vs_declared_as_of=(None if type(clock) is not int else
+                                         'at_or_before' if clock <= as_of else 'after_declared_row_as_of'),
+        publication_frontier=('exact' if type(frontier) is int else 'no_exact_receive_clock_observed_yet'),
+        publication_frontier_vs_declared_as_of=(None if type(frontier) is not int else
+                                                'at_or_before' if frontier <= as_of else 'after_declared_row_as_of'),
+        basis='through_cursor is the binding scope; as_of is the measurement\'s declared last row clock and is '
+              'carried, not used to move the cutoff')
+    layers = getattr(reader, 'layers', None)
+    return dict(rule=MISSING_COVERAGE_RULE, source_status=picture['source_status'],
+                unpaired_outcomes=picture['unpaired_outcomes'],
+                original_applied_present=picture['original_applied'] is not None,
+                core_instant_coverage=picture.get('coverage', 'not reported by this core version'),
+                layers_known_to_reader=(layers if layers is not None else 'not reported by this core version'),
+                absent_layers=getattr(reader, 'absent_layers', 'not reported by this core version'),
+                updates_at_boundary=updates, last_observed=last_observed,
+                active_instrument_sources=sorted({u['source'] for u in picture['active_instrument_state']}),
+                invalidated_state=copy.deepcopy(picture['invalidated_state']),
+                published_rows=len(picture['published_state']), clocks=clocks,
+                interpretation='a missing or stale part makes this instant thinner, never absent; a previously known '
+                               'value is named as such and is not a new observation; a failed or unpaired outcome is '
+                               'carried as its original disposition, not a measurement')
 
-    def journal_witness(self):
-        """{path, bytes, sha256, dev, ino} this process measured on the journal, for the reader's input_witness (it
-        stands only when it equals the reader's pin and names the pinned file; otherwise the reader hashes it itself);
-        None when the journal was not measured here."""
-        from time import perf_counter
-        if _JOURNAL not in self.done:
-            self.record['journal'] = 'not measured here (no journal path in the identity); the reader hashes it itself'
-            return None
-        self.done[_JOURNAL].wait()
-        ok, value = self.seen[_JOURNAL]
-        self.record['journal_seconds'] = round(perf_counter() - self.record['started'], 3)
-        if not ok:
-            self.record['journal'] = 'measurement failed here (%s); the reader hashes it itself' % type(value).__name__
-            return None
-        dev, ino = self.stats[_JOURNAL]
-        self.record['journal'] = 'measured here; handed to the reader as its input_witness'
-        return dict(path=self.paths[_JOURNAL], dev=dev, ino=ino, **value)
 
-    def finish(self, pins, by_reader):
-        """{name: (ok, witness | exception)} for every pin in `pins` (queued now if not yet), all threads joined."""
-        from time import perf_counter
-        self.record['verified_by_reader'] = list(by_reader)
-        for name, pin in pins.items():
-            self._put(name, pin)
-        for _ in self.threads:
-            self.queue.put(None)
-        for thread in self.threads:
-            thread.join()
-        self.record['seconds'] = round(perf_counter() - self.record.pop('started'), 3)
-        return {name: self.seen.get(name, (False, RuntimeError('pin %s was not hashed' % name))) for name in pins}
+PINS_BASIS = ('every pinned byte accounted for before the read, once: the sealed journal and the layer spools by their '
+              'FRANKIE_FILE_CLAIM rows (stat, filesystem and last 64 KiB unchanged) or one whole read, the native '
+              'ledgers by the reader\'s selected_files, the external day file read whole against its pin by the reader; '
+              'row identity/clock checks on every consumed row')
 
-    def stop(self):
-        self.halt.set()
-        for _ in self.threads:
-            self.queue.put(None)
+
+def walk_context(reader, scope, tracker, *, pins_verified=None):
+    """The SCHEMA context of the cutoff a CutoffTracker selected on a walk of `reader` (a SharedMarketTimeline) that has
+    ended: read()'s own assembly, and the teacher's (one pass: the teacher keeps the cutoff context of its own full
+    walk as <teacher out>/TEACHER_CONTEXT_NAME, so the exchange and Jev load it instead of a third walk). Raises the
+    selection's error for a strict tracker; a non-strict tracker with an error or no selection raises ValueError too
+    (the teacher catches it and writes nothing)."""
+    from frankie_box_classroom_code import _exact_market_text
+    if tracker.error is not None:
+        raise ValueError(tracker.error)
+    selected, wanted, exhaust = tracker.selected, tracker.wanted, tracker.exhaust
+    if selected is None:
+        raise ValueError('sealed source ended before the adviser cutoff adapter cursor %d' % wanted)
+    if pins_verified is None:
+        pins_verified = sorted(['journal', *_pinned_sources(reader.identity)])
+    last_applied = tracker.last_applied
+    tail = dict(cutoff_input_has_applied_operand=selected['original_applied'] is not None,
+                last_applied_at_or_before_cutoff=(None if last_applied is None else
+                                                  dict(at=copy.deepcopy(last_applied[0]), source_status=last_applied[1])),
+                inputs_after_last_applied_through_cutoff=dict(tracker.tail_after),
+                basis='the cutoff instant is the picture; its last-observed states come from earlier exact '
+                      'boundaries; an absent APPLIED operand at or after the last applied instant blocks only '
+                      'the arithmetic that needs it, never this instant or its unrelated evidence')
+    report = copy.deepcopy(reader.report)
+    read = dict(stopped='source_exhausted' if exhaust else 'at_cutoff_input',
+                source_exhausted=bool(exhaust and report.get('complete') is True),
+                core_report_complete=report.get('complete'),
+                pins_verified=pins_verified,
+                pins_basis=PINS_BASIS,
+                inputs_presented_through_cutoff=report.get('presented_inputs'),
+                inputs_without_adapter_cursor_seen=tracker.cursorless,
+                after_cutoff=('the cutoff is the last sealed INPUT; the journal was exhausted for the sealed-count '
+                              'check and no later picture exists' if exhaust else
+                              'no picture after the cutoff was decoded or retained; report dispositions cover the '
+                              'source through the cutoff only'),
+                rule=MISSING_COVERAGE_RULE,
+                not_implied='all-layer coverage or any consumer arithmetic; see coverage')
+    text = _exact_market_text(selected)
+    return dict(schema=SCHEMA, identity=reader.identity, scope=scope,
+                at=copy.deepcopy(selected['at']), picture_text=text, picture_sha256=_sha256(text.encode()),
+                picture_render=render_stacks(text),
+                all_99=all_99_coverage(selected, reader=reader),
+                coverage=dict(_coverage(selected, scope, reader), tail=tail), read=read, report=report,
+                reader=dict(module='frankie_box_market_timeline', interface='SharedMarketTimeline.iter_pictures',
+                            calculations=str(Path(reader.identity['calculations']['path']).parent), day=scope['day'],
+                            identity=reader.identity),
+                use=USE, limit=LIMIT)
 
 
 class AdviserMarketContext:
@@ -1859,105 +1986,31 @@ class AdviserMarketContext:
         # pure overhead). The reader's own contract: same rows, same order, same ordinals, same errors for any count.
         self.plan = reader_plan()
         self.placement = dict(reader=dict(self.plan, former_fixed_workers=WORKERS))
-        # Every pinned layer is checked whole before the read, so a read that stops exactly at
-        # the cutoff loses no byte integrity. Row identities and clocks are checked by the core on
-        # every consumed row. A mismatch here is corruption, never thin coverage.
-        # The whole-file hashes start BEFORE the shared reader opens (the Sept-29 pattern, item 4: independent pieces side
-        # by side; 2026-10-07 night): the sealed journal first (the reader takes this process's own measurement of it
-        # through its input_witness contract instead of re-reading tens of GB serially in its constructor), the layer
-        # spools largest first beside it, while the reader's constructor runs its own serial native-artifact checks.
-        # The verdicts are still taken after the reader's own checks and IN THE PIN ORDER, so the first error raised is
-        # the one the serial order raised. Every byte of every pin is hashed in this process: the native ledgers by the
-        # reader's selected_files check (same path, same pin, this process; not hashed a second time here), every other
-        # pin here. Skipping a re-hash on an unchanged stat across processes stays Greg's open call (not done).
-        hasher = _PinHasher(self.placement)
-        try:
-            early = _early_pins(identity)
-            hasher.start(early)
-            journal = hasher.journal_witness()
-            self.reader = SharedMarketTimeline(self.root, day=self.day, workers=self.plan['workers'], input_witness=journal)
-            self._journal_witness = journal if (self.reader.report.get('input_verification') or {}).get('re_read') is False \
-                else None
-            if self.reader.identity != identity:
-                raise ValueError('adviser source differs from the shared market reader identity')
-            ingestion = _json(self.reader.source['ingestion_receipt'])
-            if ingestion['source_prefix_hash'] != source_hash:
-                raise ValueError('adviser cutoff names another sealed source')
-            record_count = ingestion['record_count']
-            if type(record_count) is not int or not through_cursor < record_count:
-                raise ValueError('adviser cutoff lies outside the sealed source record count')
-            pinned = dict(identity['sources'])
-            if (identity.get('external') or {}).get('status') == 'attached':
-                pinned['external'] = identity['external']
-            by_reader = [name for name, pin in pinned.items()
-                         if name.startswith('native.') and (self.reader.layers.get(name) or {}).get('source') == pin]
-            seen = hasher.finish({name: pin for name, pin in pinned.items() if name not in by_reader}, by_reader)
-        except BaseException:
-            hasher.stop()
-            raise
-        for name, pin in pinned.items():
-            if name in by_reader:
-                continue                 # measured whole by the reader's selected_files check in this process
-            ok, value = seen[name]
-            if not ok:
-                raise value
-            if value != {k: pin[k] for k in ('bytes', 'sha256')}:
+        # Every pinned byte is accounted for before the read, so a read that stops exactly at the cutoff loses no byte
+        # integrity; row identities and clocks are checked by the core on every consumed row; a mismatch is corruption,
+        # never thin coverage. One pass (2026-10-09; see above): the journal and the layer spools by their claims (a
+        # pin with no holding claim is read whole once and leaves its claim), the native ledgers by the reader's
+        # selected_files, the external day file by the reader's own decode against its pin. The layer pins are settled
+        # BEFORE the reader opens, so a claim appended by a whole read here is the one the reader's streams take.
+        pinned = _pinned_sources(identity)
+        layers = {name: pin for name, pin in pinned.items() if not name.startswith('native.') and name != 'external'}
+        seen = _layer_witnesses(self.root, layers, self.placement)
+        for name in layers:
+            if seen[name] != {k: layers[name][k] for k in ('bytes', 'sha256')}:
                 raise ValueError('pinned shared layer bytes differ from their source pin: ' + name)
+        journal, basis = _journal_witness_by_claim(identity.get('journal'), self.root)
+        self.placement['pin_witness']['journal'] = basis
+        self.reader = SharedMarketTimeline(self.root, day=self.day, workers=self.plan['workers'], input_witness=journal)
+        self._journal_witness = journal if (self.reader.report.get('input_verification') or {}).get('re_read') is False \
+            else None
+        if self.reader.identity != identity:
+            raise ValueError('adviser source differs from the shared market reader identity')
+        ingestion = _json(self.reader.source['ingestion_receipt'])
         self.pins_verified = sorted(['journal', *pinned])
-        self.scope = dict(day=self.day, source_hash=source_hash, as_of=as_of, through_cursor=through_cursor,
-                          record_count=record_count,
-                          position=('last_sealed_input' if through_cursor == record_count - 1
-                                    else 'before_sealed_source_end'),
-                          origin='the measurement\'s own explicit source scope; no target-derived selection')
-
-    def _coverage(self, picture):
-        """What is present and what is thin at this instant, from the picture alone; nothing invented."""
-        at = picture['at']
-        boundary = at['input_cursor']
-        last_observed = {}
-        for update in picture['last_observed_state']:
-            age = ('observed_at_this_boundary' if update.get('input_cursor') == boundary
-                   else 'previously_known_last_observed_value')
-            last_observed.setdefault(update['source'], []).append(dict(
-                instrument_id=update.get('instrument_id'), input_cursor=update.get('input_cursor'),
-                known_at_ns=update.get('known_at_ns'), age=age))
-        updates = {}
-        for update in picture['updates']:
-            updates[update['source']] = updates.get(update['source'], 0) + 1
-        clock, frontier, as_of = at['ts_recv_ns'], at['publication_frontier_ns'], self.scope['as_of']
-        clocks = dict(
-            receive_clock='exact' if type(clock) is int else 'no_exact_receive_clock_at_cutoff_input',
-            raw_receive_clock_present=at.get('raw_receive_clock') is not None,
-            receive_clock_vs_declared_as_of=(None if type(clock) is not int else
-                                             'at_or_before' if clock <= as_of else 'after_declared_row_as_of'),
-            publication_frontier=('exact' if type(frontier) is int else 'no_exact_receive_clock_observed_yet'),
-            publication_frontier_vs_declared_as_of=(None if type(frontier) is not int else
-                                                    'at_or_before' if frontier <= as_of else 'after_declared_row_as_of'),
-            basis='through_cursor is the binding scope; as_of is the measurement\'s declared last row clock and is '
-                  'carried, not used to move the cutoff')
-        layers = getattr(self.reader, 'layers', None)
-        return dict(rule=MISSING_COVERAGE_RULE, source_status=picture['source_status'],
-                    unpaired_outcomes=picture['unpaired_outcomes'],
-                    original_applied_present=picture['original_applied'] is not None,
-                    core_instant_coverage=picture.get('coverage', 'not reported by this core version'),
-                    layers_known_to_reader=(layers if layers is not None else 'not reported by this core version'),
-                    absent_layers=getattr(self.reader, 'absent_layers', 'not reported by this core version'),
-                    updates_at_boundary=updates, last_observed=last_observed,
-                    active_instrument_sources=sorted({u['source'] for u in picture['active_instrument_state']}),
-                    invalidated_state=copy.deepcopy(picture['invalidated_state']),
-                    published_rows=len(picture['published_state']), clocks=clocks,
-                    interpretation='a missing or stale part makes this instant thinner, never absent; a previously known '
-                                   'value is named as such and is not a new observation; a failed or unpaired outcome is '
-                                   'carried as its original disposition, not a measurement')
+        self.scope = _scope(self.day, source_hash, as_of, through_cursor, ingestion)
 
     def read(self, *, check_save=lambda: None):
-        from frankie_box_classroom_code import _exact_market_text
-        wanted = self.scope['through_cursor']
-        exhaust = self.scope['position'] == 'last_sealed_input'
-        selected, matched, cursorless = None, 0, 0
-        # The thinner tail (core request, 2026-10-07): the last instant at or before the
-        # cutoff that carries an original APPLIED operand, and every instant after it.
-        last_applied, tail_after = None, {}
+        tracker = CutoffTracker(self.scope['through_cursor'], self.scope['record_count'])
         # Placement (research item 4, 2026-10-07): the reader's pools are spawned from this thread under the reader set
         # (the lane without the consumer core's sibling), so its workers take every other lane CPU; once the first exact
         # instant has started every stream (each stream is advanced at every exact input), this thread, the ordered
@@ -1970,80 +2023,24 @@ class AdviserMarketContext:
         before = sorted(os.sched_getaffinity(0))
         narrowed = len(plan['reader_set']) > 1 and _set_affinity(plan['reader_set'], consumer, 'reader set')
         pinned_consumer = len(plan['reader_set']) <= 1
-        presented = 0
         stream = self.reader.iter_pictures()
         try:
             for item in stream:
                 check_save()
                 picture = item['picture']
-                presented += 1
                 if not pinned_consumer:
                     at = picture['at']
                     if all(type(at.get(k)) is int for k in ('input_cursor', 'instrument_id', 'ts_recv_ns')):
                         pinned_consumer = True
                         if _set_affinity([plan['consumer']], consumer, 'consumer core'):
-                            consumer['pinned_at_picture'] = presented
-                cursor = picture['at']['adapter_cursor']
-                if type(cursor) is not int:
-                    cursorless += 1
-                    continue
-                if cursor > wanted and selected is None:
-                    raise ValueError('sealed source has no INPUT at the adviser cutoff adapter cursor %d '
-                                     '(%d INPUT envelopes without an adapter cursor seen)' % (wanted, cursorless))
-                if cursor <= wanted:
-                    if picture['original_applied'] is not None:
-                        # the reference only (the reader builds a fresh `at` per picture and never touches it after
-                        # the yield); copied once after the walk, not at every applied instant on the serial path
-                        last_applied = (picture['at'], picture['source_status'])
-                        tail_after = {}
-                    else:
-                        status = picture['source_status']
-                        tail_after[status] = tail_after.get(status, 0) + 1
-                if cursor == wanted:
-                    matched += 1
-                    if matched > 1:
-                        raise ValueError('adviser cutoff adapter cursor %d names more than one original INPUT' % wanted)
-                    # Any disposition is kept: applied, failed, unpaired or unknown. The
-                    # instant is the teacher's own scope boundary and is never rejected.
-                    selected = copy.deepcopy(picture)
-                    if not exhaust:
-                        break      # nothing after the cutoff is decoded or retained
+                            consumer['pinned_at_picture'] = tracker.presented + 1
+                if tracker.see(picture):
+                    break      # nothing after the cutoff is decoded or retained
         finally:
             stream.close()
             if narrowed or consumer['pinned_at_picture'] is not None:
                 _set_affinity(before, consumer, 'restore')
-        if selected is None:
-            raise ValueError('sealed source ended before the adviser cutoff adapter cursor %d' % wanted)
-        tail = dict(cutoff_input_has_applied_operand=selected['original_applied'] is not None,
-                    last_applied_at_or_before_cutoff=(None if last_applied is None else
-                                                      dict(at=copy.deepcopy(last_applied[0]), source_status=last_applied[1])),
-                    inputs_after_last_applied_through_cutoff=tail_after,
-                    basis='the cutoff instant is the picture; its last-observed states come from earlier exact '
-                          'boundaries; an absent APPLIED operand at or after the last applied instant blocks only '
-                          'the arithmetic that needs it, never this instant or its unrelated evidence')
-        report = copy.deepcopy(self.reader.report)
-        read = dict(stopped='source_exhausted' if exhaust else 'at_cutoff_input',
-                    source_exhausted=bool(exhaust and report.get('complete') is True),
-                    core_report_complete=report.get('complete'),
-                    pins_verified=self.pins_verified,
-                    pins_basis='whole-file bytes/sha256 before the read; row identity/clock checks on every consumed row',
-                    inputs_presented_through_cutoff=report.get('presented_inputs'),
-                    inputs_without_adapter_cursor_seen=cursorless,
-                    after_cutoff=('the cutoff is the last sealed INPUT; the journal was exhausted for the sealed-count '
-                                  'check and no later picture exists' if exhaust else
-                                  'no picture after the cutoff was decoded or retained; report dispositions cover the '
-                                  'source through the cutoff only'),
-                    rule=MISSING_COVERAGE_RULE,
-                    not_implied='all-layer coverage or any consumer arithmetic; see coverage')
-        text = _exact_market_text(selected)
-        return dict(schema=SCHEMA, identity=self.reader.identity, scope=self.scope,
-                    at=copy.deepcopy(selected['at']), picture_text=text, picture_sha256=_sha256(text.encode()),
-                    picture_render=render_stacks(text),
-                    all_99=all_99_coverage(selected, reader=self.reader),
-                    coverage=dict(self._coverage(selected), tail=tail), read=read, report=report,
-                    reader=dict(module='frankie_box_market_timeline', interface='SharedMarketTimeline.iter_pictures',
-                                calculations=str(self.root), day=self.day, identity=self.reader.identity),
-                    use=USE, limit=LIMIT)
+        return walk_context(self.reader, self.scope, tracker, pins_verified=self.pins_verified)
 
     def iter_pictures(self):
         """Full exact owner-local history; never silently replace it with the cutoff snapshot."""
@@ -2123,14 +2120,36 @@ def from_teacher(rows_path, day, measure, *, retain=None, check_save=lambda: Non
     raw = Path(ingestion_pin['path']).read_bytes()
     if _sha256(raw) != ingestion_pin['sha256']:
         raise ValueError('shared teacher ingestion receipt changed')
-    reader = AdviserMarketContext(identity, day=day, source_hash=json.loads(raw)['source_prefix_hash'],
-                                  as_of=measure['as_of'], through_cursor=measure['through_cursor'])
-    if placement is not None:
-        placement.update(reader.placement)
+    source_hash = json.loads(raw)['source_prefix_hash']
+    # One pass (Greg, 2026-10-09): a retained context needs only the identity and the scope (the identity's own small
+    # pinned records), so it is checked BEFORE any reader opens or any pin is witnessed; then the context the teacher
+    # kept from its own full walk of the same reader (<teacher out>/TEACHER_CONTEXT_NAME, the same SCHEMA read()
+    # returns); only when neither is there does this piece open the reader and walk.
+    scope = cutoff_scope(identity, day=day, source_hash=source_hash, as_of=measure['as_of'],
+                         through_cursor=measure['through_cursor'])
     if retain is not None and Path(retain).is_file():
         if placement is not None:
             placement['context'] = 'reused the retained read of the same source and cutoff: %s' % retain
-        return load_context(retain, identity=reader.reader.identity, scope=reader.scope), None
+        return load_context(retain, identity=identity, scope=scope), None
+    kept = Path(rows_path).parent / TEACHER_CONTEXT_NAME
+    if kept.is_file():
+        try:
+            context = load_context(kept, identity=identity, scope=scope)
+        except (ValueError, OSError) as error:
+            if placement is not None:
+                placement['teacher_context'] = 'not reusable (%s: %s); this piece reads' % (type(error).__name__, error)
+        else:
+            if retain is not None:
+                retain_context(retain, context)
+            if placement is not None:
+                placement['context'] = 'the teacher kept this cutoff from its own walk of the same source: %s' % kept
+            return context, None
+    elif placement is not None:
+        placement['teacher_context'] = 'none kept at %s; this piece reads' % kept
+    reader = AdviserMarketContext(identity, day=day, source_hash=source_hash,
+                                  as_of=measure['as_of'], through_cursor=measure['through_cursor'])
+    if placement is not None:
+        placement.update(reader.placement)
     context = reader.read(check_save=check_save)
     if retain is not None:
         retain_context(retain, context)

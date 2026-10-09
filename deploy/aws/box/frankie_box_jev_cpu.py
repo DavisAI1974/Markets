@@ -498,8 +498,12 @@ def _run(request, request_path, out, brain, jev_brain):
         # never a Frankie target selection. Any disposition at that instant is carried, thinner.
         import frankie_box_adviser_market as AM
         bound = attachment['dipole_classroom']['binding']
-        adviser = AM.AdviserMarketContext(classroom['shared_market']['identity'], day=request['day'],
-            source_hash=bound['source_hash'], as_of=bound['as_of'], through_cursor=bound['through_cursor'])
+        # One pass (2026-10-09): the reuse checks need only the identity and the scope (AM.cutoff_scope reads the
+        # identity's two small pinned records); the reader is opened, and its pins witnessed, only for a fresh read
+        shared_identity = classroom['shared_market']['identity']
+        scope = AM.cutoff_scope(shared_identity, day=request['day'], source_hash=bound['source_hash'],
+                                as_of=bound['as_of'], through_cursor=bound['through_cursor'])
+        adviser = None
         context_path = out / 'shared-market-context.json'
         supplied = request.get('shared_market_context')   # optional: an earlier piece's retained read of the same cutoff
         # Reuse before re-reading (efficiency, 2026-10-07): the day's exchange retained its read of the same source at
@@ -509,27 +513,30 @@ def _run(request, request_path, out, brain, jev_brain):
         # <run>/days/<day>/jev/<stamp>: parents[3] is the run directory (parents[2] named <run>/days, a path that never exists)
         exchange_retained = out.parents[3] / 'exchange' / request['day'] / 'shared-market-context.json'
         if context_path.is_file():
-            shared_context = AM.load_context(context_path, identity=adviser.reader.identity, scope=adviser.scope)
+            shared_context = AM.load_context(context_path, identity=shared_identity, scope=scope)
             shared_market_source = 'retained in this Jev output'
         elif supplied is not None:
-            shared_context = AM.load_context(pinned(supplied), identity=adviser.reader.identity, scope=adviser.scope)
+            shared_context = AM.load_context(pinned(supplied), identity=shared_identity, scope=scope)
             shared_market_source = 'supplied retained read of the same source and cutoff: ' + supplied['path']
         else:
             shared_context = None
             if exchange_retained.is_file():
                 try:
-                    shared_context = AM.load_context(exchange_retained, identity=adviser.reader.identity, scope=adviser.scope)
+                    shared_context = AM.load_context(exchange_retained, identity=shared_identity, scope=scope)
                     shared_market_source = 'reused the exchange\'s retained read of the same source and cutoff: ' + str(exchange_retained)
                 except ValueError as error:
                     reuse_listed = 'exchange retained context not reusable (%s); fresh read' % error
             else:
                 reuse_listed = 'no exchange retained context at %s; fresh read' % exchange_retained
             if shared_context is None:
+                adviser = AM.AdviserMarketContext(shared_identity, day=request['day'], source_hash=bound['source_hash'],
+                                                  as_of=bound['as_of'], through_cursor=bound['through_cursor'])
                 shared_context = adviser.read(check_save=check_save)
                 shared_market_source = 'read by this Jev piece from the owner-local shared reader'
         # the reader on the held lane: its consumer on a whole physical core, its decode workers on the other lane CPUs
-        # (frankie_box_adviser_market.reader_plan / _witness_all); it restores this thread's affinity when done
-        placement['shared_reader'] = adviser.placement
+        # (frankie_box_adviser_market.reader_plan); it restores this thread's affinity when done
+        placement['shared_reader'] = (adviser.placement if adviser is not None else
+                                      dict(reader='not opened: a retained read of the same source and cutoff was reused'))
         AM.retain_context(context_path, shared_context)
         # the owner identity carries the retained context PIN (stable across attempts); where the bytes came from on
         # this attempt (fresh read, exchange reuse, retained) is receipt information, never identity
