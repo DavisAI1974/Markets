@@ -4384,8 +4384,9 @@ def _block_dump(path, body, store=None):
 
 def _block_dump_timed(path, body, store=None):
     import os
-    from research.kalshi.frankie_boss.frankie_principal_adapter import json_form
-    body = json_form(body)
+    # the canonical form the lesson and answer files carried before the store (default=str: a bytes value is written as
+    # its str, never refused; 2026-10-09 a2 block 4: json_form has no default and refused the lesson record)
+    body = json.loads(json.dumps(body, sort_keys=True, default=str))
     if store is not None and isinstance(body, dict):
         body = {k: _by_reference(v, store) for k, v in body.items()}
     elif store is not None and isinstance(body, list):
