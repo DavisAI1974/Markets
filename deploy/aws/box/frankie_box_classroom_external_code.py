@@ -453,8 +453,11 @@ def answers(visible, *, dipole_visible=None, learner_context=None, independent_e
         unresolved_questions=questions, relationship_pairs_considered=len(review), future_outcome_claimed=False)
     scan = [dict(left=p['left'], right=p['right'], direction_relation=p['direction_relation'],
                  correlation_interpretation=_pair_text(p, basis), developing_structure=None) for p in review]
+    by_pair = {}                    # each check under its pair's set, in order (set(c.pair) == {left, right})
+    for c in prior_checks:
+        by_pair.setdefault(frozenset(c.get('pair') or []), []).append(c)
     for pair in scan:
-        checks = [c for c in prior_checks if set(c.get('pair') or []) == {pair['left'], pair['right']}]
+        checks = by_pair.get(frozenset((pair['left'], pair['right'])), [])
         if checks:
             pair['correlation_interpretation'] += (' Prior findings applied to this pair: '
                                                    + json.dumps(checks, sort_keys=True, default=str))

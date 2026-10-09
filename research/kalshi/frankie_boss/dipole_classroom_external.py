@@ -215,6 +215,9 @@ def load_day_external_module(path=DAY_EXTERNAL_MODULE):
     return module
 
 
+_DAY_FILE_READ = {}     # (path, dev, ino, size, mtime_ns, ctime_ns) -> {sha256, bytes, body, checked}: one read per process
+
+
 def open_day_external(day_file, sha256, cutoff_ns, *, trading_day):
     """THE ONE PLACE the classroom meets FRANKIE_DAY_EXTERNAL_V1. Returns (module, reader, descriptor). The file's bytes
     must equal sha256; its trading day must be the classroom's; the reader runs the file's staging check and refuses any
@@ -222,18 +225,35 @@ def open_day_external(day_file, sha256, cutoff_ns, *, trading_day):
     path = Path(day_file)
     if not path.is_file():
         raise DayExternalRefused(f'no day file at {path}')
-    raw = path.read_bytes()
-    got = _sha256_bytes(raw)
+    stat = path.stat()
+    identity = (str(path.resolve()), stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns)
+    known = _DAY_FILE_READ.get(identity)
+    if known is None:
+        raw = path.read_bytes()
+        got = _sha256_bytes(raw)
+        body = json.loads(raw) if type(sha256) is str and got == sha256 else None
+        known = dict(sha256=got, bytes=len(raw), body=body, checked=False)
+        del raw
+    else:
+        got = known['sha256']
     if type(sha256) is not str or got != sha256:
         raise DayExternalRefused(f'{path} has sha256 {got}, not the {sha256} given; refused')
-    body = json.loads(raw)
+    body = known['body']
     if body.get('schema') != DAY_EXTERNAL_SCHEMA:
         raise DayExternalRefused(f'{path} is not a {DAY_EXTERNAL_SCHEMA} document')
     if str(body.get('trading_day')) != str(trading_day):
         raise DayExternalRefused(f'{path} is trading day {body.get("trading_day")}, not {trading_day}; refused')
     dx = load_day_external_module()
-    reader = dx.AsOfReader(body, int(cutoff_ns))                 # check_day_file runs here (StagingRefused on a bad file)
-    descriptor = dict(path=str(path), sha256=got, bytes=len(raw), schema=body['schema'], trading_day=body['trading_day'],
+    if known['checked']:
+        # the same unchanged file already passed check_day_file in this process: AsOfReader's own state, unchecked again
+        reader = dx.AsOfReader.__new__(dx.AsOfReader)
+        reader.body, reader.cutoff = body, int(cutoff_ns)
+    else:
+        reader = dx.AsOfReader(body, int(cutoff_ns))             # check_day_file runs here (StagingRefused on a bad file)
+        known['checked'] = True
+        _DAY_FILE_READ[identity] = known
+    raw_bytes = known['bytes']
+    descriptor = dict(path=str(path), sha256=got, bytes=raw_bytes, schema=body['schema'], trading_day=body['trading_day'],
                       open_ns=body['open_ns'], halt_ns=body['halt_ns'], open_utc=body.get('open_utc'),
                       halt_utc=body.get('halt_utc'), built_utc=body.get('built_utc'),
                       history_prefix=body.get('history_prefix'), inputs=len(body.get('inputs') or ()),
