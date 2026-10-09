@@ -730,6 +730,9 @@ class _RawStreams:
 # batch that cannot be pickled, keeps breaking the pool or raises in the worker is simply not registered, and the
 # consumer computes those rows the original way at the original place (the same value, or the same error there).
 EVIDENCE_BATCH = 256
+# The batches the shared walk keeps in flight (the consumer reads that many batches ahead, refilled at half; 2026-10-09:
+# it was 2 per CPU, 31,744 whole pictures held in the parent); the precompute pool is sized to it.
+EVIDENCE_AHEAD_BATCHES = 32
 PRECOMPUTE_RECORD = {}
 
 

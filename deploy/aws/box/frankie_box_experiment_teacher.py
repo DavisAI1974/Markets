@@ -937,12 +937,21 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
         pictures = market.iter_applied(start=seek['market'] if seek is not None else None)
         expected = 0
         pre = None
+        # The read-ahead (2026-10-09, a2/20231018): it was 2 batches per CPU of the plan (2 x 62 x 256 = 31,744 whole
+        # pictures, each with its full-book APPLIED payload and its decoded layer rows, held in the parent and pickled
+        # whole into every raw save). PT.EVIDENCE_AHEAD_BATCHES batches keep that many encodings in flight (refilled at
+        # half), so the precompute pool is that many workers, on the plan's last CPUs (the raw-batch workers take it
+        # from the front). Same pictures, same order, same registered bytes (the guard is unchanged).
+        planned = raw_cpus if cpu_pinning['outcome'] == 'waiting' else None
+        pre_workers = min(len(planned) if planned else PT._cpus(), PT.EVIDENCE_AHEAD_BATCHES)
         try:
-            pre = PT.EvidencePrecompute(raw_cpus if cpu_pinning['outcome'] == 'waiting' else None, PJ.CONTEXT_FIELDS)
+            pre = PT.EvidencePrecompute(planned[-pre_workers:] if planned else None, PJ.CONTEXT_FIELDS,
+                                        workers=pre_workers)
             precompute.update(outcome='used', workers=pre.workers)
         except Exception as error:  # noqa: BLE001 - speed only: without it every row is encoded here, as before
             precompute.update(outcome='not_used', reason='the pool could not start (%s: %s)' % (type(error).__name__, error))
-        limit = 2 * pre.workers * PT.EVIDENCE_BATCH if pre is not None else 1
+        limit = min(2 * pre.workers, PT.EVIDENCE_AHEAD_BATCHES) * PT.EVIDENCE_BATCH if pre is not None else 1
+        precompute.update(read_ahead_pictures=limit)
         ahead, batch, slots, done, last, failed = deque(), [], [], [False], [None], [None]
         whole = tuple(entity) if entity is not None else None
         # a resumed raw pass (parallel_teacher.RESUME_SKIP, set by row_pass before it starts this generator) skips the
