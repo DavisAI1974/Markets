@@ -16,6 +16,33 @@ running_pid = status.get('pid')
 me = os.getpid()
 
 
+def wait_exit(pids, bound):
+    """2026-10-09 (no fixed waits): block until every pid has exited or `bound` seconds passed (the grace before KILL);
+    returns at the last exit. One pidfd per pid (Linux >= 5.3); without pidfd_open the bound itself is the wait."""
+    import select
+    deadline, fds = time.monotonic() + bound, {}
+    for p in set(pids):
+        try:
+            fds[os.pidfd_open(p)] = p
+        except ProcessLookupError:
+            pass
+        except (OSError, AttributeError):
+            time.sleep(max(0.0, deadline - time.monotonic()))
+            return
+    while fds:
+        left = deadline - time.monotonic()
+        if left <= 0:
+            break
+        poll = select.poll()
+        for fd in fds:
+            poll.register(fd, select.POLLIN)
+        for fd, _ in poll.poll(int(left * 1000)):
+            os.close(fd)
+            fds.pop(fd, None)
+    for fd in fds:
+        os.close(fd)
+
+
 def waiting():
     out = []
     for proc in Path('/proc').iterdir():
@@ -40,7 +67,7 @@ for w in found:
         continue
     os.kill(w['pid'], signal.SIGTERM)
     receipt['stopped'].append(w)
-time.sleep(10)
+wait_exit([w['pid'] for w in receipt['stopped']], 10)   # returns at their exit (10 s at most)
 receipt['still_alive'] = [w for w in waiting() if w['pid'] in {s['pid'] for s in receipt['stopped']}]
 receipt['after'] = waiting()
 out = Path('/opt/frankie-box/receipts') / ('stop-waiting-worker-%s.json' % receipt['at'].replace(':', ''))

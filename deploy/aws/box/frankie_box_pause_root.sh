@@ -97,6 +97,29 @@ control_receipt = root / ('pause-for-' + mode + '-' + str(pid) + '.json')
 if control_receipt.exists():
     raise SystemExit('pause receipt already exists; inspect it instead of repeating process control')
 deadline = time.monotonic() + 720
+# 2026-10-09 (no fixed waits): the wait for a fresh checkpoint wakes the instant the ROOT writes into its root or its
+# checkpoint directory (inotify), never a 5 s poll; the 720 s bound of this control step stays
+import ctypes, ctypes.util
+_libc = ctypes.CDLL(ctypes.util.find_library('c') or 'libc.so.6', use_errno=True)
+_ino = _libc.inotify_init1(0o2000000 | 0o4000)
+for _d in (root, checkpoint_dir):
+    _libc.inotify_add_watch(_ino, str(_d).encode(), 0x8 | 0x80 | 0x100 | 0x200 | 0x40)
+
+
+def wait_change(seconds):
+    if _ino < 0:
+        time.sleep(min(1.0, max(0.0, seconds)))
+        return
+    poll = select.poll()
+    poll.register(_ino, select.POLLIN)
+    if poll.poll(max(0, int(seconds * 1000))):
+        try:
+            while os.read(_ino, 65536):
+                pass
+        except BlockingIOError:
+            pass
+
+
 while True:
     progress = json.loads((root / 'progress.json').read_text())
     saved = json.loads((root / 'checkpoints.json').read_text())
@@ -116,7 +139,7 @@ while True:
             or progress.get('failed') != 0 or progress.get('stage') != (terminal_stage if terminal else 'root-native-records')
             or time.monotonic() >= deadline):
         raise SystemExit('fresh checkpoint unavailable; ROOT remains running')
-    time.sleep(5)
+    wait_change(deadline - time.monotonic())
 if (progress.get('pid') != pid or progress.get('process_token') != expected
         or progress.get('failed') != 0
         or progress.get('stage') != {'parallel-boundary':'root-native-reconstruct', 'native-workers':'root-native-records', 'terminal-finalize':'root-native-finalize', 'terminal-projection':'root-projection', 'terminal-digest':'root-digest'}[mode]
