@@ -45,6 +45,7 @@ sys.path.insert(0, str(ROOT))
 OUT = Path('/opt/frankie-box/work/experiment-teacher-rows')
 ROWS_FILE = 'host-dipole-classroom-source.c15.json'
 NG_TICK_RAW = 1_000_000            # NG tick 0.001 in the DBN fixed-point price (1e-9)
+SECOND_SET_FILE = 'teacher-second-set.pkl'
 
 
 
@@ -670,6 +671,355 @@ def _all99_use(field):
                      'teachers within the teacher\'s role and walls); the pinned equations read original APPLIED fields only')
 
 
+def _second_set_prefix(open_market, needed, SS, book_needed=0, changes=True):
+    """For the rows the walk of THIS process did not read (a resume from a save written before the second set or the
+    book read): read the same pictures again from a fresh shared reader of the same ROOT, in order, with the walk's
+    equation filter (present APPLIED payloads, adapter cursors contiguous from zero). The first `needed` rows get their
+    join records (nothing computed); the first `book_needed` rows get the book read beside the pinned functions,
+    exactly as the walk's workers read it: the R3 stream's own row builder (T._history_row), its group boundaries
+    (the receipt), the previous group's closing book, teacher_book_read.book_group on those very rows, and each window
+    the pinned R3 calls on a group (its own anchor function, T._anchor, on the same groups; no pinned column is
+    computed). Returns (records, book) with book = {groups, windows, cursor_group}."""
+    from collections import deque
+    from research.kalshi.frankie_boss import c15_teacher_r3 as T, teacher_book_read as TBR
+    reader = open_market()
+    pictures = reader.iter_applied()
+    records, expected = [], 0
+    upto = max(needed, book_needed)
+    book = dict(groups={}, windows={}, cursor_group={})
+    open_rows, last_closing, ordinals, history = {}, {}, {}, {}
+    try:
+        for item in pictures:
+            if expected >= upto:
+                break
+            if item['arithmetic']['status'] != 'present':
+                continue
+            e = item['evidence']
+            if e.get('cursor') != expected:
+                break                       # the equation prefix ends here (the rows hold more: refused by the caller)
+            if expected < needed:
+                records.append(SS.join_record(e, item['picture']))
+            if expected < book_needed:
+                m = e['normalized']
+                key = (m['publisher_id'], m['instrument_id'])
+                made = T._history_row(e)
+                open_rows.setdefault(key, []).append(made)
+                if e['receipt'] is not None:
+                    group = open_rows.pop(key)
+                    ordinal = ordinals.get(key, 0)
+                    ordinals[key] = ordinal + 1
+                    previous, last_closing[key] = last_closing.get(key), group[-1]
+                    book['cursor_group'][e['cursor']] = (key, ordinal)
+                    book['groups'][(key, ordinal)] = TBR.book_group(previous, group)
+                    held = history.setdefault(key, deque(maxlen=65 if changes else 1025))
+                    held.append(group)
+                    groups = list(held)
+                    side, missing = T._anchor(groups)
+                    if changes:
+                        if missing is None:
+                            book['windows'][e['cursor']] = dict(short=(key, ordinal, len(groups[-64:]) if len(groups) > 64
+                                                                       else len(groups) - 1, side))
+                    else:
+                        obs = e['observation']
+                        if missing is None and (any(obs['integrity'].values()) or (
+                                obs['levels']['A'] and obs['levels']['B']
+                                and obs['levels']['B'][0]['price_raw'] >= obs['levels']['A'][0]['price_raw'])):
+                            missing = 'LEVEL_INTEGRITY'
+                        if missing is None:
+                            slots = {slot: (key, ordinal, horizon, side)
+                                     for slot, horizon in (('short', 64), ('long', 1024)) if len(groups) > horizon}
+                            if slots:
+                                book['windows'][e['cursor']] = slots
+            expected += 1
+    finally:
+        close = getattr(pictures, 'close', None)
+        if close is not None:
+            close()
+    return records, book
+
+
+def _second_set(out, open_market, market, second, rows, SS):  # noqa: C901
+    """The teacher's second set for every row, written beside the rows (teacher-second-set.pkl, hash-bound) and
+    summarized for the receipt. The rows the walk read carry their join from the walk; rows read by an earlier process
+    whose save holds no join are joined here from a fresh reader of the same ROOT (merged at publication). A row left
+    without its join refuses the publication (the reason listed); a join whose picture identity or clocks differ from
+    the row's own is listed with both values, never aligned."""
+    import frankie_box_all99_coverage as ALL99
+    from research.kalshi.frankie_boss import parallel_teacher as PT, teacher_book_read as TBR
+    needed = len(rows) - len(second['records'])
+    if needed < 0:
+        raise ValueError('the teacher second set holds %d joins for %d rows; the rows do not leave the teacher'
+                         % (len(second['records']), len(rows)))
+    walked = PT.ROW_PASS_BOOK[0] or dict(groups={}, windows={}, cursor_group={}, changes=True, read_before=len(rows))
+    book_needed = min(len(rows), walked.get('read_before') or 0)
+    prefix, read = (_second_set_prefix(open_market, needed, SS, book_needed, bool(walked.get('changes')))
+                    if needed or book_needed else ([], dict(groups={}, windows={}, cursor_group={})))
+    records = prefix + second['records']
+    check = SS.check_rows(records, rows)
+    if check['rows_without_record'] or len(records) != len(rows):
+        raise ValueError('the teacher second set holds %d joins for %d rows (the shared reader yielded %d of the %d rows '
+                         'before the walk\'s own joins); a row without its joined planes does not leave the teacher'
+                         % (len(records), len(rows), len(prefix), needed))
+    groups = {**read['groups'], **walked['groups']}
+    windows = {**read['windows'], **walked['windows']}
+    cursor_group = {**read['cursor_group'], **walked['cursor_group']}
+    reads = TBR.assemble(rows, cursor_group, groups, windows, whole_day=bool(walked.get('changes')))
+    unread = [row[6] for row, entry in zip(rows, reads) if entry.get('status') == 'GROUP_NOT_READ']
+    if unread:
+        raise ValueError('the teacher book read lacks %d group(s) (first rows %s); a row without its book read does not '
+                         'leave the teacher' % (len(unread), unread[:10]))
+    for record, entry in zip(records, reads):
+        record['book'] = entry
+    carried = {name: dict(carrier=first, thinner=thin) for name, (first, thin) in ALL99.MARKET_CARRIERS.items()}
+    not_carried = [dict(entry=layer['entry'], group=layer['group'], role=layer['role'],
+                        reason=ALL99.NOT_MARKET_CARRIED.get(layer['entry']) or (
+                            'withheld by role (R09/R10: no teacher reads an answer key or a sealed target)'
+                            if layer['role'] in ('answer', 'target') else
+                            'not market evidence: the registry role %s is not carried by the picture' % layer['role']))
+                   for layer in ALL99.entries() if layer['entry'] not in carried]
+    lock = max(row[4] for row in rows)
+    header = dict(schema=SS.SCHEMA, format=SS.FORMAT, key_fields=SS.KEY_FIELDS, clock_fields=SS.CLOCK_FIELDS,
+                  plane_reference=SS.PLANE_REFERENCE, state_reference=SS.STATE_REFERENCE,
+                  key_rule='record i is teacher row i: key.adapter_cursor == the row cursor, its picture the one the '
+                           'walk read that row with (picture.original_applied is the row\'s payload)',
+                  clock_lock_time=dict(value=lock, basis='the teacher\'s as_of (the latest receive clock of its rows), '
+                                                         'stamped once: not a picture element'),
+                  streams={stream.name: dict(pin=dict(stream.pin), kind=stream.kind) for stream in market.streams},
+                  plane_values='by reference: (source, source_ordinal) names the row of that stream\'s pinned file the '
+                               'picture handed over; the values are the ROOT\'s receipted rows, not copied',
+                  carriers=market.layer_entries(), entries_carried=carried, entries_not_carried=not_carried,
+                  rows_total=len(rows), rows_matched=check['rows_matched'], rows_mismatched=check['rows_mismatched'],
+                  mismatches=check['mismatches'], clocks_compared=check['clocks_compared'],
+                  joined_in_walk=len(second['records']) - second['restored'], restored_from_save=second['restored'],
+                  merged_at_publication=len(prefix),
+                  book_read=dict(schema=TBR.SCHEMA, format=TBR.FORMAT, groups=len(groups),
+                                 groups_read_in_walk=len(walked['groups']), groups_read_at_publication=len(read['groups']),
+                                 rows_read_at_publication=book_needed, windows=sum(len(v) for v in windows.values()),
+                                 whole_day=bool(walked.get('changes')),
+                                 rule='beside the pinned functions on the same full rows (teacher_book_read); the '
+                                      'rows before a resume whose save held no book read are read at publication from '
+                                      'the same reader with the same functions'))
+    from research.kalshi.frankie_boss import parallel_teacher as PT
+    path = out / SECOND_SET_FILE
+    PT._save_raw_state(path, dict(header, records=records))
+    summary = dict({k: v for k, v in header.items() if k not in ('carriers', 'entries_carried', 'mismatches', 'streams')},
+                file=SECOND_SET_FILE, sha256=_sha256(path), mismatches_first=check['mismatches'][:20],
+                streams={name: value['pin'] for name, value in header['streams'].items()},
+                entries_not_carried=[item['entry'] for item in not_carried],
+                file_format='64 hex digits of the sha256 of the bytes after them, then the pickle of the header with '
+                            '`records` (parallel_teacher._load_raw_state reads it)')
+    return summary, records, header
+
+
+ROWS_SIDECAR = 'host-dipole-classroom-source.c15.rows.jsonl'
+SIDECAR_ROW_KEYS = ('key', 'clocks', 'clocks_absent', 'planes', 'planes_state', 'planes_absent', 'invalidated',
+                    'coverage', 'match', 'book_columns')
+
+
+def _sidecar_planes(record, carried):
+    """{99 entry: [[source, source_ordinal, input_cursor, instrument_id, known_at_ns]...]} of one row (every entry the
+    picture carries; the entries carried by the row itself or the picture's own fields name that element), and
+    {entry: reason} for an entry with no plane row at this instant."""
+    placed = {}
+    for source, ordinal, cursor, instrument, known, entries in record['planes']:
+        for entry in entries:
+            placed.setdefault(entry, []).append([source, ordinal, cursor, instrument, known])
+    planes, absent = {}, {}
+    for entry, how in carried.items():
+        carrier = how['carrier']
+        if carrier in ('input', 'clock', 'availability', 'opening'):
+            planes[entry] = dict(carrier=carrier, element=('the row itself (its APPLIED payload, key and clocks)'
+                                                           if carrier != 'opening' else 'picture.opening_state'))
+        elif carrier == 'completed':
+            planes[entry] = []
+            absent[entry] = ('completed-only: a post-stream aggregate (report.completed_sources), never a value in a '
+                             'live picture')
+        elif entry in placed:
+            planes[entry] = placed[entry]
+        else:
+            planes[entry] = []
+            absent[entry] = 'no %s row was placed at this instant' % carrier
+    return planes, absent
+
+
+def _sidecar_book(book):
+    """The book read of a row as JSON values: each side's depth decoded to [price, size, count] per level."""
+    from research.kalshi.frankie_boss import teacher_book_read as TBR
+    group = book.get('group')
+    if group is None:
+        return book
+    return dict(book, group=dict(group, depth={side: (None if depth is None else [list(level) for level in
+                                                                                   TBR.depth_levels(depth)])
+                                               for side, depth in group['depth'].items()}))
+
+
+def _write_rows_sidecar(out, source, records, header, SS):
+    """The rows as JSON lines beside the rows file (one row per line, streamed and hashed on the stream): line 1 the
+    header (schema, FORMAT, the row keys, the key and clock fields, the stream pins), then every snapshot row with its
+    second set (SIDECAR_ROW_KEYS), joined by the row cursor. Values are written whole (json; floats round-trip)."""
+    import hashlib
+    by_cursor = {record['key']['adapter_cursor']: record for record in records}
+    carried = header['entries_carried']
+    path, temporary = out / ROWS_SIDECAR, out / (ROWS_SIDECAR + '.pending')
+    digest, lines, unjoined = hashlib.sha256(), 0, []
+
+    def refuse(value):
+        raise TypeError('row value of type %s is not JSON' % type(value).__name__)
+    with temporary.open('wb') as handle:
+        def write(document):
+            data = (json.dumps(document, default=refuse, allow_nan=False) + '\n').encode()
+            digest.update(data)
+            handle.write(data)
+        write(dict(schema='FRANKIE_TEACHER_ROWS_SIDECAR_V1', format=SS.FORMAT, rows_file=ROWS_FILE,
+                   source_snapshot_hash=source.get('source_snapshot_hash'), rows=len(source['rows']),
+                   row_keys=SIDECAR_ROW_KEYS, key_fields=SS.KEY_FIELDS, clock_fields=SS.CLOCK_FIELDS,
+                   plane_reference=list(SS.PLANE_REFERENCE[:5]), state_reference=list(SS.STATE_REFERENCE),
+                   clock_lock_time=header['clock_lock_time'], plane_values=header['plane_values'],
+                   streams={name: value['pin'] for name, value in header['streams'].items()},
+                   entries_not_carried=header['entries_not_carried']))
+        for row in source['rows']:
+            record = by_cursor.get(row['cursor'])
+            if record is None:
+                unjoined.append(row['cursor'])
+                continue
+            planes, absent = _sidecar_planes(record, carried)
+            write(dict(row, key=record['key'], clocks=record['clocks'], clocks_absent=record['clocks_absent'],
+                       planes=planes, planes_state=record['state'], planes_absent=absent,
+                       invalidated=record['invalidated'], coverage=record['coverage'], match=record['match'],
+                       book_columns=_sidecar_book(record['book'])))
+            lines += 1
+        handle.flush()
+        os.fsync(handle.fileno())
+    if unjoined:
+        temporary.unlink()
+        raise ValueError('%d snapshot row(s) have no second-set record (first cursors %s); the rows do not leave the '
+                         'teacher' % (len(unjoined), unjoined[:10]))
+    os.replace(temporary, path)
+    return dict(file=ROWS_SIDECAR, sha256=digest.hexdigest(), rows=lines, format=SS.FORMAT,
+                schema='FRANKIE_TEACHER_ROWS_SIDECAR_V1', row_keys=list(SIDECAR_ROW_KEYS),
+                basis='line 1 the header, then one snapshot row per line with its second set; sha256 of the bytes '
+                      'as written')
+
+
+ACCOUNT_FORMAT = 1
+
+
+def _teacher_account(rows, records, header, *, raw_saves, cpu_pinning, phases, walked, processed):
+    """The facts the teacher's own account is written from (Greg, 2026-10-09: which data it saw together, what it lacks,
+    what it would want, what would give better outputs, beside its findings). Every number is counted from this run's
+    rows, second set, pools and clocks; nothing is estimated. FORMAT ACCOUNT_FORMAT. The day reports render it."""
+    from collections import Counter
+    import resource
+    from research.kalshi.frankie_boss import parallel_teacher as PT, teacher_book_read as TBR
+    from research.kalshi.frankie_boss.c15_teacher_r3 import CONTROL_COLUMNS
+    account = dict(schema='FRANKIE_TEACHER_ACCOUNT_V1', format=ACCOUNT_FORMAT,
+                   basis='counted from this run (rows, second set, pools, clocks); nothing estimated')
+    # (e) the pinned columns' coverage: per column, the states and reasons over every row
+    pinned = {}
+    for index, name in enumerate(CONTROL_COLUMNS):
+        states, reasons = Counter(), Counter()
+        for row in rows:
+            value = row[3][index]
+            states[value.get('state')] += 1
+            if value.get('reason'):
+                reasons[value['reason']] += 1
+        pinned[name] = dict(states={str(k): v for k, v in sorted(states.items(), key=str)},
+                            reasons=dict(sorted(reasons.items())))
+    science = dict(pinned_columns=pinned)
+    if records is None:
+        account.update(read_together=dict(status='no second set', reason='no shared market reader on this ROOT'),
+                       science=science)
+        return account
+    # (a) what was read together per row
+    carried = header['entries_carried']
+    present, absent_reasons = Counter(), {}
+    clocks_present = Counter()
+    for record in records:
+        seen = set()
+        for _, _, _, _, _, entries in record['planes']:
+            seen.update(entries)
+        for entry, how in carried.items():
+            if how['carrier'] in ('input', 'clock', 'availability', 'opening') or entry in seen:
+                present[entry] += 1
+            else:
+                reason = ('completed-only: a post-stream aggregate, never a value in a live picture'
+                          if how['carrier'] == 'completed' else 'no %s row was placed at this instant' % how['carrier'])
+                absent_reasons.setdefault(entry, Counter())[reason] += 1
+        for clock in _clocks_carried(record):
+            clocks_present[clock] += 1
+    total = len(records)
+    planes = {entry: dict(carrier=how['carrier'], rows_present=present[entry], rows_absent=total - present[entry],
+                          absent_reasons=dict(absent_reasons.get(entry, {})))
+              for entry, how in carried.items()}
+    account['read_together'] = dict(
+        rows=total, planes=planes, clocks=dict(carried_rows=dict(clocks_present), fields=list(header['clock_fields'])),
+        book_columns=['book_balance', 'book_absorption', 'counts', 'event_incomplete', 'reconciliation', 'group.depth',
+                      'group.touches', 'group.sides'],
+        state_split=dict(status='not_built', reason='the per-state split of the pinned sums is not built in this '
+                                                     'version (the state label fields of the planes are not named here)'))
+    # (b) missing or thin
+    reconciliation, examples = Counter(), []
+    for record in records:
+        group = (record.get('book') or {}).get('group')
+        if not group:
+            continue
+        for side, part in group['sides'].items():
+            for measure, found in part['differs'].items():
+                for reason in found['reasons']:
+                    reconciliation['%s:%s' % (measure, reason)] += 1
+                examples.append((abs(found['book'] - found['events']), record['key']['adapter_cursor'], side, measure,
+                                 found['book'], found['events'], found['reasons']))
+    examples.sort(key=lambda item: (-item[0], item[1], item[2], item[3]))
+    guard = (cpu_pinning.get('raw_pool') or {}).get('guard') or {}
+    account['missing_or_thin'] = dict(
+        planes_never_carried=header['entries_not_carried'],
+        planes_partial={entry: value for entry, value in planes.items() if value['rows_absent']},
+        clock_mismatches=dict(rows=header['rows_mismatched'], examples=header['mismatches'][:20]),
+        rows_read_in_walk=header['joined_in_walk'], rows_restored_from_save=header['restored_from_save'],
+        rows_merged_at_publication=header['merged_at_publication'],
+        book_read=header.get('book_read'),
+        reconciliation=dict(differences=sum(reconciliation.values()), by_measure_reason=dict(sorted(reconciliation.items())),
+                            largest=[dict(cursor=c, side=sd, measure=m, book=b, events=e, reasons=r)
+                                     for _, c, sd, m, b, e, r in examples[:20]], all_differences=len(examples)),
+        guard=dict(guard))
+    # (c) wants, derived from (b)
+    wants = [dict(want=entry['entry'] if isinstance(entry, dict) else entry, reason='never carried by the picture on '
+                  'this day') for entry in header['entries_not_carried']]
+    wants += [dict(want=entry, reason='absent on %d of %d rows: %s' % (value['rows_absent'], total, value['absent_reasons']))
+              for entry, value in planes.items() if value['rows_absent']]
+    questions = [dict(question='why do book and event %s differ (%s)?' % tuple(name.split(':', 1)), rows=count)
+                 for name, count in sorted(reconciliation.items())]
+    account['wants'] = dict(wants=wants, questions=questions,
+                            rule='every plane absent or partial is a want; every reconciliation class a question')
+    # (d) runtime facts
+    shipped = (cpu_pinning.get('raw_pool') or {}).get('shipped') or {}
+    account['runtime'] = dict(
+        rows=processed, walk_seconds=round(walked, 1), rows_per_second=round(processed / walked, 2) if walked else None,
+        phase_seconds=dict(phases), raw_batches=dict(shipped), evidence_precompute=cpu_pinning.get('evidence_precompute'),
+        saves=raw_saves, memory_peak_kib=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
+        one_pass=dict(rows_joined_in_walk=header['joined_in_walk'],
+                      rows_read_again_at_publication=header['merged_at_publication'],
+                      reader_seek=raw_saves.get('reader_seek') if isinstance(raw_saves, dict) else None))
+    # (e) findings
+    sides = {side: dict(book=Counter(), events=Counter()) for side in TBR.SIDES}
+    for record in records:
+        group = (record.get('book') or {}).get('group')
+        if group:
+            for side, part in group['sides'].items():
+                sides[side]['book'].update(part['book'])
+                sides[side]['events'].update(part['events'])
+    science.update(book_vs_events={side: dict(book=dict(value['book']), events=dict(value['events']))
+                                   for side, value in sides.items()},
+                   state_split=dict(status='not_built'))
+    account['science'] = science
+    return account
+
+
+def _clocks_carried(record):
+    """The clock names this row carries a value for (clocks_absent lists the others with their reason)."""
+    return [name for name in record['clocks'] if name not in record.get('clocks_absent', {})]
+
+
 def teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_external_sha256=None,
           *, calculations=None, shared_market_policy=None):
     # Keep the cooperative handler through publication too: an orderly stop must not
@@ -755,7 +1105,7 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
     if journal_witness != dict(bytes=rc['journal_bytes'], sha256=rc['journal_sha256']):
         raise SystemExit('the sealed journal differs from its ingestion receipt')
     phase('verify_sealed_journal')
-    market = None
+    market = open_market = None
     if calculations is not None or shared_market_policy is not None:
         from frankie_box_market_timeline import SCHEMA, SharedMarketTimeline
         if calculations is None or shared_market_policy != SCHEMA:
@@ -764,11 +1114,13 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
         # is not hashed a second time in this process; the reader re-reads it itself if the witness differs.
         # bound to THE file measured (review N1): its path, device and inode travel with the bytes and sha256; the reader
         # accepts the measurement only for the very file its pin names, else hashes the file itself
-        market = SharedMarketTimeline(calculations, day=day, workers=workers,
-                                      input_witness=dict(journal_witness, path=str(journal), dev=journal_stat.st_dev,
-                                                         ino=journal_stat.st_ino,
-                                                         **(dict(basis='claim', claim=PREFETCH.get('claim'))
-                                                            if PREFETCH.get('outcome') == 'by claim' else {})))
+        def open_market():
+            return SharedMarketTimeline(calculations, day=day, workers=workers,
+                                        input_witness=dict(journal_witness, path=str(journal), dev=journal_stat.st_dev,
+                                                           ino=journal_stat.st_ino,
+                                                           **(dict(basis='claim', claim=PREFETCH.get('claim'))
+                                                              if PREFETCH.get('outcome') == 'by claim' else {})))
+        market = open_market()
         phase('open_shared_picture')
         if (market.source['ingestion_receipt']['sha256'] != receipt_sha256
                 or market.input_pin['sha256'] != rc['journal_sha256']):
@@ -847,6 +1199,7 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
     from research.kalshi.frankie_boss import parallel_journal as PJ, context_session as CS, c15_teacher_r3 as T
     from research.kalshi.frankie_boss import parallel_teacher as PT, teacher_changes as TC, dipole_classroom as DC
     from research.kalshi.frankie_boss import sunday_execution as SE
+    from research.kalshi.frankie_boss import teacher_second_set as SS
     from research.kalshi.frankie_boss.c15_normalizer_r3 import IdentityNormalizerR3
     from research.kalshi.frankie_boss.frankie_journal_reader import FrankieCompactReader
     from research.kalshi.frankie_boss.compact_journal import CompactReader
@@ -892,6 +1245,13 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
     # six native entries' pass) made on THIS walk (frankie_box_classroom_code.TeacherPassCarry), saved beside the
     # receipt (classroom-carry.pkl); the classroom then reads the shared source only to its last anchor picture.
     carry = dict(value=None, first_input_cursor=None, error=None)
+    # The second set (Greg, 2026-10-09: the teacher reads all of Frankie's 99 planes pinned together with the event flow
+    # and builds a second set): every row the walk yields is joined, in the same step, to the picture it was read with
+    # (teacher_second_set.join_record: the row key, the seven causal clocks and every plane row the picture placed or
+    # carried, as references to the ROOT's receipted rows). The records travel with the walk's save position; rows a
+    # resumed walk did not read itself (a save written before this) are joined at publication from the same reader.
+    second = dict(records=[], read_in_walk=0, restored=0)
+    second_set = second_records = second_header = None
     carry_path = out / CARRY_FILE
     if market is not None:
         try:
@@ -1050,7 +1410,8 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                                      cutoff_walk=dict({k: v for k, v in cutoff_walk.items() if k != 'tracker'},
                                                       tracker=packed(cutoff_walk['tracker'])),
                                      carry=dict(value=packed(carry['value']), first_input_cursor=carry['first_input_cursor'],
-                                                error=carry['error'])))
+                                                error=carry['error']),
+                                     second_set=dict(format=SS.FORMAT, records=second['records'])))
         PT.RESUME_POSITION_SOURCE[0] = position
 
         def register(entry):
@@ -1061,15 +1422,21 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                 if last[0][1] is not None:
                     PJ._SUBSETS.pop(last[0][1], None)
                 last[0] = None
+            PT.ROW_BYTES.clear()
             if entry[2] is None:
                 return
             if entry[1] is None:
                 flush()
             values = pre.values(entry[1])
+            e = entry[0]['evidence']
+            payload = pre.payload(entry[1], entry[2])
+            if payload is not None:
+                # the payload's one pickle, handed on to the raw streams (parallel_teacher.ROW_BYTES): its rows reach
+                # the raw-batch workers whole without the payload being pickled again
+                PT.ROW_BYTES[id(e)] = (e, payload)
             if values is None:
                 return
             body, subset = values[entry[2]]
-            e = entry[0]['evidence']
             if entry[2] == 0:
                 # guard: the first row of every batch is encoded the original way here and must be equal
                 PT.PRECOMPUTE_RECORD['guard_checked'] += 1
@@ -1109,6 +1476,11 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                 seek_record.update(pictures=seek['market'].get('pictures'), ahead=len(seek['ahead']), rows=mine['rows'],
                                    market_exhausted=bool(seek['market'].get('exhausted')))
                 PT.RESUME_SEEKED[0] = mine['rows']
+                kept = mine.get('second_set')
+                if isinstance(kept, dict) and len(kept.get('records') or ()) == mine['rows']:
+                    second['records'] = list(kept['records'])
+                    second['restored'] = len(second['records'])
+                # else (a save written before the second set): the rows before the seek are joined at publication
             while True:
                 if len(ahead) * 2 <= limit:
                     fill()
@@ -1191,6 +1563,8 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                 teacher.control.market_picture = item['picture']
                 teacher.raw_teacher.market_picture = item['picture']
                 register(entry)
+                second['records'].append(SS.join_record(item['evidence'], item['picture']))
+                second['read_in_walk'] += 1
                 yield item['evidence']
         finally:
             try:
@@ -1216,6 +1590,7 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                         cutoff_walk['save_error'] = '%s: %s' % (type(error).__name__, error)
             finally:
                 PT.RESUME_POSITION_SOURCE[0] = None
+                PT.ROW_BYTES.clear()
                 if cpu_pinning['outcome'] in ('pinned', 'fallback') and 'restored' not in cpu_pinning:
                     cpu_pinning['restored'] = LP.restore_mask(cpu_pinning['original_mask'])
     collector = _WalkCollector()
@@ -1245,6 +1620,9 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                 raise ValueError('completed teacher raw state lacks its matching complete shared read; preserved')
         if save_requested():
             raise PT.TeacherSaved('teacher raw pass saved; attachment assembly has not started')
+        if market is not None and rows:
+            second_set, second_records, second_header = _second_set(out, open_market, market, second, rows, SS)
+            phase('second_set')
         walked = time.time() - started
         phase('raw_pass_rows')
         if not rows:
@@ -1389,6 +1767,8 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                                        if retained_claim is not None else
                                        'a retained attachment stands (resume); it is hashed on a thread instead'))
     hash_on_thread('rows', out / ROWS_FILE)
+    rows_sidecar = (_write_rows_sidecar(out, source, second_records, second_header, SS)
+                    if second_records is not None else None)
     phase('snapshot_rows_attachment')
     result = dict(schema='FRANKIE_EXPERIMENT_TEACHER_ROWS_V1', day=day, request_id=request_id, entity=list(entity),
                   ingestion_receipt=dict(path=str(receipt_path), sha256=receipt_sha256), rows=len(rows), processed=processed,
@@ -1401,6 +1781,13 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                   identity_rebinds=list(IDENTITY_REBINDS))
     if teacher_context is not None:
         result['shared_market_context'] = teacher_context
+    # the second set (teacher_second_set FORMAT): every row joined to its picture of the 99 planes on the same clocks
+    result['teacher_second_set'] = second_set if second_set is not None else dict(
+        status='not_built', format=None,
+        reason='no shared market reader on this ROOT (the legacy journal walk): no picture to join the rows to')
+    result['rows_sidecar'] = rows_sidecar or dict(status='not_written', reason='no second set on this day')
+    result['account'] = _teacher_account(rows, second_records, second_header, raw_saves=raw_saves,
+                                         cpu_pinning=cpu_pinning, phases=phases, walked=walked, processed=processed)
     if market is not None:
         # the classroom loads the file and checks its identity and roster itself; a missing or other carry makes the
         # classroom's own whole pass, so an older teacher (no field) never blocks it

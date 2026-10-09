@@ -53,7 +53,12 @@ import time
 
 GUARD_EVERY = 50_000
 FULL_HASH_CHECK_RECEIPTS = 2_000   # up to this many receipts the attachment hash is also recomputed whole (a check, no cap)
-RAW_GUARD_EVERY = 20_000
+# The live guard's rate (2026-10-09, Greg: the fast path proven against the full path on real data, inside the one
+# run): every RAW_GUARD_EVERY-th raw call (about 1%; it was 20,000), plus the first two calls and the first cohort call of
+# every batch, is also computed in the parent on the FULL objects and compared to the worker's result. Env
+# FRANKIE_TEACHER_GUARD_EVERY overrides (a positive integer), read once when the raw pass starts; recorded as
+# RAW_POOL_RECORD['guard'] with the calls guarded, compared equal and mismatched (a mismatch stops the run).
+RAW_GUARD_EVERY = 100
 RAW_BATCH_CALLS = 32_768
 RAW_MARK = '\x00parallel-raw:'
 DSTATE_SCHEMA = 'FRANKIE_TEACHER_DSTATE_ROWS_V1'
@@ -326,8 +331,8 @@ def _progress(stage, completed, total=None, force=False, _last={}):
 # and the save body layout). The teacher binding, the candidate digest (both fold whole source files) and the
 # function-level code witnesses below are kept in the save under 'recorded', beside the data, and never compared. A save
 # written before this rule (no save_format) is compared on the data fields it carries; its binding is a record.
-ROW_PASS_CODE = ('RAW_MARK', 'DSTATE_SCHEMA', '_changes_applied', '_raw_batch', '_shipped_group', '_shipped_start',
-                 '_RawStreams', '_dstate_row', 'row_pass')
+ROW_PASS_CODE = ('RAW_MARK', 'DSTATE_SCHEMA', 'CONTROL_ROW_KEYS', 'BOOK_GROUP', '_changes_applied', '_raw_batch', '_Row',
+                 '_guard_every', '_RawStreams', '_dstate_row', 'row_pass')
 FINISH_CODE = ('GUARD_EVERY', '_FastStateHash', '_receipt', '_chunk', '_canonical', '_candidate', 'finish')
 TEACHER_SAVE_FORMAT = 1
 # keys of a saved identity that are code records, never compared (the last two: saves written before 2026-10-09)
@@ -449,71 +454,112 @@ def _pin_raw_worker(cpus, counter):
         pass
 
 
+def _guard_every():
+    """(the guard rate, its basis): FRANKIE_TEACHER_GUARD_EVERY when it is a positive integer, else RAW_GUARD_EVERY."""
+    text = os.environ.get('FRANKIE_TEACHER_GUARD_EVERY')
+    if text is None:
+        return RAW_GUARD_EVERY, 'default'
+    try:
+        value = int(text)
+    except ValueError:
+        value = 0
+    if value < 1:
+        return RAW_GUARD_EVERY, 'default (FRANKIE_TEACHER_GUARD_EVERY=%r is not a positive integer)' % text[:40]
+    return value, 'FRANKIE_TEACHER_GUARD_EVERY'
+
+
 def _changes_applied():
     import sys
     module = sys.modules.get(__package__ + '.teacher_changes')
     return bool(module is not None and module._SAVED)
 
 
+# Full objects, each serialized once (2026-10-09, Greg: "the issue is the worker not reading them, not unneeded data";
+# nothing Frankie sees may be reduced). The workers receive every window row whole (its full observation: every level,
+# every order, the integrity flags) and every cohort start whole. What made the parent slow was walking the same object
+# graphs into one pickle per 32,768-call batch (and the precompute's batch pickle before it): the full book of every
+# row went through the pickler more than once. Now each source row is pickled ONCE, as the APPLIED payload e: by the
+# precompute (EvidencePrecompute.submit pickles each payload on its own and hands the same bytes on through ROW_BYTES
+# right before the producer yields e) or, when no producer bytes exist, by the raw streams when e enters the pass. A
+# batch ships its groups as tuples of row serials and the bytes of each row it needs once (a later batch repeats only
+# the rows of the overlapping windows: bytes copied, no object walked). The worker unpickles e and builds the group rows
+# with the teacher's own row builders: the control row {k: e[k] for k in CONTROL_ROW_KEYS if k in e} (c15_teacher's
+# JournalTeacher.iter_raw) and the R3 row T._history_row(e) (teacher_changes.r3_history_row when the changes are on:
+# every level, every order), so the pinned functions read the same values from the same full rows. A row with no source
+# bytes (a row restored from a save, before this process read its payload) is pickled once as that very row. The guard
+# compares the pinned result on the parent's own rows with the worker's. Speed only: same functions, same values.
+CONTROL_ROW_KEYS = ('normalized', 'effect', 'order_before', 'order_after', 'rank_before', 'rank_after')
+# The book read beside the pinned functions (teacher_book_read; Greg, 2026-10-09: "Get the book and the event flow added
+# before it leaves teacher"). Every group the R3 stream closes is read in the raw-batch workers from the same full rows
+# (book_group: the previous group's closing book and this group's rows); the pinned calls are untouched. Each R3 window
+# call (the cohort's start + window) is recorded as (key, end ordinal, length, side) so the window sums are taken from
+# the group reads at publication. ROW_PASS_BOOK[0]: the last row pass's group reads, windows and cursor -> group map.
+BOOK_GROUP = 'book_group'
+BOOK_BATCH_GROUPS = 4096
+ROW_PASS_BOOK = [None]
+# id(e) -> (e, pickle of e): set by the evidence producer right before it yields e (frankie_box_experiment_teacher's
+# shared walk, from its precompute), taken by the raw streams when e enters the pass; at most the last payload
+ROW_BYTES = {}
+
+
 def _raw_batch(blob):
-    """One batch of the raw streams' window functions, the pinned functions on the same groups, in order."""
+    """One batch of the raw streams' window functions, the pinned functions on the same full groups, in order."""
     import pickle
     from . import c15_teacher_r3 as T
-    tables, calls, changed = pickle.loads(blob)
+    tables, calls, sources, changed = pickle.loads(blob)
     if changed and not _WORKER_CHANGED[0]:
         from . import teacher_changes
         teacher_changes.apply()                       # the same changed functions the parent recorded
         _WORKER_CHANGED[0] = True
+    built, groups = {}, {}
+
+    def row(serial, family):
+        made = built.get((serial, family))
+        if made is None:
+            payload, control, r3 = sources[serial]
+            own = control if family == 'control' else r3
+            if own is not None:
+                made = pickle.loads(own)
+            else:
+                e = built.get((serial, 'e'))
+                if e is None:
+                    e = built[serial, 'e'] = pickle.loads(payload)
+                made = ({k: e[k] for k in CONTROL_ROW_KEYS if k in e} if family == 'control' else T._history_row(e))
+            built[serial, family] = made
+        return made
+
+    def group(family, at):
+        made = groups.get((family, at))
+        if made is None:
+            made = groups[family, at] = [row(serial, family) for serial in tables[family][at]]
+        return made
     out = []
     for token, kind, family, window, side, start in calls:
-        table = tables[family]
-        groups = (table[window[0]:window[0] + window[1]] if type(window) is tuple else [table[i] for i in window])
+        if kind == BOOK_GROUP:
+            from . import teacher_book_read
+            value = teacher_book_read.book_group(row(start, 'r3') if start is not None else None,
+                                                 [row(serial, 'r3') for serial in window])
+            out.append((token, value))
+            continue
+        places = range(window[0], window[0] + window[1]) if type(window) is tuple else window
+        window_groups = [group(family, at) for at in places]
         if kind == 'dynamics':
-            value = T.JournalTeacher._dynamics(groups, side)
+            value = T.JournalTeacher._dynamics(window_groups, side)
         elif kind == 'absorption':
-            value = T._absorption(groups, side)
+            value = T._absorption(window_groups, side)
         else:
-            value = T._cohort(start, groups, side)
+            value = T._cohort(row(start, 'r3') if start is not None else None, window_groups, side)
         out.append((token, value))
     return pickle.dumps(out, protocol=pickle.HIGHEST_PROTOCOL)
 
 
-# What a raw batch ships (2026-10-09, a2/20231018 teacher: 77% of the parent in pickle.dumps of the batch tables, 146 GB
-# held in pending blobs, 63 workers idle). The R3 history rows carry every level and every order of their observation
-# (teacher_changes.r3_history_row), and every row of a group window went to the workers with it, so each batch pickled
-# full books for every event in its windows plus one for each cohort start. The worker functions never read a window
-# row's observation: control/R3 dynamics, absorption and the cohort's add() read normalized, effect, order_before/after,
-# rank_before/after and the scope only; the cohort reads `start`'s observation, and of it only the start side's levels
-# and the orders on them (orders[oid]['size'] per level order id) plus the start's scope. So a window row is shipped with
-# observation=None and a cohort start with its scope, that side's levels and the orders on them (original objects, list
-# order kept, so the id->order map and the cohort's own order are the same). Same functions, same groups, same values:
-# the guard (the first two calls of every batch and every RAW_GUARD_EVERY-th, run the pinned way on the FULL objects in
-# the parent) still compares each against the worker's result. The worker results hold no input object, so the
-# unpickled values (and the attachment pickle's object sharing) are unchanged. Speed only.
-def _shipped_group(group):
-    """The group as a worker reads it: rows with an observation shipped with observation=None (the group itself when
-    no row carries one, so a control group ships exactly as before)."""
-    if not any(type(row) is dict and row.get('observation') is not None for row in group):
-        return group
-    return [dict(row, observation=None) if type(row) is dict and row.get('observation') is not None else row
-            for row in group]
+class _Row:
+    """One source row of the pass: its serial, the pickle of its payload (or None) and, for a row with no payload bytes,
+    the pickle of the very row per family. `ref` (the row's normalized mapping) keeps the id() it is found by alive."""
+    __slots__ = ('ref', 'serial', 'payload', 'rows')
 
-
-def _shipped_start(start, side):
-    """A cohort start as the worker reads it: its scope, the start side's levels and the orders on them; the start
-    itself (shipped whole, as before) when it is not of that shape, so any error is raised in the worker as before."""
-    if start is None:
-        return None
-    try:
-        observation = start['observation']
-        levels = observation['levels'][side]
-        ids = {oid for level in levels for oid in level['order_ids']}
-        slim = {key: start[key] for key in ('source_member_index', 'session_id') if key in start}
-        slim['observation'] = dict(levels={side: levels},
-                                   orders=[order for order in observation['orders'] if order['order_id'] in ids])
-        return slim
-    except Exception:  # noqa: BLE001 - not the expected shape: shipped whole (the worker raises exactly as before)
-        return start
+    def __init__(self, ref, serial, payload):
+        self.ref, self.serial, self.payload, self.rows = ref, serial, payload, {}
 
 
 class _RawStreams:
@@ -524,13 +570,25 @@ class _RawStreams:
         self.T, self.cpus = T, cpus
         self.calls, self.resolved, self.expected, self.pending = 0, 0, {}, deque()
         self.where, self.early, self.rows = {}, {}, None
+        self.entries, self.serials = {}, 0           # id(row['normalized']) -> _Row; the next serial
+        self.cursor = None
+        # the book read: per key the open group's R3 rows, the closing row of the last group and the next ordinal;
+        # the group reads by (key, ordinal); the R3 windows by cursor; the group each receipt row closes
+        self.open_rows, self.last_closing, self.ordinals, self.current = {}, {}, {}, None
+        self.book_groups, self.windows, self.cursor_group, self.book_where = {}, {}, {}, {}
+        # the book reads go in batches of their own (negative tokens), so the pinned calls' batches (and so how their
+        # results are unpickled and shared) are exactly those of a pass without the book read
+        self.book_calls, self.book_rows, self.book_tokens = [], {}, 0
+        self.from_producer = self.pickled_here = self.rows_pickled = 0
         self._new_batch()
 
     def _new_batch(self):
         self.tables, self.index, self.batch = {'control': [], 'r3': []}, {'control': {}, 'r3': {}}, []
         # the original group objects of this batch's tables: kept alive until the batch is pickled, so an id() in
-        # `index` can never be reused by a newer group while the table holds only its shipped copy
+        # `index` can never be reused by a newer group while the table holds only its serials
         self.originals = []
+        self.batch_rows = {}                 # serial -> _Row: every row this batch ships, once
+        self.cohort_guarded = False          # the first cohort call of every batch is also run in the parent
 
     def __enter__(self):
         T = self.T
@@ -551,23 +609,24 @@ class _RawStreams:
         def record(kind, family, groups, side, start, width):
             token = self.calls
             self.calls += 1
-            if len(self.batch) < 2 or token % RAW_GUARD_EVERY == 0:
-                self.expected[token] = exact(kind, groups, side, start)
+            if len(self.batch) < 2 or token % self.guard_every == 0 or (kind == 'cohort' and not self.cohort_guarded):
+                self.expected[token] = (kind, exact(kind, groups, side, start))
+                self.guard['guarded'] += 1
+                if kind == 'cohort':
+                    self.cohort_guarded = True
             table, index = self.tables[family], self.index[family]
             places = []
             for group in groups:
                 at = index.get(id(group))
                 if at is None:
                     at = index[id(group)] = len(table)
-                    shipped = _shipped_group(group)
-                    if shipped is not group:
-                        self.slim_groups += 1
-                    table.append(shipped)
+                    table.append(tuple(self._serial(row, family) for row in group))
                     self.originals.append(group)
                 places.append(at)
             contiguous = all(b == a + 1 for a, b in zip(places, places[1:]))
             window = (places[0] if places else 0, len(places)) if contiguous else places
-            self.batch.append((token, kind, family, window, side, _shipped_start(start, side) if kind == 'cohort' else start))
+            self.batch.append((token, kind, family, window, side,
+                               self._serial(start, 'r3') if kind == 'cohort' and start is not None else None))
             if len(self.batch) >= RAW_BATCH_CALLS:
                 self._submit()
             state = int(self.T.State.MISSING)
@@ -582,7 +641,31 @@ class _RawStreams:
             return record('absorption', 'r3', groups, side, None, 1)
 
         def record_cohort(start, groups, side):
+            if self.current is not None:
+                slots = self.windows.setdefault(self.cursor, {})
+                slots['short' if 'short' not in slots else 'long'] = (self.current[0], self.current[1], len(groups), side)
             return record('cohort', 'r3', groups, side, start, 2)
+
+        history_row = T._history_row
+
+        def record_history_row(e):
+            # the R3 stream's own row (the same function, the same object it keeps); a closed group is read beside it
+            made = history_row(e)
+            try:
+                m = e['normalized']
+                key, closes, cursor = (m['publisher_id'], m['instrument_id']), e['receipt'] is not None, e['cursor']
+            except Exception:  # noqa: BLE001 - the pinned stream raises on such a row itself
+                return made
+            self.open_rows.setdefault(key, []).append(made)
+            if closes:
+                group = self.open_rows.pop(key)
+                ordinal = self.ordinals.get(key, 0)
+                self.ordinals[key] = ordinal + 1
+                previous, self.last_closing[key] = self.last_closing.get(key), group[-1]
+                self.cursor_group[cursor] = self.current = (key, ordinal)
+                self._book_call(key, ordinal, previous, group)
+            return made
+        self.original_history_row = history_row
 
         self.planned = tuple(RAW_WORKER_CPUS or ())
         if self.planned:
@@ -592,30 +675,143 @@ class _RawStreams:
                                basis=('each spawn worker pinned to one CPU of the plan' if self.planned else
                                       'unpinned spawn workers on the parent\'s mask (no plan given)'))
         self.breaks = 0
-        self.slim_groups, self.shipped_bytes, self.batches = 0, 0, 0
+        self.guard_every, basis = _guard_every()
+        self.guard = RAW_POOL_RECORD['guard'] = dict(
+            every=self.guard_every, basis=basis, guarded=0, book_guarded=0, compared_equal=0, mismatches=0,
+            rule='the first two calls and the first cohort call of every batch and every %d-th call, and the first two '
+                 'book reads of every book batch and every %d-th book read, are computed in the parent on the full '
+                 'objects with the same function and compared to the worker\'s result (value and key order); a '
+                 'mismatch stops the run' % (self.guard_every, self.guard_every))
+        self.shipped_bytes, self.batches, self.collected_early, self.rows_shipped = 0, 0, 0, 0
+        self.book_batches = self.book_bytes = 0
         RAW_POOL_RECORD['shipped'] = dict(
             batch_calls=RAW_BATCH_CALLS, in_flight_batches=2 * self.cpus,
-            window_rows='observation=None (the worker functions never read a window row\'s observation)',
-            cohort_start='scope + the start side\'s levels + the orders on them (all the cohort reads)',
-            guard='the first two calls of every batch and every %d-th run the pinned way on the full objects in the '
-                  'parent and must equal the worker\'s result' % RAW_GUARD_EVERY,
-            batches=0, bytes=0, groups_slimmed=0, basis='speed only (2026-10-09): same functions, same values')
+            rows=('whole: every window row and cohort start with its full observation (every level, every order, the '
+                  'integrity flags); each source row pickled once as its APPLIED payload (by the producer, else here) '
+                  'and built in the worker by the teacher\'s own row builders; a row with no payload bytes (restored '
+                  'from a save) pickled once as that row'),
+            guard='see RAW_POOL_RECORD[\'guard\']',
+            collection='a finished batch is taken as soon as it is done (its blob released), in order',
+            batches=0, bytes=0, rows_shipped=0, payloads_from_producer=0, payloads_pickled_here=0,
+            rows_pickled_as_rows=0, batches_collected_early=0,
+            basis='speed only (2026-10-09): same functions, same full values')
         self.pool = self._new_pool(self.cpus)
         T.JournalTeacher._dynamics = staticmethod(record_dynamics)
         T._absorption, T._cohort = record_absorption, record_cohort
+        T._history_row = record_history_row
         return self
+
+    def _book_call(self, key, ordinal, previous, group):
+        from . import teacher_book_read
+        number = self.book_tokens
+        self.book_tokens += 1
+        token = -1 - number
+        if len(self.book_calls) < 2 or number % self.guard_every == 0:
+            self.expected[token] = (BOOK_GROUP, teacher_book_read.book_group(previous, group))
+            self.guard['guarded'] += 1
+            self.guard['book_guarded'] += 1
+        self.book_where[token] = (key, ordinal)
+        self.book_calls.append((token, BOOK_GROUP, 'r3', [self._serial(row, 'r3', self.book_rows) for row in group],
+                                None, self._serial(previous, 'r3', self.book_rows) if previous is not None else None))
+        if len(self.book_calls) >= BOOK_BATCH_GROUPS:
+            self._submit_book()
+
+    def _submit_book(self):
+        import pickle
+        if not self.book_calls:
+            return
+        sources = {serial: (entry.payload, entry.rows.get('control'), entry.rows.get('r3'))
+                   for serial, entry in self.book_rows.items()}
+        blob = pickle.dumps(({'control': [], 'r3': []}, self.book_calls, sources, _changes_applied()),
+                            protocol=pickle.HIGHEST_PROTOCOL)
+        self.book_calls, self.book_rows = [], {}
+        self.book_batches += 1
+        self.book_bytes += len(blob)
+        RAW_POOL_RECORD['shipped'].update(book_batches=self.book_batches, book_bytes=self.book_bytes)
+        self.pending.append((blob, _submit(self.pool, _raw_batch, blob)))
+
+    def seed(self, continuation, book=None):
+        """A resumed pass: the R3 stream's open groups and last closing rows and the control's group ordinals from the
+        saved continuation, and the group reads saved with it (None: a save written before the book read)."""
+        raw, control = (continuation or {}).get('raw') or {}, (continuation or {}).get('control') or {}
+        for key, history in (raw.get('history') or {}).items():
+            if history:
+                self.last_closing[key] = history[-1][-1]
+        for key, rows in (raw.get('pending') or {}).items():
+            self.open_rows[key] = list(rows)
+        for key, count in (control.get('ordinal') or {}).items():
+            self.ordinals[key] = count
+        if book:
+            self.book_groups.update(book['groups'])
+            self.windows.update(book['windows'])
+            self.cursor_group.update(book['cursor_group'])
+
+    def book_state(self, before=None):
+        return dict(schema='FRANKIE_TEACHER_BOOK_READ_STATE_V1', groups=self.book_groups, windows=self.windows,
+                    cursor_group=self.cursor_group, changes=_changes_applied(), read_before=before)
 
     def _new_pool(self, workers):
         return _spawn_pool(workers, self.planned, RAW_POOL_RECORD)
+
+    def feed(self, evidence):
+        """The evidence, each payload taken in as it enters the pass: its producer's pickle (ROW_BYTES) or one made here
+        (the payload's only pickle), under a new serial, found again by the identity of its normalized mapping."""
+        import pickle
+        for e in evidence:
+            held = ROW_BYTES.pop(id(e), None)
+            ROW_BYTES.clear()
+            try:
+                ref = e['normalized']
+                if held is not None and held[0] is e:
+                    payload = held[1]
+                    self.from_producer += 1
+                else:
+                    payload = pickle.dumps(e, protocol=pickle.HIGHEST_PROTOCOL)
+                    self.pickled_here += 1
+            except Exception:  # noqa: BLE001 - not a payload of that shape: its rows are pickled as rows if read
+                ref = None
+            if ref is not None:
+                self.entries[id(ref)] = _Row(ref, self.serials, payload)
+                self.serials += 1
+            self.cursor = e.get('cursor') if isinstance(e, dict) else None
+            self.current = None
+            yield e
+
+    def _serial(self, row, family, rows=None):
+        """The serial of a group row (or a cohort start), its bytes added to this batch (`rows`: the book batch) once."""
+        import pickle
+        ref = row.get('normalized') if type(row) is dict else None
+        if ref is None:
+            ref = row
+        entry = self.entries.get(id(ref))
+        if entry is None or entry.ref is not ref:
+            entry = self.entries[id(ref)] = _Row(ref, self.serials, None)
+            self.serials += 1
+        if entry.payload is None and family not in entry.rows:
+            entry.rows[family] = pickle.dumps(row, protocol=pickle.HIGHEST_PROTOCOL)
+            self.rows_pickled += 1
+        (self.batch_rows if rows is None else rows)[entry.serial] = entry
+        return entry.serial
 
     def _submit(self):
         import pickle
         if not self.batch:
             return
-        blob = pickle.dumps((self.tables, self.batch, _changes_applied()), protocol=pickle.HIGHEST_PROTOCOL)
+        sources = {serial: (entry.payload, entry.rows.get('control'), entry.rows.get('r3'))
+                   for serial, entry in self.batch_rows.items()}
+        blob = pickle.dumps((self.tables, self.batch, sources, _changes_applied()), protocol=pickle.HIGHEST_PROTOCOL)
         self.batches += 1
         self.shipped_bytes += len(blob)
-        RAW_POOL_RECORD['shipped'].update(batches=self.batches, bytes=self.shipped_bytes, groups_slimmed=self.slim_groups)
+        self.rows_shipped += len(sources)
+        # rows older than every row this batch reads are never read again (a window only moves forward): released;
+        # a row asked for after all (another instrument's window) is pickled again as that row, the same value
+        oldest = min(self.batch_rows) if self.batch_rows else self.serials
+        for key in [key for key, entry in self.entries.items() if entry.serial < oldest]:
+            del self.entries[key]
+        RAW_POOL_RECORD['shipped'].update(batches=self.batches, bytes=self.shipped_bytes, rows_shipped=self.rows_shipped,
+                                          payloads_from_producer=self.from_producer,
+                                          payloads_pickled_here=self.pickled_here, rows_pickled_as_rows=self.rows_pickled,
+                                          batches_collected_early=self.collected_early)
         try:
             future = self.pool.submit(_raw_batch, blob)
         except Exception as error:  # noqa: BLE001 - a pool that broke between results: redone in _result, one fewer
@@ -625,6 +821,12 @@ class _RawStreams:
             future.set_exception(error if isinstance(error, BrokenProcessPool) else BrokenProcessPool(str(error)))
         self.pending.append((blob, future))
         self._new_batch()
+        # finished batches are taken now, in order (before, only past 2 per CPU in flight: about the whole day of a2's
+        # 771,787 rows, so every blob stayed in the parent to the end); where a result lands never changes it: each
+        # batch is still unpickled whole, from the batch it was submitted in
+        while self.pending and self.pending[0][1].done():
+            self._collect(*self.pending.popleft())
+            self.collected_early += 1
         while len(self.pending) > 2 * self.cpus:          # bounded: never the whole day's windows in flight
             self._collect(*self.pending.popleft())
 
@@ -658,10 +860,16 @@ class _RawStreams:
         import pickle
         for token, value in pickle.loads(self._result(blob, future)):
             if token in self.expected:
-                expected = self.expected.pop(token)
+                kind, expected = self.expected.pop(token)
                 if expected != value or (type(value) is dict and list(expected) != list(value)) or (
                         type(value) is tuple and [list(v) for v in expected] != [list(v) for v in value]):
-                    raise ValueError('parallel teacher raw stream differs from the pinned function; run stopped')
+                    self.guard['mismatches'] += 1
+                    raise ValueError('parallel teacher raw stream differs from the pinned function at call %d (%s): '
+                                     'parent %r, worker %r; run stopped' % (token, kind, expected, value))
+                self.guard['compared_equal'] += 1
+            if token in self.book_where:
+                self.book_groups[self.book_where.pop(token)] = value
+                continue
             if token in self.where:
                 self._resolve(token, value)
             else:
@@ -699,15 +907,18 @@ class _RawStreams:
 
     def finish(self):
         self._submit()
+        self._submit_book()
         while self.pending:
             self._collect(*self.pending.popleft())
-        if self.expected or self.where or self.early or self.resolved != self.calls:
+        RAW_POOL_RECORD['shipped'].update(batches_collected_early=self.collected_early)
+        if self.expected or self.where or self.early or self.book_where or self.resolved != self.calls:
             raise ValueError('parallel teacher raw call unresolved; run stopped')
 
     def __exit__(self, *exc):
         T = self.T
         T.JournalTeacher._dynamics = self.original[0]
         T._absorption, T._cohort = self.original[1], self.original[2]
+        T._history_row = self.original_history_row
         for _, future in self.pending:
             future.cancel()
         _bounded_shutdown(self.pool, RAW_POOL_RECORD)
@@ -742,16 +953,18 @@ def _evidence_batch(blob):
     from . import c15_journal as J
     fields, items = pickle.loads(blob)
     out = []
-    for e, subset in items:
+    for payload, subset in items:
+        e = pickle.loads(payload)                     # each payload pickled on its own (EvidencePrecompute.submit)
         out.append((J.canonical_bytes(J.pack(e)), J.evidence_hash({k: e[k] for k in fields}) if subset else None))
     return pickle.dumps(out, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 class _EvidenceBatch:
-    __slots__ = ('blob', 'future', 'values', 'resolved')
+    __slots__ = ('blob', 'future', 'values', 'resolved', 'payloads')
 
-    def __init__(self, blob):
+    def __init__(self, blob, payloads=None):
         self.blob, self.future, self.values, self.resolved = blob, None, None, False
+        self.payloads = payloads         # the pickle of each payload, handed on to the raw streams (ROW_BYTES)
 
 
 class EvidencePrecompute:
@@ -782,7 +995,12 @@ class EvidencePrecompute:
         PRECOMPUTE_RECORD['batches'] += 1
         PRECOMPUTE_RECORD['rows'] += len(items)
         try:
-            batch = _EvidenceBatch(pickle.dumps((self.fields, items), protocol=pickle.HIGHEST_PROTOCOL))
+            # each payload pickled once on its own: the same bytes go to these workers and on to the raw streams'
+            # workers (ROW_BYTES), so no payload's object graph is walked a second time in this process
+            payloads = [pickle.dumps(e, protocol=pickle.HIGHEST_PROTOCOL) for e, _ in items]
+            batch = _EvidenceBatch(pickle.dumps((self.fields, [(payload, subset) for payload, (_, subset)
+                                                               in zip(payloads, items)]),
+                                                protocol=pickle.HIGHEST_PROTOCOL), payloads)
         except Exception as error:  # noqa: BLE001 - not registered; the consumer computes these rows itself
             batch = _EvidenceBatch(None)
             self._skip(batch, 'not picklable (%s)' % type(error).__name__)
@@ -842,6 +1060,12 @@ class EvidencePrecompute:
         if batch in self.open:
             self.open.remove(batch)
         return batch.values
+
+    @staticmethod
+    def payload(batch, index):
+        """The pickle of item `index` of the batch (made once in submit), or None."""
+        payloads = batch.payloads
+        return payloads[index] if payloads is not None and 0 <= index < len(payloads) else None
 
     def close(self):
         for batch in self.open:
@@ -1061,6 +1285,10 @@ def row_pass(self, evidence, *, as_of, source_manifest_hash, recovery_path=None,
     rows, processed, entity_hashes = [], 0, {}
     RESUME_SKIP[0] = 0
     RESUME_POSITION[0], RESUME_SEEKED[0] = None, 0
+    ROW_PASS_BOOK[0] = None
+    # the book read saved with the rows (None: a save written before it); book_before: the rows it does not cover (a
+    # save without it: its rows are read at publication, from the same reader, by the caller)
+    book_saved, book_before = None, 0
     every, every_basis = _save_every() if recovery_path else (None, 'no recovery path')
     SAVE_RECORD.clear()
     SAVE_RECORD.update(every_seconds=every, basis=every_basis, saves=[], resumed_from=None,
@@ -1087,7 +1315,12 @@ def row_pass(self, evidence, *, as_of, source_manifest_hash, recovery_path=None,
                 continuation['control']['processed'] != processed or continuation['raw']['next_cursor'] != processed)):
             raise ValueError('saved teacher streams and rows do not share one cursor')
         SAVE_RECORD['resumed_from'] = dict(processed=processed, complete=bool(saved['complete']))
+        book_saved = saved.get('book')
+        book_before = (book_saved.get('read_before') or 0) if book_saved else processed
         if saved['complete']:
+            ROW_PASS_BOOK[0] = (dict(book_saved, read_before=book_before) if book_saved else
+                                dict(schema='FRANKIE_TEACHER_BOOK_READ_STATE_V1', groups={}, windows={},
+                                     cursor_group={}, changes=_changes_applied(), read_before=book_before))
             return rows, processed, entity_hashes
         RESUME_SKIP[0] = processed
         RESUME_POSITION[0] = saved.get('reader_position')
@@ -1095,11 +1328,12 @@ def row_pass(self, evidence, *, as_of, source_manifest_hash, recovery_path=None,
     def save(complete):
         _save_raw_state(recovery_path, dict(identity=identity, as_of=as_of, rows=rows, processed=processed,
             entity_hashes=entity_hashes, continuation=continuation, complete=complete,
-            reader_position=None if complete else _reader_position()))
+            reader_position=None if complete else _reader_position(), book=streams.book_state(book_before)))
     last_save, due = time.monotonic(), False
     _progress('teacher_raw_rows', processed, None, force=True)
     with _RawStreams(T, _cpus()) as streams:
-        for e, old, six in T._paired_raw(self.control, self.raw_teacher, evidence, as_of=as_of,
+        streams.seed(continuation, book_saved)
+        for e, old, six in T._paired_raw(self.control, self.raw_teacher, streams.feed(evidence), as_of=as_of,
                                          source_manifest_hash=source_manifest_hash, continuation=continuation):
             processed += 1
             m = e['normalized']
@@ -1135,6 +1369,7 @@ def row_pass(self, evidence, *, as_of, source_manifest_hash, recovery_path=None,
     _progress('teacher_raw_rows', processed, None, force=True)
     if any(type(v['reason']) is str and v['reason'].startswith(RAW_MARK) for row in rows for v in row[3]):
         raise ValueError('parallel teacher raw placeholder left unresolved; run stopped')
+    ROW_PASS_BOOK[0] = streams.book_state(book_before)
     if recovery_path:
         save(True)
     return rows, processed, entity_hashes
