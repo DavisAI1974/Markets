@@ -38,3 +38,11 @@ i-035994afa8bdf66a5 STOPPED, a2/20231018 finish SAVED, receipt in place, digest 
   (render without FRANKIE_RENDER_BOOKING rewrites the receipt).
 - Relaunch after those land: StartInstances, KeepRunning=true, check the root volume's modification state and raise it
   before any render, direct push of the tip, resume + kick to the teacher (session-9 resume box, steps 1-5).
+
+## Temporary fix list (emptied while running or at any stop; never parked for the end)
+- FLEET: a box keeps its days end to end (Greg, asked again 2026-10-09). Checked: no code moves a day or a stage to
+  another box; the only shared object is the classroom lease (ORDER only; each day's classroom runs on its own box).
+  Not ENFORCED: frankie_box_fleet.claim_day claims per (run, day, stage) without checking the day list's assigned box,
+  and _update_progress rewrites doc['box'] with the latest writer. Fix: the first claim pins the day to its assigned
+  box for every stage; a claim from any other box is refused with the reason; the progress box is never rewritten.
+  After the current work (fleet code is inert; does not block the a2 relaunch).
