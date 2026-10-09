@@ -11,7 +11,8 @@
 #   worker  LINE SCOPE           the line's one worker in the foreground, until its scope is done [MAX_SECONDS opt-in]; a
 #                                second worker exits at once; exit 0 idle, 3 stopped at a failed entry, 5 saved at the bound
 #                                or waiting (an owner's resume, or an out-of-scope predecessor at the front)
-#   kick    LINE SCOPE           starts the line's worker detached (systemd-run) unless one runs [MAX_SECONDS opt-in, 0=none]
+#   kick    LINE SCOPE           starts the line's worker detached (systemd-run) unless one runs [MAX_SECONDS opt-in, 0=none];
+#           (or RUN DAY)         RUN and DAY without LINE/SCOPE: LINE=root, SCOPE=RUN:DAY (the derivation printed)
 # SCOPE=RUN:YYYYMMDD,... is the authorization a worker/kick/handover carries: it admits, reconciles and receipts ONLY
 # those run/days; everything else in the line is left exactly as it is (FIFO still makes an eligible day wait behind an
 # unstarted predecessor; the predecessor is never started by that worker).
@@ -117,6 +118,14 @@ case "$ACTION" in save|status|resume)
 esac
 HEAD_SHA=$(git -C "$CODE_ROOT" rev-parse HEAD 2>/dev/null) || HEAD_SHA="${MARKETS_SHA:-}"  # 2026-10-09: recorded, never compared
 [ "$HEAD_SHA" = "${MARKETS_SHA:-}" ] || { echo "code version: MARKETS_SHA ${MARKETS_SHA:-unset}, checkout $CODE_ROOT at $HEAD_SHA; this step runs on (and records) $HEAD_SHA" >&2; MARKETS_SHA=$HEAD_SHA; }
+if [ "$ACTION" = kick ] && [ -n "${RUN:-}" ] && [ -n "${DAY:-}" ] && { [ -z "${LINE:-}" ] || [ -z "${SCOPE:-}" ]; }; then
+  # 2026-10-09: an operator giving RUN and DAY has said what to kick: LINE defaults to root and SCOPE to RUN:DAY
+  case "$RUN" in ""|*[!A-Za-z0-9_-]*) echo "RUN: letters, digits, _ and - only" >&2; exit 2;; esac
+  case "$DAY" in [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]) ;; *) echo "DAY must be YYYYMMDD" >&2; exit 2;; esac
+  if [ -n "${LINE:-}" ]; then DERIVED="LINE=$LINE (given)"; else LINE=root; DERIVED="LINE=root (derived)"; fi
+  if [ -n "${SCOPE:-}" ]; then DERIVED="$DERIVED SCOPE=$SCOPE (given)"; else SCOPE="$RUN:$DAY"; DERIVED="$DERIVED SCOPE=$SCOPE (derived)"; fi
+  echo "### kick: derived from RUN=$RUN DAY=$DAY: $DERIVED" >&2
+fi
 case "${LINE:-}" in root|class) ;; *) echo "LINE must be root or class" >&2; exit 2;; esac
 # 2026-10-09: no POLL_SECONDS: every queue wait is event-driven (frankie_box_wake.py); a given value is ignored
 set -- --line "$LINE" --code-root "$CODE_ROOT" --commit "$MARKETS_SHA"
