@@ -1,3 +1,14 @@
+# Claude session drop-in — session 13 (from session 12, 2026-10-09 16:3xZ; Greg's usage nearly out: a Claude OR Codex session takes over): READ FIRST `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261009_SESSION13.md`
+
+Branch `ccr-d2f8f826-iefeah-frankie` (SHALLOW: `git fetch --deepen=400`). The day a2/20231018 is RUNNING on the box: the
+teacher seals 5/30-minute blocks (28 sealed at 16:27Z), the classroom runs ONE LESSON AT A TIME on them (blocks 1-20
+complete; the block-1 TEACHER REPORT is in `TEACHER_REPORT_20231018_BLOCK1.md`). Greg's session-12 rules: the science
+is never weakened for speed; one lesson at a time; everything at once except prerequisites; block 1 (the first 5
+minutes) is THE GAUGE (`frankie_box_block_gauge.py`, 163.3 s -> 159.0 s); DISCUSSION FIRST on the external section.
+THE FINDING awaiting Greg's call: the whole external cost (and likely the main chain's key build and store writes) is
+`c15_journal.evidence_hash` -> `causal_packet._canon`, a pure-Python canonicalizer hashing ~56 MB objects 13 times per
+block; the external science itself is 0.16 s. Fix = hash once per object + a byte-identical fast canonicalizer.
+
 # Claude session drop-in — session 12 (from session 11, 2026-10-09 12:2xZ; box on GitHub tip 4447d0fb): READ FIRST `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261009_SESSION12.md`
 
 Branch `ccr-d2f8f826-iefeah-frankie` (SHALLOW: `git fetch --deepen=400`). THE GATE: the first classroom session on
