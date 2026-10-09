@@ -18,22 +18,49 @@ moment it lands; try an AWS call before scheduling it on an assumed cooldown; no
 of a session, let things land; new session after everything lands.
 ```
 
-## State at the hand-over (fill the latest numbers from BOX_RECORD_20261009_S11.md)
+## State at the hand-over (12:09Z 2026-10-09; the box record has every step)
 - Main box i-035994afa8bdf66a5 (r7i.16xlarge, us-east-1) RUNNING, KeepRunning=true. Root vol-0d36715924f03b86c
-  16,000 IOPS / 1,250 MiB/s (accepted 11:19:57Z; let it finish optimizing; NO further volume changes this day).
-  Archive vol-004b68c077be09cc9 10,000/1,000 (revert to baseline when the day is done, next session, not before).
-- Code on the box: see the newest PUSH_RECEIPT in the box record (02461af3 at 11:15Z; later pushes appended below).
-  /opt/frankie-box/code/current -> the newest. Direct push route: build pack (frankie_box_push_bundle.py build --base
-  <box commit>), upload by presigned PUT to s3://frankie-granite42-568968024170-us-east-1/readiness/20260923/code-push/
-  <sha>/<pack sha>.pack, presign GET, SSM: export the pin variables + BUNDLE_URL and `sh <current>/deploy/aws/box/
-  frankie_box_push_code.sh` (~20 s). frankie_box_push_code.sh is unchanged since 45d0b10c.
+  16,000 IOPS / 1,250 MiB/s (accepted 11:19:57Z; let it finish optimizing; NO volume changes this day). Archive
+  vol-004b68c077be09cc9 10,000/1,000 (revert to baseline when the day is done, not before).
+- Code on the box: 2fb5ea06 (push 12:00:44Z) is `current`; GitHub tip f1b75ec4 (adds 26da953f: the CPU watchdog and the
+  queue's control calls are helpers for every booker; push it with the next box change). Push route: build the pack
+  (frankie_box_push_bundle.py build --base <box commit>), upload by presigned PUT to
+  s3://frankie-granite42-568968024170-us-east-1/readiness/20260923/code-push/<sha>/<pack sha>.pack, presign GET, SSM:
+  export the pin variables + BUNDLE_URL and `sh "$(readlink -f /opt/frankie-box/code/current)/deploy/aws/box/
+  frankie_box_push_code.sh"` (~10-20 s); frankie_box_push_code.sh is unchanged since 45d0b10c.
 - Day a2/20231018, attempt e2e-20231018-a2-20231018-a1, booking day-run-20231018-day_slot_repoint-1791535148-1706
-  (64 CPUs): ROOT complete and receipted (17:46Z 2026-10-08) WITH bedrock (583,688 groups, 43/44 layers derived;
-  clock_lock_time correctly could_not: lock time exists only after Frankie reads). TEACHER running (pid 5517, code
-  75160ec4, resumed by seek at 80,492; ~53 rows/s; 771,787 rows total). DIGEST render running inside the booking since
-  11:12:31Z on b8867dde (unit frankie-digest-render-111231; log logs/20231018-digest-render-20261009T111231Z.log; saved
-  tables 0000/0001 reused; disk plan fits on scratch). CLASSROOM not yet run (never run in this workflow).
-- Granite runtime on the box, verified 11:05Z (llama-b11440/llama-server, granite-4.2-3b-Q4_K_M.gguf, provenance.json).
+  (64 CPUs), root worker pid 9964 (2fb5ea06), FRANKIE_ROOT_DIGEST=off FRANKIE_CLASSROOM_CPUS=all carried:
+  ROOT complete and receipted (2026-10-08 17:46Z) WITH bedrock. TEACHER running: pid 10141 on 2fb5ea06 since 12:02:26Z,
+  resumed by seek from cursor 432,473 with the second set (planes joined on every row, book read, state split, carry
+  feed, 1% guard); 435,200 rows (56.4%) at 12:08:48Z, failed 0, errors 0, sharing the 64 CPUs with the render (load 75).
+  Rows done before 432,473 get the planes/book read/split merged at publication. DIGEST render running since 11:12:31Z
+  (unit frankie-digest-render-111231, log logs/20231018-digest-render-20261009T111231Z.log; on table-0002, errors 0;
+  work/derivation-digest-full.md not yet written). CLASSROOM not yet run; the class door (new code) waits for the digest
+  event-driven, then the class worker runs classroom, data, search, batch lessons, frankie_lessons, exchange, voice
+  (Granite meeting), school, reports inside the booking. Granite runtime verified on the box 11:05Z.
+- Scheduled self check-ins of session 11: all cancelled or fired; session 12 owns the probes. Box progress file:
+  /opt/frankie-box/work/experiment-teacher-rows/20231018/progress.json; day status: RUN=e2e-20231018-a2 DAY=20231018
+  sh deploy/aws/box/frankie_box_day_status.sh.
+
+## FIRST ACTIONS of session 12 (in order)
+1. STS (read-only), then one probe: progress.json, the newest /opt/frankie-box/work/experiment-teacher-rows/logs/*.log
+   (second-set join, book read, guard lines, any traceback), the digest render log, free memory. PROBE RULE (session-11
+   slip): never pin a probe onto CPUs the day holds (the booking is 0-63 = the whole box); a pinned probe is a legitimate
+   CPU holder and the slot booking waits on it (now recorded as finish_slot_waiting). Use `systemd-run` without
+   CPUAffinity or a short foreground command.
+2. Check the branch for the report-deepening helper's work (it was in flight at the hand-over in the session-11
+   container): look for commits after 6fadb637 touching frankie_box_experiment_day_reports.py /
+   frankie_box_piece_accounts.py / frankie_box_classroom_reader.py with "discovery", "blocks my signal", "teacher_account".
+   If absent, re-brief a helper from the "Teacher report, deeper" item below and push it before the classroom reports run.
+3. Push the GitHub tip to the box (f1b75ec4 or later) with the route above. A running step keeps its code; the next step
+   picks up the newest.
+4. Watch the teacher to publication (rows/s, memory; the publication merges planes onto the earlier rows and writes the
+   sidecar, teacher-second-set.pkl, teacher-state-split.json, the full-list files, the receipt with `account`), then the
+   class door opening on the digest, then the class worker's steps (first run of every one), then the reports:
+   ROOT REPORT #N, TEACHER REPORT #N, classroom report, Frankie report. Give Greg the teacher's report whole.
+5. If anything stalls: root-events.jsonl (finish_slot_waiting / root_slot_waiting name the holder), the day status, py-spy
+   (in the box venv) on the parked process; fix the moment found, push, continue. Pausing at the classroom boundary is
+   acceptable (Greg); proceeding without the digest is not.
 
 ## What happened in session 11 (the commits are the record; this is the map)
 - Relaunch: a2 re-pointed on 64 CPUs, resumed, kicked; the teacher ran from 08:39Z.
@@ -83,6 +110,20 @@ of a session, let things land; new session after everything lands.
    to Greg whole.
 
 ## Open items for the next session (NO fixes were deferred by choice; these are the ones not reachable this session)
+- ONE PASS for teacher + digest: both read the same ROOT layers (the teacher per event, the render into the pinned
+  byte-exact digest tables); a single pass yielding both is a one-pass improvement to design (not a tweak: the digest's
+  construction is pinned and resumes from saved tables). Today they run concurrently in the same booking.
+- Teacher report, deeper (Greg 2026-10-09, assigned to the consumer helper at hand-over): discovery and correlations as
+  per-cell distributions (count, p50, p90, max per pinned/book column per state bucket; the teacher key's recorded
+  correlation tables whole; co-occurrence of state labels vs pinned states/reasons; reconciliation classes), "what
+  blocks my signal" (MISSING/INVALID reason counts per column with the want each maps to), "depth I lack" (top-3 history
+  on the non-changes path, teacher_as_of lock clock, unresolved planes, unknown buckets, the one-day limit: show vs
+  claim), "for Frankie's trade signals" from the counts only, and the account + the rendered TEACHER REPORT into the
+  teacher brain stage entry as content and into the classroom's learner_context['teacher_account'].
+- Jev gets the second set at his cutoff (6fadb637): if Jev runs before the exchange on a day he gets the cutoff row but
+  no ledgered claims (names list empty); an explicit second_set_claims list on his request is the alternative.
+- The teacher's heartbeat is keyed by batch, so the teacher report may say "not recorded by my step" for time per phase.
+- The old V1 classroom runner now passes learner_context into its summary (gains the second-set sentences).
 - The teacher key is built three times (Run.teacher_knowledge with the _repin correlations; the classroom from the
   attachment with the hardened correlations; the exchange's own ledgers). Merging them is a SCIENCE question (two
   different correlation re-pins): Greg's call.

@@ -1,4 +1,4 @@
-# Claude session drop-in — session 12 (from session 11, 2026-10-09): READ FIRST `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261009_SESSION12.md`
+# Claude session drop-in — session 12 (from session 11, 2026-10-09 12:1xZ): READ FIRST `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261009_SESSION12.md`
 
 Branch `ccr-d2f8f826-iefeah-frankie` (SHALLOW: `git fetch --deepen=400`). THE GATE: the first classroom session on
 a2/20231018 must run end to end (Greg); the teacher's second set (all 99 planes beside book and flow, pinned on the
