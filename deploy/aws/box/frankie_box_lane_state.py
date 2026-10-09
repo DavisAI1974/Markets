@@ -131,11 +131,18 @@ def snapshot(brain=BRAIN, owner=None):
             p = directory / e['name']
             if not p.is_file():
                 raise FileNotFoundError('published knowledge source missing: %s' % p)
+            if e.get('kind') == 'derivation digest' or p.name.startswith('derivation-digest'):
+                # one pass (2026-10-09): the digest travels as a pointer; its sha256 from the entry's claim row when it
+                # holds (stat, filesystem, last 64 KiB), else hashed once (never twice)
+                if p.stat().st_size != e['bytes']:
+                    raise ValueError('published knowledge source differs from manifest: %s' % p)
+                sha256 = _claimed_sha256(BR, directory, p, e) or BR._file_sha256(p)
+                if sha256 != e['sha256']:
+                    raise ValueError('published knowledge source differs from manifest: %s' % p)
+                pointers.append(dict(owner=owner, path=str(p), bytes=p.stat().st_size, sha256=sha256))
+                continue
             if p.stat().st_size != e['bytes'] or BR._file_sha256(p) != e['sha256']:
                 raise ValueError('published knowledge source differs from manifest: %s' % p)
-            if e.get('kind') == 'derivation digest' or p.name.startswith('derivation-digest'):
-                pointers.append(dict(owner=owner, path=str(p), bytes=p.stat().st_size, sha256=BR._file_sha256(p)))
-                continue
             files.append(pack_file(p))
         # Publish a separate transport manifest: never rewrite the source brain manifest.
         published = dict(manifest, entries=[e for e in manifest.get('entries', [])
@@ -299,6 +306,36 @@ def boundary(day, stage, publish=True, brain=BRAIN):
     return witness
 
 
+def _claim_differs(BR, directory, path, entry):
+    """True only when the entry directory's claim row for this file (identity match) holds and names another sha256 or
+    byte count than the manifest entry; no row, or a row that no longer holds, is not a difference (size was checked).
+    One 64 KiB read at most; never raises."""
+    try:
+        from research.kalshi.frankie_boss.operations.ingest_block_sources import claim_still_holds
+        info = os.stat(path)
+        row = BR.file_claims(directory).get((info.st_ino, info.st_size, info.st_mtime_ns))
+        if row is None or claim_still_holds(row, path) is None:
+            return False
+        return (row.get('bytes'), row.get('sha256')) != (entry.get('bytes'), entry.get('sha256'))
+    except Exception:  # noqa: BLE001 - a claim is a hint
+        return False
+
+
+def _claimed_sha256(BR, directory, path, entry):
+    """The manifest entry's sha256 when the entry directory's claim row for this file holds and names the entry's
+    bytes and sha256 (no whole read), else None (the caller hashes). Never raises."""
+    try:
+        from research.kalshi.frankie_boss.operations.ingest_block_sources import claim_still_holds
+        info = os.stat(path)
+        row = BR.file_claims(directory).get((info.st_ino, info.st_size, info.st_mtime_ns))
+        if (row is not None and (row.get('bytes'), row.get('sha256')) == (entry.get('bytes'), entry.get('sha256'))
+                and claim_still_holds(row, path) is not None):
+            return entry['sha256']
+    except Exception:  # noqa: BLE001 - a claim is a hint
+        return None
+    return None
+
+
 def learner_knowledge(day, stage, brain=BRAIN, *, classroom_mode=None):
     """Pin whole legal documents, including reconsideration and completed_native_evidence.
 
@@ -333,12 +370,17 @@ def learner_knowledge(day, stage, brain=BRAIN, *, classroom_mode=None):
                 p = d / e['name']
                 if not p.is_file():
                     raise FileNotFoundError('included learner knowledge is missing: %s' % p)
-                if p.stat().st_size != e['bytes'] or BR._file_sha256(p) != e['sha256']:
-                    raise ValueError('knowledge source hash mismatch: %s' % p)
                 if not e['name'].endswith('.json'):
+                    # one pass (Greg, 2026-10-09): text evidence (each day's full digest among it) is only LISTED here,
+                    # never loaded: its size against the manifest (and the entry's claim row when it holds) is the
+                    # check; it is not hashed whole for a listing
+                    if p.stat().st_size != e['bytes'] or _claim_differs(BR, d, p, e):
+                        raise ValueError('knowledge source hash mismatch: %s' % p)
                     listed.append(dict(label=label, path=str(p), sha256=e['sha256'], bytes=e['bytes'],
                                        reason='retained text evidence; no structured learner calculation consumes this format'))
                     continue
+                if p.stat().st_size != e['bytes'] or BR._file_sha256(p) != e['sha256']:
+                    raise ValueError('knowledge source hash mismatch: %s' % p)
                 content = json.loads(p.read_bytes())
                 # No same-day circular teaching (Greg, standing; school_recovery 2026-10-07): a stage-10 survivor update
                 # is built from the rows of EVERY day of its batch (its confirmation records included), so no day of
