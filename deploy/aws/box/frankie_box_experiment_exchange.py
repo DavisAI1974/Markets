@@ -340,8 +340,13 @@ def accumulated_lessons(day, run, paths, brain, input_path, rows_path, rules_wit
     if input_path.is_file():
         LS.require_current_selection(input_path, brain=brain)
         retained = json.loads(input_path.read_bytes())
-        if retained.get('identity') != identity:
-            raise ValueError('retained exchange learner inputs belong to another source selection or producer')
+        # Greg, 2026-10-09 (standing): producer_sha256 and reader_sha256 are RECORDED, NEVER COMPARED; the retained
+        # frozen inputs stay (with the pins they were frozen under) when the data selection is the same
+        recorded = ('producer_sha256', 'reader_sha256')
+        kept = retained.get('identity')
+        if not isinstance(kept, dict) or ({k: v for k, v in kept.items() if k not in recorded}
+                                          != {k: v for k, v in identity.items() if k not in recorded}):
+            raise ValueError('retained exchange learner inputs belong to another source selection')
         # Late-arriving knowledge at this frozen boundary: LISTED (not written into the frozen file, not consumed), so a
         # restart shows what the frozen selection did not see; nothing is reopened (CCode slice D, 2026-10-06).
         frozen = {src['sha256'] for _, src in retained['documents']} | {src.get('container_sha256') for _, src in retained['documents']}
@@ -352,7 +357,9 @@ def accumulated_lessons(day, run, paths, brain, input_path, rows_path, rules_wit
             dict(label=d.get('label'), kind=d.get('kind'), day=d.get('day'), path=d.get('path'), sha256=d.get('sha256'),
                  reason='published after this exchange froze its learner inputs; not consumed by the frozen selection')
             for d in TK.knowledge_listing(day, 'exchange', brain, LS) if d.get('sha256') not in frozen],
-            rule='listed, never consumed here: no reopening of a frozen selection; the late-scheduling decision is held'))
+            rule='listed, never consumed here: no reopening of a frozen selection; the late-scheduling decision is held'),
+            code_recorded=dict(frozen={k: kept.get(k) for k in recorded}, current={k: identity.get(k) for k in recorded},
+                               rule='recorded, never compared (Greg, 2026-10-09)'))
         return retained
     docs, listed = load_lessons(paths, day, brain=brain)
     selected = LS.learner_knowledge(day, 'exchange', brain=brain)
@@ -538,9 +545,10 @@ def _claimed_rows_pin(retain_dir, path, notes):
 
 
 def _load_ledger_save(retain_dir, raw_pin, notes):
-    """The saved measurement when its manifest binds the same rows file (bytes and sha256 just measured from the
-    file's own bytes: never a stat-only skip), the same code identity and the pickle's own bytes/sha256; else None with
-    the reason in notes. Exact: the pickle keeps every value and key order the computation produced."""
+    """The saved measurement when its manifest has LEDGER_SAVE_SCHEMA (the pickle format) and binds the same rows file
+    (bytes and sha256 just measured from the file's own bytes: never a stat-only skip) and the pickle's own
+    bytes/sha256; else None with the reason in notes. The code identity is recorded (notes['ledger_save_code']), never
+    compared (Greg, 2026-10-09). Exact: the pickle keeps every value and key order the computation produced."""
     import pickle
     manifest_path = Path(retain_dir) / (LEDGER_SAVE_NAME + '.json')
     if not manifest_path.is_file():
@@ -553,7 +561,6 @@ def _load_ledger_save(retain_dir, raw_pin, notes):
         data = pickle_path.read_bytes()
         why = ('schema' if manifest.get('schema') != LEDGER_SAVE_SCHEMA else
                'rows file differs' if {k: manifest.get('rows', {}).get(k) for k in ('bytes', 'sha256')} != raw_pin else
-               'code identity differs' if identity is None or manifest.get('code') != identity else
                'pickle differs from its manifest' if dict(bytes=len(data), sha256=sha256_bytes(data)) != manifest.get('pickle')
                else None)
         if why is not None:
@@ -561,6 +568,10 @@ def _load_ledger_save(retain_dir, raw_pin, notes):
             return None
         measure = pickle.loads(data)
         notes['ledger_save'] = 'loaded the exact saved measurement %s (rows %s)' % (manifest_path, raw_pin['sha256'][:16])
+        # the code identity is recorded, never compared (Greg, 2026-10-09): LEDGER_SAVE_SCHEMA is the pickle's format
+        notes['ledger_save_code'] = dict(saved=manifest.get('code'), current=identity,
+                                         differs=manifest.get('code') != identity,
+                                         rule='recorded, never compared (Greg, 2026-10-09)')
         return measure
     except Exception as error:  # noqa: BLE001 - a save that does not load is never trusted: computed, recorded
         notes['ledger_save'] = 'saved measurement unreadable (%s: %s); computed' % (type(error).__name__, str(error)[:200])
@@ -572,10 +583,7 @@ def _write_ledger_save(retain_dir, measure, raw_pin, notes):
     whole (pickle first, manifest LAST: a manifest names only a complete pickle). Never raises."""
     import pickle
     try:
-        identity = _ledger_code_identity()
-        if identity is None:
-            notes['ledger_save_written'] = 'no code identity readable; not saved'
-            return
+        identity = _ledger_code_identity()     # recorded only; None (unreadable) is recorded as such
         from frankie_box_durable import write_bytes
         data = pickle.dumps(measure, protocol=pickle.HIGHEST_PROTOCOL)
         write_bytes(Path(retain_dir) / (LEDGER_SAVE_NAME + '.pickle'), data)
@@ -587,7 +595,8 @@ def _write_ledger_save(retain_dir, measure, raw_pin, notes):
                         rows_file_identity=rows_file_identity,
                         pickle=dict(bytes=len(data), sha256=sha256_bytes(data)), at=round(time.time(), 3),
                         rule='the exchange step loads this instead of parsing and ledgering the rows again when the rows '
-                             'file (re-hashed), the code identity and the pickle all match')
+                             'file (re-hashed) and the pickle match under LEDGER_SAVE_SCHEMA; the code identity is '
+                             'recorded, never compared')
         write_bytes(Path(retain_dir) / (LEDGER_SAVE_NAME + '.json'), (json.dumps(manifest, indent=1, sort_keys=True) + '\n').encode())
         notes['ledger_save_written'] = str(Path(retain_dir) / (LEDGER_SAVE_NAME + '.json'))
     except Exception as error:  # noqa: BLE001 - the save is a resume aid, never the outcome
@@ -685,9 +694,10 @@ def _ledgers_one_pass(snapshot, columns):
 
 def _ledgers(snapshot, columns):
     """{column: ledger} exactly as the serial comprehension {c: DC._dimension_ledger(snapshot, i)} built them: one pass
-    with per-column accumulators (_ledgers_one_pass) when dipole_classroom._dimension_ledger is the function it mirrors
-    (source sha256 DIMENSION_LEDGER_SOURCE_SHA256) and the columns are its COLUMNS; otherwise, or on any error in the one
-    pass, the serial per-column passes (the same values, the same first error). The record says which ran and why."""
+    with per-column accumulators (_ledgers_one_pass) when the columns are dipole_classroom.COLUMNS (the source sha256 of
+    dipole_classroom._dimension_ledger is recorded beside DIMENSION_LEDGER_SOURCE_SHA256, the one it mirrors, never
+    compared: Greg, 2026-10-09); otherwise, or on any error in the one pass, the serial per-column passes (the same
+    values, the same first error). The record says which ran and why."""
     import hashlib
     import inspect
     import time as _time
@@ -700,9 +710,11 @@ def _ledgers(snapshot, columns):
     except (OSError, TypeError) as error:
         source = 'unreadable (%s)' % type(error).__name__
     why = None
-    if source != DIMENSION_LEDGER_SOURCE_SHA256:
-        why = 'dipole_classroom._dimension_ledger source %s is not the mirrored %s' % (source, DIMENSION_LEDGER_SOURCE_SHA256)
-    elif tuple(columns) != tuple(getattr(DC, 'COLUMNS', ())):
+    # the mirrored source sha256 is RECORDED, never compared (Greg, 2026-10-09: the code version is recorded, never
+    # compared); the one pass runs on the columns it mirrors, any error in it falls to the serial passes
+    record['dimension_ledger_source'] = dict(sha256=source, mirrored=DIMENSION_LEDGER_SOURCE_SHA256,
+                                             same=source == DIMENSION_LEDGER_SOURCE_SHA256)
+    if tuple(columns) != tuple(getattr(DC, 'COLUMNS', ())):
         why = 'the columns are not dipole_classroom.COLUMNS'
     out = None
     if why is None:
@@ -1900,6 +1912,37 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
     return finite(full), finite(view)
 
 
+SUCCESSOR_RECORDED_CODE = ('producer_sha256', 'reader_sha256')
+
+
+def _operation_data(operation):
+    """A successor operation without its recorded-only code pins (Greg, 2026-10-09: recorded, never compared)."""
+    return {k: v for k, v in operation.items() if k not in SUCCESSOR_RECORDED_CODE}
+
+
+def _retained_successor_operation(out_dir, operation):
+    """The recorded operation of a retained successor directory under out_dir whose DATA operation equals this one
+    (its receipt's operation, else its frozen learner-knowledge identity's successor_operation); None when none is."""
+    if not out_dir.is_dir():
+        return None
+    want = _operation_data(operation)
+    for child in sorted(out_dir.iterdir()):
+        if not child.is_dir() or child.is_symlink():
+            continue
+        for name, path in (('receipt', child / 'receipt.json'), ('inputs', child / 'learner-knowledge.json')):
+            if not path.is_file():
+                continue
+            try:
+                document = json.loads(path.read_bytes())
+                kept = (document.get('operation') if name == 'receipt'
+                        else (document.get('identity') or {}).get('successor_operation'))
+            except (OSError, ValueError, AttributeError):
+                continue
+            if isinstance(kept, dict) and _operation_data(kept) == want:
+                return kept
+    return None
+
+
 def rebuild_successor(day, run, brain, out_dir, *, original_inputs, original_view, source_corrections):
     """Recompute one published exchange from its frozen selection and explicit checked corrections.
 
@@ -2012,6 +2055,12 @@ def rebuild_successor(day, run, brain, out_dir, *, original_inputs, original_vie
         original_inputs=original_inputs, original_view=original_view, source_corrections=supplied,
         teacher_rows=rows, rules=rules_witness, producer_sha256=sha256_bytes(Path(__file__).read_bytes()),
         reader_sha256=reader_pins, binding_tables_sha256=HC.binding_tables_sha256(), documents=replacements)
+    # Greg, 2026-10-09 (standing): the code version is RECORDED, NEVER COMPARED. producer_sha256 and reader_sha256 are
+    # records of the code an operation ran under: a retained directory of the same DATA operation (written under other
+    # code bytes, so named by another whole-operation digest) is this operation, and its recorded operation carries on;
+    # no new successor directory is minted because a code file changed.
+    operation = _retained_successor_operation(Path(out_dir), operation) or operation
+    reader_pins = operation['reader_sha256']
     operation_sha = REVIEW.digest(REVIEW.canonical(operation))
     directory = Path(out_dir) / operation_sha
     if any(p.is_symlink() for p in (directory, *directory.parents, directory / 'successor.lock')):
