@@ -1,7 +1,7 @@
 """Immutable, queryable native forecast snapshots; CPU float64 software candidate.
 
 Snapshots contain exact decoder tensors and native state, never future labels.
-The runtime/code lock must still match when an artifact is queried later.
+The runtime lock (numeric environment; code recorded, not compared) must still match when an artifact is queried later.
 """
 from dataclasses import asdict, dataclass, replace
 from pathlib import Path
@@ -25,17 +25,31 @@ except ImportError:
     from forecast_session import ForecastSession, PriceObservation
 
 
-def runtime_hash():
-    names = ('forecast_heads.py', 'forecast_session.py', 'forecast_artifact.py')
+CODE_FILES = ('forecast_heads.py', 'forecast_session.py', 'forecast_artifact.py')
+
+
+def _runtime_environment():
     subnormal = torch.frombuffer(bytearray.fromhex('0100000000000000'), dtype=torch.float64)
     denormal_probe = (subnormal + subnormal).view(torch.uint8).numpy().tobytes()
-    return evidence_hash(dict(code={n: Path(__file__).with_name(n).read_bytes() for n in names},
-        python=sys.version, torch=str(torch.__version__), device='cpu', dtype='float64',
+    return dict(python=sys.version, torch=str(torch.__version__), device='cpu', dtype='float64',
         byteorder=sys.byteorder, cpu=torch.backends.cpu.get_cpu_capability(),
         torch_build=torch.__config__.show(), denormal_probe=denormal_probe,
         mkldnn=torch.backends.mkldnn.enabled, default_device=str(torch.get_default_device()),
         deterministic=torch.are_deterministic_algorithms_enabled(),
-        threads=torch.get_num_threads(), interop_threads=torch.get_num_interop_threads()))
+        threads=torch.get_num_threads(), interop_threads=torch.get_num_interop_threads())
+
+
+# Greg, 2026-10-09 (standing): the code version is RECORDED, NEVER COMPARED. A snapshot's runtime is the numeric
+# environment only (Python, torch build, CPU capability, threads, determinism: the float64 replay concern); the code
+# files' bytes are no longer in it. legacy_runtime_hash() is the earlier form (environment + CODE_FILES bytes) that
+# snapshots captured before 2026-10-09 carry: accepted while those bytes are unchanged (it cannot be decomposed).
+def runtime_hash():
+    return evidence_hash(_runtime_environment())
+
+
+def legacy_runtime_hash():
+    return evidence_hash(dict(code={n: Path(__file__).with_name(n).read_bytes() for n in CODE_FILES},
+                              **_runtime_environment()))
 
 
 @dataclass(frozen=True, slots=True)
@@ -92,8 +106,8 @@ class DecoderSnapshot(HashedContract):
         return cls(decoder.d_model, decoder.hidden, canonical_bytes(pack(tensor_identity(decoder.state_dict()))), runtime_hash())
 
     def restore(self):
-        if self.runtime != runtime_hash():
-            raise ValueError('frozen forecast runtime or code differs')
+        if self.runtime not in (runtime_hash(), legacy_runtime_hash()):
+            raise ValueError('frozen forecast runtime differs')
         # Construction must not consume the caller's RNG stream. No B1 forward.
         with torch.random.fork_rng(devices=[]):
             decoder = NativeForecastHeads(self.d_model, self.hidden).eval()

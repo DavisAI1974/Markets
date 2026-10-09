@@ -22,6 +22,20 @@ from .forecast_contract import sha256_digest
 
 SCHEMA = 'BOSS_TRAINING_CHECKPOINT_V1'
 IDENTITIES = {'training_config_hash', 'code_hash', 'source_hash', 'model_hash'}
+# Greg, 2026-10-09 (standing): the code version is RECORDED, NEVER COMPARED. The caller's code_hash identity and the
+# binding's runtime.code (this module's bytes) are written in every checkpoint; a saved checkpoint is compared on the
+# other identities, the model/optimizer layout and the numeric runtime (Python, torch, numpy, threads, determinism).
+RECORDED_IDENTITIES = ('code_hash',)
+
+
+def _identities_meaning(identities):
+    return {k: v for k, v in identities.items() if k not in RECORDED_IDENTITIES} if isinstance(identities, dict) else identities
+
+
+def _binding_meaning(binding):
+    if not isinstance(binding, dict) or not isinstance(binding.get('runtime'), dict):
+        return binding
+    return dict(binding, runtime={k: v for k, v in binding['runtime'].items() if k != 'code'})
 DTYPES = {str(value): value for value in (torch.float64, torch.float32, torch.float16,
     torch.bfloat16, torch.int64, torch.int32, torch.int16, torch.int8, torch.uint8, torch.bool)}
 
@@ -155,7 +169,8 @@ class BossTrainingCheckpoint:
                         or state['request_id'] != request_id or type(state['training_cursor']) is not int
                         or sequence != (0 if last is None else last['sequence']+1)
                         or state['previous_hash'] != previous
-                        or state['identities'] != self._identities or encode_state(state['binding']) != encode_state(self._binding)
+                        or _identities_meaning(state['identities']) != _identities_meaning(self._identities)
+                        or encode_state(_binding_meaning(state['binding'])) != encode_state(_binding_meaning(self._binding))
                         or (last is not None and state['training_cursor'] <= last['training_cursor'])):
                     raise ValueError('training checkpoint identity or chain differs')
                 if sequence == 0:
@@ -297,7 +312,7 @@ class BossTrainingCheckpoint:
                     return self._receipt(saved, old[1])
                 if training_cursor <= self.training_cursor:
                     raise ValueError('training cursor must advance')
-                if encode_state(self._layout()) != encode_state(self._binding):
+                if encode_state(_binding_meaning(self._layout())) != encode_state(_binding_meaning(self._binding)):
                     raise ValueError('training architecture or runtime changed')
                 mutated = True
                 update_result = update()

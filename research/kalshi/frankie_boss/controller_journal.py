@@ -8,6 +8,17 @@ except ImportError:
 
 SCHEMA = 'BOSS_FRANKIE_CONTROLLER_JOURNAL_V1'
 
+# The controller configuration's code fields (frankie_controller._configuration: the source bytes of the controller,
+# journal and context modules and of the critic transport): recorded in every intent, never compared on a resume.
+RECORDED_CONFIGURATION_CODE = ('code', 'transport_code')
+
+
+def _without_recorded_code(payload):
+    if not isinstance(payload, dict) or not isinstance(payload.get('configuration'), dict):
+        return payload
+    configuration = {k: v for k, v in payload['configuration'].items() if k not in RECORDED_CONFIGURATION_CODE}
+    return dict(payload, configuration=configuration)
+
 
 def _copy(value):
     return unpack(pack(value))
@@ -222,10 +233,15 @@ class ControllerJournal:
         self._failed = False
 
     def begin(self, request_id, payload):
+        """A request's INTENT. A request ID already journaled resumes its saved intent when the inputs are the same:
+        equal, or equal but for the controller configuration's recorded-only code (Greg, 2026-10-09: the code version
+        is recorded, never compared: RECORDED_CONFIGURATION_CODE); the saved intent stays the identity."""
         self._active()
         digest = evidence_hash(payload)
         if request_id in self._requests:
-            if self._requests[request_id]['request_hash'] != digest:
+            saved = self._requests[request_id]
+            if (saved['request_hash'] != digest
+                    and _without_recorded_code(saved['intent']) != _without_recorded_code(payload)):
                 raise ValueError('request ID reused with changed inputs')
         else:
             self._append(dict(request_id=request_id,request_hash=digest,step='INTENT',payload=payload))

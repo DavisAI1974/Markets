@@ -10,7 +10,7 @@ try:
     from .b1_reasoner import B1Reasoner, B1Config
     from .c15_journal import canonical_bytes, pack, unpack, evidence_hash
     from .context_session import tensor_identity
-    from .forecast_artifact import runtime_hash as decoder_runtime_hash
+    from .forecast_artifact import runtime_hash as decoder_runtime_hash, legacy_runtime_hash as decoder_legacy_runtime_hash
     from .forecast_contract import HashedContract, sha256_digest
     from .native_forecast_refresh import native_execution_hash
     from .native_mbo_encoder import NativeTrunk, NativeRegistry
@@ -19,7 +19,7 @@ except ImportError:
     from b1_reasoner import B1Reasoner, B1Config
     from c15_journal import canonical_bytes, pack, unpack, evidence_hash
     from context_session import tensor_identity
-    from forecast_artifact import runtime_hash as decoder_runtime_hash
+    from forecast_artifact import runtime_hash as decoder_runtime_hash, legacy_runtime_hash as decoder_legacy_runtime_hash
     from forecast_contract import HashedContract, sha256_digest
     from native_forecast_refresh import native_execution_hash
     from native_mbo_encoder import NativeTrunk, NativeRegistry
@@ -39,12 +39,22 @@ def decode_exact(payload):
         raise ValueError('invalid evidence encoding') from exc
 
 
+CODE_FILES = ('native_model_artifact.py', 'trunk.py', 'b1_reasoner.py',
+              'native_mbo_encoder.py', 'native_forecast_refresh.py', 'context_session.py',
+              'c15_journal.py', 'causal_packet.py')
+
+
+# Greg, 2026-10-09 (standing): the code version is RECORDED, NEVER COMPARED. A snapshot's runtime is the decoder's
+# numeric environment (forecast_artifact.runtime_hash) and the QSV feature registry; the weights, configuration and
+# execution hash identify the model. legacy_runtime_hash() is the earlier form (with the CODE_FILES bytes and the
+# decoder's earlier form) carried by snapshots captured before 2026-10-09: accepted while those bytes are unchanged.
 def runtime_hash():
-    names = ('native_model_artifact.py', 'trunk.py', 'b1_reasoner.py',
-             'native_mbo_encoder.py', 'native_forecast_refresh.py', 'context_session.py',
-             'c15_journal.py', 'causal_packet.py')
-    return evidence_hash(dict(decoder_runtime=decoder_runtime_hash(), qsv_registry=QSV_FEATURE_REGISTRY,
-        code={name: Path(__file__).with_name(name).read_bytes() for name in names}))
+    return evidence_hash(dict(decoder_runtime=decoder_runtime_hash(), qsv_registry=QSV_FEATURE_REGISTRY))
+
+
+def legacy_runtime_hash():
+    return evidence_hash(dict(decoder_runtime=decoder_legacy_runtime_hash(), qsv_registry=QSV_FEATURE_REGISTRY,
+        code={name: Path(__file__).with_name(name).read_bytes() for name in CODE_FILES}))
 
 
 def _construct(config):
@@ -125,8 +135,8 @@ class NativeModelSnapshot(HashedContract):
             native_execution_hash(model), runtime_hash())
 
     def restore(self):
-        if self.runtime != runtime_hash():
-            raise ValueError('native runtime or code differs')
+        if self.runtime not in (runtime_hash(), legacy_runtime_hash()):
+            raise ValueError('native runtime differs')
         model = _construct(decode_exact(self.configuration))
         if native_execution_hash(model) != self.execution_hash:
             raise ValueError('native effective module configuration differs')

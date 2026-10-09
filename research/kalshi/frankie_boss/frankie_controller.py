@@ -92,6 +92,8 @@ class FrankieForecastController:
             critic_timeout=self.critic.request_timeout,
             targets=tuple(asdict(t) for t in self.bridge.targets),policy=asdict(self.bridge.policy),
             entity=self.bridge.context.entity,
+            # code / transport_code: recorded in the intent, never compared on a resumed request
+            # (controller_journal.RECORDED_CONFIGURATION_CODE; Greg, 2026-10-09)
             code={name:Path(__file__).with_name(name).read_bytes() for name in
                   ('frankie_controller.py','controller_journal.py','granite_context.py',
                    'granite_context_compact.py','granite_context_route.py','granite_shadow.py')},

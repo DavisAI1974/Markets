@@ -21,10 +21,11 @@ class ContextRoute:
 
     def validate_identity(self, identity):
         identity.__post_init__()
+        # parser_code_hash (the route's parser/codec code identity) is recorded on the identity, never compared (Greg,
+        # 2026-10-09: the code version is recorded); the prompt text and the output schema version are compared
         if (identity.system_prompt_hash != hashlib.sha256(self.system_text.encode()).hexdigest()
-                or identity.parser_code_hash != self.parser_code_hash()
                 or identity.schema_version != SCHEMA_VERSION):
-            raise ValueError('critic does not pin selected context prompt/parser/schema')
+            raise ValueError('critic does not pin selected context prompt/schema')
 
     def native(self, snapshot):
         checked = self.parse(snapshot.text, expected_hash=snapshot.hash)

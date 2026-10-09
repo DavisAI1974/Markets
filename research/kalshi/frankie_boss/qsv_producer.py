@@ -36,7 +36,15 @@ def _clock(value):
         raise ValueError('nonnegative integer nanosecond availability required')
 
 
+# Greg, 2026-10-09 (standing): the code version is RECORDED, NEVER COMPARED. A producer configuration's encoder_hash is
+# the encoder's FORMAT identity (schema, numpy version, the QSV feature names); the encoder and producer files' bytes
+# are no longer in it. legacy_encoder_code_hash() is the earlier form (with those bytes) that configurations written
+# before 2026-10-09 carry: accepted while those bytes are unchanged (the combined hash cannot be decomposed).
 def encoder_code_hash():
+    return evidence_hash(dict(schema=SCHEMA, numpy_version=np.__version__, names=QSV_FEATURE_REGISTRY))
+
+
+def legacy_encoder_code_hash():
     return evidence_hash(dict(schema=SCHEMA, encoder_code=hashlib.sha256(
         Path(markets_adapter.__file__).read_bytes()).hexdigest(),
         producer_code=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
@@ -217,8 +225,8 @@ class QSVProducerStore:
                 previous = result
         if previous is not None:
             return previous
-        if config.encoder_hash != encoder_code_hash():
-            raise ValueError('encoder differs from pinned runtime')
+        if config.encoder_hash not in (encoder_code_hash(), legacy_encoder_code_hash()):
+            raise ValueError('encoder format differs from pinned runtime')
         encoder = MarketChunkEncoder(d_enc=len(QSV_FEATURE_REGISTRY))
         if encoder.feature_registry != QSV_FEATURE_REGISTRY:
             raise ValueError('encoder registry differs')

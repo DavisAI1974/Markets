@@ -141,10 +141,10 @@ async def serve_shadow(
         raise TypeError('identity must be GraniteIdentity')
     identity.__post_init__()
     prompt = build_prompt(snapshot)
+    # parser_code_hash is recorded on the identity, never compared (Greg, 2026-10-09: the code version is recorded)
     if (identity.system_prompt_hash != prompt.system_prompt_hash
-            or identity.schema_version != SCHEMA_VERSION
-            or identity.parser_code_hash != parser_code_hash()):
-        raise ValueError('identity does not match local prompt/schema/parser')
+            or identity.schema_version != SCHEMA_VERSION):
+        raise ValueError('identity does not match local prompt/schema')
     request = ShadowRequest(request_id, identity, snapshot.text, snapshot.hash,
                             prompt.text, float(timeout_seconds))
     return await _serve_request(request, snapshot, transport, granite_parser.runtime_score)
@@ -153,7 +153,7 @@ async def serve_shadow(
 async def serve_native_shadow(snapshot, identity: GraniteIdentity, *, request_id: str,
                               timeout_seconds: float, transport, max_prompt_bytes=None) -> ShadowReceipt:
     """Serve exact native evidence with its distinct prompt/parser identity."""
-    from .granite_context import build_native_prompt, native_parser_code_hash, score_native
+    from .granite_context import build_native_prompt, score_native
     if type(timeout_seconds) not in (int, float) or not math.isfinite(timeout_seconds) or timeout_seconds <= 0:
         raise ValueError('timeout_seconds must be finite and positive')
     if not isinstance(request_id, str) or not request_id.strip():
@@ -162,10 +162,10 @@ async def serve_native_shadow(snapshot, identity: GraniteIdentity, *, request_id
         raise TypeError('identity must be GraniteIdentity')
     identity.__post_init__()
     prompt = build_native_prompt(snapshot, max_prompt_bytes=max_prompt_bytes)
+    # parser_code_hash is recorded on the identity, never compared (Greg, 2026-10-09: the code version is recorded)
     if (identity.system_prompt_hash != prompt.system_prompt_hash
-            or identity.schema_version != SCHEMA_VERSION
-            or identity.parser_code_hash != native_parser_code_hash()):
-        raise ValueError('identity does not match native prompt/schema/parser')
+            or identity.schema_version != SCHEMA_VERSION):
+        raise ValueError('identity does not match native prompt/schema')
     request = ShadowRequest(request_id, identity, snapshot.text, snapshot.hash,
                             prompt.text, float(timeout_seconds))
     return await _serve_request(request, snapshot, transport, score_native)
