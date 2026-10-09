@@ -74,9 +74,11 @@ class JournalTeacher:
         groups=defaultdict(lambda:deque(maxlen=K_LONG))
         pending=defaultdict(list); machines={}; origins={}; ordinal=defaultdict(int)
         processed=0; last_recv=-1
+        candidate=self.candidate_digest
         if continuation:
-            if continuation['candidate'] != self.candidate_digest:
-                raise ValueError('saved control teacher identity differs')
+            # Greg, 2026-10-09: the code version is RECORDED, NEVER COMPARED. The saved candidate digest (it folds the
+            # contract files' bytes) stays the save's record; the caller compares the data identity of the save.
+            candidate=continuation['candidate']
             groups.update(continuation['groups']); pending.update(continuation['pending'])
             machines=continuation['machines']; origins=continuation['origins']
             ordinal.update(continuation['ordinal'])
@@ -114,7 +116,7 @@ class JournalTeacher:
                 ordinal[key]+=1
             if continuation is not None:
                 from .teacher_changes import saved_control_totals
-                continuation.update(candidate=self.candidate_digest, groups=dict(groups), pending=dict(pending),
+                continuation.update(candidate=candidate, groups=dict(groups), pending=dict(pending),
                     machines=machines, origins=origins, ordinal=dict(ordinal), processed=processed, last_recv=last_recv,
                     whole_day_totals=saved_control_totals(groups))
             yield e,raw

@@ -33,7 +33,9 @@ their calculation definitions remain unchanged.
                 previous step gives the ratio as log1p(m_last) - log1p(m_prev), listed DEGENERATE_STEP. No INVALID.
 
 The provenance says so: parallel_teacher adds this file's sha256 to the candidate digest and the teacher binding while
-the changes are applied, so these targets are never labelled as the pinned R3's.
+the changes are applied, so these targets are never labelled as the pinned R3's. That sha256 is a RECORD (Greg,
+2026-10-09: the code version is recorded, never compared): a save is resumed on whether the changes are on, never on
+this file's bytes.
 """
 from collections import Counter
 import hashlib
@@ -466,8 +468,11 @@ def r3_iter_raw(self, evidence, *, as_of, source_manifest_hash, continuation=Non
     last_recv = -1
     start = 0
     if continuation:
-        if continuation['candidate'] != candidate or continuation['source_manifest_hash'] != source_manifest_hash:
-            raise ValueError('saved whole-day R3 source/identity differs')
+        # Greg, 2026-10-09: the code version is RECORDED, NEVER COMPARED; only the source is compared here. The saved
+        # candidate digest (it folds the code files' bytes) stays the save's record.
+        if continuation['source_manifest_hash'] != source_manifest_hash:
+            raise ValueError('saved whole-day R3 source differs')
+        candidate = continuation['candidate']
         history.update(continuation['history']); longs.update(continuation['longs'])
         pending.update(continuation['pending']); publishers = continuation['publishers']
         content = continuation['content']; last_recv = continuation['last_recv']; start = continuation['next_cursor']

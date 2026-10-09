@@ -38,7 +38,8 @@ Shared-path payload encodings (EvidencePrecompute, 2026-10-07 night): the canoni
 entity's 7-field row hash, computed on pinned workers and registered for parallel_journal._chain_hash_factory exactly as
 the legacy walk's reader workers do (section note below). Finish (steps 3-4): pinned workers (FINISH_WORKER_CPUS), a
 dead worker redone with one fewer, the finished prefix of chunks joined in order while later chunks run.
-Pinned files unchanged: c15_teacher_r3.py, c15_teacher.py, c15_normalizer.py, c15_normalizer_r3.py, dipole_target.py.
+Pinned files unchanged: c15_normalizer.py, c15_normalizer_r3.py, dipole_target.py; c15_teacher_r3.py and c15_teacher.py
+changed only in their continuation checks (2026-10-09: the saved candidate is a record; only the source is compared).
 """
 from concurrent.futures import ProcessPoolExecutor
 from collections import Counter, deque
@@ -313,14 +314,25 @@ def _progress(stage, completed, total=None, force=False, _last={}):
 
 
 # ---- save identity like ROOT's (Greg, 2026-10-07 night: "every workflow piece needs their restore save code updated to
-# match ROOT's"). (5) Function-level code identity: a raw-pass or attachment save binds frankie_box_bedrock.code_identity
-# of the declared definitions below (a comment or an unrelated edit of this file no longer refuses a save; any change to
-# the named code does); a save written with the old whole-file parallel_teacher_sha256 is accepted while this file is
-# byte-identical. (4) Identity is content, not location: any other difference is offered to
+# match ROOT's"). (4) Identity is content, not location: any other difference is offered to
 # frankie_box_experiment_root.content_rebinds; checkout-prefix moves with equal bytes and sha256 are accepted and recorded
-# (<recovery>.checkout-rebinds/<n>.json), anything else refuses as before. Nothing saved is rewritten.
+# (<recovery>.checkout-rebinds/<n>.json), anything else refuses. Nothing saved is rewritten.
+# THE CODE VERSION IS RECORDED, NEVER COMPARED (Greg, 2026-10-09, standing; "Yes" to "fix all code-hash comparisons"): a
+# raw-pass or attachment save is never refused, discarded or redone because a code file's bytes changed. What is
+# compared is the DATA identity only: the code-free teacher definition (_teacher_identity: the candidate names, columns,
+# horizons, tick_raw, whether the teacher changes are on), the initial normalizer's export, the source (manifest hash,
+# entity, the caller's recovery identity with its recorded code fields removed), the context and the causal bound, plus
+# TEACHER_SAVE_FORMAT, a small integer bumped ONLY when the saved bytes' format changes (it covers DSTATE_SCHEMA, RAW_MARK
+# and the save body layout). The teacher binding, the candidate digest (both fold whole source files) and the
+# function-level code witnesses below are kept in the save under 'recorded', beside the data, and never compared. A save
+# written before this rule (no save_format) is compared on the data fields it carries; its binding is a record.
 ROW_PASS_CODE = ('RAW_MARK', 'DSTATE_SCHEMA', '_changes_applied', '_raw_batch', '_RawStreams', '_dstate_row', 'row_pass')
 FINISH_CODE = ('GUARD_EVERY', '_FastStateHash', '_receipt', '_chunk', '_canonical', '_candidate', 'finish')
+TEACHER_SAVE_FORMAT = 1
+# keys of a saved identity that are code records, never compared (the last two: saves written before 2026-10-09)
+RECORDED_KEYS = ('recorded', 'binding', 'candidate', 'parallel_teacher_code', 'parallel_teacher_sha256')
+# the keys the 2026-10-09 identity added; a save written before it is compared without them
+FORMAT_KEYS = ('save_format', 'teacher', 'normalizer')
 
 
 def _box(name):
@@ -341,22 +353,63 @@ def _code_witness(names):
     return dict(parallel_teacher_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
 
 
+def _changes_bound():
+    module = sys.modules.get(__package__ + '.teacher_changes')
+    return bool(module is not None and module._BINDING)
+
+
+def _teacher_identity(self):
+    """The teacher's definition with no code bytes in it: what the targets mean, compared on a resume."""
+    T, N = _modules()[:2]
+    from . import c15_teacher as C
+    return dict(candidate=T.CANDIDATE, control_candidate=N.CANDIDATE, columns=tuple(T.CONTROL_COLUMNS),
+                r3_columns=tuple(T.COLUMNS), ablated=tuple(sorted(N.ABLATED_COLUMNS)), horizons=(C.K_SHORT, C.K_LONG),
+                top_levels=C.L_TOP, imbalance_epsilon=C.IMB_EPS, tick_raw=tuple(sorted(self.control.ticks.items())),
+                teacher_changes=dict(applied=_changes_applied(), bound=_changes_bound()))
+
+
+def _recorded(self, names, **extra):
+    """The code version of this save: recorded beside the data, never compared."""
+    return dict(binding=self.binding, **extra, **_code_witness(names))
+
+
+def _source_data(source):
+    """The caller's recovery identity without its recorded code: the learner binding's producer file hashes and the
+    shared-market policy's implementation hash (frankie_box_market_timeline.without_recorded_code)."""
+    if isinstance(source, dict):
+        source = dict(source)
+        learner = source.get('learner_binding')
+        if isinstance(learner, dict) and 'producers' in learner:
+            source['learner_binding'] = {k: v for k, v in learner.items() if k != 'producers'}
+        timeline = _box('frankie_box_market_timeline')
+        if timeline is not None and hasattr(timeline, 'without_recorded_code'):
+            source = timeline.without_recorded_code(source)
+    return source
+
+
+def _data_identity(identity):
+    """The compared form of a saved or built identity: every recorded code field removed."""
+    if not isinstance(identity, dict):
+        return identity
+    data = {k: v for k, v in identity.items() if k not in RECORDED_KEYS}
+    if 'source' in data:
+        data['source'] = _source_data(data['source'])
+    return data
+
+
 def _identity_accepted(saved, built, recovery_path, record=None):
-    """True when a saved identity may be resumed under the identity this process builds (ROOT's rule, see above)."""
+    """True when a saved identity may be resumed under the identity this process builds: the DATA identities are equal
+    (code recorded, never compared), or differ only by checkout-prefix moves (ROOT's rule, see above)."""
+    saved, built = _data_identity(saved), _data_identity(built)
+    if isinstance(saved, dict) and isinstance(built, dict) and 'save_format' not in saved:
+        # written before 2026-10-09: its binding mixed code with data; compared on the data fields it carries
+        built = {k: v for k, v in built.items() if k in saved or k not in FORMAT_KEYS}
+        if record is not None:
+            record.setdefault('identity_notes', []).append(
+                'a save written before 2026-10-09 (no save_format): compared on the data fields it carries; its '
+                'binding and code witnesses are records')
     if saved == built:
         return True
-    whole = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
-    if (isinstance(saved, dict) and isinstance(built, dict) and 'parallel_teacher_sha256' in saved
-            and 'parallel_teacher_code' in built):
-        if saved['parallel_teacher_sha256'] != whole:
-            return False
-        rest_saved = {k: v for k, v in saved.items() if k != 'parallel_teacher_sha256'}
-        rest_built = {k: v for k, v in built.items() if k != 'parallel_teacher_code'}
-        if record is not None:
-            record.setdefault('identity_notes', []).append('an old whole-file save, accepted: this file is byte-identical')
-        if rest_saved == rest_built:
-            return True
-        saved, built = rest_saved, rest_built
     root = _box('frankie_box_experiment_root')
     moves = root.content_rebinds(saved, built) if root is not None and hasattr(root, 'content_rebinds') else None
     if not moves:
@@ -371,6 +424,16 @@ def _identity_accepted(saved, built, recovery_path, record=None):
     if record is not None:
         record.setdefault('checkout_rebinds', []).append(dict(file=str(note), moves=len(moves)))
     return True
+
+
+def _recorded_differs(saved, recorded, record):
+    """List (record only) that the code recorded in a resumed save differs from this process's code."""
+    was = saved.get('recorded') if isinstance(saved, dict) and 'recorded' in saved else {
+        k: v for k, v in (saved or {}).items() if k in RECORDED_KEYS}
+    if record is not None and was != recorded:
+        record.setdefault('identity_notes', []).append(
+            'resumed under different code (recorded, never compared): ' + ', '.join(
+                sorted(k for k in set(was) | set(recorded) if was.get(k) != recorded.get(k))))
 
 
 def _pin_raw_worker(cpus, counter):
@@ -944,15 +1007,18 @@ def row_pass(self, evidence, *, as_of, source_manifest_hash, recovery_path=None,
                        rule='exact state at a row that closes its group (F_LAST receipt), raw streams drained first; '
                             'the walk continues; a resume loads it as it loads a stop-save')
     continuation = {} if recovery_path or retain_dstate else None
-    identity = dict(binding=self.binding, source_manifest_hash=source_manifest_hash,
+    # the data identity (compared) with the code version under 'recorded' (kept, never compared)
+    identity = dict(save_format=TEACHER_SAVE_FORMAT, teacher=_teacher_identity(self),
+                    normalizer=self.normalizer.export(), source_manifest_hash=source_manifest_hash,
                     entity=entity, source=recovery_identity,
-                    **_code_witness(ROW_PASS_CODE)) if recovery_path else None
+                    recorded=_recorded(self, ROW_PASS_CODE)) if recovery_path else None
     if identity is not None and retain_dstate:
         identity['dstate_schema'] = DSTATE_SCHEMA
     if recovery_path and Path(recovery_path).exists():
         saved = _load_raw_state(recovery_path)
         if not _identity_accepted(saved['identity'], identity, recovery_path, SAVE_RECORD) or saved['as_of'] > as_of:
-            raise ValueError('saved teacher source, code or causal bound differs')
+            raise ValueError('saved teacher source data or causal bound differs')
+        _recorded_differs(saved['identity'], identity['recorded'], SAVE_RECORD)
         identity = saved['identity']             # the saved document stays the identity (ROOT's rule)
         as_of = saved['as_of']
         rows, processed, entity_hashes = saved['rows'], saved['processed'], saved['entity_hashes']
@@ -1061,18 +1127,31 @@ def finish(self, rows, processed, entity_hashes, spec, *, source_manifest_hash,
     size = max(1, -(-len(rows) // (cpus * FINISH_CHUNKS_PER_WORKER)))
     target_spec = dict(registry_id=f'boss/teacher/{T.CANDIDATE}:{candidate}', target_names=T.CONTROL_COLUMNS,
                        target_units=units, builder_code_sha=builder_sha)
-    recovery_identity = dict(binding=self.binding, candidate=candidate, source=source_manifest_hash,
+    # the data identity (compared) with the code version under 'recorded' (kept, never compared)
+    recovery_identity = dict(save_format=TEACHER_SAVE_FORMAT, teacher=_teacher_identity(self),
+                             source=source_manifest_hash,
                              processed=processed, context=hashlib.sha256(_canonical(spec)).hexdigest(),
                              normalizer=self.normalizer.export(),
-                             **_code_witness(FINISH_CODE))
+                             recorded=_recorded(self, FINISH_CODE, candidate=candidate, builder_code_sha=builder_sha))
     if dstate_rows is not None:
         recovery_identity['dstate_sha256'] = T.evidence_hash(dstate_rows)
     saved = _load_raw_state(recovery_path) if recovery_path and Path(recovery_path).exists() else None
     identity_notes = {}
     if saved and not _identity_accepted(saved['identity'], recovery_identity, recovery_path, identity_notes):
-        raise ValueError('saved teacher attachment source, context or normalizer changed')
+        raise ValueError('saved teacher attachment source data, context or normalizer changed')
     if saved:
+        _recorded_differs(saved['identity'], recovery_identity['recorded'], identity_notes)
         recovery_identity = saved['identity']   # the saved document stays the identity (chunks are bound to it)
+        # the saved targets keep their saved registry_id and builder_code_sha: every chunk of this attachment, prepared
+        # before or after the resume, carries the spec of the code that began it, and the result names that candidate
+        retained_spec = saved.get('target_spec') or (saved['jobs'][0][6] if saved.get('jobs') else None)
+        was = recovery_identity.get('recorded', recovery_identity)
+        if retained_spec is not None:
+            target_spec = dict(retained_spec)
+        elif isinstance(was, dict) and 'candidate' in was:
+            target_spec = dict(target_spec, registry_id=f'boss/teacher/{T.CANDIDATE}:{was["candidate"]}',
+                               **({'builder_code_sha': was['builder_code_sha']} if 'builder_code_sha' in was else {}))
+        candidate = target_spec['registry_id'].rsplit(':', 1)[1]
     jobs = saved['jobs'] if saved else []
     # Preparation is saved once; each result gets its own immutable, hash-bound file.
     # Rewriting all prior tensors after every chunk would turn recovery into quadratic I/O.
@@ -1091,7 +1170,8 @@ def finish(self, rows, processed, entity_hashes, spec, *, source_manifest_hash,
             path = chunk_path(index)
             if path.exists():
                 retained = _load_raw_state(path)
-                if retained['identity'] != recovery_identity or retained['index'] != index:
+                if (_data_identity(retained['identity']) != _data_identity(recovery_identity)
+                        or retained['index'] != index):
                     raise ValueError('saved teacher attachment chunk belongs to another source or position')
                 blobs[index] = retained['blob']
             elif index in blobs:       # preserve results saved by the earlier combined-state format
@@ -1100,7 +1180,7 @@ def finish(self, rows, processed, entity_hashes, spec, *, source_manifest_hash,
         base = R.NormalizerR3.restore(config, saved['base'], saved['base_hash'])
     def save_finish():
         _save_raw_state(recovery_path, dict(identity=recovery_identity, jobs=jobs, chunk_size=size,
-            prepared=prepared, base=None if identity else base.export(),
+            prepared=prepared, target_spec=target_spec, base=None if identity else base.export(),
             base_hash=None if identity else base.state_hash))
     for start in range(prepared, len(rows), size):
         chunk = rows[start:start + size]

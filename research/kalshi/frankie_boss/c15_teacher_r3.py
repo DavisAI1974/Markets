@@ -221,8 +221,11 @@ class RawJournalTeacherR3:
         last_recv = -1
         start = 0
         if continuation:
-            if continuation['candidate'] != candidate or continuation['source_manifest_hash'] != source_manifest_hash:
-                raise ValueError('saved R3 teacher source/identity differs')
+            # Greg, 2026-10-09: the code version is RECORDED, NEVER COMPARED; only the source is compared here. The
+            # saved candidate digest (it folds the code files' bytes) stays the save's record.
+            if continuation['source_manifest_hash'] != source_manifest_hash:
+                raise ValueError('saved R3 teacher source differs')
+            candidate = continuation['candidate']
             history.update(continuation['history']); pending.update(continuation['pending'])
             publishers = continuation['publishers']; content = continuation['content']
             last_recv = continuation['last_recv']; start = continuation['next_cursor']
