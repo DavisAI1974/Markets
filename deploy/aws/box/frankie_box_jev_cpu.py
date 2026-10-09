@@ -193,10 +193,32 @@ def request_chain(request_path, request):
     return chain
 
 
+# Greg, 2026-10-09 (standing): the code version is RECORDED, NEVER COMPARED. These owner fields are whole-file pins of
+# code (the Jev client, this helper, the shared transport, the adviser market reader); a retained owner that differs
+# from the one this checkout builds only in them is the same owner and stays as written (its pins are its record).
+# The request, the runtime/model pins (shared_runtime) and every data pin still compare.
+OWNER_CODE_PINS = ('client', 'helper', 'transport', 'adviser_market_reader')
+
+
+def _without_code(identity):
+    """The owner identity without its recorded-only code pins."""
+    return {k: v for k, v in identity.items() if k not in OWNER_CODE_PINS}
+
+
+def _record_code(out, retained, identity):
+    """Record (never compare) the code pins of a retained owner beside this checkout's, when they differ."""
+    saved = {k: retained.get(k) for k in OWNER_CODE_PINS}
+    current = {k: identity.get(k) for k in OWNER_CODE_PINS}
+    if saved != current:
+        write_json(out / 'code-recorded' / ('%d.json' % time.time_ns()),
+                   dict(schema='JEV_CPU_CODE_RECORDED_V1', saved=saved, current=current,
+                        rule='recorded, never compared (Greg, 2026-10-09): the retained owner stands'))
+
+
 def _comparable(identity):
     """The owner identity without what a REBOOK legitimately changes (booking, lane CPUs, the request pin/record, the
-    one claimed runtime CPU)."""
-    body = {k: v for k, v in identity.items() if k not in REBOOK_FIELDS + ('request_pin',)}
+    one claimed runtime CPU) and without the recorded-only code pins."""
+    body = {k: v for k, v in _without_code(identity).items() if k not in REBOOK_FIELDS + ('request_pin',)}
     if isinstance(body.get('shared_runtime'), dict):
         body['shared_runtime'] = {k: v for k, v in body['shared_runtime'].items() if k != 'cpus'}
     return body
@@ -216,6 +238,7 @@ def bind_owner(out, identity, chain):
                               if _comparable(retained).get(k) != _comparable(identity).get(k))
                 raise ValueError('retained Jev owner differs beyond the REBOOK booking/CPUs (%s); explicit owner recovery '
                                  'required' % ', '.join(keys))
+            _record_code(out, retained, identity)
             n = (identity.get('rebook') or {}).get('n')
             record = retain_json(out / ('rebook-%s.json' % n), dict(
                 schema='JEV_CPU_REBOOK_RESUME_V1', request=chain[0], chain=chain, owner_request_pin=retained['request_pin'],
@@ -229,15 +252,18 @@ def bind_owner(out, identity, chain):
             # differs only in checkout-prefix paths of equal-bytes, equal-sha256 witnesses (client, helper, transport,
             # reader pins); those moves are accepted and recorded under <out>/checkout-rebinds/, the SAVED owner stays
             # the identity (the state's cpu_owner and the claims seal stay valid). Anything else refuses as before.
+            # The code pins are compared never: both sides without them (Greg, 2026-10-09); their difference is recorded.
             try:
                 import frankie_box_experiment_root as XR
-                moves = XR.content_rebinds(retained, identity)
+                moves = XR.content_rebinds(_without_code(retained), _without_code(identity))
             except Exception:  # noqa: BLE001 - no rebind check: the retain below refuses as before
                 moves = None
-            if moves:
-                write_json(out / 'checkout-rebinds' / ('%d.json' % time.time_ns()),
-                           dict(schema='JEV_CPU_CHECKOUT_REBIND_V1', owner=pin(owner_path), moves=moves,
-                                rule='checkout-prefix moves of equal bytes and sha256 only; the saved owner is kept'))
+            if moves is not None:
+                if moves:
+                    write_json(out / 'checkout-rebinds' / ('%d.json' % time.time_ns()),
+                               dict(schema='JEV_CPU_CHECKOUT_REBIND_V1', owner=pin(owner_path), moves=moves,
+                                    rule='checkout-prefix moves of equal bytes and sha256 only; the saved owner is kept'))
+                _record_code(out, retained, identity)
                 return retained, None
     retain_json(owner_path, identity)
     return identity, None
@@ -788,7 +814,15 @@ def _run(request, request_path, out, brain, jev_brain):
     deliveries = dict(peer_publication=peer_publication, jev=dict(lesson=delivery, reader=pin(SI.__file__), readback=consumed),
                       frankie=dict(knowledge=pin(frankie_knowledge), lesson=pin(result_path)),
                       rule='available immediately; readback is not a new model/native-learning cycle')
-    retain_json(out / 'deliveries.json', deliveries)
+    deliveries_path = out / 'deliveries.json'
+    if deliveries_path.is_file():
+        # the Jev reader pin is recorded, never compared (Greg, 2026-10-09): a retained delivery record that differs
+        # only in it stands as written
+        kept = json.loads(deliveries_path.read_bytes())
+        strip = lambda d: dict(d, jev={k: v for k, v in (d.get('jev') or {}).items() if k != 'reader'})
+        if canonical(kept) != canonical(deliveries) and strip(kept) == strip(deliveries):
+            deliveries = kept
+    retain_json(deliveries_path, deliveries)
     pending = []
     if not client['comparison_available']:
         pending.append('comparison unavailable')
