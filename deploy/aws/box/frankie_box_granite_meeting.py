@@ -1029,7 +1029,10 @@ class LlamaServer:
         try:
             import threading
             before_exec = bool(self.cpus) and threading.active_count() == 1    # preexec_fn only when single-threaded
-            self.process = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=stderr,
+            # stdout into the same retained file (2026-10-09): every line the server prints, on either stream, is an
+            # event for the event-driven /health check below and is kept whole
+            self.process = subprocess.Popen(command, stdout=stderr if self._stderr_handle is not None else subprocess.DEVNULL,
+                                            stderr=stderr,
                                             preexec_fn=self._pin_child if before_exec else None)
             if self.cpus and not before_exec:
                 try:          # other threads here: pin the new process right after the spawn instead
