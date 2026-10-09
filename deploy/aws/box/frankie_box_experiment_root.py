@@ -31,7 +31,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from frankie_box_prepare_trading_day import require_checkout, witness, safe_path  # noqa: E402
+from frankie_box_prepare_trading_day import witness, safe_path  # noqa: E402
 from frankie_box_author_monday_launch import fresh, sync_directory  # noqa: E402
 from frankie_box_monday_calculations import whole_day_pin_document  # noqa: E402
 
@@ -407,6 +407,27 @@ def _journal_witness(journal, receipt, output_root):
     return seen, basis
 
 
+def checkout_recorded(commit):
+    """The Markets checkout this ROOT runs on, RECORDED, never compared (Greg, 2026-10-09: the code version is recorded,
+    never compared; this replaces require_checkout's refusal of a HEAD other than the given commit or of a dirty or
+    untracked tree): the given commit, the checkout's HEAD, whether they are equal, and whether tracked files differ
+    from HEAD. Never raises."""
+    import subprocess
+
+    def git(*args):
+        try:
+            done = subprocess.run(['git', '--no-optional-locks', '-C', str(REPOSITORY), *args],
+                                  capture_output=True, text=True, check=False)
+            return done.returncode, done.stdout.strip()
+        except OSError as error:
+            return None, '%s: %s' % (type(error).__name__, error)
+    code, head = git('rev-parse', 'HEAD')
+    dirty, _ = git('diff', '--quiet', 'HEAD', '--')
+    return dict(given_commit=str(commit), head=head if code == 0 else None, head_equals_given=(code == 0 and head == commit),
+                tracked_changes=(dirty == 1) if dirty is not None else None, checkout=str(REPOSITORY),
+                rule='recorded only; the code version is never compared')
+
+
 def _day_manifest(day, manifest_hash):
     """(path, body) of the committed manifest of this trading day: the day's own file
     (blocks/BLOCK_<day>_SOURCE_MANIFEST.json) opened directly when its declared manifest_hash is the receipt's
@@ -462,7 +483,7 @@ def receipt_file_changes(saved, built):
 def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_root, data_workers=1, digest=False,
                    frozen_survivors=None, resume=False, save_requested=None, bedrock=True, shared_market_policy=None,
                    bedrock_off_cause=None):
-    require_checkout(commit)
+    checkout = checkout_recorded(commit)
     # Why the native pass is off, stated to Session.derive (second review F5; correction_consumer cceb191 defines the
     # causes): the caller's explicit cause when given; otherwise this ROOT's own request decides it. A request WITHOUT
     # the shared market policy is an older saved legacy plan run with its saved native-off setting (legacy_plan, kept as
@@ -676,6 +697,7 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
     session.requested_data_workers = data_workers
     session.request_sha256 = witness(output / 'source-binding.json')['sha256']
     session.note('sealed journal witness: %s' % journal_basis)
+    session.note('checkout (recorded, never compared): %s' % json.dumps(checkout, sort_keys=True))
     session.phase('deriving', 'experiment ROOT: sealed day, legacy and native calculations; no giant bedrock digest'
                   if bedrock else 'experiment ROOT: the legacy pass on the sealed day; bedrock off')
     retained = session.work / 'derive.json'
