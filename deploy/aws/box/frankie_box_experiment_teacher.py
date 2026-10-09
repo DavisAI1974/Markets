@@ -643,9 +643,22 @@ def teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ext
     requested = [False]
     def request_save(*_):
         requested[0] = True
+    # The row pass asks at every row (a2/20231018 py-spy: a Path.exists per row on the parent). The lane stop file is
+    # watched by the box's event latch (frankie_box_wake.FileLatch: inotify + SIGIO, armed before the first check, a
+    # read costs no syscall), as the classroom does; a stat per ask only when the latch cannot be armed here.
+    stop_file = os.environ.get('FRANKIE_LANE_STOP_FILE')
+    latch = None
+    if stop_file:
+        try:
+            latch = _box_module('frankie_box_wake').FileLatch(stop_file)
+        except Exception:  # noqa: BLE001 - no latch: the stop file is checked with a stat per ask, as before
+            latch = None
     def save_requested():
-        stop_file = os.environ.get('FRANKIE_LANE_STOP_FILE')
-        return requested[0] or bool(stop_file and Path(stop_file).exists())
+        if requested[0]:
+            return True
+        if not stop_file:
+            return False
+        return latch.set if latch is not None else Path(stop_file).exists()
     previous_signal = signal.signal(signal.SIGTERM, request_save)
     try:
         return _teach(day, receipt_path, receipt_sha256, workers, day_external,
@@ -653,6 +666,8 @@ def teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ext
                       shared_market_policy=shared_market_policy)
     finally:
         signal.signal(signal.SIGTERM, previous_signal)
+        if latch is not None:
+            latch.close()
 
 
 def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_external_sha256=None,
