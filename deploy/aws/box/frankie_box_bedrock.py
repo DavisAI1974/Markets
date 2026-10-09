@@ -99,6 +99,16 @@ def witness(path):
     return dict(bytes=path.stat().st_size, sha256=sha256_file(path))
 
 
+def _cached_witness(path):
+    """witness(path) through the process-wide stat-keyed cache (frankie_box_filehash) when it loads: a pinned file the
+    session already hashed (Session._producer_witnesses) is not hashed again in this process. The same value."""
+    try:
+        import frankie_box_filehash as F
+    except ImportError:
+        return witness(path)
+    return F.witness(path)
+
+
 def ledger_file_identity(path):
     """Bind a same-process reconciliation to its unchanged regular file."""
     import stat
@@ -111,7 +121,8 @@ def ledger_file_identity(path):
 
 
 def reconciled_ledger_witness(sink, receipt, observed):
-    """Reuse actual disk readback, never a checkpoint's unverified counters."""
+    """The reconciled ledger's witness (frankie_box_finalization.reconcile_all: the write stream's sha256, bytes and
+    rows written, and one stat), bound to the unchanged file."""
     if (not sink._closed or not sink._handle.closed
             or ledger_file_identity(sink.path) != observed
             or receipt['path'] != str(sink.path)
@@ -119,11 +130,10 @@ def reconciled_ledger_witness(sink, receipt, observed):
             or receipt['bytes'] != sink._bytes
             or receipt['sha256'] != sink._digest.hexdigest()
             or receipt['row_count'] != sink.rows_written
-            or receipt['rows_read_back_from_disk'] != sink.rows_written
             or receipt['reconciled_against_counter'] != sink.rows_written):
-        raise ValueError('ledger changed after its completed disk reconciliation')
+        raise ValueError('ledger changed after its completed reconciliation')
     return dict(bytes=receipt['bytes'], sha256=receipt['sha256'],
-                path=str(sink.path), rows=receipt['rows_read_back_from_disk'])
+                path=str(sink.path), rows=receipt['row_count'], witness=receipt.get('witness'))
 
 
 class RowSpool(list):
@@ -268,7 +278,7 @@ def loaded_modules(producers, *modules):
         path = Path(module.__file__).resolve()
         if not path.is_relative_to(producers):
             raise ValueError(f'{module.__name__} loaded from {path}, not the pinned checkout {producers}')
-        out[module.__name__.rsplit('.', 1)[-1]] = dict(path=str(path), **witness(path))
+        out[module.__name__.rsplit('.', 1)[-1]] = dict(path=str(path), **_cached_witness(path))
     return out
 
 
@@ -364,8 +374,8 @@ def identity(producers, container, count, cycle, code_commit):
     producers = Path(producers)
     knowledge = json.loads((producers / KNOWLEDGE_MANIFEST_PATH).read_bytes())
     return RunIdentity(run_id=f'frankie-box-cycle-{cycle}', arm='A_MEMORY',
-                       mission_sha256=sha256_file(producers / MISSION_PATH),
-                       calculation_contract_sha256=sha256_file(producers / CONTRACT_PATH),
+                       mission_sha256=_cached_witness(producers / MISSION_PATH)['sha256'],
+                       calculation_contract_sha256=_cached_witness(producers / CONTRACT_PATH)['sha256'],
                        knowledge_manifest_hash=knowledge['manifest_hash'],
                        source_manifest_hash=str(container['sha256']),
                        total_mbo_records=int(count), code_commit=str(code_commit))
@@ -682,7 +692,7 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
     materialize_all(sinks)
     result = dict(driver._frankie_final_result) if descriptor and descriptor['finalized'] else driver.finalize()
     # Finalize has emitted its terminal rows. Close/fsync before observing file
-    # identity; reconciliation independently reads each unchanged file once.
+    # identity; reconciliation takes each ledger's write stream (sha256, bytes, rows) and one stat.
     finalized_sinks = [getattr(sinks, name) for name in ('member', 'lifecycle', 'legacy')]
     for sink in finalized_sinks:
         sink.close()
@@ -707,7 +717,7 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
     result['runner_result_hash'] = result.pop('result_hash')
     result['result_hash'] = canonical_hash(result)
     result_witness = write_json(out_dir / 'result.json', result)
-    # The unchanged reconciliation already measured all three fields from disk.
+    # The reconciliation holds all three fields from the write stream.
     # The full-state checkpoint writes elsewhere; refuse reuse if any ledger's
     # inode, extent or write timestamps changed in the meantime.
     ledgers = {

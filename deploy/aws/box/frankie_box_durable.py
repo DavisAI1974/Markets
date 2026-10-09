@@ -45,6 +45,48 @@ def _filehash():
     return F
 
 
+def _cached(cache, path):
+    """The per-process write-stream witness of an unchanged file (frankie_box_filehash), or None: no read."""
+    if cache is None:
+        return None
+    try:
+        key = cache._key(path)
+        with cache._LOCK:
+            hit = cache._CACHE.get(key)
+    except (OSError, AttributeError):
+        return None
+    return dict(hit) if hit is not None else None
+
+
+def _claimed(path):
+    """{bytes, sha256} of an existing file from a FRANKIE_FILE_CLAIM row that still holds (inode, size, mtime_ns,
+    filesystem, last 64 KiB: ingest_block_sources.claim_still_holds), looked up in the file-claims.jsonl of the file's
+    own directory and each directory above it; None when no row holds (the caller then hashes the file). A hint only:
+    never raises."""
+    try:
+        from research.kalshi.frankie_boss.operations.ingest_block_sources import (FILE_CLAIMS_NAME,
+                                                                                   FILE_CLAIM_SCHEMAS,
+                                                                                   claim_still_holds)
+    except ImportError:
+        return None
+    try:
+        want = str(Path(path).resolve())
+        for directory in Path(want).parents:
+            claims = directory / FILE_CLAIMS_NAME
+            if not claims.is_file():
+                continue
+            row = None
+            for line in claims.read_text(encoding='utf-8').splitlines():
+                value = json.loads(line)
+                if isinstance(value, dict) and value.get('schema') in FILE_CLAIM_SCHEMAS and value.get('path') == want:
+                    row = value
+            if row is not None and claim_still_holds(row) is not None:
+                return dict(bytes=int(row['bytes']), sha256=str(row['sha256']))
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+    return None
+
+
 def readback_on():
     """The two read-back passes of the earlier write_chunks (off by default since 2026-10-08; FRANKIE_DURABLE_READBACK=on)."""
     return os.environ.get('FRANKIE_DURABLE_READBACK', 'off') == 'on'
@@ -81,11 +123,18 @@ def write_chunks(path, chunks):
     if not readback and os.stat(pending).st_size != size:
         raise ValueError('durable artifact size on disk differs from the bytes written')
     if path.exists():
+        # one pass (Greg, 2026-10-09): the replaced file's sha256 from this process's write-stream cache when it wrote
+        # it, else from a claim row that still holds, else (no record at all) hashed once
         cache = _filehash()
-        previous = cache.witness(path) if cache is not None else witness(path)   # cached when this process wrote it
+        previous = _cached(cache, path)
+        if previous is None:
+            previous = _claimed(path)
+        if previous is None:
+            previous = cache.witness(path) if cache is not None else witness(path)
         retained = path.with_name(path.name + '.retained-' + previous['sha256'])
         if retained.exists():
-            if witness(retained) != previous:
+            # the retained copy is named by its content hash and never rewritten: its size is checked by stat
+            if os.stat(retained).st_size != previous['bytes']:
                 raise ValueError('retained artifact differs from its content hash')
         else:
             os.link(path, retained)

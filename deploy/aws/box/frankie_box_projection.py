@@ -80,13 +80,16 @@ def save(path, value):
 
 
 def _initialize(queue, barrier, configuration):
+    """Unbounded start-up waits (Greg, 2026-10-09: no coded waits): the queue is filled before the pool starts, and a
+    helper that dies before the barrier breaks the pool (ProcessPoolExecutor terminates the others and the
+    coordinator's future raises BrokenProcessPool, naming the death), so a slow spawn on a loaded box only waits."""
     global _STATE
-    cpu = queue.get(timeout=30)
+    cpu = queue.get()
     os.sched_setaffinity(0, {cpu})
     if os.sched_getaffinity(0) != {cpu}:
         raise ValueError('projection helper affinity differs')
     _STATE = configuration
-    barrier.wait(timeout=60)
+    barrier.wait()
 
 
 def _ready():
@@ -175,10 +178,10 @@ def _range(job):
     if receipt_path.exists():
         value = json.loads(receipt_path.read_bytes())
         path = Path(value['archive']['path'])
+        # by claim (one pass): the receipt records the archive's write-stream sha256 and bytes; a stat matches the size
         if (value['binding'] != binding or path.parent != root or not path.name.startswith(base.name+'-')
                 or path.suffix != '.blocks'
-                or path.stat().st_size != value['archive']['bytes']
-                or sha(path) != value['archive']['sha256']):
+                or path.stat().st_size != value['archive']['bytes']):
             raise ValueError('retained projection range differs')
         return value
     # A failed unreceipted range is preserved; a new attempt gets its own name.
@@ -234,12 +237,16 @@ def _range(job):
         actual_end = stream.tell()
     if file_identity(source) != before:
         raise ValueError('projection ledger changed during range read')
-    if shutil.disk_usage(root).free < 20<<30:
-        raise OSError('projection disk reserve reached; all previous ranges retained')
+    for name in streams:
+        data[name].append(streams[name].flush())
+    projected = sum(len(block) for name in streams for block in data[name])
+    free = shutil.disk_usage(root).free
+    if projected > free:
+        # only a write that does not fit stops (Greg, 2026-10-09: no reserve on top of a fit); the numbers are named
+        raise OSError('projection range %d needs %d bytes, %d free; all previous ranges retained' % (index, projected, free))
     fragments,hashed,size = {},hashlib.sha256(),0
     with archive.open('xb') as output:
         for name in streams:
-            data[name].append(streams[name].flush())
             width,digest = 0,hashlib.sha256()
             for block in data[name]:
                 output.write(block)
@@ -249,12 +256,13 @@ def _range(job):
             size += width
         output.flush()
         os.fsync(output.fileno())
-    if sha(archive) != hashed.hexdigest():
-        raise ValueError('compressed projection archive readback differs')
+        if os.fstat(output.fileno()).st_size != size:
+            raise ValueError('compressed projection archive size differs from its write stream')
+    # the archive's sha256 is its write stream's (one pass): the bytes are not read back
     value = dict(binding=binding,actual_start=actual_start,actual_end=actual_end,rows=total,
                  archive=dict(path=str(archive),bytes=size,sha256=hashed.hexdigest()),
                  fragments=fragments,absent=absent,sections=sections,
-                 worker=_ready(),source_identity=list(before),readback_verified=True)
+                 worker=_ready(),source_identity=list(before),witness='write stream')
     # Canonical path is only in the receipt; immutable attempt files survive failure.
     save(receipt_path,value)
     return value
@@ -273,12 +281,25 @@ def _copy_fragment(output,entry):
         raise ValueError('projection fragment changed during publication')
 
 
+class _HashedOutput:
+    """A write stream that hashes and counts exactly the bytes it writes (the published layer's witness, one pass)."""
+
+    def __init__(self, stream):
+        self.stream, self.digest, self.size = stream, hashlib.sha256(), 0
+
+    def write(self, data):
+        self.stream.write(data)
+        self.digest.update(data)
+        self.size += len(data)
+
+
 def _publish(job):
     path,metadata,arrays = job
     path = Path(path)
     if path.exists():
         raise FileExistsError('existing projected layer is preserved')
-    with path.open('xb') as output:
+    with path.open('xb') as raw:
+        output = _HashedOutput(raw)
         output.write(gzip.compress(b'{',compresslevel=1,mtime=0))
         for index,key in enumerate(sorted(metadata.keys() | arrays.keys())):
             output.write(gzip.compress((b',' if index else b'')+encoded(key)+b':',
@@ -295,8 +316,10 @@ def _publish(job):
             else:
                 output.write(gzip.compress(encoded(metadata[key]),compresslevel=1,mtime=0))
         output.write(gzip.compress(b'}\n',compresslevel=1,mtime=0))
-        output.flush();os.fsync(output.fileno())
-    return dict(path=str(path),bytes=path.stat().st_size,sha256=sha(path),
+        raw.flush();os.fsync(raw.fileno())
+        if os.fstat(raw.fileno()).st_size != output.size:
+            raise ValueError('published projected layer size differs from its write stream')
+    return dict(path=str(path),bytes=output.size,sha256=output.digest.hexdigest(),
                 encoding='gzip-json',fields=sorted(metadata.keys() | arrays.keys()),
                 **{k:metadata[k] for k in ('status','producer','reason','count','partial')})
 
@@ -341,8 +364,6 @@ def project(receipt,layers,crosswalk,out_dir,progress):
                 position=value['actual_end'];count+=value['rows']
                 ranges[kind].append(value)
                 progress.update('root-projection-'+kind,position,pin['bytes'],force=False)
-                if shutil.disk_usage(root).free < 20<<30:
-                    raise OSError('projection reserve reached; completed compressed ranges retained')
             if position != pin['bytes'] or count != pin['rows']:
                 raise ValueError('projection complete ledger row/byte coverage differs')
             save(root/(kind+'-coverage-'+str(os.getpid())+'.json'),

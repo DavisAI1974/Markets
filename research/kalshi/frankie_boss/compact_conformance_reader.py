@@ -8,17 +8,20 @@ Workers open their own read-only connections; raw book objects never cross IPC.
 from collections import deque
 from concurrent.futures import ProcessPoolExecutor
 import hashlib
+import json
 import multiprocessing
 from pathlib import Path
 import sqlite3
 import time
 
 try:
-    from .compact_journal import CompactReader, decode_block, verified_rows
-    from .verified_journal_reader import GENESIS_HASH
+    from .c15_journal import SCHEMA
+    from .compact_journal import CompactReader, _field, decode_block, verified_rows
+    from .verified_journal_reader import GENESIS_HASH, decode_tagged
 except ImportError:
-    from compact_journal import CompactReader, decode_block, verified_rows
-    from verified_journal_reader import GENESIS_HASH
+    from c15_journal import SCHEMA
+    from compact_journal import CompactReader, _field, decode_block, verified_rows
+    from verified_journal_reader import GENESIS_HASH, decode_tagged
 
 
 SOURCE_FIELDS = {
@@ -71,6 +74,50 @@ def _read_conformance_block(path, index):
     return entries, cpu
 
 
+def _decoded_partition(rows, start, previous, payload_fields):
+    """compact_journal.verified_partition's decode with payload_fields (the same envelopes, built by the same steps)
+    without re-proving each body: no canonical re-serialization and no second sha256 per row. Used only when the
+    whole file's sha256 equals the seal's (proof: by seal claim); decode_block still checks each reconstructed body's
+    digest, and the ordinal/kind/schema/previous-hash chain is still compared."""
+    count = start
+    for ordinal, kind, body, digest in rows:
+        tree = json.loads(body)
+        if type(tree) is not list or len(tree) != 2 or tree[0] != 'dict':
+            raise ValueError('evidence envelope must be a tagged mapping')
+        payload = _field(tree, 'payload')
+        if type(payload) is not list or len(payload) != 2 or payload[0] != 'dict':
+            raise ValueError('evidence payload must be a tagged mapping')
+        fields = payload_fields[kind]
+        projected = ['dict', [item for item in payload[1] if item[0] in fields]]
+        decoded_tree = ['dict', [[key, projected if key == 'payload' else value] for key, value in tree[1]]]
+        envelope = decode_tagged(decoded_tree)
+        if (type(envelope) is not dict or ordinal != count or envelope.get('ordinal') != ordinal
+                or envelope.get('schema') != SCHEMA or envelope.get('kind') != kind
+                or envelope.get('previous_hash') != previous):
+            raise ValueError('evidence journal continuity differs')
+        previous, count = digest, count+1
+        yield envelope
+
+
+def _read_conformance_block_by_seal(path, index):
+    """_read_conformance_block when the whole file's sha256 is the seal's: the block's own sha256 and the per-row
+    re-proof are not recomputed (the sealed bytes were proven at the seal); the decoded entries are the same."""
+    start, length, previous, head = index
+    cpu = time.process_time()
+    db = sqlite3.connect(Path(path).resolve().as_uri()+'?mode=ro', uri=True)
+    try:
+        row = db.execute('SELECT count,body FROM blocks WHERE start=?', (start,)).fetchone()
+    finally:
+        db.close()
+    if row is None:
+        raise ValueError('block identity differs')
+    rows = decode_block(row[1])
+    if len(rows) != row[0] or len(rows) != length or rows[-1][3] != head:
+        raise ValueError('conformance partition identity differs')
+    entries = project_entries(_decoded_partition(rows, start, previous, SOURCE_FIELDS))
+    return entries, time.process_time()-cpu
+
+
 try:
     from .frankie_journal_reader import FrankieCompactReader
 except ImportError:
@@ -86,7 +133,13 @@ class CompactConformanceReader(FrankieCompactReader):
     block_task = staticmethod(_read_conformance_block)
     progress_phase = 'compact_conformance_read'
 
-    def __init__(self, path, *, expected_count, expected_head_hash, workers=1, emit=None):
+    def __init__(self, path, *, expected_count, expected_head_hash, workers=1, emit=None, proof=True):
+        """proof=False only when the caller holds the whole file's sha256 equal to the seal's (by a claim or a whole
+        read): blocks are then decoded without the per-block sha256 and the per-row re-proof
+        (_read_conformance_block_by_seal); the decoded entries are the same."""
         super().__init__(path, expected_count=expected_count, expected_head_hash=expected_head_hash,
                          workers=workers, emit=emit)
         self.workers = len(self.worker_cpus)
+        self.proof = 'full row proof' if proof else 'by seal claim'
+        if not proof:
+            self.block_task = _read_conformance_block_by_seal

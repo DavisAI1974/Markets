@@ -399,30 +399,26 @@ def _encode_row(value):
     return json.dumps(pack(value), separators=(',', ':')) + '\n'
 
 
-POOL_PIN_WAIT_SECONDS = 5.0      # an initializer's wait for its CPU before it falls back to the pool's whole CPU set
-
-
-def _encoder_pin(cpus, fallback=None):
+def _encoder_pin(handout, cpus):
     """Each encoder process takes one lane CPU of its own and is pinned to it (Greg, 2026-10-07: CPUs pinned to the jobs).
-    A replacement worker (the pool re-forks one that died) finds the hand-out empty: it never blocks there (L-2) and is
+    The hand-out is a shared counter (no wait, Greg 2026-10-09: no coded waits): the first len(cpus) workers take
+    cpus[0], cpus[1], ... in turn; a replacement worker (the pool re-forks one that died) finds them all taken and is
     pinned to the pool's whole CPU set instead, never left on the forking process's CPU.
     SIGTERM (session 5, review 1.7): a pool worker is forked from the ROOT and inherits its save handler (a flag the
     worker never reads), so Pool.terminate()'s SIGTERM could leave a worker blocked in a result-pipe write and the
     pool's join waiting forever (the a2 shard hang's shape). The default action is restored first, as in the shards."""
-    import queue as queue_module
     import signal
     try:
         signal.signal(signal.SIGTERM, signal.SIG_DFL)
     except (ValueError, OSError):       # not the main thread: _bounded_pool_stop still ends the worker
         pass
-    try:
-        cpu = {cpus.get(timeout=POOL_PIN_WAIT_SECONDS)}
-    except queue_module.Empty:
-        cpu = set(fallback or ()) or set(os.sched_getaffinity(0))
+    with handout.get_lock():
+        index = handout.value
+        handout.value = index + 1
+    cpu = {cpus[index]} if index < len(cpus) else (set(cpus) or set(os.sched_getaffinity(0)))
     os.sched_setaffinity(0, cpu)
 
 
-POOL_POLL_SECONDS = 1.0          # a pinned-pool wait's step: between steps it checks its workers are the ones it started
 POOL_STOP_SECONDS = 10.0         # _bounded_pool_stop: the bound on terminate()+join(), then on each kill()+join()
 POOL_CLOSE_GRACE_SECONDS = 60.0  # _bounded_pool_stop: a graceful close()+join() may take this long before terminate
 
@@ -483,9 +479,10 @@ class _PinnedPool:
     """A fork pool of encoders pinned one per CPU (_encoder_pin) that neither stops nor waits forever when a worker dies
     (Greg, 2026-10-07: "We don't want it to die if worker dies" / "continue but with just one less worker").
 
-    multiprocessing.Pool replaces a dead worker but the task it held never completes. get() waits in POOL_POLL_SECONDS
-    steps (a slow task is not a failure: no overall deadline) and, at each step, checks whether any worker has exited
-    or the worker set differs from the one started (no maxtasksperchild: these pools never retire workers). On a loss
+    multiprocessing.Pool replaces a dead worker but the task it held never completes. get() blocks, with no timeout
+    (Greg, 2026-10-09: no coded waits), until a task completes (each result's callback writes one byte to a self-pipe)
+    or a worker exits (its process sentinel), and then checks whether any worker has exited or the worker set differs
+    from the one started (no maxtasksperchild: these pools never retire workers). On a loss
     the pool is ended and started again on the surviving workers' CPUs, one CPU fewer per worker lost (the dead
     worker's CPU is not refilled), and every collected-later task that was not ready is submitted again with its
     own arguments. Only the result is replaced: the caller still writes each slot once, in its own order. With every
@@ -499,6 +496,9 @@ class _PinnedPool:
         self.tasks_redone = 0
         self.outstanding = {}
         self.stop_kills = []              # what _bounded_pool_stop had to kill (session 5): pids, at, exit code
+        self._ready_r, self._ready_w = os.pipe()     # a completed task's callback writes one byte here (get's wake)
+        os.set_blocking(self._ready_r, False)
+        os.set_blocking(self._ready_w, False)
         self._start()
 
     @property
@@ -511,28 +511,42 @@ class _PinnedPool:
             return
         import multiprocessing
         context = multiprocessing.get_context('fork')
-        handout = context.Queue()
-        for cpu in self.cpus:
-            handout.put(cpu)
+        handout = context.Value('i', 0)
         if self.flush is not None:
             self.flush()                  # nothing buffered is copied into the forked encoders
         self.pool = context.Pool(len(self.cpus), initializer=_encoder_pin, initargs=(handout, tuple(self.cpus)))
         self.pids = frozenset(process.pid for process in self.pool._pool)
 
+    def _signal(self, _value=None):
+        """A task's callback (the pool's result thread): one byte on the self-pipe wakes get(). Never raises."""
+        try:
+            os.write(self._ready_w, b'.')
+        except OSError:                   # full (get will find the pipe readable anyway) or closed at the end
+            pass
+
+    def _apply(self, fn, args):
+        return self.pool.apply_async(fn, (args,), callback=self._signal, error_callback=self._signal)
+
     def submit(self, fn, args):
-        task = _PoolTask(fn, args, None if self.pool is None else self.pool.apply_async(fn, (args,)))
+        task = _PoolTask(fn, args, None if self.pool is None else self._apply(fn, args))
         self.outstanding[id(task)] = task
         return task
 
     def get(self, task):
-        import multiprocessing
+        from multiprocessing.connection import wait
         try:
             while task.result is not None:
+                if task.result.ready():
+                    return task.result.get()
+                if self._lost():
+                    self._recover()
+                    continue
+                wait([self._ready_r] + [process.sentinel for process in list(self.pool._pool)])
                 try:
-                    return task.result.get(POOL_POLL_SECONDS)
-                except multiprocessing.TimeoutError:
-                    if self._lost():
-                        self._recover()
+                    while os.read(self._ready_r, 4096):
+                        pass
+                except (BlockingIOError, OSError):
+                    pass
             return task.fn(task.args)
         finally:
             self.outstanding.pop(id(task), None)
@@ -563,7 +577,7 @@ class _PinnedPool:
         self.cpus = survivors
         self._start()
         for task in lost:
-            task.result = None if self.pool is None else self.pool.apply_async(task.fn, (task.args,))
+            task.result = None if self.pool is None else self._apply(task.fn, task.args)
         self.workers_lost += before - len(self.cpus)
         self.tasks_redone += len(lost)
         if self.note is not None:
@@ -606,6 +620,14 @@ class _PinnedPool:
         if self.pool is not None:
             self._stop_pool(graceful=False)
 
+    def __del__(self):
+        for fd in (getattr(self, '_ready_r', None), getattr(self, '_ready_w', None)):
+            if fd is not None:
+                try:
+                    os.close(fd)
+                except OSError:
+                    pass
+
 
 class OrderedRowWriter:
     """The legacy pass's spool appends in the serial order, with the frame rows encoded on pinned lane workers.
@@ -626,7 +648,6 @@ class OrderedRowWriter:
     it runs before every save point (a saved spool position always has every earlier row on disk, so a resume reopens
     the spools at exactly those byte offsets) and before the spools are closed."""
 
-    HANDOVER_CHECK_SECONDS = 5.0     # how often append_frame asks `handover` for CPUs freed beside the legacy pass
 
     def __init__(self, cpus, window_per_worker=4, note=None, handover=None):
         import collections
@@ -638,11 +659,11 @@ class OrderedRowWriter:
         self.pinned = _PinnedPool(self.cpus, 'legacy pass frame encoders', note=note, flush=self._flush_spools)
         self.frames_encoded = 0
         self.wait_seconds = 0.0
-        # handover(): CPUs freed beside this pass (the native child's, once it ended), [] while none; asked every
-        # HANDOVER_CHECK_SECONDS until it hands some over, once (Greg, 2026-10-07: every CPU used)
+        # handover(): CPUs freed beside this pass (the native child's, once it ended), [] while none; asked at every
+        # frame until it hands some over, once (Greg, 2026-10-07: every CPU used). No timed check (Greg, 2026-10-09):
+        # the source (Session._freed_native_cpus) reads a flag the native child's exit sets, so asking costs no syscall
         self.handover = handover
         self.handed_over = []
-        self._handover_next = time.monotonic() + self.HANDOVER_CHECK_SECONDS
 
     @property
     def workers(self):
@@ -683,7 +704,7 @@ class OrderedRowWriter:
             return
         self._spools[id(spool)] = spool
         self._spools[id(failures)] = failures
-        if self.handover is not None and time.monotonic() >= self._handover_next:
+        if self.handover is not None:
             self._take_handover()
         self.queue.append((spool, value, self.pinned.submit(_encode_frame, payload), (failures, payload, index)))
         while len(self.queue) > self.window:
@@ -720,7 +741,6 @@ class OrderedRowWriter:
     def _take_handover(self):
         """Widen the encoders onto the handed-over CPUs: every queued row is written first (drain: the same lines in
         the same order, as at a save point), then the pool restarts on its CPUs plus the new ones. Placement only."""
-        self._handover_next = time.monotonic() + self.HANDOVER_CHECK_SECONDS
         extra = [cpu for cpu in (self.handover() or []) if cpu not in self.pinned.cpus]
         if not extra:
             return
@@ -975,7 +995,6 @@ class _QueuedSpool:
 # forked again from the replay's state after that group, on the CPUs left (the lost one's CPU is not refilled; none left:
 # the replay builds every later row itself). CPUs handed over (the native child's, once it ended first) are taken the same
 # way: after the replay has its current row, the shards restart on their CPUs plus the new ones, once.
-LEGACY_SHARD_POLL_SECONDS = 1.0
 LEGACY_SHARD_PIPE_BYTES = 8 << 20            # asked of F_SETPIPE_SZ (capped by /proc/sys/fs/pipe-max-size): a row in one write
 
 
@@ -1670,7 +1689,6 @@ class LegacyFrameShards:
     """The replica shards of the legacy pass (see the block comment above). result() returns the closed group's
     (kind, line, value) in the replay's order; write() puts it on its spool with RowSpool.append's bookkeeping."""
 
-    HANDOVER_CHECK_SECONDS = 5.0
     STOP_JOIN_SECONDS = 10.0       # _stop: the most it waits for the shards to end after terminate(), then kill()
 
     def __init__(self, cpus, records_path, start, state, *, advance=legacy_replica_advance, note=None, flush=None,
@@ -1686,7 +1704,6 @@ class LegacyFrameShards:
         self.losses = []
         self.stop_kills = []                     # shards _stop had to SIGKILL after STOP_JOIN_SECONDS (nothing lost)
         self._pending_last = {}
-        self._handover_next = time.monotonic() + self.HANDOVER_CHECK_SECONDS
         self._start(start, state, offset)
 
     @property
@@ -1724,8 +1741,8 @@ class LegacyFrameShards:
         The rule is frankie_box_lane_pin's dead-worker rule (ordered_map / wait_result / check_alive: "a dead pool
         worker must never stop a stage or hang it"), mirrored here, not imported: lane_pin imports this module (for
         cpu_topology) and its helpers drive a multiprocessing.Pool, while the shards are plain forked Processes on
-        pipes. As there: every wait is bounded (_receive polls LEGACY_SHARD_POLL_SECONDS and reports an exited shard;
-        this join is bounded), a dead or stuck worker is recorded in the shape of ordered_map's report['worker_deaths']
+        pipes. As there: _receive waits on the shard's pipe and its sentinel and reports an exited shard; this stop
+        join is bounded (the explicit stop route), a dead or stuck worker is recorded in the shape of ordered_map's report['worker_deaths']
         (pids, at), never waited for, and the lost row is redone (result(): built in the replay, one fewer shard)."""
         workers, self.workers = self.workers, []
         for process, _, _ in workers:
@@ -1749,9 +1766,13 @@ class LegacyFrameShards:
                           f'nothing durable, no row lost')
 
     def _receive(self, process, receive, ordinal, check):
+        """The shard's next message, or why it is lost. Blocks with no timeout (Greg, 2026-10-09: no coded waits) on
+        the shard's pipe (a message, or EOF: the shard holds the only write end) and its process sentinel (its exit)."""
         import pickle
+        from multiprocessing.connection import wait
         while True:
-            if receive.poll(LEGACY_SHARD_POLL_SECONDS):
+            wait([receive, process.sentinel])
+            if receive.poll(0):
                 try:
                     message = pickle.loads(receive.recv_bytes())
                 except (EOFError, OSError):
@@ -1771,8 +1792,7 @@ class LegacyFrameShards:
         ordinal = self.ordinal
         self.ordinal += 1
         extra = []
-        if self.handover is not None and time.monotonic() >= self._handover_next:
-            self._handover_next = time.monotonic() + self.HANDOVER_CHECK_SECONDS
+        if self.handover is not None:      # asked at every closed group: a flag read until the native child ends
             extra = [cpu for cpu in (self.handover() or []) if cpu not in self.cpus]
             if self.limit is not None:
                 extra = extra[:max(0, self.limit - len(self.cpus))]
@@ -1860,6 +1880,91 @@ class LegacyFrameShards:
                     replay_waited_seconds=round(self.wait_seconds, 3), killed_at_stop=self.stop_kills)
 
 
+def _flock_holders(fd):
+    """The pids holding a flock on the open file `fd` (/proc/locks, matched by the file's device and inode), excluding
+    this process; [] when none is readable."""
+    info = os.fstat(fd)
+    want = '%02x:%02x:%d' % (os.major(info.st_dev), os.minor(info.st_dev), info.st_ino)
+    pids = []
+    try:
+        with open('/proc/locks', encoding='ascii', errors='replace') as stream:
+            for line in stream:
+                parts = line.split()
+                if len(parts) >= 6 and parts[1] == 'FLOCK' and parts[5].lower() == want and parts[4].isdigit():
+                    pid = int(parts[4])
+                    if pid != os.getpid() and pid not in pids:
+                        pids.append(pid)
+    except OSError:
+        return []
+    return pids
+
+
+def _sentinel_flag(process):
+    """A threading.Event set the instant `process` exits: a daemon thread blocks on its sentinel (no timeout). Reading
+    the flag costs no syscall (the legacy pass asks at every frame whether the native child's CPUs are free)."""
+    import threading
+    from multiprocessing.connection import wait
+    ended = threading.Event()
+
+    def watch():
+        try:
+            wait([process.sentinel])
+        except (OSError, ValueError):     # the sentinel closed: the process was joined and closed
+            pass
+        ended.set()
+    threading.Thread(target=watch, name='native-child-exit', daemon=True).start()
+    return ended
+
+
+def _wait_exit_or_save(process, save_requested):
+    """Block, with no timeout (Greg, 2026-10-09: no coded waits), until `process` exits or a save is requested: the
+    process sentinel, a SIGTERM to this process (signal.set_wakeup_fd: the ROOT's save handler sets its flag, the
+    wake fd wakes this wait), and the lane stop file's directory (FRANKIE_LANE_STOP_FILE; inotify). Returns True when a
+    save was requested while the process still ran. Off the main thread (no wakeup fd) a SIGTERM is seen at the next
+    wake (the stop file or the exit)."""
+    import select
+    import signal
+    wake = _box_module('frankie_box_wake')
+    stop_file = os.environ.get('FRANKIE_LANE_STOP_FILE')
+    read_fd, write_fd = os.pipe()
+    os.set_blocking(read_fd, False)
+    os.set_blocking(write_fd, False)
+    previous = None
+    try:
+        try:
+            previous = signal.set_wakeup_fd(write_fd, warn_on_full_buffer=False)
+        except ValueError:                # not the main thread
+            previous = None
+        with wake.Waiter([Path(stop_file).parent] if stop_file else []) as waiter:
+            while True:
+                if not process.is_alive():
+                    return False
+                if save_requested and save_requested():
+                    return True
+                for missing in list(waiter.missing):
+                    waiter.watch_dir(missing)
+                poll = select.poll()
+                poll.register(process.sentinel, select.POLLIN)
+                poll.register(read_fd, select.POLLIN)
+                if waiter.fd is not None:
+                    poll.register(waiter.fd, select.POLLIN)
+                poll.poll()
+                waiter._drain()
+                try:
+                    while os.read(read_fd, 4096):
+                        pass
+                except (BlockingIOError, OSError):
+                    pass
+    finally:
+        if previous is not None:
+            try:
+                signal.set_wakeup_fd(previous)
+            except ValueError:
+                pass
+        os.close(read_fd)
+        os.close(write_fd)
+
+
 def _split_handover(source, shares):
     """CPUs handed over once (source(): [] until some are freed) split between `shares` takers in proportion to their
     weights, in CPU order; each taker's callable returns its own part (then [] again: a part is taken once)."""
@@ -1893,6 +1998,9 @@ def _pin_worker(cpus):
 
 def sha256_bytes(data):
     return hashlib.sha256(data).hexdigest()
+
+
+_PRODUCER_WITNESSES = {}      # Session._producer_witnesses: (producers root, files) -> witnesses, once per process
 
 
 def _filehash():
@@ -2444,11 +2552,38 @@ class Session:
             try:
                 fcntl.flock(handle.fileno(), fcntl.LOCK_EX | (0 if blocking else fcntl.LOCK_NB))
             except BlockingIOError:
-                raise ValueError('a native stage of an earlier attempt of this ROOT still runs (work/native-stage.lock '
-                                 'held); resume after it ends, never a second traversal beside it')
+                # Greg, 2026-10-09 (a gate never blocks fine data; no coded waits): a held lock is never a refusal. A
+                # flock is released by the kernel when its last holder exits, so a held lock has a live holder (an
+                # earlier attempt's native stage, or a process that inherited its descriptor): this attempt waits on
+                # the holders' exits (pidfd, no timeout; the kernel's blocking flock when no holder is readable), then
+                # takes the lock and continues (the earlier stage's checkpoints / native-stage.json are then reused by
+                # the recovery route, never a second traversal beside it). Recorded in the notes.
+                self._wait_native_stage_lock(handle)
             yield handle
         finally:
             handle.close()
+
+    def _wait_native_stage_lock(self, handle):
+        """Take work/native-stage.lock held by another process: wait on its holders' exits, then lock. Event-driven."""
+        import fcntl
+        wake = _box_module('frankie_box_wake')
+        started = time.time()
+        holders = _flock_holders(handle.fileno())
+        self.note('native stage lock held by %s (an earlier attempt of this ROOT); waiting for it to end, then '
+                  'continuing on its saved state' % (holders or 'a process not readable in /proc/locks'))
+        while True:
+            holders = [pid for pid in holders if wake.alive(pid)]   # a recorded holder that died (a forked child
+            if holders:                                             # keeps the lock): the kernel's blocking flock
+                wake.wait_pids_exit(holders)
+            else:
+                fcntl.flock(handle.fileno(), fcntl.LOCK_EX)          # the kernel wakes this at the release
+                break
+            try:
+                fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except BlockingIOError:
+                holders = _flock_holders(handle.fileno())
+        self.note('native stage lock taken after %.1f s (the earlier holder ended)' % (time.time() - started))
 
     def _start_native_overlap(self, records, container, pin, *, opening_adapter_state, opening_book, save_requested):
         """Start ROOT process 2 (the unchanged _native_stage: B.run, then native-stage.json) in a forked child while this
@@ -2534,7 +2669,8 @@ class Session:
             lock.__exit__(None, None, None)   # this process's copy closes; the child's copy keeps the flock
         self._native_overlap = dict(process=process, lane=lane, started=time.time(), native_cpus=list(native_cpus),
                                     legacy_cpus=list(legacy_cpus), handover_path=handover_path,
-                                    environment={k: os.environ.get(k) for k in ('FRANKIE_LANE_CPUS', 'FRANKIE_BOOKED_CPUS')})
+                                    environment={k: os.environ.get(k) for k in ('FRANKIE_LANE_CPUS', 'FRANKIE_BOOKED_CPUS')},
+                                    ended=_sentinel_flag(process))
         # from here every exit joins it; the legacy pass (and the layer writes after it) see only the second half
         os.sched_setaffinity(0, set(legacy_cpus))
         os.environ['FRANKIE_LANE_CPUS'] = os.environ['FRANKIE_BOOKED_CPUS'] = ','.join(map(str, legacy_cpus))
@@ -2573,25 +2709,35 @@ class Session:
 
     def _freed_native_cpus(self):
         """The native child's CPUs once it has exited while the legacy pass still runs (Greg, 2026-10-07: every CPU
-        used): [] while it runs or with no overlap. Never the legacy side's CPUs, so never the replay's core."""
+        used): [] while it runs or with no overlap. Never the legacy side's CPUs, so never the replay's core. Read at
+        every frame: the exit is a flag set by a thread blocked on the child's sentinel (no syscall here, no timed
+        check), confirmed once by is_alive when set."""
         overlap = getattr(self, '_native_overlap', None)
-        if not overlap or overlap['process'].is_alive():
+        if not overlap:
+            return []
+        ended = overlap.get('ended')
+        if ended is not None and not ended.is_set():
+            return []
+        if overlap['process'].is_alive():
             return []
         return list(overlap.get('native_cpus') or [])
 
     NATIVE_OVERLAP_JOIN_SECONDS = 1800.0   # _join_native_overlap: the most it waits for the child after its SIGTERM
     NATIVE_OVERLAP_KILL_JOIN_SECONDS = 60.0  # then the wait after SIGKILL (kernel reaping)
 
-    def _join_native_overlap(self, process, outcome_note):
+    def _join_native_overlap(self, process, outcome_note, bound=None):
         # Bounded (session 6, the ROOT AWS treatment; the rule of frankie_box_lane_pin's dead-worker handling and the
         # session-5 shard/pool stops: never hang). The normal route reaches here with the child already ended
-        # (_await_native_overlap polls is_alive), so the bound matters only on the save/stop routes, where the child was
+        # (_await_native_overlap waits on its sentinel), so the bound matters only on the save/stop routes, where the child was
         # asked (SIGTERM) to save at its next closed group: a2's checkpoints took seconds, the bound is 30 min. A child
         # still alive at the bound is SIGKILLed and the kill is recorded (join_kill) and noted; its checkpoints are
         # atomic (pending + rename) and its ledgers resume from the last checkpoint, so a kill loses no saved state.
-        process.join(self.NATIVE_OVERLAP_JOIN_SECONDS)
+        # Greg, 2026-10-09 (no coded waits): the join waits for the child's own orderly end (it has exited, or it saves
+        # at its next closed group after SIGTERM) with no bound; the bound and the kill below are the explicit stop
+        # route's only (_stop_native_overlap passes bound=NATIVE_OVERLAP_JOIN_SECONDS).
+        process.join(bound)
         join_kill = None
-        if process.is_alive():
+        if bound is not None and process.is_alive():
             process.kill()
             process.join(self.NATIVE_OVERLAP_KILL_JOIN_SECONDS)
             join_kill = dict(pid=process.pid, at=round(time.time(), 3), after_seconds=self.NATIVE_OVERLAP_JOIN_SECONDS,
@@ -2633,13 +2779,12 @@ class Session:
         process = overlap['process']
         waited = time.time()
         self._hand_legacy_cpus_to_native(overlap)
-        while process.is_alive():
-            process.join(timeout=5)
-            if process.is_alive() and save_requested and save_requested():
-                os.kill(process.pid, signal.SIGTERM)
-                self._join_native_overlap(process, 'a save request reached the ROOT while the native stage ran')
-                from research.kalshi.frankie_boss.parallel_teacher import TeacherSaved
-                raise TeacherSaved('ROOT legacy stage complete; the native stage saved at a closed group')
+        # event-driven (Greg, 2026-10-09): the child's sentinel, a SIGTERM to the ROOT and the lane stop file wake this
+        if _wait_exit_or_save(process, save_requested) and process.is_alive():
+            os.kill(process.pid, signal.SIGTERM)
+            self._join_native_overlap(process, 'a save request reached the ROOT while the native stage ran')
+            from research.kalshi.frankie_boss.parallel_teacher import TeacherSaved
+            raise TeacherSaved('ROOT legacy stage complete; the native stage saved at a closed group')
         self._native_overlap_record(legacy_waited_for_native_seconds=round(time.time() - waited, 3))
         outcome = self._join_native_overlap(process, 'joined after the legacy pass')
         if outcome != 'native_stage_completed':
@@ -2655,7 +2800,7 @@ class Session:
         process = overlap['process']
         if process.is_alive():
             os.kill(process.pid, signal.SIGTERM)       # the child saves at its next closed group, then exits
-        self._join_native_overlap(process, reason)
+        self._join_native_overlap(process, reason, bound=self.NATIVE_OVERLAP_JOIN_SECONDS)
 
     FINALIZE_PROJECTION_SCHEMA = 'FRANKIE_ROOT_FINALIZE_PROJECTION_V1'
 
@@ -2664,8 +2809,9 @@ class Session:
         free space (2026-10-08): a spool reference layer is its other keys plus a few hundred bytes and one index entry
         per INDEX_EVERY rows (no row is re-encoded); an inline one (FRANKIE_ROOT_LAYER_SPOOLS=inline) is at least its
         spools' bytes again (a2's frames layer was ~1.9x its spool); every other layer is its own encoding. Refuses,
-        writing nothing, when the free space is below the projection plus FRANKIE_ROOT_DISK_FLOOR_GB (the Run's floor,
-        default 0). The receipt carries the projection; written_bytes is added after the writes."""
+        writing nothing, only when the projection does not fit the free space (Greg, 2026-10-09: a gate never blocks fine
+        data; no floor on top of a fit: FRANKIE_ROOT_DISK_FLOOR_GB is recorded, never added). The receipt carries the
+        projection; written_bytes is added after the writes."""
         import shutil
         B = _box_module('frankie_box_bedrock')
         LS = _box_module('frankie_box_layer_spool')
@@ -2685,11 +2831,11 @@ class Session:
         floor = int(float(os.environ.get('FRANKIE_ROOT_DISK_FLOOR_GB') or 0) * 1024 ** 3)
         projection = dict(schema=self.FINALIZE_PROJECTION_SCHEMA, spool_form=spool_form, projected_bytes=projected,
                           per_layer=per_layer, free_bytes_before=free, floor_bytes=floor,
-                          rule='the legacy layer files only (the spools are already written); refuse below projection + '
-                               'floor, nothing written')
-        if free < projected + floor:
-            raise ValueError(f'finalize would write ~{projected} bytes of legacy layers with {free} free (floor '
-                             f'{floor}); nothing written, the saved legacy state retained for a resume')
+                          rule='the legacy layer files only (the spools are already written); refuse only when the '
+                               'projection exceeds the free space, nothing written; the floor is recorded, never added')
+        if projected > free:
+            raise ValueError(f'finalize would write ~{projected} bytes of legacy layers with {free} free; nothing '
+                             f'written, the saved legacy state retained for a resume')
         return projection
 
     def _derive(self, *, source=None, bedrock=True, digest=True, opening_adapter_state=None, opening_book=None,
@@ -2832,7 +2978,8 @@ class Session:
         from research.kalshi.frankie_boss.parallel_teacher import _load_raw_state, _save_raw_state, TeacherSaved
         recovery_path = self.work / 'legacy-state.pkl'
         saved = _load_raw_state(recovery_path) if recovery and recovery_path.exists() else None
-        if saved and saved['identity'] != identity:
+        # compared without recorded-only code (Greg, 2026-10-09), as legacy-stage.json is; the producers stay compared
+        if saved and without_recorded_code(saved['identity']) != without_recorded_code(identity):
             raise ValueError('saved ROOT source, producers, opening book or frame projection changed; retained state preserved')
         adapter = V4MboAdapter()
         if opening_adapter_state is not None:
@@ -3584,11 +3731,19 @@ class Session:
 
     @staticmethod
     def _producer_witnesses(pin):
-        out = {}
-        for rel in pin.get('crosswalk_producers') or []:
-            path = PRODUCERS / rel
-            out[rel] = dict(witness(path), path=str(path)) if path.is_file() else dict(missing=True)
-        return out
+        """The pinned producer files' witnesses (science identity: compared at every reuse). Computed ONCE per process
+        (Greg, 2026-10-09: no second hashing of the producer files) and that one result reused at every comparison
+        site (the legacy stage and legacy-state.pkl, the native stage, derive.json, the experiment ROOT's resume); a
+        forked child inherits it."""
+        rels = tuple(pin.get('crosswalk_producers') or [])
+        key = (str(PRODUCERS), rels)
+        if key not in _PRODUCER_WITNESSES:
+            out = {}
+            for rel in rels:
+                path = PRODUCERS / rel
+                out[rel] = dict(witness(path), path=str(path)) if path.is_file() else dict(missing=True)
+            _PRODUCER_WITNESSES[key] = out
+        return json.loads(json.dumps(_PRODUCER_WITNESSES[key]))
 
     def _pin_matches_request(self):
         """The pin this checkout would derive is the pin the request was rendered under (attachment.calculation_pin_witness,
@@ -3912,6 +4067,7 @@ class Session:
             take(kind, payload)
             consumed = seen
             stop_input()
+        proof_basis = None
         if not (saved and saved['complete']):
             probe = _box_module('frankie_box_progress').for_session(self)
             if layout == 'compact' and self.source_binding:
@@ -3931,11 +4087,19 @@ class Session:
                 consumer_core = [c for c in affinity if topology and topology[c] == topology[consumer]] if topology \
                     else [consumer]
                 idle = consumer_core[1:] if len(affinity) - len(consumer_core) >= 1 else []
+                # One pass (Greg, 2026-10-09): when this file's whole sha256 and bytes (by its claim or one whole
+                # read: experiment_root._journal_witness) are the sealed journal's in the source binding, the rows are
+                # decoded without the per-block sha256 and per-row re-proof (proof: by seal claim); the decoded rows are
+                # the same. Otherwise the full row proof, as before.
+                sealed = (self.source_binding or {}).get('container') or {}
+                by_seal = all(sealed.get(k) == container.get(k) for k in ('bytes', 'sha256')) and \
+                    (sealed.get('count'), sealed.get('head')) == (count, head) and sealed.get('sha256') is not None
                 try:
                     os.sched_setaffinity(0, set(affinity) - set(idle))
                     with CompactConformanceReader(rows_path, expected_count=count, expected_head_hash=head,
-                            workers=self._data_workers()) as reader:
+                            workers=self._data_workers(), proof=not by_seal) as reader:
                         os.sched_setaffinity(0, {consumer})
+                        proof_basis = reader.proof
                         probe.reader_workers = dict(requested=self._data_workers(),
                                                     effective=len(reader.worker_cpus), worker_cpus=list(reader.worker_cpus),
                                                     consumer_cpu=consumer, consumer_core_idle_siblings=idle,
@@ -3964,6 +4128,8 @@ class Session:
                 save_input(complete=True)
         records.close()
         container['kinds'] = kinds
+        if proof_basis is not None:
+            container['proof'] = proof_basis      # recorded after the last save (the saved identity never carries it)
         container['inputs_without_observation'] = without_observation
         container['bytes_fields_not_spooled'] = {} if retain_all_fields else bytes_fields
         if retain_all_fields:

@@ -31,7 +31,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from frankie_box_prepare_trading_day import require_checkout, witness, safe_path  # noqa: E402
+from frankie_box_prepare_trading_day import witness, safe_path  # noqa: E402
 from frankie_box_author_monday_launch import fresh, sync_directory  # noqa: E402
 from frankie_box_monday_calculations import whole_day_pin_document  # noqa: E402
 
@@ -407,10 +407,105 @@ def _journal_witness(journal, receipt, output_root):
     return seen, basis
 
 
+def checkout_recorded(commit):
+    """The Markets checkout this ROOT runs on, RECORDED, never compared (Greg, 2026-10-09: the code version is recorded,
+    never compared; this replaces require_checkout's refusal of a HEAD other than the given commit or of a dirty or
+    untracked tree): the given commit, the checkout's HEAD, whether they are equal, and whether tracked files differ
+    from HEAD. Never raises."""
+    import subprocess
+
+    def git(*args):
+        try:
+            done = subprocess.run(['git', '--no-optional-locks', '-C', str(REPOSITORY), *args],
+                                  capture_output=True, text=True, check=False)
+            return done.returncode, done.stdout.strip()
+        except OSError as error:
+            return None, '%s: %s' % (type(error).__name__, error)
+    code, head = git('rev-parse', 'HEAD')
+    dirty, _ = git('diff', '--quiet', 'HEAD', '--')
+    return dict(given_commit=str(commit), head=head if code == 0 else None, head_equals_given=(code == 0 and head == commit),
+                tracked_changes=(dirty == 1) if dirty is not None else None, checkout=str(REPOSITORY),
+                rule='recorded only; the code version is never compared')
+
+
+def _day_manifest(day, manifest_hash):
+    """(path, body) of the committed manifest of this trading day: the day's own file
+    (blocks/BLOCK_<day>_SOURCE_MANIFEST.json) opened directly when its declared manifest_hash is the receipt's
+    (block_source_scope then recomputes the hash once); otherwise the hash search over every committed manifest
+    (opening_book._manifest_by_hash), as before."""
+    from research.kalshi.frankie_boss.opening_book import BLOCKS, _manifest_by_hash
+    own = BLOCKS / ('BLOCK_%s_SOURCE_MANIFEST.json' % day)
+    if own.is_file():
+        body = json.loads(own.read_bytes())
+        if body.get('manifest_hash') == manifest_hash:
+            return own, body
+    return _manifest_by_hash(manifest_hash)
+
+
+# Greg, 2026-10-09: a gate never blocks fine data. The source binding binds the DATA (the day file's sha256, the
+# journal's bytes/sha256/count/head, completion's scope hash and member counts, the manifest hash and its file); the
+# hashes of the receipt FILES that state them (the ingestion receipt's witness, completion.json's witness, the day-file
+# receipt's sha256) are recorded in the binding and never compared, so a rewritten receipt over unchanged data resumes.
+RECEIPT_FILE_FIELDS = (('ingestion_receipt',), ('completion',), ('external', 'receipt_sha256'))
+
+
+def binding_meaning(document):
+    """A source binding in its compared form: without the receipt-file hashes (RECEIPT_FILE_FIELDS)."""
+    if not isinstance(document, dict):
+        return document
+    out = dict(document)
+    for path in RECEIPT_FILE_FIELDS:
+        holder = out
+        for key in path[:-1]:
+            if not isinstance(holder.get(key), dict):
+                holder = None
+                break
+            holder[key] = dict(holder[key])
+            holder = holder[key]
+        if isinstance(holder, dict):
+            holder.pop(path[-1], None)
+    return out
+
+
+def pin_document_forms(saved, built):
+    """(saved, built) calculation-pins documents in their compared form, plus the recorded differences. The historical
+    definition file (CYCLE_CALCULATION_PINS.json) is compared by its parsed content (content_sha256) when both carry
+    it; a save written before content_sha256 existed carries only the raw witness and matches on an equal raw sha256.
+    The raw bytes/sha256 are otherwise recorded, never compared (Greg, 2026-10-09: a formatting-only rewrite never
+    refuses a resume). Every other field of the document is compared as before."""
+    if not (isinstance(saved, dict) and isinstance(built, dict)):
+        return saved, built, []
+    a, b = saved.get('historical_definition_file'), built.get('historical_definition_file')
+    if not (isinstance(a, dict) and isinstance(b, dict)):
+        return saved, built, []
+    keep = ('path',)
+    if 'content_sha256' in a and 'content_sha256' in b:
+        keep += ('content_sha256',)
+    else:
+        keep += ('sha256',)
+    recorded = [dict(at='$.historical_definition_file.' + k, saved=a.get(k), this_run=b.get(k))
+                for k in sorted(set(a) | set(b)) if k not in keep and a.get(k) != b.get(k)]
+    return (dict(saved, historical_definition_file={k: a.get(k) for k in keep}),
+            dict(built, historical_definition_file={k: b.get(k) for k in keep}), recorded)
+
+
+def receipt_file_changes(saved, built):
+    """The receipt-file hashes in which the saved binding differs from this run's: recorded, never refused."""
+    out = []
+    for path in RECEIPT_FILE_FIELDS:
+        a, b = saved, built
+        for key in path:
+            a = a.get(key) if isinstance(a, dict) else None
+            b = b.get(key) if isinstance(b, dict) else None
+        if a != b:
+            out.append(dict(at='$.' + '.'.join(path), saved=a, this_run=b))
+    return out
+
+
 def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_root, data_workers=1, digest=False,
                    frozen_survivors=None, resume=False, save_requested=None, bedrock=True, shared_market_policy=None,
                    bedrock_off_cause=None):
-    require_checkout(commit)
+    checkout = checkout_recorded(commit)
     # Why the native pass is off, stated to Session.derive (second review F5; correction_consumer cceb191 defines the
     # causes): the caller's explicit cause when given; otherwise this ROOT's own request decides it. A request WITHOUT
     # the shared market policy is an older saved legacy plan run with its saved native-off setting (legacy_plan, kept as
@@ -490,16 +585,21 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
     # read through the same as-of reader as the search/teachers, with every table field counted exactly.
     ext_path, ext_receipt = directory / 'day-external.json', directory / 'day-external-receipt.json'
     if ext_path.is_file() and ext_receipt.is_file():
-        want = json.loads(ext_receipt.read_bytes())
-        have = _sha256_file(ext_path)
+        # one pass (Greg, 2026-10-09): the day file is read once (the as-of reader needs its body) and its sha256 is
+        # taken from those same bytes, as is the receipt's; neither file is read a second time to hash it
+        raw_receipt = ext_receipt.read_bytes()
+        want = json.loads(raw_receipt)
+        raw_external = ext_path.read_bytes()
+        have = hashlib.sha256(raw_external).hexdigest()
         if have != want.get('sha256'):
             raise ValueError('day-external.json beside the ingest differs from its receipt')
         from research.kalshi.frankie_boss.operations.frankie_day_external import AsOfReader, computation_receipt
-        body = json.loads(ext_path.read_bytes())
+        body = json.loads(raw_external)
         external_computation = computation_receipt(AsOfReader(body, body['halt_ns']), day)
-        external = dict(status='attached', path=str(ext_path), sha256=have, bytes=ext_path.stat().st_size,
-                        receipt=str(ext_receipt), receipt_sha256=_sha256_file(ext_receipt), s3_key=want.get('s3_key'),
-                        missing=len(want.get('missing') or []))
+        external = dict(status='attached', path=str(ext_path), sha256=have, bytes=len(raw_external),
+                        receipt=str(ext_receipt), receipt_sha256=hashlib.sha256(raw_receipt).hexdigest(),
+                        s3_key=want.get('s3_key'), missing=len(want.get('missing') or []))
+        del raw_external
     else:
         external = dict(status='absent', expected=str(ext_path), s3_key='frankie/day_external/%s/day-external.json' % day,
                         reason='not attached beside the ingest when the ROOT ran (frankie_box_day_external.sh ACTION=link)')
@@ -508,9 +608,9 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
                          'needs the whole manifest, is off in the experiment)')
     manifest_pin = None
     if bedrock:
-        from research.kalshi.frankie_boss.opening_book import _manifest_by_hash
         from research.kalshi.frankie_boss.block_source_scope import block_source_scope
-        manifest_path, manifest = _manifest_by_hash(receipt['manifest_hash'])
+        manifest_path, manifest = _day_manifest(day, receipt['manifest_hash'])
+        # block_source_scope recomputes the manifest hash (the data identity) once; the scope it builds is metadata
         scope = block_source_scope(manifest, expected_manifest_hash=receipt['manifest_hash'])
         if (manifest.get('trading_day') != day
                 or manifest.get('total_mbo_records') != receipt['record_count']
@@ -525,7 +625,7 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
     output.mkdir(mode=0o700, exist_ok=resume)
     sync_directory(PARENT)
     rebinds = []
-    def save_or_match(path, body, run_size=()):
+    def save_or_match(path, body, run_size=(), receipt_files=False, pin_document=False):
         """The saved document when this checkout builds the same content (equal, or equal but for the checkout prefix
         of recorded file paths: content_rebinds); it stays the identity, never rewritten. Any other difference refuses
         (retained, never discarded). A fresh ROOT publishes the built document.
@@ -550,7 +650,18 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
             # attempt's checkout-rebinds record, never refused, and the saved document stays the identity.
             from frankie_box_boss_session import without_recorded_code, recorded_code_changes
             code = recorded_code_changes(saved, built)
-            moves = content_rebinds(without_recorded_code(saved), without_recorded_code(built))
+            if pin_document:
+                # the calculation pins: CYCLE_CALCULATION_PINS.json by its parsed content (pin_document_forms)
+                compared_saved, compared_built, recorded = pin_document_forms(saved, built)
+                code += recorded
+                moves = content_rebinds(without_recorded_code(compared_saved), without_recorded_code(compared_built))
+            elif receipt_files:
+                # the source binding: receipt-file hashes recorded, never compared (binding_meaning)
+                code += receipt_file_changes(saved, built)
+                moves = content_rebinds(without_recorded_code(binding_meaning(saved)),
+                                        without_recorded_code(binding_meaning(built)))
+            else:
+                moves = content_rebinds(without_recorded_code(saved), without_recorded_code(built))
             if moves is None:
                 # session 9: an identity refusal on a resume is its own visible outcome (exit RESUME_REFUSED_EXIT and
                 # work/resume-refused.json, main below), never a generic failure; the saved document is untouched
@@ -570,7 +681,7 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
             'compressed projections retained, giant bedrock rendering omitted. Source route only; consumer coverage separate.'
             if bedrock else 'One complete day delivery for the experiment; the complete registry; the bedrock groups '
             'are named by the pin but not derived (bedrock off).')
-    save_or_match(output / 'calculation-pins.json', whole_day_pin_document(source, rule=rule))
+    save_or_match(output / 'calculation-pins.json', whole_day_pin_document(source, rule=rule), pin_document=True)
     from frankie_box_boss_session import Session, FRAME_SECTIONS_SCHEMA, NATIVE_RECOVERY_SCHEMA
     binding = dict(schema='FRANKIE_EXPERIMENT_DAY_CALCULATION_SOURCE_V1', source=source, data_workers=data_workers,
                    frame_sections_schema=FRAME_SECTIONS_SCHEMA,
@@ -590,7 +701,7 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
             emission=emission_binding())
     # on resume the SAVED binding stays the identity (Session reads source-binding.json; every stage identity and the
     # retained derivation compare against it), whatever checkout path this process built
-    binding = save_or_match(output / 'source-binding.json', binding, run_size=('data_workers',))
+    binding = save_or_match(output / 'source-binding.json', binding, run_size=('data_workers',), receipt_files=True)
     if external['status'] == 'attached':
         save_or_match(output / 'external-computation.json', external_computation)
     if rebinds:
@@ -613,6 +724,7 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
     session.requested_data_workers = data_workers
     session.request_sha256 = witness(output / 'source-binding.json')['sha256']
     session.note('sealed journal witness: %s' % journal_basis)
+    session.note('checkout (recorded, never compared): %s' % json.dumps(checkout, sort_keys=True))
     session.phase('deriving', 'experiment ROOT: sealed day, legacy and native calculations; no giant bedrock digest'
                   if bedrock else 'experiment ROOT: the legacy pass on the sealed day; bedrock off')
     retained = session.work / 'derive.json'
@@ -646,7 +758,8 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
                 retained_checks.append(dict(path=str(path), bytes=item['bytes'], basis=basis))
                 witnessed[str(path.resolve())] = dict(path=str(path), bytes=item['bytes'], sha256=item['sha256'])
             from frankie_box_boss_session import without_recorded_code
-            if without_recorded_code(result.get('source_binding')) != without_recorded_code(binding) or \
+            if without_recorded_code(binding_meaning(result.get('source_binding'))) != \
+                    without_recorded_code(binding_meaning(binding)) or \
                     result.get('pin_identity', {}).get('sha256') != witness(output / 'calculation-pins.json')['sha256']:
                 raise ResumeRefused('saved derivation belongs to another source/pin', document=str(retained),
                                     differs=_differs(dict(source_binding=result.get('source_binding'),
@@ -654,10 +767,10 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
                                                      dict(source_binding=binding,
                                                           pin_sha256=witness(output / 'calculation-pins.json')['sha256']))
                                     + _differs(result.get('source_binding') or {}, binding, 'source_binding.'))
-            if result.get('producers') != session._producer_witnesses(session._pin()):
+            producers = session._producer_witnesses(session._pin())      # once per process (the science pin, compared)
+            if result.get('producers') != producers:
                 raise ResumeRefused('saved derivation producers changed', document=str(retained),
-                                    differs=_differs(result.get('producers') or {},
-                                                     session._producer_witnesses(session._pin()), 'producers.'))
+                                    differs=_differs(result.get('producers') or {}, producers, 'producers.'))
             if result.get('frame_sections_schema') != FRAME_SECTIONS_SCHEMA:
                 raise ResumeRefused('saved derivation has another frame projection; retained outputs preserved', document=str(retained))
             if bedrock and (result.get('native_recovery_schema') != NATIVE_RECOVERY_SCHEMA
