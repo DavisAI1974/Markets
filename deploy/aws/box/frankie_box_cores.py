@@ -67,7 +67,7 @@ WORKER CPUs of the booking (never its parent/coordinator CPU). The claim stays s
 class worker's step and an owner school recovery's) never run at once on the lane: the second waits, visibly. A claim
 is recorded under the booking's `steps` (stage, slot, cpus, pid with its start time, at) under
 the ledger lock before the step runs, and moved to `steps_released` with its exit code when it ends; a claim whose pid
-is gone (or never recorded within UNATTACHED_CLAIM_SECONDS) is released by the next claim. While another live claim holds
+is gone (or, never recorded, whose claimant process is gone) is released by the next claim. While another live claim holds
 the slot, the step WAITS in place (woken by the ledger change or the holder's exit, 2026-10-09) and its CPU_BOOKING line names the holder and the
 seconds waited. The CPU never leaves the day's booking, so no other day can take it and nothing is double booked.
 
@@ -165,7 +165,6 @@ DAY_RUN_STAGES = ('root', 'teacher', 'classroom', 'data', 'search', 'lessons', '
 STAGE_SLOTS = {'voice': 'adviser'}
 SLOT_CPUS = {'adviser': None}           # None = every CPU of the day's held booking (the whole lane); N = N worker CPUs
 STAGE_CPUS = {stage: SLOT_CPUS[slot] for stage, slot in STAGE_SLOTS.items()}
-UNATTACHED_CLAIM_SECONDS = 120.0        # a claim whose step pid was never recorded is stale after this
 INGEST_RULE = ('an ingest, canary or conform day process runs ONE pool at a time (the encode pool ends at the seal before '
                'the conformance reader starts; the parallel writer\'s replay/encode pool closes before its reader): WORKERS + 1 '
                'CPUs, the parent included; the day process books --size CPUs (one of %s, default %d) and a demand above '
@@ -1193,8 +1192,8 @@ def held_booking(booking):
 def claim_step(booking, stage):
     """Under the ledger lock: claim the stage's slot CPU(s) of the live held booking (STAGE_SLOTS): every CPU of the
     booking when SLOT_CPUS is None (the whole lane), else the highest worker CPU(s) of the booking; shared by every stage
-    of the same slot. Stale claims (pid gone, or never attached within
-    UNATTACHED_CLAIM_SECONDS) are moved to steps_released first. Returns (claim, None, None), or (None, why, holder) while
+    of the same slot. Stale claims (pid gone, or never attached and its claimant gone: an event, never a timer,
+    2026-10-09) are moved to steps_released first. Returns (claim, None, None), or (None, why, holder) while
     another live claim holds the slot, or (None, why, None) when the booking is not a live held slot."""
     slot = STAGE_SLOTS[stage]
     with Lock():
@@ -1206,7 +1205,7 @@ def claim_step(booking, stage):
             return None, 'booking %s is not a live held slot' % booking, None
         steps, gone, now = [], [], time.time()
         for s in b.get('steps') or []:
-            stale = (not alive(s['pid'])) if s.get('pid') else (now - float(s.get('at_epoch') or 0) > UNATTACHED_CLAIM_SECONDS)
+            stale = (not alive(s['pid'])) if s.get('pid') else not _claimant_alive(s)
             (gone if stale else steps).append(s)
         for s in gone:
             s.update(released=now_iso(), release_reason='stale: its pid is gone or was never recorded (released by the next claim)')
@@ -1243,6 +1242,21 @@ def _claim_pid(claim):
         return int(str(claim.get('claim_id') or '').rsplit('-', 1)[1])
     except (IndexError, ValueError):
         return None
+
+
+def _claimant_alive(claim):
+    """True while the process that made an unattached claim runs (the pid in its claim id, started no later than the
+    claim, so a reused pid is not it). It either attaches its step (a ledger write) or exits: both wake a waiter."""
+    pid = _claim_pid(claim)
+    start = start_time(pid) if pid else None
+    if start is None:
+        return False
+    try:
+        with open('/proc/stat') as f:
+            boot = next(float(line.split()[1]) for line in f if line.startswith('btime '))
+    except (OSError, StopIteration, ValueError, IndexError):
+        return True
+    return boot + start / os.sysconf('SC_CLK_TCK') <= float(claim.get('at_epoch') or 0) + 1.0
 
 
 def attach_step(booking, claim_id, pid, exit_code=None, end=False):
@@ -1325,12 +1339,8 @@ def cmd_run_step(a, b, command):
         if not announced:
             print('### stage %s waits for the shared slot: %s' % (a.stage, why), flush=True)
             announced = True
-        waiter.watch_pid(_claim_pid(holder))
-        # an unattached claim (its step pid never recorded) is stale after UNATTACHED_CLAIM_SECONDS: that one moment is
-        # the only timed wake, and only for such a claim
-        unattached = None if holder.get('pid') else max(0.0, float(holder.get('at_epoch') or 0) + UNATTACHED_CLAIM_SECONDS
-                                                         - time.time()) + 0.1
-        waiter.wait(unattached)
+        waiter.watch_pid(_claim_pid(holder))       # its exit (or its attach, a ledger write) wakes this wait; no timer
+        waiter.wait()
     waiter.close()
     waited = round(time.time() - started, 1)
     cpus = cpu_list(claim['cpus'])
