@@ -1237,6 +1237,8 @@ class Run:
         self._root_rederived = {}        # day -> session 9: the root step record re-derived from the ROOT on disk (root_on_disk)
         self._teacher_rederived = None   # the current teacher call's days whose root record was re-derived (on its receipt)
         self._day_file_sha = {}          # (day, ingest dir) -> (the attached day file's sha256, why absent), read once (day_rows)
+        self._identity_recorded = {}     # day -> [what differed on the day's retained outputs] (Greg, 2026-10-09: recorded
+                                         # on every step record of the day, never a refusal)
         # THE OWNER BINDING (Step 8, 2026-10-07): a queue day carries its owner (run, day, host, attempt, commit, code root,
         # exact CPU set, booking, day-specific save marker), bound by the queue BEFORE dispatch. This Run reads the save
         # request from ITS OWN marker (never a process-global environment variable: the two main lanes are threads of one
@@ -1368,8 +1370,9 @@ class Run:
         policy; a policy mismatch stays its refusal, as today); the re-derivation is noted (the teacher receipt carries
         it). Returns the day's root step record (re-derived or as it stands). A save (int SystemExit) propagates."""
         r = self.receipt('root', e['day'])
-        if r and (r.get('status') in FINISHED or r.get('remote_calculations')
-                  or (r.get('status') == 'refused' and 'retained_policy' in r)):
+        # 2026-10-09 (Greg: "use previously generated one"): a record 'refused' on a policy mismatch (retained_policy) is
+        # never final: it is re-derived below from the retained receipt ('reused', the difference recorded)
+        if r and (r.get('status') in FINISHED or r.get('remote_calculations')):
             return r
         calc = None
         try:
@@ -1462,6 +1465,9 @@ class Run:
         fields['knowledge_available'] = self._knowledge.pop((stage, key), None)
         if stage == 'teacher' and self._teacher_rederived:
             fields.setdefault('root_rederived', self._teacher_rederived)   # session 9: readiness from the ROOT on disk
+        noted = self._identity_recorded.get(key[4:] if key.startswith('day-') else key)
+        if noted:
+            fields.setdefault('identity_recorded', list(noted))       # what differed; the run proceeded (Greg, 2026-10-09)
         body = dict(schema='FRANKIE_EXPERIMENT_STEP_V1', run=self.plan['run'], stage=stage, key=key, status=status,
                     at=time.time(), commit=self.commit, plan_sha256=plan_digest(self.plan),
                     directive_sha256=(self.plan.get('directive') or {}).get('sha256'), **fields)
@@ -1804,20 +1810,14 @@ class Run:
             if retained.get('day') != e['day'] or retained.get('day_role') != e['role']:
                 raise ValueError('retained ROOT receipt belongs to another day/role')
             mismatch = self.shared_policy_mismatch(retained.get('shared_market_policy')) if policy else None
-            prior = self.receipt('root', e['day']) or {}
-            if mismatch and prior.get('status') == 'refused' and prior.get('calculations') == str(calc) \
-                    and prior.get('plan_policy') == policy and prior.get('mismatch') == mismatch:
-                return prior                         # refused already for exactly this; not re-recorded on every call
             if mismatch:
-                # a legacy (or other-implementation) completed ROOT never satisfies a shared-policy plan: preserved as
-                # it is, never recomputed or relabelled here; one finished ROOT per day (root_of) and one plan per run,
-                # so the compatible successor is a NEW run name
-                all99 = self.all99(e['day'], calc, retained, policy, mismatch)
-                return self.record('root', e['day'], 'refused', calculations=str(calc), interrupted_attempts=attempts,
-                                   retained_policy=retained.get('shared_market_policy'), plan_policy=policy, mismatch=mismatch,
-                                   all99=all99, inspection=dict(outputs=dict(all99=all99_summary(all99))),
-                                   reason='the completed ROOT %s does not carry the plan\'s shared market policy (%s); it is '
-                                          'preserved; the compatible successor is a new run name' % (calc, mismatch))
+                # Greg, 2026-10-09 ("use previously generated one or override ... we know"): the day's completed,
+                # receipted ROOT on disk is ALWAYS used. A policy difference (meaning fields only; the code hash is
+                # recorded, never compared) is recorded on this step and every later step of the day; never refused,
+                # never recomputed, never a new run name. Only data trouble (wrong day/role above, a missing or
+                # unreadable receipt) stops here.
+                self.note_identity(e['day'], 'root', 'the retained ROOT %s policy differs from the plan\'s: %s; used as '
+                                                    'it is' % (calc, mismatch))
             sources = [calc / 'calculations-receipt.json', calc / 'work' / 'derive.json']
             # session 6: a ROOT without the digest (a day with no digest reader) is listed, never a missing source
             digest_path = calc / 'work' / 'derivation-digest-full.md'
@@ -1836,7 +1836,7 @@ class Run:
                                receipt_sha256=sha256_file(calc / 'calculations-receipt.json')
                                if (calc / 'calculations-receipt.json').is_file() else None,
                                shared_market_policy=retained.get('shared_market_policy'), plan_policy=policy,
-                               brain_entry=brain_entry, all99=all99,
+                               policy_recorded=mismatch, brain_entry=brain_entry, all99=all99,
                                # the one-day inspection: a reused ROOT received the retained receipt and produced the
                                # same all-99 list; operator review only
                                inspection=dict(inputs=dict(calculations=str(calc), receipt_sha256=sha256_file(calc / 'calculations-receipt.json')
@@ -4573,35 +4573,49 @@ class Run:
         return dict(modules={name: sha256_file(self.code_root / name) for name in self.TEACHER_KNOWLEDGE_PRODUCERS})
 
     def shared_policy_mismatch(self, retained):
-        """None when a ROOT's retained shared_market_policy is exactly the staged timeline module's binding (schema AND
-        implementation, Codex's frankie_box_market_timeline.binding(): the reader refuses any other), else why."""
+        """None when a ROOT's retained shared_market_policy is the staged timeline policy, else what differs (a RECORD,
+        never a refusal: Greg, 2026-10-09). Meaning fields only (frankie_box_market_timeline.policy_differs: schema,
+        order, clocks, required_native, representation, completed_knowledge, missing_coverage); implementation_sha256
+        (the module's bytes) is recorded, never compared: a code hash is not data identity."""
         import frankie_box_market_timeline as MT
-        want = MT.binding()
         if not isinstance(retained, dict) or not retained:
             return 'no shared market policy (a legacy ROOT)'
-        differ = sorted(k for k in set(want) | set(retained) if want.get(k) != retained.get(k))
-        return ('the retained policy differs from the staged %s in %s' % (want['schema'], ', '.join(differ))) if differ else None
+        differ = MT.policy_differs(retained)
+        return ('the retained policy differs from the staged %s in %s' % (MT.SCHEMA, ', '.join(differ))) if differ else None
+
+    def note_identity(self, day, stage, what):
+        """Record (never refuse) a policy/identity difference on the day's retained outputs: it is carried on every step
+        record of the day written by this Run (identity_recorded) and logged once (Greg, 2026-10-09: "use previously
+        generated one or override ... we know")."""
+        notes = self._identity_recorded.setdefault(day, [])
+        line = '%s: %s' % (stage, what)
+        if line not in notes:
+            notes.append(line)
+            self.log('%s %s: RECORDED, the run proceeds: %s' % (stage, day, what))
 
     def shared_root_of(self, e):
-        """(the day's completed owner-local ROOT directory under the plan's shared market policy, None) or (None, why):
-        'waiting ...' while the ROOT is not complete here; 'refused ...' when it is refused or complete under another
-        policy or implementation (preserved; never recomputed or relabelled; the compatible successor is a new run
-        name). A remote owner's ROOT is that lane's, never a caller-local alias."""
+        """(the day's completed owner-local ROOT directory, None) or (None, why): 'waiting ...' while the ROOT is not
+        complete here; 'refused ...' only for data trouble (a remote owner's ROOT is that lane's, never a caller-local
+        alias). Greg, 2026-10-09: the existing receipted ROOT on disk is ALWAYS used; a policy difference is recorded
+        (note_identity), never a refusal and never a new run name."""
         r = self.root_on_disk(e) or {}                # session 9: the ROOT on disk, never a stale step record
         if r.get('remote_calculations'):
             return None, 'refused: the day\'s ROOT belongs to its remote owner %s; its teacher runs there' % r.get('owner')
-        if r.get('status') == 'refused' and 'retained_policy' in r:
-            return None, 'refused: the day\'s ROOT is refused under the plan\'s shared market policy: %s' % r.get('reason')
-        if r.get('status') not in ('done', 'reused') or not r.get('calculations'):
-            return None, 'waiting for the day\'s completed ROOT under the shared market policy (root is %s)' % (r.get('status') or 'not run')
+        if r.get('status') not in ('done', 'reused', 'refused') or not r.get('calculations'):
+            return None, 'waiting for the day\'s completed ROOT (root is %s)' % (r.get('status') or 'not run')
         calc = Path(r['calculations'])
         receipt = calc / 'calculations-receipt.json'
         if not receipt.is_file():
             return None, 'waiting: the ROOT %s has no calculations-receipt.json' % calc
-        mismatch = self.shared_policy_mismatch(json.loads(receipt.read_bytes()).get('shared_market_policy'))
+        try:
+            retained = json.loads(receipt.read_bytes())
+        except (OSError, ValueError) as error:
+            return None, 'refused: data trouble: the ROOT receipt %s is unreadable (%s: %s)' % (receipt, type(error).__name__, error)
+        if retained.get('day') != e['day']:
+            return None, 'refused: data trouble: the ROOT receipt %s belongs to day %s, not %s' % (receipt, retained.get('day'), e['day'])
+        mismatch = self.shared_policy_mismatch(retained.get('shared_market_policy'))
         if mismatch:
-            return None, ('refused: the completed ROOT %s does not carry the plan\'s shared market policy (%s); preserved; the '
-                          'compatible successor is a new run name' % (calc, mismatch))
+            self.note_identity(e['day'], 'root', 'the completed ROOT %s: %s; used as it is' % (calc, mismatch))
         return str(calc), None
 
     def day_rows(self, e):
@@ -4618,42 +4632,49 @@ class Run:
         return base, source, None
 
     def shared_teacher_compatible(self, e, rows, source):
-        """('ok', None) when the day's retained teacher result was produced under the plan's shared market policy on the
-        day's completed ROOT, with its complete shared read: the rows receipt's shared_market_identity (schema, day, the
-        exact calculations-receipt witness of that ROOT, whose own policy is the staged binding), its shared_market_read
-        (same identity, complete), the same ingestion receipt and the same external publication as the day file beside
-        the sealed ingest; ('waiting', why) while the day's ROOT or ingest is not complete here (not judged, not reused);
-        ('refused', why) otherwise: a legacy teacher receipt, the plan's rows or a launch run's never satisfy the policy
-        (preserved; the compatible successor is a new run name)."""
+        """('ok', None) when the day's retained teacher rows are used; ('waiting', why) while the day's ROOT or ingest is
+        not complete here (not judged yet); ('refused', why) ONLY for data trouble: an unreadable (missing/corrupt)
+        teacher receipt, rows of another day, a shared read that did not complete, an integrity failure of the day file.
+        Greg, 2026-10-09 ("use previously generated one or override ... we know"): a policy or identity difference on the
+        retained rows (no shared identity, another schema, another ROOT witness, another ingestion receipt, another
+        external publication) is RECORDED on the day's step records (note_identity) and the rows are used; never a
+        refusal and never a new run name."""
         policy = self.plan.get('shared_market_policy')
         day = e['day']
+
+        def note(what):
+            self.note_identity(day, 'teacher', '%s (rows %s); used as they are' % (what, rows))
         if source != 'teacher-only step':
-            return 'refused', 'refused: the %s rows carry no shared-market teacher receipt; the plan selects %s' % (source, policy)
+            note('the %s rows carry no shared-market teacher receipt; the plan selects %s' % (source, policy))
+            return 'ok', None
         try:
             saved = json.loads((Path(rows) / 'receipt.json').read_bytes())
         except (OSError, ValueError) as error:
-            return 'refused', 'refused: unreadable teacher receipt under %s (%s); %s' % (rows, error, ROWS_ROUTE % rows)
+            return 'refused', 'refused: data trouble: unreadable teacher receipt under %s (%s); %s' % (rows, error, ROWS_ROUTE % rows)
         identity, read = saved.get('shared_market_identity') or {}, saved.get('shared_market_read') or {}
+        if saved.get('day') not in (None, day) or identity.get('day') not in (None, day):
+            return 'refused', 'refused: data trouble: the teacher receipt under %s belongs to day %s, not %s' % (
+                rows, identity.get('day') or saved.get('day'), day)
         if not identity:
-            return 'refused', 'refused: a legacy teacher receipt (no shared_market_identity) never satisfies the plan\'s %s; %s' % (
-                policy, ROWS_ROUTE % rows)
-        if identity.get('schema') != policy or identity.get('day') != day:
-            return 'refused', 'refused: the teacher receipt\'s shared identity is %s for %s, not %s' % (identity.get('schema'), identity.get('day'), policy)
+            note('a legacy teacher receipt (no shared_market_identity) under the plan\'s %s' % policy)
+            return 'ok', None
+        if identity.get('schema') != policy:
+            note('the teacher receipt\'s shared identity is %s, not %s' % (identity.get('schema'), policy))
         root, why = self.shared_root_of(e)
         if root is None:
             return ('refused' if why.startswith('refused') else 'waiting'), why
         want = file_pin(Path(root) / 'calculations-receipt.json')
         have = identity.get('calculations') or {}
         if (have.get('sha256'), have.get('bytes')) != (want['sha256'], want['bytes']):
-            return 'refused', 'refused: the teacher receipt binds another ROOT witness (%s) than the day\'s completed ROOT (%s); %s' % (
-                have.get('sha256'), want['sha256'], ROWS_ROUTE % rows)
+            note('the teacher receipt binds another ROOT witness (%s) than the day\'s completed ROOT (%s)' % (
+                have.get('sha256'), want['sha256']))
         if read.get('identity') != identity or not read.get('complete'):
-            return 'refused', 'refused: the teacher\'s shared read is not the complete read of its identity'
+            return 'refused', 'refused: data trouble: the teacher\'s shared read is not the complete read of its identity'
         ing = self.receipt('ingest', day) or {}
         if ing.get('status') not in FINISHED or not ing.get('receipt_sha256'):
             return 'waiting', 'waiting: the day\'s ingest is %s here; its teacher result is not judged until it is sealed' % (ing.get('status') or 'not run')
         if (saved.get('ingestion_receipt') or {}).get('sha256') != ing['receipt_sha256']:
-            return 'refused', 'refused: the teacher receipt binds another ingestion receipt than the day\'s'
+            note('the teacher receipt binds another ingestion receipt than the day\'s')
         directory = self.ingest_dir(e)
         key = (day, str(directory))
         if key not in self._day_file_sha:                 # read once per Run: what the ROOT and the teacher both saw
@@ -4672,8 +4693,8 @@ class Run:
             # relabelled a differing publication; the retained result is not judged until the file is readable again
             return 'waiting', 'waiting: the day file beside the sealed ingest is missing (%s) while the teacher receipt binds %s; not judged by it' % (absent, bound)
         if bound != attached:
-            return 'refused', 'refused: the teacher receipt\'s external publication (%s) differs from the day file beside the sealed ingest (%s)' % (
-                section.get('sha256') or section.get('sha256_expected'), attached)
+            note('the teacher receipt\'s external publication (%s) differs from the day file beside the sealed ingest (%s)' % (
+                section.get('sha256') or section.get('sha256_expected'), attached))
         return 'ok', None
 
     def teacher_knowledge(self, day, rows_path, source):

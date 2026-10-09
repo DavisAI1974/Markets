@@ -53,6 +53,45 @@ def binding():
                 missing_coverage=MISSING_COVERAGE_RULE)
 
 
+# Greg, 2026-10-09 (standing): code version is RECORDED, NEVER COMPARED; our own gates never block a run when the data
+# is fine. binding() keeps implementation_sha256 (the module's bytes) as a record; every comparison of the policy uses
+# its MEANING fields only (schema, order, clocks, required_native, representation, completed_knowledge,
+# missing_coverage). A ROOT made under an earlier byte version of this module is the same policy.
+RECORDED_ONLY = ('implementation_sha256',)
+
+
+def policy_meaning(policy):
+    """The policy without its recorded-only code fields (a non-dict is returned as it is)."""
+    if not isinstance(policy, dict):
+        return policy
+    return {k: v for k, v in policy.items() if k not in RECORDED_ONLY}
+
+
+def policy_differs(retained, current=None):
+    """The sorted MEANING keys in which `retained` differs from `current` (default: this module's binding()); [] when
+    they are the same policy. A missing or non-dict retained policy differs in every meaning key."""
+    want = policy_meaning(binding() if current is None else current)
+    have = policy_meaning(retained)
+    if not isinstance(have, dict) or not have:
+        return sorted(want) if isinstance(want, dict) else ['schema']
+    return sorted(k for k in set(want) | set(have) if want.get(k) != have.get(k))
+
+
+def policy_matches(retained, current=None):
+    return not policy_differs(retained, current)
+
+
+def without_recorded_code(document):
+    """A copy of `document` with the recorded-only code fields removed from every embedded shared-market policy (a dict
+    whose schema is SCHEMA), at any depth: the comparison form of a saved identity that embeds binding()."""
+    if isinstance(document, dict):
+        meaning = policy_meaning(document) if document.get('schema') == SCHEMA else document
+        return {k: without_recorded_code(v) for k, v in meaning.items()}
+    if isinstance(document, list):
+        return [without_recorded_code(v) for v in document]
+    return document
+
+
 def frame_index(numeric, receive_times):
     """The shared exact F_LAST view. This is the pre-existing membership contract."""
     cursors, instruments = numeric.get('input_cursor'), numeric.get('native_frame.instrument_id')
@@ -529,8 +568,15 @@ class SharedMarketTimeline:
         root = _local(Path(calculations).absolute()).resolve()
         source_pin = dict(path=str(root / 'source-binding.json'), **witness(root / 'source-binding.json'))
         self.source = _json(source_pin)
-        if self.source.get('shared_market_policy') != binding():
-            raise ValueError('ROOT has no matching shared-market policy; retain old result and use an explicit compatible successor')
+        # Greg, 2026-10-09: the existing ROOT on disk is always used; a policy difference is RECORDED (report
+        # policy_recorded), never a refusal. The code hash is never compared (policy_differs: meaning only). The only
+        # refusals left here are real data trouble: another day, a source/completion contradiction, altered bytes.
+        self.policy_recorded = []
+        differs = policy_differs(self.source.get('shared_market_policy'))
+        if differs:
+            self.policy_recorded.append(dict(what='source-binding.json shared_market_policy vs this reader', differs=differs,
+                                             retained=self.source.get('shared_market_policy'), reader=binding(),
+                                             rule='recorded, never refused (Greg, 2026-10-09)'))
         if str(self.source['source']['trading_day']) != str(day):
             raise ValueError('shared market ROOT belongs to another day')
         calculation_pin = dict(path=str(root / 'calculations-receipt.json'), **witness(root / 'calculations-receipt.json'))
@@ -541,8 +587,10 @@ class SharedMarketTimeline:
         if (derive.get('source_binding') != self.source or type(derive.get('input_records')) is not int
                 or not 0 <= derive['input_records'] <= self.source['record_count']):
             raise ValueError('shared ROOT did not account for every original INPUT')
-        if calculation.get('shared_market_policy') != self.source['shared_market_policy']:
-            raise ValueError('completed shared market policy differs from its source')
+        differs = policy_differs(calculation.get('shared_market_policy'), self.source.get('shared_market_policy'))
+        if differs and (calculation.get('shared_market_policy') or self.source.get('shared_market_policy')):
+            self.policy_recorded.append(dict(what='calculations-receipt.json shared_market_policy vs its source binding',
+                                             differs=differs, rule='recorded, never refused (Greg, 2026-10-09)'))
         # Layers. A layer the completed ROOT did not produce is listed absent and the
         # picture is thinner there; a pin that names another path, or pinned bytes that
         # differ (checked on read), is a contradiction and stays an error.
@@ -677,7 +725,7 @@ class SharedMarketTimeline:
                              sources={stream.name: stream.pin for stream in self.streams}, external=external,
                              completed_sources=self.completed_sources, absent_layers=self.absent_layers)
         self.report = dict(identity=self.identity, complete=False, presented_inputs=0,
-                           input_verification=verification,
+                           input_verification=verification, policy_recorded=self.policy_recorded or None,
                            interpretation='actual shared-reader input delivery; target/learner arithmetic coverage is separate',
                            completeness=dict(
                                complete='source exhausted: every journal envelope, every pinned layer row and every external '
@@ -1197,8 +1245,9 @@ class SharedFrameView:
     target rows. Their source-reader dispositions remain authoritative.
     """
     def __init__(self, frame_numeric, receive_times, series, cells, *, policy, sources):
-        if policy != binding():
-            raise ValueError('search shared-market implementation differs from the selected ROOT')
+        # Greg, 2026-10-09: the selected ROOT is used as it is; a policy difference (meaning fields only; the code hash
+        # is never compared) is recorded on the view, never refused
+        self.policy_differs = policy_differs(policy) or None
         # Exact membership (input_cursor, native_frame.instrument_id, input_record_indices[*]) is a layer of
         # the frame spool. A spool without it (an older legacy pass) thins the view: the axis is still the
         # spool's F_LAST closes in their original order and the search runs on it; the exact per-group
@@ -1219,7 +1268,7 @@ class SharedFrameView:
                                  dict(status='absent', reason='the frame spool carries no exact ROOT group membership columns; '
                                       'the F_LAST axis stands in spool order with its receive clocks, the per-group INPUT '
                                       'membership is not available to this view (thinner picture, not a rejected day)'))
-        self.report = dict(source='shared_market', schema=SCHEMA, policy=policy,
+        self.report = dict(source='shared_market', schema=SCHEMA, policy=policy, policy_differs=self.policy_differs,
             view='existing exact F_LAST projection; original source cursor and ties retained',
             frames=self.count, numeric_channels=len(series), cell_channels=len(cells),
             exact_membership=self.exact_membership,

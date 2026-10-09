@@ -40,8 +40,12 @@ def repoint(run, day, attempt, size, reason, by, code_root, commit):
     directory = ROOTS / attempt
     if directory.is_symlink() or not directory.is_dir() or not (directory / 'work' / 'derive.json').is_file():
         raise SystemExit('%s is not a retained attempt directory with work/derive.json' % directory)
-    if (directory / 'calculations-receipt.json').exists():
-        raise SystemExit('%s is a finished ROOT (receipt present): admission reuses it; nothing to re-point' % directory)
+    # 2026-10-09 (Greg: "use previously generated one ... we are starting this ourselves on one day at the point we want
+    # it at"): a FINISHED ROOT (receipt present) whose ROOT-line entry is done but whose FINISH (teacher onward) failed or
+    # stopped is re-pointed too: the owner binding is put back on the same attempt on a retained booking of SIZE, the
+    # finish set 'unknown' (an owner state), so ACTION=resume ('finish' phase) and ACTION=kick resume the day at the step
+    # after its ROOT (the teacher), reusing the receipted ROOT as it is. Never a new attempt, never a ROOT from scratch.
+    finished = (directory / 'calculations-receipt.json').exists()
     if size not in C.DAY_RUN_SIZES:
         raise SystemExit('SIZE %s is not one of %s' % (size, C.DAY_RUN_SIZES))
     plan_size = int(Q._plan_of(run).get('day_cpus') or C.DAY_RUN_CPUS)
@@ -53,12 +57,18 @@ def repoint(run, day, attempt, size, reason, by, code_root, commit):
         if x is None:
             raise SystemExit('%s %s is not in the ROOT line' % (run, day))
         old = x.get('owner')
-        if old and old.get('attempt') == attempt and (old.get('repointed') or {}).get('reason') and x['state'] in Q.OWNER_STATES:
+        finish = dict(x.get('finish') or {})
+        owned_state = finish.get('state') if finished else x['state']
+        if old and old.get('attempt') == attempt and (old.get('repointed') or {}).get('reason') and owned_state in Q.OWNER_STATES:
             path = C.LEDGER / ('%s.json' % old.get('booking'))
             b = json.loads(path.read_bytes()) if path.is_file() else {}
             if b.get('retained') and len(b.get('cpus') or []) == size:
-                return dict(status='already', run=run, day=day, state=x['state'], owner=old)
-        if x['state'] not in ('failed', 'unknown', 'saved'):
+                return dict(status='already', run=run, day=day, state=x['state'], finish=finish.get('state'), owner=old)
+        if finished:
+            if x['state'] != 'done' or finish.get('state') in ('running', 'finished'):
+                raise SystemExit('%s %s is %s (finish %s): a finished ROOT is re-pointed only when its entry is done and its '
+                                 'finish is not running or finished' % (run, day, x['state'], finish.get('state')))
+        elif x['state'] not in ('failed', 'unknown', 'saved'):
             raise SystemExit('%s %s is %s: only a failed, unknown or saved entry is re-pointed' % (run, day, x['state']))
         if old and _alive(old.get('holder_pid')):
             raise SystemExit('%s %s: its owner process %s is alive' % (run, day, old.get('holder_pid')))
@@ -101,12 +111,19 @@ def repoint(run, day, attempt, size, reason, by, code_root, commit):
                                     from_owner=old or (history[-1] if history else None),
                                     cleared_failed_finish_bookings=released))
         x['owner'] = owner
-        x.update(state='unknown', where=None, reason='re-pointed by %s to attempt %s on the retained booking %s (%d CPUs): '
-                                                     'ACTION=resume then kick resumes it' % (by, attempt, b['booking'], size))
+        text = ('re-pointed by %s to attempt %s on the retained booking %s (%d CPUs): ACTION=resume then kick resumes it'
+                % (by, attempt, b['booking'], size))
+        if finished:
+            # the ROOT stays done (its receipt is the day's ROOT, reused as it is); the finish becomes the owner's
+            owner['repointed']['from_finish'] = finish or None
+            x['finish'] = dict(finish, state='unknown', reason=text + ' at the step after its finished ROOT', repointed_utc=Q.utc())
+        else:
+            x.update(state='unknown', where=None, reason=text)
         Q.save('root', doc)
         Q.event('root', 'repoint', seq=x['seq'], day=day, run=run, by=by, attempt=attempt, booking=b['booking'],
-                cpus=C.cpu_list(cpus), route=route, reason=reason)
-        return dict(status='repointed', run=run, day=day, seq=x['seq'], state='unknown', attempt=attempt,
+                cpus=C.cpu_list(cpus), route=route, reason=reason, phase='finish' if finished else 'root')
+        return dict(status='repointed', run=run, day=day, seq=x['seq'], state=x['state'],
+                    finish=(x.get('finish') or {}).get('state'), phase='finish' if finished else 'root', attempt=attempt,
                     booking=b['booking'], cpus=C.cpu_list(cpus), size=len(cpus), route=route,
                     next='ACTION=resume RUN=%s DAY=%s, then ACTION=kick (or handover) LINE=root SCOPE=%s:%s' % (run, day, run, day))
 
