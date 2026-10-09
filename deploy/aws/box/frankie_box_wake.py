@@ -211,6 +211,57 @@ class Waiter:
             pass
 
 
+class FileLatch:
+    """`.set` becomes True the instant `path` exists, with no thread and no poll (a classroom forks only when it runs one
+    thread, so a watcher thread is not an option there). inotify on the file's directory with O_ASYNC: the kernel sends
+    SIGIO to this process on any event there and the handler re-checks the file (a wake is a hint, never the
+    condition). Reading `.set` costs no syscall. Armed BEFORE the first check, so a file written at any moment is seen.
+    Owner process only: a forked child builds its own latch (the inherited descriptor signals the parent). Without
+    inotify (not a Linux box) `.set` is a stat per read. close() ends the signals and restores the previous handler."""
+
+    def __init__(self, path):
+        import fcntl
+        import signal
+        self.path, self.owner, self._set = Path(path), os.getpid(), False
+        self.waiter, self.previous = Waiter([self.path.parent]), None
+        if self.waiter.fd is not None:
+            self.previous = signal.signal(signal.SIGIO, self._on_signal)
+            fcntl.fcntl(self.waiter.fd, fcntl.F_SETOWN, self.owner)
+            fcntl.fcntl(self.waiter.fd, fcntl.F_SETFL, fcntl.fcntl(self.waiter.fd, fcntl.F_GETFL) | os.O_ASYNC)
+        self._check()
+
+    def _check(self):
+        if self.waiter.fd is None:
+            return
+        self.waiter._drain()
+        for missing in list(self.waiter.missing):      # the directory appeared: watch it (its file may already be there)
+            self.waiter.watch_dir(missing)
+        if self.path.exists():
+            self._set = True
+
+    def _on_signal(self, signum, frame):
+        if os.getpid() == self.owner and self.waiter.fd is not None:
+            self._check()
+        previous = self.previous
+        if callable(previous) and previous is not self._on_signal:
+            previous(signum, frame)
+
+    @property
+    def set(self):
+        if self.waiter.fd is None:
+            return self._set or self.path.exists()
+        return self._set
+
+    def close(self):
+        import signal
+        if os.getpid() != self.owner:
+            return
+        had_fd = self.waiter.fd is not None
+        self.waiter.close()
+        if had_fd:
+            signal.signal(signal.SIGIO, self.previous if self.previous is not None else signal.SIG_DFL)
+
+
 def notify(wake_dir, topic='any', **facts):
     """One wake file in wake_dir (atomic replace = IN_MOVED_TO): every waiter on the box watching it re-checks. Never
     raises: a hand-off never fails for want of a wake."""
