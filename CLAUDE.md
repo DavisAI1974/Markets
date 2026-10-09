@@ -21,7 +21,10 @@ refinement REPLACES it in place; no version list, no history of old market-condi
 write (the superseded addition and its hub-owned file go in the same turn, temp files never outlive the write) so the data stays
 as small as possible by construction, never by cutting a value (only replaced versions and copies are ever removed). The only permanent
 records are the TRADE (date, time, price: sealed, never a calculation, never written by anything) and the small decision records
-(what was decided and why). LIVE (Greg, note for go-live, not now): live data is fed to the teacher hub, and the teacher feeds
+(what was decided and why). A DEAD PIECE IS REVIVED, NEVER SKIPPED (Greg): if a piece dies mid-turn, its lock is taken over and
+recorded, the pieces after it keep WAITING (values queue until it is healthy), and a DOCTOR helper resumes it from its own save so
+it finishes its part; successors never proceed on a partial part, because the experiment's findings would be silently wrong.
+LIVE (Greg, note for go-live, not now): live data is fed to the teacher hub, and the teacher feeds
 Frankie with any improvements; Frankie sends his own improvements back to the teacher hub, and the hub feeds the
 FORECASTER; the same hub and spokes, with the live feed as ROOT's spoke and the forecaster as the last spoke.
 
