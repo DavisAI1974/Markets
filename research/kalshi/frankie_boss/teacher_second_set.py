@@ -42,7 +42,7 @@ would be ~490 GB of duplicates of receipted rows).
 """
 
 SCHEMA = 'FRANKIE_TEACHER_SECOND_SET_V1'
-FORMAT = 2
+FORMAT = 3
 KEY_FIELDS = ('adapter_cursor', 'input_cursor', 'input_journal_ordinal', 'source_input_index', 'source_member_index',
               'session_id', 'instrument_id', 'terminal_prefix_hash')
 CLOCK_FIELDS = ('clock_event_time', 'clock_receive_time', 'clock_event_known_by', 'clock_feature_availability',
@@ -51,6 +51,77 @@ CLOCK_FIELDS = ('clock_event_time', 'clock_receive_time', 'clock_event_known_by'
 LOCK_LABEL = 'teacher_as_of (lock time does not exist before Frankie reads)'
 PLANE_REFERENCE = ('source', 'source_ordinal', 'input_cursor', 'instrument_id', 'known_at_ns', 'entries')
 STATE_REFERENCE = ('source', 'source_ordinal')
+
+
+# The state labels the streamed planes carry at an instant (Greg, 2026-10-09: the pinned measures split by the bedrock
+# state present at that moment). The label fields are the label-valued fields of each plane as the 20231018 probe
+# (frankie_box_probe_picture_fields.py) showed them, every one; a native lifecycle section the probe did not reach
+# (episode, candidate, lineage, ...) takes every top-level text or true/false field (its own values, nothing renamed).
+# Plane names: root.structures, native.member, native.lifecycle:<emitting_section>. Several rows of one plane at an
+# instant give the tuple of their values in row order. The values are the planes' own; nothing is binned or renamed.
+STATE_LABEL_FIELDS = {
+    'root.structures': ('discovery_status', 'candidate_family_id', 'carried_native_family',
+                        'matches_carried_native_family', 'fill_disposition.class', 'mirror.orientation',
+                        'terminal_action', 'terminal_side'),
+    'native.member': ('session_phase', 'side_orientation', 'family_id', 'decision_basis', 'continuity_segment',
+                      'snapshot_bootstrap_only', 'event_group_complete_f_last', 'sequence_contiguous',
+                      'fifo_priority_reconstructed'),
+    'native.lifecycle:mirror': ('disposition', 'orientation'),
+    'native.lifecycle:ladder': ('ladder_scope', 'side', 'touch_state', 'best_price_moved'),
+    'native.lifecycle:absorption': ('price_moved',),
+    'native.lifecycle:flow_substrate': ('classification', 'window_direction', 'status', 'no_direction_reason',
+                                        'roll20_defined', 'polarity'),
+    'native.lifecycle:replenishment': ('action', 'liquidity_kind', 'liquidity_kind_basis', 'observation',
+                                       'unattributed_reason', 'price_is_sentinel'),
+    'native.lifecycle:queue': ('terminal_status', 'birth_session_phase', 'exit_session_phase', 'queue_scope',
+                               'stratum_basis', 'terminal_basis', 'resolved', 'censored', 'exit_stratum_available',
+                               'birth_family_id', 'exit_family_id'),
+    'native.lifecycle:recurrence': (),          # lists only (runs[].node, gaps[].from_node): no scalar label
+    'native.lifecycle:detector_coverage': (),   # counts and ratios only
+}
+# never a state label in the generic rule: identities and keys unique per event, clocks, and the row's own section name
+GENERIC_EXCLUDED = ('member_id', 'runway_id', 'mirror_pair_key', 'level_event_key_at_exit', 'action_string',
+                    'side_string', 'schema', 'clock', 'binning_clock', 'emitted_on', 'emitting_section')
+LABEL_SOURCES = ('root.structures', 'native.member', 'native.lifecycle')
+
+
+def _field(value, path):
+    for part in path.split('.'):
+        if not isinstance(value, dict) or part not in value:
+            return False, None
+        value = value[part]
+    return True, value
+
+
+def state_labels(picture):
+    """({'plane|field': value (or the tuple of the values of several rows, in row order)}, {plane: 'placed'|'carried'})
+    from the plane rows the picture placed at this instant, and, for a state plane with no row placed here, from its
+    last observed row for the instrument (the state present at that moment)."""
+    rows, origin = {}, {}
+    for where, carried in (('updates', False), ('active_instrument_state', True)):
+        for update in picture.get(where) or ():
+            source = update.get('source') if isinstance(update, dict) else None
+            value = update.get('value') if isinstance(update, dict) else None
+            if source not in LABEL_SOURCES or not isinstance(value, dict):
+                continue
+            plane = ('native.lifecycle:%s' % value.get('emitting_section') if source == 'native.lifecycle' else source)
+            if carried and origin.get(plane) == 'placed':
+                continue
+            origin.setdefault(plane, 'carried' if carried else 'placed')
+            rows.setdefault(plane, []).append(value)
+    labels = {}
+    for plane, values in rows.items():
+        names = STATE_LABEL_FIELDS.get(plane)
+        if names is None:
+            names = sorted({name for value in values for name, item in value.items()
+                            if type(item) in (str, bool) and name not in GENERIC_EXCLUDED})
+        for name in names:
+            found = [_field(value, name) for value in values]
+            if not any(present for present, _ in found):
+                continue
+            items = tuple(item for present, item in found if present)
+            labels['%s|%s' % (plane, name)] = items[0] if len(items) == 1 else items
+    return labels, origin
 
 
 def _ref(update):
@@ -104,7 +175,8 @@ def join_record(evidence, picture):
     if picture.get('original_applied') is not evidence:
         mismatches.append(('original_applied', 'another object', 'the teacher row'))
     coverage = picture.get('coverage') or {}
-    return dict(key=key, clocks=clocks, clocks_absent=absent,
+    labels, label_origin = state_labels(picture)
+    return dict(key=key, clocks=clocks, clocks_absent=absent, state_labels=labels, state_label_origin=label_origin,
                 planes=tuple(_ref(u) for u in updates),
                 state=dict(last_observed=_state(picture.get('last_observed_state')),
                            active_instrument=_state(picture.get('active_instrument_state')),

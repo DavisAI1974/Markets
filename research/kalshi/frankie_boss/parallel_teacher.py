@@ -495,6 +495,11 @@ CONTROL_ROW_KEYS = ('normalized', 'effect', 'order_before', 'order_after', 'rank
 # call (the cohort's start + window) is recorded as (key, end ordinal, length, side) so the window sums are taken from
 # the group reads at publication. ROW_PASS_BOOK[0]: the last row pass's group reads, windows and cursor -> group map.
 BOOK_GROUP = 'book_group'
+# ROW_DONE[0]: a caller's function(index, row) called once per row, in row order, as soon as every value of the row is
+# in it (its worker results resolved): the classroom carry's anchors are fed from it (frankie_box_experiment_teacher).
+# Read-only on the row; an error in it is recorded on ROW_DONE_RECORD and stops the calls, never the walk.
+ROW_DONE = [None]
+ROW_DONE_RECORD = {}
 BOOK_BATCH_GROUPS = 4096
 ROW_PASS_BOOK = [None]
 # id(e) -> (e, pickle of e): set by the evidence producer right before it yields e (frankie_box_experiment_teacher's
@@ -874,20 +879,49 @@ class _RawStreams:
                 self._resolve(token, value)
             else:
                 self.early[token] = value
+        if hasattr(self, 'frontier'):
+            self._advance()
+
+    def watch(self, start):
+        """Rows from `start` on are reported to ROW_DONE once complete (earlier rows: a resumed save's own)."""
+        self.frontier, self.placed, self.waiting = start, start - 1, {}
+        ROW_DONE_RECORD.clear()
+        ROW_DONE_RECORD.update(rows_reported=0, error=None, started_at_row=start)
+
+    def _advance(self):
+        rows, report = self.rows, ROW_DONE[0]
+        while self.frontier <= self.placed and not self.waiting.get(self.frontier):
+            self.waiting.pop(self.frontier, None)
+            if report is not None and ROW_DONE_RECORD.get('error') is None:
+                try:
+                    report(self.frontier, rows[self.frontier])
+                    ROW_DONE_RECORD['rows_reported'] += 1
+                except Exception as error:  # noqa: BLE001 - a consumer's feed never stops the walk (recorded)
+                    ROW_DONE_RECORD['error'] = 'row %d: %s: %s' % (self.frontier, type(error).__name__, error)
+            self.frontier += 1
 
     def place(self, rows, index):
         """Record where row index's placeholders sit; results arriving later go straight into the row."""
         self.rows = rows
+        if not hasattr(self, 'frontier'):
+            self.watch(index)
+        waiting = 0
         for column, v in enumerate(rows[index][3]):
             if type(v['reason']) is str and v['reason'].startswith(RAW_MARK):
                 token, slot = v['reason'][len(RAW_MARK):].split('.')
                 self.where.setdefault(int(token), []).append((index, column, slot))
+                waiting += 1
+        if waiting:
+            self.waiting[index] = waiting
+        self.placed = index
         for token in [t for t in self.early if t in self.where]:
             self._resolve(token, self.early.pop(token))
+        self._advance()
 
     def _resolve(self, token, value):
         # the row's value is replaced exactly as attach builds it: control columns dict(v), R3 columns value/state/reason
         for index, column, slot in self.where.pop(token):
+            self.waiting[index] -= 1
             v = value if slot == '-' else value[int(slot)]
             carried = self.rows[index][3][column]
             resolved = dict(v)
@@ -1333,6 +1367,7 @@ def row_pass(self, evidence, *, as_of, source_manifest_hash, recovery_path=None,
     _progress('teacher_raw_rows', processed, None, force=True)
     with _RawStreams(T, _cpus()) as streams:
         streams.seed(continuation, book_saved)
+        streams.watch(len(rows))
         for e, old, six in T._paired_raw(self.control, self.raw_teacher, streams.feed(evidence), as_of=as_of,
                                          source_manifest_hash=source_manifest_hash, continuation=continuation):
             processed += 1

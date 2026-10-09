@@ -671,7 +671,7 @@ def _all99_use(field):
                      'teachers within the teacher\'s role and walls); the pinned equations read original APPLIED fields only')
 
 
-def _second_set_prefix(open_market, needed, SS, book_needed=0, changes=True):
+def _second_set_prefix(open_market, needed, SS, book_needed=0, changes=True, label_needed=0):
     """For the rows the walk of THIS process did not read (a resume from a save written before the second set or the
     book read): read the same pictures again from a fresh shared reader of the same ROOT, in order, with the walk's
     equation filter (present APPLIED payloads, adapter cursors contiguous from zero). The first `needed` rows get their
@@ -679,14 +679,15 @@ def _second_set_prefix(open_market, needed, SS, book_needed=0, changes=True):
     exactly as the walk's workers read it: the R3 stream's own row builder (T._history_row), its group boundaries
     (the receipt), the previous group's closing book, teacher_book_read.book_group on those very rows, and each window
     the pinned R3 calls on a group (its own anchor function, T._anchor, on the same groups; no pinned column is
-    computed). Returns (records, book) with book = {groups, windows, cursor_group}."""
+    computed); the first `label_needed` rows get the state labels their picture carries (joins recorded before the
+    labels were). Returns (records, book) with book = {groups, windows, cursor_group, labels}."""
     from collections import deque
     from research.kalshi.frankie_boss import c15_teacher_r3 as T, teacher_book_read as TBR
     reader = open_market()
     pictures = reader.iter_applied()
     records, expected = [], 0
-    upto = max(needed, book_needed)
-    book = dict(groups={}, windows={}, cursor_group={})
+    upto = max(needed, book_needed, label_needed)
+    book = dict(groups={}, windows={}, cursor_group={}, labels={})
     open_rows, last_closing, ordinals, history = {}, {}, {}, {}
     try:
         for item in pictures:
@@ -699,6 +700,8 @@ def _second_set_prefix(open_market, needed, SS, book_needed=0, changes=True):
                 break                       # the equation prefix ends here (the rows hold more: refused by the caller)
             if expected < needed:
                 records.append(SS.join_record(e, item['picture']))
+            elif expected < label_needed:
+                book['labels'][expected] = SS.state_labels(item['picture'])
             if expected < book_needed:
                 m = e['normalized']
                 key = (m['publisher_id'], m['instrument_id'])
@@ -752,9 +755,23 @@ def _second_set(out, open_market, market, second, rows, SS):  # noqa: C901
                          % (len(second['records']), len(rows)))
     walked = PT.ROW_PASS_BOOK[0] or dict(groups={}, windows={}, cursor_group={}, changes=True, read_before=len(rows))
     book_needed = min(len(rows), walked.get('read_before') or 0)
-    prefix, read = (_second_set_prefix(open_market, needed, SS, book_needed, bool(walked.get('changes')))
-                    if needed or book_needed else ([], dict(groups={}, windows={}, cursor_group={})))
+    # joins recorded before the state labels were (a save of the code before them): their labels are read with the prefix
+    label_needed = 0
+    for record in second['records']:
+        if 'state_labels' in record:
+            break
+        label_needed += 1
+    label_needed = needed + label_needed if label_needed else 0
+    prefix, read = (_second_set_prefix(open_market, needed, SS, book_needed, bool(walked.get('changes')), label_needed)
+                    if needed or book_needed or label_needed else
+                    ([], dict(groups={}, windows={}, cursor_group={}, labels={})))
     records = prefix + second['records']
+    for cursor, (labels, origin) in read['labels'].items():
+        records[cursor]['state_labels'], records[cursor]['state_label_origin'] = labels, origin
+    unlabelled = [index for index, record in enumerate(records) if 'state_labels' not in record]
+    if unlabelled:
+        raise ValueError('%d row(s) of the second set carry no state labels (first %s); the rows do not leave the teacher'
+                         % (len(unlabelled), unlabelled[:10]))
     check = SS.check_rows(records, rows)
     if check['rows_without_record'] or len(records) != len(rows):
         raise ValueError('the teacher second set holds %d joins for %d rows (the shared reader yielded %d of the %d rows '
@@ -763,7 +780,10 @@ def _second_set(out, open_market, market, second, rows, SS):  # noqa: C901
     groups = {**read['groups'], **walked['groups']}
     windows = {**read['windows'], **walked['windows']}
     cursor_group = {**read['cursor_group'], **walked['cursor_group']}
-    reads = TBR.assemble(rows, cursor_group, groups, windows, whole_day=bool(walked.get('changes')))
+    group_labels = _group_labels(rows, records, cursor_group)
+    reads = TBR.assemble(rows, cursor_group, groups, windows, whole_day=bool(walked.get('changes')),
+                         group_labels=group_labels)
+    day_split = _day_state_split(groups, group_labels, TBR)
     unread = [row[6] for row, entry in zip(rows, reads) if entry.get('status') == 'GROUP_NOT_READ']
     if unread:
         raise ValueError('the teacher book read lacks %d group(s) (first rows %s); a row without its book read does not '
@@ -793,6 +813,25 @@ def _second_set(out, open_market, market, second, rows, SS):  # noqa: C901
                   mismatches=check['mismatches'], clocks_compared=check['clocks_compared'],
                   joined_in_walk=len(second['records']) - second['restored'], restored_from_save=second['restored'],
                   merged_at_publication=len(prefix),
+                  state_split=dict(format=TBR.SPLIT_FORMAT, unknown_bucket=TBR.STATE_UNKNOWN,
+                                   label_fields=SS.STATE_LABEL_FIELDS, generic_rule='a lifecycle section not in '
+                                   'label_fields: every top-level text or true/false field except %s' % (
+                                       list(SS.GENERIC_EXCLUDED),),
+                                   dipole='teacher.dstate|... : the teacher row\'s own DState (status, '
+                                          'state.anchor_dir, state.armed, state.broken); derived_roll20_and_dipole_state '
+                                          'is the teacher\'s Dipole state rows, not a picture plane',
+                                   per_row='each R3 short window (64 groups) on its side: every label field\'s '
+                                           'buckets with the event and book parts, sums_back per field, pinned_check '
+                                           'against the row\'s pinned columns',
+                                   day=day_split['summary'], day_file=STATE_SPLIT_FILE,
+                                   rows_all_sum_back=sum(1 for entry in reads for read in (entry.get('windows') or {})
+                                                         .values() if read.get('state_split', {}).get('all_sum_back')),
+                                   rows_pinned_equal=sum(1 for entry in reads if ((entry.get('windows') or {}).get(
+                                       'short') or {}).get('state_split', {}).get('pinned_check', {}).get('all_equal')),
+                                   rows_pinned_not_equal=[row[6] for row, entry in zip(rows, reads) if (
+                                       ((entry.get('windows') or {}).get('short') or {}).get('state_split', {})
+                                       .get('pinned_check', {}).get('status') == 'compared'
+                                       and not entry['windows']['short']['state_split']['pinned_check']['all_equal'])]),
                   book_read=dict(schema=TBR.SCHEMA, format=TBR.FORMAT, groups=len(groups),
                                  groups_read_in_walk=len(walked['groups']), groups_read_at_publication=len(read['groups']),
                                  rows_read_at_publication=book_needed, windows=sum(len(v) for v in windows.values()),
@@ -801,10 +840,16 @@ def _second_set(out, open_market, market, second, rows, SS):  # noqa: C901
                                       'rows before a resume whose save held no book read are read at publication from '
                                       'the same reader with the same functions'))
     from research.kalshi.frankie_boss import parallel_teacher as PT
+    with (out / (STATE_SPLIT_FILE + '.pending')).open('w') as handle:
+        json.dump(day_split, handle, sort_keys=True)
+    os.replace(out / (STATE_SPLIT_FILE + '.pending'), out / STATE_SPLIT_FILE)
+    header['state_split']['day_file_sha256'] = _sha256(out / STATE_SPLIT_FILE)
     path = out / SECOND_SET_FILE
     PT._save_raw_state(path, dict(header, records=records))
+    mismatches = _write_list(out / MISMATCHES_FILE, header['mismatches'])
+    header['mismatches_file'] = mismatches
     summary = dict({k: v for k, v in header.items() if k not in ('carriers', 'entries_carried', 'mismatches', 'streams')},
-                file=SECOND_SET_FILE, sha256=_sha256(path), mismatches_first=check['mismatches'][:20],
+                file=SECOND_SET_FILE, sha256=_sha256(path), mismatches=mismatches,
                 streams={name: value['pin'] for name, value in header['streams'].items()},
                 entries_not_carried=[item['entry'] for item in not_carried],
                 file_format='64 hex digits of the sha256 of the bytes after them, then the pickle of the header with '
@@ -812,9 +857,149 @@ def _second_set(out, open_market, market, second, rows, SS):  # noqa: C901
     return summary, records, header
 
 
+STATE_SPLIT_FILE = 'teacher-state-split.json'
+MISMATCHES_FILE = 'teacher-second-set-mismatches.jsonl'
+DIFFERENCES_FILE = 'teacher-book-event-differences.jsonl'
+
+
+def _write_list(path, items):
+    """A whole list as JSON lines beside the receipt (every item, never cut): {file, count, sha256}."""
+    import hashlib
+    digest, count = hashlib.sha256(), 0
+    pending = Path(str(path) + '.pending')
+    with pending.open('wb') as handle:
+        for item in items:
+            data = (json.dumps(item, sort_keys=True, default=repr) + '\n').encode()
+            digest.update(data)
+            handle.write(data)
+            count += 1
+        handle.flush()
+        os.fsync(handle.fileno())
+    os.replace(pending, path)
+    return dict(file=Path(path).name, count=count, sha256=digest.hexdigest(), format='one JSON value per line')
+
+
+# ---- the classroom carry's anchors fed by the walk (frankie_box_classroom_code.TeacherPassCarry.enable_anchors /
+# note_row, 2026-10-09: the classroom does not re-walk the market timeline to its last anchor). Each roster row's
+# components are built as dipole_classroom._target_row builds them: the teacher's normalizer (identity: observe on a
+# group-closing row, the raw value otherwise), the target's float32, TargetState names, a value only when PRESENT.
+# Fed once per row, in row order, as soon as the row's worker results are in it (parallel_teacher.ROW_DONE). Only the
+# identity normalizer is stateless enough to do this in the walk; any other leaves the anchors off (recorded).
+def _enable_anchors(carry, teacher):
+    value = carry['value']
+    if not hasattr(value, 'enable_anchors'):
+        carry['anchor_feed'] = dict(status='off', reason='this TeacherPassCarry has no anchors')
+        return
+    if type(teacher.normalizer).__name__ != 'IdentityNormalizerR3':
+        carry['anchor_feed'] = dict(status='off', reason='the normalizer is not the identity: the target values exist only '
+                                                         'after the attachment, so the walk cannot feed them')
+        return
+    value.enable_anchors()
+    carry['anchor_feed'] = dict(status='on', basis='fed by the walk once per roster row (ROW_DONE)')
+
+
+def _restored_anchors(carry):
+    """A carry unpickled from a save: one written before the anchors existed holds none; it stays without them (the
+    rows before the save were never fed), listed."""
+    value = carry['value']
+    if value is None or hasattr(value, 'anchor_on'):
+        return
+    value.anchor_on, value.anchor_pending, value.anchor = False, {}, {}
+    value.anchor_pictures, value.anchor_rows, value.anchor_unvalued = {}, 0, []
+    carry['anchor_feed'] = dict(status='off', reason='the carry was restored from a save written before the anchors: '
+                                                     'its rows before the save were not fed')
+
+
+def _anchor_feed(carry, teacher, T):
+    import struct
+    from research.kalshi.frankie_boss.c15_normalizer import NormalizedValue, State
+    from research.kalshi.frankie_boss.dipole_target import TargetState
+    normalizer, columns = teacher.normalizer, tuple(T.CONTROL_COLUMNS)
+
+    def feed(index, row):
+        value = carry['value']
+        if value is None or not value.anchor_on or row[6] not in value.anchor_pending:
+            return
+        _, has_receipt, iid, combined = row[:4]
+        normalized = ([normalizer.observe(iid, c, v['value'], State(v['state'])) for c, v in zip(columns, combined)]
+                      if has_receipt else [NormalizedValue(v['value'], State(v['state'])) for v in combined])
+        components = []
+        for name, item in zip(columns, normalized):
+            state = TargetState(int(item.state)).name
+            stored = struct.unpack('<f', struct.pack('<f', item.value))[0]
+            components.append((name, state, float(stored) if state == TargetState.PRESENT.name else None))
+        value.note_row(row[6], components)
+    return feed
+
+
+def _anchor_record(carry, source):
+    """carry anchors: n, and each anchor's value checked against the published snapshot row (the classroom reads both)."""
+    value = carry.get('value')
+    record = dict(carry.get('anchor_feed') or dict(status='off', reason='no carry'))
+    if value is None or not getattr(value, 'anchor_on', False):
+        return record
+    rows = {row['cursor']: {c['name']: c for c in row['components']} for row in source['rows']}
+    checked = differ = 0
+    first = []
+    for name, slot in value.anchor.items():
+        for which, (cursor, number) in slot.items():
+            component = (rows.get(cursor) or {}).get(name)
+            checked += 1
+            if component is None or component['state'] != 'PRESENT' or component['value'] != number:
+                differ += 1
+                first.append(dict(component=name, anchor=which, cursor=cursor, fed=number,
+                                  published=None if component is None else component['value']))
+    record.update(anchors=len(value.anchor_pictures), components=len(value.anchor), rows_valued=value.anchor_rows,
+                  rows_without_values=len(value.anchor_unvalued) + len(value.anchor_pending),
+                  checked_against_snapshot=checked, differ=differ, differing=first)
+    return record
+
+
+def _group_labels(rows, records, cursor_group):
+    """(key, ordinal) -> the state labels of the instant that closes that group: the planes' labels from its joined
+    picture and the teacher row's own DState (teacher.dstate|...)."""
+    out = {}
+    for index, row in enumerate(rows):
+        group = cursor_group.get(row[6])
+        if group is None:
+            continue
+        labels = dict(records[index].get('state_labels') or {})
+        if len(row) > 8 and isinstance(row[8], dict):
+            dstate = row[8]
+            labels['teacher.dstate|status'] = dstate.get('status')
+            state = dstate.get('state') if isinstance(dstate.get('state'), dict) else {}
+            for name in ('anchor_dir', 'armed', 'broken'):
+                if name in state:
+                    labels['teacher.dstate|state.%s' % name] = state[name]
+        out[group] = labels
+    return out
+
+
+def _day_state_split(groups, group_labels, TBR):
+    """The whole day's split, per side: for every label field, every bucket's parts and its share of the day's
+    totals (written to STATE_SPLIT_FILE; a summary of the field and bucket counts goes on the receipt)."""
+    ordered = sorted(groups)
+    results = [groups[key] for key in ordered]
+    labels = [group_labels.get(key) for key in ordered]
+    sides = {}
+    for side in TBR.SIDES:
+        split = TBR.state_split(results, labels, side)
+        totals = split['totals']['events']
+        for field in split['fields'].values():
+            for bucket in field['buckets'].values():
+                bucket['share_of_day'] = {k: (bucket['events'].get(k, 0) / v if v else None) for k, v in totals.items()}
+        sides[side] = split
+    summary = dict(groups=len(ordered), fields=len(sides[TBR.SIDES[0]]['fields']) if ordered else 0,
+                   buckets={side: sum(len(f['buckets']) for f in value['fields'].values()) for side, value in sides.items()},
+                   unknown_groups={side: {name: f['unknown_groups'] for name, f in value['fields'].items()
+                                          if f['unknown_groups']} for side, value in sides.items()},
+                   all_sum_back={side: value['all_sum_back'] for side, value in sides.items()})
+    return dict(schema='FRANKIE_TEACHER_STATE_SPLIT_DAY_V1', format=TBR.SPLIT_FORMAT, sides=sides, summary=summary)
+
+
 ROWS_SIDECAR = 'host-dipole-classroom-source.c15.rows.jsonl'
 SIDECAR_ROW_KEYS = ('key', 'clocks', 'clocks_absent', 'planes', 'planes_state', 'planes_absent', 'invalidated',
-                    'coverage', 'match', 'book_columns')
+                    'coverage', 'match', 'book_columns', 'state_split', 'state_labels', 'state_label_origin')
 
 
 def _sidecar_planes(record, carried):
@@ -843,9 +1028,18 @@ def _sidecar_planes(record, carried):
     return planes, absent
 
 
+def _sidecar_split(book):
+    """The row's state split (each window's, keyed by its slot), its own row role in the sidecar."""
+    return {slot: read['state_split'] for slot, read in (book.get('windows') or {}).items() if 'state_split' in read}
+
+
 def _sidecar_book(book):
-    """The book read of a row as JSON values: each side's depth decoded to [price, size, count] per level."""
+    """The book read of a row as JSON values: each side's depth decoded to [price, size, count] per level; the state
+    split goes to its own role (state_split)."""
     from research.kalshi.frankie_boss import teacher_book_read as TBR
+    if book.get('windows'):
+        book = dict(book, windows={slot: {k: v for k, v in read.items() if k != 'state_split'}
+                                   for slot, read in book['windows'].items()})
     group = book.get('group')
     if group is None:
         return book
@@ -889,7 +1083,8 @@ def _write_rows_sidecar(out, source, records, header, SS):
             write(dict(row, key=record['key'], clocks=clocks, clocks_absent=record['clocks_absent'],
                        planes=planes, planes_state=record['state'], planes_absent=absent,
                        invalidated=record['invalidated'], coverage=record['coverage'], match=record['match'],
-                       book_columns=_sidecar_book(record['book'])))
+                       state_labels=record['state_labels'], state_label_origin=record['state_label_origin'],
+                       book_columns=_sidecar_book(record['book']), state_split=_sidecar_split(record['book'])))
             lines += 1
         handle.flush()
         os.fsync(handle.fileno())
@@ -907,7 +1102,7 @@ def _write_rows_sidecar(out, source, records, header, SS):
 ACCOUNT_FORMAT = 1
 
 
-def _teacher_account(rows, records, header, *, raw_saves, cpu_pinning, phases, walked, processed):
+def _teacher_account(rows, records, header, *, raw_saves, cpu_pinning, phases, walked, processed, out):
     """The facts the teacher's own account is written from (Greg, 2026-10-09: which data it saw together, what it lacks,
     what it would want, what would give better outputs, beside its findings). Every number is counted from this run's
     rows, second set, pools and clocks; nothing is estimated. FORMAT ACCOUNT_FORMAT. The day reports render it."""
@@ -958,8 +1153,10 @@ def _teacher_account(rows, records, header, *, raw_saves, cpu_pinning, phases, w
         rows=total, planes=planes, clocks=dict(carried_rows=dict(clocks_present), fields=list(header['clock_fields'])),
         book_columns=['book_balance', 'book_absorption', 'counts', 'event_incomplete', 'reconciliation', 'group.depth',
                       'group.touches', 'group.sides'],
-        state_split=dict(status='not_built', reason='the per-state split of the pinned sums is not built in this '
-                                                     'version (the state label fields of the planes are not named here)'))
+        state_split=dict(status='built', planes=sorted({name.split('|')[0] for record in records
+                                                        for name in record.get('state_labels') or ()}),
+                         label_fields=sorted({name for record in records for name in record.get('state_labels') or ()}),
+                         dipole='teacher.dstate (the teacher row\'s own DState)'))
     # (b) missing or thin
     reconciliation, examples = Counter(), []
     for record in records:
@@ -973,17 +1170,20 @@ def _teacher_account(rows, records, header, *, raw_saves, cpu_pinning, phases, w
                 examples.append((abs(found['book'] - found['events']), record['key']['adapter_cursor'], side, measure,
                                  found['book'], found['events'], found['reasons']))
     examples.sort(key=lambda item: (-item[0], item[1], item[2], item[3]))
+    differences = _write_list(out / DIFFERENCES_FILE, [
+        dict(cursor=c, side=sd, measure=m, book=b, events=e, difference=d, reasons=r)
+        for d, c, sd, m, b, e, r in examples])
     guard = (cpu_pinning.get('raw_pool') or {}).get('guard') or {}
     account['missing_or_thin'] = dict(
         planes_never_carried=header['entries_not_carried'],
         planes_partial={entry: value for entry, value in planes.items() if value['rows_absent']},
-        clock_mismatches=dict(rows=header['rows_mismatched'], examples=header['mismatches'][:20]),
+        clock_mismatches=dict(rows=header['rows_mismatched'], all=header.get('mismatches_file')),
         rows_read_in_walk=header['joined_in_walk'], rows_restored_from_save=header['restored_from_save'],
         rows_merged_at_publication=header['merged_at_publication'],
         book_read=header.get('book_read'),
+        state_unknown_groups=((header.get('state_split') or {}).get('day') or {}).get('unknown_groups'),
         reconciliation=dict(differences=sum(reconciliation.values()), by_measure_reason=dict(sorted(reconciliation.items())),
-                            largest=[dict(cursor=c, side=sd, measure=m, book=b, events=e, reasons=r)
-                                     for _, c, sd, m, b, e, r in examples[:20]], all_differences=len(examples)),
+                            all=differences, order='largest absolute difference first, then cursor, side, measure'),
         guard=dict(guard))
     # (c) wants, derived from (b)
     wants = [dict(want=entry['entry'] if isinstance(entry, dict) else entry, reason='never carried by the picture on '
@@ -992,6 +1192,10 @@ def _teacher_account(rows, records, header, *, raw_saves, cpu_pinning, phases, w
               for entry, value in planes.items() if value['rows_absent']]
     questions = [dict(question='why do book and event %s differ (%s)?' % tuple(name.split(':', 1)), rows=count)
                  for name, count in sorted(reconciliation.items())]
+    for side, fields in (((header.get('state_split') or {}).get('day') or {}).get('unknown_groups') or {}).items():
+        for name, count in sorted(fields.items()):
+            wants.append(dict(want=name, reason='side %s: %d group(s) with no row of that plane at their closing '
+                                                'instant (state unknown)' % (side, count)))
     account['wants'] = dict(wants=wants, questions=questions,
                             rule='every plane absent or partial is a want; every reconciliation class a question')
     # (d) runtime facts
@@ -1013,7 +1217,9 @@ def _teacher_account(rows, records, header, *, raw_saves, cpu_pinning, phases, w
                 sides[side]['events'].update(part['events'])
     science.update(book_vs_events={side: dict(book=dict(value['book']), events=dict(value['events']))
                                    for side, value in sides.items()},
-                   state_split=dict(status='not_built'))
+                   state_split=dict(header.get('state_split') or {}, status='built',
+                                    findings='per label field and bucket, both sides, with each bucket\'s share of the '
+                                             'day\'s totals: %s' % STATE_SPLIT_FILE))
     account['science'] = science
     return account
 
@@ -1260,6 +1466,7 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
         try:
             K = _box_module('frankie_box_classroom_code')
             carry['value'] = K.TeacherPassCarry(market, K.native_cutoff_limits(os.environ))
+            _enable_anchors(carry, teacher)
         except Exception as error:  # noqa: BLE001 - the classroom then makes its own whole pass
             carry['error'] = 'not started: %s: %s' % (type(error).__name__, error)
     if market is not None:
@@ -1471,6 +1678,7 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                 try:
                     value = pickle.loads(kept['value']) if kept['value'] is not None else None
                     carry.update(value=value, first_input_cursor=kept['first_input_cursor'], error=kept['error'])
+                    _restored_anchors(carry)
                 except Exception as error:  # noqa: BLE001 - no carry: the classroom makes its own whole pass (listed)
                     carry.update(value=None, first_input_cursor=kept['first_input_cursor'],
                                  error='the saved classroom carry could not be restored (%s: %s)' % (type(error).__name__, error))
@@ -1580,11 +1788,16 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                 PT._save_raw_state(market_state, state)
                 saved_market_state['value'] = state
                 if carry['value'] is not None and market.report.get('complete'):
-                    try:
-                        PT._save_raw_state(carry_path, carry['value'].state(market.identity))
-                        carry['saved'] = True
-                    except Exception as error:  # noqa: BLE001 - the classroom then makes its own whole pass
-                        carry['error'] = 'not saved: %s: %s' % (type(error).__name__, error)
+                    if PT.ROW_DONE[0] is not None:
+                        # the anchors are fed as rows resolve; the last rows resolve after the evidence ends: the carry
+                        # is saved by the caller once the row pass has fed every row
+                        carry['save_after_rows'] = market.identity
+                    else:
+                        try:
+                            PT._save_raw_state(carry_path, carry['value'].state(market.identity))
+                            carry['saved'] = True
+                        except Exception as error:  # noqa: BLE001 - the classroom then makes its own whole pass
+                            carry['error'] = 'not saved: %s: %s' % (type(error).__name__, error)
                 if cutoff_walk['tracker'] is not None and cutoff_walk['next_input_cursor'] is not None:
                     try:          # the tracker with the walk's save point (plain picklable data)
                         PT._save_raw_state(tracker_path, dict(tracker=cutoff_walk['tracker'],
@@ -1597,6 +1810,8 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                 if cpu_pinning['outcome'] in ('pinned', 'fallback') and 'restored' not in cpu_pinning:
                     cpu_pinning['restored'] = LP.restore_mask(cpu_pinning['original_mask'])
     collector = _WalkCollector()
+    if market is not None and carry['value'] is not None and getattr(carry['value'], 'anchor_on', False):
+        PT.ROW_DONE[0] = _anchor_feed(carry, teacher, T)
     try:
         if market is not None:
             cpu_pinning['collector'] = collector.enter()
@@ -1608,6 +1823,12 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                                    **({'learner_binding': learner_binding} if learner_binding is not None else {}),
                                    **({'shared_market_identity': market.identity} if market is not None else {})),
             save_requested=save_requested, retain_dstate=True)
+        if carry.get('save_after_rows') is not None and carry['value'] is not None:
+            try:                 # every row fed (the row pass drained its streams): the carry with its anchors
+                PT._save_raw_state(carry_path, carry['value'].state(carry.pop('save_after_rows')))
+                carry['saved'] = True
+            except Exception as error:  # noqa: BLE001 - the classroom then makes its own whole pass
+                carry['error'] = 'not saved: %s: %s' % (type(error).__name__, error)
         collector.exit()
         if cpu_pinning['outcome'] in ('pinned', 'fallback') and 'restored' not in cpu_pinning:
             cpu_pinning['restored'] = LP.restore_mask(cpu_pinning['original_mask'])     # before finish sizes its pool
@@ -1663,6 +1884,8 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
             PT.RAW_WORKER_CPUS = None
             PT.FINISH_WORKER_CPUS = None
             PT.PROGRESS = None
+            PT.ROW_DONE[0] = None
+            carry['anchor_feed'] = dict(PT.ROW_DONE_RECORD, **(carry.get('anchor_feed') or {}))
             raw_saves = dict(PT.SAVE_RECORD, progress_errors=PT.PROGRESS_ERRORS[0])
             cpu_pinning['finish_pool'] = dict(PT.FINISH_POOL_RECORD) if PT.FINISH_POOL_RECORD else None
             cpu_pinning['evidence_precompute'] = dict(precompute)
@@ -1790,7 +2013,8 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
         reason='no shared market reader on this ROOT (the legacy journal walk): no picture to join the rows to')
     result['rows_sidecar'] = rows_sidecar or dict(status='not_written', reason='no second set on this day')
     result['account'] = _teacher_account(rows, second_records, second_header, raw_saves=raw_saves,
-                                         cpu_pinning=cpu_pinning, phases=phases, walked=walked, processed=processed)
+                                         cpu_pinning=cpu_pinning, phases=phases, walked=walked, processed=processed,
+                                         out=out)
     if market is not None:
         # the classroom loads the file and checks its identity and roster itself; a missing or other carry makes the
         # classroom's own whole pass, so an older teacher (no field) never blocks it
@@ -1799,6 +2023,7 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
             dict(file=CARRY_FILE, status='retained', reason='a completed saved walk was reused; the carry its walk saved')
             if carry_path.is_file() and not walked_now(carry) else
             dict(file=CARRY_FILE, status='not_written', reason=carry.get('error') or 'the walk did not reach the source end'))
+        result['classroom_carry']['anchors'] = _anchor_record(carry, source)
     if market is not None:
         result.update(shared_market_identity=market.identity, shared_market_read=shared_read,
                       shared_market_arithmetic=shared_read.get('equation'),
