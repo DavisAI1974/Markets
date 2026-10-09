@@ -1533,12 +1533,20 @@ class Run:
                 continue
         return total
 
-    def disk_ok(self, stage):
+    def disk_ok(self, stage, resume=False):
+        """False (self.stopped names why) only when the step's measured size would take free space below the floor. The
+        numbers are recorded on self.disk_facts either way. 2026-10-09 (Greg: a gate we coded never blocks fine data):
+        an owned ROOT RESUME is never gated (its bytes are on disk already), and a fresh ROOT reserves only what ROOTs
+        measured on the current form wrote (a record carrying inline_spool_layer_bytes, since 2026-10-08); an older
+        form's pre-clean size is listed, never reserved."""
         free = shutil.disk_usage(BOX_ROOT).free
-        sizes, adjusted = [], 0
+        sizes, adjusted, old_form = [], 0, []
         for p in (self.dir / 'days').glob('*/%s.json' % stage) if (self.dir / 'days').is_dir() else ():
             r = json.loads(p.read_bytes())
             if r.get('status') == 'done' and isinstance(r.get('new_bytes'), int):
+                if stage == 'root' and 'inline_spool_layer_bytes' not in r:
+                    old_form.append(dict(day=p.parent.name, new_bytes=r['new_bytes']))
+                    continue
                 inline = self.inline_spool_layer_bytes(r) if stage == 'root' else 0
                 adjusted += inline
                 sizes.append(r['new_bytes'] - inline)
@@ -1547,9 +1555,16 @@ class Run:
             if r.get('status') == 'done' and isinstance(r.get('new_bytes'), int):
                 sizes.append(r['new_bytes'])
         largest = max(sizes) if sizes else 0
+        self.disk_facts = dict(stage=stage, free_bytes=free, largest_measured_step_bytes=largest, floor_bytes=self.floor,
+                               measured_steps=len(sizes), old_form_not_reserved=old_form, resume=resume)
+        if resume:
+            self.disk_facts['decision'] = 'an owned resume: its bytes are on disk already; not gated'
+            return True
+        self.disk_facts['decision'] = 'gated' if free - largest < self.floor else 'fits'
         if free - largest < self.floor:
             self.stopped = dict(stage=stage, free_bytes=free, largest_measured_step_bytes=largest, floor_bytes=self.floor,
                                 measured_steps=len(sizes), inline_spool_layer_bytes_not_reserved=adjusted,
+                                old_form_not_reserved=old_form,
                                 reason='the step would take free space below the floor (largest measured %s step %d '
                                        'bytes, free %d, floor %d)' % (stage, largest, free, self.floor))
             return False
@@ -1852,11 +1867,11 @@ class Run:
         ready, why = self.external_ready(e)
         if not ready:
             return self.record('root', e['day'], 'waiting', reason=why)
-        if not self.disk_ok('root'):
-            return None
-        output = owned_output or ROOTS / ('%s-%s-a%d' % (self.plan['run'], e['day'], len(attempts) + 1))
         # First dispatch and resume both use the central claim's exact directory.
         resume = owned_output is not None and owned_output.is_dir()
+        if not self.disk_ok('root', resume=resume):
+            return None
+        output = owned_output or ROOTS / ('%s-%s-a%d' % (self.plan['run'], e['day'], len(attempts) + 1))
         held = self.claim_root(e, output)          # None = no claim store on the box: exactly as before
         if held is not None and not held[0]:
             return self.record('root', e['day'], 'waiting', reason=held[1], claim=held[2])
@@ -1953,6 +1968,7 @@ class Run:
                            native_pass=native, shared_market_policy=calc.get('shared_market_policy'),
                            root_status=calc.get('status'), producer_failures=calc.get('failure_count'),
                            brain_entry=brain_entry, owner_binding=self.owner, all99=all99,
+                           disk=getattr(self, 'disk_facts', None),
                            # the one-day inspection (frankie_box_workflow_inspection.py): what the ROOT child received,
                            # how this caller used it, what it produced; operator review only, never knowledge or a gate
                            inspection=dict(inputs=dict(ingestion_receipt=dict(path=ing['receipt'], sha256=ing['receipt_sha256']),
