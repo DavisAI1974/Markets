@@ -1330,6 +1330,18 @@ def _save_checkpoint(scratch, key, code, passes):
     os.replace(tmp, scratch / 'passes.pkl')
 
 
+def _same_device(directory, scratch):
+    """An earlier attempt's table directory is adopted by ONE rename, so only from the filesystem the new scratch is on
+    (2026-10-09: the parts may be placed on another volume, FRANKIE_DIGEST_PARTS_DIR; a cross-device rename would fail)."""
+    target = Path(scratch)
+    while not target.exists() and target.parent != target:
+        target = target.parent
+    try:
+        return os.stat(directory).st_dev == os.stat(target).st_dev
+    except OSError:
+        return False
+
+
 def _adopt_checkpoint(scratch, key, code):
     """Session 9: the pass save points of THIS table left by an earlier stopped attempt of the same calculation root.
     Every digest call writes into a fresh <root>/work/derived/.digest-<uuid4> (frankie_box_boss_session.Session._write_digest),
@@ -1343,7 +1355,7 @@ def _adopt_checkpoint(scratch, key, code):
     best = None
     for saved in sorted(scratch.parent.parent.glob('.digest-*/%s/passes.pkl' % scratch.name)):
         directory = saved.parent
-        if directory.parent == scratch.parent or directory.is_symlink():
+        if directory.parent == scratch.parent or directory.is_symlink() or not _same_device(directory, scratch):
             continue
         passes = _load_checkpoint(directory, key, code)
         if passes and (best is None or len(passes) > len(best[1])):
@@ -1382,7 +1394,7 @@ def _adopt_progress(scratch, key):
     wanted, best = _key_digest(key), None
     for marker in sorted(scratch.parent.parent.glob('.digest-*/%s/%s' % (scratch.name, PROGRESS_KEY))):
         directory = marker.parent
-        if directory.parent == scratch.parent or directory.is_symlink():
+        if directory.parent == scratch.parent or directory.is_symlink() or not _same_device(directory, scratch):
             continue
         try:
             if json.loads(marker.read_text()).get('key') != wanted:
@@ -1458,45 +1470,92 @@ def _separator(finals):
     return '\t' if any(f['has_space'] for f in finals) else ' '
 
 
-def _copy(destination, name, n, facts, whole, first, scales, sep, parts, sizes, reserve=DISK_RESERVE):
+class _TableSink:
+    """The table's bytes on their way out (one pass, 2026-10-09): buffered to 4 MiB, hashed as they pass (the table's
+    own sha256 and byte count, so no caller reads the table again for its witness), each flushed buffer handed to
+    `out` (a file's write, or the digest assembly's write into digest.pending)."""
+    FLUSH = 4 << 20
+
+    def __init__(self, out):
+        self.out, self.buffer, self.hasher, self.size = out, bytearray(), hashlib.sha256(), 0
+
+    def write(self, data):
+        self.buffer += data
+        self.size += len(data)
+        if len(self.buffer) >= self.FLUSH:
+            self.flush()
+
+    def flush(self):
+        if self.buffer:
+            data = bytes(self.buffer)
+            self.hasher.update(data)
+            self.out(data)
+            self.buffer = bytearray()
+
+    def witness(self):
+        return dict(bytes=self.size, sha256=self.hasher.hexdigest())
+
+
+def _copy(destination, name, n, facts, whole, first, scales, sep, parts, sizes, reserve=DISK_RESERVE, into=None):
     """The table: header, constants, scales, the dictionary (each part's names in part order, numbers checked
     consecutive), then every part's rows. Each part's row text is deleted as soon as it is appended (the disk holds the
-    table plus one part, never the table twice); an interrupted copy therefore reruns the final pass."""
-    destination.unlink(missing_ok=True)       # an unsaved partial table from an interrupted copy
-    _room(destination.parent, sum((p / 'names.txt').stat().st_size for p in parts), reserve)   # the dictionary text, at most
-    with destination.open('x', encoding='utf-8', newline='\n') as handle:
+    table plus one part, never the table twice); an interrupted copy therefore reruns the final pass.
+    One pass (2026-10-09): the bytes are hashed as they are written (bytes + sha256 on the result: no caller reads the
+    table again for its witness). into = the digest assembly's slot (frankie_box_digest_document): the table is written
+    straight into digest.pending at its turn (no table file, no second copy of the table on any disk); offsets are then
+    relative to the table's first byte (into.start)."""
+    if into is None:
+        destination.unlink(missing_ok=True)   # an unsaved partial table from an interrupted copy
+        room_at = destination.parent
+    else:
+        room_at = Path(into.path).parent
+    _room(room_at, sum((p / 'names.txt').stat().st_size for p in parts), reserve)   # the dictionary text, at most
+    with (destination.open('xb') if into is None else contextlib.nullcontext()) as handle:
+        sink = _TableSink(handle.write if into is None else into.write)
         for line in DG.header_lines(name, n, sep, facts.columns, whole, first, scales, facts):
-            handle.write(line + '\n')
+            sink.write((line + '\n').encode('utf-8'))
         number = 0
         for p in parts:
             with (p / 'names.txt').open(encoding='utf-8', newline='\n') as names:
                 for line in names:
                     if not line.startswith('@%d=' % number) or not line.endswith('\n'):
                         raise ValueError('dictionary numbering mismatch in %s' % p)
-                    handle.write(('\t' if number else 'dictionary: ') + line[:-1])
+                    sink.write((('\t' if number else 'dictionary: ') + line[:-1]).encode('utf-8'))
                     number += 1
         if number:
-            handle.write('\n')
-        handle.flush()
-        offset = destination.stat().st_size     # header bytes; the part rows follow in order
+            sink.write(b'\n')
+        offset = sink.size                      # header bytes; the part rows follow in order
         offsets = []
         for p, size in zip(parts, sizes):
-            _room(destination.parent, size, reserve)
+            _room(room_at, size, reserve)
             offsets.append(offset)
             offset += size
             with (p / 'rows.txt').open('rb') as chunk:
                 while block := chunk.read(1 << 22):
-                    handle.buffer.write(block.replace(b'\t', b' ') if sep == ' ' else block)
-            handle.flush()
+                    sink.write(block.replace(b'\t', b' ') if sep == ' ' else block)
+            sink.flush()
+            if into is None:
+                handle.flush()
+            else:
+                into.sync()                     # the part's bytes are on disk in digest.pending before it is deleted
             (p / 'rows.txt').unlink()
-        os.fsync(handle.fileno())
-    if destination.stat().st_size != offset:
+        sink.flush()
+        if into is None:
+            handle.flush()
+            os.fsync(handle.fileno())
+        else:
+            into.sync()
+    if sink.size != offset:
         raise ValueError('table %s is not its header and parts' % name)
-    return dict(offsets=offsets, identity=TS._identity(destination), numbered=number)
+    if into is None:
+        if destination.stat().st_size != offset:
+            raise ValueError('table %s is not its header and parts' % name)
+        return dict(offsets=offsets, identity=TS._identity(destination), numbered=number, **sink.witness())
+    return dict(offsets=offsets, numbered=number, into_start=into.start, **sink.witness())
 
 
 def write_table_parallel(destination, name, specs, scratch_directory, cpus, progress=None, reserve=DISK_RESERVE,
-                         pool=None, cross_columns=None, on_cross=None):
+                         pool=None, cross_columns=None, on_cross=None, into=None):
     """specs: ordered part row sources (see _source_rows). The same bytes and proof as TS.write_table over the same rows
     (no context); note the ROWS differ for `bedrock.members`, where _source_rows applies MEMBER_LIST_PATHS and the serial
     reader does not, so that table is not byte-identical to a serial build of sources.sqlite. reserve = the bytes every
@@ -1510,7 +1569,15 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
     only once the pass that reads them is saved.
 
     pool: a PinnedPool shared with other tables written at the same time (the digest's one set of pinned helpers); None
-    starts one on cpus for this table alone. Which helper runs a part never changes what the part returns."""
+    starts one on cpus for this table alone. Which helper runs a part never changes what the part returns.
+
+    into (one pass, 2026-10-09): the digest assembly's slot for this table (frankie_box_digest_document._Slot): the copy
+    pass waits for the table's turn (into.acquire()) and writes the table straight into digest.pending, deleting each
+    part as it is appended; the inverse proof reads it there (offsets from into.start); no table file is made, so the
+    table's bytes exist once on disk. A copy saved into an earlier attempt's pending that the assembly adopted
+    (into.saved_copy, the same start, bytes and sha256) is proved in place instead of copied again; any other saved copy
+    is dropped (the final pass reruns when its part rows were already consumed). The result carries the table's bytes and
+    sha256 (hashed on the write stream) in both modes, and `start` with into."""
     destination = Path(destination)
     destination.parent.mkdir(parents=True, exist_ok=True)
     scratch = Path(scratch_directory)
@@ -1568,6 +1635,21 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
 
     def present(filename):
         return all((p / filename).is_file() for p in parts)
+
+    # one pass (2026-10-09): a saved copy pass counts only where its bytes are: a table file (into=None) or the very
+    # bytes the assembly adopted into this attempt's digest.pending (into.saved_copy); otherwise it is dropped and, its
+    # part rows having been consumed by it, the final pass reruns
+    saved_copy = passes.get('copy')
+    if saved_copy is not None:
+        if into is None:
+            usable = 'into_start' not in saved_copy
+        else:
+            held = getattr(into, 'saved_copy', None) or {}
+            usable = ('into_start' in saved_copy and
+                      (held.get('start'), held.get('bytes'), held.get('sha256'))
+                      == (saved_copy['into_start'], saved_copy.get('bytes'), saved_copy.get('sha256')))
+        if not usable:
+            passes.pop('copy')
 
     # A saved pass is kept only while the files the next unsaved pass reads are still there (an interrupted copy has
     # deleted the parts it appended; freq.sqlite is deleted once the merge is saved), checked from the last pass back.
@@ -1651,22 +1733,36 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
     copied = passes.get('copy')
     if copied is not None:
         note(name, 'copy (saved)')
-        if not destination.is_file() or TS._identity(destination) != copied['identity']:
+        if into is not None:
+            into.acquire(keep_saved=True)     # the table's turn (its saved bytes kept): nothing is appended after it
+                                              # until it is proved
+        elif not destination.is_file() or TS._identity(destination) != copied['identity']:
             raise ValueError('table %s changed since its copy save point; remove %s to rebuild it' % (name, scratch))
     else:
         stop = stop_requested()
         if stop:                              # session 8: the copy is a saved pass too; the stop point stands before it
             note(name, 'copy NOT STARTED: stop requested (%s); exit %d, the same command resumes here' % (stop, STOPPED_EXIT))
             raise DigestStopped(name, 'copy', stop)
+        if into is not None:
+            note(name, 'copy (waiting for its turn in digest.pending)')
+            into.acquire()
         note(name, 'copy')
-        copied = _copy(destination, name, n, facts, whole, first, scales, sep, parts, sizes, reserve)
+        copied = _copy(destination, name, n, facts, whole, first, scales, sep, parts, sizes, reserve, into=into)
         if copied['numbered'] != numbering['total']:
             raise ValueError('table %s: %d dictionary entries copied, %d numbered' % (name, copied['numbered'], numbering['total']))
+        if into is not None:
+            into.mark_copied(copied)          # the assembly's record first: a rerun adopts these bytes, then this save
         passes['copy'] = copied
         _save_checkpoint(scratch, key, code, passes)
     offsets = copied['offsets']
     drop('rows.txt', 'names.txt')
     dictionary.unlink(missing_ok=True)        # the table carries the dictionary now; the proof parses its own
+    if into is not None:
+        destination, base = Path(into.path), copied['into_start']
+        offsets = [base + off for off in offsets]
+        table_end = base + copied['bytes']
+    else:
+        base, table_end = 0, None
     before = TS._identity(destination)
     # Inverse proof: the header and dictionary are parsed from the written file into their own database, then every
     # part's rows are parsed back from the file at their byte offsets and compared with the part's source rows.
@@ -1677,7 +1773,9 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
     inverse.mkdir()
     _room(inverse, 2 * (offsets[0] if offsets else destination.stat().st_size), reserve)   # the parsed dictionary, indexed
     vdb = sqlite3.connect(inverse / 'table.sqlite')
-    with destination.open(encoding='utf-8', newline='') as reader:
+    import io
+    with io.TextIOWrapper(destination.open('rb'), encoding='utf-8', newline='') as reader:
+        reader.buffer.seek(base)              # the table's first byte (0 for a table file)
         tokens = TS._Tokens(reader)
         header = DG.Header(tokens)
         if header.name != name or header.n != n:
@@ -1688,7 +1786,7 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
     vdb.close()
     if any(mark == '=' and (name, c) in DG.CROSS_DERIVED for c, mark in header.whole.items()):
         raise ValueError('cross-table derived tables are not written in parallel')
-    total = destination.stat().st_size
+    total = destination.stat().st_size if table_end is None else table_end
     if offsets and offsets[0] + sum(sizes) != total:
         raise ValueError('table parts do not end the file')
     # canonical_verify: every part's source-row digests must be there (an interrupted scratch may lack them) and no
@@ -1721,6 +1819,8 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
                     chunks=sum(n.get('chunks') or 0 for _, n in notes))
     return dict(path=str(destination), rows=n, verified=True, verified_identity=before,
                 scratch_directory=str(scratch), parts=len(specs),
+                **({k: copied[k] for k in ('bytes', 'sha256') if k in copied}),
+                **(dict(start=base) if into is not None else {}),
                 passes=dict(schema='FRANKIE_DIGEST_PASSES_V2', fuse_context=fused, one_decode=one,
                             canonical_verify=by_digest, verify_basis=verify_basis, source_decodes=decodes,
                             cells_scratch_bytes=cells_bytes, digests_bytes=digests_bytes,
