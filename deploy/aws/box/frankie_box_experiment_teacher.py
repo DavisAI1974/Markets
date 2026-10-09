@@ -671,6 +671,9 @@ def _all99_use(field):
                      'teachers within the teacher\'s role and walls); the pinned equations read original APPLIED fields only')
 
 
+PREFIX_PROGRESS_ROWS = 1024        # the prefix merge offers its row count to the stage heartbeat every this many rows
+
+
 def _second_set_prefix(open_market, needed, SS, book_needed=0, changes=True, label_needed=0):
     """For the rows the walk of THIS process did not read (a resume from a save written before the second set or the
     book read): read the same pictures again from a fresh shared reader of the same ROOT, in order, with the walk's
@@ -682,8 +685,10 @@ def _second_set_prefix(open_market, needed, SS, book_needed=0, changes=True, lab
     computed); the first `label_needed` rows get the state labels their picture carries (joins recorded before the
     labels were). Returns (records, book) with book = {groups, windows, cursor_group, labels}."""
     from collections import deque
-    from research.kalshi.frankie_boss import c15_teacher_r3 as T, teacher_book_read as TBR
-    reader = open_market()
+    from research.kalshi.frankie_boss import c15_teacher_r3 as T, teacher_book_read as TBR, parallel_teacher as PT
+    # the frames rows by reference (frankie_box_market_timeline.RowRef): the join names them by (source, source_ordinal)
+    # and nothing here reads a frames value; every line is still decoded and checked on the decode workers
+    reader = open_market(frame_values='reference')
     pictures = reader.iter_applied()
     records, expected = [], 0
     upto = max(needed, book_needed, label_needed)
@@ -734,6 +739,10 @@ def _second_set_prefix(open_market, needed, SS, book_needed=0, changes=True, lab
                             if slots:
                                 book['windows'][e['cursor']] = slots
             expected += 1
+            if expected % PREFIX_PROGRESS_ROWS == 0:
+                # the stage heartbeat (PT.PROGRESS: progress.json and the phase file): rows merged of the prefix
+                PT._progress('teacher_second_set_prefix', expected, upto)
+        PT._progress('teacher_second_set_prefix', expected, upto, force=True)
     finally:
         close = getattr(pictures, 'close', None)
         if close is not None:
@@ -1323,8 +1332,8 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
         # is not hashed a second time in this process; the reader re-reads it itself if the witness differs.
         # bound to THE file measured (review N1): its path, device and inode travel with the bytes and sha256; the reader
         # accepts the measurement only for the very file its pin names, else hashes the file itself
-        def open_market():
-            return SharedMarketTimeline(calculations, day=day, workers=workers,
+        def open_market(**options):
+            return SharedMarketTimeline(calculations, day=day, workers=workers, **options,
                                         input_witness=dict(journal_witness, path=str(journal), dev=journal_stat.st_dev,
                                                            ino=journal_stat.st_ino,
                                                            **(dict(basis='claim', claim=PREFETCH.get('claim'))
@@ -1829,7 +1838,6 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                 carry['saved'] = True
             except Exception as error:  # noqa: BLE001 - the classroom then makes its own whole pass
                 carry['error'] = 'not saved: %s: %s' % (type(error).__name__, error)
-        collector.exit()
         if cpu_pinning['outcome'] in ('pinned', 'fallback') and 'restored' not in cpu_pinning:
             cpu_pinning['restored'] = LP.restore_mask(cpu_pinning['original_mask'])     # before finish sizes its pool
         if market is not None:
@@ -1845,8 +1853,10 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
         if save_requested():
             raise PT.TeacherSaved('teacher raw pass saved; attachment assembly has not started')
         if market is not None and rows:
+            # the merge runs under the walk's collector settings (frozen heap, rare full collections): restored after it
             second_set, second_records, second_header = _second_set(out, open_market, market, second, rows, SS)
             phase('second_set')
+        collector.exit()
         walked = time.time() - started
         phase('raw_pass_rows')
         if not rows:

@@ -146,7 +146,40 @@ def _json(pin):
     return json.loads(raw)
 
 
-def _rows(pin, *, packed, timing=None, verify=True, where=None, start=None):
+class RowRef:
+    """A reference to one row of a layer spool (the ROOT's receipted line): path, byte offset, line length, ordinal.
+    It holds no value; load() reads and decodes exactly that line as the reader decodes it (json.loads, plus the
+    journal codec's unpack for a packed ROOT spool). Used where a consumer reads a stream's rows only by reference
+    (the teacher's second-set prefix merge: the frames row is named by (source, source_ordinal), never read)."""
+    __slots__ = ('path', 'offset', 'length', 'ordinal', 'packed')
+
+    def __init__(self, path, offset, length, ordinal, packed):
+        self.path, self.offset, self.length, self.ordinal, self.packed = str(path), offset, length, ordinal, packed
+
+    def load(self):
+        from research.kalshi.frankie_boss.c15_journal import unpack
+        with open(self.path, 'rb') as stream:
+            stream.seek(self.offset)
+            raw = stream.read(self.length)
+        row = json.loads(raw)
+        return unpack(row) if self.packed else row
+
+    def __repr__(self):
+        return 'RowRef(%r, offset=%d, length=%d, ordinal=%d)' % (self.path, self.offset, self.length, self.ordinal)
+
+
+def frame_identity(row):
+    """What _Changes._next reads of a decoded frames row: (input_cursor, native_frame.instrument_id, ts_recv_ns)."""
+    return row.get('input_cursor'), (row.get('native_frame') or {}).get('instrument_id'), row.get('ts_recv_ns')
+
+
+class _Identified(tuple):
+    """(identity, RowRef): a row decoded in full (every byte parsed, a bad line raises in order) whose value travels as
+    its reference; the identity is what the reader checks and places the row by."""
+    __slots__ = ()
+
+
+def _rows(pin, *, packed, timing=None, verify=True, where=None, start=None, identify=None):
     """Check the exact consumed bytes; caller must exhaust before claiming completion. `timing` (optional dict)
     accumulates the seconds spent reading, hashing and decoding rows: an inspection measurement, never a value.
     verify=False (one pass, 2026-10-09): the stream's pin is held by the ROOT's FRANKIE_FILE_CLAIM_V2 row (stat,
@@ -175,6 +208,8 @@ def _rows(pin, *, packed, timing=None, verify=True, where=None, start=None):
             begun, size = size, size + len(raw)
             row = json.loads(raw)
             row = unpack(row) if packed else row
+            if identify is not None:
+                row = _Identified((identify(row), RowRef(pin['path'], begun, len(raw), ordinal, packed)))
             if timing is not None:
                 now = perf_counter()
                 spent += now - mark
@@ -266,7 +301,8 @@ def _decode_range(args):
     """Rows of one byte range, decoded exactly as _rows decodes them; (rows, line lengths, error) where error is the
     exception the first undecodable line raised (rows hold every row before it; lengths one per row, for the reader's
     position)."""
-    path, start, end, packed = args
+    path, start, end, packed = args[:4]
+    identify = args[4] if len(args) > 4 else None    # reference mode: every line decoded here, only its identity sent
     from research.kalshi.frankie_boss.c15_journal import unpack
     rows, lengths = [], []
     try:
@@ -278,7 +314,8 @@ def _decode_range(args):
                     break
                 position += len(raw)
                 row = json.loads(raw)
-                rows.append(unpack(row) if packed else row)
+                row = unpack(row) if packed else row
+                rows.append(identify(row) if identify is not None else row)
                 lengths.append(len(raw))
     except Exception as error:  # noqa: BLE001 - handed back and raised in order by the consumer
         return rows, lengths, error
@@ -307,7 +344,7 @@ def _frontier_hasher():
     return FrontierHasher
 
 
-def _rows_parallel(pin, *, packed, timing, workers, verify=True, where=None, start=None):
+def _rows_parallel(pin, *, packed, timing, workers, verify=True, where=None, start=None, identify=None):
     """_rows with the decode on pinned lane workers (see above). One pass (2026-10-09): the bytes are hashed in file
     order by the search's FrontierHasher, held at most one decode window past the consumed frontier, so the hash reads
     the pages the decode workers just read (one disk pass, not a second unbounded read of the whole stream racing
@@ -348,7 +385,8 @@ def _rows_parallel(pin, *, packed, timing, workers, verify=True, where=None, sta
                 item = next(ranges, None)
                 if item is None:
                     return
-                pending.append((item, pool.apply_async(_decode_range, ((path, item[0], item[1], packed),))))
+                job = (path, item[0], item[1], packed) + ((identify,) if identify is not None else ())
+                pending.append((item, pool.apply_async(_decode_range, (job,))))
         fill()
         while pending:
             mark = perf_counter()
@@ -361,6 +399,8 @@ def _rows_parallel(pin, *, packed, timing, workers, verify=True, where=None, sta
             timing['decode_seconds'] = round(spent, 3)
             for row, length in zip(rows, lengths):
                 where['row_start'], where['next_offset'], where['next_ordinal'] = begun, begun + length, ordinal + 1
+                if identify is not None:          # the worker sent the identity; the value is the line's reference
+                    row = _Identified((row, RowRef(path, begun, length, ordinal, packed)))
                 begun += length
                 yield ordinal, row
                 ordinal += 1
@@ -402,8 +442,11 @@ def _stream_claim(pin, claims, work):
 
 class _Changes:
     """One existing ordered producer stream; no completion-order merge or row cap."""
-    def __init__(self, name, pin, *, kind, state, workers=1, claims=None, work=None, verified=None):
+    def __init__(self, name, pin, *, kind, state, workers=1, claims=None, work=None, verified=None, reference=False):
         self.name, self.pin, self.kind, self.state = name, pin, kind, state
+        # reference (frames only): each row is decoded in full on the decode workers, which send back its identity
+        # alone; the update's value is a RowRef to the ROOT's line (no object graph rebuilt in this process)
+        self.identify = frame_identity if reference and kind == 'frame' else None
         self.timing = dict(decode_seconds=0.0, mode='serial')
         packed = kind in ('frame', 'price', 'structure')
         # one pass (Greg, 2026-10-09): a pin held by the ROOT's claim (or witnessed by selected_files in this process,
@@ -426,8 +469,9 @@ class _Changes:
     def _open(self, start):
         if self.workers > 1 and self.pin['bytes'] >= PARALLEL_DECODE_MIN_BYTES:
             return _rows_parallel(self.pin, packed=self.packed, timing=self.timing, workers=self.workers,
-                                  verify=self.verify, where=self.where, start=start)
-        return _rows(self.pin, packed=self.packed, timing=self.timing, verify=self.verify, where=self.where, start=start)
+                                  verify=self.verify, where=self.where, start=start, identify=self.identify)
+        return _rows(self.pin, packed=self.packed, timing=self.timing, verify=self.verify, where=self.where, start=start,
+                     identify=self.identify)
 
     # ---- seek (teacher resume, 2026-10-09): the stream's state for exactly the rows it has PRESENTED; the row it holds
     # read ahead (pending, or a FINALIZE terminal) is read again after a seek, never skipped
@@ -516,7 +560,10 @@ class _Changes:
                 return
             self.counts['read'] += 1
             if self.kind == 'frame':
-                cursor, instrument, stamp = row.get('input_cursor'), (row.get('native_frame') or {}).get('instrument_id'), row.get('ts_recv_ns')
+                if type(row) is _Identified:
+                    (cursor, instrument, stamp), row = row
+                else:
+                    cursor, instrument, stamp = frame_identity(row)
             elif self.kind in ('price', 'structure'):
                 provenance = row.get('provenance') or {}
                 wanted = 'FRANKIE_ROOT_PRICE_ROW_PROVENANCE_V2' if self.kind == 'price' else 'FRANKIE_ROOT_ROW_PROVENANCE_V1'
@@ -718,7 +765,7 @@ class SharedMarketTimeline:
     disposition. legacy_native_signed_flow / legacy_per_second_roll20 stay completed_only
     (blocked on contributing-cursor provenance, not on this reader).
     """
-    def __init__(self, calculations, *, day, workers=15, input_witness=None):
+    def __init__(self, calculations, *, day, workers=15, input_witness=None, frame_values='rows'):
         """`input_witness`: an optional {path, bytes, sha256[, dev, ino]} the caller measured on the sealed journal in
         this same process (the teacher hashes it against its ingestion receipt before opening this reader). When it
         equals the ROOT's container pin AND names the pinned file (_caller_witness) the full re-read is skipped and `report['input_verification']` says whose
@@ -781,8 +828,10 @@ class SharedMarketTimeline:
             if Path(pin['path']) != root / 'work/derived/.rows' / (role + '.jsonl'):
                 raise ValueError('completed shared source pins another path as its ' + role + ' spool')
             self.layers[name] = dict(status='present', source=pin)
+            if frame_values not in ('rows', 'reference'):
+                raise ValueError('frame_values must be rows or reference')
             self.streams.append(_Changes(name, pin, kind=kind, state=state, workers=workers, claims=claims,
-                                         work=root / 'work'))
+                                         work=root / 'work', reference=frame_values == 'reference'))
         # Native: absent only when the native pass did not complete or an older saved legacy plan ran it
         # off (selected_files returns nothing); every NEW run has it ON;
         # a bedrock-on ROOT whose artifacts are incomplete or altered raises inside selected_files.
@@ -1285,7 +1334,8 @@ class SharedMarketTimeline:
                         open_groups.setdefault(instrument, dict(first_input_cursor=cursor, input_count=0))['input_count'] += 1
                         for stream in self.streams:
                             for update in stream.through(cursor, instrument, stamp):
-                                emission = update['value'].get('frankie_emission') or {}
+                                value = update['value']      # a RowRef for frames read by reference (no emission)
+                                emission = (value.get('frankie_emission') if isinstance(value, dict) else None) or {}
                                 if stream.name == 'native.member':
                                     member = (emission.get('group_index'), cursor, instrument, stamp)
                                 elif stream.name == 'native.lifecycle' and member != (emission.get('group_index'), cursor, instrument, stamp):
