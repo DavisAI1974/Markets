@@ -247,6 +247,18 @@ def inventory_complete(entry, staging):
     return reasons
 
 
+# Greg, 2026-10-09 (standing): the code version is RECORDED, NEVER COMPARED. capability_sha256 (this module's bytes) is
+# written in every plan, dispatch, run and record document as a record; no comparison of those documents includes it.
+RECORDED_CODE = ('capability_sha256',)
+
+
+def without_recorded_code(doc):
+    """A plan/run/dispatch/record document without its recorded-only code fields (a non-dict is returned as it is)."""
+    if not isinstance(doc, dict):
+        return doc
+    return {k: v for k, v in doc.items() if k not in RECORDED_CODE}
+
+
 def plan_document(entry, staging):
     """The complete declared plan of (entry, staging): pure, so run() can reconstruct it and refuse a plan that differs
     in ANY field (command, pins, comparison declarations, tables, capability, inventory), not only in `executable`."""
@@ -295,11 +307,12 @@ def run(plan_doc, staging, out_dir, authorized=None, timeout=3600):
         raise ValueError('the staging given is not the one the plan was made from: refused')
     entry = entry_by_id(plan_doc['entry_id'])
     # B3 follow-up: the COMPLETE declared plan is reconstructed from the current entry and the staging and must equal
-    # the plan given field by field (command, pins, recorded outputs, tables, capability, inventory, executable); a
+    # the plan given field by field (command, pins, recorded outputs, tables, inventory, executable; the capability is recorded only); a
     # self-consistent altered or stale plan refuses even when its executable flag agrees
     expected = plan_document(entry, staging)
-    if canonical(expected) != canonical(plan_doc):
-        differing = sorted(k for k in set(expected) | set(plan_doc) if expected.get(k) != plan_doc.get(k))
+    if canonical(without_recorded_code(expected)) != canonical(without_recorded_code(plan_doc)):
+        differing = sorted(k for k in set(expected) | set(plan_doc)
+                           if k not in RECORDED_CODE and expected.get(k) != plan_doc.get(k))
         raise ValueError('the plan does not follow from the current declared binding and staging (fields %s): refused'
                          % ', '.join(differing))
     executable, reasons = expected['executable'], expected['not_executable_reasons']
@@ -711,8 +724,7 @@ def coherence(entry, plan_doc, run_doc, comparison, status, dispatch_doc=None, d
         reasons.append('run schema/entry (%s/%s) is not this entry\'s' % (run_doc.get('schema'), run_doc.get('entry_id')))
     if run_doc.get('plan_sha256') != plan_sha:
         reasons.append('run.plan_sha256 does not name this plan')
-    if run_doc.get('capability_sha256') != plan_doc.get('capability_sha256'):
-        reasons.append('run and plan name different capability revisions')
+    # capability_sha256 of the run and of the plan: recorded, never compared (Greg, 2026-10-09)
     if run_doc.get('status') == 'run':
         if not run_doc.get('dispatch_sha256'):
             reasons.append('a run without its dispatch marker hash')
@@ -732,8 +744,7 @@ def coherence(entry, plan_doc, run_doc, comparison, status, dispatch_doc=None, d
                 reasons.append('dispatch marker carries no explicit authorization')
             if dispatch_doc.get('started_at') != run_doc.get('started_at'):
                 reasons.append('dispatch marker start differs from the run\'s')
-            if dispatch_doc.get('capability_sha256') != run_doc.get('capability_sha256'):
-                reasons.append('dispatch marker names another capability revision than the run')
+            # capability_sha256 of the dispatch and of the run: recorded, never compared (Greg, 2026-10-09)
         command = plan_doc.get('command') or {}
         # B4-F: the producer contract is run()'s own: argv recorded = [sys.executable, '-B', script, *args][1:]
         expected_argv = command_argv(command) if command else None
@@ -857,8 +868,7 @@ def _admit(doc, path, claim_id):
         dispatch_doc, dispatch_sha = read_dispatch(dispatch.get('path') or '')
         if dispatch_doc is None or dispatch_sha != dispatch.get('sha256') or dispatch_sha != run_doc.get('dispatch_sha256'):
             return 'performed status without the dispatch marker the run names'
-        if doc.get('capability_sha256') != plan_doc.get('capability_sha256'):
-            return 'record names another capability revision than its plan'
+        # capability_sha256 of the record and of its plan: recorded, never compared (Greg, 2026-10-09)
         if doc.get('plan_sha256') != run_doc.get('plan_sha256'):
             return 'record plan hash differs from the run\'s'
         problems = coherence(entry, plan_doc, run_doc, doc.get('comparison') or {}, doc.get('status'),
