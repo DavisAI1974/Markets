@@ -230,7 +230,7 @@ def _saved_journal_witness(directory, path, pin):
     """(value, file, why): the claim saved by an earlier attempt when it names this same unchanged file (the ROOT rule of
     frankie_box_boss_session._resume_row_spool for a file without lines: size, device, inode and mtime equal and the
     last MiB equal; no full read), else (None, None, why) and the caller makes one full pass. The claim must equal the
-    pin; the full read at the seal (_run: journal_seal_check) compares it again and refuses a difference."""
+    pin (one pass, 2026-10-09: no seal re-read follows)."""
     record_path = Path(directory) / 'journal-witness.json'
     if not record_path.is_file():
         return None, None, 'the save recorded no journal witness (a first attempt or an older save)'
@@ -580,14 +580,30 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     measured_witness, witness_thread, witness_clock = {}, None, time.monotonic()
     # Save/restore as ROOT (frankie_box_boss_session._resume_row_spool): a resume on the SAME unchanged journal takes
     # the claim its first attempt saved (no full read now); anything else is one full pass, the reason recorded. The
-    # full read still happens, side by side, and is compared with the claim at the seal (journal_seal_check below).
+    # ingest's own claim row comes first (below); nothing re-reads the journal at the seal (one pass, 2026-10-09).
     journal_resume = dict(how='first measure in this directory')
-    if journal_pin.get('path'):
+    ingest_claim = None
+    if journal_pin.get('path') and type(journal_pin.get('bytes')) is int and journal_pin.get('sha256'):
+        # one pass (Greg, 2026-10-09): the ingest's FRANKIE_FILE_CLAIM_V2 row for the sealed journal
+        # (<ingest>/file-claims.jsonl, written by ingest_block_sources beside its receipt) naming the pin's bytes and
+        # sha256 and still holding (stat, filesystem, last 64 KiB) is the witness: the journal is not read whole
+        from frankie_box_experiment_journal import _holding_claim
+        ingest_claim = _holding_claim(
+            journal_pin['path'], {k: journal_pin[k] for k in ('bytes', 'sha256')}, [Path(journal_pin['path']).parent])
+    if ingest_claim is not None:
+        observed = os.stat(journal_pin['path'])
+        measured_witness.update(value={k: journal_pin[k] for k in ('bytes', 'sha256')},
+                                file=dict(dev=observed.st_dev, ino=observed.st_ino))
+        # a later witness() of the unchanged journal in this process (the learner walk, the full reader) is this value
+        from frankie_box_filehash import remember
+        remember(journal_pin['path'], measured_witness['value'])
+        journal_resume = dict(how='the ingest\'s file claim (%s, %s): no full read' % (ingest_claim['claim_file'],
+                                                                                      ingest_claim['basis']))
+    elif journal_pin.get('path'):
         saved_value, saved_file, why = _saved_journal_witness(d, journal_pin['path'], journal_pin)
         if saved_value is not None:
             measured_witness.update(value=saved_value, file=saved_file)
-            journal_resume = dict(how='unchanged file: size, device, inode, mtime and the last MiB checked, no full read; '
-                                      'the full read runs beside the stage and is compared at the seal')
+            journal_resume = dict(how='unchanged file: size, device, inode, mtime and the last MiB checked, no full read')
         elif (d / 'journal-witness.json').is_file():
             journal_resume = dict(how='one full pass: ' + why)
     if journal_pin.get('path') and 'value' not in measured_witness:
@@ -639,6 +655,7 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         journal_witness = dict(path=journal_pin['path'], **measured_witness['value'], resume=journal_resume,
                                basis=('frankie_box_filehash.witness: streamed sha256 in this process, cached per unchanged file'
                                       if witness_thread is not None else
+                                      'the ingest\'s FRANKIE_FILE_CLAIM_V2 row (claim_still_holds)' if ingest_claim else
                                       'the claim journal-witness.json saved by the first attempt (resume rule above)'),
                                seconds=round(time.monotonic() - witness_clock, 3),
                                overlapped_with=['teacher receipt and attachment hash', 'day file resolution and hash'],
@@ -941,15 +958,6 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         # value, so the answers are the same bytes. Each is computed in order here when its phase is saved, the read
         # is saved, or no fork can be taken; a dead side process is redone in order (_SideTask.result).
         side = {}
-        if journal_witness is not None and journal_claim is None and not phase_path('receipt').exists():
-            # the claim was taken without a full read (resume rule): the full read runs beside the stage, on the
-            # booked CPUs off the consumer core, and is compared at the seal (ROOT's _check_spool_claims)
-            lane = K.lane_cpus()
-            consumer, siblings, _ = K._lane_pin().consumer_core(lane)
-            from frankie_box_filehash import witness as full_witness
-            side['journal_seal_check'] = _SideTask('journal_seal_check', lambda: full_witness(journal_pin['path']), d,
-                                                   [c for c in lane if c != consumer and c not in siblings] or lane
-                                                   ).start(K._fork_ready(wait=2.0))
         if market is not None and not phase_path('shared_market_context').exists():
             lane = K.lane_cpus()
             consumer, siblings, _ = K._lane_pin().consumer_core(lane)
@@ -1281,19 +1289,7 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     # a heartbeat that could not be written (the probe module failed to import), counted per error; {} = none
     received['probe_errors'] = dict(K.PROBE_ERRORS)
     received['output_pins'] = dict(PIN_RECORD)              # where the output sha256s ran and how long
-    # The seal check (ROOT's _check_spool_claims): when this attempt took the journal claim without a full read, the full
-    # read made beside the stage must equal it; a difference refuses visibly (the failure receipt names it).
-    if 'journal_seal_check' in side:
-        full = side['journal_seal_check'].result()
-        seal = dict(claim={k: journal_witness[k] for k in ('bytes', 'sha256')},
-                    full_read={k: full.get(k) for k in ('bytes', 'sha256')})
-        seal['equal'] = seal['claim'] == seal['full_read']
-        received['journal_seal_check'] = seal
-        if not seal['equal']:
-            raise ValueError('journal seal check: the full read %s differs from the saved claim %s; refused, every saved '
-                             'operation retained' % (seal['full_read'], seal['claim']))
-    else:
-        received['journal_seal_check'] = dict(basis='the journal was fully read in this attempt (or no shared journal)')
+    # one pass (Greg, 2026-10-09): no seal re-read of the journal; the witness basis is on journal_witness
     key = ext['teacher_key']
     result = dict(schema=SCHEMA, day=day, status='complete', mode=mode, components=report['components'],
                   observations=report['observations'], pairs=report['pairs'], novel_findings=len(novel),
