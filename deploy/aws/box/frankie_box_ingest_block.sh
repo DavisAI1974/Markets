@@ -174,8 +174,8 @@ partitions_present() {   # every member of the manifest M on the box under DATA 
   done
 }
 fetch_ahead() {   # $1 = the booking outcome file of the day about to ingest, $2 = the next day's manifest, $3 = marker prefix
-  ( W=0
-    while [ ! -s "$1" ] && [ "$W" -lt 900 ]; do sleep 1; W=$((W + 1)); done
+  # 2026-10-09 (no coded waits): the booking outcome landing wakes it (inotify); the day's own script exiting first ends it
+  ( "$PY" -I -S -B "$MK/deploy/aws/box/frankie_box_wake.py" file-ready "$1" "$$" || true
     CPUS=$("$PY" -I -S -c "import json,sys; o=json.load(open(sys.argv[1])); print(o.get('cpus') or '' if o.get('status') == 'booked' else '')" "$1" 2>/dev/null)
     case "$CPUS" in ""|*[!0-9,-]*) echo "### fetch-ahead of $2 skipped: the day's booking was not made (the day fetches it before it starts)"; echo skipped > "$3.rc"; exit 0;; esac
     MANIFEST="$2"
@@ -188,7 +188,7 @@ fetch_ahead() {   # $1 = the booking outcome file of the day about to ingest, $2
   FA_PID=$!
 }
 fetch_ahead_wait() {   # $1 = marker prefix: waits for the fetch-ahead, prints its log; a failed one is fetched again by the day itself
-  while [ ! -s "$1.rc" ] && kill -0 "$FA_PID" 2>/dev/null; do sleep 2; done
+  wait "$FA_PID" 2>/dev/null || true                       # the fetch-ahead writes its rc and then ends: its exit is the event
   [ -s "$1.rc" ] || echo 2 > "$1.rc"                       # ended without its exit record: treated as failed (refetched)
   echo "### fetch-ahead log ($1.log)"; cat "$1.log"
   [ "$(cat "$1.rc")" = 0 ] || [ "$(cat "$1.rc")" = skipped ] || echo "### fetch-ahead exited $(cat "$1.rc"); the day checks its partitions and fetches again before it starts"
@@ -353,7 +353,7 @@ at_once() {   # DAYS_AT_ONCE days of the list side by side (each warms its own b
     while :; do
       LIVE=""; C=0; for P in $RUNNING; do if kill -0 "$P" 2>/dev/null; then LIVE="$LIVE $P"; C=$((C + 1)); fi; done; RUNNING=$LIVE
       [ "$C" -lt "$AT" ] && break
-      sleep 2
+      "$PY" -I -S -B "$MK/deploy/aws/box/frankie_box_wake.py" any-exit $RUNNING >/dev/null || true   # a running day's exit frees the slot
     done
     manifest_ok || return 2; mkdir -p "$DATA"
     ( run_tool ingest ) > "$ROOT/tmp/ingest-$BLOCK-$$.log" 2>&1 &

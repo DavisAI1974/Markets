@@ -18,7 +18,9 @@ wait returns at once, so a file written into a new directory is never missed.
 A timeout is only ever a process's own lifetime bound (a worker's MAX_SECONDS), never a poll interval.
 
 CLI (shell wrappers that have a checkout): `python frankie_box_wake.py pids-exit [--bound S] PID...` blocks until every
-pid has exited (exit 0) or the bound passed (exit 1, the live pids printed); `notify DIR TOPIC` writes one wake file.
+pid has exited (exit 0) or the bound passed (exit 1, the live pids printed); `any-exit PID...` blocks until any one of
+them has exited (its pid printed); `file-ready PATH [PID]` blocks until PATH exists and is non-empty (exit 0) or PID
+exits first (exit 1); `notify DIR TOPIC` writes one wake file.
 """
 import ctypes
 import ctypes.util
@@ -301,6 +303,37 @@ def wait_pids_exit(pids, bound=None):
             w.wait(remaining)
 
 
+def wait_any_exit(pids):
+    """Block until any one of pids has exited; returns it (None when none was given)."""
+    pids = [int(p) for p in pids]
+    if not pids:
+        return None
+    with Waiter(pids=pids) as w:
+        while True:
+            gone = [p for p in pids if p in w.exited or not alive(p)]
+            if gone:
+                return gone[0]
+            if not any(p in w.pids and w.pids[p] >= 0 for p in pids):
+                raise OSError('no pidfd on this kernel for pids %s' % pids)
+            w.wait()
+
+
+def wait_file_ready(path, pid=None):
+    """Block until path exists and is non-empty (True) or pid exits first (False). inotify on its directory."""
+    path = Path(path)
+    with Waiter([path.parent], pids=[] if pid is None else [int(pid)]) as w:
+        while True:
+            try:
+                if path.stat().st_size > 0:
+                    return True
+            except OSError:
+                pass
+            if pid is not None and (int(pid) in w.exited or not alive(pid)):
+                return False
+            w.fired.clear()
+            w.wait()
+
+
 def main(argv):
     if len(argv) >= 2 and argv[1] == 'pids-exit':
         args, bound = argv[2:], None
@@ -311,6 +344,11 @@ def main(argv):
             print(' '.join(str(p) for p in left))
             return 1
         return 0
+    if len(argv) >= 3 and argv[1] == 'any-exit':
+        print(wait_any_exit([a for a in argv[2:] if a.strip()]))
+        return 0
+    if len(argv) in (3, 4) and argv[1] == 'file-ready':
+        return 0 if wait_file_ready(argv[2], argv[3] if len(argv) == 4 else None) else 1
     if len(argv) == 4 and argv[1] == 'notify':
         notify(argv[2], argv[3])
         return 0
