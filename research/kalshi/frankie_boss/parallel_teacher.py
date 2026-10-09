@@ -331,7 +331,7 @@ def _progress(stage, completed, total=None, force=False, _last={}):
 # and the save body layout). The teacher binding, the candidate digest (both fold whole source files) and the
 # function-level code witnesses below are kept in the save under 'recorded', beside the data, and never compared. A save
 # written before this rule (no save_format) is compared on the data fields it carries; its binding is a record.
-ROW_PASS_CODE = ('RAW_MARK', 'DSTATE_SCHEMA', 'CONTROL_ROW_KEYS', '_changes_applied', '_raw_batch', '_Row',
+ROW_PASS_CODE = ('RAW_MARK', 'DSTATE_SCHEMA', 'CONTROL_ROW_KEYS', 'BOOK_GROUP', '_changes_applied', '_raw_batch', '_Row',
                  '_guard_every', '_RawStreams', '_dstate_row', 'row_pass')
 FINISH_CODE = ('GUARD_EVERY', '_FastStateHash', '_receipt', '_chunk', '_canonical', '_candidate', 'finish')
 TEACHER_SAVE_FORMAT = 1
@@ -489,6 +489,14 @@ def _changes_applied():
 # bytes (a row restored from a save, before this process read its payload) is pickled once as that very row. The guard
 # compares the pinned result on the parent's own rows with the worker's. Speed only: same functions, same values.
 CONTROL_ROW_KEYS = ('normalized', 'effect', 'order_before', 'order_after', 'rank_before', 'rank_after')
+# The book read beside the pinned functions (teacher_book_read; Greg, 2026-10-09: "Get the book and the event flow added
+# before it leaves teacher"). Every group the R3 stream closes is read in the raw-batch workers from the same full rows
+# (book_group: the previous group's closing book and this group's rows); the pinned calls are untouched. Each R3 window
+# call (the cohort's start + window) is recorded as (key, end ordinal, length, side) so the window sums are taken from
+# the group reads at publication. ROW_PASS_BOOK[0]: the last row pass's group reads, windows and cursor -> group map.
+BOOK_GROUP = 'book_group'
+BOOK_BATCH_GROUPS = 4096
+ROW_PASS_BOOK = [None]
 # id(e) -> (e, pickle of e): set by the evidence producer right before it yields e (frankie_box_experiment_teacher's
 # shared walk, from its precompute), taken by the raw streams when e enters the pass; at most the last payload
 ROW_BYTES = {}
@@ -527,6 +535,12 @@ def _raw_batch(blob):
         return made
     out = []
     for token, kind, family, window, side, start in calls:
+        if kind == BOOK_GROUP:
+            from . import teacher_book_read
+            value = teacher_book_read.book_group(row(start, 'r3') if start is not None else None,
+                                                 [row(serial, 'r3') for serial in window])
+            out.append((token, value))
+            continue
         places = range(window[0], window[0] + window[1]) if type(window) is tuple else window
         window_groups = [group(family, at) for at in places]
         if kind == 'dynamics':
@@ -557,6 +571,14 @@ class _RawStreams:
         self.calls, self.resolved, self.expected, self.pending = 0, 0, {}, deque()
         self.where, self.early, self.rows = {}, {}, None
         self.entries, self.serials = {}, 0           # id(row['normalized']) -> _Row; the next serial
+        self.cursor = None
+        # the book read: per key the open group's R3 rows, the closing row of the last group and the next ordinal;
+        # the group reads by (key, ordinal); the R3 windows by cursor; the group each receipt row closes
+        self.open_rows, self.last_closing, self.ordinals, self.current = {}, {}, {}, None
+        self.book_groups, self.windows, self.cursor_group, self.book_where = {}, {}, {}, {}
+        # the book reads go in batches of their own (negative tokens), so the pinned calls' batches (and so how their
+        # results are unpickled and shared) are exactly those of a pass without the book read
+        self.book_calls, self.book_rows, self.book_tokens = [], {}, 0
         self.from_producer = self.pickled_here = self.rows_pickled = 0
         self._new_batch()
 
@@ -619,7 +641,31 @@ class _RawStreams:
             return record('absorption', 'r3', groups, side, None, 1)
 
         def record_cohort(start, groups, side):
+            if self.current is not None:
+                slots = self.windows.setdefault(self.cursor, {})
+                slots['short' if 'short' not in slots else 'long'] = (self.current[0], self.current[1], len(groups), side)
             return record('cohort', 'r3', groups, side, start, 2)
+
+        history_row = T._history_row
+
+        def record_history_row(e):
+            # the R3 stream's own row (the same function, the same object it keeps); a closed group is read beside it
+            made = history_row(e)
+            try:
+                m = e['normalized']
+                key, closes, cursor = (m['publisher_id'], m['instrument_id']), e['receipt'] is not None, e['cursor']
+            except Exception:  # noqa: BLE001 - the pinned stream raises on such a row itself
+                return made
+            self.open_rows.setdefault(key, []).append(made)
+            if closes:
+                group = self.open_rows.pop(key)
+                ordinal = self.ordinals.get(key, 0)
+                self.ordinals[key] = ordinal + 1
+                previous, self.last_closing[key] = self.last_closing.get(key), group[-1]
+                self.cursor_group[cursor] = self.current = (key, ordinal)
+                self._book_call(key, ordinal, previous, group)
+            return made
+        self.original_history_row = history_row
 
         self.planned = tuple(RAW_WORKER_CPUS or ())
         if self.planned:
@@ -631,11 +677,13 @@ class _RawStreams:
         self.breaks = 0
         self.guard_every, basis = _guard_every()
         self.guard = RAW_POOL_RECORD['guard'] = dict(
-            every=self.guard_every, basis=basis, guarded=0, compared_equal=0, mismatches=0,
-            rule='the first two calls and the first cohort call of every batch and every %d-th call are computed in '
-                 'the parent on the full objects with the same function and compared to the worker\'s result (value '
-                 'and key order); a mismatch stops the run' % self.guard_every)
+            every=self.guard_every, basis=basis, guarded=0, book_guarded=0, compared_equal=0, mismatches=0,
+            rule='the first two calls and the first cohort call of every batch and every %d-th call, and the first two '
+                 'book reads of every book batch and every %d-th book read, are computed in the parent on the full '
+                 'objects with the same function and compared to the worker\'s result (value and key order); a '
+                 'mismatch stops the run' % (self.guard_every, self.guard_every))
         self.shipped_bytes, self.batches, self.collected_early, self.rows_shipped = 0, 0, 0, 0
+        self.book_batches = self.book_bytes = 0
         RAW_POOL_RECORD['shipped'] = dict(
             batch_calls=RAW_BATCH_CALLS, in_flight_batches=2 * self.cpus,
             rows=('whole: every window row and cohort start with its full observation (every level, every order, the '
@@ -650,7 +698,57 @@ class _RawStreams:
         self.pool = self._new_pool(self.cpus)
         T.JournalTeacher._dynamics = staticmethod(record_dynamics)
         T._absorption, T._cohort = record_absorption, record_cohort
+        T._history_row = record_history_row
         return self
+
+    def _book_call(self, key, ordinal, previous, group):
+        from . import teacher_book_read
+        number = self.book_tokens
+        self.book_tokens += 1
+        token = -1 - number
+        if len(self.book_calls) < 2 or number % self.guard_every == 0:
+            self.expected[token] = (BOOK_GROUP, teacher_book_read.book_group(previous, group))
+            self.guard['guarded'] += 1
+            self.guard['book_guarded'] += 1
+        self.book_where[token] = (key, ordinal)
+        self.book_calls.append((token, BOOK_GROUP, 'r3', [self._serial(row, 'r3', self.book_rows) for row in group],
+                                None, self._serial(previous, 'r3', self.book_rows) if previous is not None else None))
+        if len(self.book_calls) >= BOOK_BATCH_GROUPS:
+            self._submit_book()
+
+    def _submit_book(self):
+        import pickle
+        if not self.book_calls:
+            return
+        sources = {serial: (entry.payload, entry.rows.get('control'), entry.rows.get('r3'))
+                   for serial, entry in self.book_rows.items()}
+        blob = pickle.dumps(({'control': [], 'r3': []}, self.book_calls, sources, _changes_applied()),
+                            protocol=pickle.HIGHEST_PROTOCOL)
+        self.book_calls, self.book_rows = [], {}
+        self.book_batches += 1
+        self.book_bytes += len(blob)
+        RAW_POOL_RECORD['shipped'].update(book_batches=self.book_batches, book_bytes=self.book_bytes)
+        self.pending.append((blob, _submit(self.pool, _raw_batch, blob)))
+
+    def seed(self, continuation, book=None):
+        """A resumed pass: the R3 stream's open groups and last closing rows and the control's group ordinals from the
+        saved continuation, and the group reads saved with it (None: a save written before the book read)."""
+        raw, control = (continuation or {}).get('raw') or {}, (continuation or {}).get('control') or {}
+        for key, history in (raw.get('history') or {}).items():
+            if history:
+                self.last_closing[key] = history[-1][-1]
+        for key, rows in (raw.get('pending') or {}).items():
+            self.open_rows[key] = list(rows)
+        for key, count in (control.get('ordinal') or {}).items():
+            self.ordinals[key] = count
+        if book:
+            self.book_groups.update(book['groups'])
+            self.windows.update(book['windows'])
+            self.cursor_group.update(book['cursor_group'])
+
+    def book_state(self, before=None):
+        return dict(schema='FRANKIE_TEACHER_BOOK_READ_STATE_V1', groups=self.book_groups, windows=self.windows,
+                    cursor_group=self.cursor_group, changes=_changes_applied(), read_before=before)
 
     def _new_pool(self, workers):
         return _spawn_pool(workers, self.planned, RAW_POOL_RECORD)
@@ -675,10 +773,12 @@ class _RawStreams:
             if ref is not None:
                 self.entries[id(ref)] = _Row(ref, self.serials, payload)
                 self.serials += 1
+            self.cursor = e.get('cursor') if isinstance(e, dict) else None
+            self.current = None
             yield e
 
-    def _serial(self, row, family):
-        """The serial of a group row (or a cohort start), its bytes added to this batch once."""
+    def _serial(self, row, family, rows=None):
+        """The serial of a group row (or a cohort start), its bytes added to this batch (`rows`: the book batch) once."""
         import pickle
         ref = row.get('normalized') if type(row) is dict else None
         if ref is None:
@@ -690,7 +790,7 @@ class _RawStreams:
         if entry.payload is None and family not in entry.rows:
             entry.rows[family] = pickle.dumps(row, protocol=pickle.HIGHEST_PROTOCOL)
             self.rows_pickled += 1
-        self.batch_rows[entry.serial] = entry
+        (self.batch_rows if rows is None else rows)[entry.serial] = entry
         return entry.serial
 
     def _submit(self):
@@ -767,6 +867,9 @@ class _RawStreams:
                     raise ValueError('parallel teacher raw stream differs from the pinned function at call %d (%s): '
                                      'parent %r, worker %r; run stopped' % (token, kind, expected, value))
                 self.guard['compared_equal'] += 1
+            if token in self.book_where:
+                self.book_groups[self.book_where.pop(token)] = value
+                continue
             if token in self.where:
                 self._resolve(token, value)
             else:
@@ -804,16 +907,18 @@ class _RawStreams:
 
     def finish(self):
         self._submit()
+        self._submit_book()
         while self.pending:
             self._collect(*self.pending.popleft())
         RAW_POOL_RECORD['shipped'].update(batches_collected_early=self.collected_early)
-        if self.expected or self.where or self.early or self.resolved != self.calls:
+        if self.expected or self.where or self.early or self.book_where or self.resolved != self.calls:
             raise ValueError('parallel teacher raw call unresolved; run stopped')
 
     def __exit__(self, *exc):
         T = self.T
         T.JournalTeacher._dynamics = self.original[0]
         T._absorption, T._cohort = self.original[1], self.original[2]
+        T._history_row = self.original_history_row
         for _, future in self.pending:
             future.cancel()
         _bounded_shutdown(self.pool, RAW_POOL_RECORD)
@@ -1180,6 +1285,10 @@ def row_pass(self, evidence, *, as_of, source_manifest_hash, recovery_path=None,
     rows, processed, entity_hashes = [], 0, {}
     RESUME_SKIP[0] = 0
     RESUME_POSITION[0], RESUME_SEEKED[0] = None, 0
+    ROW_PASS_BOOK[0] = None
+    # the book read saved with the rows (None: a save written before it); book_before: the rows it does not cover (a
+    # save without it: its rows are read at publication, from the same reader, by the caller)
+    book_saved, book_before = None, 0
     every, every_basis = _save_every() if recovery_path else (None, 'no recovery path')
     SAVE_RECORD.clear()
     SAVE_RECORD.update(every_seconds=every, basis=every_basis, saves=[], resumed_from=None,
@@ -1206,7 +1315,12 @@ def row_pass(self, evidence, *, as_of, source_manifest_hash, recovery_path=None,
                 continuation['control']['processed'] != processed or continuation['raw']['next_cursor'] != processed)):
             raise ValueError('saved teacher streams and rows do not share one cursor')
         SAVE_RECORD['resumed_from'] = dict(processed=processed, complete=bool(saved['complete']))
+        book_saved = saved.get('book')
+        book_before = (book_saved.get('read_before') or 0) if book_saved else processed
         if saved['complete']:
+            ROW_PASS_BOOK[0] = (dict(book_saved, read_before=book_before) if book_saved else
+                                dict(schema='FRANKIE_TEACHER_BOOK_READ_STATE_V1', groups={}, windows={},
+                                     cursor_group={}, changes=_changes_applied(), read_before=book_before))
             return rows, processed, entity_hashes
         RESUME_SKIP[0] = processed
         RESUME_POSITION[0] = saved.get('reader_position')
@@ -1214,10 +1328,11 @@ def row_pass(self, evidence, *, as_of, source_manifest_hash, recovery_path=None,
     def save(complete):
         _save_raw_state(recovery_path, dict(identity=identity, as_of=as_of, rows=rows, processed=processed,
             entity_hashes=entity_hashes, continuation=continuation, complete=complete,
-            reader_position=None if complete else _reader_position()))
+            reader_position=None if complete else _reader_position(), book=streams.book_state(book_before)))
     last_save, due = time.monotonic(), False
     _progress('teacher_raw_rows', processed, None, force=True)
     with _RawStreams(T, _cpus()) as streams:
+        streams.seed(continuation, book_saved)
         for e, old, six in T._paired_raw(self.control, self.raw_teacher, streams.feed(evidence), as_of=as_of,
                                          source_manifest_hash=source_manifest_hash, continuation=continuation):
             processed += 1
@@ -1254,6 +1369,7 @@ def row_pass(self, evidence, *, as_of, source_manifest_hash, recovery_path=None,
     _progress('teacher_raw_rows', processed, None, force=True)
     if any(type(v['reason']) is str and v['reason'].startswith(RAW_MARK) for row in rows for v in row[3]):
         raise ValueError('parallel teacher raw placeholder left unresolved; run stopped')
+    ROW_PASS_BOOK[0] = streams.book_state(book_before)
     if recovery_path:
         save(True)
     return rows, processed, entity_hashes

@@ -27,6 +27,13 @@ never recomputed:
   match   the picture's row identity against the teacher row's own fields (cursor, receive clock, member, session,
           instrument): each difference listed with both values, never aligned to the nearest
 
+  book    (attached at publication, FORMAT 2) the book read beside the pinned functions on the same full rows
+          (teacher_book_read): the group the row closes (both sides, every level: book vs event counts and their
+          reconciliation, the full depth, every event's level/queue/depth-beyond before and after) and each window
+          the pinned R3 called on the row (64 groups; 1,024 on the pinned R3; the whole day with the teacher
+          changes) with the book counterparts of the pinned balance and absorption; a row that closes no group reads
+          NOT_F_LAST, a receipt row with no window carries the pinned R3's own reason
+
 The plane VALUES are the ROOT's receipted rows themselves: each reference (source, source_ordinal) names one row of the
 stream file pinned (path, bytes, sha256) in the second set's header, the very row the picture handed over. They are
 referenced, not copied (a picture holds ~640 KB of layer values per APPLIED row on 20231018: a copy per teacher row
@@ -34,7 +41,7 @@ would be ~490 GB of duplicates of receipted rows).
 """
 
 SCHEMA = 'FRANKIE_TEACHER_SECOND_SET_V1'
-FORMAT = 1
+FORMAT = 2
 KEY_FIELDS = ('adapter_cursor', 'input_cursor', 'input_journal_ordinal', 'source_input_index', 'source_member_index',
               'session_id', 'instrument_id', 'terminal_prefix_hash')
 CLOCK_FIELDS = ('clock_event_time', 'clock_receive_time', 'clock_event_known_by', 'clock_feature_availability',

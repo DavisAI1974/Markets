@@ -671,28 +671,71 @@ def _all99_use(field):
                      'teachers within the teacher\'s role and walls); the pinned equations read original APPLIED fields only')
 
 
-def _second_set_prefix(open_market, needed, SS):
-    """Join records for the first `needed` rows of the equation prefix, read from a fresh shared reader of the same ROOT:
-    the same pictures in the same order, the same equation filter as the walk (present APPLIED payloads, adapter
-    cursors contiguous from zero). Only pictures are read; no teacher value is computed."""
+def _second_set_prefix(open_market, needed, SS, book_needed=0, changes=True):
+    """For the rows the walk of THIS process did not read (a resume from a save written before the second set or the
+    book read): read the same pictures again from a fresh shared reader of the same ROOT, in order, with the walk's
+    equation filter (present APPLIED payloads, adapter cursors contiguous from zero). The first `needed` rows get their
+    join records (nothing computed); the first `book_needed` rows get the book read beside the pinned functions,
+    exactly as the walk's workers read it: the R3 stream's own row builder (T._history_row), its group boundaries
+    (the receipt), the previous group's closing book, teacher_book_read.book_group on those very rows, and each window
+    the pinned R3 calls on a group (its own anchor function, T._anchor, on the same groups; no pinned column is
+    computed). Returns (records, book) with book = {groups, windows, cursor_group}."""
+    from collections import deque
+    from research.kalshi.frankie_boss import c15_teacher_r3 as T, teacher_book_read as TBR
     reader = open_market()
     pictures = reader.iter_applied()
     records, expected = [], 0
+    upto = max(needed, book_needed)
+    book = dict(groups={}, windows={}, cursor_group={})
+    open_rows, last_closing, ordinals, history = {}, {}, {}, {}
     try:
         for item in pictures:
-            if expected >= needed:
+            if expected >= upto:
                 break
             if item['arithmetic']['status'] != 'present':
                 continue
-            if item['evidence'].get('cursor') != expected:
+            e = item['evidence']
+            if e.get('cursor') != expected:
                 break                       # the equation prefix ends here (the rows hold more: refused by the caller)
-            records.append(SS.join_record(item['evidence'], item['picture']))
+            if expected < needed:
+                records.append(SS.join_record(e, item['picture']))
+            if expected < book_needed:
+                m = e['normalized']
+                key = (m['publisher_id'], m['instrument_id'])
+                made = T._history_row(e)
+                open_rows.setdefault(key, []).append(made)
+                if e['receipt'] is not None:
+                    group = open_rows.pop(key)
+                    ordinal = ordinals.get(key, 0)
+                    ordinals[key] = ordinal + 1
+                    previous, last_closing[key] = last_closing.get(key), group[-1]
+                    book['cursor_group'][e['cursor']] = (key, ordinal)
+                    book['groups'][(key, ordinal)] = TBR.book_group(previous, group)
+                    held = history.setdefault(key, deque(maxlen=65 if changes else 1025))
+                    held.append(group)
+                    groups = list(held)
+                    side, missing = T._anchor(groups)
+                    if changes:
+                        if missing is None:
+                            book['windows'][e['cursor']] = dict(short=(key, ordinal, len(groups[-64:]) if len(groups) > 64
+                                                                       else len(groups) - 1, side))
+                    else:
+                        obs = e['observation']
+                        if missing is None and (any(obs['integrity'].values()) or (
+                                obs['levels']['A'] and obs['levels']['B']
+                                and obs['levels']['B'][0]['price_raw'] >= obs['levels']['A'][0]['price_raw'])):
+                            missing = 'LEVEL_INTEGRITY'
+                        if missing is None:
+                            slots = {slot: (key, ordinal, horizon, side)
+                                     for slot, horizon in (('short', 64), ('long', 1024)) if len(groups) > horizon}
+                            if slots:
+                                book['windows'][e['cursor']] = slots
             expected += 1
     finally:
         close = getattr(pictures, 'close', None)
         if close is not None:
             close()
-    return records
+    return records, book
 
 
 def _second_set(out, open_market, market, second, rows, SS):  # noqa: C901
@@ -702,17 +745,31 @@ def _second_set(out, open_market, market, second, rows, SS):  # noqa: C901
     without its join refuses the publication (the reason listed); a join whose picture identity or clocks differ from
     the row's own is listed with both values, never aligned."""
     import frankie_box_all99_coverage as ALL99
+    from research.kalshi.frankie_boss import parallel_teacher as PT, teacher_book_read as TBR
     needed = len(rows) - len(second['records'])
     if needed < 0:
         raise ValueError('the teacher second set holds %d joins for %d rows; the rows do not leave the teacher'
                          % (len(second['records']), len(rows)))
-    prefix = _second_set_prefix(open_market, needed, SS) if needed else []
+    walked = PT.ROW_PASS_BOOK[0] or dict(groups={}, windows={}, cursor_group={}, changes=True, read_before=len(rows))
+    book_needed = min(len(rows), walked.get('read_before') or 0)
+    prefix, read = (_second_set_prefix(open_market, needed, SS, book_needed, bool(walked.get('changes')))
+                    if needed or book_needed else ([], dict(groups={}, windows={}, cursor_group={})))
     records = prefix + second['records']
     check = SS.check_rows(records, rows)
     if check['rows_without_record'] or len(records) != len(rows):
         raise ValueError('the teacher second set holds %d joins for %d rows (the shared reader yielded %d of the %d rows '
                          'before the walk\'s own joins); a row without its joined planes does not leave the teacher'
                          % (len(records), len(rows), len(prefix), needed))
+    groups = {**read['groups'], **walked['groups']}
+    windows = {**read['windows'], **walked['windows']}
+    cursor_group = {**read['cursor_group'], **walked['cursor_group']}
+    reads = TBR.assemble(rows, cursor_group, groups, windows, whole_day=bool(walked.get('changes')))
+    unread = [row[6] for row, entry in zip(rows, reads) if entry.get('status') == 'GROUP_NOT_READ']
+    if unread:
+        raise ValueError('the teacher book read lacks %d group(s) (first rows %s); a row without its book read does not '
+                         'leave the teacher' % (len(unread), unread[:10]))
+    for record, entry in zip(records, reads):
+        record['book'] = entry
     carried = {name: dict(carrier=first, thinner=thin) for name, (first, thin) in ALL99.MARKET_CARRIERS.items()}
     not_carried = [dict(entry=layer['entry'], group=layer['group'], role=layer['role'],
                         reason=ALL99.NOT_MARKET_CARRIED.get(layer['entry']) or (
@@ -734,7 +791,14 @@ def _second_set(out, open_market, market, second, rows, SS):  # noqa: C901
                   rows_total=len(rows), rows_matched=check['rows_matched'], rows_mismatched=check['rows_mismatched'],
                   mismatches=check['mismatches'], clocks_compared=check['clocks_compared'],
                   joined_in_walk=len(second['records']) - second['restored'], restored_from_save=second['restored'],
-                  merged_at_publication=len(prefix))
+                  merged_at_publication=len(prefix),
+                  book_read=dict(schema=TBR.SCHEMA, format=TBR.FORMAT, groups=len(groups),
+                                 groups_read_in_walk=len(walked['groups']), groups_read_at_publication=len(read['groups']),
+                                 rows_read_at_publication=book_needed, windows=sum(len(v) for v in windows.values()),
+                                 whole_day=bool(walked.get('changes')),
+                                 rule='beside the pinned functions on the same full rows (teacher_book_read); the '
+                                      'rows before a resume whose save held no book read are read at publication from '
+                                      'the same reader with the same functions'))
     from research.kalshi.frankie_boss import parallel_teacher as PT
     path = out / SECOND_SET_FILE
     PT._save_raw_state(path, dict(header, records=records))
