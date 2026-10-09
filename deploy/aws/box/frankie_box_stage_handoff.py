@@ -26,9 +26,10 @@ At a stage's boundary (its step receipt finished: done or reused), boundary() ru
                the resumed day reuses its finished stages (their receipts) and goes on to the successor. Guards:
                exactly once (trigger.fired beside the receipt, create-only), never while the day is not in state saved,
                never while a successor process or unit for that run/day already exists. A clean that FAILS (a missing
-               stream hash, a refused move, a dead zstd) leaves the day SAVED: no resume, the failure named in the
-               trigger receipt and beside the day's marker (<marker>.clean.json, shown by ACTION=status); an operator
-               resumes by hand, and the boundary then goes on to the successor without a second clean.
+               stream hash, a refused move, a dead zstd) keeps each failed item's source (execute's rule); the failure
+               is named in the trigger receipt and beside the day's marker (<marker>.clean.json, shown by
+               ACTION=status) and the day resumes anyway (2026-10-09). A trigger that finds a process of the
+               run/day still alive waits on its exit (pidfd) and fires then.
 The switch: FRANKIE_CLEAN_ON_SAVE=on (default) = validate -> save -> clean -> auto resume -> successor; off = validate
 -> successor directly (no save, no clean). One switch for every stage, recorded on every receipt.
 FRANKIE_ROOT_VALIDATE_CHECK=off is the DEFAULT at every boundary (2026-10-09, Greg: our own checks never re-read
@@ -634,6 +635,21 @@ def wait_saved(run, day, bound=None, say=print):
         waiter.close()
 
 
+def busy_pids(busy):
+    """The pids named by successor_running's lines (a process line starts with its pid; a line worker names 'pid N')."""
+    pids = set()
+    for line in busy:
+        head = line.split(' ', 1)[0]
+        if head.isdigit():
+            pids.add(int(head))
+        elif '(pid ' in line:
+            tail = line.split('(pid ', 1)[1].split(',', 1)[0].split(')', 1)[0].strip()
+            if tail.isdigit():
+                pids.add(int(tail))
+    pids.discard(os.getpid())
+    return sorted(pids)
+
+
 def successor_running(run, day, own_unit=None):
     """Processes or workers already working this run/day (the successor must not be started twice). Review 2026-10-08
     finding 7 (Patch G): a ROOT-line worker's argv is `frankie_box_frankie_queue.py --action worker ... --scope RUN:DAYS`
@@ -685,13 +701,27 @@ def trigger(out_dir, run, day, stage, code_root, commit, say=print):
         earlier = _load(receipt_path)
         return dict(base, status='already_fired', earlier=earlier,
                     reason='the trigger fired before for this boundary (trigger.fired stands); nothing done')
-    if not is_saved(run, day):
-        return _write(receipt_path, dict(base, status='refused', reason='the day is not in state saved (%s); no resume'
-                                                                        % (day_state(run, day),)))
-    busy = successor_running(run, day)
-    if busy:
-        return _write(receipt_path, dict(base, status='refused', reason='a process or unit for %s %s already exists: %s'
-                                                                        % (run, day, busy)))
+    waited = []
+    while True:
+        if not is_saved(run, day):
+            return _write(receipt_path, dict(base, status='refused', waited_on=waited,
+                                             reason='the day is not in state saved (%s); no resume' % (day_state(run, day),)))
+        busy = successor_running(run, day)
+        if not busy:
+            break
+        # 2026-10-09 (Greg: no stop a gate of ours makes on fine data; no coded waits): a process or worker of this
+        # run/day still exists (a ROOT worker re-kicked for the parked scope, a stage child ending): wait on its exit
+        # (pidfd, event-driven) and try again; refused only when no pid can be named to wait on
+        pids = busy_pids(busy)
+        if not pids:
+            return _write(receipt_path, dict(base, status='refused', waited_on=waited,
+                                             reason='a process or unit for %s %s already exists and names no pid to wait '
+                                                    'on: %s' % (run, day, busy)))
+        say('%s %s %s: the trigger waits for %s to exit (%s)' % (stage, run, day, pids, busy))
+        waited.append(dict(at=time.time(), pids=pids, busy=busy))
+        import frankie_box_wake as W
+        W.wait_any_exit(pids)
+    base['waited_on'] = waited
     # 2026-10-09 (Greg): the code version is recorded, never compared: the resume and kick go at the NEWEST staged
     # checkout on the box (the launching one only when none is staged); both are on the receipt
     try:
@@ -766,14 +796,18 @@ def clean_action(args):
     say('clean %s %s %s: %s, %d moved, %d failed, %d bytes freed' % (
         args.stage, args.run, args.day, receipt['status'], receipt.get('moved', 0), len(receipt.get('failed') or []),
         receipt.get('bytes_freed', 0)))
+    clean_failed = None
     if receipt['status'] != 'done':
-        body = dict(base, status='failed', clean=dict(receipt=str(clean_dir / 'clean-receipt.json'), failed=receipt.get('failed')),
-                    reason='the clean failed (%s); the day stays saved; no resume; an operator resumes by hand'
-                           % '; '.join('%s: %s' % (f['old_path'], f['reason']) for f in receipt.get('failed') or []))
-        _write(out_dir / 'trigger.json', body)
-        _note_beside_marker(marker, body)
-        return 3
+        # 2026-10-09 (Greg: a gate we coded never blocks fine data): a clean that fails (a refused move, a dead zstd)
+        # leaves its items where they were; the day's data is whole, so it resumes anyway with the failure recorded
+        clean_failed = dict(receipt=str(clean_dir / 'clean-receipt.json'), status=receipt['status'], failed=receipt.get('failed'),
+                            reason='the clean failed (%s); each failed item keeps its source; the day resumes anyway'
+                                   % '; '.join('%s: %s' % (f['old_path'], f['reason']) for f in receipt.get('failed') or []))
+        say('clean %s %s %s: %s' % (args.stage, args.run, args.day, clean_failed['reason']))
+        _note_beside_marker(marker, dict(base, status='clean_failed', clean=clean_failed, reason=clean_failed['reason']))
     result = trigger(out_dir, args.run, args.day, args.stage, args.code_root, args.commit, say)
+    if clean_failed:
+        result['clean_failed'] = clean_failed
     result['clean'] = dict(receipt=str(clean_dir / 'clean-receipt.json'), manifest=receipt.get('manifest'),
                            moved=receipt.get('moved'), bytes_freed=receipt.get('bytes_freed'),
                            archives=[dict(old_path=i['old_path'], new_path=i['new_path'], bytes=i.get('bytes_archived', i.get('bytes_copied')),
