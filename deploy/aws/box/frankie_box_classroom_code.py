@@ -1737,8 +1737,18 @@ def _fork_ready(wait=FORK_READY_WAIT_SECONDS):
     if not sys.platform.startswith('linux'):
         return False, 0.0, 'not Linux'
     started = time.monotonic()
-    while threading.active_count() > 1 and time.monotonic() - started < wait:
-        time.sleep(0.05)
+    # event-driven (2026-10-09: no coded wait times): each helper thread is JOINED (the join returns the instant it
+    # ends), all within the one bound; no sleep step. A thread that cannot be joined (a foreign/dummy thread) ends the
+    # wait at once and is named below.
+    while threading.active_count() > 1:
+        others = [t for t in threading.enumerate() if t is not threading.current_thread()]
+        left = wait - (time.monotonic() - started)
+        if not others or left <= 0:
+            break
+        try:
+            others[0].join(left)
+        except (RuntimeError, AssertionError):
+            break
     waited = round(time.monotonic() - started, 3)
     if threading.active_count() > 1:
         return False, waited, 'live threads after %.1f s: %s' % (waited, sorted(
