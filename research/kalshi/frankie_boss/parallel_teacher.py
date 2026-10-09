@@ -326,7 +326,8 @@ def _progress(stage, completed, total=None, force=False, _last={}):
 # and the save body layout). The teacher binding, the candidate digest (both fold whole source files) and the
 # function-level code witnesses below are kept in the save under 'recorded', beside the data, and never compared. A save
 # written before this rule (no save_format) is compared on the data fields it carries; its binding is a record.
-ROW_PASS_CODE = ('RAW_MARK', 'DSTATE_SCHEMA', '_changes_applied', '_raw_batch', '_RawStreams', '_dstate_row', 'row_pass')
+ROW_PASS_CODE = ('RAW_MARK', 'DSTATE_SCHEMA', '_changes_applied', '_raw_batch', '_shipped_group', '_shipped_start',
+                 '_RawStreams', '_dstate_row', 'row_pass')
 FINISH_CODE = ('GUARD_EVERY', '_FastStateHash', '_receipt', '_chunk', '_canonical', '_candidate', 'finish')
 TEACHER_SAVE_FORMAT = 1
 # keys of a saved identity that are code records, never compared (the last two: saves written before 2026-10-09)
@@ -477,6 +478,44 @@ def _raw_batch(blob):
     return pickle.dumps(out, protocol=pickle.HIGHEST_PROTOCOL)
 
 
+# What a raw batch ships (2026-10-09, a2/20231018 teacher: 77% of the parent in pickle.dumps of the batch tables, 146 GB
+# held in pending blobs, 63 workers idle). The R3 history rows carry every level and every order of their observation
+# (teacher_changes.r3_history_row), and every row of a group window went to the workers with it, so each batch pickled
+# full books for every event in its windows plus one for each cohort start. The worker functions never read a window
+# row's observation: control/R3 dynamics, absorption and the cohort's add() read normalized, effect, order_before/after,
+# rank_before/after and the scope only; the cohort reads `start`'s observation, and of it only the start side's levels
+# and the orders on them (orders[oid]['size'] per level order id) plus the start's scope. So a window row is shipped with
+# observation=None and a cohort start with its scope, that side's levels and the orders on them (original objects, list
+# order kept, so the id->order map and the cohort's own order are the same). Same functions, same groups, same values:
+# the guard (the first two calls of every batch and every RAW_GUARD_EVERY-th, run the pinned way on the FULL objects in
+# the parent) still compares each against the worker's result. The worker results hold no input object, so the
+# unpickled values (and the attachment pickle's object sharing) are unchanged. Speed only.
+def _shipped_group(group):
+    """The group as a worker reads it: rows with an observation shipped with observation=None (the group itself when
+    no row carries one, so a control group ships exactly as before)."""
+    if not any(type(row) is dict and row.get('observation') is not None for row in group):
+        return group
+    return [dict(row, observation=None) if type(row) is dict and row.get('observation') is not None else row
+            for row in group]
+
+
+def _shipped_start(start, side):
+    """A cohort start as the worker reads it: its scope, the start side's levels and the orders on them; the start
+    itself (shipped whole, as before) when it is not of that shape, so any error is raised in the worker as before."""
+    if start is None:
+        return None
+    try:
+        observation = start['observation']
+        levels = observation['levels'][side]
+        ids = {oid for level in levels for oid in level['order_ids']}
+        slim = {key: start[key] for key in ('source_member_index', 'session_id') if key in start}
+        slim['observation'] = dict(levels={side: levels},
+                                   orders=[order for order in observation['orders'] if order['order_id'] in ids])
+        return slim
+    except Exception:  # noqa: BLE001 - not the expected shape: shipped whole (the worker raises exactly as before)
+        return start
+
+
 class _RawStreams:
     """Swaps JournalTeacher._dynamics, _absorption and _cohort (pure functions of a group window) for recorders during
     the parent's pinned raw loop; the recorded calls run in spawn workers, batch by batch, while the loop goes on."""
@@ -489,6 +528,9 @@ class _RawStreams:
 
     def _new_batch(self):
         self.tables, self.index, self.batch = {'control': [], 'r3': []}, {'control': {}, 'r3': {}}, []
+        # the original group objects of this batch's tables: kept alive until the batch is pickled, so an id() in
+        # `index` can never be reused by a newer group while the table holds only its shipped copy
+        self.originals = []
 
     def __enter__(self):
         T = self.T
@@ -517,11 +559,15 @@ class _RawStreams:
                 at = index.get(id(group))
                 if at is None:
                     at = index[id(group)] = len(table)
-                    table.append(group)
+                    shipped = _shipped_group(group)
+                    if shipped is not group:
+                        self.slim_groups += 1
+                    table.append(shipped)
+                    self.originals.append(group)
                 places.append(at)
             contiguous = all(b == a + 1 for a, b in zip(places, places[1:]))
             window = (places[0] if places else 0, len(places)) if contiguous else places
-            self.batch.append((token, kind, family, window, side, start))
+            self.batch.append((token, kind, family, window, side, _shipped_start(start, side) if kind == 'cohort' else start))
             if len(self.batch) >= RAW_BATCH_CALLS:
                 self._submit()
             state = int(self.T.State.MISSING)
@@ -546,6 +592,14 @@ class _RawStreams:
                                basis=('each spawn worker pinned to one CPU of the plan' if self.planned else
                                       'unpinned spawn workers on the parent\'s mask (no plan given)'))
         self.breaks = 0
+        self.slim_groups, self.shipped_bytes, self.batches = 0, 0, 0
+        RAW_POOL_RECORD['shipped'] = dict(
+            batch_calls=RAW_BATCH_CALLS, in_flight_batches=2 * self.cpus,
+            window_rows='observation=None (the worker functions never read a window row\'s observation)',
+            cohort_start='scope + the start side\'s levels + the orders on them (all the cohort reads)',
+            guard='the first two calls of every batch and every %d-th run the pinned way on the full objects in the '
+                  'parent and must equal the worker\'s result' % RAW_GUARD_EVERY,
+            batches=0, bytes=0, groups_slimmed=0, basis='speed only (2026-10-09): same functions, same values')
         self.pool = self._new_pool(self.cpus)
         T.JournalTeacher._dynamics = staticmethod(record_dynamics)
         T._absorption, T._cohort = record_absorption, record_cohort
@@ -559,6 +613,9 @@ class _RawStreams:
         if not self.batch:
             return
         blob = pickle.dumps((self.tables, self.batch, _changes_applied()), protocol=pickle.HIGHEST_PROTOCOL)
+        self.batches += 1
+        self.shipped_bytes += len(blob)
+        RAW_POOL_RECORD['shipped'].update(batches=self.batches, bytes=self.shipped_bytes, groups_slimmed=self.slim_groups)
         try:
             future = self.pool.submit(_raw_batch, blob)
         except Exception as error:  # noqa: BLE001 - a pool that broke between results: redone in _result, one fewer
