@@ -38,6 +38,28 @@ def producer_hashes():
     return {p: sha256(root / p) for p in paths}
 
 
+# The code version is RECORDED, NEVER COMPARED (Greg, 2026-10-09: "fix all code-hash comparisons"). The learner
+# reading's input pin and its retained receipt are compared on DATA only (day, the ROOT source binding sha256, the
+# learner binding's source hash / as_of / cursor / request / cycle, the day file and its sha256); producer_hashes() is
+# recorded on the witness, never compared. A pin or receipt saved before this rule carries `producers` inside its
+# learner binding: the field is dropped from the comparison (RECORDED_ONLY), and that saved binding is the one the
+# walk continues under, so its own saved walk state is resumed, never redone.
+RECORDED_ONLY = ('producers',)
+
+
+def binding_data(learner_binding):
+    """The compared form of a learner binding: without its recorded-only code fields."""
+    if not isinstance(learner_binding, dict):
+        return learner_binding
+    return {k: v for k, v in learner_binding.items() if k not in RECORDED_ONLY}
+
+
+def _pin_data(identity):
+    if not isinstance(identity, dict):
+        return identity
+    return dict(identity, learner_binding=binding_data(identity.get('learner_binding')))
+
+
 def _teacher_walk(teacher_rows, teacher_body, *, day, ingest, own, shared_policy):
     """(receipt, receipt path) of the host teacher's completed walk when it IS the walk this learner reading would make
     (Greg, 2026-10-09: one pass; a SOCRATIC/VERIFY day reads the source once): same day, same sealed ingestion receipt,
@@ -103,7 +125,7 @@ def read_day(day, calculations, binding, *, day_file, day_sha256, save_requested
                                   'cycle_index', 'cycle_count')}
     if own['cycle_index'] != 0 or own['cycle_count'] != 1:
         raise ValueError('learner day reader requires the existing single whole-day cycle')
-    own['producers'] = producer_hashes()
+    producers = producer_hashes()            # recorded on the witness, never compared
     directory = calculations / 'work' / 'classroom' / 'learner-reading'
     directory.mkdir(parents=True, exist_ok=True)
     identity = dict(day=day, source_binding_sha256=sha256(source_path), learner_binding=own,
@@ -111,8 +133,13 @@ def read_day(day, calculations, binding, *, day_file, day_sha256, save_requested
     pin = directory / 'input-state.pkl'
     pin_created = not pin.exists()
     if pin.exists():
-        if _load_raw_state(pin) != identity:
-            raise ValueError('retained learner reading belongs to different inputs/code')
+        pinned = _load_raw_state(pin)
+        if _pin_data(pinned) != identity:
+            raise ValueError('retained learner reading belongs to different inputs (data identity; code is recorded, '
+                             'never compared)')
+        # the binding the retained reading was made under (an earlier pin may also record its producers): the walk and
+        # its saved walk state continue under exactly it
+        own = pinned['learner_binding']
     else:
         _save_raw_state(pin, identity)
     result_path = directory / 'receipt.json'
@@ -131,7 +158,7 @@ def read_day(day, calculations, binding, *, day_file, day_sha256, save_requested
         witness = dict(schema='FRANKIE_LEARNER_READING_V1', author='frankie',
             source_binding_sha256=identity['source_binding_sha256'], ingestion_receipt=ingest,
             receipt=dict(path=str(teacher_receipt_path), sha256=sha256(teacher_receipt_path)),
-            source_snapshot_hash=snapshot['source_snapshot_hash'], producers=own['producers'],
+            source_snapshot_hash=snapshot['source_snapshot_hash'], producers=producers,
             walk_seconds=0.0, seconds=0.0, shared_market_read=shared_read,
             shared_market_use=result.get('shared_market_use'),
             shared_market_arithmetic=result.get('shared_market_arithmetic'),
@@ -162,7 +189,7 @@ def read_day(day, calculations, binding, *, day_file, day_sha256, save_requested
                 else:
                     os.environ[name] = value
     result = json.loads(result_path.read_bytes())
-    if (result.get('evidence_seat') != 'frankie' or result.get('learner_binding') != own or
+    if (result.get('evidence_seat') != 'frankie' or binding_data(result.get('learner_binding')) != binding_data(own) or
             result.get('ingestion_receipt', {}).get('sha256') != ingest['sha256']):
         raise ValueError('retained learner receipt has another seat/source/binding')
     attachment_path = directory / result['attachment_file']['file']
@@ -183,7 +210,7 @@ def read_day(day, calculations, binding, *, day_file, day_sha256, save_requested
     witness = dict(schema='FRANKIE_LEARNER_READING_V1', author='frankie',
         source_binding_sha256=identity['source_binding_sha256'], ingestion_receipt=ingest,
         receipt=dict(path=str(result_path), sha256=sha256(result_path)),
-        source_snapshot_hash=snapshot['source_snapshot_hash'], producers=own['producers'],
+        source_snapshot_hash=snapshot['source_snapshot_hash'], producers=producers,
         walk_seconds=result['walk_seconds'], seconds=result['seconds'],
         shared_market_read=shared_read, shared_market_use=result.get('shared_market_use'),
         shared_market_arithmetic=result.get('shared_market_arithmetic'),

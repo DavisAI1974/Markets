@@ -99,8 +99,8 @@ def _dump(path, body):
 
 # Function-level identities of the code the classroom invokes from other files (drop-in session 5, open item 5; the
 # native identities' pattern in eac32a0: frankie_box_bedrock.code_identity of declared definitions, each hashed as its
-# syntax tree without positions). A saved classroom then survives unrelated edits of those files (a comment, another
-# function, a move) and still refuses any change to the code its saved values came from. The lists are the transitive
+# syntax tree without positions). Recorded on the receipt (received.code), never compared (Greg, 2026-10-09: a saved
+# classroom is resumed on its data identity alone; see CLASSROOM_SAVE_FORMAT below). The lists are the transitive
 # closure, inside each file, of what the classroom calls: frankie_box_classroom_code.exhaustion_d_facts calls
 # frankie_box_teach.facts and frankie_box_bedrock.producers_commit / load_producers (and _sections_of calls
 # crosswalk_records); the native entry arithmetic reuses frankie_box_joined_teacher._flatten and CATEGORY_LIMIT. A new
@@ -123,35 +123,67 @@ def _code_identities(declared):
 
 
 def _whole_file_identities(declared):
-    """The earlier form, {file: sha256 of its whole bytes} (saves made before the function-level identities)."""
+    """The whole-file form, {file: sha256 of its whole bytes} (recorded on the receipt beside the function-level form)."""
     return {name: _sha256(BOX / name) for name, _ in declared}
 
 
+# The code version is RECORDED, NEVER COMPARED (Greg, 2026-10-09: "fix all code-hash comparisons"). A saved classroom
+# (phase-state.pkl, its saved phases, its segment saves) is never refused, discarded or redone because a code file's
+# bytes changed: only the DATA identity is compared (ROOT and teacher receipt sha256, attachment sha256, day file and
+# its sha256, the previous carries, the directive and rules sha256, the shared market source minus the timeline's
+# recorded-only code fields, the locations) plus CLASSROOM_SAVE_FORMAT, an explicit integer bumped only when the saved
+# bytes' FORMAT changes. Every code identity (this runner's sha256, the producers, the learner-reading producers, the
+# function-level exhaustion/D and native entry code) is recorded on the receipt (received.code) beside them; the
+# pattern of frankie_box_classroom_cache.science() / INFRASTRUCTURE. Saves made before this rule carry the code fields
+# inside their identity: they are dropped from the comparison, and such a save is format 1.
+CLASSROOM_SAVE_FORMAT = 1
+CODE_FIELDS = ('runner_sha256', 'producers', 'learner_reading_producers', 'exhaustion_d_code', 'native_entry_code')
+
+
+def _timeline():
+    return sys.modules.get('frankie_box_market_timeline') or _box('frankie_box_market_timeline')
+
+
+def save_format(identity):
+    """The saved bytes' format (CLASSROOM_SAVE_FORMAT); a save made before the field is format 1."""
+    return identity.get('save_format', 1)
+
+
+def data_identity(identity):
+    """The compared form of a classroom identity: no code field, no save_format (compared on its own), and the shared
+    market source without the timeline's recorded-only code fields (frankie_box_market_timeline.without_recorded_code)."""
+    value = {k: v for k, v in identity.items() if k not in CODE_FIELDS and k != 'save_format'}
+    if value.get('shared_market') is not None:
+        value['shared_market'] = _timeline().without_recorded_code(value['shared_market'])
+    return value
+
+
+def save_key(identity):
+    """The code-free key a save is bound to (the segment saves' identity digest): the data identity and the format."""
+    return dict(data_identity(identity), save_format=save_format(identity))
+
+
 def identity_acceptance(saved, current):
-    """Why a saved classroom identity is accepted for `current`, or None (refused). 'code': equal. The compatibility rule
-    (as the native identities, eac32a0): a save whose exhaustion_d_code / native_entry_code are the earlier whole-file
-    sha256 values is accepted only while those whole files are byte-identical now and every other field is equal
-    ('whole_file_unchanged'); the saved identity then stays the identity, so its saved phases load unchanged."""
-    if saved == current:
-        return 'code'
-    whole = dict(current, exhaustion_d_code=_whole_file_identities(EXHAUSTION_D_CODE),
-                 native_entry_code=_whole_file_identities(NATIVE_ENTRY_CODE))
-    if saved == whole:
-        return 'whole_file_unchanged'
+    """Why a saved classroom identity is accepted for `current`, or None (refused). Same save format and the same DATA
+    identity: 'data' (code fields, saved or current, are recorded, never compared; a save carrying the code of another
+    version is accepted the same way). Refused only on a format or data difference."""
+    if save_format(saved) != save_format(current):
+        return None
+    if data_identity(saved) == data_identity(current):
+        return 'data'
     return None
 
 
 def checkout_rebinds(saved, current):
     """Identity is content, not location (frankie_box_experiment_root.content_rebinds, ROOT's rule): the checkout moves
-    under which `saved` equals `current` (or its whole-file form), or None. Only file witnesses whose bytes, sha256 and
-    every other key are equal and whose paths name the same file inside a checkout may differ."""
+    under which the saved DATA identity equals the current one, or None. Only file witnesses whose bytes, sha256 and
+    every other key are equal and whose paths name the same file inside a checkout may differ; code is not compared."""
     import frankie_box_experiment_root as XR
-    for form, built in (('code', current), ('whole_file_unchanged', dict(
-            current, exhaustion_d_code=_whole_file_identities(EXHAUSTION_D_CODE),
-            native_entry_code=_whole_file_identities(NATIVE_ENTRY_CODE)))):
-        moves = XR.content_rebinds(saved, built)
-        if moves:
-            return form, moves
+    if save_format(saved) != save_format(current):
+        return None
+    moves = XR.content_rebinds(data_identity(saved), data_identity(current))
+    if moves:
+        return 'data', moves
     return None
 
 
@@ -765,20 +797,22 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                                     '(it ran before V2); the external section starts without a prior correction')
     from research.kalshi.frankie_boss.parallel_teacher import _load_raw_state, _save_raw_state, TeacherSaved
     rules, rules_witness = K.rules()
-    identity = dict(day=day, calculations=str(calculations), brain=str(Path(brain)), runner_sha256=_sha256(__file__),
+    # DATA only (CODE_FIELDS: recorded in received.code, never compared) plus the save format
+    identity = dict(day=day, calculations=str(calculations), brain=str(Path(brain)),
                     root_receipt=_sha256(calculations / 'calculations-receipt.json'),
                     teacher_receipt=_sha256(teacher_rows / 'receipt.json'), attachment=attachment_sha,
                     day_file=str(day_file), day_sha256=day_sha, previous=carried, previous_external=external_carried,
-                    directive=_sha256(DIRECTIVE_PATH), rules=rules_witness,
-                    producers={m.__name__: _sha256(m.__file__) for m in (F, S, R, EXT, V2, C, K, KX, LS, BR, KR)},
-                    learner_reading_producers=KR.producer_hashes(),
-                    # the existing exhaustion/D computation this classroom now invokes, and its producers loader:
-                    # function-level (EXHAUSTION_D_CODE; a whole-file save is accepted while byte-identical)
-                    exhaustion_d_code=_code_identities(EXHAUSTION_D_CODE),
-                    # the leaf rule the native entry arithmetic reuses (frankie_box_joined_teacher._flatten / CATEGORY_LIMIT)
-                    native_entry_code=_code_identities(NATIVE_ENTRY_CODE))
+                    directive=_sha256(DIRECTIVE_PATH), rules=rules_witness, save_format=CLASSROOM_SAVE_FORMAT)
     if market is not None:
         identity['shared_market'] = market.identity
+    # the code this classroom runs, recorded on the receipt (received.code) and never compared
+    code = dict(runner_sha256=_sha256(__file__),
+                producers={m.__name__: _sha256(m.__file__) for m in (F, S, R, EXT, V2, C, K, KX, LS, BR, KR)},
+                learner_reading_producers=KR.producer_hashes(),
+                # the existing exhaustion/D computation this classroom invokes, and its producers loader (function-level)
+                exhaustion_d_code=_code_identities(EXHAUSTION_D_CODE),
+                # the leaf rule the native entry arithmetic reuses (frankie_box_joined_teacher._flatten / CATEGORY_LIMIT)
+                native_entry_code=_code_identities(NATIVE_ENTRY_CODE))
     # Inspection (Greg, 2026-10-07): every input this piece received, with path, bytes, sha256, the whole-day
     # binding (as_of / through_cursor / source hash) and the source binding, recorded in the receipt itself so
     # the reporter shows them from receipt.json alone. Recorded, not re-verified here; the checks above are the
@@ -816,10 +850,12 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         day_file=dict(path=str(day_file), sha256=day_sha, bytes=Path(day_file).stat().st_size, found=day_source),
         previous=carried, previous_external=external_carried,
         directive=dict(path=str(DIRECTIVE_PATH), sha256=identity['directive']), rules=rules_witness,
-        producers=identity['producers'], learner_reading_producers=identity['learner_reading_producers'],
-        # the files' whole bytes as before (the receipt field keeps its meaning); the identity binds the function-level
-        # form beside it (received.identity_acceptance.current_code)
+        producers=code['producers'], learner_reading_producers=code['learner_reading_producers'],
+        # the files' whole bytes as before (the receipt field keeps its meaning); the function-level form is in `code`
         exhaustion_d_code=_whole_file_identities(EXHAUSTION_D_CODE), native_entry_code=_whole_file_identities(NATIVE_ENTRY_CODE),
+        # every code identity of this run, recorded and never compared (CODE_FIELDS; Greg, 2026-10-09)
+        code=dict(code, save_format=CLASSROOM_SAVE_FORMAT,
+                  rule='recorded, never compared: a save is resumed on its data identity and save format alone'),
         shared_market_identity=market.identity if market is not None else None,
         shared_market_external=shared_external,
         teacher_shared_market_arithmetic=teacher_receipt.get('shared_market_arithmetic'))
@@ -833,16 +869,23 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
             acceptance = 'checkout_rebind (%s)' % found[0]
             rebinds = dict(moves=found[1], record=_record_rebinds(d, found[1], found[0]))
     if acceptance is None:
-        raise ValueError('saved classroom source, previous class, directive or destination changed')
-    # recorded on the receipt (received.identity_acceptance): 'code' (equal), or 'whole_file_unchanged' (a save made
-    # before the function-level code identities, accepted while those files are byte-identical; its identity is kept)
-    received['identity_acceptance'] = dict(rule=acceptance, checkout_rebinds=rebinds, current_code=dict(
-        exhaustion_d_code=identity['exhaustion_d_code'], native_entry_code=identity['native_entry_code']))
+        raise ValueError('saved classroom source, previous class, directive, destination or save format changed '
+                         '(data identity; code is recorded, never compared)')
+    # recorded on the receipt (received.identity_acceptance): 'data' (the same data identity and save format; the saved
+    # code fields, when a save carries them, are listed beside the current code, never compared); the saved identity is
+    # kept, so its saved phases load unchanged
+    received['identity_acceptance'] = dict(rule=acceptance, checkout_rebinds=rebinds, save_format=save_format(state['identity']),
+        saved_code={k: state['identity'][k] for k in CODE_FIELDS if k in state['identity']} or None,
+        current_code=dict(exhaustion_d_code=code['exhaustion_d_code'], native_entry_code=code['native_entry_code']))
     identity = state['identity']
     # Periodic exact saves inside the long sub-steps (the 171 pairs, the native series, the anchor picture texts):
-    # frankie_box_classroom_code._Segments, bound to this identity, honouring the same save request.
+    # frankie_box_classroom_code._Segments, bound to this identity's code-free key (save_key), honouring the same save
+    # request. legacy_identity = the earlier key (the digest of the whole saved identity, code fields included): a
+    # segment directory saved under it is adopted, never lost.
     K.SEGMENT_SAVES.update(directory=str(d), identity=hashlib.sha256(json.dumps(
-        identity, sort_keys=True, default=str).encode()).hexdigest(), save_requested=save_requested,
+        save_key(identity), sort_keys=True, default=str).encode()).hexdigest(),
+        legacy_identity=hashlib.sha256(json.dumps(identity, sort_keys=True, default=str).encode()).hexdigest(),
+        save_requested=save_requested,
         every_s=float(os.environ.get('FRANKIE_CLASSROOM_SAVE_EVERY_SECONDS') or K.SEGMENT_EVERY_SECONDS))
     received['segment_saves'] = K.SEGMENT_RECORD
     # Where the classroom's time goes, per saved operation (Greg, 2026-10-07: show where a run spends its

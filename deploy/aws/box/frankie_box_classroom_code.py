@@ -107,10 +107,13 @@ def heartbeat(phase, done, total=None, unit=None, every=None, **extra):
 # segment file (parallel_teacher._save_raw_state: a sha256-prefixed pickle, fsynced, renamed), so saving is linear in
 # the values and never rewrites an earlier segment. A resume loads the segments in order (each checked: its hash, its
 # key, its start = the values before it) and computes only the rest with the same functions; a value comes back through
-# the same pickle a saved phase uses, so the result is the same bytes. The key binds the classroom's identity (set by
-# the runner), the operation and its whole job list: another day, code or job list never matches. A sub-step's segments
-# are removed once it returns its whole value (its phase then saves it). Configured by the classroom V2 runner
-# (SEGMENT_SAVES: directory, identity digest, save_requested, every_s); without it nothing is saved here (as before).
+# the same pickle a saved phase uses, so the result is the same bytes. The key binds the classroom's code-free identity
+# (set by the runner: its data identity and save format; Greg, 2026-10-09: the code version is recorded, never compared),
+# the operation and its whole job list: another day, source or job list never matches; a code change does not. A segment
+# directory saved under the earlier key (the digest of the whole saved identity, code fields included; legacy_identity)
+# is adopted, never lost. A sub-step's segments are removed once it returns its whole value (its phase then saves it).
+# Configured by the classroom V2 runner (SEGMENT_SAVES: directory, identity digest, legacy_identity, save_requested,
+# every_s); without it nothing is saved here (as before).
 SEGMENT_SCHEMA = 'FRANKIE_CLASSROOM_SEGMENT_SAVE_V1'
 SEGMENT_SAVES = {}
 SEGMENT_RECORD = {}
@@ -131,16 +134,26 @@ class _Segments:
         import time
         config = SEGMENT_SAVES
         self.operation, self.enabled = operation, bool(config.get('directory'))
-        self.key = hashlib.sha256(json.dumps([SEGMENT_SCHEMA, config.get('identity'), operation, jobs_key],
+        def key_of(identity):
+            return hashlib.sha256(json.dumps([SEGMENT_SCHEMA, identity, operation, jobs_key],
                                              sort_keys=True, default=str).encode()).hexdigest()
-        self.directory = (Path(config['directory']) / 'segment-saves' / ('%s-%s' % (operation, self.key[:16]))
-                          if self.enabled else None)
+        def directory_of(key):
+            return Path(config['directory']) / 'segment-saves' / ('%s-%s' % (operation, key[:16]))
+        self.key = key_of(config.get('identity'))
+        self.directory = directory_of(self.key) if self.enabled else None
+        adopted = None
+        if self.enabled and not self.directory.is_dir() and config.get('legacy_identity') not in (None, config.get('identity')):
+            legacy = key_of(config['legacy_identity'])
+            if directory_of(legacy).is_dir():
+                # segments saved under the earlier code-bound key: the same continuation, kept and continued there
+                self.key, self.directory, adopted = legacy, directory_of(legacy), legacy
         self.every = float(config.get('every_s') or SEGMENT_EVERY_SECONDS)
         self.save_requested = config.get('save_requested')
         self.saved, self.last = 0, time.monotonic()
         self.record = SEGMENT_RECORD.setdefault(operation, dict(saves=0, resumed_values=0, segments_loaded=0))
         self.record.update(enabled=self.enabled, every_s=self.every,
-                           directory=str(self.directory) if self.directory else None)
+                           directory=str(self.directory) if self.directory else None,
+                           legacy_key_adopted=adopted is not None)
 
     def load(self):
         """The values saved by an earlier attempt, in order ([] when none). A segment that fails its checks refuses."""
