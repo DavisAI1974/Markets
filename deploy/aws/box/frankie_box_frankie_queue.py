@@ -525,20 +525,24 @@ def entry_of(line, run, day):
     return next((x for x in doc['entries'] if x['run'] == run and x['day'] == day), None)
 
 
+def behind_other_run(doc, x):
+    """The earlier entry of the same day from ANOTHER run that has not left the line (not done, not failed, not
+    retired), or None. 2026-10-09 (Greg: fastest runtime, science unchanged): such a day is admitted to the line QUEUED
+    BEHIND it and starts the moment it leaves (its save of the line wakes every worker; no poll)."""
+    return next((y for y in ordered(doc) if y['seq'] < x['seq'] and y['day'] == x['day'] and y['run'] != x['run']
+                 and y['state'] not in ('done', 'failed')), None)
+
+
 def enqueue(line, run, day, commit, code_root, plan_sha256, settings, readiness, by):
     """(entry, 'enqueued' | 'existing') or (None, why refused). One entry per (day, run); a day already in the line from
-    another run (not failed) is declined: duplicate data (the same day's ROOT or class twice)."""
+    another run (not failed) is admitted QUEUED BEHIND that run's entry (2026-10-09; was declined): it starts when the
+    earlier entry leaves the line (done, failed or retired), the ordering reason recorded on the entry."""
     with locked():
         doc = load(line)
         for x in doc['entries']:
             if x['run'] == run and x['day'] == day:
                 return x, 'existing'
         others = [x for x in doc['entries'] if x['day'] == day and x['state'] != 'failed']
-        if others:
-            why = ('%s is in the %s line already from run %s (seq %d, %s): duplicate data declines a second entry of the '
-                   'day' % (day, line, others[0]['run'], others[0]['seq'], others[0]['state']))
-            event(line, 'enqueue_refused', run=run, day=day, reason=why, by=by)
-            return None, why
         now = time.time()
         seq = doc['next_seq']
         doc['next_seq'] = seq + 1
@@ -547,9 +551,14 @@ def enqueue(line, run, day, commit, code_root, plan_sha256, settings, readiness,
                                                                       pid=os.getpid(), host=socket.gethostname()),
                      plan_sha256=plan_sha256, settings={k: settings.get(k, v) for k, v in SETTINGS.items()},
                      readiness=readiness, attempts=[], stages={}, receipts=[])
+        if others:
+            entry['behind'] = [dict(seq=y['seq'], run=y['run'], state=y['state']) for y in others]
+            entry['reason'] = ('in line (seq %d), queued behind run %s\'s entry of %s (seq %d, %s): it starts when that '
+                               'entry leaves the line' % (seq, others[0]['run'], day, others[0]['seq'], others[0]['state']))
         doc['entries'].append(entry)
         save(line, doc)
-        event(line, 'enqueued', seq=seq, run=run, day=day, by=by, readiness=readiness)
+        event(line, 'enqueued', seq=seq, run=run, day=day, by=by, readiness=readiness,
+              **(dict(behind=entry['behind']) if others else {}))
         return entry, 'enqueued'
 
 
@@ -1543,6 +1552,10 @@ def root_gate(run, day):
         return False, 'not_in_root_line: %s enters the ROOT line when it is ROOT-ready (orchestrator)' % day
     if mine['state'] == 'done':
         return False, 'root_line_done: the day\'s ROOT line entry is done (seq %d)' % mine['seq']
+    earlier = behind_other_run(doc, mine)
+    if earlier is not None:
+        return False, 'behind_other_run: run %s\'s entry of %s (seq %d, %s) has not left the ROOT line' % (
+            earlier['run'], day, earlier['seq'], earlier['state'])
     for x in ordered(doc):
         if x['seq'] >= mine['seq']:
             break
@@ -2727,6 +2740,11 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                 if why:
                     x['reason'] = source = why
                     break                                   # FIFO: a retained-source refusal never admits its successor
+                earlier = behind_other_run(doc, x)
+                if earlier is not None:
+                    x['reason'] = ('queued behind run %s\'s entry of %s (seq %d, %s): it starts when that entry leaves the '
+                                   'line' % (earlier['run'], x['day'], earlier['seq'], earlier['state']))
+                    continue                                # woken by that entry's line save (the wake directory)
                 if x['state'] == 'failed':
                     if x['seq'] in retried:
                         blocked = x
