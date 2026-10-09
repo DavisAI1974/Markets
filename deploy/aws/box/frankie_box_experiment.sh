@@ -18,8 +18,8 @@
 # day history and curve prefixes and the day-file slots for external, Jev's material slots for jev; ACTION=plan prints
 # the whole presign string), FRANKIE_QUEUE (on|off, default on: classroom-arm days enter Frankie's class line, arrival
 # FIFO, one class at a time), ROOT_QUEUE (on|off, default on: ROOT-ready days enter the ROOT line, arrival FIFO to the next
-# free day-run slot), QUEUE_WORKER_SECONDS (43200: a kicked queue worker's bound and the wait on this run's ROOT-line
-# days; every wait is event-driven, 2026-10-09). A probe: frankie_box_progress.sh DIRECTORY=/opt/frankie-box/work/experiment/<RUN>; the
+# free day-run slot), QUEUE_WORKER_SECONDS (opt-in, default 0 = none: a kicked queue worker's lifetime limit and the
+# limit on this start's wait for its ROOT-line days; every wait is event-driven, 2026-10-09). A probe: frankie_box_progress.sh DIRECTORY=/opt/frankie-box/work/experiment/<RUN>; the
 # queue: frankie_box_frankie_queue.sh ACTION=show.
 set -eu
 export HOME="${HOME:-/root}"   # SSM runs without HOME; DuckDB refuses to load extensions without a home directory (2026-09-29)
@@ -139,9 +139,12 @@ case "${PREVIOUS_CLASSROOM:-}" in ""|/opt/frankie-box/work/experiment-roots/*/wo
 [ -z "${PREVIOUS_CLASSROOM:-}" ] || set -- "$@" --previous-classroom "$PREVIOUS_CLASSROOM"
 case "${FRANKIE_QUEUE:-on}${ROOT_QUEUE:-on}" in onon|onoff|offon|offoff) ;; *) echo "FRANKIE_QUEUE and ROOT_QUEUE must be on or off" >&2; exit 2;; esac
 # 2026-10-09: QUEUE_POLL_SECONDS is gone (every queue wait is event-driven); a given value is ignored
-case "${QUEUE_WORKER_SECONDS:-43200}" in *[!0-9]*) echo "QUEUE_WORKER_SECONDS must be whole seconds" >&2; exit 2;; esac
+# 2026-10-09: no worker lifetime limit and no limit on this start's wait unless QUEUE_WORKER_SECONDS opts in (0 = none);
+# given, it reaches the kicked workers as FRANKIE_QUEUE_MAX_SECONDS
+case "${QUEUE_WORKER_SECONDS:-0}" in *[!0-9]*) echo "QUEUE_WORKER_SECONDS must be whole seconds" >&2; exit 2;; esac
+[ "${QUEUE_WORKER_SECONDS:-0}" = 0 ] || export FRANKIE_QUEUE_MAX_SECONDS="$QUEUE_WORKER_SECONDS"
 set -- "$@" --frankie-queue "${FRANKIE_QUEUE:-on}" --root-queue "${ROOT_QUEUE:-on}" \
-  --queue-worker-seconds "${QUEUE_WORKER_SECONDS:-43200}"
+  --queue-worker-seconds "${QUEUE_WORKER_SECONDS:-0}"
 set -- "$@" --lags "${LAGS:-20}" --ingest-workers "${INGEST_WORKERS:-31}" --data-workers "${DATA_WORKERS:-1}" \
   --search-workers "${SEARCH_WORKERS:-8}" --teacher-cpus "${TEACHER_CPUS:-0}" --parallel-days "${PARALLEL_DAYS:-2}" --disk-floor-gb "${DISK_FLOOR_GB:-100}"
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONPATH="$CODE_ROOT" MAP_URL="${MAP_URL:-}"

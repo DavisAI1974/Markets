@@ -2671,7 +2671,8 @@ class Run:
         again. 2026-10-09: no poll interval; it wakes on any state change (the queue's wake directory)."""
         import frankie_box_frankie_queue as Q
         import frankie_box_wake as W
-        deadline = time.monotonic() + self.a.queue_worker_seconds
+        limit = int(self.a.queue_worker_seconds or 0)      # 0 = no limit (the default, 2026-10-09)
+        deadline = time.monotonic() + limit if limit else None
         waiter = W.Waiter([Q.wake_dir()])
         kicked_for = None
         while True:
@@ -2697,8 +2698,8 @@ class Run:
                 self.check_save()
                 self.kick('root')
                 kicked_for = list(left)
-            remaining = deadline - time.monotonic()
-            if remaining <= 0 or not waiter.wait(remaining):
+            remaining = None if deadline is None else deadline - time.monotonic()
+            if (remaining is not None and remaining <= 0) or not waiter.wait(remaining):
                 self.log('root line: %d day(s) still in the line at the bound (%s); they stay queued' % (len(left), left))
                 waiter.close()
                 return
@@ -5516,8 +5517,9 @@ def main():
     p.add_argument('--root-queue', choices=('on', 'off'), default='on',
                    help='on: ROOT-ready days enter the ROOT line (arrival FIFO to the next free day-run slot, box or Pod) '
                         'and this run waits for its own; off: the ROOTs run here in plan order as before')
-    p.add_argument('--queue-worker-seconds', type=int, default=43200,
-                   help='the bound of a kicked queue worker and of this run\'s wait on its ROOT-line days')
+    p.add_argument('--queue-worker-seconds', type=int, default=0,
+                   help='opt-in (0 = none, the default): the limit of this run\'s wait on its ROOT-line days; a kicked '
+                        'worker\'s limit comes only from FRANKIE_QUEUE_MAX_SECONDS (frankie_box_experiment.sh exports it)')
     p.add_argument('--queue-poll-seconds', type=int, default=60,
                    help='accepted for older callers and recorded; nothing polls on it (2026-10-09: every wait is event-driven)')
     a = p.parse_args()

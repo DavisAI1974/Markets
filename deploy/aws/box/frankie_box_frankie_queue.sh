@@ -8,10 +8,10 @@
 # Inputs: CODE_ROOT (staged checkout; default the newest staged one), ACTION:
 #   show                         read-only: both lines, every entry with its state and reason, the workers [EVENTS=50|all]
 #   enqueue LINE RUN DAY         the orchestrator's own readiness checks on the run's saved plan, then the entry [KICK=on]
-#   worker  LINE SCOPE           the line's one worker in the foreground, bounded [MAX_SECONDS=1500]; event-driven; a
+#   worker  LINE SCOPE           the line's one worker in the foreground, until its scope is done [MAX_SECONDS opt-in]; a
 #                                second worker exits at once; exit 0 idle, 3 stopped at a failed entry, 5 saved at the bound
 #                                or waiting (an owner's resume, or an out-of-scope predecessor at the front)
-#   kick    LINE SCOPE           starts the line's worker detached (systemd-run) unless one runs [MAX_SECONDS=43200]
+#   kick    LINE SCOPE           starts the line's worker detached (systemd-run) unless one runs [MAX_SECONDS opt-in, 0=none]
 # SCOPE=RUN:YYYYMMDD,... is the authorization a worker/kick/handover carries: it admits, reconciles and receipts ONLY
 # those run/days; everything else in the line is left exactly as it is (FIFO still makes an eligible day wait behind an
 # unstarted predecessor; the predecessor is never started by that worker).
@@ -120,16 +120,20 @@ case "$ACTION" in worker|kick|handover)
 esac
 case "$ACTION" in
   worker)
-    case "${MAX_SECONDS:-1500}" in ""|*[!0-9]*) echo "MAX_SECONDS must be whole seconds" >&2; exit 2;; esac
-    exec "$PY" -B "$SCRIPT" --action worker "$@" --max-seconds "${MAX_SECONDS:-1500}" ;;
+    # 2026-10-09: no worker lifetime limit unless MAX_SECONDS opts in (0 = none)
+    case "${MAX_SECONDS:-0}" in ""|*[!0-9]*) echo "MAX_SECONDS must be whole seconds" >&2; exit 2;; esac
+    exec "$PY" -B "$SCRIPT" --action worker "$@" --max-seconds "${MAX_SECONDS:-0}" ;;
   kick)
-    case "${MAX_SECONDS:-43200}" in ""|*[!0-9]*) echo "MAX_SECONDS must be whole seconds" >&2; exit 2;; esac
-    exec "$PY" -B "$SCRIPT" --action kick "$@" --max-seconds "${MAX_SECONDS:-43200}" ;;
+    # 2026-10-09: the kicked worker has no lifetime limit unless MAX_SECONDS opts in (FRANKIE_QUEUE_MAX_SECONDS)
+    case "${MAX_SECONDS:-0}" in ""|*[!0-9]*) echo "MAX_SECONDS must be whole seconds" >&2; exit 2;; esac
+    [ "${MAX_SECONDS:-0}" = 0 ] || export FRANKIE_QUEUE_MAX_SECONDS="$MAX_SECONDS"
+    exec "$PY" -B "$SCRIPT" --action kick "$@" --max-seconds "${MAX_SECONDS:-0}" ;;
   handover)
     # the root line to this commit without stopping a running day: the old worker stops TAKING work (SIGTERM), finishes
     # the days in its slots and ends; a new worker at this commit waits on the lock and takes over (2026-09-30)
-    case "${MAX_SECONDS:-43200}" in ""|*[!0-9]*) echo "MAX_SECONDS must be whole seconds" >&2; exit 2;; esac
-    exec "$PY" -B "$SCRIPT" --action handover "$@" --max-seconds "${MAX_SECONDS:-43200}" ;;
+    case "${MAX_SECONDS:-0}" in ""|*[!0-9]*) echo "MAX_SECONDS must be whole seconds" >&2; exit 2;; esac
+    [ "${MAX_SECONDS:-0}" = 0 ] || export FRANKIE_QUEUE_MAX_SECONDS="$MAX_SECONDS"
+    exec "$PY" -B "$SCRIPT" --action handover "$@" --max-seconds "${MAX_SECONDS:-0}" ;;
   enqueue)
     : "${RUN:?the orchestrator run name required}"; : "${DAY:?YYYYMMDD required}"
     case "$RUN" in ""|*[!A-Za-z0-9_-]*) echo "RUN: letters, digits, _ and - only" >&2; exit 2;; esac
