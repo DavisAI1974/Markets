@@ -401,19 +401,20 @@ def _move_aside(out_dir, siblings=(), schema='FRANKIE_BOX_BEDROCK_SUPERSEDE_RECE
     return str(target)
 
 
-def recovery_checkpoint(out_dir):
+def recovery_checkpoint(out_dir, code_recorded=None):
     """Select one verified generation leaf, never a timestamp or largest cursor.
 
     Call after load_producers. Empty/unpublished generations remain untouched;
     every published generation must belong to one unambiguous parent chain.
+    code_recorded: an optional list that receives the recorded-only code differences between generations.
     """
     from research.kalshi.frankie_raw_mbo_benchmark import periodic_checkpointer as P
-    from frankie_box_native_checkpoint import SCHEMA
+    from frankie_box_native_checkpoint import SCHEMA, continuation_meaning
     from frankie_box_prepare_trading_day import safe_path
     root = Path(out_dir)
     directories = [root / 'checkpoints', *sorted(root.glob('recovery-*/checkpoints'))]
     generations = {}
-    lineage_identity = None
+    lineage_identity = lineage_opening = None
     for directory in directories:
         if not directory.is_dir() or not any(directory.glob(P.CHECKPOINT_GLOB)):
             continue
@@ -428,10 +429,21 @@ def recovery_checkpoint(out_dir):
                     or descriptor.get('finalized') != checkpoint['locked']
                     or descriptor.get('completed_mbo_records') != checkpoint['completed_mbo_records']):
                 raise ValueError('native recovery generation descriptor differs from its checkpoint')
-            bound = dict(driver=descriptor['driver_identity'], opening=descriptor.get('continuation_binding'))
+            # Greg, 2026-10-09: the code version is recorded, never compared. The continuation binding is compared by
+            # frankie_box_native_checkpoint.continuation_meaning (the emission helper by its schema; its helper_sha256
+            # recorded): a lineage saved under two emission helper versions is one lineage, the difference appended
+            # to code_recorded (the native receipt's recovery.lineage_code_recorded).
+            opening = descriptor.get('continuation_binding')
+            bound = dict(driver=descriptor['driver_identity'], opening=continuation_meaning(opening))
             if lineage_identity is not None and bound != lineage_identity:
                 raise ValueError('native recovery generations disagree on source, producer or opening identity')
-            lineage_identity = bound
+            if (code_recorded is not None and lineage_opening is not None and opening != lineage_opening
+                    and isinstance(opening, dict) and isinstance(lineage_opening, dict)):
+                code_recorded.append(dict(checkpoint=str(P.checkpoint_path(directory, checkpoint['sequence'])),
+                    field='continuation_binding.emission.helper_sha256',
+                    earlier=(lineage_opening.get('emission') or {}).get('helper_sha256'),
+                    this=(opening.get('emission') or {}).get('helper_sha256')))
+            lineage_identity, lineage_opening = bound, opening
             candidate = descriptor.get('parent_checkpoint')
             if index and candidate != parent:
                 raise ValueError('native recovery generation changed its parent')
@@ -539,8 +551,9 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
                              native_response, native_a_arm_launch, periodic_checkpointer, native_staging)
     out_dir = Path(out_dir)
     original_out_dir = out_dir
+    lineage_code_recorded = []
     if recovery:
-        discovered = recovery_checkpoint(out_dir)
+        discovered = recovery_checkpoint(out_dir, code_recorded=lineage_code_recorded)
         if resume_checkpoint is not None and (discovered is None or Path(resume_checkpoint).resolve() != Path(discovered)):
             raise ValueError('explicit native checkpoint differs from the sole recovery generation leaf')
         resume_checkpoint = discovered
@@ -717,7 +730,8 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
                    recovery=dict(parent_checkpoint=str(resume_checkpoint) if resume_checkpoint else None,
                        restored_state_records=checkpoint['completed_mbo_records'] if descriptor else 0,
                        authorized_reconstruction_records=checkpoint['completed_mbo_records'] if checkpoint and descriptor is None else 0,
-                       runtime_acceptance=checkpoint.get('_runtime_acceptance') if checkpoint else None),
+                       runtime_acceptance=checkpoint.get('_runtime_acceptance') if checkpoint else None,
+                       lineage_code_recorded=lineage_code_recorded),
                    execution=dict(
                        policy=getattr(driver, '_frankie_parallel_policy', {'calculation_processes': 1}),
                        metrics=getattr(driver, '_frankie_parallel_metrics', {}),
