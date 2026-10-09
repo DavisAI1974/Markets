@@ -20,6 +20,11 @@ work/derived/.projection-v2/) stays where it is, with the reason listed.
            sha256 on the write stream, the tar -v listing captured at creation, zstd's own frame checksums (its default)
            plus that stream sha256 are the integrity record; ONE PASS ONLY: no read-back, no decompress-list; then the
            source directory is removed, a symlink to the .tar.zst stands at the old path with the README.
+  (one pass, Greg 2026-10-09) plan() no longer makes bind_mount items: a GUARDED directory holding pinned files STAYS
+           in place (copying ~0.8-1 TB to re-compare it with the ROOT pins was the boundary validation again, and the
+           copies' new inodes/filesystem broke every ROOT file claim). A 'move' that still happens appends a fresh
+           FRANKIE_FILE_CLAIM_V2 row (the write-stream sha256 + the copy's stat) to the root's work/file-claims.jsonl.
+           do_bind_mount below is kept for an operator only; the queue's clean never reaches it.
   bind_mount  (Greg, 2026-10-08: "Do what is best for both, without changing science or dropping important data") a
            GUARDED directory (the next stage's readers open it through safe_path, which refuses a symlink: the ROOT's
            work/derived/.rows and work/bedrock) of FLOOR_BYTES or more holding pinned files is MOVED by bind mount:
@@ -137,7 +142,8 @@ def plan(roots, pins, *, guarded=(), floor=FLOOR_BYTES, archive_root=ARCHIVE_ROO
     """The items: [{kind: move|archive|bind_mount|stay, old_path, new_path, bytes, reason, pinned, expected}], the
     redundant native segments first (archived before their guarded parent is copied), then largest first.
     roots: the stage's output directories; pins: {realpath: expected {bytes, sha256, ...}} from the validator's
-    collector; guarded: prefixes relative to each root a safe_path reader of the next stage opens (moved by bind mount);
+    collector; guarded: prefixes relative to each root a safe_path reader of the next stage opens (a guarded directory
+    holding a pin stays in place, one pass: never copied, never re-hashed);
     native_complete: the stage's receipt shows the native stage complete (redundant_ledger_segments)."""
     held = open_files() if held is None else set(held)
     items = []
@@ -176,27 +182,18 @@ def plan(roots, pins, *, guarded=(), floor=FLOOR_BYTES, archive_root=ARCHIVE_ROO
                                   reason='already a bind mount (an earlier clean); nothing planned'))
                 skip.add(real)
                 continue
-            inside = {os.path.relpath(r, real): pins[r] for r in pins if r.startswith(real + '/')}
-            size = _du(directory)
-            skip.add(real)
+            inside = [r for r in pins if r.startswith(real + '/')]
             if not inside:
-                skip.discard(real)                              # no pin inside: the ordinary walk decides (archive/stay)
-            elif size < floor:
-                items.append(dict(kind='stay', old_path=str(directory), new_path=None, bytes=size, pinned=True,
-                                  reason='guarded directory under the floor (%d < %d bytes)' % (size, floor)))
-            elif any(h == real or h.startswith(real + '/') for h in held):
-                items.append(dict(kind='stay', old_path=str(directory), new_path=None, bytes=size, pinned=True,
-                                  reason='guarded directory with a file a live process holds open: not bind-mounted'))
-            else:
-                try:
-                    rel = directory.relative_to(box_root)
-                except ValueError:
-                    rel = Path(str(directory).lstrip('/'))
-                items.append(dict(kind='bind_mount', old_path=str(directory), new_path=str(Path(archive_root) / rel), bytes=size,
-                                  pinned=True, archive_root=str(archive_root),
-                                  pins_inside={k: {x: v.get(x) for x in ('bytes', 'sha256')} for k, v in inside.items()},
-                                  reason='guarded (safe_path readers refuse a symlink): %d bytes, %d pinned files; moved by '
-                                         'bind mount' % (size, len(inside))))
+                continue                                        # no pin inside: the ordinary walk decides (archive/stay)
+            # one pass (Greg, 2026-10-09): a guarded directory holding pinned files (the ROOT's frames/structures/input
+            # spools, final ledgers, checkpoints, .projection-v2) STAYS where it is. Copying it to the archive volume
+            # was the boundary validation again under another name (every byte re-read and re-hashed against the
+            # pins), and the copies took new inodes on another filesystem, so every FRANKIE_FILE_CLAIM_V2 row of the
+            # ROOT failed and the teacher, render, brain, data and resume fell back to whole reads
+            items.append(dict(kind='stay', old_path=str(directory), new_path=None, bytes=_du(directory), pinned=True,
+                              reason='guarded directory with %d pinned files: stays in place (one pass: never copied or '
+                                     're-hashed at the boundary; the ROOT\'s file claims keep holding)' % len(inside)))
+            skip.add(real)
     pinned_dirs = set()
     for real in pins:
         parent = os.path.dirname(real)
@@ -222,6 +219,8 @@ def plan(roots, pins, *, guarded=(), floor=FLOOR_BYTES, archive_root=ARCHIVE_ROO
             continue
         stack = [root]
         redundant_paths = {i['old_path'] for i in redundant}
+        # a moved pinned file gets a fresh FRANKIE_FILE_CLAIM_V2 row in the root's own work/file-claims.jsonl (do_move)
+        claims_work = str(root / 'work') if (root / 'work' / 'file-claims.jsonl').is_file() else None
         while stack:
             directory = stack.pop()
             try:
@@ -273,6 +272,7 @@ def plan(roots, pins, *, guarded=(), floor=FLOOR_BYTES, archive_root=ARCHIVE_ROO
                 else:
                     items.append(dict(kind='move', old_path=str(entry), new_path=new_path_for(entry), bytes=info.st_size,
                                       pinned=True, expected={k: pins[real].get(k) for k in ('bytes', 'sha256')},
+                                      claims_work=claims_work,
                                       reason='pinned, %d bytes, outside every guarded prefix: behind a symlink' % info.st_size))
     order = {'move': 0, 'archive': 0, 'bind_mount': 0, 'stay': 1}
     items.sort(key=lambda i: (order[i['kind']], -i['bytes'], i['old_path']))
@@ -451,6 +451,26 @@ def _replace_with_symlink(old, new, aside_suffix):
         os.unlink(aside)
 
 
+def _claim_moved(item, new, size, sha):
+    """One pass (2026-10-09): the moved file's FRANKIE_FILE_CLAIM_V2 row from the sha256 the copy computed on its write
+    stream and the copy's own stat now (plus its last 64 KiB), appended to the root's work/file-claims.jsonl
+    (frankie_box_brain.append_file_claim), so every later reader that resolves the old path (the symlink) to the copy
+    takes the claim instead of reading the file whole. A hint: the outcome is listed, never the move's."""
+    work = item.get('claims_work')
+    if not work:
+        return dict(status='not_written', reason='no work/file-claims.jsonl under the root')
+    try:
+        if str(HERE.parents[2]) not in sys.path:
+            sys.path.append(str(HERE.parents[2]))                 # the checkout's root (research.kalshi...)
+        from research.kalshi.frankie_boss.operations.ingest_block_sources import file_claim
+        import frankie_box_brain as B
+        row = file_claim(new, size, sha, 'frankie_box_root_move.do_move: write-stream sha256 of the copy at %s'
+                         % time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()))
+        return B.append_file_claim(work, row)
+    except Exception as error:  # noqa: BLE001 - a claim is a hint
+        return dict(status='not_written', reason='%s: %s' % (type(error).__name__, error))
+
+
 def do_move(item, cpus=None, say=print):
     old, new, expected = item['old_path'], item['new_path'], item.get('expected') or {}
     started = time.monotonic()
@@ -467,7 +487,7 @@ def do_move(item, cpus=None, say=print):
     os.rename(part, new)
     _replace_with_symlink(old, new, '.moving-aside')
     _readme(old, new, 'move', size, sha)
-    out.update(status='done', seconds=round(time.monotonic() - started, 3))
+    out.update(status='done', seconds=round(time.monotonic() - started, 3), claim=_claim_moved(item, new, size, sha))
     say('moved %14d B %8.1f s  %s -> %s' % (size, out['seconds'], old, new))
     return out
 
