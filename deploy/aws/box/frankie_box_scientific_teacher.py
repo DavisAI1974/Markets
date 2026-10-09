@@ -510,13 +510,38 @@ def _hash_part(path):
     return hashed.hexdigest(), size
 
 
+LAST_PART_PINS = {}     # path -> how a large part's pin was taken by the last _part_tasks (pre_read's note)
+
+
+def _part_pinned(path, rel, pin, expected, size):
+    """One pass (2026-10-09): the basis on which a large search part is taken at its MANIFEST pin without a whole-file
+    hash beside its range scans: a FRANKIE_FILE_CLAIM row naming the pin that still holds (_held), else, with no
+    holding claim, its size equal to the MANIFEST's bytes and its mtime no later than the MANIFEST's (unchanged since
+    the search wrote and pinned it). None: the part is hashed whole as before."""
+    held = _held(path, pin, expected if expected is not None else size)
+    if held is not None:
+        return held
+    if _claims_full() or expected is None or size != expected:
+        return None
+    try:
+        manifest = Path(path).parents[len(Path(rel).parts) - 1] / 'MANIFEST.json'
+        if os.stat(path).st_mtime_ns <= os.stat(manifest).st_mtime_ns:
+            return 'the search MANIFEST pin: size equal and not modified since %s was written' % manifest
+    except (OSError, IndexError):
+        return None
+    return None
+
+
 def _part_tasks(parts):
-    """(tasks, layout) for the shared scan of parts [(path, rel, pin)]: a part below SCAN_RANGE_MIN_BYTES (or one whose
-    size cannot be read: its own task then raises where the whole scan would) is one ('scan', part) task; a larger part
-    is one ('hash', path) task and its ('range', (path, rel, pin, start, end)) tasks. layout[i] = the task indexes of
-    part i (one index, or the hash index then its range indexes in file order)."""
+    """(tasks, layout) for the shared scan of parts [(path, rel, pin[, MANIFEST bytes])]: a part below
+    SCAN_RANGE_MIN_BYTES (or one whose size cannot be read: its own task then raises where the whole scan would) is one
+    ('scan', part) task; a larger part is one pin task and its ('range', (path, rel, pin, start, end)) tasks. The pin
+    task is ('pinned', (path, pin, size)) when _part_pinned takes the MANIFEST pin (no read: one pass, 2026-10-09),
+    else ('hash', path), the whole-file hash as before. layout[i] = the task indexes of part i (one index, or the pin
+    index then its range indexes in file order)."""
     tasks, layout = [], []
-    for path, rel, pin in parts:
+    LAST_PART_PINS.clear()
+    for path, rel, pin, *rest in parts:
         try:
             size = os.stat(path).st_size
         except OSError:
@@ -527,7 +552,9 @@ def _part_tasks(parts):
             continue
         ranges = _part_ranges(path, size, size // SCAN_RANGE_BYTES + 1)
         layout.append(list(range(len(tasks), len(tasks) + 1 + len(ranges))))
-        tasks.append(('hash', path))
+        basis = _part_pinned(path, rel, pin, rest[0] if rest else None, size)
+        LAST_PART_PINS[str(path)] = basis or 'hashed whole (no holding claim; size or mtime not the MANIFEST\'s)'
+        tasks.append(('pinned', (path, pin, size)) if basis is not None else ('hash', path))
         tasks += [('range', (path, rel, pin, a, b)) for a, b in ranges]
     return tasks, layout
 
@@ -866,7 +893,7 @@ def shared_scan(claims_docs, days):
         return [None] * len(claims_docs)
     members, plans, jobs = plan
     _SHARED_SPECS = _shared_specs(members, plans)
-    tasks, layout = _part_tasks([(path, rel, pin) for _, path, rel, pin, _ in jobs])
+    tasks, layout = _part_tasks([(path, rel, pin, nbytes) for _, path, rel, pin, nbytes in jobs])
     try:
         out = _pinned_map(_pre_read_task, tasks, 'shared scientific scan of %d search parts (%d tasks) for %d claim '
                                                  'documents' % (len(jobs), len(tasks), len(members)))
@@ -906,8 +933,9 @@ SAVE_SCHEMA = 'FRANKIE_SCIENTIFIC_PRE_READ_SAVE_V1'
 SAVE_EXIT = 75
 SAVE_EVERY_SECONDS = 60
 SAVE_CODE_NAMES = ('sha256_bytes', 'SCAN_BLOCK', '_segments', '_line_at', '_line_starts', '_scan_part_shared',
-                   'SCAN_RANGE_MIN_BYTES', 'SCAN_RANGE_BYTES', '_part_ranges', '_hash_part', '_part_tasks', '_pre_read_task',
-                   '_read_pinned', '_finalize_rows', 'NATIVE_ROLES', 'NATIVE_LEDGERS', '_LEDGER_ABSENT', '_native_projection',
+                   'SCAN_RANGE_MIN_BYTES', 'SCAN_RANGE_BYTES', '_part_ranges', '_hash_part', '_part_tasks', '_part_pinned',
+                   '_pre_read_task',
+                   '_read_pinned', '_finalize_rows', '_line_start_from_end', 'NATIVE_ROLES', 'NATIVE_LEDGERS', '_LEDGER_ABSENT', '_native_projection',
                    '_native_read', '_native_read_kept', '_native_tasks')
 _SAVE = dict(requested=False, installed=False)
 
@@ -961,7 +989,7 @@ def _task_file(task):
         return pin['retained'] if role_kind == 'file' else pin.get('path')
     if kind == 'hash':
         return payload
-    return payload[0]
+    return payload[0]                   # 'scan', 'range' and 'pinned' name their file first
 
 
 def _task_identity(task):
@@ -1066,10 +1094,10 @@ class PreReadSave:
                 else:
                     records.append(item)
         if complete:
-            # the call that wrote it finished every document: nothing to resume. A new call reads every file again
-            # (skipping a re-hash on an unchanged stat outside a resume is Greg's open call (c), not taken)
-            self._set_aside('a completed save: its call finished, nothing to resume; this call reads again')
-            return {}
+            # one pass (Greg, 2026-10-09): a completed save of the same tasks is a receipt of reads already done; its
+            # values are reused on every file still unchanged (the same stat + last-line rule as a resume), never read
+            # again. A completed save of other code or inputs is set aside below.
+            self.note['completed_save_reused'] = True
         saved_identity = (header or {}).get('identity')
         if saved_identity is not None and 'code' not in saved_identity:
             # an older save shape without the function-level identity: its values are not reused; one full pass
@@ -1162,6 +1190,8 @@ def _pre_read_task(task):
     kind, payload = task
     if kind == 'native':
         return _native_read_kept(payload)
+    if kind == 'pinned':
+        return 'ok', (payload[1], payload[2])      # the MANIFEST pin taken by _part_pinned: nothing read
     try:
         return 'ok', (_hash_part(payload) if kind == 'hash' else _scan_part_shared(payload))
     except Exception as error:  # noqa: BLE001 - each document then reads its own parts and raises there
@@ -1181,11 +1211,12 @@ def pre_read(days, claims_docs, out_root, save_dir=None):
     global _SHARED_SPECS
     import sys
     started = time.time()
-    tasks, plans = _native_tasks(days)
+    tasks, plans = _native_tasks(days, out_root)
     plan = _shared_plan(claims_docs, days, minimum=1)
-    parts = [] if plan is None else [(path, rel, pin) for _, path, rel, pin, _ in plan[2]]
+    parts = [] if plan is None else [(path, rel, pin, nbytes) for _, path, rel, pin, nbytes in plan[2]]
     part_tasks, layout = _part_tasks(parts)
     note = dict(native_reads=len(tasks), scan_parts=len(parts), scan_tasks=len(part_tasks),
+                native_kept=[p[0]['day'] for p in plans if p[4] is not None], part_pins=dict(LAST_PART_PINS),
                 ranged_parts=sum(1 for ix in layout if len(ix) > 1), documents=len(claims_docs),
                 scan_documents=0 if plan is None else len(plan[0]), side_by_side=bool(tasks and parts))
     if plan is not None:
@@ -1235,7 +1266,8 @@ def pre_read(days, claims_docs, out_root, save_dir=None):
     finally:
         _SHARED_SPECS = ()
     reads, scans = out[:len(tasks)], out[len(tasks):]
-    native = [_native_document(d, retained, reports, tasks, reads, index, out_root) for d, retained, reports, index in plans]
+    native = [_native_document(d, retained, reports, tasks, reads, index, out_root, kept=kept)
+              for d, retained, reports, index, kept in plans]
     failed = [text for status, text in scans if status == 'error']
     if plan is None or failed:
         prepared = [None] * len(claims_docs)
@@ -1295,16 +1327,122 @@ def load_searches(dirs):
 
 
 # ------------------------------------------------------------------------------- completed native evidence, consumed
+# ---- one pass over the data (Greg, 2026-10-09): what an earlier step read whole and receipted is taken from its claim
+# (FRANKIE_FILE_CLAIM_V1/V2: a sealed file's bytes and sha256 with its inode, size, mtime_ns, filesystem and the sha256
+# of its last 64 KiB; ingest_block_sources.claim_still_holds, one 64 KiB read), never hashed again here. The claim rows
+# are found by the file's identity (inode, size, mtime_ns), so a data-export hardlink of a ROOT file takes the ROOT's
+# row: in every ancestor directory's file-claims.jsonl and work/file-claims.jsonl, and in the claim files an ancestor
+# export MANIFEST.json lists (hashing.claims.files). A file with no holding claim is read whole as before.
+# FRANKIE_ROOT_LEGACY_REUSE_CHECK=full (or FRANKIE_ROOT_NATIVE_REUSE_CHECK=full) restores every whole read.
+_CLAIM_ROWS = {}        # claims file -> {(inode, size, mtime_ns): row}, read once per process
+_MANIFEST_CLAIM_FILES = {}
+
+
+def _claims_full():
+    return 'full' in (os.environ.get('FRANKIE_ROOT_LEGACY_REUSE_CHECK'), os.environ.get('FRANKIE_ROOT_NATIVE_REUSE_CHECK'))
+
+
+def _claim_rows(candidate):
+    key = str(candidate)
+    if key not in _CLAIM_ROWS:
+        rows = {}
+        try:
+            from research.kalshi.frankie_boss.operations.ingest_block_sources import claim_identity
+            for line in Path(candidate).read_bytes().splitlines():
+                try:
+                    row = json.loads(line)
+                except ValueError:
+                    continue
+                identity = claim_identity(row)
+                if identity is not None:
+                    rows[identity] = row
+        except (ImportError, OSError):
+            rows = {}
+        _CLAIM_ROWS[key] = rows
+    return _CLAIM_ROWS[key]
+
+
+def _claim_files_near(path):
+    out = []
+    for parent in Path(path).parents:
+        for candidate in (parent / 'file-claims.jsonl', parent / 'work' / 'file-claims.jsonl'):
+            if candidate.is_file():
+                out.append(candidate)
+        manifest = parent / 'MANIFEST.json'
+        if manifest.is_file():
+            key = str(manifest)
+            if key not in _MANIFEST_CLAIM_FILES:
+                try:
+                    listed = ((json.loads(manifest.read_bytes()).get('hashing') or {}).get('claims') or {}).get('files') or []
+                    _MANIFEST_CLAIM_FILES[key] = [Path(f['path']) for f in listed if isinstance(f, dict) and f.get('path')]
+                except (OSError, ValueError, AttributeError, TypeError):
+                    _MANIFEST_CLAIM_FILES[key] = []
+            out += [c for c in _MANIFEST_CLAIM_FILES[key] if c.is_file()]
+    return out
+
+
+def _held(path, sha256, nbytes=None):
+    """The basis text when a saved claim row naming these bytes and this sha256 still holds for the file at `path`;
+    else None (the caller reads it whole). Never raises."""
+    if _claims_full():
+        return None
+    try:
+        observed = os.stat(path)
+        if nbytes is not None and observed.st_size != nbytes:
+            return None
+        from research.kalshi.frankie_boss.operations.ingest_block_sources import claim_still_holds
+        identity = (observed.st_ino, observed.st_size, observed.st_mtime_ns)
+        for candidate in _claim_files_near(path):
+            row = _claim_rows(candidate).get(identity)
+            if row is None or row.get('sha256') != sha256 or row.get('bytes') != observed.st_size:
+                continue
+            held = claim_still_holds(row, path)
+            if held is not None:
+                return 'by claim (%s): %s' % (candidate, held['text'])
+    except Exception:  # noqa: BLE001 - a claim is a hint: without one the file is read whole
+        return None
+    return None
+
+
 def _read_pinned(path, sha256, nbytes):
     data = Path(path).read_bytes()
-    if len(data) != nbytes or sha256_bytes(data) != sha256:
+    if len(data) != nbytes or (sha256_bytes(data) != sha256 and _held(path, sha256, nbytes) is None):
         raise ValueError('retained native evidence differs from the search\'s pin: %s' % path)
     return json.loads(gzip.decompress(data) if str(path).endswith('.gz') else data)
 
 
+def _line_start_from_end(path, size, lines_back):
+    """The byte offset where the last `lines_back` lines of the file begin (b'\\n' ends a line; a final line without
+    one counts as a line), read backwards in SCAN_BLOCK blocks: only the tail is read."""
+    if lines_back <= 0:
+        return size
+    with open(path, 'rb', buffering=0) as handle:
+        handle.seek(size - 1)
+        ends_with_newline = handle.read(1) == b'\n'
+        need = lines_back + (1 if ends_with_newline else 0)     # newlines from the end, the one before the first line
+        position, seen = size, 0
+        while position > 0:
+            low = max(0, position - SCAN_BLOCK)
+            handle.seek(low)
+            block = handle.read(position - low)
+            count = block.count(b'\n')
+            if seen + count >= need:
+                at = len(block)
+                for _ in range(need - seen):
+                    at = block.rfind(b'\n', 0, at)
+                return low + at + 1
+            seen += count
+            position = low
+    return 0
+
+
 def _finalize_rows(report):
-    """Every FINALIZE (post-stream) row of an exact ledger, whole, by emitting section; the ledger is hashed while it
-    streams and must equal the search's pin. Only the ordinals the search listed post_stream_knowledge_only are parsed."""
+    """Every FINALIZE (post-stream) row of an exact ledger, whole, by emitting section. Only the ordinals the search listed
+    post_stream_knowledge_only are parsed. One pass (2026-10-09): when the ledger's claim holds (its bytes and sha256
+    are the search's pin) and the search recorded its row count, the FINALIZE rows are read by seeking: the tail from
+    the first listed ordinal to the end (the post-stream rows end the ledger) is read and nothing before it; the line
+    count from that offset to the end must equal the rows the search counted. Without a holding claim the ledger is
+    hashed while it streams from byte 0 and must equal the search's pin, as before."""
     ranges = ((report.get('dispositions') or {}).get('post_stream_knowledge_only') or {}).get('ordinal_ranges') or []
     wanted, previous_end = [], -1
     for r in ranges:
@@ -1318,13 +1456,26 @@ def _finalize_rows(report):
             raise ValueError('FINALIZE ordinal ranges must be exact, ordered and disjoint')
         wanted.append((lo, hi))
         previous_end = hi
-    rows, hashed, size, selection, selected = {}, hashlib.sha256(), 0, 0, 0
-    # Read in blocks (_segments; Greg, 2026-10-07: faster, same bytes): every byte hashed whole in file order; a block with
-    # no listed ordinal is only counted (C-level newline count); inside a block holding listed ordinals the lines are
-    # walked to them and exactly those raw lines parsed, in order, with the line iterator's ordinals. The search emits
-    # ordered inclusive ranges; each is advanced through once; every original row is still hashed.
-    for segment, base, count in _segments(report['path'], hashed):
+    total = report.get('rows')
+    claimed = (_held(report['path'], report.get('sha256'), report.get('bytes'))
+               if type(total) is int and total >= 0 and (not wanted or wanted[-1][1] < total) else None)
+    Path(report['path']).stat()                    # an absent ledger raises FileNotFoundError here, as the read did
+    rows, hashed, size, selection, selected = {}, None, 0, 0, 0
+    if claimed is not None:
+        first = wanted[0][0] if wanted else total
+        start = _line_start_from_end(report['path'], report['bytes'], total - first)
+        base_ordinal = first
+    else:
+        hashed, start, base_ordinal = hashlib.sha256(), 0, 0
+    counted = 0
+    # Read in blocks (_segments; Greg, 2026-10-07: faster, same bytes); a block with no listed ordinal is only counted
+    # (C-level newline count); inside a block holding listed ordinals the lines are walked to them and exactly those raw
+    # lines parsed, in order, with the line iterator's ordinals. Each ordered inclusive range is advanced through once.
+    for segment, base, count in (_segments(report['path'], hashed, start) if start < report.get('bytes', 0) or hashed
+                                 is not None else ()):
+        base += base_ordinal
         size += len(segment)
+        counted += count
         stop = base + count                       # this segment's lines are ordinals base .. stop - 1
         while selection < len(wanted) and wanted[selection][1] < base:
             selection += 1
@@ -1345,8 +1496,11 @@ def _finalize_rows(report):
             if hi >= stop:
                 break                             # the range continues in the next segment
             selection += 1
-    if size != report.get('bytes') or hashed.hexdigest() != report.get('sha256'):
-        raise ValueError('exact ledger differs from the search\'s pin: %s' % report['path'])
+    if hashed is not None:
+        if size != report.get('bytes') or hashed.hexdigest() != report.get('sha256'):
+            raise ValueError('exact ledger differs from the search\'s pin: %s' % report['path'])
+    elif size != report['bytes'] - start or counted != total - base_ordinal:
+        raise ValueError('exact ledger tail differs from the search\'s row count: %s' % report['path'])
     if selected != sum(hi - lo + 1 for lo, hi in wanted):
         raise ValueError('FINALIZE ordinal selection extends beyond its pinned ledger')
     return rows
@@ -1436,37 +1590,103 @@ def completed_native_evidence_many(days, out_root):
     assembled in this process in exactly the serial order (receipt, result, 4.2, 4.4, member, lifecycle), with the same
     listed entries in the same order and the same bytes written; a read that raised in a worker is re-run here at its own
     place, so the first error in that order is raised as before. A broken pool re-reads everything here, in order (L-2)."""
-    tasks, plans = _native_tasks(days)
+    tasks, plans = _native_tasks(days, out_root)
     reads = _pinned_map(_native_read_kept, tasks, 'completed native evidence: %d reads of %d searched days'
                         % (len(tasks), len(days))) if tasks else []
     out = []
-    for d, retained, reports, index in plans:
-        out.append(_native_document(d, retained, reports, tasks, reads, index, out_root))
+    for d, retained, reports, index, kept in plans:
+        out.append(_native_document(d, retained, reports, tasks, reads, index, out_root, kept=kept))
     return out
 
 
-def _native_tasks(days):
+def _native_tasks(days, out_root=None):
     """(tasks, plans) of completed_native_evidence_many: every file read of every day in the serial order, and per day
-    (d, retained, reports, index of its first read)."""
+    (d, retained, reports, index of its first read, kept). kept (one pass, 2026-10-09): the day's own earlier
+    <out_root>/native/<day>-completed-native.json when it is the receipt of these very inputs (_native_kept): that day
+    gets no read at all and its reference is the kept document's."""
     tasks, plans = [], []
     for d in days:
         retained = {x['role']: x for x in d.get('native_retained') or []}
         reports = {x['source']: x for x in d.get('native_reports') or []}
         index = len(tasks)
-        if retained:
+        kept = _native_kept(d, retained, reports, out_root) if (retained and out_root is not None) else None
+        if retained and kept is None:
             tasks += [('file', role, retained[role]) for role in NATIVE_ROLES if role in retained]
             tasks += [('ledger', name, reports[name]) for name in NATIVE_LEDGERS if name in reports]
-        plans.append((d, retained, reports, index))
+        plans.append((d, retained, reports, index, kept))
     return tasks, plans
 
 
-def _native_document(d, retained, reports, tasks, reads, index, out_root):
+NATIVE_DOC_SCHEMA = 'FRANKIE_COMPLETED_NATIVE_EVIDENCE_V1'
+
+
+def _unchanged_since(path, pin, written_ns):
+    """The basis when the pinned file is the one the kept document was made from: its claim holds, or (no holding
+    claim) its size is the pin's and it was last modified no later than the kept document was written."""
+    held = _held(path, pin['sha256'], pin['bytes'])
+    if held is not None:
+        return held
+    if _claims_full():
+        return None
+    try:
+        observed = os.stat(path)
+    except OSError:
+        return None
+    if observed.st_size == pin['bytes'] and observed.st_mtime_ns <= written_ns:
+        return 'size equal to the pin and not modified since the completed-native document was written'
+    return None
+
+
+def _native_kept(d, retained, reports, out_root):
+    """(reference, listed) from the day's existing <out_root>/native/<day>-completed-native.json when it was made from
+    exactly these inputs: same schema and day, the same search manifest sha256 (which pins the ledger reports), the same
+    read_from pins, and every file it read unchanged since (_unchanged_since: its claim, else size + mtime). Else None
+    (the reads run). The kept document is the receipt of the earlier reads: nothing it was made from is read again."""
+    path = Path(out_root) / 'native' / ('%s-completed-native.json' % d['day'])
+    try:
+        written = path.stat().st_mtime_ns
+        data = path.read_bytes()
+        doc = json.loads(data)
+    except (OSError, ValueError):
+        return None
+    read_from = {k: dict(path=v['retained'], sha256=v['sha256'], bytes=v['bytes']) for k, v in retained.items()}
+    if (not isinstance(doc, dict) or doc.get('schema') != NATIVE_DOC_SCHEMA or doc.get('day') != d['day']
+            or doc.get('search_manifest_sha256') != d['manifest_sha256'] or doc.get('read_from') != read_from):
+        return None
+    pins = list(read_from.values()) + [reports[name] for name in NATIVE_LEDGERS
+                                       if name in ((doc.get('finalize_rows') or {}).get('rows') or {}) and name in reports]
+    for pin in pins:
+        if _unchanged_since(pin['path'], pin, written) is None:
+            return None
+    return _native_reference(d, doc, data, path, doc.get('listed') or [])
+
+
+def _native_reference(d, doc, data, path, listed):
+    # C1: the reference's IDENTITY is its content, sources and owning manifest (identity below), never where this owner
+    # materialized it (path): identical bytes under another output root are the same evidence; different bytes for the
+    # same frozen owner are different evidence (native_evidence_identity compares them).
+    reference = dict(path=str(path), sha256=sha256_bytes(data), bytes=len(data), day=d['day'],
+                     search_manifest_sha256=d['manifest_sha256'], read_from=doc['read_from'],
+                     identity=dict(day=d['day'], search_manifest_sha256=d['manifest_sha256'], sha256=sha256_bytes(data),
+                                   bytes=len(data), read_from=doc['read_from']),
+                     counts=dict(first_last_pairs=len((doc.get('section_4_2') or {}).get('first_last_pairs') or []),
+                                 stream_end_rows=len((doc.get('section_4_4') or {}).get('stream_end_rows') or []),
+                                 finalize_rows=doc['finalize_rows']['by_ledger'],
+                                 averaged_rows=len(((doc.get('result') or {}).get('averaged_companions') or {}).get('rows') or [])),
+                     receipt=doc.get('receipt'), matching_rule=(doc.get('section_4_4') or {}).get('matching_rule'),
+                     listed=listed)
+    return reference, listed
+
+
+def _native_document(d, retained, reports, tasks, reads, index, out_root, kept=None):
     """Assemble and write one day's FRANKIE_COMPLETED_NATIVE_EVIDENCE_V1 from its reads (completed_native_evidence's
-    document, listed entries and reference, unchanged)."""
+    document, listed entries and reference, unchanged); a kept document (_native_kept) is returned as it stands."""
+    if kept is not None:
+        return kept
     listed = []
     if not retained:
         return None, [dict(day=d['day'], reason='the search carries no retained native evidence (none selected for this day)')]
-    doc = dict(schema='FRANKIE_COMPLETED_NATIVE_EVIDENCE_V1', day=d['day'], search_manifest_sha256=d['manifest_sha256'],
+    doc = dict(schema=NATIVE_DOC_SCHEMA, day=d['day'], search_manifest_sha256=d['manifest_sha256'],
                read_from={k: dict(path=v['retained'], sha256=v['sha256'], bytes=v['bytes']) for k, v in retained.items()},
                rule='exact numbers are evidence, read whole and bound by sha256; averages are labelled supplements (D37); '
                     'post-stream rows have no axis position and are never search steps; nothing is computed here')
@@ -1505,20 +1725,7 @@ def _native_document(d, retained, reports, tasks, reads, index, out_root):
     else:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(data)
-    # C1: the reference's IDENTITY is its content, sources and owning manifest (identity below), never where this owner
-    # materialized it (path): identical bytes under another output root are the same evidence; different bytes for the
-    # same frozen owner are different evidence (native_evidence_identity compares them).
-    reference = dict(path=str(path), sha256=sha256_bytes(data), bytes=len(data), day=d['day'],
-                     search_manifest_sha256=d['manifest_sha256'], read_from=doc['read_from'],
-                     identity=dict(day=d['day'], search_manifest_sha256=d['manifest_sha256'], sha256=sha256_bytes(data),
-                                   bytes=len(data), read_from=doc['read_from']),
-                     counts=dict(first_last_pairs=len((doc.get('section_4_2') or {}).get('first_last_pairs') or []),
-                                 stream_end_rows=len((doc.get('section_4_4') or {}).get('stream_end_rows') or []),
-                                 finalize_rows=doc['finalize_rows']['by_ledger'],
-                                 averaged_rows=len(((doc.get('result') or {}).get('averaged_companions') or {}).get('rows') or [])),
-                     receipt=doc.get('receipt'), matching_rule=(doc.get('section_4_4') or {}).get('matching_rule'),
-                     listed=listed)
-    return reference, listed
+    return _native_reference(d, doc, data, path, listed)
 
 
 def native_evidence_identity(reference):
