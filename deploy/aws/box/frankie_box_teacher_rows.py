@@ -51,7 +51,7 @@ SIDECAR_FIELDS = dict(
 # The roles the readers use, each the row key that carries it (row_keys of the header; renamed here only)
 ROLE_KEYS = dict(key='key', clocks='clocks', clocks_absent='clocks_absent', planes='planes', planes_state='planes_state',
                  planes_absent='planes_absent', invalidated='invalidated', coverage='coverage', match='match',
-                 book_columns='book_columns')
+                 book_columns='book_columns', state_split='state_split')
 KEY_CURSOR = 'adapter_cursor'                  # the key field that equals the row's cursor
 LOCK_CLOCK = 'clock_lock_time'                 # stamped once at publication: the teacher's as_of (header clock_lock_time)
 FIRST_SET_ROW_KEYS = ('cursor', 'target_hash', 'source_manifest_hash', 'source_prefix_hash', 'as_of_ts_recv_ns',
@@ -648,7 +648,7 @@ def second_set_at_cutoff(rows_dir, through_cursor, *, day_file=None):
                      'read by their references'), None
 
 
-def second_set_field(rows_dir, role, leaf, *, entry=None, day_file=None):
+def second_set_field(rows_dir, role, leaf, *, entry=None, day_file=None, through_cursor=None):
     """One second-set leaf per teacher row, streamed (the exchange's claim ledger on a second-set name): yields
     (cursor, value, why) for every row; `leaf` a dotted path inside the role's value (for planes: `entry` names the
     plane entry (entry names carry dots) and `leaf` the dotted path inside each resolved row; the value is the list of
@@ -662,6 +662,9 @@ def second_set_field(rows_dir, role, leaf, *, entry=None, day_file=None):
     try:
         for row in stream:
             cursor = row.get('cursor')
+            if through_cursor is not None and (type(cursor) is not int or cursor > through_cursor):
+                yield cursor, None, 'after the cutoff'      # not read further, never resolved
+                continue
             value = row.get(key) if key else None
             if value is None:
                 yield cursor, None, 'the row carries no %s' % role
@@ -696,3 +699,50 @@ def _dig(value, parts):
         else:
             return None
     return value
+
+
+# ---- a second-set leaf ledgered over the rows (the exchange's claims; Jev's material up to his cutoff)
+SECOND_SET_PREFIX = 'dipole.second_set.'
+SECOND_SET_NAME_RE = (r'dipole\.second_set\.(?:(planes)\[([^\]]+)\](?:\.(.+))?|(key|clocks|book_columns|state_split)\.(.+))')
+
+
+def second_set_leaf_ledger(rows_dir, name, *, through_cursor=None, day_file=None):
+    """(ledger, summary) of one second-set leaf (dipole.second_set.<key|clocks|book_columns|state_split>.<leaf> or
+    dipole.second_set.planes[<entry>].<leaf>) over every teacher row of the sidecar, or (None, why). through_cursor:
+    rows after it are not ledgered (counted in summary.rows_after_cutoff_excluded, never read into the ledger). A row
+    without a finite number is MISSING with its reason counted; a plane with several references at one row is not
+    reduced to one value (listed with the count)."""
+    import math
+    import re
+    from research.kalshi.frankie_boss import dipole_classroom as DC
+    match = re.fullmatch(SECOND_SET_NAME_RE, str(name))
+    if match is None:
+        return None, ('not a second-set leaf name (dipole.second_set.<key|clocks|book_columns|state_split>.<leaf> or '
+                      'planes[<entry>].<leaf>)')
+    role, entry, leaf = (('planes', match[2], match[3] or '') if match[1] else (match[4], None, match[5]))
+    if not sidecar_of(rows_dir).is_file():
+        return None, 'no rows sidecar beside the teacher rows (a teacher before the second set)'
+    ledger, reasons, after = [], {}, 0
+    for cursor, value, why in second_set_field(rows_dir, role, leaf, entry=entry, day_file=day_file,
+                                               through_cursor=through_cursor):
+        if through_cursor is not None and (type(cursor) is not int or cursor > through_cursor):
+            after += 1
+            continue
+        if why is None and role == 'planes':
+            numeric = [v for v in value if type(v) in (int, float) and math.isfinite(v)]
+            if len(value) != 1:
+                why = '%d references at this row: not reduced to one value' % len(value)
+            elif not numeric:
+                why = 'the referenced row carries no finite number at this leaf'
+            else:
+                value = numeric[0]
+        elif why is None and (type(value) not in (int, float) or isinstance(value, bool) or not math.isfinite(value)):
+            why = 'not a finite number (%s)' % type(value).__name__
+        if why is not None:
+            reasons[why] = reasons.get(why, 0) + 1
+        ledger.append(dict(cursor=cursor, value=value if why is None else None, state='PRESENT' if why is None else 'MISSING'))
+    available = sum(p['state'] == 'PRESENT' for p in ledger)
+    return ledger, dict(series=name, entity=None, leaf=leaf, role=role, entry=entry, rows=len(ledger),
+                        available=available, unavailable=reasons, direction=DC._direction(ledger),
+                        through_cursor=through_cursor, rows_after_cutoff_excluded=after,
+                        representation='the teacher\'s second set (rows sidecar); a plane read by its reference')

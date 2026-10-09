@@ -878,44 +878,16 @@ def retained_evidence_counts(measure, names):
     return out
 
 
-SECOND_SET_PREFIX = 'dipole.second_set.'
-# a second-set claim name: dipole.second_set.<role>.<dotted leaf> for key / clocks / book_columns, and
+# a second-set claim name: dipole.second_set.<role>.<dotted leaf> for key / clocks / book_columns / state_split, and
 # dipole.second_set.planes[<entry>].<dotted leaf inside the referenced row> for a plane (entry names carry dots)
-SECOND_SET_NAME = re.compile(r'dipole\.second_set\.(?:(planes)\[([^\]]+)\](?:\.(.+))?|(key|clocks|book_columns)\.(.+))')
+SECOND_SET_PREFIX = 'dipole.second_set.'
 
 
 def _second_set_ledger(measure, name):
-    """(ledger, summary) of one second-set leaf over every teacher row, streamed from the rows sidecar beside the rows
-    (planes read by their references), or (None, why). A row without the value is MISSING with its reason counted;
-    a plane with several references at one row is not reduced to one value (listed with the count)."""
-    from research.kalshi.frankie_boss import dipole_classroom as DC
+    """(ledger, summary) of one second-set leaf over every teacher row (frankie_box_teacher_rows.second_set_leaf_ledger:
+    streamed from the rows sidecar beside the rows, planes read by their references), or (None, why)."""
     import frankie_box_teacher_rows as TR
-    match = SECOND_SET_NAME.fullmatch(str(name))
-    if match is None:
-        return None, 'not a second-set leaf name (dipole.second_set.<key|clocks|book_columns>.<leaf> or planes[<entry>].<leaf>)'
-    role, entry, leaf = (('planes', match[2], match[3] or '') if match[1] else (match[4], None, match[5]))
-    rows_dir = Path(measure['path']).parent
-    if not TR.sidecar_of(rows_dir).is_file():
-        return None, 'no rows sidecar beside the teacher rows (a teacher before the second set)'
-    ledger, reasons = [], {}
-    for cursor, value, why in TR.second_set_field(rows_dir, role, leaf, entry=entry):
-        if why is None and role == 'planes':
-            numeric = [v for v in value if type(v) in (int, float) and math.isfinite(v)]
-            if len(value) != 1:
-                why = '%d references at this row: not reduced to one value' % len(value)
-            elif not numeric:
-                why = 'the referenced row carries no finite number at this leaf'
-            else:
-                value = numeric[0]
-        elif why is None and (type(value) not in (int, float) or isinstance(value, bool) or not math.isfinite(value)):
-            why = 'not a finite number (%s)' % type(value).__name__
-        if why is not None:
-            reasons[why] = reasons.get(why, 0) + 1
-        ledger.append(dict(cursor=cursor, value=value if why is None else None, state='PRESENT' if why is None else 'MISSING'))
-    available = sum(p['state'] == 'PRESENT' for p in ledger)
-    return ledger, dict(series=name, entity=None, leaf=leaf, role=role, entry=entry, rows=len(ledger),
-                        available=available, unavailable=reasons, direction=DC._direction(ledger),
-                        representation='the teacher\'s second set (rows sidecar); a plane read by its reference')
+    return TR.second_set_leaf_ledger(Path(measure['path']).parent, name)
 
 
 def _evidence_producers(measure):

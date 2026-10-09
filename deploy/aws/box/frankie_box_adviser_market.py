@@ -2180,6 +2180,68 @@ def teacher_second_set_at_cutoff(rows_path, measure):
     return record, None
 
 
+JEV_SECOND_SET_SCHEMA = 'FRANKIE_JEV_SECOND_SET_V1'
+JEV_SECOND_SET_FORMAT = 1
+
+
+def jev_second_set(rows_dir, through_cursor, as_of, *, names=(), day_file=None):
+    """Jev's second set (Greg, 2026-10-09: Jev gets it; his wall is the cutoff): the teacher's last row at or before
+    through_cursor with its key, clocks, planes RESOLVED (every plane the row carries, whole; external.* read from the
+    day file when given, else listed unresolved with the reason), planes_absent, book_columns and state_split when
+    present; and each named dipole.second_set.* leaf ledgered over every row up to the cutoff. The blind-wall audit
+    counts the rows after the cutoff in what this returns: it must be 0 (a ValueError otherwise, never handed on).
+    Returns the whole record (FORMAT JEV_SECOND_SET_FORMAT); never drops a plane: an unreadable one is listed."""
+    import frankie_box_teacher_rows as TR
+    record = dict(schema=JEV_SECOND_SET_SCHEMA, format=JEV_SECOND_SET_FORMAT, through_cursor=through_cursor, as_of=as_of,
+                  day_file=str(day_file) if day_file else None)
+    at_cutoff, why = TR.second_set_at_cutoff(rows_dir, through_cursor, day_file=day_file)
+    record['at_cutoff'] = at_cutoff if at_cutoff is not None else dict(status='absent', reason=why)
+    ledgers, listed = {}, []
+    for name in dict.fromkeys(names or ()):
+        ledger, summary = TR.second_set_leaf_ledger(rows_dir, name, through_cursor=through_cursor, day_file=day_file)
+        if ledger is None:
+            listed.append(dict(series=name, reason=summary))
+            continue
+        ledgers[name] = dict(summary=summary, ledger=ledger)
+    record['ledgers'] = ledgers
+    record['ledgers_listed'] = listed
+    after = []
+    if at_cutoff is not None and (type(at_cutoff.get('cursor')) is not int or at_cutoff['cursor'] > through_cursor):
+        after.append(dict(where='at_cutoff', cursor=at_cutoff.get('cursor')))
+    for name, item in ledgers.items():
+        after += [dict(where=name, cursor=p['cursor']) for p in item['ledger']
+                  if type(p['cursor']) is not int or p['cursor'] > through_cursor]
+    record['blind_wall_audit'] = dict(rows_after_cutoff=len(after), through_cursor=through_cursor,
+                                      rows_excluded_after_cutoff={n: i['summary'].get('rows_after_cutoff_excluded')
+                                                                  for n, i in ledgers.items()},
+                                      rule='every row handed to Jev is at or before his cutoff; rows after it are not '
+                                           'read into his material')
+    if after:
+        raise ValueError('Jev second set would carry %d rows after his cutoff %s: %s' % (len(after), through_cursor, after[:5]))
+    resolver = (at_cutoff or {}).get('resolver') or {}
+    record['counts'] = dict(
+        planes=len((at_cutoff or {}).get('planes') or {}),
+        planes_resolved=(resolver.get('counts') or {}).get('resolved'),
+        planes_unresolved=(resolver.get('counts') or {}).get('unresolved'),
+        planes_absent=len((at_cutoff or {}).get('planes_absent') or {}),
+        ledgers=len(ledgers), ledgers_listed=len(listed),
+        ledger_rows=sum(len(i['ledger']) for i in ledgers.values()))
+    return record
+
+
+def second_set_claim_names(*texts):
+    """Every dipole.second_set.* leaf name appearing in the given texts (the day's exchange record, lessons), in order."""
+    import re
+    names = []
+    for text in texts:
+        # a name inside JSON text ends at its closing quote, a comma, a space or a closing bracket
+        for match in re.finditer(r'dipole\.second_set\.(?:planes\[[^\]"]+\](?:\.[^"\s,\]]+)?|'
+                                 r'(?:key|clocks|book_columns|state_split)\.[^"\s,\]]+)', text or ''):
+            if match.group(0) not in names:
+                names.append(match.group(0))
+    return names
+
+
 def render_summary(context):
     """The render's facts without its text (for references and reports)."""
     render = (context or {}).get('picture_render')
