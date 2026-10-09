@@ -255,12 +255,14 @@ def load_retained_layers(session, *, allow_failures=False, receipt=None, spools=
 
 def write_retained_digest(session, receipt, layers, prices, frames, structures, bedrock=True):
     """The digest from the retained layers, exactly as ROOT's assembly writes it (the roll series and per-second flow).
-    bedrock=False: no bedrock sources or tables (the render-only step; Granite's read stops at the bedrock heading)."""
+    bedrock=False: no bedrock sources or tables (the render-only step; Granite's read stops at the bedrock heading).
+    Returns the writer's proof (FRANKIE_STREAMED_DIGEST_V1: bytes, sha256 of the published digest, its tables)."""
     flow = layers['legacy_native_signed_flow']['per_second']
     roll_layer = layers['legacy_per_second_roll20']
     import frankie_box_progress
     frankie_box_progress.for_session(session).update('root-digest')
-    session._write_digest(receipt, layers, prices, frames, structures,
+    # the writer's proof (bytes and sha256 hashed on the write stream) is returned, so a caller never re-reads the digest
+    return session._write_digest(receipt, layers, prices, frames, structures,
         [float('nan') if v is None else v for v in roll_layer['series']], roll_layer['first_second'],
         [r['buy'] for r in flow], [r['sell'] for r in flow], bedrock=bedrock)
 
