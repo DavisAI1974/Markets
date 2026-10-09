@@ -1521,7 +1521,7 @@ def box_slots(settings):
     except ImportError:
         return None, max(1, int(settings.get('parallel_days') or 1)), 'PARALLEL_DAYS (frankie_box_cores.py not on the box)'
     me = os.getpid()
-    held, _, _, bookings = C.usage(1.0, exclude=C.ancestors(C.processes(), me) | {me})
+    held, _, _, bookings = C.usage(0.0, exclude=C.ancestors(C.processes(), me) | {me})
     booked = {c for b in bookings for c in b['cpus']}
     free = [c for c in C.online_cpus() if c not in booked and c not in held]
     return len(free) // C.DAY_RUN_CPUS, len(C.online_cpus()) // C.DAY_RUN_CPUS, \
@@ -1581,7 +1581,7 @@ def _book_slot(x, stage, commit):
     # the run's day slot size (plan day_cpus: 32 = both main-box lanes as one booking; default 16)
     size = int(_plan_of(x['run']).get('day_cpus') or C.DAY_RUN_CPUS)
     b, outcome = C.book('day-run', os.getpid(), dict(day=x['day'], run=x['run'], stage='day-slot-' + stage, commit=commit,
-                                                  cpus=cpus, size=size), 1.0)
+                                                  cpus=cpus, size=size), 0.0)
     if not b:
         _SLOT_HELD_PIDS.update(outcome.get('held_pids') or [])   # the root worker wakes on their exit (2026-10-09)
     return (b['booking'], b['cpus'], None) if b else (None, None, outcome.get('reason'))

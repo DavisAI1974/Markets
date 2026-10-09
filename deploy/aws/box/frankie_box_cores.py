@@ -31,9 +31,10 @@ SIZES (hard):
 
 FREE = the online CPUs, less the CPUs of live bookings, less the CPUs actually in use by any running Frankie process tree
 that is NOT in the ledger: every python process whose executable, command line or working directory is under
-/opt/frankie-box, and every descendant of one. Per thread (read from /proc twice, WINDOW seconds apart): a thread pinned
-to fewer than all online CPUs holds every CPU of its affinity; an unpinned thread holds the CPU it last ran on when it
-used at least 5% of a CPU in the window. A CPU in either set is never booked.
+/opt/frankie-box, and every descendant of one. Per thread (ONE /proc read, no wait, 2026-10-09; `show` alone samples twice,
+WINDOW seconds apart): a thread pinned to fewer than all online CPUs holds every CPU of its affinity; an unpinned thread
+holds the CPU it is running on this instant (show: when it used at least 5% of a CPU in the window). A CPU in either set
+is never booked.
 
 CPU 0 is the host / ordered-consumer CPU. A job's PARENT CPU is the lowest CPU of its booking (worker_budget reserves
 cpus[0] of the affinity for the ordered consumer and host; the workers take cpus[1:]), so CPU 0, when a booking holds it,
@@ -652,8 +653,9 @@ def ancestors(procs, pid):
     return out
 
 
-def threads(pids):
-    """{(pid, tid): (ticks, last cpu, affinity)} of every thread of the pids."""
+def threads(pids, states=None):
+    """{(pid, tid): (ticks, last cpu, affinity)} of every thread of the pids. states: a dict filled with {(pid, tid): the
+    thread's /proc state letter now} (R = running or runnable this instant)."""
     out = {}
     for pid in pids:
         try:
@@ -670,12 +672,25 @@ def threads(pids):
             except OSError:
                 continue
             out[(pid, tid)] = (s[1], s[3], affinity)
+            if states is not None:
+                try:
+                    states[(pid, tid)] = Path('/proc/%d/task/%d/stat' % (pid, tid)).read_text().rsplit(')', 1)[1].split()[0]
+                except (OSError, IndexError):
+                    states[(pid, tid)] = '?'
     return out
 
 
 def sample(pids, window):
-    """[(pid, tid, busy share of one CPU over the window, last cpu, affinity)] for every thread of the pids."""
+    """[(pid, tid, busy share of one CPU over the window, last cpu, affinity)] for every thread of the pids. window <= 0
+    (every booking, grow and free since 2026-10-09: no timed wait under the ledger and queue locks): ONE /proc read, no
+    sleep; an unpinned thread's busy share is 1.0 when it is running this instant (state R) and 0.0 otherwise; a pinned
+    thread holds its affinity either way. A positive window (the read-only show) samples twice, window seconds apart."""
     tick = os.sysconf('SC_CLK_TCK')
+    if not window or window <= 0:
+        states = {}
+        now = threads(pids, states)
+        return [(key[0], key[1], 1.0 if states.get(key) == 'R' else 0.0, cpu, affinity)
+                for key, (ticks, cpu, affinity) in now.items()]
     first = threads(pids)
     started = time.monotonic()
     time.sleep(max(0.2, window))
@@ -1029,7 +1044,7 @@ def grow_locked(b, size, reason, window):
     return b, dict(status='grown', booking=b['booking'], cpus=b['cpu_list'], added=cpu_list(added), from_size=len(have), to_size=size)
 
 
-def grow(booking, size, reason, window=1.0):
+def grow(booking, size, reason, window=0.0):
     """Widen a live or retained day-run booking (session 8, Greg: "a classroom day gets all 64"; the fleet: two ROOTs at
     32, then the classroom one day at a time on all 64). Returns (booking record, outcome); outcome status grown |
     waiting | refused, the reason on it."""
@@ -1089,7 +1104,7 @@ def retain(booking, run, day, attempt=None, reason=None):
         return _retain_locked(b, run, day, attempt=attempt, reason=reason)
 
 
-def rebook_for_owner(run, day, attempt, size, stage, commit, window=1.0, reason=None):
+def rebook_for_owner(run, day, attempt, size, stage, commit, window=0.0, reason=None):
     """Session 8 (B4, the queue half): a saved day whose booking was RELEASED at the fleet classroom gate re-books under
     ONE ledger lock at its resume: the resolver (lane_for day-slot = allocate_day_slot, whole cores first) names the
     lane and refuses loudly when none is free; the same lane is booked (the same allocation, so the two agree) for this
@@ -1575,7 +1590,8 @@ def main():
         s.add_argument('--commit')
         s.add_argument('--workers', type=int)
         s.add_argument('--verify', choices=('inline', 'deferred'))
-        s.add_argument('--window', type=float, default=1.0, help='seconds between the two /proc samples')
+        s.add_argument('--window', type=float, default=0.0, help='seconds between two /proc samples (default 0: one read, '
+                                                                 'no wait; a thread running this instant holds its CPU)')
         s.add_argument('--outcome', help='write the booking outcome (booked | waiting | refused) as JSON here')
         s.add_argument('--cpus', help='a saved day\'s resume: exactly its retained CPU list (comma list / ranges)')
         s.add_argument('--size', type=int, help='day-run slot size: one of %s (default %d; the run\'s plan day_cpus); '
@@ -1608,7 +1624,7 @@ def main():
     s.add_argument('--booking', required=True)
     s.add_argument('--size', type=int, required=True, help='one of %s, larger than the booking holds' % (DAY_RUN_SIZES,))
     s.add_argument('--reason')
-    s.add_argument('--window', type=float, default=1.0)
+    s.add_argument('--window', type=float, default=0.0)
     s.add_argument('--outcome')
     s = sub.add_parser('plan', help='READ-ONLY: the resolver (lane_for) for a step')
     s.add_argument('--step', required=True, choices=LANE_STEPS)
@@ -1618,7 +1634,7 @@ def main():
     s.add_argument('--days', help='teacher-lanes: the batch days, comma list')
     s.add_argument('--attempt', help='digest-render with FRANKIE_RENDER_BOOKING: the output root\'s attempt name')
     s = sub.add_parser('free')
-    s.add_argument('--window', type=float, default=1.0)
+    s.add_argument('--window', type=float, default=0.0)
     a = p.parse_args()
     if getattr(a, 'booking', None) and not re.fullmatch('[A-Za-z0-9_.-]{1,160}', a.booking):
         raise SystemExit('--booking: a booking id from the ledger')
