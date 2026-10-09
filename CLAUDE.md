@@ -1,6 +1,7 @@
 # Claude session drop-in — session 13 (from session 12, 2026-10-09 16:3xZ; Greg's usage nearly out: a Claude OR Codex session takes over): READ FIRST `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261009_SESSION13.md`
 
-Branch `ccr-d2f8f826-iefeah-frankie` (SHALLOW: `git fetch --deepen=400`). The day a2/20231018 is RUNNING on the box: the
+Branch `ccr-d2f8f826-iefeah-frankie` (SHALLOW: `git fetch --deepen=400`). BOX STOPPED 16:37Z (Greg: break), KeepRunning=false;
+the day a2/20231018 saved mid-finish (restart sequence in the drop-in). When it ran: the
 teacher seals 5/30-minute blocks (28 sealed at 16:27Z), the classroom runs ONE LESSON AT A TIME on them (blocks 1-20
 complete; the block-1 TEACHER REPORT is in `TEACHER_REPORT_20231018_BLOCK1.md`). Greg's session-12 rules: the science
 is never weakened for speed; one lesson at a time; everything at once except prerequisites; block 1 (the first 5

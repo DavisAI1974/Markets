@@ -1,20 +1,29 @@
-# DROP-IN, session 13 (from session 12, 2026-10-09 16:3xZ), for Claude or Codex
+# DROP-IN, session 13 (from session 12, 2026-10-09 16:4xZ), for Claude or Codex
 
 Greg's usage is nearly out: this box is written so a fresh session (Claude or Codex) can take over without the chat.
 
-## THE BOX (state at 16:30Z, 2026-10-09)
+## THE BOX: STOPPED 16:37Z (Greg: "Kill box for right now taking a break")
 
 - Branch `ccr-d2f8f826-iefeah-frankie` (SHALLOW: `git fetch --deepen=400` first). Tip = this commit. Every commit of
-  session 12 is on GitHub and ON THE BOX (code `3071eac8` current; this handoff commit is docs only).
-- Box `i-035994afa8bdf66a5` (r7i.16xlarge, 64 CPU, 495 GB, us-east-1) RUNNING. Day `e2e-20231018-a2/20231018`
-  (attempt `-a1`, 64-CPU booking) in its finish: the TEACHER is sealing blocks, the CLASSROOM runs one lesson at a time.
-- Teacher: the teacher process was started at 15:22:11Z on code `bd8c1a57` and runs that code for its life (a
-  teacher-code change needs the save/stop/resume below; the classroom restarts never touch it). At 16:27Z: 28 blocks
-  sealed, next_cursor 168,212 of 771,787, manifest status `sealing`. It seals a block about every 50 s and will run
-  for hours (the merge is ~130 rows/s plus the seals).
-- Classroom: class worker unit `frankie-queue-class-*` on code `3071eac8` (pid 32938 at 16:23Z), ONE worker process,
-  blocks in seal order. Sessions complete: blocks 1-20 (1-4 sequential on the first code; 5-18 under the 64-worker
-  build before Greg's one-lesson rule, same computation; 19-20 sequential). Each block 160-300 s.
+  session 12 is on GitHub and ON THE BOX (code `3071eac8` = `/opt/frankie-box/code/current`; later commits are docs).
+- Box `i-035994afa8bdf66a5` (r7i.16xlarge, 64 CPU, 495 GB, us-east-1) STOPPED at 16:37Z, tag KeepRunning=false.
+  Stopped cleanly: ACTION=save written, every frankie unit stopped, no frankie process left, disks synced.
+- Day `e2e-20231018-a2/20231018` (attempt `-a1`, 64-CPU booking retained) as left: root entry `done` with its finish
+  reading `running` on a dead holder (ACTION=resume reconciles that itself); class entry `saved`. TEACHER manifest:
+  29 blocks sealed, next_cursor 190,923 of 771,787, status `sealing` (the resumed teacher continues the manifest from
+  the next block; its walk save is the raw-state save, the prefix merge restarts from row 0 and re-feeds the sealed
+  rows as carry only). CLASSROOM: block sessions 1-22 complete; a resumed class worker keeps every block with a
+  session.json and runs the rest one lesson at a time.
+- RESTART (in order; each SSM command under ~55 s, the MCP run_script tool times out at 60 s):
+  1. `StartInstances` + tag KeepRunning=true; wait for SSM Online.
+  2. `CR=$(readlink -f /opt/frankie-box/code/current); cd $CR; CODE_ROOT=$CR MARKETS_SHA=$(basename $(dirname $CR) | cut -d- -f1)
+     FRANKIE_ROOT_DIGEST=off FRANKIE_CLASSROOM_CPUS=all ACTION=resume SCOPE=e2e-20231018-a2:20231018 RUN=e2e-20231018-a2 DAY=20231018
+     sh deploy/aws/box/frankie_box_frankie_queue.sh` (resume reconciles the dead finish holder, re-points the slot, kicks the
+     root worker; the finish restarts the teacher child on `current` and the early class door re-enqueues the class with the slot
+     and kicks the class worker). If the class line does not start within a minute: the class kick from COMMANDS below.
+  3. Probe the teacher manifest and `blocks/<n>/session.json` (COMMANDS, Probes).
+- Teacher code note: the teacher child runs whatever `current` is when the finish starts it (after a resume: 3071eac8
+  or newer); a teacher-code change while it runs needs the save/stop/resume below.
 - Outputs: teacher blocks `/opt/frankie-box/work/experiment-teacher-rows/20231018/{teacher-blocks.json,blocks/<n>.json,
   host-dipole-classroom-source.c15.rows.jsonl}`; classroom `/opt/frankie-box/work/experiment-roots/
   e2e-20231018-a2-20231018-a1/work/classroom/blocks/<n>/` (lesson.json, second_set.json/.jsonl, store.jsonl +
@@ -25,9 +34,11 @@ Greg's usage is nearly out: this box is written so a fresh session (Claude or Co
   `/opt/frankie-box/work/profile-block1/run-162428.log` (the external section of block 1 under cProfile).
 - Swap: 400 GB swapfile `/opt/frankie-box/archive/swapfile` (priority -1, unused): REMOVE when the day is done.
   Archive volume raised in session 8: revert to baseline when the day is done. Disk 52% at 15:49Z.
-- No check-in routine is armed (session 12's was deleted at close). A new session arms its own if it wants one.
-- Helper agent of session 12 (a8a9c17f72e7928d6, worktree `worktree-agent-a8a9c17f72e7928d6`) was asked for an
-  ANALYSIS of the evidence-hash cost (below); it may still be writing. Its worktree has no uncommitted work.
+- No check-in routine is armed. A new session arms its own if it wants one.
+- Greg at close (2026-10-09 16:36Z): "running this on future days as the data is loading instead of waiting for the
+  full day to fill in will save us a lot of wait time" = the streaming design is the standard for every later day:
+  the teacher seals blocks as the data arrives and the classroom lessons start on block 1; no day waits for its full
+  fill. (On this day the sealing started after the walk; the 30-day wiring makes the seal follow the ingest.)
 
 ## GREG'S RULES OF SESSION 12 (binding)
 
@@ -95,6 +106,26 @@ day to day (`previous`, external-history.json), never block to block. Across pie
 classroom builds its own section in its own directory (reused only if one already stands there, which the blocks
 never write); the school reads the day-end one; Jev and the exchange read none. Options 3 and 4 above are what
 would close that.
+THE HELPER'S ANALYSIS (a8a9c17f72e7928d6, 16:36Z, no files changed; the decision is Greg's):
+- `evidence_hash(x) = sha256(SCHEMA + NUL + canonical_bytes(pack(x)))`; `pack` and `_canon` are recursive pure Python.
+  `pack` emits only lists, exact str/int/bool and tag strings (floats as IEEE hex strings, bytes as hex, None as
+  ["null"], dicts as tagged lists), so on pack output `_canon` is the IDENTITY and
+  `canonical_bytes(pack(x)) == json.dumps(pack(x), sort_keys=True, separators=(',',':'), ensure_ascii=True).encode()`
+  BYTE FOR BYTE (tested on a 7.9 MB key-shaped object and on every edge type: same bytes, same hash). The fast path
+  is 4.4-10x faster and must apply ONLY inside evidence_hash / the journal's canonical_bytes(pack(...)) uses, never
+  to canonical_bytes on raw values (there _canon quantizes floats, sorts Mapping keys, converts numpy). Prove it on
+  the box in SHADOW mode (every evidence_hash computes both and asserts equal) on block 1 and one large block.
+- Per block the external key's content enters 5 large hashes (E1 key, E2 verify, E3 pre-message, E5 model-visible,
+  E6 verify again); only E1 and E3 are new content. The Dipole main chain repeats similarly (snapshot verified twice,
+  pre-message hashed then discarded and re-hashed, post-grade hashed 3x, correction 2x). store_writes (22.9 s) is the
+  block store re-serializing the same objects per file and per subtree. The day-end classroom calls the same
+  functions on ~770k rows: far larger there, same fixes.
+- Estimates for block 1 / a 9,000-row block: now 159 / ~300 s; forked child only ~122 / ~270; (a) hash once ~82 /
+  ~205; (b) fast canonicalizer ~50 / ~110; (a)+(b) ~42 / ~85 (then bound by the main chain and the section build's
+  non-hash work ~30 s); store write-once serialization 22.9 -> ~7 s.
+- Recommendation: (b) first (one change inside evidence_hash, byte identity by construction, shadow-checked on the
+  box), then (a) as explicit carry-the-hash / skip-the-discarded-intermediate parameters at the named sites, then the
+  store. Side finding: cyclic GC doubles a large hash's cost (3.44 s -> 1.54 s with gc.freeze()).
 Greg's open questions at close: "the piece that speeds it up 250 M per sec" (unidentified: ask him which); "the
 other 8 on 8 consecutive days" (unclarified: which eight; nothing scheduled).
 
@@ -132,8 +163,9 @@ root events `root-events.jsonl`; class worker log `/opt/frankie-box/work/frankie
 
 ## NEXT (in order)
 
-1. Greg's decision on the evidence-hash fix (hash once + byte-identical fast canonicalizer); then build it, prove it on
-   the gauge (block 1 session seconds and the SAME hashes as before), push to the box, restart the class worker.
+1. Start the box and resume the day (THE BOX above). Greg's decision on the evidence-hash fix ((b) then (a) above);
+   then build it, prove it in shadow mode and on the gauge (block 1 seconds and the SAME hashes), push, restart the
+   class worker.
 2. Keep the day running to its end: the teacher's final publication (blocks verified against the whole day), the
    whole-day classroom, Jev, exchange, school, the day reports; then Greg reads the TEACHER REPORT whole.
 3. After the day: remove the swapfile; revert the archive volume; hub wiring per piece after by-value comparison
