@@ -474,6 +474,29 @@ def retained_school(brain, day):
                 status='requires_successor' if stale else 'complete')
 
 
+SUCCESSOR_RECORDED_CODE = ('producer_sha256',)
+
+
+def _retained_successor_operation(day_dir, operation):
+    """The recorded operation of a retained school successor (its receipt.json) under day_dir whose operation equals
+    this one without the recorded-only code pins; None when none is."""
+    if not day_dir.is_dir():
+        return None
+    data = lambda op: {k: v for k, v in op.items() if k not in SUCCESSOR_RECORDED_CODE}
+    want = data(operation)
+    for child in sorted(day_dir.iterdir()):
+        path = child / 'receipt.json'
+        if child.is_symlink() or not path.is_file():
+            continue
+        try:
+            kept = json.loads(path.read_bytes()).get('operation')
+        except (OSError, ValueError, AttributeError):
+            continue
+        if isinstance(kept, dict) and data(kept) == want:
+            return kept
+    return None
+
+
 def rebuild_successor(day, run, brain, *, original_school, exchange_view=None):
     """Retain an explicit school successor on its original owner, after the new meeting completes.
 
@@ -525,6 +548,11 @@ def rebuild_successor(day, run, brain, *, original_school, exchange_view=None):
                      brain=str(Path(brain).resolve()), original_school=original_school,
                      source_corrections=source_corrections, meeting_receipt=meeting_receipt,
                      producer_sha256=sha256_bytes(Path(__file__).read_bytes()))
+    # Greg, 2026-10-09 (standing): the code version is RECORDED, NEVER COMPARED. producer_sha256 records the code the
+    # operation ran under: a retained successor directory of the same DATA operation (written under other code bytes,
+    # so named by another whole-operation digest) is this operation and its recorded operation carries on; no new
+    # successor directory is minted because this file changed.
+    operation = _retained_successor_operation(Path(brain) / 'school' / 'successors' / day, operation) or operation
     operation_sha = R.digest(R.canonical(operation))
     directory = Path(brain) / 'school' / 'successors' / day / operation_sha
     if any(p.is_symlink() for p in (directory, *directory.parents, directory / 'successor.lock')):

@@ -2312,8 +2312,13 @@ def file_name(kind, number, revision):
     return '%s-report-%04d%s.md' % (kind, number, '' if revision == 1 else '-r%d' % revision)
 
 
+KEPT_EXISTING = 'kept the existing report'
+
+
 def write_new(path, raw):
-    """Write bytes to a new file (never overwrite): (True, None) or (False, why)."""
+    """Write bytes to a new file (never overwrite): (True, None), (True, why) when the file is already there (same
+    bytes, or other bytes: the saved report is KEPT, never refused and never overwritten; Greg, 2026-10-09: a save is
+    never refused because the code that renders it changed; the caller reads the kept bytes back) or (False, why)."""
     try:
         with open(path, 'xb') as f:
             f.write(raw)
@@ -2321,7 +2326,7 @@ def write_new(path, raw):
     except FileExistsError:
         if Path(path).read_bytes() == raw:
             return True, 'already there with the same bytes'
-        return False, '%s exists with other bytes (never overwritten)' % path
+        return True, '%s: %s exists with other bytes (never overwritten; this render is not used)' % (KEPT_EXISTING, path)
     except OSError as error:
         return False, '%s: %s' % (type(error).__name__, error)
 
@@ -2426,10 +2431,20 @@ def save_requested():
 
 
 def _code_sha256():
-    """The templates' code identity in a save point: this file's bytes (every report template lives here). A save
-    under other code is not reused: both reports are rendered again (an existing report with other bytes then refuses
-    visibly, write_new never overwrites)."""
+    """The templates' code identity in a save point: this file's bytes (every report template lives here). RECORDED,
+    NEVER COMPARED (Greg, 2026-10-09): a save under other code is reused like any other (load_save compares the inputs,
+    number and revision only), and an existing report is kept (write_new)."""
     return sha256_bytes(Path(__file__).resolve().read_bytes())
+
+
+SAVE_RECORDED_CODE = ('code_sha256',)
+
+
+def _compared_save_identity(identity):
+    """A save-point identity without its recorded-only code field."""
+    if not isinstance(identity, dict):
+        return identity
+    return {k: v for k, v in identity.items() if k not in SAVE_RECORDED_CODE}
 
 
 def _save_path(reports, run_name, day):
@@ -2452,7 +2467,7 @@ def load_save(reports, run_name, day, identity):
         save = json.loads(path.read_bytes())
     except (OSError, ValueError) as error:
         return {}, 'the save point %s is unreadable (%s); every report is rendered' % (path, error)
-    if save.get('schema') != SAVE_SCHEMA or save.get('identity') != identity:
+    if save.get('schema') != SAVE_SCHEMA or _compared_save_identity(save.get('identity')) != _compared_save_identity(identity):
         return {}, 'the save point %s is for other inputs or another number/revision; every report is rendered' % path
     return dict(save.get('written') or {}), None
 
@@ -2574,6 +2589,9 @@ def _run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, 
                 written, why = write_new(central, raw)
                 if not written:
                     raise SystemExit('the %s report %s could not be written: %s' % (k, central, why))
+                if why and why.startswith(KEPT_EXISTING):
+                    raw = central.read_bytes()     # the saved report stands; everything below names its bytes
+                    rendering.setdefault('kept_existing', []).append(dict(kind=k, file=str(central), why=why))
                 if k not in resumed:   # the save point after each report (the Sept-29 exact save at a boundary)
                     written_so_far[k] = dict(file=str(central), sha256=sha256_bytes(raw), bytes=len(raw))
                     try:
