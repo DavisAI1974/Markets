@@ -674,7 +674,7 @@ def _all99_use(field):
 PREFIX_PROGRESS_ROWS = 1024        # the prefix merge offers its row count to the stage heartbeat every this many rows
 
 
-def _second_set_prefix(open_market, needed, SS, book_needed=0, changes=True, label_needed=0):
+def _second_set_prefix(open_market, needed, SS, book_needed=0, changes=True, label_needed=0, on_row=None):
     """For the rows the walk of THIS process did not read (a resume from a save written before the second set or the
     book read): read the same pictures again from a fresh shared reader of the same ROOT, in order, with the walk's
     equation filter (present APPLIED payloads, adapter cursors contiguous from zero). The first `needed` rows get their
@@ -683,7 +683,9 @@ def _second_set_prefix(open_market, needed, SS, book_needed=0, changes=True, lab
     (the receipt), the previous group's closing book, teacher_book_read.book_group on those very rows, and each window
     the pinned R3 calls on a group (its own anchor function, T._anchor, on the same groups; no pinned column is
     computed); the first `label_needed` rows get the state labels their picture carries (joins recorded before the
-    labels were). Returns (records, book) with book = {groups, windows, cursor_group, labels}."""
+    labels were). Returns (records, book) with book = {groups, windows, cursor_group, labels}. on_row(index, records,
+    book): called after each row is merged, in cursor order (the sealed blocks, 2026-10-09: a block seals the moment
+    its rows are merged)."""
     from collections import deque
     from research.kalshi.frankie_boss import c15_teacher_r3 as T, teacher_book_read as TBR, parallel_teacher as PT
     # the frames rows by reference (frankie_box_market_timeline.RowRef): the join names them by (source, source_ordinal)
@@ -738,6 +740,8 @@ def _second_set_prefix(open_market, needed, SS, book_needed=0, changes=True, lab
                                      for slot, horizon in (('short', 64), ('long', 1024)) if len(groups) > horizon}
                             if slots:
                                 book['windows'][e['cursor']] = slots
+            if on_row is not None:
+                on_row(expected, records, book)
             expected += 1
             if expected % PREFIX_PROGRESS_ROWS == 0:
                 # the stage heartbeat (PT.PROGRESS: progress.json and the phase file): rows merged of the prefix
@@ -750,7 +754,7 @@ def _second_set_prefix(open_market, needed, SS, book_needed=0, changes=True, lab
     return records, book
 
 
-def _second_set(out, open_market, market, second, rows, SS):  # noqa: C901
+def _second_set(out, open_market, market, second, rows, SS, feed=None):  # noqa: C901
     """The teacher's second set for every row, written beside the rows (teacher-second-set.pkl, hash-bound) and
     summarized for the receipt. The rows the walk read carry their join from the walk; rows read by an earlier process
     whose save holds no join are joined here from a fresh reader of the same ROOT (merged at publication). A row left
@@ -771,9 +775,17 @@ def _second_set(out, open_market, market, second, rows, SS):  # noqa: C901
             break
         label_needed += 1
     label_needed = needed + label_needed if label_needed else 0
-    prefix, read = (_second_set_prefix(open_market, needed, SS, book_needed, bool(walked.get('changes')), label_needed)
+    on_row = None
+    if feed is not None:
+        # the sealed blocks (2026-10-09): every row is fed in cursor order as its parts exist (the merged prefix first,
+        # as the merge proceeds, then the rows the walk joined), so block n seals the moment its rows are there
+        on_row = feed.merge_view(rows, second['records'], needed, walked)
+    prefix, read = (_second_set_prefix(open_market, needed, SS, book_needed, bool(walked.get('changes')), label_needed,
+                                       on_row=on_row)
                     if needed or book_needed or label_needed else
                     ([], dict(groups={}, windows={}, cursor_group={}, labels={})))
+    if feed is not None:
+        feed.merged_rest(prefix, read)
     records = prefix + second['records']
     for cursor, (labels, origin) in read['labels'].items():
         records[cursor]['state_labels'], records[cursor]['state_label_origin'] = labels, origin
@@ -799,13 +811,7 @@ def _second_set(out, open_market, market, second, rows, SS):  # noqa: C901
                          'leave the teacher' % (len(unread), unread[:10]))
     for record, entry in zip(records, reads):
         record['book'] = entry
-    carried = {name: dict(carrier=first, thinner=thin) for name, (first, thin) in ALL99.MARKET_CARRIERS.items()}
-    not_carried = [dict(entry=layer['entry'], group=layer['group'], role=layer['role'],
-                        reason=ALL99.NOT_MARKET_CARRIED.get(layer['entry']) or (
-                            'withheld by role (R09/R10: no teacher reads an answer key or a sealed target)'
-                            if layer['role'] in ('answer', 'target') else
-                            'not market evidence: the registry role %s is not carried by the picture' % layer['role']))
-                   for layer in ALL99.entries() if layer['entry'] not in carried]
+    carried, not_carried = _carriers()
     lock = max(row[4] for row in rows)
     header = dict(schema=SS.SCHEMA, format=SS.FORMAT, key_fields=SS.KEY_FIELDS, clock_fields=SS.CLOCK_FIELDS,
                   plane_reference=SS.PLANE_REFERENCE, state_reference=SS.STATE_REFERENCE,
@@ -864,6 +870,19 @@ def _second_set(out, open_market, market, second, rows, SS):  # noqa: C901
                 file_format='64 hex digits of the sha256 of the bytes after them, then the pickle of the header with '
                             '`records` (parallel_teacher._load_raw_state reads it)')
     return summary, records, header
+
+
+def _carriers():
+    """(entries carried by the picture {entry: {carrier, thinner}}, entries not carried [{entry, group, role, reason}])."""
+    import frankie_box_all99_coverage as ALL99
+    carried = {name: dict(carrier=first, thinner=thin) for name, (first, thin) in ALL99.MARKET_CARRIERS.items()}
+    not_carried = [dict(entry=layer['entry'], group=layer['group'], role=layer['role'],
+                        reason=ALL99.NOT_MARKET_CARRIED.get(layer['entry']) or (
+                            'withheld by role (R09/R10: no teacher reads an answer key or a sealed target)'
+                            if layer['role'] in ('answer', 'target') else
+                            'not market evidence: the registry role %s is not carried by the picture' % layer['role']))
+                   for layer in ALL99.entries() if layer['entry'] not in carried]
+    return carried, not_carried
 
 
 STATE_SPLIT_FILE = 'teacher-state-split.json'
@@ -1057,6 +1076,26 @@ def _sidecar_book(book):
                                                for side, depth in group['depth'].items()}))
 
 
+def _refuse_json(value):
+    raise TypeError('row value of type %s is not JSON' % type(value).__name__)
+
+
+def _sidecar_document(row, record, book, carried, lock, SS):
+    """One sidecar line's document: the snapshot row with its second set (SIDECAR_ROW_KEYS), the lock stamped."""
+    planes, absent = _sidecar_planes(record, carried)
+    clocks = dict(record['clocks'], clock_lock_time=dict(label=SS.LOCK_LABEL, teacher_as_of=lock))
+    return dict(row, key=record['key'], clocks=clocks, clocks_absent=record['clocks_absent'],
+                planes=planes, planes_state=record['state'], planes_absent=absent,
+                invalidated=record['invalidated'], coverage=record['coverage'], match=record['match'],
+                state_labels=record['state_labels'], state_label_origin=record['state_label_origin'],
+                book_columns=_sidecar_book(book), state_split=_sidecar_split(book))
+
+
+def _sidecar_line(row, record, book, carried, lock, SS):
+    return (json.dumps(_sidecar_document(row, record, book, carried, lock, SS), default=_refuse_json, allow_nan=False)
+            + '\n').encode()
+
+
 def _write_rows_sidecar(out, source, records, header, SS):
     """The rows as JSON lines beside the rows file (one row per line, streamed and hashed on the stream): line 1 the
     header (schema, FORMAT, the row keys, the key and clock fields, the stream pins), then every snapshot row with its
@@ -1068,11 +1107,9 @@ def _write_rows_sidecar(out, source, records, header, SS):
     digest, lines, unjoined = hashlib.sha256(), 0, []
     lock = header['clock_lock_time']['teacher_as_of']
 
-    def refuse(value):
-        raise TypeError('row value of type %s is not JSON' % type(value).__name__)
     with temporary.open('wb') as handle:
         def write(document):
-            data = (json.dumps(document, default=refuse, allow_nan=False) + '\n').encode()
+            data = (json.dumps(document, default=_refuse_json, allow_nan=False) + '\n').encode()
             digest.update(data)
             handle.write(data)
         write(dict(schema='FRANKIE_TEACHER_ROWS_SIDECAR_V1', format=SS.FORMAT, rows_file=ROWS_FILE,
@@ -1087,13 +1124,7 @@ def _write_rows_sidecar(out, source, records, header, SS):
             if record is None:
                 unjoined.append(row['cursor'])
                 continue
-            planes, absent = _sidecar_planes(record, carried)
-            clocks = dict(record['clocks'], clock_lock_time=dict(label=SS.LOCK_LABEL, teacher_as_of=lock))
-            write(dict(row, key=record['key'], clocks=clocks, clocks_absent=record['clocks_absent'],
-                       planes=planes, planes_state=record['state'], planes_absent=absent,
-                       invalidated=record['invalidated'], coverage=record['coverage'], match=record['match'],
-                       state_labels=record['state_labels'], state_label_origin=record['state_label_origin'],
-                       book_columns=_sidecar_book(record['book']), state_split=_sidecar_split(record['book'])))
+            write(_sidecar_document(row, record, record['book'], carried, lock, SS))
             lines += 1
         handle.flush()
         os.fsync(handle.fileno())
@@ -1106,6 +1137,354 @@ def _write_rows_sidecar(out, source, records, header, SS):
                 schema='FRANKIE_TEACHER_ROWS_SIDECAR_V1', row_keys=list(SIDECAR_ROW_KEYS),
                 basis='line 1 the header, then one snapshot row per line with its second set; sha256 of the bytes '
                       'as written')
+
+
+# ---- the sealed blocks (Greg, 2026-10-09: "Can we start sending data out as it's coming in?"; frankie_box_teacher_blocks)
+# The rows sidecar is appended block by block on the receive clock (FRANKIE_BLOCK_SCHEDULE_MINUTES, default "5,30": the
+# five-minute canary, then thirty-minute blocks; "0" turns it off) while the rows are produced: in the walk (each row fed
+# as the row pass reports it complete, parallel_teacher.ROW_DONE; a block seals once the book reads of its groups are in)
+# and in the publication's merge of the rows a resumed walk did not join (_second_set_prefix on_row: a block seals the
+# moment its rows are merged). Each line is built by the same _sidecar_line as the whole-day writer; the lock stamped on a
+# block's lines is the block's teacher as_of (the latest receive clock of the rows through it), declared in the header.
+# Every stateful measure crosses the boundary by carry: the book read's whole-day running window
+# (teacher_book_read.assemble running=), the group labels of every closed group, the R3 windows (the book groups kept by
+# reference), the cutter's running receive clock. The final publication re-builds every line from the whole-day result
+# and compares each block's bytes (a difference refuses the publication, named); the sidecar is then the sealed file.
+PLANE_VALUES = ('by reference: (source, source_ordinal) names the row of that stream\'s pinned file the picture handed '
+                'over; the values are the ROOT\'s receipted rows, not copied')
+SIDECAR_SCHEMA = 'FRANKIE_TEACHER_ROWS_SIDECAR_V1'
+BLOCK_FEED = [None]
+SECOND_RECORDS = [None]            # the walk's `second` (its 'records': the walk feed's joins, by reference)
+BLOCK_TARGET_CHUNK = 4096          # snapshot rows built per target call inside a block (memory only; no value depends on it)
+
+
+def _row_done(anchors, feed):
+    """parallel_teacher.ROW_DONE: the anchors' feed (its error stops the reports, as before), then the block feed (never
+    raises)."""
+    if anchors is None and feed is None:
+        return None
+
+    def report(index, row):
+        try:
+            if anchors is not None:
+                anchors(index, row)
+        finally:
+            if feed is not None:
+                feed.on_walk_row(index, row)
+    return report
+
+
+def _block_feed(out, *, day, market, teacher, rc, SS):
+    """The block feed of this teacher process, or (None, record) when blocks are off (FRANKIE_BLOCK_SCHEDULE_MINUTES=0)
+    and no manifest stands. A manifest left by an earlier process is continued whatever the setting says."""
+    B = _box_module('frankie_box_teacher_blocks')
+    minutes, setting = B.schedule_setting()
+    standing = B.read_manifest(out)
+    if minutes is None and standing is None:
+        return None, setting
+    if minutes is None:
+        minutes = tuple(standing['schedule']['minutes'])
+        setting = dict(setting, outcome='continued', reason='a manifest of sealed blocks stands: they continue')
+    return _BlockFeed(out, day=day, market=market, teacher=teacher, rc=rc, SS=SS, minutes=minutes, setting=setting), setting
+
+
+class _BlockFeed:
+    def __init__(self, out, *, day, market, teacher, rc, SS, minutes, setting):
+        from collections import deque
+        from research.kalshi.frankie_boss import teacher_book_read as TBR, parallel_teacher as PT
+        from research.kalshi.frankie_boss import dipole_classroom as DC
+        self.B, self.TBR, self.PT, self.DC, self.SS = _box_module('frankie_box_teacher_blocks'), TBR, PT, DC, SS
+        self.out, self.day, self.teacher, self.rc = Path(out), day, teacher, rc
+        self.carried, not_carried = _carriers()
+        origin, basis = self.B.trading_day_open_ns(day)
+        header = dict(schema=SIDECAR_SCHEMA, format=SS.FORMAT, rows_file=ROWS_FILE, source_snapshot_hash=None, rows=None,
+                      row_keys=SIDECAR_ROW_KEYS, key_fields=SS.KEY_FIELDS, clock_fields=SS.CLOCK_FIELDS,
+                      plane_reference=list(SS.PLANE_REFERENCE[:5]), state_reference=list(SS.STATE_REFERENCE),
+                      clock_lock_time=dict(label=SS.LOCK_LABEL, teacher_as_of=None, per_block=True,
+                                           basis='sealed blocks: each row\'s clocks.clock_lock_time.teacher_as_of is its '
+                                                 'block\'s teacher as_of (the latest receive clock of the rows through '
+                                                 'that block); the whole day\'s is on the receipt and in %s'
+                                                 % self.B.MANIFEST_FILE),
+                      plane_values=PLANE_VALUES, streams={stream.name: dict(stream.pin) for stream in market.streams},
+                      entries_not_carried=not_carried,
+                      blocks=dict(manifest=self.B.MANIFEST_FILE, rule='this file is this header followed by every sealed '
+                                  'block\'s bytes in order (blocks/<n>.json: its byte range and sha256)'))
+        try:
+            wake = _box_module('frankie_box_frankie_queue').wake_dir()
+        except Exception:  # noqa: BLE001 - the manifest's rename still wakes a waiter on the rows directory
+            wake = None
+        self.sealer = self.B.BlockSealer(self.out, day=day, schedule=self.B.Schedule(minutes), origin_ns=origin,
+                                         origin_basis=basis if origin is not None else '%s; the first row\'s receive '
+                                         'clock instead' % basis, header=header, sidecar_name=ROWS_SIDECAR,
+                                         log=lambda text: print(text, flush=True), wake_dir=wake, setting=setting)
+        self.changes = PT._changes_applied()
+        self.mode = 'off' if self.sealer.complete else 'pending'     # pending -> walk | merge
+        self.error = None
+        self.pending = deque()
+        self.entity = None
+        self._reset()
+
+    def _reset(self):
+        self.fed, self.cutter, self.running, self.group_labels = 0, None, {}, {}
+        self.pending.clear()
+        self.rows = self.records = self.cg = self.groups = self.windows = None
+        self.book_size = -1
+
+    # -- the row parts (references; nothing copied)
+    def _label(self, index, row):
+        group = self.cg.get(row[6])
+        if group is not None:
+            self.group_labels.update(_group_labels([row], [self.records(index)], {row[6]: group}))
+
+    def _feed(self, index):
+        row = self.rows[index]
+        self._label(index, row)
+        if index < self.sealer.next_cursor:          # sealed by an earlier process: only the carry is replayed
+            if self.changes:
+                self.TBR.advance_running(self.running, [row], self.cg, self.groups, self.windows)
+            return
+        if self.cutter is None:
+            if self.sealer.manifest['schedule'].get('origin_ns') is None:
+                self.sealer.manifest['schedule']['origin_ns'] = row[4]
+            self.cutter = self.sealer.cutter(row[4])
+        for block in self.cutter.offer(index, row[4]):
+            self.pending.append(block)
+
+    def _ready(self, block):
+        if self.mode != 'walk':
+            return True
+        if 'unresolved' not in block:
+            a, b = block['cursor_range']
+            block['unresolved'] = {self.cg[c] for c in range(a, b) if self.rows[c][1] and c in self.cg}
+        block['unresolved'] = {g for g in block['unresolved'] if self.groups.get(g) is None}
+        return not block['unresolved']
+
+    def _drain(self):
+        while self.pending and self._ready(self.pending[0]):
+            block = self.pending.popleft()
+            block.pop('unresolved', None)
+            self._seal(block)
+
+    def _state_after(self, block):
+        index = block['index'] + 1
+        start = block['clock_range'][1]
+        return dict(origin_ns=self.cutter.origin, index=index, start_cursor=block['cursor_range'][1], start_ns=start,
+                    end_ns=start + self.sealer.schedule.length(index), known_by=block['known_by'],
+                    lock=block['teacher_as_of'])
+
+    def _lines(self, block, extra):
+        import math
+        a, b = block['cursor_range']
+        span = self.rows[a:b]
+        entries = self.TBR.assemble(span, self.cg, self.groups, self.windows, whole_day=self.changes,
+                                    group_labels=self.group_labels, running=self.running)
+        wanted = [k for k, row in enumerate(span) if row[6] in self.entity]
+        sums, lock, columns = {}, block['teacher_as_of'], self.DC.COLUMNS
+        for start in range(0, len(wanted), BLOCK_TARGET_CHUNK):
+            part = wanted[start:start + BLOCK_TARGET_CHUNK]
+            made = self.PT.block_targets(self.teacher, [span[k] for k in part], self.rc['manifest_hash'])
+            for k, (target, receipt) in zip(part, made):
+                row = span[k]
+                snap = self.DC._target_row(target, row[3], receipt, row[6])
+                if len(row) > 8:
+                    state = row[8]
+                    if (state.get('schema') != 'FRANKIE_TEACHER_DSTATE_ROWS_V1'
+                            or any(state.get(key) != snap[key] for key in ('cursor', 'source_prefix_hash', 'ts_recv_ns'))
+                            or state.get('status') not in ('GROUP_STATE', 'NOT_F_LAST')
+                            or (state['status'] == 'GROUP_STATE') != isinstance(state.get('state'), dict)):
+                        raise ValueError('teacher DState differs from its exact target source row (cursor %d)' % row[6])
+                    snap['dstate'] = state
+                snap['raw_components'] = {name: dict(value) for name, value in zip(columns, row[3])}
+                for component in snap['components']:
+                    slot = sums.setdefault(component['name'], dict(present=0, values=[], states={}))
+                    slot['states'][component['state']] = slot['states'].get(component['state'], 0) + 1
+                    if component['value'] is not None:
+                        slot['present'] += 1
+                        slot['values'].append(component['value'])
+                yield _sidecar_line(snap, self.records(row[6]), entries[k], self.carried, lock, self.SS)
+        extra['pinned_sums'] = {name: dict(present=slot['present'], sum=math.fsum(slot['values']), states=slot['states'])
+                                for name, slot in sums.items()}
+        extra['snapshot_rows'] = len(wanted)
+
+    def _seal(self, block):
+        a, b = block['cursor_range']
+        extra = dict(mode=self.mode,
+                     second_set=dict(records=[a, b], file=SECOND_SET_FILE,
+                                     carried_in='this block\'s sidecar lines: each row\'s key, clocks, plane references, '
+                                                'book columns, state split and labels (teacher-second-set.pkl records '
+                                                '[a, b) at the final publication)'),
+                     carried_state=dict(
+                         book_running={str(k): v['upto'] for k, v in self.running.items()},
+                         group_labels=len(self.group_labels),
+                         r3_windows='the short (64-group) and long (1024-group) R3 windows of later rows reach back into '
+                                    'this block\'s book groups (held by reference)',
+                         receive_clock_known_by=block['known_by'], teacher_as_of=block['teacher_as_of'],
+                         walk='the classroom carry, cutoff tracker and the row pass continuation continue on the walk '
+                              '(saved with its position)',
+                         normalizer='identity (stateless)'))
+        self.sealer.seal(block, self._lines(block, extra), extra, cutter_state=self._state_after(block),
+                         walk_cursor=self.fed)
+
+    # -- the walk (parallel_teacher.ROW_DONE)
+    def on_walk_row(self, index, row):
+        if self.mode in ('off', 'merge', 'failed'):
+            return
+        try:
+            if self.mode == 'pending':
+                live = self.PT.ROW_PASS_LIVE[0]
+                records = SECOND_RECORDS[0]['records'] if SECOND_RECORDS[0] is not None else None
+                why = None
+                if live is None or records is None:
+                    why = 'no live row pass state'
+                elif (live.get('book_before') or 0) > self.sealer.next_cursor:
+                    why = 'the save holds no book read for rows before %d' % live['book_before']
+                elif len(records) < index:
+                    why = 'the save holds %d joins for %d rows' % (len(records), index)
+                elif any('state_labels' not in r for r in records[self.sealer.next_cursor:index]):
+                    why = 'joins before the state labels in the save'
+                if why is not None:
+                    self.mode = 'merge'
+                    self.sealer.manifest.setdefault('notes', []).append(
+                        'walk sealing not taken (%s): blocks seal in the publication merge' % why)
+                    return
+                streams = live['streams']
+                self.rows, self.records = live['rows'], records.__getitem__
+                self.cg, self.groups, self.windows = streams.cursor_group, streams.book_groups, streams.windows
+                self.entity = live['entity_hashes']
+                self.mode = 'walk'
+                while self.fed < index:                 # the saved rows first (their parts are in the save)
+                    self._feed(self.fed)
+                    self.fed += 1
+            self._feed(index)
+            self.fed = index + 1
+            if self.pending and len(self.groups) != self.book_size:
+                self.book_size = len(self.groups)
+                self._drain()
+        except Exception as error:  # noqa: BLE001 - never stops the walk: the publication merge seals from the manifest
+            self.error = 'walk: %s: %s' % (type(error).__name__, error)
+            self.mode = 'merge'
+            self.sealer.manifest.setdefault('notes', []).append('walk sealing stopped (%s); continued in the merge'
+                                                                % self.error)
+
+    # -- the publication merge (_second_set)
+    def merge_view(self, rows, walk_records, needed, walked):
+        from collections import ChainMap
+        if self.mode in ('off', 'failed'):
+            return None
+        walking = self.mode == 'walk' and self.error is None
+        if not walking:
+            self._reset()
+        self.mode = 'walk' if walking else 'merge'
+        self.rows = rows
+        view = dict(prefix=[], book=None)
+
+        def record(index):
+            rec = view['prefix'][index] if index < needed else walk_records[index - needed]
+            label = view['book']['labels'].get(index)
+            if label is not None and 'state_labels' not in rec:
+                rec = dict(rec, state_labels=label[0], state_label_origin=label[1])
+            return rec
+
+        def bind(book):
+            view['book'] = book
+            self.cg = ChainMap(book['cursor_group'], walked['cursor_group'])
+            self.groups = ChainMap(book['groups'], walked['groups'])
+            self.windows = ChainMap(book['windows'], walked['windows'])
+        self.view, self.bind = view, bind
+        if walking:
+            return None                                # every row was fed in the walk; the rest closes in merged_rest
+        self.records = record
+        bind(dict(groups={}, windows={}, cursor_group={}, labels={}))
+
+        def on_row(index, records, book):
+            if self.mode != 'merge':
+                return
+            try:
+                if view['book'] is not book:
+                    bind(book)
+                view['prefix'] = records
+                while self.fed <= index:
+                    self._feed(self.fed)
+                    self.fed += 1
+                self._drain()
+            except Exception as error:  # noqa: BLE001 - never stops the merge; listed and the blocks end here
+                self._fail('merge: %s: %s' % (type(error).__name__, error))
+        return on_row
+
+    def merged_rest(self, prefix, read):
+        if self.mode not in ('walk', 'merge'):
+            return
+        try:
+            if self.mode == 'merge':
+                self.view['prefix'] = prefix
+                self.bind(read)
+            while self.fed < len(self.rows):
+                self._feed(self.fed)
+                self.fed += 1
+            if self.cutter is None:
+                raise ValueError('no row was fed')
+            self.pending.append(self.cutter.close())
+            self.mode = 'merge'                        # every row's parts are there now: nothing waits on a book read
+            self._drain()
+        except Exception as error:  # noqa: BLE001
+            self._fail('merge end: %s: %s' % (type(error).__name__, error))
+
+    def _fail(self, reason):
+        self.error, self.mode = reason, 'failed'
+        try:
+            self.sealer.finish('failed', complete=False, reason=reason)
+        except Exception:  # noqa: BLE001
+            pass
+        print('TEACHER_BLOCKS failed: %s' % reason, flush=True)
+
+    # -- the final publication
+    def verify(self, source, records):
+        """Every sealed block's bytes against the lines built from the whole-day result (record['book'], the snapshot
+        rows): equal, or ValueError naming each differing block. Returns the rows_sidecar pin."""
+        manifest = self.sealer.manifest
+        side = self.out / ROWS_SIDECAR
+        with side.open('rb') as handle:
+            head = handle.read(manifest['header']['bytes'][1])
+        if hashlib.sha256(head).hexdigest() != manifest['header']['sha256']:
+            raise ValueError('the rows sidecar header differs from its manifest pin')
+        digest = hashlib.sha256(head)
+        by_cursor = {record['key']['adapter_cursor']: record for record in records}
+        rows, at, differ, lines = source['rows'], 0, [], 0
+        for entry in manifest['blocks']:
+            a, b = entry['cursor_range']
+            block_digest, count = hashlib.sha256(), 0
+            while at < len(rows) and rows[at]['cursor'] < b:
+                row = rows[at]
+                if row['cursor'] < a:
+                    raise ValueError('snapshot row %d lies before block %d' % (row['cursor'], entry['index']))
+                record = by_cursor[row['cursor']]
+                data = _sidecar_line(row, record, record['book'], self.carried, entry['teacher_as_of'], self.SS)
+                block_digest.update(data)
+                digest.update(data)
+                count += 1
+                at += 1
+            lines += count
+            if block_digest.hexdigest() != entry['sidecar_sha256'] or count != entry['lines']:
+                differ.append(dict(index=entry['index'], lines=[entry['lines'], count],
+                                   sha256=[entry['sidecar_sha256'], block_digest.hexdigest()]))
+        if at != len(rows):
+            differ.append(dict(unsealed_snapshot_rows=len(rows) - at, first_cursor=rows[at]['cursor']))
+        if side.stat().st_size != manifest['sealed_bytes']:
+            differ.append(dict(sidecar_bytes=side.stat().st_size, sealed_bytes=manifest['sealed_bytes']))
+        if differ:
+            raise ValueError('the sealed blocks differ from the whole-day rows (%d): %s; the rows do not leave the '
+                             'teacher' % (len(differ), json.dumps(differ[:10])))
+        return dict(file=ROWS_SIDECAR, sha256=digest.hexdigest(), rows=lines, format=self.SS.FORMAT, schema=SIDECAR_SCHEMA,
+                    row_keys=list(SIDECAR_ROW_KEYS), blocks=self.sealer.sealed_pin(),
+                    basis='line 1 the header, then every sealed block\'s rows (each row\'s lock its block\'s teacher '
+                          'as_of); every block re-built from the whole-day result and equal; sha256 of the bytes')
+
+    def complete(self, receipt_path, result):
+        self.sealer.finish('complete', complete=True, receipt=dict(file='receipt.json', sha256=_sha256(receipt_path)),
+                           pins=dict(rows_file=result.get('rows_file'),
+                                     rows_sidecar=(result.get('rows_sidecar') or {}).get('sha256'),
+                                     second_set=(result.get('teacher_second_set') or {}).get('sha256'),
+                                     attachment=result.get('attachment_file')), walk_cursor=self.fed)
 
 
 ACCOUNT_FORMAT = 1
@@ -1471,6 +1850,16 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
     second = dict(records=[], read_in_walk=0, restored=0)
     second_set = second_records = second_header = None
     carry_path = out / CARRY_FILE
+    # the sealed blocks (2026-10-09): the rows sidecar appended per block of the receive clock as the rows are made
+    feed, block_setting = None, None
+    if market is not None and learner_binding is None:
+        try:
+            feed, block_setting = _block_feed(out, day=day, market=market, teacher=teacher, rc=rc, SS=SS)
+        except Exception as error:  # noqa: BLE001 - listed; the whole-day publication stands as before
+            feed, block_setting = None, dict(outcome='failed', reason='%s: %s' % (type(error).__name__, error))
+            print('TEACHER_BLOCKS not started: %s' % block_setting['reason'], flush=True)
+    BLOCK_FEED[0] = feed
+    SECOND_RECORDS[0] = second
     if market is not None:
         try:
             K = _box_module('frankie_box_classroom_code')
@@ -1819,8 +2208,9 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                 if cpu_pinning['outcome'] in ('pinned', 'fallback') and 'restored' not in cpu_pinning:
                     cpu_pinning['restored'] = LP.restore_mask(cpu_pinning['original_mask'])
     collector = _WalkCollector()
-    if market is not None and carry['value'] is not None and getattr(carry['value'], 'anchor_on', False):
-        PT.ROW_DONE[0] = _anchor_feed(carry, teacher, T)
+    anchors = (_anchor_feed(carry, teacher, T) if market is not None and carry['value'] is not None
+               and getattr(carry['value'], 'anchor_on', False) else None)
+    PT.ROW_DONE[0] = _row_done(anchors, feed)
     try:
         if market is not None:
             cpu_pinning['collector'] = collector.enter()
@@ -1854,7 +2244,10 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
             raise PT.TeacherSaved('teacher raw pass saved; attachment assembly has not started')
         if market is not None and rows:
             # the merge runs under the walk's collector settings (frozen heap, rare full collections): restored after it
-            second_set, second_records, second_header = _second_set(out, open_market, market, second, rows, SS)
+            if feed is not None:
+                feed.entity = hashes
+            second_set, second_records, second_header = _second_set(out, open_market, market, second, rows, SS,
+                                                                    feed=feed)
             phase('second_set')
         collector.exit()
         walked = time.time() - started
@@ -1895,6 +2288,7 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
             PT.FINISH_WORKER_CPUS = None
             PT.PROGRESS = None
             PT.ROW_DONE[0] = None
+            PT.ROW_PASS_LIVE[0] = None
             carry['anchor_feed'] = dict(PT.ROW_DONE_RECORD, **(carry.get('anchor_feed') or {}))
             raw_saves = dict(PT.SAVE_RECORD, progress_errors=PT.PROGRESS_ERRORS[0])
             cpu_pinning['finish_pool'] = dict(PT.FINISH_POOL_RECORD) if PT.FINISH_POOL_RECORD else None
@@ -1937,6 +2331,8 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                                                     equation=(shared_read or {}).get('equation') if market is not None else None,
                                                     workers=workers, exit_code=5)
         _publish(out, result)
+        if feed is not None and feed.mode != 'failed':
+            feed.sealer.finish('equation_not_run', complete=True, reason=equation_not_run['reason'])
         print(json.dumps(result, sort_keys=True), flush=True)
         return 5
     request_id = 'experiment-%s-cycle-00' % day
@@ -2003,8 +2399,11 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                                        if retained_claim is not None else
                                        'a retained attachment stands (resume); it is hashed on a thread instead'))
     hash_on_thread('rows', out / ROWS_FILE)
-    rows_sidecar = (_write_rows_sidecar(out, source, second_records, second_header, SS)
-                    if second_records is not None else None)
+    if second_records is not None and feed is not None and feed.mode != 'failed':
+        rows_sidecar = feed.verify(source, second_records)      # the sealed blocks are the sidecar (each block checked)
+    else:
+        rows_sidecar = (_write_rows_sidecar(out, source, second_records, second_header, SS)
+                        if second_records is not None else None)
     phase('snapshot_rows_attachment')
     result = dict(schema='FRANKIE_EXPERIMENT_TEACHER_ROWS_V1', day=day, request_id=request_id, entity=list(entity),
                   ingestion_receipt=dict(path=str(receipt_path), sha256=receipt_sha256), rows=len(rows), processed=processed,
@@ -2022,6 +2421,12 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
         status='not_built', format=None,
         reason='no shared market reader on this ROOT (the legacy journal walk): no picture to join the rows to')
     result['rows_sidecar'] = rows_sidecar or dict(status='not_written', reason='no second set on this day')
+    result['blocks'] = (dict(status='sealed', setting=block_setting, mode=feed.mode, error=feed.error,
+                             pin=(rows_sidecar or {}).get('blocks'))
+                        if feed is not None and feed.mode != 'failed' else
+                        dict(status='failed' if feed is not None else 'off', setting=block_setting,
+                             error=feed.error if feed is not None else None,
+                             rule='the whole-day sidecar written at publication'))
     result['account'] = _teacher_account(rows, second_records, second_header, raw_saves=raw_saves,
                                          cpu_pinning=cpu_pinning, phases=phases, walked=walked, processed=processed,
                                          out=out)
@@ -2081,6 +2486,8 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                                                 equation=(shared_read or {}).get('equation') if market is not None else None,
                                                 workers=workers, exit_code=code)
     _publish(out, result)
+    if feed is not None and feed.mode != 'failed':
+        feed.complete(out / 'receipt.json', result)
     print(json.dumps(result, sort_keys=True), flush=True)
     return code
 

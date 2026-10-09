@@ -502,6 +502,9 @@ ROW_DONE = [None]
 ROW_DONE_RECORD = {}
 BOOK_BATCH_GROUPS = 4096
 ROW_PASS_BOOK = [None]
+# the row pass's live state while it runs (the teacher's sealed blocks, 2026-10-09): rows, entity hashes, the raw streams
+# (their cursor_group / book_groups / windows dicts) and the rows before the book read (book_before); None otherwise
+ROW_PASS_LIVE = [None]
 # id(e) -> (e, pickle of e): set by the evidence producer right before it yields e (frankie_box_experiment_teacher's
 # shared walk, from its precompute), taken by the raw streams when e enters the pass; at most the last payload
 ROW_BYTES = {}
@@ -1368,6 +1371,7 @@ def row_pass(self, evidence, *, as_of, source_manifest_hash, recovery_path=None,
     with _RawStreams(T, _cpus()) as streams:
         streams.seed(continuation, book_saved)
         streams.watch(len(rows))
+        ROW_PASS_LIVE[0] = dict(rows=rows, entity_hashes=entity_hashes, streams=streams, book_before=book_before)
         for e, old, six in T._paired_raw(self.control, self.raw_teacher, streams.feed(evidence), as_of=as_of,
                                          source_manifest_hash=source_manifest_hash, continuation=continuation):
             processed += 1
@@ -1401,6 +1405,7 @@ def row_pass(self, evidence, *, as_of, source_manifest_hash, recovery_path=None,
                 SAVE_RECORD['saves'].append(dict(processed=processed, cursor=e['cursor'],
                                                  seconds=round(last_save - began, 3), at=round(time.time(), 3)))
         streams.finish()
+    ROW_PASS_LIVE[0] = None
     _progress('teacher_raw_rows', processed, None, force=True)
     if any(type(v['reason']) is str and v['reason'].startswith(RAW_MARK) for row in rows for v in row[3]):
         raise ValueError('parallel teacher raw placeholder left unresolved; run stopped')
@@ -1630,6 +1635,29 @@ def finish(self, rows, processed, entity_hashes, spec, *, source_manifest_hash,
                 context_cursors=selected, step_receipts=tuple(receipts),
                 attachment_hash=attachment, candidate_digest=candidate,
                 **(dict(dstate_rows=dstate_rows) if dstate_rows is not None else {}))
+
+
+def block_targets(self, rows, source_manifest_hash):
+    """The finish's targets and step receipts for a span of context rows (the teacher's sealed blocks, 2026-10-09),
+    computed by the finish's own _chunk with the same target spec: [(target, receipt), ...] in row order. The identity
+    normalizer only (stateless: a span is the same pure function of its rows as the whole day's chunks)."""
+    import pickle
+    T, N, R, D, SCHEMA, pack, DIGEST_PREFIX, canonical_tagged_bytes = _modules()
+    if not isinstance(self.normalizer, R.IdentityNormalizerR3):
+        raise ValueError('block targets need the identity normalizer (a stateful normalizer is known only after the day)')
+    if not rows:
+        return []
+    code = Path(T.__file__).read_bytes()
+    builder_sha = hashlib.sha1(b'blob ' + str(len(code)).encode() + b'\0' + code).hexdigest()
+    units = ('log_seconds', 'log_seconds', 'share', 'log_quantity', 'log_quantity', 'share', 'share',
+             'share', 'share', 'share', 'share', 'share', 'share', 'log_groups', 'log_count', 'log_ratio',
+             'log_ticks', 'log_groups', 'log_ticks')
+    target_spec = dict(registry_id=f'boss/teacher/{T.CANDIDATE}:{_candidate(self, T)}', target_names=T.CONTROL_COLUMNS,
+                       target_units=units, builder_code_sha=builder_sha)
+    chunk = [(True,) + tuple(row[1:]) for row in rows]
+    job = (True, self.normalizer.config.instrument_ids, self.normalizer.config, None, None, chunk, target_spec,
+           source_manifest_hash)
+    return [(target, receipt) for target, receipt, _ in pickle.loads(_chunk(job))]
 
 
 def parallel_attach(self, evidence, context, *, as_of, source_manifest_hash):

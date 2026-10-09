@@ -1073,3 +1073,91 @@ def reading_sentence(record):
               for x in record.get('listed') or []]
     text = '; '.join(said) if said else 'nothing of the second set was read'
     return text + ('. Not read, listed: %s' % '; '.join(absent) if absent else '')
+
+
+# ---- the sealed blocks (frankie_box_teacher_blocks, 2026-10-09): the sidecar published per block while the teacher walks.
+# A block is readable the moment it is sealed, whether or not the day is complete: its bytes are a fixed range of the
+# sidecar (append-only), pinned by sha256 in blocks/<n>.json and in teacher-blocks.json.
+BLOCKS_MANIFEST = 'teacher-blocks.json'
+BLOCKS_SCHEMA = 'FRANKIE_TEACHER_BLOCKS_V1'
+BLOCK_SCHEMA = 'FRANKIE_TEACHER_BLOCK_V1'
+BLOCK_READ_BYTES = 8 << 20
+
+
+def blocks(rows_dir):
+    """The teacher's blocks manifest beside the rows (schedule, the sealed blocks in order, complete, status), or None
+    when the teacher published no blocks there."""
+    path = Path(rows_dir) / BLOCKS_MANIFEST
+    if not path.is_file():
+        return None
+    manifest = json.loads(path.read_bytes())
+    if manifest.get('schema') != BLOCKS_SCHEMA:
+        raise ValueError('%s is not a %s (schema %s)' % (path, BLOCKS_SCHEMA, manifest.get('schema')))
+    return manifest
+
+
+def block_record(rows_dir, n, manifest=None):
+    """blocks/<n>.json, checked against the manifest's sha256 of it. Raises when block n is not sealed or differs."""
+    manifest = manifest if manifest is not None else blocks(rows_dir)
+    sealed = (manifest or {}).get('blocks') or []
+    if not 1 <= n <= len(sealed):
+        raise ValueError('block %d is not sealed (%d sealed)' % (n, len(sealed)))
+    entry = sealed[n - 1]
+    data = (Path(rows_dir) / entry['file']).read_bytes()
+    if hashlib.sha256(data).hexdigest() != entry['sha256']:
+        raise ValueError('block %d record %s differs from its manifest sha256' % (n, entry['file']))
+    record = json.loads(data)
+    if record.get('schema') != BLOCK_SCHEMA or record.get('index') != n:
+        raise ValueError('block %d record %s is not block %d' % (n, entry['file'], n))
+    return record
+
+
+def _block_range(rows_dir, record):
+    """(path, start, end) of a block's bytes, verified: the sha256 of the range equals the block's pin (one read)."""
+    side = record['sidecar']
+    path = Path(rows_dir) / side['file']
+    start, end = side['bytes']
+    digest, left = hashlib.sha256(), end - start
+    with path.open('rb') as handle:
+        handle.seek(start)
+        while left > 0:
+            data = handle.read(min(BLOCK_READ_BYTES, left))
+            if not data:
+                raise ValueError('the rows sidecar %s ends before byte %d (block %d)' % (path, end, record['index']))
+            digest.update(data)
+            left -= len(data)
+    if digest.hexdigest() != side['sha256']:
+        raise ValueError('block %d bytes [%d, %d) of %s differ from its sha256' % (record['index'], start, end, path))
+    return path, start, end
+
+
+def iter_block(rows_dir, n, select=None, manifest=None):
+    """Block n's rows (dicts, one per sidecar line, in cursor order), after its bytes are verified against its sha256
+    (nothing is yielded from an unverified range). select: row keys to keep (None = all)."""
+    record = block_record(rows_dir, n, manifest)
+    path, start, end = _block_range(rows_dir, record)
+    keep = None if select is None else frozenset(select)
+    with path.open('rb') as handle:
+        handle.seek(start)
+        at = start
+        while at < end:
+            line = handle.readline()
+            if not line:
+                raise ValueError('the rows sidecar %s ends inside block %d' % (path, n))
+            at += len(line)
+            row = json.loads(line)
+            yield row if keep is None else {k: v for k, v in row.items() if k in keep}
+    if at != end:
+        raise ValueError('block %d lines end at byte %d, not at its pinned end %d' % (n, at, end))
+
+
+def sidecar_header_of_blocks(rows_dir, manifest=None):
+    """Line 1 of a block-published sidecar, verified against the manifest's header pin."""
+    manifest = manifest if manifest is not None else blocks(rows_dir)
+    start, end = manifest['header']['bytes']
+    with (Path(rows_dir) / manifest['sidecar']).open('rb') as handle:
+        handle.seek(start)
+        data = handle.read(end - start)
+    if hashlib.sha256(data).hexdigest() != manifest['header']['sha256']:
+        raise ValueError('the block sidecar header differs from its manifest pin')
+    return json.loads(data)
