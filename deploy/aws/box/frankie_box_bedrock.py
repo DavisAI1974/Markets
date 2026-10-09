@@ -111,7 +111,8 @@ def ledger_file_identity(path):
 
 
 def reconciled_ledger_witness(sink, receipt, observed):
-    """Reuse actual disk readback, never a checkpoint's unverified counters."""
+    """The reconciled ledger's witness (frankie_box_finalization.reconcile_all: the write stream's sha256, bytes and
+    rows written, and one stat), bound to the unchanged file."""
     if (not sink._closed or not sink._handle.closed
             or ledger_file_identity(sink.path) != observed
             or receipt['path'] != str(sink.path)
@@ -119,11 +120,10 @@ def reconciled_ledger_witness(sink, receipt, observed):
             or receipt['bytes'] != sink._bytes
             or receipt['sha256'] != sink._digest.hexdigest()
             or receipt['row_count'] != sink.rows_written
-            or receipt['rows_read_back_from_disk'] != sink.rows_written
             or receipt['reconciled_against_counter'] != sink.rows_written):
-        raise ValueError('ledger changed after its completed disk reconciliation')
+        raise ValueError('ledger changed after its completed reconciliation')
     return dict(bytes=receipt['bytes'], sha256=receipt['sha256'],
-                path=str(sink.path), rows=receipt['rows_read_back_from_disk'])
+                path=str(sink.path), rows=receipt['row_count'], witness=receipt.get('witness'))
 
 
 class RowSpool(list):
@@ -682,7 +682,7 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
     materialize_all(sinks)
     result = dict(driver._frankie_final_result) if descriptor and descriptor['finalized'] else driver.finalize()
     # Finalize has emitted its terminal rows. Close/fsync before observing file
-    # identity; reconciliation independently reads each unchanged file once.
+    # identity; reconciliation takes each ledger's write stream (sha256, bytes, rows) and one stat.
     finalized_sinks = [getattr(sinks, name) for name in ('member', 'lifecycle', 'legacy')]
     for sink in finalized_sinks:
         sink.close()
@@ -707,7 +707,7 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
     result['runner_result_hash'] = result.pop('result_hash')
     result['result_hash'] = canonical_hash(result)
     result_witness = write_json(out_dir / 'result.json', result)
-    # The unchanged reconciliation already measured all three fields from disk.
+    # The reconciliation holds all three fields from the write stream.
     # The full-state checkpoint writes elsewhere; refuse reuse if any ledger's
     # inode, extent or write timestamps changed in the meantime.
     ledgers = {

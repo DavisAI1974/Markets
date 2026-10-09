@@ -1,8 +1,8 @@
-"""Bounded disk verification and read-only reuse of finalized native ledgers.
+"""Witnessing and read-only reuse of finalized native ledgers.
 
-No scientific calculators run here. Every verification reads the original bytes,
-counts all lines and hashes in file order. Closed checkpoint ledgers are referenced
-in place; original evidence and fresh empty placeholders are both retained.
+No scientific calculators run here. A closed ledger is witnessed by its write stream (sha256, bytes, rows written) and
+one stat (one pass, Greg 2026-10-09); scan() is the independent whole-file read, kept as a reader no route calls.
+Closed checkpoint ledgers are referenced in place; original evidence and fresh empty placeholders are both retained.
 """
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor
@@ -182,6 +182,32 @@ def scan(path, expected_rows, expected_bytes, expected_sha256, progress=None, na
     return digest, before, policy
 
 
+class ClaimedDigest:
+    """A closed ledger's sha256 as its saved checkpoint records it (the write stream's digest at the seal): read by
+    hexdigest() only; a closed ledger is never written again."""
+
+    def __init__(self, value):
+        self._value = str(value)
+
+    def hexdigest(self):
+        return self._value
+
+
+def _witness(sink, receipt, identity, basis):
+    """The witness of a closed ledger from what was already measured (one pass, Greg 2026-10-09): the write stream's
+    sha256 and row count (RowSink._digest / rows_written, or the checkpoint's record of them) and one stat of the
+    file (its size equals the written bytes). Nothing is read back. A segmented (resumed) ledger also carries the
+    materializer's copy-stream sha256 of the whole final file, checked against the write stream at its copy."""
+    transfer = getattr(sink, '_frankie_ledger_transfer', None)
+    policy = dict(schema='FRANKIE_LEDGER_WITNESS_V1', witness=basis, bytes_read=0,
+                  bytes=receipt['bytes'], sha256=receipt['sha256'], rows=receipt['row_count'],
+                  stat_size=identity[2])
+    if isinstance(transfer, dict):
+        policy.update(witness=basis + ' + materialize copy stream', copy_stream_sha256=transfer.get('sha256'),
+                      copy_stream_bytes=transfer.get('bytes'))
+    return policy
+
+
 def restore_closed(saved, sinks, progress=None):
     for name in ('member', 'lifecycle', 'legacy'):
         entry, sink = saved[name], getattr(sinks, name)
@@ -192,32 +218,38 @@ def restore_closed(saved, sinks, progress=None):
         path = safe_path(entry['path'])
         if path.name != sink.path.name:
             raise ValueError('finalized ledger name differs')
-        digest, identity, policy = scan(path, attrs['_rows'], attrs['_bytes'], entry['sha256'],
-                                        progress, name)
+        identity = file_identity(path)
+        if identity[2] != attrs['_bytes']:
+            raise ValueError('sealed ledger size differs')
         sink._handle.close()  # Fresh zero-byte placeholder is retained, never published.
         sink.__dict__.update(attrs)
-        sink.path, sink._digest = path, digest
+        sink.path, sink._digest = path, ClaimedDigest(entry['sha256'])
         receipt = sink.receipt()
-        receipt.update(reconciled_against_counter=attrs['_rows'], rows_read_back_from_disk=attrs['_rows'])
-        _CACHE[sink] = (receipt, identity, dict(policy, reused_sealed_path=str(path), ledger_copy_bytes=0))
+        receipt.update(reconciled_against_counter=attrs['_rows'], witness='checkpoint claim (write stream at the seal)')
+        _CACHE[sink] = (receipt, identity, dict(_witness(sink, receipt, identity, 'checkpoint claim (write stream at the seal)'),
+                                                reused_sealed_path=str(path), ledger_copy_bytes=0))
 
 
 def reconcile_all(sinks, *, member, lifecycle, legacy, progress=None):
+    """Each closed ledger reconciled against the calculation's own counter from its write stream (sha256, bytes, rows
+    written) and one stat; the whole-file read-back (scan) is not run: it recomputed what the sink computed while
+    writing (Greg 2026-10-09, one pass)."""
     result = {}
     for name, expected in (('member',member), ('lifecycle',lifecycle), ('legacy',legacy)):
         sink = getattr(sinks, name)
         if sink not in _CACHE:
             receipt = sink.close()
-            digest, identity, policy = scan(sink.path, expected, receipt['bytes'], receipt['sha256'],
-                                            progress, name)
-            if expected != sink.rows_written:
-                raise ValueError('independent ledger row count differs from writer count')
-            receipt.update(reconciled_against_counter=expected, rows_read_back_from_disk=expected)
-            _CACHE[sink] = (receipt, identity, policy)
+            identity = file_identity(sink.path)
+            if expected != sink.rows_written or receipt['row_count'] != expected:
+                raise ValueError('ledger row count differs from writer count')
+            if (identity[2] != receipt['bytes'] or receipt['bytes'] != sink._bytes
+                    or receipt['sha256'] != sink._digest.hexdigest()):
+                raise ValueError('ledger on disk differs from its write stream')
+            receipt.update(reconciled_against_counter=expected, witness='write stream')
+            _CACHE[sink] = (receipt, identity, _witness(sink, receipt, identity, 'write stream'))
         receipt, identity, policy = _CACHE[sink]
         if (not sink._closed or not sink._handle.closed or file_identity(sink.path) != identity
                 or receipt['path'] != str(sink.path) or receipt['row_count'] != expected
-                or receipt['rows_read_back_from_disk'] != expected
                 or receipt['reconciled_against_counter'] != expected
                 or expected != sink.rows_written or receipt['bytes'] != sink._bytes
                 or receipt['sha256'] != sink._digest.hexdigest()):
