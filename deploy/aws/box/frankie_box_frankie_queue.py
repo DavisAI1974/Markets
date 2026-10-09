@@ -211,15 +211,173 @@ def _parked_path(line, scope_text):
     return QUEUE / PARKED / ('%s-%s.json' % (line, hashlib.sha256(scope_text.encode()).hexdigest()[:16]))
 
 
+# WAITS ON DISK (2026-10-09, Greg): a day that stops 'waiting' for an input on disk (the teacher's not_ready ROOT
+# receipt, a day file, an ingest receipt, a claims file named in its reason) records the paths with their stat at that
+# moment (entry['wait'] / finish['wait'] / the class entry's wait). The ROOT worker, the class worker and the parked
+# watcher watch those paths' parent directories (inotify) and act the instant one of them appears or changes. The run's
+# own receipt directory and the queue are never in the list (a stage receipt's status change already notifies; the
+# step's own rewrites must not wake it in a loop).
+_PATH_IN_TEXT = re.compile(r'/opt/frankie-box/[^\s\'",;()\[\]{}]+')
+
+
+def _stat_key(path):
+    try:
+        st = os.stat(path)
+        return [st.st_ino, st.st_size, st.st_mtime_ns]
+    except OSError:
+        return None
+
+
+def wait_of(entry, reason=None, facts=None):
+    """{'paths': {path: stat or None}} of the on-disk inputs a waiting day names: absolute /opt/frankie-box paths in its
+    reason and facts, its readiness's ingest receipt and day file(s), and its owner attempt's ROOT receipt. None when
+    nothing concrete is named. Never raises."""
+    try:
+        import frankie_box_experiment as X
+        skip = (str(X.RUNS), str(QUEUE))
+        roots = str(X.ROOTS)
+    except Exception:  # noqa: BLE001
+        skip, roots = (str(QUEUE),), None
+    found = set()
+    try:
+        text = '%s %s' % (reason or '', json.dumps(facts, default=str) if facts else '')
+        found.update(m.rstrip('.') for m in _PATH_IN_TEXT.findall(text))
+        ready = entry.get('readiness') or {}
+        for p in [ready.get('receipt')] + list(ready.get('day_file') or []):
+            if isinstance(p, str) and p.startswith('/'):
+                found.add(p)
+        attempt = (entry.get('owner') or {}).get('attempt')
+        if attempt and roots:
+            found.add(str(Path(roots) / attempt / 'calculations-receipt.json'))
+    except Exception:  # noqa: BLE001
+        pass
+    skip = tuple(str(d).rstrip('/') + '/' for d in skip)          # a directory prefix, never a name prefix
+    paths = {p: _stat_key(p) for p in sorted(found) if not p.startswith(skip)}
+    return dict(paths=paths, at_utc=utc()) if paths else None
+
+
+def wait_changed(wait):
+    """True when any recorded path appeared, vanished or changed (inode, size, mtime) since it was recorded."""
+    return bool(wait) and any(_stat_key(p) != (list(st) if st else None) for p, st in (wait.get('paths') or {}).items())
+
+
+def _waits_of_entry(x):
+    return [w for w in (x.get('wait'), (x.get('finish') or {}).get('wait')) if w]
+
+
+def watch_waits(waiter, waits):
+    """Add the parent directory of every waited path to a Waiter (a missing one through its nearest ancestor)."""
+    for w in waits:
+        for p in (w.get('paths') or {}):
+            waiter.watch_dir(str(Path(p).parent))
+
+
 def park_scope(line, scope_text, code_root, commit, state, reason=None, signature=None):
-    """Called by a worker that ends while its scope still has work (under no lock)."""
+    """Called by a worker that ends while its scope still has work (under no lock). The scope's on-disk waits go on the
+    parked file and the parked watcher (frankie-queue-parked-watch) is started, so the scope is re-kicked the instant
+    one of those inputs appears or changes, as well as on the next change of the lines (rekick_parked)."""
     import frankie_box_cores as C
+    scope = parse_scope(scope_text)
+    waits = []
+    for name in LINES:
+        try:
+            for x in load(name).get('entries') or []:
+                if in_scope(x, scope):
+                    waits.extend(_waits_of_entry(x))
+        except (OSError, ValueError, SystemExit):
+            continue
     path = _parked_path(line, scope_text)
     path.parent.mkdir(parents=True, exist_ok=True)
     C.write_json(path, dict(schema='FRANKIE_QUEUE_PARKED_V1', line=line, scope=scope_text, code_root=str(code_root),
                             commit=commit, worker_end=state, reason=reason, signature=signature or _parked_signature(),
-                            at=time.time(), at_utc=utc(), pid=os.getpid()))
+                            waits=waits, at=time.time(), at_utc=utc(), pid=os.getpid()))
+    if waits:
+        start_parked_watch(code_root, commit)
     return str(path)
+
+
+PARKED_WATCH_UNIT = 'frankie-queue-parked-watch'
+
+
+def start_parked_watch(code_root, commit, log=print):
+    """The one parked watcher (a systemd unit of its own, so it outlives the worker that parked; a new session without
+    systemd). Idempotent: a second watcher exits at once on its lock. It ends by itself when no scope is parked."""
+    lock = QUEUE / 'parked-watch.lock'
+    try:
+        fd = os.open(lock, os.O_RDONLY | os.O_CREAT, 0o644)
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            fcntl.flock(fd, fcntl.LOCK_UN)
+        except BlockingIOError:
+            return dict(started=False, reason='the parked watcher runs')
+        finally:
+            os.close(fd)
+    except OSError:
+        pass
+    argv = [sys.executable, '-B', str(HERE / 'frankie_box_frankie_queue.py'), '--action', 'parked-watch',
+            '--code-root', str(code_root), '--commit', str(commit)]
+    env = dict(PYTHONDONTWRITEBYTECODE='1', PYTHONNOUSERSITE='1', PYTHONPATH=str(code_root), HOME=os.environ.get('HOME') or '/root',
+               MARKETS_SHA=str(commit), CODE_ROOT=str(code_root), **_run_settings_env())
+    (QUEUE / 'logs').mkdir(parents=True, exist_ok=True)
+    log_path = QUEUE / 'logs' / 'parked-watch.log'
+    if shutil.which('systemd-run'):
+        cmd = ['systemd-run', '--unit', '%s-%d' % (PARKED_WATCH_UNIT, int(time.time())), '--collect',
+               '-p', 'StandardOutput=append:%s' % log_path, '-p', 'StandardError=append:%s' % log_path] + \
+              [x for k, v in sorted(env.items()) for x in ('-E', '%s=%s' % (k, v))] + argv
+        if subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).returncode == 0:
+            return dict(started=True, method='systemd-run')
+    with open(log_path, 'ab') as out:
+        proc = subprocess.Popen(argv, env=dict(os.environ, **env), stdout=out, stderr=subprocess.STDOUT,
+                                stdin=subprocess.DEVNULL, start_new_session=True)
+    return dict(started=True, method='new session', pid=proc.pid)
+
+
+def parked_watch(log=print):
+    """The parked watcher's loop: no interval, no timer. It watches the parked directory, the wake directory and the
+    parent directory of every on-disk input a parked scope waits on; when one of those inputs appeared or changed it
+    re-kicks that scope at once (the parked file removed first, so it is kicked once). It ends when no scope is parked."""
+    import frankie_box_wake as W
+    QUEUE.mkdir(parents=True, exist_ok=True)
+    lock = open(QUEUE / 'parked-watch.lock', 'a+')
+    try:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        log('a parked watcher runs already; this one ends')
+        return 0
+    directory = QUEUE / PARKED
+    kicked = 0
+    while True:
+        waiter = W.Waiter([directory, wake_dir()])
+        parked = []
+        for path in sorted(directory.glob('*.json')) if directory.is_dir() else []:
+            try:
+                parked.append((path, json.loads(path.read_bytes())))
+            except (OSError, ValueError):
+                continue
+        if not parked:
+            waiter.close()
+            log('parked watcher: no scope is parked; it ends (%d re-kicked)' % kicked)
+            return 0
+        for path, req in parked:
+            watch_waits(waiter, req.get('waits') or [])
+            if not any(wait_changed(w) for w in req.get('waits') or []):
+                continue
+            try:
+                path.unlink()
+            except OSError:
+                continue
+            code_root, commit = current_checkout(req.get('code_root'), req.get('commit'))
+            try:
+                out = kick(req['line'], code_root, commit, 0, SETTINGS['queue_poll_seconds'],
+                           by='parked watcher: an awaited input appeared or changed (%s)' % req.get('scope'), log=log,
+                           scope=req['scope'])
+                kicked += 1
+                log('parked watcher: %s re-kicked: %s' % (req.get('scope'), json.dumps(out, default=str)[:300]))
+            except (Exception, SystemExit) as error:  # noqa: BLE001 - named; parked again for the next change
+                log('parked watcher: %s not re-kicked (%s: %s)' % (req.get('scope'), type(error).__name__, error))
+        rekick_parked(log=log)                       # the queue-change rule too (nothing re-kicked twice)
+        waiter.wait()
+        waiter.close()
 
 
 def unpark_scope(line, scope_text):
@@ -294,7 +452,7 @@ def load(line):
     return doc
 
 
-WAKE_VOLATILE_ENTRY = ('reason',)               # a waiter's own re-recorded reason is not a state change
+WAKE_VOLATILE_ENTRY = ('reason', 'wait')       # a waiter's own re-recorded reason / waits are not a state change
 WAKE_VOLATILE_ATTEMPT = ('polls', 'last_wait')
 
 
@@ -1322,6 +1480,8 @@ def class_worker(code_root, commit, max_seconds, poll_seconds, log=print, scope=
                     continue                                   # the loop ends at this failed front after one retry
                 att['polls'] = att.get('polls', 0) + 1
                 att['last_wait'] = reason
+                y['wait'] = wait_of(y, reason, facts)
+                watch_waits(waiter, _waits_of_entry(y))   # the class re-checks the instant an awaited input appears
                 y['reason'] = 'waiting (poll %d): %s' % (att['polls'], reason)
                 save('class', doc)
                 if att['polls'] == 1 or att['polls'] % 60 == 0:
@@ -1422,7 +1582,12 @@ def _book_slot(x, stage, commit):
     size = int(_plan_of(x['run']).get('day_cpus') or C.DAY_RUN_CPUS)
     b, outcome = C.book('day-run', os.getpid(), dict(day=x['day'], run=x['run'], stage='day-slot-' + stage, commit=commit,
                                                   cpus=cpus, size=size), 1.0)
+    if not b:
+        _SLOT_HELD_PIDS.update(outcome.get('held_pids') or [])   # the root worker wakes on their exit (2026-10-09)
     return (b['booking'], b['cpus'], None) if b else (None, None, outcome.get('reason'))
+
+
+_SLOT_HELD_PIDS = set()     # processes holding CPUs outside the ledger when a slot could not be booked (this worker)
 
 
 def marker_of(run, day):
@@ -2308,8 +2473,14 @@ def _root_waiter(doc, running):
                 continue
             if any(a.endswith(b'frankie_box_experiment_root.py') for a in argv) and days & set(argv):
                 pids.add(int(proc.name))
+    pids.update(_SLOT_HELD_PIDS)                    # CPUs held outside the ledger: their holders' exit frees them
+    _SLOT_HELD_PIDS.clear()
     pids.discard(os.getpid())
-    return W.Waiter([wake_dir(), claims.CLAIMS], pids=sorted(pids))
+    waiter = W.Waiter([wake_dir(), claims.CLAIMS], pids=sorted(pids))
+    waiter.waits = {x['seq']: _waits_of_entry(x) for x in doc.get('entries') or [] if _waits_of_entry(x)}
+    for waits in waiter.waits.values():
+        watch_waits(waiter, waits)                  # an awaited input on disk appearing or changing wakes the worker
+    return waiter
 
 
 def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lock=False, scope=None):
@@ -2365,6 +2536,7 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                         # F1: a wait stays a wait; the retry binds a new booking to the SAME owner with a recorded
                         # rebook decision, so a done or pending Jev is reused/resumed, never refused
                         _rebook_owner(y, 'finish waiting: the retry books any free 16 CPUs for the same owner binding')
+                        y['finish']['wait'] = wait_of(y, reason, facts)     # the inputs on disk it waits on
                     event('root', 'finish_end', seq=seq, day=y['day'], run=y['run'], result=result, reason=reason, facts=facts)
                     log('FINISH seq %d %s (%s): %s%s' % (seq, y['day'], y['run'], result, (': %s' % reason) if reason else ''))
                     continue
@@ -2416,6 +2588,7 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                     if y['finish']['state'] == 'waiting':
                         # F1, the same rule on the ROOT-and-finish-in-one-slot route: the retry rebinds the same owner
                         _rebook_owner(y, 'finish waiting: the retry books any free 16 CPUs for the same owner binding')
+                        y['finish']['wait'] = wait_of(y, json.dumps(y['finish'].get('reason'), default=str), facts)
                     elif y['finish']['state'] == 'failed':
                         # the same rule as the finish-only route above (2026-10-07 night, the gap ccode_step8 named): a
                         # failed finish gives its owner binding up, kept as history. Kept, it would pin the retry to the
@@ -2430,7 +2603,9 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                     y.update(state='running', where=(facts.get('claim') or {}).get('where'), reason=reason)
                     _release_owner(y, 'claimed elsewhere: this box holds nothing of the day')
                 elif result == 'queued':
-                    y.update(state='queued', where=None, reason='back in line at its own place: %s' % reason)
+                    y.update(state='queued', where=None, reason='back in line at its own place: %s' % reason,
+                             wait=wait_of(y, reason, facts))
+
                     if _owned_root(y):
                         # session 9: an OWNED day (a resume, or its ROOT directory exists) keeps its owner binding and
                         # attempt; only its booking is re-booked (the waiting finish's rule), never a new attempt
@@ -2620,6 +2795,9 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
         # 2026-10-09: no poll interval; the worker wakes on the next event (see _root_waiter), or at its own lifetime
         # bound when nothing stops it yet
         waiter.wait(None if (stop or deadline is None) else max(0.0, deadline - time.monotonic()))
+        for seq, waits in getattr(waiter, 'waits', {}).items():
+            if seq in retried and any(wait_changed(w) for w in waits):
+                retried.discard(seq)                # its awaited input appeared or changed: retried once more now
     if waiter is not None:
         waiter.close()
     return code
@@ -2829,7 +3007,7 @@ def resume_owner(run, day, by, rebook=False):
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument('--action', required=True, choices=('show', 'enqueue', 'worker', 'kick', 'handover', 'save', 'status', 'resume',
-                                                      'retire'))
+                                                      'retire', 'parked-watch'))
     p.add_argument('--reason', help='retire: the recorded reason')
     p.add_argument('--wait-lock', action='store_true', help='worker: wait for the running worker to end (handover)')
     p.add_argument('--line', choices=LINES)
@@ -2878,11 +3056,13 @@ def main():
         a.code_root = str(HERE.parents[2]) if a.action == 'worker' else current_checkout(str(HERE.parents[2]), None)[0]
     if not a.commit:
         a.commit = _head_of(a.code_root)
-    if not (a.line and a.code_root and a.commit):
+    if not ((a.line or a.action == 'parked-watch') and a.code_root and a.commit):
         raise SystemExit('--line required (and a checkout whose commit can be read)')
     if (a.max_seconds and a.max_seconds < 60) or a.poll_seconds < 5 or a.poll_seconds > 600:
         raise SystemExit('--max-seconds 0 (no limit, the default) or >= 60, and --poll-seconds 5..600 required')
     sys.path.insert(0, str(HERE))
+    if a.action == 'parked-watch':
+        return parked_watch(log=lambda t: print('%s %s' % (utc(), t), flush=True))
     if a.action == 'worker':
         try:
             if a.line == 'class':

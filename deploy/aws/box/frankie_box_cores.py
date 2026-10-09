@@ -833,6 +833,7 @@ def book_locked(kind, size, pid, meta, window):
     procs_now = processes()
     exclude = ancestors(procs_now, me) | {me}
     held, _, procs, bookings = usage(window, exclude=exclude)
+    _LAST_HELD_PIDS[:] = sorted({h['pid'] for hs in held.values() for h in hs})   # 2026-10-09: a waiting booker watches them
     online = online_cpus()
     booked = {c for b in bookings for c in b['cpus']}
     free = [c for c in online if c not in booked and c not in held]
@@ -966,6 +967,9 @@ def record_waiting(kind, meta, outcome):
         return None
 
 
+_LAST_HELD_PIDS = []        # the pids holding CPUs outside the ledger at the last booking attempt of this process
+
+
 def book(kind, pid, meta, window):
     size, why = size_of(kind, meta.get('workers'), meta.get('verify'), meta.get('size'))
     if not why and kind == 'day-run' and meta.get('cpus') and len(meta['cpus']) != size:
@@ -979,6 +983,8 @@ def book(kind, pid, meta, window):
     with Lock():
         b, outcome = book_locked(kind, size, pid, meta, window)
     if outcome['status'] == 'waiting':
+        # 2026-10-09: the processes holding CPUs outside the ledger; a waiting booker wakes on their exit (pidfd)
+        outcome['held_pids'] = list(_LAST_HELD_PIDS)
         outcome['record'] = record_waiting(kind, meta, outcome)
     return b, outcome
 

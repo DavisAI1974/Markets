@@ -94,6 +94,7 @@ class Waiter:
 
     def __init__(self, dirs=(), pids=()):
         self.fd, self.watched, self.missing, self.pids, self.fresh, self.exited = None, {}, [], {}, False, set()
+        self.fired = set()                         # the watched directories that had an event (cleared by the caller)
         lib = _lib()
         if lib:
             fd = lib.inotify_init1(IN_CLOEXEC | IN_NONBLOCK)
@@ -173,6 +174,9 @@ class Waiter:
             while offset + 16 <= len(data):        # struct inotify_event: wd, mask, cookie, len, name[len]
                 wd, mask, _cookie, size = struct.unpack_from('iIII', data, offset)
                 offset += 16 + size
+                for path, w in self.watched.items():
+                    if w == wd:
+                        self.fired.add(path)
                 if mask & (IN_DELETE_SELF | IN_MOVE_SELF):
                     for path, w in list(self.watched.items()):
                         if w == wd:
