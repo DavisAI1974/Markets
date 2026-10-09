@@ -18,7 +18,8 @@ never recomputed:
             clock_feature_availability        every update's (source, source_ordinal, known_at_ns, availability_basis)
             clock_prospective_discovery_confirmation   every native.lifecycle update's emission record
             clock_model_evaluation            every native.member update's clocks record
-            clock_lock_time                   not a picture element: stamped once at publication (the teacher's as_of)
+            clock_lock_time                   not a picture element: the TEACHER's as_of, labelled
+                                              'teacher_as_of (lock time does not exist before Frankie reads)'
           a clock with no carrier at this instant is listed in clocks_absent with its reason (never filled in)
   planes  every update the picture placed at this instant: (source, source_ordinal, input_cursor, instrument_id,
           known_at_ns, the 99 registry entries it carries), and every state row it carried (last_observed_state,
@@ -46,6 +47,8 @@ KEY_FIELDS = ('adapter_cursor', 'input_cursor', 'input_journal_ordinal', 'source
               'session_id', 'instrument_id', 'terminal_prefix_hash')
 CLOCK_FIELDS = ('clock_event_time', 'clock_receive_time', 'clock_event_known_by', 'clock_feature_availability',
                 'clock_prospective_discovery_confirmation', 'clock_model_evaluation', 'clock_lock_time')
+# clock_lock_time on a teacher row is the TEACHER's as_of, never Frankie's lock (Greg, 2026-10-09)
+LOCK_LABEL = 'teacher_as_of (lock time does not exist before Frankie reads)'
 PLANE_REFERENCE = ('source', 'source_ordinal', 'input_cursor', 'instrument_id', 'known_at_ns', 'entries')
 STATE_REFERENCE = ('source', 'source_ordinal')
 
@@ -85,7 +88,7 @@ def join_record(evidence, picture):
         absent['clock_prospective_discovery_confirmation'] = 'no native.lifecycle row was placed at this instant'
     if not member:
         absent['clock_model_evaluation'] = 'no native.member row was placed at this instant'
-    absent['clock_lock_time'] = 'not a picture element: stamped at publication (the teacher\'s as_of)'
+    absent['clock_lock_time'] = LOCK_LABEL + ': not a picture element; the teacher\'s as_of is stamped at publication'
     key = dict(adapter_cursor=at.get('adapter_cursor'), input_cursor=at.get('input_cursor'),
                input_journal_ordinal=at.get('input_journal_ordinal'), source_input_index=at.get('source_input_index'),
                source_member_index=at.get('source_member_index'), session_id=at.get('session_id'),
