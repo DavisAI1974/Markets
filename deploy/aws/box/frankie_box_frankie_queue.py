@@ -3004,12 +3004,31 @@ def resume_owner(run, day, by, rebook=False):
             x.setdefault('owner_rebooks', []).append(decision)
             retained = b.get('retained')
         if retained is None and owner.get('cpus') and not rebook:
+            # 2026-10-09 (Greg: a gate we coded never blocks fine data): the retained booking is gone from the ledger; the
+            # day is re-booked automatically at the SAME size through the ledger (the same attempt resumes on the new
+            # set), the decision recorded; when no lane of that size is free now, the next admission books any free
+            # slot of the plan's size for the same owner binding (the REBOOK=on route), recorded the same way
             released = C.RELEASED / ('%s.json' % owner.get('booking'))
-            raise SystemExit('the retained booking %s of %s %s is not in the ledger any more (%s): the exact CPU set cannot be '
-                             'reused; an explicit owner decision is required: REBOOK=on resumes the same attempt %s on any '
-                             'free 16 CPUs' % (owner.get('booking'), run, day,
-                                                json.loads(released.read_bytes()).get('release_reason') if released.is_file()
-                                                else 'no ledger record', owner['attempt']))
+            why = (json.loads(released.read_bytes()).get('release_reason') if released.is_file() else 'no ledger record')
+            cpus_then = owner['cpus'] if isinstance(owner['cpus'], (list, tuple)) else C.parse_list(owner['cpus'])
+            size = len(cpus_then) if len(cpus_then) in C.DAY_RUN_SIZES else int(_plan_of(run).get('day_cpus') or C.DAY_RUN_CPUS)
+            b, outcome = C.rebook_for_owner(run, day, owner['attempt'], size, 'day-slot-resume', owner.get('commit'),
+                                            reason='resumed by %s: the retained booking %s (CPUs %s) left the ledger (%s); '
+                                                   're-booked at the same size' % (by, owner.get('booking'),
+                                                                                   owner.get('cpus'), why))
+            decision = dict(by=by, at_utc=utc(), previous_cpus=owner.get('cpus'), previous_booking=owner.get('booking'),
+                            previous_release_reason=why, size=size, automatic=True,
+                            rule='re-booked automatically at resume: the retained booking was gone (2026-10-09)')
+            if b is not None:
+                decision.update(booking=b['booking'], cpus=sorted(b['cpus']), resolver=outcome.get('resolver'),
+                                fallback=outcome.get('fallback'))
+                x['owner'] = owner = dict(owner, cpus=sorted(b['cpus']), booking=b['booking'], rebooked=decision)
+                retained = b.get('retained')
+            else:
+                decision.update(booking=None, cpus=None, waiting=outcome.get('reason'),
+                                note='no %d-CPU lane free now: the next admission books any free slot for this owner' % size)
+                x['owner'] = owner = dict(owner, cpus=None, booking=None, rebooked=decision)
+            x.setdefault('owner_rebooks', []).append(decision)
         if rebook and retained is None:
             x['owner'] = owner = dict(owner, cpus=None, booking=None,
                                       rebooked=dict(by=by, at_utc=utc(), previous_cpus=owner.get('cpus'),
