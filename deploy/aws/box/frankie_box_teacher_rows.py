@@ -1114,27 +1114,17 @@ def block_record(rows_dir, n, manifest=None):
 
 
 def _block_range(rows_dir, record):
-    """(path, start, end) of a block's bytes, verified: the sha256 of the range equals the block's pin (one read)."""
+    """(path, start, end) of a block's bytes. The block's sha256 stays pinned on its record; it is NOT re-read and
+    compared here (Greg, 2026-10-09: gates that re-check sealed data are off; the reader reads the sealed range once)."""
     side = record['sidecar']
     path = Path(rows_dir) / side['file']
     start, end = side['bytes']
-    digest, left = hashlib.sha256(), end - start
-    with path.open('rb') as handle:
-        handle.seek(start)
-        while left > 0:
-            data = handle.read(min(BLOCK_READ_BYTES, left))
-            if not data:
-                raise ValueError('the rows sidecar %s ends before byte %d (block %d)' % (path, end, record['index']))
-            digest.update(data)
-            left -= len(data)
-    if digest.hexdigest() != side['sha256']:
-        raise ValueError('block %d bytes [%d, %d) of %s differ from its sha256' % (record['index'], start, end, path))
     return path, start, end
 
 
 def iter_block(rows_dir, n, select=None, manifest=None):
-    """Block n's rows (dicts, one per sidecar line, in cursor order), after its bytes are verified against its sha256
-    (nothing is yielded from an unverified range). select: row keys to keep (None = all)."""
+    """Block n's rows (dicts, one per sidecar line, in cursor order) from its sealed byte range, read once (the range's
+    sha256 is pinned on the record, not re-checked). select: row keys to keep (None = all)."""
     record = block_record(rows_dir, n, manifest)
     path, start, end = _block_range(rows_dir, record)
     keep = None if select is None else frozenset(select)

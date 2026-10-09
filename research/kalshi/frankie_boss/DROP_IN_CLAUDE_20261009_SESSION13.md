@@ -15,7 +15,10 @@ Greg's usage is nearly out: this box is written so a fresh session (Claude or Co
   rows as carry only). CLASSROOM: block sessions 1-22 complete; a resumed class worker keeps every block with a
   session.json and runs the rest one lesson at a time.
 - RESTART (in order; each SSM command under ~55 s, the MCP run_script tool times out at 60 s):
-  1. `StartInstances` + tag KeepRunning=true; wait for SSM Online.
+  1. `StartInstances` + tag KeepRunning=true; wait for SSM Online. Then PUSH THE TIP to the box (COMMANDS below; the
+     box's current is 3071eac8 and the tip carries the seal-gate removal Greg asked for at close: the publication
+     pins the sealed sidecar by one read instead of rebuilding and comparing every block, and the block reader no
+     longer re-reads a block for its sha256 before yielding its rows).
   2. `CR=$(readlink -f /opt/frankie-box/code/current); cd $CR; CODE_ROOT=$CR MARKETS_SHA=$(basename $(dirname $CR) | cut -d- -f1)
      FRANKIE_ROOT_DIGEST=off FRANKIE_CLASSROOM_CPUS=all ACTION=resume SCOPE=e2e-20231018-a2:20231018 RUN=e2e-20231018-a2 DAY=20231018
      sh deploy/aws/box/frankie_box_frankie_queue.sh` (resume reconciles the dead finish holder, re-points the slot, kicks the

@@ -1438,46 +1438,22 @@ class _BlockFeed:
         print('TEACHER_BLOCKS failed: %s' % reason, flush=True)
 
     # -- the final publication
-    def verify(self, source, records):
-        """Every sealed block's bytes against the lines built from the whole-day result (record['book'], the snapshot
-        rows): equal, or ValueError naming each differing block. Returns the rows_sidecar pin."""
+    def pin(self):
+        """The sealed sidecar as the publication, pinned by ONE read of its bytes (sha256 of the file): no block is
+        rebuilt from the whole-day result and compared (Greg, 2026-10-09: gates that re-check sealed/receipted data are
+        OFF; the seal is the record). The sealed byte count and the manifest's line counts are the pin's own facts."""
         manifest = self.sealer.manifest
         side = self.out / ROWS_SIDECAR
+        digest = hashlib.sha256()
         with side.open('rb') as handle:
-            head = handle.read(manifest['header']['bytes'][1])
-        if hashlib.sha256(head).hexdigest() != manifest['header']['sha256']:
-            raise ValueError('the rows sidecar header differs from its manifest pin')
-        digest = hashlib.sha256(head)
-        by_cursor = {record['key']['adapter_cursor']: record for record in records}
-        rows, at, differ, lines = source['rows'], 0, [], 0
-        for entry in manifest['blocks']:
-            a, b = entry['cursor_range']
-            block_digest, count = hashlib.sha256(), 0
-            while at < len(rows) and rows[at]['cursor'] < b:
-                row = rows[at]
-                if row['cursor'] < a:
-                    raise ValueError('snapshot row %d lies before block %d' % (row['cursor'], entry['index']))
-                record = by_cursor[row['cursor']]
-                data = _sidecar_line(row, record, record['book'], self.carried, entry['teacher_as_of'], self.SS)
-                block_digest.update(data)
-                digest.update(data)
-                count += 1
-                at += 1
-            lines += count
-            if block_digest.hexdigest() != entry['sidecar_sha256'] or count != entry['lines']:
-                differ.append(dict(index=entry['index'], lines=[entry['lines'], count],
-                                   sha256=[entry['sidecar_sha256'], block_digest.hexdigest()]))
-        if at != len(rows):
-            differ.append(dict(unsealed_snapshot_rows=len(rows) - at, first_cursor=rows[at]['cursor']))
-        if side.stat().st_size != manifest['sealed_bytes']:
-            differ.append(dict(sidecar_bytes=side.stat().st_size, sealed_bytes=manifest['sealed_bytes']))
-        if differ:
-            raise ValueError('the sealed blocks differ from the whole-day rows (%d): %s; the rows do not leave the '
-                             'teacher' % (len(differ), json.dumps(differ[:10])))
+            for chunk in iter(lambda: handle.read(1 << 24), b''):
+                digest.update(chunk)
+        lines = sum(int(entry.get('lines') or 0) for entry in manifest['blocks'])
         return dict(file=ROWS_SIDECAR, sha256=digest.hexdigest(), rows=lines, format=self.SS.FORMAT, schema=SIDECAR_SCHEMA,
                     row_keys=list(SIDECAR_ROW_KEYS), blocks=self.sealer.sealed_pin(),
-                    basis='line 1 the header, then every sealed block\'s rows (each row\'s lock its block\'s teacher '
-                          'as_of); every block re-built from the whole-day result and equal; sha256 of the bytes')
+                    sealed_bytes=manifest.get('sealed_bytes'), file_bytes=side.stat().st_size,
+                    basis='line 1 the header, then every sealed block\'s rows as sealed (each row\'s lock its block\'s '
+                          'teacher as_of); sha256 of the file\'s bytes, read once; nothing rebuilt or compared')
 
     def complete(self, receipt_path, result):
         self.sealer.finish('complete', complete=True, receipt=dict(file='receipt.json', sha256=_sha256(receipt_path)),
@@ -2402,7 +2378,7 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
     rows_sidecar = None
     if second_records is not None and feed is not None and feed.mode != 'failed':
         try:
-            rows_sidecar = feed.verify(source, second_records)  # the sealed blocks are the sidecar (each block checked)
+            rows_sidecar = feed.pin()                          # the sealed blocks ARE the sidecar (pinned, not re-checked)
         except Exception as error:  # noqa: BLE001 - never blocks the publication (Greg 2026-10-09): listed, whole day written
             feed._fail('publication: %s: %s' % (type(error).__name__, error))
     if rows_sidecar is None and second_records is not None:
