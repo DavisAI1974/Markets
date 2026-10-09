@@ -7,6 +7,7 @@ future-dependent backfill is permitted. Existing F_LAST science is a view of thi
 source, not replaced by a different lag axis. Only raw/ROOT market evidence enters
 this module: host answers, private decisions, school and other agents' claims do not.
 """
+import copy
 import hashlib
 import json
 import re
@@ -58,6 +59,8 @@ def binding():
 # its MEANING fields only (schema, order, clocks, required_native, representation, completed_knowledge,
 # missing_coverage). A ROOT made under an earlier byte version of this module is the same policy.
 RECORDED_ONLY = ('implementation_sha256',)
+# A read's position (SharedMarketTimeline.position / iter_applied(start=...)): teacher resume, 2026-10-09.
+POSITION_SCHEMA = 'FRANKIE_SHARED_MARKET_POSITION_V1'
 
 
 def policy_meaning(policy):
@@ -143,31 +146,83 @@ def _json(pin):
     return json.loads(raw)
 
 
-def _rows(pin, *, packed, timing=None, verify=True):
+def _rows(pin, *, packed, timing=None, verify=True, where=None, start=None):
     """Check the exact consumed bytes; caller must exhaust before claiming completion. `timing` (optional dict)
     accumulates the seconds spent reading, hashing and decoding rows: an inspection measurement, never a value.
     verify=False (one pass, 2026-10-09): the stream's pin is held by the ROOT's FRANKIE_FILE_CLAIM_V2 row (stat,
-    filesystem and last 64 KiB unchanged), so the bytes are not hashed again and not compared at exhaustion."""
+    filesystem and last 64 KiB unchanged), so the bytes are not hashed again and not compared at exhaustion.
+    Seek (teacher resume, 2026-10-09): `where` (a dict) is kept at each yield: row_start / next_offset / next_ordinal of
+    the row just yielded, and `hasher` (its running state). A line is hashed when the NEXT line is read (or at the end),
+    so while a row is held unconsumed by the caller the hash stands exactly at that row's first byte. `start`
+    ({offset, ordinal, sha256: (state, bytes) or None}, from _Changes.position) continues at that line: the bytes
+    before it are neither read nor hashed again; the pin is checked at exhaustion exactly as from byte 0."""
     from research.kalshi.frankie_boss.c15_journal import unpack
     from time import perf_counter
-    hashed, size = hashlib.sha256(), 0
+    offset, first = (int(start['offset']), int(start['ordinal'])) if start else (0, 0)
+    hashed = _line_hasher(start.get('sha256') if start else None, offset) if verify else None
+    where = {} if where is None else where
+    where.update(row_start=None, next_offset=offset, next_ordinal=first, hasher=hashed)
+    size, held = offset, None
     spent = 0.0
     with _local(pin['path']).open('rb') as stream:
+        stream.seek(offset)
         mark = perf_counter()
-        for ordinal, raw in enumerate(stream):
+        for ordinal, raw in enumerate(stream, first):
+            if held is not None:
+                hashed.update(held)
             if verify:
-                hashed.update(raw)
-            size += len(raw)
+                held = raw
+            begun, size = size, size + len(raw)
             row = json.loads(raw)
             row = unpack(row) if packed else row
             if timing is not None:
                 now = perf_counter()
                 spent += now - mark
                 timing['decode_seconds'] = round(spent, 3)
+            where['row_start'], where['next_offset'], where['next_ordinal'] = begun, size, ordinal + 1
             yield ordinal, row
             mark = perf_counter()
+    if held is not None:
+        hashed.update(held)
     if verify and (size != pin['bytes'] or hashed.hexdigest() != pin['sha256']):
         raise ValueError('shared market rows differ from their source pin: ' + pin['path'])
+
+
+def _sha256_resumable():
+    """frankie_box_boss_session's (_ResumableSha256, library) when libcrypto reproduces hashlib here, else None."""
+    try:
+        try:
+            import frankie_box_boss_session as S
+        except ImportError:
+            from deploy.aws.box import frankie_box_boss_session as S
+        library = S._sha256_library()
+    except Exception:  # noqa: BLE001 - no resumable state: the stream is hashed with hashlib and cannot be seeked
+        return None
+    return (S._ResumableSha256, library) if library is not None else None
+
+
+class _PlainLineHash:
+    """hashlib.sha256 with a length; no running state to save (a stream hashed with it cannot be seeked)."""
+    def __init__(self):
+        self.sha, self.length = hashlib.sha256(), 0
+
+    def update(self, data):
+        self.sha.update(data)
+        self.length += len(data)
+
+    def hexdigest(self):
+        return self.sha.hexdigest()
+
+
+def _line_hasher(snapshot, offset):
+    """The serial reader's hasher at byte `offset`: a resumable SHA-256 (continued from `snapshot` = (state, bytes) when
+    offset > 0), or hashlib from byte 0 when libcrypto cannot be used. A seek past byte 0 without a saved state raises."""
+    resumable = _sha256_resumable()
+    if offset:
+        if snapshot is None or resumable is None or int(snapshot[1]) != offset:
+            raise ValueError('a layer stream cannot be continued at byte %d without its saved SHA-256 state' % offset)
+        return resumable[0](resumable[1], snapshot[0], snapshot[1])
+    return resumable[0](resumable[1]) if resumable is not None else _PlainLineHash()
 
 
 # ---- layer-row decode on the lane (Greg, 2026-10-07: CPUs pinned to the jobs and workers) --------------------------
@@ -208,11 +263,12 @@ def _decode_pin(handout):
 
 
 def _decode_range(args):
-    """Rows of one byte range, decoded exactly as _rows decodes them; (rows, error) where error is the exception the
-    first undecodable line raised (rows hold every row before it)."""
+    """Rows of one byte range, decoded exactly as _rows decodes them; (rows, line lengths, error) where error is the
+    exception the first undecodable line raised (rows hold every row before it; lengths one per row, for the reader's
+    position)."""
     path, start, end, packed = args
     from research.kalshi.frankie_boss.c15_journal import unpack
-    rows = []
+    rows, lengths = [], []
     try:
         with open(path, 'rb') as stream:
             stream.seek(start)
@@ -223,13 +279,14 @@ def _decode_range(args):
                 position += len(raw)
                 row = json.loads(raw)
                 rows.append(unpack(row) if packed else row)
+                lengths.append(len(raw))
     except Exception as error:  # noqa: BLE001 - handed back and raised in order by the consumer
-        return rows, error
-    return rows, None
+        return rows, lengths, error
+    return rows, lengths, None
 
 
-def _decode_ranges(path, size):
-    cuts = [0]
+def _decode_ranges(path, size, start=0):
+    cuts = [start]
     with open(path, 'rb') as stream:
         while cuts[-1] + DECODE_RANGE_BYTES < size:
             stream.seek(cuts[-1] + DECODE_RANGE_BYTES - 1)
@@ -250,30 +307,40 @@ def _frontier_hasher():
     return FrontierHasher
 
 
-def _rows_parallel(pin, *, packed, timing, workers, verify=True):
+def _rows_parallel(pin, *, packed, timing, workers, verify=True, where=None, start=None):
     """_rows with the decode on pinned lane workers (see above). One pass (2026-10-09): the bytes are hashed in file
     order by the search's FrontierHasher, held at most one decode window past the consumed frontier, so the hash reads
     the pages the decode workers just read (one disk pass, not a second unbounded read of the whole stream racing
-    ahead). verify=False (the ROOT's claim holds for this pin): no hash at all and no check at exhaustion."""
+    ahead). verify=False (the ROOT's claim holds for this pin): no hash at all and no check at exhaustion.
+    Seek (teacher resume, 2026-10-09): the hasher is resumable (its snapshot (state, bytes) is the running hash of the
+    file's first bytes, wherever the decode stands); `where` and `start` as in _rows: the decode starts at the saved
+    line, the hash continues from the saved snapshot (bytes before either are not read again)."""
     import collections
     import multiprocessing
     from time import perf_counter
     path = str(_local(pin['path']))
+    offset, ordinal = (int(start['offset']), int(start['ordinal'])) if start else (0, 0)
+    snapshot = start.get('sha256') if start else None
+    if verify and offset and snapshot is None:
+        raise ValueError('a layer stream cannot be continued at byte %d without its saved SHA-256 state' % offset)
+    where = {} if where is None else where
+    where.update(row_start=None, next_offset=offset, next_ordinal=ordinal, hasher=None)
     lane = lane_cpus()
     cpus = (lane[1:] if len(lane) > workers else lane)[:workers] or lane
     context = multiprocessing.get_context('spawn')      # spawn: this process already runs reader workers and threads
     handout = context.Queue()
     for cpu in cpus:
         handout.put(cpu)
-    cut = _decode_ranges(path, _local(pin['path']).stat().st_size)
+    cut = _decode_ranges(path, _local(pin['path']).stat().st_size, offset)
     ranges = iter(cut)
     pool = context.Pool(len(cpus), initializer=_decode_pin, initargs=(handout,))
     window = len(cpus) * DECODE_WINDOW_PER_WORKER
-    hasher = (_frontier_hasher()(path, window * max((b - a for a, b in cut), default=1), name='layer-sha256')
-              if verify else None)
+    hasher = (_frontier_hasher()(path, window * max((b - a for a, b in cut), default=1), name='layer-sha256',
+                                 resumable=True, resume=snapshot) if verify else None)
+    where['hasher'] = hasher
     if hasher is not None:
         hasher.start()
-    pending, ordinal, spent, finished = collections.deque(), 0, 0.0, False
+    pending, spent, finished = collections.deque(), 0.0, False
     timing.update(mode='pinned_lane_workers', workers=len(cpus), cpus=cpus, range_bytes=DECODE_RANGE_BYTES)
     try:
         def fill():
@@ -281,18 +348,20 @@ def _rows_parallel(pin, *, packed, timing, workers, verify=True):
                 item = next(ranges, None)
                 if item is None:
                     return
-                pending.append((item[1], pool.apply_async(_decode_range, ((path, item[0], item[1], packed),))))
+                pending.append((item, pool.apply_async(_decode_range, ((path, item[0], item[1], packed),))))
         fill()
         while pending:
             mark = perf_counter()
-            end, job = pending.popleft()
-            rows, error = job.get()
+            (begun, end), job = pending.popleft()
+            rows, lengths, error = job.get()
             if hasher is not None:
                 hasher.advance(end)
             fill()
             spent += perf_counter() - mark
             timing['decode_seconds'] = round(spent, 3)
-            for row in rows:
+            for row, length in zip(rows, lengths):
+                where['row_start'], where['next_offset'], where['next_ordinal'] = begun, begun + length, ordinal + 1
+                begun += length
                 yield ordinal, row
                 ordinal += 1
             if error is not None:
@@ -343,15 +412,93 @@ class _Changes:
             verify, self.verification = False, dict(basis='witnessed in this process', by=verified)
         else:
             verify, self.verification = _stream_claim(pin, claims, work)
-        self.rows = (_rows_parallel(pin, packed=packed, timing=self.timing, workers=workers, verify=verify)
-                     if workers > 1 and pin['bytes'] >= PARALLEL_DECODE_MIN_BYTES else
-                     _rows(pin, packed=packed, timing=self.timing, verify=verify))
+        self.packed, self.verify, self.workers = packed, verify, workers
+        self.where = {}
+        self.rows = self._open(None)
         self.pending = None
         self.previous = -1
+        self.before = -1                 # `previous` as it stood before the row now held (pending) was read
         self.finished = False
         self.terminal = None
         self.counts = dict(read=0, presented=0, post_stream=0, unsupported=0)
         self.dispositions = {}
+
+    def _open(self, start):
+        if self.workers > 1 and self.pin['bytes'] >= PARALLEL_DECODE_MIN_BYTES:
+            return _rows_parallel(self.pin, packed=self.packed, timing=self.timing, workers=self.workers,
+                                  verify=self.verify, where=self.where, start=start)
+        return _rows(self.pin, packed=self.packed, timing=self.timing, verify=self.verify, where=self.where, start=start)
+
+    # ---- seek (teacher resume, 2026-10-09): the stream's state for exactly the rows it has PRESENTED; the row it holds
+    # read ahead (pending, or a FINALIZE terminal) is read again after a seek, never skipped
+    def position(self):
+        state = dict(name=self.name, pin={k: self.pin.get(k) for k in ('path', 'bytes', 'sha256')},
+                     counts=dict(self.counts), dispositions=copy.deepcopy(self.dispositions),
+                     verification_basis=self.verification.get('basis'), finished=self.finished)
+        if self.finished:
+            return state
+        held = self.pending is not None or self.terminal is not None
+        if held:
+            offset = self.where['row_start']
+            ordinal = self.pending['source_ordinal'] if self.pending is not None else self.terminal[0]
+            previous = self.before if self.pending is not None else self.previous
+            state['counts']['read'] -= 1
+        else:
+            offset, ordinal, previous = self.where.get('next_offset', 0), self.where.get('next_ordinal', 0), self.previous
+        snapshot = None
+        if self.verify:
+            hasher = self.where.get('hasher')
+            if hasher is None:
+                snapshot = self.where.get('resume_sha256') if offset else None
+                if offset and snapshot is None:
+                    raise ValueError('%s: no running SHA-256 for its read' % self.name)
+            elif isinstance(hasher, _PlainLineHash):
+                raise ValueError('%s: hashed with hashlib (no libcrypto state): cannot be continued' % self.name)
+            elif hasattr(hasher, 'state'):                       # the serial reader's line hasher: at the held line
+                if hasher.length != offset:
+                    raise ValueError('%s: hash at byte %d, read position at %d' % (self.name, hasher.length, offset))
+                snapshot = (hasher.state(), hasher.length)
+            else:                                                # FrontierHasher: any consistent prefix of the file
+                snapshot = hasher.snapshot
+                if snapshot is None or hasher.error is not None:
+                    raise ValueError('%s: the frontier hasher has no resumable state' % self.name)
+        state.update(offset=offset, ordinal=ordinal, previous=previous, sha256=snapshot)
+        return state
+
+    def seek_problem(self, state):
+        """None when this stream can continue at `state` (its own position()), else why not."""
+        if not isinstance(state, dict) or state.get('name') != self.name or state.get('pin') != {
+                k: self.pin.get(k) for k in ('path', 'bytes', 'sha256')}:
+            return '%s: the saved position names another stream or pin' % self.name
+        if state.get('finished'):
+            return None
+        if self.verify and state.get('offset') and state.get('sha256') is None:
+            return ('%s: saved without a running hash (%s) and hashed with the decode here (%s)'
+                    % (self.name, state.get('verification_basis'), self.verification.get('basis')))
+        if self.verify and state.get('offset') and _sha256_resumable() is None:
+            return '%s: no resumable SHA-256 (libcrypto) here to continue its hash' % self.name
+        return None
+
+    def seek(self, state):
+        problem = self.seek_problem(state)
+        if problem is not None:
+            raise ValueError(problem)
+        self.rows.close()
+        self.counts, self.dispositions = dict(state['counts']), copy.deepcopy(state['dispositions'])
+        self.pending, self.terminal = None, None
+        if state['finished']:
+            def nothing():
+                return
+                yield
+            self.rows, self.finished = nothing(), True
+            next(self.rows, None)                       # started and closed (frankie_box_lane_pin.generators_started)
+            return
+        self.previous = self.before = state['previous']
+        self.where.clear()
+        self.where.update(row_start=None, next_offset=state['offset'], next_ordinal=state['ordinal'],
+                          resume_sha256=state['sha256'])
+        self.rows = self._open(dict(offset=state['offset'], ordinal=state['ordinal'],
+                                    sha256=state['sha256'] if self.verify else None))
 
     def _listed(self, reason, ordinal):
         ranges = self.dispositions.setdefault(reason, [])
@@ -403,7 +550,7 @@ class _Changes:
             identities = (cursor, instrument) if self.kind == 'price' else (cursor, instrument, stamp)
             if any(type(value) is not int for value in identities) or cursor < self.previous:
                 raise ValueError('shared source has missing/noninteger/backwards causal identity')
-            self.previous = cursor
+            self.before, self.previous = self.previous, cursor
             self.pending = dict(source=self.name, source_ordinal=ordinal, input_cursor=cursor,
                                 instrument_id=instrument, known_at_ns=stamp, value=row)
 
@@ -525,6 +672,20 @@ class _Publications:
             self.states[key] = update
             self.report['presented'] += 1
             yield update
+
+    def mark(self):
+        """The publications presented so far (seek, teacher resume 2026-10-09): the next row, the published state and
+        the presented counts."""
+        return dict(position=self.position, states=dict(self.states), presented=self.report['presented'],
+                    points={name: item['presented'] for name, item in self.report['points'].items()})
+
+    def restore(self, mark):
+        if set(mark['points']) != set(self.report['points']) or not 0 <= mark['position'] <= len(self.rows):
+            raise ValueError('the saved publications position names another day file')
+        self.position, self.states = mark['position'], dict(mark['states'])
+        self.report['presented'] = mark['presented']
+        for name, presented in mark['points'].items():
+            self.report['points'][name]['presented'] = presented
 
     def finish(self):
         for _, _, ordinal, name, _, _, _ in self.rows[self.position:]:
@@ -756,6 +917,9 @@ class SharedMarketTimeline:
                  'names its entries (update.entries)')
         self.report['all99_coverage'] = self.all99_coverage(exhausted=False)
         self.started = False
+        # seek (teacher resume, 2026-10-09): the walk's live state for position(); `resumed` records a seeked start (kept
+        # off the report, which stays the report a whole read makes; the consumer lists it, e.g. the teacher's raw_saves)
+        self._walk, self._journal_mark, self.resumed = None, None, None
 
     def _caller_witness(self, supplied, expected):
         """The caller's measurement stands in for this reader's full hash only when it is bound to THE pinned file
@@ -946,16 +1110,25 @@ class SharedMarketTimeline:
                            basis=('pins verified and every source exhausted' if exhausted else
                                   'layers known at open; rows counted at exhaustion'))
 
-    def _inputs(self, reader):
+    def _inputs(self, reader, start=None):
         """Original journal envelopes, including failed/unpaired/unknown outcomes.
 
         ROOT's extracted INPUT index and the ingestion adapter's cursor are different
         identities after a failed application. Neither is inferred from the other.
         Only the original matching APPLIED payload is usable by a raw teacher.
+
+        Seek (teacher resume, 2026-10-09): before each yield self._journal_mark = (entries consumed by the envelopes
+        yielded so far, inputs, extracted); an INPUT read ahead to close the previous one is not consumed. `start` (such
+        a mark) opens the reader at the block holding the last consumed entry (FrankieCompactReader.resume_point) and
+        continues after it; the chain from that block to the seal is verified as from genesis.
         """
         from frankie_box_boss_session import Session
         from research.kalshi.frankie_boss.c15_journal import pack
         pending, inputs, extracted, entries = None, 0, 0, 0
+        if start is not None:
+            entries, inputs, extracted = start['consumed'], start['inputs'], start['extracted']
+        skip_below = entries
+        self._journal_mark = (entries, inputs, extracted)
         accounting = self.report.setdefault('journal', dict(entries=0, inputs=0, extracted=0,
             dispositions={}, unclosed_instruments={}))
         def listed(reason, ordinal):
@@ -964,8 +1137,10 @@ class SharedMarketTimeline:
                 ranges[-1][1] = ordinal
             else:
                 ranges.append([ordinal, ordinal])
-        for entry in reader.entries():
+        for entry in (reader.entries() if start is None else reader.entries(reader.resume_point(skip_below))):
             ordinal, kind, payload = entry['ordinal'], entry['kind'], entry.get('payload')
+            if ordinal < skip_below:
+                continue                         # the saved block's entries the yielded envelopes already consumed
             if ordinal != entries:
                 raise ValueError('shared journal changed original envelope order')
             entries += 1
@@ -975,6 +1150,7 @@ class SharedMarketTimeline:
                     if pending['evidence'] is None and pending['status'] == 'pending':
                         pending['status'] = 'unpaired_input'
                         listed(pending['status'], pending['entry']['ordinal'])
+                    self._journal_mark = (ordinal, inputs, extracted)      # this INPUT is read ahead, not consumed
                     yield pending
                 inputs += 1
                 raw = Session._find_observation(payload, max_depth=None)
@@ -990,6 +1166,7 @@ class SharedMarketTimeline:
                 listed('unpaired_' + str(kind).lower(), ordinal)
                 # The envelope remains an explicit original-order diagnostic, not a
                 # fabricated market event or a retrospectively repaired INPUT pair.
+                self._journal_mark = (ordinal + 1, inputs, extracted)
                 yield dict(entry=entry, source_input_index=None, input_cursor=None,
                            raw=None, evidence=None, status='unpaired_' + str(kind).lower(), outcomes=[], unpaired_outcomes=1)
                 continue
@@ -1015,20 +1192,55 @@ class SharedMarketTimeline:
             if pending['evidence'] is None and pending['status'] == 'pending':
                 pending['status'] = 'unpaired_input'
                 listed(pending['status'], pending['entry']['ordinal'])
+            self._journal_mark = (entries, inputs, extracted)
             yield pending
         if (entries != self.source['journal_count'] or inputs != self.source['record_count']
                 or extracted != self.extracted_count):
             raise ValueError('shared source dispositions differ from sealed INPUT/extraction counts')
 
-    def iter_pictures(self):
-        """Full live-like input interface, including non-APPLIED original evidence."""
+    def iter_pictures(self, start=None):
+        """Full live-like input interface, including non-APPLIED original evidence. `start` (a position() of a reader of
+        the same source, in another process): the read continues exactly after the pictures that position holds (see
+        position); nothing before it is read again but the one compact block that holds its last journal entry."""
         from research.kalshi.frankie_boss.frankie_journal_reader import FrankieCompactReader
+        if start is not None:
+            problem = self.seek_problem(start)
+            if problem is not None:
+                raise ValueError('the shared read cannot continue at the saved position: ' + problem)
         if self.started:
             raise ValueError('shared timeline iterator has one owner; open a fresh reader for another consumer')
         self.started = True
+        if start is not None and start['exhausted']:
+            # the saved read had exhausted the source (its consumer still held pictures read ahead): its report stands
+            self.report.clear()
+            self.report.update(start['report'])
+            self.resumed = dict(pictures=start['pictures'], exhausted=True,
+                                basis='the saved read had exhausted the source; nothing is read again')
+            self.entry_counts, self.external_entry_counts = dict(start['entry_counts']), dict(start['external_entry_counts'])
+            self._walk = dict(phase='exhausted')
+            return
         reader = FrankieCompactReader(self.input_pin['path'], expected_count=self.source['journal_count'],
                                       expected_head_hash=self.source['journal_hash'], workers=self.workers)
         states, scopes, open_groups, frontier = {}, {}, {}, None
+        if start is not None:
+            walk, saved = start['walk'], start['report']
+            states, scopes, frontier = dict(walk['states']), dict(walk['scopes']), walk['frontier']
+            open_groups = {instrument: dict(details) for instrument, details in walk['open_groups'].items()}
+            self.report.update(journal=dict(saved['journal']), outputs=copy.deepcopy(saved['outputs']),
+                               presented_inputs=saved['presented_inputs'])
+            self.resumed = dict(pictures=start['pictures'], journal_entries=start['journal']['consumed'], exhausted=False,
+                                basis='seeked: every layer stream at its saved line (running SHA-256 continued), the '
+                                      'journal at the compact block of its last consumed entry; nothing before it read '
+                                      'again')
+            for key in ('unplaceable_input_clocks', 'closed_source_without_root_frame'):
+                if key in saved:
+                    self.report[key] = list(saved[key])
+            self.entry_counts, self.external_entry_counts = dict(start['entry_counts']), dict(start['external_entry_counts'])
+            for stream in self.streams:
+                stream.seek(start['streams'][stream.name])
+            if self.publications is not None:
+                self.publications.restore(start['publications'])
+        walk = self._walk = dict(phase='open', states=states, scopes=scopes, open_groups=open_groups, frontier=frontier)
         # Inspection accounting (Greg, 2026-10-07: every piece reports what it received, how it
         # used it and what it produced). Counts and extents only; no evidence is copied here.
         outputs = self.report.setdefault('outputs', dict(
@@ -1051,7 +1263,7 @@ class SharedMarketTimeline:
                                                    else [min(current[0], value), max(current[1], value)])
         try:
             with reader:
-                for source in self._inputs(reader):
+                for source in self._inputs(reader, start['journal'] if start is not None else None):
                     raw, evidence, entry = source['raw'], source['evidence'], source['entry']
                     payload = entry.get('payload') or {}
                     cursor = source['input_cursor']
@@ -1145,7 +1357,9 @@ class SharedMarketTimeline:
                         extent(name, point[name])
                     clock['inside'] += perf_counter() - clock['mark']
                     clock['mark'] = None                    # the consumer holds the picture: not this reader's time
+                    walk['frontier'], walk['phase'] = frontier, 'yielded'
                     yield dict(evidence=evidence, picture=picture)
+                    walk['phase'] = 'walking'
                     clock['mark'] = perf_counter()
             for stream in self.streams:
                 stream.finish()
@@ -1170,11 +1384,14 @@ class SharedMarketTimeline:
             # Exhaustion only. Thinner coverage above never withholds this flag; a pin,
             # count or identity contradiction raised instead and leaves it False.
             self.report['complete'] = True
+            walk['phase'] = 'exhausted'
         except GeneratorExit:
+            walk['phase'] = 'stopped'
             self.report['stopped'] = dict(reason='consumer closed the iterator before exhaustion',
                                           pictures_yielded=outputs['pictures_yielded'])
             raise
         except Exception as error:
+            walk['phase'] = 'failed'
             # Integrity corruption and contradictions stay visible in the report, distinct
             # from the missing-coverage listings above; they are never relabelled.
             self.report['integrity_failure'] = dict(error_type=type(error).__name__, error=str(error),
@@ -1199,7 +1416,64 @@ class SharedMarketTimeline:
                 # a stopped or failed read keeps the list made at open (its basis says so)
                 self.report['all99_coverage'] = self.all99_coverage(exhausted=True)
 
-    def iter_applied(self):
+    def position(self):
+        """The read's position for exactly the pictures iter_pictures / iter_applied have HANDED OUT (teacher resume,
+        2026-10-09), never their read-ahead: per layer stream the line after its last presented row (the row it holds
+        read ahead is read again), its running SHA-256 (none for a stream taken by claim or witnessed in this process)
+        and its counts; the journal entries consumed by the yielded envelopes (FrankieCompactReader.resume_point is
+        taken from it on the seek); the publications presented; the walk's last-observed state; every report count.
+        After exhaustion it is the exhausted read's report. Large structures are REFERENCES to the live ones (the
+        journal disposition ranges grow with the day): pickle it before the walk continues, as row_pass's save does.
+        A position is valid only while the iterator is suspended at a yield; otherwise this raises."""
+        walk = self._walk
+        if walk is None:
+            raise ValueError('the shared read has not started')
+        base = dict(schema=POSITION_SCHEMA, identity=self.identity, entry_counts=dict(self.entry_counts),
+                    external_entry_counts=dict(self.external_entry_counts))
+        if walk['phase'] == 'exhausted':
+            return dict(base, exhausted=True, pictures=(self.report.get('outputs') or {}).get('pictures_yielded'),
+                        report=self.report)
+        if walk['phase'] != 'yielded':
+            raise ValueError('the shared read is not at a handed-out picture (%s)' % walk['phase'])
+        consumed, inputs, extracted = self._journal_mark
+        outputs = self.report['outputs']
+        report = dict(journal=dict(self.report['journal'], entries=consumed), outputs=copy.deepcopy(outputs),
+                      presented_inputs=self.report['presented_inputs'], arithmetic=self.report.get('arithmetic'))
+        for key in ('unplaceable_input_clocks', 'closed_source_without_root_frame'):
+            if key in self.report:
+                report[key] = self.report[key]
+        return dict(base, exhausted=False, pictures=outputs['pictures_yielded'],
+                    journal=dict(consumed=consumed, inputs=inputs, extracted=extracted), report=report,
+                    walk=dict(states=dict(walk['states']), scopes=dict(walk['scopes']), frontier=walk['frontier'],
+                              open_groups={k: dict(v) for k, v in walk['open_groups'].items()}),
+                    streams={stream.name: stream.position() for stream in self.streams},
+                    publications=self.publications.mark() if self.publications is not None else None)
+
+    def seek_problem(self, position):
+        """None when this (unread) reader can continue at `position`, else why not (the caller then reads from the
+        start). The source identity must be the same; each stream must be able to continue its own hash."""
+        if not isinstance(position, dict) or position.get('schema') != POSITION_SCHEMA:
+            return 'not a shared-read position'
+        if position.get('identity') != self.identity:
+            return 'the saved position belongs to another shared source'
+        if self.started:
+            return 'this reader has already been read'
+        if position.get('exhausted'):
+            return None
+        if set(position.get('streams') or ()) != {stream.name for stream in self.streams}:
+            return 'the saved position names other layer streams'
+        for stream in self.streams:
+            problem = stream.seek_problem(position['streams'][stream.name])
+            if problem is not None:
+                return problem
+        if (position.get('publications') is None) != (self.publications is None):
+            return 'the saved position and this reader differ in the day file'
+        consumed = position['journal']['consumed']
+        if type(consumed) is not int or not 0 <= consumed <= self.source['journal_count']:
+            return 'the saved journal position is outside the sealed source'
+        return None
+
+    def iter_applied(self, start=None):
         """Teacher-facing view: every instant, with its arithmetic evidence present or absent.
 
         Nothing is refused and nothing is fabricated. `evidence` is the unchanged original
@@ -1207,7 +1481,12 @@ class SharedMarketTimeline:
         `arithmetic` says why (failed, unpaired, unreadable, or an APPLIED beside unknown
         outcomes). A consumer's existing equation runs only where its own operands exist
         and lists the rest; this reader never derives a replacement or a target.
+
+        `start`: a position() (see there), freshly unpickled: its structures are taken over, not copied; the walk
+        continues with the picture after it.
         """
+        if start is not None and not start.get('exhausted') and start['report'].get('arithmetic') is not None:
+            self.report['arithmetic'] = start['report']['arithmetic']       # the unpickled position is taken over
         listing = self.report.setdefault('arithmetic', dict(present=0, absent=0, absent_by_status={}, absent_ordinals={},
             rule='absent operands block only the equation that needs them, never the instant or unrelated evidence'))
 
@@ -1217,7 +1496,7 @@ class SharedMarketTimeline:
                 ranges[-1][1] = ordinal
             else:
                 ranges.append([ordinal, ordinal])
-        pictures = self.iter_pictures()
+        pictures = self.iter_pictures(start)
         try:
             for item in pictures:
                 picture = item['picture']

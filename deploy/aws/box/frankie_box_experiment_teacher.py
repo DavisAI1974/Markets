@@ -282,6 +282,7 @@ def _finish_attachment_writer(writer, attachment_path, body):
 
 
 CARRY_FILE = 'classroom-carry.pkl'
+WALK_POSITION_SCHEMA = 'FRANKIE_TEACHER_WALK_POSITION_V1'     # a raw save's reader_position (teacher resume, 2026-10-09)
 
 
 def walked_now(carry):
@@ -894,8 +895,31 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
 
     def shared_evidence():
         from collections import deque
+        import pickle
         from research.kalshi.frankie_boss import c15_journal as J
-        pictures = market.iter_applied()
+        # One pass on a resume (2026-10-09, the seek protocol of parallel_teacher.RESUME_POSITION): a raw save carries
+        # this walk's position (position() below: the shared read's position after the last picture it handed to this
+        # walk, the pictures this walk had read ahead but not consumed, and this walk's own state: the equation, the
+        # adapter cursor expected next, the present pictures counted, the cutoff tracker and the classroom carry, each
+        # as of the last picture consumed). A resume whose saved position holds exactly the saved rows continues there:
+        # nothing before it is read again, and the context and the carry are written after the resumed walk as after a
+        # whole one. Anything else reads from the start and skips the saved rows (the earlier behaviour), listed.
+        seek, seek_record = None, None
+        saved = PT.RESUME_POSITION[0]
+        if saved is not None:
+            problem = None
+            if not isinstance(saved, dict) or saved.get('schema') != WALK_POSITION_SCHEMA:
+                problem = 'the saved reader position is not this walk\'s'
+            elif (saved.get('teacher') or {}).get('rows') != PT.RESUME_SKIP[0]:
+                problem = 'the saved position holds %r rows; the save holds %d' % (
+                    (saved.get('teacher') or {}).get('rows'), PT.RESUME_SKIP[0])
+            else:
+                problem = market.seek_problem(saved['market'])
+            if problem is None:
+                seek = saved
+            seek_record = dict(outcome='seeked' if seek is not None else 'read_from_start', reason=problem)
+            PT.SAVE_RECORD['reader_seek'] = seek_record
+        pictures = market.iter_applied(start=seek['market'] if seek is not None else None)
         expected = 0
         pre = None
         try:
@@ -907,7 +931,8 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
         ahead, batch, slots, done, last, failed = deque(), [], [], [False], [None], [None]
         whole = tuple(entity) if entity is not None else None
         # a resumed raw pass (parallel_teacher.RESUME_SKIP, set by row_pass before it starts this generator) skips the
-        # rows its save already holds: their payloads are read (the reader has no start-at-cursor) but not encoded
+        # rows its save already holds: without a seek their payloads are read again but not encoded; after a seek the
+        # count continues from the saved position (restored below), so nothing past it is skipped
         present_seen = [0]
 
         def flush():
@@ -917,6 +942,25 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                     entry[1] = handle
                 batch.clear()
                 slots.clear()
+
+        def admit(item, counted=True):
+            entry = [item, None, None]
+            e = item['evidence']
+            skip = False
+            if counted and item['arithmetic']['status'] == 'present':
+                present_seen[0] += 1
+                skip = present_seen[0] <= PT.RESUME_SKIP[0]
+                if skip:
+                    precompute['resume_skipped_rows'] = present_seen[0]
+            if pre is not None and not skip and item['arithmetic']['status'] == 'present' and type(e) is dict:
+                m = e.get('normalized')
+                entity_row = whole is None or (type(m) is dict and (m.get('publisher_id'), m.get('instrument_id')) == whole)
+                entry[2] = len(batch)
+                batch.append((e, entity_row))
+                slots.append(entry)
+                if len(batch) >= PT.EVIDENCE_BATCH:
+                    flush()
+            ahead.append(entry)
 
         def fill():
             # read ahead in source order (the timeline's own order; nothing is reordered or dropped) so the workers
@@ -930,25 +974,25 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                 if item is None:
                     done[0] = True
                     break
-                entry = [item, None, None]
-                e = item['evidence']
-                skip = False
-                if item['arithmetic']['status'] == 'present':
-                    present_seen[0] += 1
-                    skip = present_seen[0] <= PT.RESUME_SKIP[0]
-                    if skip:
-                        precompute['resume_skipped_rows'] = present_seen[0]
-                if pre is not None and not skip and item['arithmetic']['status'] == 'present' and type(e) is dict:
-                    m = e.get('normalized')
-                    entity_row = whole is None or (type(m) is dict and (m.get('publisher_id'), m.get('instrument_id')) == whole)
-                    entry[2] = len(batch)
-                    batch.append((e, entity_row))
-                    slots.append(entry)
-                    if len(batch) >= PT.EVIDENCE_BATCH:
-                        flush()
-                ahead.append(entry)
+                admit(item)
             if done[0] and pre is not None:
                 flush()
+
+        def position():
+            """This walk's position after the last picture it consumed (parallel_teacher.RESUME_POSITION_SOURCE): the
+            shared read after the last picture it handed here, the pictures read ahead but not consumed (yielded again
+            first on a resume), and the walk's own state. The tracker and the carry are pickled here (each restored or
+            listed on its own on a resume); the rest is pickled by the save that asks for it, before the walk goes on."""
+            def packed(value):
+                return None if value is None else pickle.dumps(value, protocol=pickle.HIGHEST_PROTOCOL)
+            return dict(schema=WALK_POSITION_SCHEMA, market=market.position(), ahead=[entry[0] for entry in ahead],
+                        teacher=dict(rows=equation['rows'], expected=expected, present_seen=present_seen[0],
+                                     equation=equation,
+                                     cutoff_walk=dict({k: v for k, v in cutoff_walk.items() if k != 'tracker'},
+                                                      tracker=packed(cutoff_walk['tracker'])),
+                                     carry=dict(value=packed(carry['value']), first_input_cursor=carry['first_input_cursor'],
+                                                error=carry['error'])))
+        PT.RESUME_POSITION_SOURCE[0] = position
 
         def register(entry):
             # the previous payload has been hashed by now (the pinned loop hashes a row before asking for the next);
@@ -980,6 +1024,32 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                 PJ._SUBSETS[key] = (subset, id(e['raw_record']))
             last[0] = (id(e), key)
         try:
+            if seek is not None:
+                # this walk's state as of the last picture consumed before the save; the pictures read ahead then come first
+                mine = seek['teacher']
+                expected, present_seen[0] = mine['expected'], mine['present_seen']
+                equation.clear()
+                equation.update(mine['equation'])
+                walked = dict(mine['cutoff_walk'])
+                try:
+                    walked['tracker'] = pickle.loads(walked['tracker']) if walked['tracker'] is not None else None
+                except Exception as error:  # noqa: BLE001 - no tracker: no context from this walk (listed)
+                    walked.update(tracker=None, error='the saved cutoff tracker could not be restored (%s: %s)'
+                                                      % (type(error).__name__, error))
+                cutoff_walk.clear()
+                cutoff_walk.update(walked, continued=True)
+                kept = mine['carry']
+                try:
+                    value = pickle.loads(kept['value']) if kept['value'] is not None else None
+                    carry.update(value=value, first_input_cursor=kept['first_input_cursor'], error=kept['error'])
+                except Exception as error:  # noqa: BLE001 - no carry: the classroom makes its own whole pass (listed)
+                    carry.update(value=None, first_input_cursor=kept['first_input_cursor'],
+                                 error='the saved classroom carry could not be restored (%s: %s)' % (type(error).__name__, error))
+                for item in seek['ahead']:
+                    admit(item, counted=False)
+                seek_record.update(pictures=seek['market'].get('pictures'), ahead=len(seek['ahead']), rows=mine['rows'],
+                                   market_exhausted=bool(seek['market'].get('exhausted')))
+                PT.RESUME_SEEKED[0] = mine['rows']
             while True:
                 if len(ahead) * 2 <= limit:
                     fill()
@@ -1086,6 +1156,7 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                     except Exception as error:  # noqa: BLE001 - listed; the walk's own save stands
                         cutoff_walk['save_error'] = '%s: %s' % (type(error).__name__, error)
             finally:
+                PT.RESUME_POSITION_SOURCE[0] = None
                 if cpu_pinning['outcome'] in ('pinned', 'fallback') and 'restored' not in cpu_pinning:
                     cpu_pinning['restored'] = LP.restore_mask(cpu_pinning['original_mask'])
     try:

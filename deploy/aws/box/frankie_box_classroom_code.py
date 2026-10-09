@@ -1179,6 +1179,18 @@ class _NativeEntryArithmetic:
         from frankie_box_joined_teacher import _flatten     # the joined teacher's leaf rule, reused (never restated)
         self._flatten, self._isfinite = _flatten, math.isfinite
 
+    def __getstate__(self):
+        """Picklable (the teacher's walk saves its online pass with each raw save, teacher resume 2026-10-09): the
+        probe's lock is not state; a restored instance gets a fresh one."""
+        state = dict(self.__dict__)
+        state.pop('_probe_lock', None)
+        return state
+
+    def __setstate__(self, state):
+        import threading
+        self.__dict__.update(state)
+        self._probe_lock = threading.Lock()
+
     # ---- hot path
     def note(self, picture, evidence):
         if self.status is not None:
