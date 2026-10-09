@@ -4169,8 +4169,11 @@ def block_lesson(teacher_rows, directory, n, *, day_file=None, manifest=None):
     except Exception as error:  # noqa: BLE001 - listed; the next block goes on
         lesson = dict(schema=TR.SECOND_SET_LEDGER_SCHEMA, status='failed', reason='%s: %s' % (type(error).__name__, error))
     lesson['component_anchors'] = {name: {k: list(v) for k, v in chosen.items()} for name, chosen in anchors.items()}
-    with (out / 'second_set.json').open('w', encoding='utf-8') as handle:      # whole (the session's learner context)
-        json.dump(lesson, handle, sort_keys=True, default=str)
+    store = _BlockStore(out)                       # whole (the session's learner context), each large part once
+    try:
+        _block_dump(out / 'second_set.json', lesson, store)
+    finally:
+        store.close()
     entry = manifest['blocks'][n - 1]
     doc = dict(schema=BLOCK_LESSON_SCHEMA, day=manifest.get('day'), block=n,
                block_pin=dict(file=entry['file'], sha256=entry['sha256'], sidecar_sha256=entry['sidecar_sha256'],
@@ -4221,10 +4224,138 @@ BLOCK_DAY_END = (
 )
 
 
-def _block_dump(path, body):
+# Written ONCE per block (2026-10-09, a2 block 1: 3,180 MB for 1,588 rows, the same answer set under five wrappers):
+# every subtree of a block file whose compact JSON is at least BLOCK_STORE_MIN bytes is written once, as one line of
+# <block>/store.jsonl, and every file that holds it (ledgers, teachback, code answers, grades, the brain update, the
+# second set record, ...) holds {"$ref": {file, sha256, bytes: [start, end)}} instead of a copy. block_load(path) gives
+# the whole value back (each range checked against its sha256). Nothing computed, answered, graded or carried changes:
+# only how it is written. store.index.jsonl lists sha256 -> byte range so a later writer of the same block reuses lines.
+BLOCK_STORE = 'store.jsonl'
+BLOCK_STORE_INDEX = 'store.index.jsonl'
+BLOCK_STORE_MIN = 16384
+
+
+class _BlockStore:
+    def __init__(self, directory):
+        self.dir = Path(directory)
+        self.path, self.index_path = self.dir / BLOCK_STORE, self.dir / BLOCK_STORE_INDEX
+        self.seen, self.written, self.reused = {}, 0, 0
+        size = self.path.stat().st_size if self.path.is_file() else 0
+        if self.index_path.is_file():
+            for line in self.index_path.read_text(encoding='utf-8').splitlines():
+                if line.strip():
+                    item = json.loads(line)
+                    if item['bytes'][1] <= size:            # a line past the store's end was never completed
+                        self.seen[item['sha256']] = tuple(item['bytes'])
+        self.handle = self.path.open('ab')
+        self.handle.truncate(max([0] + [end + 1 for _, end in self.seen.values()]))
+        self.handle.seek(0, 2)
+        self.index = self.index_path.open('a', encoding='utf-8')
+
+    def put(self, data):
+        sha = hashlib.sha256(data).hexdigest()
+        where = self.seen.get(sha)
+        if where is None:
+            start = self.handle.tell()
+            self.handle.write(data + b'\n')
+            where = self.seen[sha] = (start, start + len(data))
+            self.index.write(json.dumps(dict(sha256=sha, bytes=list(where))) + '\n')
+            self.written += len(data) + 1
+        else:
+            self.reused += len(data)
+        return {'$ref': dict(file=BLOCK_STORE, sha256=sha, bytes=list(where))}
+
+    def flush(self):
+        import os
+        self.handle.flush()
+        os.fsync(self.handle.fileno())
+        self.index.flush()
+        os.fsync(self.index.fileno())
+
+    def close(self):
+        self.flush()
+        self.handle.close()
+        self.index.close()
+
+
+def _by_reference(value, store):
+    """value with every subtree of at least BLOCK_STORE_MIN compact bytes put in the store (children first)."""
+    if isinstance(value, dict):
+        value = {k: _by_reference(v, store) for k, v in value.items()}
+    elif isinstance(value, list):
+        value = [_by_reference(v, store) for v in value]
+    else:
+        return value
+    data = json.dumps(value, sort_keys=True, separators=(',', ':'), default=str).encode()
+    return store.put(data) if len(data) >= BLOCK_STORE_MIN else value
+
+
+def block_load(path):
+    """A block file with every {"$ref": ...} replaced by its value from the store (each range checked by sha256)."""
+    path = Path(path)
+    cache = {}
+
+    def resolve(value, handle):
+        if isinstance(value, dict):
+            ref = value.get('$ref') if len(value) == 1 else None
+            if isinstance(ref, dict) and ref.get('file') == BLOCK_STORE:
+                sha = ref['sha256']
+                if sha not in cache:
+                    start, end = ref['bytes']
+                    handle.seek(start)
+                    data = handle.read(end - start)
+                    if hashlib.sha256(data).hexdigest() != sha:
+                        raise ValueError('%s bytes %s differ from their sha256' % (path.parent / BLOCK_STORE, ref['bytes']))
+                    cache[sha] = resolve(json.loads(data), handle)
+                return cache[sha]
+            return {k: resolve(v, handle) for k, v in value.items()}
+        if isinstance(value, list):
+            return [resolve(v, handle) for v in value]
+        return value
+    body = json.loads(path.read_bytes())
+    store = path.parent / BLOCK_STORE
+    if not store.is_file():
+        return body
+    with store.open('rb') as handle:
+        return resolve(body, handle)
+
+
+def block_render(block_dir, name):
+    """classroom.md / transcript.md / classroom-external.md of a block, rendered on request from its stored answers by
+    the same renderers the day uses (the block session records each one's sha256 and size, it does not write them)."""
+    import frankie_box_classroom as C
+    from research.kalshi.frankie_boss import dipole_classroom_final_review as F
+    from research.kalshi.frankie_boss import dipole_classroom_external as EXT
+    d = Path(block_dir)
+    if name == 'classroom.md':
+        answers = block_load(d / 'code-answers.json')
+        return C.render_markdown(block_load(d / 'ledgers.json'), answers.get('dropped_findings') or ())
+    if name == 'transcript.md':
+        reply = block_load(d / 'correction-response.json')
+        return F.render_final_transcript(block_load(d / 'package.pre_message.json'), block_load(d / 'teachback.json'),
+                                         block_load(d / 'novel-findings.json'), block_load(d / 'correction-request.json'),
+                                         block_load(d / 'acknowledgement.json'), reply.get('dipole_scientific_exchange'))
+    if name == 'classroom-external.md':
+        return EXT.render_markdown(block_load(d / 'external-code-answers.json')['ledgers'],
+                                   block_load(d / 'external-post-grade.json'))
+    raise ValueError('no block rendering named %s' % name)
+
+
+def _block_rendered(text, name, renderer):
+    data = text.encode('utf-8')
+    return dict(file=name, written=False, bytes=len(data), sha256=hashlib.sha256(data).hexdigest(), renderer=renderer,
+                rule='rendered on request from the stored answers (block_render(<block dir>, %r)); not written' % name)
+
+
+def _block_dump(path, body, store=None):
     import os
     from research.kalshi.frankie_boss.frankie_principal_adapter import json_form
-    data = (json.dumps(json_form(body), indent=1, sort_keys=True, default=str) + '\n').encode()
+    body = json_form(body)
+    if store is not None and isinstance(body, dict):
+        body = {k: _by_reference(v, store) for k, v in body.items()}
+    elif store is not None and isinstance(body, list):
+        body = [_by_reference(v, store) for v in body]
+    data = (json.dumps(body, indent=1, sort_keys=True, default=str) + '\n').encode()
     pending = Path(str(path) + '.pending')
     with pending.open('wb') as handle:
         handle.write(data)
@@ -4274,13 +4405,20 @@ def block_session(teacher_rows, directory, n, *, day, brain, previous=None, day_
     out.mkdir(parents=True, exist_ok=True)
     began = time.monotonic()
     written, listed = {}, []
+    store = _BlockStore(out)
     try:
         record = _block_session(teacher_rows, out, n, day=day, brain=brain, previous=previous, day_file=day_file,
-                                day_sha256=day_sha256, manifest=manifest, written=written, listed=listed)
+                                day_sha256=day_sha256, manifest=manifest, written=written, listed=listed, store=store)
     except Exception as error:  # noqa: BLE001 - the next block goes on; the reason is the record
         import traceback
         record = dict(status='failed', reason='%s: %s' % (type(error).__name__, error),
                       trace=traceback.format_exc()[-4000:])
+    finally:
+        store.close()
+    record['store'] = dict(file=BLOCK_STORE, index=BLOCK_STORE_INDEX, min_bytes=BLOCK_STORE_MIN,
+                           bytes_written=store.written, bytes_referenced_again=store.reused, parts=len(store.seen),
+                           rule='every part of at least min_bytes compact JSON written once; the files hold it by '
+                                'reference (block_load resolves)')
     record = dict(schema=BLOCK_SESSION_SCHEMA, day=day, block=n, **record, written=written, listed=listed,
                   day_end=list(BLOCK_DAY_END), seconds=round(time.monotonic() - began, 3),
                   written_utc=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()))
@@ -4294,7 +4432,8 @@ def block_session(teacher_rows, directory, n, *, day, brain, previous=None, day_
     return record
 
 
-def _block_session(teacher_rows, out, n, *, day, brain, previous, day_file, day_sha256, manifest, written, listed):
+def _block_session(teacher_rows, out, n, *, day, brain, previous, day_file, day_sha256, manifest, written, listed,
+                   store=None):
     import frankie_box_classroom as C
     import frankie_box_lane_state as LS
     from research.kalshi.frankie_boss import dipole_classroom_final_review as F
@@ -4318,7 +4457,7 @@ def _block_session(teacher_rows, out, n, *, day, brain, previous, day_file, day_
         snapshot, request_id=snapshot['request_id'], cycle_index=0, cycle_count=1, source_hash=snapshot['source_hash'],
         as_of=snapshot['as_of'], through_cursor=snapshot['through_cursor'], history=history, prior_grade=prior_grade)
     for part in ('teacher_key', 'pre_message', 'binding'):
-        written['package.%s' % part] = _block_dump(out / ('package.%s.json' % part), pkg[part])
+        written['package.%s' % part] = _block_dump(out / ('package.%s.json' % part), pkg[part], store)
     mode = pkg['binding']['mode']
     base = dict(status='complete', mode=mode, rows=len(snapshot['rows']), cursor_range=block['cursor_range'],
                 clock_range=block['clock_range'], teacher_as_of=block['teacher_as_of'],
@@ -4339,7 +4478,7 @@ def _block_session(teacher_rows, out, n, *, day, brain, previous, day_file, day_
     knowledge_check = stage_knowledge_reproduction(visible, knowledge)
     school_check = school_reproduction(visible, school)
     lesson_path = out / 'second_set.json'
-    lesson = json.loads(lesson_path.read_bytes()) if lesson_path.is_file() else dict(
+    lesson = block_load(lesson_path) if lesson_path.is_file() else dict(
         status='absent', reason='no block lesson second set at %s' % lesson_path)
     account = dict(checks=[], listed=[dict(teacher_account='day_end', reason=BLOCK_DAY_END[3]['why'])])
     learner_context = dict(stage_knowledge=knowledge_check, school=school_check, second_set=second_set_context(lesson),
@@ -4354,9 +4493,11 @@ def _block_session(teacher_rows, out, n, *, day, brain, previous, day_file, day_
         schema=SCHEMA, outputs=outputs, summary=summary, school=school_check, stage_knowledge=knowledge_check,
         knowledge=dict(documents=[{k: doc.get(k) for k in ('label', 'day', 'kind', 'sha256')} for doc in knowledge],
                        versions=selected['versions'], listed=selected['listed'], school_listed=school_listed),
-        second_set=lesson.get('status'), answer_report=report, model_calls=0))
-    written['ledgers'] = _block_dump(out / 'ledgers.json', built['ledgers'])
-    written['classroom.md'] = _block_text(out / 'classroom.md', C.render_markdown(built['ledgers'], built['dropped_findings']))
+        second_set=lesson.get('status'), answer_report=report, dropped_findings=built['dropped_findings'],
+        model_calls=0), store)
+    written['ledgers'] = _block_dump(out / 'ledgers.json', built['ledgers'], store)
+    written['classroom.md'] = _block_rendered(C.render_markdown(built['ledgers'], built['dropped_findings']),
+                                              'classroom.md', 'frankie_box_classroom.render_markdown')
     request = {'attachment': {'dipole_classroom': visible}}
     request_sha256 = digest(request)
     session_id = 'experiment-%s-block-%02d' % (day, n)
@@ -4381,8 +4522,9 @@ def _block_session(teacher_rows, out, n, *, day, brain, previous, day_file, day_
              'novelty-investigation': novelty, 'correction-request': correction, 'correction-response': reply,
              'acknowledgement': ack, 'completion': completion}
     for name, body in files.items():
-        written[name] = _block_dump(out / ('%s.json' % name), body)
-    written['transcript.md'] = _block_text(out / 'transcript.md', transcript)
+        written[name] = _block_dump(out / ('%s.json' % name), body, store)
+    written['transcript.md'] = _block_rendered(transcript, 'transcript.md',
+                                               'dipole_classroom_final_review.render_final_transcript')
     external = dict(status='not_run', reason='no day file given to the block session')
     if day_file is not None and day_sha256:
         try:
@@ -4407,21 +4549,23 @@ def _block_session(teacher_rows, out, n, *, day, brain, previous, day_file, day_
                                ('external-post-grade', ext_grade), ('external-correction-request', ext_correction),
                                ('external-correction-response', ext_reply), ('external-acknowledgement', ext_ack),
                                ('external-completion', ext_completion)):
-                written[name] = _block_dump(out / ('%s.json' % name), body)
-            written['classroom-external.md'] = _block_text(out / 'classroom-external.md',
-                                                           EXT.render_markdown(ledgers, ext_grade))
+                written[name] = _block_dump(out / ('%s.json' % name), body, store)
+            written['classroom-external.md'] = _block_rendered(EXT.render_markdown(ledgers, ext_grade),
+                                                               'classroom-external.md',
+                                                               'dipole_classroom_external.render_markdown')
             external = dict(status='complete', section=section.get('section_sha256'), cutoff_ns=key['cutoff_ns'],
                             history_entries=len(external_history))
         except Exception as error:  # noqa: BLE001 - listed; the Dipole session stands
             external = dict(status='failed', reason='%s: %s' % (type(error).__name__, error))
             listed.append(dict(piece='external section', why=external['reason']))
     # the checked lesson he carries into his brain (published once per day: BLOCK_DAY_END)
-    written['brain-update'] = _block_dump(out / 'brain-update.json', dict(
+    written['brain-update'] = _block_dump(out / 'brain-update.json', store=store, body=dict(
         schema='FRANKIE_CLASSROOM_BLOCK_BRAIN_UPDATE_V1', day=day, block=n, mode=mode, checked=True,
         completion=completion, acknowledgement=ack, history_entry=completion,
         corrected_ledgers=reply, novel_findings=list(novel), novelty_investigation=novelty,
         rule='the checked lesson of this block (graded, corrected, acknowledged); filed into Frankie\'s brain with the '
              'day\'s entry <day>-cycle-00 (one entry per day, R16)'))
+    store.flush()
     return dict(base, answer_report=report, external=external, components=len(names))
 
 
@@ -4434,7 +4578,7 @@ def block_teacher_report(teacher_rows, out, n, *, day, session=None, manifest=No
     manifest = manifest if manifest is not None else TR.blocks(teacher_rows)
     block = TR.block_record(teacher_rows, n, manifest)
     lesson_path = Path(out) / 'second_set.json'
-    lesson = json.loads(lesson_path.read_bytes()) if lesson_path.is_file() else {}
+    lesson = block_load(lesson_path) if lesson_path.is_file() else {}
 
     def at(ns):
         import datetime
