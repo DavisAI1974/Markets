@@ -2215,8 +2215,9 @@ def _save_state(path, body):
 def _load_state(path, identity):
     from research.kalshi.frankie_boss.parallel_teacher import _load_raw_state
     state = _load_raw_state(Path(path))
-    if state['identity'] != identity:
-        raise ValueError('saved search state belongs to different inputs or search code: %s' % path)
+    # code fields are recorded, never compared (Greg, 2026-10-09): only the data identity of a saved state is checked
+    if compared_identity(state['identity']) != compared_identity(identity):
+        raise ValueError('saved search state belongs to different inputs: %s' % path)
     return state
 
 def _lane_pin():
@@ -3160,8 +3161,8 @@ def workflow_report(manifest, day_dir, identity, *, phase_timings, fft_cache, wo
                             frozen_survivors=manifest.get('frozen_survivors'), lags=manifest['lags'],
                             transforms=manifest['transforms']['names'],
                             experiment_directive=(manifest.get('experiment_directive') or {}).get('sha256'),
-                            code_pins={k: identity.get(k) for k in ('code_sha256', 'transform_sha256', 'surface_sha256',
-                                                                   'native_reader_sha256', 'journal_reader', 'dipole_reader')},
+                            code_pins=(((manifest.get('continuation') or {}).get('code_recorded') or {}).get('current')
+                                       or recorded_code(identity)),
                             workers=workers, cpu_placement=manifest.get('cpu_placement')),
                 use=dict(axis='F_LAST group closes of the ROOT frame spool in spool order; the running maximum of the '
                               'receive clock in exact nanoseconds; never a timestamp as-of or a dense grid',
@@ -3223,7 +3224,58 @@ def compact_report(value, at):
 # content_rebinds finds only checkout-prefix moves of equal files (recorded under recovery/checkout-rebinds/); a V1
 # (whole-file) save is accepted while every file is byte-identical (the V1 identity rebuilt here). The SAVED identity
 # stays the identity of every later state check (nothing saved is rewritten).
+# Greg, 2026-10-09 (standing): the code version is RECORDED, NEVER COMPARED. A saved search is never refused because a
+# code file changed: compared_identity() removes the code fields (CONTINUATION_CODE_FIELDS, and the journal reader's
+# helper/extractor code with its shared-market policy's implementation_sha256) before any comparison; the data identity
+# (export MANIFEST sha256, lags, transforms, frozen survivors sha256, external fields mode, the directive's sha256 and
+# bytes, frame_columns/column_codec, the shared-market policy meaning) and CONTINUATION_SCHEMA stay compared. The code
+# of the save and of this checkout are recorded in the MANIFEST's continuation.code_recorded.
 CONTINUATION_SCHEMA = 'FRANKIE_SEARCH_CONTINUATION_V2'
+CONTINUATION_SCHEMAS = (CONTINUATION_SCHEMA, 'FRANKIE_SEARCH_CONTINUATION_V1')
+CONTINUATION_CODE_FIELDS = ('code', 'transform_code', 'surface_code', 'native_reader_code', 'dipole_reader',
+                            'code_sha256', 'transform_sha256', 'surface_sha256', 'native_reader_sha256')
+JOURNAL_READER_CODE_FIELDS = ('helper', 'extractor', 'helper_sha256', 'extractor_sha256')
+
+
+def _without_recorded_code(document):
+    try:
+        from frankie_box_market_timeline import without_recorded_code
+    except ImportError:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from frankie_box_market_timeline import without_recorded_code
+    return without_recorded_code(document)
+
+
+def compared_identity(identity):
+    """The compared form of a saved identity: a continuation identity (V1 or V2, at any dict depth, e.g. under a
+    state's search=/identity= key) without its recorded-only code fields; everything else as it is."""
+    if not isinstance(identity, dict):
+        return identity
+    if identity.get('schema') in CONTINUATION_SCHEMAS:
+        out = {k: v for k, v in identity.items() if k not in CONTINUATION_CODE_FIELDS}
+        if isinstance(out.get('journal_reader'), dict):
+            out['journal_reader'] = _without_recorded_code(
+                {k: v for k, v in out['journal_reader'].items() if k not in JOURNAL_READER_CODE_FIELDS})
+        return out
+    return {k: compared_identity(v) for k, v in identity.items()}
+
+
+def recorded_code(identity):
+    """The code fields of a continuation identity (the record kept beside the compared data identity)."""
+    if not isinstance(identity, dict):
+        return None
+    out = {k: identity[k] for k in CONTINUATION_CODE_FIELDS if k in identity}
+    if isinstance(identity.get('journal_reader'), dict):
+        out['journal_reader'] = identity['journal_reader']
+    return out
+
+
+def _record(fn, *args):
+    """A recorded-only code field: its value, or what kept it from being computed (never a refusal)."""
+    try:
+        return fn(*args)
+    except Exception as error:  # a record, not a gate
+        return dict(unavailable='%s: %s' % (type(error).__name__, error))
 SEARCH_VALUE_CODE = (
     'CELL_NAMES', 'F_LAST', 'ROW_PROVENANCE_SCHEMA', 'PRICE_ROW_PROVENANCE_SCHEMA', 'EVENT_IDENTITY_FIELDS',
     'NON_MARKET_IDENTITIES', 'NON_MARKET_CALENDAR', 'NON_MARKET_EXECUTION', 'SEARCH_CONTEXT_IDENTITIES',
@@ -3260,15 +3312,15 @@ def continuation_identities(day, cycle, day_role, day_dir, lags, transform_names
     common = dict(day=day, cycle=cycle, role=day_role, data_manifest_sha256=sha256_file(day_dir / 'MANIFEST.json'),
                   lags=lags, transforms=transform_names, frozen_sha256=sha256_file(frozen) if frozen else None,
                   external_fields_mode=external_fields_mode)
-    v2 = dict(common, schema=CONTINUATION_SCHEMA, code=_code_identity(__file__, SEARCH_VALUE_CODE),
-              transform_code=T.save_identity(), surface_code=SURFACE.save_identity(),
-              native_reader_code=NATIVE.save_identity(), journal_reader=JOURNAL.save_identity(),
-              dipole_reader=DIPOLE.save_identity(), directive=directive_document(),
+    v2 = dict(common, schema=CONTINUATION_SCHEMA, code=_record(_code_identity, __file__, SEARCH_VALUE_CODE),
+              transform_code=_record(T.save_identity), surface_code=_record(SURFACE.save_identity),
+              native_reader_code=_record(NATIVE.save_identity), journal_reader=JOURNAL.save_identity(),
+              dipole_reader=_record(DIPOLE.save_identity), directive=directive_document(),
               frame_columns=frame_columns_mode(), column_codec=column_codec())
     v1 = dict(common, schema='FRANKIE_SEARCH_CONTINUATION_V1', code_sha256=sha256_file(__file__),
               transform_sha256=sha256_file(T.__file__), surface_sha256=sha256_file(SURFACE.__file__),
               native_reader_sha256=sha256_file(NATIVE.__file__), journal_reader=JOURNAL.binding(),
-              dipole_reader=DIPOLE.binding(), directive=directive_witness())
+              dipole_reader=_record(DIPOLE.binding), directive=directive_witness())
     return v2, v1
 
 
@@ -3287,12 +3339,21 @@ def _root_module():
 
 
 def accept_saved_identity(saved, built, legacy, rebinds_dir):
-    """(the identity to continue with: the SAVED one, how it was accepted); refuses any other difference."""
+    """(the identity to continue with: the SAVED one, how it was accepted); refuses only a DATA difference. The code
+    fields are compared never: both sides are compared_identity() forms, and the code of the save and of this checkout
+    are recorded in the acceptance (code_recorded)."""
     R = _root_module()
-    candidates = [('current', built)] if saved.get('schema') == CONTINUATION_SCHEMA else [('V1 whole-file', legacy)]
+    full_saved = saved
+    code = dict(saved=recorded_code(saved), current=recorded_code(built),
+                rule='recorded, never compared (Greg, 2026-10-09)')
+    code['differs'] = sorted(k for k in set(code['saved'] or {}) | set(code['current'] or {})
+                             if (code['saved'] or {}).get(k) != (code['current'] or {}).get(k))
+    saved = compared_identity(saved)
+    candidates = ([('current', compared_identity(built))] if saved.get('schema') == CONTINUATION_SCHEMA
+                  else [('V1 whole-file', compared_identity(legacy))])
     for label, current in candidates:
         if saved == current:
-            return saved, dict(how='equal (%s identity)' % label)
+            return full_saved, dict(how='equal data identity (%s identity)' % label, code_recorded=code)
         if label == 'V1 whole-file':
             # V1's directive witness carries no bytes; a checkout move of an equal directive is accepted by its sha256
             # and content, the rest by content_rebinds
@@ -3315,10 +3376,10 @@ def accept_saved_identity(saved, built, legacy, rebinds_dir):
                                                                  .encode()).hexdigest()[:8])
             (Path(rebinds_dir) / name).write_text(json.dumps(record, indent=1, sort_keys=True, default=str) + '\n',
                                                  encoding='utf-8')
-            return saved, dict(how='accepted (%s identity): checkout moves of equal files only' % label,
-                               rebinds=str(Path(rebinds_dir) / name), moves=len(moves))
-    raise ValueError('saved search state belongs to different inputs or search code (neither the current identity, a '
-                     'checkout move of it, nor a byte-identical V1 save); retained, not overwritten')
+            return full_saved, dict(how='accepted (%s identity): checkout moves of equal files only' % label,
+                                    rebinds=str(Path(rebinds_dir) / name), moves=len(moves), code_recorded=code)
+    raise ValueError('saved search state belongs to different inputs (the data identity differs from the current one '
+                     'and is not a checkout move of it; code is never compared); retained, not overwritten')
 
 
 def cell_preview(cells, transforms_count, series_count):
@@ -3442,7 +3503,9 @@ def _search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, 
                                                      recovery / 'checkout-rebinds')
     else:
         _save_state(identity_path, dict(identity=identity))
-        acceptance = dict(how='fresh: this process wrote the identity')
+        acceptance = dict(how='fresh: this process wrote the identity',
+                          code_recorded=dict(saved=recorded_code(identity), current=recorded_code(identity), differs=[],
+                                             rule='recorded, never compared (Greg, 2026-10-09)'))
     # the save route (ROOT's contract): SIGTERM marks the save; the marker reaches the forked workers; a marker left by
     # a run that exited 75 is this resume's own start, cleared here and listed
     marker = recovery / 'save-requested'
