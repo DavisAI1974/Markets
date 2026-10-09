@@ -50,11 +50,20 @@ class _JournalWitness:
 
     def __init__(self):
         self.thread, self.pin, self.path, self.measured, self.error, self.seconds = None, None, None, None, None, None
+        self.claim = None
 
-    def start(self, path, pin):
+    def start(self, path, pin, claim_dirs=()):
+        """One pass (Greg, 2026-10-09): when the ingest's FRANKIE_FILE_CLAIM_V2 row for this file (the export's hard
+        link shares its inode, size and mtime_ns) names the MANIFEST pin's bytes and sha256 and still holds
+        (claim_still_holds: stat, filesystem, last 64 KiB), it is the witness and the journal is not read whole;
+        without a holding claim the whole-file witness runs on the lane thread as before."""
         import threading
         import time
         self.path, self.pin = path, {key: pin[key] for key in ('bytes', 'sha256')}
+        self.claim = _holding_claim(path, self.pin, claim_dirs)
+        if self.claim is not None:
+            self.measured, self.seconds = dict(self.pin), 0.0
+            return
 
         def run():
             started = time.time()
@@ -73,6 +82,8 @@ class _JournalWitness:
         self.thread.start()
 
     def verify(self):
+        if self.claim is not None:
+            return
         if self.thread is None:
             return
         self.thread.join()
@@ -82,10 +93,43 @@ class _JournalWitness:
             raise ValueError('selected sealed journal physical bytes changed')
 
     def record(self, result):
-        if self.thread is not None:
+        if self.claim is not None:
+            for report in result[2]:
+                report['journal_witness'] = dict(seconds=0.0, mode='by claim', claim=self.claim)
+        elif self.thread is not None:
             for report in result[2]:
                 report['journal_witness'] = dict(seconds=self.seconds, mode='lane thread beside the frame check and the '
                                                  'decode; verified before any result is returned')
+
+
+def _holding_claim(path, pin, claim_dirs):
+    """The basis note of a FRANKIE_FILE_CLAIM_V1/V2 row in <dir>/file-claims.jsonl (each of claim_dirs) whose identity
+    is the file's (inode, size, mtime_ns), whose bytes and sha256 are `pin`'s and which still holds
+    (ingest_block_sources.claim_still_holds); else None (the caller reads the file whole). Never raises."""
+    try:
+        import os
+        from research.kalshi.frankie_boss.operations.ingest_block_sources import (claim_identity, claim_still_holds,
+                                                                                   FILE_CLAIMS_NAME)
+        info = os.stat(path)
+        for base in claim_dirs:
+            target = Path(base) / FILE_CLAIMS_NAME
+            if not target.is_file():
+                continue
+            for line in target.read_text(encoding='utf-8').splitlines():
+                try:
+                    row = json.loads(line)
+                except ValueError:
+                    continue
+                if (claim_identity(row) != (info.st_ino, info.st_size, info.st_mtime_ns)
+                        or (row.get('bytes'), row.get('sha256')) != (pin['bytes'], pin['sha256'])):
+                    continue
+                held = claim_still_holds(row, path)
+                if held is not None:
+                    return dict(claim_file=str(target), claimed_by=row.get('claimed_by'), basis=held['basis'],
+                                text=held['text'])
+    except Exception:  # noqa: BLE001 - a claim is a hint: without one the file is read whole
+        return None
+    return None
 
 
 def read_columns(day_dir, columns, frame_numeric, receive_times, *, workers=15, frame_sha256=None):
@@ -169,13 +213,17 @@ def _read_columns(day_dir, columns, frame_numeric, receive_times, *, workers, fr
             or derive.get('source_binding') != root_binding
             or str(root_binding['source']['trading_day']) != str(receipt['trading_day'])):
         raise ValueError('selected journal does not belong to this ROOT source')
-    journal_check.start(journal, pin)     # verified by read_columns before anything is returned or raised past it
+    ingest_dir = (manifest.get('directories') or {}).get('ingest')
+    # the ingest wrote its journal claim beside its receipt (ingest_block_sources: <ingest>/file-claims.jsonl)
+    claim_dirs = [Path(ingest_dir) / Path(receipt_paths[0]).parent, Path(ingest_dir)] if ingest_dir else []
+    journal_check.start(journal, pin, claim_dirs=claim_dirs)     # verified by read_columns
     frames_path, frames_pin = artifact('root', 'work/derived/.rows/frames.jsonl')
     if frames_pin is None:
         return {}, {}, [], [dict(source='journal.group', retained=str(journal), sha256=pin['sha256'],
                                 reason='unsupported export: ROOT frame artifact is not manifest-bound')]
-    if (witness(frames_path) != {key: frames_pin[key] for key in ('bytes', 'sha256')}
-            or frame_sha256 != frames_pin['sha256']):
+    # one pass (2026-10-09): the frame spool's bytes were verified against this pin by the caller's own decode
+    # (sources[0], frame_sha256); its sha256 equal to the MANIFEST pin is the check, no second whole read here
+    if frame_sha256 != frames_pin['sha256']:
         raise ValueError('ROOT group membership differs from the selected frame artifact')
     report = dict(source='journal.group', schema=SCHEMA, implementation=binding(), path=str(journal),
                   sha256=pin['sha256'], bytes=pin['bytes'], journal_count=receipt['journal_count'],
