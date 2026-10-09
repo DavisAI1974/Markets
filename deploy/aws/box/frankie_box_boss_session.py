@@ -187,6 +187,57 @@ def _box_module(stem):
     return _MODULES[stem]
 
 
+# Greg, 2026-10-09 (standing): the code version is RECORDED, NEVER COMPARED. A saved ROOT identity (source-binding.json,
+# native-stage.json, legacy-stage.json, derive.json) embeds code identities beside its data identity: the shared-market
+# policy's implementation_sha256 (frankie_box_market_timeline.RECORDED_ONLY), the native emission helper's helper_sha256
+# (frankie_box_native_emission.RECORDED_ONLY) and the native stage's wrapper (frankie_box_bedrock's code identity).
+# Every reuse compares the comparison form below (data identity and policy meaning); the code fields that differ are
+# recorded beside the reuse, never refused.
+RECORDED_CODE_KEYS = ('wrapper',)        # top-level code keys of a native stage identity
+
+
+def without_recorded_code(document):
+    """The comparison form of a saved identity: every embedded shared-market policy and native emission binding, at any
+    depth, without its recorded-only code fields; RECORDED_CODE_KEYS dropped at the top level."""
+    import frankie_box_market_timeline as T
+    import frankie_box_native_emission as E
+
+    def walk(value):
+        if isinstance(value, dict):
+            if value.get('schema') == E.SCHEMA:
+                value = E.meaning(value)
+            return {k: walk(v) for k, v in value.items()}
+        if isinstance(value, list):
+            return [walk(v) for v in value]
+        return value
+    if isinstance(document, dict):
+        document = {k: v for k, v in document.items() if k not in RECORDED_CODE_KEYS}
+    return walk(T.without_recorded_code(document))
+
+
+def recorded_code_changes(saved, current, where='$'):
+    """The recorded-only code fields in which `saved` differs from `current` (both identities, walked in parallel):
+    [{at, saved, this_run}], for the record of a reuse. Never a refusal."""
+    import frankie_box_market_timeline as T
+    import frankie_box_native_emission as E
+    out = []
+    if isinstance(saved, dict) and isinstance(current, dict):
+        fields = list(T.RECORDED_ONLY) if saved.get('schema') == T.SCHEMA else (
+            list(E.RECORDED_ONLY) if saved.get('schema') == E.SCHEMA else [])
+        if where == '$':
+            fields += list(RECORDED_CODE_KEYS)
+        for key in fields:
+            if (key in saved or key in current) and saved.get(key) != current.get(key):
+                out.append(dict(at='%s.%s' % (where, key), saved=saved.get(key), this_run=current.get(key)))
+        for key in sorted(set(saved) & set(current), key=str):
+            if key not in fields:
+                out.extend(recorded_code_changes(saved[key], current[key], '%s.%s' % (where, key)))
+    elif isinstance(saved, list) and isinstance(current, list):
+        for i, (a, b) in enumerate(zip(saved, current)):
+            out.extend(recorded_code_changes(a, b, '%s[%d]' % (where, i)))
+    return out
+
+
 def _reusable_projection(projection, receipt, layers, crosswalk, out_dir, section_names):
     """Save point for reruns: the published layers of a completed earlier publication of exactly this projection plan,
     or None (then projection.project runs and decides). Kept OUT of frankie_box_projection.py on purpose: the plan pins
@@ -3608,23 +3659,30 @@ class Session:
             native_input=NativeInputView.RULE)
         records = NativeInputView(records)
         if recovery:
-            from frankie_box_native_emission import binding as emission_binding
+            from frankie_box_native_emission import binding as emission_binding, meaning as emission_meaning
             stage_identity['emission'] = emission_binding()
             selected = (self.source_binding or {}).get('native_calculation_policy')
+            # the emission helper is compared by its meaning (schema); its helper_sha256 is recorded, never compared
+            if selected is not None and emission_meaning(selected.get('emission')) != emission_meaning(stage_identity['emission']):
+                raise ValueError('native emission schema differs from the selected ROOT policy')
             if selected is not None and selected.get('emission') != stage_identity['emission']:
-                raise ValueError('native emission implementation differs from the selected ROOT policy')
+                self.note('bedrock: native emission helper code differs from the selected ROOT policy\'s record '
+                          '(recorded, not compared: %s -> %s)' % ((selected.get('emission') or {}).get('helper_sha256'),
+                                                                   stage_identity['emission'].get('helper_sha256')))
+        code_recorded = []
         if recovery and native_stage.is_file():
             saved = load_json(native_stage)
-            # The wrapper is the native code identity of frankie_box_bedrock (its NATIVE_VALUE_CODE definitions), so an
-            # edit elsewhere in that file keeps a completed stage. Compatibility rule (Greg, 2026-10-07): a stage saved
-            # in the earlier whole-file form ({bytes, sha256} of frankie_box_bedrock.py) is accepted only while that
-            # whole file is byte-identical; every other identity field must still be equal.
-            if saved.get('identity') != stage_identity:
-                legacy = dict(stage_identity, wrapper=witness(Path(B.__file__)))
-                if saved.get('identity') != legacy:
-                    raise ValueError('completed native stage source or implementation changed; retained outputs preserved')
-                self.note('bedrock: completed native stage saved in the whole-file wrapper form; accepted because '
-                          'frankie_box_bedrock.py is byte-identical to the saving checkout')
+            # Greg, 2026-10-09: the code version is recorded, never compared. The wrapper (frankie_box_bedrock's code
+            # identity, in either its native-code or its earlier whole-file form), the emission helper_sha256 and the
+            # shared-market implementation_sha256 are compared out (without_recorded_code); every data and policy field
+            # must still be equal. The code fields that differ are recorded on the reuse check (derive.json's
+            # bedrock.stage_reuse_check.code_recorded).
+            if without_recorded_code(saved.get('identity')) != without_recorded_code(stage_identity):
+                raise ValueError('completed native stage source or policy changed; retained outputs preserved')
+            code_recorded = recorded_code_changes(saved.get('identity'), stage_identity)
+            if code_recorded:
+                self.note('bedrock: completed native stage reused; code differs from the saving checkout, recorded '
+                          'only: %s' % ', '.join(c['at'] for c in code_recorded))
             # session 6 (Greg: CPUs in every ending step; the parent: carry the claim): the artifacts' whole-file read
             # here (the 193.7 GB native ledgers on a2, serial: a SHA-256 is one chain, and one core already runs it at
             # the volume's rate) is replaced by the claim the child saved with its native-stage.json (stat identity + the
@@ -3642,7 +3700,8 @@ class Session:
                         raise ValueError('completed native stage artifact changed: ' + item['path'])
                     basis = 'read whole: bytes and sha256 equal to the saved artifact'
                 checks.append(dict(path=item['path'], bytes=item['bytes'], basis=basis))
-            self._native_stage_reuse_check = dict(schema='FRANKIE_NATIVE_REUSE_CHECK_V1', setting=mode, artifacts=checks)
+            self._native_stage_reuse_check = dict(schema='FRANKIE_NATIVE_REUSE_CHECK_V1', setting=mode, artifacts=checks,
+                                                  code_recorded=code_recorded)
             run = saved['run']
             self.note('bedrock: completed native results reused in place; no traversal or finalization replay (%d '
                       'artifacts: %d by their saved claim, %d read whole)'
