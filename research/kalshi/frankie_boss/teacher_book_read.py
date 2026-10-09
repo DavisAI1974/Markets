@@ -354,14 +354,35 @@ def window(results, side):
     return columns(total)
 
 
-def assemble(rows, cursor_group, groups, windows, *, whole_day, group_labels=None):
+def advance_running(running, rows, cursor_group, groups, windows):
+    """The whole-day running window of assemble() advanced over `rows` without building their entries (a resumed
+    block feed replays the rows its earlier process sealed: the carry crosses the block boundary unchanged)."""
+    for row in rows:
+        cursor, has_receipt = row[6], row[1]
+        if not has_receipt:
+            continue
+        key, _ = cursor_group.get(cursor, (None, None))
+        slots = windows.get(cursor) or {}
+        if 'short' in slots and key is not None:
+            wkey, end, _, _ = slots['short']
+            held = running.setdefault(wkey, dict(upto=-1, totals={s: _empty() for s in SIDES}))
+            while held['upto'] < end:
+                held['upto'] += 1
+                for s in SIDES:
+                    add(held['totals'][s], groups.get((wkey, held['upto'])), s)
+    return running
+
+
+def assemble(rows, cursor_group, groups, windows, *, whole_day, group_labels=None, running=None):
     """Per teacher row (in order), its book read: the group it closes (receipt rows) and each window the pinned R3
     called on it (slot -> (key, end ordinal, length, side)); `whole_day` adds the whole-day running window on the
     short window's side (the teacher changes' long horizon). A row that closes no group reads NOT_F_LAST and a receipt
     row with no window the pinned R3's own reason (its R3 column), exactly as the pinned columns do."""
     from .c15_teacher import value
     from .c15_normalizer import State
-    running = {}
+    # running: the whole-day window's carry (a dict the caller keeps across calls on consecutive row spans, the
+    # teacher's sealed blocks); None: a fresh one, the whole day in one call (unchanged)
+    running = {} if running is None else running
     out = []
     for row in rows:
         cursor, has_receipt, combined = row[6], row[1], row[3]
