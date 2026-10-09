@@ -24,6 +24,7 @@ pairs happens AFTER the walk (D1).
 | Kalshi PROD trading pair | live money (post-paper) | DOES NOT EXIST | future | live trading |
 | GitHub (collector pushes) | GH Actions on the old trunk | repo secrets (account-level) | fine | collector accrual |
 | Pyth | pyth collectors | n/a | DEAD — free era ended 2026-07-31; collectors RETIRED (D14) | nothing (gas-only) |
+| AWS CLI login profiles (2026-10-09, Agent Toolkit) | `aws login` short-term creds for the CLI and the user-level `aws-mcp` entry (`AWS_MCP_PROXY_PROFILES`) | **`greg-davis-claude` = Claude; `greg-davis` = Codex — never share one.** Login cache `~/.aws/login`, outside the repo; dies with a cloud container (re-run `aws login --remote --profile greg-davis-claude`; the host `us-east-1.signin.aws.amazon.com` is on the environment's allowed domains) | signs in as the account ROOT user (email+password) — move to a non-root Identity Center user | the CLI path only; the project `.mcp.json` `aws-mcp` and the Aws connector do not use these profiles |
 
 Container trap (standing): cloud containers inject PLACEHOLDER AWS env vars that override
 ~/.aws/credentials in boto3's precedence — run AWS via `env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY`

@@ -102,5 +102,21 @@ echo "[session_start] installing RunPod agent skills..."
   && echo "[session_start] RunPod skills installed" \
   || echo "[session_start] RunPod skills install failed (continuing)"
 
+# AWS Agent Toolkit core skills (Greg, 2026-10-09): install at every session start, never vendored,
+# same rule as RunPod. Source: https://github.com/aws/agent-toolkit-for-aws (skills/core-skills),
+# public, so no AWS sign-in is needed to install. The AWS rules block lives in CLAUDE.md. A CLI login
+# (`aws login --remote --profile greg-davis-claude`; Codex uses greg-davis) does not survive a container.
+echo "[session_start] installing AWS Agent Toolkit core skills..."
+AWS_TK_TMP="$(mktemp -d)"
+if timeout 120 git clone -q --depth 1 https://github.com/aws/agent-toolkit-for-aws.git "$AWS_TK_TMP/tk" >/dev/null 2>&1 \
+   && [ -d "$AWS_TK_TMP/tk/skills/core-skills" ]; then
+  mkdir -p "$HOME/.claude/skills"
+  cp -R "$AWS_TK_TMP/tk/skills/core-skills/." "$HOME/.claude/skills/"
+  echo "[session_start] AWS skills installed ($(ls "$AWS_TK_TMP/tk/skills/core-skills" | wc -l) core)"
+else
+  echo "[session_start] AWS skills install failed (continuing)"
+fi
+rm -rf "$AWS_TK_TMP"
+
 echo "[session_start] done."
 exit 0
