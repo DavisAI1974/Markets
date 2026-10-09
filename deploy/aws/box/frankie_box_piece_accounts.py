@@ -113,20 +113,30 @@ class Account:
         return L + ['']
 
 
-def _shares(acc, seconds, source, path, label):
-    """Where the time went: every recorded phase with its seconds and its share of their recorded sum."""
+def _number(value):
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def _shares(acc, seconds, source, path, label, total_text=None):
+    """Where the time went: every recorded phase with its seconds and its share of the stated total. The total is the
+    sum of the phases' recorded seconds (total_text says what those seconds are); the shares of the phases with a
+    number sum to 100% of it, shown in a closing row."""
     items = [(name, v if not isinstance(v, dict) else v.get('seconds')) for name, v in (seconds or {}).items()]
-    numbers = [(n, s) for n, s in items if isinstance(s, (int, float))]
-    total = sum(s for _, s in numbers)
-    rows = [(n, show(s), ('%.1f%%' % (100.0 * s / total)) if total and isinstance(s, (int, float)) else NOT_RECORDED,
-             '%s#%s.%s' % (source, path, n)) for n, s in items]
-    if not rows:
+    numbers = [s for _, s in items if _number(s)]
+    total = sum(numbers)
+    if not items:
         acc.missing.append('the time per %s%s' % (label, cite(source, path)))
         return
-    acc.improvements += ['Where my time went, %s by %s, each with its share of their recorded sum of %s seconds%s:' % (
-        label, label, show(round(total, 3)), cite(source, path)), '']
-    acc.improvements += table([label, 'seconds', 'share', 'from'], sorted(rows, key=lambda r: -(
-        float(r[1]) if r[1] not in (NOT_RECORDED,) and r[1].replace('.', '', 1).isdigit() else -1))) + ['']
+    rows = [(n, show(round(s, 1) if _number(s) else s),
+             ('%.1f%%' % (100.0 * s / total)) if total and _number(s) else NOT_RECORDED,
+             '%s#%s.%s' % (source, path, n), s if _number(s) else None) for n, s in items]
+    rows.sort(key=lambda r: -r[4] if r[4] is not None else float('inf'))
+    acc.improvements += ['Where my time went, %s by %s, each with its share of %s seconds, %s%s:' % (
+        label, label, show(round(total, 1)), total_text or 'the sum of the %s seconds I recorded' % label,
+        cite(source, path)), '']
+    acc.improvements += table([label, 'seconds', 'share', 'from'], [r[:4] for r in rows] + [
+        ('all %d %ss with seconds recorded' % (len(numbers), label), show(round(total, 1)),
+         '100.0%' if total else NOT_RECORDED, '%s#%s' % (source, path))]) + ['']
 
 
 def _cpu_count(ranges):
@@ -151,38 +161,94 @@ def _cpu_count(ranges):
     return count or None
 
 
+def heartbeat_runs(lines):
+    """The heartbeat samples split into runs: one run per start of the stage process. The writer
+    (frankie_box_stage_progress.Heartbeat, FRANKIE_STAGE_HEARTBEAT_V1) appends every start's samples to the same file;
+    elapsed_s is the seconds since THAT start (monotonic), so it restarts at 0 with each run. A new run begins where the
+    pid changes, where elapsed_s falls below the previous sample's, or after a final sample."""
+    runs, previous = [], None
+    for line in lines:
+        elapsed, pid = line.get('elapsed_s'), line.get('pid')
+        new = previous is None or previous.get('final') is True or (
+            pid is not None and previous.get('pid') is not None and pid != previous.get('pid')) or (
+            _number(elapsed) and _number(previous.get('elapsed_s')) and elapsed < previous.get('elapsed_s'))
+        if new:
+            runs.append([])
+        runs[-1].append(line)
+        previous = line
+    return runs
+
+
 def heartbeat(acc, lines, source, stage):
-    """The stage heartbeats (frankie_box_stage_progress samples): the phases seen in order with their first time, the
-    final elapsed time and outcome (actions); the memory peak and every sample whose busy CPUs were below the CPUs the
-    stage held (improvements). No heartbeat file: listed."""
+    """The stage heartbeats (frankie_box_stage_progress samples): the runs (one per start of the stage process), every
+    phase change in order with its time, the wall clock and outcome (actions); where the time went by phase, the memory
+    peak and every sample whose busy CPUs were below the CPUs the stage held (improvements). No heartbeat file: listed.
+    A phase is the recorded string as written (often the stage's last log line); it is never parsed."""
     if lines is None:
         acc.missing.append('the %s stage heartbeats%s' % (stage, cite(source)))
         return
     if not lines:
         acc.missing.append('any %s heartbeat sample (the file is empty)%s' % (stage, cite(source)))
         return
-    phases, seen = [], set()
-    for line in lines:
-        phase = line.get('phase')
-        if phase is not None and phase not in seen:
-            seen.add(phase)
-            phases.append((phase, line.get('utc'), line.get('elapsed_s')))
-    acc.actions += ['', 'The phases my heartbeat saw, in order, with when each was first seen%s:' % cite(source, 'phase'), '']
-    acc.actions += (table(['phase', 'first seen (UTC)', 'elapsed s'], [(p, show(u), show(e)) for p, u, e in phases])
-                    if phases else ['- ' + NOT_RECORDED + ' (no sample names a phase).'])
+    runs = heartbeat_runs(lines)
     last = lines[-1]
-    acc.actions += ['', '- My heartbeat ran from %s to %s, %s seconds, %d samples; the last sample says outcome %s%s.' % (
-        show(lines[0].get('utc')), show(last.get('utc')), show(last.get('elapsed_s')), len(lines),
-        show(last.get('outcome')), cite(source, 'utc,elapsed_s,outcome'))]
-    # where the time went by phase: each phase from its first sample to the next phase's first sample (or the last
-    # sample), from the recorded elapsed_s; a phase whose bounds are not recorded is said so
-    spans = []
-    for i, (phase, utc, start) in enumerate(phases):
-        end = phases[i + 1][2] if i + 1 < len(phases) else last.get('elapsed_s')
-        spans.append((phase, round(end - start, 1) if isinstance(start, (int, float)) and isinstance(end, (int, float))
-                      else None))
-    if spans:
-        _shares(acc, {p: s for p, s in spans}, source, 'elapsed_s by phase', 'phase')
+    run_rows, change_rows, spans, per_phase, unmeasured = [], [], [], {}, []
+    for number, run in enumerate(runs, 1):
+        first_e, last_e = run[0].get('elapsed_s'), run[-1].get('elapsed_s')
+        span = (last_e - first_e) if _number(first_e) and _number(last_e) else None
+        spans.append(span)
+        end = run[-1]
+        run_rows.append((number, show(run[0].get('pid')), show(run[0].get('utc')), show(end.get('utc')), len(run),
+                         show(last_e), show(round(span, 1) if span is not None else None),
+                         ('final sample: outcome %s, exit code %s' % (show(end.get('outcome')), show(end.get('exit_code')))
+                          if end.get('final') is True else 'no final sample (the run ended without one)')))
+        current = object()
+        for i, line in enumerate(run):
+            phase = line.get('phase')
+            if phase != current:
+                change_rows.append((number, show(phase), show(line.get('utc')), show(line.get('elapsed_s'))))
+                current = phase
+            if i + 1 < len(run):
+                a, b = line.get('elapsed_s'), run[i + 1].get('elapsed_s')
+                if _number(a) and _number(b):
+                    per_phase[show(phase)] = per_phase.get(show(phase), 0.0) + (b - a)
+                else:
+                    unmeasured.append((number, show(line.get('utc'))))
+    acc.actions += ['', 'My heartbeat file holds %d runs, one per start of my stage process (a new run begins where the '
+                    'pid changes or elapsed_s starts again from 0); each run with its first and last sample%s:' % (
+                        len(runs), cite(source, 'pid,utc,elapsed_s,final,outcome,exit_code')), '']
+    acc.actions += table(['run', 'pid', 'first sample (UTC)', 'last sample (UTC)', 'samples',
+                          'elapsed s at the last sample', 'run span s (last minus first elapsed s)', 'how it ended'],
+                         run_rows)
+    acc.actions += ['', 'Every phase change my heartbeat saw, in order, run by run, with the sample that first showed '
+                    'it (a phase is the recorded text, often my last log line)%s:' % cite(source, 'phase,utc,elapsed_s'), '']
+    acc.actions += (table(['run', 'phase', 'first seen (UTC)', 'elapsed s in its run'], change_rows)
+                    if any(r[1] != NOT_RECORDED for r in change_rows) else ['- ' + NOT_RECORDED + ' (no sample names a phase).'])
+    measured = [x for x in spans if x is not None]
+    run_sum = round(sum(measured), 1) if measured else None
+    at0, at1 = lines[0].get('at'), last.get('at')
+    wall = round(at1 - at0, 1) if _number(at0) and _number(at1) else None
+    acc.actions += ['', '- My heartbeat ran from %s to %s: %s seconds of wall clock from the first to the last sample%s, '
+                    'in %d samples over %d runs; the runs themselves span %s seconds in all (the sum of each run\'s last '
+                    'minus first elapsed_s%s), and the time between runs is not in that sum. The last run\'s elapsed_s '
+                    'at its last sample is %s seconds; the last sample says outcome %s%s.' % (
+                        show(lines[0].get('utc')), show(last.get('utc')), show(wall), cite(source, 'at'), len(lines),
+                        len(runs), show(run_sum), cite(source, 'elapsed_s'), show(last.get('elapsed_s')),
+                        show(last.get('outcome')), cite(source, 'outcome'))]
+    if None in spans:
+        acc.missing.append('the span of %d of my %d heartbeat runs (a first or last sample without elapsed_s)%s' % (
+            spans.count(None), len(runs), cite(source, 'elapsed_s')))
+    for number, utc in unmeasured:
+        acc.missing.append('the time after the run %d sample at %s (it or the next sample has no elapsed_s)%s' % (
+            number, utc, cite(source, 'elapsed_s')))
+    # where the time went by phase: each interval between two consecutive samples of the same run (the difference of
+    # their recorded elapsed_s) counts to the phase the earlier sample shows; never across a run boundary
+    if per_phase:
+        _shares(acc, {p: round(v, 3) for p, v in per_phase.items()}, source, 'elapsed_s by phase', 'phase',
+                'the sum of every interval between two consecutive samples of the same run (the difference of their '
+                'elapsed_s, counted to the phase the earlier sample shows; never across a restart, so the time between '
+                'runs is not in it)' + ('; it equals the runs\' summed span above' if not unmeasured and None not in spans
+                                        else '; intervals without elapsed_s are listed below as not measured'))
     rss = [(line.get('rss_bytes'), line.get('utc')) for line in lines if isinstance(line.get('rss_bytes'), int)]
     if rss:
         peak = max(rss, key=lambda item: item[0])
@@ -204,6 +270,68 @@ def heartbeat(acc, lines, source, stage):
 
 
 # ---------------------------------------------------------------------------------------------------------- ROOT
+REOPENED_FROM_COUNT = 'the count: first and last lines read, no other line'
+
+
+def taken_how(item):
+    """How one spool_reopen / retained_evidence_check.artifacts entry was taken, from its own recorded strings only
+    (the phrasings frankie_box_experiment_root.reopen_retained_spools and frankie_box_boss_session._artifact_check /
+    _legacy_spool_artifact / _archived_witness / claim_still_holds write): 'whole' (read whole on this resume), 'claim'
+    (accepted by its saved claim, not read whole), 'archived' (taken through its archive link, not read whole), or None
+    (a basis this account does not recognise; it is then printed verbatim, never guessed)."""
+    basis, reopened = str(item.get('basis') or ''), str(item.get('reopened_from') or '')
+    if basis.startswith(('read whole', 'one pass, sha256 + count together')) or 'every line read' in reopened:
+        return 'whole'
+    if basis.startswith('archived:') and 'not read' in basis:
+        return 'archived'
+    if 'the saved claim' in basis and 'not read whole here' in basis:
+        return 'claim'
+    return None
+
+
+def evidence_entries(receipt):
+    """[(group label, cited field, entry, how)] for every legacy spool reopen and every retained artifact check."""
+    out = []
+    for key, label in (('spool_reopen', 'legacy spool'), ('retained', 'retained artifact')):
+        value = receipt.get(ROOT_FIELDS[key])
+        items = value.get('artifacts') if isinstance(value, dict) else value
+        prefix = ROOT_FIELDS[key] + ('.artifacts' if isinstance(value, dict) else '')
+        for i, item in enumerate(items or []):
+            item = item if isinstance(item, dict) else dict(basis=item)
+            out.append((label, '%s[%d]' % (prefix, i), item, taken_how(item)))
+    return out
+
+
+def evidence_sentence(R, field, item, how):
+    """One first-person sentence for one entry, carrying its recorded strings verbatim."""
+    path, basis = show(item.get('path') or item.get('name')), str(item.get('basis') or '')
+    size = '%s bytes' % show(item.get('bytes'))
+    if 'count' in item:
+        size = '%s lines, %s' % (show(item.get('count')), size)
+    reopened = item.get('reopened_from')
+    tail = ''
+    if reopened is not None:
+        tail = '; reopened from (recorded) "%s"%s' % (reopened, cite(R, field + '.reopened_from'))
+    if item.get('archived') is not None:
+        tail += '; archived (recorded) "%s"%s' % (item.get('archived'), cite(R, field + '.archived'))
+    if how == 'claim':
+        claim = basis[basis.index('the saved claim'):]
+        count_from = basis[:basis.index('the saved claim')].rstrip('; ')
+        if reopened == REOPENED_FROM_COUNT:
+            return ('- I reopened %s (%s) from its count, first and last lines read, no other line%s; the count from '
+                    '%s, and the file accepted by %s%s.' % (path, size, cite(R, field + '.reopened_from'),
+                                                            count_from or NOT_RECORDED, claim, cite(R, field + '.basis')))
+        return '- I accepted %s (%s) by its saved claim, not read whole: %s%s%s.' % (
+            path, size, basis, cite(R, field + '.basis'), tail)
+    if how == 'archived':
+        return '- I took %s (%s) through its archive link, not read whole: %s%s%s.' % (
+            path, size, basis, cite(R, field + '.basis'), tail)
+    if how == 'whole':
+        return '- I read %s (%s) whole again on this resume: basis (recorded) "%s"%s%s.' % (
+            path, size, basis, cite(R, field + '.basis'), tail)
+    return '- %s (%s): basis (recorded) "%s"%s%s.' % (path, size, basis, cite(R, field + '.basis'), tail)
+
+
 def root_account(receipt, derive, workers, gates, beats, sources):
     """ROOT's account: calculations-receipt.json, work/derive.json, the bedrock runtime-workers receipt and
     pre-traversal gates, the root stage heartbeats. `sources`: {role: the path string to cite}."""
@@ -234,6 +362,12 @@ def root_account(receipt, derive, workers, gates, beats, sources):
         else:
             acc.actions += ['', '%s (every recorded field)%s:' % (label, cite(R, F[key])), '']
             acc.actions += record_table(value, R, F[key]) + ['']
+            if key in ('spool_reopen', 'retained'):
+                mine = [e for e in evidence_entries(receipt) if e[1].startswith(F[key])]
+                if mine:
+                    acc.actions += ['How I took each %s, from its own recorded basis%s:' % (
+                        mine[0][0], ' and reopened_from' if key == 'spool_reopen' else ''), '']
+                    acc.actions += [evidence_sentence(R, field, item, how) for _, field, item, how in mine] + ['']
     bedrock = derive.get(F['bedrock'])
     if isinstance(bedrock, dict):
         for key in ('groups', 'records', 'span_seconds', 'derived', 'could_not', 'verdict', 'candidate_warmup_seconds',
@@ -283,12 +417,18 @@ def root_account(receipt, derive, workers, gates, beats, sources):
     else:
         acc.missing.append('my native ledgers%s' % cite(D, F['bedrock'], 'ledgers'))
     pins = [(name, receipt.get(name)) for name in F['pins']]
+    ran = processes if isinstance(processes, dict) else {}
+
+    def not_run(name):
+        return ran.get(name) is not None and ran.get(name) != 'run'
     acc.outputs += ['The files my receipt pins (path, bytes, sha256)%s:' % cite(R, ','.join(F['pins'])), '']
     acc.outputs += table(['file', 'path', 'bytes', 'sha256'],
-                         [(name, show((p or {}).get('path')), show((p or {}).get('bytes')), show((p or {}).get('sha256')))
-                          for name, p in pins]) + ['']
+                         [(name, 'none: I did not run the process %s (%s) [%s#%s.%s]' % (
+                             name, show(ran.get(name)), R, F['processes'], name), 'none', 'none') if p is None and not_run(name)
+                          else (name, show((p or {}).get('path')), show((p or {}).get('bytes')),
+                                show((p or {}).get('sha256'))) for name, p in pins]) + ['']
     for name, p in pins:
-        if p is None:
+        if p is None and not not_run(name):
             acc.missing.append('the %s pin%s' % (name, cite(R, name)))
     market = receipt.get(F['market_sources'])
     if market:
@@ -299,15 +439,22 @@ def root_account(receipt, derive, workers, gates, beats, sources):
     acc.fact('improvements', 'Records a producer could not use', receipt.get(F['failures']), R, F['failures'])
     for name, status, rows, size, reason, src in layer_rows:
         if status != 'derived':
-            acc.improvements.append('- The layer %s is %s: %s [%s].' % (name, status, reason, src))
-    for key in ('spool_reopen', 'retained'):
-        value = receipt.get(F[key])
-        items = value.get('artifacts') if isinstance(value, dict) else value
-        for i, item in enumerate(items or []):
-            basis = str((item or {}).get('basis', ''))
-            if 'read whole' in basis or ('claim' not in basis and basis):
-                acc.improvements.append('- I read %s again whole: %s%s.' % (show(item.get('path') or item.get('name')),
-                                                                         basis, cite(R, F[key], i, 'basis')))
+            acc.improvements.append('- The layer %s has the status %s; its reason (recorded): %s [%s].' % (
+                name, status, reason, src))
+    entries = evidence_entries(receipt)
+    for label, key in (('legacy spool', 'spool_reopen'), ('retained artifact', 'retained')):
+        group = [e for e in entries if e[0] == label]
+        if not group:
+            continue
+        whole = sum(1 for e in group if e[3] == 'whole')
+        unknown = sum(1 for e in group if e[3] is None)
+        acc.improvements.append('- Of my %d %ss, %d %s read whole again on this resume, by %s own recorded basis%s%s.' % (
+            len(group), label, whole, 'was' if whole == 1 else 'were', 'its' if len(group) == 1 else 'their',
+            '; %d %s a basis my account does not recognise (printed verbatim next)' % (unknown, 'carries' if unknown == 1 else 'carry') if unknown else '',
+            cite(R, F[key])))
+        for _, field, item, how in group:
+            if how in ('whole', None):
+                acc.improvements.append(evidence_sentence(R, field, item, how))
     if isinstance(bedrock, dict) and isinstance(bedrock.get('records'), (int, float)) and \
             isinstance(bedrock.get('span_seconds'), (int, float)):
         pass                                             # span_seconds is market time, not my time: no rate from it
@@ -320,13 +467,26 @@ def root_found(receipt, derive, sources):
     R, D = sources.get('receipt', F['receipt']), sources.get('derive', F['derive'])
     receipt, derive = receipt or {}, derive or {}
     L = ['## What I found', '']
+    tables = []
     for key in F['counts']:
-        if key in derive:
+        if key not in derive:
+            continue
+        if isinstance(derive[key], (dict, list, tuple)) and derive[key]:
+            tables += ['', 'The %s record (every recorded field)%s:' % (key.replace('_', ' '), cite(D, key)), '']
+            tables += record_table(derive[key], D, key)
+        else:
             L.append('- %s: %s%s.' % (key.replace('_', ' ').capitalize(), show(derive[key]), cite(D, key)))
     bedrock = derive.get(F['bedrock']) if isinstance(derive.get(F['bedrock']), dict) else {}
     for key in ('groups', 'records', 'derived', 'could_not'):
-        if key in bedrock:
+        if key not in bedrock:
+            continue
+        if isinstance(bedrock[key], (dict, list, tuple)) and bedrock[key]:
+            tables += ['', 'The native pass %s (every recorded field)%s:' % (
+                key.replace('_', ' '), cite(D, F['bedrock'], key)), '']
+            tables += record_table(bedrock[key], D, '%s.%s' % (F['bedrock'], key))
+        else:
             L.append('- The native pass %s: %s%s.' % (key.replace('_', ' '), show(bedrock[key]), cite(D, F['bedrock'], key)))
+    L += tables
     if bedrock.get('reconciliation') is not None:
         L += ['', 'The native reconciliation (every recorded field)%s:' % cite(D, F['bedrock'], 'reconciliation'), '']
         L += record_table(bedrock['reconciliation'], D, '%s.reconciliation' % F['bedrock'])
