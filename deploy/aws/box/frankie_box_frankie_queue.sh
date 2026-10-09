@@ -24,8 +24,9 @@
 #   status  RUN DAY              read-only: the owner binding, marker, class acknowledgment, ledger booking (live /
 #                                retained / released), both line entries and the worker, distinctly
 #   resume  RUN DAY [REBOOK=on]  a saved/unknown owned day back in line with the SAME owner (attempt, CPUs, marker
-#                                archived); refused when its retained booking is gone unless REBOOK=on (the same attempt
-#                                on any free 16 CPUs, an explicit decision); then kick LINE=root (SCOPE=RUN:...)
+#                                archived); a retained booking gone from the ledger is re-booked at the same size; then
+#           [KICK=off]           the resume kicks the ROOT worker for RUN:DAY itself (2026-10-09; KICK=off leaves it to
+#                                an ACTION=kick); a worker that runs already takes it over, an ending one kicks a new one
 #   retire  RUN REASON           a dead run's line entries leave both lines (kept whole under each line's `retired` list
 #                                with who/when/why; nothing deleted), so its duplicate-data claim no longer blocks a new
 #                                run of the same day; refused while one of its entries runs under a live worker
@@ -106,6 +107,12 @@ case "$ACTION" in save|status|resume)
   case "${RELEASE_BOOKING:-off}" in on|off) ;; *) echo "RELEASE_BOOKING must be on or off" >&2; exit 2;; esac
   set -- --action "$ACTION" --run "$RUN" --day "$DAY" --rebook "${REBOOK:-off}" --release-booking "${RELEASE_BOOKING:-off}"
   [ -z "${RELEASE_REASON:-}" ] || set -- "$@" --release-reason "$RELEASE_REASON"
+  if [ "$ACTION" = resume ]; then
+    # 2026-10-09: the resume kicks the ROOT worker for RUN:DAY itself, on this checkout, with this shell's FRANKIE_*
+    # settings over the ones the day's last worker ran with (KICK=off leaves it to an ACTION=kick)
+    case "${KICK:-on}" in on|off) ;; *) echo "KICK must be on or off" >&2; exit 2;; esac
+    set -- "$@" --kick "${KICK:-on}" --code-root "$CODE_ROOT" --commit "$MARKETS_SHA"
+  fi
   exec "$PY" -B "$SCRIPT" "$@" ;;
 esac
 HEAD_SHA=$(git -C "$CODE_ROOT" rev-parse HEAD 2>/dev/null) || HEAD_SHA="${MARKETS_SHA:-}"  # 2026-10-09: recorded, never compared
