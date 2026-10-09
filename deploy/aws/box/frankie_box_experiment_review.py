@@ -996,6 +996,68 @@ def frozen_documents(path):
     raise ValueError('unknown frozen knowledge selection: ' + str(path))
 
 
+def review_row(raw):
+    """(reasons, row) of one stored coupling row's bytes: the field-role policy, the existing count arithmetic
+    (frankie_box_experiment_exchange.count_margins) and the stored chance decision. One definition, used by the search
+    worker as it writes the row (the part's review sidecar) and by search_findings on a part without one."""
+    import frankie_box_experiment_search as SEARCH
+    import frankie_box_experiment_exchange as EX
+    row = json.loads(raw)
+    if not isinstance(row, dict):
+        raise ValueError('search evidence row is not an object')
+    reasons = []
+    for field in ('x', 'y', 'cell'):
+        name = row.get(field)
+        if not isinstance(name, str):
+            reasons.append('missing exact ' + field)
+            continue
+        role = SEARCH.non_market_reason(name)
+        if role and not (field == 'cell' and role == 'context_only'):
+            reasons.append('%s: %s' % (field, role))
+    projected = dict(row, counts={k: row.get(k) for k in
+        ('same_way', 'opposite', 'both_moving', 'x_moves', 'y_moves')}, lag=row.get('best_lag'),
+        x_transform=row.get('x_transform', row.get('transform', 'sign_of_step')),
+        y_transform=row.get('y_transform', 'sign_of_step'))
+    arithmetic, _ = EX.count_margins(projected)
+    reasons.extend(arithmetic)
+    if type(row.get('beyond_chance')) is not bool:
+        reasons.append('chance result must be the stored boolean decision')
+    return reasons, row
+
+
+def _part_review(target, pin):
+    """(listed, findings, rows checked) of one part from its review sidecar (one pass, 2026-10-09): the part's pin from
+    the MANIFEST plus a stat check (its size), the sidecar's own pin from the MANIFEST and its last line naming the
+    part's bytes and sha256; None when the pin carries no sidecar or any of that differs (the part is then read whole
+    as before)."""
+    review = pin.get('review')
+    if not isinstance(review, dict) or type(pin.get('bytes')) is not int:
+        return None
+    try:
+        part = target / pin['path']
+        side = target / review['path']
+        if not side.resolve().is_relative_to(target.resolve()) or part.stat().st_size != pin['bytes']:
+            return None
+        raw = side.read_bytes()
+        if len(raw) != review['bytes'] or digest(raw) != review['sha256']:
+            return None
+        lines = [json.loads(line) for line in raw.splitlines()]
+        last = lines.pop()
+        if (last.get('part_bytes'), last.get('part_sha256')) != (pin['bytes'], pin['sha256']):
+            return None
+    except (OSError, ValueError, KeyError, TypeError, IndexError):
+        return None
+    listed, findings = [], []
+    for entry in lines:
+        source = dict(part=pin['path'], part_sha256=pin['sha256'], row=entry['row'], row_sha256=entry['row_sha256'])
+        if 'reasons' in entry:
+            listed.append(dict(source, reasons=entry['reasons'], disposition='needs_source_correction',
+                               counts_as_independent_check=False))
+        else:
+            findings.append(dict(source, content=entry['content']))
+    return listed, findings, last['rows_checked']
+
+
 def search_findings(target, day):
     """Recheck stored search rows with the existing count arithmetic and field-role policy.
 
@@ -1009,38 +1071,33 @@ def search_findings(target, day):
     manifest = json.loads(manifest_raw)
     if manifest.get('schema') != SEARCH.SCHEMA or str(manifest.get('day')) != str(day):
         raise ValueError('step-5 review must use the owning day search')
-    findings, listed, checked = [], [], 0
+    findings, listed, checked, sidecars = [], [], 0, 0
     seen = set()
     for pin in manifest['couplings']['parts']:
         part = target / pin['path']
         if not part.resolve().is_relative_to(target.resolve()) or pin['path'] in seen:
             raise ValueError('ambiguous/outside search part in review')
         seen.add(pin['path'])
+        # one pass (Greg, 2026-10-09): the search worker made these per-row checks as it wrote the part and saved them
+        # beside it; with the part's MANIFEST pin, a stat check and the sidecar's own pin, the part is not read again
+        sidecar = _part_review(target, pin)
+        if sidecar is not None:
+            listed.extend(sidecar[0])
+            findings.extend(sidecar[1])
+            checked += sidecar[2]
+            sidecars += 1
+            continue
         hashed, size = hashlib.sha256(), 0
         with part.open('rb') as handle:
             for ordinal, raw in enumerate(handle):
                 hashed.update(raw)
                 size += len(raw)
-                row = json.loads(raw)
-                if not isinstance(row, dict):
-                    raise ValueError('search evidence row is not an object: %s row %d' % (part, ordinal))
-                reasons = []
-                for field in ('x', 'y', 'cell'):
-                    name = row.get(field)
-                    if not isinstance(name, str):
-                        reasons.append('missing exact ' + field)
-                        continue
-                    role = SEARCH.non_market_reason(name)
-                    if role and not (field == 'cell' and role == 'context_only'):
-                        reasons.append('%s: %s' % (field, role))
-                projected = dict(row, counts={k: row.get(k) for k in
-                    ('same_way', 'opposite', 'both_moving', 'x_moves', 'y_moves')}, lag=row.get('best_lag'),
-                    x_transform=row.get('x_transform', row.get('transform', 'sign_of_step')),
-                    y_transform=row.get('y_transform', 'sign_of_step'))
-                arithmetic, _ = EX.count_margins(projected)
-                reasons.extend(arithmetic)
-                if type(row.get('beyond_chance')) is not bool:
-                    reasons.append('chance result must be the stored boolean decision')
+                try:
+                    reasons, row = review_row(raw)
+                except ValueError as error:
+                    if 'not an object' in str(error):
+                        raise ValueError('search evidence row is not an object: %s row %d' % (part, ordinal))
+                    raise
                 source = dict(part=pin['path'], part_sha256=pin['sha256'], row=ordinal,
                               row_sha256=digest(raw))
                 checked += 1
@@ -1058,6 +1115,8 @@ def search_findings(target, day):
                 status='source/arithmetic-checked candidates; existing scientific teachers retain scientific judgment',
                 review=dict(rows_checked=checked, listed=listed,
                             checks=['exact source bytes', 'existing count margins', 'market signals/context roles'],
+                            parts_from_write_time_review=sidecars,
+                            parts_read_whole=len(seen) - sidecars,
                             independent_observations_added=0, producer_sha256=digest(Path(__file__).read_bytes()),
                             search_reader_sha256=digest(Path(SEARCH.__file__).read_bytes()),
                             arithmetic_reader_sha256=digest(Path(EX.__file__).read_bytes())),

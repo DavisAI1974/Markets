@@ -432,8 +432,10 @@ def _decode_range(args):
     return rows, None
 
 
-def _decoded_lines(path, workers):
-    """Yield (ordinal, decoded row) of the ledger in file order; (bytes, sha256) of every byte read, via `done`."""
+def _decoded_lines(path, workers, pin=None):
+    """Yield (ordinal, decoded row) of the ledger in file order; (bytes, sha256) of every byte read, via `done`.
+    pin (the export MANIFEST item): when it was pinned from a claim that still holds on this link, the parallel decode
+    hashes nothing (frankie_box_experiment_search.frontier_hasher; one pass, 2026-10-09)."""
     done = {}
     size = path.stat().st_size
 
@@ -455,13 +457,14 @@ def _decoded_lines(path, workers):
         ranges = _line_ranges(path, size, NATIVE_RANGE_BYTES)
         count = min(workers, len(ranges))
         try:
-            from frankie_box_experiment_search import FrontierHasher
+            from frankie_box_experiment_search import frontier_hasher
         except ImportError:
-            from deploy.aws.box.frankie_box_experiment_search import FrontierHasher
+            from deploy.aws.box.frankie_box_experiment_search import frontier_hasher
         # the search's shared hasher (stacks pass): the hash reads the pages the decode workers read (one disk pass),
-        # and an early stop is bounded (no wait on the rest of the ledger after a failure)
+        # and an early stop is bounded (no wait on the rest of the ledger after a failure); none at all when the
+        # export's claim holds (one pass, 2026-10-09)
         window = count * NATIVE_WINDOW_PER_WORKER
-        hasher = FrontierHasher(path, window * max(b - a for _, a, b in ranges), name='native-ledger-sha256')
+        hasher = frontier_hasher(path, pin, window * max(b - a for _, a, b in ranges), name='native-ledger-sha256')
         ordinal, finished, recovery = 0, False, dict(worker_deaths=[], redone=[])
         try:
             # pinned, in file order, at most NATIVE_WINDOW_PER_WORKER ranges per worker in flight; the hasher starts
@@ -561,7 +564,7 @@ def read_columns(day_dir, columns, frame_numeric, receive_times, *, workers=1):
         def rows():
             previous = -1
             started = time.time()
-            decoded, read = _decoded_lines(path, workers)
+            decoded, read = _decoded_lines(path, workers, pin)
             try:
                 for ordinal, row in decoded:
                     if not isinstance(row, dict):

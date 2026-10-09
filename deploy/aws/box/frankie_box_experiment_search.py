@@ -474,6 +474,67 @@ class FrontierHasher:
                     stopped_early=self.stopped, resumable=self.snapshot is not None, resumed_from_byte=self.resumed_from)
 
 
+CLAIM_SNAPSHOT = ('claim',)       # the saved "hash state" of a read whose pin was taken by claim (nothing hashed)
+
+
+class ClaimedHasher:
+    """FrontierHasher's interface for a file the export pinned from an earlier stage's claim that still holds on this
+    link (one pass, Greg 2026-10-09): nothing is read for a hash; finish() returns the pin. The decode is unchanged."""
+
+    def __init__(self, pin, basis):
+        self.pin, self.basis, self.snapshot, self.stopped = {k: pin[k] for k in ('bytes', 'sha256')}, basis, CLAIM_SNAPSHOT, False
+
+    def start(self, *_):
+        pass
+
+    def advance(self, offset):
+        pass
+
+    def stop(self, timeout=60.0):
+        self.stopped = True
+        return True
+
+    def finish(self):
+        return self.pin['bytes'], self.pin['sha256']
+
+    def report(self):
+        return dict(mode='by claim: the export pinned this file from a claim that still holds; not hashed again',
+                    basis=self.basis, stopped_early=self.stopped)
+
+
+def export_claim_basis(path, pin):
+    """The basis text when the export MANIFEST item `pin` says hash_basis 'claim' and that claim row (pin['claim']: the
+    claims file and the row's path) still names the pin's bytes and sha256 and still holds on `path` (inode, size,
+    mtime_ns, filesystem, last 64 KiB: ingest_block_sources.claim_still_holds; one 64 KiB read), else None (the caller
+    hashes). FRANKIE_ROOT_LEGACY_REUSE_CHECK=full turns it off. Never raises."""
+    try:
+        if (not isinstance(pin, dict) or pin.get('hash_basis') != 'claim' or not isinstance(pin.get('claim'), dict)
+                or 'full' in (os.environ.get('FRANKIE_ROOT_LEGACY_REUSE_CHECK'),
+                              os.environ.get('FRANKIE_ROOT_NATIVE_REUSE_CHECK'))):
+            return None
+        from research.kalshi.frankie_boss.operations.ingest_block_sources import claim_still_holds
+        claim, row = pin['claim'], None
+        for line in Path(claim['file']).read_text(encoding='utf-8').splitlines():
+            try:
+                candidate = json.loads(line)
+            except ValueError:
+                continue
+            if isinstance(candidate, dict) and candidate.get('path') == claim.get('path'):
+                row = candidate
+        if row is None or (row.get('bytes'), row.get('sha256')) != (pin['bytes'], pin['sha256']):
+            return None
+        held = claim_still_holds(row, path)
+        return None if held is None else 'by claim (%s): %s' % (claim['file'], held['text'])
+    except Exception:  # noqa: BLE001 - a claim is a hint: without one the file is hashed
+        return None
+
+
+def frontier_hasher(path, pin, lead, **options):
+    """ClaimedHasher when export_claim_basis holds for (path, pin), else FrontierHasher(path, lead, **options)."""
+    basis = export_claim_basis(path, pin)
+    return ClaimedHasher(pin, basis) if basis is not None else FrontierHasher(path, lead, **options)
+
+
 def _boss_session():
     """frankie_box_boss_session (ROOT's spool save helpers: _ResumableSha256, _sha256_library, _line_ending_at), or None
     when it cannot be imported here (then hashing is hashlib and no running state is saved; listed on the receipt)."""
@@ -513,7 +574,7 @@ def spool_columns(path, pin, time_key, workers=1, report=None):
     ranges = _spool_ranges(str(path), size, max(workers * SPOOL_RANGES_PER_WORKER, size // SPOOL_COLUMN_RANGE_BYTES + 1))
     count = min(workers, len(ranges))
     window = count * SPOOL_WINDOW_PER_WORKER
-    hasher = FrontierHasher(path, window * max(b - a for _, a, b in ranges), name='spool-sha256')
+    hasher = frontier_hasher(path, pin, window * max(b - a for _, a, b in ranges), name='spool-sha256')
     numeric, text, rows, done, finished = {}, {}, 0, 0, False
     try:
         # in file order; pinned; hasher started after the workers are forked (no thread is copied into them); a dead
@@ -1029,9 +1090,11 @@ def disk_spool_columns(path, pin, time_key, workers, report, directory, identity
             raise ValueError('saved frame column index belongs to other inputs or code (%s): %s retained' % (error, save_path))
         observed = path.stat()
         tail = S._line_ending_at(path, size) if S is not None else None
+        claimed_now = export_claim_basis(path, pin)
         if (saved['pin'] != {k: pin[k] for k in ('bytes', 'sha256')} or saved['spool_stat'] != [
                 observed.st_dev, observed.st_ino, observed.st_size, observed.st_mtime_ns] or saved['tail'] != tail
-                or saved.get('hash_snapshot') is None):
+                or saved.get('hash_snapshot') is None
+                or (tuple(saved['hash_snapshot']) == CLAIM_SNAPSHOT and claimed_now is None)):
             why = ('the spool is not the one saved (pin, device, inode, size, mtime or last line differ)'
                    if saved.get('hash_snapshot') is not None else 'the save holds no running hash state')
             aside = directory.with_name(directory.name + '.set-aside-%d' % int(time.time() * 1000))
@@ -1060,8 +1123,12 @@ def disk_spool_columns(path, pin, time_key, workers, report, directory, identity
     count = max(1, min(workers, len(ranges) - first)) if len(ranges) > first else 1
     window = count * SPOOL_WINDOW_PER_WORKER
     largest = max((b - a for _, a, b in ranges), default=0)
-    hasher = FrontierHasher(path, window * largest, name='frame-columns-sha256',
-                            resumable=True, resume=saved['hash_snapshot'] if saved is not None else None)
+    claimed = export_claim_basis(path, pin)
+    if claimed is not None:
+        hasher = ClaimedHasher(pin, claimed)          # one pass: the export's claim holds; nothing hashed here
+    else:
+        hasher = FrontierHasher(path, window * largest, name='frame-columns-sha256',
+                                resumable=True, resume=saved['hash_snapshot'] if saved is not None else None)
     hasher.advance(ranges[first - 1][2] if first else 0)
     observed = path.stat()
     spool_stat = [observed.st_dev, observed.st_ino, observed.st_size, observed.st_mtime_ns]
@@ -1185,7 +1252,7 @@ def decoded_spool(path, pin, workers=1, report=None):
     import multiprocessing
     ranges = _spool_ranges(str(path), size, max(workers * SPOOL_RANGES_PER_WORKER, size // SPOOL_RANGE_BYTES + 1))
     count = min(workers, len(ranges))
-    hasher = FrontierHasher(path, count * 2 * max(b - a for _, a, b in ranges), name='input-spool-sha256')
+    hasher = frontier_hasher(path, pin, count * 2 * max(b - a for _, a, b in ranges), name='input-spool-sha256')
     decoded = _lane_pin().ordered_map(_spool_range_rows, ranges, count, context=multiprocessing.get_context('fork'),
                                       cpus=lane_cpus(), window=count * 2, on_start=hasher.start,
                                       report=POOL_RECOVERY)
@@ -2207,6 +2274,7 @@ def _run_pending(context, workers, function, jobs):
 POOL_RECOVERY = dict(worker_deaths=[], redone=[])
 PART_DIGESTS = {}         # coupling part -> sha256 its job recorded for the bytes it wrote (the part's pin)
 PART_READS = {}           # coupling part -> (bytes, sha256) of the discovery read of it (an integrity cross-check)
+PART_REVIEWS = {}         # coupling part -> (bytes, review sidecar pin) its job recorded (one pass, 2026-10-09)
 
 
 def _part_digest(part):
@@ -2218,7 +2286,11 @@ def _part_digest(part):
         state = _load_raw_state(Path(part + '.state.pkl'))
     except Exception:  # noqa: BLE001 - the part is hashed at publication instead (listed in source_passes)
         return None
-    return state.get('sha256') if state.get('complete') else None
+    if not state.get('complete'):
+        return None
+    if type(state.get('bytes')) is int and isinstance(state.get('review'), dict):
+        PART_REVIEWS[part] = (state['bytes'], state['review'])
+    return state.get('sha256')
 
 
 def _cell_retry(args):
@@ -2531,32 +2603,106 @@ def plane_summary(sources, notes):
     return out
 
 
+def _file_identity(path):
+    """[inode, size, mtime_ns] and the sha256 of the last 64 KiB of a part this job wrote: the claim rule (stat +
+    tail) a resume takes instead of re-hashing the part (one pass, 2026-10-09)."""
+    info = os.stat(path)
+    with open(path, 'rb') as handle:
+        handle.seek(max(0, info.st_size - (64 << 10)))
+        tail = hashlib.sha256(handle.read()).hexdigest()
+    return [info.st_ino, info.st_size, info.st_mtime_ns], tail
+
+
+def _identity_holds(path, saved):
+    """True when the file's stat and last 64 KiB equal the ones saved with its sha256 (no full read)."""
+    try:
+        return saved.get('stat') is not None and list(_file_identity(path)) == [saved['stat'], saved['tail']]
+    except OSError:
+        return False
+
+
+REVIEW_SUFFIX = '.review.jsonl'
+
+
+def _review_entry(ordinal, raw):
+    """One coupling row's review line (frankie_box_experiment_review.review_row: the field roles, the count margins,
+    the stored chance decision), or None for a row that is neither listed nor a finding."""
+    try:
+        import frankie_box_experiment_review as REVIEW
+    except ImportError:
+        from deploy.aws.box import frankie_box_experiment_review as REVIEW
+    reasons, row = REVIEW.review_row(raw)
+    if reasons:
+        return dict(row=ordinal, row_sha256=hashlib.sha256(raw).hexdigest(), reasons=reasons)
+    if row.get('beyond_chance'):
+        return dict(row=ordinal, row_sha256=hashlib.sha256(raw).hexdigest(), content=row)
+    return None
+
+
+def _write_review(part, entries, rows, part_bytes, part_sha256):
+    """<part>.review.jsonl beside the part (written whole, fsynced, renamed): the review's listed rows and findings for
+    this part, computed as the rows were written, and a last line naming the rows checked and the part's pin. The
+    step-5 review reads this small file instead of re-reading, re-hashing and re-parsing the part. Returns its pin."""
+    target = Path(part + REVIEW_SUFFIX)
+    temporary = Path(str(target) + '.tmp')
+    hashed, size = hashlib.sha256(), 0
+    with temporary.open('wb') as out:
+        for entry in list(entries) + [dict(rows_checked=rows, part_bytes=part_bytes, part_sha256=part_sha256)]:
+            raw = (json.dumps(entry, sort_keys=True) + '\n').encode()
+            out.write(raw)
+            hashed.update(raw)
+            size += len(raw)
+        out.flush()
+        os.fsync(out.fileno())
+    os.replace(temporary, target)
+    return dict(path=target.name, bytes=size, sha256=hashed.hexdigest(), rows=rows)
+
+
 def _cell_job(args):
-    """One cell/x job; retain its exact next partner and all completed candidate rows on save."""
+    """One cell/x job; retain its exact next partner and all completed candidate rows on save.
+
+    One pass (Greg, 2026-10-09): the part is hashed as its rows are written (no read-back for its pin); a resumed
+    partial is read ONCE (its hash continued from that read, compared with the saved one); a completed or ready part is
+    taken on a resume by its saved pin plus stat and last 64 KiB (no re-hash); the review's per-row checks are made as
+    the rows are written and saved beside the part (<part>.review.jsonl)."""
     _worker_default_sigterm()
     part, cell_col, cell_value, tx, x, lags, survivors, header = args
     identity = dict(search=_JOB['identity'], job=args)
     state_path, partial = Path(part + '.state.pkl'), Path(part + '.tmp')
     saved = _load_state(state_path, identity) if state_path.is_file() else None
     if saved and saved.get('complete'):
-        if saved['sha256'] is not None and (not Path(part).is_file() or sha256_file(part) != saved['sha256']):
+        if saved['sha256'] is not None and (not Path(part).is_file() or (
+                not _identity_holds(part, saved) and sha256_file(part) != saved['sha256'])):
             raise ValueError('completed search part changed: %s' % part)
         return saved['result']
     if saved and saved.get('ready_to_publish'):
         source = partial if partial.is_file() else Path(part)
-        if not source.is_file() or source.stat().st_size != saved['bytes'] or sha256_file(source) != saved['sha256']:
+        if not source.is_file() or source.stat().st_size != saved['bytes'] or (
+                not _identity_holds(source, saved) and sha256_file(source) != saved['sha256']):
             raise ValueError('search part differs from its retained result: %s' % source)
         if source == partial:
             os.replace(partial, part)
         result = (part, saved['count'], saved['beyond'], None)
-        _save_state(state_path, dict(identity=identity, complete=True, result=result, sha256=saved['sha256']))
+        _save_state(state_path, dict(identity=identity, complete=True, result=result, sha256=saved['sha256'],
+                                     bytes=saved['bytes'], stat=saved.get('stat'), tail=saved.get('tail'),
+                                     review=saved.get('review')))
         return result
     steps, idx = _JOB['steps'], _JOB['cells'][(cell_col, cell_value)]
     pick = (lambda v: v) if idx is None else (lambda v: v[idx])
+    hashed, review, written = hashlib.sha256(), [], 0
     if saved:
         sx, fx = saved['sx'], saved['fx']
         count, beyond, cursor = saved['count'], saved['beyond'], saved['cursor']
-        if not partial.is_file() or partial.stat().st_size != saved['bytes'] or sha256_file(partial) != saved['sha256']:
+        if not partial.is_file() or partial.stat().st_size != saved['bytes']:
+            raise ValueError('unfinished search part differs from saved cursor: %s' % partial)
+        with partial.open('rb') as handle:            # the prefix read ONCE: its hash continues, its review is made
+            for raw in handle:
+                hashed.update(raw)
+                entry = _review_entry(written, raw)
+                if entry is not None:
+                    review.append(entry)
+                written += 1
+        if hashed.hexdigest() != saved['sha256']:
             raise ValueError('unfinished search part differs from saved cursor: %s' % partial)
     else:
         if Path(part).exists() or partial.exists():
@@ -2571,32 +2717,43 @@ def _cell_job(args):
         count = beyond = cursor = 0
     partners = [(ty, y) for ty in y_transforms(tx) if ty in steps for y in sorted(steps[ty])
                 if y != x and (survivors is None or (tx, x, ty, y, cell_col, cell_value) in survivors)]
-    with partial.open('a' if saved else 'x') as out:
+    with partial.open('ab' if saved else 'xb') as out:
         for partner_index in range(cursor, len(partners)):
             if _stop_requested():
                 out.flush()
                 os.fsync(out.fileno())
                 _save_state(state_path, dict(identity=identity, complete=False, sx=sx, fx=fx,
                                             count=count, beyond=beyond, cursor=partner_index,
-                                            bytes=partial.stat().st_size, sha256=sha256_file(partial)))
+                                            bytes=partial.stat().st_size, sha256=hashed.hexdigest()))
                 return None
             ty, y = partners[partner_index]
             fy = _partner_transforms((cell_col, cell_value), (ty, y), lambda: pick(steps[ty][y]))
             row = dict(header, x=x, y=y, cell=cell_col, cell_value=cell_value, transform=tx, x_transform=tx,
                        y_transform=ty, **couple(fx, fy, lags))
-            out.write(json.dumps(row, sort_keys=True) + '\n')
+            raw = (json.dumps(row, sort_keys=True) + '\n').encode()
+            out.write(raw)
+            hashed.update(raw)
+            entry = _review_entry(written, raw)
+            if entry is not None:
+                review.append(entry)
+            written += 1
             count += 1
             beyond += row['beyond_chance']
         out.flush()
         os.fsync(out.fileno())
     # Save the completed result before publication. A stop never requires redoing these pair calculations.
     result = (part, count, beyond, None)
-    digest = sha256_file(partial)
+    digest = hashed.hexdigest()                     # hashed as written: no read-back of the part
+    size = partial.stat().st_size
+    stat, tail = _file_identity(partial)
+    review_pin = _write_review(part, review, written, size, digest)
     _save_state(state_path, dict(identity=identity, complete=False,
                                 count=count, beyond=beyond, cursor=len(partners),
-                                bytes=partial.stat().st_size, sha256=digest, ready_to_publish=True))
+                                bytes=size, sha256=digest, ready_to_publish=True, stat=stat, tail=tail,
+                                review=review_pin))
     os.replace(partial, part)
-    _save_state(state_path, dict(identity=identity, complete=True, result=result, sha256=digest))
+    _save_state(state_path, dict(identity=identity, complete=True, result=result, sha256=digest, bytes=size, stat=stat,
+                                 tail=tail, review=review_pin))
     # The fifth element is this worker's cache accounting at the end of a freshly computed job (never saved in the
     # retained result: a recovered job reports none); the caller aggregates it for MANIFEST.fft_cache.
     return result + (_fft_cache_stats(),)
@@ -3333,7 +3490,16 @@ def _search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, 
         if read is not None and read[1] != PART_DIGESTS[p]:
             raise ValueError('coupling part bytes changed after its worker pinned them: %s (worker %s, discovery read %s)'
                              % (p, PART_DIGESTS[p], read[1]))
-    part_pins = [dict(path=str(Path(p).relative_to(staging)), rows=None, sha256=PART_DIGESTS[p]) for p in pinned_parts]
+    part_pins = []
+    for p in pinned_parts:
+        pin = dict(path=str(Path(p).relative_to(staging)), rows=None, sha256=PART_DIGESTS[p])
+        recorded = PART_REVIEWS.get(p)
+        if recorded is not None and Path(p).stat().st_size == recorded[0]:
+            # one pass (2026-10-09): the part's bytes and its review sidecar (the review's per-row checks made as the
+            # rows were written); the step-5 review reads the sidecar instead of re-reading the part
+            pin.update(bytes=recorded[0], rows=recorded[1].get('rows'),
+                       review=dict(recorded[1], path=str((Path(p).parent / recorded[1]['path']).relative_to(staging))))
+        part_pins.append(pin)
     SOURCE_PASSES.append(dict(what='coupling part pins (sha256)', parts=len(pinned_parts),
                               kind='write-time digests of the jobs (one read per part); re-hashed here: %d; checked '
                                    'against the discovery read: %d' % (len(rehash), sum(1 for p in pinned_parts

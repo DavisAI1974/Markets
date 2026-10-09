@@ -652,8 +652,17 @@ def _export(day, cycle, dirs, root=ROOT, workers=1):
         hashing['native_selection_check_unavailable'] = 'frankie_box_experiment_native not importable here (%s)' % error
     hashing['native_selection_check'] = (dict(_NATIVE.LAST_SELECTION_CHECK)
                                          if _NATIVE is not None and getattr(_NATIVE, 'LAST_SELECTION_CHECK', None) else None)
+    accepted = hashing['save_point']['found'].get('claimed') or {}
     for item in files:
-        item['bytes'], item['sha256'] = pins[item.pop('destination')]
+        destination = item.pop('destination')
+        item['bytes'], item['sha256'] = pins[destination]
+        claimed = accepted.get(str(destination))
+        if claimed is not None:
+            # one pass (2026-10-09): the pin came from an earlier stage's claim; a reader (the search) that finds the
+            # same claim still holding on this link takes the pin without hashing the file again
+            item['hash_basis'] = 'claim'
+            item['claim'] = dict(file=claimed.get('claim_file'), path=claimed.get('claim_path'),
+                                 schema=claimed.get('claim_schema'))
         if item.get('expected') and item['expected'] != {k: item[k] for k in ('bytes', 'sha256')}:
             raise ValueError('linked artifact differs from its producer pin (%s): %s measured %s, pinned %s'
                              % (item.get('expected_from', 'native derivation'), item['source'],
