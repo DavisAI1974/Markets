@@ -2,9 +2,11 @@
 up, clean trash and move important data to S3 before the space is refilled"). Called by frankie_box_archive_day.sh.
 
   plan     read-only: the sealed directory's every file (bytes, sha256, mode, mtime), directory and symlink; the S3 layout;
-           the exact presign string for the upload dispatch; receipt action=plan
+           the exact presign string for the upload dispatch; receipt action=plan. A file the ingest claimed (the journal,
+           file-claims.jsonl beside the receipt; one pass, 2026-10-09) takes its receipted sha256 and is not read here
   upload   every slot PUT through the presigned map (MAP_URL); the bytes sent are hashed as they go and must equal the
-           plan's; the archive manifest is the LAST object, written only when every data object is proven; receipt
+           plan's (a claimed file's pieces: the stream's digest is the piece's); the archive manifest is the LAST object,
+           written only when every data object is proven; verify compares every file's whole sha256 read back from S3; receipt
   verify   every object read back by presigned GET (streamed, nothing written), per-object and per-file sha256 against the
            manifest, the object set exactly the manifest's; the local directory (if still here) compared by stat; receipt
   restore  the read path: every file downloaded into WORK/.archive-restore-<name>/, each sha256 checked, modes, mtimes,
@@ -262,14 +264,73 @@ def shape(files, dirs, links):
                 dirs=[(x['path'], x['mode']) for x in dirs], links=[(x['path'], x['target']) for x in links])
 
 
+CLAIMS_NAME = 'file-claims.jsonl'
+CLAIM_TAIL_BYTES = 64 << 10
+
+
+def claimed(d, f, claims):
+    """One pass (Greg, 2026-10-09): the whole-file sha256 of a sealed file from the claim row the ingest wrote beside its
+    receipt (FRANKIE_FILE_CLAIM_V1/V2, ingest_block_sources.file_claim: the journal hashed whole beside the drain) when
+    the row's inode, size and mtime_ns are the file's now and the sha256 of its last 64 KiB is unchanged (one 64 KiB
+    read; the identity rule of ingest_block_sources.claim_still_holds, checked here with the stdlib, the filesystem
+    identity aside); else None (hash_file reads it whole, as before)."""
+    row = claims.get(str((d / f['path']).resolve()))
+    if row is None or type(row.get('bytes')) is not int or row['bytes'] != f['bytes'] or not row.get('sha256'):
+        return None
+    stat_row = row.get('stat') or []
+    identity = (tuple(stat_row[1:4]) if row.get('schema') == 'FRANKIE_FILE_CLAIM_V1' and len(stat_row) == 4 else
+                tuple(stat_row) if len(stat_row) == 3 else None)
+    try:
+        st = os.stat(d / f['path'])
+        if identity != (st.st_ino, st.st_size, st.st_mtime_ns):
+            return None
+        with open(d / f['path'], 'rb') as src:
+            src.seek(max(0, st.st_size - CLAIM_TAIL_BYTES))
+            tail = src.read()
+    except OSError:
+        return None
+    if (len(tail), hashlib.sha256(tail).hexdigest()) != (row.get('tail_bytes'), row.get('tail_sha256')):
+        return None
+    return row
+
+
+def load_claims(d):
+    """{resolved path: claim row} of <d>/file-claims.jsonl; {} when absent or unreadable."""
+    out = {}
+    try:
+        for line in (d / CLAIMS_NAME).read_text(encoding='utf-8').splitlines():
+            try:
+                row = json.loads(line)
+            except ValueError:
+                continue
+            if isinstance(row, dict) and str(row.get('schema', '')).startswith('FRANKIE_FILE_CLAIM_V') and row.get('path'):
+                out[str(row['path'])] = row
+    except OSError:
+        return {}
+    return out
+
+
 def plan(d, day, prefix, workers):
     seal = sealed(d, day)
     not_open(d)
     files, dirs, links = walk(d)
     n = layout(files, prefix)
     t0 = time.time()
+    # one pass (2026-10-09): a file the ingest claimed (the journal) takes its receipted sha256 and is not read here;
+    # its per-piece sha256 come from the upload stream (put_range hashes what it sends) and go into the manifest, which
+    # is written after the upload. Every other file is hashed here whole and per piece in one read, as before.
+    claims = load_claims(d)
+    taken, to_hash = [], []
+    for f in files:
+        row = claimed(d, f, claims)
+        if row is not None and (f['path'] != seal['journal_file'] or row['sha256'] == seal['journal_sha256']):
+            f['sha256'], f['hash_basis'] = row['sha256'], 'claim (%s, %s)' % (CLAIMS_NAME, row.get('claimed_by'))
+            taken.append(f)
+        else:
+            to_hash.append(f)
     with ThreadPoolExecutor(workers) as ex:
-        files = list(ex.map(lambda f: hash_file(d, f), files))
+        hashed = list(ex.map(lambda f: hash_file(d, f), to_hash))
+    files = sorted(taken + hashed, key=lambda f: f['parts'][0]['index'])     # the walk's order (every file has a piece)
     journal = next(f for f in files if f['path'] == seal['journal_file'])
     if journal['sha256'] != seal['journal_sha256']:
         refuse('the journal sha256 %s differs from its receipt %s' % (journal['sha256'], seal['journal_sha256']))
@@ -277,14 +338,16 @@ def plan(d, day, prefix, workers):
     say('### %s: %d files, %d bytes, %d directories, %d symlinks, %d data objects + %s (hashed in %.0f s)'
         % (d, len(files), total, len(dirs), len(links), n, MANIFEST_NAME, time.time() - t0))
     for f in files:
-        say('   %s %d %s parts=%d' % (f['path'], f['bytes'], f['sha256'], len(f['parts'])))
+        say('   %s %d %s parts=%d%s' % (f['path'], f['bytes'], f['sha256'], len(f['parts']),
+                                    ' (by %s; piece sha256 from the upload stream)' % f['hash_basis'] if f.get('hash_basis') else ''))
     for x in links:
         say('   symlink %s -> %s' % (x['path'], x['target']))
     for x in dirs:
         say('   dir %s' % x['path'])
     presign = 'putarchive:%s/%s:%d getprefix:%s/%s' % (BUCKET, prefix, n, BUCKET, prefix)
     rec = dict(base_record('plan', d, day, prefix), ingestion=seal, files=files, dirs=dirs, symlinks=links, objects=n,
-               file_count=len(files), bytes=total, presign=presign, hash_seconds=round(time.time() - t0, 1))
+               file_count=len(files), bytes=total, presign=presign, hash_seconds=round(time.time() - t0, 1),
+               claimed=[f['path'] for f in taken], bytes_claimed=sum(f['bytes'] for f in taken))
     write_receipt(day, rec)
     say('PRESIGN %s' % presign)
     say('upload dispatch: script=deploy/aws/box/frankie_box_archive_day.sh variables="ACTION=upload DIRECTORY=%s" '
@@ -332,14 +395,16 @@ def upload(d, day, prefix, workers):
         f, q = job
         path = d / f['path']
         try:
+            # a piece of a claimed file has no planned sha256 (one pass): the stream's own sha256 is its digest
             if 'put:' + q['key'] in m:
                 slot = m['put:' + q['key']]
                 sent = T.put_range(slot['url'], path, q['offset'], q['bytes'], headers=slot.get('headers'))
-                return dict(index=q['index'], how='sent', sha256=sent, ok=sent == q['sha256'])
+                return dict(index=q['index'], how='sent', sha256=sent, ok=q.get('sha256') in (None, sent))
             have = m[q['key']]               # already in S3 (an earlier attempt): proven by GET, never rewritten
             got = get_hash(have['url'], q['bytes']) if have['bytes'] == q['bytes'] else 'bytes %d' % have['bytes']
             local = slice_hash(path, q['offset'], q['bytes'])
-            return dict(index=q['index'], how='present', sha256=got, local_sha256=local, ok=got == q['sha256'] == local)
+            return dict(index=q['index'], how='present', sha256=got, local_sha256=local,
+                        ok=got == local and q.get('sha256') in (None, got))
         except (OSError, http.client.HTTPException) as e:     # one piece's failure is recorded; the next dispatch resumes
             return dict(index=q['index'], how='failed', sha256='%s: %s' % (type(e).__name__, e), ok=False)
 
@@ -359,6 +424,10 @@ def upload(d, day, prefix, workers):
                    % (len(bad), ', the directory changed during the upload' if changed else ''))
         write_receipt(day, rec)
         refuse(rec['reason'])
+    streamed = {r['index']: r['sha256'] for r in results}
+    for f in files:
+        for q in f['parts']:
+            q.setdefault('sha256', streamed[q['index']])     # a claimed file's pieces: the digest of the bytes sent
     manifest = dict(schema=MANIFEST_SCHEMA, day=day, directory=str(d), name=d.name, bucket=BUCKET, prefix=prefix,
                     instance=instance_id(), host=socket.gethostname(), ingestion=seal, files=files, dirs=dirs, symlinks=links,
                     file_count=len(files), bytes=sum(f['bytes'] for f in files), objects=len(jobs),
