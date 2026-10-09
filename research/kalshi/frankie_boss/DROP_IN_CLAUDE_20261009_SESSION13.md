@@ -8,10 +8,10 @@ Greg's usage is nearly out: this box is written so a fresh session (Claude or Co
   session 12 is on GitHub and ON THE BOX (code `3071eac8` current; this handoff commit is docs only).
 - Box `i-035994afa8bdf66a5` (r7i.16xlarge, 64 CPU, 495 GB, us-east-1) RUNNING. Day `e2e-20231018-a2/20231018`
   (attempt `-a1`, 64-CPU booking) in its finish: the TEACHER is sealing blocks, the CLASSROOM runs one lesson at a time.
-- Teacher: pid on code `3071eac8`? NO: the teacher runs on `b8ec5d3d`-era code? NO: the teacher process was started
-  at 15:22:11Z on `bd8c1a57` and never restarted since (its code root is fixed for its life; the sealing code is in
-  it). At 16:27Z: 28 blocks sealed, next_cursor 168,212 of 771,787, manifest status `sealing`. It seals a block
-  about every 50 s and will run for hours (the merge is ~130 rows/s plus the seals).
+- Teacher: the teacher process was started at 15:22:11Z on code `bd8c1a57` and runs that code for its life (a
+  teacher-code change needs the save/stop/resume below; the classroom restarts never touch it). At 16:27Z: 28 blocks
+  sealed, next_cursor 168,212 of 771,787, manifest status `sealing`. It seals a block about every 50 s and will run
+  for hours (the merge is ~130 rows/s plus the seals).
 - Classroom: class worker unit `frankie-queue-class-*` on code `3071eac8` (pid 32938 at 16:23Z), ONE worker process,
   blocks in seal order. Sessions complete: blocks 1-20 (1-4 sequential on the first code; 5-18 under the 64-worker
   build before Greg's one-lesson rule, same computation; 19-20 sequential). Each block 160-300 s.
@@ -25,8 +25,7 @@ Greg's usage is nearly out: this box is written so a fresh session (Claude or Co
   `/opt/frankie-box/work/profile-block1/run-162428.log` (the external section of block 1 under cProfile).
 - Swap: 400 GB swapfile `/opt/frankie-box/archive/swapfile` (priority -1, unused): REMOVE when the day is done.
   Archive volume raised in session 8: revert to baseline when the day is done. Disk 52% at 15:49Z.
-- Check-in routine armed: `trig_01J5eZ85p9CxSLL8gyvGUzfv` fires 16:49Z into session 12 (delete it from the new
-  session with `delete_trigger`, or let it fire into the old session harmlessly).
+- No check-in routine is armed (session 12's was deleted at close). A new session arms its own if it wants one.
 - Helper agent of session 12 (a8a9c17f72e7928d6, worktree `worktree-agent-a8a9c17f72e7928d6`) was asked for an
   ANALYSIS of the evidence-hash cost (below); it may still be writing. Its worktree has no uncommitted work.
 
