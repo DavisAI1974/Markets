@@ -655,8 +655,9 @@ def _disk_plan(scratch, reserve, spools):
     appended, the peak on the parts' volume is the final pass (the parts' row text, at most the spool's bytes, plus the
     plan pass's cells): planning bound PARTS_PEAK_FACTOR x the spool bytes; digest.pending (on the scratch volume, the
     destination's: published by link) needs at most the spool bytes plus the small tables. FRANKIE_DIGEST_PARTS_DIR
-    names the parts' volume explicitly; otherwise the scratch when the bound fits there (or an earlier attempt's progress
-    for these tables is there: kept, never moved across volumes), else the archive volume (FRANKIE_ARCHIVE_ROOT,
+    names the parts' volume explicitly; otherwise the scratch when the bound fits there (or an earlier attempt's parts
+    of these tables with the final pass saved are there: resumed, never moved across volumes; earlier progress short of
+    that is left behind when the parts go elsewhere), else the archive volume (FRANKIE_ARCHIVE_ROOT,
     default /opt/frankie-box/archive, <it>/digest-parts/<root tag>/<scratch name>) when the bound fits there, else the
     scratch (the writer then stops lawfully before the reserve, every pass saved). Returns the plan (bytes named)."""
     import shutil
@@ -667,16 +668,24 @@ def _disk_plan(scratch, reserve, spools):
     plan = dict(spool_bytes=spool_bytes, parts_peak_bound=bound, digest_pending_bound=spool_bytes, reserve=reserve,
                 scratch=str(scratch), free_scratch=free_scratch, rule=PARTS_PEAK_FACTOR)
     explicit = os.environ.get(PARTS_SETTING)
+    def final_saved(directory):
+        # an earlier attempt's table whose final pass is saved: its part rows already stand on this volume (the peak is
+        # behind it; the copy into digest.pending consumes them one by one), so it is resumed where it is
+        try:
+            import pickle
+            return 'final' in (pickle.loads((directory / 'passes.pkl').read_bytes()).get('passes') or {})
+        except Exception:  # noqa: BLE001 - no usable save point: the parts may be placed afresh
+            return False
     progress = [str(d) for ordinal in spools for d in Path(scratch).parent.glob('.digest-*/table-%04d.parallel' % ordinal)
-                if (d / 'passes.pkl').is_file() or (d / 'progress-key.json').is_file()]
+                if final_saved(d)]
     archive = Path(os.environ.get('FRANKIE_ARCHIVE_ROOT') or ARCHIVE_ROOT)
     if explicit:
         base, basis = Path(explicit) / tag / Path(scratch).name, PARTS_SETTING
     elif not spools or free_scratch - reserve >= bound:
         base, basis = Path(scratch), 'the bound fits on the scratch volume'
     elif progress:
-        base, basis = Path(scratch), ('an earlier attempt\'s progress for these tables is on the scratch volume (%s): '
-                                      'kept there (%s=<dir> moves the parts and starts them over)' % (progress, PARTS_SETTING))
+        base, basis = Path(scratch), ('an earlier attempt\'s parts of these tables, final pass saved, are on the scratch '
+                                      'volume (%s): resumed there, the copy consumes them' % progress)
     else:
         try:
             free_archive = shutil.disk_usage(archive).free if archive.is_dir() else 0
