@@ -104,9 +104,11 @@ def _json(pin):
     return json.loads(raw)
 
 
-def _rows(pin, *, packed, timing=None):
+def _rows(pin, *, packed, timing=None, verify=True):
     """Check the exact consumed bytes; caller must exhaust before claiming completion. `timing` (optional dict)
-    accumulates the seconds spent reading, hashing and decoding rows: an inspection measurement, never a value."""
+    accumulates the seconds spent reading, hashing and decoding rows: an inspection measurement, never a value.
+    verify=False (one pass, 2026-10-09): the stream's pin is held by the ROOT's FRANKIE_FILE_CLAIM_V2 row (stat,
+    filesystem and last 64 KiB unchanged), so the bytes are not hashed again and not compared at exhaustion."""
     from research.kalshi.frankie_boss.c15_journal import unpack
     from time import perf_counter
     hashed, size = hashlib.sha256(), 0
@@ -114,7 +116,8 @@ def _rows(pin, *, packed, timing=None):
     with _local(pin['path']).open('rb') as stream:
         mark = perf_counter()
         for ordinal, raw in enumerate(stream):
-            hashed.update(raw)
+            if verify:
+                hashed.update(raw)
             size += len(raw)
             row = json.loads(raw)
             row = unpack(row) if packed else row
@@ -124,7 +127,7 @@ def _rows(pin, *, packed, timing=None):
                 timing['decode_seconds'] = round(spent, 3)
             yield ordinal, row
             mark = perf_counter()
-    if size != pin['bytes'] or hashed.hexdigest() != pin['sha256']:
+    if verify and (size != pin['bytes'] or hashed.hexdigest() != pin['sha256']):
         raise ValueError('shared market rows differ from their source pin: ' + pin['path'])
 
 
@@ -200,11 +203,21 @@ def _decode_ranges(path, size):
     return [(a, b) for a, b in zip(cuts, cuts[1:]) if b > a]
 
 
-def _rows_parallel(pin, *, packed, timing, workers):
-    """_rows with the decode on pinned lane workers (see above)."""
+def _frontier_hasher():
+    try:
+        from frankie_box_experiment_search import FrontierHasher
+    except ImportError:
+        from deploy.aws.box.frankie_box_experiment_search import FrontierHasher
+    return FrontierHasher
+
+
+def _rows_parallel(pin, *, packed, timing, workers, verify=True):
+    """_rows with the decode on pinned lane workers (see above). One pass (2026-10-09): the bytes are hashed in file
+    order by the search's FrontierHasher, held at most one decode window past the consumed frontier, so the hash reads
+    the pages the decode workers just read (one disk pass, not a second unbounded read of the whole stream racing
+    ahead). verify=False (the ROOT's claim holds for this pin): no hash at all and no check at exhaustion."""
     import collections
     import multiprocessing
-    import threading
     from time import perf_counter
     path = str(_local(pin['path']))
     lane = lane_cpus()
@@ -213,33 +226,30 @@ def _rows_parallel(pin, *, packed, timing, workers):
     handout = context.Queue()
     for cpu in cpus:
         handout.put(cpu)
-    hashed = dict(sha256=hashlib.sha256(), bytes=0, error=None)
-
-    def hash_file():
-        try:
-            with open(path, 'rb') as stream:
-                for block in iter(lambda: stream.read(1 << 24), b''):
-                    hashed['sha256'].update(block)
-                    hashed['bytes'] += len(block)
-        except BaseException as error:  # noqa: BLE001 - raised at exhaustion
-            hashed['error'] = error
-    ranges = iter(_decode_ranges(path, _local(pin['path']).stat().st_size))
+    cut = _decode_ranges(path, _local(pin['path']).stat().st_size)
+    ranges = iter(cut)
     pool = context.Pool(len(cpus), initializer=_decode_pin, initargs=(handout,))
-    hasher = threading.Thread(target=hash_file, name='layer-sha256', daemon=True)
-    hasher.start()
-    pending, ordinal, spent = collections.deque(), 0, 0.0
+    window = len(cpus) * DECODE_WINDOW_PER_WORKER
+    hasher = (_frontier_hasher()(path, window * max((b - a for a, b in cut), default=1), name='layer-sha256')
+              if verify else None)
+    if hasher is not None:
+        hasher.start()
+    pending, ordinal, spent, finished = collections.deque(), 0, 0.0, False
     timing.update(mode='pinned_lane_workers', workers=len(cpus), cpus=cpus, range_bytes=DECODE_RANGE_BYTES)
     try:
         def fill():
-            while len(pending) < len(cpus) * DECODE_WINDOW_PER_WORKER:
+            while len(pending) < window:
                 item = next(ranges, None)
                 if item is None:
                     return
-                pending.append(pool.apply_async(_decode_range, ((path, item[0], item[1], packed),)))
+                pending.append((item[1], pool.apply_async(_decode_range, ((path, item[0], item[1], packed),))))
         fill()
         while pending:
             mark = perf_counter()
-            rows, error = pending.popleft().get()
+            end, job = pending.popleft()
+            rows, error = job.get()
+            if hasher is not None:
+                hasher.advance(end)
             fill()
             spent += perf_counter() - mark
             timing['decode_seconds'] = round(spent, 3)
@@ -248,25 +258,55 @@ def _rows_parallel(pin, *, packed, timing, workers):
                 ordinal += 1
             if error is not None:
                 raise error
-        hasher.join()
-        if hashed['error'] is not None:
-            raise hashed['error']
-        if hashed['bytes'] != pin['bytes'] or hashed['sha256'].hexdigest() != pin['sha256']:
-            raise ValueError('shared market rows differ from their source pin: ' + pin['path'])
+        if hasher is not None:
+            hashed_bytes, digest = hasher.finish()
+            timing['hashing'] = hasher.report()
+            if hashed_bytes != pin['bytes'] or digest != pin['sha256']:
+                raise ValueError('shared market rows differ from their source pin: ' + pin['path'])
+        finished = True
     finally:
+        if hasher is not None and not finished:
+            hasher.stop()
         pool.terminate()
         pool.join()
 
 
+def _stream_claim(pin, claims, work):
+    """(verify, verification) for one stream's pin: when the ROOT's work/file-claims.jsonl row for the path names the
+    pin's bytes and sha256 and still holds (inode, size, mtime_ns, filesystem, last 64 KiB: one 64 KiB read), the
+    stream is decoded without a hash (basis 'by claim'); else it is hashed in lockstep with the decode. Never raises."""
+    if claims is None:
+        return True, dict(basis='hashed with the decode', reason='no claims were consulted')
+    try:
+        try:
+            from frankie_box_experiment_native import _claim_basis, _claims_mode
+        except ImportError:
+            from deploy.aws.box.frankie_box_experiment_native import _claim_basis, _claims_mode
+        if _claims_mode() == 'full':
+            return True, dict(basis='hashed with the decode', reason='FRANKIE_ROOT_LEGACY_REUSE_CHECK=full')
+        held, why = _claim_basis(pin['path'], pin, claims, work)
+    except Exception as error:  # noqa: BLE001 - a claim is a hint: without one the stream is hashed with the decode
+        held, why = None, 'claim not taken (%s: %s)' % (type(error).__name__, error)
+    if held is None:
+        return True, dict(basis='hashed with the decode', reason=why)
+    return False, dict(basis='by claim', claim=held, claim_file=str(Path(work) / 'file-claims.jsonl'))
+
+
 class _Changes:
     """One existing ordered producer stream; no completion-order merge or row cap."""
-    def __init__(self, name, pin, *, kind, state, workers=1):
+    def __init__(self, name, pin, *, kind, state, workers=1, claims=None, work=None, verified=None):
         self.name, self.pin, self.kind, self.state = name, pin, kind, state
         self.timing = dict(decode_seconds=0.0, mode='serial')
         packed = kind in ('frame', 'price', 'structure')
-        self.rows = (_rows_parallel(pin, packed=packed, timing=self.timing, workers=workers)
+        # one pass (Greg, 2026-10-09): a pin held by the ROOT's claim (or witnessed by selected_files in this process,
+        # `verified`) is not hashed again; else it is hashed with the decode
+        if verified is not None:
+            verify, self.verification = False, dict(basis='witnessed in this process', by=verified)
+        else:
+            verify, self.verification = _stream_claim(pin, claims, work)
+        self.rows = (_rows_parallel(pin, packed=packed, timing=self.timing, workers=workers, verify=verify)
                      if workers > 1 and pin['bytes'] >= PARALLEL_DECODE_MIN_BYTES else
-                     _rows(pin, packed=packed, timing=self.timing))
+                     _rows(pin, packed=packed, timing=self.timing, verify=verify))
         self.pending = None
         self.previous = -1
         self.finished = False
@@ -508,6 +548,16 @@ class SharedMarketTimeline:
         # differ (checked on read), is a contradiction and stays an error.
         self.layers, self.streams = {}, []
         pins = calculation.get('shared_market_sources') or {}
+        # one pass (Greg, 2026-10-09): the ROOT sealed and claimed every spool (work/file-claims.jsonl,
+        # FRANKIE_FILE_CLAIM_V2); a stream whose pin the claim still holds is decoded without a second hash
+        try:
+            from frankie_box_experiment_native import _session_claims
+        except ImportError:
+            from deploy.aws.box.frankie_box_experiment_native import _session_claims
+        try:
+            claims = _session_claims()._load_file_claims(root / 'work')
+        except Exception:  # noqa: BLE001 - no claims: every stream is hashed with its decode
+            claims = {}
         for role, kind, state in (('frames', 'frame', True), ('prices', 'price', False), ('structures', 'structure', False)):
             name, pin = 'root.' + role, pins.get(role)
             if pin is None:
@@ -522,7 +572,8 @@ class SharedMarketTimeline:
             if Path(pin['path']) != root / 'work/derived/.rows' / (role + '.jsonl'):
                 raise ValueError('completed shared source pins another path as its ' + role + ' spool')
             self.layers[name] = dict(status='present', source=pin)
-            self.streams.append(_Changes(name, pin, kind=kind, state=state, workers=workers))
+            self.streams.append(_Changes(name, pin, kind=kind, state=state, workers=workers, claims=claims,
+                                         work=root / 'work'))
         # Native: absent only when the native pass did not complete or an older saved legacy plan ran it
         # off (selected_files returns nothing); every NEW run has it ON;
         # a bedrock-on ROOT whose artifacts are incomplete or altered raises inside selected_files.
@@ -537,7 +588,10 @@ class SharedMarketTimeline:
                 continue
             pin = dict(path=item['source'], **item['expected'])
             self.layers[name] = dict(status='present', source=pin)
-            self.streams.append(_Changes(name, pin, kind='native', state=state, workers=workers))
+            # selected_files witnessed this ledger in this process (its claim, or one whole read that left a claim
+            # behind): the decode does not hash it again (one pass, 2026-10-09)
+            self.streams.append(_Changes(name, pin, kind='native', state=state, workers=workers,
+                                         verified='selected_files: ' + (item.get('selection_basis') or 'witnessed')))
         external = self.source.get('external') or {}
         self.publications = _Publications(external, day) if external.get('status') == 'attached' else None
         self.layers['external'] = (dict(status='present', source=external) if self.publications is not None else
@@ -1063,7 +1117,8 @@ class SharedMarketTimeline:
                           consumer_seconds=round(wall - clock['inside'], 3),
                           layer_decode_seconds=round(sum(stream.timing['decode_seconds'] for stream in self.streams), 3))
             self.report['sources'] = {stream.name: dict(source=stream.pin, counts=dict(stream.counts),
-                                                       dispositions=stream.dispositions, timing=dict(stream.timing))
+                                                       dispositions=stream.dispositions, timing=dict(stream.timing),
+                                                       verification=dict(stream.verification))
                                       for stream in self.streams}
             for stream in self.streams:
                 stream.close()
