@@ -281,6 +281,26 @@ def _finish_attachment_writer(writer, attachment_path, body):
     return _write_attachment(attachment_path, body)
 
 
+def _keep_cutoff_context(AM, market, cutoff_walk, out, *, day, rc, as_of, through, exhausted):
+    """<out>/AM.TEACHER_CONTEXT_NAME from this walk's CutoffTracker (the exchange/Jev contract, 2026-10-09): scope,
+    walk_context, retain_context; {path, bytes, sha256} or the reason nothing was written. None without a shared walk."""
+    if market is None:
+        return None
+    tracker = cutoff_walk.get('tracker')
+    if AM is None or tracker is None or cutoff_walk.get('pictures', 0) == 0 or not exhausted:
+        return dict(status='not_written', reason=cutoff_walk.get('error') or (
+            'this attempt did not walk the source (a completed saved walk was reused): no tracker'
+            if not cutoff_walk.get('pictures') else 'the shared read did not reach the end of the source'))
+    try:
+        scope = AM.cutoff_scope(market.identity, day=day, source_hash=rc['source_prefix_hash'], as_of=as_of,
+                                through_cursor=through)
+        context = AM.walk_context(market, scope, tracker)
+        kept = AM.retain_context(out / AM.TEACHER_CONTEXT_NAME, context)
+    except Exception as error:  # noqa: BLE001 - ValueError/OSError by contract; nothing else may stop the teacher
+        return dict(status='not_written', reason='%s: %s' % (type(error).__name__, error))
+    return dict(kept, status='written', tracker_continued=cutoff_walk.get('continued', False))
+
+
 def _body_identity(body):
     """The attachment body's identity fields (everything but the attachment object), as JSON-safe values."""
     return json.loads(json.dumps({k: v for k, v in body.items() if k != 'attachment'}, sort_keys=True, default=str))
@@ -686,7 +706,9 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
         # accepts the measurement only for the very file its pin names, else hashes the file itself
         market = SharedMarketTimeline(calculations, day=day, workers=workers,
                                       input_witness=dict(journal_witness, path=str(journal), dev=journal_stat.st_dev,
-                                                         ino=journal_stat.st_ino))
+                                                         ino=journal_stat.st_ino,
+                                                         **(dict(basis='claim', claim=PREFETCH.get('claim'))
+                                                            if PREFETCH.get('outcome') == 'by claim' else {})))
         phase('open_shared_picture')
         if (market.source['ingestion_receipt']['sha256'] != receipt_sha256
                 or market.input_pin['sha256'] != rc['journal_sha256']):
@@ -798,6 +820,20 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
     shared_read = None
     market_state = out / 'shared-market-state.pkl'
     saved_market_state = {}          # one pass (2026-10-09): the shared read saved in this process, kept in memory
+    # One pass (2026-10-09, the exchange/Jev contract): the adviser cutoff context is kept from THIS walk, so the
+    # exchange and Jev load it (<out>/AM.TEACHER_CONTEXT_NAME) instead of a third walk of the source. The tracker sees
+    # every picture the walk consumes; it is saved beside the walk's state on every stop (cutoff-tracker.pkl, with the
+    # next INPUT cursor) and continued only by a walk that resumes exactly there; a walk that begins later than the
+    # first INPUT without that saved tracker writes no context.
+    cutoff_walk = dict(tracker=None, first_input_cursor=None, next_input_cursor=None, continued=False, pictures=0)
+    tracker_path = out / 'cutoff-tracker.pkl'
+    AM = None
+    if market is not None:
+        try:
+            AM = _box_module('frankie_box_adviser_market')
+            cutoff_walk['tracker'] = AM.CutoffTracker(rc['record_count'] - 1, rc['record_count'], strict=False)
+        except Exception as error:  # noqa: BLE001 - the context is an addition; the walk never stops for it
+            cutoff_walk['error'] = '%s: %s' % (type(error).__name__, error)
     # The pinned R3 equation's operands are the original APPLIED payloads with every adapter
     # cursor from zero (c15_teacher_r3.iter_raw). It runs on exactly that prefix. An instant
     # without its operand (failed, unpaired, unreadable, or past a cursor gap) is listed here
@@ -933,6 +969,26 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                     break
                 entry = ahead.popleft()
                 item = entry[0]
+                if cutoff_walk['tracker'] is not None:
+                    at_input = item['picture']['at'].get('input_cursor')
+                    if cutoff_walk['first_input_cursor'] is None:
+                        cutoff_walk['first_input_cursor'] = at_input
+                        if type(at_input) is int and at_input > 0:
+                            # a walk resumed past the source start: continue the tracker saved at exactly this cursor
+                            try:
+                                saved = PT._load_raw_state(tracker_path) if tracker_path.is_file() else None
+                            except Exception:  # noqa: BLE001 - no usable tracker: no context is written
+                                saved = None
+                            if saved and saved.get('next_input_cursor') == at_input:
+                                cutoff_walk.update(tracker=saved['tracker'], continued=True)
+                            else:
+                                cutoff_walk.update(tracker=None, error='the walk began at INPUT cursor %s with no tracker '
+                                                   'saved there: no context from this walk' % at_input)
+                    if cutoff_walk['tracker'] is not None:
+                        cutoff_walk['tracker'].see(item['picture'])        # the return value is ignored by contract
+                        cutoff_walk['pictures'] += 1
+                        if type(at_input) is int:
+                            cutoff_walk['next_input_cursor'] = at_input + 1
                 if cpu_pinning['outcome'] == 'waiting':
                     started_streams = LP.generators_started(getattr(market, 'streams', None) or ())
                     if started_streams is None:
@@ -981,6 +1037,12 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                 state = dict(market.report, equation=dict(equation))
                 PT._save_raw_state(market_state, state)
                 saved_market_state['value'] = state
+                if cutoff_walk['tracker'] is not None and cutoff_walk['next_input_cursor'] is not None:
+                    try:          # the tracker with the walk's save point (plain picklable data)
+                        PT._save_raw_state(tracker_path, dict(tracker=cutoff_walk['tracker'],
+                                                              next_input_cursor=cutoff_walk['next_input_cursor']))
+                    except Exception as error:  # noqa: BLE001 - listed; the walk's own save stands
+                        cutoff_walk['save_error'] = '%s: %s' % (type(error).__name__, error)
             finally:
                 if cpu_pinning['outcome'] in ('pinned', 'fallback') and 'restored' not in cpu_pinning:
                     cpu_pinning['restored'] = LP.restore_mask(cpu_pinning['original_mask'])
@@ -1143,6 +1205,8 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
     else:
         SE._save(out / ROWS_FILE, source)               # beside the side process writing the attachment
         attachment_sha[0] = _finish_attachment_writer(attachment_writer, attachment_path, body)
+    teacher_context = _keep_cutoff_context(AM, market, cutoff_walk, out, day=day, rc=rc, as_of=as_of, through=through,
+                                           exhausted=bool(shared_read and shared_read.get('complete')))
     cpu_pinning['attachment_writer'] = attachment_writer['record'] if attachment_writer else dict(
         outcome='not_started', reason=('a retained attachment stands (resume); its claim row holds, not read again'
                                        if retained_claim is not None else
@@ -1158,6 +1222,8 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                   experiment_directive=directive_witness(), phase_timings=phases, cpu_pinning=cpu_pinning,
                   raw_saves=raw_saves, journal_prefetch=dict(PREFETCH), run_defaults=dict(RUN_DEFAULTS),
                   identity_rebinds=list(IDENTITY_REBINDS))
+    if teacher_context is not None:
+        result['shared_market_context'] = teacher_context
     if market is not None:
         result.update(shared_market_identity=market.identity, shared_market_read=shared_read,
                       shared_market_arithmetic=shared_read.get('equation'),

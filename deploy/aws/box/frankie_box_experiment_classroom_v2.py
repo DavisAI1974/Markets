@@ -667,7 +667,9 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
             # review N1: the witness names the file it measured (path, device, inode); the core accepts it only when that
             # is THE pinned file of the same size, else it hashes the journal itself (never a weaker check)
             input_witness=(dict({k: journal_witness[k] for k in ('bytes', 'sha256')}, path=journal_witness['path'],
-                                **(measured_witness.get('file') or {})) if journal_witness else None))
+                                **(measured_witness.get('file') or {}),
+                                **(dict(basis='claim', claim=ingest_claim) if ingest_claim else {}))
+                           if journal_witness else None))
     shared_market_disposition = ('read: the ROOT carries the shared market policy; one full ordered read follows' if market is not None else
                                  'legacy no-policy source: source-binding.json carries no shared_market_policy; the classroom reads '
                                  'no shared picture and the external section reads the checked day file directly (listed, not refused)')

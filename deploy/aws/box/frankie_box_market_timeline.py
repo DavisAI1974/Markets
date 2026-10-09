@@ -653,6 +653,19 @@ class SharedMarketTimeline:
         expected = {k: self.input_pin[k] for k in ('bytes', 'sha256')}
         verification = self._caller_witness(input_witness, expected)
         if verification is None:
+            # one pass (2026-10-09): the ingest's own FRANKIE_FILE_CLAIM_V2 row for the sealed journal (beside its
+            # receipt), naming the pin's bytes and sha256 and still holding, stands in for the whole read
+            try:
+                from frankie_box_experiment_journal import _holding_claim
+            except ImportError:
+                from deploy.aws.box.frankie_box_experiment_journal import _holding_claim
+            held = _holding_claim(self.input_pin['path'], expected, [Path(self.input_pin['path']).parent])
+            if held is not None:
+                verification = dict(basis='claim', re_read=False, path=self.input_pin['path'], claim=held,
+                                    caller_witness=('absent' if input_witness is None else 'not bound to the pinned file '
+                                                    'or differs from the pin'),
+                                    note='the ingest\'s file claim (stat, filesystem, last 64 KiB) holds for the pin')
+        if verification is None:
             if witness(self.input_pin['path']) != expected:
                 raise ValueError('shared input journal differs from its exact sealed source bytes')
             verification = dict(basis='full_read_by_this_reader', re_read=True,
@@ -720,6 +733,11 @@ class SharedMarketTimeline:
         # The caller measured these exact bytes of this exact file in this process; a second full read of the sealed
         # journal (tens of GB on a big day) would re-measure the same pin. The chained head hash is still verified by
         # the compact reader as the envelopes are read.
+        if supplied.get('basis') == 'claim':
+            # the caller took the ingest's file claim (stat, filesystem, last 64 KiB) rather than hashing the journal
+            return dict(basis='claim', re_read=False, path=str(pinned),
+                        bound_by=('path, size, device and inode' if supplied.get('dev') is not None else 'path and size'),
+                        claim=supplied.get('claim'), note='the caller took the ingest\'s file claim for the sealed journal')
         return dict(basis='caller_measured_witness_equal_to_pin', re_read=False, path=str(pinned),
                     bound_by=('path, size, device and inode' if supplied.get('dev') is not None else 'path and size'),
                     note='the caller hashed the sealed journal in this process')
