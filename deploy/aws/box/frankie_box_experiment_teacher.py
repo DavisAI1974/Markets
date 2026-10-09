@@ -2399,11 +2399,14 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                                        if retained_claim is not None else
                                        'a retained attachment stands (resume); it is hashed on a thread instead'))
     hash_on_thread('rows', out / ROWS_FILE)
+    rows_sidecar = None
     if second_records is not None and feed is not None and feed.mode != 'failed':
-        rows_sidecar = feed.verify(source, second_records)      # the sealed blocks are the sidecar (each block checked)
-    else:
-        rows_sidecar = (_write_rows_sidecar(out, source, second_records, second_header, SS)
-                        if second_records is not None else None)
+        try:
+            rows_sidecar = feed.verify(source, second_records)  # the sealed blocks are the sidecar (each block checked)
+        except Exception as error:  # noqa: BLE001 - never blocks the publication (Greg 2026-10-09): listed, whole day written
+            feed._fail('publication: %s: %s' % (type(error).__name__, error))
+    if rows_sidecar is None and second_records is not None:
+        rows_sidecar = _write_rows_sidecar(out, source, second_records, second_header, SS)
     phase('snapshot_rows_attachment')
     result = dict(schema='FRANKIE_EXPERIMENT_TEACHER_ROWS_V1', day=day, request_id=request_id, entity=list(entity),
                   ingestion_receipt=dict(path=str(receipt_path), sha256=receipt_sha256), rows=len(rows), processed=processed,
