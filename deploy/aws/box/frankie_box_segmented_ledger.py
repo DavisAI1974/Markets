@@ -28,6 +28,9 @@ _jobs = weakref.WeakKeyDictionary()
 # beyond the CPUs it can use (each loss leaves its CPU out). Integrity refusals (ValueError) are never redone.
 MAX_REDOS = 3
 
+# Recorded, never compared (Greg, 2026-10-09): this identity is written beside a saved checkpoint as
+# ledger_storage_code; frankie_box_native_checkpoint accepts a save on NATIVE_STATE_FORMAT, which is bumped only
+# when the storage FORMAT below changes.
 # What a saved checkpoint's ledger storage depends on (frankie_box_native_checkpoint.runtime_identity): the segment
 # schema, the verified extents, the byte assembly and its hash checks, the checkpoint attributes and the materialized
 # sink. The read pools (_read_at, ordered_chunks: every byte they return is hashed against the checkpoint), the

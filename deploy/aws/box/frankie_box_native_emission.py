@@ -16,6 +16,18 @@ def binding():
     return dict(schema=SCHEMA, helper_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
 
 
+# Greg, 2026-10-09 (standing): the code version is RECORDED, NEVER COMPARED. helper_sha256 (this file's bytes) is kept
+# in binding() as a record; every comparison of an emission binding uses its meaning (the schema) only.
+RECORDED_ONLY = ('helper_sha256',)
+
+
+def meaning(value):
+    """An emission binding without its recorded-only code fields (a non-dict is returned as it is)."""
+    if not isinstance(value, dict):
+        return value
+    return {k: v for k, v in value.items() if k not in RECORDED_ONLY}
+
+
 def _coordinates(driver, *, phase, group_index, instrument_id, ts_recv_ns):
     return dict(schema=SCHEMA, phase=phase, group_index=group_index,
                 input_cursor=int(driver.counters.records_seen) - 1,
@@ -86,8 +98,8 @@ def install(driver):
         raise ValueError('native emission requires the pinned NativeReplayDriver')
     expected = binding()
     previous = getattr(driver, '_frankie_emission_binding', None)
-    if previous is not None and previous != expected:
-        raise ValueError('native emission helper differs from its checkpoint')
+    if previous is not None and meaning(previous) != meaning(expected):
+        raise ValueError('native emission schema differs from its checkpoint')
     wrappers = {'_on_group': _on_group, '_retain_lifecycle': _retain_lifecycle, 'finalize': _finalize}
     for name, wrapper in wrappers.items():
         existing = vars(driver).get(name)

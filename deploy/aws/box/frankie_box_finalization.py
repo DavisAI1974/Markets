@@ -22,6 +22,9 @@ PREFETCH = 28
 HELPERS = 14                       # ledger readers at most (the Sept-29 policy: 14 readers on 14 distinct cores)
 _CACHE = weakref.WeakKeyDictionary()
 
+# Recorded, never compared (Greg, 2026-10-09): finalization_code / finalization_sha256 are written beside a saved
+# checkpoint; frankie_box_native_checkpoint accepts a save on NATIVE_STATE_FORMAT only. accepts_whole_file below is
+# kept as a reader of the earlier whole-file rule; no acceptance path calls it.
 # Function-level identity (stacks pass, 2026-10-07 night; the eac32a0 pattern of frankie_box_native_checkpoint): what a
 # saved native full state depends on in THIS file is how a closed ledger is identified on disk, how its blocks are
 # counted, how a closed sink is rebuilt from the saved descriptor and how a sealed verification is reused or receipted.
