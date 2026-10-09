@@ -23,6 +23,8 @@ NAMES = ('member', 'lifecycle', 'legacy')
 BATCH_ROWS = 32
 BATCH_BYTES = 1 << 20  # Flush threshold, never a row or scientific-output cap.
 
+# Recorded, never compared (Greg, 2026-10-09): helper_code is a record in the policy (bind_transport_policy compares
+# policy_meaning).
 # What the exact evidence bytes and accounting depend on (the evidence transport policy's helper_code): the pinned
 # RowSink.write capture and encoding, the ordered commit/hash, the sink proxies, the member freeze bridge and the
 # checkpoint barriers. The processes and their CPUs (_encoder, _Encoder, pin_threads, core_plan, _booked_cpus),
@@ -39,19 +41,35 @@ def native_code_identity():
     return code_identity(__file__, NATIVE_VALUE_CODE)
 
 
+# Greg, 2026-10-09 (standing): the code version is RECORDED, NEVER COMPARED. helper_code / helper_sha256 stay in every
+# policy as a record; a saved policy is compared on its meaning (the policy without them).
+RECORDED_CODE = ('helper_code', 'helper_sha256')
+
+
+def policy_meaning(policy):
+    """A transport policy without its recorded-only code fields (a non-dict is returned as it is)."""
+    if not isinstance(policy, dict):
+        return policy
+    return {k: v for k, v in policy.items() if k not in RECORDED_CODE}
+
+
 def bind_transport_policy(driver, attribute, policy, predecessors):
-    """Bind the current transport policy; a saved driver's earlier policy is accepted only when it is one of the
-    named predecessors, on a verified full-state resume, and the transition is recorded."""
+    """Bind the current transport policy. A saved policy with the same meaning (it differs at most in its recorded
+    helper code) is the same policy: bound, the code change recorded. A saved policy of another meaning is accepted
+    only when its meaning is one of the named predecessors', on a verified full-state resume, and the transition is
+    recorded."""
     previous = getattr(driver, attribute, None)
     if previous is not None and previous != policy:
-        if (previous not in predecessors or not driver.checkpointer.parent_checkpoint
-                or getattr(driver, '_frankie_reconstruction_checkpoint', None) is not None):
+        same_meaning = policy_meaning(previous) == policy_meaning(policy)
+        if not same_meaning and (policy_meaning(previous) not in [policy_meaning(p) for p in predecessors]
+                                 or not driver.checkpointer.parent_checkpoint
+                                 or getattr(driver, '_frankie_reconstruction_checkpoint', None) is not None):
             raise ValueError('saved transport policy requires its verified full-state predecessor')
         driver.adapter.assert_groups_closed()
         history = getattr(driver, '_frankie_transport_transitions', [])
         history.append(dict(attribute=attribute, previous=previous, current=policy,
-            completed_mbo_records=driver.counters.records_seen,
-            parent_checkpoint=driver.checkpointer.parent_checkpoint))
+            code_recorded_only=same_meaning, completed_mbo_records=driver.counters.records_seen,
+            parent_checkpoint=getattr(driver.checkpointer, 'parent_checkpoint', None)))
         driver._frankie_transport_transitions = history
     setattr(driver, attribute, policy)
 

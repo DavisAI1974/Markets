@@ -29,6 +29,8 @@ import cloudpickle
 KINDS = ('queue', 'replenishment')
 POLICY_SCHEMA = 'FRANKIE_NATIVE_PARALLEL_V2'
 
+# Recorded, never compared (Greg, 2026-10-09): helper_code is written in the policy as a record; a saved policy is
+# compared on its meaning without it (frankie_box_parallel_evidence.bind_transport_policy / policy_meaning).
 # What the native values computed or saved through this file depend on (the execution policy's helper_code): which
 # process computes which section call and in what order (_worker, _Calculator, _Adapter, _feed_parallel, the
 # ParallelSections dispatch, join and materialization), and the reconstruction boundary (which writes a checkpoint and
@@ -73,8 +75,9 @@ def policy_predecessors():
 
 
 def bind_policy(driver):
-    """Bind this checkout's execution policy. A saved driver's earlier policy is accepted only when it is a named
-    predecessor, on a verified full-state resume, and the transition is recorded on the driver
+    """Bind this checkout's execution policy. A saved policy of the same meaning (differing at most in its recorded
+    helper code) is the same policy; one of another meaning is accepted only when it is a named predecessor, on a
+    verified full-state resume. Every transition is recorded on the driver
     (frankie_box_parallel_evidence.bind_transport_policy, the same rule as the evidence and auxiliary policies)."""
     from frankie_box_parallel_evidence import bind_transport_policy
     bind_transport_policy(driver, '_frankie_parallel_policy', execution_policy(), policy_predecessors())
