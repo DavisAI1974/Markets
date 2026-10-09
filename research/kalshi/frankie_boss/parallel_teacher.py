@@ -53,7 +53,12 @@ import time
 
 GUARD_EVERY = 50_000
 FULL_HASH_CHECK_RECEIPTS = 2_000   # up to this many receipts the attachment hash is also recomputed whole (a check, no cap)
-RAW_GUARD_EVERY = 20_000
+# The live guard's rate (2026-10-09, Greg: the fast path proven against the full path on real data, inside the one
+# run): every RAW_GUARD_EVERY-th raw call (about 1%; it was 20,000), plus the first two calls and the first cohort call of
+# every batch, is also computed in the parent on the FULL objects and compared to the worker's result. Env
+# FRANKIE_TEACHER_GUARD_EVERY overrides (a positive integer), read once when the raw pass starts; recorded as
+# RAW_POOL_RECORD['guard'] with the calls guarded, compared equal and mismatched (a mismatch stops the run).
+RAW_GUARD_EVERY = 100
 RAW_BATCH_CALLS = 32_768
 RAW_MARK = '\x00parallel-raw:'
 DSTATE_SCHEMA = 'FRANKIE_TEACHER_DSTATE_ROWS_V1'
@@ -327,7 +332,7 @@ def _progress(stage, completed, total=None, force=False, _last={}):
 # function-level code witnesses below are kept in the save under 'recorded', beside the data, and never compared. A save
 # written before this rule (no save_format) is compared on the data fields it carries; its binding is a record.
 ROW_PASS_CODE = ('RAW_MARK', 'DSTATE_SCHEMA', '_changes_applied', '_raw_batch', '_shipped_group', '_shipped_start',
-                 '_compact_start', '_built_start', '_RawStreams', '_dstate_row', 'row_pass')
+                 '_compact_start', '_built_start', '_guard_every', '_RawStreams', '_dstate_row', 'row_pass')
 FINISH_CODE = ('GUARD_EVERY', '_FastStateHash', '_receipt', '_chunk', '_canonical', '_candidate', 'finish')
 TEACHER_SAVE_FORMAT = 1
 # keys of a saved identity that are code records, never compared (the last two: saves written before 2026-10-09)
@@ -447,6 +452,20 @@ def _pin_raw_worker(cpus, counter):
         os.sched_setaffinity(0, {cpus[turn % len(cpus)]})
     except (OSError, AttributeError):
         pass
+
+
+def _guard_every():
+    """(the guard rate, its basis): FRANKIE_TEACHER_GUARD_EVERY when it is a positive integer, else RAW_GUARD_EVERY."""
+    text = os.environ.get('FRANKIE_TEACHER_GUARD_EVERY')
+    if text is None:
+        return RAW_GUARD_EVERY, 'default'
+    try:
+        value = int(text)
+    except ValueError:
+        value = 0
+    if value < 1:
+        return RAW_GUARD_EVERY, 'default (FRANKIE_TEACHER_GUARD_EVERY=%r is not a positive integer)' % text[:40]
+    return value, 'FRANKIE_TEACHER_GUARD_EVERY'
 
 
 def _changes_applied():
@@ -605,8 +624,9 @@ class _RawStreams:
         def record(kind, family, groups, side, start, width):
             token = self.calls
             self.calls += 1
-            if len(self.batch) < 2 or token % RAW_GUARD_EVERY == 0 or (kind == 'cohort' and not self.cohort_guarded):
-                self.expected[token] = exact(kind, groups, side, start)
+            if len(self.batch) < 2 or token % self.guard_every == 0 or (kind == 'cohort' and not self.cohort_guarded):
+                self.expected[token] = (kind, exact(kind, groups, side, start))
+                self.guard['guarded'] += 1
                 if kind == 'cohort':
                     self.cohort_guarded = True
             table, index = self.tables[family], self.index[family]
@@ -657,6 +677,12 @@ class _RawStreams:
                                basis=('each spawn worker pinned to one CPU of the plan' if self.planned else
                                       'unpinned spawn workers on the parent\'s mask (no plan given)'))
         self.breaks = 0
+        self.guard_every, basis = _guard_every()
+        self.guard = RAW_POOL_RECORD['guard'] = dict(
+            every=self.guard_every, basis=basis, guarded=0, compared_equal=0, mismatches=0,
+            rule='the first two calls and the first cohort call of every batch and every %d-th call are computed in '
+                 'the parent on the full objects with the same function and compared to the worker\'s result (value '
+                 'and key order); a mismatch stops the run' % self.guard_every)
         self.slim_groups, self.shipped_bytes, self.batches = 0, 0, 0
         self.compact_starts, self.slim_starts, self.collected_early = 0, 0, 0
         RAW_POOL_RECORD['shipped'] = dict(
@@ -665,8 +691,7 @@ class _RawStreams:
             cohort_start=('scope + the start side\'s levels + the ids and sizes of the book\'s orders as two lists, '
                           'rebuilt in the worker as {order_id, size} dicts in the same order (all the cohort reads); a '
                           'start not of that shape: scope + the side\'s levels + the orders on them'),
-            guard='the first two calls of every batch, its first cohort call and every %d-th call run the pinned way '
-                  'on the full objects in the parent and must equal the worker\'s result' % RAW_GUARD_EVERY,
+            guard='see RAW_POOL_RECORD[\'guard\']',
             collection='a finished batch is taken as soon as it is done (its blob released), in order',
             batches=0, bytes=0, groups_slimmed=0, starts_compact=0, starts_slim=0, batches_collected_early=0,
             basis='speed only (2026-10-09): same functions, same values')
@@ -736,10 +761,13 @@ class _RawStreams:
         import pickle
         for token, value in pickle.loads(self._result(blob, future)):
             if token in self.expected:
-                expected = self.expected.pop(token)
+                kind, expected = self.expected.pop(token)
                 if expected != value or (type(value) is dict and list(expected) != list(value)) or (
                         type(value) is tuple and [list(v) for v in expected] != [list(v) for v in value]):
-                    raise ValueError('parallel teacher raw stream differs from the pinned function; run stopped')
+                    self.guard['mismatches'] += 1
+                    raise ValueError('parallel teacher raw stream differs from the pinned function at call %d (%s): '
+                                     'parent %r, worker %r; run stopped' % (token, kind, expected, value))
+                self.guard['compared_equal'] += 1
             if token in self.where:
                 self._resolve(token, value)
             else:
