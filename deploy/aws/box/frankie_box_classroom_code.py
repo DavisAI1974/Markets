@@ -391,7 +391,57 @@ def coverage_disposition(report, *, journal_count=None, record_count=None):
                                 'not a new observation; integrity and identity failures raise separately'))
 
 
-def market_context(visible, timeline, *, save_requested, native_limits=None):
+TEACHER_CARRY_SCHEMA = 'FRANKIE_CLASSROOM_TEACHER_CARRY_V1'
+
+
+class TeacherPassCarry:
+    """The classroom's whole-source work made on the TEACHER's walk (one pass, Greg 2026-10-09): per picture of the
+    teacher's shared read, the all-99 arrivals (_Arrivals.note), the source status counts and the six native entries'
+    pass (_NativeEntryArithmetic online: the teacher declares each Dipole roster cursor, the entity's rows of its
+    contiguous equation prefix, before the picture that carries it). Saved with the teacher's receipt; the classroom's
+    market_context takes it and reads the shared source only as far as its last anchor picture."""
+
+    def __init__(self, timeline, limits=None):
+        self.arrivals, self.counts, self.pictures = _Arrivals(), {}, 0
+        try:
+            self.native = _NativeEntryArithmetic([], getattr(timeline, 'native_carriers', None),
+                                                 getattr(timeline, 'layers', None) or {}, limits=limits, online=True)
+            self.native_setup = None
+        except Exception as error:  # noqa: BLE001 - recorded; the classroom then makes its own pass for the native entries
+            self.native, self.native_setup = None, 'setting up: %s: %s' % (type(error).__name__, error)
+
+    def note(self, item, row_cursor=None):
+        import time
+        picture = item['picture']
+        status = picture['source_status']
+        key = status if isinstance(status, str) else json.dumps(status, sort_keys=True)
+        self.counts[key] = self.counts.get(key, 0) + 1
+        self.pictures += 1
+        self.arrivals.note(picture, item['evidence'])
+        native = self.native
+        if native is None:
+            return
+        if row_cursor is not None:
+            native.declare_row(row_cursor)
+        if native.status is None:
+            try:
+                clock = time.perf_counter()
+                native.note(picture, item['evidence'])
+                native.note_seconds += time.perf_counter() - clock
+            except Exception as error:  # noqa: BLE001 - blocks only this computation, as in the classroom's own pass
+                native.status, native.reason = 'failed', 'at adapter cursor %s: %s: %s' % (
+                    picture['at'].get('adapter_cursor'), type(error).__name__, error)
+
+    def state(self, identity):
+        """The carry to save beside the teacher's receipt (call once, after the walk exhausted the source)."""
+        if self.native is not None:
+            self.native.end_online()
+        return dict(schema=TEACHER_CARRY_SCHEMA, identity=identity, pictures=self.pictures,
+                    source_status_counts=dict(self.counts), arrivals=self.arrivals.record(),
+                    native=self.native.pass_state() if self.native is not None else None, native_setup=self.native_setup)
+
+
+def market_context(visible, timeline, *, save_requested, native_limits=None, carry=None, teacher_report=None):
     """Read the complete shared view once; retain full pictures at existing evidence anchors.
 
     Missing-coverage rule (Greg, 2026-10-07): the read exhausts the ordered source, and whatever
@@ -400,6 +450,11 @@ def market_context(visible, timeline, *, save_requested, native_limits=None):
     `unavailable`; its Dipole value from the teacher rows stands and the market picture at that
     instant is thinner. Nothing is fabricated for it. Exhaustion, layer coverage and integrity are
     reported separately. Same-day identity mismatches still refuse; they are not coverage.
+
+    One pass (Greg, 2026-10-09): with `carry` (TeacherPassCarry.state from the teacher's walk of this same source,
+    identity equal) and `teacher_report` (the teacher's exhausted shared read), the arrivals, the source status counts
+    and the native entries' pass come from the teacher's walk, coverage from its report, and this read stops at the
+    last anchor picture. A carry that does not match (identity, roster, carriers) makes the full pass as before.
     """
     from research.kalshi.frankie_boss.parallel_teacher import TeacherSaved
     ingest = timeline.source['ingestion_receipt']
@@ -444,6 +499,9 @@ def market_context(visible, timeline, *, save_requested, native_limits=None):
                                                       getattr(timeline, 'layers', None) or {}, limits=native_limits), None
     except Exception as error:  # noqa: BLE001 - blocks only the native entry arithmetic; recorded, never a measurement
         native, native_setup = None, 'setting up: %s: %s' % (type(error).__name__, error)
+    carried, carry_note = _take_carry(carry, teacher_report, timeline, native, native_setup)
+    if carried:
+        arrivals_record, counts = carry['arrivals'], dict(carry['source_status_counts'])
     iterator = timeline.iter_pictures()
     # The pass consumer on its own CPU (Greg, 2026-10-07: pin every step; research item: the full-read consumer on a
     # whole core). lane[0] is the CPU the readers leave free (frankie_journal_reader.worker_budget and the timeline's
@@ -461,7 +519,7 @@ def market_context(visible, timeline, *, save_requested, native_limits=None):
     PINNING_RECORD['pass_consumer'] = consumer_pin
     waiting = consumer is not None
     try:
-        for item in iterator:
+        for item in (() if carried and not wanted else iterator):
             if save_requested():
                 raise TeacherSaved('shared classroom picture read interrupted; no completed reading claimed')
             if waiting:
@@ -478,15 +536,22 @@ def market_context(visible, timeline, *, save_requested, native_limits=None):
             status = picture['source_status']
             # The core yields a plain status string (applied, failed, unpaired_...); a structured status is
             # keyed by its sorted JSON. No per-picture JSON encoding on the hot path for the common case.
-            key = status if isinstance(status, str) else json.dumps(status, sort_keys=True)
-            counts[key] = counts.get(key, 0) + 1
             seen += 1
-            if not seen & 4095 and (native is None or native.status is not None):
+            if carried:
+                # one pass: the teacher's walk made the whole-source work; this read only retains the anchor pictures
+                if not seen & 4095:
+                    heartbeat('classroom: shared market read to the last anchor', seen, unit='pictures', every=1.0,
+                              source_records=timeline.source.get('record_count'))
+            else:
+                key = status if isinstance(status, str) else json.dumps(status, sort_keys=True)
+                counts[key] = counts.get(key, 0) + 1
+            if not carried and not seen & 4095 and (native is None or native.status is not None):
                 # the heartbeat while the native entries do not report the pass themselves (absent, failed, cut off)
                 heartbeat('classroom: shared market read', seen, unit='pictures', every=1.0,
                           source_records=timeline.source.get('record_count'))
-            arrivals.note(picture, item['evidence'])
-            if native is not None and native.status is None:
+            if not carried:
+                arrivals.note(picture, item['evidence'])
+            if not carried and native is not None and native.status is None:
                 try:
                     clock = time.perf_counter()
                     native.note(picture, item['evidence'])
@@ -511,6 +576,8 @@ def market_context(visible, timeline, *, save_requested, native_limits=None):
                                         thinner=copy.deepcopy(picture.get('coverage')))
                 if len(pictures) == len(wanted):
                     last_anchor_seen_at = seen
+                    if carried:
+                        break               # one pass: nothing after the last anchor is needed from this read
     finally:
         try:
             iterator.close()
@@ -519,12 +586,26 @@ def market_context(visible, timeline, *, save_requested, native_limits=None):
                 consumer_pin['restored'] = LP.restore_mask(original_mask)
             elif consumer_pin.get('outcome') == 'waiting':
                 consumer_pin.update(outcome='not_pinned', reason='the reader streams never all started in this pass')
-    read = dict(seconds=round(time.monotonic() - started, 3), pictures_seen=seen, workers=lane_workers(),
+    if carried:
+        total = carry.get('pictures')
+        read = dict(seconds=round(time.monotonic() - started, 3), pictures_seen=seen, workers=lane_workers(),
+                    consumer_pin=dict(consumer_pin),
+                    wanted_anchor_cursors=len(wanted), max_wanted_adapter_cursor=(max(wanted) if wanted else None),
+                    last_anchor_retained_at_picture=last_anchor_seen_at,
+                    pictures_after_last_anchor=(total - last_anchor_seen_at if last_anchor_seen_at is not None
+                                                and type(total) is int else None),
+                    read_to_end=False, pictures_in_source=total, carry=carry_note,
+                    note='one pass (Greg, 2026-10-09): the teacher\'s walk of this same source made the whole-source '
+                         'work (arrivals, source status counts, the native entries\' pass) and its exhausted read is the '
+                         'coverage; this read retained the anchor pictures and stopped at the last one')
+    else:
+        read = None
+    read = read or dict(seconds=round(time.monotonic() - started, 3), pictures_seen=seen, workers=lane_workers(),
                 consumer_pin=dict(consumer_pin),
                 wanted_anchor_cursors=len(wanted), max_wanted_adapter_cursor=(max(wanted) if wanted else None),
                 last_anchor_retained_at_picture=last_anchor_seen_at,
                 pictures_after_last_anchor=(seen - last_anchor_seen_at if last_anchor_seen_at is not None else None),
-                read_to_end=True,
+                read_to_end=True, carry=carry_note,
                 hot_path='per picture: status key, anchor membership test, arrivals.note (a few dict increments; '
                          'per update: source name, frame section presence, top-level field names); native.note (the six '
                          'native entries: per native member row the carrier leaves, per lifecycle row a count; its own '
@@ -543,10 +624,18 @@ def market_context(visible, timeline, *, save_requested, native_limits=None):
             native_entries = native.finish()
     # Reaching here means the iterator ended without an integrity/identity exception. The core's
     # own exhaustion flag is read beside that fact, never used to reject a thinner day.
-    report = copy.deepcopy(timeline.report)
+    if carried:
+        # one pass: the teacher's exhausted read of this same source (identity checked) is the coverage record; the
+        # teacher's own additions (its equation accounting, its carry note) are not part of the reader's report
+        report = {k: copy.deepcopy(v) for k, v in teacher_report.items() if k not in ('equation', 'classroom_carry')}
+    else:
+        report = copy.deepcopy(timeline.report)
     coverage = coverage_disposition(report, journal_count=timeline.source.get('journal_count'),
                                     record_count=timeline.source.get('record_count'))
-    coverage['classroom_iterator_ended'] = True
+    coverage['classroom_iterator_ended'] = not carried
+    if carried:
+        coverage['classroom_read'] = 'stopped at the last anchor picture; coverage is the teacher\'s exhausted read'
+
     if coverage.get('core_coverage') is None:
         # A reader between d6af990 and the core's revised report: carry its layer attributes as read, never inferred.
         for attribute in ('layers', 'absent_layers'):
@@ -568,7 +657,7 @@ def market_context(visible, timeline, *, save_requested, native_limits=None):
                     interface='SharedMarketTimeline.iter_pictures', workers=lane_workers()),
                 anchors=anchors, pictures=pictures, report=report,
                 source_status_counts=counts, coverage=coverage, read=read,
-                arrivals=arrivals.record(),
+                arrivals=(arrivals_record if carried else arrivals.record()),
                 # the predecessor bootstrap as the ingestion receipt recorded it (seeded / absent / none recorded);
                 # the core yields no opening-state picture element (named as a request to the core author)
                 opening_book=(dict(status=opening.get('status'), listed=opening.get('listed'))
@@ -582,6 +671,31 @@ def market_context(visible, timeline, *, save_requested, native_limits=None):
                     'values on the same pass are operands of the native entry arithmetic (native_entries)',
                 limit='no claim that every market field changes a target or is interpreted; no claim that every layer was '
                       'present; no native training; the Dipole values and target equations are unchanged')
+
+
+def _take_carry(carry, teacher_report, timeline, native, native_setup):
+    """(True, note) when the teacher's carry stands in for this read's whole-source work: same identity as this reader,
+    the teacher's report exhausted with the same identity, and the native entries' pass loaded (or not needed). Else
+    (False, why). Never raises."""
+    if carry is None:
+        return False, dict(taken=False, reason='no teacher carry given (an older teacher, or none saved)')
+    try:
+        if carry.get('schema') != TEACHER_CARRY_SCHEMA or carry.get('identity') != timeline.identity:
+            return False, dict(taken=False, reason='the teacher carry names another schema or source identity')
+        if (not isinstance(teacher_report, dict) or teacher_report.get('identity') != timeline.identity
+                or not source_exhausted(teacher_report, journal_count=timeline.source.get('journal_count'),
+                                        record_count=timeline.source.get('record_count'))):
+            return False, dict(taken=False, reason='the teacher\'s shared read is not this source exhausted')
+        if native is not None:
+            if carry.get('native') is None:
+                return False, dict(taken=False, reason='the teacher carry holds no native pass (%s)' % carry.get('native_setup'))
+            loaded, why = native.load_pass_state(carry['native'])
+            if not loaded:
+                return False, dict(taken=False, reason=why)
+        return True, dict(taken=True, schema=TEACHER_CARRY_SCHEMA, pictures=carry.get('pictures'),
+                          native=('loaded' if native is not None else 'not used: %s' % native_setup))
+    except Exception as error:  # noqa: BLE001 - without the carry this read makes the whole pass
+        return False, dict(taken=False, reason='%s: %s' % (type(error).__name__, error))
 
 
 class ClassroomMarketContext:
@@ -997,23 +1111,34 @@ class _NativeEntryArithmetic:
     change. The per-row ledgers are stored as changes only (array-backed), materialized one series at a time at finish().
     """
 
-    def __init__(self, components, carriers, layers, limits=None):
+    def __init__(self, components, carriers, layers, limits=None, online=False):
+        """online (one pass, Greg 2026-10-09): the TEACHER's walk feeds note() over the same ordered pictures while the
+        Dipole roster is still being made; the teacher declares each roster cursor (declare_row) before the picture
+        that carries it, so every event lands on the row it would land on offline; end_online() closes the roster and
+        moves what followed the last row to after_last. The classroom loads that pass state (load_pass_state) onto its
+        own instance built from the Dipole components, checks the roster, and computes finish() unchanged."""
         self.status, self.reason = None, None
+        self.online = online
         self.limits = limits or native_cutoff_limits({})
         self.cutoff, self.pictures, self.finish_clock = None, 0, None
         import threading
         self._probe_lock, self._probe_at = threading.Lock(), float('-inf')    # the stage-progress probe (_check)
         self.components = [(c['name'], c['observations']) for c in components]
         roster = [int(p['cursor']) for p in (self.components[0][1] if self.components else ())]
-        for name, observations in self.components:
+        for name, observations in (() if online else self.components):
             if [int(p['cursor']) for p in observations] != roster:
                 self.status, self.reason = 'integrity_failure', ('the Dipole components do not share one cursor roster '
                                                                  '(%s differs); no row to align the native series on' % name)
-        if self.status is None and any(a >= b for a, b in zip(roster, roster[1:])):
+        if not online and self.status is None and any(a >= b for a, b in zip(roster, roster[1:])):
             self.status, self.reason = 'integrity_failure', 'the Dipole cursor roster is not strictly increasing'
-        if self.status is None and not roster:
+        if not online and self.status is None and not roster:
             self.status, self.reason = 'unavailable', 'no Dipole row on this day: no row to place a native value at'
         self.cursors, self.n, self.k, self.last_cursor, self.at_cursor = roster, len(roster), 0, None, None
+        # the row index at or past which an event follows the last Dipole row: n offline; unknown (never) while the
+        # teacher's walk is still making the roster (online); end_online() sets it
+        self.limit = float('inf') if online else self.n
+        if online:
+            self.n = None
         self.layers = {name: dict(status=(layers.get(name) or {}).get('status', 'absent'),
                                   reason=(layers.get(name) or {}).get('reason')) for name in ('native.member', 'native.lifecycle')}
         self.carriers = {}
@@ -1057,7 +1182,7 @@ class _NativeEntryArithmetic:
                                                                  'native series are never re-sorted' % (cursor, self.last_cursor))
                 return
             self.last_cursor = cursor
-            if self.k < self.n and self.cursors[self.k] < cursor:
+            if self.k < len(self.cursors) and self.cursors[self.k] < cursor:
                 # every Dipole row before this cursor closes at once (bisect over the sorted roster; was a per-row loop)
                 self.k = bisect.bisect_left(self.cursors, cursor, self.k)
         instrument = at.get('instrument_id')
@@ -1094,7 +1219,7 @@ class _NativeEntryArithmetic:
                     self._count(('native.lifecycle.' + str(section), owner))
                 else:
                     self.lifecycle_other_sections += 1
-        if type(cursor) is int and self.k < self.n and self.cursors[self.k] == cursor:
+        if type(cursor) is int and self.k < len(self.cursors) and self.cursors[self.k] == cursor:
             self._close_row()
 
     def _count(self, key):
@@ -1103,7 +1228,7 @@ class _NativeEntryArithmetic:
             from array import array
             slot = self.cnt[key] = dict(total=0, first=None, last=None, rows=array('q'), counts=array('q'))
         k = self.k
-        if k >= self.n:
+        if k >= self.limit:
             self.after_last[key] = self.after_last.get(key, 0) + 1
         elif slot['rows'] and slot['rows'][-1] == k:
             slot['counts'][-1] += 1             # the event's interval = the row it is closed with (no per-row loop)
@@ -1127,10 +1252,10 @@ class _NativeEntryArithmetic:
             slot['known'] += 1
             slot['distinct'].add(value)
         k = self.k
-        if k >= self.n:
+        if k >= self.limit:
             return                                  # after the last Dipole row: no row closes with it
         if slot['open_k'] != k:
-            self._settle_category(slot, self.n)     # the previous row's last value, recorded once (no per-row loop)
+            self._settle_category(slot, self.limit)     # the previous row's last value, recorded once (no per-row loop)
             slot['open_k'] = k
         slot['current'] = value
 
@@ -1139,9 +1264,9 @@ class _NativeEntryArithmetic:
         if s is None:
             s = self.num[key] = _NumSeries()
         k = self.k
-        if k < self.n:
+        if k < self.limit:
             if s.open_k != k:
-                _settle_numeric(s, self.n)          # the previous row's last state, recorded once (no per-row loop)
+                _settle_numeric(s, self.limit)      # the previous row's last state, recorded once (no per-row loop)
                 s.open_k = k
             s.code, s.value, s.reason = code, value, reason
         if code == 0:
@@ -1236,9 +1361,60 @@ class _NativeEntryArithmetic:
                            pictures_fed=self.pictures, limits={k: self.limits[k] for k in ('seconds', 'rss_gb', 'check_every')})
         self.status = 'cutoff'
         self.reason = ('cutoff (%s) in the %s after %.1f s of native work at %.2f GB resident; adapter cursor reached %s, '
-                       '%d of %d Dipole rows closed; a named limit, not an integrity failure'
+                       '%d of %s Dipole rows closed; a named limit, not an integrity failure'
                        % (hit, phase, elapsed, rss / 2 ** 30, self.last_cursor, self.k, self.n))
         return True
+
+    # ---- one pass (Greg, 2026-10-09): the teacher's walk feeds this pass; the classroom computes
+    PASS_FIELDS = ('status', 'reason', 'cutoff', 'pictures', 'k', 'last_cursor', 'at_cursor', 'num', 'cat', 'cnt',
+                   'after_last', 'member_keys', 'scopes', 'identities', 'unplaced', 'member_rows', 'lifecycle_rows',
+                   'reset_inputs', 'lifecycle_other_sections', 'note_seconds')
+
+    def declare_row(self, cursor):
+        """Online: the teacher's walk names a Dipole roster cursor before note() sees the picture that carries it."""
+        if self.cursors and cursor <= self.cursors[-1]:
+            if self.status is None:
+                self.status, self.reason = 'integrity_failure', 'the Dipole cursor roster is not strictly increasing'
+            return
+        self.cursors.append(int(cursor))
+
+    def end_online(self):
+        """Online: the roster is complete. Events counted on the row past the last one move to after_last (where the
+        offline pass counts them); every other series state is already what the offline pass holds."""
+        self.n = len(self.cursors)
+        self.limit = self.n
+        for key, slot in self.cnt.items():
+            while slot['rows'] and slot['rows'][-1] >= self.n:
+                slot['rows'].pop()
+                self.after_last[key] = self.after_last.get(key, 0) + slot['counts'].pop()
+        if self.cutoff is not None:
+            self.cutoff['dipole_rows'] = self.n
+            self.reason = (self.reason or '').replace('of None Dipole rows', 'of %d Dipole rows' % self.n)
+        self.online = False
+
+    def pass_state(self):
+        """The pass's state (picklable), with the roster and the carriers/layers it was made against."""
+        state = {name: getattr(self, name) for name in self.PASS_FIELDS}
+        state.update(cursors=list(self.cursors), carriers=self.carriers, layers=self.layers, limits=self.limits)
+        return state
+
+    def load_pass_state(self, state):
+        """Take a pass made by the teacher's walk over the same ordered source. (True, None) when loaded or when this
+        instance's own construction already decided its status (an integrity failure or no Dipole row: the offline
+        pass would feed nothing); else (False, why) and the caller makes its own pass. Never raises."""
+        if self.status is not None:
+            return True, 'not needed: %s at construction (%s)' % (self.status, self.reason)
+        try:
+            if list(state['cursors']) != list(self.cursors):
+                return False, 'the teacher walk\'s roster differs from this classroom\'s Dipole roster'
+            if state['carriers'] != self.carriers or state['layers'] != self.layers:
+                return False, 'the teacher walk\'s native carriers or layers differ from this classroom\'s'
+            values = {name: state[name] for name in self.PASS_FIELDS}       # every field present before any is set
+            for name, value in values.items():
+                setattr(self, name, value)
+        except (KeyError, TypeError) as error:
+            return False, 'the teacher carry is malformed (%s: %s)' % (type(error).__name__, error)
+        return True, None
 
     def _identity(self, instrument, leaf, value):
         slot = self.identities.setdefault(instrument, {}).get(leaf)

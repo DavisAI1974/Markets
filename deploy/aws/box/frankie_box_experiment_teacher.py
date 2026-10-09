@@ -281,6 +281,15 @@ def _finish_attachment_writer(writer, attachment_path, body):
     return _write_attachment(attachment_path, body)
 
 
+CARRY_FILE = 'classroom-carry.pkl'
+
+
+def walked_now(carry):
+    """Whether this attempt's walk fed the carry at least one picture."""
+    value = carry.get('value')
+    return value is not None and getattr(value, 'pictures', 0) > 0
+
+
 def _keep_cutoff_context(AM, market, cutoff_walk, out, *, day, rc, as_of, through, exhausted):
     """<out>/AM.TEACHER_CONTEXT_NAME from this walk's CutoffTracker (the exchange/Jev contract, 2026-10-09): scope,
     walk_context, retain_context; {path, bytes, sha256} or the reason nothing was written. None without a shared walk."""
@@ -828,6 +837,17 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
     cutoff_walk = dict(tracker=None, first_input_cursor=None, next_input_cursor=None, continued=False, pictures=0)
     tracker_path = out / 'cutoff-tracker.pkl'
     AM = None
+    # One pass (Greg, 2026-10-09, item 3): the classroom's whole-source work (all-99 arrivals, source status counts, the
+    # six native entries' pass) made on THIS walk (frankie_box_classroom_code.TeacherPassCarry), saved beside the
+    # receipt (classroom-carry.pkl); the classroom then reads the shared source only to its last anchor picture.
+    carry = dict(value=None, first_input_cursor=None, error=None)
+    carry_path = out / CARRY_FILE
+    if market is not None:
+        try:
+            K = _box_module('frankie_box_classroom_code')
+            carry['value'] = K.TeacherPassCarry(market, K.native_cutoff_limits(os.environ))
+        except Exception as error:  # noqa: BLE001 - the classroom then makes its own whole pass
+            carry['error'] = 'not started: %s: %s' % (type(error).__name__, error)
     if market is not None:
         try:
             AM = _box_module('frankie_box_adviser_market')
@@ -997,6 +1017,22 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                         cpu_pinning.update(LP.pin_core(cpu_pinning['consumer_mask']), at_instant=equation['rows'] + len(
                             equation['absent']) + 1)
                 at = item['picture']['at']
+                if carry['value'] is not None:
+                    if carry['first_input_cursor'] is None:
+                        carry['first_input_cursor'] = at.get('input_cursor')
+                        if type(at.get('input_cursor')) is int and at['input_cursor'] > 0:
+                            carry.update(value=None, error='the walk began at INPUT cursor %s, not the source start'
+                                                           % at['input_cursor'])
+                if carry['value'] is not None:
+                    # the classroom's Dipole roster: the entity's rows of this walk's contiguous equation prefix
+                    # (row_pass hashes exactly those; PT.finish selects them as the context cursors)
+                    row_cursor = None
+                    if (item['arithmetic']['status'] == 'present' and equation['ended_at'] is None
+                            and item['evidence'].get('cursor') == expected):
+                        m = item['evidence'].get('normalized') or {}
+                        if whole is None or (m.get('publisher_id'), m.get('instrument_id')) == whole:
+                            row_cursor = item['evidence']['cursor']
+                    carry['value'].note(item, row_cursor)
                 if item['arithmetic']['status'] != 'present':
                     equation['absent'].append(dict(input_journal_ordinal=at['input_journal_ordinal'],
                                                    adapter_cursor=at['adapter_cursor'], input_cursor=at['input_cursor'],
@@ -1037,6 +1073,12 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                 state = dict(market.report, equation=dict(equation))
                 PT._save_raw_state(market_state, state)
                 saved_market_state['value'] = state
+                if carry['value'] is not None and market.report.get('complete'):
+                    try:
+                        PT._save_raw_state(carry_path, carry['value'].state(market.identity))
+                        carry['saved'] = True
+                    except Exception as error:  # noqa: BLE001 - the classroom then makes its own whole pass
+                        carry['error'] = 'not saved: %s: %s' % (type(error).__name__, error)
                 if cutoff_walk['tracker'] is not None and cutoff_walk['next_input_cursor'] is not None:
                     try:          # the tracker with the walk's save point (plain picklable data)
                         PT._save_raw_state(tracker_path, dict(tracker=cutoff_walk['tracker'],
@@ -1224,6 +1266,14 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                   identity_rebinds=list(IDENTITY_REBINDS))
     if teacher_context is not None:
         result['shared_market_context'] = teacher_context
+    if market is not None:
+        # the classroom loads the file and checks its identity and roster itself; a missing or other carry makes the
+        # classroom's own whole pass, so an older teacher (no field) never blocks it
+        result['classroom_carry'] = (
+            dict(file=CARRY_FILE, status='written', schema='FRANKIE_CLASSROOM_TEACHER_CARRY_V1') if carry.get('saved') else
+            dict(file=CARRY_FILE, status='retained', reason='a completed saved walk was reused; the carry its walk saved')
+            if carry_path.is_file() and not walked_now(carry) else
+            dict(file=CARRY_FILE, status='not_written', reason=carry.get('error') or 'the walk did not reach the source end'))
     if market is not None:
         result.update(shared_market_identity=market.identity, shared_market_read=shared_read,
                       shared_market_arithmetic=shared_read.get('equation'),
