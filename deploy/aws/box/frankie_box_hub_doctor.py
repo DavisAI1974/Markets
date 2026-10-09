@@ -1,8 +1,8 @@
 """The hub DOCTOR (Greg, 2026-10-09 session 12, HUB DESIGN at the top of CLAUDE.md: "A DEAD PIECE IS REVIVED, NEVER
-SKIPPED"). If a piece dies mid-turn, the hub core takes its lock over and records it ('takeover'), the pieces after it
-keep WAITING (an ordered waiter is eligible only once every piece before it has written the round, so a death never
-releases them), and this doctor resumes the dead piece from ITS OWN save so it finishes its part. Successors never
-proceed on a partial part.
+SKIPPED"). If a piece dies mid-turn, the hub core takes its lock over and records it ('takeover'), the pieces that
+need it keep WAITING (a waiter is eligible only once each of its PREREQUISITES, hub.json `prerequisites`, has written the
+round, so a death never releases the pieces that depend on it), and this doctor resumes the dead piece from ITS OWN save
+so it finishes its part. Dependents never proceed on a partial part.
 
 What the doctor does, and only this:
   - it watches one hub (frankie_box_hub.py) EVENT-DRIVEN: inotify on the hub directory and its pieces/ directory (an
@@ -34,11 +34,12 @@ register(piece, spec) does the same in code). A spec: {"argv": [...], "env": {..
 argv and env values are formatted with {hub_dir} {piece} {run} {day} {round} {python} {box} {code_root}
 (code_root = readlink -f /opt/frankie-box/code/current, resolved only when a spec names it; the queue script is looked for
 there and under its markets/ checkout; absent = a 'doctor-error', the revive not started).
-  root, teacher, classroom, exchange, jev, school   the queue's resume of the day's worker: bash
+  root, teacher, classroom, teacher-2, exchange, jev, school, reports   the queue's resume of the day's worker: bash
         <code_root>/deploy/aws/box/frankie_box_frankie_queue.sh with ACTION=resume RUN=<run> DAY=<day> CODE_ROOT=<code_root>
         (run and day from hub.json). The worker resumes the day from its own save point; the resume itself exits once it
-        has handed the day back to the line (process_is_piece false: its exit is recorded; a non-zero exit is a
-        'doctor-error', not relaunched, because the revival failed rather than the piece dying again).
+        has handed the day back to the line (teacher-2, the second teacher turn, runs inside the day's class line, and
+        reports is the class worker's day-reports step: the same resume). process_is_piece false: its exit is recorded;
+        a non-zero exit is a 'doctor-error', not relaunched, because the revival failed rather than the piece dying again.
   forecaster   the spokes module's run_spoke(piece, hub_dir, day_sources(day, run)) as a standalone process (the doctor's
         own checkout, {box}); process_is_piece true.
 
@@ -68,7 +69,7 @@ import frankie_box_wake as W  # noqa: E402 - the box's stdlib-only event waker, 
 
 CODE_CURRENT = Path('/opt/frankie-box/code/current')
 QUEUE_SH = 'deploy/aws/box/frankie_box_frankie_queue.sh'
-DAY_PIECES = ('root', 'teacher', 'classroom', 'exchange', 'jev', 'school')
+DAY_PIECES = ('root', 'teacher', 'classroom', 'teacher-2', 'exchange', 'jev', 'school', 'reports')  # the queue resumes all
 SPOKE_SNIPPET = ('import sys; sys.path.insert(0, sys.argv[1]); import frankie_box_hub_spokes as S; '
                  'piece, hub, run, day = sys.argv[2:6]; '
                  'S.run_spoke(piece, hub, S.day_sources(day, run or None))')
@@ -305,7 +306,7 @@ class Doctor:
         spec = self.revivers.get(piece)
         if spec is None:
             self.ev('doctor-no-reviver', piece, dead_pid=dead_pid, known=sorted(self.revivers),
-                    reason='no reviver known for piece %s: it is not resumed; its successors keep waiting' % piece)
+                    reason='no reviver known for piece %s: it is not resumed; the pieces that need it keep waiting' % piece)
             return None
         try:
             hub_doc = hub_doc or H._hub(self.hub_dir)
