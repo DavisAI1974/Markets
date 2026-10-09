@@ -102,10 +102,17 @@ def run(day, calculations, teacher_rows, previous, brain):
         jev_path.write_bytes(jev_raw)
     rules, rules_witness = K.rules()
     names = [c['name'] for c in C.components(visible)]
+    # the teacher's second set beside every Dipole row (package.second_set.jsonl / .json): at each component's anchor
+    # rows its planes are read by their references and handed to the answers; every absence listed
+    teacher_receipt = json.loads((teacher_rows / 'receipt.json').read_bytes()) if (teacher_rows / 'receipt.json').is_file() else None
+    second_set = K.second_set_lesson(teacher_rows, d, visible, pkg['source']['rows'], teacher_receipt=teacher_receipt,
+                                     as_of=p['as_of'])
+    learner_context = dict(second_set=K.second_set_context(second_set))
     try:
-        outputs = {n: K.component_answer(visible, C.component(visible, n), [q['right'] for q in C.pairs_of(visible, n)])
+        outputs = {n: K.component_answer(visible, C.component(visible, n), [q['right'] for q in C.pairs_of(visible, n)],
+                                         learner_context=learner_context)
                    for n in names}
-        summary = K.summary_answer(visible, outputs)
+        summary = K.summary_answer(visible, outputs, learner_context=learner_context)
     except K.ModeNotAnswerable as error:
         refusal = dict(schema=SCHEMA, day=day, status='refused', mode=mode, reason=str(error),
                        listed='Frankie\'s code answers TEACH only; this classroom day is refused with the reason, the run goes on')
@@ -114,7 +121,9 @@ def run(day, calculations, teacher_rows, previous, brain):
         return 3
     built = C.assemble(visible, outputs, summary)
     report = C.validate(visible, built['ledgers'])
+    import frankie_box_teacher_rows as TR
     (d / 'code-answers.json').write_text(json.dumps(dict(schema=K.SCHEMA, rules=rules_witness, outputs=outputs, summary=summary,
+                                                         second_set=TR.second_set_summary(second_set),
                                                          model_calls=0), indent=1, sort_keys=True, default=str))
     (d / 'ledgers.json').write_text(json.dumps(built['ledgers'], indent=1, sort_keys=True, default=str))
     (d / 'classroom.md').write_text(C.render_markdown(built['ledgers'], built['dropped_findings']))
@@ -151,6 +160,7 @@ def run(day, calculations, teacher_rows, previous, brain):
                   dropped_findings=len(built['dropped_findings']), correction_ids=len(correction.get('correction_ids') or ()),
                   teacher_complete=completion.get('teacher_complete'), completion_hash=completion.get('completion_hash'),
                   carried_from_previous=carried, classroom_rules=rules_witness, teacher_rows=str(teacher_rows),
+                  second_set=TR.second_set_summary(second_set),
                   jev_material=dict(path=str(jev_path), sha256=hashlib.sha256(jev_raw).hexdigest(), bytes=len(jev_raw)),
                   stand_ins=dict(request_sha256=request_sha256, session_id=session_id, model_identity=MODEL_IDENTITY,
                                  why='the experiment has no principal request; the request identity is the digest of the '

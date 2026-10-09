@@ -749,6 +749,78 @@ def market_context(visible, timeline, *, save_requested, native_limits=None, car
                       'present; no native training; the Dipole values and target equations are unchanged')
 
 
+def component_anchors(visible):
+    """{component: {first, last, minimum, maximum: (cursor, value)}} over its PRESENT observations, with market_context's
+    tie rules; the anchor cursors the classroom retains pictures at."""
+    out = {}
+    for component in _evidence(visible)['components']:
+        present = [(int(p['cursor']), float(p['value'])) for p in component['observations'] if p['state'] == 'PRESENT']
+        out[component['name']] = {} if not present else dict(
+            first=present[0], last=present[-1], minimum=min(present, key=lambda cv: (cv[1], cv[0])),
+            maximum=max(present, key=lambda cv: (cv[1], -cv[0])))
+    return out
+
+
+def second_set_lesson(teacher_rows, directory, visible, snapshot_rows, *, teacher_receipt=None, day_file=None, as_of=None):
+    """The teacher's second set handed to Frankie (frankie_box_teacher_rows.second_set_lesson): every row's second set
+    whole in <directory>/package.second_set.jsonl (aligned on the classroom's own snapshot rows), the record with every
+    absence listed in <directory>/package.second_set.json, and the second set at each component's anchor rows with its
+    planes resolved by reading their references. Never raises for the data: a failure is the record's status."""
+    import frankie_box_teacher_rows as TR
+    directory = Path(directory)
+    anchors = component_anchors(visible)
+    cursors = sorted({c for chosen in anchors.values() for c, _ in chosen.values()})
+    try:
+        lesson = TR.second_set_lesson(teacher_rows, directory / 'package.second_set.jsonl', snapshot_rows,
+                                      anchor_cursors=cursors, teacher_receipt=teacher_receipt, day_file=day_file,
+                                      as_of=as_of)
+    except Exception as error:  # noqa: BLE001 - the second set's failure is listed; the classroom goes on
+        lesson = dict(schema=TR.SECOND_SET_LEDGER_SCHEMA, status='failed', reason='%s: %s' % (type(error).__name__, error))
+    lesson['component_anchors'] = {name: {k: list(v) for k, v in chosen.items()} for name, chosen in anchors.items()}
+    with (directory / 'package.second_set.json').open('w', encoding='utf-8') as handle:
+        json.dump(lesson, handle, sort_keys=True, default=str)
+    return lesson
+
+
+def second_set_context(lesson):
+    """The second set as a learner_context input: no prior checks; every absence, alignment difference, mismatch and
+    unresolved reference listed (each becomes an open question of the summary)."""
+    listed = []
+    if not isinstance(lesson, dict) or lesson.get('status') != 'carried':
+        listed.append(dict(second_set=(lesson or {}).get('status'), reason=(lesson or {}).get('reason')))
+        return dict(checks=[], listed=listed, lesson=lesson)
+    for role, listing in (lesson.get('absent') or {}).items():
+        listed.append(dict(second_set='absent', role=role, rows=listing['rows'], ordinal_ranges=listing['ordinal_ranges']))
+    differs = (lesson.get('alignment') or {}).get('differs') or []
+    if differs:
+        listed.append(dict(second_set='alignment', rows=len(differs), differs=differs))
+    if lesson.get('key_cursor_differs'):
+        listed.append(dict(second_set='key_cursor_differs', rows=len(lesson['key_cursor_differs']),
+                           items=lesson['key_cursor_differs']))
+    if lesson.get('mismatched_rows'):
+        listed.append(dict(second_set='picture_identity_mismatch', rows=len(lesson['mismatched_rows']),
+                           items=lesson['mismatched_rows']))
+    if lesson.get('clock_after_cutoff'):
+        listed.append(dict(second_set='clock_after_cutoff', items=lesson['clock_after_cutoff']))
+    resolver = ((lesson.get('anchors_resolved') or {}).get('resolver') or {})
+    if (resolver.get('counts') or {}).get('unresolved'):
+        listed.append(dict(second_set='unresolved_plane_references', reasons=resolver.get('unresolved_reasons')))
+    if (lesson.get('sidecar_check') or {}).get('status') == 'differs':
+        listed.append(dict(second_set='sidecar_differs_from_teacher_receipt', check=lesson['sidecar_check']))
+    return dict(checks=[], listed=listed, lesson=lesson)
+
+
+def _second_set_text(learner_context, name):
+    """The teacher's second set at this component's anchor rows (key, clocks, resolved planes, book columns), whole."""
+    lesson = ((learner_context or {}).get('second_set') or {}).get('lesson') or {}
+    if lesson.get('status') != 'carried':
+        return None
+    chosen = (lesson.get('component_anchors') or {}).get(name) or {}
+    rows = (lesson.get('anchors_resolved') or {}).get('rows') or {}
+    at = {kind: dict(cursor=cv[0], value=cv[1], second_set=rows.get(str(cv[0]))) for kind, cv in chosen.items()}
+    return json.dumps(at, sort_keys=True, default=str)
+
+
 def _carry_anchors(carry, anchors, wanted):
     """((pictures, statuses), note) when the teacher's carry holds every anchor this classroom computed (the same
     component, kind, cursor and value for every component) with its picture; else (None, why). Never raises."""
@@ -3592,6 +3664,12 @@ def component_answer(visible, comp, rights, *, learner_context=None, shared_mark
                 'that were context, per instrument, with the external-section equations: relation, Pearson, co-movement): '
                 + json.dumps(paired, sort_keys=True) + '. Every pair is whole in %s; descriptive for this window only, no '
                 'causation or outcome claimed (rules R01, R02, R05).' % _native_file_text(shared_market))
+    second = _second_set_text(learner_context, name)
+    if second is not None:
+        result['evidence'] += (' The teacher\'s second set at this component\'s anchor rows (first / last / minimum / '
+            'maximum PRESENT): the row key, the seven causal clocks (clock_lock_time is the teacher\'s as_of), every '
+            'plane the picture placed at that instant read by its reference, and the book columns: ' + second
+            + '. Every row\'s second set is whole in package.second_set.jsonl; nothing in it changes a Dipole value.')
     native = _facts_for_component(exhaustion_d, name)
     if native:
         # The registry entries whose teacher form is this component also had their own native rows computed by
@@ -3725,12 +3803,24 @@ def summary_answer(visible, outputs, *, learner_context=None, shared_market=None
         recognized = [n for n in notes if n.get('result') in ('pattern_again', 'same_teacher_steps_today')]
         cycle_summary += (' Accumulated structures matched in the current observations, with each evaluated part '
                           'and source retained: ' + json.dumps(recognized, sort_keys=True, default=str) + '.')
+        lesson = (learner_context.get('second_set') or {}).get('lesson')
+        if isinstance(lesson, dict):
+            resolver = (lesson.get('anchors_resolved') or {}).get('resolver') or {}
+            cycle_summary += (' The teacher\'s second set read beside the Dipole rows: ' + json.dumps(dict(
+                status=lesson.get('status'), rows=lesson.get('rows'), carried=lesson.get('carried'),
+                plane_entries=len(lesson.get('planes') or {}), match_status=lesson.get('match_status'),
+                clock_lock_time=lesson.get('clock_lock_time'), anchors=resolver.get('note'),
+                file=(lesson.get('file') or {}).get('path')), sort_keys=True, default=str) + '.')
         correlation_review += (' Legal learner knowledge was applied before these answers. Each prior source and '
             'its individual check, with original scope retained: ' + json.dumps(notes, sort_keys=True, default=str)
             + '. Prior findings are not relabelled as observations from this window; unavailable conditions supply '
             'no new test and do not downgrade a checked finding.')
         for kind, result in learner_context.items():
             for item in result.get('listed', []):
+                if kind == 'second_set':
+                    questions.append('The teacher\'s second set, listed (not filled in): %s' %
+                                     json.dumps(item, sort_keys=True, default=str))
+                    continue
                 questions.append('Legal knowledge input not evaluated by this classroom check (%s): %s' %
                                  (kind, json.dumps(item, sort_keys=True, default=str)))
         for note in notes:

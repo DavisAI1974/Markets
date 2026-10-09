@@ -308,6 +308,19 @@ class SidecarStream:
                     clock_fields=list(self.fields('clock_fields')))
 
 
+def sidecar_header(rows_dir):
+    """(path, header or None, why): line 1 of the sidecar beside a rows directory, read alone (the rows are not read)."""
+    side = sidecar_of(rows_dir)
+    if not side.is_file():
+        return side, None, 'no rows sidecar at %s' % side
+    try:
+        with side.open('rb') as handle:
+            header = json.loads(handle.readline())
+    except (OSError, ValueError) as error:
+        return side, None, 'the sidecar header is unreadable (%s)' % error
+    return side, header, None
+
+
 def sidecar_check(stream, teacher_receipt):
     """The sidecar as read against the teacher receipt's rows_sidecar (sha256, rows): equal or the difference listed."""
     pinned = (teacher_receipt or {}).get('rows_sidecar') or {}
