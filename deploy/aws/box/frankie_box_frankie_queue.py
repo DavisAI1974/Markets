@@ -1833,11 +1833,12 @@ def _finish_steps(run, e, code_root, commit, log):
     if e['classroom_arm'] and os.environ.get('FRANKIE_LANE_MAILBOX'):
         import frankie_box_lane_state as LS
         while True:
+            # no interval (2026-10-09): each request waits inside LS.request for the controller's answer (its mailbox
+            # rewrite), so a 'waiting' answer is re-asked at the controller's next coordination, never on a timer
             run.check_save()
             lease = LS.request('class_take', settings=settings_of(run.a))
             if not lease['waiting']:
                 break
-            time.sleep(15)
         if lease['files']:
             LS.restore_classroom_carry(lease['previous'][0], lease['files'], [X.ROOTS])
         run.check_save()
