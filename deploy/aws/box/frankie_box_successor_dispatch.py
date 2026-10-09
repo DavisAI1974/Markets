@@ -39,9 +39,26 @@ def lock(path):
         yield
 
 
+# Greg, 2026-10-09 (standing): the code version is RECORDED, NEVER COMPARED. These keys carry code pins (a module's
+# bytes sha256 or witness, the owner's code commit) in the documents written once here; a retained document that differs from the one this
+# checkout builds only in them is the same intent and is kept as written (its pins are its record).
+RECORDED_CODE_KEYS = ('reader_sha256', 'readers', 'producer_sha256', 'producer', 'commit')
+
+
+def without_code_pins(value):
+    """`value` without the recorded-only code pins (RECORDED_CODE_KEYS) at any dict depth."""
+    if isinstance(value, dict):
+        return {k: without_code_pins(v) for k, v in value.items() if k not in RECORDED_CODE_KEYS}
+    if isinstance(value, list):
+        return [without_code_pins(v) for v in value]
+    return value
+
+
 def once(path, value):
+    """Write `value` once; a retained file is kept (its pin returned) when it is the same intent, code pins aside."""
     if path.exists():
-        if read(pin(path)) != value:
+        retained = read(pin(path))
+        if retained != value and without_code_pins(retained) != without_code_pins(value):
             raise ValueError('retained successor intent differs: ' + str(path))
     else:
         D.write_json(path, value)
@@ -88,6 +105,12 @@ def enqueue(run, day, request):
     with lock(directory / 'inbox.lock'):
         path = directory / 'requests' / (key + '.json')
         if not path.exists():
+            # the same request filed under another code commit (the owner's commit is recorded, never compared: Greg,
+            # 2026-10-09) is this request: its retained filing is returned, nothing is filed again
+            for other in (directory / 'requests').glob('*.json'):
+                retained = operation(other, identity)
+                if retained['request'] == request and retained['search'] == selected_search:
+                    return dict(id=other.stem, operation=pin(other))
             if (directory / 'closed.json').exists() or run.finished('jev', day):
                 raise ValueError('completed owner boundary is closed; no implicit reopening of its day')
             for other in (directory / 'requests').glob('*.json'):

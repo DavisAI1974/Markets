@@ -928,7 +928,8 @@ def shared_scan(claims_docs, days):
 # (or an old-shape record without the position) -> ONE full pass (the task again: every byte hashed, the pin checked by
 # test() / the native assembly exactly as before). Identity is content (frankie_box_experiment_root.content_rebinds):
 # the saved header against the one this checkout builds; checkout moves are recorded under <saves>/checkout-rebinds/,
-# any other difference refuses (an unfinished save) or sets aside (a completed one: nothing to resume).
+# any other difference refuses (an unfinished save) or sets aside (a completed one: nothing to resume). The header's
+# code identity is RECORDED, NEVER COMPARED (Greg, 2026-10-09): only SAVE_SCHEMA, the tasks and the specs compare.
 SAVE_SCHEMA = 'FRANKIE_SCIENTIFIC_PRE_READ_SAVE_V1'
 SAVE_EXIT = 75
 SAVE_EVERY_SECONDS = 60
@@ -1035,14 +1036,25 @@ def _save_identity(tasks):
         import frankie_box_bedrock as BED
     except ImportError:
         from deploy.aws.box import frankie_box_bedrock as BED
-    return dict(schema=SAVE_SCHEMA, tasks=[_task_identity(t) for t in tasks], specs=specs,
-                code=BED.code_identity(Path(__file__), SAVE_CODE_NAMES))
+    try:
+        code = BED.code_identity(Path(__file__), SAVE_CODE_NAMES)
+    except Exception as error:  # recorded only (Greg, 2026-10-09): never a refusal
+        code = dict(unavailable='%s: %s' % (type(error).__name__, error))
+    return dict(schema=SAVE_SCHEMA, tasks=[_task_identity(t) for t in tasks], specs=specs, code=code)
+
+
+SAVE_RECORDED_CODE = ('code', 'code_sha256')
+
+
+def _compared_save_identity(identity):
+    """A save header without its recorded-only code fields (Greg, 2026-10-09: the code is recorded, never compared)."""
+    return {k: v for k, v in identity.items() if k not in SAVE_RECORDED_CODE}
 
 
 class PreReadSave:
     """The pre-read checkpoint (see the section note): load() the saved values that may be reused, add() a finished
     task, flush() at a save point (fsync), finish() at the end. Never changes a value: a reused value is the pickled
-    value of the same task on the same unchanged file under the same code identity."""
+    value of the same task on the same unchanged file (the code identity is recorded beside it, never compared)."""
 
     def __init__(self, directory, tasks):
         self.directory = Path(directory)
@@ -1099,21 +1111,27 @@ class PreReadSave:
             # again. A completed save of other code or inputs is set aside below.
             self.note['completed_save_reused'] = True
         saved_identity = (header or {}).get('identity')
-        if saved_identity is not None and 'code' not in saved_identity:
-            # an older save shape without the function-level identity: its values are not reused; one full pass
+        if saved_identity is not None and (not isinstance(saved_identity, dict) or 'tasks' not in saved_identity):
+            # a save with no task list: nothing in it can be matched to a task; one full pass
             self.note['old_shape'] = True
             saved_identity = None
         if saved_identity is None:
             self._set_aside('the save has no identity this code can check (an older shape): one full pass of every task')
             return {}
+        # Greg, 2026-10-09 (standing): the code version is recorded, never compared. The save's code identity and this
+        # checkout's are recorded in the note; only SAVE_SCHEMA (the pickle format), the tasks and the specs compare.
+        self.note['code_recorded'] = dict(saved=saved_identity.get('code'), current=self.identity.get('code'),
+                                          differs=saved_identity.get('code') != self.identity.get('code'),
+                                          rule='recorded, never compared (Greg, 2026-10-09)')
         import frankie_box_experiment_root as XR
-        moves = XR.content_rebinds(saved_identity, self.identity)
+        moves = XR.content_rebinds(_compared_save_identity(saved_identity), _compared_save_identity(self.identity))
         if moves is None:
             if complete:
-                self._set_aside('a completed save of different code or inputs: nothing to resume, set aside')
+                self._set_aside('a completed save of different inputs: nothing to resume, set aside')
                 return {}
-            raise SaveRefused('the saved scientific pre-read %s differs from what this checkout builds (code or inputs); '
-                             'retained for recovery: move it aside to start the pre-read again' % self.path)
+            raise SaveRefused('the saved scientific pre-read %s differs from what this checkout builds (its inputs: '
+                             'tasks, specs or save format; code is never compared); retained for recovery: move it '
+                             'aside to start the pre-read again' % self.path)
         if moves:
             from frankie_box_durable import write_json
             write_json(self.directory / 'checkout-rebinds' / ('%s-%d.json' % (self.key, time.time_ns())),
@@ -2246,7 +2264,11 @@ def teach_standalone_successor(day, search, brain, out_dir, *, request):
                         successor=request, owner_day=day)
         frozen = dict(schema='FRANKIE_STANDALONE_TEACHER_INPUTS_V1', identity=identity,
                       selection=selected, selection_sha256=R._lesson_digest(selected))
+        # the reader pins are recorded, never compared (Greg, 2026-10-09): a retained inputs.json frozen under other
+        # reader bytes is kept and is the operation's binding from here on (its identity is the one carried below)
         inputs = once(out / 'inputs.json', frozen)
+        frozen = read(inputs)
+        identity = frozen['identity']
         if Path(request['original_inputs']['path']).resolve() == Path(inputs['path']).resolve():
             raise ValueError('standalone successor cannot overwrite its original operation')
         result_path = out / 'result.json'
@@ -2343,6 +2365,10 @@ def freeze_operation(doc, days, out_dir, brain_dir):
         raise ValueError('standalone search changed before operation freeze')
     identity = dict(day=day, brain=str(brain_dir), reader_sha256=witness(__file__)['sha256'],
                     readers={m.__name__: witness(m.__file__) for m in (HC, HR, SEARCH, R)})
+    # Greg, 2026-10-09 (standing): the reader pins (reader_sha256, readers) are RECORDED, NEVER COMPARED: a frozen
+    # operation written under other code bytes is the same operation when its data (day, brain, doc, source, searches,
+    # selection, binding tables) is the same; the retained file is kept as written (its pins are its record).
+    recorded = ('reader_sha256', 'readers')
     saved = json.loads(path.read_bytes()) if path.exists() else None
     records = (saved['selection']['reproduction_records'] if saved is not None else
                dict(directory=str(REPRODUCTION_DIR), files=HR.record_selection(REPRODUCTION_DIR),
@@ -2357,7 +2383,9 @@ def freeze_operation(doc, days, out_dir, brain_dir):
             raise ValueError('historical claims changed while their operation was being frozen')
         doc = current
     if path.exists():
-        if (saved.get('schema') != 'FRANKIE_STANDALONE_TEACHER_INPUTS_V1' or saved['identity'] != identity
+        if (saved.get('schema') != 'FRANKIE_STANDALONE_TEACHER_INPUTS_V1'
+                or {k: v for k, v in saved['identity'].items() if k not in recorded}
+                != {k: v for k, v in identity.items() if k not in recorded}
                 or saved['selection']['doc'] != doc or saved['selection']['source'] != source
                 or saved['selection']['searches'] != searches
                 or saved['selection_sha256'] != R._lesson_digest(saved['selection'])

@@ -100,7 +100,8 @@ def _transition_operation(pin, lesson):
 
 
 def _validate_operation(operation, lesson):
-    """Check one completed accumulated result against its frozen owner operation."""
+    """Check one completed accumulated result against its frozen owner operation (data only: the reader sha256 pins are
+    recorded, never compared)."""
     pin, identity = operation['inputs'], operation['identity']
     if (not isinstance(pin.get('path'), str) or not pin['path'] or type(pin.get('bytes')) is not int
             or pin['bytes'] < 0 or not re.fullmatch('[0-9a-f]{64}', str(pin.get('sha256')))):
@@ -117,7 +118,6 @@ def _validate_operation(operation, lesson):
                                   manifest_sha256=s['manifest']['sha256']) for s in operation['searches']]
         if (lesson.get('scientific_operation') != dict(inputs=pin, selection_sha256=operation['selection_sha256'])
                 or lesson['claim_inputs_sha256'] != operation['claim_inputs_sha256']
-                or claims['reader_sha256'] != identity['reader_sha256']
                 or lesson['claims_sha256'] != operation['claims_sha256']
                 or lesson['searches'] != expected_searches or lesson['day'] != identity['day']
                 or lesson.get('results_sha256') != _lesson_digest(lesson['results'])):
@@ -134,8 +134,9 @@ def _validate_operation(operation, lesson):
                 'reproduction_records_selection_sha256', 'historical_binding_tables_sha256'):
         if not re.fullmatch('[0-9a-f]{64}', str(operation.get(key))):
             raise ValueError('correction transition lacks its complete operation binding: ' + key)
-    if (claims.get('reader_sha256') != identity['readers']['frankie_box_scientific_teacher']['sha256']
-            or any(claims.get(key) != operation[key] for key in
+    # the reader sha256 of the lesson and of its frozen operation are records of the code each ran under (Greg,
+    # 2026-10-09: the code version is recorded, never compared); the data bindings below stay checked
+    if (any(claims.get(key) != operation[key] for key in
                    ('reproduction_records_selection_sha256', 'historical_binding_tables_sha256'))
             or identity.get('day') != lesson['day'] or not identity.get('brain')
             or not identity.get('search') or lesson.get('results_sha256') != _lesson_digest(lesson['results'])):
