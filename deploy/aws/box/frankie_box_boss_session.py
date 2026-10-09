@@ -1558,6 +1558,69 @@ def _load_file_claims(directory):
     return out
 
 
+ARCHIVE_README_SUFFIX = '.ARCHIVED.README.txt'      # frankie_box_root_move.README_SUFFIX and the session-6 clean script
+
+
+def _archive_recorded_sha256(recorded, target):
+    """Every sha256 the move recorded for an archived file: the ARCHIVED README at the recorded path and the
+    <target>.sha256 beside the copy (both written from the copy's write stream). Never raises."""
+    found = set()
+    for record in (Path(str(recorded) + ARCHIVE_README_SUFFIX), Path(str(target) + '.sha256')):
+        try:
+            if record.is_file() and record.stat().st_size <= 1 << 20:
+                found.update(re.findall(r'\b[0-9a-f]{64}\b', record.read_text(encoding='utf-8', errors='replace')))
+        except OSError:
+            pass
+    return found
+
+
+def _archived_witness(path, claim, claims_dir=None):
+    """Session 11 (2026-10-09): the basis text for a saved artifact the disk-pressure clean moved to the archive volume
+    (a symlink at the recorded path, or at a parent, resolving under the box's own roots), else None (the caller goes on
+    as before). Two shapes, neither read whole:
+      a file moved whole (<name> -> /opt/frankie-box/archive/...): its size must equal the pin and the move's
+        write-stream sha256 (the ARCHIVED README / <copy>.sha256) must be the pin's; a fresh FRANKIE_FILE_CLAIM_V2 row
+        for the copy is then appended to <claims_dir>/file-claims.jsonl (one 64 KiB tail read) so later readers take
+        the claim;
+      a member of a directory archived as a .tar.zst (<dir> -> <dir>.tar.zst): the tarball must be a regular file; the
+        member is witnessed by the pin the ROOT recorded, never extracted, never hashed (the tarball's own stream sha256
+        is its integrity record)."""
+    try:
+        from frankie_box_prepare_trading_day import archive_link
+    except ImportError:
+        from deploy.aws.box.frankie_box_prepare_trading_day import archive_link
+    try:
+        link = archive_link(path)
+        if link is None or not link['within_box_roots']:
+            return None
+        if link['member'] is not None:
+            tarball = Path(link['target'])
+            if not tarball.is_file() or tarball.stat().st_size == 0:
+                return None
+            return ('archived: %s -> %s (a tar.zst); member %s not extracted and not read: witnessed by the ROOT\'s '
+                    'recorded bytes and sha256' % (link['link'], link['target'], link['member']))
+        target = Path(link['resolved'])
+        if not target.is_file() or target.stat().st_size != claim['bytes']:
+            return None
+        if claim['sha256'] not in _archive_recorded_sha256(link['link'], link['target']):
+            return None
+        note = ''
+        if claims_dir is not None:
+            try:                              # a claim is a hint: the witness above stands without it
+                from research.kalshi.frankie_boss.operations.ingest_block_sources import file_claim
+                row = file_claim(target, claim['bytes'], claim['sha256'],
+                                 'archived witness: the move\'s write-stream sha256 for %s' % path)
+                added = _box_module('frankie_box_brain').append_file_claim(claims_dir, row)
+                note = '; claim row for the copy: %s' % added.get('status')
+            except Exception as error:        # noqa: BLE001
+                note = '; no claim row written (%s: %s)' % (type(error).__name__, error)
+        _filehash().remember(target, claim)
+        return ('archived: symlink %s -> %s; the move\'s write-stream sha256 equals the saved pin and the size is equal; '
+                'not read whole%s' % (link['link'], link['target'], note))
+    except (ImportError, OSError, ValueError, KeyError, TypeError):
+        return None
+
+
 def _artifact_check(item, claims, mode, claims_dir=None):
     """A saved artifact {path, bytes, sha256} against the file now: (witness, basis). With mode 'claim' and a saved
     claim row (V1 or V2) for the path whose bytes/sha256 are the artifact's and which still holds (inode, size,
@@ -1570,6 +1633,10 @@ def _artifact_check(item, claims, mode, claims_dir=None):
     basis = None
     if row is not None and (row.get('bytes'), row.get('sha256')) == (claim['bytes'], claim['sha256']):
         basis = _claim_still_holds(row, claims_dir=claims_dir, claims=claims)
+    if basis is None and mode == 'claim':
+        archived = _archived_witness(path, claim, claims_dir)
+        if archived is not None:
+            return dict(claim), archived
     if basis is None:
         seen = witness(path)
         if seen != claim:

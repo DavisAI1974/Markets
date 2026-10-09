@@ -31,7 +31,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from frankie_box_prepare_trading_day import witness, safe_path  # noqa: E402
+from frankie_box_prepare_trading_day import witness, safe_path, archive_link  # noqa: E402
 from frankie_box_author_monday_launch import fresh, sync_directory  # noqa: E402
 from frankie_box_monday_calculations import whole_day_pin_document  # noqa: E402
 
@@ -153,9 +153,10 @@ def _pinned(path):
     sha256 from frankie_box_filehash's per-process cache, which the durable writer fills from its WRITE stream and the
     reference layers fill from their one spool scan, so derive.json, the layer files and the three shared spools are not
     read again at the receipt (before: a full uncached read of each, the frames spool among them, at every ROOT's end)."""
-    path = safe_path(path)
+    recorded = path
+    path = safe_path(path)            # session 11: a symlink into the box's archive is followed (the resolved path)
     import frankie_box_filehash
-    return dict(path=str(path), **frankie_box_filehash.witness(path))
+    return dict(path=str(recorded), **frankie_box_filehash.witness(path))
 
 
 def _sha256_file(path):
@@ -749,14 +750,27 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
             retained_checks, witnessed = [], {}
 
             def evidence(item, what):
-                path = safe_path(item['path'])                     # the same refusal as the witness before (no symlink)
-                seen, basis = _artifact_check(dict(item, path=str(path)), claims, mode, claims_dir=session.work)
-                if dict(seen, path=str(path)) != {k: item[k] for k in ('path', 'bytes', 'sha256')}:
+                # session 11 (2026-10-09): an artifact the disk-pressure clean moved to the archive volume is reached
+                # through a symlink at its recorded path; it is taken there (_artifact_check: the claim, else the move's
+                # write-stream sha256, else one whole read; a member of an archived .tar.zst by the recorded pin, never
+                # extracted). The recorded path string is what is compared and recorded; the link beside it.
+                link = archive_link(item['path'])
+                if link is None or link['member'] is None:
+                    safe_path(item['path'])                        # '..', a relative path or a link outside the box refuse
+                elif not link['within_box_roots']:
+                    raise ResumeRefused('saved %s is behind a link outside the box roots: %s' % (what, item['path']),
+                                        document=item['path'])
+                seen, basis = _artifact_check(dict(item), claims, mode, claims_dir=session.work)
+                if dict(seen, path=item['path']) != {k: item[k] for k in ('path', 'bytes', 'sha256')}:
                     raise ResumeRefused('saved %s differs: %s' % (what, item['path']), document=item['path'],
                                         differs=_differs({k: item[k] for k in ('path', 'bytes', 'sha256')},
-                                                         dict(seen, path=str(path))))
-                retained_checks.append(dict(path=str(path), bytes=item['bytes'], basis=basis))
-                witnessed[str(path.resolve())] = dict(path=str(path), bytes=item['bytes'], sha256=item['sha256'])
+                                                         dict(seen, path=item['path'])))
+                check = dict(path=item['path'], bytes=item['bytes'], basis=basis)
+                if link is not None:
+                    check['archived'] = 'symlink %s -> %s' % (link['link'], link['target'])
+                retained_checks.append(check)
+                witnessed[str(Path(item['path']).resolve())] = dict(path=item['path'], bytes=item['bytes'],
+                                                                    sha256=item['sha256'])
             from frankie_box_boss_session import without_recorded_code
             if without_recorded_code(binding_meaning(result.get('source_binding'))) != \
                     without_recorded_code(binding_meaning(binding)) or \
