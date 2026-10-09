@@ -909,7 +909,7 @@ def all99_crosswalk(code_root):
     return reg, pin
 
 
-def all99_admission(code_root, day, calc_dir, calc, plan_policy, policy_mismatch, ingest, brain):
+def all99_admission(code_root, day, calc_dir, calc, plan_policy, policy_mismatch, ingest, brain, derive_doc=None):
     """Per day: every one of the 99 registry entries with its disposition for THIS ROOT (ALL99_SCHEMA), its own words:
       admitted   produced AND carried into the shared market timeline picture by the entry's OWN settled carrier
                  (frankie_box_all99_coverage.MARKET_CARRIERS: input / opening / clock / availability through the sealed
@@ -937,7 +937,11 @@ def all99_admission(code_root, day, calc_dir, calc, plan_policy, policy_mismatch
     derive, derive_why, derive_sha, derive_problem = {}, None, None, None
     try:
         dpath = (calc.get('derivation') or {}).get('path')
-        if dpath:
+        pinned = (calc.get('derivation') or {}).get('sha256')
+        if dpath and derive_doc is not None and derive_doc[0] is not None and pinned:
+            # 2026-10-09 (one pass): the caller's one parse of derive.json; its sha256 is the receipt's derivation pin
+            derive, derive_sha = derive_doc[0], pinned
+        elif dpath:
             raw = Path(dpath).read_bytes()             # derive.json: a sealed record, read once (bytes and sha256 here)
             derive_sha = hashlib.sha256(raw).hexdigest()
             derive = json.loads(raw)
@@ -1207,7 +1211,34 @@ def last_json_line(log):
         return None
 
 
-def native_pass_facts(output, calc, policy, child_seconds):
+def load_derive(output):
+    """(derive.json parsed, None) or (None, why) of a ROOT output: read and parsed ONCE per Run.root, then passed along."""
+    try:
+        return json.loads((Path(output) / 'work' / 'derive.json').read_bytes()), None
+    except (OSError, ValueError) as error:
+        return None, '%s: %s' % (type(error).__name__, error)
+
+
+def receipt_pins(calc, receipt_path, receipt_sha256):
+    """{path: {bytes, sha256, not_after_ns}} of the files a ROOT receipt pins (derivation, digest, external computation)
+    plus the receipt itself (hashed once by the caller): the brain stage takes them by claim (size and recorded sha256,
+    the file not newer than the receipt) and reads nothing whole (2026-10-09, one pass)."""
+    out = {}
+    try:
+        not_after = os.stat(receipt_path).st_mtime_ns
+        out[str(receipt_path)] = dict(bytes=os.stat(receipt_path).st_size, sha256=receipt_sha256, not_after_ns=not_after,
+                                      basis='hashed once by Run.root')
+    except OSError:
+        return out
+    for field in ('derivation', 'digest', 'external_computation'):
+        pin = (calc or {}).get(field)
+        if isinstance(pin, dict) and pin.get('path') and isinstance(pin.get('bytes'), int) and pin.get('sha256'):
+            out[str(pin['path'])] = dict(bytes=pin['bytes'], sha256=pin['sha256'], not_after_ns=not_after,
+                                         basis='the ROOT receipt\'s %s pin' % field)
+    return out
+
+
+def native_pass_facts(output, calc, policy, child_seconds, derive=None):
     """What the ROOT's native pass (bedrock on under the shared policy) did, for the receipt and the one-day inspection:
     requested on/off, the derivation's own bedrock record (skipped/reason, its timings when recorded, the ledgers it
     produced), and the ROOT child's wall seconds on the held 16-CPU lane. The ADDED time of the native pass is this ROOT's
@@ -1215,10 +1246,9 @@ def native_pass_facts(output, calc, policy, child_seconds):
     here). A failed native pass is listed with its reason; it never rejects the day by this caller."""
     out = dict(requested='on' if policy else 'off (legacy plan)', root_child_seconds=child_seconds, cpus=16,
                added_seconds='unmeasured: compare with a bedrock-off ROOT of the same day (none run)')
-    try:
-        derive = json.loads((Path(output) / 'work' / 'derive.json').read_bytes())
-    except (OSError, ValueError) as error:
-        out.update(derive='unreadable or absent: %s: %s' % (type(error).__name__, error))
+    derive, why = derive if derive is not None else load_derive(output)
+    if derive is None:
+        out.update(derive='unreadable or absent: %s' % why)
         return out
     b = derive.get('bedrock') if isinstance(derive.get('bedrock'), dict) else None
     if b is None:
@@ -1427,7 +1457,7 @@ class Run:
         return self.record(stage, key, 'waiting', owner=root['owner'],
                            reason='the owning AWS lane has not published a completed %s receipt; its artifacts stay there' % stage)
 
-    def brain_stage(self, day, stage, sources, summary=None, inline_limit=2 * 1024 * 1024, declined='record'):
+    def brain_stage(self, day, stage, sources, summary=None, inline_limit=2 * 1024 * 1024, declined='record', known=None):
         """Immediately commit newly available stage knowledge to Frankie's brain before advancing. Session 9: each
         source's sha256 comes from its attempt's FRANKIE_FILE_CLAIM row when the claim still holds (stat + last 64 KiB;
         the ROOT's digest, layers, spools and ledgers), else from one whole read, after which a large source's claim row
@@ -1440,7 +1470,8 @@ class Run:
         brain = Path(self.plan.get('brain') or str(BRAIN))
         entry = brain / ('%s-%s' % (day, stage))
         try:
-            manifest, reused = BR.write_stage_entry(brain, day, stage, sources, summary=summary, inline_limit=inline_limit)
+            manifest, reused = BR.write_stage_entry(brain, day, stage, sources, summary=summary, inline_limit=inline_limit,
+                                                    known=known)
         except ValueError as error:
             if declined == 'raise' or 'different' not in str(error) or 'stage knowledge' not in str(error):
                 raise
@@ -1837,7 +1868,8 @@ class Run:
                 raise ValueError('the owned ROOT output is not a retained directory: %s' % owned_output)
         policy = self.plan.get('shared_market_policy')
         if calc:
-            retained = json.loads((calc / 'calculations-receipt.json').read_bytes())
+            retained_raw = (calc / 'calculations-receipt.json').read_bytes()     # read once: parsed and hashed
+            retained = json.loads(retained_raw)
             if retained.get('day') != e['day'] or retained.get('day_role') != e['role']:
                 raise ValueError('retained ROOT receipt belongs to another day/role')
             mismatch = self.shared_policy_mismatch(retained.get('shared_market_policy')) if policy else None
@@ -1856,7 +1888,9 @@ class Run:
                 sources.append(digest_path)
             if (calc / 'external-computation.json').is_file():
                 sources.append(calc / 'external-computation.json')
-            brain_entry = self.brain_stage(e['day'], 'root', sources,
+            receipt_path = calc / 'calculations-receipt.json'
+            receipt_sha = hashlib.sha256(retained_raw).hexdigest()   # hashed once, from the bytes parsed above (2026-10-09)
+            brain_entry = self.brain_stage(e['day'], 'root', sources, known=receipt_pins(retained, receipt_path, receipt_sha),
                                            summary=dict(calculations=str(calc), role=e['role'],
                                                         root_status=retained.get('status'),
                                                         producer_failures=retained.get('failure_count'),
@@ -1864,14 +1898,12 @@ class Run:
                                                                 self.DIGEST_NOT_BUILT)))
             all99 = self.all99(e['day'], calc, retained, policy, None)
             return self.record('root', e['day'], 'reused', calculations=str(calc), interrupted_attempts=attempts,
-                               receipt_sha256=sha256_file(calc / 'calculations-receipt.json')
-                               if (calc / 'calculations-receipt.json').is_file() else None,
+                               receipt_sha256=receipt_sha,
                                shared_market_policy=retained.get('shared_market_policy'), plan_policy=policy,
                                policy_recorded=mismatch, brain_entry=brain_entry, all99=all99,
                                # the one-day inspection: a reused ROOT received the retained receipt and produced the
                                # same all-99 list; operator review only
-                               inspection=dict(inputs=dict(calculations=str(calc), receipt_sha256=sha256_file(calc / 'calculations-receipt.json')
-                                                           if (calc / 'calculations-receipt.json').is_file() else None),
+                               inspection=dict(inputs=dict(calculations=str(calc), receipt_sha256=receipt_sha),
                                                use=dict(reused=True, plan_policy=policy or 'none (an older saved legacy plan, kept as saved: native pass off; every NEW run has it ON)',
                                                         interrupted_attempts=attempts),
                                                outputs=dict(root_status=retained.get('status'), producer_failures=retained.get('failure_count'),
@@ -1916,8 +1948,10 @@ class Run:
         child_started = time.time()
         code, log = self.child('root', e['day'], 'frankie_box_experiment_root.sh', env)
         child_seconds = round(time.time() - child_started, 1)
+        derive = load_derive(output)                 # derive.json parsed ONCE for this ROOT step (2026-10-09, one pass)
         saved = self.child_saved('root', e['day'], code, log, output_root=str(output), interrupted_attempts=attempts,
-                                 seconds=child_seconds, native_pass=native_pass_facts(output, None, policy, child_seconds),
+                                 seconds=child_seconds, native_pass=native_pass_facts(output, None, policy, child_seconds,
+                                                                                      derive=derive),
                                  claim='kept: the attempt resumes under it (claim_root retakes this box\'s own claim when no '
                                        'ROOT of the day runs)' if held else 'no claim store')
         if saved:
@@ -1946,35 +1980,38 @@ class Run:
             self.claim_end(e, output, None, 'the box ROOT attempt ended without calculations-receipt.json (exit %s)' % code)
             return self.record('root', e['day'], 'failed', exit_code=code, log=log, output_root=str(output),
                                interrupted_attempts=attempts, seconds=child_seconds, resume=resume,
-                               native_pass=native_pass_facts(output, None, policy, child_seconds),
+                               native_pass=native_pass_facts(output, None, policy, child_seconds, derive=derive),
                                reason='no calculations-receipt.json (the attempt is kept)%s' % (
                                    '; the native pass was ON (policy %s): its failure, if it is the cause, is named in the '
                                    'log and native_pass; no bedrock-off retry is substituted' % policy if policy else ''))
-        calc = json.loads((output / 'calculations-receipt.json').read_bytes())
-        native = native_pass_facts(output, calc, policy, child_seconds)
-        self.claim_end(e, output, sha256_file(output / 'calculations-receipt.json'), None)
+        receipt_path = output / 'calculations-receipt.json'
+        receipt_raw = receipt_path.read_bytes()      # read once: parsed here, its sha256 from the same bytes
+        calc = json.loads(receipt_raw)
+        receipt_sha = hashlib.sha256(receipt_raw).hexdigest()
+        native = native_pass_facts(output, calc, policy, child_seconds, derive=derive)
+        self.claim_end(e, output, receipt_sha, None)
         # the 99 layers combined for Frankie: per entry produced / admitted / absent (thinner picture, the day stays) /
         # knowledge / retired / sealed / disabled / output, on this receipt and in the one-day inspection (Greg, 2026-10-07)
-        all99 = self.all99(e['day'], output, calc, policy, self.shared_policy_mismatch(calc.get('shared_market_policy')) if policy else None)
+        all99 = self.all99(e['day'], output, calc, policy, self.shared_policy_mismatch(calc.get('shared_market_policy')) if policy else None,
+                           derive=derive)
         digest_path = output / 'work' / 'derivation-digest-full.md'      # session 6: absent on a day with no digest reader
+        # 2026-10-09 (one pass): the receipt's own pins (derivation, digest, external computation) and its sha256 are
+        # taken by claim; the brain stage reads none of them whole again
         brain_entry = self.brain_stage(e['day'], 'root',
-                                       [output / 'calculations-receipt.json', output / 'work' / 'derive.json'] +
+                                       [receipt_path, output / 'work' / 'derive.json'] +
                                        ([digest_path] if digest_path.is_file() else []) +
                                        ([output / 'external-computation.json']
                                         if (output / 'external-computation.json').is_file() else []),
+                                       known=receipt_pins(calc, receipt_path, receipt_sha),
                                        summary=dict(calculations=str(output), role=e['role'],
                                                     root_status=calc.get('status'),
                                                     producer_failures=calc.get('failure_count'),
                                                     digest=('attached' if digest_path.is_file() else
                                                             self.DIGEST_NOT_BUILT)))
-        finalize = None
-        try:
-            finalize = json.loads((output / 'work' / 'derive.json').read_bytes()).get('finalize_projection')
-        except (OSError, ValueError):
-            finalize = None
+        finalize = (derive[0] or {}).get('finalize_projection')
         measured = dict(calculations=str(output))
         return self.record('root', e['day'], 'done', exit_code=code, log=log, calculations=str(output),
-                           receipt_sha256=sha256_file(output / 'calculations-receipt.json'), new_bytes=new_bytes(output),
+                           receipt_sha256=receipt_sha, new_bytes=new_bytes(output),
                            # 2026-10-08: what the ROOT's finalize projected and wrote, and its inline spool-layer bytes
                            # (0 on reference layers), which the root disk gate does not reserve again
                            finalize_projection=finalize, inline_spool_layer_bytes=self.inline_spool_layer_bytes(measured),
@@ -1993,18 +2030,18 @@ class Run:
                                            use=dict(resume=resume, plan_policy=policy or 'none (an older saved legacy plan, kept as saved: native pass off; every NEW run has it ON)',
                                                     interrupted_attempts=attempts, claim=held[2] if held else 'no claim store'),
                                            outputs=dict(calculations=str(output), exit_code=code,
-                                                        receipt_sha256=sha256_file(output / 'calculations-receipt.json'),
+                                                        receipt_sha256=receipt_sha,
                                                         root_status=calc.get('status'), producer_failures=calc.get('failure_count'),
                                                         shared_market_policy=calc.get('shared_market_policy'),
                                                         native_pass=native, seconds=child_seconds,
                                                         all99=all99_summary(all99))))
 
-    def all99(self, day, calc_dir, calc, policy, mismatch):
+    def all99(self, day, calc_dir, calc, policy, mismatch, derive=None):
         """The day's all-99 production/admission list (all99_admission), never raising out of the ROOT step: a failure
         to build the list is itself listed (schema, error) so the receipt shows it instead of a missing field."""
         try:
             return all99_admission(self.code_root, day, calc_dir, calc, policy, mismatch, self.receipt('ingest', day),
-                                   self.plan.get('brain') or str(BRAIN))
+                                   self.plan.get('brain') or str(BRAIN), derive_doc=derive)
         except Exception as error:  # noqa: BLE001 - the list is operator-visible accounting; its failure is recorded, not hidden
             self.log('all99 %s: the list could not be built (%s: %s)' % (day, type(error).__name__, error))
             return dict(schema=ALL99_SCHEMA, day=day, listed=0, counts={}, entries=[],

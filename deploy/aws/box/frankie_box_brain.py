@@ -60,7 +60,7 @@ def parse_entry_name(name):
     return (match.group(1), match.group(2)) if match else None
 
 
-def write_stage_entry(brain, day, stage, sources, summary=None, inline_limit=2 * 1024 * 1024):
+def write_stage_entry(brain, day, stage, sources, summary=None, inline_limit=2 * 1024 * 1024, known=None):
     """Commit one knowledge-producing stage to Frankie's brain immediately.
 
     The brain entry is <brain>/<day>-<stage>/stage-knowledge.json. Small JSON/text sources are carried inline; large
@@ -82,7 +82,7 @@ def write_stage_entry(brain, day, stage, sources, summary=None, inline_limit=2 *
         # (stat + filesystem + last 64 KiB), else read whole; a large source read whole leaves its claim row behind.
         # The basis is NOT part of stage-knowledge.json (the entry's bytes stay the same whichever way the sha256 came,
         # so a repeat reuses the entry); it rides on the manifest of a first write and on the returned manifest.
-        pin, basis = stage_source_witness(p)
+        pin, basis = stage_source_witness(p, known=(known or {}).get(str(p)))
         bases.append(dict(path=str(p), **basis))
         rec = dict(path=str(p), **pin, inline=False)
         if pin['bytes'] <= inline_limit and p.suffix.lower() in ('.json', '.md', '.txt'):
@@ -733,7 +733,7 @@ def append_file_claim(work, row):
         return dict(file=str(target), status='not_written', added=0, reason='%s: %s' % (type(error).__name__, error))
 
 
-def stage_source_witness(path, threshold=None):
+def stage_source_witness(path, threshold=None, known=None):
     """({bytes, sha256}, basis) of one stage-entry source with at most ONE whole read (session 9, Greg: "one pass over
     the data, never two"). The rule:
       - a claim row for the source under its attempt (<D>/work/file-claims.jsonl, D the nearest such ancestor) whose
@@ -750,8 +750,15 @@ def stage_source_witness(path, threshold=None):
     p = Path(path)
     if threshold is None:
         threshold = int(os.environ.get('FRANKIE_BRAIN_CLAIM_THRESHOLD') or STAGE_CLAIM_THRESHOLD)
-    work = _claims_work_of(p)
     before = os.stat(p)
+    if known and known.get('sha256') and known.get('bytes') == before.st_size and \
+            (known.get('not_after_ns') is None or before.st_mtime_ns <= known['not_after_ns']):
+        # 2026-10-09 (one pass): the caller's recorded pin (a ROOT receipt's derivation/digest/external pins, or the
+        # receipt hashed once by its caller): its size matches and the file is not newer than the receipt; nothing read
+        pin = dict(bytes=int(known['bytes']), sha256=str(known['sha256']))
+        remember(p, pin)
+        return pin, dict(basis='by claim', claim=known.get('basis') or 'the caller\'s recorded pin')
+    work = _claims_work_of(p)
     if work is not None:
         row = _claim_row_of(work, p)
         if row is not None and row.get('bytes') == before.st_size and row.get('sha256'):
