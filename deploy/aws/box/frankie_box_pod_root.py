@@ -375,8 +375,7 @@ def main():
     attempt = env.get('ATTEMPT') or ''
     if action == 'prepare':
         held = held_by(run, day, where, attempt)
-        if held.get('commit') != env.get('CODE_COMMIT'):
-            raise SystemExit('preparation must use the retained claim commit')
+        # the claim's commit is recorded on it, never compared with this preparation's CODE_COMMIT (2026-10-09)
         st = day_state(run, plan, entry_of(plan, day), ignore_claim=True)
         if st['state'] != 'ready':
             raise SystemExit('retained day is not ready for preparation: %s' % st)

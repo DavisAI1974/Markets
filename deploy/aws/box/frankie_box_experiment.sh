@@ -19,15 +19,42 @@
 # the whole presign string), FRANKIE_QUEUE (on|off, default on: classroom-arm days enter Frankie's class line, arrival
 # FIFO, one class at a time), ROOT_QUEUE (on|off, default on: ROOT-ready days enter the ROOT line, arrival FIFO to the next
 # free day-run slot), QUEUE_WORKER_SECONDS (43200: a kicked queue worker's bound and the wait on this run's ROOT-line
-# days), QUEUE_POLL_SECONDS (60). A probe: frankie_box_progress.sh DIRECTORY=/opt/frankie-box/work/experiment/<RUN>; the
+# days; every wait is event-driven, 2026-10-09). A probe: frankie_box_progress.sh DIRECTORY=/opt/frankie-box/work/experiment/<RUN>; the
 # queue: frankie_box_frankie_queue.sh ACTION=show.
 set -eu
 export HOME="${HOME:-/root}"   # SSM runs without HOME; DuckDB refuses to load extensions without a home directory (2026-09-29)
-: "${MARKETS_SHA:?full dispatched commit required}"; : "${CODE_ROOT:?staged clean checkout required}"; : "${RUN:?run name required}"
+# 2026-10-09 (Greg: the code version is recorded, never compared): CODE_ROOT defaults to the NEWEST staged checkout on
+# the box (frankie_box_cpu_watch.newest_staged_checkout's rule: staging-receipt.json status 'staged' for the directory's
+# own commit, newest by the receipt's mtime) and MARKETS_SHA to that checkout's HEAD
+if [ -z "${CODE_ROOT:-}" ]; then
+  CODE_ROOT=$(/opt/frankie-box/venv/bin/python -I -S -B -c '
+import json, os, re
+best, parent = None, "/opt/frankie-box/code"
+for name in (os.listdir(parent) if os.path.isdir(parent) else []):
+    d = os.path.join(parent, name)
+    m = re.fullmatch(r"([0-9a-f]{40})-[A-Za-z0-9_-]{1,96}", name)
+    r, c = os.path.join(d, "staging-receipt.json"), os.path.join(d, "markets")
+    if not m or os.path.islink(d) or not os.path.isfile(r):
+        continue
+    try:
+        v = json.load(open(r))
+    except ValueError:
+        continue
+    if v.get("status") == "staged" and v.get("commit") == m.group(1) and v.get("code_root") == c and os.path.isdir(c):
+        t = os.stat(r).st_mtime
+        if best is None or t > best[0]:
+            best = (t, c)
+print(best[1] if best else "")') || CODE_ROOT=''
+  [ -n "$CODE_ROOT" ] || { echo "no CODE_ROOT given and no staged checkout under /opt/frankie-box/code" >&2; exit 2; }
+  echo "### CODE_ROOT not given: the newest staged checkout $CODE_ROOT" >&2
+fi
+MARKETS_SHA="${MARKETS_SHA:-$(git -C "$CODE_ROOT" rev-parse HEAD 2>/dev/null || true)}"
+: "${RUN:?run name required}"
 ACTION="${ACTION:-plan}"
 case "$ACTION" in plan|start|status|successor-request|successor-decision|successor-retry|successor-save|successor-resume|voice-dispatched|voice-returned) ;; *) echo "unknown experiment ACTION" >&2; exit 2;; esac
 case "$CODE_ROOT" in /opt/frankie-box/code/*) ;; *) echo "staged checkout under /opt/frankie-box/code required" >&2; exit 2;; esac
-[ "$(git -C "$CODE_ROOT" rev-parse HEAD)" = "$MARKETS_SHA" ] || { echo "staged checkout differs from MARKETS_SHA" >&2; exit 2; }
+HEAD_SHA=$(git -C "$CODE_ROOT" rev-parse HEAD 2>/dev/null) || HEAD_SHA="${MARKETS_SHA:-}"  # 2026-10-09: recorded, never compared
+[ "$HEAD_SHA" = "${MARKETS_SHA:-}" ] || { echo "code version: MARKETS_SHA ${MARKETS_SHA:-unset}, checkout $CODE_ROOT at $HEAD_SHA; this step runs on (and records) $HEAD_SHA" >&2; MARKETS_SHA=$HEAD_SHA; }
 set -- --action "$ACTION" --run "$RUN" --commit "$MARKETS_SHA" --code-root "$CODE_ROOT"
 case "$ACTION" in successor-*)
   : "${SUCCESSOR_DAY:?owning day required}"
@@ -111,9 +138,10 @@ case "${BRAIN:-/opt/frankie-box/brain}" in /opt/frankie-box/*) ;; *) echo "BRAIN
 case "${PREVIOUS_CLASSROOM:-}" in ""|/opt/frankie-box/work/experiment-roots/*/work/classroom) ;; *) echo "PREVIOUS_CLASSROOM must be an experiment root's work/classroom" >&2; exit 2;; esac
 [ -z "${PREVIOUS_CLASSROOM:-}" ] || set -- "$@" --previous-classroom "$PREVIOUS_CLASSROOM"
 case "${FRANKIE_QUEUE:-on}${ROOT_QUEUE:-on}" in onon|onoff|offon|offoff) ;; *) echo "FRANKIE_QUEUE and ROOT_QUEUE must be on or off" >&2; exit 2;; esac
-case "${QUEUE_WORKER_SECONDS:-43200}${QUEUE_POLL_SECONDS:-60}" in *[!0-9]*) echo "QUEUE_WORKER_SECONDS and QUEUE_POLL_SECONDS must be whole seconds" >&2; exit 2;; esac
+# 2026-10-09: QUEUE_POLL_SECONDS is gone (every queue wait is event-driven); a given value is ignored
+case "${QUEUE_WORKER_SECONDS:-43200}" in *[!0-9]*) echo "QUEUE_WORKER_SECONDS must be whole seconds" >&2; exit 2;; esac
 set -- "$@" --frankie-queue "${FRANKIE_QUEUE:-on}" --root-queue "${ROOT_QUEUE:-on}" \
-  --queue-worker-seconds "${QUEUE_WORKER_SECONDS:-43200}" --queue-poll-seconds "${QUEUE_POLL_SECONDS:-60}"
+  --queue-worker-seconds "${QUEUE_WORKER_SECONDS:-43200}"
 set -- "$@" --lags "${LAGS:-20}" --ingest-workers "${INGEST_WORKERS:-31}" --data-workers "${DATA_WORKERS:-1}" \
   --search-workers "${SEARCH_WORKERS:-8}" --teacher-cpus "${TEACHER_CPUS:-0}" --parallel-days "${PARALLEL_DAYS:-2}" --disk-floor-gb "${DISK_FLOOR_GB:-100}"
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONPATH="$CODE_ROOT" MAP_URL="${MAP_URL:-}"
@@ -159,7 +187,8 @@ if [ "${DETACH:-off}" = on ]; then
   # at TimeoutStopSec. The ingest under the orchestrator runs in this unit.
   systemd-run --unit "$UNIT" --collect -p StandardOutput=append:"$LOG" -p StandardError=append:"$LOG" -p KillMode=mixed "$@"
   echo "orchestrator $RUN started detached: unit $UNIT, log $LOG"
-  sleep 10
+  # 2026-10-09: no fixed 10 s wait; the unit's state is read at once (an active unit = started; its outcome is on its
+  # log and the probe); a unit that already ended is judged by its exit as before
   if systemctl is-active --quiet "$UNIT"; then
     echo "unit $UNIT active"; tail -n 20 "$LOG"; exit 0
   fi
@@ -197,7 +226,7 @@ elif code == 3 and held_for:
 else:
     print("fail exit %s; line workers holding a lock for run %s: %s" % ("unknown (not in the journal)" if code is None else code, run, ",".join(held_for) or "none"))
 ' "$RUN" 2>&1) || VERDICT="fail: the start check itself failed ($VERDICT)"
-  echo "unit $UNIT ended within 10 s: $VERDICT"
+  echo "unit $UNIT ended at once: $VERDICT"
   case "$VERDICT" in
     ok*) tail -n 20 "$LOG"; exit 0 ;;
     *) echo "log tail:"; tail -n 40 "$LOG"; exit 3 ;;

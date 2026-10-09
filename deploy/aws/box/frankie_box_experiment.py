@@ -754,8 +754,8 @@ def box_in_use(run_name=None):
             other = held and (status or {}).get('pid') != os.getpid()
             if other:
                 busy.append('%s line worker holds its lock (pid %s)' % (line, (status or {}).get('pid')))
-            # B3a (2026-10-07): a kick returns after its worker took the lock or KICK_LOCK_WAIT_SECONDS passed; a kick this
-            # recent keeps the box in use while its worker is still starting (Python start-up, imports)
+            # B3a (2026-10-07; 2026-10-09 the kick returns at once, never waiting on the lock): a kick this recent keeps
+            # the box in use while its worker is still starting (Python start-up, imports)
             kick = Q.QUEUE / ('%s-kick.json' % line)
             if kick.is_file():
                 try:
@@ -1470,6 +1470,14 @@ class Run:
                 {k: previous.get(k) for k in ('status', 'at', 'reason', 'exit_code')}]
         from frankie_box_durable import write_json
         write_json(path, body)
+        if not previous or previous.get('status') != status:
+            # 2026-10-09: a stage's status changed: every event-driven waiter on the box re-checks now (a repeated
+            # 'waiting' record wakes nobody, so a waiter never wakes itself)
+            try:
+                import frankie_box_frankie_queue as Q
+                Q.notify('stage-%s' % stage, run=self.plan['run'], key=key, status=status)
+            except Exception:  # noqa: BLE001 - a wake never fails a record
+                pass
         self.log('%s %s: %s%s' % (stage, key, status, (' (%s)' % fields['reason']) if fields.get('reason') else ''))
         return body
 
@@ -2657,11 +2665,15 @@ class Run:
             return None
 
     def await_roots(self, days):
-        """This run's ROOT-line days: wait (polling, bounded by --queue-worker-seconds) until each has left the line done
-        or failed, re-kicking the ROOT worker when none runs; each day's root receipt is then the worker's. A day still
-        in the line at the bound stays queued (listed); the next start waits again."""
+        """This run's ROOT-line days: wait (event-driven, bounded only by --queue-worker-seconds, the orchestrator's own
+        lifetime) until each has left the line done or failed, re-kicking the ROOT worker when none runs; each day's root
+        receipt is then the worker's. A day still in the line at the bound stays queued (listed); the next start waits
+        again. 2026-10-09: no poll interval; it wakes on any state change (the queue's wake directory)."""
         import frankie_box_frankie_queue as Q
+        import frankie_box_wake as W
         deadline = time.monotonic() + self.a.queue_worker_seconds
+        waiter = W.Waiter([Q.wake_dir()])
+        kicked_for = None
         while True:
             self.check_save()
             left = []
@@ -2675,16 +2687,21 @@ class Run:
                     left.append('%s seq %d %s%s' % (e['day'], x['seq'], x['state'],
                                                      (' at %s' % x['where']) if x.get('where') else ''))
             if not left:
+                waiter.close()
                 return
             self.probe.update('root line: waiting on %d day(s)' % len(left), 0, None)
-            if time.monotonic() + self.a.queue_poll_seconds > deadline:
-                self.log('root line: %d day(s) still in the line at the bound (%s); they stay queued' % (len(left), left))
-                return
             status, held = Q.worker_state('root')
-            if not held:
+            if not held and kicked_for != left:
+                # one kick per distinct line state: a worker that ends with nothing changed (an owner's resume pending)
+                # is not re-kicked on its own end-of-worker wake; the next real change kicks again
                 self.check_save()
                 self.kick('root')
-            time.sleep(self.a.queue_poll_seconds)
+                kicked_for = list(left)
+            remaining = deadline - time.monotonic()
+            if remaining <= 0 or not waiter.wait(remaining):
+                self.log('root line: %d day(s) still in the line at the bound (%s); they stay queued' % (len(left), left))
+                waiter.close()
+                return
 
     # the day reports (Greg, 2026-09-29: "make sure classroom is printing out an analysis after every day has gone through
     # it, and same with Frankie, and have them number their reports")
@@ -4054,9 +4071,14 @@ class Run:
         path = self.dir / 'days' / day / ('jev-request-%s.json' % stamp)
         if path.is_file():
             retained = json.loads(path.read_bytes())
-            bound = ('schema', 'run', 'day', 'day_role', 'stamp', 'attempt', 'host', 'plan_sha256', 'source', 'output',
+            # 2026-10-09 (Greg): `source` (commit, code root) is RECORDED on the request, NEVER COMPARED: a resumed day on
+            # a newer staged checkout runs its retained Jev request (the helper then runs on this checkout, recorded)
+            bound = ('schema', 'run', 'day', 'day_role', 'stamp', 'attempt', 'host', 'plan_sha256', 'output',
                      'brain', 'jev_brain', 'report_number', 'slot_booking', 'cpus')
             differ = [k for k in bound if retained.get(k) != request.get(k)]
+            if not differ and retained.get('source') != request.get('source'):
+                self.log('jev %s: the retained request was made on %s; this step runs on %s (recorded, never compared)' % (
+                    day, (retained.get('source') or {}).get('commit'), self.commit))
             if differ:
                 # a REBOOK'd day (ACTION=resume REBOOK=on: the same attempt on another free 16-CPU booking) runs its Jev
                 # on the explicit rebook successor of the retained request; anything else differing is refused as before
@@ -4663,23 +4685,36 @@ class Run:
         from research.kalshi.frankie_boss.frankie_principal_adapter import json_form
         import frankie_box_lane_state as LS
         rows_path = Path(rows_path)
-        source_sha = sha256_file(rows_path)
+        # 2026-10-09 (one pass over the data): the rows file's sha256 from its claim row or the teacher's own receipt
+        # (rows_file.sha256, with a stat check), read whole only when neither holds
+        source_sha, source_basis = self.teacher_rows_sha256(rows_path)
+        try:                                       # brain_stage's witness of the rows file is then a cache hit, no read
+            from frankie_box_filehash import remember
+            remember(rows_path, dict(bytes=rows_path.stat().st_size, sha256=source_sha))
+        except Exception:  # noqa: BLE001 - without it brain_stage witnesses as before
+            pass
         path = rows_path.parent / 'teacher-knowledge.json'
         producer = self.teacher_producer_identity()
+        producer_note = None
         if path.exists():
             body = json.loads(path.read_bytes())
             if body['source']['sha256'] != source_sha or body['day'] != day:
                 raise ValueError('retained teacher knowledge belongs to another source/day')
             retained = body.get('producer')
+            # 2026-10-09 (Greg): the code version is RECORDED, NEVER COMPARED: retained knowledge made by other producer
+            # modules (or before producer identities were recorded) is reused for the same rows; the difference is listed
             if retained is None:
-                raise ValueError('retained teacher knowledge %s carries no producer identity (unestablished): the old result '
-                                 'is preserved; an explicit checked successor is required before it is taught again' % path)
-            if retained.get('modules') != producer['modules']:
+                producer_note = 'retained knowledge carries no producer identity (made before it was recorded): reused'
+            elif retained.get('modules') != producer['modules']:
                 changed = sorted(k for k in set(retained.get('modules') or {}) | set(producer['modules'])
                                  if (retained.get('modules') or {}).get(k) != producer['modules'].get(k))
-                raise ValueError('retained teacher knowledge %s was produced by another producer identity (made at commit '
-                                 '%s; modules changed: %s): the old result is preserved, nothing is regenerated here; an '
-                                 'explicit checked successor is required' % (path, body.get('made_at_commit'), changed))
+                producer_note = ('retained knowledge made at commit %s by other producer modules (%s): reused, the code '
+                                 'version recorded, never compared' % (body.get('made_at_commit'), ', '.join(changed)))
+            if producer_note:
+                self.log('teacher knowledge %s: %s' % (day, producer_note))
+            reused = self.teacher_entry_reuse(day, rows_path, source_sha, path)
+            if reused is not None:
+                return dict(reused, source_basis=source_basis, producer_note=producer_note)
         else:
             snapshot = unpack(json.loads(rows_path.read_bytes()))
             key = I._repin_teacher_key_correlations(DC.build_teacher_key(snapshot))
@@ -4706,8 +4741,59 @@ class Run:
         # The summary is part of the immutable entry bytes: it names the exact rows file, never the label of the path
         # that found it ('plan' / 'teacher-only step'), so the same rows reached by another label reuse the entry
         # instead of declining it as different knowledge. The label stays in the step receipt (days=[... source]).
-        return self.brain_stage(day, 'teacher', [rows_path, path],
-                                summary=dict(rows=str(rows_path)), inline_limit=path.stat().st_size)
+        out = self.brain_stage(day, 'teacher', [rows_path, path],
+                               summary=dict(rows=str(rows_path)), inline_limit=path.stat().st_size)
+        return dict(out, source_basis=source_basis, producer_note=producer_note) if isinstance(out, dict) else out
+
+    @staticmethod
+    def teacher_rows_sha256(rows_path):
+        """(sha256, basis) of the teacher's rows file without a second whole read when one is not needed: (1) a
+        FRANKIE_FILE_CLAIM row in the rows directory that still holds (inode, size, mtime_ns, filesystem, last 64 KiB);
+        (2) the teacher receipt beside it (receipt.json rows_file.sha256 naming this file) when the rows file was not
+        modified after that receipt was written; (3) else one whole read."""
+        rows_path = Path(rows_path)
+        try:
+            import frankie_box_brain as BR
+            from research.kalshi.frankie_boss.operations.ingest_block_sources import claim_still_holds
+            st = os.stat(rows_path)
+            row = BR.file_claims(rows_path.parent).get((st.st_ino, st.st_size, st.st_mtime_ns))
+            if row is not None and claim_still_holds(row, rows_path) is not None:
+                return row['sha256'], 'claim (%s)' % row.get('claim_file')
+        except Exception:  # noqa: BLE001 - no claim: the next basis
+            st = None
+        try:
+            receipt = rows_path.parent / 'receipt.json'
+            rf = (json.loads(receipt.read_bytes()).get('rows_file') or {})
+            st = st or os.stat(rows_path)
+            if (rf.get('sha256') and rf.get('file') == rows_path.name
+                    and st.st_mtime_ns <= receipt.stat().st_mtime_ns):
+                return rf['sha256'], 'teacher receipt rows_file.sha256 (rows not modified after %s)' % receipt
+        except (OSError, ValueError, AttributeError):
+            pass
+        return sha256_file(rows_path), 'hashed (no claim, no usable teacher receipt)'
+
+    def teacher_entry_reuse(self, day, rows_path, source_sha, knowledge_path):
+        """The brain's <day>-teacher entry when it already holds EQUAL knowledge (its rows source = this rows file and
+        sha256, its teacher-knowledge source = this file's bytes): the brain_stage record, without witnessing the rows
+        file again; else None (brain_stage files it as before)."""
+        brain = Path(self.plan.get('brain') or str(BRAIN))
+        entry = brain / ('%s-teacher' % day)
+        try:
+            body = json.loads((entry / 'stage-knowledge.json').read_bytes())
+            manifest = json.loads((entry / 'MANIFEST.json').read_bytes())
+        except (OSError, ValueError):
+            return None
+        sources = {str(r.get('path')): r for r in body.get('sources') or []}
+        rows = sources.get(str(rows_path))
+        know = sources.get(str(knowledge_path))
+        if not (rows and know and rows.get('sha256') == source_sha and know.get('sha256') == sha256_file(knowledge_path)):
+            return None
+        self.log('brain teacher %s: %s holds equal knowledge (rows %s, knowledge %s): reused, the rows not read again' % (
+            day, entry, source_sha[:12], know['sha256'][:12]))
+        return dict(path=str(entry), reused=True, status='reused',
+                    manifest_sha256=sha256_file(entry / 'MANIFEST.json'),
+                    knowledge_sha256=sha256_file(entry / (manifest.get('current_knowledge') or 'stage-knowledge.json')),
+                    source_witness=[dict(path=str(rows_path), basis='the brain entry\'s own equal record')])
 
     def data(self, e):
         remote = self.remote_stage('data', e['day'])
@@ -5432,7 +5518,8 @@ def main():
                         'and this run waits for its own; off: the ROOTs run here in plan order as before')
     p.add_argument('--queue-worker-seconds', type=int, default=43200,
                    help='the bound of a kicked queue worker and of this run\'s wait on its ROOT-line days')
-    p.add_argument('--queue-poll-seconds', type=int, default=60, help='the queue workers\' and the wait\'s poll interval')
+    p.add_argument('--queue-poll-seconds', type=int, default=60,
+                   help='accepted for older callers and recorded; nothing polls on it (2026-10-09: every wait is event-driven)')
     a = p.parse_args()
     import re
     if not re.fullmatch('[A-Za-z0-9_-]{1,64}', a.run):

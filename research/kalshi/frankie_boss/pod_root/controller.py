@@ -523,10 +523,8 @@ class Controller:
     def queue(self):
         q = box('queue', MAIN, 1800, CODE_ROOT=self.a.code_root, RUN=self.run)
         if self.a.commit and q.get('code_commit') != self.a.commit:
-            if self.a.action in ('loop', 'resume'):
-                raise SystemExit('the staged checkout %s is at %s, the controller was given --commit %s: run/code identity '
-                                 'differs; nothing claimed' % (self.a.code_root, q.get('code_commit'), self.a.commit))
-            say('NOTE: the staged checkout is at %s, this dispatch is %s (a read-only action or a save relay; the staged commit is used)'
+            # 2026-10-09 (Greg): the code version is recorded, never compared: the staged checkout's commit is used
+            say('NOTE: the staged checkout is at %s, this dispatch is %s: the staged commit is used and recorded'
                 % (q.get('code_commit'), self.a.commit))
         self.commit = q.get('code_commit')
         self.queue_state = q
@@ -1045,9 +1043,8 @@ class Controller:
                 if not started:
                     raise RuntimeError('retained preparation did not complete; same claim and inputs kept')
                 return dict(job_id=job['job_id'], resumed_preparation=True)
-            if (saved['run'], saved['name'], saved['where'], saved['commit']) != \
-                    (self.run, job['job_id'], w.where, self.commit):
-                raise ValueError('resume must use the original job, owner and staged commit')
+            if (saved['run'], saved['name'], saved['where']) != (self.run, job['job_id'], w.where):
+                raise ValueError('resume must use the original job and owner')   # its commit recorded, never compared
         if saved is not None:
             # the inputs' GETs re-signed with the renewal (same bucket/key identity, which the worker checks), so a job
             # whose input stage outlives the signing session keeps readable sources
@@ -1285,9 +1282,10 @@ def preflight(a):
         head = subprocess.run(['git', '-C', a.code_root, 'rev-parse', 'HEAD'], capture_output=True, text=True, check=True).stdout.strip()
         dirty = subprocess.run(['git', '-C', a.code_root, 'status', '--porcelain', '--untracked-files=no'], capture_output=True,
                                text=True, check=True).stdout
-        if head != a.commit or dirty:
-            raise ValueError('HEAD %s (--commit %s), tracked changes: %s' % (head, a.commit, bool(dirty)))
-        return dict(head=head, clean=True)
+        if dirty:
+            raise ValueError('HEAD %s has tracked changes' % head)
+        # the dispatched --commit is recorded beside HEAD, never compared (2026-10-09)
+        return dict(head=head, clean=True, dispatched=a.commit, same_as_dispatched=head == a.commit)
 
     check('saved main plan', '%s/%s/plan.json written by the main orchestrator\'s first start of this run' % (PLAN_PARENT, a.run),
           saved_plan)
@@ -1368,7 +1366,7 @@ def main():
     p.add_argument('--host', choices=('runner', 'main'), default='runner',
                    help='runner: a bounded GitHub job; main: a run-bound service on the main box (--state-dir, --commit)')
     p.add_argument('--state-dir', default='', help='host main: %s/<run>' % STATE_PARENT)
-    p.add_argument('--commit', default='', help='the staged checkout\'s full commit; the queue\'s code_commit must equal it')
+    p.add_argument('--commit', default='', help='the dispatched commit, recorded beside the staged checkout\'s (never compared, 2026-10-09)')
     p.add_argument('--job', help='original retained Linux job/attempt, required for resume/stop')
     p.add_argument('--run', required=True, help='the orchestrator run (its plan.json lists the days, roles and arm)')
     p.add_argument('--days', default='', help='the authorized days (comma list YYYYMMDD) this controller may claim or '

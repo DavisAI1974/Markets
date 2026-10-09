@@ -34,6 +34,7 @@ import json
 import os
 from pathlib import Path
 import signal
+import sys
 import time
 import urllib.parse
 
@@ -413,7 +414,7 @@ def execute(request_path):
         raise ValueError('Jev run/stamp/attempt must be path-free identities')
     booking, why = C.held_booking(request['slot_booking'])
     if (booking is None or booking['run'] != request['run'] or booking['day'] != request['day']
-            or booking['cpus'] != request['cpus'] or booking['commit'] != request['source']['commit']):
+            or booking['cpus'] != request['cpus']):     # the booking's commit is recorded, never compared (2026-10-09)
         raise ValueError('Jev requires its exact live held day booking: ' + str(why))
     # Greg, 2026-10-07 night: Jev is an ordinary stage of the day on the WHOLE held lane, like every other stage
     # (frankie_box_cores.cmd_run_inside: taskset of the booking's CPUs, FRANKIE_CPU_BOOKING = the booking); never a CPU
@@ -423,9 +424,11 @@ def execute(request_path):
         raise ValueError('Jev must enter inside his day\'s held lane (cores run --inside %s --stage jev): affinity %s, lane %s, '
                          'FRANKIE_CPU_BOOKING %r' % (request['slot_booking'], affinity, sorted(request['cpus']),
                                                      os.environ.get('FRANKIE_CPU_BOOKING')))
-    if (os.environ.get('MARKETS_SHA') != request['source']['commit']
-            or Path(os.environ.get('CODE_ROOT', '')).resolve() != Path(request['source']['code_root']).resolve()):
-        raise ValueError('Jev must run from its retained staged source')
+    # 2026-10-09 (Greg): the code version is recorded, never compared: Jev runs on the checkout this step runs on (the
+    # request's own source and this one are both on the record), never refused for a newer staged checkout
+    if os.environ.get('MARKETS_SHA') != (request.get('source') or {}).get('commit'):
+        print('jev: request source %s, this step runs on %s (recorded, never compared)' % (
+            (request.get('source') or {}).get('commit'), os.environ.get('MARKETS_SHA')), file=sys.stderr, flush=True)
     out = Path(request['output'])
     brain, jev_brain = Path(request['brain']), Path(request['jev_brain'])
     if not all(p.is_absolute() and not any(q.is_symlink() for q in (p, *p.parents))

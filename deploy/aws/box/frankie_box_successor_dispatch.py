@@ -106,10 +106,18 @@ def enqueue(run, day, request):
         return dict(id=key, operation=once(path, body))
 
 
+def same_owner(a, b):
+    """Two successor owner identities are the same owner when everything but the code commit is equal (2026-10-09,
+    Greg: the code version is recorded, never compared; run, day, plan and brain stay bound)."""
+    if not (isinstance(a, dict) and isinstance(b, dict)):
+        return a == b
+    return {k: v for k, v in a.items() if k != 'commit'} == {k: v for k, v in b.items() if k != 'commit'}
+
+
 def operation(path, expected=None):
     value = read(pin(path))
     if (value.get('schema') != SCHEMA or path.stem != R.digest(R.canonical(value))
-            or (expected is not None and value['owner'] != expected)):
+            or (expected is not None and not same_owner(value['owner'], expected))):
         raise ValueError('successor request identity changed')
     return value
 
@@ -570,7 +578,8 @@ def execute(path, phase):
     plan = read(pin(X.RUNS / identity['run'] / 'plan.json'))
     booking = os.environ.get('FRANKIE_CPU_BOOKING')
     held, _ = C.held_booking(booking) if booking else (None, None)
-    if (path.resolve() != expected.resolve() or identity['commit'] != os.environ.get('MARKETS_SHA')
+    # the request's commit is recorded on it, never compared with this child's MARKETS_SHA (2026-10-09)
+    if (path.resolve() != expected.resolve()
             or X.plan_digest(plan) != identity['plan_sha256']
             or str(plan.get('brain') or X.BRAIN) != identity['brain']
             or not held or held.get('run') != identity['run'] or held.get('day') != identity['day']
@@ -655,6 +664,16 @@ def drain(run, day):
                 completed.append(acknowledgment(path, value))
                 continue
             school_completed = None      # F7: at most ONE 'complete' owner school recovery per operation per drain call
+            # 2026-10-09 (was a 5 s sleep at each wait): the drain wakes the instant a file it waits on appears or changes
+            # (the save control, a retry, a decision, the operation's own work directory) or the box's state changes
+            # (the queue's wake directory: a save marker, a resume, a stage status); built before the first check
+            import frankie_box_wake as W
+            try:
+                import frankie_box_frankie_queue as Q
+                wake = [Q.wake_dir()]
+            except Exception:  # noqa: BLE001 - no queue here
+                wake = []
+            waiter = W.Waiter(wake + [directory, directory / 'decisions', target])
             while True:
                 held, why = run.cores.held_booking(getattr(run, 'slot_booking', None)) if getattr(run, 'slot_booking', None) else (None, 'no held day booking')
                 if (not held or held.get('run') != identity['run'] or held.get('day') != day
@@ -668,17 +687,17 @@ def drain(run, day):
                         run.record('successors', day, status, operation=pin(path), progress=pin(state_path))
                 control_path = directory / 'control.json'
                 paused = read(pin(control_path)) if control_path.exists() else {}
-                if paused and paused['owner'] != identity:
+                if paused and not same_owner(paused['owner'], identity):
                     raise ValueError('successor save control belongs to another owner')
                 if run.save_requested() or paused.get('saved'):
                     state('saved', reason='cooperative save acknowledged; original operation and CPU booking held')
-                    time.sleep(5)
+                    waiter.wait()
                     continue
                 failure = target / 'failure.json'
                 retry = target / 'retry.json'
                 if failure.exists() and (not retry.exists() or read(pin(retry)).get('failure') != pin(failure)):
                     state('waiting', reason='child failed; explicit retry must name the retained failure', failure=pin(failure))
-                    time.sleep(5)
+                    waiter.wait()
                     continue
                 publication = target / 'publication.json'
                 candidate = target / 'successor-receipt.json'
@@ -686,7 +705,7 @@ def drain(run, day):
                 phase = 'research' if not candidate.exists() else 'publish'
                 if not publication.exists() and phase == 'publish' and not decision.exists():
                     state('waiting', reason='complete candidate awaits the checked scientific-owner decision', candidate=pin(candidate))
-                    time.sleep(5)
+                    waiter.wait()
                     continue
                 try:
                     recover_sync(identity['brain'])
@@ -749,8 +768,7 @@ def drain(run, day):
                                                     recovery=school_completed,
                                                     reason='the school stage ended done but the chain still requires a '
                                                            'successor (one complete recovery per operation per drain call)'))
-                            time.sleep(5)
-                            break
+                            break                    # 2026-10-09: no 5 s pause; the next drain call tries it once more
                         recovered = run.recover_school(day, downstream['recovery_intent'])
                         if recovered.get('status') == 'complete':
                             school_completed = recovered
@@ -801,13 +819,13 @@ def drain(run, day):
                             # the next drain call tries it once more. The ordinary poll interval first: close_day drains
                             # ONCE and returns 'waiting' for an unacknowledged request, but the class worker's keep() and
                             # every child boundary drain again, and recover_school dispatches nothing twice, so without it
-                            # those repeated drains would spin hot on reads and receipt rewrites.
-                            time.sleep(5)
+                            # those repeated drains would spin hot on reads and receipt rewrites. 2026-10-09: the class
+                            # worker and the owner now re-drain only on a state change (event-driven), so no pause here.
                             break
                         continue
                     if downstream['status'] != 'complete':
                         state('waiting', **{k: v for k, v in downstream.items() if k != 'status'})
-                        time.sleep(5)
+                        waiter.wait()
                         continue
                     dependents_pin = once(target / 'dependents.json', downstream)
                     # Full readback before any acknowledgment, including legacy missing receipts.

@@ -32,7 +32,33 @@
 # refused even when empty. BOXES is fixed to the one Linux lane; SLOTS=1. SSM runs this under sh: POSIX only.
 set -eu
 export HOME="${HOME:-/root}"
-: "${MARKETS_SHA:?full dispatched commit required}"; : "${CODE_ROOT:?staged clean checkout required}"; : "${RUN:?run name required}"
+# 2026-10-09 (Greg: the code version is recorded, never compared): CODE_ROOT defaults to the NEWEST staged checkout on
+# the box (frankie_box_cpu_watch.newest_staged_checkout's rule: staging-receipt.json status 'staged' for the directory's
+# own commit, newest by the receipt's mtime) and MARKETS_SHA to that checkout's HEAD
+if [ -z "${CODE_ROOT:-}" ]; then
+  CODE_ROOT=$(/opt/frankie-box/venv/bin/python -I -S -B -c '
+import json, os, re
+best, parent = None, "/opt/frankie-box/code"
+for name in (os.listdir(parent) if os.path.isdir(parent) else []):
+    d = os.path.join(parent, name)
+    m = re.fullmatch(r"([0-9a-f]{40})-[A-Za-z0-9_-]{1,96}", name)
+    r, c = os.path.join(d, "staging-receipt.json"), os.path.join(d, "markets")
+    if not m or os.path.islink(d) or not os.path.isfile(r):
+        continue
+    try:
+        v = json.load(open(r))
+    except ValueError:
+        continue
+    if v.get("status") == "staged" and v.get("commit") == m.group(1) and v.get("code_root") == c and os.path.isdir(c):
+        t = os.stat(r).st_mtime
+        if best is None or t > best[0]:
+            best = (t, c)
+print(best[1] if best else "")') || CODE_ROOT=''
+  [ -n "$CODE_ROOT" ] || { echo "no CODE_ROOT given and no staged checkout under /opt/frankie-box/code" >&2; exit 2; }
+  echo "### CODE_ROOT not given: the newest staged checkout $CODE_ROOT" >&2
+fi
+MARKETS_SHA="${MARKETS_SHA:-$(git -C "$CODE_ROOT" rev-parse HEAD 2>/dev/null || true)}"
+: "${RUN:?run name required}"
 for retired in PODS COUNT CONFIRM DATA_CENTERS VOLUME_GB CONTAINER_GB WAIT_MINUTES RUNPOD_API_KEY; do
   eval "set_=\${$retired+x}"
   [ -z "$set_" ] || { echo "$retired is a retired Pod input; AWS CPU lanes only (refused even when empty)" >&2; exit 2; }
@@ -44,7 +70,8 @@ case "$CODE_ROOT" in /opt/frankie-box/code/*/markets) ;; *) echo "CODE_ROOT=/opt
 case "$MARKETS_SHA" in *[!0-9a-f]*) echo "MARKETS_SHA must be a full hex commit" >&2; exit 2;; esac
 [ "${#MARKETS_SHA}" -eq 40 ] || { echo "MARKETS_SHA must be 40 hex characters" >&2; exit 2; }
 [ -d "$CODE_ROOT/.git" ] || [ -f "$CODE_ROOT/.git" ] || { echo "$CODE_ROOT is not a checkout" >&2; exit 2; }
-[ "$(git -C "$CODE_ROOT" rev-parse HEAD)" = "$MARKETS_SHA" ] || { echo "staged checkout differs from MARKETS_SHA" >&2; exit 2; }
+HEAD_SHA=$(git -C "$CODE_ROOT" rev-parse HEAD 2>/dev/null) || HEAD_SHA="${MARKETS_SHA:-}"  # 2026-10-09: recorded, never compared
+[ "$HEAD_SHA" = "${MARKETS_SHA:-}" ] || { echo "code version: MARKETS_SHA ${MARKETS_SHA:-unset}, checkout $CODE_ROOT at $HEAD_SHA; this step runs on (and records) $HEAD_SHA" >&2; MARKETS_SHA=$HEAD_SHA; }
 [ -z "$(git -C "$CODE_ROOT" status --porcelain --untracked-files=no)" ] || { echo "$CODE_ROOT has tracked changes" >&2; exit 2; }
 BOXES="${BOXES:-i-0d17573dbce871520@us-east-1}"; SLOTS="${SLOTS:-1}"
 [ "$BOXES" = i-0d17573dbce871520@us-east-1 ] && [ "$SLOTS" = 1 ] || { echo "BOXES=i-0d17573dbce871520@us-east-1 SLOTS=1 is the one Linux lane" >&2; exit 2; }

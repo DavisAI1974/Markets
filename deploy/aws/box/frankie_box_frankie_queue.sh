@@ -5,10 +5,10 @@
 # to the next free day-run slot, box or Pod) and the CLASS line (an arm day enters when its ROOT, teacher rows and day file
 # are there; ONE class at a time, school day = position in the line = report number N, each class carrying the last class
 # to finish). Nothing dropped, skipped or reordered. No model call, no Pod call, no Granite, no Databento.
-# Inputs: CODE_ROOT (staged checkout), ACTION:
+# Inputs: CODE_ROOT (staged checkout; default the newest staged one), ACTION:
 #   show                         read-only: both lines, every entry with its state and reason, the workers [EVENTS=50|all]
 #   enqueue LINE RUN DAY         the orchestrator's own readiness checks on the run's saved plan, then the entry [KICK=on]
-#   worker  LINE SCOPE           the line's one worker in the foreground, bounded [MAX_SECONDS=1500 POLL_SECONDS=60]; a
+#   worker  LINE SCOPE           the line's one worker in the foreground, bounded [MAX_SECONDS=1500]; event-driven; a
 #                                second worker exits at once; exit 0 idle, 3 stopped at a failed entry, 5 saved at the bound
 #                                or waiting (an owner's resume, or an out-of-scope predecessor at the front)
 #   kick    LINE SCOPE           starts the line's worker detached (systemd-run) unless one runs [MAX_SECONDS=43200]
@@ -29,12 +29,37 @@
 #   retire  RUN REASON           a dead run's line entries leave both lines (kept whole under each line's `retired` list
 #                                with who/when/why; nothing deleted), so its duplicate-data claim no longer blocks a new
 #                                run of the same day; refused while one of its entries runs under a live worker
-# A day that is NOT running follows the worker's current source on its next admission (recorded on the entry as
-# source_rebinds; its stages' own resume checks still decide); a running day never moves.
-# LINE is root or class. MARKETS_SHA (the dispatched commit) is required for every action but show and status.
+# Every day follows the worker's current source on its next admission (recorded on the entry as source_rebinds; its
+# stages' own data checks still decide). 2026-10-09: the code version is recorded, never compared.
+# LINE is root or class. MARKETS_SHA (the dispatched commit) is recorded; the checkout's own HEAD is what runs.
 set -eu
 export HOME="${HOME:-/root}"
-: "${CODE_ROOT:?staged checkout required}"
+# 2026-10-09 (Greg: the code version is recorded, never compared): CODE_ROOT defaults to the NEWEST staged checkout on
+# the box (frankie_box_cpu_watch.newest_staged_checkout's rule: staging-receipt.json status 'staged' for the directory's
+# own commit, newest by the receipt's mtime) and MARKETS_SHA to that checkout's HEAD
+if [ -z "${CODE_ROOT:-}" ]; then
+  CODE_ROOT=$(/opt/frankie-box/venv/bin/python -I -S -B -c '
+import json, os, re
+best, parent = None, "/opt/frankie-box/code"
+for name in (os.listdir(parent) if os.path.isdir(parent) else []):
+    d = os.path.join(parent, name)
+    m = re.fullmatch(r"([0-9a-f]{40})-[A-Za-z0-9_-]{1,96}", name)
+    r, c = os.path.join(d, "staging-receipt.json"), os.path.join(d, "markets")
+    if not m or os.path.islink(d) or not os.path.isfile(r):
+        continue
+    try:
+        v = json.load(open(r))
+    except ValueError:
+        continue
+    if v.get("status") == "staged" and v.get("commit") == m.group(1) and v.get("code_root") == c and os.path.isdir(c):
+        t = os.stat(r).st_mtime
+        if best is None or t > best[0]:
+            best = (t, c)
+print(best[1] if best else "")') || CODE_ROOT=''
+  [ -n "$CODE_ROOT" ] || { echo "no CODE_ROOT given and no staged checkout under /opt/frankie-box/code" >&2; exit 2; }
+  echo "### CODE_ROOT not given: the newest staged checkout $CODE_ROOT" >&2
+fi
+MARKETS_SHA="${MARKETS_SHA:-$(git -C "$CODE_ROOT" rev-parse HEAD 2>/dev/null || true)}"
 ACTION="${ACTION:-show}"
 case "$ACTION" in show|enqueue|worker|kick|handover|save|status|resume|retire) ;; *) echo "ACTION must be show, enqueue, worker, kick, handover, save, status, resume or retire" >&2; exit 2;; esac
 case "$CODE_ROOT" in /opt/frankie-box/code/*) ;; *) echo "staged checkout under /opt/frankie-box/code required" >&2; exit 2;; esac
@@ -63,8 +88,8 @@ fi
 if [ "$ACTION" = retire ]; then
   : "${RUN:?the dead run name required}"; : "${REASON:?REASON (recorded on every retired entry) required}"
   case "$RUN" in ""|*[!A-Za-z0-9_-]*) echo "RUN: letters, digits, _ and - only" >&2; exit 2;; esac
-  : "${MARKETS_SHA:?full dispatched commit required}"
-  [ "$(git -C "$CODE_ROOT" rev-parse HEAD)" = "$MARKETS_SHA" ] || { echo "staged checkout differs from MARKETS_SHA" >&2; exit 2; }
+  HEAD_SHA=$(git -C "$CODE_ROOT" rev-parse HEAD 2>/dev/null) || HEAD_SHA="${MARKETS_SHA:-}"  # 2026-10-09: recorded, never compared
+  [ "$HEAD_SHA" = "${MARKETS_SHA:-}" ] || { echo "code version: MARKETS_SHA ${MARKETS_SHA:-unset}, checkout $CODE_ROOT at $HEAD_SHA; this step runs on (and records) $HEAD_SHA" >&2; MARKETS_SHA=$HEAD_SHA; }
   exec "$PY" -B "$SCRIPT" --action retire --run "$RUN" --reason "$REASON"
 fi
 case "$ACTION" in save|status|resume)
@@ -72,8 +97,8 @@ case "$ACTION" in save|status|resume)
   case "$RUN" in ""|*[!A-Za-z0-9_-]*) echo "RUN: letters, digits, _ and - only" >&2; exit 2;; esac
   case "$DAY" in [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]) ;; *) echo "DAY must be YYYYMMDD" >&2; exit 2;; esac
   if [ "$ACTION" != status ]; then
-    : "${MARKETS_SHA:?full dispatched commit required}"
-    [ "$(git -C "$CODE_ROOT" rev-parse HEAD)" = "$MARKETS_SHA" ] || { echo "staged checkout differs from MARKETS_SHA" >&2; exit 2; }
+    HEAD_SHA=$(git -C "$CODE_ROOT" rev-parse HEAD 2>/dev/null) || HEAD_SHA="${MARKETS_SHA:-}"  # 2026-10-09: recorded, never compared
+    [ "$HEAD_SHA" = "${MARKETS_SHA:-}" ] || { echo "code version: MARKETS_SHA ${MARKETS_SHA:-unset}, checkout $CODE_ROOT at $HEAD_SHA; this step runs on (and records) $HEAD_SHA" >&2; MARKETS_SHA=$HEAD_SHA; }
   fi
   case "${REBOOK:-off}" in on|off) ;; *) echo "REBOOK must be on or off" >&2; exit 2;; esac
   # session 8 (B4): RELEASE_BOOKING=on on ACTION=save releases the day's CPU booking at the save boundary (the fleet
@@ -83,11 +108,11 @@ case "$ACTION" in save|status|resume)
   [ -z "${RELEASE_REASON:-}" ] || set -- "$@" --release-reason "$RELEASE_REASON"
   exec "$PY" -B "$SCRIPT" "$@" ;;
 esac
-: "${MARKETS_SHA:?full dispatched commit required}"
-[ "$(git -C "$CODE_ROOT" rev-parse HEAD)" = "$MARKETS_SHA" ] || { echo "staged checkout differs from MARKETS_SHA" >&2; exit 2; }
+HEAD_SHA=$(git -C "$CODE_ROOT" rev-parse HEAD 2>/dev/null) || HEAD_SHA="${MARKETS_SHA:-}"  # 2026-10-09: recorded, never compared
+[ "$HEAD_SHA" = "${MARKETS_SHA:-}" ] || { echo "code version: MARKETS_SHA ${MARKETS_SHA:-unset}, checkout $CODE_ROOT at $HEAD_SHA; this step runs on (and records) $HEAD_SHA" >&2; MARKETS_SHA=$HEAD_SHA; }
 case "${LINE:-}" in root|class) ;; *) echo "LINE must be root or class" >&2; exit 2;; esac
-case "${POLL_SECONDS:-60}" in ""|*[!0-9]*) echo "POLL_SECONDS must be whole seconds" >&2; exit 2;; esac
-set -- --line "$LINE" --code-root "$CODE_ROOT" --commit "$MARKETS_SHA" --poll-seconds "${POLL_SECONDS:-60}"
+# 2026-10-09: no POLL_SECONDS: every queue wait is event-driven (frankie_box_wake.py); a given value is ignored
+set -- --line "$LINE" --code-root "$CODE_ROOT" --commit "$MARKETS_SHA"
 case "$ACTION" in worker|kick|handover)
   : "${SCOPE:?SCOPE=RUN:YYYYMMDD,... (the authorized run and days) required}"
   case "$SCOPE" in *[!A-Za-z0-9_:,-]*) echo "SCOPE carries a character outside [A-Za-z0-9_:,-]" >&2; exit 2;; esac

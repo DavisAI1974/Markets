@@ -31,7 +31,8 @@ At a stage's boundary (its step receipt finished: done or reused), boundary() ru
                resumes by hand, and the boundary then goes on to the successor without a second clean.
 The switch: FRANKIE_CLEAN_ON_SAVE=on (default) = validate -> save -> clean -> auto resume -> successor; off = validate
 -> successor directly (no save, no clean). One switch for every stage, recorded on every receipt.
-FRANKIE_ROOT_VALIDATE_CHECK=claim (default; session 9, one pass) lets step 1 take the ROOT's own file claims
+FRANKIE_ROOT_VALIDATE_CHECK=off is the DEFAULT at every boundary (2026-10-09, Greg: our own checks never re-read
+receipted data); claim and full stay as explicit settings. =claim (session 9, one pass) lets step 1 take the ROOT's own file claims
 (R/work/file-claims.jsonl: stat identity + last 64 KiB of a file the ROOT witnessed whole) instead of a second whole read;
 =full reads every pinned file whole; =off (session 9, Greg: "we have too many gates and validations") SKIPS the validator
 at the boundary: handoff.json and the log line record validate = {check: 'off', basis, receipt_sha256} (the ROOT's own receipt
@@ -62,8 +63,7 @@ SWITCH = 'FRANKIE_CLEAN_ON_SAVE'
 SCHEMA = 'FRANKIE_STAGE_HANDOFF_V1'
 TRIGGER_SCHEMA = 'FRANKIE_ROOT_CLEAN_TRIGGER_V1'
 FINISHED_WITH_OUTPUTS = ('done', 'reused')
-WAIT_SAVED_SECONDS = 1800
-WAIT_POLL_SECONDS = 10
+WAIT_SAVED_SECONDS = None        # 2026-10-09: no bound; FRANKIE_HANDOFF_WAIT_SAVED_SECONDS sets one explicitly
 VENV_PYTHON = '/opt/frankie-box/venv/bin/python'
 
 
@@ -243,7 +243,7 @@ def _python():
     return VENV_PYTHON if Path(VENV_PYTHON).is_file() else sys.executable
 
 
-VALIDATE_CHECK = 'FRANKIE_ROOT_VALIDATE_CHECK'     # claim (default) | full | off (frankie_box_root_validate.CHECK_SETTING)
+VALIDATE_CHECK = 'FRANKIE_ROOT_VALIDATE_CHECK'     # off (default, 2026-10-09) | claim | full (frankie_box_root_validate.CHECK_SETTING)
 OFF_BASIS = dict(root='validated by the ROOT itself: its receipt and file claims (retained_evidence_check / spool_reopen / '
                       'file_claims on the receipt)')
 OFF_BASIS_OTHER = 'not re-read at the boundary (%s=off): the stage\'s own step receipt stands as its record' % VALIDATE_CHECK
@@ -353,6 +353,14 @@ def start_clean_unit(run, e, stage, key, out_dir, roots, receipts, lane, code_ro
                  'FRANKIE_FSTAB', SWITCH):
         if os.environ.get(name):
             env[name] = os.environ[name]
+    # 2026-10-09: EVERY FRANKIE_* run setting of this worker (FRANKIE_ROOT_VALIDATE_CHECK, FRANKIE_ROOT_DIGEST,
+    # FRANKIE_CLASSROOM_CPUS, ...) reaches the clean unit and so the resume/kick its trigger runs, so a setting the
+    # operator turned off never comes back on at the next boundary (the queue's own rule: _run_settings_env)
+    try:
+        import frankie_box_frankie_queue as Q
+        env.update(Q._run_settings_env())
+    except Exception as error:  # noqa: BLE001 - named in the log; the listed names above still pass
+        log('%s %s: run settings not forwarded to the clean unit (%s: %s)' % (stage, key, type(error).__name__, error))
     pinned = (['taskset', '-c', lane] if lane and shutil.which('taskset') else [])
     how = None
     if shutil.which('systemd-run') and os.environ.get('FRANKIE_HANDOFF_DETACH', 'systemd') != 'session':
@@ -433,7 +441,7 @@ def boundary(run, e, stage, key, record, *, code_root, commit, log=print):
     else:
         pins_args = [a for r in receipts for a in ('--receipt', str(r))] + [a for r in roots for a in ('--dir', str(r))] + \
                     [a for r in roots for a in ('--only-under', str(r))]
-    if os.environ.get(VALIDATE_CHECK, 'claim') == 'off':
+    if os.environ.get(VALIDATE_CHECK, 'off') == 'off':      # 2026-10-09: off is the default at every boundary
         # session 9: the validator is skipped; the boundary goes on exactly as after exit 0
         code, validation, totals = 0, None, {}
         base.update(roots=[str(r) for r in roots], receipts=[str(r) for r in receipts], lane=lane,
@@ -589,15 +597,41 @@ def is_saved(run, day):
     return state == 'saved' or (state == 'done' and finish == 'saved')
 
 
-def wait_saved(run, day, bound, say=print):
-    deadline = time.monotonic() + bound
-    while True:
-        if is_saved(run, day):
-            return True
-        if time.monotonic() >= deadline:
-            return False
-        say('waiting for %s %s to be recorded saved (%s)' % (run, day, day_state(run, day)))
-        time.sleep(WAIT_POLL_SECONDS)
+def _root_worker_pid():
+    """The pid of the ROOT line's worker while it holds its lock, else None (no owner left to save the day)."""
+    try:
+        import frankie_box_frankie_queue as Q
+        status, held = Q.worker_state('root')
+        return (status or {}).get('pid') if held else None
+    except Exception:  # noqa: BLE001 - no queue here
+        return None
+
+
+def wait_saved(run, day, bound=None, say=print):
+    """Event-driven (2026-10-09; was a 10 s poll): wakes on the queue's state changes (the wake directory) and on the
+    ROOT worker's exit. True when the day is recorded saved; False when it can no longer become saved by itself (the
+    entry is not running or its finish not running, or no ROOT worker holds the line) or at the optional bound."""
+    import frankie_box_wake as W
+    deadline = None if bound is None else time.monotonic() + bound
+    waiter = W.Waiter([queue_dir() / 'wake'])
+    try:
+        while True:
+            if is_saved(run, day):
+                return True
+            state, finish, _ = day_state(run, day)
+            pid = _root_worker_pid()
+            if not (state == 'running' or (state == 'done' and finish == 'running')) or pid is None:
+                say('%s %s: not saved and nothing left to save it (entry %s, finish %s, ROOT worker %s)' % (
+                    run, day, state, finish, pid or 'none'))
+                return False
+            waiter.watch_pid(pid)
+            say('waiting for %s %s to be recorded saved (entry %s, finish %s)' % (run, day, state, finish))
+            remaining = None if deadline is None else deadline - time.monotonic()
+            if remaining is not None and remaining <= 0:
+                return False
+            waiter.wait(remaining)
+    finally:
+        waiter.close()
 
 
 def successor_running(run, day, own_unit=None):
@@ -638,7 +672,8 @@ def queue_sh(code_root):
 
 
 def trigger(out_dir, run, day, stage, code_root, commit, say=print):
-    """The stage's last task: resume + kick on the LAUNCHING checkout, exactly once, only while the day is saved."""
+    """The stage's last task: resume + kick on the NEWEST staged checkout (2026-10-09), exactly once, only while the day
+    is saved."""
     out_dir = Path(out_dir)
     receipt_path = out_dir / 'trigger.json'
     base = dict(schema=TRIGGER_SCHEMA, run=run, day=day, stage=stage, code_root=str(code_root), commit=commit, at=time.time(),
@@ -657,6 +692,16 @@ def trigger(out_dir, run, day, stage, code_root, commit, say=print):
     if busy:
         return _write(receipt_path, dict(base, status='refused', reason='a process or unit for %s %s already exists: %s'
                                                                         % (run, day, busy)))
+    # 2026-10-09 (Greg): the code version is recorded, never compared: the resume and kick go at the NEWEST staged
+    # checkout on the box (the launching one only when none is staged); both are on the receipt
+    try:
+        import frankie_box_frankie_queue as Q
+        newest_root, newest_commit = Q.current_checkout(code_root, commit)
+    except Exception:  # noqa: BLE001 - no queue module here: the launching checkout
+        newest_root, newest_commit = code_root, commit
+    base.update(launching=dict(code_root=str(code_root), commit=commit), code_root=str(newest_root), commit=newest_commit,
+                queue_sh=queue_sh(newest_root))
+    code_root, commit = newest_root, newest_commit
     env = dict(os.environ, CODE_ROOT=str(code_root), MARKETS_SHA=commit, RUN=run, DAY=day)
     steps = []
     for action, extra in (('resume', {}), ('kick', dict(LINE='root', SCOPE='%s:%s' % (run, day)))):
@@ -687,7 +732,8 @@ def clean_action(args):
     clean_dir = out_dir / 'clean'
     clean_dir.mkdir(parents=True, exist_ok=True)
     say = lambda t: print('%s %s' % (time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), t), flush=True)
-    bound = float(os.environ.get('FRANKIE_HANDOFF_WAIT_SAVED_SECONDS') or WAIT_SAVED_SECONDS)
+    bound = os.environ.get('FRANKIE_HANDOFF_WAIT_SAVED_SECONDS') or WAIT_SAVED_SECONDS
+    bound = float(bound) if bound else None
     _, _, marker = day_state(args.run, args.day)
     base = dict(schema=TRIGGER_SCHEMA, run=args.run, day=args.day, stage=args.stage, code_root=args.code_root,
                 commit=args.commit, at=time.time())
@@ -696,8 +742,8 @@ def clean_action(args):
     # the end only when a successor was triggered (the resumed day then owns it)
     _note_beside_marker(marker, dict(base, status='running', pid=os.getpid(), reason='the clean unit is running'))
     if not wait_saved(args.run, args.day, bound, say):
-        body = dict(base, status='failed', reason='the day was not recorded saved within %d s (%s); nothing cleaned, no resume'
-                                                   % (bound, (day_state(args.run, args.day),)))
+        body = dict(base, status='failed', reason='the day was not recorded saved (%s; bound %s); nothing cleaned, no resume'
+                                                   % ((day_state(args.run, args.day),), bound))
         _write(out_dir / 'trigger.json', body)
         _note_beside_marker(marker, body)
         return 3

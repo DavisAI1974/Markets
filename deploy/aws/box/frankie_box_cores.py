@@ -67,7 +67,7 @@ class worker's step and an owner school recovery's) never run at once on the lan
 is recorded under the booking's `steps` (stage, slot, cpus, pid with its start time, at) under
 the ledger lock before the step runs, and moved to `steps_released` with its exit code when it ends; a claim whose pid
 is gone (or never recorded within UNATTACHED_CLAIM_SECONDS) is released by the next claim. While another live claim holds
-the slot, the step WAITS in place (polling every SLOT_WAIT_POLL s) and its CPU_BOOKING line names the holder and the
+the slot, the step WAITS in place (woken by the ledger change or the holder's exit, 2026-10-09) and its CPU_BOOKING line names the holder and the
 seconds waited. The CPU never leaves the day's booking, so no other day can take it and nothing is double booked.
 
 THE RESOLVER AND THE 64-vCPU BOX (session 8, 2026-10-08; Greg: "make sure CPUs are designed for every upcoming step ...
@@ -164,7 +164,6 @@ DAY_RUN_STAGES = ('root', 'teacher', 'classroom', 'data', 'search', 'lessons', '
 STAGE_SLOTS = {'voice': 'adviser'}
 SLOT_CPUS = {'adviser': None}           # None = every CPU of the day's held booking (the whole lane); N = N worker CPUs
 STAGE_CPUS = {stage: SLOT_CPUS[slot] for stage, slot in STAGE_SLOTS.items()}
-SLOT_WAIT_POLL = 5.0                    # seconds between claim attempts while the shared slot is busy
 UNATTACHED_CLAIM_SECONDS = 120.0        # a claim whose step pid was never recorded is stale after this
 INGEST_RULE = ('an ingest, canary or conform day process runs ONE pool at a time (the encode pool ends at the seal before '
                'the conformance reader starts; the parallel writer\'s replay/encode pool closes before its reader): WORKERS + 1 '
@@ -747,6 +746,11 @@ def release_one(b, reason, exit_code=None):
         body['exit_code'] = exit_code
     write_json(RELEASED / Path(b['_path']).name, body)
     os.remove(b['_path'])
+    try:                                    # 2026-10-09: CPUs freed: every event-driven waiter on the box re-checks
+        import frankie_box_frankie_queue as Q
+        Q.notify('cpus-released', booking=b.get('booking'))
+    except Exception:  # noqa: BLE001 - a wake never fails a release
+        pass
     return body
 
 
@@ -1209,6 +1213,17 @@ def claim_step(booking, stage):
         return claim, None, None
 
 
+def _claim_pid(claim):
+    """The process whose exit ends a slot claim: its step pid when attached, else the claimant (the pid in its id)."""
+    pid = claim.get('pid')
+    if isinstance(pid, dict) and pid.get('pid'):
+        return int(pid['pid'])
+    try:
+        return int(str(claim.get('claim_id') or '').rsplit('-', 1)[1])
+    except (IndexError, ValueError):
+        return None
+
+
 def attach_step(booking, claim_id, pid, exit_code=None, end=False):
     """Record the step's pid on its claim, or (end=True) move the claim to steps_released with its exit code."""
     with Lock():
@@ -1273,7 +1288,11 @@ def cmd_run_step(a, b, command):
     """A STAGE_SLOTS step inside its day's held slot: claim the slot's CPUs (the whole lane for SLOT_CPUS None; waiting
     in place while another stage of the slot holds it, the wait recorded), run under taskset of exactly those CPUs,
     release the claim when it ends (the day's slot itself stays held)."""
+    import frankie_box_wake as W
     started, waited_on, announced = time.time(), None, False
+    # 2026-10-09: the slot wait wakes the instant the ledger changes (the holder's claim released) or the holder's
+    # process exits (its claim is then stale and released by this claim); never an interval
+    waiter = W.Waiter([LEDGER])
     while True:
         claim, why, holder = claim_step(b['booking'], a.stage)
         if claim is not None:
@@ -1285,7 +1304,13 @@ def cmd_run_step(a, b, command):
         if not announced:
             print('### stage %s waits for the shared slot: %s' % (a.stage, why), flush=True)
             announced = True
-        time.sleep(SLOT_WAIT_POLL)
+        waiter.watch_pid(_claim_pid(holder))
+        # an unattached claim (its step pid never recorded) is stale after UNATTACHED_CLAIM_SECONDS: that one moment is
+        # the only timed wake, and only for such a claim
+        unattached = None if holder.get('pid') else max(0.0, float(holder.get('at_epoch') or 0) + UNATTACHED_CLAIM_SECONDS
+                                                         - time.time()) + 0.1
+        waiter.wait(unattached)
+    waiter.close()
     waited = round(time.time() - started, 1)
     cpus = cpu_list(claim['cpus'])
     emit_outcome(a, dict(status='booked', booking=b['booking'], cpus=cpus, parent_cpu=b['parent_cpu'], inside=True,

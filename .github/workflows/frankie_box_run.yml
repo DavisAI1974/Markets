@@ -578,7 +578,7 @@ jobs:
         # plan/status are read-only; loop/resume require Greg's explicit AWS go. A loop here is BOUNDED (its budget end is
         # budget_expired, never completion); the controller's lifetime is the main-box route script=
         # deploy/aws/box/frankie_box_cpu_controller.sh (a run-bound systemd unit); an S3 lease keeps the two off one run.
-        # --commit binds the staged checkout to THIS dispatched commit (the controller refuses a differing queue code_commit).
+        # --commit records THIS dispatched commit beside the staged checkout's (2026-10-09: recorded, never compared).
         if: inputs.script == 'deploy/aws/box/frankie_box_pod_root_loop.sh'
         run: |
           set -euo pipefail
