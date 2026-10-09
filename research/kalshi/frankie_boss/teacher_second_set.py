@@ -118,7 +118,7 @@ def join_record(evidence, picture):
 def check_rows(records, rows):
     """Line the second set up with the teacher's rows (row tuples of parallel_teacher.row_pass: [4] receive clock,
     [5] terminal prefix hash, [6] cursor). Returns the counts and every mismatch (cursor, field, picture, teacher);
-    a row without a record is listed as such."""
+    a row without a record is listed as such. Every mismatch is kept."""
     out = dict(rows_total=len(rows), records=len(records), rows_matched=0, mismatches=[], rows_without_record=0,
                clocks_compared=0)
     for index, row in enumerate(rows):
@@ -126,8 +126,7 @@ def check_rows(records, rows):
         record = records[index] if index < len(records) else None
         if record is None:
             out['rows_without_record'] += 1
-            if len(out['mismatches']) < 1000:
-                out['mismatches'].append((cursor, 'no_picture_record', None, cursor))
+            out['mismatches'].append((cursor, 'no_picture_record', None, cursor))
             continue
         found = [(cursor,) + m for m in record['match']['mismatches']]
         key, clocks = record['key'], record['clocks']
@@ -138,7 +137,7 @@ def check_rows(records, rows):
             if pictured != own:
                 found.append((cursor, name, pictured, own))
         if found:
-            out['mismatches'].extend(found[:max(0, 1000 - len(out['mismatches']))])
+            out['mismatches'].extend(found)                 # every one, never capped
             out.setdefault('rows_mismatched', 0)
             out['rows_mismatched'] += 1
         else:
