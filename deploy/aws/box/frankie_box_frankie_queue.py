@@ -265,6 +265,21 @@ def _waits_of_entry(x):
     return [w for w in (x.get('wait'), (x.get('finish') or {}).get('wait')) if w]
 
 
+def _live_waits_of_entry(x):
+    """The waits of a day that is WAITING on disk now: a queued/failed/running entry's own wait, a waiting finish's wait.
+    A wait left on a day since admitted, finished or held by its owner (saved/unknown: only ACTION=resume moves it) is
+    history: parked with its old stat it would read 'changed' forever and re-kick a worker that ends again at once."""
+    finish = x.get('finish') or {}
+    if x.get('state') in OWNER_STATES or finish.get('state') in OWNER_STATES:
+        return []
+    out = []
+    if x.get('wait') and x.get('state') != 'done':
+        out.append(x['wait'])
+    if finish.get('wait') and finish.get('state') == 'waiting':
+        out.append(finish['wait'])
+    return out
+
+
 def watch_waits(waiter, waits):
     """Add the parent directory of every waited path to a Waiter (a missing one through its nearest ancestor)."""
     for w in waits:
@@ -272,7 +287,7 @@ def watch_waits(waiter, waits):
             waiter.watch_dir(str(Path(p).parent))
 
 
-def park_scope(line, scope_text, code_root, commit, state, reason=None, signature=None):
+def park_scope(line, scope_text, code_root, commit, state, reason=None, signature=None, run_settings=None):
     """Called by a worker that ends while its scope still has work (under no lock). The scope's on-disk waits go on the
     parked file and the parked watcher (frankie-queue-parked-watch) is started, so the scope is re-kicked the instant
     one of those inputs appears or changes, as well as on the next change of the lines (rekick_parked)."""
@@ -283,14 +298,17 @@ def park_scope(line, scope_text, code_root, commit, state, reason=None, signatur
         try:
             for x in load(name).get('entries') or []:
                 if in_scope(x, scope):
-                    waits.extend(_waits_of_entry(x))
+                    waits.extend(_live_waits_of_entry(x))
         except (OSError, ValueError, SystemExit):
             continue
     path = _parked_path(line, scope_text)
     path.parent.mkdir(parents=True, exist_ok=True)
+    # run_settings: the FRANKIE_* settings this worker was kicked with (its own environment), so the re-kick starts the
+    # next worker with the SAME settings, never with whatever process happens to trigger the re-kick (2026-10-09)
     C.write_json(path, dict(schema='FRANKIE_QUEUE_PARKED_V1', line=line, scope=scope_text, code_root=str(code_root),
                             commit=commit, worker_end=state, reason=reason, signature=signature or _parked_signature(),
-                            waits=waits, at=time.time(), at_utc=utc(), pid=os.getpid()))
+                            waits=waits, run_settings=_run_settings_env() if run_settings is None else run_settings,
+                            at=time.time(), at_utc=utc(), pid=os.getpid()))
     if waits:
         start_parked_watch(code_root, commit)
     return str(path)
@@ -370,7 +388,7 @@ def parked_watch(log=print):
             try:
                 out = kick(req['line'], code_root, commit, 0, SETTINGS['queue_poll_seconds'],
                            by='parked watcher: an awaited input appeared or changed (%s)' % req.get('scope'), log=log,
-                           scope=req['scope'])
+                           scope=req['scope'], run_settings=req.get('run_settings'))
                 kicked += 1
                 log('parked watcher: %s re-kicked: %s' % (req.get('scope'), json.dumps(out, default=str)[:300]))
             except (Exception, SystemExit) as error:  # noqa: BLE001 - named; parked again for the next change
@@ -421,12 +439,12 @@ def rekick_parked(log=print):
             try:
                 out.append(kick(req['line'], code_root, commit, 0, SETTINGS['queue_poll_seconds'],
                                 by='re-kick of a parked scope (%s, %s)' % (req.get('worker_end'), req.get('at_utc')),
-                                log=log, scope=req['scope']))
+                                log=log, scope=req['scope'], run_settings=req.get('run_settings')))
             except (Exception, SystemExit) as error:  # noqa: BLE001 - named; parked again for the next change
                 log('parked %s not re-kicked: %s: %s' % (path.name, type(error).__name__, error))
                 try:
                     park_scope(req['line'], req['scope'], req.get('code_root'), req.get('commit'), req.get('worker_end'),
-                               'the re-kick failed: %s' % error)
+                               'the re-kick failed: %s' % error, run_settings=req.get('run_settings'))
                 except Exception:  # noqa: BLE001
                     pass
     except Exception:  # noqa: BLE001 - a re-kick never fails the caller's queue write
@@ -709,10 +727,18 @@ def _start_cpu_watch(code_root, log=print, script=None):
     return dict(started=out.returncode == 0, exit_code=out.returncode, output=text[-600:], script=str(script))
 
 
-def kick(line, code_root, commit, max_seconds, poll_seconds, by, log=print, scope=None):
+def kick(line, code_root, commit, max_seconds, poll_seconds, by, log=print, scope=None, run_settings=None):
     """Start the line's worker detached (systemd-run, else a new session) unless one runs, FOR the authorized scope
     (RUN:days; refused without one). The kicked worker is bounded by max_seconds like a dispatched one. A running worker
-    keeps its own scope: a day outside it waits for the next kick after that worker ends. Returns what happened."""
+    keeps its own scope: a day outside it waits for the next kick after that worker ends. Returns what happened.
+    run_settings: the FRANKIE_* settings the started worker gets (a re-kick passes the ones its scope's last worker ran
+    with); None = this process's own (_run_settings_env).
+
+    2026-10-09 (a2/20231018, 09:30Z: a kick refused as covered by a worker that was ending, and the day sat idle): on the
+    ROOT line a kick that finds a worker running ALWAYS leaves its kick request, covered or not, and wakes the queue. A
+    live worker whose scope covers it takes it at its next pass and re-admits the request's days on it (the kick's
+    'retry now'); a worker that is ending leaves it, and its end kicks a new worker for it (consume_kick_requests). A
+    covered kick is never lost to an ending worker."""
     if scope is None:
         # a kick without an authorization starts nothing (never an unscoped worker): the day waits for a scoped kick
         with locked():
@@ -732,26 +758,45 @@ def kick(line, code_root, commit, max_seconds, poll_seconds, by, log=print, scop
                 set(scope['days']) <= set(parse_scope(theirs)['days'])
         except SystemExit:
             covered = False
+        settings = _run_settings_env() if run_settings is None else dict(run_settings)
+        # the live worker cannot change its environment: a covered kick with other FRANKIE_* settings is recorded, named
+        theirs_settings = (status or {}).get('run_settings')
+        differ = None if theirs_settings is None else {
+            k: dict(worker=theirs_settings.get(k), kick=settings.get(k))
+            for k in sorted(set(theirs_settings) | set(settings)) if theirs_settings.get(k) != settings.get(k)} or None
+        ending = (status or {}).get('state') not in (None, 'running')    # the lock still held by a worker that is ending
         request = None
-        if not covered:
-            request = _leave_kick_request(line, scope, code_root, commit, max_seconds, poll_seconds, by)
+        if not covered or line == 'root':
+            request = _leave_kick_request(line, scope, code_root, commit, max_seconds, poll_seconds, by, settings)
+            notify('kick-request-' + line)            # the live worker wakes and takes it at its next pass
         with locked():
             event(line, 'kick_worker_running', by=by, worker=(status or {}).get('pid'), scope=scope['text'],
-                  worker_scope=theirs, covered=covered, kick_request=request)
-        return dict(started=False, covered=covered, worker_scope=theirs, kick_request=request,
-                    reason='a %s worker runs (pid %s, scope %s): it %s' % (
-                        line, (status or {}).get('pid'), theirs,
-                        'covers %s' % scope['text'] if covered else
-                        'does NOT cover %s; a kick request is left (%s) that the worker consumes the moment it ends'
-                        % (scope['text'], request)))
+                  worker_scope=theirs, worker_state=(status or {}).get('state'), covered=covered, kick_request=request,
+                  run_settings=settings, settings_differ=differ)
+        if covered and request:
+            how = ('covers %s; the kick request %s is handed to it: it re-admits these days at its next pass, or, %s, its '
+                   'end kicks a new worker for them' % (scope['text'], request, 'as it is ending now (%s)' % status.get('state')
+                                                         if ending else 'if it ends first'))
+        elif covered:
+            how = 'covers %s' % scope['text']
+        else:
+            how = ('does NOT cover %s; a kick request is left (%s) that the worker consumes the moment it ends'
+                   % (scope['text'], request))
+        return dict(started=False, covered=covered, worker_scope=theirs, worker_state=(status or {}).get('state'),
+                    kick_request=request, settings_differ=differ,
+                    reason='a %s worker runs (pid %s, scope %s): it %s%s' % (
+                        line, (status or {}).get('pid'), theirs, how,
+                        '' if not differ else '; it runs with other FRANKIE_* settings than this kick\'s (%s): recorded, '
+                        'not applied to the live worker' % json.dumps(differ, sort_keys=True)))
     probe.close()                         # released: the new worker takes it (a race with another kick: one of them exits)
     (QUEUE / 'logs').mkdir(parents=True, exist_ok=True)
     log_path = QUEUE / 'logs' / ('%s-worker.log' % line)
     argv = [sys.executable, '-B', str(HERE / 'frankie_box_frankie_queue.py'), '--action', 'worker', '--line', line,
             '--code-root', str(code_root), '--commit', commit, '--max-seconds', str(worker_limit()),
             '--poll-seconds', str(int(poll_seconds)), '--scope', scope['text']]
+    settings = _run_settings_env() if run_settings is None else dict(run_settings)
     env = dict(PYTHONDONTWRITEBYTECODE='1', PYTHONNOUSERSITE='1', PYTHONPATH=str(code_root), HOME=os.environ.get('HOME') or '/root',
-               MARKETS_SHA=commit, CODE_ROOT=str(code_root), **_run_settings_env())
+               MARKETS_SHA=commit, CODE_ROOT=str(code_root), **settings)
     how = None
     if shutil.which('systemd-run'):
         unit = 'frankie-queue-%s-%d' % (line, int(time.time()))
@@ -773,7 +818,6 @@ def kick(line, code_root, commit, max_seconds, poll_seconds, by, log=print, scop
     # kicked worker is still importing; a worker that has not taken its lock in time is named, and the kick marker keeps
     # the box in use for KICK_GRACE_SECONDS
     import frankie_box_cores as C
-    settings = _run_settings_env()
     cpu_watch = _start_cpu_watch(code_root, log)      # session 8: the watchdog loop rides every kick (idempotent)
     C.write_json(QUEUE / ('%s-kick.json' % line), dict(schema='FRANKIE_QUEUE_KICK_V1', line=line, at=time.time(), at_utc=utc(),
                                                        by=by, scope=scope['text'], how=how, run_settings=settings, cpu_watch=cpu_watch))
@@ -788,16 +832,33 @@ def kick(line, code_root, commit, max_seconds, poll_seconds, by, log=print, scop
                 run_settings=settings, cpu_watch=cpu_watch)
 
 
-def _leave_kick_request(line, scope, code_root, commit, max_seconds, poll_seconds, by):
-    """A kick for a scope the running worker does not cover: one file the worker consumes when it ends (never a wait)."""
+def _leave_kick_request(line, scope, code_root, commit, max_seconds, poll_seconds, by, run_settings=None):
+    """A kick while a worker runs: one file (never a wait). A ROOT worker whose scope covers it takes it at its next pass
+    (_covered_kick_requests); otherwise the worker consumes it the moment it ends (consume_kick_requests)."""
     import frankie_box_cores as C
     directory = QUEUE / KICK_REQUESTS
     directory.mkdir(parents=True, exist_ok=True)
     name = '%s-%s.json' % (line, hashlib.sha256(scope['text'].encode()).hexdigest()[:16])
     C.write_json(directory / name, dict(schema='FRANKIE_QUEUE_KICK_REQUEST_V1', line=line, scope=scope['text'],
                                         code_root=str(code_root), commit=commit, max_seconds=int(max_seconds),
-                                        poll_seconds=int(poll_seconds), by=by, at=time.time(), at_utc=utc()))
+                                        poll_seconds=int(poll_seconds), by=by, at=time.time(), at_utc=utc(),
+                                        run_settings=_run_settings_env() if run_settings is None else run_settings))
     return str(directory / name)
+
+
+def _covered_kick_requests(line, scope):
+    """[(path, request)] of the line's kick requests on disk NOW whose scope this worker's scope covers."""
+    directory = QUEUE / KICK_REQUESTS
+    out = []
+    for path in sorted(directory.glob('%s-*.json' % line)) if directory.is_dir() else []:
+        try:
+            req = json.loads(path.read_bytes())
+            theirs = parse_scope(req.get('scope'))
+        except (OSError, ValueError, SystemExit):
+            continue
+        if theirs['run'] == scope['run'] and theirs['days'] <= scope['days']:
+            out.append((path, req))
+    return out
 
 
 def consume_kick_requests(line, log=print):
@@ -815,7 +876,8 @@ def consume_kick_requests(line, log=print):
         try:
             out.append(kick(line, code_root, commit, req.get('max_seconds') or SETTINGS['queue_worker_seconds'],
                             req.get('poll_seconds') or SETTINGS['queue_poll_seconds'],
-                            by='kick request of %s (%s)' % (req.get('by'), req.get('at_utc')), log=log, scope=req['scope']))
+                            by='kick request of %s (%s)' % (req.get('by'), req.get('at_utc')), log=log, scope=req['scope'],
+                            run_settings=req.get('run_settings')))
         except (Exception, SystemExit) as error:  # noqa: BLE001 - listed; the request's own caller is long gone
             log('kick request %s not kicked: %s: %s' % (path.name, type(error).__name__, error))
     return out
@@ -2542,7 +2604,7 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
     deadline = time.monotonic() + max_seconds if max_seconds else None
     running, retried, plans, code = {}, set(), {}, 0
     _worker_status('root', state='running', commit=commit, code_root=str(code_root), max_seconds=max_seconds,
-                   poll_seconds=poll_seconds, started_utc=utc(), scope=scope['text'])
+                   poll_seconds=poll_seconds, started_utc=utc(), scope=scope['text'], run_settings=_run_settings_env())
     waiter = None
     while True:
         if deadline is not None and time.monotonic() >= deadline:
@@ -2552,11 +2614,21 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
             running[seq]['thread'].join()           # it ended (marked before its wake): the join returns at once
         after, owner_waiting = [], []
         with locked():
+            # 2026-10-09 (a2/20231018 09:30Z): the kick requests this worker covers, listed BEFORE the line is read: a
+            # kicker writes its request after its own line change, so that change is in this pass's doc. Their days are
+            # re-admitted in this pass (a kick is a 'retry now'); a request written after this listing stays on disk for
+            # the next pass, or, when this worker ends, for its end (consume_kick_requests kicks a new worker for it)
+            taken = _covered_kick_requests('root', scope)
             doc = load('root')
             if waiter is not None:
                 waiter.close()
             waiter = _root_waiter(doc, running)     # built BEFORE this pass's checks: no change after them is missed
             marks = _wake_marks()                   # with it: the hand-offs after this point re-admit a waiting day
+            for _path, req in taken:
+                days = parse_scope(req['scope'])['days']
+                for x in doc['entries']:
+                    if x['run'] == scope['run'] and x['day'] in days:
+                        retried.discard(x['seq'])
             for seq in finished:
                 job = running.pop(seq)
                 y = find(doc, seq)
@@ -2719,6 +2791,7 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                     event('root', 'finish_refused', seq=x['seq'], day=x['day'], run=x['run'], reason=str(error))
                     continue
                 x['finish'] = dict(state='running', started_utc=utc(), pid=os.getpid(), commit=commit, slot_booking=slot)
+                x['reason'] = 'its day (after the ROOT) in the held box slot %s' % slot
                 save('root', doc)                            # retain source before the child thread can do work
                 t = threading.Thread(target=_wake_after, args=(_finish_job, dict(x), code_root, commit, log, holder), daemon=True)
                 running[x['seq']] = dict(thread=t, holder=holder, kind='finish')
@@ -2785,12 +2858,18 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
             owned = [x for x in pending if x['state'] in OWNER_STATES or (x.get('finish') or {}).get('state') in OWNER_STATES]
             n_done = len(mine) - len(pending)
             end = None
+            owner_wait = None
             if not running and owner_waiting and not after:
                 blocked = owner_waiting[0]
                 end = ('waiting_owner', 5)
+                owner_wait = blocked.get('reason')
             elif not running and pending and not after and len(owned) == len(pending):
                 blocked = owned[0]                           # every pending day is saved/unknown: its owner's ACTION=resume
                 end = ('waiting_owner', 5)
+                owner_wait = ('every pending day of %s is held by its owner (seq %d %s %s: state %s, finish %s, attempt %s): '
+                              'only ACTION=resume moves it, and the resume re-kicks this scope' % (
+                                  scope['text'], blocked['seq'], blocked['run'], blocked['day'], blocked['state'],
+                                  (blocked.get('finish') or {}).get('state'), (blocked.get('owner') or {}).get('attempt')))
             elif not running and not pending and not after:
                 end = ('idle', 0)                            # nothing of this scope left; other scopes' days are untouched
             elif not running and not after and out_of_scope_ahead is not None and pending and \
@@ -2801,14 +2880,26 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                 end = ('stopped_at_failed', 3)
             elif not running and stop and not after:
                 end = ('saved', 5)
+            for path, req in taken:                         # taken: re-admitted by this pass (ending or not)
+                try:
+                    path.unlink()
+                except OSError:
+                    continue
+                theirs = req.get('run_settings')
+                mine_settings = _run_settings_env()
+                event('root', 'kick_request_taken', scope=req.get('scope'), by=req.get('by'), at_utc=req.get('at_utc'),
+                      worker_scope=scope['text'], worker_end=end[0] if end else None,
+                      settings_differ=None if theirs is None else {
+                          k: dict(worker=mine_settings.get(k), kick=theirs.get(k))
+                          for k in sorted(set(theirs) | set(mine_settings)) if theirs.get(k) != mine_settings.get(k)} or None)
             if end:
                 about = None if blocked is None else dict(seq=blocked['seq'], day=blocked['day'], run=blocked['run'],
                                                           reason=blocked.get('reason'))
                 _worker_status('root', state=end[0], commit=commit, scope=scope['text'],
-                               reason=blocked.get('reason') if end[0] == 'waiting_owner' else source if end[0] == 'waiting_out_of_scope'
-                               else stop.get('reason'), front=about, pending=len(pending))
+                               reason=owner_wait if end[0] == 'waiting_owner' else source if end[0] == 'waiting_out_of_scope'
+                               else stop.get('reason'), front=about, pending=len(pending), run_settings=_run_settings_env())
                 event('root', 'worker_end', state=end[0], reason=stop.get('reason'), front=about, pending=len(pending),
-                      scope=scope['text'])
+                      scope=scope['text'], **(dict(owner_wait=owner_wait) if owner_wait else {}))
                 probe.update('root:' + end[0], n_done, len(mine) or None,
                              state='waiting' if end[0] in ('waiting_owner', 'waiting_out_of_scope') else 'complete' if end[1] == 0 else 'failed')
                 fcntl.flock(lock, fcntl.LOCK_UN)            # released under the queue lock: an enqueue now gets a new kick
@@ -2839,7 +2930,7 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                     event('root', 'receipt_after_found_failed', seq=x['seq'], day=x['day'], run=x['run'],
                           reason='%s: %s' % (type(error).__name__, error))
         _worker_status('root', state='running', commit=commit, running=sorted(running), stop=stop.get('reason'),
-                       pending=len(pending), scope=scope['text'])
+                       pending=len(pending), scope=scope['text'], run_settings=_run_settings_env())
         probe.update('root:running %d' % len(running), n_done, len(mine) or None, in_flight=len(running))
         # 2026-10-09: no poll interval; the worker wakes on the next event (see _root_waiter), or at its own lifetime
         # bound when nothing stops it yet
@@ -3057,6 +3148,8 @@ def resume_owner(run, day, by, rebook=False):
             phase = 'root'
         elif x['state'] == 'done' and finish.get('state') in OWNER_STATES:
             x['finish'] = dict(finish, state='resume', resumed_by=by, resumed_utc=utc())
+            x['reason'] = ('resumed by %s: its day after the ROOT back in line with its owner binding (attempt %s, CPUs %s)'
+                           % (by, owner['attempt'], owner.get('cpus') or 'any free slot'))
             phase = 'finish'
         else:
             raise SystemExit('%s %s is %s (finish %s): only a saved/unknown day is resumed' % (run, day, x['state'], finish.get('state')))
@@ -3073,8 +3166,88 @@ def resume_owner(run, day, by, rebook=False):
             save('class', cdoc)
             event('class', 'resume', seq=c['seq'], day=day, run=run, by=by)
         return dict(resumed=dict(run=run, day=day, phase=phase, owner=owner, archived=archived),
-                    note='the next ROOT-line admission books exactly the retained CPUs and resumes attempt %s; kick the '
-                         'root worker with this run/day in scope' % owner['attempt'])
+                    note='the next ROOT-line admission books exactly the retained CPUs and resumes attempt %s; ACTION=resume '
+                         'kicks the root worker for this run/day itself (KICK=off leaves it to an ACTION=kick)' % owner['attempt'])
+
+
+def worker_end_handoff(line, scope_text, code_root, commit, log=print):
+    """A line worker's last steps after its loop returned (its worker lock is already released, under the queue lock).
+
+    1. Park (or unpark) its scope, with the lines' signature taken AT its end decision (_worker_status).
+    2. Re-kick at once when the lines changed since that decision (rekick_parked, after the parked file exists).
+       2026-10-09, a2/20231018 09:30Z: an ACTION=resume waited on the queue lock while the worker's last pass held it
+       (the worker read the day still saved), wrote the instant the pass released it, and ran its own re-kick BEFORE
+       this worker had written its parked file: nothing was parked yet, so nothing was kicked; the worker then parked
+       with its pre-resume signature and nobody re-read the lines again (no further queue write, and the parked watcher
+       runs only for on-disk waits). The day sat idle. Re-reading the lines here closes that window: a change before the
+       parked file exists is seen by this re-kick; a change after it is seen by the changer's own re-kick.
+    3. Wake every waiter, and kick the kick requests left while it ran (a request it did not take: another scope, or one
+       written after its last pass listed them)."""
+    try:
+        status, _ = worker_state(line)
+        if scope_text and (status or {}).get('pid') == os.getpid():
+            if status.get('state') == 'idle':
+                unpark_scope(line, parse_scope(scope_text)['text'])
+            else:
+                park_scope(line, parse_scope(scope_text)['text'], code_root, commit, status.get('state'),
+                           status.get('reason'), signature=status.get('lines_signature'))
+                for out in rekick_parked(log=log):
+                    log('re-kicked at this worker\'s end (the lines changed after its end decision): %s'
+                        % json.dumps(out, default=str)[:300])
+    except Exception as error:  # noqa: BLE001 - named; the kick requests below still run
+        log('park: not recorded (%s: %s)' % (type(error).__name__, error))
+    # a worker's end wakes every waiter, and the kick requests left while it ran are kicked now
+    notify('worker-end-' + line)
+    try:
+        consume_kick_requests(line, log=log)
+    except Exception as error:  # noqa: BLE001 - named; the requests stay on disk for the next worker end
+        log('kick requests: not consumed (%s: %s)' % (type(error).__name__, error))
+
+
+def _scope_settings(line, run, day):
+    """The FRANKIE_* run settings the last worker of a scope holding run:day was kicked with: its parked file's, else the
+    line's last kick record's (<line>-kick.json) when its scope holds the day; {} when neither says."""
+    want = dict(run=run, days={day})
+    for path in sorted((QUEUE / PARKED).glob('%s-*.json' % line)) if (QUEUE / PARKED).is_dir() else []:
+        try:
+            req = json.loads(path.read_bytes())
+            theirs = parse_scope(req.get('scope'))
+        except (OSError, ValueError, SystemExit):
+            continue
+        if theirs['run'] == want['run'] and want['days'] <= theirs['days'] and req.get('run_settings') is not None:
+            return dict(req['run_settings'])
+    try:
+        last = json.loads((QUEUE / ('%s-kick.json' % line)).read_bytes())
+        theirs = parse_scope(last.get('scope'))
+        if theirs['run'] == run and day in theirs['days'] and last.get('run_settings') is not None:
+            return dict(last['run_settings'])
+    except (OSError, ValueError, SystemExit):
+        pass
+    return {}
+
+
+def kick_after_resume(run, day, by, code_root=None, commit=None, log=print):
+    """The resume arms its own re-admission (2026-10-09): the ROOT worker is kicked for RUN:DAY right after the resume's
+    write, so no separate ACTION=kick is needed and none can race it. A worker that runs already takes the request at its
+    next pass (kick hands it over); one that is ending kicks a new worker for it at its end. The settings: the ones the
+    scope's last worker was kicked with (_scope_settings), with this process's own FRANKIE_* settings on top (the
+    operator's, given with the resume). Never raises: the resume stands, the outcome is returned and recorded."""
+    try:
+        if not code_root:
+            code_root, commit = current_checkout(str(HERE.parents[2]), commit)
+        commit = commit or _head_of(code_root)
+        settings = _scope_settings('root', run, day)
+        settings.update(_run_settings_env())
+        return kick('root', code_root, commit, 0, SETTINGS['queue_poll_seconds'], by='%s (the resume\'s own kick)' % by,
+                    log=log, scope='%s:%s' % (run, day), run_settings=settings)
+    except (Exception, SystemExit) as error:  # noqa: BLE001 - named; ACTION=kick still takes it
+        try:
+            with locked():
+                event('root', 'resume_kick_failed', run=run, day=day, by=by, reason='%s: %s' % (type(error).__name__, error))
+        except Exception:  # noqa: BLE001
+            pass
+        return dict(started=False, error='%s: %s' % (type(error).__name__, error),
+                    note='the resume stands; ACTION=kick LINE=root SCOPE=%s:%s admits it' % (run, day))
 
 
 # ------------------------------------------------------------------------------------------------------ main
@@ -3093,7 +3266,8 @@ def main():
     p.add_argument('--events', default='50', help='show: how many of the last events per line (a number or all)')
     p.add_argument('--max-seconds', type=int, default=0, help='worker lifetime limit; 0 = none (default); opt-in only')
     p.add_argument('--poll-seconds', type=int, default=60)
-    p.add_argument('--kick', choices=('on', 'off'), default='on', help='enqueue: kick the line\'s worker after')
+    p.add_argument('--kick', choices=('on', 'off'), default='on',
+                   help='enqueue / resume: kick the line\'s worker after (resume: the ROOT worker for RUN:DAY)')
     p.add_argument('--scope', help='worker/kick/handover: the authorized RUN:YYYYMMDD,... this worker may admit (required)')
     p.add_argument('--rebook', choices=('on', 'off'), default='off',
                    help='resume: the retained booking is gone (released): resume the same attempt on any free 16 CPUs')
@@ -3123,6 +3297,10 @@ def main():
         out = (request_save(a.run, a.day, by, release_booking=a.release_booking == 'on', release_reason=a.release_reason)
                if a.action == 'save' else owner_status(a.run, a.day) if a.action == 'status'
                else resume_owner(a.run, a.day, by, rebook=a.rebook == 'on'))
+        if a.action == 'resume' and a.kick == 'on':
+            # 2026-10-09: the resume arms the re-admission itself (KICK=off leaves it to an ACTION=kick)
+            out['kick'] = kick_after_resume(a.run, a.day, by, a.code_root, a.commit,
+                                            log=lambda t: print(t, file=sys.stderr, flush=True))
         print(json.dumps(out, indent=1, sort_keys=True, default=str))
         return 0
     # 2026-10-09 (Greg): the code version is recorded, never compared. Without --code-root a kick/handover uses the
@@ -3147,24 +3325,7 @@ def main():
                 code = root_worker(a.code_root, a.commit, a.max_seconds, a.poll_seconds, log=lambda t: print(t, flush=True),
                                    wait_lock=a.wait_lock, scope=a.scope)
         finally:
-            # 2026-10-09: a worker that ends while its scope still has work parks the scope (the next change of the
-            # lines re-kicks it, rekick_parked); a worker whose scope is done unparks it
-            try:
-                status, _ = worker_state(a.line)
-                if a.scope and (status or {}).get('pid') == os.getpid():
-                    if status.get('state') == 'idle':
-                        unpark_scope(a.line, parse_scope(a.scope)['text'])
-                    else:
-                        park_scope(a.line, parse_scope(a.scope)['text'], a.code_root, a.commit, status.get('state'),
-                                   status.get('reason'), signature=status.get('lines_signature'))
-            except Exception as error:  # noqa: BLE001 - named; the kick requests below still run
-                print('park: not recorded (%s: %s)' % (type(error).__name__, error), flush=True)
-            # a worker's end wakes every waiter, and the kick requests left while it ran are kicked now
-            notify('worker-end-' + a.line)
-            try:
-                consume_kick_requests(a.line, log=lambda t: print(t, flush=True))
-            except Exception as error:  # noqa: BLE001 - named; the requests stay on disk for the next worker end
-                print('kick requests: not consumed (%s: %s)' % (type(error).__name__, error), flush=True)
+            worker_end_handoff(a.line, a.scope, a.code_root, a.commit, log=lambda t: print(t, flush=True))
             # the box's KeepRunning tag (Greg, 2026-10-07: "keep running only when in use"): a line worker's end is the
             # last work of a run on this box; cleared to false ONLY when no orchestrator start, other line worker or CPU
             # controller is alive here (frankie_box_experiment.box_in_use names what is; then the tag is kept, recorded);
