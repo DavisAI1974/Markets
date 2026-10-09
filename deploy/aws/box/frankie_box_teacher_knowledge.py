@@ -563,8 +563,40 @@ def late_arrivals(day, brain, selection, LS):
         source = item.get('source')
         seen.update(x for x in ((source or {}).get('sha256') if isinstance(source, dict) else item.get('sha256'),
                                 item.get('sha256')) if x)
-    current = LS.learner_knowledge(day, 'exchange', brain=brain)
-    return [dict(label=d.get('label'), kind=d.get('kind'), day=d.get('day'), path=d.get('path'), sha256=d.get('sha256'),
-                 schema=(d.get('content') or {}).get('schema') if isinstance(d.get('content'), dict) else None,
+    return [dict(d, schema=None,
                  reason='published after this owner froze its scientific selection; not consumed by the frozen selection')
-            for d in current['documents'] if d.get('sha256') not in seen]
+            for d in knowledge_listing(day, 'exchange', brain, LS) if d['sha256'] not in seen]
+
+
+# the boundary walls of frankie_box_lane_state.learner_knowledge (its `before` map and day rule), mirrored for a listing
+_STAGE_BEFORE = {'root': -20, 'teacher': -10, 'classroom': 0, 'search': 10,
+                 'lessons': 20, 'exchange': 40, 'voice': 40, 'meeting': 45, 'school': 50}
+
+
+def knowledge_listing(day, stage, brain, LS):
+    """One pass (Greg, 2026-10-09): the knowledge documents a learner selection at this boundary would consider, LISTED
+    from the brain entries' own manifests (label, kind, day, path, the manifest's bytes and sha256) and the files' stat:
+    no document is loaded, parsed or hashed. Used where a frozen selection is reused and only the late arrivals are
+    listed (never consumed); the selection itself (lane_state.learner_knowledge) reads and checks what it consumes. A
+    listing does not resolve a correction successor or a same-batch withholding (those need the content): such a
+    document is listed by its manifest sha256. Every included .json entry of every entry before the boundary, with the
+    same day/stage wall as learner_knowledge; a missing file raises as there."""
+    import frankie_box_brain as BR
+    before = _STAGE_BEFORE.get(stage, 100)
+    out = []
+    for root in [Path(brain)] + [Path(v['root']) for v in LS.knowledge_versions()]:
+        for label, m, d in BR.entries_before(root, '00', day=day):
+            eday, kind = BR.parse_entry_name(d.name)
+            if eday == day and (BR.DAY_KINDS.get(kind, 0) > before or kind.isdigit() and before <= 0):
+                continue
+            for e in m.get('entries', []):
+                if not e.get('include') or not e['name'].endswith('.json'):
+                    continue
+                p = d / e['name']
+                if not p.is_file():
+                    raise FileNotFoundError('included learner knowledge is missing: %s' % p)
+                if p.stat().st_size != e['bytes']:
+                    raise ValueError('knowledge source hash mismatch: %s' % p)
+                out.append(dict(label=label, kind=kind, day=eday, path=str(p), sha256=e['sha256'], bytes=e['bytes'],
+                                basis='manifest entry and stat (listing only; not loaded or hashed)'))
+    return out

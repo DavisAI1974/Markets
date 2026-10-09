@@ -346,11 +346,12 @@ def accumulated_lessons(day, run, paths, brain, input_path, rows_path, rules_wit
         # restart shows what the frozen selection did not see; nothing is reopened (CCode slice D, 2026-10-06).
         frozen = {src['sha256'] for _, src in retained['documents']} | {src.get('container_sha256') for _, src in retained['documents']}
         frozen |= {item.get('sha256') for item in retained.get('listed') or []}
-        current = LS.learner_knowledge(day, 'exchange', brain=brain)
+        # one pass (2026-10-09): a stat-only listing from the entries' manifests (no document loaded or hashed)
+        import frankie_box_teacher_knowledge as TK
         retained = dict(retained, late_knowledge=dict(frozen=True, listed=[
             dict(label=d.get('label'), kind=d.get('kind'), day=d.get('day'), path=d.get('path'), sha256=d.get('sha256'),
                  reason='published after this exchange froze its learner inputs; not consumed by the frozen selection')
-            for d in current['documents'] if d.get('sha256') not in frozen],
+            for d in TK.knowledge_listing(day, 'exchange', brain, LS) if d.get('sha256') not in frozen],
             rule='listed, never consumed here: no reopening of a frozen selection; the late-scheduling decision is held'))
         return retained
     docs, listed = load_lessons(paths, day, brain=brain)
