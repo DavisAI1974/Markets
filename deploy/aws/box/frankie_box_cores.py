@@ -630,6 +630,14 @@ def is_frankie(info):
     return python and under and 'frankie_box_cores.py' not in info['cmdline']
 
 
+HELPER_SCRIPTS = ('frankie_box_stage_handoff.py', 'frankie_box_render_digest.py')
+
+
+def is_helper(info):
+    """A known helper unit (the clean/upload of frankie_box_stage_handoff, the digest render): never a CPU holder."""
+    return any(name in info['cmdline'] for name in HELPER_SCRIPTS)
+
+
 def descendants(procs, roots):
     children = {}
     for pid, info in procs.items():
@@ -824,6 +832,10 @@ def usage(window, exclude=()):
     frankie = descendants(procs, [pid for pid, info in procs.items() if is_frankie(info)])
     frankie |= set(owner)
     frankie -= set(exclude)
+    # 2026-10-09 (Greg: a gate we coded never blocks fine data): the known helper units outside the ledger (the stage
+    # handoff's clean unit, pinned to the day's own retained lane; its unpinned Glacier upload; the digest render) and
+    # their children never hold a CPU against a booking
+    frankie -= descendants(procs, [pid for pid, info in procs.items() if pid not in owner and is_helper(info)])
     held, rows = {}, []
     for pid, tid, busy, cpu, affinity in sample(sorted(frankie), window):
         who = owner.get(pid)
