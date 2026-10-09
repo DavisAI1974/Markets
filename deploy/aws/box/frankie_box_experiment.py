@@ -515,21 +515,63 @@ def sealed_ingests(day):
     return out
 
 
-def ingest_of(entry):
-    """(receipt path, None) or (None, reason)."""
+DUPLICATES = {}     # day -> {'ingest'|'root': the duplicate candidates and the choice} (recorded on the day's step records)
+
+
+def _mtime(path):
+    try:
+        return os.stat(path).st_mtime_ns
+    except OSError:
+        return -1
+
+
+def _referenced(run, day, stage, field):
+    """The path this run's own step receipt of the day names (its earlier choice), or None."""
+    if not run:
+        return None
+    try:
+        r = json.loads((RUNS / run / 'days' / day / ('%s.json' % stage)).read_bytes())
+        return str(Path(r[field])) if r.get(field) else None
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+
+
+def _choose(kind, day, candidates, referenced, label):
+    """2026-10-09 (Greg: fastest runtime, science unchanged): never a stop on duplicates. The one the owner binding or
+    this run's own step receipt references, else the newest (receipt mtime); every candidate and the choice recorded
+    (DUPLICATES, carried on the day's step records)."""
+    by_path = {str(c): c for c in candidates}
+    if referenced in by_path:
+        chosen, why = by_path[referenced], 'referenced by %s' % label
+    else:
+        chosen = max(candidates, key=lambda c: (_mtime(c), str(c)))
+        why = 'the newest sealed/receipted one (receipt mtime); none is referenced by %s' % label
+    DUPLICATES.setdefault(day, {})[kind] = dict(duplicates=len(candidates), candidates=[str(c) for c in candidates],
+                                                chosen=str(chosen), why=why)
+    return chosen
+
+
+def ingest_of(entry, run=None):
+    """(receipt path, None) or (None, reason). Two or more sealed ingests of the day: one is chosen (_choose: the one
+    this run's ingest step receipt names, else the newest), recorded, never a refusal."""
     if entry.get('ingest'):
         receipt = Path(entry['ingest']) / 'ingestion-receipt.json'
         return (receipt, None) if receipt.is_file() else (None, 'the plan names %s but it holds no ingestion-receipt.json'
                                                                 % entry['ingest'])
     found = sealed_ingests(entry['day'])
     if len(found) > 1:
-        return None, 'two or more sealed ingests of %s (%s): duplicate data declines the day; name one in the plan' % (
-            entry['day'], ', '.join(str(p.parent) for p in found))
+        named = _referenced(run, entry['day'], 'ingest', 'receipt')
+        if named is None:
+            ingest_dir = _referenced(run, entry['day'], 'ingest', 'ingest')
+            named = str(Path(ingest_dir) / 'ingestion-receipt.json') if ingest_dir else None
+        return _choose('ingest', entry['day'], found, named, 'this run\'s ingest step receipt'), None
     return (found[0], None) if found else (None, None)
 
 
-def root_of(entry, run):
-    """(calculations directory, attempts listed) of the day's finished ROOT, or (None, attempts)."""
+def root_of(entry, run, prefer=None):
+    """(calculations directory, attempts listed) of the day's finished ROOT, or (None, attempts). Two or more finished
+    ROOTs: one is chosen (_choose: the owner binding's attempt `prefer`, else the one this run's root step receipt
+    names, else the newest), recorded, never a refusal; the others are listed with the attempts."""
     remote = RUNS / run / 'days' / entry['day'] / 'root.json'
     if remote.is_file():
         receipt = json.loads(remote.read_bytes())
@@ -540,7 +582,11 @@ def root_of(entry, run):
     attempts = sorted(ROOTS.glob('%s-%s*' % (run, entry['day'])))
     done = [p for p in attempts if (p / 'calculations-receipt.json').is_file()]
     if len(done) > 1:
-        raise SystemExit('two finished ROOTs of %s (%s): duplicate data declines the run' % (entry['day'], done))
+        named = str(ROOTS / prefer) if prefer else _referenced(run, entry['day'], 'root', 'calculations')
+        receipts = [p / 'calculations-receipt.json' for p in done]
+        chosen = _choose('root', entry['day'], receipts, str(Path(named) / 'calculations-receipt.json') if named else None,
+                         'the owner binding (attempt %s)' % prefer if prefer else 'this run\'s root step receipt').parent
+        return chosen, [str(p) for p in attempts if p != chosen]
     return (done[0] if done else None), [str(p) for p in attempts if p not in done]
 
 
@@ -1515,6 +1561,9 @@ class Run:
         noted = self._identity_recorded.get(key[4:] if key.startswith('day-') else key)
         if noted:
             fields.setdefault('identity_recorded', list(noted))       # what differed; the run proceeded (Greg, 2026-10-09)
+        chosen = DUPLICATES.get(key[4:] if key.startswith('day-') else key)
+        if chosen:
+            fields.setdefault('duplicates_chosen', dict(chosen))     # duplicate ingests/ROOTs: candidates and the choice
         body = dict(schema='FRANKIE_EXPERIMENT_STEP_V1', run=self.plan['run'], stage=stage, key=key, status=status,
                     at=time.time(), commit=self.commit, plan_sha256=plan_digest(self.plan),
                     directive_sha256=(self.plan.get('directive') or {}).get('sha256'), **fields)
@@ -1715,7 +1764,7 @@ class Run:
                     use=use, outputs=outputs)
 
     def fetch(self, e):
-        receipt, why = ingest_of(e)
+        receipt, why = ingest_of(e, self.plan['run'])
         if receipt or why:
             return self.record('fetch', e['day'], 'skipped' if receipt else 'refused',
                                reason='the day is ingested already: %s' % receipt.parent if receipt else why,
@@ -1741,7 +1790,7 @@ class Run:
                                dict(exit_code=code, log=pin_or_listed(log))))
 
     def ingest(self, e):
-        receipt, why = ingest_of(e)
+        receipt, why = ingest_of(e, self.plan['run'])
         if why:
             return self.record('ingest', e['day'], 'refused', reason=why)
         if receipt:
@@ -1790,7 +1839,7 @@ class Run:
         before = set(WORK.glob('ingest-*'))
         code, log = self.child('ingest', e['day'], 'frankie_box_ingest_block.sh', env)
         made = sorted(set(WORK.glob('ingest-*')) - before)
-        receipt, why = ingest_of(e)
+        receipt, why = ingest_of(e, self.plan['run'])
         cpu = self._cpu.get(('ingest', e['day']))     # the ledger's own line of this dispatch (booked / waiting / refused)
         if code == self.cores.WAITING_EXIT and (cpu or {}).get('status') == 'waiting' and not receipt:
             # not started: the day's CPUs were not free (a ROOT or another day holds them); visible, retried on a later
@@ -1843,7 +1892,7 @@ class Run:
         remote = self.remote_root(e['day'])
         if remote is not None:
             return remote
-        calc, attempts = root_of(e, self.plan['run'])
+        calc, attempts = root_of(e, self.plan['run'], prefer=self.owned_attempt)
         owned_output = None
         if os.environ.get('FRANKIE_LANE_MAILBOX'):
             attempt = os.environ.get('FRANKIE_LANE_ATTEMPT', '')
@@ -2086,7 +2135,7 @@ class Run:
         ing = self.receipt('ingest', e['day'])
         if ing and ing['status'] in FINISHED and ing.get('ingest'):
             return Path(ing['ingest'])
-        receipt, _ = ingest_of(e)
+        receipt, _ = ingest_of(e, self.plan['run'])
         return receipt.parent if receipt else None
 
     def external_ready(self, e):
