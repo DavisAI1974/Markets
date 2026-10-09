@@ -2750,31 +2750,58 @@ class Run:
         dirs = [rows_dir, rows_dir / 'blocks', Q.wake_dir()] + ([Path(self.stop_marker).parent] if self.stop_marker else [])
         waiter = W.Waiter(dirs)
 
-        def lesson(n, manifest):
-            # the lesson (the second set of the block), then the WHOLE session on the block at once (answers, grade
-            # against the block's pinned key, correction, external section, the checked lesson, the teacher's report)
+        # Everything at once except what needs another piece's output first (Greg, 2026-10-09): block n's lesson and
+        # session read nothing of block n-1 (previous = the prior DAY's classroom, brain = the day's brain), so the
+        # sealed blocks run side by side, one worker process per block up to the classroom's CPUs, each block's lesson
+        # right before its own session in the same worker, submitted in seal order as they seal (follow_blocks keeps
+        # feeding; its waiter stays event-driven). Each block's files are its result (session.json last).
+        import concurrent.futures as CF
+        import multiprocessing as MP
+        workers = max(1, len(K.lane_cpus()))
+        ready, waited, why = K._fork_ready()
+        context = 'fork' if ready else 'spawn'
+        pool = CF.ProcessPoolExecutor(max_workers=workers, mp_context=MP.get_context(context))
+        self.log('classroom %s: block sessions side by side: %d worker process(es) (%s%s)' % (
+            e['day'], workers, context, '' if ready else ': ' + str(why)))
+        futures = {}
+
+        def done(future, n):
+            try:
+                value = future.result()
+                session = value.get('session') or {}
+                self.log('classroom %s: block %d (pid %s) lesson %s; session %s' % (
+                    e['day'], n, value.get('pid'), value.get('lesson'), session if isinstance(session, str) else
+                    '%s (mode %s, %s s)%s; report %s' % (session.get('status'), session.get('mode'),
+                                                        session.get('seconds'), (': ' + str(session.get('reason')))
+                                                        if session.get('reason') else '', session.get('report'))))
+            except BaseException as error:  # noqa: BLE001 - recorded; the block has no session.json and is redone
+                self.log('classroom %s: block %d worker failed: %s: %s' % (e['day'], n, type(error).__name__, error))
+
+        def submit(n, manifest):
             here = d / 'blocks' / str(n)
-            if (here / 'lesson.json').is_file() and (here / 'second_set.json').is_file():
-                made = dict(block=n, lesson=str(here / 'lesson.json'), status='kept')
-            else:
-                made = K.block_lesson(rows_dir, d, n, day_file=day_file, manifest=manifest)
-                self.log('classroom %s: block %d lesson (%s rows, second set %s)' % (e['day'], n, made['rows'],
-                                                                                     made['second_set']))
-            if (here / 'session.json').is_file():
-                made['session'] = 'kept'
-                return made
-            session = K.block_session(rows_dir, d, n, day=e['day'], brain=brain, previous=previous, day_file=day_file,
-                                      day_sha256=day_sha, manifest=manifest)
-            made['session'] = dict(status=session.get('status'), mode=session.get('mode'), reason=session.get('reason'),
-                                   seconds=session.get('seconds'))
-            self.log('classroom %s: block %d session %s (mode %s, %s s)%s; report %s' % (
-                e['day'], n, session.get('status'), session.get('mode'), session.get('seconds'),
-                (': ' + str(session.get('reason'))) if session.get('reason') else '', here / 'TEACHER_REPORT.md'))
-            return made
+            if (here / 'session.json').is_file() and (here / 'lesson.json').is_file() and \
+                    (here / 'second_set.json').is_file():
+                return dict(block=n, lesson='kept', session='kept')
+            future = pool.submit(K.block_work, rows_dir, d, n, e['day'], brain, previous, day_file, day_sha)
+            future.add_done_callback(lambda f, n=n: done(f, n))
+            futures[n] = future
+            return dict(block=n, submitted=True)
         try:
-            return TR.follow_blocks(rows_dir, lesson, waiter, check=self.check_save)
+            followed = TR.follow_blocks(rows_dir, submit, waiter, check=self.check_save)
+            sessions = {}
+            for n, future in sorted(futures.items()):
+                try:
+                    sessions[n] = future.result()
+                except BaseException as error:  # noqa: BLE001
+                    sessions[n] = dict(block=n, error='%s: %s' % (type(error).__name__, error))
+            followed.update(workers=workers, context=context, sessions=sessions)
+            if any('error' in value for value in sessions.values()) and followed.get('status') == 'complete':
+                followed.update(status='failed', reason='block worker(s) failed: %s' % sorted(
+                    n for n, value in sessions.items() if 'error' in value))
+            return followed
         finally:
             waiter.close()
+            pool.shutdown(wait=True, cancel_futures=True)
 
     def early_class_door(self, entries):
         """While the teacher child runs (the sealed blocks, 2026-10-09): one watcher thread per single classroom-arm day
