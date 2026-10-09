@@ -995,7 +995,10 @@ class LlamaServer:
             self.port = s.getsockname()[1]
         command = [self.binary, '-m', self.model, '--host', '127.0.0.1', '--port', str(self.port),
                    '--ctx-size', str(int(self.params['context_size'])), '--threads', str(self.threads),
-                   '--parallel', '1', '--no-context-shift', '--log-disable']
+                   '--parallel', '1', '--no-context-shift']
+        # 2026-10-09: no --log-disable. The start below asks /health when the server writes to its stderr file (or exits);
+        # with logging disabled llama-server writes nothing there after the spawn, so the start would sit until the
+        # meeting's whole budget passed. Its load/listen lines are the start's events (logging only; no model setting).
         # Explicit placement (Greg, 2026-10-07: every process pinned, physical-core aware): the server process is pinned,
         # before exec, to exactly `threads` CPUs of the owning affinity in physical-core order (distinct cores first), so
         # every thread llama.cpp creates inherits that set; on the claimed one-CPU adviser slot that is its one CPU.
@@ -1026,7 +1029,10 @@ class LlamaServer:
         try:
             import threading
             before_exec = bool(self.cpus) and threading.active_count() == 1    # preexec_fn only when single-threaded
-            self.process = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=stderr,
+            # stdout into the same retained file (2026-10-09): every line the server prints, on either stream, is an
+            # event for the event-driven /health check below and is kept whole
+            self.process = subprocess.Popen(command, stdout=stderr if self._stderr_handle is not None else subprocess.DEVNULL,
+                                            stderr=stderr,
                                             preexec_fn=self._pin_child if before_exec else None)
             if self.cpus and not before_exec:
                 try:          # other threads here: pin the new process right after the spawn instead
