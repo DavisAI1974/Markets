@@ -566,14 +566,29 @@ def rows_of(entry):
     return None, None
 
 
+_ATTACHED_CHECKED = {}      # {(day file, receipt, ingest receipt) stat keys: sha256} checked in this process
+
+
+def _stat_key(path):
+    try:
+        st = os.stat(path)
+        return (str(path), st.st_ino, st.st_size, st.st_mtime_ns)
+    except OSError:
+        return (str(path), None)
+
+
 def attached_day_file(ingest_dir):
     """(day file, sha256, None) beside a sealed ingest when it and its receipt agree; (None, None, why) otherwise, and
-    why starts with DIFFERS when a file is there but differs from its receipt (never overwritten: refused)."""
+    why starts with DIFFERS when a file is there but differs from its receipt (never overwritten: refused). One pass:
+    a check that passed in this process is reused while the three files' stat keys are unchanged (every Run object)."""
     path, receipt = Path(ingest_dir) / DAY_FILE, Path(ingest_dir) / DAY_FILE_RECEIPT
     if not path.is_file():
         return None, None, 'no %s beside the sealed ingest %s' % (DAY_FILE, ingest_dir)
     if not receipt.is_file():
         return None, None, '%s beside %s has no %s' % (DAY_FILE, ingest_dir, DAY_FILE_RECEIPT)
+    key = (_stat_key(path), _stat_key(receipt), _stat_key(Path(ingest_dir) / 'ingestion-receipt.json'))
+    if key in _ATTACHED_CHECKED:
+        return path, _ATTACHED_CHECKED[key], None
     want = json.loads(receipt.read_bytes()).get('sha256')
     have = sha256_file(path)
     if have != want:
@@ -587,6 +602,7 @@ def attached_day_file(ingest_dir):
                 body.get('trading_day'), expected_day)
     from research.kalshi.frankie_boss.operations.frankie_day_external import check_day_file
     check_day_file(body)
+    _ATTACHED_CHECKED[key] = have
     return path, have, None
 
 
@@ -2042,34 +2058,36 @@ class Run:
         step receipt must be finished AND say which file: the verified S3 file swapped in (action s3) or confirmed equal
         (s3.same_as_attached), or S3 holds none (s3.status absent: the attached or rebuilt file stands), or this run's
         ROOT/teacher/classroom already used the attached file (the recorded s3_day_file_differs_after_use finding). And
-        the attached file's sha256 must be the one the step recorded. A waiting, refused or failed step, an S3 state
-        present/integrity/unknown without that outcome, or a receipt from before the S3 check: waits, with the reason."""
+        the attached file's sha256 must be the one the step recorded. 2026-10-09 (Greg: a gate we coded never blocks fine
+        data): without such a settled step (a waiting step, an S3 state unknown for want of a presigned map, a receipt
+        from before the S3 check), an attached day file that matches its receipt is used and "S3 not checked" recorded;
+        only a day file actually missing (or differing from its receipt) waits."""
         if not self.plan.get('external_wait', True):
             return True, None
         day = e['day']
         step = self.receipt('external', day) or {}
-        if step.get('status') not in FINISHED:
-            return False, 'the day file is not settled by this run\'s external step (%s%s)' % (
-                step.get('status') or 'not run', (': ' + str(step['reason'])) if step.get('reason') else '')
         s3 = step.get('s3') if isinstance(step.get('s3'), dict) else {}
-        settled = (step.get('action') == 's3' or s3.get('same_as_attached') is True or s3.get('status') == 'absent'
-                   or any(isinstance(f, dict) and f.get('kind') == 's3_day_file_differs_after_use'
-                          for f in step.get('findings') or []))
-        if not settled:
-            return False, ('this run\'s external step (%s) does not show the attached file is the verified S3 file or that '
-                           'S3 holds none (S3 %s); it is run again on a dispatch carrying the day\'s S3 listing' % (
-                               step.get('status'), s3.get('status') or 'not checked'))
-        if day in self._attached and self._attached[day][1] == step.get('sha256'):
-            return True, None
-        directory = self.ingest_dir(e)
-        if directory is None:
-            return False, 'the day has no sealed ingest yet, so no day file beside it (stages ingest, external)'
-        path, sha, why = attached_day_file(directory)
-        if path is None:
-            return False, 'the day file of the historical data points is not attached (stage external): %s' % why
-        if sha != step.get('sha256'):
+        settled = step.get('status') in FINISHED and (
+            step.get('action') == 's3' or s3.get('same_as_attached') is True or s3.get('status') == 'absent'
+            or any(isinstance(f, dict) and f.get('kind') == 's3_day_file_differs_after_use' for f in step.get('findings') or []))
+        if day in self._attached:
+            path, sha = self._attached[day]       # checked once per Run object (attached_day_file read it whole)
+        else:
+            directory = self.ingest_dir(e)
+            if directory is None:
+                return False, 'the day has no sealed ingest yet, so no day file beside it (stages ingest, external)'
+            path, sha, why = attached_day_file(directory)
+            if path is None:
+                return False, 'the day file of the historical data points is not attached (stage external): %s' % why
+        if settled and sha != step.get('sha256'):
             return False, ('the attached day file (sha256 %s) is not the one this run\'s external step settled (%s); the '
                            'external step runs again' % (sha, step.get('sha256')))
+        if not settled:
+            # 2026-10-09 (Greg: a gate we coded never blocks fine data): the attached day file matches its receipt, so
+            # the day proceeds on it; that S3 was not checked is RECORDED on the day's steps, never a wait
+            self.note_identity(day, 'external', 'S3 not checked: the attached day file %s (sha256 %s) matches its receipt '
+                                                'and is used (external step %s, S3 %s)' % (
+                                                    path, sha, step.get('status') or 'not run', s3.get('status') or 'not checked'))
         self._attached[day] = (str(path), sha)
         return True, None
 
@@ -2133,20 +2151,23 @@ class Run:
                                                outputs={}))
         if s3['status'] == 'present':
             return self.external_from_s3(day, directory, s3)
-        if s3['status'] == 'unknown':
-            # E-1 (fifth follow-up review): an unknown S3 state never lets the day proceed on whatever is attached (it
-            # may be an older file than the verified one on S3): the step waits with the reason, retried on a dispatch
-            # whose presigned map carries the day's frankie/day_external/<day>/ listing (ACTION=plan's presign string)
-            return self.record('external', day, 'waiting', s3=s3,
-                               reason='the S3 state of the day file is unknown (%s); the day waits rather than use an '
-                                      'attached file that may be older than S3\'s verified one' % s3['reason'],
-                               inspection=dict(inputs=dict(ingest=str(directory), s3=s3),
-                                               use='waiting: S3 state unknown', outputs={}))
         path, sha, why = attached_day_file(directory)
+        if s3['status'] == 'unknown' and path is None:
+            # an unknown S3 state with NO usable attached file: the step waits with the reason, retried on a dispatch
+            # whose presigned map carries the day's frankie/day_external/<day>/ listing (ACTION=plan's presign string).
+            # 2026-10-09 (Greg): an attached file that matches its receipt proceeds below, "S3 not checked" recorded
+            return self.record('external', day, 'waiting', s3=s3,
+                               reason='the S3 state of the day file is unknown (%s) and no day file is attached (%s)' % (
+                                   s3['reason'], why),
+                               inspection=dict(inputs=dict(ingest=str(directory), s3=s3),
+                                               use='waiting: S3 state unknown, no attached day file', outputs={}))
+        if s3['status'] == 'unknown':
+            s3 = dict(s3, not_checked=True, note='S3 not checked: the attached day file matches its receipt and is used')
         if path is not None:
             day_receipt = directory / DAY_FILE_RECEIPT
             brain_entry = self.brain_stage(day, 'day-file', [path, day_receipt],
                                            summary=dict(day_file=str(path), sha256=sha))
+            self._attached[day] = (str(path), sha)    # external_ready reuses this check (one read per Run object)
             return self.record('external', day, 'reused', day_file=str(path), sha256=sha, ingest=str(directory),
                                brain_entry=brain_entry, s3=s3,
                                inspection=dict(inputs=dict(ingest=str(directory), s3=s3),
