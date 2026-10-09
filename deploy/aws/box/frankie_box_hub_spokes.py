@@ -921,7 +921,8 @@ def _files_in(directory, patterns=('*.json', '*.jsonl', '*.md', '*.pkl', '*.gz')
 def pinned_sources(sources, hash_max=HASH_MAX):
     """hub.json's pinned sources: the sealed day (ingestion receipt, journal by its pin, completion, opening book), the
     day file and its receipt, the committed day manifest, the directive and the classroom rules, the previous classroom
-    day's carry and the frozen survivors when the day has them."""
+    day's carry and the frozen survivors when the day has them, the orchestrator's step receipts of the day and the
+    survivors candidates receipt (sealed_records)."""
     out, ing = [], sources.get('ingest_receipt')
     rc = _json(ing) if ing else None
     def add(a):
@@ -953,7 +954,48 @@ def pinned_sources(sources, hash_max=HASH_MAX):
                                hash_max=hash_max))
     if sources.get('frozen_survivors'):
         add(_file_addition('frozen survivors', 'file', 'survivors stage', sources['frozen_survivors'], hash_max=hash_max))
+    for a in sealed_records(sources, hash_max)[0]:
+        add(a)
     return out
+
+
+# The orchestrator's sealed step receipts of a day (frankie_box_experiment.Run.record: <run>/days/<day>/<stage>.json;
+# frankie_box_experiment.STAGES plus the day-keyed records the queue writes) and the survivors stage's candidates receipt
+# (frankie_box_survivor_update: experiment-survivors/<run>/<day>/receipt.json). Coordinator's decision, 2026-10-09: the hub
+# CARRIES both as pinned base references (not spokes); every one present by reference, an absent one listed, never fatal.
+STEP_RECEIPT_STAGES = ('fetch', 'ingest', 'external', 'root', 'teacher', 'classroom', 'jev', 'data', 'search', 'lessons',
+                       'exchange', 'voice', 'school', 'reports', 'accumulated_lessons', 'frankie_lessons')
+
+
+def sealed_records(sources, hash_max=HASH_MAX):
+    """(additions, absent): every step receipt present under <run>/days/<day>/ (any <stage>.json there, the Jev request
+    excluded: it is the Jev stage's own request, not a step receipt) and the survivors candidates receipt, by reference;
+    absent = [{name, path, status: 'absent', reason}] for each expected one not on disk."""
+    out, absent = [], []
+    run_dir, run, day = sources.get('run_dir'), sources.get('run'), sources['day']
+    if run_dir is not None:
+        days = Path(run_dir) / 'days' / day
+        present = sorted(p for p in days.glob('*.json') if p.is_file() and not fnmatch.fnmatch(p.name, 'jev-request-*'))
+        for p in present:
+            a = _file_addition('orchestrator step receipt ' + p.name, 'receipt', 'orchestrator (Run.record)', p,
+                               hash_max=hash_max)
+            if a is not None:
+                out.append(a)
+        names = {p.stem for p in present}
+        absent += [dict(name='orchestrator step receipt %s.json' % st, path=str(days / (st + '.json')), status='absent',
+                        reason='no %s step receipt for this day (the stage has not recorded, or is batch-keyed)' % st)
+                   for st in STEP_RECEIPT_STAGES if st not in names]
+    else:
+        absent.append(dict(name='orchestrator step receipts', path=None, status='absent', reason='no run named'))
+    if run and sources.get('survivors') is not None:
+        cand = Path(sources['survivors']) / run / day / 'receipt.json'
+        a = _file_addition('survivors candidates receipt', 'receipt', 'survivors stage', cand, hash_max=hash_max)
+        if a is not None:
+            out.append(a)
+        else:
+            absent.append(dict(name='survivors candidates receipt', path=str(cand), status='absent',
+                               reason='the survivors stage has written no candidates receipt for this day'))
+    return out, absent
 
 
 def knowledge_store(sources, hash_max=HASH_MAX):
@@ -1227,6 +1269,7 @@ def open_day_hub(hub_root, sources, hash_max=HASH_MAX):
     """open_hub with this day's pinned sources, every piece and the hub core's default prerequisites (so nothing is
     listed in prerequisites_dropped)."""
     pins = [{k: a.get(k) for k in ('name', 'path', 'bytes', 'sha256')} for a in pinned_sources(sources, hash_max)]
+    pins += sealed_records(sources, hash_max)[1]                  # the absent sealed records, listed on their pins
     H = _hub()
     table = {p: list(q) for p, q in prerequisites().items()}      # the core's default table over these pieces
     return H.open_hub(hub_root, sources.get('run'), sources['day'], pins, pieces=list(PIECES), prerequisites=table)
