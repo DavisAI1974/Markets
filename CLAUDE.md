@@ -11,7 +11,8 @@ and classroom roles as two prompts over one store (separate only in role and in 
 grading key never built from the other role's findings). The teacher is a HUB with a spoke to each workflow piece (ROOT,
 teacher, classroom/Frankie, exchange, Jev, school); each spoke is read-calc-write under ONE TURN LOCK (one piece in or out
 at a time; a waiter is recorded by name and woken event-driven when the holder releases, never timed out or killed; the
-order is the workflow order; a second lap only when a piece has something new). Frankie INGESTS the hub's merged set (not
+order is BY PREREQUISITES, not a fixed list (Greg 2026-10-09: a piece waits only for the pieces whose output it needs, from
+HUB_CALC_ORDER_MAP_20261009.md; everything else goes in arrival order); a second lap only when a piece has something new). Frankie INGESTS the hub's merged set (not
 the pieces reading his); everyone's plane ingestion layer is the same except Frankie's trade logic, Jev's cutoff and the
 per-lesson reveal (answers/outcomes hidden from Frankie for the lesson in progress and lessons not reached, revealed at that
 lesson's discussion and visible from then on, with a reveal record). No provenance machinery: a name at the top of each
