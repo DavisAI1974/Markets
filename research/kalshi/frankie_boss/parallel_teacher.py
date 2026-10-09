@@ -864,6 +864,53 @@ def _dstate_row(e, control):
 SAVE_EVERY_SECONDS = 1800.0
 SAVE_RECORD = {}
 RESUME_SKIP = [0]
+# One pass on a resume (2026-10-09): before this a resume re-read and re-hashed every row of the journal and of every
+# layer spool from instant 0 and threw the first `processed` away (islice). The seek protocol between row_pass and the
+# evidence producer (the shared market timeline's walk, frankie_box_experiment_teacher.shared_evidence):
+#   RESUME_POSITION_SOURCE[0]  set by the producer: a callable returning a picklable reader position for exactly the rows
+#                              it has YIELDED so far (not its read-ahead): each stream's byte offset and resumable
+#                              sha256 state, the journal block (FrankieCompactReader.resume_point), the report counts,
+#                              and the producer's own counters. row_pass calls it at every save (after the raw streams
+#                              are drained) and keeps it in the save as `reader_position`.
+#   RESUME_POSITION[0]         set by row_pass on a resume, BEFORE the producer starts: the saved position (None: none).
+#   RESUME_SEEKED[0]           set by the producer when it started from RESUME_POSITION: the rows its seek skipped (it
+#                              then yields row RESUME_SEEKED[0] first). row_pass skips only the rest (processed - seeked)
+#                              by reading; a producer that cannot seek leaves 0 and every saved row is read and skipped
+#                              as before.
+RESUME_POSITION_SOURCE = [None]
+RESUME_POSITION = [None]
+RESUME_SEEKED = [0]
+
+
+def _reader_position():
+    """The producer's position for the rows yielded so far (RESUME_POSITION_SOURCE), or None; a failure is listed on
+    SAVE_RECORD, never the save's outcome (the resume then reads the saved rows and skips them)."""
+    source = RESUME_POSITION_SOURCE[0]
+    if source is None:
+        return None
+    try:
+        return source()
+    except Exception as error:  # noqa: BLE001 - a position is a speed-up only
+        SAVE_RECORD.setdefault('position_errors', []).append('%s: %s' % (type(error).__name__, str(error)[:300]))
+        return None
+
+
+def _skip_resumed(evidence, processed):
+    """The evidence after the `processed` rows a save holds: the producer is started first (it reads RESUME_POSITION
+    and may seek, RESUME_SEEKED), then only the rows its seek did not skip are read and dropped."""
+    from itertools import chain, islice
+    iterator = iter(evidence)
+    marker = object()
+    first = next(iterator, marker)
+    seeked = RESUME_SEEKED[0]
+    if type(seeked) is not int or not 0 <= seeked <= processed:
+        raise ValueError('the evidence producer reports %r rows skipped by its seek; the save holds %d' % (seeked, processed))
+    resumed = SAVE_RECORD.get('resumed_from')
+    if isinstance(resumed, dict):
+        resumed.update(seeked=seeked, read_and_skipped=processed - seeked)
+    if first is marker:
+        return
+    yield from islice(chain((first,), iterator), processed - seeked, None)
 
 
 def _save_every():
@@ -890,6 +937,7 @@ def row_pass(self, evidence, *, as_of, source_manifest_hash, recovery_path=None,
     entity = _ENTITY[0]
     rows, processed, entity_hashes = [], 0, {}
     RESUME_SKIP[0] = 0
+    RESUME_POSITION[0], RESUME_SEEKED[0] = None, 0
     every, every_basis = _save_every() if recovery_path else (None, 'no recovery path')
     SAVE_RECORD.clear()
     SAVE_RECORD.update(every_seconds=every, basis=every_basis, saves=[], resumed_from=None,
@@ -916,11 +964,12 @@ def row_pass(self, evidence, *, as_of, source_manifest_hash, recovery_path=None,
         if saved['complete']:
             return rows, processed, entity_hashes
         RESUME_SKIP[0] = processed
-        from itertools import islice
-        evidence = islice(evidence, processed, None)
+        RESUME_POSITION[0] = saved.get('reader_position')
+        evidence = _skip_resumed(evidence, processed)
     def save(complete):
         _save_raw_state(recovery_path, dict(identity=identity, as_of=as_of, rows=rows, processed=processed,
-            entity_hashes=entity_hashes, continuation=continuation, complete=complete))
+            entity_hashes=entity_hashes, continuation=continuation, complete=complete,
+            reader_position=None if complete else _reader_position()))
     last_save, due = time.monotonic(), False
     _progress('teacher_raw_rows', processed, None, force=True)
     with _RawStreams(T, _cpus()) as streams:
