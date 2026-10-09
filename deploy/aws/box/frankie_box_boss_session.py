@@ -1880,6 +1880,25 @@ class LegacyFrameShards:
                     replay_waited_seconds=round(self.wait_seconds, 3), killed_at_stop=self.stop_kills)
 
 
+def _flock_holders(fd):
+    """The pids holding a flock on the open file `fd` (/proc/locks, matched by the file's device and inode), excluding
+    this process; [] when none is readable."""
+    info = os.fstat(fd)
+    want = '%02x:%02x:%d' % (os.major(info.st_dev), os.minor(info.st_dev), info.st_ino)
+    pids = []
+    try:
+        with open('/proc/locks', encoding='ascii', errors='replace') as stream:
+            for line in stream:
+                parts = line.split()
+                if len(parts) >= 6 and parts[1] == 'FLOCK' and parts[5].lower() == want and parts[4].isdigit():
+                    pid = int(parts[4])
+                    if pid != os.getpid() and pid not in pids:
+                        pids.append(pid)
+    except OSError:
+        return []
+    return pids
+
+
 def _sentinel_flag(process):
     """A threading.Event set the instant `process` exits: a daemon thread blocks on its sentinel (no timeout). Reading
     the flag costs no syscall (the legacy pass asks at every frame whether the native child's CPUs are free)."""
@@ -2533,11 +2552,38 @@ class Session:
             try:
                 fcntl.flock(handle.fileno(), fcntl.LOCK_EX | (0 if blocking else fcntl.LOCK_NB))
             except BlockingIOError:
-                raise ValueError('a native stage of an earlier attempt of this ROOT still runs (work/native-stage.lock '
-                                 'held); resume after it ends, never a second traversal beside it')
+                # Greg, 2026-10-09 (a gate never blocks fine data; no coded waits): a held lock is never a refusal. A
+                # flock is released by the kernel when its last holder exits, so a held lock has a live holder (an
+                # earlier attempt's native stage, or a process that inherited its descriptor): this attempt waits on
+                # the holders' exits (pidfd, no timeout; the kernel's blocking flock when no holder is readable), then
+                # takes the lock and continues (the earlier stage's checkpoints / native-stage.json are then reused by
+                # the recovery route, never a second traversal beside it). Recorded in the notes.
+                self._wait_native_stage_lock(handle)
             yield handle
         finally:
             handle.close()
+
+    def _wait_native_stage_lock(self, handle):
+        """Take work/native-stage.lock held by another process: wait on its holders' exits, then lock. Event-driven."""
+        import fcntl
+        wake = _box_module('frankie_box_wake')
+        started = time.time()
+        holders = _flock_holders(handle.fileno())
+        self.note('native stage lock held by %s (an earlier attempt of this ROOT); waiting for it to end, then '
+                  'continuing on its saved state' % (holders or 'a process not readable in /proc/locks'))
+        while True:
+            holders = [pid for pid in holders if wake.alive(pid)]   # a recorded holder that died (a forked child
+            if holders:                                             # keeps the lock): the kernel's blocking flock
+                wake.wait_pids_exit(holders)
+            else:
+                fcntl.flock(handle.fileno(), fcntl.LOCK_EX)          # the kernel wakes this at the release
+                break
+            try:
+                fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except BlockingIOError:
+                holders = _flock_holders(handle.fileno())
+        self.note('native stage lock taken after %.1f s (the earlier holder ended)' % (time.time() - started))
 
     def _start_native_overlap(self, records, container, pin, *, opening_adapter_state, opening_book, save_requested):
         """Start ROOT process 2 (the unchanged _native_stage: B.run, then native-stage.json) in a forked child while this
