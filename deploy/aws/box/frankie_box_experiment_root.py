@@ -718,10 +718,10 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
                                                      dict(source_binding=binding,
                                                           pin_sha256=witness(output / 'calculation-pins.json')['sha256']))
                                     + _differs(result.get('source_binding') or {}, binding, 'source_binding.'))
-            if result.get('producers') != session._producer_witnesses(session._pin()):
+            producers = session._producer_witnesses(session._pin())      # once per process (the science pin, compared)
+            if result.get('producers') != producers:
                 raise ResumeRefused('saved derivation producers changed', document=str(retained),
-                                    differs=_differs(result.get('producers') or {},
-                                                     session._producer_witnesses(session._pin()), 'producers.'))
+                                    differs=_differs(result.get('producers') or {}, producers, 'producers.'))
             if result.get('frame_sections_schema') != FRAME_SECTIONS_SCHEMA:
                 raise ResumeRefused('saved derivation has another frame projection; retained outputs preserved', document=str(retained))
             if bedrock and (result.get('native_recovery_schema') != NATIVE_RECOVERY_SCHEMA

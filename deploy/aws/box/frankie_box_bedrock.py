@@ -99,6 +99,16 @@ def witness(path):
     return dict(bytes=path.stat().st_size, sha256=sha256_file(path))
 
 
+def _cached_witness(path):
+    """witness(path) through the process-wide stat-keyed cache (frankie_box_filehash) when it loads: a pinned file the
+    session already hashed (Session._producer_witnesses) is not hashed again in this process. The same value."""
+    try:
+        import frankie_box_filehash as F
+    except ImportError:
+        return witness(path)
+    return F.witness(path)
+
+
 def ledger_file_identity(path):
     """Bind a same-process reconciliation to its unchanged regular file."""
     import stat
@@ -268,7 +278,7 @@ def loaded_modules(producers, *modules):
         path = Path(module.__file__).resolve()
         if not path.is_relative_to(producers):
             raise ValueError(f'{module.__name__} loaded from {path}, not the pinned checkout {producers}')
-        out[module.__name__.rsplit('.', 1)[-1]] = dict(path=str(path), **witness(path))
+        out[module.__name__.rsplit('.', 1)[-1]] = dict(path=str(path), **_cached_witness(path))
     return out
 
 
@@ -364,8 +374,8 @@ def identity(producers, container, count, cycle, code_commit):
     producers = Path(producers)
     knowledge = json.loads((producers / KNOWLEDGE_MANIFEST_PATH).read_bytes())
     return RunIdentity(run_id=f'frankie-box-cycle-{cycle}', arm='A_MEMORY',
-                       mission_sha256=sha256_file(producers / MISSION_PATH),
-                       calculation_contract_sha256=sha256_file(producers / CONTRACT_PATH),
+                       mission_sha256=_cached_witness(producers / MISSION_PATH)['sha256'],
+                       calculation_contract_sha256=_cached_witness(producers / CONTRACT_PATH)['sha256'],
                        knowledge_manifest_hash=knowledge['manifest_hash'],
                        source_manifest_hash=str(container['sha256']),
                        total_mbo_records=int(count), code_commit=str(code_commit))

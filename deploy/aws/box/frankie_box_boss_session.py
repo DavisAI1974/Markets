@@ -1981,6 +1981,9 @@ def sha256_bytes(data):
     return hashlib.sha256(data).hexdigest()
 
 
+_PRODUCER_WITNESSES = {}      # Session._producer_witnesses: (producers root, files) -> witnesses, once per process
+
+
 def _filehash():
     """The process-wide stat-keyed hash cache (frankie_box_filehash.py): each unchanged file is hashed once per run."""
     try:
@@ -2928,7 +2931,8 @@ class Session:
         from research.kalshi.frankie_boss.parallel_teacher import _load_raw_state, _save_raw_state, TeacherSaved
         recovery_path = self.work / 'legacy-state.pkl'
         saved = _load_raw_state(recovery_path) if recovery and recovery_path.exists() else None
-        if saved and saved['identity'] != identity:
+        # compared without recorded-only code (Greg, 2026-10-09), as legacy-stage.json is; the producers stay compared
+        if saved and without_recorded_code(saved['identity']) != without_recorded_code(identity):
             raise ValueError('saved ROOT source, producers, opening book or frame projection changed; retained state preserved')
         adapter = V4MboAdapter()
         if opening_adapter_state is not None:
@@ -3680,11 +3684,19 @@ class Session:
 
     @staticmethod
     def _producer_witnesses(pin):
-        out = {}
-        for rel in pin.get('crosswalk_producers') or []:
-            path = PRODUCERS / rel
-            out[rel] = dict(witness(path), path=str(path)) if path.is_file() else dict(missing=True)
-        return out
+        """The pinned producer files' witnesses (science identity: compared at every reuse). Computed ONCE per process
+        (Greg, 2026-10-09: no second hashing of the producer files) and that one result reused at every comparison
+        site (the legacy stage and legacy-state.pkl, the native stage, derive.json, the experiment ROOT's resume); a
+        forked child inherits it."""
+        rels = tuple(pin.get('crosswalk_producers') or [])
+        key = (str(PRODUCERS), rels)
+        if key not in _PRODUCER_WITNESSES:
+            out = {}
+            for rel in rels:
+                path = PRODUCERS / rel
+                out[rel] = dict(witness(path), path=str(path)) if path.is_file() else dict(missing=True)
+            _PRODUCER_WITNESSES[key] = out
+        return json.loads(json.dumps(_PRODUCER_WITNESSES[key]))
 
     def _pin_matches_request(self):
         """The pin this checkout would derive is the pin the request was rendered under (attachment.calculation_pin_witness,
