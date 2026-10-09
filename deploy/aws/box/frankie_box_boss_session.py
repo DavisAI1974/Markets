@@ -3912,6 +3912,7 @@ class Session:
             take(kind, payload)
             consumed = seen
             stop_input()
+        proof_basis = None
         if not (saved and saved['complete']):
             probe = _box_module('frankie_box_progress').for_session(self)
             if layout == 'compact' and self.source_binding:
@@ -3931,11 +3932,19 @@ class Session:
                 consumer_core = [c for c in affinity if topology and topology[c] == topology[consumer]] if topology \
                     else [consumer]
                 idle = consumer_core[1:] if len(affinity) - len(consumer_core) >= 1 else []
+                # One pass (Greg, 2026-10-09): when this file's whole sha256 and bytes (by its claim or one whole
+                # read: experiment_root._journal_witness) are the sealed journal's in the source binding, the rows are
+                # decoded without the per-block sha256 and per-row re-proof (proof: by seal claim); the decoded rows are
+                # the same. Otherwise the full row proof, as before.
+                sealed = (self.source_binding or {}).get('container') or {}
+                by_seal = all(sealed.get(k) == container.get(k) for k in ('bytes', 'sha256')) and \
+                    (sealed.get('count'), sealed.get('head')) == (count, head) and sealed.get('sha256') is not None
                 try:
                     os.sched_setaffinity(0, set(affinity) - set(idle))
                     with CompactConformanceReader(rows_path, expected_count=count, expected_head_hash=head,
-                            workers=self._data_workers()) as reader:
+                            workers=self._data_workers(), proof=not by_seal) as reader:
                         os.sched_setaffinity(0, {consumer})
+                        proof_basis = reader.proof
                         probe.reader_workers = dict(requested=self._data_workers(),
                                                     effective=len(reader.worker_cpus), worker_cpus=list(reader.worker_cpus),
                                                     consumer_cpu=consumer, consumer_core_idle_siblings=idle,
@@ -3964,6 +3973,8 @@ class Session:
                 save_input(complete=True)
         records.close()
         container['kinds'] = kinds
+        if proof_basis is not None:
+            container['proof'] = proof_basis      # recorded after the last save (the saved identity never carries it)
         container['inputs_without_observation'] = without_observation
         container['bytes_fields_not_spooled'] = {} if retain_all_fields else bytes_fields
         if retain_all_fields:
