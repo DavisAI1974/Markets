@@ -135,6 +135,16 @@ def _successor_document(request, identity, input_path, REVIEW, BR):
     return document, original, operation, frozen['selection']['reproduction_records']['files']
 
 
+IDENTITY_CODE_PINS = ('producer', 'readers')
+
+
+def _without_code_pins(identity):
+    """An inputs identity without its recorded-only code pins (Greg, 2026-10-09: recorded, never compared)."""
+    if not isinstance(identity, dict):
+        return identity
+    return {k: v for k, v in identity.items() if k not in IDENTITY_CODE_PINS}
+
+
 def teach_accumulated(day, search, brain, out_dir, *, _successor=None):
     """Return actual new result files, exact reuses and explicitly unconsumed inputs.
 
@@ -193,8 +203,17 @@ def teach_accumulated(day, search, brain, out_dir, *, _successor=None):
         if _successor is None:
             LS.require_current_selection(input_path, brain=brain)
         inputs = json.loads(input_path.read_bytes())
-        if inputs.get('identity') != identity or inputs.get('schema') != 'FRANKIE_TEACHER_KNOWLEDGE_INPUTS_V1':
-            raise ValueError('retained scientific knowledge belongs to another search or reader')
+        # Greg, 2026-10-09 (standing): the producer and reader pins are RECORDED, NEVER COMPARED. The retained inputs
+        # are the same operation when their data identity (day, search, manifest, brain, successor) is the same; the
+        # retained identity (with the pins it was frozen under) stays the binding of every result key below.
+        if (_without_code_pins(inputs.get('identity')) != _without_code_pins(identity)
+                or inputs.get('schema') != 'FRANKIE_TEACHER_KNOWLEDGE_INPUTS_V1'):
+            raise ValueError('retained scientific knowledge belongs to another search')
+        late_knowledge['code_recorded'] = dict(
+            frozen={k: inputs['identity'].get(k) for k in IDENTITY_CODE_PINS},
+            current={k: identity.get(k) for k in IDENTITY_CODE_PINS},
+            rule='recorded, never compared (Greg, 2026-10-09)')
+        identity = inputs['identity']
         if inputs.get('selection_sha256') != _digest(inputs['selection']):
             raise ValueError('retained scientific knowledge selection differs from its binding')
         frozen_records = {r['path'] for r in inputs['selection'].get('reproduction_records', {}).get('files') or []}
