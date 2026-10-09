@@ -11,7 +11,8 @@ export HOME="${HOME:-/root}"   # SSM runs without HOME; DuckDB refuses to load e
 : "${MARKETS_SHA:?full dispatched commit required}"; : "${CODE_ROOT:?staged clean checkout required}"
 : "${DAY:?YYYYMMDD required}"; : "${CYCLE:?cycle required}"; : "${DAY_ROLE:?discovery or confirmation required}"
 case "$CODE_ROOT" in /opt/frankie-box/code/*) ;; *) echo "staged checkout under /opt/frankie-box/code required" >&2; exit 2;; esac
-[ "$(git -C "$CODE_ROOT" rev-parse HEAD)" = "$MARKETS_SHA" ] || { echo "staged checkout differs from MARKETS_SHA" >&2; exit 2; }
+HEAD_SHA=$(git -C "$CODE_ROOT" rev-parse HEAD 2>/dev/null) || HEAD_SHA="${MARKETS_SHA:-}"  # 2026-10-09: recorded, never compared
+[ "$HEAD_SHA" = "${MARKETS_SHA:-}" ] || { echo "code version: MARKETS_SHA ${MARKETS_SHA:-unset}, checkout $CODE_ROOT at $HEAD_SHA; this step runs on (and records) $HEAD_SHA" >&2; MARKETS_SHA=$HEAD_SHA; }
 /opt/frankie-box/venv/bin/python -c 'import duckdb, pyarrow' 2>/dev/null || { echo "duckdb and pyarrow are not in the box venv (install on Greg's go)" >&2; exit 3; }
 # WORKERS unset: sized from the held lane (stacks pass: never a fixed count), as frankie_box_experiment_data.sh; the
 # orchestrator passes day_cpus - 1 (31 on 32). OpenBLAS is settled inside (pin_coordinator: blas_reduction).

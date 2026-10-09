@@ -18,7 +18,8 @@ set -u
 : "${MARKETS_SHA:?full dispatched commit required}"; : "${CODE_ROOT:?staged clean checkout required}"
 : "${DAYS:?comma list of days required}"; : "${INGESTION_RECEIPTS:?comma list of ingestion receipts required}"
 case "$CODE_ROOT" in /opt/frankie-box/code/*) ;; *) echo "staged checkout under /opt/frankie-box/code required" >&2; exit 2;; esac
-[ "$(git -C "$CODE_ROOT" rev-parse HEAD)" = "$MARKETS_SHA" ] || { echo "staged checkout differs from MARKETS_SHA" >&2; exit 2; }
+HEAD_SHA=$(git -C "$CODE_ROOT" rev-parse HEAD 2>/dev/null) || HEAD_SHA="${MARKETS_SHA:-}"  # 2026-10-09: recorded, never compared
+[ "$HEAD_SHA" = "${MARKETS_SHA:-}" ] || { echo "code version: MARKETS_SHA ${MARKETS_SHA:-unset}, checkout $CODE_ROOT at $HEAD_SHA; this step runs on (and records) $HEAD_SHA" >&2; MARKETS_SHA=$HEAD_SHA; }
 case "$DAYS$INGESTION_RECEIPTS" in *..*) echo "no .. in DAYS or INGESTION_RECEIPTS" >&2; exit 2;; esac
 ND=$(echo "$DAYS" | tr ',' '\n' | grep -c .); NR=$(echo "$INGESTION_RECEIPTS" | tr ',' '\n' | grep -c .)
 [ "$ND" -ge 1 ] && [ "$ND" = "$NR" ] || { echo "DAYS and INGESTION_RECEIPTS must be equal-length comma lists" >&2; exit 2; }

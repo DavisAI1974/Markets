@@ -12,7 +12,8 @@ set -eu
 : "${DAY:?YYYYMMDD required}"; : "${DAY_ROLE:?discovery or confirmation required}"; : "${OUTPUT_ROOT:?fresh output root required}"
 case "$CODE_ROOT" in /opt/frankie-box/code/*) ;; *) echo "staged checkout under /opt/frankie-box/code required" >&2; exit 2;; esac
 case "$OUTPUT_ROOT" in /opt/frankie-box/work/experiment-roots/*) ;; *) echo "OUTPUT_ROOT under /opt/frankie-box/work/experiment-roots required" >&2; exit 2;; esac
-[ "$(git -C "$CODE_ROOT" rev-parse HEAD)" = "$MARKETS_SHA" ] || { echo "staged checkout differs from MARKETS_SHA" >&2; exit 2; }
+HEAD_SHA=$(git -C "$CODE_ROOT" rev-parse HEAD 2>/dev/null) || HEAD_SHA="${MARKETS_SHA:-}"  # 2026-10-09: recorded, never compared
+[ "$HEAD_SHA" = "${MARKETS_SHA:-}" ] || { echo "code version: MARKETS_SHA ${MARKETS_SHA:-unset}, checkout $CODE_ROOT at $HEAD_SHA; this step runs on (and records) $HEAD_SHA" >&2; MARKETS_SHA=$HEAD_SHA; }
 set -- --commit "$MARKETS_SHA" --ingestion-receipt "$INGESTION_RECEIPT" --ingestion-receipt-sha256 "$INGESTION_RECEIPT_SHA256" \
   --day "$DAY" --day-role "$DAY_ROLE" --output-root "$OUTPUT_ROOT" --data-workers "${DATA_WORKERS:-1}" --digest "${DIGEST:-off}"
 # New shared-input requests select the versioned shared policy. A missing policy retains

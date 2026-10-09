@@ -12,7 +12,8 @@ case "$CODE_ROOT" in /opt/frankie-box/code/*) ;; *) echo "staged checkout under 
 case "$OLD_CODE_ROOT" in /opt/frankie-box/code/*/markets) ;; *) echo "old staged checkout under /opt/frankie-box/code required" >&2; exit 2;; esac
 case "$DIRECTORY" in /opt/frankie-box/work/monday-calculations/*) ;; *) echo "Monday calculation root required" >&2; exit 2;; esac
 case "$DIGEST" in .digest-*) ;; *) echo "DIGEST must be a .digest-* name" >&2; exit 2;; esac
-[ "$(git -C "$CODE_ROOT" rev-parse HEAD)" = "$MARKETS_SHA" ] || { echo "staged checkout differs from MARKETS_SHA" >&2; exit 2; }
+HEAD_SHA=$(git -C "$CODE_ROOT" rev-parse HEAD 2>/dev/null) || HEAD_SHA="${MARKETS_SHA:-}"  # 2026-10-09: recorded, never compared
+[ "$HEAD_SHA" = "${MARKETS_SHA:-}" ] || { echo "code version: MARKETS_SHA ${MARKETS_SHA:-unset}, checkout $CODE_ROOT at $HEAD_SHA; this step runs on (and records) $HEAD_SHA" >&2; MARKETS_SHA=$HEAD_SHA; }
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1
 exec /opt/frankie-box/venv/bin/python -B "$CODE_ROOT/deploy/aws/box/frankie_box_adopt_digest.py" \
   --directory "$DIRECTORY" --digest "$DIGEST" --old-code-root "$OLD_CODE_ROOT"

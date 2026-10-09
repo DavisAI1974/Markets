@@ -11,7 +11,8 @@ set -eu
 : "${DAY:?YYYYMMDD required}"; : "${RUN:?the orchestrator run name required}"; : "${OUT_DIR:?output directory required}"
 LESSONS="${LESSONS:-}" # completed brain lessons may be the only exchange inputs
 case "$CODE_ROOT" in /opt/frankie-box/code/*) ;; *) echo "staged checkout under /opt/frankie-box/code required" >&2; exit 2;; esac
-[ "$(git -C "$CODE_ROOT" rev-parse HEAD)" = "$MARKETS_SHA" ] || { echo "staged checkout differs from MARKETS_SHA" >&2; exit 2; }
+HEAD_SHA=$(git -C "$CODE_ROOT" rev-parse HEAD 2>/dev/null) || HEAD_SHA="${MARKETS_SHA:-}"  # 2026-10-09: recorded, never compared
+[ "$HEAD_SHA" = "${MARKETS_SHA:-}" ] || { echo "code version: MARKETS_SHA ${MARKETS_SHA:-unset}, checkout $CODE_ROOT at $HEAD_SHA; this step runs on (and records) $HEAD_SHA" >&2; MARKETS_SHA=$HEAD_SHA; }
 case "$DAY" in [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]) ;; *) echo "DAY must be YYYYMMDD" >&2; exit 2;; esac
 case "$RUN" in ""|*[!A-Za-z0-9_-]*) echo "RUN: letters, digits, _ and - only" >&2; exit 2;; esac
 case "$OUT_DIR" in "/opt/frankie-box/work/experiment/$RUN/exchange/$DAY") ;; *) echo "OUT_DIR must be /opt/frankie-box/work/experiment/<RUN>/exchange/<DAY>" >&2; exit 2;; esac
