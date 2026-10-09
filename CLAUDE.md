@@ -1,3 +1,10 @@
+# Claude session drop-in — session 11 (from session 10, 2026-10-09): READ FIRST `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261009_SESSION11.md`
+
+Branch `ccr-d2f8f826-iefeah-frankie` (SHALLOW: `git fetch --deepen=400`). Every session-10 fix is committed and ON THE
+BOX (code 45d0b10c). Box STOPPED, KeepRunning=false. Two jobs: (1) relaunch a2/20231018 at the teacher on its same
+attempt (re-point, resume, kick; commands in the drop-in); (2) inspect ROOT start to receipt for anything missed.
+Greg's rules are at the top of DROP_IN_CLAUDE_20261009_SESSION10.md.
+
 # Claude session drop-in — 2026-10-09, session 10: READ FIRST `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261009_SESSION10.md` (Greg's operating rules at its top)
 
 Branch `ccr-d2f8f826-iefeah-frankie` (SHALLOW: `git fetch --deepen=400`). Greg 2026-10-09: launching and keeping the
