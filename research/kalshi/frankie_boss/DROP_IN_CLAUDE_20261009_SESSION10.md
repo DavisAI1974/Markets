@@ -22,7 +22,10 @@ i-035994afa8bdf66a5 STOPPED, a2/20231018 finish SAVED, receipt in place, digest 
 7. THE 6-MINUTE STAGE WAS OUR OWN DESIGN (GitHub Actions runner + pack + S3 + SSM + box helper), NOT AWS. The normal
    route is a direct push to the box in seconds; the GitHub stage is a fallback only.
 8. CODE VERSION IS RECORDED, NEVER COMPARED. A running day picks up the newest code at its next step; no save/restage/
-   resume just to change code. Data identity (sealed sources, pins, counts, data receipts) stays bound.
+   resume just to change code. Data identity (sealed sources, pins, counts, data receipts) stays bound. This covers
+   EVERY save, checkpoint, frozen input and retained result keyed on a code hash (Greg's explicit "Yes" 2026-10-09 to
+   fix all code-hash comparisons): compare data identity + a small *_FORMAT integer bumped only when saved bytes'
+   format changes; record code hashes; never refuse, discard or delete a save because code changed.
 9. NO RECORDS OF CODE CHANGES (Greg 2026-10-09): the commits are the record. The only records kept are the run's own
    outputs per piece after it has run (the day reports: classroom report #N and Frankie report #N, written by
    frankie_box_experiment_day_reports.py, plus the stage receipts), read to check the piece gave the outputs and
