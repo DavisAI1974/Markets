@@ -136,6 +136,73 @@ def witness_file(path):
     return dict(path=str(path), bytes=size, sha256=digest.hexdigest())
 
 
+# ---- the installed runtime by claim (one pass, Greg 2026-10-09) ---------------------------------------------------
+# The Granite weights (~2 GB) and llama-server with its extracted libraries were hashed whole in every process that
+# gated the runtime (the meeting child, Jev's bind, the gate again before the items), although the setup script
+# verified every one of them against its pin before it wrote provenance.json. Now each verified file carries a
+# FRANKIE_FILE_CLAIM_V2 row in file-claims.jsonl beside the install's provenance.json, tied to that receipt by the
+# sha256 of its bytes (provenance_sha256): a file whose row names the pin, the current provenance.json and still holds
+# (inode, size, mtime_ns, filesystem, last 64 KiB; one 64 KiB read) is not read. Only a file with no holding claim is
+# hashed whole; when that hash equals the pin the claim row is written for the next process. A reinstall (a new
+# provenance.json) voids every row. The value is remembered in frankie_box_filehash, so the binding's and the record's
+# witness_file of the same unchanged file in this process read nothing either.
+def _install_provenances(path):
+    """[(provenance.json path, its sha256)] of the installs that may claim `path`: the provenance beside it (the
+    extracted runtime), then every install's under GRANITE_ROOT (the weights sit at GRANITE_ROOT itself)."""
+    out, seen = [], set()
+    candidates = [Path(path).parent / 'provenance.json']
+    try:
+        candidates += sorted(GRANITE_ROOT.glob('*/provenance.json')) if GRANITE_ROOT.is_dir() else []
+    except OSError:
+        pass
+    for candidate in candidates:
+        key = str(candidate)
+        if key in seen or not candidate.is_file():
+            continue
+        seen.add(key)
+        try:
+            out.append((candidate, sha256_bytes(candidate.read_bytes())))
+        except OSError:
+            continue
+    return out
+
+
+def pinned_sha256(path, sha256):
+    """The sha256 of the installed runtime file at `path` against its pin: the pin itself when a claim tied to the
+    install's provenance.json holds (no read), else the whole file hashed (witness_file), and on a match its claim
+    written beside that provenance.json. Never raises for a claim; the whole read raises its own OSError."""
+    provenances = _install_provenances(path) if sha256 else []
+    try:
+        import frankie_box_brain as BR
+        from research.kalshi.frankie_boss.operations.ingest_block_sources import claim_still_holds
+        observed = os.stat(path)
+        for directory, digest in ((p.parent, d) for p, d in provenances):
+            row = BR.file_claims(directory).get((observed.st_ino, observed.st_size, observed.st_mtime_ns))
+            if (row is not None and row.get('sha256') == sha256 and row.get('provenance_sha256') == digest
+                    and claim_still_holds(row, path) is not None):
+                try:
+                    import frankie_box_filehash as F
+                    F.remember(path, dict(bytes=row['bytes'], sha256=sha256))
+                except ImportError:
+                    pass
+                return sha256
+    except Exception:  # noqa: BLE001 - a claim is a hint: without one the file is hashed whole
+        pass
+    seen = witness_file(path)
+    if sha256 and seen['sha256'] == sha256 and provenances:
+        try:
+            import frankie_box_brain as BR
+            from research.kalshi.frankie_boss.operations.ingest_block_sources import file_claim
+            provenance, digest = provenances[0]
+            row = file_claim(path, seen['bytes'], seen['sha256'],
+                             'Granite runtime gate (frankie_box_granite_meeting.pinned_sha256): whole read equal to the pin')
+            row['provenance'], row['provenance_sha256'] = str(provenance), digest
+            BR.append_file_claim(provenance.parent, row)
+        except Exception:  # noqa: BLE001 - a claim is a hint for the next process
+            pass
+    return seen['sha256']
+
+
 def load_config(path=CONFIG):
     raw = Path(path).read_bytes()
     config = json.loads(raw)
@@ -164,7 +231,7 @@ def gate(config, binary=None, model=None):
     if model is not None:
         if not Path(model).is_file():
             reasons.append('model file is not at %s' % model)
-        elif pins.get('model_sha256') and witness_file(model)['sha256'] != pins['model_sha256']:
+        elif pins.get('model_sha256') and pinned_sha256(model, pins['model_sha256']) != pins['model_sha256']:
             reasons.append('model file sha256 differs from the pin')
     return reasons
 
@@ -183,7 +250,7 @@ def runtime_provenance(pins, binary):
     if not server_sha or not manifest:
         return dict(reasons=['pins llama_server_sha256 / llama_cpp_files are explicit blanks: the extracted runtime cannot be '
                              'verified (the archive hash llama_cpp_sha256 is not the binary\'s)'], verified=verified)
-    actual = witness_file(path)['sha256']
+    actual = pinned_sha256(path, server_sha)
     if actual != server_sha:
         reasons.append('llama-server binary sha256 %s differs from pin llama_server_sha256 %s' % (actual[:12], server_sha[:12]))
     root = path.parent
@@ -191,7 +258,7 @@ def runtime_provenance(pins, binary):
         sibling = root / name
         if not sibling.is_file():
             reasons.append('extracted file %s missing beside llama-server' % name)
-        elif witness_file(sibling)['sha256'] != sha:
+        elif pinned_sha256(sibling, sha) != sha:
             reasons.append('extracted file %s differs from pin llama_cpp_files' % name)
         else:
             verified.append(name)
