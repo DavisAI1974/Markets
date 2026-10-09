@@ -27,7 +27,9 @@ i-035994afa8bdf66a5 STOPPED, a2/20231018 finish SAVED, receipt in place, digest 
    outputs per piece after it has run (the day reports: classroom report #N and Frankie report #N, written by
    frankie_box_experiment_day_reports.py, plus the stage receipts), read to check the piece gave the outputs and
    answered the questions it was meant to; and the parent's box record of what was done on the box.
-10. Standing from session 9: one pass everywhere; no gates that re-check receipted data; an owned day is never retried
+10. TESTS (Greg 2026-10-09): disregard a failing test unless it shows a real data or run problem. A test that fails
+   because a redundant pass or check was removed is NOT a failure; never restore a redundancy to make a test pass.
+11. Standing from session 9: one pass everywhere; no gates that re-check receipted data; an owned day is never retried
    from scratch; a box keeps its days end to end.
 
 ## Session 10 work (in flight; records below)
