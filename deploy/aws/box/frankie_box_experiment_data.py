@@ -92,6 +92,8 @@ CATALOG = (
     ('host_config', 'actual-host-configuration.json', INCLUDE, 'the whole host run configuration'),
     # TEACHER: the experiment's teacher-only step (1 day in 5, batched per day; /opt/frankie-box/work/experiment-teacher-rows/<day>/)
     ('teacher', 'host-dipole-classroom-source*.json', INCLUDE, "the teacher's Dipole measurements from the teacher-only step"),
+    ('teacher', 'host-dipole-classroom-source*.rows.jsonl', INCLUDE, "the teacher's rows with its second set (key, clocks, "
+                                                                      "plane references, book columns), one row per line"),
     ('teacher', '*.json', INCLUDE, 'the teacher-only step receipt'),
     # CYCLE: one run directory (/opt/frankie-box/work/runs/<run_id>/), this cycle's execution/cycle-<NN>/
     ('run', 'execution/cycle-{cycle}/host-dipole-classroom-teacher-key*', GRADED, 'the graded answer key (R10)'),
