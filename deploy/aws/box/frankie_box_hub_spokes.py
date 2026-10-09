@@ -1,6 +1,8 @@
 """The hub's SPOKES (Greg, 2026-10-09, session 12: one teacher hub, a spoke to each workflow piece; read-calc-write under
-one turn lock). One spoke per piece, in workflow order: root, teacher, classroom (Frankie), exchange, jev, school, and the
-forecaster (the go-live last spoke: no consumer yet).
+one turn lock). One spoke per piece: root, teacher, classroom (Frankie), teacher-2 (the teacher's second turn after the
+classroom: Frankie's lessons, the novelty investigation), exchange, jev, school, reports (the day-reports render) and the
+forecaster (the go-live last spoke: no consumer yet). Turns are ordered by the hub core's prerequisites
+(frankie_box_hub.PREREQUISITES), and a piece's send carries what its prerequisites (transitively) have written.
 
 Greg, 2026-10-09: "Let's get spokes built while the teacher is finishing, and we won't disconnect any info the other
 pieces get natively until we compare what is sent to them also includes everything they are getting fed to them
@@ -39,13 +41,23 @@ if str(BOX) not in sys.path:
     sys.path.insert(0, str(BOX))
 
 SPOKES_SCHEMA = 'FRANKIE_HUB_SPOKES_V1'
-PIECES = ('root', 'teacher', 'classroom', 'exchange', 'jev', 'school', 'forecaster')
+# The hub core's pieces (frankie_box_hub.DEFAULT_PIECES): teacher-2 is the teacher's second turn after the classroom
+# (Frankie's lessons, the novelty investigation); reports is the day-reports render. Turns are ordered by the hub core's
+# prerequisites (frankie_box_hub.PREREQUISITES), not by this tuple; this tuple is only the listing order.
+PIECES = ('root', 'teacher', 'classroom', 'teacher-2', 'exchange', 'jev', 'school', 'reports', 'forecaster')
+# A copy of frankie_box_hub.PREREQUISITES for when the core is not importable; prerequisites() prefers the core's own.
+_PREREQUISITES_FALLBACK = {
+    'root': (), 'teacher': ('root',), 'classroom': ('teacher',), 'teacher-2': ('classroom',),
+    'exchange': ('teacher', 'classroom', 'teacher-2'), 'jev': ('teacher', 'classroom', 'exchange'),
+    'school': ('classroom', 'exchange', 'jev'),
+    'reports': ('root', 'teacher', 'classroom', 'teacher-2', 'exchange', 'jev', 'school'), 'forecaster': ('school',)}
 BOX_ROOT = Path('/opt/frankie-box')
 WORK = BOX_ROOT / 'work'
 DEFAULT_ROOTS = dict(
     experiment_roots=WORK / 'experiment-roots', teacher_rows=WORK / 'experiment-teacher-rows',
     runs=WORK / 'experiment', brain=BOX_ROOT / 'brain', jev_brain=BOX_ROOT / 'jev-brain',
-    search=WORK / 'experiment-search', lessons=WORK / 'experiment-teacher', lane_state=WORK / 'lane-state', repo=REPO)
+    search=WORK / 'experiment-search', lessons=WORK / 'experiment-teacher', lane_state=WORK / 'lane-state', repo=REPO,
+    survivors=WORK / 'experiment-survivors', reports=WORK / 'experiment-reports')
 CYCLE, SEARCH_ROLE = '00', 'discovery'
 HASH_MAX = 64 << 20          # send_set hashes an unpinned file up to this size; larger ones carry sha256 None (stated)
 
@@ -74,7 +86,11 @@ FILTERS = dict(
          'knowledge, never Frankie\'s brain'),
     school=('R10 withholdings: the exhaustive grades (post-grade.json, external-post-grade.json) and the teacher key\'s '
             'content (hash only); Jev\'s claims stay out (the lessons wall)'),
-    forecaster='no consumer yet (go-live: the hub feeds the forecaster last)')
+    forecaster='no consumer yet (go-live: the hub feeds the forecaster last)',
+    **{'teacher-2': ('R09: of Frankie\'s ledgers only the novel findings (dipole_novel_findings) and the external novel '
+                     'findings are read; the teacher key is the teacher\'s own (sealed from Frankie, not from the teacher)'),
+       'reports': ('none: the reports render every piece as recorded (one-way in; nothing reads the reports into a '
+                   'calculation); the exhaustive grades are rendered in the CLASSROOM report, not in Frankie\'s')})
 
 
 def _i(name, kind, producer, at, anchor, locate, *, compare='file', klass='data', filter=None, note=None):
@@ -439,6 +455,164 @@ NATIVE_INPUTS['school'] = [
        ('path', '{rows}/file-claims.jsonl'), klass='mechanism'),
 ]
 
+_SCI_PY = 'deploy/aws/box/frankie_box_scientific_teacher.py'
+_Q_PY = 'deploy/aws/box/frankie_box_frankie_queue.py'
+_X_PY = 'deploy/aws/box/frankie_box_experiment.py'
+_REP_PY = 'deploy/aws/box/frankie_box_experiment_day_reports.py'
+
+# teacher-2: the teacher's second turn (the hub map, HUB_CALC_ORDER_MAP_20261009.md section 6 turn 4): Frankie's lessons
+# (frankie_box_frankie_queue.frankie_lessons -> frankie_box_scientific_teacher.sh with FRANKIE_LEDGERS / SEARCHES; the
+# batch lessons call the same for a non-queued day) and the novelty investigation (computed today inside the classroom
+# process, frankie_box_experiment_classroom_v2.py, on the package key and his novel findings).
+NATIVE_INPUTS['teacher-2'] = [
+    _i('Frankie\'s ledgers.json (only dipole_novel_findings, R09)', 'file', 'classroom', _SCI_PY,
+       "findings = ledgers.get('dipole_novel_findings') or []", ('path', '{classroom}/ledgers.json'),
+       filter=None, note='located by frankie_box_frankie_queue.frankie_lessons (ledgers = Path(c[\'classroom\']) / '
+                         '\'ledgers.json\')'),
+    _i('Frankie\'s external-code-answers.json (the external novel findings)', 'file', 'classroom', _SCI_PY,
+       "source_raw = source_path.read_bytes()", ('path', '{classroom}/external-code-answers.json')),
+    _i('external-novel-findings.json (the retained projection, when present)', 'file', 'classroom', _SCI_PY,
+       "projection_path = Path(path).with_name('external-novel-findings.json')",
+       ('path', '{classroom}/external-novel-findings.json')),
+    _i('every finished discovery-day search MANIFEST.json (SEARCHES)', 'file', 'teacher: scientific seat (search)',
+       _SCI_PY, "manifest_raw = (d / 'MANIFEST.json').read_bytes()",
+       ('glob', '{search_root}/*/cycle-' + CYCLE + '/' + SEARCH_ROLE + '/MANIFEST.json'),
+       note='the searched days: frankie_box_frankie_queue.frankie_lessons (searched = every finished discovery search)'),
+    _i('the searches\' coupling parts (MANIFEST couplings.parts, pinned)', 'stream', 'teacher: scientific seat (search)',
+       _SCI_PY, "for pin in manifest['couplings']['parts']:", ('manifest_parts', '{search_root}/*/cycle-' + CYCLE + '/'
+                                                                 + SEARCH_ROLE + '/MANIFEST.json'), compare='pin'),
+    _i('completed native evidence of the searched day: ROOT native receipt', 'file', 'ROOT', _SCI_PY,
+       "NATIVE_ROLES = ('receipt', 'result', 'bedrock_section_4_2', 'bedrock_section_4_4')",
+       ('pin', _DERIVE, ('bedrock', 'receipt')), compare='pin'),
+    _i('completed native evidence: ROOT native result.json', 'file', 'ROOT', _SCI_PY,
+       "NATIVE_ROLES = ('receipt', 'result', 'bedrock_section_4_2', 'bedrock_section_4_4')",
+       ('pin', _DERIVE, ('bedrock', 'result')), compare='pin'),
+] + [_i('completed native evidence: ROOT %s.json.gz' % n, 'file', 'ROOT', _SCI_PY,
+        "NATIVE_ROLES = ('receipt', 'result', 'bedrock_section_4_2', 'bedrock_section_4_4')",
+        ('pin', _DERIVE, ('layers', n)), compare='pin') for n in NATIVE_SECTIONS] + [
+    _i('completed native evidence: ROOT %s (FINALIZE rows)' % n, 'stream', 'ROOT', _SCI_PY,
+       "NATIVE_LEDGERS = ('native.member', 'native.lifecycle')", ('pin', _DERIVE, ('bedrock', 'ledgers', n)),
+       compare='pin') for n in NATIVE_LEDGERS[:2]] + [
+    _i('brain <day>-teacher/stage-knowledge.json (names the teacher rows)', 'brain entry', 'teacher (knowledge step)',
+       _SCI_PY, "entry = root / ('%s-teacher' % day) / 'stage-knowledge.json'",
+       ('path', '{brain}/{day}-teacher/stage-knowledge.json')),
+    _i('teacher receipt.json (its second set reading)', 'receipt', 'teacher', _SCI_PY,
+       "record, pin, how = TR.second_set_reading_file(Path(rows).parent, target, 'scientific_teacher')", ('path', _TRC)),
+    _i('teacher rows sidecar (the whole second set, streamed)', 'stream', 'teacher', _SCI_PY,
+       "record, pin, how = TR.second_set_reading_file(Path(rows).parent, target, 'scientific_teacher')",
+       ('pin_rel', _TRC, 'rows_sidecar', '{rows}')),
+    _i('teacher-second-set.pkl (pinned by the receipt)', 'file', 'teacher', _TR_PY,
+       "path = rows_dir / (second.get('file') or SECOND_SET_PKL)", ('pin_rel', _TRC, 'teacher_second_set', '{rows}'),
+       compare='pin'),
+    _i('teacher-state-split.json', 'file', 'teacher', _TR_PY,
+       "path = rows_dir / (split.get('day_file') or STATE_SPLIT_DAY_FILE)", ('path', '{rows}/teacher-state-split.json')),
+    _i('teacher-second-set-mismatches.jsonl', 'file', 'teacher', _TR_PY, "guarded('mismatches_list'",
+       ('path', '{rows}/teacher-second-set-mismatches.jsonl')),
+    _i('teacher-book-event-differences.jsonl', 'file', 'teacher', _TR_PY, "guarded('book_event_differences_list'",
+       ('path', '{rows}/teacher-book-event-differences.jsonl')),
+    _i('teacher-reconciliation-differences.jsonl', 'file', 'teacher (frankie_box_teacher_findings)', _TR_PY,
+       "guarded('reconciliation_differences_list'", ('path', '{rows}/teacher-reconciliation-differences.jsonl')),
+    _i('novelty investigation: the package teacher key (package.teacher_key.c15.json)', 'file',
+       'classroom (the package split off the teacher attachment)', _V2_PY,
+       "novelty = phase('novelty_investigation', lambda: F.investigate_novel_findings(pkg['teacher_key']",
+       ('path', '{classroom}/package.teacher_key.c15.json'),
+       note='today computed in memory inside the classroom process from pkg[\'teacher_key\']; the file is the same key'),
+    _i('novelty investigation: his novel findings validated against the pre-message (package.pre_message.c15.json)',
+       'file', 'classroom', _V2_PY,
+       "novel = phase('novel_findings', lambda: F.validate_novel_findings(response.get('dipole_novel_findings')",
+       ('path', '{classroom}/package.pre_message.c15.json')),
+    _i('novelty investigation: the mode and learning policy (package.binding.c15.json)', 'file', 'classroom', _V2_PY,
+       "novelty = phase('novelty_investigation', lambda: F.investigate_novel_findings(pkg['teacher_key']",
+       ('path', '{classroom}/package.binding.c15.json')),
+    _i('brain correction records', 'brain entry', 'review', _REV_PY,
+       "for path in sorted((Path(root) / 'corrections').glob('*.json')):", ('glob', '{brain}/corrections/*.json')),
+    _i('knowledge versions (lane-state/knowledge/*/version.json)', 'file', 'lane state', _LS_PY,
+       "return [json.loads(p.read_bytes()) for p in sorted((STATE / 'knowledge').glob('*/version.json'))]",
+       ('glob', '{lane_state}/knowledge/*/version.json')),
+    _i('the run\'s search step receipts (which searches finished)', 'control', 'orchestrator (Run.record)', _Q_PY,
+       "s = run.receipt('search', day)", ('path', '{run_dir}/days/{day}/search.json'), klass='mechanism'),
+    _i('retained lessons (lessons_written: an already-written frankie-<day> lesson is reused)', 'own state',
+       'teacher-2 itself', _Q_PY, "written = run.lessons_written('frankie-%s' % day, searched, frankie_ledgers=ledgers)",
+       ('path', '{lessons}/frankie/{day}-frankie.json'), klass='own'),
+]
+
+_REPORT_JSON = ('code-answers.json', 'ledgers.json', 'post-grade.json', 'novel-findings.json', 'novelty-investigation.json',
+                'correction-request.json', 'correction-response.json', 'acknowledgement.json', 'completion.json',
+                'external-code-answers.json', 'external-post-grade.json', 'external-correction-request.json',
+                'external-correction-response.json', 'external-acknowledgement.json', 'external-completion.json',
+                'package.external.pre_message.json')
+# reports: frankie_box_experiment_day_reports.py (run once after Jev under the hub; every piece one-way in)
+NATIVE_INPUTS['reports'] = [
+    _i('classroom receipt.json', 'receipt', 'classroom', _REP_PY, "raw = self._read('classroom receipt', receipt_path)",
+       ('path', '{classroom}/receipt.json')),
+] + [_i('classroom %s' % f, 'file', 'classroom', _REP_PY, "self.docs[name] = json.loads(self._read(name, path))",
+        ('path', '{classroom}/' + f)) for f in _REPORT_JSON] + [
+    _i('classroom.md (the dropped findings)', 'file', 'classroom', _REP_PY, "path = self.dir / 'classroom.md'",
+       ('path', '{classroom}/classroom.md')),
+    _i('Frankie\'s brain entry MANIFEST.json (<day>-cycle-00)', 'brain entry', 'classroom (brain publication)', _REP_PY,
+       "raw = self._read('brain MANIFEST', path)", ('path', '{brain}/{day}-cycle-' + CYCLE + '/MANIFEST.json')),
+    _i('exchange.json', 'file', 'exchange', _REP_PY, "raw = self._read('exchange', exchange)",
+       ('path', '{exchange}/exchange.json')),
+    _i('exchange-frankie.json', 'file', 'exchange', _REP_PY,
+       "frankie_view = json.loads(self._read('exchange-frankie view', frankie_path))", ('path', '{exchange}/exchange-frankie.json')),
+    _i('exchange receipt.json', 'receipt', 'exchange', _REP_PY,
+       "doc, seen, why = _json_once(d, 'exchange receipt', Path(exchange_path).with_name('receipt.json'))",
+       ('path', '{exchange}/receipt.json')),
+    _i('the meeting record (meeting/<day>/meeting.json)', 'file', 'exchange (meeting)', _REP_PY,
+       "self.meeting = read_meeting_for_exchange(frankie_path)", ('path', '{meeting}/meeting.json')),
+    _i('the meeting receipt (meeting/<day>/receipt.json)', 'receipt', 'exchange (meeting)', _REP_PY,
+       "self.meeting = read_meeting_for_exchange(frankie_path)", ('path', '{meeting}/receipt.json')),
+    _i('ROOT calculations-receipt.json', 'receipt', 'ROOT', _REP_PY,
+       "load('receipt', self.root_dir / PA.ROOT_FIELDS['receipt'])", ('path', _CR)),
+    _i('ROOT derive.json', 'file', 'ROOT', _REP_PY, "load('derive', self.root_dir / PA.ROOT_FIELDS['derive'])",
+       ('pin', _CR, 'derivation'), compare='pin'),
+    _i('ROOT native runtime-workers-receipt.json', 'receipt', 'ROOT (native pass)', _REP_PY,
+       "for role in ('workers', 'gates'):", ('glob', '{attempt}/work/*/runtime-workers-receipt.json')),
+    _i('ROOT native pre-traversal-gates.json', 'receipt', 'ROOT (native pass)', _REP_PY,
+       "for role in ('workers', 'gates'):", ('glob', '{attempt}/work/*/pre-traversal-gates.json')),
+    _i('teacher receipt.json (the TEACHER REPORT renders its account)', 'receipt', 'teacher', _REP_PY,
+       "raw = self._read('teacher receipt', path)", ('path', _TRC)),
+    _i('BOSS teacher second-set reading (teacher-second-set-read.boss.json)', 'file', 'teacher (knowledge step)', _REP_PY,
+       "doc, why = kept('BOSS teacher second-set reading', path)", ('path', '{rows}/teacher-second-set-read.boss.json')),
+    _i('scientific teacher second-set reading (experiment-teacher/teacher-second-set/<day>.json)', 'file',
+       'teacher-2 (lessons)', _REP_PY, "for path in [LESSONS_ROOT / 'teacher-second-set' / ('%s.json' % d.day)] + (",
+       ('path', '{lessons}/teacher-second-set/{day}.json')),
+    _i('accumulated reader\'s second-set reading (scientific-knowledge/<day>/teacher-second-set-read.json)', 'file',
+       'exchange (accumulated claim tests)', _REP_PY,
+       "[Path(run_dir) / 'scientific-knowledge' / str(d.day) / 'teacher-second-set-read.json'] if run_dir else []",
+       ('path', '{run_dir}/scientific-knowledge/{day}/teacher-second-set-read.json')),
+    _i('Frankie\'s lessons file (all99_coverage)', 'file', 'teacher-2 (lessons)', _REP_PY,
+       "mine = LESSONS_ROOT / 'frankie' / ('%s-frankie.json' % d.day)", ('path', '{lessons}/frankie/{day}-frankie.json')),
+    _i('carried claims receipt (scientific-knowledge/<day>/receipt.json)', 'receipt', 'accumulated lessons', _REP_PY,
+       "doc, seen, why = _json_once(d, 'carried claims receipt', given)",
+       ('path', '{run_dir}/scientific-knowledge/{day}/receipt.json')),
+    _i('candidates receipt (experiment-survivors/<run>/<day>/receipt.json)', 'receipt', 'survivors', _REP_PY,
+       "given = piece_receipts.get('candidates') or (SURVIVORS / run_name / d.day / 'receipt.json')",
+       ('path', '{survivors}/{run}/{day}/receipt.json')),
+    _i('the day\'s search MANIFEST.json (external points)', 'file', 'teacher: scientific seat (search)', _REP_PY,
+       "manifest, mseen, mwhy = _json_once(d, 'search MANIFEST', Path(step['target']) / 'MANIFEST.json')",
+       ('path', '{search}/MANIFEST.json')),
+    _i('Jev receipt.json', 'receipt', 'jev', _REP_PY, "jev, jseen, jwhy = _json_once(d, 'Jev receipt', given)",
+       ('path', '{jev_out}/receipt.json')),
+    _i('Jev client-receipt.json', 'receipt', 'jev', _REP_PY,
+       "client, cseen, cwhy, cbad = _pinned_once(d, 'Jev client receipt', jev.get('client_receipt'))",
+       ('path', '{jev_out}/client-receipt.json')),
+    _i('the school file (<brain>/school/<day>.json)', 'file', 'school', _REP_PY, "raw = self._read('school file', path)",
+       ('path', '{brain}/school/{day}.json')),
+    _i('the school index (school/index.json)', 'file', 'school', _REP_PY,
+       "index = json.loads(self._read('school index', index_path))", ('path', '{brain}/school/index.json')),
+    _i('orchestrator step receipts <run>/days/<day>/<stage>.json (each piece\'s all99 list and pins)', 'receipt',
+       'orchestrator (Run.record)', _REP_PY, "path = Path(run_dir) / 'days' / d.day / (stage + '.json')",
+       ('glob', '{run_dir}/days/{day}/*.json', 'jev-request-*.json'),
+       note='the all-99 join reads each piece\'s list through these records; no hub piece publishes them'),
+    _i('stage heartbeats <run>/days/<day>/progress/<stage>.jsonl', 'stream', 'each stage (frankie_box_stage_progress)',
+       _REP_PY, "progress = self.run_dir / 'days' / str(self.day) / 'progress'",
+       ('glob', '{run_dir}/days/{day}/progress/*.jsonl'), klass='mechanism',
+       note='instrumentation the piece accounts render (seconds, heartbeats), not a calculation input'),
+    _i('reports index / save / earlier revision (resume)', 'own state', 'reports itself', _REP_PY,
+       "path = reports / 'index.json'", ('path', '{reports_dir}/index.json'), klass='own'),
+]
+
 NATIVE_INPUTS['forecaster'] = []        # no consumer yet: the go-live last spoke (the hub feeds the forecaster)
 FORECASTER_NOTE = 'no consumer yet: the forecaster is the go-live last spoke; nothing reads the hub for it today'
 
@@ -533,6 +707,8 @@ def day_sources(day, run=None, *, attempt=None, previous=None, frozen_survivors=
     s['jev_request'] = _newest(list(jev_days.glob('jev-request-*.json'))) if jev_days and jev_days.is_dir() else None
     s['search'] = Path(r['search']) / str(day) / ('cycle-' + CYCLE) / SEARCH_ROLE
     s['lessons'] = Path(r['lessons'])
+    s['search_root'] = Path(r['search'])
+    s['survivors'], s['reports_dir'] = Path(r['survivors']), Path(r['reports'])
     s['brain'], s['jev_brain'], s['lane_state'], s['repo'] = (Path(r['brain']), Path(r['jev_brain']),
                                                                Path(r['lane_state']), Path(r['repo']))
     if previous is None and s['classroom'] is not None:
@@ -589,7 +765,8 @@ def resolve(item, sources):
             return [dict(label=item['name'], present=False, reason=why)]
         base = Path(pattern)
         anchor = Path(base.anchor)
-        found = sorted(p for p in anchor.glob(str(base.relative_to(anchor))) if p.is_file())
+        found = sorted(p for p in anchor.glob(str(base.relative_to(anchor))) if p.is_file()
+                       and not (len(loc) > 2 and fnmatch.fnmatch(p.name, loc[2])))
         if not found:
             return [dict(label=item['name'], present=False, reason='nothing matches %s' % pattern)]
         return [dict(label='%s [%s]' % (item['name'], p.name), path=str(p), present=True) for p in found]
@@ -624,6 +801,22 @@ def resolve(item, sources):
                      reason=None if p.exists() else 'pinned but not on disk')]
     if op in ('brain', 'school'):
         return _brain_items(item, sources, op, loc[1])
+    if op == 'manifest_parts':
+        pattern, why = _fill(loc[1], sources)
+        if pattern is None:
+            return [dict(label=item['name'], present=False, reason=why)]
+        base = Path(pattern)
+        anchor = Path(base.anchor)
+        found = []
+        for manifest_path in sorted(anchor.glob(str(base.relative_to(anchor)))):
+            m = _json(manifest_path) or {}
+            for pin in ((m.get('couplings') or {}).get('parts') or []):
+                p = manifest_path.parent / str(pin.get('path'))
+                found.append(dict(label='%s [%s/%s]' % (item['name'], manifest_path.parent.parent.parent.name,
+                                                         pin.get('path')),
+                                  path=str(p), pin=dict(path=str(p), bytes=pin.get('bytes'), sha256=pin.get('sha256')),
+                                  present=p.is_file()))
+        return found or [dict(label=item['name'], present=False, reason='no search part pinned under %s' % pattern)]
     if op == 'jevpeer':
         found = []
         for manifest_path in sorted(Path(sources['brain']).glob('jev-peer/*/MANIFEST.json')):
@@ -686,7 +879,7 @@ def _sha256_small(path, hash_max=HASH_MAX):
         size = p.stat().st_size
     except OSError:
         return None, None, 'not on disk'
-    if size > hash_max:
+    if hash_max is not None and size > hash_max:
         return size, None, 'not hashed by the spoke (over %d bytes); the comparison streams it' % hash_max
     h = hashlib.sha256()
     with p.open('rb') as f:
@@ -697,8 +890,8 @@ def _sha256_small(path, hash_max=HASH_MAX):
 
 def _file_addition(name, kind, producer, path, *, pin=None, hash_max=HASH_MAX, known_by=None):
     """A reference addition for a file: the producer's pin when it recorded one (no hashing), else hashed when small."""
-    path = Path(path)
-    if not path.exists():
+    path = Path(os.path.abspath(str(path)))
+    if not path.exists() or not path.is_file():
         return None
     if pin and pin.get('sha256'):
         size, sha, basis = pin.get('bytes'), pin['sha256'], 'the producer\'s pin'
@@ -779,6 +972,9 @@ def knowledge_store(sources, hash_max=HASH_MAX):
         school_dir = 'school'
     for d in dirs:
         manifest = _json(d / 'MANIFEST.json') or {}
+        if (d / 'MANIFEST.json').is_file():
+            out.append(_file_addition('brain entry %s/MANIFEST.json' % d.name, 'brain entry', 'brain', d / 'MANIFEST.json',
+                                      hash_max=hash_max))
         for e in manifest.get('entries') or []:
             a = _file_addition('brain entry %s/%s' % (d.name, e.get('name')), 'brain entry', 'brain', d / str(e.get('name')),
                                pin=dict(bytes=e.get('bytes'), sha256=e.get('sha256')), hash_max=hash_max)
@@ -808,6 +1004,18 @@ def knowledge_store(sources, hash_max=HASH_MAX):
                                pin=dict(bytes=e.get('bytes'), sha256=e.get('sha256')), hash_max=hash_max)
             if a is not None:
                 out.append(a)
+    search_root = sources.get('search_root')
+    if search_root is not None:
+        # the run's searches of every day (the scientific seat tests claims over all of them): each MANIFEST.json and
+        # the coupling parts it pins, by the manifest's pins
+        for manifest_path in sorted(Path(search_root).glob('*/cycle-%s/%s/MANIFEST.json' % (CYCLE, SEARCH_ROLE))):
+            day_name = manifest_path.parents[2].name
+            out.append(_file_addition('search %s MANIFEST.json' % day_name, 'file', 'teacher: scientific seat (search)',
+                                      manifest_path, hash_max=hash_max))
+            for pin in ((_json(manifest_path) or {}).get('couplings') or {}).get('parts') or []:
+                out.append(_file_addition('search %s %s' % (day_name, pin.get('path')), 'stream',
+                                          'teacher: scientific seat (search)', manifest_path.parent / str(pin.get('path')),
+                                          pin=dict(bytes=pin.get('bytes'), sha256=pin.get('sha256')), hash_max=hash_max))
     for p in sorted(Path(sources['jev_brain']).glob('*/*.json')):
         out.append(_file_addition('jev brain %s/%s' % (p.parent.name, p.name), 'brain entry', 'jev', p,
                                   hash_max=hash_max))
@@ -853,6 +1061,10 @@ def publications(piece, sources, hash_max=HASH_MAX):
                 add(_file_addition('ROOT layer ' + name, 'file', 'ROOT', p, pin=pin, hash_max=hash_max))
         for name in ('native-layer-records.json', 'native-overlap.json'):
             add(_file_addition('ROOT ' + name, 'file', 'ROOT', a / 'work' / name, hash_max=hash_max))
+        for name in ('runtime-workers-receipt.json', 'pre-traversal-gates.json'):
+            for p in sorted((a / 'work').glob('*/' + name)) + sorted((a / 'work').glob('*/*/' + name)):
+                add(_file_addition('ROOT native ' + '/'.join(p.parts[-2:]), 'receipt', 'ROOT (native pass)', p,
+                                   hash_max=hash_max))
         return out
     if piece == 'teacher':
         rows = Path(sources['rows'])
@@ -882,11 +1094,20 @@ def publications(piece, sources, hash_max=HASH_MAX):
         for p in _files_in(search, ('MANIFEST.json', 'knowledge-findings.json', 'knowledge-review-*.json')):
             add(_file_addition('teacher (scientific seat) search ' + p.name, 'file', 'teacher: scientific seat', p,
                                hash_max=hash_max))
+        return out
+    if piece == 'teacher-2':
+        # the teacher's second turn: Frankie's lessons (FRANKIE_LESSONS_V1), the scientific seat's reading of the second
+        # set, Jev's lessons of the day when the batch lessons have written them; the novelty investigation is on disk
+        # in the classroom directory today (published with the classroom) until it moves to this turn
         lessons, day = Path(sources['lessons']), sources['day']
         for p in [lessons / 'frankie' / ('%s-frankie.json' % day)] + sorted((lessons / 'jev').glob('%s-*.json' % day)) + \
                 [lessons / 'teacher-second-set' / ('%s.json' % day)]:
-            add(_file_addition('teacher (scientific seat) ' + '/'.join(p.parts[-2:]), 'file', 'teacher: scientific seat',
+            add(_file_addition('teacher-2 (lessons) ' + '/'.join(p.parts[-2:]), 'file', 'teacher-2: scientific seat',
                                p, hash_max=hash_max))
+        brain = Path(sources['brain'])
+        for p in sorted(brain.glob('%s-lessons/*' % day)):
+            add(_file_addition('teacher-2 brain %s-lessons/%s' % (day, p.name), 'brain entry', 'teacher-2', p,
+                               hash_max=hash_max))
         return out
     if piece == 'classroom':
         c, a = sources.get('classroom'), sources.get('attempt')
@@ -901,6 +1122,11 @@ def publications(piece, sources, hash_max=HASH_MAX):
                 add(_file_addition('classroom out/' + p.name, 'file', 'classroom', p, hash_max=hash_max))
         return out
     if piece == 'exchange':
+        run_dir, day = sources.get('run_dir'), sources['day']
+        if run_dir is not None:
+            for p in _files_in(Path(run_dir) / 'scientific-knowledge' / day, ('*.json',)):
+                add(_file_addition('exchange accumulated ' + p.name, 'file', 'exchange (accumulated claim tests)', p,
+                                   hash_max=hash_max))
         for p in _files_in(sources.get('exchange'), ('*.json',)):
             add(_file_addition('exchange ' + p.name, 'file', 'exchange', p, hash_max=hash_max))
         for p in _files_in(sources.get('meeting'), ('*.json',)):
@@ -915,17 +1141,48 @@ def publications(piece, sources, hash_max=HASH_MAX):
         add(_file_addition('school day %s.json' % day, 'brain entry', 'school', brain / 'school' / ('%s.json' % day),
                            hash_max=hash_max))
         return out
+    if piece == 'reports':
+        rd, run, day = sources.get('reports_dir'), sources.get('run'), sources['day']
+        if rd is not None and run:
+            add(_file_addition('reports receipt', 'receipt', 'reports', Path(rd) / 'receipts' / run / ('%s.json' % day),
+                               hash_max=hash_max))
+            receipt = _json(Path(rd) / 'receipts' / run / ('%s.json' % day)) or {}
+            for value in (receipt.get('written') or {}).values() if isinstance(receipt.get('written'), dict) else []:
+                if isinstance(value, str) and Path(value).is_file():
+                    add(_file_addition('report ' + Path(value).name, 'file', 'reports', value, hash_max=hash_max))
+        return out
     return out                                   # forecaster: no publication yet
 
 
+def prerequisites():
+    """{piece: (pieces it needs this round)}: the hub core's own table (frankie_box_hub.PREREQUISITES) restricted to
+    PIECES, else the copy above."""
+    try:
+        table = dict(_hub().PREREQUISITES)
+    except Exception:  # noqa: BLE001 - the core not importable: the copy
+        table = dict(_PREREQUISITES_FALLBACK)
+    return {p: tuple(q for q in table.get(p, ()) if q in PIECES and q != p) for p in PIECES}
+
+
+def before(piece, table=None):
+    """The pieces whose write is guaranteed in the hub at `piece`'s turn: its prerequisites, transitively (listing
+    order)."""
+    table = table or prerequisites()
+    seen, stack = set(), list(table.get(piece, ()))
+    while stack:
+        q = stack.pop()
+        if q not in seen:
+            seen.add(q)
+            stack.extend(table.get(q, ()))
+    return [p for p in PIECES if p in seen]
+
+
 def hub_set(sources, upto=None, hash_max=HASH_MAX):
-    """The merged hub set at a piece's turn: the pinned sources, the knowledge store and every EARLIER piece's
-    publications (workflow order). upto=None: everything."""
+    """The merged hub set at a piece's turn: the pinned sources, the knowledge store and the publications of every
+    piece the hub core guarantees has written before it (its prerequisites, transitively). upto=None: everything."""
     out = [dict(a, group='pinned source') for a in pinned_sources(sources, hash_max)]
     out += [dict(a, group='knowledge store') for a in knowledge_store(sources, hash_max)]
-    for piece in PIECES:
-        if piece == upto:
-            break
+    for piece in (PIECES if upto is None else before(upto)):
         out += [dict(a, group='publication of ' + piece) for a in publications(piece, sources, hash_max)]
     return out
 
@@ -950,7 +1207,7 @@ def _hub():
     return H
 
 
-def run_spoke(piece, hub_dir, sources, *, pid=None, hash_max=HASH_MAX):
+def run_spoke(piece, hub_dir, sources, *, pid=None):
     """One read-calc-write turn of `piece` under the hub's turn lock: take_turn (a waiter is recorded and woken by the
     holder's release), read the hub set, calc (placeholder: the piece's own outputs on disk, by reference), write the
     additions, release. Returns {piece, token, read, written}. Not called by the workflow yet."""
@@ -958,7 +1215,7 @@ def run_spoke(piece, hub_dir, sources, *, pid=None, hash_max=HASH_MAX):
     token = H.take_turn(hub_dir, piece, pid=pid if pid is not None else os.getpid())
     try:
         received = H.read(hub_dir, piece, token)
-        additions = publications(piece, sources, hash_max) if piece != 'forecaster' else [
+        additions = publications(piece, sources, hash_max=None) if piece != 'forecaster' else [
             _value_addition('forecaster', 'note', 'forecaster', FORECASTER_NOTE)]
         H.write(hub_dir, piece, token, additions)
         return dict(piece=piece, token=token, read=received, written=len(additions))
@@ -967,9 +1224,12 @@ def run_spoke(piece, hub_dir, sources, *, pid=None, hash_max=HASH_MAX):
 
 
 def open_day_hub(hub_root, sources, hash_max=HASH_MAX):
-    """open_hub with this day's pinned sources (the hub core's API)."""
+    """open_hub with this day's pinned sources, every piece and the hub core's default prerequisites (so nothing is
+    listed in prerequisites_dropped)."""
     pins = [{k: a.get(k) for k in ('name', 'path', 'bytes', 'sha256')} for a in pinned_sources(sources, hash_max)]
-    return _hub().open_hub(hub_root, sources.get('run'), sources['day'], pins, pieces=list(PIECES))
+    H = _hub()
+    table = {p: list(q) for p, q in prerequisites().items()}      # the core's default table over these pieces
+    return H.open_hub(hub_root, sources.get('run'), sources['day'], pins, pieces=list(PIECES), prerequisites=table)
 
 
 if __name__ == '__main__':
