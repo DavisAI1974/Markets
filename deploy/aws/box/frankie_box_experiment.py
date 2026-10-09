@@ -2609,6 +2609,12 @@ class Run:
         rows, source, why = self.day_rows(e)
         if rows is None and why and why.startswith('refused'):
             return 'refused', why, facts          # a legacy teacher result under the plan's shared policy (preserved)
+        if rows is None:
+            # the sealed blocks (2026-10-09): with the digest there, the door opens on the teacher's first sealed block;
+            # the classroom then takes the day block by block while the teacher walks on (Run.class_blocks)
+            sealed = self.sealed_blocks(e['day'])
+            if sealed is not None:
+                rows, facts['blocks'] = TEACHER_ROWS / e['day'], sealed
         if rows is None or not str(rows).startswith(str(TEACHER_ROWS) + '/'):
             return 'waiting', why or 'no teacher-only Dipole rows under %s yet (stage teacher; found: %s)' % (
                 TEACHER_ROWS, source), facts
@@ -2639,6 +2645,19 @@ class Run:
             return self.record('classroom', day, 'waiting', reason=why)
         if previous and not (Path(previous) / 'completion.json').is_file():
             return self.record('classroom', day, 'waiting', reason='PREVIOUS %s holds no completion.json' % previous)
+        block_lessons = None
+        if self.sealed_blocks(day, any_state=True) is not None:
+            # the sealed blocks (2026-10-09): block n's lesson as soon as block n is sealed, event-driven between blocks
+            # (no interval, no timeout), until the teacher's manifest is complete; then the whole-day lesson below
+            import frankie_box_frankie_queue as Q
+            with Q.class_running(self.log):
+                block_lessons = self.class_blocks(e, TEACHER_ROWS / day, d)
+            if block_lessons.get('status') != 'complete' and self.day_rows(e)[0] is None:
+                # a failed block publication with the whole-day rows published goes on to the whole-day lesson (listed)
+                return self.record('classroom', day, 'waiting', block_lessons=block_lessons,
+                                   reason='the classroom took %d sealed block(s); the teacher\'s blocks stopped: %s (%s)'
+                                          % (len(block_lessons.get('blocks') or ()), block_lessons.get('status'),
+                                             block_lessons.get('reason')))
         # The BOSS teacher's measured knowledge must be in the brain BEFORE Frankie's classroom reads it, whichever path
         # brought the day here (a fresh teacher run, rows reused from an earlier run, or a ROOT found elsewhere that
         # entered the class line without a teacher call). Idempotent: an identical entry is reused, not rewritten.
@@ -2681,6 +2700,7 @@ class Run:
                 self.log('classroom %s: the teacher entry %s is NOT among the %d learner documents read' % (
                     day, teacher_brain['path'], len(documents)))
         fields = dict(exit_code=code, log=log, classroom=str(d), previous=previous, previous_from=previous_from,
+                      block_lessons=block_lessons,
                       school_day=self.school_day,
                       receipt_status=r.get('status'), external=(r.get('external') or {}).get('completion_hash'),
                       brain_entry=r.get('brain_entry'), jev_material=r.get('jev_material'),
@@ -2694,6 +2714,98 @@ class Run:
         if code == 3 and r.get('status') == 'refused':
             return self.record('classroom', day, 'refused', reason=r.get('reason'), **fields)
         return self.record('classroom', day, 'failed', reason='no completion.json after the step (its log names why)', **fields)
+
+    def sealed_blocks(self, day, any_state=False):
+        """The teacher's blocks manifest of the day when at least one block is sealed and its blocks go on (or are
+        complete); any_state: whenever a manifest with a sealed block stands. None otherwise."""
+        import frankie_box_teacher_rows as TR
+        try:
+            manifest = TR.blocks(TEACHER_ROWS / day)
+        except (OSError, ValueError):
+            return None
+        if not manifest or not manifest.get('blocks'):
+            return None
+        if not any_state and manifest.get('status') in ('failed', 'stopped', 'equation_not_run'):
+            return None
+        return dict(blocks=len(manifest['blocks']), complete=bool(manifest.get('complete')), status=manifest.get('status'),
+                    schedule=(manifest.get('schedule') or {}).get('minutes'))
+
+    def class_blocks(self, e, rows_dir, d):
+        """The classroom block by block (frankie_box_classroom_code.block_lesson): block 1 (the canary) first, then each
+        block as it seals, waiting between blocks on the rows directory, its blocks directory, the box's wake directory
+        and the day's save marker (frankie_box_wake: no interval, no timeout). A lesson already written is kept. Returns
+        {status: complete | failed | stopped, blocks, waits}."""
+        import frankie_box_classroom_code as K
+        import frankie_box_frankie_queue as Q
+        import frankie_box_teacher_rows as TR
+        import frankie_box_wake as W
+        rows_dir, d = Path(rows_dir), Path(d)
+        d.mkdir(parents=True, exist_ok=True)
+        try:
+            directory = self.ingest_dir(e)
+            day_file = attached_day_file(directory)[0] if directory is not None else None
+        except (OSError, ValueError, KeyError, TypeError):
+            day_file = None
+        dirs = [rows_dir, rows_dir / 'blocks', Q.wake_dir()] + ([Path(self.stop_marker).parent] if self.stop_marker else [])
+        waiter = W.Waiter(dirs)
+
+        def lesson(n, manifest):
+            done = d / 'blocks' / str(n) / 'lesson.json'
+            if done.is_file():
+                return dict(block=n, lesson=str(done), status='kept')
+            made = K.block_lesson(rows_dir, d, n, day_file=day_file, manifest=manifest)
+            self.log('classroom %s: block %d lesson (%s rows, second set %s)' % (e['day'], n, made['rows'],
+                                                                                 made['second_set']))
+            return made
+        try:
+            return TR.follow_blocks(rows_dir, lesson, waiter, check=self.check_save)
+        finally:
+            waiter.close()
+
+    def early_class_door(self, entries):
+        """While the teacher child runs (the sealed blocks, 2026-10-09): one watcher thread per single classroom-arm day
+        opens the class door the moment the door condition holds (the digest AND a sealed block): the day enters the
+        class line and its worker is kicked (frankie_box_frankie_queue._after_root, the same call the finish makes after
+        the teacher), so the classroom starts on block 1 while the teacher walks on. Event-driven (the rows and blocks
+        directories, the ROOT's work directory, the wake directory); stopped by the teacher's end. Returns
+        (stop, thread, state) or None."""
+        import threading
+        if getattr(self.a, 'frankie_queue', 'off') != 'on' or not getattr(self, 'slot_booking', None):
+            return None
+        days = [e for e in entries if e.get('classroom_arm') and not self.finished('classroom', e['day'])]
+        if len(days) != 1:
+            return None
+        e = days[0]
+        import frankie_box_frankie_queue as Q
+        import frankie_box_wake as W
+        rows_dir = TEACHER_ROWS / e['day']
+        dirs = [rows_dir, rows_dir / 'blocks', Q.wake_dir()]
+        root = self.root_on_disk(e) or {}
+        if root.get('calculations'):
+            dirs.append(Path(root['calculations']) / 'work')
+        stop, state = threading.Event(), dict(day=e['day'], opened=None, error=None, wakes=0)
+
+        def run():
+            waiter = W.Waiter(dirs)
+            try:
+                while not stop.is_set():
+                    status, why, facts = self.classroom_ready(e)
+                    if status is None and facts.get('blocks'):
+                        state['opened'] = Q._after_root(self, e, self.code_root, self.commit, self.log)
+                        self.log('classroom %s: the class door opened on sealed block(s) %s while the teacher walks: %s'
+                                 % (e['day'], facts['blocks'], state['opened']))
+                        return
+                    if status is None or status in ('reused', 'refused'):
+                        return
+                    waiter.wait()
+                    state['wakes'] += 1
+            except BaseException as error:  # noqa: BLE001 - the finish opens the door after the teacher as before
+                state['error'] = '%s: %s' % (type(error).__name__, error)
+            finally:
+                waiter.close()
+        thread = threading.Thread(target=run, name='early-class-door-%s' % e['day'], daemon=True)
+        thread.start()
+        return stop, thread, state
 
     # Frankie's FIFO queue (frankie_box_frankie_queue.py): the ROOT line and the CLASS line, arrival order
     def queue_owned(self, e):
@@ -4669,7 +4781,16 @@ class Run:
         env = dict(DAYS=','.join(d for d, _ in receipts), INGESTION_RECEIPTS=','.join(r for _, r in receipts))
         if policy:
             env.update(SHARED_MARKET_POLICY=policy, CALCULATION_ROOTS=','.join(roots[d] for d, _ in receipts))
-        code, log = self.child('teacher', batch_key, 'frankie_box_experiment_teacher.sh', env)
+        door = self.early_class_door([e for e in todo if e['day'] in dict(receipts)])
+        try:
+            code, log = self.child('teacher', batch_key, 'frankie_box_experiment_teacher.sh', env)
+        finally:
+            if door is not None:
+                door[0].set()
+                import frankie_box_frankie_queue as Q
+                Q.notify('teacher-ended-%s' % batch_key)
+                door[1].join()
+                self.log('teacher %s: early class door %s' % (batch_key, json.dumps(door[2], default=str)[:600]))
         saved = self.child_saved('teacher', batch_key, code, log, days=[d for d, _ in receipts], waiting=waiting,
                                  remote_days=remote, refused_days=refused or None, shared_market_policy=policy,
                                  calculation_roots=roots or None, root_waiting=root_waiting or None,

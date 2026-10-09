@@ -4124,3 +4124,66 @@ def stage_knowledge_reproduction(visible, knowledge, *, evidence=None, relations
     return dict(schema='FRANKIE_STAGE_KNOWLEDGE_REPRODUCTION_V1', author=AUTHOR, sources=sources,
                 checks=checks, listed=listed, model_calls=0,
                 rule='apply source-bound findings individually; no occurrence gates, validity downgrade or pooled outputs')
+
+
+# ---- the lesson per sealed block (Greg, 2026-10-09: "You don't have to wait for full data to come in"): the classroom
+# starts on block 1 (the five-minute canary) while the teacher walks on. Block n's lesson reads ONLY block n's sealed
+# rows (frankie_box_teacher_rows.iter_block / BlockSidecarStream, each verified against its sha256): the teacher's second
+# set beside every row of the block, whole in <classroom>/blocks/<n>/second_set.jsonl, and at each component's anchor
+# rows of the block (first / last / minimum / maximum PRESENT, the market_context tie rules) the planes resolved by
+# reading their references. Nothing of a later block is read; the carry into the next block is the teacher's (each row
+# carries its windows and running totals, sealed with it). The whole-day lesson (answers, grade, correction, the brain
+# entry) runs after the last block, unchanged.
+BLOCK_LESSON_SCHEMA = 'FRANKIE_CLASSROOM_BLOCK_LESSON_V1'
+
+
+def block_component_anchors(rows):
+    """{component: {first, last, minimum, maximum: (cursor, value)}} over the PRESENT values of these snapshot rows
+    (component_anchors' tie rules)."""
+    present = {}
+    for row in rows:
+        for component in row.get('components') or ():
+            if component.get('state') == 'PRESENT' and component.get('value') is not None:
+                present.setdefault(component['name'], []).append((int(row['cursor']), float(component['value'])))
+    return {name: dict(first=values[0], last=values[-1], minimum=min(values, key=lambda cv: (cv[1], cv[0])),
+                       maximum=max(values, key=lambda cv: (cv[1], -cv[0])))
+            for name, values in present.items()}
+
+
+def block_lesson(teacher_rows, directory, n, *, day_file=None, manifest=None):
+    """Block n's lesson, written to <directory>/blocks/<n>/lesson.json (atomic). Returns its record."""
+    import hashlib
+    import os
+    import time
+    import frankie_box_teacher_rows as TR
+    manifest = manifest if manifest is not None else TR.blocks(teacher_rows)
+    block = TR.block_record(teacher_rows, n, manifest)
+    rows = list(TR.iter_block(teacher_rows, n, select=('cursor', 'target_hash', 'components'), manifest=manifest))
+    anchors = block_component_anchors(rows)
+    cursors = sorted({c for chosen in anchors.values() for c, _ in chosen.values()})
+    out = Path(directory) / 'blocks' / str(n)
+    out.mkdir(parents=True, exist_ok=True)
+    try:
+        lesson = TR.second_set_lesson(teacher_rows, out / 'second_set.jsonl', rows, anchor_cursors=cursors,
+                                      day_file=day_file, blocks=[n])
+    except Exception as error:  # noqa: BLE001 - listed; the next block goes on
+        lesson = dict(schema=TR.SECOND_SET_LEDGER_SCHEMA, status='failed', reason='%s: %s' % (type(error).__name__, error))
+    entry = manifest['blocks'][n - 1]
+    doc = dict(schema=BLOCK_LESSON_SCHEMA, day=manifest.get('day'), block=n,
+               block_pin=dict(file=entry['file'], sha256=entry['sha256'], sidecar_sha256=entry['sidecar_sha256'],
+                              cursor_range=block['cursor_range'], clock_range=block['clock_range'],
+                              teacher_as_of=block['teacher_as_of'], final=block.get('final')),
+               rows=len(rows), component_anchors={name: {k: list(v) for k, v in chosen.items()}
+                                                  for name, chosen in anchors.items()},
+               second_set=TR.second_set_summary(lesson), context=second_set_context(lesson)['listed'],
+               reads=dict(blocks=[n], rule='only this block\'s sealed bytes (sha256 verified); no later block'),
+               written_utc=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()))
+    data = (json.dumps(doc, sort_keys=True, default=str) + '\n').encode()
+    pending = out / 'lesson.json.pending'
+    with pending.open('wb') as handle:
+        handle.write(data)
+        handle.flush()
+        os.fsync(handle.fileno())
+    os.replace(pending, out / 'lesson.json')
+    return dict(block=n, rows=len(rows), lesson=str(out / 'lesson.json'), sha256=hashlib.sha256(data).hexdigest(),
+                second_set=lesson.get('status'), anchors=len(cursors))

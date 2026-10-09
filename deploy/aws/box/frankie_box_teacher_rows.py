@@ -465,7 +465,7 @@ def _listing(ordinals, cursors):
 
 
 def second_set_lesson(rows_dir, out_path, snapshot_rows, *, anchor_cursors=(), teacher_receipt=None, day_file=None,
-                      as_of=None):
+                      as_of=None, blocks=None):
     """The teacher's second set for the classroom (Greg, 2026-10-09: whatever Frankie sees is pinned together with the
     99 planes on the same clocks). Streams the sidecar beside the rows, writes every row's second set WHOLE to
     `out_path` (JSON lines, one per row: ordinal, cursor, target_hash and every row key the header lists; the plane
@@ -483,7 +483,8 @@ def second_set_lesson(rows_dir, out_path, snapshot_rows, *, anchor_cursors=(), t
                     reason='no rows sidecar beside the teacher rows (a teacher before the second set): the second set '
                            'is absent on every row', rows=len(cursors),
                     absent=dict(all=_listing(list(range(len(cursors))), cursors)))
-    stream = SidecarStream(side)
+    # blocks: the sealed blocks to read (a partial sidecar bounded by them, each verified; listed on the record)
+    stream = SidecarStream(side) if blocks is None else BlockSidecarStream(rows_dir, blocks)
     roles = {role: stream.role(role) for role in ROLE_KEYS}
     row_keys = stream.fields('row_keys')
     clock_fields = stream.fields('clock_fields')
@@ -616,14 +617,14 @@ def second_set_summary(lesson):
     return out
 
 
-def second_set_at_cutoff(rows_dir, through_cursor, *, day_file=None):
+def second_set_at_cutoff(rows_dir, through_cursor, *, day_file=None, blocks=None):
     """The second set of the last teacher row at or before the cutoff (through_cursor), its planes resolved by reading
     their references: the teacher's own instant at the cutoff, aligned on its key and clocks. (record, None) or
     (None, why). One pass over the sidecar."""
     side = sidecar_of(rows_dir)
     if not side.is_file():
         return None, 'no rows sidecar beside the teacher rows (a teacher before the second set)'
-    stream = SidecarStream(side)
+    stream = SidecarStream(side) if blocks is None else BlockSidecarStream(rows_dir, blocks)
     last, after = None, 0
     for row in stream:
         cursor = row.get('cursor')
@@ -1161,3 +1162,83 @@ def sidecar_header_of_blocks(rows_dir, manifest=None):
     if hashlib.sha256(data).hexdigest() != manifest['header']['sha256']:
         raise ValueError('the block sidecar header differs from its manifest pin')
     return json.loads(data)
+
+
+class BlockSidecarStream(SidecarStream):
+    """SidecarStream over the header and the given sealed blocks only (a partial sidecar while the teacher walks): the
+    header checked against the manifest's pin, each block's bytes checked against its sha256 before any of its rows is
+    read. .sha256/.bytes cover the header and those blocks' bytes; record() lists the blocks read."""
+
+    def __init__(self, rows_dir, indices, select=None):
+        self.rows_dir = Path(rows_dir)
+        self.manifest = blocks(self.rows_dir)
+        if self.manifest is None:
+            raise ValueError('no %s beside %s' % (BLOCKS_MANIFEST, self.rows_dir))
+        self.indices = sorted(set(int(n) for n in indices))
+        self.read_blocks = []
+        super().__init__(self.rows_dir / self.manifest['sidecar'], select=select)
+
+    def _open(self):
+        self.header = sidecar_header_of_blocks(self.rows_dir, self.manifest)
+        start, end = self.manifest['header']['bytes']
+        with self.path.open('rb') as handle:
+            handle.seek(start)
+            data = handle.read(end - start)
+        self._digest.update(data)
+        self._size += len(data)
+
+    def __iter__(self):
+        for n in self.indices:
+            record = block_record(self.rows_dir, n, self.manifest)
+            path, start, end = _block_range(self.rows_dir, record)
+            with path.open('rb') as handle:
+                handle.seek(start)
+                at = start
+                while at < end:
+                    line = handle.readline()
+                    at += len(line)
+                    self._digest.update(line)
+                    self._size += len(line)
+                    row = json.loads(line)
+                    self.rows += 1
+                    yield row if self.select is None else {k: v for k, v in row.items() if k in self.select}
+            self.read_blocks.append(dict(index=n, cursor_range=record['cursor_range'], clock_range=record['clock_range'],
+                                         lines=record['sidecar']['lines'], sha256=record['sidecar']['sha256']))
+        self.close()
+
+    def close(self):
+        self.sha256, self.bytes = self._digest.hexdigest(), self._size
+
+    def record(self):
+        out = super().record()
+        out.update(blocks=list(self.read_blocks), manifest=BLOCKS_MANIFEST, complete=bool(self.manifest.get('complete')),
+                   rule='the sidecar header and the sealed blocks listed, each verified against its sha256; sha256 '
+                        'covers exactly those bytes')
+        return out
+
+
+def follow_blocks(rows_dir, on_block, waiter, *, check=None, start=1):
+    """Block by block as they seal: on_block(n, manifest) for each sealed block in order from `start`; between blocks
+    wait on `waiter` (a frankie_box_wake.Waiter on the rows directory and its blocks directory, built by the caller
+    BEFORE this call), no interval and no timeout, until the manifest says complete (every block done) or stopped.
+    check(): called before every look (a save request raises there). Returns {status, blocks, waits}."""
+    n, waits, done = start, 0, []
+    while True:
+        if check is not None:
+            check()
+        manifest = blocks(rows_dir)
+        if manifest is None:
+            waiter.wait()
+            waits += 1
+            continue
+        sealed = manifest.get('blocks') or []
+        if n <= len(sealed):
+            done.append(on_block(n, manifest))
+            n += 1
+            continue
+        if manifest.get('complete'):
+            return dict(status='complete', blocks=done, waits=waits, manifest_status=manifest.get('status'))
+        if manifest.get('status') in ('failed', 'stopped'):
+            return dict(status=manifest['status'], reason=manifest.get('reason'), blocks=done, waits=waits)
+        waiter.wait()
+        waits += 1
