@@ -118,5 +118,23 @@ else
 fi
 rm -rf "$AWS_TK_TMP"
 
+# AWS CLI v2 (Greg, 2026-10-09): AWS's official installer (verifies the package's PGP signature),
+# user-local into ~/.local/bin. Skipped when `aws` is already present. Sign-in is NOT automatic:
+# run `aws login --remote --profile greg-davis-claude` and paste the code back (see KEYS.md).
+if command -v aws >/dev/null 2>&1 || [ -x "$HOME/.local/bin/aws" ]; then
+  echo "[session_start] AWS CLI present"
+else
+  echo "[session_start] installing AWS CLI v2..."
+  AWS_CLI_TMP="$(mktemp -d)"
+  if timeout 60 curl -fsSL -o "$AWS_CLI_TMP/install.sh" https://awscli.amazonaws.com/v2/install.sh \
+     && timeout 300 bash "$AWS_CLI_TMP/install.sh" >/dev/null 2>&1; then
+    echo "[session_start] AWS CLI installed ($("$HOME/.local/bin/aws" --version 2>&1 | cut -d' ' -f1))"
+  else
+    echo "[session_start] AWS CLI install failed (continuing)"
+  fi
+  rm -rf "$AWS_CLI_TMP"
+fi
+grep -q 'HOME/.local/bin' "$HOME/.bashrc" 2>/dev/null || echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"
+
 echo "[session_start] done."
 exit 0
