@@ -16,7 +16,10 @@ the pieces reading his); everyone's plane ingestion layer is the same except Fra
 per-lesson reveal (answers/outcomes hidden from Frankie for the lesson in progress and lessons not reached, revealed at that
 lesson's discussion and visible from then on, with a reveal record). No provenance machinery: a name at the top of each
 piece's JSON. Brain improvements go TO FRANKIE, who updates his own brain after a checked lesson; the teachers' store is
-written by the teachers. LIVE (Greg, note for go-live, not now): live data is fed to the teacher hub, and the teacher feeds
+written by the teachers. NO STACK OF OLD CALCS (Greg): for any timestamp the hub keeps the latest and greatest calc until a
+refinement REPLACES it in place; no version list, no history of old market-condition calcs, nothing to clean. The only permanent
+records are the TRADE (date, time, price: sealed, never a calculation, never written by anything) and the small decision records
+(what was decided and why). LIVE (Greg, note for go-live, not now): live data is fed to the teacher hub, and the teacher feeds
 Frankie with any improvements; Frankie sends his own improvements back to the teacher hub, and the hub feeds the
 FORECASTER; the same hub and spokes, with the live feed as ROOT's spoke and the forecaster as the last spoke.
 
