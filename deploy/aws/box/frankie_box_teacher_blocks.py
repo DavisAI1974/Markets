@@ -3,7 +3,8 @@ out as it's coming in? That's the advantage of this. You don't have to wait for 
 
 A block is a span of the day's receive clock (the rows' ts_recv_ns). The schedule is one setting,
 FRANKIE_BLOCK_SCHEDULE_MINUTES: a comma list of minutes whose last value repeats ("5,30": the first block five minutes, the
-canary, then thirty-minute blocks). Unset or "0": no blocks, the whole-day publication exactly as before. The clock starts
+canary, then thirty-minute blocks), the default when unset; "0": no blocks, the whole-day publication exactly as before
+(a manifest of sealed blocks already standing is continued whatever the setting says). The clock starts
 at the trading day's open (18:00 America/New_York of the prior calendar day, the trading-day standard); block k ends at
 open + the first k lengths.
 
@@ -49,15 +50,16 @@ def utc():
 
 
 def schedule_setting(environ=None):
-    """(minutes tuple or None, record). Unset, empty or '0': None (whole-day publication); 'standard': STANDARD; else a
-    comma list of positive minutes, the last repeating. A malformed value raises (named)."""
+    """(minutes tuple or None, record). Unset or empty: STANDARD ("5,30", Greg 2026-10-09); '0': None (the whole-day
+    publication, exactly as before); else a comma list of positive minutes, the last repeating. A malformed value raises
+    (named)."""
     environ = os.environ if environ is None else environ
     raw = environ.get(SETTING)
     text = (raw or '').strip()
-    if text in ('', '0'):
+    if text == '0':
         return None, dict(setting=SETTING, value=raw, outcome='off',
-                          rule='unset or 0: the whole-day publication, exactly as before')
-    if text.lower() == 'standard':
+                          rule='0: the whole-day publication, exactly as before')
+    if text == '' or text.lower() == 'standard':
         text = STANDARD
     try:
         minutes = tuple(float(part) for part in text.split(','))
