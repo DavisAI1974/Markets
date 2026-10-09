@@ -5050,11 +5050,15 @@ class Run:
             made_from = (json.loads((target / 'MANIFEST.json').read_bytes()).get('directories') or {}).get('root')
             ours = (root or {}).get('calculations')
             if ours and made_from and str(Path(made_from)) != str(Path(ours)):
-                return self.record('data', e['day'], 'refused', target=str(target), exported_from=made_from, this_root=ours,
-                                   reason='the day was exported from another ROOT; duplicate data declines the day (move '
-                                          'that export aside with a receipt, or name its ROOT in the plan)')
-            return self.record('data', e['day'], 'reused', target=str(target), exported_from=made_from,
-                               manifest_sha256=sha256_file(target / 'MANIFEST.json'))
+                # 2026-10-09 (Greg: our own gate never blocks a run on fine data): an export made from ANOTHER ROOT of the
+                # day is not this ROOT's data. It is moved aside with a receipt (nothing deleted), together with the
+                # day's search built on it, and the day is exported from its own ROOT below; never a refusal of the day
+                moved = self.move_aside_other_export(e, target, made_from, ours)
+                self.log('data %s: the export under %s was made from another ROOT (%s, this ROOT %s): moved aside (%s); '
+                         'exported again from this ROOT' % (e['day'], target, made_from, ours, moved))
+            else:
+                return self.record('data', e['day'], 'reused', target=str(target), exported_from=made_from,
+                                   manifest_sha256=sha256_file(target / 'MANIFEST.json'))
         ing = self.receipt('ingest', e['day'])
         if root and root.get('status') == 'refused' and 'retained_policy' in root:
             return self.record('data', e['day'], 'refused', reason='refused: the day\'s ROOT is refused under the plan\'s '
@@ -5093,6 +5097,28 @@ class Run:
         return self.record('data', e['day'], 'done', exit_code=code, log=log, target=str(target), dipole=source,
                            dipole_missing=dipole_missing, manifest_sha256=sha256_file(target / 'MANIFEST.json'),
                            new_bytes=new_bytes(target))
+
+    def move_aside_other_export(self, e, target, made_from, ours):
+        """An export of the day made from another ROOT (and the day's searches, built on it) moved aside, never deleted:
+        <dir> -> <dir>.other-root-<stamp>, a FRANKIE_EXPORT_MOVED_ASIDE_V1 receipt written beside it. Returns the moves."""
+        stamp = time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())
+        moves = []
+        for directory in (Path(target), SEARCH / e['day'] / ('cycle-' + CYCLE)):
+            if not directory.exists():
+                continue
+            aside = directory.with_name('%s.other-root-%s' % (directory.name, stamp))
+            os.rename(directory, aside)
+            moves.append(dict(moved=str(directory), to=str(aside)))
+        receipt = dict(schema='FRANKIE_EXPORT_MOVED_ASIDE_V1', run=self.plan['run'], day=e['day'], at_utc=stamp,
+                       exported_from=made_from, this_root=ours, moves=moves, commit=self.commit,
+                       rule='an export (and the searches on it) of another ROOT of the day is moved aside, never reused, '
+                            'never deleted; the day is exported again from its own ROOT')
+        for move in moves:
+            try:
+                (Path(move['to']) / 'MOVED_ASIDE.json').write_text(json.dumps(receipt, indent=1, sort_keys=True) + '\n')
+            except OSError as error:
+                self.log('moved-aside receipt under %s not written (%s)' % (move['to'], error))
+        return moves
 
     def search(self, e):
         remote = self.remote_stage('search', e['day'])
