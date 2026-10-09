@@ -3155,6 +3155,82 @@ def retire_run(run, by, reason):
                      'untouched')
 
 
+def _holder_alive(pid, recorded_utc=None):
+    """True while the process with this pid runs AND is the recorded holder: /proc/<pid> present and (when the holder's
+    record carries its UTC time) the process started no later than that record, so a reused pid (a newer process under
+    the same number) reads as the holder gone. Without a recorded time, /proc presence alone decides."""
+    try:
+        pid = int(pid)
+    except (TypeError, ValueError):
+        return False
+    if pid <= 0 or not Path('/proc/%d' % pid).exists():
+        return False
+    if not recorded_utc:
+        return True
+    try:
+        import calendar
+        recorded = calendar.timegm(time.strptime(str(recorded_utc), '%Y-%m-%dT%H:%M:%SZ'))
+        fields = Path('/proc/%d/stat' % pid).read_text().rsplit(')', 1)[1].split()
+        with open('/proc/stat') as f:
+            boot = next(float(line.split()[1]) for line in f if line.startswith('btime '))
+        started = boot + int(fields[19]) / os.sysconf('SC_CLK_TCK')
+    except (OSError, ValueError, IndexError, StopIteration):
+        return Path('/proc/%d' % pid).exists()      # the start time unreadable: /proc presence decides
+    return started <= recorded + 2.0                # the record's whole-second UTC and the boot time's rounding
+
+
+def _resume_reconcile_dead_holder(x, by):
+    """ACTION=resume reconciles a dead holder itself (Greg, 2026-10-09: a gate we coded never blocks fine data), exactly as
+    a worker pass would (_sync_root), in the same call, before the resume proper:
+      - a done entry whose finish reads 'running' with its holder (the finish pid, else the owner's holder_pid) gone ->
+        finish 'unknown' (the pass's fields and reason, plus reconciled_by='resume'), the booking retained;
+      - a 'running' owned entry on this box whose owner holder_pid is gone (and no ROOT of the day runs here) -> 'unknown'
+        (its attempt ended as the pass ends it), the booking retained.
+    A holder that is alive is left exactly as it is (a real running process: the resume's refusal stands). Returns the
+    reconciliation record (also written as the events the pass writes plus resume_reconciled_dead_holder), or None."""
+    owner = x.get('owner') or {}
+    finish = x.get('finish') or {}
+    if x['state'] == 'done' and finish.get('state') == 'running':
+        if finish.get('pid'):
+            pid, recorded, which = finish.get('pid'), finish.get('started_utc'), 'finish.pid'
+        else:
+            pid, recorded, which = owner.get('holder_pid'), owner.get('holder_utc'), 'owner.holder_pid'
+        if not pid or _holder_alive(pid, recorded):
+            return None
+        before = dict(entry=x['state'], finish=finish.get('state'))
+        x['finish'] = dict(finish, state='unknown', ended_utc=utc(), reconciled_by='resume',
+                           reason='its holder (pid %s) is gone without a saved result; attempt %s and its CPUs are retained; '
+                                  'ACTION=resume reconciles it' % (pid, owner.get('attempt')))
+        _retain_quietly(x)
+        after = dict(entry=x['state'], finish=x['finish']['state'])
+    elif x['state'] == 'running' and x.get('owner') and not str(x.get('where') or '').startswith('worker:'):
+        pid, recorded, which = owner.get('holder_pid'), owner.get('holder_utc'), 'owner.holder_pid'
+        if not pid or _holder_alive(pid, recorded):
+            return None
+        try:
+            import frankie_box_root_claims as claims
+            if claims.root_running(x['day']):
+                return None                         # a ROOT of the day still runs on the box: a real process
+        except ImportError:
+            pass
+        before = dict(entry=x['state'], finish=finish.get('state'))
+        _end_attempt(x, 'unknown', 'the owner process is gone without a saved result or acknowledgment')
+        x.update(state='unknown', reconciled_by='resume',
+                 reason='its owner (pid %s, booking %s) is gone without a saved result; attempt %s and its CPUs are '
+                        'retained; ACTION=resume reconciles it' % (pid, owner.get('booking'), owner.get('attempt')))
+        _retain_quietly(x)
+        after = dict(entry=x['state'], finish=(x.get('finish') or {}).get('state'))
+    else:
+        return None
+    record = dict(holder_pid=pid, pid_field=which, holder_recorded_utc=recorded, run=x['run'], day=x['day'], by=by,
+                  before=before, after=after, at_utc=utc())
+    x.setdefault('resume_reconciliations', []).append(record)    # holder_pid: an event's own 'pid' is the writer's
+    event('root', 'sync_unknown', seq=x['seq'], day=x['day'], run=x['run'], reason=x.get('reason'), where=x.get('where'),
+          reconciled_by='resume')
+    event('root', 'resume_reconciled_dead_holder', seq=x['seq'], **record)
+    return record
+
+
 def resume_owner(run, day, by, rebook=False):
     """The explicit resume of a saved/unknown owned day: its marker archived beside its acknowledgment, the ROOT-line entry
     (and its class entry) back to queued WITH the same owner binding (attempt, CPUs, booking, marker), so the next
@@ -3168,6 +3244,11 @@ def resume_owner(run, day, by, rebook=False):
         owner = x.get('owner')
         if owner is None:
             raise SystemExit('%s %s has no owner binding; nothing to resume' % (run, day))
+        # 2026-10-09: a holder that is gone (finish 'running' on a done entry, or a 'running' owned entry) is reconciled
+        # here, in this call, as a worker pass would; a live holder is left as it is and the refusal below stands
+        reconciled = _resume_reconcile_dead_holder(x, by)
+        if reconciled:
+            save('root', doc)                       # the reconciliation stands as the pass's would, whatever follows
         finish = x.get('finish') or {}
         C = _cores()
         ledger = C.LEDGER / ('%s.json' % owner.get('booking'))
@@ -3241,7 +3322,8 @@ def resume_owner(run, day, by, rebook=False):
         x['save_request'] = None
         x.setdefault('resumes', []).append(dict(at=time.time(), at_utc=utc(), by=by, phase=phase, archived=archived))
         save('root', doc)
-        event('root', 'resume', seq=x['seq'], day=day, run=run, by=by, phase=phase, archived=archived, owner=owner)
+        event('root', 'resume', seq=x['seq'], day=day, run=run, by=by, phase=phase, archived=archived, owner=owner,
+              reconciled=reconciled)
         cdoc = load('class')
         c = next((y for y in cdoc['entries'] if y['run'] == run and y['day'] == day), None)
         if c is not None and c['state'] in OWNER_STATES:
@@ -3249,7 +3331,7 @@ def resume_owner(run, day, by, rebook=False):
                 by, c.get('school_day')))
             save('class', cdoc)
             event('class', 'resume', seq=c['seq'], day=day, run=run, by=by)
-        return dict(resumed=dict(run=run, day=day, phase=phase, owner=owner, archived=archived),
+        return dict(resumed=dict(run=run, day=day, phase=phase, owner=owner, archived=archived, reconciled=reconciled),
                     note='the next ROOT-line admission books exactly the retained CPUs and resumes attempt %s; ACTION=resume '
                          'kicks the root worker for this run/day itself (KICK=off leaves it to an ACTION=kick)' % owner['attempt'])
 
