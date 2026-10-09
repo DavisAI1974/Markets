@@ -327,7 +327,7 @@ def _progress(stage, completed, total=None, force=False, _last={}):
 # function-level code witnesses below are kept in the save under 'recorded', beside the data, and never compared. A save
 # written before this rule (no save_format) is compared on the data fields it carries; its binding is a record.
 ROW_PASS_CODE = ('RAW_MARK', 'DSTATE_SCHEMA', '_changes_applied', '_raw_batch', '_shipped_group', '_shipped_start',
-                 '_RawStreams', '_dstate_row', 'row_pass')
+                 '_compact_start', '_built_start', '_RawStreams', '_dstate_row', 'row_pass')
 FINISH_CODE = ('GUARD_EVERY', '_FastStateHash', '_receipt', '_chunk', '_canonical', '_candidate', 'finish')
 TEACHER_SAVE_FORMAT = 1
 # keys of a saved identity that are code records, never compared (the last two: saves written before 2026-10-09)
@@ -472,6 +472,8 @@ def _raw_batch(blob):
             value = T.JournalTeacher._dynamics(groups, side)
         elif kind == 'absorption':
             value = T._absorption(groups, side)
+        elif kind == COMPACT_COHORT:
+            value = T._cohort(_built_start(start, side), groups, side)
         else:
             value = T._cohort(start, groups, side)
         out.append((token, value))
@@ -516,6 +518,57 @@ def _shipped_start(start, side):
         return start
 
 
+# The cohort start as two flat lists (2026-10-09, second pass on the a2/20231018 teacher: after the slimmed window rows
+# the parent still spent ~70% of its time in pickle.dumps of the raw batches, writing only ~15 MB/s). What was left in a
+# batch, measured on synthetic real-shaped books: the group tables cost ~0.03 ms per row (one entity: a batch's ~11k
+# groups per family are each pickled once, the next batch repeats only the <= 64-group overlap), while each cohort start
+# carried every order dict of its side (all levels are taken) into ONE pickle.dumps of 32,768 calls, whose memo grows
+# with every dict of every start in the batch: 0.8 ms per row on a 650-order side, 6.4 ms on a 3,000-order side (most of
+# it the batch-wide memo), each blob held in the parent until its result was taken. The cohort reads of its start only
+# the scope, the side's levels (their order_ids) and, through {o['order_id']: o for o in orders}, orders[oid]['size']
+# for the ids on those levels. So the start goes as (scope, the side's levels, [o['order_id'] for o in orders],
+# [o['size'] for o in orders]): two C-level passes (operator.itemgetter) and two lists of ints (never memoized) instead
+# of thousands of dicts; the worker rebuilds orders as [{'order_id': i, 'size': s}] in the same order (so the same
+# id->order map, the last of a repeated id kept as before) and runs the same function on it. Every key the function
+# reads has the same value, so the values are the same; anything not of that shape takes the slim form above (the same
+# error raised in the worker as before). The guard below also runs the first cohort call of every batch on the full
+# objects.
+COMPACT_COHORT = 'cohort.compact'
+_ORDER_ID = None
+_ORDER_SIZE = None
+
+
+def _compact_start(start, side):
+    """(scope items, the side's levels, order ids, order sizes) of a cohort start, or None when it is not of that shape
+    (the caller then ships the slim start)."""
+    global _ORDER_ID, _ORDER_SIZE
+    if _ORDER_ID is None:
+        from operator import itemgetter
+        _ORDER_ID, _ORDER_SIZE = itemgetter('order_id'), itemgetter('size')
+    if type(start) is not dict:
+        return None
+    try:
+        observation = start['observation']
+        if type(observation) is not dict:
+            return None
+        orders, levels = observation['orders'], observation['levels'][side]
+        if type(orders) is not list or type(levels) is not list:
+            return None
+        scope = tuple((key, start[key]) for key in ('source_member_index', 'session_id') if key in start)
+        return scope, levels, list(map(_ORDER_ID, orders)), list(map(_ORDER_SIZE, orders))
+    except Exception:  # noqa: BLE001 - not the expected shape: the slim start goes instead
+        return None
+
+
+def _built_start(compact, side):
+    """The cohort start rebuilt in the worker from _compact_start: every key the cohort reads, the same values."""
+    scope, levels, ids, sizes = compact
+    start = dict(scope)
+    start['observation'] = dict(levels={side: levels},
+                                orders=[{'order_id': oid, 'size': size} for oid, size in zip(ids, sizes)])
+    return start
+
+
 class _RawStreams:
     """Swaps JournalTeacher._dynamics, _absorption and _cohort (pure functions of a group window) for recorders during
     the parent's pinned raw loop; the recorded calls run in spawn workers, batch by batch, while the loop goes on."""
@@ -531,6 +584,7 @@ class _RawStreams:
         # the original group objects of this batch's tables: kept alive until the batch is pickled, so an id() in
         # `index` can never be reused by a newer group while the table holds only its shipped copy
         self.originals = []
+        self.cohort_guarded = False          # the first cohort call of every batch is also run in the parent
 
     def __enter__(self):
         T = self.T
@@ -551,8 +605,10 @@ class _RawStreams:
         def record(kind, family, groups, side, start, width):
             token = self.calls
             self.calls += 1
-            if len(self.batch) < 2 or token % RAW_GUARD_EVERY == 0:
+            if len(self.batch) < 2 or token % RAW_GUARD_EVERY == 0 or (kind == 'cohort' and not self.cohort_guarded):
                 self.expected[token] = exact(kind, groups, side, start)
+                if kind == 'cohort':
+                    self.cohort_guarded = True
             table, index = self.tables[family], self.index[family]
             places = []
             for group in groups:
@@ -567,7 +623,16 @@ class _RawStreams:
                 places.append(at)
             contiguous = all(b == a + 1 for a, b in zip(places, places[1:]))
             window = (places[0] if places else 0, len(places)) if contiguous else places
-            self.batch.append((token, kind, family, window, side, _shipped_start(start, side) if kind == 'cohort' else start))
+            shipped_kind, shipped_start = kind, start
+            if kind == 'cohort':
+                compact = _compact_start(start, side)
+                if compact is not None:
+                    shipped_kind, shipped_start = COMPACT_COHORT, compact
+                    self.compact_starts += 1
+                else:
+                    shipped_start = _shipped_start(start, side)
+                    self.slim_starts += 1
+            self.batch.append((token, shipped_kind, family, window, side, shipped_start))
             if len(self.batch) >= RAW_BATCH_CALLS:
                 self._submit()
             state = int(self.T.State.MISSING)
@@ -593,13 +658,18 @@ class _RawStreams:
                                       'unpinned spawn workers on the parent\'s mask (no plan given)'))
         self.breaks = 0
         self.slim_groups, self.shipped_bytes, self.batches = 0, 0, 0
+        self.compact_starts, self.slim_starts, self.collected_early = 0, 0, 0
         RAW_POOL_RECORD['shipped'] = dict(
             batch_calls=RAW_BATCH_CALLS, in_flight_batches=2 * self.cpus,
             window_rows='observation=None (the worker functions never read a window row\'s observation)',
-            cohort_start='scope + the start side\'s levels + the orders on them (all the cohort reads)',
-            guard='the first two calls of every batch and every %d-th run the pinned way on the full objects in the '
-                  'parent and must equal the worker\'s result' % RAW_GUARD_EVERY,
-            batches=0, bytes=0, groups_slimmed=0, basis='speed only (2026-10-09): same functions, same values')
+            cohort_start=('scope + the start side\'s levels + the ids and sizes of the book\'s orders as two lists, '
+                          'rebuilt in the worker as {order_id, size} dicts in the same order (all the cohort reads); a '
+                          'start not of that shape: scope + the side\'s levels + the orders on them'),
+            guard='the first two calls of every batch, its first cohort call and every %d-th call run the pinned way '
+                  'on the full objects in the parent and must equal the worker\'s result' % RAW_GUARD_EVERY,
+            collection='a finished batch is taken as soon as it is done (its blob released), in order',
+            batches=0, bytes=0, groups_slimmed=0, starts_compact=0, starts_slim=0, batches_collected_early=0,
+            basis='speed only (2026-10-09): same functions, same values')
         self.pool = self._new_pool(self.cpus)
         T.JournalTeacher._dynamics = staticmethod(record_dynamics)
         T._absorption, T._cohort = record_absorption, record_cohort
@@ -615,7 +685,9 @@ class _RawStreams:
         blob = pickle.dumps((self.tables, self.batch, _changes_applied()), protocol=pickle.HIGHEST_PROTOCOL)
         self.batches += 1
         self.shipped_bytes += len(blob)
-        RAW_POOL_RECORD['shipped'].update(batches=self.batches, bytes=self.shipped_bytes, groups_slimmed=self.slim_groups)
+        RAW_POOL_RECORD['shipped'].update(batches=self.batches, bytes=self.shipped_bytes, groups_slimmed=self.slim_groups,
+                                          starts_compact=self.compact_starts, starts_slim=self.slim_starts,
+                                          batches_collected_early=self.collected_early)
         try:
             future = self.pool.submit(_raw_batch, blob)
         except Exception as error:  # noqa: BLE001 - a pool that broke between results: redone in _result, one fewer
@@ -625,6 +697,12 @@ class _RawStreams:
             future.set_exception(error if isinstance(error, BrokenProcessPool) else BrokenProcessPool(str(error)))
         self.pending.append((blob, future))
         self._new_batch()
+        # finished batches are taken now, in order (before, only past 2 per CPU in flight: about the whole day of a2's
+        # 771,787 rows, so every blob stayed in the parent to the end); where a result lands never changes it: each
+        # batch is still unpickled whole, from the batch it was submitted in
+        while self.pending and self.pending[0][1].done():
+            self._collect(*self.pending.popleft())
+            self.collected_early += 1
         while len(self.pending) > 2 * self.cpus:          # bounded: never the whole day's windows in flight
             self._collect(*self.pending.popleft())
 
@@ -701,6 +779,7 @@ class _RawStreams:
         self._submit()
         while self.pending:
             self._collect(*self.pending.popleft())
+        RAW_POOL_RECORD['shipped'].update(batches_collected_early=self.collected_early)
         if self.expected or self.where or self.early or self.resolved != self.calls:
             raise ValueError('parallel teacher raw call unresolved; run stopped')
 
