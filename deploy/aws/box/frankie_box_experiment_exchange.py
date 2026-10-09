@@ -332,7 +332,7 @@ def accumulated_lessons(day, run, paths, brain, input_path, rows_path, rules_wit
     from frankie_box_durable import witness
     identity = dict(day=day, run=run,
                     lessons=[dict(path=str(p), **witness(p)) for p in paths], brain=str(brain),
-                    teacher_rows=dict(path=str(rows_path), **witness(rows_path)) if rows_path else None,
+                    teacher_rows=dict(path=str(rows_path), **rows_pin(rows_path)) if rows_path else None,
                     rules=rules_witness, producer_sha256=sha256_bytes(Path(__file__).read_bytes()),
                     reader_sha256={m.__name__: sha256_bytes(Path(m.__file__).read_bytes())
                                    for m in (LS, BR, ST, K, SEARCH, DC, REVIEW)})
@@ -477,6 +477,28 @@ def _file_witness(path):
 ROWS_CLAIM_TAIL_BYTES = 64 << 10
 
 
+def _claimed_file_pin(path):
+    """{bytes, sha256} of `path` from the FRANKIE_FILE_CLAIM row its writer left beside it (<dir>/file-claims.jsonl:
+    the teacher-only step claims its rows file there from the sha256 it took on the write stream) when the row still
+    holds (inode, size, mtime_ns, filesystem, last 64 KiB; one 64 KiB read); else None. Never raises."""
+    try:
+        import frankie_box_brain as BR
+        from research.kalshi.frankie_boss.operations.ingest_block_sources import claim_still_holds
+        observed = os.stat(path)
+        row = BR.file_claims(Path(path).parent).get((observed.st_ino, observed.st_size, observed.st_mtime_ns))
+        if row is not None and claim_still_holds(row, path) is not None:
+            return dict(bytes=row['bytes'], sha256=row['sha256'])
+    except Exception:  # noqa: BLE001 - a claim is a hint: without one the file is hashed
+        return None
+    return None
+
+
+def rows_pin(path):
+    """One pass (2026-10-09): the teacher rows file's {bytes, sha256} from the teacher's claim when it holds, else the
+    file hashed whole (frankie_box_filehash, cached per unchanged file in this process). The same values either way."""
+    return _claimed_file_pin(path) or _file_witness(path)
+
+
 def _rows_file_identity(path):
     """The rows file's identity now: stat (device, inode, size, mtime_ns) and the sha256 of its last 64 KiB; the
     "same unchanged file" half of ROOT's rule (frankie_box_boss_session._resume_row_spool: claim + stat + last line)."""
@@ -588,17 +610,24 @@ def teacher_rows(path, retain_dir=None, notes=None):
     path = Path(path)
     if not path.is_file():
         return None, '%s is not on the box' % path
+    teacher_claim = _claimed_file_pin(path)       # the teacher's own claim of its rows file (one pass, 2026-10-09)
     if retain_dir is not None:
         claimed_pin = _claimed_rows_pin(retain_dir, path, notes)
+        if claimed_pin is None and teacher_claim is not None:
+            claimed_pin = teacher_claim
+            notes['rows_claim'] = 'rows pin taken from the teacher\'s claim beside the rows file (file-claims.jsonl)'
         if claimed_pin is not None:
             saved = _load_ledger_save(retain_dir, claimed_pin, notes)
             if saved is not None and saved.get('path') == str(path):
                 notes['rows_hash_basis'] = 'claim'
                 return saved, None
-            notes['rows_claim'] += '; the saved measurement itself was not usable, so the rows are read in full'
-    raw = path.read_bytes()
-    raw_pin = dict(bytes=len(raw), sha256=sha256_bytes(raw))
-    notes['rows_hash_basis'] = 'hashed'
+            notes['rows_claim'] = (notes.get('rows_claim') or '') + ('; the saved measurement itself was not usable, '
+                                                                     'so the rows are read (parsed) in full')
+    raw = path.read_bytes()            # the parse read; the bytes are hashed only when no claim of the teacher holds
+    if teacher_claim is not None and teacher_claim['bytes'] == len(raw):
+        raw_pin, notes['rows_hash_basis'] = dict(teacher_claim), 'claim (the teacher\'s rows claim; parsed, not hashed)'
+    else:
+        raw_pin, notes['rows_hash_basis'] = dict(bytes=len(raw), sha256=sha256_bytes(raw)), 'hashed'
     if retain_dir is not None:
         saved = _load_ledger_save(retain_dir, raw_pin, notes)
         if saved is not None and saved.get('path') == str(path):

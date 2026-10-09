@@ -88,27 +88,63 @@ def _lane_physical_first():
         return []
 
 
-def prefetch_pointer_digests(classroom, teacher_rows):
-    """Start hashing the school's two large pointer files (the teacher's Dipole rows of the day and the classroom
-    receipt's day file) now, each on a thread pinned to its own physical core of the lane, so the serial whole-file
-    hashes overlap the corrections read and the rest of the build (Greg, 2026-10-07: run that hash concurrently with
-    other school work; reusing the teacher's recorded hash instead is Greg's trust call and is NOT done: every byte is
-    still hashed here). Returns (executor or None, {str(path): future}); Section.pointer takes a path's digest from its
-    future (an error re-raises there, where the inline hash would have raised). Only files present now are started;
-    anything else is hashed (or listed missing) by pointer exactly as before."""
-    paths = []
-    if teacher_rows:
-        paths.append(Path(teacher_rows) / TEACHER_ROWS_FILE)
+def _receipted_digest(path, recorded=None, receipt=None):
+    """(sha256, basis) for a pointer file an earlier step already read whole and receipted, or (None, why): the claim
+    row its writer left beside it (<dir>/file-claims.jsonl; the teacher-only step claims its rows file) when it still
+    holds (one 64 KiB read), else the sha256 a receipt recorded for it when the file was last modified no later than
+    that receipt was written (unchanged since it was checked). Never raises."""
+    import os
     try:
-        receipt = json.loads((Path(classroom) / 'receipt.json').read_bytes())
-        day_file = ((receipt.get('external') or {}).get('day_file') or {}).get('path')
-        if day_file:
-            paths.append(Path(day_file))
+        import frankie_box_brain as BR
+        from research.kalshi.frankie_boss.operations.ingest_block_sources import claim_still_holds
+        observed = os.stat(path)
+        row = BR.file_claims(Path(path).parent).get((observed.st_ino, observed.st_size, observed.st_mtime_ns))
+        held = claim_still_holds(row, path) if row is not None else None
+        if held is not None and (recorded is None or row['sha256'] == recorded):
+            return row['sha256'], 'claim (%s): %s' % (row.get('claim_file'), held['text'])
+        if (recorded and receipt is not None and row is None
+                and observed.st_mtime_ns <= os.stat(receipt).st_mtime_ns):
+            return recorded, 'the sha256 %s recorded (the file not modified since it was written)' % receipt
+    except Exception as error:  # noqa: BLE001 - a claim is a hint: without one the file is hashed
+        return None, 'not taken (%s: %s)' % (type(error).__name__, error)
+    return None, 'no holding claim and no receipt older than the file'
+
+
+def prefetch_pointer_digests(classroom, teacher_rows):
+    """The digests of the school's two large pointer files (the teacher's Dipole rows of the day and the classroom
+    receipt's day file). One pass (Greg, 2026-10-09): each is taken from what its earlier step receipted
+    (_receipted_digest: the teacher's claim of its rows file; the classroom receipt's day-file sha256, checked by the
+    classroom against the day file) and read nothing; only a file with neither is hashed, on a thread pinned to its own
+    physical core of the lane, overlapping the rest of the build (as before). Returns (executor or None,
+    {str(path): future}); Section.pointer takes a path's digest from its future (an error re-raises there). Only files
+    present now are started; anything else is hashed (or listed missing) by pointer exactly as before."""
+    from concurrent.futures import Future
+    wanted = []
+    if teacher_rows:
+        wanted.append((Path(teacher_rows) / TEACHER_ROWS_FILE, None, None))
+    try:
+        receipt_path = Path(classroom) / 'receipt.json'
+        receipt = json.loads(receipt_path.read_bytes())
+        day_file = (receipt.get('external') or {}).get('day_file') or {}
+        if day_file.get('path'):
+            wanted.append((Path(day_file['path']), day_file.get('sha256'), receipt_path))
     except (OSError, ValueError, AttributeError):
         pass                    # build() reads the receipt itself and lists what is missing; nothing is prefetched
-    paths = [p for p in dict.fromkeys(paths) if p.is_file()]
+    seen, paths, known, bases = set(), [], {}, {}
+    for path, recorded, receipt in wanted:
+        if path in seen or not path.is_file():
+            continue
+        seen.add(path)
+        digest, basis = _receipted_digest(path, recorded, receipt)
+        bases[str(path)] = basis if digest is not None else 'hashed: ' + basis
+        if digest is not None:
+            known[str(path)] = Future()
+            known[str(path)].set_result(digest)
+        else:
+            paths.append(path)
+    PREFETCH.update(receipted=bases)
     if not paths:
-        return None, {}
+        return None, known
     # the shared pin helper (frankie_box_lane_pin.executor): each hashing thread pinned to its placement CPU (the other
     # cores' threads first, the coordinator's own CPU left to the build); the plain pinned threads when it cannot load
     try:
@@ -119,15 +155,15 @@ def prefetch_pointer_digests(classroom, teacher_rows):
         pool = LP.executor('thread', len(paths))
         PREFETCH.update(mode='lane_pin.executor', cpu_map=LP.record(len(paths), what='school pointer-file sha256 prefetch'),
                         files=[str(p) for p in paths])
-        return pool, {str(p): pool.submit(_hash_file, p, None) for p in paths}
+        return pool, dict(known, **{str(p): pool.submit(_hash_file, p, None) for p in paths})
     except Exception as error:  # noqa: BLE001 - placement only: the earlier pinned threads below
         PREFETCH.update(mode='threads_pinned_in_task', helper_error='%s: %s' % (type(error).__name__, error),
                         files=[str(p) for p in paths])
     from concurrent.futures import ThreadPoolExecutor
     order = _lane_physical_first()
     pool = ThreadPoolExecutor(max_workers=len(paths), thread_name_prefix='school-hash')
-    return pool, {str(p): pool.submit(_hash_file, p, order[i % len(order)] if order else None)
-                  for i, p in enumerate(paths)}
+    return pool, dict(known, **{str(p): pool.submit(_hash_file, p, order[i % len(order)] if order else None)
+                                for i, p in enumerate(paths)})
 
 
 PREFETCH = {}     # what the pointer-hash prefetch did (the receipt's `prefetch`, Day-1 visibility); {} = nothing prefetched
