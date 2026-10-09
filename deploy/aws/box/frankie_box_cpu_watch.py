@@ -374,7 +374,7 @@ def drive_resize(finding, work_dir, record, actions):
     if req is None:
         req = dict(schema='FRANKIE_CPU_WATCH_RESIZE_V1', booking=b, stage=stage, planned=finding['planned'], running=finding['running'],
                    decision=finding['decision'], requested_at=now, state='requested', log=[], run=finding.get('run'),
-                   day=finding.get('day'))
+                   day=finding.get('day'), watcher=this_watcher())
         try:
             if stage == 'root':
                 req['log'].append(dict(at=now, did='request_save', out=actions['request_save'](finding['run'], finding['day'])))
@@ -430,6 +430,11 @@ def drive_resize(finding, work_dir, record, actions):
     record['resize'].append(dict(req, step='continued'))
 
 
+def this_watcher():
+    """[pid, start time] of this watcher process: a request is continued from itself only by the watcher that made it."""
+    return [os.getpid(), C.start_time(os.getpid())]
+
+
 def continue_open_requests(work_dir, record, actions, bookings, handled):
     """Every resize request still 'requested' that no finding of this pass drove: continued from the request itself.
     The step it asked to stop has stopped (a ROOT saved: its booking retained, its step gone; a render exited), so the
@@ -437,6 +442,12 @@ def continue_open_requests(work_dir, record, actions, bookings, handled):
     grow + resume + kick (or the render's restart)."""
     for path, req in sorted(resize_requests(work_dir).items()):
         if req.get('state') != 'requested' or req.get('booking') in handled:
+            continue
+        if req.get('watcher') != this_watcher():
+            # made by another (earlier) watcher: never acted on from the file alone (a leftover request must not grow,
+            # resume or kick a saved day); listed for a human
+            record.setdefault('orphaned_resize_requests', []).append(dict(file=path.name, booking=req.get('booking'),
+                                                                          stage=req.get('stage'), watcher=req.get('watcher')))
             continue
         b = next((x for x in bookings if x.get('booking') == req.get('booking')), {})
         finding = dict(kind='plan_wider_than_lane', booking=req['booking'], stage=req.get('stage'), planned=req['planned'],
@@ -446,8 +457,10 @@ def continue_open_requests(work_dir, record, actions, bookings, handled):
 
 
 def open_requests(work_dir):
-    """The resize requests still in flight (state 'requested')."""
-    return [req for req in resize_requests(work_dir).values() if req.get('state') == 'requested']
+    """The resize requests this watcher has in flight (state 'requested'): they keep the watch going until their step
+    stops or exits and the request is continued."""
+    me = this_watcher()
+    return [req for req in resize_requests(work_dir).values() if req.get('state') == 'requested' and req.get('watcher') == me]
 
 
 def _queue_kick_defaults(Q):
