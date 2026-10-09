@@ -43,7 +43,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from frankie_box_prepare_trading_day import read_pin, require_checkout, save_new, witness, safe_path
+from frankie_box_prepare_trading_day import read_pin, require_checkout, save_new, witness, safe_path, archive_link
 from frankie_box_monday_calculations import PARENT, load_retained_layers, write_retained_digest
 
 
@@ -179,19 +179,39 @@ def _retained_inputs(session, derivation):
     from frankie_box_boss_session import _artifact_check, _load_file_claims, _reuse_check_mode, LEGACY_REUSE_CHECK_SETTING
     from frankie_box_experiment_root import reopen_retained_spools
     claims, mode = _load_file_claims(session.work), _reuse_check_mode(LEGACY_REUSE_CHECK_SETTING)
-    witnessed, bases = {}, []
-    for item in derivation['layers'].values():
-        path = safe_path(item['path'])
-        seen, basis = _artifact_check(dict(item, path=str(path)), claims, mode, claims_dir=session.work)
-        if dict(seen, path=str(path)) != {k: item[k] for k in ('path', 'bytes', 'sha256')}:
+    witnessed, bases, archived = {}, [], []
+    for name, item in derivation['layers'].items():
+        # session 11 (2026-10-09): a layer the disk-pressure clean moved to the archive volume is reached through a
+        # symlink at its recorded path (e.g. work/derived/legacy_book_imbalance.json -> /opt/frankie-box/archive/...); it
+        # is witnessed on the resolved file by its claim, else by the move's write-stream sha256 (size checked), else
+        # read whole once (_artifact_check). A layer inside a directory archived as a .tar.zst is witnessed by the
+        # ROOT's recorded pin and never extracted: the render does not read it (bedrock stays in its layer files);
+        # a layer the render must READ there is the one refusal (the bytes are not on disk in place).
+        link = archive_link(item['path'])
+        if link is None or link['member'] is None:
+            safe_path(item['path'])                    # '..', a relative path or a link outside the box roots refuse
+        elif not link['within_box_roots']:
+            raise ValueError('retained calculation layer behind a link outside the box roots: ' + item['path'])
+        elif not item.get('bedrock'):
+            raise ValueError('retained calculation layer %s is inside the archived %s (member %s); the render reads it: '
+                             'restore it in place first (zstd -dc %s | tar -xf - -C %s)' % (
+                                 item['path'], link['target'], link['member'], link['target'],
+                                 str(Path(link['link']).parent)))
+        seen, basis = _artifact_check(dict(item), claims, mode, claims_dir=session.work)
+        if dict(seen, path=item['path']) != {k: item[k] for k in ('path', 'bytes', 'sha256')}:
             raise ValueError('retained calculation layer differs: ' + item['path'])
-        witnessed[str(path.resolve())] = dict(path=str(path), bytes=item['bytes'], sha256=item['sha256'])
+        witnessed[str(Path(item['path']).resolve())] = dict(path=item['path'], bytes=item['bytes'], sha256=item['sha256'])
         bases.append(basis)
+        if link is not None:
+            archived.append(dict(layer=name, path=item['path'], resolved=link['resolved'], member=link['member'],
+                                 archived='symlink %s -> %s' % (link['link'], link['target']), basis=basis))
     checks, spools = reopen_retained_spools(session, derivation, claims, mode)
-    print('RENDER inputs: %d layers, %d by their claim; %d spools, %d reopened from a sealed count' % (
-        len(bases), sum(str(b).startswith('the saved claim') for b in bases), len(checks),
+    print('RENDER inputs: %d layers, %d by their claim, %d archived; %d spools, %d reopened from a sealed count' % (
+        len(bases), sum(str(b).startswith('the saved claim') for b in bases), len(archived), len(checks),
         sum(c['count'] is not None for c in checks)), flush=True)
-    return spools, witnessed
+    for entry in archived:
+        print('RENDER archived input: ' + json.dumps(entry, sort_keys=True), flush=True)
+    return spools, witnessed, archived
 
 
 def render(commit, output_root, keep_receipt=False):
@@ -262,7 +282,7 @@ def render(commit, output_root, keep_receipt=False):
     session.phase('deriving', 'render-only: the digest in ' + DG.SCHEMA + ' from the retained layers (legacy tables; bedrock stays in its layer files); no recalculation')
     # an experiment root: producer failures allowed (allow_failures reads derive.json's listed inputs); every frames row
     # rendered whole (Greg, 2026-10-08: no data dropped; the full depth as the ROOT's own digest renders it)
-    spools, witnessed = _retained_inputs(session, derivation) if kind == 'experiment' else (None, None)
+    spools, witnessed, archived = _retained_inputs(session, derivation) if kind == 'experiment' else (None, None, [])
     _, _, _, prices, frames, structures, _, layers, _ = load_retained_layers(session, allow_failures=(kind == 'experiment'),
                                                                             receipt=derivation if kind == 'experiment' else None,
                                                                             spools=spools, layer_witnesses=witnessed)
@@ -277,7 +297,7 @@ def render(commit, output_root, keep_receipt=False):
         # the day is in flight: the ROOT's receipt stays byte for byte (the teacher binds its sha256); the render's own
         # record names the digest, its proof and the receipt it left standing
         record = dict(schema='FRANKIE_DIGEST_RENDER_V1', digest_schema=DG.SCHEMA, at=time.time(), commit=commit, day=day,
-                      root_kind=kind, digest=digest_pin,
+                      root_kind=kind, digest=digest_pin, archived_inputs=archived,
                       digest_proof=witness(session.work / 'digest-proof.json'), root_receipt_kept=witness(receipt_path),
                       moved_aside=moved, recalculation=False, model_calls=0,
                       render_booking=os.environ.get('FRANKIE_RENDER_BOOKING'), lane_cpus=os.environ.get('FRANKIE_LANE_CPUS'),

@@ -164,6 +164,7 @@ def _cores():
 WORK = BOX_ROOT / 'work'
 RUNS = WORK / 'experiment'
 ROOTS = WORK / 'experiment-roots'
+DIGEST_FILE = 'derivation-digest-full.md'     # Frankie's full-depth digest under <ROOT>/work (the classroom reads it)
 RESUME_REFUSED_EXIT = 65    # frankie_box_experiment_root.RESUME_REFUSED_EXIT: a resume refused on identity (session 9)
 TEACHER_ROWS = WORK / 'experiment-teacher-rows'
 DATA = WORK / 'experiment-data'
@@ -448,9 +449,9 @@ def load_plan(a, code_root):
     # nor keeps them): an explicit persisted flag, decided here once and saved with the plan, never inferred at call time.
     # 'auto' = one_day when the plan holds exactly one day, else off; one_day / off = the operator's explicit override.
     # None (a saved plan from before the flag) keeps the plan without the key, read as off by Run.inspection_on
-    # the classroom's native-entry cutoff (Greg, 2026-10-07 night; frankie_box_classroom_code.native_cutoff_limits): saved
-    # only when given, so an older plan without the keys keeps its digest; absent = the classroom's defaults (3600 s,
-    # 48 GB, every 10000 pictures)
+    # the classroom's former native-entry cutoff (frankie_box_classroom_code.native_cutoff_limits; retired 2026-10-09:
+    # recorded as given, never applied; check_every stays the probe cadence): saved only when given, so an older plan
+    # without the keys keeps its digest
     for key in NATIVE_CUTOFF_PLAN_KEYS:
         if getattr(a, key, None) is not None:
             plan[key] = getattr(a, key)
@@ -2593,17 +2594,18 @@ class Run:
                     return 'refused', ('completed classroom preserved; checked successor required before reuse: '
                                        + str(error)), facts
                 return 'reused', None, facts
-        if not (calc / 'work' / 'derivation-digest-full.md').is_file():
+        if not (calc / 'work' / DIGEST_FILE).is_file():
             # session 6: a ROOT run with the digest off (FRANKIE_ROOT_DIGEST / root_digest_setting) is a visible WAIT with
             # the way to put it right, re-evaluated every pass, never a silent failure of the day: the digest is rendered
             # later from the retained layers (frankie_box_render_digest.sh on this experiment root, every row whole)
             # session 9: inside the day's own booking (beside the teacher; the ROOT receipt is kept, the render's record
             # is work/digest-render.json); without FRANKIE_RENDER_BOOKING it takes only CPUs outside every booking
-            return 'waiting', ('the ROOT %s has no derivation digest (its ROOT ran with the digest off); render it from the '
+            # 2026-10-09: the reason names the digest file itself, so a parked wait watches <calc>/work (queue wait_of)
+            return 'waiting', ('the ROOT %s has no derivation digest %s (its ROOT ran with the digest off); render it from the '
                                'retained layers, then the class line takes the day: MARKETS_SHA=<staged commit> '
                                'CODE_ROOT=<staged checkout> OUTPUT_ROOT=%s FRANKIE_RENDER_BOOKING=<the day\'s booking id '
                                '(live or retained; frankie_box_cores.py show)> bash deploy/aws/box/frankie_box_render_digest.sh'
-                               % (calc, calc)), facts
+                               % (calc, calc / 'work' / DIGEST_FILE, calc)), facts
         rows, source, why = self.day_rows(e)
         if rows is None and why and why.startswith('refused'):
             return 'refused', why, facts          # a legacy teacher result under the plan's shared policy (preserved)
@@ -2716,6 +2718,16 @@ class Run:
                                                Q.entry_of('class', self.plan['run'], day) is not None):
             return prior                             # in the line already (or its class is done): never recorded twice
         status, why, facts = self.classroom_ready(e)
+        if status == 'waiting' and facts.get('calc') and not (Path(facts['calc']) / 'work' / DIGEST_FILE).is_file():
+            # 2026-10-09 (Greg: the classroom reads Frankie's full-depth digest; a pause at the classroom boundary is fine,
+            # proceeding without the digest is not): the owner waits HERE, in the day's held slot, for the digest (the
+            # render beside the teacher, or one started now inside the same booking), event-driven, then re-checks
+            rendered = self.await_digest(e, Path(facts['calc']))
+            if rendered is not None:
+                self.log('classroom %s: digest wait ended: %s' % (day, json.dumps(rendered, default=str, sort_keys=True)[:600]))
+                status, why, facts = self.classroom_ready(e)
+                if status == 'waiting' and rendered.get('reason'):
+                    why = '%s; %s' % (why, rendered['reason'])
         if status == 'reused' and Q.entry_of('class', self.plan['run'], day) is None:
             return self.classroom(e)                 # complete before the line existed: recorded reused, as before
         if status == 'waiting':
@@ -2738,6 +2750,92 @@ class Run:
                            queue=str(Q.QUEUE), enqueued_utc=entry['enqueued_utc'],
                            reason='in Frankie\'s class line at seq %d (%s, %s): the class worker runs its class side in '
                                   'arrival order, one class at a time' % (entry['seq'], outcome, entry['state']))
+
+    @staticmethod
+    def digest_render_pids(calc):
+        """The live digest renders of this experiment root (frankie_box_render_digest.py --output-root <calc>), by /proc."""
+        want, out = str(Path(calc).resolve()), []
+        for proc in Path('/proc').iterdir():
+            if not proc.name.isdigit():
+                continue
+            try:
+                argv = [a.decode('utf-8', 'replace') for a in (proc / 'cmdline').read_bytes().split(b'\0')]
+            except OSError:
+                continue
+            if not any(a.endswith('frankie_box_render_digest.py') for a in argv) or '--output-root' not in argv:
+                continue
+            i = argv.index('--output-root')
+            if i + 1 < len(argv) and str(Path(argv[i + 1]).resolve()) == want:
+                out.append(int(proc.name))
+        return out
+
+    def await_digest(self, e, calc):
+        """The class door's digest wait (2026-10-09): only for a Run that holds the day's booking (the owner in its slot).
+        While <calc>/work/derivation-digest-full.md is absent: a running render of this root is waited on (its pidfd, the
+        work directory's inotify, the queue's wake directory and the day's save marker: no interval); with none running,
+        ONE render is started inside the day's own booking (frankie_box_render_digest.sh FRANKIE_RENDER_BOOKING=<slot>,
+        detached, its log under <run>/logs) and waited on the same way. A save request stops the wait (SystemExit 75 by
+        check_save; a running render keeps running and is found again by the resume). Returns None when the Run holds no
+        booking or the digest is there, else what happened (a render that ended without the digest is named, the class
+        door then records its wait with that reason)."""
+        digest = Path(calc) / 'work' / DIGEST_FILE
+        booking = getattr(self, 'slot_booking', None)
+        if digest.is_file() or not booking:
+            return None
+        import frankie_box_frankie_queue as Q
+        import frankie_box_wake as W
+        dirs = [Q.wake_dir(), Path(calc) / 'work']
+        if self.stop_marker:
+            dirs.append(Path(self.stop_marker).parent)
+        for d in dirs:
+            try:
+                Path(d).mkdir(parents=True, exist_ok=True)
+            except OSError:
+                pass
+        waiter = W.Waiter(dirs)
+        started, out, clock = None, dict(day=e['day'], calc=str(calc), booking=booking), time.monotonic()
+        try:
+            while True:
+                self.check_save()
+                pids = self.digest_render_pids(calc)
+                if digest.is_file() and not pids:
+                    break                # published (one rename) and its render has written its claim row and record
+                if started is not None and started.poll() is not None and not pids:
+                    log_path = out.get('log')
+                    out.update(status='render_ended_without_digest', exit_code=started.returncode,
+                               reason='the digest render started at the class door ended (exit %s) without %s; its log: %s'
+                                      % (started.returncode, digest, log_path))
+                    return out
+                if not pids and started is None and not digest.is_file():
+                    logs = self.dir / 'logs'
+                    logs.mkdir(parents=True, exist_ok=True)
+                    log_path = logs / ('%s-digest-render.log' % e['day'])
+                    env = dict(os.environ, MARKETS_SHA=self.commit, CODE_ROOT=str(self.code_root), OUTPUT_ROOT=str(calc),
+                               FRANKIE_RENDER_BOOKING=str(booking))
+                    with open(log_path, 'ab') as handle:
+                        handle.write(('\n### digest render %s at %s (class door, inside booking %s)\n' % (
+                            calc, time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), booking)).encode())
+                        handle.flush()
+                        started = subprocess.Popen(['bash', str(self.box / 'frankie_box_render_digest.sh')], env=env,
+                                                   stdout=handle, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
+                                                   start_new_session=True)
+                    out.update(started_pid=started.pid, log=str(log_path), started_utc=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()))
+                    self.log('classroom %s: no digest under %s and no render running: render started inside booking %s '
+                             '(pid %d, log %s); the class door waits on it' % (e['day'], calc, booking, started.pid, log_path))
+                    pids = [started.pid]
+                elif pids and 'waited_on' not in out:
+                    out['waited_on'] = pids
+                    self.log('classroom %s: the digest render of %s runs (pid %s); the class door waits on it' % (
+                        e['day'], calc, ','.join(map(str, pids))))
+                for pid in pids + ([started.pid] if started is not None and started.poll() is None else []):
+                    waiter.watch_pid(pid)
+                waiter.wait()
+            out.update(status='digest_present', seconds=round(time.monotonic() - clock, 1))
+            return out
+        finally:
+            waiter.close()
+            if started is not None:
+                started.poll()
 
     def root_enqueue(self, e):
         """The ROOT line's door: the root step's own readiness checks (a finished ROOT is recorded reused as before; the
@@ -3527,13 +3625,22 @@ class Run:
                 current = receipt_path.read_bytes() if receipt_path.is_file() else None
                 if (current is None or current == prior_receipt
                         or json.loads(current).get('status') != 'runtime_failed'):
-                    return self.record('voice', day, 'failed', exit_code=code, log=log,
-                                       reason='meeting child failed; retained artifacts are kept for recovery',
+                    # 2026-10-09 (Greg: the meeting never blocks the classroom): a failed meeting child is LISTED on a
+                    # non-blocking receipt (meeting_status runtime_failed, the class side passes it); school and the
+                    # reports go on, the retained artifacts stay for the next attempt, the reports are rebuilt when the
+                    # meeting arrives
+                    return self.record('voice', day, 'waiting', non_blocking=True, meeting_status='runtime_failed',
+                                       meeting_child_failed=True, exit_code=code, log=log,
+                                       refused_to_run=['the meeting child exited %s (its log %s)' % (code, log)],
+                                       reason='meeting child failed (exit %s); listed, the day goes on; retained artifacts are '
+                                              'kept for recovery' % code,
                                        inspection=dict(inputs=inputs, use=use,
                                                        outputs=dict(exit_code=code, meeting_receipt_changed=current != prior_receipt)))
         result = BR.read_meeting_for_exchange(x['frankie_view'], owner_dir=self.dir)
         if result['status'] == 'missing':
-            return self.record('voice', day, 'failed', exit_code=code, log=log, reason=result['reason'],
+            return self.record('voice', day, 'waiting', non_blocking=True, meeting_status='runtime_failed',
+                               meeting_child_failed=True, exit_code=code, log=log, refused_to_run=[result['reason']],
+                               reason='%s; listed, the day goes on' % result['reason'],
                                inspection=dict(inputs=inputs, use=use, outputs=dict(exit_code=code, meeting='missing')))
         r = result['receipt']
         fields = dict(exit_code=code, log=log, meeting_status=result['status'], meeting=result['path'],
@@ -4826,7 +4933,6 @@ class Run:
         the current one, or is not established (an older summary without one), is NOT reused and NOT regenerated here: the
         old result is preserved and an explicit checked successor (the correction route) is required."""
         from research.kalshi.frankie_boss import dipole_classroom as DC, dipole_classroom_integration as I
-        from research.kalshi.frankie_boss.c15_journal import unpack
         from research.kalshi.frankie_boss.frankie_principal_adapter import json_form
         import frankie_box_lane_state as LS
         rows_path = Path(rows_path)
@@ -4861,8 +4967,17 @@ class Run:
             if reused is not None:
                 return dict(reused, source_basis=source_basis, producer_note=producer_note)
         else:
-            snapshot = unpack(json.loads(rows_path.read_bytes()))
-            key = I._repin_teacher_key_correlations(DC.build_teacher_key(snapshot))
+            # the rows streamed one at a time with only the fields the key reads (frankie_box_teacher_rows); the
+            # snapshot hash is computed on the same stream over the file's own bytes (the same check, never a whole load)
+            import frankie_box_teacher_rows as TR
+            snapshot, stream = TR.load(rows_path, select=('cursor', 'ts_recv_ns', 'target_hash', 'components'))
+            if not stream.snapshot_ok:
+                raise ValueError('classroom source snapshot changed')
+            if stream.sha256 != source_sha:
+                self.log('teacher knowledge %s: the rows streamed hash to %s, the recorded sha256 (%s) is %s; the '
+                         'recorded one is kept on the entry' % (day, stream.sha256, source_basis, source_sha))
+            key = I._repin_teacher_key_correlations(DC.build_teacher_key(
+                snapshot, snapshot_hash_verified=stream.snapshot_hash))
             findings = []
             for dimension in key['dimensions']:
                 # These are the reviewed teacher's measured outputs, not a summary replacing the retained observations.
@@ -4952,11 +5067,15 @@ class Run:
             made_from = (json.loads((target / 'MANIFEST.json').read_bytes()).get('directories') or {}).get('root')
             ours = (root or {}).get('calculations')
             if ours and made_from and str(Path(made_from)) != str(Path(ours)):
-                return self.record('data', e['day'], 'refused', target=str(target), exported_from=made_from, this_root=ours,
-                                   reason='the day was exported from another ROOT; duplicate data declines the day (move '
-                                          'that export aside with a receipt, or name its ROOT in the plan)')
-            return self.record('data', e['day'], 'reused', target=str(target), exported_from=made_from,
-                               manifest_sha256=sha256_file(target / 'MANIFEST.json'))
+                # 2026-10-09 (Greg: our own gate never blocks a run on fine data): an export made from ANOTHER ROOT of the
+                # day is not this ROOT's data. It is moved aside with a receipt (nothing deleted), together with the
+                # day's search built on it, and the day is exported from its own ROOT below; never a refusal of the day
+                moved = self.move_aside_other_export(e, target, made_from, ours)
+                self.log('data %s: the export under %s was made from another ROOT (%s, this ROOT %s): moved aside (%s); '
+                         'exported again from this ROOT' % (e['day'], target, made_from, ours, moved))
+            else:
+                return self.record('data', e['day'], 'reused', target=str(target), exported_from=made_from,
+                                   manifest_sha256=sha256_file(target / 'MANIFEST.json'))
         ing = self.receipt('ingest', e['day'])
         if root and root.get('status') == 'refused' and 'retained_policy' in root:
             return self.record('data', e['day'], 'refused', reason='refused: the day\'s ROOT is refused under the plan\'s '
@@ -4995,6 +5114,28 @@ class Run:
         return self.record('data', e['day'], 'done', exit_code=code, log=log, target=str(target), dipole=source,
                            dipole_missing=dipole_missing, manifest_sha256=sha256_file(target / 'MANIFEST.json'),
                            new_bytes=new_bytes(target))
+
+    def move_aside_other_export(self, e, target, made_from, ours):
+        """An export of the day made from another ROOT (and the day's searches, built on it) moved aside, never deleted:
+        <dir> -> <dir>.other-root-<stamp>, a FRANKIE_EXPORT_MOVED_ASIDE_V1 receipt written beside it. Returns the moves."""
+        stamp = time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())
+        moves = []
+        for directory in (Path(target), SEARCH / e['day'] / ('cycle-' + CYCLE)):
+            if not directory.exists():
+                continue
+            aside = directory.with_name('%s.other-root-%s' % (directory.name, stamp))
+            os.rename(directory, aside)
+            moves.append(dict(moved=str(directory), to=str(aside)))
+        receipt = dict(schema='FRANKIE_EXPORT_MOVED_ASIDE_V1', run=self.plan['run'], day=e['day'], at_utc=stamp,
+                       exported_from=made_from, this_root=ours, moves=moves, commit=self.commit,
+                       rule='an export (and the searches on it) of another ROOT of the day is moved aside, never reused, '
+                            'never deleted; the day is exported again from its own ROOT')
+        for move in moves:
+            try:
+                (Path(move['to']) / 'MOVED_ASIDE.json').write_text(json.dumps(receipt, indent=1, sort_keys=True) + '\n')
+            except OSError as error:
+                self.log('moved-aside receipt under %s not written (%s)' % (move['to'], error))
+        return moves
 
     def search(self, e):
         remote = self.remote_stage('search', e['day'])

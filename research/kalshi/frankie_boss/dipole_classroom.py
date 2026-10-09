@@ -347,11 +347,20 @@ def _direction_relation(left: str,right: str) -> str:
     return "UNRESOLVED"
 
 
-def build_teacher_key(snapshot: Mapping[str, Any], previous_snapshot: Mapping[str, Any] | None = None) -> dict:
-    """Complete audit key, including all values/states and all 171 pair scans."""
+def build_teacher_key(snapshot: Mapping[str, Any], previous_snapshot: Mapping[str, Any] | None = None, *,
+                      snapshot_hash_verified: str | None = None) -> dict:
+    """Complete audit key, including all values/states and all 171 pair scans.
+
+    snapshot_hash_verified: the snapshot hash a streaming reader computed over the rows file's own bytes
+    (frankie_box_teacher_rows: evidence_hash of the snapshot without source_snapshot_hash, on the stream). When given,
+    the snapshot may carry only the row fields the key reads (cursor, ts_recv_ns, target_hash, components) and the
+    check is that verified hash against the snapshot's source_snapshot_hash; else the hash is recomputed here."""
     if snapshot.get("schema") != SOURCE_SCHEMA or snapshot.get("coverage_columns") != tuple(COLUMNS):
         raise ValueError("complete Dipole classroom source snapshot required")
-    if evidence_hash({k:v for k,v in snapshot.items() if k!="source_snapshot_hash"}) != snapshot.get("source_snapshot_hash"):
+    if snapshot_hash_verified is not None:
+        if snapshot_hash_verified != snapshot.get("source_snapshot_hash"):
+            raise ValueError("classroom source snapshot changed")
+    elif evidence_hash({k:v for k,v in snapshot.items() if k!="source_snapshot_hash"}) != snapshot.get("source_snapshot_hash"):
         raise ValueError("classroom source snapshot changed")
     if snapshot["cycle_index"] and previous_snapshot is None:
         raise ValueError("every cycle after zero requires the preceding classroom source snapshot")

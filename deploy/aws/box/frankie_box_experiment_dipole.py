@@ -24,7 +24,6 @@ def binding():
 def read_columns(day_dir, path, columns, journal_numeric, journal_text, receive_times):
     """Return exact group rows and cursor-aligned components, with row dispositions."""
     from frankie_box_durable import witness
-    from research.kalshi.frankie_boss.c15_journal import evidence_hash, unpack
     from research.kalshi.frankie_boss.c15_normalizer import State
 
     day_dir, path = Path(day_dir), Path(path)
@@ -34,13 +33,15 @@ def read_columns(day_dir, path, columns, journal_numeric, journal_text, receive_
             if str(Path(item['stage']) / item['path']) == relative]
     if len(pins) != 1:
         raise ValueError('Dipole source is not uniquely bound by the export')
-    raw = path.read_bytes()
-    if (len(raw) != pins[0]['bytes'] or hashlib.sha256(raw).hexdigest() != pins[0]['sha256']):
+    # the rows streamed one at a time (frankie_box_teacher_rows), the file's sha256 and the snapshot hash computed on
+    # the same stream: the same checks in the same order as the whole read, never the whole file in memory at once
+    import frankie_box_teacher_rows as TR
+    if path.stat().st_size != pins[0]['bytes']:
         raise ValueError('exported Dipole source changed')
-    source = unpack(json.loads(raw))
-    if (source.get('schema') != 'DIPOLE_CLASSROOM_SOURCE_V1'
-            or source.get('source_snapshot_hash') != evidence_hash(
-                {k: v for k, v in source.items() if k != 'source_snapshot_hash'})):
+    source, stream = TR.load(path)
+    if stream.bytes != pins[0]['bytes'] or stream.sha256 != pins[0]['sha256']:
+        raise ValueError('exported Dipole source changed')
+    if source.get('schema') != 'DIPOLE_CLASSROOM_SOURCE_V1' or not stream.snapshot_ok:
         raise ValueError('Dipole snapshot schema or content identity differs')
     rows, names = source['rows'], list(source['coverage_columns'])
     cursors = [row['cursor'] for row in rows]
@@ -205,7 +206,7 @@ def read_columns(day_dir, path, columns, journal_numeric, journal_text, receive_
                                               for component in components]
     report = dict(source='dipole', schema=source['schema'], placement_schema=SCHEMA,
         implementation=binding(), path=str(path), rows=len(rows), searched_rows=searched_rows,
-        sha256=hashlib.sha256(raw).hexdigest(), through_cursor=source['through_cursor'],
+        sha256=stream.sha256, through_cursor=source['through_cursor'],
         components=names, states_per_component=states, dispositions=dispositions,
         mixed=mixed, unbound_root_frames=sum(cursor is None for cursor in boundaries),
         note='all exact original target rows on their INPUT group; current components select the latest source cursor '

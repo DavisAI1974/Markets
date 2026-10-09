@@ -28,13 +28,60 @@ ORIGINAL_CONTAINER = dict(
 sys.path.insert(0, str(REPOSITORY))
 
 
+# The box's own roots (session 11, 2026-10-09): a symlink in a path is the box's own layout when it resolves under one of
+# these (the archive volume reached from a recorded path after a disk-pressure move: <name> -> /opt/frankie-box/archive/
+# ..., an ARCHIVED README beside it); safe_path follows it and returns the resolved path. A link resolving anywhere
+# else is still refused.
+BOX_ROOTS = (Path('/opt/frankie-box/work'), Path('/opt/frankie-box/archive'), Path('/opt/frankie-box/code'))
+
+
+def within_box_roots(path):
+    """Whether a (resolved) path lies under one of BOX_ROOTS (each taken as written and as resolved)."""
+    path = Path(path)
+    for root in BOX_ROOTS:
+        for base in {Path(root), Path(os.path.realpath(root))}:
+            if path == base or base in path.parents:
+                return True
+    return False
+
+
+def archive_link(value):
+    """None when no component of the path is a symlink; else what the link serves: dict(path=<as recorded>,
+    link=<the outermost symlinked component>, target=<its resolved target>, resolved=<the whole path resolved>,
+    member=<the path inside the target when the target is a regular file, e.g. a directory archived as a .tar.zst;
+    else None>, within_box_roots=<bool>). Never raises on a missing target (os.path.realpath)."""
+    path = Path(value)
+    links = [p for p in (*reversed(path.parents), path) if p.is_symlink()]
+    if not links:
+        return None
+    link = links[0]
+    target = Path(os.path.realpath(link))
+    resolved = Path(os.path.realpath(path))
+    member = str(path.relative_to(link)) if link != path and target.is_file() else None
+    return dict(path=str(path), link=str(link), target=str(target), resolved=str(resolved), member=member,
+                within_box_roots=within_box_roots(resolved) and within_box_roots(target))
+
+
 def safe_path(value):
+    """An absolute path without '..'. A path through a symlink is accepted when it resolves (os.path.realpath) under the
+    box's own roots (BOX_ROOTS) to something that exists: the RESOLVED path is returned (a caller that records the path
+    keeps its own recorded string; archive_link names the link). A link resolving outside the roots, or to nothing, is
+    refused."""
     path = Path(value)
     if not path.is_absolute() or '..' in path.parts:
         raise ValueError('absolute path without parent traversal required')
-    if any(p.is_symlink() for p in (path, *path.parents)):
-        raise ValueError('symlink path refused')
-    return path
+    if not any(p.is_symlink() for p in (path, *path.parents)):
+        return path
+    link = archive_link(path)
+    if not link['within_box_roots']:
+        raise ValueError('symlink path refused: %s resolves to %s, outside the box roots %s'
+                         % (path, link['resolved'], ', '.join(map(str, BOX_ROOTS))))
+    resolved = Path(link['resolved'])
+    if not resolved.exists():
+        raise ValueError('symlink path refused: %s resolves to %s, which does not exist%s' % (
+            path, resolved, (' (%s is archived as the file %s; member %s)' % (link['link'], link['target'], link['member']))
+            if link['member'] else ''))
+    return resolved
 
 
 @contextmanager

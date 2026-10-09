@@ -416,6 +416,12 @@ class TeacherPassCarry:
 
     def __init__(self, timeline, limits=None):
         self.arrivals, self.counts, self.pictures = _Arrivals(), {}, 0
+        # the anchor pictures (Greg, 2026-10-09: the classroom does not re-walk the market timeline): per Dipole
+        # component its first PRESENT, running minimum and maximum, and last PRESENT row, each with the whole picture of
+        # that instant. Kept only when the teacher feeds the row values (enable_anchors, then note_row per roster row);
+        # a roster row's picture waits in anchor_pending until its values arrive (the teacher's row pipeline depth).
+        self.anchor_on, self.anchor_pending, self.anchor = False, {}, {}
+        self.anchor_pictures, self.anchor_rows, self.anchor_unvalued = {}, 0, []
         try:
             self.native = _NativeEntryArithmetic([], getattr(timeline, 'native_carriers', None),
                                                  getattr(timeline, 'layers', None) or {}, limits=limits, online=True)
@@ -423,9 +429,50 @@ class TeacherPassCarry:
         except Exception as error:  # noqa: BLE001 - recorded; the classroom then makes its own pass for the native entries
             self.native, self.native_setup = None, 'setting up: %s: %s' % (type(error).__name__, error)
 
+    def enable_anchors(self):
+        """The teacher will call note_row(cursor, components) for every roster row it declares (in roster order)."""
+        self.anchor_on = True
+
+    def note_row(self, cursor, components):
+        """A roster row's Dipole values (the snapshot row's components: (name, state name, value) each, value a float
+        when PRESENT): update each component's first / running minimum / running maximum / last PRESENT anchor with the
+        same tie rules as market_context (minimum: lowest value, then earliest cursor; maximum: highest value, then
+        earliest cursor), keep the pictures an anchor names, release the others. Pending rows before this cursor that
+        never received values are listed (anchor_unvalued) and released."""
+        held = self.anchor_pending.pop(cursor, None)
+        for earlier in [c for c in self.anchor_pending if c < cursor]:
+            self.anchor_unvalued.append(earlier)
+            self.anchor_pending.pop(earlier)
+        self.anchor_rows += 1
+        for item in components:
+            name, state, value = (item['name'], item['state'], item['value']) if isinstance(item, dict) else item
+            if state != 'PRESENT' or value is None:
+                continue
+            point = (int(cursor), float(value))
+            slot = self.anchor.get(name)
+            if slot is None:
+                self.anchor[name] = dict(first=point, last=point, minimum=point, maximum=point)
+                continue
+            slot['last'] = point
+            if point[1] < slot['minimum'][1]:
+                slot['minimum'] = point
+            if point[1] > slot['maximum'][1]:
+                slot['maximum'] = point
+        named = {c for slot in self.anchor.values() for c, _ in slot.values()}
+        if held is not None and int(cursor) in named:
+            self.anchor_pictures[int(cursor)] = held
+        for c in [c for c in self.anchor_pictures if c not in named]:
+            del self.anchor_pictures[c]
+
     def note(self, item, row_cursor=None):
         import time
         picture = item['picture']
+        if self.anchor_on and row_cursor is not None:
+            # the whole picture of the instant (a new top-level mapping, its contents shared: the core never edits a
+            # yielded picture), with the status record market_context keeps for an anchor
+            self.anchor_pending[int(row_cursor)] = (dict(picture), dict(
+                source_status=picture['source_status'], applied_evidence=item['evidence'] is not None,
+                unpaired_outcomes=picture.get('unpaired_outcomes'), thinner=copy.deepcopy(picture.get('coverage'))))
         status = picture['source_status']
         key = status if isinstance(status, str) else json.dumps(status, sort_keys=True)
         self.counts[key] = self.counts.get(key, 0) + 1
@@ -449,9 +496,17 @@ class TeacherPassCarry:
         """The carry to save beside the teacher's receipt (call once, after the walk exhausted the source)."""
         if self.native is not None:
             self.native.end_online()
+        anchors = None
+        if self.anchor_on:
+            unvalued = sorted(self.anchor_unvalued + list(self.anchor_pending))
+            anchors = dict(components={name: {k: list(v) for k, v in slot.items()} for name, slot in self.anchor.items()},
+                           pictures={c: held[0] for c, held in self.anchor_pictures.items()},
+                           statuses={c: held[1] for c, held in self.anchor_pictures.items()},
+                           rows_valued=self.anchor_rows, rows_without_values=unvalued)
         return dict(schema=TEACHER_CARRY_SCHEMA, identity=identity, pictures=self.pictures,
                     source_status_counts=dict(self.counts), arrivals=self.arrivals.record(),
-                    native=self.native.pass_state() if self.native is not None else None, native_setup=self.native_setup)
+                    native=self.native.pass_state() if self.native is not None else None, native_setup=self.native_setup,
+                    anchors=anchors)
 
 
 def market_context(visible, timeline, *, save_requested, native_limits=None, carry=None, teacher_report=None):
@@ -491,7 +546,7 @@ def market_context(visible, timeline, *, save_requested, native_limits=None, car
         anchors[component['name']] = {name: dict(adapter_cursor=value[0], value=value[1])
                                       for name, value in chosen.items()}
         wanted.update(value[0] for value in chosen.values())
-    pictures, statuses, counts = {}, {}, {}
+    counts = {}
     # Where the classroom's own pass spends its time (Greg, 2026-10-07: make it run faster, measure first):
     # pictures seen, when the last wanted anchor was retained, and how many pictures followed it. The pass
     # still reads to the end (the published guarantee: one full ordered read, the exhaustion seen by this
@@ -515,7 +570,12 @@ def market_context(visible, timeline, *, save_requested, native_limits=None, car
     carried, carry_note = _take_carry(carry, teacher_report, timeline, native, native_setup)
     if carried:
         arrivals_record, counts = carry['arrivals'], dict(carry['source_status_counts'])
-    iterator = timeline.iter_pictures()
+    pictures, statuses = {}, {}
+    held, held_note = (_carry_anchors(carry, anchors, wanted) if carried else (None, 'the carry is not taken'))
+    carry_note = dict(carry_note, anchors=held_note)
+    if held is not None:
+        pictures, statuses = held
+    iterator = (item for item in ()) if held is not None else timeline.iter_pictures()
     # The pass consumer on its own CPU (Greg, 2026-10-07: pin every step; research item: the full-read consumer on a
     # whole core). lane[0] is the CPU the readers leave free (frankie_journal_reader.worker_budget and the timeline's
     # decode take lane[1:]). The timeline sizes its decode pools from THIS thread's affinity when each stream starts,
@@ -608,6 +668,7 @@ def market_context(visible, timeline, *, save_requested, native_limits=None, car
                     pictures_after_last_anchor=(total - last_anchor_seen_at if last_anchor_seen_at is not None
                                                 and type(total) is int else None),
                     read_to_end=False, pictures_in_source=total, carry=carry_note,
+                    anchors_from_carry=(len(pictures) if held is not None else 0),
                     note='one pass (Greg, 2026-10-09): the teacher\'s walk of this same source made the whole-source '
                          'work (arrivals, source status counts, the native entries\' pass) and its exhausted read is the '
                          'coverage; this read retained the anchor pictures and stopped at the last one')
@@ -647,7 +708,9 @@ def market_context(visible, timeline, *, save_requested, native_limits=None, car
                                     record_count=timeline.source.get('record_count'))
     coverage['classroom_iterator_ended'] = not carried
     if carried:
-        coverage['classroom_read'] = 'stopped at the last anchor picture; coverage is the teacher\'s exhausted read'
+        coverage['classroom_read'] = ('not read: every anchor picture came from the teacher\'s walk (%s); coverage is the '
+                                      'teacher\'s exhausted read' % held_note if held is not None else
+                                      'stopped at the last anchor picture; coverage is the teacher\'s exhausted read')
 
     if coverage.get('core_coverage') is None:
         # A reader between d6af990 and the core's revised report: carry its layer attributes as read, never inferred.
@@ -684,6 +747,104 @@ def market_context(visible, timeline, *, save_requested, native_limits=None, car
                     'values on the same pass are operands of the native entry arithmetic (native_entries)',
                 limit='no claim that every market field changes a target or is interpreted; no claim that every layer was '
                       'present; no native training; the Dipole values and target equations are unchanged')
+
+
+def component_anchors(visible):
+    """{component: {first, last, minimum, maximum: (cursor, value)}} over its PRESENT observations, with market_context's
+    tie rules; the anchor cursors the classroom retains pictures at."""
+    out = {}
+    for component in _evidence(visible)['components']:
+        present = [(int(p['cursor']), float(p['value'])) for p in component['observations'] if p['state'] == 'PRESENT']
+        out[component['name']] = {} if not present else dict(
+            first=present[0], last=present[-1], minimum=min(present, key=lambda cv: (cv[1], cv[0])),
+            maximum=max(present, key=lambda cv: (cv[1], -cv[0])))
+    return out
+
+
+def second_set_lesson(teacher_rows, directory, visible, snapshot_rows, *, teacher_receipt=None, day_file=None, as_of=None):
+    """The teacher's second set handed to Frankie (frankie_box_teacher_rows.second_set_lesson): every row's second set
+    whole in <directory>/package.second_set.jsonl (aligned on the classroom's own snapshot rows), the record with every
+    absence listed in <directory>/package.second_set.json, and the second set at each component's anchor rows with its
+    planes resolved by reading their references. Never raises for the data: a failure is the record's status."""
+    import frankie_box_teacher_rows as TR
+    directory = Path(directory)
+    anchors = component_anchors(visible)
+    cursors = sorted({c for chosen in anchors.values() for c, _ in chosen.values()})
+    try:
+        lesson = TR.second_set_lesson(teacher_rows, directory / 'package.second_set.jsonl', snapshot_rows,
+                                      anchor_cursors=cursors, teacher_receipt=teacher_receipt, day_file=day_file,
+                                      as_of=as_of)
+    except Exception as error:  # noqa: BLE001 - the second set's failure is listed; the classroom goes on
+        lesson = dict(schema=TR.SECOND_SET_LEDGER_SCHEMA, status='failed', reason='%s: %s' % (type(error).__name__, error))
+    lesson['component_anchors'] = {name: {k: list(v) for k, v in chosen.items()} for name, chosen in anchors.items()}
+    with (directory / 'package.second_set.json').open('w', encoding='utf-8') as handle:
+        json.dump(lesson, handle, sort_keys=True, default=str)
+    return lesson
+
+
+def second_set_context(lesson):
+    """The second set as a learner_context input: no prior checks; every absence, alignment difference, mismatch and
+    unresolved reference listed (each becomes an open question of the summary)."""
+    listed = []
+    if not isinstance(lesson, dict) or lesson.get('status') != 'carried':
+        listed.append(dict(second_set=(lesson or {}).get('status'), reason=(lesson or {}).get('reason')))
+        return dict(checks=[], listed=listed, lesson=lesson)
+    for role, listing in (lesson.get('absent') or {}).items():
+        listed.append(dict(second_set='absent', role=role, rows=listing['rows'], ordinal_ranges=listing['ordinal_ranges']))
+    differs = (lesson.get('alignment') or {}).get('differs') or []
+    if differs:
+        listed.append(dict(second_set='alignment', rows=len(differs), differs=differs))
+    if lesson.get('key_cursor_differs'):
+        listed.append(dict(second_set='key_cursor_differs', rows=len(lesson['key_cursor_differs']),
+                           items=lesson['key_cursor_differs']))
+    if lesson.get('mismatched_rows'):
+        listed.append(dict(second_set='picture_identity_mismatch', rows=len(lesson['mismatched_rows']),
+                           items=lesson['mismatched_rows']))
+    if lesson.get('clock_after_cutoff'):
+        listed.append(dict(second_set='clock_after_cutoff', items=lesson['clock_after_cutoff']))
+    resolver = ((lesson.get('anchors_resolved') or {}).get('resolver') or {})
+    if (resolver.get('counts') or {}).get('unresolved'):
+        listed.append(dict(second_set='unresolved_plane_references', reasons=resolver.get('unresolved_reasons')))
+    if (lesson.get('sidecar_check') or {}).get('status') == 'differs':
+        listed.append(dict(second_set='sidecar_differs_from_teacher_receipt', check=lesson['sidecar_check']))
+    return dict(checks=[], listed=listed, lesson=lesson)
+
+
+def _second_set_text(learner_context, name):
+    """The teacher's second set at this component's anchor rows (key, clocks, resolved planes, book columns), whole."""
+    lesson = ((learner_context or {}).get('second_set') or {}).get('lesson') or {}
+    if lesson.get('status') != 'carried':
+        return None
+    chosen = (lesson.get('component_anchors') or {}).get(name) or {}
+    rows = (lesson.get('anchors_resolved') or {}).get('rows') or {}
+    at = {kind: dict(cursor=cv[0], value=cv[1], second_set=rows.get(str(cv[0]))) for kind, cv in chosen.items()}
+    return json.dumps(at, sort_keys=True, default=str)
+
+
+def _carry_anchors(carry, anchors, wanted):
+    """((pictures, statuses), note) when the teacher's carry holds every anchor this classroom computed (the same
+    component, kind, cursor and value for every component) with its picture; else (None, why). Never raises."""
+    try:
+        held = (carry or {}).get('anchors')
+        if not held:
+            return None, 'the carry holds no anchors (a teacher that does not feed note_row)'
+        mine = {name: {kind: [a['adapter_cursor'], a['value']] for kind, a in chosen.items()}
+                for name, chosen in anchors.items() if chosen}
+        theirs = {name: {kind: [int(v[0]), float(v[1])] for kind, v in slot.items()}
+                  for name, slot in (held.get('components') or {}).items()}
+        if mine != theirs:
+            differs = sorted(set(mine) ^ set(theirs) | {n for n in set(mine) & set(theirs) if mine[n] != theirs[n]})
+            return None, 'the carry\'s anchors differ from this classroom\'s for %d component(s): %s' % (
+                len(differs), differs)
+        pictures, statuses = held.get('pictures') or {}, held.get('statuses') or {}
+        missing = sorted(c for c in wanted if c not in pictures or c not in statuses)
+        if missing:
+            return None, 'the carry lacks the pictures of %d anchor cursor(s): %s' % (len(missing), missing)
+        return ({c: pictures[c] for c in wanted}, {c: statuses[c] for c in wanted}), (
+            'carry anchors: %d (every anchor picture taken from the teacher\'s walk; the market timeline was not read '
+            'again)' % len(wanted))
+    except Exception as error:  # noqa: BLE001 - without the carry's anchors this read retains them itself
+        return None, 'the carry\'s anchors are not usable (%s: %s)' % (type(error).__name__, error)
 
 
 def _take_carry(carry, teacher_report, timeline, native, native_setup):
@@ -1020,16 +1181,18 @@ IDENTITY_RULE = ('instrument_id and raw_symbol are identities, not signals: reco
                  'and every change (cursor, before, after) in native-entry-arithmetic.json; no numeric series or cell')
 
 
-# The cutoff (Greg, 2026-10-07 night, binding for the one-day run): the native entry arithmetic stops at a wall-time or a
-# resident-memory limit, keeps what it completed, and lists the rest unavailable: cutoff. A named limit, never an integrity
-# failure; the rest of the classroom is not affected. Settable through the environment (the plan sets it for the step).
+# The former cutoff (Greg, 2026-10-07 night) is RETIRED (Greg, 2026-10-09: "we can't make a size-based decision that
+# makes science weaker"): the native entry arithmetic computes every series over every Dipole row, whatever the time or
+# the memory it takes, and records both (elapsed native work, peak resident memory). The limits below are kept only as a
+# recorded reading (a plan or an environment may still name them; they are listed, never applied); check_every is the
+# probe's cadence in the pass. A series is listed unavailable only when its data is actually absent.
 NATIVE_CUTOFF_DEFAULTS = dict(seconds=3600.0, rss_gb=48.0, check_every=10000)
 NATIVE_CUTOFF_ENV = dict(seconds='FRANKIE_NATIVE_CUTOFF_SECONDS', rss_gb='FRANKIE_NATIVE_CUTOFF_RSS_GB',
                          check_every='FRANKIE_NATIVE_CUTOFF_CHECK_EVERY')
-NATIVE_CUTOFF_RULE = ('the native entry work (its own time inside the pass, closing the rows and the pairs after it) is '
-                      'checked every check_every pictures in the pass and before every series after it: at the wall-time '
-                      'or resident-memory limit it stops feeding, computes what it holds over the Dipole rows it closed, '
-                      'and lists every series not computed as unavailable: cutoff (never zero, never done)')
+NATIVE_CUTOFF_RULE = ('no cutoff: the native entry work computes every series over every Dipole row; its time and '
+                      'resident memory are read every check_every pictures in the pass and before every series after it, '
+                      'for the probe and the record (elapsed native work, peak resident memory), never to stop it. The '
+                      'seconds / rss_gb values are recorded as given and not applied (Greg, 2026-10-09)')
 
 
 def native_cutoff_limits(environ=None):
@@ -1053,6 +1216,7 @@ def native_cutoff_limits(environ=None):
     out['check_every'] = max(1, int(out['check_every']))
     out['rss_bytes'] = int(out['rss_gb'] * 2 ** 30)
     out['listed'] = listed or None
+    out['applied'] = False           # recorded, never a stop (NATIVE_CUTOFF_RULE)
     return out
 
 
@@ -1134,6 +1298,7 @@ class _NativeEntryArithmetic:
         self.online = online
         self.limits = limits or native_cutoff_limits({})
         self.cutoff, self.pictures, self.finish_clock = None, 0, None
+        self.peak_rss, self.peak_rss_basis, self.peak_rss_phase = 0, None, None     # the largest reading _check took
         import threading
         self._probe_lock, self._probe_at = threading.Lock(), float('-inf')    # the stage-progress probe (_check)
         self.components = [(c['name'], c['observations']) for c in components]
@@ -1351,13 +1516,14 @@ class _NativeEntryArithmetic:
         seen.update(leaves)
 
     def _check(self, phase):
-        """True when the cutoff is (or was already) reached; records which limit, the elapsed native work, the memory and
-        the cursor reached. Elapsed = this work's own time in the pass plus the time since finish() began."""
+        """The probe and the record, never a stop (the cutoff is retired, NATIVE_CUTOFF_RULE): reads the elapsed native
+        work and the resident memory, reports them on the heartbeat, keeps the peak reading, and returns False. Elapsed =
+        this work's own time in the pass plus the time since finish() began."""
         import time
-        if self.cutoff is not None:
-            return True
         elapsed = self.note_seconds + (time.monotonic() - self.finish_clock if self.finish_clock is not None else 0.0)
         rss, basis = _rss_bytes()
+        if rss > self.peak_rss:
+            self.peak_rss, self.peak_rss_basis, self.peak_rss_phase = rss, basis, phase
         # Greg's probes on every step: the stage's own phase for the parent's heartbeat. _check also runs in the pair
         # threads (before every series), so the report is throttled to one per second under a lock (one writer of the
         # pid's pending file at a time). A probe never changes the pass.
@@ -1377,18 +1543,7 @@ class _NativeEntryArithmetic:
                     heartbeat('classroom native entries: series', getattr(self, 'series_done', 0),
                            getattr(self, 'series_total', None), unit='series', rss_bytes=rss,
                            native_elapsed_s=round(elapsed, 1))
-        hit = ('wall_time' if elapsed >= self.limits['seconds'] else
-               'resident_memory' if rss >= self.limits['rss_bytes'] else None)
-        if hit is None:
-            return False
-        self.cutoff = dict(limit=hit, phase=phase, elapsed_seconds=round(elapsed, 3), rss_bytes=rss, rss_basis=basis,
-                           cursor_reached=self.last_cursor, dipole_rows_closed=self.k, dipole_rows=self.n,
-                           pictures_fed=self.pictures, limits={k: self.limits[k] for k in ('seconds', 'rss_gb', 'check_every')})
-        self.status = 'cutoff'
-        self.reason = ('cutoff (%s) in the %s after %.1f s of native work at %.2f GB resident; adapter cursor reached %s, '
-                       '%d of %s Dipole rows closed; a named limit, not an integrity failure'
-                       % (hit, phase, elapsed, rss / 2 ** 30, self.last_cursor, self.k, self.n))
-        return True
+        return False
 
     # ---- one pass (Greg, 2026-10-09): the teacher's walk feeds this pass; the classroom computes
     PASS_FIELDS = ('status', 'reason', 'cutoff', 'pictures', 'k', 'last_cursor', 'at_cursor', 'num', 'cat', 'cnt',
@@ -1420,7 +1575,8 @@ class _NativeEntryArithmetic:
     def pass_state(self):
         """The pass's state (picklable), with the roster and the carriers/layers it was made against."""
         state = {name: getattr(self, name) for name in self.PASS_FIELDS}
-        state.update(cursors=list(self.cursors), carriers=self.carriers, layers=self.layers, limits=self.limits)
+        state.update(cursors=list(self.cursors), carriers=self.carriers, layers=self.layers, limits=self.limits,
+                     peak_rss=self.peak_rss, peak_rss_basis=self.peak_rss_basis, peak_rss_phase=self.peak_rss_phase)
         return state
 
     def load_pass_state(self, state):
@@ -1434,9 +1590,16 @@ class _NativeEntryArithmetic:
                 return False, 'the teacher walk\'s roster differs from this classroom\'s Dipole roster'
             if state['carriers'] != self.carriers or state['layers'] != self.layers:
                 return False, 'the teacher walk\'s native carriers or layers differ from this classroom\'s'
+            if state.get('cutoff') is not None or state.get('status') == 'cutoff':
+                # a pass saved under the retired cutoff stopped feeding early: never computed over a part of the day
+                return False, ('the teacher walk\'s pass stopped at the retired cutoff (%s); the classroom makes its own '
+                               'full pass' % (state.get('reason') or state.get('cutoff')))
             values = {name: state[name] for name in self.PASS_FIELDS}       # every field present before any is set
             for name, value in values.items():
                 setattr(self, name, value)
+            if (state.get('peak_rss') or 0) > self.peak_rss:
+                self.peak_rss, self.peak_rss_basis = state['peak_rss'], state.get('peak_rss_basis')
+                self.peak_rss_phase = 'teacher walk: %s' % state.get('peak_rss_phase')
         except (KeyError, TypeError) as error:
             return False, 'the teacher carry is malformed (%s: %s)' % (type(error).__name__, error)
         return True, None
@@ -1504,8 +1667,17 @@ class _NativeEntryArithmetic:
         out['hot_path_seconds'] = round(self.note_seconds, 3)
         out['pair_threads'] = getattr(self, 'pair_threads', None)
         out['queue_level_cost'] = QUEUE_LEVEL_COST
-        out['cutoff'] = self.cutoff                     # None = no limit reached
-        out['cutoff_limits'] = self.limits
+        out['cutoff'] = self.cutoff                     # always None: the cutoff is retired (NATIVE_CUTOFF_RULE)
+        out['cutoff_limits'] = self.limits              # recorded as given, applied: False
+        import resource
+        out['peak_rss'] = dict(
+            sampled_bytes=self.peak_rss or None, sampled_basis=self.peak_rss_basis, sampled_phase=self.peak_rss_phase,
+            process_max_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024,
+            largest_worker_max_bytes=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss * 1024 or None,
+            basis=('sampled: the largest _check reading (every check_every pictures in the pass, before every series '
+                   'after it); process_max: getrusage ru_maxrss of this process; largest_worker_max: ru_maxrss of the '
+                   'largest waited-for child (a forked series worker counts the pages it shares with this process)'))
+        out['elapsed_native_seconds'] = round(self.note_seconds + (time.monotonic() - started), 3)
         out['status'] = self.status or 'computed'       # a cutoff reached after the pass shows here too
         out['reason'] = self.reason
         out['timing'] = ('hot_path_seconds: note() inside the classroom\'s one ordered pass (part of read.seconds); seconds: '
@@ -3492,6 +3664,12 @@ def component_answer(visible, comp, rights, *, learner_context=None, shared_mark
                 'that were context, per instrument, with the external-section equations: relation, Pearson, co-movement): '
                 + json.dumps(paired, sort_keys=True) + '. Every pair is whole in %s; descriptive for this window only, no '
                 'causation or outcome claimed (rules R01, R02, R05).' % _native_file_text(shared_market))
+    second = _second_set_text(learner_context, name)
+    if second is not None:
+        result['evidence'] += (' The teacher\'s second set at this component\'s anchor rows (first / last / minimum / '
+            'maximum PRESENT): the row key, the seven causal clocks (clock_lock_time is the teacher\'s as_of), every '
+            'plane the picture placed at that instant read by its reference, and the book columns: ' + second
+            + '. Every row\'s second set is whole in package.second_set.jsonl; nothing in it changes a Dipole value.')
     native = _facts_for_component(exhaustion_d, name)
     if native:
         # The registry entries whose teacher form is this component also had their own native rows computed by
@@ -3625,12 +3803,24 @@ def summary_answer(visible, outputs, *, learner_context=None, shared_market=None
         recognized = [n for n in notes if n.get('result') in ('pattern_again', 'same_teacher_steps_today')]
         cycle_summary += (' Accumulated structures matched in the current observations, with each evaluated part '
                           'and source retained: ' + json.dumps(recognized, sort_keys=True, default=str) + '.')
+        lesson = (learner_context.get('second_set') or {}).get('lesson')
+        if isinstance(lesson, dict):
+            resolver = (lesson.get('anchors_resolved') or {}).get('resolver') or {}
+            cycle_summary += (' The teacher\'s second set read beside the Dipole rows: ' + json.dumps(dict(
+                status=lesson.get('status'), rows=lesson.get('rows'), carried=lesson.get('carried'),
+                plane_entries=len(lesson.get('planes') or {}), match_status=lesson.get('match_status'),
+                clock_lock_time=lesson.get('clock_lock_time'), anchors=resolver.get('note'),
+                file=(lesson.get('file') or {}).get('path')), sort_keys=True, default=str) + '.')
         correlation_review += (' Legal learner knowledge was applied before these answers. Each prior source and '
             'its individual check, with original scope retained: ' + json.dumps(notes, sort_keys=True, default=str)
             + '. Prior findings are not relabelled as observations from this window; unavailable conditions supply '
             'no new test and do not downgrade a checked finding.')
         for kind, result in learner_context.items():
             for item in result.get('listed', []):
+                if kind == 'second_set':
+                    questions.append('The teacher\'s second set, listed (not filled in): %s' %
+                                     json.dumps(item, sort_keys=True, default=str))
+                    continue
                 questions.append('Legal knowledge input not evaluated by this classroom check (%s): %s' %
                                  (kind, json.dumps(item, sort_keys=True, default=str)))
         for note in notes:
