@@ -362,6 +362,51 @@ def calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_ro
         signal.signal(signal.SIGTERM, previous_handler)
 
 
+def _journal_witness(journal, receipt, output_root):
+    """({bytes, sha256}, basis) of the sealed journal with at most one whole read (Greg, 2026-10-09: one pass).
+    A claim row for the journal (the ingest's <ingest>/file-claims.jsonl written at the seal by
+    ingest_block_sources, else this ROOT's <output_root>/work/file-claims.jsonl) whose bytes/sha256 are the ingestion
+    receipt's and which still holds (inode, size, mtime_ns, filesystem, last 64 KiB: boss_session._claim_still_holds)
+    is the witness: one 64 KiB read, the pin remembered in frankie_box_filehash so a later witness() of the unchanged
+    file in this process reads nothing. Otherwise the file is hashed whole (frankie_box_filehash.witness) and, when it
+    equals the pin, its claim row is appended beside the ingest's (frankie_box_brain.append_file_claim; a hint)."""
+    import frankie_box_filehash
+    if str(REPOSITORY) not in sys.path:
+        sys.path.append(str(REPOSITORY))                      # research.kalshi... (the claim rows' module)
+    pin = dict(bytes=receipt['journal_bytes'], sha256=receipt['journal_sha256'])
+    want = str(Path(journal).resolve())
+    try:
+        from frankie_box_boss_session import _load_file_claims, _claim_still_holds
+        for directory in (Path(journal).parent, Path(output_root) / 'work'):
+            claims = _load_file_claims(directory)
+            row = claims.get(want)
+            if row is None or (row.get('bytes'), row.get('sha256')) != (pin['bytes'], pin['sha256']):
+                continue
+            held = _claim_still_holds(row, claims_dir=directory, claims=claims)
+            if held:
+                frankie_box_filehash.remember(journal, pin)
+                return dict(pin), 'by claim (%s/file-claims.jsonl): %s' % (directory, held)
+    except Exception as error:  # noqa: BLE001 - a claim is a hint: without one the journal is read whole
+        why = '%s: %s' % (type(error).__name__, error)
+    else:
+        why = 'no claim row holds'
+    before = os.stat(journal)
+    seen = frankie_box_filehash.witness(journal)
+    basis = 'read whole (%s)' % why
+    if seen == pin:
+        try:
+            from research.kalshi.frankie_boss.operations.ingest_block_sources import file_claim
+            import frankie_box_brain
+            row = file_claim(journal, seen['bytes'], seen['sha256'], 'experiment ROOT journal witness: read whole at %s'
+                             % time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()))
+            if row['stat'] == [before.st_ino, before.st_size, before.st_mtime_ns]:
+                note = frankie_box_brain.append_file_claim(Path(journal).parent, row)
+                basis += '; claim row %s' % note.get('status')
+        except Exception as error:  # noqa: BLE001 - a hint
+            basis += '; no claim row written (%s: %s)' % (type(error).__name__, error)
+    return seen, basis
+
+
 def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_root, data_workers=1, digest=False,
                    frozen_survivors=None, resume=False, save_requested=None, bedrock=True, shared_market_policy=None,
                    bedrock_off_cause=None):
@@ -426,11 +471,12 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
                             listed='this day opens at the prior halt and its ingest had no opening book; the legacy pass '
                                    'starts from an empty book')
     journal = directory / receipt['journal_file']
-    # Hashed once per ROOT process: the stat-keyed cache (frankie_box_filehash) is the one Session.derive's input
-    # reader witnesses the same container with, so the multi-GB journal is read for its sha256 once, not twice. Same
-    # bytes, same sha256, same refusal on any difference.
-    import frankie_box_filehash
-    journal_witness = frankie_box_filehash.witness(journal)
+    # One pass (2026-10-09): the journal's sha256 is taken from a FRANKIE_FILE_CLAIM_V2 row that still holds (the
+    # ingest's own <ingest>/file-claims.jsonl, else this ROOT's work/file-claims.jsonl) and remembered in the stat-keyed
+    # cache Session.derive's input reader witnesses the same container with; the 8.8-23.7 GB journal is read whole
+    # only when no claim holds (and its claim row is then written beside the ingest's for the next process). Same
+    # refusal on any difference.
+    journal_witness, journal_basis = _journal_witness(journal, receipt, output_root)
     if journal_witness != dict(bytes=receipt['journal_bytes'], sha256=receipt['journal_sha256']):
         raise ValueError('the sealed journal differs from its ingestion receipt (bytes or sha256)')
     completion_path = directory / 'completion.json'
@@ -556,6 +602,7 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
     # never the saved binding's (the identity, which may name the smaller booking the attempt began on)
     session.requested_data_workers = data_workers
     session.request_sha256 = witness(output / 'source-binding.json')['sha256']
+    session.note('sealed journal witness: %s' % journal_basis)
     session.phase('deriving', 'experiment ROOT: sealed day, legacy and native calculations; no giant bedrock digest'
                   if bedrock else 'experiment ROOT: the legacy pass on the sealed day; bedrock off')
     retained = session.work / 'derive.json'
