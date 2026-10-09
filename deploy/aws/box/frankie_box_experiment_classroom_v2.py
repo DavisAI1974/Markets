@@ -1103,8 +1103,11 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
             day_file=day_file, as_of=p['as_of']))
         import frankie_box_teacher_rows as TR
         received['second_set'] = TR.second_set_summary(second_set)
+        # the teacher's own account (its receipt account rendered with its findings), read whole into the lesson
+        # input before any answer; withheld outside TEACH (the current-day teacher wall); recorded on the receipt
+        teacher_account, received['teacher_account'] = K.teacher_account_context(teacher_rows, mode)
         learner_context = dict(stage_knowledge=knowledge_reproduction, school=reproduction,
-                               second_set=K.second_set_context(second_set))
+                               second_set=K.second_set_context(second_set), teacher_account=teacher_account)
         # All-99 (Greg, 2026-10-07: the 99 layers combined for Frankie FIRST): every registry entry routed to the
         # picture element the component answers compute beside, or to its own consumer here, or named sealed /
         # disabled / output / retired, with this day's arrivals; on the receipt and in the inspection markdown.

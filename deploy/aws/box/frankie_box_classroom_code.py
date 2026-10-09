@@ -810,6 +810,37 @@ def second_set_context(lesson):
     return dict(checks=[], listed=listed, lesson=lesson)
 
 
+def teacher_account_context(teacher_rows, mode):
+    """The teacher's own account as a lesson input (Greg, 2026-10-09: the first classroom session reads it):
+    teacher-account.json and teacher-account.md beside the teacher's rows (published with the teacher's brain entry;
+    published here when absent), read whole. In a mode other than TEACH the current-day account carries the measured
+    states the classroom grades, so it is withheld and listed (the same wall as the current-day teacher entry).
+    Returns (context, receipt record)."""
+    import hashlib
+    rows_dir = Path(teacher_rows)
+    if mode != 'TEACH':
+        why = ('withheld in %s: the current-day teacher account carries the measured states this classroom grades '
+               '(the same wall as the current-day teacher entry)' % mode)
+        return dict(checks=[], listed=[dict(teacher_account='withheld', reason=why)]), dict(read=False, reason=why)
+    import frankie_box_teacher_findings as TF
+    paths = [rows_dir / TF.ACCOUNT_FILE, rows_dir / TF.ACCOUNT_MD]
+    published_here = False
+    if not all(p.is_file() for p in paths):
+        try:
+            TF.publish(rows_dir, None)
+            published_here = True
+        except Exception as error:  # noqa: BLE001 - listed; the classroom goes on
+            why = 'the teacher account could not be published (%s: %s)' % (type(error).__name__, error)
+            return dict(checks=[], listed=[dict(teacher_account='absent', reason=why)]), dict(read=False, reason=why)
+    account_raw, md_raw = paths[0].read_bytes(), paths[1].read_bytes()
+    record = dict(read=True, published_here=published_here,
+                  account=dict(path=str(paths[0]), bytes=len(account_raw), sha256=hashlib.sha256(account_raw).hexdigest()),
+                  report=dict(path=str(paths[1]), bytes=len(md_raw), sha256=hashlib.sha256(md_raw).hexdigest()),
+                  rule='read whole into the lesson input (learner_context.teacher_account) before any answer')
+    return dict(checks=[], listed=[], account=json.loads(account_raw), report=md_raw.decode('utf-8', errors='replace'),
+                pins=record), record
+
+
 def _second_set_text(learner_context, name):
     """The teacher's second set at this component's anchor rows (key, clocks, resolved planes, book columns), whole."""
     lesson = ((learner_context or {}).get('second_set') or {}).get('lesson') or {}
@@ -3803,6 +3834,11 @@ def summary_answer(visible, outputs, *, learner_context=None, shared_market=None
         recognized = [n for n in notes if n.get('result') in ('pattern_again', 'same_teacher_steps_today')]
         cycle_summary += (' Accumulated structures matched in the current observations, with each evaluated part '
                           'and source retained: ' + json.dumps(recognized, sort_keys=True, default=str) + '.')
+        told = learner_context.get('teacher_account') or {}
+        if told.get('pins'):
+            cycle_summary += (' The teacher\'s own account was read before these answers: ' + json.dumps(
+                told['pins'], sort_keys=True, default=str) + '; its findings are its recorded counts for this day, '
+                'one day showing what it cannot yet claim.')
         lesson = (learner_context.get('second_set') or {}).get('lesson')
         if isinstance(lesson, dict):
             resolver = (lesson.get('anchors_resolved') or {}).get('resolver') or {}

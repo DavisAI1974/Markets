@@ -378,7 +378,7 @@ def learner_knowledge(day, stage, brain=BRAIN, *, classroom_mode=None):
             parsed = BR.parse_entry_name(d.name)
             eday, kind = parsed
             reason = None
-            if eday == day and stage == 'classroom' and kind == 'teacher' and classroom_mode != 'TEACH':
+            if eday == day and stage == 'classroom' and kind in ('teacher', 'teacher-account') and classroom_mode != 'TEACH':
                 reason = 'current-day teacher measurements contain answers withheld by this classroom mode'
             elif eday == day and (BR.DAY_KINDS.get(kind, 0) > before or
                                   kind.isdigit() and before <= 0):
