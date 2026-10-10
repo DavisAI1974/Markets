@@ -30,6 +30,18 @@
   byte for byte (every edge type and a 30 MB row-shaped object: same hash; 3.5x faster here). Recommendation stands:
   (b) inside evidence_hash in shadow mode on the box, then (a), then the store. Greg has not picked.
 - Check-ins: this session armed its own (send_later) and re-arms them; probes are in COMMANDS.
+- SECOND KILL, 11:21:21Z: the kernel OOM-killed the teacher (pid 17525, anon-rss 514.8 GB on the 495 GB box) while it
+  wrote its second-set pickle (`teacher-second-set.pkl.pending`, 39.8 GB; pickle.dump streams, the growth is pickle's
+  memo). THE 400 GB SWAPFILE WAS NOT ACTIVE: it survives in `/opt/frankie-box/archive/swapfile` but is not in fstab, so
+  the box stop/start at 23:58Z lost it (`/proc/swaps` empty, "0B memory swap peak" on every unit). The finish then logged
+  "teacher step ended failed (rows missing) ... the day goes on without them (missing-coverage rule)" and ended; the
+  class worker kept WAITING for the teacher rows (nothing skipped). Also found at 08:27Z: a resume after the walk's last
+  seal made the block feed fail ('no row was fed': nothing to cut) and the manifest read `failed`; FIXED in 2f02022
+  (the sealed blocks are the publication; the sealer resets `failed` to `sealing` on resume), on the box as `current`.
+  11:5xZ: `swapon -p -1 /opt/frankie-box/archive/swapfile` (EVERY box start must redo this until the day is done; it is
+  not in fstab on purpose: the drop-in says remove the swapfile after the day), then ACTION=resume: the teacher re-feeds
+  the 47 sealed blocks (~1.7 h), assembles the second set (~2.5 h), publishes with swap headroom; the classroom day-end
+  follows. No save point exists between the walk save and the publication: each kill costs the whole second set.
 
 Greg's usage is nearly out: this box is written so a fresh session (Claude or Codex) can take over without the chat.
 
