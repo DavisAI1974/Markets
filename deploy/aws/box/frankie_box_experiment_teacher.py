@@ -1421,9 +1421,12 @@ class _BlockFeed:
             while self.fed < len(self.rows):
                 self._feed(self.fed)
                 self.fed += 1
-            if self.cutter is None:
+            if self.cutter is not None:
+                self.pending.append(self.cutter.close())
+            elif self.sealer.next_cursor < len(self.rows):
                 raise ValueError('no row was fed')
-            self.pending.append(self.cutter.close())
+            # else: every row was sealed by an earlier process (a resume after the walk's last seal, 2026-10-10 08:27Z on
+            # a2/20231018): nothing is left to cut, the sealed blocks are the publication and pin() reads them once
             self.mode = 'merge'                        # every row's parts are there now: nothing waits on a book read
             self._drain()
         except Exception as error:  # noqa: BLE001
