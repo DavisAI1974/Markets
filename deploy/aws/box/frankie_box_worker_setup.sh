@@ -18,6 +18,17 @@ echo "### identity"; hostname; . /etc/os-release; echo "$PRETTY_NAME"; nproc; fr
 echo "### apt"
 apt-get update -q >/dev/null
 apt-get install -y -q git zstd sqlite3 curl ca-certificates >/dev/null
+# No unattended upgrades and no service restarts after a package upgrade (2026-10-10): on the main box the
+# apt-daily-upgrade timer upgraded libssl3/libxml2/the kernel at 06:09Z, re-executed systemd and restarted every
+# service holding the old libraries, the two frankie transient units among them (SIGTERM, then SIGKILL after 90 s):
+# the teacher lost its whole-day second set 2.5 h in and the classroom its running block. The experiment units are
+# never killed by the box (Greg: a dead piece is revived, never skipped; keep the workflow running).
+systemctl disable --now apt-daily.timer apt-daily-upgrade.timer >/dev/null 2>&1 || true
+systemctl mask apt-daily.service apt-daily-upgrade.service >/dev/null 2>&1 || true
+systemctl disable --now unattended-upgrades.service >/dev/null 2>&1 || true
+printf 'APT::Periodic::Update-Package-Lists "0";\nAPT::Periodic::Unattended-Upgrade "0";\nAPT::Periodic::Download-Upgradeable-Packages "0";\n' > /etc/apt/apt.conf.d/99frankie-no-auto-upgrade
+mkdir -p /etc/needrestart/conf.d
+printf '# frankie box: never restart services after a package upgrade; the experiment units must not be killed\n$nrconf{restart} = '"'"'l'"'"';\n' > /etc/needrestart/conf.d/99-frankie-no-restart.conf
 mkdir -p "$ROOT"/work "$ROOT"/data "$ROOT"/code "$ROOT"/ingest-code "$ROOT"/receipts "$ROOT"/brain "$ROOT"/tmp "$ROOT"/logs
 echo "### python 3.13.15"
 PYDIR=/opt/hostedtoolcache/Python/3.13.15/x64

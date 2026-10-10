@@ -1,5 +1,36 @@
 # DROP-IN, session 13 (from session 12, 2026-10-09 16:4xZ), for Claude or Codex
 
+## SESSION 13 RAN (Claude, 2026-10-09 23:5xZ -> 2026-10-10 06:5xZ): the day is RUNNING again on the tip; the box's own package upgrades killed it once
+
+- AWS came back (Greg: "Aws should be good"). Box STARTED 23:58Z, tag KeepRunning=true; the tip 4e5ca5d pushed by the
+  push route (delta pack, 20.7 s) = `/opt/frankie-box/code/current`; ACTION=resume at 00:01Z reconciled the dead finish
+  holder itself; root, class and teacher lines came up on the tip.
+- The teacher walk ENDED 04:04:35Z: 47 blocks sealed (block 47 `final: true`), cursor 771,787 = the whole day; the
+  prefix merge after a resume re-feeds the sealed rows as carry (~112 rows/s) and walks the rest at ~44 rows/s on one
+  core. Then the teacher went into its whole-day second set (`_second_set` -> `teacher_book_read.assemble` ->
+  `state_split`, one thread, 305 GB RSS, ~54% of the rows after 80 min; it writes nothing until it is done, so the
+  manifest stays `sealing`; `py-spy dump --pid <teacher> --locals` shows the `cursor` local in the assemble frame).
+  The classroom ran blocks 23-42 (240-984 s each, the time scales with the block's rows; no new errors).
+- THE KILL (06:09:53Z): Ubuntu's `apt-daily-upgrade` timer ran unattended-upgrades (libssl3, libxml2, a kernel, ...),
+  which re-executed systemd and restarted every service holding the old libraries, the two frankie transient units
+  among them: SIGTERM at 06:09:53Z, "stop-sigterm timed out", SIGKILL of root/class/teacher at 06:11:23Z. Not OOM
+  (dmesg clean; 495 GB box, root unit peak 461 GB). The teacher lost its second set 2.5 h in; the classroom its block 43.
+  The re-started workers parked ("every pending day is held by its owner ... only ACTION=resume moves it").
+- THE FIX ON THE BOX (06:4xZ, applied and verified): apt-daily.timer + apt-daily-upgrade.timer disabled, their services
+  masked, unattended-upgrades disabled, `/etc/apt/apt.conf.d/99frankie-no-auto-upgrade` (periodic 0),
+  `/etc/needrestart/conf.d/99-frankie-no-restart.conf` (`$nrconf{restart} = 'l'`). The same block is now in
+  `deploy/aws/box/frankie_box_worker_setup.sh` for every future box. (A newer kernel is installed but not running; a
+  reboot would boot it. Nothing else changed.)
+- RESUMED 06:45:51Z (ACTION=resume, same env as THE BOX step 2): teacher restarted at next_block 48 / cursor 771,787
+  (its log `/opt/frankie-box/work/experiment-teacher-rows/logs/20231018-1791614754.log`): it re-feeds all 47 sealed
+  blocks as carry (~2 h), assembles the second set (~2.5 h), then publishes; the class worker resumes blocks 43-47,
+  then the whole-day classroom, Jev, exchange, school, day reports.
+- The evidence-hash fix: NOT touched (rule 5). Verified locally: on `pack` output `_canon` is the identity, so
+  `canonical_bytes(pack(x)) == json.dumps(pack(x), sort_keys=True, separators=(',',':'), ensure_ascii=True).encode()`
+  byte for byte (every edge type and a 30 MB row-shaped object: same hash; 3.5x faster here). Recommendation stands:
+  (b) inside evidence_hash in shadow mode on the box, then (a), then the store. Greg has not picked.
+- Check-ins: this session armed its own (send_later) and re-arms them; probes are in COMMANDS.
+
 Greg's usage is nearly out: this box is written so a fresh session (Claude or Codex) can take over without the chat.
 
 ## THE BOX: STOPPED 16:37Z (Greg: "Kill box for right now taking a break")
