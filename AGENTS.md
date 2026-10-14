@@ -2,6 +2,7 @@
 
 ## Start here
 
+- **CURRENT (2026-10-14): read research/kalshi/frankie_boss/CODEX_HANDOFF_20261014_SESSION13.md FIRST.** Work branch ccr-d2f8f826-iefeah-frankie (shallow: git fetch --deepen=400). The one-day E2E e2e-20231018-a2/20231018 is authorized and was RUNNING on box i-035994afa8bdf66a5 when AWS access was lost at 2026-10-10 12:52Z; its state since is unknown. Greg's session 10-12 rules in that handoff supersede the older boundaries below (three 16-CPU lanes, no starts without a go). The bullets below are background.
 - Apply using-agent-skills, then context-engineering when available. Locate missing named skills before proceeding.
 - Read research/kalshi/frankie_boss/CURRENT_WORKFLOW_SETUP_20261007.md and CODEX_HANDOFF_20261007_WORKFLOW_CONTINUATION.md first. They record current source boundaries, active ownership, remaining workflow work and the agreed E2E, one-day inspection, then three-day sequence. CODEX_HANDOFF_20261006_NIGHT.md and earlier handoffs remain background.
 - Consult CLAUDE.md for shared project context; its older session notes and startup hooks do not supersede the current handoff or Greg's current instructions.

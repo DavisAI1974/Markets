@@ -1,3 +1,7 @@
+# Handoff for Codex or a fresh Claude (2026-10-14): READ FIRST `research/kalshi/frankie_boss/CODEX_HANDOFF_20261014_SESSION13.md`.
+Branch `ccr-d2f8f826-iefeah-frankie`. a2/20231018 was RUNNING on code 2f02022 (teacher re-feeding then second set, all 47 classroom
+blocks done, 400 GB swap active) when both AWS connectors died at 2026-10-10 12:52Z; box state unknown since. Evidence-hash fix still Greg's call.
+
 # Claude session 13 ran (2026-10-10 06:5xZ): a2/20231018 RUNNING on tip 4e5ca5d after the box's unattended apt upgrade killed the
 units at 06:11Z (fixed on the box and in `frankie_box_worker_setup.sh`); teacher re-feeding 47 sealed blocks then its second set;
 classroom at block 43 of 47; the evidence-hash decision still Greg's. Record at the top of `DROP_IN_CLAUDE_20261009_SESSION13.md`.

@@ -1,0 +1,32 @@
+DROP-IN: CONTINUE THE FIRST FULL FRANKIE DAY (a2/20231018) ON THE AWS BOX
+
+Repo: DavisAI1974/Markets
+Branch: ccr-d2f8f826-iefeah-frankie (shallow clone: run git fetch --deepen=400 first). Code tip 2f02022; docs after.
+READ FIRST: research/kalshi/frankie_boss/CODEX_HANDOFF_20261014_SESSION13.md (complete on its own).
+Detail log: research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261009_SESSION13.md (newest at top).
+
+GOAL: run ONE day, e2e-20231018-a2/20231018, end to end with the full science: teacher publication, whole-day
+classroom, Jev, exchange, meeting, school, day reports. Greg then reads the whole-day TEACHER REPORT. After that:
+remove the swapfile, revert the archive volume, wire the hub, one-pass build, ROOT fix, then the 30-day run.
+
+STATE: box i-035994afa8bdf66a5 (r7i.16xlarge, 64 CPU, 495 GB, us-east-1, SSM only) was RUNNING, KeepRunning=true,
+when AWS access was lost at 2026-10-10 12:52Z. Then: teacher pid 19448 on code 2f02022 re-feeding its 47 sealed
+blocks, next the whole-day second set (~2.5 h, ~305 GB RAM) and publication; all 47 classroom block lessons done;
+day-end waiting on the teacher rows; 400 GB swap active. Nothing seen since. It may have finished (box idle and
+billing about $4.2/h) or died.
+
+FIRST ACTIONS:
+1. Get AWS access (Greg re-authorizes the connector, or keys in ~/.config/markets/env). Never echo secrets.
+2. DescribeInstances. If stopped and the day is unfinished: start, tag KeepRunning=true, then
+   swapon -p -1 /opt/frankie-box/archive/swapfile, then ACTION=resume (commands in the handoff section 7).
+3. If running: run the probe in the handoff section 7. Dead piece: find the cause, fix, swapon if needed, resume.
+   Finished: confirm every day-end output, bring the whole-day TEACHER REPORT into the repo, give it to Greg.
+
+GREG'S RULES (binding): the science is never weakened for speed; one lesson at a time; everything at once except
+prerequisites; block 1 is the gauge (159.0 s now); DISCUSSION FIRST on the external section and the hashing: do NOT
+change evidence_hash until Greg picks (recommendation in handoff section 6); keep the workflow running; a dead piece
+is revived, never skipped; no coded waits; fixes go on the box the moment they are pushed; push every fix with
+[skip ci]; no emojis; no infrastructure change calls at a session's end.
+
+OPEN WITH GREG: his pick on the evidence-hash fix ((b) fast canonicalizer in shadow mode, then (a) hash once per
+object, then the store); "the piece that speeds it up 250 M per sec"; "the other 8 on 8 consecutive days".
