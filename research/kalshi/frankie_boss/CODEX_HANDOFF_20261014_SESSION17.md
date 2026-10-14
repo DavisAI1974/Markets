@@ -4,6 +4,33 @@ Repository DavisAI1974/Markets; branch ccr-d2f8f826-iefeah-frankie.
 Fetch CURRENT HEAD and preserve newer work. This document is operational continuity, not completion.
 Read SESSION16 and SESSION15 for original source pins, mounts, saved package and cleanup receipts.
 
+## New-chat transfer update — 2026-10-14 08:57:51 UTC / 04:57:51 Eastern
+
+Greg asks to move to a new chat now. Keep the active run running; do not request another restart or interrupt it.
+
+### Exactly which classroom work is running
+
+YES, all47 BLOCK classroom lessons are complete and retained. The distinct WHOLE-DAY classroom was saved after its package phase; later whole-day phases are not complete.
+
+Latest live proof:
+- ROOT finish running, CLASS running, owner/booking unchanged, source8bb2eb2.
+- Classroom PID5820 is alive and accumulating CPU (543.64s user,15.51s system at08:57:51Z).
+- Current heartbeat: "classroom: package", units_done1.
+- Only "package" in saved_phases; stop_requested=false.
+- py-spy dump positively places the active main thread in c15_journal.pack -> evidence_bytes -> sunday_execution._save -> experiment_classroom_v2._run line970.
+- This is AFTER phase('package', prepare_package) restored the saved value. Line970 is the existing loop serializing package.source / teacher_key / pre_message / binding evidence files.
+- Thus current work is SERIALIZING THE RESTORED WHOLE-DAY PACKAGE, before learner_inputs. It is not rebuilding the completed47 lessons, not rerunning prepare_package, and not traversing161GB sidecar.
+- rchar stayed3,024,687,521 and read_bytes2,494,337,024 while CPU advanced. No large data FD open at that sample.
+- Historical timings.package.restored=false remains stale by setdefault; do not use it to infer recalculation.
+
+Whole-day learner inputs/readings/shared market context, second-set lesson, answers, grading/corrections and completion remain ahead. Existing code selects applicable phases by classroom mode; don't assume every optional mode-specific phase must run.
+The shared column/index generation has NOT yet been observed, since the process has not reached its first such consumer. Published bounded checks pass, but actual-day reconstruction remains a required runtime proof. Do not overstate this.
+
+Handoff copy placed on MAIN:
+ /opt/frankie-box/work/handoffs/CODEX_HANDOFF_20261014_SESSION17.md
+Read this repository file first in new chat, then SESSION16 and SESSION15. Source checkout remains8bb2eb2; later documentation-only commits do not require another worker restart.
+Business-account completion watch remains ENABLED, scheduled05:51 Eastern then hourly; no duplicate watch needed. New chat owns any immediate actions and should inspect live state to avoid races.
+
 ## Greg's latest scope
 
 Finish the ENTIRE existing one-day e2e-20231018-a2 / 20231018 workflow, including Frankie, classroom/search/lessons, exchange, Jev, meeting, school and reports. Then safely stop unused compute preserving every disk and data file.
