@@ -3897,6 +3897,7 @@ class Session:
             opening_adapter_state_hash=evidence_hash(opening_adapter_state),
             native_input=NativeInputView.RULE)
         records = NativeInputView(records)
+        selected_provenance = ((self.source_binding or {}).get('native_calculation_policy') or {}).get('record_provenance')
         if recovery:
             from frankie_box_native_emission import binding as emission_binding, meaning as emission_meaning
             stage_identity['emission'] = emission_binding()
@@ -3952,7 +3953,8 @@ class Session:
                         resume_checkpoint=getattr(self, 'native_resume_checkpoint', None),
                         reconstruct_missing=getattr(self, 'native_reconstruct_missing', False),
                         opening_adapter_state=opening_adapter_state, opening_book=opening_book,
-                        save_requested=save_requested, recovery=recovery)
+                        save_requested=save_requested, recovery=recovery,
+                        record_provenance=selected_provenance)
             if recovery:
                 receipt_path = Path(run['result']['path']).parent / 'receipt.json'
                 artifacts = [dict(path=str(receipt_path), **witness(receipt_path)), run['result']]
@@ -3997,6 +3999,7 @@ class Session:
                   + ', '.join(f'{name[-3:].replace("_", ".")} {e["status"]} ({e["count"]} rows)' for name, e in sections.items()))
         return dict(schema='FRANKIE_BOX_DERIVE_BEDROCK_V1', layers=layers, sections={name: e['status'] for name, e in sections.items()},
                     emission=run.get('emission'),
+                    **({'record_provenance': run['record_provenance']} if 'record_provenance' in run else {}),
                     stage_reuse_check=getattr(self, '_native_stage_reuse_check', None),     # session 6, additive
                     bedrock_groups=pin_groups(pin), producers_commit=code_commit,
                     cadence_policy=run['cadence_policy'], receipt=dict(witness(native_directory / 'receipt.json'), path=str(native_directory / 'receipt.json')),
@@ -4111,9 +4114,14 @@ class Session:
         if saved and not 0 <= saved['consumed'] <= count:
             raise ValueError('saved INPUT journal cursor is outside the sealed source')
         prepared = (self.source_binding or {}).get('prepared_inputs')
+        provenance = ((self.source_binding or {}).get('native_calculation_policy') or {}).get('record_provenance')
+        if provenance is not None and (prepared is None or not retain_all_fields or layout != 'compact'):
+            raise ValueError('native member provenance requires the original prepared full-field INPUT spool')
         if prepared is not None and retain_all_fields and layout == 'compact':
             from frankie_box_ingest_inputs import load_prepared
             records, extracted = load_prepared(rows_path.parent, prepared, container)
+            if provenance is not None and extracted.get('record_provenance') != provenance:
+                raise ValueError('prepared INPUT member provenance differs from the selected native policy')
             spool_pin = extracted['record_spool']
             position = dict(path=str(records.path), count=len(records),
                             bytes=spool_pin['bytes'], sha256=spool_pin['sha256'])

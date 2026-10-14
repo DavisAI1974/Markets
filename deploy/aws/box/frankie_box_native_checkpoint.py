@@ -80,7 +80,9 @@ def runtime_acceptance(saved):
 
 def continuation_meaning(binding):
     """A continuation binding in its compared form: the opening book exactly, the emission helper by its schema only
-    (frankie_box_native_emission.meaning; its helper_sha256 is recorded, never compared)."""
+    (frankie_box_native_emission.meaning; its helper_sha256 is recorded, never compared).
+    V3's record_provenance, including every DBN member and its order/count, remains an exact data-policy comparison.
+    """
     if isinstance(binding, dict) and isinstance(binding.get('emission'), dict):
         import frankie_box_native_emission
         return dict(binding, emission=frankie_box_native_emission.meaning(binding['emission']))

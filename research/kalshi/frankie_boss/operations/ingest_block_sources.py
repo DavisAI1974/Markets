@@ -1000,7 +1000,11 @@ def _main(cleanup):
         if box not in sys.path:
             sys.path.insert(0, box)
         from frankie_box_ingest_inputs import PreparedInputs
-        prepared_inputs = PreparedInputs(Path(args.prepare_inputs).resolve())
+        provenance = None
+        if manifest.get('trading_day') and args.source_object == 'member_key':
+            from frankie_box_native_source import binding as native_source_binding
+            provenance = native_source_binding(manifest, manifest['trading_day'])
+        prepared_inputs = PreparedInputs(Path(args.prepare_inputs).resolve(), record_provenance=provenance)
         cleanup.callback(prepared_inputs.close)
     results = {}
     for writer in writers:
@@ -1077,6 +1081,8 @@ def _main(cleanup):
                                reason='%s: %s' % (type(error).__name__, error))
         receipt = dict(common, schema=RECEIPT_SCHEMA, writer=writer,
                        **({'prepared_inputs': prepared_pin} if prepared_pin is not None else {}),
+                       **({'native_record_provenance': prepared_inputs.record_provenance}
+                          if prepared_pin is not None and prepared_inputs.record_provenance is not None else {}),
                        record_count=result['completion']['record_count'], journal_count=result['completion']['journal_count'],
                        journal_hash=result['completion']['journal_hash'], group_count=result['completion']['group_count'],
                        source_prefix_hash=result['completion']['source_prefix_hash'],

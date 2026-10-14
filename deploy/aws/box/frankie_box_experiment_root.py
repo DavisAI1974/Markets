@@ -705,6 +705,12 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
             producer='existing_pinned_native_traversal', bedrock=True, source_manifest=manifest_pin,
             representation='exact_local_ledgers_and_existing_compressed_projections', digest_bedrock=False,
             emission=emission_binding())
+        if receipt.get('native_record_provenance') is not None:
+            from frankie_box_native_source import require_binding
+            if receipt.get('prepared_inputs') is None:
+                raise ValueError('member provenance requires the ingestion-bound INPUT preparation')
+            binding['native_calculation_policy']['record_provenance'] = require_binding(
+                receipt['native_record_provenance'], manifest, day)
     # on resume the SAVED binding stays the identity (Session reads source-binding.json; every stage identity and the
     # retained derivation compare against it), whatever checkout path this process built
     binding = save_or_match(output / 'source-binding.json', binding, run_size=('data_workers',), receipt_files=True)
@@ -797,6 +803,9 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
                 raise ResumeRefused('saved derivation lacks completed native calculations; retained outputs preserved', document=str(retained))
             if bedrock:
                 native = result['bedrock']
+                if native.get('record_provenance') != binding['native_calculation_policy'].get('record_provenance'):
+                    raise ResumeRefused('saved native record provenance differs; retained outputs preserved',
+                                        document=str(retained))
                 from frankie_box_native_emission import meaning as emission_meaning
                 # the emission helper by its meaning (schema); its helper_sha256 is recorded, never compared
                 if emission_meaning(native.get('emission')) != emission_meaning(binding['native_calculation_policy']['emission']):

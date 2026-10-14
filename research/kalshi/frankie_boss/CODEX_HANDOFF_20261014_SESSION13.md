@@ -3,6 +3,19 @@
 Written by Claude at the end of session 13 for Codex (or a fresh Claude). Greg's usage is low; this file is meant to be
 enough on its own. All times are UTC (Z). Nothing in here is a guess unless it says "unknown" or "expected".
 
+**Current source contract and next timing scope:** read
+`NATIVE_STREAM_TIMING_SCOPE_20261014.md`. New fresh sequential day ingests with prepared INPUTs select
+`FRANKIE_NATIVE_DBN_MEMBER_PROVENANCE_V1`: original verified DBN member hashes on native rows, with the
+completed physical journal pinned separately. The ingestion envelope, saved global cursor, native continuation,
+and teacher artifact selection bind that policy. Old receipts and the saved a2 attempt retain journal stamping.
+This resolves the per-record final-journal-hash dependency in source; it does not implement early native execution.
+The committed-prefix notifications, continuing ROOT consumers and shared-picture/teacher segment readers remain
+to be wired. Existing full-day checks stay in place. The bounded timing scope is one block-1 classroom gauge plus
+one contiguous 35-minute ingestion/ROOT prefix (first frontier at 30 minutes, then continue from the saved cursor),
+in one attended session with a 30-minute wall-work budget. That combined run is not launch-ready until the actual
+continuation entry point and bounded stop path exist. Do not substitute a saved-day resume. No AWS start, mutation,
+scientific execution, test or benchmark was performed; only source review, syntax parsing and diff checks.
+
 **Codex continuation, 2026-10-14 (Greg's evening of October 13 ET):** Greg authorized the complete efficiency design
 and source integration before any test: share exact calculations/tables, remove unnecessary passes, wire the hub,
 then use one small timing run as the test. He explicitly approved: "Do the faster hash encoder if it doesn't change
@@ -62,15 +75,16 @@ pre-messages copy their published values, and the existing final grade canonical
 dict/list/tuple evidence types, insertion order, field values and hash formulas remain the source contract; actual
 equivalence, memory use and speed remain unverified until the one small timing run.
 
-**A verified prerequisite changes the proposed streaming design.** `frankie_box_bedrock.source_object` and
+**Historical prerequisite, resolved for new prepared ingests by the current contract above.** `frankie_box_bedrock.source_object` and
 `iter_driver_records` stamp the *final physical journal SHA-256* into `source_dbn_sha256` on every native INPUT. Source
 inspection of the actual pinned producer (`2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134`) confirmed that the adapter's normalized
 records/raw actions and retained member rows include it. Replacing it with a manifest/stream ID changes the native
 evidence rows and their hashes. The native pass cannot start before that digest exists under the present exact evidence
 contract; full-picture teacher/block work must not declare the still-running native producer absent to get around it.
-No such replacement was made. Greg should discuss whether NEW runs may use the actual already-verified DBN member
-identity as per-record provenance while retaining the final journal pin separately. That is a versioned provenance
-change requiring complete downstream/recovery review, not an encoder optimization. The saved a2 identity stays intact.
+That source review originally left the choice open. Greg's next instruction was to resolve this dependency;
+the current source contract uses the actual already-verified DBN member identity for NEW prepared ingests and
+retains the final journal pin separately. This is a versioned provenance change, not an encoder optimization.
+The saved a2 identity stays intact. Runtime/recovery behavior remains unverified until the authorized small run.
 
 Safe preparation is now wired into the actual daily route, beginning during ingestion rather than waiting for the day:
 
@@ -88,7 +102,8 @@ This is genuine shared preparation, **not** implementation of native/teacher pro
 The draft generic frontier/resume framework was not included as an unused capability. Legacy calculations could also
 be separated from the terminal identity wrapper, but that continuation route is still unbuilt. No speedup percentage or
 full-day cost claim is established. The first-block classroom gauge alone does not exercise this new ingestion/ROOT
-path: settle the bounded timing-run coverage after the provenance/design discussion, before any AWS start.
+path: the bounded timing-run coverage is now in NATIVE_STREAM_TIMING_SCOPE_20261014.md; complete its stated
+continuation wiring before any AWS start.
 
 ## 0. READ THIS FIRST: the box is STOPPED and the day is SAVED mid day-end (read on the box 2026-10-14 01:2xZ)
 

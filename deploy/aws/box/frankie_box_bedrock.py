@@ -461,11 +461,19 @@ def source_object(container, day):
     return f'journal:{day}:{path}', str(sha)
 
 
-def iter_driver_records(records, container, day):
-    """The session's INPUT observations stamped for the driver: `source_dbn_object` = journal:<day>:<verified prefix
-    container path>, `source_dbn_sha256` = the container's sha256 (the driver refuses a record without a source object;
-    the box's source object IS the verified container), `raw_symbol` = the observation's own raw_symbol/symbol when
-    present, else None. Copies; the input is left untouched."""
+def iter_driver_records(records, container, day, *, record_provenance=None, start_cursor=0):
+    """Copy INPUT observations into their selected native provenance contract.
+
+    An explicit new DBN-member policy needs no journal container or final hash.
+    Its absence preserves journal:<day>:<path> and the physical journal SHA.
+    Both retain the original raw_symbol/symbol fallback and leave INPUT intact.
+    """
+    if record_provenance is not None:
+        from frankie_box_native_source import MemberSource
+        if record_provenance.get('trading_day') != str(day):
+            raise ValueError('native record provenance belongs to another trading day')
+        yield from MemberSource(record_provenance).stamp(records, start_cursor)
+        return
     path, sha = source_object(container, day)
     for record in records:
         stamped = dict(record)
@@ -482,19 +490,22 @@ def driver_records(records, container, day):
 class _SeekableDriverRecords:
     """Stamp a counted source without losing its optional recovery seek.
 
-    The source owns validation of its ordinal/offset binding. Stamping still uses
-    the unchanged, verified container identity; a streaming source identifier is
-    never substituted for that container's final SHA-256.
+    The source owns validation of its ordinal/offset binding. Old attempts keep
+    journal stamping; a new selected DBN policy uses the original global ordinal
+    on every seek, never restarting member selection at zero after recovery.
     """
-    def __init__(self, records, container, day):
+    def __init__(self, records, container, day, *, record_provenance=None):
         self.records, self.container, self.day = records, container, day
+        self.record_provenance = record_provenance
 
     def __iter__(self):
-        return iter_driver_records(self.records.iter_from(0), self.container, self.day)
+        return iter_driver_records(self.records.iter_from(0), self.container, self.day,
+                                   record_provenance=self.record_provenance)
 
     def iter_from(self, completed_count, *, position=None):
         return iter_driver_records(self.records.iter_from(completed_count, position=position),
-                                   self.container, self.day)
+                                   self.container, self.day, record_provenance=self.record_provenance,
+                                   start_cursor=completed_count)
 
 
 def span_seconds(records):
@@ -514,7 +525,7 @@ def span_seconds(records):
     return 0.0 if low is None else (high - low) / NS
 
 
-def identity(producers, container, count, cycle, code_commit):
+def identity(producers, container, count, cycle, code_commit, *, source_manifest_hash=None):
     from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import RunIdentity
     producers = Path(producers)
     knowledge = json.loads((producers / KNOWLEDGE_MANIFEST_PATH).read_bytes())
@@ -522,7 +533,8 @@ def identity(producers, container, count, cycle, code_commit):
                        mission_sha256=_cached_witness(producers / MISSION_PATH)['sha256'],
                        calculation_contract_sha256=_cached_witness(producers / CONTRACT_PATH)['sha256'],
                        knowledge_manifest_hash=knowledge['manifest_hash'],
-                       source_manifest_hash=str(container['sha256']),
+                       source_manifest_hash=(str(container['sha256']) if source_manifest_hash is None
+                                             else str(source_manifest_hash)),
                        total_mbo_records=int(count), code_commit=str(code_commit))
 
 
@@ -640,7 +652,7 @@ def recovery_checkpoint(out_dir, code_recorded=None):
 
 def run(records, container, out_dir, producers, cycle, code_commit, day, *, progress=None, source_manifest=None,
         resume_checkpoint=None, reconstruct_missing=False, opening_adapter_state=None, opening_book=None,
-        save_requested=None, recovery=False):
+        save_requested=None, recovery=False, record_provenance=None):
     """The pinned traversal on this cycle's rows: identity -> NativeCalculationRun (the launcher's canonical arguments) ->
     NativeReplayDriver(ExchangeSessionRule, NeverInvoke, LedgerSinks) -> consume -> finalize -> reconcile (a mismatch
     raises: a ledger that does not match its counter is not evidence). Files result.json (the exact rows live in the
@@ -652,11 +664,21 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
     save complete state at the next closed-group boundary, then raise the caller's existing TeacherSaved contract.
     A locked native checkpoint reuses its completed calculation result without scientific replay.
     recovery=True discovers that checkpoint by verified parent ancestry and refuses to restart a nonempty run
-    without recoverable full state. recovery=False keeps the historical explicit-resume/supersede behavior."""
+    without recoverable full state. recovery=False keeps the historical explicit-resume/supersede behavior.
+    record_provenance is selected by a NEW ingestion receipt, never inferred on resume. This complete-day
+    entry point still requires all records and final journal completion; member stamping alone does not
+    turn it into a committed-prefix consumer."""
     if not hasattr(records, '__len__'):
         raise ValueError('bedrock input must be counted and replayable before traversal')
     if not records:
         raise ValueError('no INPUT records; nothing to derive')
+    if record_provenance is not None:
+        from frankie_box_native_source import require_binding
+        if source_manifest is None:
+            raise ValueError('native DBN provenance requires the full original source manifest')
+        record_provenance = require_binding(record_provenance, source_manifest, day)
+        if record_provenance['total_mbo_records'] != len(records):
+            raise ValueError('native DBN provenance must cover every original INPUT ordinal')
     producers = load_producers(producers)
     from research.kalshi.frankie_raw_mbo_benchmark import native_calculation_runner, native_replay_driver, native_response, native_row_sink
     from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import NativeCalculationRun, canonical_hash
@@ -702,6 +724,12 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
         emission = frankie_box_native_emission.binding()
         continuation_binding = dict(schema='FRANKIE_NATIVE_CONTINUATION_V2',
                                     opening_book=opening_binding, emission=emission)
+    if record_provenance is not None:
+        # Data policy, not a recorded-only code identity. Full-state restores
+        # must compare this exactly before adopting any saved scientific state.
+        continuation_binding = dict(schema='FRANKIE_NATIVE_CONTINUATION_V3',
+                                    opening_book=opening_binding, emission=emission,
+                                    record_provenance=record_provenance)
     modules = loaded_modules(producers, native_replay_driver, native_calculation_runner, native_row_sink,
                              native_response, native_a_arm_launch, periodic_checkpointer, native_staging)
     out_dir = Path(out_dir)
@@ -721,9 +749,11 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
     else:
         superseded = None if recovery else _move_aside(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    stamped = (_SeekableDriverRecords(records, container, day)
-               if callable(getattr(records, 'iter_from', None)) else iter_driver_records(records, container, day))
-    ident = identity(producers, container, len(records), cycle, code_commit)
+    stamped = (_SeekableDriverRecords(records, container, day, record_provenance=record_provenance)
+               if callable(getattr(records, 'iter_from', None)) else
+               iter_driver_records(records, container, day, record_provenance=record_provenance))
+    ident = identity(producers, container, len(records), cycle, code_commit,
+                     source_manifest_hash=source_manifest['manifest_hash'] if record_provenance is not None else None)
     if source_manifest is not None:
         if (source_manifest.get('total_mbo_records') != len(records)
                 or source_manifest.get('trading_day') != day):
@@ -864,6 +894,8 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
                         event_group_open=False, controller_state=None, locked=True)
     result['gates'] = {key: gates[key] for key in ('registry_gate', 'pre_call_layer_gate', 'rt_surface_gate')}
     result['evidence_identity'] = evidence
+    if record_provenance is not None:
+        result['record_provenance'] = record_provenance
     result['slice'] = dict(record_source='VERIFIED_JOURNAL', records_requested=None,
         roster_total_mbo_records=len(records), is_bounded_slice=False,
         is_complete_source_day=source_manifest is not None, sources=[str(container['path'])])
@@ -918,6 +950,11 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
                    verdict=result.get('verdict'), failed_gates=result.get('failed_gates'),
                    sections_fed=result['traversal']['sections_fed'], reconciliation=result['ledger_retention'],
                    ledgers=ledgers, result=result_witness, superseded=superseded)
+    if record_provenance is not None:
+        receipt['record_provenance'] = record_provenance
+        receipt['source_object'] = dict(rule=record_provenance['object_rule'], day=str(day),
+                                       members=record_provenance['members'])
+        receipt['final_journal'] = {name: container[name] for name in ('path', 'bytes', 'sha256', 'count', 'head')}
     write_json(out_dir / 'receipt.json', receipt)
     # If the request arrived during finalization/publication, the locked state
     # and completed receipt are available for the caller's resume path.

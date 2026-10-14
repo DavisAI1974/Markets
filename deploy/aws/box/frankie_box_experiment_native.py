@@ -351,6 +351,15 @@ def _take_all(root, binding, native, derive, policy, selected, measured):
         raise ValueError('native completion and derivation disagree on scientific artifacts')
     if run.get('emission') != native.get('emission') or native.get('emission') != policy.get('emission'):
         raise ValueError('native emission implementation is not bound by the selected source policy')
+    if (run.get('record_provenance') != native.get('record_provenance')
+            or native.get('record_provenance') != policy.get('record_provenance')):
+        raise ValueError('native record provenance differs from the selected source policy')
+    if policy.get('record_provenance') is not None:
+        from frankie_box_native_source import require_binding
+        require_binding(policy['record_provenance'], binding['manifest'], binding['source']['trading_day'])
+        final_journal = {name: binding['container'][name] for name in ('path', 'bytes', 'sha256', 'count', 'head')}
+        if run.get('final_journal') != final_journal:
+            raise ValueError('native final journal differs from the completed ROOT source')
     for name in LEDGERS:
         take(name, native['ledgers'][name], name, 'work/bedrock')
     for name in SECTIONS:

@@ -109,7 +109,15 @@ class PreparedInputs:
     producer must drain/commit its journal before publishing a checkpoint pin.
     Existing-source/resume callers do not create this fresh-only preparer.
     """
-    def __init__(self, directory):
+    def __init__(self, directory, *, record_provenance=None):
+        self.record_provenance = record_provenance
+        self._member_source = None
+        if record_provenance is not None:
+            try:
+                from frankie_box_native_source import MemberSource
+            except ImportError:
+                from deploy.aws.box.frankie_box_native_source import MemberSource
+            self._member_source = MemberSource(record_provenance)
         self.directory = Path(directory).resolve()
         self.directory.mkdir(parents=True, exist_ok=True)
         self.path = self.directory / ('root-inputs-' + uuid.uuid4().hex + '.jsonl')
@@ -135,8 +143,12 @@ class PreparedInputs:
             raise ValueError('prepared INPUT observer requires a journal kind')
         self._kinds[kind] = self._kinds.get(kind, 0) + 1
         if kind == 'INPUT':
+            if self._member_source is not None:
+                self._member_source.verify_input(payload, self._count)
             observation = find_observation(payload, max_depth=None)
             if observation is None:
+                if self._member_source is not None:
+                    raise ValueError('member-bound native INPUT lacks its original observation')
                 from research.kalshi.frankie_boss.c15_journal import pack, unpack
                 cursor = (payload or {}).get('cursor') if isinstance(payload, dict) else None
                 self._missing.append(dict(input_entry=self._kinds[kind] - 1,
@@ -204,6 +216,8 @@ class PreparedInputs:
                      journal_count=journal_count, journal_head=journal_head, container=container,
                      kinds=dict(self._kinds), inputs_without_observation=list(self._missing),
                      bytes_fields_spooled=dict(self._bytes_fields), bytes_fields_not_spooled={}, spool=spool)
+        if self.record_provenance is not None:
+            value['record_provenance'] = self.record_provenance
         return value
 
     def checkpoint(self, journal_count, journal_head):
@@ -218,6 +232,8 @@ class PreparedInputs:
     def complete(self, container):
         """Publish only after the caller verifies the sealed container/file pin."""
         identity = _container_identity(container)
+        if self._member_source is not None and self._count != self._member_source.total:
+            raise ValueError('prepared native INPUT count differs from the complete DBN source')
         if self._complete is not None:
             if identity != self._complete[0]:
                 raise ValueError('prepared INPUT source was completed for a different journal')
@@ -335,6 +351,8 @@ def load_prepared(directory, descriptor, expected_container):
     _remember(path, descriptor, before)
     metadata = {name: value[name] for name in ('kinds', 'inputs_without_observation',
                                               'bytes_fields_spooled', 'bytes_fields_not_spooled')}
+    if 'record_provenance' in value:
+        metadata['record_provenance'] = value['record_provenance']
     metadata['record_spool'] = dict(path=str(spool_path), bytes=spool['bytes'], sha256=spool['sha256'],
                                     hash_basis=basis)
     metadata['proof'] = dict(basis='prepared_source_original_append_payloads_final_container_pin',
