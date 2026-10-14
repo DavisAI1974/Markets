@@ -1,32 +1,33 @@
-DROP-IN: CONTINUE THE FIRST FULL FRANKIE DAY (a2/20231018) ON THE AWS BOX
+DROP-IN: THE FIRST FULL FRANKIE DAY (a2/20231018): TEACHER AND ROOT DONE, DAY-END SAVED, BOX STOPPED
 
 Repo: DavisAI1974/Markets
 Branch: ccr-d2f8f826-iefeah-frankie (shallow clone: run git fetch --deepen=400 first). Code tip 2f02022; docs after.
 READ FIRST: research/kalshi/frankie_boss/CODEX_HANDOFF_20261014_SESSION13.md (complete on its own).
 Detail log: research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261009_SESSION13.md (newest at top).
 
-GOAL: run ONE day, e2e-20231018-a2/20231018, end to end with the full science: teacher publication, whole-day
-classroom, Jev, exchange, meeting, school, day reports. Greg then reads the whole-day TEACHER REPORT. After that:
-remove the swapfile, revert the archive volume, wire the hub, one-pass build, ROOT fix, then the 30-day run.
+STATE (read on the box 2026-10-14 01:2xZ, read-only): box i-035994afa8bdf66a5 (r7i.16xlarge, us-east-1, SSM only)
+is STOPPED, KeepRunning=false; nothing else running in any region. Its two 2 TB disks still bill (~$11/day).
+- Teacher DONE: published 2026-10-10 20:18Z, 47 blocks, all 771,787 rows, receipt; teacher account written.
+- ROOT finish DONE 23:54Z. All 47 classroom block lessons DONE.
+- Whole-day classroom SAVED after its first phase ("package", 1.7 h) on a stop request at 00:09Z on 2026-10-11;
+  what sent that request is NOT identified. Workers parked waiting for ACTION=resume.
+- NOT RUN: rest of the whole-day classroom, Jev, exchange, meeting, school, day reports.
+- The box sat idle ~2.5 days unwatched after AWS access was lost (2026-10-10 12:52Z). Never leave a running box
+  without someone able to see it.
 
-STATE: box i-035994afa8bdf66a5 (r7i.16xlarge, 64 CPU, 495 GB, us-east-1, SSM only) was RUNNING, KeepRunning=true,
-when AWS access was lost at 2026-10-10 12:52Z. Then: teacher pid 19448 on code 2f02022 re-feeding its 47 sealed
-blocks, next the whole-day second set (~2.5 h, ~305 GB RAM) and publication; all 47 classroom block lessons done;
-day-end waiting on the teacher rows; 400 GB swap active. Nothing seen since. It may have finished (box idle and
-billing about $4.2/h) or died.
+GREG (2026-10-14): "We were only supposed to be doing small slice checks for timing why did we get here doing all
+this??" (not important now). So: do NOT start the box or resume anything without his word; ask him first whether he
+wants this day's day-end finished or small timing-slice checks.
 
-FIRST ACTIONS:
-1. Get AWS access (Greg re-authorizes the connector, or keys in ~/.config/markets/env). Never echo secrets.
-2. DescribeInstances. If stopped and the day is unfinished: start, tag KeepRunning=true, then
-   swapon -p -1 /opt/frankie-box/archive/swapfile, then ACTION=resume (commands in the handoff section 7).
-3. If running: run the probe in the handoff section 7. Dead piece: find the cause, fix, swapon if needed, resume.
-   Finished: confirm every day-end output, bring the whole-day TEACHER REPORT into the repo, give it to Greg.
+IF HE SAYS FINISH THE DAY: start the box, tag KeepRunning=true, swapon -p -1 /opt/frankie-box/archive/swapfile,
+find what requested the 00:09Z stop, then ACTION=resume (commands in the handoff section 7). Watch it throughout;
+stop the box the moment it is done or if access is lost.
 
 GREG'S RULES (binding): the science is never weakened for speed; one lesson at a time; everything at once except
 prerequisites; block 1 is the gauge (159.0 s now); DISCUSSION FIRST on the external section and the hashing: do NOT
-change evidence_hash until Greg picks (recommendation in handoff section 6); keep the workflow running; a dead piece
-is revived, never skipped; no coded waits; fixes go on the box the moment they are pushed; push every fix with
-[skip ci]; no emojis; no infrastructure change calls at a session's end.
+change evidence_hash until Greg picks (recommendation in handoff section 6); a dead piece is revived, never skipped;
+no coded waits; fixes go on the box the moment they are pushed; push every fix with [skip ci]; no emojis.
 
-OPEN WITH GREG: his pick on the evidence-hash fix ((b) fast canonicalizer in shadow mode, then (a) hash once per
-object, then the store); "the piece that speeds it up 250 M per sec"; "the other 8 on 8 consecutive days".
+OPEN WITH GREG: full day-end vs timing slices; his pick on the evidence-hash fix ((b) fast canonicalizer in shadow
+mode, then (a) hash once per object, then the store); "the piece that speeds it up 250 M per sec"; "the other 8 on
+8 consecutive days"; reverting the 2 TB archive volume and removing the swapfile.

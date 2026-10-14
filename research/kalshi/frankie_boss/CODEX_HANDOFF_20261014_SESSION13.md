@@ -1,19 +1,26 @@
-# CODEX HANDOFF, 2026-10-14: the first full Frankie day (a2/20231018), where it stands, what to do next
+# CODEX HANDOFF, 2026-10-14: the first full Frankie day (a2/20231018): teacher and ROOT done, day-end saved, box stopped
 
 Written by Claude at the end of session 13 for Codex (or a fresh Claude). Greg's usage is low; this file is meant to be
 enough on its own. All times are UTC (Z). Nothing in here is a guess unless it says "unknown" or "expected".
 
-## 0. READ THIS FIRST: the box state is UNKNOWN since 2026-10-10 12:52Z
+## 0. READ THIS FIRST: the box is STOPPED and the day is SAVED mid day-end (read on the box 2026-10-14 01:2xZ)
 
-- Both AWS connectors in the Claude session died at 12:52Z on 2026-10-10 ("needs sign-in" and "expired credentials")
-  and never came back through 2026-10-13 20:57Z (28 retries). Greg was told once. Nothing on the box has been seen
-  since 12:52Z on 2026-10-10.
-- At that moment the box was RUNNING, tag KeepRunning=true, the day in progress (section 4). Nothing stopped it from
-  our side. If it is still running and the day has finished, it is an idle r7i.16xlarge billing by the hour (about
-  $4.2/h on demand in us-east-1, so roughly $100 per day idle). Check it first.
-- You need working AWS access before anything else. Options: Greg re-authorizes the AWS connector, or the keys go in
-  `~/.config/markets/env` (chmod 600; see `KEYS.md` and `research/kalshi/creds.py`). Never echo a secret. Keys do not
-  rotate during the walk (Greg's standing decision).
+- Box `i-035994afa8bdf66a5` is STOPPED, tag KeepRunning=false. Greg had it stopped on 2026-10-14 at about 01:0xZ,
+  then it was started for about 10 minutes for a READ-ONLY look (nothing resumed, nothing changed) and stopped again.
+  No other EC2 instance is running in any region. Its two 2 TB gp3 disks (root and archive) still bill while stopped
+  (about $11/day together).
+- WHAT IT COST: the AWS connectors died at 2026-10-10 12:52Z and nobody watched the box after that. Its CPU history
+  shows the work ended at about 00:09Z on 2026-10-11, and the box then sat IDLE until it was stopped on 2026-10-14,
+  about 2.5 days at roughly $4.2/h (on demand). Lesson: a running box must never be left without someone able to see
+  it; if access is lost, the person is told plainly that it is still billing.
+- Greg, 2026-10-14, on seeing this: "We were only supposed to be doing small slice checks for timing why did we get
+  here doing all this??" He said it is not important now. Read it as his intent: before any long run, confirm with him
+  whether he wants the full day or small timing slices. Do NOT start the box or resume the day without his word.
+- The day's state as read on the box is in section 4. The teacher and ROOT are DONE; the whole-day classroom is SAVED
+  after its first phase; Jev, exchange, meeting, school and day reports have NOT run.
+- AWS access: the AWS connector worked again on 2026-10-14. If it fails for you, Greg re-authorizes it, or the keys go
+  in `~/.config/markets/env` (chmod 600; see `KEYS.md` and `research/kalshi/creds.py`). Never echo a secret. Keys do
+  not rotate during the walk (Greg's standing decision).
 
 ## 1. Where everything is
 
@@ -82,31 +89,34 @@ across 2021-2025; every later day streams: the teacher seals as the data arrives
    concern (only the forecaster stays blind).
 7. No emojis or special symbols in anything pushed. Commits end with `[skip ci]` on this branch.
 
-## 4. Last known state (2026-10-10 12:52Z) and what was expected after it
+## 4. The day's state, read on the box 2026-10-14 01:2xZ (box now STOPPED)
 
-Box `i-035994afa8bdf66a5`, r7i.16xlarge (64 CPU, 495 GB RAM), us-east-1, driven only over SSM. Code on the box:
-`/opt/frankie-box/code/current` = `2f02022`.
+Code on the box: `/opt/frankie-box/code/current` = `2f02022`. On boot nothing auto-starts: no frankie unit or process
+ran during the read. Disks: root 63% used (743 GB free), archive 73% used (559 GB free).
 
-| Piece | State at 12:52Z on 2026-10-10 |
+| Piece | State |
 |---|---|
-| Teacher walk | Done 04:04Z: 47 blocks sealed, block 47 final, cursor 771,787 = whole day |
-| Teacher process | pid 19448, restarted 11:50Z on `2f02022`; re-feeding the 47 sealed blocks as carry, then the second set, then publication |
-| Classroom blocks | All 47 block sessions complete (one `session.json` each) |
-| Day-end classroom onward | Waiting for the teacher's published rows (nothing skipped) |
-| Swap | 400 GB swapfile active (`swapon -p -1`), not in fstab |
-| Evidence-hash fix | Not touched; waiting on Greg |
+| Teacher | DONE. Published 2026-10-10 20:18:42Z: manifest `complete: true`, 47 blocks, all 771,787 rows merged at publication, `receipt.json` (144 MB). Teacher account (`teacher-account.md`, 281 MB, 23:00Z), `teacher-findings.json`, `teacher-knowledge.json`, `teacher-second-set-read.boss.json` written |
+| ROOT finish | DONE. `finish_end` 2026-10-10 23:54Z, then the big files moved to the archive disk (symlinks plus `.ARCHIVED.README.txt` beside each) |
+| Classroom blocks | DONE. All 47 block sessions (`blocks/<n>/session.json`) |
+| Whole-day classroom | SAVED, not finished. Started 22:25:51Z on 2026-10-10; its first phase `package` completed (6,177 s, about 1.7 h); at 00:09:20Z on 2026-10-11 a stop was requested and it saved itself ("every completed operation and the continuation state retained"; `saved-phases/<sha>.pkl` 2.6 GB) |
+| Jev, exchange, meeting, school, day reports | NOT RUN |
+| Queue | Both workers parked `waiting_owner` since 00:09:34Z on 2026-10-11: "the class is saved on its owner; ACTION=resume RUN=e2e-20231018-a2 DAY=20231018 resumes it" |
+| Swap | Not active (lost at every box start; see section 7) |
 
-Expected after 12:52Z if nothing broke: re-feed done near 13:35Z; second-set assembly about 2.5 h, so near 16:05Z;
-then the second-set pickle and the final publication (the step that OOM-killed it before, now with swap headroom);
-then the day-end classroom on the whole day, Jev, exchange, meeting, school, day reports. How long the whole-day
-classroom takes is unknown; the evidence-hash cost (section 6) applies to it at a much larger scale than per block.
+Paths: teacher outputs `/opt/frankie-box/work/experiment-teacher-rows/20231018/`; classroom
+`/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/classroom/` (`phase-progress.json`,
+`saved-phases/`, `blocks/`); queue `/opt/frankie-box/work/frankie-queue/` (`class.json`, `root.json`, `logs/`, `save/`).
 
-What may have happened instead, and how to tell (probe commands in section 7):
-- The day finished: the class events and the day-reports directory show it, and the box sits idle.
-- Something died: a unit stopped, an OOM line in dmesg, a teacher log ending in a traceback. Find the cause first,
-  then resume (section 7). Every kill of the teacher before publication costs the whole second set; there is no save
-  point between the walk save and the publication.
-- The box was stopped by someone: swap is gone after any start; redo `swapon` before resuming.
+OPEN QUESTION: what requested the classroom stop at 00:09:20Z on 2026-10-11 is not identified. Nobody in the Claude
+session sent a save (no AWS access then). The `save/` folder holds older `.resumed-*` request markers from Oct 8-9;
+the read did not show a new request. It coincides with the root worker's re-kick after the finish ended (23:54Z) and
+the root worker's `worker_end` at 00:09:34Z. Find the cause before relying on a long unattended day-end run.
+
+Also seen: the teacher manifest still carries `reason: "merge end: ValueError: no row was fed"` from the 08:27Z
+failure, beside `complete: true`; the publication pinned the sealed blocks after the `2f02022` fix. The class worker
+log contains older "ROOT is refused under the plan's shared market policy" lines from earlier sessions (the resume
+on Oct 9 overrode them); they are not from this run's end.
 
 ## 5. What happened in session 13 (2026-10-09 23:5x to 2026-10-10 12:52Z)
 
@@ -129,7 +139,11 @@ What may have happened instead, and how to tell (probe commands in section 7):
   on without them (missing-coverage rule)" and ended; the class worker kept waiting (correct: nothing skipped).
 - 11:50Z `swapon -p -1 /opt/frankie-box/archive/swapfile` (400 GB active), then `ACTION=resume`: teacher restarted on
   `2f02022` (pid 19448). Commit `3e5cca6` records this.
-- 12:52Z AWS access lost for the rest of the session.
+- 12:52Z AWS access lost; it did not return until 2026-10-14. Unseen in between: the teacher finished its second
+  set and published at 20:18Z; the whole-day classroom started at 22:25Z; the ROOT finish ended at 23:54Z; the
+  classroom saved itself on a stop request at 00:09Z on Oct 11; the box then sat idle about 2.5 days.
+- 2026-10-14: AWS back. Box stopped on Greg's order (about 01:0xZ), started for a 10-minute read-only look
+  (01:2xZ; section 4), stopped again. Nothing was lost by the stops: the box had been idle and the class saved.
 
 ## 6. The decision waiting on Greg: the evidence-hash cost
 
@@ -234,21 +248,20 @@ systemd-run --unit=frankie-gauge-$(date +%s) --collect -p WorkingDirectory=$CR s
   > /opt/frankie-box/work/gauge-block1/run-\$(date +%H%M%S).log 2>&1"
 ```
 
-## 8. Next steps, in order
+## 8. Next steps, in order (only on Greg's word)
 
-1. Get AWS access. Check the instance state (DescribeInstances) and, if running, run the probe.
-2. If a piece died: read its log and dmesg, name the cause, fix it (push the fix if it is code), `swapon` if needed,
-   resume. Report the cause and the fix to Greg in plain words.
-3. If the day finished: confirm every day-end output exists (whole-day classroom, Jev, exchange, meeting, school,
-   numbered day reports) and the teacher's whole-day TEACHER REPORT. Bring that report back into the repo the way the
-   block-1 report was (`TEACHER_REPORT_20231018_BLOCK1.md`) and give it to Greg to read. Then stop the box only on
-   Greg's word, or if it is plainly idle and he has said so before (he stopped it himself for breaks).
-4. If it is still running: keep it running; probe on a sensible cadence; do not restart the teacher for anything
-   that is not a correctness fix.
-5. Ask Greg for his pick on the evidence-hash fix (section 6) and his two open questions. Build only after he picks.
-6. After the day and Greg's read: remove the swapfile; revert the archive volume to baseline; then the hub wiring
-   (compare each piece by value with `frankie_box_hub_compare.py` before switching it), the one-pass build, the ROOT
-   fix; then the 30-day run on Greg's go.
+1. Ask Greg what he wants next: finish this day's day-end (the resume below), or the small timing-slice checks he
+   says were the intent. Do not start the box until he says.
+2. To finish the day: start the box, tag KeepRunning=true, `swapon` (section 7), find what requested the 00:09Z
+   classroom stop (section 4) so it cannot recur unseen, then `ACTION=resume`. The whole-day classroom continues from
+   its saved `package` phase; then Jev, exchange, meeting, school and the day reports. Watch it the whole time; stop
+   the box the moment it is done or if access to it is lost.
+3. Bring the whole-day teacher account (`teacher-account.md`, 281 MB; read it on the box or excerpt it) and the
+   day-end reports to Greg; the block-1 report is already in the repo (`TEACHER_REPORT_20231018_BLOCK1.md`).
+4. Greg's pick on the evidence-hash fix (section 6) and his two open questions. Build only after he picks.
+5. After the day and Greg's read: remove the swapfile; revert the archive volume to baseline (it is 2 TB, still
+   billing); then the hub wiring (compare each piece by value with `frankie_box_hub_compare.py` before switching it),
+   the one-pass build, the ROOT fix; then the 30-day run on Greg's go.
 
 ## 9. Traps learned the hard way
 
