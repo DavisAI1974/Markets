@@ -220,7 +220,8 @@ def plan(roots, pins, *, guarded=(), floor=FLOOR_BYTES, archive_root=ARCHIVE_ROO
         stack = [root]
         redundant_paths = {i['old_path'] for i in redundant}
         # a moved pinned file gets a fresh FRANKIE_FILE_CLAIM_V2 row in the root's own work/file-claims.jsonl (do_move)
-        claims_work = str(root / 'work') if (root / 'work' / 'file-claims.jsonl').is_file() else None
+        claims_work = (str(root / 'work') if (root / 'work' / 'file-claims.jsonl').is_file()
+                       else str(root) if (root / 'file-claims.jsonl').is_file() else None)
         while stack:
             directory = stack.pop()
             try:
@@ -466,7 +467,12 @@ def _claim_moved(item, new, size, sha):
         import frankie_box_brain as B
         row = file_claim(new, size, sha, 'frankie_box_root_move.do_move: write-stream sha256 of the copy at %s'
                          % time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()))
-        return B.append_file_claim(work, row)
+        note = B.append_file_claim(work, row)
+        # Readers resolving the old symlink search beside the actual archived
+        # file first. Keep that same full write-stream witness there as well.
+        if Path(new).parent.resolve() != Path(work).resolve():
+            note = dict(note, archive_claim=B.append_file_claim(Path(new).parent, row))
+        return note
     except Exception as error:  # noqa: BLE001 - a claim is a hint
         return dict(status='not_written', reason='%s: %s' % (type(error).__name__, error))
 

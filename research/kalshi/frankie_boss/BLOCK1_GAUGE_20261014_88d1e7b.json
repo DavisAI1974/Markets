@@ -1,0 +1,88 @@
+{
+ "schema": "FRANKIE_BLOCK_GAUGE_V1",
+ "commit": "88d1e7b8",
+ "at_utc": "20261014T055855Z",
+ "day": "20231018",
+ "block": 1,
+ "rows": 1588,
+ "status": "complete",
+ "wall_seconds": 116.626,
+ "session_seconds": 90.85,
+ "lesson_seconds": {
+  "block_read": 2.838,
+  "second_set_lesson": 8.551
+ },
+ "steps": {
+  "external.join_wait": 52.048,
+  "initial_grade": 8.561,
+  "key_pre_message_binding": 7.708,
+  "answers_components": 5.314,
+  "store_writes": 4.795,
+  "assembly_validation": 3.298,
+  "snapshot": 1.903,
+  "render_transcript_md": 1.664,
+  "render_classroom_md": 1.384,
+  "model_visible": 1.324,
+  "transcript_sha": 1.255,
+  "relationship_crosscheck": 0.937,
+  "teacher_report": 0.262,
+  "second_set_load": 0.219,
+  "learner_inputs": 0.126,
+  "imports": 0.111,
+  "store_close": 0.088,
+  "request_digest": 0.067,
+  "novelty_investigation": 0.02,
+  "correction_request": 0.01,
+  "external.start": 0.006,
+  "correction_answer": 0.004,
+  "answers_summary": 0.003,
+  "knowledge_school_checks": 0.003,
+  "novel_findings": 0.002,
+  "acknowledgement_completion": 0.0,
+  "answer_files": 0.0,
+  "brain_update": 0.0,
+  "correction_check": 0.0,
+  "grade_files": 0.0,
+  "package_files": 0.0,
+  "previous_history": 0.0,
+  "second_set_context": 0.0,
+  "store_open": 0.0
+ },
+ "work": {
+  "block": 1,
+  "pid": 2402,
+  "lesson": {
+   "rows": 1588,
+   "second_set": "carried"
+  },
+  "session": {
+   "status": "complete",
+   "mode": "TEACH",
+   "reason": null,
+   "seconds": 90.85,
+   "report": "/opt/frankie-box/gauge-block1/88d1e7b-20261014T055854Z/88d1e7b8-20261014T055855Z/blocks/1/TEACHER_REPORT.md"
+  },
+  "ready": true,
+  "reason": null
+ },
+ "out": "/opt/frankie-box/gauge-block1/88d1e7b-20261014T055854Z/88d1e7b8-20261014T055855Z",
+ "evidence_encoding": "shadow",
+ "encoding": {
+  "candidate_seconds": 5.191127789999655,
+  "legacy_seconds": 13.868716973000119,
+  "mismatches": 0,
+  "mode": "shadow",
+  "prepacked_legacy_calls": 0,
+  "shadow_bytes": 1796793280,
+  "shadow_calls": 161
+ },
+ "external_encoding": {
+  "candidate_seconds": 3.5882504800002835,
+  "legacy_seconds": 40.483680800000116,
+  "mismatches": 0,
+  "mode": "shadow",
+  "prepacked_legacy_calls": 0,
+  "shadow_bytes": 310541320,
+  "shadow_calls": 12
+ }
+}

@@ -484,8 +484,9 @@ def _write_json(path, value):
 
 def load_or_compute(rows_dir):
     """The findings beside the rows when they were computed by this FORMAT from the sidecar as it is now (its bytes and
-    mtime unchanged); else computed again (a findings file written before the sidecar existed, by a failed pass or
-    by another FORMAT is never reused)."""
+    mtime unchanged, or the moved file's complete source claim still holds); else computed again. A findings file
+    written before the sidecar existed, by a failed pass or by another FORMAT is never reused. The retained findings
+    and their original source stat/pins stay unchanged when a verified move changes filesystem metadata."""
     import frankie_box_teacher_rows as TR
     path = Path(rows_dir) / FINDINGS_FILE
     if path.is_file():
@@ -493,9 +494,25 @@ def load_or_compute(rows_dir):
             body = json.loads(path.read_bytes())
         except ValueError:
             body = None
-        if (isinstance(body, dict) and body.get('status') == 'computed' and body.get('format') == FORMAT
-                and (body.get('sidecar') or {}).get('stat') == _sidecar_stat(TR.sidecar_of(rows_dir))):
-            return body
+        if isinstance(body, dict) and body.get('status') == 'computed' and body.get('format') == FORMAT:
+            side = TR.sidecar_of(rows_dir)
+            source = body.get('sidecar') or {}
+            if source.get('stat') == _sidecar_stat(side):
+                return body
+            try:
+                import frankie_box_brain as B
+                from research.kalshi.frankie_boss.operations.ingest_block_sources import claim_still_holds
+                stat = side.stat()
+                identity = (stat.st_ino, stat.st_size, stat.st_mtime_ns)
+                for directory in dict.fromkeys((Path(rows_dir), side.resolve().parent)):
+                    claim = B.file_claims(directory).get(identity)
+                    if (claim is not None and claim.get('sha256') == source.get('sha256')
+                            and claim.get('bytes') == source.get('bytes')
+                            and Path(claim.get('path', '')).resolve() == side.resolve()
+                            and claim_still_holds(claim, side) is not None):
+                        return body
+            except (OSError, ValueError, ImportError):
+                pass                    # no matching complete-source witness: the existing full pass
     return compute(rows_dir)
 
 
@@ -865,6 +882,15 @@ def account_md(receipt, rows_dir, source_receipt):
 
 
 def publish(rows_dir, day):
+    """One owner publishes a day's teacher account; concurrent consumers reuse its completed findings."""
+    import fcntl
+    rows_dir = Path(rows_dir)
+    with (rows_dir / '.teacher-account-publication.lock').open('a') as lock:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+        return _publish(rows_dir, day)
+
+
+def _publish(rows_dir, day):
     """Write teacher-findings.json, teacher-account.json and teacher-account.md beside the teacher's rows; returns
     their paths (the brain entry <day>-teacher-account carries them). Never raises for the data: a failure is written
     into teacher-account.json and the md with its reason."""

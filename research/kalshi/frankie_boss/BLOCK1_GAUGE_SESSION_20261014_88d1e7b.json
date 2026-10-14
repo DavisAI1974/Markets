@@ -1,0 +1,292 @@
+{
+ "answer_report": {
+  "components": 19,
+  "consistent": true,
+  "novel_findings": 34,
+  "observations": 30172,
+  "pairs": 171,
+  "schema": "FRANKIE_BOX_CLASSROOM_V1",
+  "unresolved_questions": 17
+ },
+ "block": 1,
+ "clock_range": [
+  1697580000000000000,
+  1697580300000000000
+ ],
+ "components": 19,
+ "cursor_range": [
+  0,
+  1588
+ ],
+ "day": "20231018",
+ "day_end": [
+  {
+   "piece": "learner reading (SOCRATIC / VERIFY)",
+   "why": "these modes read Frankie's own walk of the whole sealed journal (frankie_box_classroom_reader.read_day); a block session in those modes is listed, not run"
+  },
+  {
+   "piece": "shared market context and the native entry arithmetic (K.market_context)",
+   "why": "one full ordered read of the shared market timeline to the day's last anchor picture; the block answers take the second set at the block's anchors instead"
+  },
+  {
+   "piece": "exhaustion/D facts (K.exhaustion_d_facts)",
+   "why": "computed from the ROOT's whole-day bedrock layers (not block-scoped data)"
+  },
+  {
+   "piece": "the teacher's account (teacher-account.json) as a lesson input",
+   "why": "written by the teacher's final publication from the whole day's second set"
+  },
+  {
+   "piece": "the brain entry <day>-cycle-00",
+   "why": "one entry per day (R16: a second entry of the same day declines); each block's checked lesson is kept in blocks/<n>/brain-update.json for it and the entry is published once the day's classroom completes"
+  },
+  {
+   "piece": "Jev's material, the exchange, the meeting, the school and the day reports",
+   "why": "per day after the last block (they read the complete teacher publication)"
+  }
+ ],
+ "evidence_encoding": {
+  "candidate_seconds": 5.191127789999655,
+  "legacy_seconds": 13.868716973000119,
+  "mismatches": 0,
+  "mode": "shadow",
+  "prepacked_legacy_calls": 0,
+  "shadow_bytes": 1796793280,
+  "shadow_calls": 161
+ },
+ "external": {
+  "cutoff_ns": 1697580291013992434,
+  "evidence_encoding": {
+   "candidate_seconds": 3.5882504800002835,
+   "legacy_seconds": 40.483680800000116,
+   "mismatches": 0,
+   "mode": "shadow",
+   "prepacked_legacy_calls": 0,
+   "shadow_bytes": 310541320,
+   "shadow_calls": 12
+  },
+  "history_entries": 0,
+  "process": {
+   "cpu_seconds": 87.967,
+   "wall_seconds": 77.146
+  },
+  "runs_in": {
+   "pid": 2490,
+   "runs_in": "forked child"
+  },
+  "seconds": {
+   "external.answers": 43.751,
+   "external.grade_correction": 3.769,
+   "external.render_md": 0.003,
+   "external.section": 29.503
+  },
+  "section": "052d6fe90ba24d753b3029388105d812ea6644e307e755e0959913f310caecc7",
+  "status": "complete"
+ },
+ "history_entries": 0,
+ "key_rule": "built from block 1's rows with the day's functions (build_teacher_key + the re-pin); never from Frankie's findings",
+ "lesson_seconds": {
+  "block_read": 2.838,
+  "second_set_lesson": 8.551
+ },
+ "listed": [],
+ "mode": "TEACH",
+ "previous": null,
+ "rows": 1588,
+ "schema": "FRANKIE_CLASSROOM_BLOCK_SESSION_V1",
+ "second_set_resolver": {
+  "counts": {
+   "from_cache": 563,
+   "indexed_seeks": 77,
+   "lines_read": 13489,
+   "re_reads": 0,
+   "resolved": 197,
+   "unresolved": 0
+  },
+  "note": "resolved 197 plane rows (563 from the step cache, 0 unresolved, 0 re-reads from a file start)",
+  "rule": "each reference read from its pinned stream file by its row; values are read, never copied into the teacher rows; an unreadable reference is listed with its reason",
+  "unresolved_reasons": {}
+ },
+ "seconds": 90.85,
+ "source_snapshot_hash": "ef86f5125f712bc350dd567a213e47f17ace1aaba15e7431cad3c0d9bb5ed429",
+ "status": "complete",
+ "steps": {
+  "acknowledgement_completion": 0.0,
+  "answer_files": 0.0,
+  "answers_components": 5.314,
+  "answers_summary": 0.003,
+  "assembly_validation": 3.298,
+  "brain_update": 0.0,
+  "correction_answer": 0.004,
+  "correction_check": 0.0,
+  "correction_request": 0.01,
+  "external.join_wait": 52.048,
+  "external.start": 0.006,
+  "grade_files": 0.0,
+  "imports": 0.111,
+  "initial_grade": 8.561,
+  "key_pre_message_binding": 7.708,
+  "knowledge_school_checks": 0.003,
+  "learner_inputs": 0.126,
+  "model_visible": 1.324,
+  "novel_findings": 0.002,
+  "novelty_investigation": 0.02,
+  "package_files": 0.0,
+  "previous_history": 0.0,
+  "relationship_crosscheck": 0.937,
+  "render_classroom_md": 1.384,
+  "render_transcript_md": 1.664,
+  "request_digest": 0.067,
+  "second_set_context": 0.0,
+  "second_set_load": 0.219,
+  "snapshot": 1.903,
+  "store_close": 0.088,
+  "store_open": 0.0,
+  "store_writes": 4.795,
+  "teacher_report": 0.262,
+  "transcript_sha": 1.255
+ },
+ "steps_rule": "wall seconds per step as it ran (instrumentation only); store_writes = every _block_dump; session.json itself is written after this record",
+ "store": {
+  "bytes_referenced_again": 1152623784,
+  "bytes_written": 604513824,
+  "file": "store.jsonl",
+  "index": "store.index.jsonl",
+  "min_bytes": 16384,
+  "parts": 272,
+  "rule": "every part of at least min_bytes compact JSON written once; the files hold it by reference (block_load resolves)",
+  "text_bytes_reused": 1131323172,
+  "text_bytes_serialized": 565946038,
+  "text_serializations_reused": 40
+ },
+ "teacher_as_of": 1697580291013992434,
+ "teacher_key_hash": "1a24ef3d8d20913d2215ec79ab399597664660eeef494f77119e3ed009f7e4d9",
+ "written": {
+  "TEACHER_REPORT.md": "/opt/frankie-box/gauge-block1/88d1e7b-20261014T055854Z/88d1e7b8-20261014T055855Z/blocks/1/TEACHER_REPORT.md",
+  "acknowledgement": {
+   "bytes": 485,
+   "path": "/opt/frankie-box/gauge-block1/88d1e7b-20261014T055854Z/88d1e7b8-20261014T055855Z/blocks/1/acknowledgement.json",
+   "sha256": "a06220a0878916047b2f0074f58a63bac095bb95058f77e268e17ad67c878e90"
+  },
+  "brain-update": {
+   "bytes": 4559,
+   "path": "/opt/frankie-box/gauge-block1/88d1e7b-20261014T055854Z/88d1e7b8-20261014T055855Z/blocks/1/brain-update.json",
+   "sha256": "df77c0f8cb783fda86c398cb78246e65597423de10770d0bf7d99afce874ead1"
+  },
+  "classroom-external.md": {
+   "bytes": 1481171,
+   "file": "classroom-external.md",
+   "renderer": "dipole_classroom_external.render_markdown",
+   "rule": "rendered on request from the stored answers (block_render(<block dir>, 'classroom-external.md')); not written",
+   "sha256": "75a7d5c4340207cfa7c48089425810d755582412344fd6b8623d42d7537463a4",
+   "written": false
+  },
+  "classroom.md": {
+   "bytes": 522816799,
+   "file": "classroom.md",
+   "renderer": "frankie_box_classroom.render_markdown",
+   "rule": "rendered on request from the stored answers (block_render(<block dir>, 'classroom.md')); not written",
+   "sha256": "56af04b4c0997ac56bdfa1c7b8a580f0b61d8fbe4844ef0905f667e9e37e06e4",
+   "written": false
+  },
+  "code-answers": {
+   "bytes": 20738,
+   "path": "/opt/frankie-box/gauge-block1/88d1e7b-20261014T055854Z/88d1e7b8-20261014T055855Z/blocks/1/code-answers.json",
+   "sha256": "3a339819f239e2ef9341be01cac6d75205bc2e830d3b8e94c16c577633ec8fc5"
+  },
+  "completion": {
+   "bytes": 1153,
+   "path": "/opt/frankie-box/gauge-block1/88d1e7b-20261014T055854Z/88d1e7b8-20261014T055855Z/blocks/1/completion.json",
+   "sha256": "c2aad1e20a0935da9c0a493b1b50fe6c89de9b161f5c45517d99635752286214"
+  },
+  "correction-request": {
+   "bytes": 1721,
+   "path": "/opt/frankie-box/gauge-block1/88d1e7b-20261014T055854Z/88d1e7b8-20261014T055855Z/blocks/1/correction-request.json",
+   "sha256": "61516712f00fff981eaf8c46fe477e055b311db510411a18ec2bd46b03aac7cb"
+  },
+  "correction-response": {
+   "bytes": 659,
+   "path": "/opt/frankie-box/gauge-block1/88d1e7b-20261014T055854Z/88d1e7b8-20261014T055855Z/blocks/1/correction-response.json",
+   "sha256": "afee918421136b407f40a73f24961777b1a9e89fed3b554e46c96b6df63f9c5b"
+  },
+  "external-acknowledgement": {
+   "bytes": 485,
+   "path": "/opt/frankie-box/gauge-block1/88d1e7b-20261014T055854Z/88d1e7b8-20261014T055855Z/blocks/1/external-acknowledgement.json",
+   "sha256": "06b7d1f2dadd9bb9616ec08c8feeac1da6a7a30e452563bfe72d74d954a3febc"
+  },
+  "external-code-answers": {
+   "bytes": 12184,
+   "path": "/opt/frankie-box/gauge-block1/88d1e7b-20261014T055854Z/88d1e7b8-20261014T055855Z/blocks/1/external-code-answers.json",
+   "sha256": "5116a3b1acc7ed0fb15fd6f88e2aa050c3e224aa03d719649a6c7b2612de2397"
+  },
+  "external-completion": {
+   "bytes": 1122,
+   "path": "/opt/frankie-box/gauge-block1/88d1e7b-20261014T055854Z/88d1e7b8-20261014T055855Z/blocks/1/external-completion.json",
+   "sha256": "02494471e6335fd58880637222b878b7db9fe2686660813ec603639ddfc6e1c5"
+  },
+  "external-correction-request": {
+   "bytes": 9769,
+   "path": "/opt/frankie-box/gauge-block1/88d1e7b-20261014T055854Z/88d1e7b8-20261014T055855Z/blocks/1/external-correction-request.json",
+   "sha256": "f5f189a36f2c13cab210ab05709e92a0a258912322ef2c2fad4a5f9503760874"
+  },
+  "external-correction-response": {
+   "bytes": 659,
+   "path": "/opt/frankie-box/gauge-block1/88d1e7b-20261014T055854Z/88d1e7b8-20261014T055855Z/blocks/1/external-correction-response.json",
+   "sha256": "01900277477188e6e964fa390d1aabcb7168aa129e1e351efd3511bd0fe21209"
+  },
+  "external-post-grade": {
+   "bytes": 8415,
+   "path": "/opt/frankie-box/gauge-block1/88d1e7b-20261014T055854Z/88d1e7b8-20261014T055855Z/blocks/1/external-post-grade.json",
+   "sha256": "8fa849ccd483bb9a5dee073332260369a2dfe44021a1b393808b235b1887aabd"
+  },
+  "ledgers": {
+   "bytes": 17334,
+   "path": "/opt/frankie-box/gauge-block1/88d1e7b-20261014T055854Z/88d1e7b8-20261014T055855Z/blocks/1/ledgers.json",
+   "sha256": "f175734cc535182c456f5b74c224422e7df0062d19e136fb1c1e480003adf5a6"
+  },
+  "novel-findings": {
+   "bytes": 45059,
+   "path": "/opt/frankie-box/gauge-block1/88d1e7b-20261014T055854Z/88d1e7b8-20261014T055855Z/blocks/1/novel-findings.json",
+   "sha256": "b2e598d3b157d3d8ca6e5f4b8b4ab4424f91bed916cbc5199c667383b2971c12"
+  },
+  "novelty-investigation": {
+   "bytes": 417,
+   "path": "/opt/frankie-box/gauge-block1/88d1e7b-20261014T055854Z/88d1e7b8-20261014T055855Z/blocks/1/novelty-investigation.json",
+   "sha256": "3b384ff1ab81ac07fc7012968506255660bbbe29cd2b7e4095df410d762833dd"
+  },
+  "package.binding": {
+   "bytes": 870,
+   "path": "/opt/frankie-box/gauge-block1/88d1e7b-20261014T055854Z/88d1e7b8-20261014T055855Z/blocks/1/package.binding.json",
+   "sha256": "742617234806e9310b41088cba63b78575d8c8fc26f4a70c7c016dbb762ff367"
+  },
+  "package.pre_message": {
+   "bytes": 3393,
+   "path": "/opt/frankie-box/gauge-block1/88d1e7b-20261014T055854Z/88d1e7b8-20261014T055855Z/blocks/1/package.pre_message.json",
+   "sha256": "97310e1d9c72e245ef0af96600f217c0eac1abcae75f129e39d8a7975cae8ddf"
+  },
+  "package.teacher_key": {
+   "bytes": 1503,
+   "path": "/opt/frankie-box/gauge-block1/88d1e7b-20261014T055854Z/88d1e7b8-20261014T055855Z/blocks/1/package.teacher_key.json",
+   "sha256": "df60d1adaebe9b202c0fe9c5a38f3279f6d083312235153e757f96dedcf2e75f"
+  },
+  "post-grade": {
+   "bytes": 18080,
+   "path": "/opt/frankie-box/gauge-block1/88d1e7b-20261014T055854Z/88d1e7b8-20261014T055855Z/blocks/1/post-grade.json",
+   "sha256": "ad6e9b4e9d042444f819a88fa58cf6ce63c428d6101fda7a38cb24b092eb1e95"
+  },
+  "teachback": {
+   "bytes": 17228,
+   "path": "/opt/frankie-box/gauge-block1/88d1e7b-20261014T055854Z/88d1e7b8-20261014T055855Z/blocks/1/teachback.json",
+   "sha256": "965e94701879e970d68cbb40e753fbdb7fd5d80e73dbbfd9c0168ad41de4133f"
+  },
+  "transcript.md": {
+   "bytes": 534904231,
+   "file": "transcript.md",
+   "renderer": "dipole_classroom_final_review.render_final_transcript",
+   "rule": "rendered on request from the stored answers (block_render(<block dir>, 'transcript.md')); not written",
+   "sha256": "83549f6c14911be6d4a101e7de3c4c720aa8773a2d9bdfa0346c52e75fef51f5",
+   "written": false
+  }
+ },
+ "written_utc": "2026-10-14T06:00:52Z"
+}
