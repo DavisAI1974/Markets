@@ -1700,7 +1700,8 @@ class Run:
             self.require_current_teacher_inputs(key[:8])
         if stage in ('voice', 'school', 'reports') and not successor:
             self.require_current_exchange(key[:8], env)
-        full = dict(os.environ, MARKETS_SHA=self.commit, CODE_ROOT=str(self.code_root), **{k: str(v) for k, v in env.items()})
+        full = dict(os.environ, **{k: str(v) for k, v in env.items()})
+        full.update(MARKETS_SHA=self.commit, CODE_ROOT=str(self.code_root), PYTHONPATH=str(self.code_root))
         import frankie_box_hub_runtime as HR
         full.update(HR.child_environment(env))
         full.pop('FRANKIE_STAGE_CPUS', None)

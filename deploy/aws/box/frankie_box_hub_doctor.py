@@ -354,7 +354,7 @@ class Doctor:
             hub_doc = hub_doc or H._hub(self.hub_dir)
             ctx = _Context(hub_dir=str(self.hub_dir), piece=piece, run=str(hub_doc.get('run') or ''),
                            day=str(hub_doc.get('day') or ''), round=str(hub_doc.get('round')),
-                           python=sys.executable, box=str(HERE))
+                           python=sys.executable, box=str(Path(_code_root()) / 'deploy/aws/box'))
             argv = [a.format_map(ctx) for a in spec['argv']]
             env = {k: v.format_map(ctx) for k, v in (spec.get('env') or {}).items()}
         except (DoctorError, ValueError, IndexError, KeyError) as error:

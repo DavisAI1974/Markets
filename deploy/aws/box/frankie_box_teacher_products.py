@@ -423,6 +423,231 @@ def _source_state(path):
                 ctime_ns=st.st_ctime_ns, tail_sha256=tail)
 
 
+def indexed_second_set(rows_dir):
+    """Index an old publication once; retain its pickle and every scientific value.
+
+    The native joined format is returned directly. Legacy conversion uses the
+    existing independently hashed records and immutable manifest-last writer.
+    A chmod is not a data revision; inode/size/mtime/tail and the saved hash are.
+    """
+    rows_dir = Path(rows_dir)
+    native = rows_dir / JOINED_FILE
+    if native.is_file():
+        return native
+    legacy = rows_dir / 'teacher-second-set.pkl'
+    state = _source_state(legacy)
+    state.pop('ctime_ns')
+    state.pop('device', None)
+    with legacy.open('rb') as handle:
+        state['body_sha256'] = handle.read(64).decode('ascii')
+    key = hashlib.sha256(json.dumps(state, sort_keys=True).encode()).hexdigest()
+    directory = rows_dir / 'shared-products' / 'indexed-second-set' / key
+    directory.mkdir(parents=True, exist_ok=True)
+    target = directory / JOINED_FILE
+    with (directory / 'publication.lock').open('a+b') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        if target.is_file():
+            return target
+        header, records = load_joined(legacy)
+        identity = dict(legacy_source=state, format='retained-second-set-index-v1')
+        parts = []
+        for start in range(0, len(records), 4096):
+            stop = min(start + 4096, len(records))
+            path = directory / ('records-%012d-%012d.json' % (start, stop))
+            pin = _record_product(path, dict(identity, start=start, stop=stop),
+                                  (records[i] for i in range(start, stop)), stop - start)
+            parts.append(dict(start=start, stop=stop, pin=pin))
+        after = _source_state(legacy)
+        after.pop('ctime_ns')
+        after.pop('device', None)
+        if after != {k: v for k, v in state.items() if k != 'body_sha256'}:
+            raise ValueError('legacy second set changed during indexing; partial products retained')
+        publish_joined(target, header, parts, identity=identity)
+    return target
+
+
+SIDECAR_SECTIONS_SCHEMA = 'FRANKIE_TEACHER_SIDECAR_SECTIONS_V1'
+
+
+def _sidecar_section_source(rows_dir):
+    """A current complete-source claim, never a speculative whole-file rehash."""
+    import frankie_box_teacher_rows as TR
+    from research.kalshi.frankie_boss.operations.ingest_block_sources import claim_still_holds
+    side = TR.sidecar_of(rows_dir)
+    for directory in dict.fromkeys((Path(rows_dir), side.resolve().parent)):
+        claims = directory / 'file-claims.jsonl'
+        if not claims.is_file():
+            continue
+        for line in claims.read_text().splitlines():
+            claim = json.loads(line)
+            if (Path(claim.get('path', '')).resolve() == side.resolve()
+                    and claim_still_holds(claim, side) is not None):
+                return claim
+    raise ValueError('second-set sections require the current complete sidecar source claim; '
+                     'no full-sidecar fallback: ' + str(side))
+
+
+def ensure_sidecar_sections(rows_dir):
+    """Reconstruct exact published bytes from retained typed data, without reading the sidecar.
+
+    Every block and the complete reconstructed byte stream must match their
+    existing pins before the section manifest is visible. No teacher calculation
+    is rerun. Each original block lock, JSON type, field and row is preserved.
+    A source revision selects a different generation; old generations survive.
+    """
+    import frankie_box_teacher_rows as TR
+    rows_dir = Path(rows_dir)
+    source = _sidecar_section_source(rows_dir)
+    directory = rows_dir / 'shared-products' / 'sidecar-sections' / source['sha256']
+    directory.mkdir(parents=True, exist_ok=True)
+    target = directory / 'sections.json'
+    with (directory / 'publication.lock').open('a+b') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        if target.is_file():
+            body = _read_json(target)
+            if body.get('schema') != SIDECAR_SECTIONS_SCHEMA or body['source']['sha256'] != source['sha256']:
+                raise ValueError('retained sidecar sections belong to another publication')
+            return target
+        manifest = TR.blocks(rows_dir)
+        if not manifest or not manifest.get('complete') or manifest['pins']['rows_sidecar'] != source['sha256']:
+            raise ValueError('sidecar sections require the exact completed sealed-block publication')
+        import frankie_box_experiment_teacher as TE
+        from research.kalshi.frankie_boss import teacher_second_set as SS
+        native = indexed_second_set(rows_dir)
+        header, records = load_joined(native)
+        side = TR.sidecar_of(rows_dir)
+        with side.open('rb') as handle:
+            raw_header = handle.readline()
+        if hashlib.sha256(raw_header).hexdigest() != manifest['header']['sha256']:
+            raise ValueError('sidecar header differs from the sealed-block pin')
+        side_header = json.loads(raw_header)
+        fields = list(side_header['row_keys'])
+        if len(fields) != len(set(fields)) or any(k.startswith('_') for k in fields):
+            raise ValueError('ambiguous sidecar section field names')
+        snapshots = TR.RowsStream(rows_dir / TR.ROWS_FILE)
+        snapshot_iter, record_iter = iter(snapshots), iter(records)
+        record_index, record = -1, None
+        digest, size, total = hashlib.sha256(raw_header), len(raw_header), 0
+        parts = {key: [] for key in ['_first', '_identity'] + fields}
+        cursors = []
+        identity = dict(sidecar_sha256=source['sha256'], format=SIDECAR_SECTIONS_SCHEMA)
+        for n in range(1, len(manifest['blocks']) + 1):
+            block = TR.block_record(rows_dir, n, manifest)
+            paths = {key: directory / ('block-%04d-%02d.json' % (n, i)) for i, key in enumerate(parts)}
+            writers = {key: (None if path.is_file() else RecordWriter(path, dict(identity, block=n, field=key)))
+                       for key, path in paths.items()}
+            block_hash, block_size, start = hashlib.sha256(), 0, total
+            try:
+                for _ in range(block['sidecar']['lines']):
+                    row = next(snapshot_iter)
+                    cursor = row['cursor']
+                    if type(cursor) is not int or cursor < record_index:
+                        raise ValueError('snapshot rows are not in retained adapter order')
+                    while record_index < cursor:
+                        record = next(record_iter)
+                        record_index += 1
+                    if record['key']['adapter_cursor'] != cursor:
+                        raise ValueError('second-set record cursor differs from its retained snapshot')
+                    raw = TE._sidecar_line(row, record, record['book'], header['entries_carried'],
+                                           block['teacher_as_of'], SS)
+                    block_hash.update(raw)
+                    digest.update(raw)
+                    block_size += len(raw)
+                    size += len(raw)
+                    doc = json.loads(raw)  # original JSON lists/scalars, never typed-pickle substitutes
+                    values = {'_first': dict(order=list(doc), values={k: v for k, v in doc.items() if k not in fields}),
+                              '_identity': {k: doc.get(k) for k in ('cursor', 'target_hash', 'ts_recv_ns')}}
+                    values.update((key, (key in doc, doc.get(key))) for key in fields)
+                    for key, writer in writers.items():
+                        if writer is not None:
+                            writer.append(values[key])
+                    cursors.append(cursor)
+                    total += 1
+                if (block_hash.hexdigest() != block['sidecar']['sha256']
+                        or block_size != block['sidecar']['bytes'][1] - block['sidecar']['bytes'][0]):
+                    raise ValueError('reconstructed second set differs from sealed block %d; nothing published' % n)
+                for key, writer in writers.items():
+                    pin = (writer.finish() if writer is not None else
+                           _record_product(paths[key], dict(identity, block=n, field=key), (), total - start))
+                    parts[key].append(dict(start=start, stop=total, pin=pin))
+                import sys
+                print('SIDECAR_SECTIONS block=%d rows=%d reconstructed_bytes=%d' % (n, total, size), file=sys.stderr, flush=True)
+            finally:
+                for writer in writers.values():
+                    if writer is not None:
+                        writer.close()
+        if next(snapshot_iter, None) is not None:
+            raise ValueError('snapshot has rows beyond the sealed sidecar')
+        if (digest.hexdigest() != source['sha256'] or size != source['bytes']
+                or snapshots.sha256 != manifest['pins']['rows_file']['sha256']):
+            raise ValueError('reconstructed publication differs from its original complete-source pins')
+        if _sidecar_section_source(rows_dir)['sha256'] != source['sha256']:
+            raise ValueError('sidecar source changed during section publication')
+        cursor_pin = _record_product(directory / 'cursors.json', identity, [cursors], 1)
+        _write_json(target, dict(schema=SIDECAR_SECTIONS_SCHEMA, source=source,
+            header=side_header, rows=total, fields=fields, columns=parts, cursors=cursor_pin,
+            reconstructed_bytes=size, reconstructed_sha256=digest.hexdigest(),
+            snapshot_sha256=snapshots.sha256, typed_publication=str(native)))
+    return target
+
+
+class SidecarSections:
+    """Original sidecar values from shared columns; a cutoff seeks one row."""
+    def __init__(self, rows_dir):
+        self.rows_dir = Path(rows_dir)
+        self.path = ensure_sidecar_sections(rows_dir)
+        self.manifest = _read_json(self.path)
+        self.header = self.manifest['header']
+        self.rows = self.manifest['rows']
+        self._columns = {}
+
+    def column(self, name):
+        if name not in self._columns:
+            self._columns[name] = JoinedRecords(dict(rows=self.rows, parts=self.manifest['columns'][name]))
+        return self._columns[name]
+
+    def _selection(self, select):
+        if select is None:
+            return ['_first'] + self.manifest['fields']
+        return ['_identity'] + [k for k in self.manifest['fields'] if k in select]
+
+    def _row(self, names, values, select):
+        columns = dict(zip(names, values))
+        if select is None:
+            first = columns.pop('_first')
+            row = dict(first['values'])
+        else:
+            row = dict(columns.pop('_identity'))
+        row.update((k, value) for k, (present, value) in columns.items() if present)
+        return ({k: row[k] for k in first['order']} if select is None else
+                {k: v for k, v in row.items() if k in select})
+
+    def iterate(self, select=None):
+        names = self._selection(select)
+        for values in zip(*(iter(self.column(k)) for k in names), strict=True):
+            yield self._row(names, values, select)
+
+    def block(self, number, select=None):
+        names = self._selection(select)
+        for values in zip(*(iter(self.column(k)._store(number - 1)) for k in names), strict=True):
+            yield self._row(names, values, select)
+
+    def at(self, ordinal, select=None):
+        names = self._selection(select)
+        return self._row(names, [self.column(k)[ordinal] for k in names], select)
+
+    def cutoff(self, through_cursor, select=None):
+        pin = self.manifest['cursors']
+        cursors = RecordStore(pin['path'], pin=pin)[0]
+        last, after = None, 0
+        for index, cursor in enumerate(cursors):
+            if type(cursor) is int and cursor <= through_cursor:
+                last = index
+            else:
+                after += 1
+        return (None if last is None else self.at(last, select)), after
+
+
 def _key_identity(snapshot, previous):
     return dict(source_snapshot_hash=snapshot['source_snapshot_hash'],
                 teacher_attachment_hash=snapshot['teacher_attachment_hash'],

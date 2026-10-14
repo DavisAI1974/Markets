@@ -266,14 +266,11 @@ class SidecarStream:
         self._open()
 
     def _open(self):
-        self._handle = self.path.open('rb')
-        line = self._handle.readline()
-        self._digest.update(line)
-        self._size += len(line)
-        self.header = json.loads(line)
-        if self.header.get('schema') != SIDECAR_SCHEMA:
-            self._handle.close()
-            raise ValueError('%s is not a %s (schema %s)' % (self.path, SIDECAR_SCHEMA, self.header.get('schema')))
+        # Whole-publication consumers share exact source-bound columns. A missing
+        # or changed publication must prepare those columns, never replay JSONL.
+        import frankie_box_teacher_products as TP
+        self._sections = TP.SidecarSections(self.path.parent)
+        self.header = self._sections.header
 
     def fields(self, name):
         """A name list of the header (row_keys, key_fields, clock_fields, plane_reference), else the fallback."""
@@ -287,20 +284,27 @@ class SidecarStream:
 
     def __iter__(self):
         try:
-            for line in self._handle:
-                self._digest.update(line)
-                self._size += len(line)
-                row = json.loads(line)
+            for row in self._sections.iterate(self.select):
                 self.rows += 1
-                yield row if self.select is None else {k: v for k, v in row.items() if k in self.select}
+                yield row
+            self._complete()
         finally:
             self.close()
 
+    def _complete(self):
+        source = self._sections.manifest['source']
+        self.sha256, self.bytes = source['sha256'], source['bytes']
+        self.rows = self._sections.rows
+
+    def cutoff(self, through_cursor):
+        row, after = self._sections.cutoff(through_cursor)
+        self._complete()
+        return row, after
+
     def close(self):
-        if self._handle is not None:
-            self._handle.close()
-            self._handle = None
-            self.sha256, self.bytes = self._digest.hexdigest(), self._size
+        # Independent record iterators own their file handles. An interrupted
+        # iteration never acquires a complete-publication measurement.
+        pass
 
     def record(self):
         return dict(path=str(self.path), bytes=self.bytes, sha256=self.sha256, rows=self.rows,
@@ -686,12 +690,15 @@ def second_set_at_cutoff(rows_dir, through_cursor, *, day_file=None, blocks=None
     inputs = _cutoff_identity(rows_dir, day_file) if blocks is None else None
     stream = SidecarStream(side) if blocks is None else BlockSidecarStream(rows_dir, blocks)
     last, after = None, 0
-    for row in stream:
-        cursor = row.get('cursor')
-        if type(cursor) is int and cursor <= through_cursor:
-            last = row
-        else:
-            after += 1
+    if blocks is None:
+        last, after = stream.cutoff(through_cursor)
+    else:
+        for row in stream:
+            cursor = row.get('cursor')
+            if type(cursor) is int and cursor <= through_cursor:
+                last = row
+            else:
+                after += 1
     record, why = _cutoff_from_row(stream, last, after, through_cursor, day_file)
     if record is not None and blocks is None and inputs == _cutoff_identity(rows_dir, day_file):
         _try_product_write(_cutoff_product(rows_dir, through_cursor, day_file), dict(inputs=inputs, record=record))
@@ -720,7 +727,10 @@ def _second_set_value(row, stream, resolver, role, entry, leaf):
 
 def second_set_field(rows_dir, role, leaf, *, entry=None, day_file=None, through_cursor=None):
     """One exact leaf per row. Multi-leaf consumers use second_set_leaf_ledgers for one shared pass."""
-    stream = SidecarStream(sidecar_of(rows_dir))
+    selected = {'cursor', ROLE_KEYS[role]}
+    if role == 'planes':
+        selected.add(ROLE_KEYS['planes_absent'])
+    stream = SidecarStream(sidecar_of(rows_dir), select=selected)
     resolver = PlaneResolver(stream.header.get('streams'), day_file=day_file) if role == 'planes' else None
     try:
         for row in stream:
@@ -787,7 +797,10 @@ def second_set_leaf_ledgers(rows_dir, names, *, through_cursor=None, day_file=No
     available, after = {name: 0 for name in specs}, 0
     last = None
     inputs = _cutoff_identity(rows_dir, day_file) if cutoff_result is not None else None
-    stream = SidecarStream(sidecar_of(rows_dir))
+    selected = {'cursor'} | {ROLE_KEYS[role] for role, entry, leaf in specs.values()}
+    if any(role == 'planes' for role, entry, leaf in specs.values()):
+        selected.add(ROLE_KEYS['planes_absent'])
+    stream = SidecarStream(sidecar_of(rows_dir), select=selected)
     resolver = PlaneResolver(stream.header.get('streams'), day_file=day_file)
     try:
         for row in stream:
@@ -819,6 +832,7 @@ def second_set_leaf_ledgers(rows_dir, names, *, through_cursor=None, day_file=No
         stream.close()
         resolver.close()
     if cutoff_result is not None:
+        last, after = stream.cutoff(through_cursor)
         record, why = _cutoff_from_row(stream, last, after, through_cursor, day_file)
         cutoff_result[:] = record, why
         if record is not None and inputs == _cutoff_identity(rows_dir, day_file):
@@ -1399,7 +1413,12 @@ def _block_range(rows_dir, record):
 def iter_block(rows_dir, n, select=None, manifest=None):
     """Block n's rows (dicts, one per sidecar line, in cursor order) from its sealed byte range, read once (the range's
     sha256 is pinned on the record, not re-checked). select: row keys to keep (None = all)."""
+    manifest = manifest if manifest is not None else blocks(rows_dir)
     record = block_record(rows_dir, n, manifest)
+    if manifest.get('complete'):
+        import frankie_box_teacher_products as TP
+        yield from TP.SidecarSections(rows_dir).block(n, select)
+        return
     path, start, end = _block_range(rows_dir, record)
     keep = None if select is None else frozenset(select)
     with path.open('rb') as handle:
@@ -1443,6 +1462,10 @@ class BlockSidecarStream(SidecarStream):
         super().__init__(self.rows_dir / self.manifest['sidecar'], select=select)
 
     def _open(self):
+        self._sections = None
+        if self.manifest.get('complete'):
+            import frankie_box_teacher_products as TP
+            self._sections = TP.SidecarSections(self.rows_dir)
         self.header = sidecar_header_of_blocks(self.rows_dir, self.manifest)
         start, end = self.manifest['header']['bytes']
         with self.path.open('rb') as handle:
@@ -1454,18 +1477,33 @@ class BlockSidecarStream(SidecarStream):
     def __iter__(self):
         for n in self.indices:
             record = block_record(self.rows_dir, n, self.manifest)
-            path, start, end = _block_range(self.rows_dir, record)
-            with path.open('rb') as handle:
+            if self._sections is not None:
+                # Reproduce the already-proved original bytes only to retain the
+                # selected-block digest; no raw sidecar range is read again.
+                lines = ((json.dumps(row, allow_nan=False) + '\n').encode()
+                         for row in self._sections.block(n))
+                handle = None
+            else:
+                path, start, end = _block_range(self.rows_dir, record)
+                handle = path.open('rb')
                 handle.seek(start)
-                at = start
-                while at < end:
-                    line = handle.readline()
-                    at += len(line)
+                def bounded():
+                    while handle.tell() < end:
+                        line = handle.readline()
+                        if not line:
+                            raise ValueError('sidecar ended inside a sealed block')
+                        yield line
+                lines = bounded()
+            try:
+                for line in lines:
                     self._digest.update(line)
                     self._size += len(line)
                     row = json.loads(line)
                     self.rows += 1
                     yield row if self.select is None else {k: v for k, v in row.items() if k in self.select}
+            finally:
+                if handle is not None:
+                    handle.close()
             self.read_blocks.append(dict(index=n, cursor_range=record['cursor_range'], clock_range=record['clock_range'],
                                          lines=record['sidecar']['lines'], sha256=record['sidecar']['sha256']))
         self.close()

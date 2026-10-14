@@ -3517,6 +3517,15 @@ def main():
                         'save ONLY); off (default) retains it exactly as before')
     p.add_argument('--release-reason', help='save --release-booking on: the recorded reason')
     a = p.parse_args()
+    if a.code_root:
+        selected = Path(a.code_root).resolve()
+        entrypoint = selected / 'deploy/aws/box/frankie_box_frankie_queue.py'
+        if entrypoint != Path(__file__).resolve():
+            # Switch the interpreter before any resume, ownership mutation or
+            # local import; --code-root alone cannot replace loaded Python code.
+            env = dict(os.environ, CODE_ROOT=str(selected), PYTHONPATH=str(selected),
+                       PYTHONDONTWRITEBYTECODE='1', PYTHONNOUSERSITE='1')
+            os.execve(sys.executable, [sys.executable, '-B', str(entrypoint), *sys.argv[1:]], env)
     if a.action == 'doctor-recover':
         import re
         if not (a.run and re.fullmatch('[A-Za-z0-9_-]{1,64}', a.run) and
