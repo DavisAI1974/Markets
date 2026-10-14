@@ -6,7 +6,8 @@ READ FIRST: research/kalshi/frankie_boss/CODEX_HANDOFF_20261014_SESSION13.md (co
 Detail log: research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261009_SESSION13.md (newest at top).
 
 STATE (read on the box 2026-10-14 01:2xZ, read-only): box i-035994afa8bdf66a5 (r7i.16xlarge, us-east-1, SSM only)
-is STOPPED, KeepRunning=false; nothing else running in any region. Its two 2 TB disks still bill (~$11/day).
+is STOPPED, KeepRunning=false; nothing else running in EC2. All data-holding disks, snapshots and S3 are KEPT (Greg),
+about $1,000/month in total; the inventory is in the handoff section 0. Lightsail Od-discovery and market_watch kept running.
 - Teacher DONE: published 2026-10-10 20:18Z, 47 blocks, all 771,787 rows, receipt; teacher account written.
 - ROOT finish DONE 23:54Z. All 47 classroom block lessons DONE.
 - Whole-day classroom SAVED after its first phase ("package", 1.7 h) on a stop request at 00:09Z on 2026-10-11;
@@ -19,7 +20,8 @@ GREG (2026-10-14): "We were only supposed to be doing small slice checks for tim
 this??" (not important now). So: do NOT start the box or resume anything without his word; ask him first whether he
 wants this day's day-end finished or small timing-slice checks.
 
-IF HE SAYS FINISH THE DAY: start the box, tag KeepRunning=true, swapon -p -1 /opt/frankie-box/archive/swapfile,
+IF HE SAYS FINISH THE DAY: first raise the main box's two disks back to their run speed (root 16000 IOPS/1250 MB/s,
+archive 10000/1000; lowered to the free baseline on 2026-10-14 to save money), start the box, tag KeepRunning=true, swapon -p -1 /opt/frankie-box/archive/swapfile,
 find what requested the 00:09Z stop, then ACTION=resume (commands in the handoff section 7). Watch it throughout;
 stop the box the moment it is done or if access is lost.
 

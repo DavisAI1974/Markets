@@ -16,6 +16,19 @@ enough on its own. All times are UTC (Z). Nothing in here is a guess unless it s
 - Greg, 2026-10-14, on seeing this: "We were only supposed to be doing small slice checks for timing why did we get
   here doing all this??" He said it is not important now. Read it as his intent: before any long run, confirm with him
   whether he wants the full day or small timing slices. Do NOT start the box or resume the day without his word.
+- WHAT STILL BILLS (account inventory 2026-10-14; Greg: keep anything whose removal would lose data, keep both
+  Lightsail servers, he will find a permanent solution later). Nothing is running in EC2. Kept, all holding data:
+  us-east-1 volumes `vol-0d36715924f03b86c` and `vol-004b68c077be09cc9` (the main box's root and archive, 2 TB each),
+  `vol-0fbf7bc0991bc8e39` (2 TB, on the stopped `i-0d17573dbce871520` frankie-linux-r7i4xl), two UNATTACHED 2 TB
+  volumes `vol-0c53052c4a6b38bfe` and `vol-0025eb0f8dc9d97b9` (content not checked), two 2 TB snapshots from Oct 8;
+  us-east-2 `vol-05a0b1e56f8c16478` (300 GB, stopped `i-08cee7171c0a76a04` markets-year-pull-v2) and two snapshots;
+  S3 `bento-568968024170-us-east-2-an` (623 GB market data), `frankie-granite42-568968024170-us-east-1` (113 GB),
+  `frankie-archive-568968024170-us-east-1` (empty); Lightsail `Od-discovery` and `market_watch` (us-east-2, running).
+  Roughly $1,000-1,100 a month in total, almost all of it the ten-plus TB of gp3 disks.
+- DISK SPEED LOWERED (2026-10-14, no data touched): the main box's two volumes were set to 16,000 IOPS / 1,250 MB/s
+  (root) and 10,000 IOPS / 1,000 MB/s (archive); both are now the free gp3 baseline 3,000 IOPS / 125 MB/s (saves about
+  $180/month). BEFORE ANY RUN ON THAT BOX, raise them back with `ModifyVolume` (same values), or ROOT, the teacher and
+  the classroom will run far slower. A volume can be modified once every 6 hours.
 - The day's state as read on the box is in section 4. The teacher and ROOT are DONE; the whole-day classroom is SAVED
   after its first phase; Jev, exchange, meeting, school and day reports have NOT run.
 - AWS access: the AWS connector worked again on 2026-10-14. If it fails for you, Greg re-authorizes it, or the keys go
