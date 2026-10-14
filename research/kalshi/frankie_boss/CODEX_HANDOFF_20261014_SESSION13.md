@@ -1,5 +1,16 @@
 # CODEX HANDOFF, 2026-10-14: the first full Frankie day (a2/20231018): teacher and ROOT done, day-end saved, box stopped
 
+**Latest scope correction, October 14 at 01:21–01:29 ET:** Greg directs us to
+Claude's existing five-minute block-1 gauge **with our updated efficiency code**.
+Read `BLOCK1_GAUGE_SCOPE_20261014.md`. Stage the selected current branch commit
+before measurement; the old deployed code is not the measurement target.
+Ingest/ROOT continuation waits until the one-day run is underway, and 30-day
+changes remain deferred. The combined ingest/ROOT timing leg below is historical,
+not a prerequisite for the current gauge. Unfinished continuation and replacement
+gauge source are preserved on separate local draft branches named in that scope.
+The updated published implementation remains intact. No test, deployment, AWS
+start or saved-a2 resume occurred; each still needs the applicable explicit go.
+
 Written by Claude at the end of session 13 for Codex (or a fresh Claude). Greg's usage is low; this file is meant to be
 enough on its own. All times are UTC (Z). Nothing in here is a guess unless it says "unknown" or "expected".
 

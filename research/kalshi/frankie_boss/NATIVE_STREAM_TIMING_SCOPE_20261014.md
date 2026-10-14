@@ -1,5 +1,11 @@
 # Native provenance and the single small timing run
 
+**Superseded timing scope, October 14 at 01:21–01:29 ET:** Greg's current test is
+Claude's existing block-1 gauge with our updated code. See
+`BLOCK1_GAUGE_SCOPE_20261014.md`. Ingest/ROOT work and the combined streaming test
+below are deferred until the one-day run is underway. Keep this design for that
+continuation; it is not a blocker for the current five-minute classroom gauge.
+
 Status: source-built provenance; runtime unverified; AWS start NOT authorized.
 This is the scope for Greg's next timing decision, not a launch instruction.
 The operational state and saved-day paths remain in CODEX_HANDOFF_20261014_SESSION13.md.
