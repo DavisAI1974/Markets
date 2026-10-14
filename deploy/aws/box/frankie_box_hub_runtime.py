@@ -75,6 +75,52 @@ def active_pid(operation):
     return None
 
 
+def voice_passed(receipt):
+    """The queue's existing nonblocking meeting contract, shared with the hub."""
+    from frankie_box_experiment import FINISHED
+    return bool(receipt and (receipt.get('status') in FINISHED or (
+        receipt.get('status') == 'waiting' and receipt.get('non_blocking')
+        and receipt.get('meeting_status') in ('refused', 'inputs_only', 'runtime_failed', 'remote_pending'))))
+
+
+def owner_finished(runtime):
+    """Only the exact native owner can declare the day terminal.
+
+    Reports may exist before a correction finishes, and some native routes do
+    not publish a reports hub operation. Neither fact is a completion signal.
+    """
+    owner = runtime.get('owner') or {}
+    if not all(owner.get(k) for k in ('run', 'day', 'attempt')):
+        return False
+    marker = runtime.get('marker') or owner.get('marker')
+    if marker and Path(marker).exists():
+        return False
+    operations = runtime.get('operations') or {}
+    for operation in operations.values():
+        if (operation.get('status') != 'complete' or operation.get('recovery_pending')
+                or operation.get('blocked_signature') or operation.get('changed_inputs')
+                or active_pid(operation) is not None):
+            return False
+        if any(operations.get(piece, {}).get('signature') != signature
+               for piece, signature in (operation.get('inputs') or {}).items()):
+            return False
+    queue = Path('/opt/frankie-box/work/frankie-queue/root.json')
+    for path in runtime.get('recovery_watch', []):
+        if Path(path).name == 'root.json':
+            queue = Path(path)
+            break
+    document = H._load(queue) or {}
+    entries = [entry for entry in document.get('entries', [])
+               if entry.get('run') == owner['run'] and entry.get('day') == owner['day']]
+    if len(entries) != 1:
+        return False
+    entry = entries[0]
+    return ((entry.get('owner') or {}).get('attempt') == owner['attempt']
+            and entry.get('state') == 'done'
+            and (entry.get('finish') or {}).get('state') == 'finished'
+            and not entry.get('save_request'))
+
+
 def attach_child(pid):
     reader = getattr(_LOCAL, 'reader', None)
     if not reader:
@@ -294,6 +340,7 @@ def _native_publications(stage, source, receipt):
         for name, pin in (document.get('shared_market_sources') or {}).items():
             if (pin or {}).get('status') != 'absent':
                 pinned('ROOT ' + name + ' spool', pin, root)
+        pinned('ROOT INPUT spool', (derive.get('rows') or {}).get('record_spool'), root)
         native = derive.get('bedrock') if isinstance(derive.get('bedrock'), dict) else {}
         for name, pin in (native.get('ledgers') or {}).items():
             pinned('ROOT native ledger ' + name, pin, root)
@@ -382,7 +429,7 @@ def _native_publications(stage, source, receipt):
             else:
                 file('exchange ' + name, directory / name)
         brain(document.get('brain_entry'), 'exchange knowledge')
-    elif stage == 'voice':
+    elif stage == 'voice' and receipt.get('status') in ('done', 'reused'):
         directory = Path(source['meeting'])
         document = S._json(directory / 'receipt.json') or {}
         file('exchange meeting meeting.json', directory / 'meeting.json', document.get('record'))
@@ -415,7 +462,8 @@ def _outputs(stage, source, receipt):
     # All current products retain their stable logical slot when paths change.
     additions = [dict(a, key=a['name']) for a in additions]
     summary = {k: receipt.get(k) for k in ('status', 'reason', 'target', 'classroom', 'exchange',
-                                   'frankie_view', 'exchange_sha256', 'manifest_sha256', 'request', 'output')
+                                   'frankie_view', 'exchange_sha256', 'manifest_sha256', 'request', 'output',
+                                   'non_blocking', 'meeting_status')
                if receipt.get(k) is not None}
     if summary.get('status') == 'reused':
         summary['status'] = 'done'
@@ -482,6 +530,8 @@ def ensure(run, entry):
 
 def _completed(stage, receipt, source):
     status = receipt.get('status')
+    if stage == 'voice':
+        return voice_passed(receipt)
     if stage == 'teacher' and (source['day'] in (receipt.get('refused_days') or {}) or
                                source['day'] in (receipt.get('waiting') or []) or
                                source['day'] in (receipt.get('root_waiting') or {})):
@@ -533,8 +583,9 @@ def await_prerequisites(run, entry, required):
 def run_stage(run, entry, stage, calculate):
     """Execute one native stage with durable binding and atomic hub publication.
 
-    A waiting/saved/failed result never satisfies a prerequisite. Different
-    operations can calculate concurrently, but a duplicate operation cannot.
+    A waiting/saved/failed result never satisfies a prerequisite except the
+    native queue's explicit nonblocking meeting outcomes. Different operations
+    can calculate concurrently, but a duplicate operation cannot.
     """
     run.check_save()
     hub, source = ensure(run, entry)
@@ -613,7 +664,8 @@ def run_stage(run, entry, stage, calculate):
                         reader.unlink()
                     raise
                 operation.update(status='complete', signature=_signature(additions), outputs=additions,
-                                 completed_utc=H.utc(), recovery_pending=False, blocked_signature=None)
+                                 completed_utc=H.utc(), recovery_pending=False, blocked_signature=None,
+                                 changed_inputs=[])
             else:
                 operation.update(status='saved' if saved else 'waiting' if status == 'waiting' else 'failed',
                     recovery_pending=not saved and status != 'waiting',

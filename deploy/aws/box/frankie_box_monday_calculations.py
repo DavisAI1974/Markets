@@ -188,14 +188,19 @@ def load_retained_layers(session, *, allow_failures=False, receipt=None, spools=
         return dict(path=str(path), **frankie_box_filehash.witness(safe_path(path)))
     pin = session._pin()
     derived = session.work / 'derived'
-    candidates = list((derived / '.rows').glob('input-*.jsonl'))
-    if len(candidates) != 1:
-        raise ValueError('one retained complete INPUT spool required')
-
     def reopen(path):
         found = (spools or {}).get(str(Path(path).resolve()))
         return found if found is not None else B.RowSpool.reopen(path)
-    records = reopen(candidates[0])
+    prepared = session.source_binding.get('prepared_inputs')
+    if prepared is not None:
+        from frankie_box_ingest_inputs import load_prepared
+        container = session.source_binding['container']
+        records, _ = load_prepared(Path(container['path']).parent, prepared, container)
+    else:
+        candidates = list((derived / '.rows').glob('input-*.jsonl'))
+        if len(candidates) != 1:
+            raise ValueError('one retained complete INPUT spool required')
+        records = reopen(candidates[0])
     missing = []
     if allow_failures:
         if receipt is None:

@@ -1163,9 +1163,8 @@ def passed(run, stage, day):
     if stage == 'voice':
         # a non-blocking meeting state passes: the runtime gate's refusal, inputs-only, a runtime failure, or the remote
         # route's pending dispatch/admission/return (Run.voice_remote); the reports are rebuilt when the meeting arrives
-        return r['status'] in X.FINISHED or bool(r['status'] == 'waiting' and r.get('non_blocking')
-                                                and r.get('meeting_status') in ('refused', 'inputs_only', 'runtime_failed',
-                                                                                'remote_pending'))
+        from frankie_box_hub_runtime import voice_passed
+        return voice_passed(r)
     if stage == 'reports' and run.reports_stale(dict(day=day)):
         return False
     return r['status'] in X.FINISHED
@@ -2147,17 +2146,22 @@ def _finish_steps(run, e, code_root, commit, log):
     if _boundary(run, e, 'jev', e['day'], j, code_root, commit, log, facts):
         return 'failed', facts
     run.check_save()
-    # R-A (fresh review): Jev finishes after the class line rendered the reports; their 99-layer join now has a late
-    # piece (Jev's lists, a candidates update). A revision under the same number, in this same slot, no model call;
-    # its outcome is listed in the facts and never gates the day's close
-    try:
-        stale = run.reports_stale(e)
-    except Exception as error:      # noqa: BLE001 - e.g. a corrupt school chain: named in the facts, never the day's close
-        stale, facts['reports_revision'] = False, dict(status='not_checked', reason='%s: %s' % (type(error).__name__, error))
-    if stale:
-        r = run.guarded('reports', e) or {}
-        facts['reports_revision'] = dict(status=r.get('status'), reason=r.get('reason'),
-                                         trigger='late pieces after Jev (reports_stale)')
+    # A late Jev/candidate update can require a revision under the same report
+    # number. Both the currentness check and the revision belong to the reports
+    # operation: failure must not leave an earlier publication marked complete
+    # while the native owner closes the day.
+    def current_reports():
+        receipt = run.receipt('reports', e['day'])
+        if run.reports_stale(e) or not receipt or receipt.get('status') not in X.FINISHED:
+            receipt = run.guarded('reports', e)
+        if receipt and receipt.get('status') in X.FINISHED and run.reports_stale(e):
+            return dict(status='waiting', reason='reports still await a current native publication')
+        return receipt
+    r = run.hub_stage('reports', e, current_reports) or {}
+    facts['reports_revision'] = dict(status=r.get('status'), reason=r.get('reason'),
+                                     trigger='late pieces after Jev (reports_stale)')
+    if r.get('hub_pending') or r.get('status') not in X.FINISHED:
+        return ('waiting' if r.get('status') == 'waiting' else 'failed'), facts
     return _close(run, e, facts)
 
 

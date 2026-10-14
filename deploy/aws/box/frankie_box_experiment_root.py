@@ -692,6 +692,11 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
                    record_count=receipt['record_count'], journal_count=receipt['journal_count'],
                    journal_hash=receipt['journal_hash'], day_role=day_role, partial_members=partial_members,
                    tail_members=tail_members, opening_book=opening_book, external=external)
+    if receipt.get('prepared_inputs') is not None:
+        # The ingestion receipt pins the spool produced from those same INPUT
+        # payloads while the journal was written. Session checks its final
+        # source binding before using it; older receipts keep extraction.
+        binding['prepared_inputs'] = receipt['prepared_inputs']
     if shared_market_policy is not None:
         binding['shared_market_policy'] = timeline_binding()
     if bedrock:

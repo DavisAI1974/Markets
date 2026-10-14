@@ -62,7 +62,7 @@ from research.kalshi.frankie_boss import mbo_source                             
 from research.kalshi.frankie_boss.block_source_scope import block_source_scope          # noqa: E402
 from research.kalshi.frankie_boss.c15_journal import evidence_hash, pack, unpack, canonical_bytes  # noqa: E402
 from research.kalshi.frankie_boss.compact_build_journal import conformance_driver_with_compact_journal  # noqa: E402
-from research.kalshi.frankie_boss.compact_journal import CompactReader, MAX_BYTES      # noqa: E402
+from research.kalshi.frankie_boss.compact_journal import CompactReader, FORMAT, MAX_BYTES  # noqa: E402
 from research.kalshi.frankie_boss.box_standard import partition_entries_for            # noqa: E402
 from research.kalshi.frankie_boss.compact_conformance_reader import CompactConformanceReader     # noqa: E402
 from research.kalshi.frankie_boss.selected_source_scope import source_manifest, source_scope  # noqa: E402
@@ -180,7 +180,8 @@ def opening_adapter(adapter_state):
 
 def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, journal_path,
            writer='compact', canary_records=None, block_bytes=MAX_BYTES // 2, workers=0, event=None, takes=None, block_rows=None,
-           tails=None, opening=None, opening_descriptor=None, observation_mode='full', verify='inline', fast_decode=True):
+           tails=None, opening=None, opening_descriptor=None, observation_mode='full', verify='inline', fast_decode=True,
+           prepare_inputs=None):
     """The ingest_sources loop with a chosen writer, a per-record session policy and member-key naming.
 
     Returns dict(kind='canary'|'complete', ...). The record decode is mbo_source's pinned extractor,
@@ -195,6 +196,11 @@ def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, jo
     never counted), from the partition's first record (its 00:00Z book snapshot, which is checked and listed) up to the
     halt; the book at the halt is then the day's opening book. Either way the opening book is written beside the journal
     (opening-book.c15.json, sha256 in the receipt) so the day's ROOT opens from the same bytes without the prior day.
+
+    `prepare_inputs` is an optional owner-supplied product writer exposing observe(kind, payload,
+    ordinal). It sees the original INPUT mapping once, while already
+    in hand. Its final publication belongs to the caller after the normal seal and file hash;
+    the existing inline/deferred conformance disposition is unchanged. It never cuts a block.
     """
     SourceConformanceDriver._check_scope(scope, expected_scope_hash)
     takes = dict(takes or {})
@@ -204,6 +210,8 @@ def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, jo
         raise ValueError('complete ordered source paths required')
     if writer not in ('compact', 'raw'):
         raise ValueError('writer must be compact or raw')
+    if prepare_inputs is not None and (writer != 'compact' or canary_records is not None):
+        raise ValueError('shared INPUT preparation requires a fresh whole sequential compact ingest')
     if canary_records is not None and (type(canary_records) is not int or canary_records <= 0):
         raise ValueError('canary record count must be a positive integer')
     total = sum(member.mbo_records for member in scope.members)
@@ -230,7 +238,8 @@ def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, jo
             driver = conformance_driver_with_compact_journal(scope, journal_path,
                 expected_scope_hash=expected_scope_hash, block_bytes=block_bytes,
                 workers=len(place['workers']) if workers > 0 and place['workers'] else workers,   # one encoder per worker CPU
-                block_rows=block_rows, cpus=place['workers'], note=event)
+                block_rows=block_rows, cpus=place['workers'], note=event,
+                entry_observer=prepare_inputs.observe if prepare_inputs is not None else None)
         else:
             driver = SourceConformanceDriver(scope, journal_path, expected_scope_hash=expected_scope_hash)
         stack.callback(driver.close)
@@ -860,6 +869,11 @@ def conform_directory(directory, *, workers):
 
 
 def main():
+    with ExitStack() as cleanup:
+        return _main(cleanup)
+
+
+def _main(cleanup):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--manifest', help='committed block manifest (BOSS_BLOCK_SOURCE_MANIFEST_V1)')
     parser.add_argument('--sunday', action='store_true', help='the Sunday single-source scope instead of a block')
@@ -875,6 +889,9 @@ def main():
     parser.add_argument('--block-bytes', type=int, default=MAX_BYTES // 2, help='bytes of bodies per box; default the format ceiling')
     parser.add_argument('--block-rows', type=int, help='rows per box; default the standard, partition_entries_for(2 x declared records)')
     parser.add_argument('--workers', type=int, default=0, help='encode blocks on this many spawned processes; 0 = inline')
+    parser.add_argument('--prepare-inputs', metavar='DIRECTORY',
+                        help='fresh sequential compact ingest: prepare the exact shared ROOT INPUT spool in this '
+                             'directory while appending; publish its pin only with the final sealed source receipt')
     parser.add_argument('--opening-receipt',
                         help='the PRIOR trading day\'s sealed ingest receipt (BOSS_BLOCK_INGESTION_RECEIPT_V1, or Monday\'s '
                              'FRANKIE_SEALED_INGESTION_RECOVERY_RECEIPT_V1): the day opens with its closing book (opening_book.py). '
@@ -898,6 +915,9 @@ def main():
                         help='run the ingest under cProfile and file profile.txt (top functions by own time and by cumulative time) '
                              'in the output directory; a measurement of where the parent\'s time goes, no change to what is written')
     args = parser.parse_args()
+    if args.prepare_inputs and (args.mode != 'sequential' or args.writer != 'compact' or args.resume
+                               or args.canary_records is not None or args.conform):
+        raise SystemExit('--prepare-inputs requires fresh sequential compact ingestion, without --resume or a canary')
     if args.conform:
         return conform_directory(Path(args.conform).resolve(), workers=args.workers)
     if not args.output_dir or not args.session_policy:
@@ -972,6 +992,16 @@ def main():
                   mode=args.mode, observation_mode=args.observation, verify=args.verify)
 
     writers = ('raw', 'compact') if args.writer == 'both' else (args.writer,)
+    prepared_inputs = None
+    if args.prepare_inputs:
+        # This deployment product is explicitly requested by the CLI. The scientific writer
+        # accepts only its generic callback and never imports box modules.
+        box = str(ROOT / 'deploy' / 'aws' / 'box')
+        if box not in sys.path:
+            sys.path.insert(0, box)
+        from frankie_box_ingest_inputs import PreparedInputs
+        prepared_inputs = PreparedInputs(Path(args.prepare_inputs).resolve())
+        cleanup.callback(prepared_inputs.close)
     results = {}
     for writer in writers:
         directory = output / writer if args.writer == 'both' else output
@@ -993,7 +1023,8 @@ def main():
                                         canary_records=args.canary_records, block_bytes=args.block_bytes, workers=args.workers, event=emit, takes=takes,
                                         block_rows=args.block_rows, tails=tails, opening_descriptor=opening_descriptor,
                                         opening=(opening_adapter(adapter_state) if args.opening_receipt else None),
-                                        observation_mode=args.observation, verify=args.verify)
+                                        observation_mode=args.observation, verify=args.verify,
+                                        prepare_inputs=prepared_inputs)
         try:
             if args.profile:
                 result = profiled(run_ingest, directory / 'profile.txt')
@@ -1028,6 +1059,14 @@ def main():
             stream.write(checkpoint_raw); stream.flush(); os.fsync(stream.fileno())
         write_once(directory / 'completion.json', dict(result['completion'], conformance=result.get('conformance', 'inline')))
         journal_sha256 = _journal_sha256(result, journal)
+        prepared_pin = None
+        if prepared_inputs is not None:
+            # Original completion/seal and the whole-file pin already exist. Deferred conformance
+            # stays deferred; this product certifies exact extraction, not a new conformance claim.
+            prepared_pin = prepared_inputs.complete(dict(path=str(journal), layout='compact', format=FORMAT,
+                count=result['completion']['journal_count'], head=result['completion']['journal_hash'],
+                bytes=journal.stat().st_size, sha256=journal_sha256,
+                conformance=result.get('conformance', 'inline')))
         # dedupe pass 2026-10-08: the sealed journal's claim (bytes, sha256, stat, last 64 KiB) beside the receipt, for the
         # stages that pin the same unchanged file again (file_claim); additive, a hint only, never a refusal
         try:
@@ -1037,6 +1076,7 @@ def main():
             file_claims = dict(file=FILE_CLAIMS_NAME, schema=FILE_CLAIM_SCHEMA, rows=0, status='not_written',
                                reason='%s: %s' % (type(error).__name__, error))
         receipt = dict(common, schema=RECEIPT_SCHEMA, writer=writer,
+                       **({'prepared_inputs': prepared_pin} if prepared_pin is not None else {}),
                        record_count=result['completion']['record_count'], journal_count=result['completion']['journal_count'],
                        journal_hash=result['completion']['journal_hash'], group_count=result['completion']['group_count'],
                        source_prefix_hash=result['completion']['source_prefix_hash'],

@@ -449,8 +449,10 @@ class Doctor:
                     watch = self.scan()
                     self.last_error = None
                     runtime = H._load(self.hub_dir / 'runtime.json') or {}
-                    if runtime.get('operations', {}).get('reports', {}).get('status') == 'complete':
-                        self.ev('doctor-finished', None, reason='the final reports operation is complete')
+                    import frankie_box_hub_runtime as HR
+                    if not self.children and not self.pending and HR.owner_finished(runtime):
+                        self.ev('doctor-finished', None,
+                                reason='the exact native owner finished with no outstanding hub operations')
                         return 0
                 except _Stop:
                     raise

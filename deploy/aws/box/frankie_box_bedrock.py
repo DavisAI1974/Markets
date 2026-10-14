@@ -39,7 +39,7 @@ CODE_IDENTITY_SCHEMA = 'FRANKIE_NATIVE_CODE_IDENTITY_V1'
 NATIVE_VALUE_CODE = ('PIN_COMMIT', 'PIN_LINEAGE', 'V4_ADAPTER', 'V4_ADAPTER_MODULE', 'MISSION_PATH', 'CONTRACT_PATH',
                      'KNOWLEDGE_MANIFEST_PATH', 'LEDGER_FILES', 'NS', 'NeverInvoke', 'sha256_file', 'witness',
                      'ledger_file_identity', 'reconciled_ledger_witness', 'write_json', 'producers_commit',
-                     'loaded_modules', 'load_producers', 'source_object', 'iter_driver_records', 'span_seconds',
+                     'loaded_modules', 'load_producers', 'source_object', 'iter_driver_records', '_SeekableDriverRecords', 'span_seconds',
                      'identity', 'run')
 
 
@@ -218,6 +218,128 @@ class RowSpool(list):
         if seen != self._count:
             raise ValueError('retained row spool count changed')
 
+    @staticmethod
+    def _previous_line(path, offset):
+        """Bind a saved byte offset to the complete row immediately before it."""
+        if offset == 0:
+            return dict(offset=0, sha256=None)
+        with Path(path).open('rb') as handle:
+            handle.seek(offset - 1)
+            if handle.read(1) != b'\n':
+                raise ValueError('native INPUT offset is not a complete row boundary')
+            begin, end = 0, offset - 1
+            while end > 0:
+                start = max(0, end - (1 << 20))
+                handle.seek(start)
+                found = handle.read(end - start).rfind(b'\n')
+                if found >= 0:
+                    begin = start + found + 1
+                    break
+                end = start
+            handle.seek(begin)
+            return dict(offset=begin, sha256=hashlib.sha256(handle.read(offset - begin)).hexdigest())
+
+    def _read_cursor(self, completed_count, position=None):
+        """Resolve an exact sealed-source position; only old saves need a prefix scan."""
+        import threading
+        if type(completed_count) is not int or not 0 <= completed_count <= self._count:
+            raise ValueError('native INPUT record position is outside its sealed source')
+        if not self._writer.closed:
+            self._writer.flush()
+        observed = ledger_file_identity(self.path)
+        # The native and legacy readers may share the spool in separate threads.
+        # Their cursors must not replace each other at a checkpoint boundary.
+        local = self.__dict__.setdefault('_read_cursors', threading.local())
+        held = getattr(local, 'cursor', None)
+        if (position is None and held is not None and held['observed'] == observed
+                and held['count'] == completed_count):
+            return held
+        source = _cached_witness(self.path)
+        path = str(self.path.resolve())
+        if position is not None:
+            if (not isinstance(position, dict)
+                    or position.get('schema') != 'FRANKIE_NATIVE_INPUT_POSITION_V1'
+                    or position.get('path') != path or position.get('count') != completed_count
+                    or position.get('total') != self._count or position.get('source') != source):
+                raise ValueError('native INPUT saved position belongs to a different sealed source')
+            offset = position.get('offset')
+            if (type(offset) is not int or not 0 <= offset <= source['bytes']
+                    or (completed_count == 0) != (offset == 0)
+                    or (completed_count == self._count) != (offset == source['bytes'])):
+                raise ValueError('native INPUT saved offset differs from its record boundary')
+            if self._previous_line(self.path, offset) != position.get('previous_line'):
+                raise ValueError('native INPUT row before the saved offset changed')
+        else:
+            # A legacy full-state save has an ordinal but no byte offset. Locate
+            # it once without decoding/replaying the already calculated rows.
+            start, offset = 0, 0
+            if held is not None and held['observed'] == observed and held['count'] < completed_count:
+                start, offset = held['count'], held['offset']
+            if getattr(self, '_row_offsets_file_identity', None) == observed:
+                offsets = getattr(self, '_row_offsets', {})
+                eligible = [row for row in offsets if start <= row <= completed_count]
+                if eligible:
+                    start = max(eligible)
+                    offset = offsets[start]
+            if type(offset) is not int or not 0 <= offset <= source['bytes']:
+                raise ValueError('native INPUT sparse offset is outside its sealed source')
+            with self.path.open('rb') as handle:
+                handle.seek(offset)
+                for _ in range(start, completed_count):
+                    line = handle.readline()
+                    if not line or not line.endswith(b'\n'):
+                        raise ValueError('native INPUT source ends before its saved record position')
+                    offset += len(line)
+            if (completed_count == self._count) != (offset == source['bytes']):
+                raise ValueError('native INPUT source count differs from its saved record position')
+        if ledger_file_identity(self.path) != observed:
+            raise ValueError('native INPUT source changed while resolving its saved position')
+        local.cursor = dict(count=completed_count, offset=offset, observed=observed,
+                            source=source, path=path)
+        return local.cursor
+
+    def checkpoint_position(self, completed_count, *, position=None):
+        """The exact next INPUT byte, covered by the full-state checkpoint hash."""
+        cursor = self._read_cursor(completed_count, position)
+        return dict(schema='FRANKIE_NATIVE_INPUT_POSITION_V1', path=cursor['path'],
+                    source=cursor['source'], total=self._count, count=completed_count,
+                    offset=cursor['offset'], previous_line=self._previous_line(self.path, cursor['offset']))
+
+    def iter_from(self, completed_count, *, position=None):
+        """Continue this sealed spool without rereading a saved native prefix."""
+        from research.kalshi.frankie_boss.c15_journal import unpack
+        cursor = self._read_cursor(completed_count, position)
+
+        def rows():
+            seen, offset = completed_count, cursor['offset']
+            with self.path.open('rb') as handle:
+                handle.seek(offset)
+                for line in handle:
+                    if seen >= self._count or not line.endswith(b'\n'):
+                        raise ValueError('retained row spool count or complete-row boundary changed')
+                    row = unpack(json.loads(line))
+                    seen += 1
+                    offset += len(line)
+                    # Set before yielding: the driver saves after consuming this
+                    # row, while this generator is suspended at the yield.
+                    cursor.update(count=seen, offset=offset)
+                    yield row
+            if seen != self._count or ledger_file_identity(self.path) != cursor['observed']:
+                raise ValueError('retained native INPUT spool changed during traversal')
+
+        return rows()
+
+    def span_seconds(self):
+        """Use extraction's exact min/max, or retain the legacy complete-row pass."""
+        observed = ledger_file_identity(self.path)
+        if (getattr(self, '_receive_clock_count', None) == self._count
+                and getattr(self, '_receive_clock_file_identity', None) == observed):
+            low, high = self._receive_clock_bounds
+            return 0.0 if low is None else (high - low) / NS
+        # The generator deliberately hides this optional method from the common
+        # helper, which then performs its original calculation without recursion.
+        return span_seconds(row for row in self)
+
     def __getitem__(self, key):
         from itertools import islice
         if isinstance(key, slice):
@@ -357,8 +479,31 @@ def driver_records(records, container, day):
     return list(iter_driver_records(records, container, day))
 
 
+class _SeekableDriverRecords:
+    """Stamp a counted source without losing its optional recovery seek.
+
+    The source owns validation of its ordinal/offset binding. Stamping still uses
+    the unchanged, verified container identity; a streaming source identifier is
+    never substituted for that container's final SHA-256.
+    """
+    def __init__(self, records, container, day):
+        self.records, self.container, self.day = records, container, day
+
+    def __iter__(self):
+        return iter_driver_records(self.records.iter_from(0), self.container, self.day)
+
+    def iter_from(self, completed_count, *, position=None):
+        return iter_driver_records(self.records.iter_from(completed_count, position=position),
+                                   self.container, self.day)
+
+
 def span_seconds(records):
     """The receive-clock span of the rows, in seconds (ts_recv ns on the wire record; ts_recv_ns on a normalized one)."""
+    supplied = getattr(records, 'span_seconds', None)
+    if callable(supplied):
+        # A sealed spool may retain its exact min/max receive clocks from the
+        # original extraction, bound to the unchanged complete source.
+        return supplied()
     low = high = None
     for row in records:
         value = row.get('ts_recv') if row.get('ts_recv') is not None else row.get('ts_recv_ns')
@@ -576,7 +721,8 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
     else:
         superseded = None if recovery else _move_aside(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    stamped = iter_driver_records(records, container, day)
+    stamped = (_SeekableDriverRecords(records, container, day)
+               if callable(getattr(records, 'iter_from', None)) else iter_driver_records(records, container, day))
     ident = identity(producers, container, len(records), cycle, code_commit)
     if source_manifest is not None:
         if (source_manifest.get('total_mbo_records') != len(records)
@@ -627,12 +773,22 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
         if checkpoint['total_mbo_records'] != len(records):
             raise ValueError('checkpoint full-source denominator differs')
         checkpoint['_directory'] = str(Path(resume_checkpoint).parent)
+    position_reader = getattr(records, 'checkpoint_position', None)
+    input_position = None
+    if callable(getattr(records, 'iter_from', None)) and callable(position_reader):
+        def input_position(completed_count):
+            retained = (descriptor.get('input_position') if descriptor is not None
+                        and descriptor['completed_mbo_records'] == completed_count else None)
+            if retained is not None:
+                return position_reader(completed_count, position=retained)
+            return position_reader(completed_count)
     checkpointer = ParallelCheckpointer(
         run_id=ident.run_id, controller='A_CHATGPT', memory_mode='MEMORY_ASSISTED',
         source_manifest_hash=ident.source_manifest_hash, total_mbo_records=len(records),
         checkpoint_dir=checkpoint_dir, phase='RT_NATIVE_TRAVERSAL',
         driver_identity=asdict(ident), progress=progress,
         continuation_binding=continuation_binding, save_requested=save_requested,
+        input_position=input_position,
         parent_checkpoint=witness(Path(resume_checkpoint)) | {'path': str(resume_checkpoint)} if resume_checkpoint else None)
     evidence = dict(run_id=ident.run_id, arm=ident.arm, mission_sha256=ident.mission_sha256,
         calculation_contract_sha256=ident.calculation_contract_sha256,

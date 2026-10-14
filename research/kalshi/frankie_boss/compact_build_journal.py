@@ -58,7 +58,7 @@ class CompactBuildJournal:
     """
 
     def __init__(self, path, *, block_bytes=MAX_BYTES // 2, workers=0, block_rows=MAX_ROWS, cpus=None, note=None,
-                 executor=None):
+                 executor=None, entry_observer=None):
         """workers > 0 encodes blocks (order dedup, gzip) on that many spawned processes while the
         parent stays on the causal sequence; blocks are inserted in order and read back, as the
         first run's journal stack did. workers == 0 encodes inline. A box is cut at `block_rows`
@@ -79,13 +79,21 @@ class CompactBuildJournal:
         operations/ingest_cpus.pinned_pool), used instead of a pool of this journal's own: the
         parallel writer's pass 3 encodes its blocks on the same pinned workers that replay the
         segments, so no CPU idles between the passes. Its recovery is its own; blocks are still
-        inserted strictly in submission order. The caller closes it."""
+        inserted strictly in submission order. The caller closes it.
+
+        `entry_observer(kind, payload, ordinal)` may prepare shared INPUT operands while the
+        original payload is already in hand. It must not mutate payload. It observes accepted
+        appends, not durable completion; the caller publishes its product only after the normal
+        seal/conformance disposition and final file pin. APPLIED may contain the observation splice sentinel;
+        INPUT is always the complete original mapping and is never spliced. Block cuts, original
+        bodies and hashes are unchanged. append_body cannot supply this callback's payload."""
         if type(block_rows) is not int or not 0 < block_rows <= MAX_ROWS:
             raise ValueError(f'rows per box must be an integer in 1..{MAX_ROWS}')
         self.path = Path(path)
         self.writer = CompactWriter(self.path, block_bytes=block_bytes)
         self.block_bytes, self.block_rows = block_bytes, block_rows
         self.appends = 0
+        self.entry_observer = entry_observer
         self._rows, self._trees, self._pending_bytes, self._pending_previous = [], [], 0, GENESIS_HASH
         self.executor = executor
         self.workers = int(workers) if executor is None else 0
@@ -191,6 +199,8 @@ class CompactBuildJournal:
         self._rows.append((ordinal, kind, body, digest)); self._trees.append(tree); self._pending_bytes += len(body)
         self.writer.count, self.writer.head_hash = ordinal + 1, digest
         self.appends += 1
+        if self.entry_observer is not None:
+            self.entry_observer(kind, payload, ordinal)
         return digest
 
     @staticmethod
@@ -203,6 +213,8 @@ class CompactBuildJournal:
         with a fixed placeholder where previous_hash goes. The placeholder's canonical `"previous_hash",["str",<64 hex>]`
         node must occur exactly once; it is replaced by this entry's real previous hash, then the digest and the box
         cut are exactly append()'s, so the rows, digests, head hash and boxes equal the sequential writer's."""
+        if self.entry_observer is not None:
+            raise ValueError('prepared INPUT observation requires append with the original payload')
         if self.sealed:
             raise ValueError('container already sealed')
         ordinal, previous = self.count, self.head_hash
@@ -414,7 +426,7 @@ def _encode_rows(rows):
 
 
 def conformance_driver_with_compact_journal(scope, journal_path, *, expected_scope_hash, block_bytes=MAX_BYTES // 2, workers=0,
-                                            block_rows=MAX_ROWS, cpus=None, note=None):
+                                            block_rows=MAX_ROWS, cpus=None, note=None, entry_observer=None):
     """SourceConformanceDriver whose builder writes the compact container directly.
 
     Same construction as source_recovery.rehydrate_source: the builder's __init__ hard-wires an
@@ -427,7 +439,7 @@ def conformance_driver_with_compact_journal(scope, journal_path, *, expected_sco
     builder.adapter, builder.identity = V4MboAdapter(), implementation_identity()
     builder._sessions, builder._failed = {}, False
     builder.journal = CompactBuildJournal(journal_path, block_bytes=block_bytes, workers=workers, block_rows=block_rows,
-                                          cpus=cpus, note=note)
+                                          cpus=cpus, note=note, entry_observer=entry_observer)
     driver = SourceConformanceDriver.__new__(SourceConformanceDriver)
     driver._builder = builder
     driver._stopped = driver._completed = driver._closed = False

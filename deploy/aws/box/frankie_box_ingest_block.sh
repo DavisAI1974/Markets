@@ -37,6 +37,10 @@ MANIFESTS="$MANIFEST"; OPENING_RECEIPT="${OPENING_RECEIPT:-}"
 # The defaults are Frankie's journal as before (sequential, full, inline, one day at a time).
 MODE="${MODE:-sequential}"; OBSERVATION="${OBSERVATION:-full}"; VERIFY="${VERIFY:-inline}"; DAYS_AT_ONCE="${DAYS_AT_ONCE:-1}"
 RESUME_DIR="${RESUME_DIR:-}"; DIRECTORY="${DIRECTORY:-}"
+# A fresh sequential delivery prepares ROOT's exact INPUT spool during its
+# original journal write. Older/resumed/parallel deliveries keep their route.
+PREPARE_INPUTS="${PREPARE_INPUTS:-auto}"
+case "$PREPARE_INPUTS" in auto|on|off) ;; *) echo "PREPARE_INPUTS must be auto, on or off"; exit 2;; esac
 case "$MODE" in sequential|parallel) ;; *) echo "MODE must be sequential or parallel"; exit 2;; esac
 case "$OBSERVATION" in full|none) ;; *) echo "OBSERVATION must be full or none"; exit 2;; esac
 case "$VERIFY" in inline|deferred) ;; *) echo "VERIFY must be inline or deferred"; exit 2;; esac
@@ -304,6 +308,12 @@ run_tool() {   # $1 = canary|ingest (prepare ran: units idle, the dispatched com
   OUT="$ROOT/work/ingest-$BLOCK-$1-$(date +%s)"     # a fresh directory per run, CREATED BY THE TOOL (it refuses an existing one; run 35680854102); it writes once, never over
   EXTRA=""; [ "$1" = canary ] && EXTRA="--canary-records $CANARY"
   EXTRA="$EXTRA --mode $MODE --observation $OBSERVATION --verify $VERIFY"
+  if [ "$PREPARE_INPUTS" = on ] || { [ "$PREPARE_INPUTS" = auto ] && [ "$1" = ingest ] && [ "$MODE" = sequential ] && [ -z "$RESUME_DIR" ]; }; then
+    [ "$MODE" = sequential ] && [ -z "$RESUME_DIR" ] && [ "$1" = ingest ] || {
+      echo "PREPARE_INPUTS=on requires a fresh sequential full ingest"; return 2;
+    }
+    EXTRA="$EXTRA --prepare-inputs $OUT/prepared-inputs"
+  fi
   if [ -n "$RESUME_DIR" ]; then
     [ -d "$RESUME_DIR" ] || { echo "RESUME_DIR $RESUME_DIR is not on the box"; return 2; }
     OUT="$RESUME_DIR"; EXTRA="$EXTRA --resume"; echo "### resuming in $OUT (saved pass 1 and finished segments are reused)"

@@ -324,11 +324,34 @@ class NativeInputView:
     def __len__(self):
         return len(self._records)
 
-    def __iter__(self):
-        for record in self._records:
+    @staticmethod
+    def _project(records):
+        for record in records:
             if any(isinstance(value, (bytes, bytearray)) for value in record.values()):
                 record = {k: v for k, v in record.items() if not isinstance(v, (bytes, bytearray))}
             yield record
+
+    def __iter__(self):
+        return self._project(self._records)
+
+    def __getattr__(self, name):
+        # Preserve optional sealed-spool capabilities through the byte-field
+        # projection.  An older input advertises none of these and keeps the
+        # existing traversal/recovery path.
+        if name == 'iter_from':
+            seek = getattr(self._records, name)
+            return lambda *args, **kwargs: self._project(seek(*args, **kwargs))
+        if name == 'checkpoint_position':
+            return getattr(self._records, name)
+        raise AttributeError(name)
+
+    def span_seconds(self):
+        if getattr(self._records, '_native_clock_projection_unchanged', False):
+            return self._records.span_seconds()
+        # An unusual byte-valued clock is removed by the native projection too.
+        # Without a producer claim that both clocks survive, retain the original
+        # scan over projected observations rather than reuse raw clock extrema.
+        return _box_module('frankie_box_bedrock').span_seconds(row for row in self)
 
 
 def lane_cpus():
@@ -4087,6 +4110,33 @@ class Session:
             raise ValueError('saved INPUT extraction belongs to a different sealed source')
         if saved and not 0 <= saved['consumed'] <= count:
             raise ValueError('saved INPUT journal cursor is outside the sealed source')
+        prepared = (self.source_binding or {}).get('prepared_inputs')
+        if prepared is not None and retain_all_fields and layout == 'compact':
+            from frankie_box_ingest_inputs import load_prepared
+            records, extracted = load_prepared(rows_path.parent, prepared, container)
+            spool_pin = extracted['record_spool']
+            position = dict(path=str(records.path), count=len(records),
+                            bytes=spool_pin['bytes'], sha256=spool_pin['sha256'])
+            if saved and (not saved['complete'] or saved['consumed'] != count
+                          or any(saved['spool'].get(k) != v for k, v in position.items())
+                          or saved['kinds'] != extracted['kinds']
+                          or saved['without_observation'] != extracted['inputs_without_observation']
+                          or saved['bytes_fields'] != extracted['bytes_fields_spooled']):
+                raise ValueError('saved INPUT extraction differs from the pinned ingest preparation')
+            if recovery and not saved:
+                # The immutable spool was hashed as it was written by ingestion.
+                # load_prepared checked its final source pin and unchanged-file
+                # claim (or read it once on a claim miss). Do not hash it again
+                # merely to create ROOT's completed extraction checkpoint.
+                _save_raw_state(state_path, dict(identity=identity, spool=position,
+                    kinds=extracted['kinds'], without_observation=extracted['inputs_without_observation'],
+                    bytes_fields=extracted['bytes_fields_spooled'], consumed=count, complete=True))
+            container.update(extracted)
+            self.note('INPUT extraction reused the exact spool prepared during ingestion; '
+                      'no second journal decode/extraction pass')
+            if recovery and save_requested and save_requested():
+                raise TeacherSaved('ROOT saved the completed ingestion-prepared INPUT spool')
+            return records, container
         # review 2.7: the last saved claim on the INPUT spool (the save resumed from, then each save_input), checked
         # against the full witness below after the extraction, so a fast resume (stat + last line) is never the only check
         input_claim = [saved['spool'] if saved else None]
@@ -4221,15 +4271,8 @@ class Session:
 
     @staticmethod
     def _find_observation(node, depth=0, max_depth=4):
-        if isinstance(node, dict):
-            if 'ts_event' in node and 'action' in node and 'instrument_id' in node:
-                return node
-            if max_depth is None or depth < max_depth:
-                for value in node.values():
-                    found = Session._find_observation(value, depth + 1, max_depth)
-                    if found is not None:
-                        return found
-        return None
+        from frankie_box_ingest_inputs import find_observation
+        return find_observation(node, depth, max_depth)
 
     @staticmethod
     def _derivation_digest(receipt, layers, prices, frames, structures, roll, first, buys, sells):

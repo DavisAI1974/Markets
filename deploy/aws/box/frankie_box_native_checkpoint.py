@@ -162,7 +162,7 @@ class StateUnpickler(pickle.Unpickler):
 
 class FullCheckpointer(P.PeriodicCheckpointer):
     def __init__(self, *, driver_identity, progress=None, parent_checkpoint=None,
-                 continuation_binding=None, save_requested=None, **kwargs):
+                 continuation_binding=None, save_requested=None, input_position=None, **kwargs):
         super().__init__(**kwargs)
         self.driver = None
         self.driver_identity = driver_identity
@@ -170,6 +170,7 @@ class FullCheckpointer(P.PeriodicCheckpointer):
         self.parent_checkpoint = parent_checkpoint
         self.continuation_binding = continuation_binding
         self.save_requested = save_requested
+        self.input_position = input_position
         self.stop_checkpoint = None
         self.low_space_stop = False
         self.last_state_bytes = 0
@@ -246,6 +247,11 @@ class FullCheckpointer(P.PeriodicCheckpointer):
             descriptor['disk'] = disk                  # recorded at every save, never compared
         if self.continuation_binding is not None:
             descriptor['continuation_binding'] = self.continuation_binding
+        if self.input_position is not None:
+            position = self.input_position(completed_mbo_records)
+            if not isinstance(position, dict):
+                raise ValueError('native input checkpoint position must be a durable mapping')
+            descriptor['input_position'] = position
         checkpoint = super()._write(adapter, completed_mbo_records=completed_mbo_records,
             event_group_open=event_group_open, controller_state=descriptor, locked=locked)
         # Durable readback verifies the adapter chain, controller descriptor and full
@@ -371,12 +377,19 @@ def compare_reconstructed_prefix(driver, checkpoint, old_directory):
 
 
 def consume_recovery(driver, records, total, progress, checkpoint=None, descriptor=None):
-    iterator = iter(records)
     start = driver.counters.records_seen
-    # Full-state continuation skips source records without recalculating them.
-    if descriptor is not None:
-        for _ in range(start):
-            next(iterator)
+    seek = getattr(records, 'iter_from', None)
+    if descriptor is not None and callable(seek):
+        # The source verifies this retained ordinal/offset before yielding. The
+        # checkpoint hash covers the optional position; old descriptors supply
+        # None and the source may resolve the ordinal through its durable index.
+        iterator = iter(seek(start, position=descriptor.get('input_position')))
+    else:
+        iterator = iter(records)
+        # Legacy counted sources keep the original continuation behavior.
+        if descriptor is not None:
+            for _ in range(start):
+                next(iterator)
     if checkpoint and descriptor is None:
         driver._frankie_reconstruction_checkpoint = checkpoint
     reconstruction = getattr(driver, '_frankie_reconstruction_checkpoint', None)

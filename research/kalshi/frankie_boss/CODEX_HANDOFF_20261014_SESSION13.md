@@ -40,6 +40,56 @@ The first three new frontier contracts above remain source work, not a deployed 
 identities cannot be replaced by successively larger prefix identities; current saved attempts must keep their original
 contracts. A single instrument's F_LAST is not proof that every instrument group is closed: carry open groups explicitly.
 
+**Latest continuation, October 13 evening ET / October 14 UTC: source review before a chat change.**
+The first efficiency publication is `bd8f4f1e6684865c71b410f0fd63a68d2dda3e59`. Read the branch's current tip for the
+following follow-up changes; the commit containing this paragraph has `[skip ci]`. No test, benchmark, scientific run,
+AWS mutation, instance start or day resume was performed for these changes. Box deployment remains pending while it is
+stopped. Greg asked when to change chat: after this source publication and handoff, before the remaining design decision.
+
+Codex independently reviewed `bd8f4f1` and found two correctness defects. Both are corrected in the follow-up source:
+
+- A waiting meeting explicitly marked nonblocking (`refused`, `inputs_only`, `runtime_failed`, or `remote_pending`) now
+  satisfies the hub under the exact same predicate as the queue. Its disposition is published; no completed meeting
+  content is invented. This preserves school/report progress and later meeting updates.
+- Doctor shutdown now requires the exact retained queue owner's terminal `done` / `finish.finished` state, no remaining
+  child/revival work, and no unfinished/stale hub operation. A reports publication alone cannot end recovery; a
+  non-classroom day does not need a nonexistent reports hub operation. Required late report revisions/currentness checks
+  run inside the reports hub operation and failed/waiting revisions prevent the owner's close.
+
+The external-key review also found repeated whole-key decoding despite cached verification. The lesson now owns one
+immutable decoded tree plus its series/pair lookup tables. Grading reads those directly. Public materialization and
+pre-messages copy their published values, and the existing final grade canonicalization detaches its output. Original
+dict/list/tuple evidence types, insertion order, field values and hash formulas remain the source contract; actual
+equivalence, memory use and speed remain unverified until the one small timing run.
+
+**A verified prerequisite changes the proposed streaming design.** `frankie_box_bedrock.source_object` and
+`iter_driver_records` stamp the *final physical journal SHA-256* into `source_dbn_sha256` on every native INPUT. Source
+inspection of the actual pinned producer (`2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134`) confirmed that the adapter's normalized
+records/raw actions and retained member rows include it. Replacing it with a manifest/stream ID changes the native
+evidence rows and their hashes. The native pass cannot start before that digest exists under the present exact evidence
+contract; full-picture teacher/block work must not declare the still-running native producer absent to get around it.
+No such replacement was made. Greg should discuss whether NEW runs may use the actual already-verified DBN member
+identity as per-record provenance while retaining the final journal pin separately. That is a versioned provenance
+change requiring complete downstream/recovery review, not an encoder optimization. The saved a2 identity stays intact.
+
+Safe preparation is now wired into the actual daily route, beginning during ingestion rather than waiting for the day:
+
+| Source change | Work removed | Boundaries retained |
+|---|---|---|
+| Fresh sequential compact ingest observes original accepted INPUT payloads and writes ROOT's exact typed spool as they arrive | ROOT's later journal decode/extraction pass; about `2N` INPUT/APPLIED entries for `N` source records (1,543,574 for 771,787 records, excluding any extra control entries) | Same journal block cuts, bodies, hashes and file bytes; same complete receipt and inline/deferred conformance disposition |
+| ROOT reuses the receipt-pinned prepared spool | Repeated serialization/allocation of the same INPUT rows | Final journal path/count/head/size/SHA checked; immutable descriptor; strong file claim or full SHA/count fallback; no partial descriptor accepted |
+| Native full-state saves retain exact validated byte offsets | New saves avoid decoding/skipping the computed INPUT prefix on recovery | Same source hash, count, row boundary and saved scientific state; older saves locate their ordinal once |
+| Prepared spool retains receive-clock extrema | Final native span calculation needs no extra full INPUT scan when the clock projection is unchanged | Original min/max formula; older/unusual sources retain the original projected scan |
+| External key and lookup reuse | Repeated whole-key JSON decoding and per-grade lookup construction | Same graded values, role walls and independently owned publications |
+
+`frankie_box_ingest_block.sh PREPARE_INPUTS=auto` enables this only for a fresh sequential full ingest. The CLI option is
+`--prepare-inputs DIRECTORY`; old receipts, parallel ingestion, canaries and resumes keep their established routes.
+This is genuine shared preparation, **not** implementation of native/teacher processing at the first 30-minute frontier.
+The draft generic frontier/resume framework was not included as an unused capability. Legacy calculations could also
+be separated from the terminal identity wrapper, but that continuation route is still unbuilt. No speedup percentage or
+full-day cost claim is established. The first-block classroom gauge alone does not exercise this new ingestion/ROOT
+path: settle the bounded timing-run coverage after the provenance/design discussion, before any AWS start.
+
 ## 0. READ THIS FIRST: the box is STOPPED and the day is SAVED mid day-end (read on the box 2026-10-14 01:2xZ)
 
 - Box `i-035994afa8bdf66a5` is STOPPED, tag KeepRunning=false. Greg had it stopped on 2026-10-14 at about 01:0xZ,

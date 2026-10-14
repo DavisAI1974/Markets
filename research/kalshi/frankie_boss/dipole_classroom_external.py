@@ -65,7 +65,8 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 from . import dipole_classroom as classroom
-from .c15_journal import evidence_hash, evidence_bytes, unpack
+from .c15_journal import evidence_hash, evidence_bytes, unpack, freeze, FrozenList
+from types import MappingProxyType
 from .c15_normalizer import COLUMNS
 
 KEY_SCHEMA = 'DIPOLE_CLASSROOM_EXTERNAL_KEY_V1'
@@ -182,7 +183,11 @@ def _sha256_bytes(raw):
 
 
 def _canon(value):
-    return json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False)
+    def owned_mapping(item):
+        if type(item) is MappingProxyType:
+            return dict(item)
+        raise TypeError('Object of type %s is not JSON serializable' % type(item).__name__)
+    return json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False, default=owned_mapping)
 
 
 def _finite(value, counter):
@@ -831,20 +836,21 @@ def build_external_key(snapshot: Mapping[str, Any], day_file, day_file_sha256, *
 
 @dataclass(frozen=True, init=False)
 class VerifiedExternalKey:
-    """One lesson's verified key, owned as immutable bytes rather than a live dict.
+    """One lesson's verified key, decoded once into an owned immutable tree.
 
-    Consumers get independent ordinary mappings, so mutating the source or any
-    returned value cannot stale this verification. JSON-native keys use the C
-    JSON reader; unusual accepted evidence types retain their tagged encoding.
-    The handle is local to a lesson, never added to a persisted package.
+    Internal readers share the tree and lookup tables. Public materialization
+    returns independent ordinary values; neither a source mutation nor an edit
+    to a returned message/grade can change the verified key. The handle remains
+    local to a lesson and is never added to a persisted package.
     """
-    _encoded: bytes
-    _json: bool
+    _value: Mapping[str, Any]
+    _series: Mapping[str, Any]
+    _pairs: Mapping[Any, Any]
 
     def __init__(self, key):
         owned = self._from_verified(verify_external_key(key))
-        object.__setattr__(self, '_encoded', owned._encoded)
-        object.__setattr__(self, '_json', owned._json)
+        for name in ('_value', '_series', '_pairs'):
+            object.__setattr__(self, name, getattr(owned, name))
 
     @classmethod
     def _from_verified(cls, key):
@@ -858,14 +864,34 @@ class VerifiedExternalKey:
             native = False
         if not native:
             encoded = evidence_bytes(key)
+            ordinary = unpack(json.loads(encoded))
+        value = freeze(ordinary)
         owned = object.__new__(cls)
-        object.__setattr__(owned, '_encoded', encoded)
-        object.__setattr__(owned, '_json', native)
+        object.__setattr__(owned, '_value', value)
+        object.__setattr__(owned, '_series', MappingProxyType({s['name']: s for s in value['series']}))
+        object.__setattr__(owned, '_pairs', MappingProxyType({(p['left'], p['right']): p
+                                                            for p in value['relationship_scan']}))
         return owned
 
     def materialize(self):
-        value = json.loads(self._encoded)
-        return value if self._json else unpack(value)
+        return _ordinary_owned(self._value)
+
+    def view(self):
+        return self._value
+
+    def grading_inputs(self):
+        return self._value, self._series, self._pairs
+
+
+def _ordinary_owned(value):
+    """Copy only a published value, preserving the evidence's dict/list/tuple types."""
+    if type(value) in (dict, MappingProxyType):
+        return {k: _ordinary_owned(v) for k, v in value.items()}
+    if type(value) in (list, FrozenList):
+        return [_ordinary_owned(v) for v in value]
+    if type(value) is tuple:
+        return tuple(_ordinary_owned(v) for v in value)
+    return value
 
 
 def verify_external_key(key: Mapping[str, Any]) -> dict:
@@ -982,7 +1008,8 @@ def _visible_series(s, mode):
 
 
 def build_external_pre_message(key, *, mode, prior_grade=None):
-    key = verify_external_key(key)
+    shared = type(key) is VerifiedExternalKey
+    key = key.view() if shared else verify_external_key(key)
     if mode not in classroom._MODES:
         raise ValueError('known classroom mode required')
     teach = mode == 'TEACH'
@@ -1013,6 +1040,8 @@ def build_external_pre_message(key, *, mode, prior_grade=None):
                                   'beside it each pair carries its co-movement COUNTS. Both are descriptive, not causation or a '
                                   'future outcome; each pair is read on its own, never flattened into one number across pairs.'),
         future_wall='DO_NOT_CLAIM_OR_USE_ANY_OUTCOME_OR_VALUE_NOT_PUBLISHED_AT_THIS_CUTOFF')
+    if shared:
+        body = _ordinary_owned(body)
     body['teacher_message_hash'] = evidence_hash(body)
     return body
 
@@ -1129,10 +1158,13 @@ def _same(a, b):
 
 def grade_external(key, ledgers):
     """Point-by-point exact grade of the external section. Returns the post-grade (correction ids, data review items)."""
-    key = verify_external_key(key)
+    if type(key) is VerifiedExternalKey:
+        key, by_name, pairs = key.grading_inputs()
+    else:
+        key = verify_external_key(key)
+        by_name = {s['name']: s for s in key['series']}
+        pairs = {(p['left'], p['right']): p for p in key['relationship_scan']}
     tb = ledgers['external_teachback']
-    by_name = {s['name']: s for s in key['series']}
-    pairs = {(p['left'], p['right']): p for p in key['relationship_scan']}
     corrections, items, component_grades, value_grades, relationship_grades, point_grades = [], [], [], [], [], []
 
     def correct(cid, message, **data):
