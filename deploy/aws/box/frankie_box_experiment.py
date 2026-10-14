@@ -1758,7 +1758,7 @@ class Run:
                         # parallel caller joins its sibling operation.
                         if self.owner and not self.save_requested():
                             import frankie_box_frankie_queue as Q
-                            Q.request_save(self.plan['run'], key[:8], 'stage interrupted: ' + stage)
+                            Q.request_save(self.plan['run'], self.owner['day'], 'stage interrupted: ' + stage)
                         elif not self.owner:
                             import signal
                             proc.send_signal(signal.SIGTERM)

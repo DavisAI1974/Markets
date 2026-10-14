@@ -618,7 +618,7 @@ def teacher_rows(path, retain_dir=None, notes=None):
     """(the BOSS teacher's measurement of the day, None) or (None, why): its Dipole rows snapshot, checked against its
     own source_snapshot_hash, read into the per-component ledgers the teacher key is built from.
     retain_dir (save point, Greg 2026-10-07 night: saves at a boundary, matching ROOT's): after the ledger pass the exact
-    measurement is saved there; a later call with the same rows bytes and code loads it instead of parsing and
+    measurement is saved there; a later call with the same rows bytes loads it instead of parsing and
     ledgering again (the context-only step saves, the exchange step loads: the double read of the rows becomes one
     parse plus one re-hash). notes (optional dict) receives what happened. The returned value is identical either way."""
     notes = notes if notes is not None else {}
@@ -681,7 +681,13 @@ def teacher_rows(path, retain_dir=None, notes=None):
                    through_cursor=snapshot['through_cursor'], columns=tuple(COLUMNS),
                    retained_rows=snapshot['rows'])
     _shared_key_measure(measure, path, notes, snapshot=snapshot, snapshot_hash_verified=stream.snapshot_hash)
-    notes['ledger_save'] = 'the shared full teacher key owns these exact ledgers; existing legacy saves retained'
+    if retain_dir is not None:
+        # The shared key owns the ledgers, but the exchange also reads the complete
+        # source rows. Retain those exact rows and their measurement binding so a
+        # retry does not parse the source again. Reattach the key when reopening.
+        _write_ledger_save(retain_dir,
+                           {k: v for k, v in measure.items() if k not in ('ledgers', '_shared_teacher_key')},
+                           raw_pin, notes)
     return measure, None
 
 

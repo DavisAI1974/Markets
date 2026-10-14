@@ -21,6 +21,7 @@ from pathlib import Path
 RECORD_SCHEMA = 'FRANKIE_TEACHER_RECORD_STORE_V1'
 JOINED_SCHEMA = 'FRANKIE_TEACHER_JOINED_RECORDS_V1'
 KEY_SCHEMA = 'FRANKIE_SHARED_TEACHER_KEY_V1'
+KEY_LOOKUP_SCHEMA = 'FRANKIE_SHARED_TEACHER_KEY_LOOKUP_V1'
 JOINED_FILE = 'teacher-second-set.json'
 KEY_FILE = 'teacher-key.json'
 _OFFSET = struct.Struct('>Q')
@@ -483,17 +484,38 @@ def ensure_teacher_key(rows_path, *, snapshot=None, snapshot_hash_verified=None,
         if verified != snapshot.get('source_snapshot_hash'):
             raise ValueError('shared teacher snapshot differs from its evidence hash')
     default_path = rows_path.parent / KEY_FILE
+    lookup_path = default_path.with_suffix('.lookup.json')
     with default_path.with_suffix('.lock').open('a') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         state = _source_state(rows_path)
+        identity = None if snapshot is None else _key_identity(snapshot, previous_snapshot)
+        previous_hash = None if previous_snapshot is None else previous_snapshot['source_snapshot_hash']
+
+        def publish_lookup(pin, key_identity):
+            # Only the lookup is replaceable. Every returned manifest pin and
+            # every source-bound key payload remains immutable for prior readers.
+            if _source_state(rows_path) != state:
+                raise ValueError('teacher source changed while refreshing the shared key lookup')
+            from frankie_box_durable import write_bytes
+            body = dict(schema=KEY_LOOKUP_SCHEMA, source_state=state, identity=key_identity, manifest=pin)
+            write_bytes(lookup_path, (json.dumps(body, sort_keys=True, separators=(',', ':')) + '\n').encode())
+
+        if lookup_path.is_file():
+            lookup = _read_json(lookup_path)
+            if (lookup.get('schema') == KEY_LOOKUP_SCHEMA and lookup.get('source_state') == state
+                    and (identity is None or lookup.get('identity') == identity)
+                    and lookup['identity']['previous_snapshot_hash'] == previous_hash):
+                pin = lookup['manifest']
+                kept = _read_json(pin['path'], pin)
+                if kept.get('schema') != KEY_SCHEMA or kept.get('identity') != lookup['identity']:
+                    raise ValueError('shared teacher key lookup differs from its pinned manifest')
+                return _load_key(kept), pin
         if default_path.is_file():
             raw = default_path.read_bytes()
             kept = json.loads(raw)
-            identity = None if snapshot is None else _key_identity(snapshot, previous_snapshot)
             if (kept.get('schema') == KEY_SCHEMA and kept.get('source_state') == state
                     and (identity is None or kept.get('identity') == identity)
-                    and kept['identity']['previous_snapshot_hash'] == (
-                        None if previous_snapshot is None else previous_snapshot['source_snapshot_hash'])):
+                    and kept['identity']['previous_snapshot_hash'] == previous_hash):
                 return _load_key(kept), dict(path=str(default_path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
         if snapshot is None:
             import frankie_box_teacher_rows as TR
@@ -510,7 +532,10 @@ def ensure_teacher_key(rows_path, *, snapshot=None, snapshot_hash_verified=None,
             kept = json.loads(raw)
             if kept.get('schema') != KEY_SCHEMA or kept.get('identity') != identity:
                 raise ValueError('addressed teacher key differs from its source identity')
-            return _load_key(kept), dict(path=str(path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+            key = _load_key(kept)
+            pin = dict(path=str(path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+            publish_lookup(pin, identity)
+            return key, pin
         key = I._repin_teacher_key_correlations(DC.build_teacher_key(
             snapshot, previous_snapshot, snapshot_hash_verified=snapshot_hash_verified))
         payload_directory = directory / key['teacher_key_hash']
@@ -534,4 +559,5 @@ def ensure_teacher_key(rows_path, *, snapshot=None, snapshot_hash_verified=None,
         pin = _write_json(path, body)
         if not default_path.exists():
             pin = _write_json(default_path, body)
+        publish_lookup(pin, identity)
         return key, pin

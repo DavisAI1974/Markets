@@ -3,6 +3,14 @@
 Written by Claude at the end of session 13 for Codex (or a fresh Claude). Greg's usage is low; this file is meant to be
 enough on its own. All times are UTC (Z). Nothing in here is a guess unless it says "unknown" or "expected".
 
+**October 14 review corrections:** interrupted batch children request the bound owner's day save marker, including
+lesson keys such as `discovery-01-historical`. Exchange publication again retains the complete source-bound rows
+measurement beside its context; retries reload it and attach the shared key's ledgers. Shared teacher-key lookups
+refresh after an unchanged source acquires new file metadata, using a separate atomic lookup that points at an
+immutable, hash-pinned key manifest. Existing manifest pins remain valid. The earlier meeting, doctor-completion
+and external-key decoding corrections remain in source. These changes have source, syntax and diff review only;
+runtime behavior remains unverified, and no AWS operation or execution was performed.
+
 **Greg's latest clarification, October 14 ET:** keep ALL 99 planes and the teacher's second set pinned together
 with the existing original row keys, event flow, source cursors and causal clocks. Recovery must retain partial
 calculations and partial output when a process is one-third done, then continue at its saved position. Reuse the
