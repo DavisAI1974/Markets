@@ -34,8 +34,18 @@ without waiting for the former 120-second interval. They remain after a sub-step
 returns, covering the gap before the enclosing phase is saved. This does not yet
 establish persistence inside every worker calculation or for every out-of-order
 result. Legacy ROOT already saves open groups, binner, pending rows and spool
-positions. Native and sequential ingestion still need their actual remaining
-partial-continuation gaps addressed; do not describe recovery as pipeline-wide
+positions. New member-bound native runs now reuse the full-driver save and the
+existing open-group adapter serializer, with an explicit partial checkpoint
+schema. Requested saves occur after the current INPUT returns; all instruments'
+unfinished groups, calculator objects, ledger extents and original input position
+are retained without reading forward to a group close. Restore verifies the full
+state and its adapter witness. The previous format remains readable; old
+journal-stamped attempts keep their original closed-group route.
+
+This is cooperative saved-state recovery, not a claim that every interrupted CPU
+instruction or unfinished file write is restartable. Sequential ingest recovery,
+temporary-EOF consumers and worker-internal/out-of-order result retention still
+need their remaining gaps addressed. Do not describe recovery as pipeline-wide
 complete. These changes have source/syntax review only, with no runtime claim.
 
 ## The hash dependency

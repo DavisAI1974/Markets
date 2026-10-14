@@ -576,7 +576,7 @@ def recovery_checkpoint(out_dir, code_recorded=None):
     code_recorded: an optional list that receives the recorded-only code differences between generations.
     """
     from research.kalshi.frankie_raw_mbo_benchmark import periodic_checkpointer as P
-    from frankie_box_native_checkpoint import SCHEMA, continuation_meaning
+    from frankie_box_native_checkpoint import SCHEMA, continuation_meaning, load_chain
     from frankie_box_prepare_trading_day import safe_path
     root = Path(out_dir)
     directories = [root / 'checkpoints', *sorted(root.glob('recovery-*/checkpoints'))]
@@ -585,7 +585,7 @@ def recovery_checkpoint(out_dir, code_recorded=None):
     for directory in directories:
         if not directory.is_dir() or not any(directory.glob(P.CHECKPOINT_GLOB)):
             continue
-        chain = P.load_chain(directory)
+        chain = load_chain(directory)
         parent = None
         for index, checkpoint in enumerate(chain):
             if checkpoint['controller_state_hash'] is None:
@@ -661,7 +661,9 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
     opening_adapter_state/opening_book optionally bind the same initial book and provenance as the legacy ROOT.
     Both must be supplied together (or an explicit absent-book descriptor alone) and repeated unchanged on resume.
     save_requested is a cooperative callback:
-    save complete state at the next closed-group boundary, then raise the caller's existing TeacherSaved contract.
+    save complete state, then raise the caller's existing TeacherSaved contract. New member-bound sources
+    carry unfinished groups and honor the request after the current INPUT returns, without reading forward
+    to a group close. Retained journal-stamped sources keep their original closed-group save contract.
     A locked native checkpoint reuses its completed calculation result without scientific replay.
     recovery=True discovers that checkpoint by verified parent ancestry and refuses to restart a nonempty run
     without recoverable full state. recovery=False keeps the historical explicit-resume/supersede behavior.
@@ -818,7 +820,7 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
         checkpoint_dir=checkpoint_dir, phase='RT_NATIVE_TRAVERSAL',
         driver_identity=asdict(ident), progress=progress,
         continuation_binding=continuation_binding, save_requested=save_requested,
-        input_position=input_position,
+        input_position=input_position, carry_open_groups=record_provenance is not None,
         parent_checkpoint=witness(Path(resume_checkpoint)) | {'path': str(resume_checkpoint)} if resume_checkpoint else None)
     evidence = dict(run_id=ident.run_id, arm=ident.arm, mission_sha256=ident.mission_sha256,
         calculation_contract_sha256=ident.calculation_contract_sha256,

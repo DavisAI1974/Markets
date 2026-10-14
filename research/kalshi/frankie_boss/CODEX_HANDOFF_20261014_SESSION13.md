@@ -3,6 +3,27 @@
 Written by Claude at the end of session 13 for Codex (or a fresh Claude). Greg's usage is low; this file is meant to be
 enough on its own. All times are UTC (Z). Nothing in here is a guess unless it says "unknown" or "expected".
 
+**Chat continuation, October 14 around 00:40 ET:** Greg requested a new chat after source publication. Continue
+branch `ccr-d2f8f826-iefeah-frankie` at its current remote tip; do not reset to the original `e5c3f2e`. The three
+review corrections below are published in `c928dac39a434ce20cd6ad90b54be095f0c1ea58`. The following source publication
+adds native open-group saves and this continuation note. No AWS start or mutation, deployment, test, benchmark,
+scientific calculation or saved-day resume was performed. The saved a2 day stays untouched.
+
+The next source work is the committed ingest-prefix producer and its real continuing ROOT consumers. Existing
+`PreparedInputs.checkpoint` is not yet wired into ingestion, and `load_prepared` intentionally accepts only final
+receipts. Preserve the compact journal's original block cuts: draining submitted encoders is allowed; flushing its
+partially filled block merely to make a timing frontier changes the physical container. Save that pending block,
+full builder/adapter/source-chain state, accepted original cursor and prepared spool extent together using existing
+durable helpers. Sequential ingest currently has no usable resume route; its CLI `--resume` is still parallel-only.
+On continuation, do not replay completed scientific work or erase unacknowledged output bytes.
+
+Then wire a constant full-manifest identity/count to native and legacy readers across temporary EOF; only true EOF
+permits finalization and the separate final-journal pin. Preserve opening state, all 99 plane joins, second-set row
+keys and actual causal availability. ROOT source binding, shared-picture/teacher segment readers and a concrete
+bounded timing entry point remain unfinished. Do not remove existing completion checks, substitute canary ingestion
+or resume a2 to call this streaming. The one attended timing scope below is still NOT launch-ready. Finish that
+source work and review its stop/reopen path before asking for the AWS go.
+
 **October 14 review corrections:** interrupted batch children request the bound owner's day save marker, including
 lesson keys such as `discovery-01-historical`. Exchange publication again retains the complete source-bound rows
 measurement beside its context; retries reload it and attach the shared key's ledgers. Shared teacher-key lookups
@@ -21,8 +42,14 @@ Current source follow-up: second-set book-record parts now retain partial output
 the existing teacher atomic save helper, and reuse the saved prefix/carry when reopened. Interrupted files are
 preserved. Completed parts retain their carry as well. Classroom segment saves retain each returned in-order
 portion immediately and keep it after the sub-step returns, closing the former deletion-before-phase-save gap.
-Individual in-flight row/worker calculations, out-of-order result retention, native open-group continuation and
-sequential ingest recovery are not established by these changes. No new native checkpoint protocol was installed.
+New member-bound native runs now use the existing full-driver pickle plus the existing open-group adapter serializer
+under `FRANKIE_NATIVE_PARTIAL_CHECKPOINT_V1` (full-state descriptor format 2). A requested save is taken after the
+current INPUT returns, even with unfinished instrument groups, preserving calculator objects, output extents and
+the original input position. Restore checks the matching adapter witness. Format 1 and old journal-stamped/a2 saves
+remain readable under their original route. This does not persist an arbitrary interpreter instruction or a
+half-written pickle. Individual in-flight row/worker calculations, out-of-order result retention and sequential ingest
+recovery are not established by these changes. All remaining recovery gaps must be addressed before claiming no loss
+across the entire pipeline.
 Source review, AST parsing and diff checks only; no tests, scientific execution, benchmark, AWS mutation or start.
 See the precise limits and revised timing-marker wording in NATIVE_STREAM_TIMING_SCOPE_20261014.md.
 

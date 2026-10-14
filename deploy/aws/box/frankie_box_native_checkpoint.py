@@ -17,6 +17,7 @@ import frankie_box_segmented_ledger as ledger_storage
 import frankie_box_finalization as finalization
 
 SCHEMA = 'FRANKIE_NATIVE_FULL_STATE_V1'
+PARTIAL_CHECKPOINT_SCHEMA = 'FRANKIE_NATIVE_PARTIAL_CHECKPOINT_V1'
 RUNTIME_SCHEMA = 'FRANKIE_NATIVE_RUNTIME_CODE_V2'
 # Greg, 2026-10-09 (standing): the code version is RECORDED, NEVER COMPARED. A saved full state is accepted on the
 # FORMAT of its saved bytes only: NATIVE_STATE_FORMAT (a small integer, bumped ONLY when the pickled object graph, the
@@ -27,14 +28,18 @@ RUNTIME_SCHEMA = 'FRANKIE_NATIVE_RUNTIME_CODE_V2'
 # ledger_storage_code, finalization_code, finalization_sha256 and the earlier whole-file *_sha256 forms) is recorded
 # beside them and never refuses a save. A save written before this field existed (every V1 and V2 runtime form up to
 # 2026-10-09) carries format 1: the object graph, the descriptor and the segment storage are those of format 1.
-NATIVE_STATE_FORMAT = 1
+# Format 2 adds the explicit carried adapter witness to the full descriptor.
+# The full driver pickle is unchanged; format-1 closed-group saves remain readable.
+NATIVE_STATE_FORMAT = 2
 RECORDED_CODE = ('serializer_code', 'ledger_storage_code', 'finalization_code', 'finalization_sha256',
                  'serializer_sha256', 'ledger_storage_sha256')
 # The definitions in THIS file whose change may change the saved FORMAT (bump NATIVE_STATE_FORMAT when it does); their
 # identity is recorded as serializer_code.
 NATIVE_VALUE_CODE = ('SCHEMA', 'sink_items', 'ledger_state', 'copy_ledger_prefixes', '_runtime_binding', 'StatePickler',
                      'StateUnpickler',
-                     'FullCheckpointer.externals', 'FullCheckpointer._write', 'FullCheckpointer.save_boundary',
+                     'PARTIAL_CHECKPOINT_SCHEMA', '_partial_checkpoint', 'load_chain',
+                     'FullCheckpointer.externals', 'FullCheckpointer._partial_adapter_save',
+                     'FullCheckpointer._write', 'FullCheckpointer.save_boundary',
                      'restore_driver', 'compare_reconstructed_prefix', 'consume_recovery')
 
 
@@ -62,19 +67,20 @@ def python_minor(version):
 
 def runtime_acceptance(saved):
     """Why a saved descriptor's runtime is accepted, or None (refused). Compared: the saved format (absent = 1) against
-    NATIVE_STATE_FORMAT, and the Python major.minor (the pickle compatibility key). The full Python version, the
+    the supported formats 1 and 2, and the Python major.minor (the pickle compatibility key). The full Python version, the
     cloudpickle version and the code identities are recorded, never compared: the label names any recorded field that
     differs ('format_1; code recorded: serializer_code, python')."""
     if not isinstance(saved, dict):
         return None
     current = runtime_identity()
-    if saved.get('format', 1) != NATIVE_STATE_FORMAT:
+    saved_format = saved.get('format', 1)
+    if type(saved_format) is not int or saved_format not in (1, NATIVE_STATE_FORMAT):
         return None
     if python_minor(saved.get('python')) != python_minor(current['python']):
         return None
     differs = sorted(k for k in RECORDED_CODE + ('python', 'cloudpickle')
                      if k in saved and saved.get(k) != current.get(k))
-    label = 'format_%d' % NATIVE_STATE_FORMAT
+    label = 'format_%d' % saved_format
     return label + ('; code recorded: ' + ', '.join(differs) if differs else '')
 
 
@@ -87,6 +93,45 @@ def continuation_meaning(binding):
         import frankie_box_native_emission
         return dict(binding, emission=frankie_box_native_emission.meaning(binding['emission']))
     return binding
+
+
+def _partial_checkpoint(**fields):
+    """The existing checkpoint fields with an explicit carried-group format.
+
+    The pinned benchmark schema remains closed-group-only. Its builder validates
+    the common identity/count fields; this wrapper then binds the actual open
+    flag under the partial format. No scientific group is closed to make a save.
+    """
+    opened = fields.pop('event_group_open')
+    if type(opened) is not bool or (opened and fields['locked']):
+        raise ValueError('a terminal native save cannot carry unfinished groups')
+    value = P.build_checkpoint(event_group_open=False, **fields)
+    value.update(schema=PARTIAL_CHECKPOINT_SCHEMA, event_group_open=opened)
+    value['checkpoint_hash'] = P.canonical_hash({k: v for k, v in value.items() if k != 'checkpoint_hash'})
+    return value
+
+
+def load_chain(directory):
+    """Keep the original reader for old saves; also read exact partial saves."""
+    paths = sorted(Path(directory).glob(P.CHECKPOINT_GLOB))
+    if not paths or json.loads(paths[0].read_bytes()).get('schema') != PARTIAL_CHECKPOINT_SCHEMA:
+        return P.load_chain(directory)
+    chain = []
+    stable = ('run_id', 'controller', 'memory_mode', 'source_manifest_hash', 'total_mbo_records')
+    for index, path in enumerate(paths):
+        value = json.loads(path.read_bytes())
+        fields = {k: v for k, v in value.items() if k not in ('schema', 'checkpoint_hash', 'progress_percent')}
+        if value != _partial_checkpoint(**fields) or path != P.checkpoint_path(directory, index):
+            raise ValueError('native partial checkpoint identity differs')
+        previous = chain[-1] if chain else None
+        if (value['sequence'] != index
+                or value['previous_checkpoint_hash'] != (previous['checkpoint_hash'] if previous else None)
+                or (previous and (previous['locked']
+                    or value['completed_mbo_records'] < previous['completed_mbo_records']
+                    or any(value[k] != previous[k] for k in stable)))):
+            raise ValueError('native partial checkpoint chain differs')
+        chain.append(value)
+    return chain
 
 
 def sink_items(sinks):
@@ -164,7 +209,7 @@ class StateUnpickler(pickle.Unpickler):
 
 class FullCheckpointer(P.PeriodicCheckpointer):
     def __init__(self, *, driver_identity, progress=None, parent_checkpoint=None,
-                 continuation_binding=None, save_requested=None, input_position=None, **kwargs):
+                 continuation_binding=None, save_requested=None, input_position=None, carry_open_groups=False, **kwargs):
         super().__init__(**kwargs)
         self.driver = None
         self.driver_identity = driver_identity
@@ -173,6 +218,7 @@ class FullCheckpointer(P.PeriodicCheckpointer):
         self.continuation_binding = continuation_binding
         self.save_requested = save_requested
         self.input_position = input_position
+        self.carry_open_groups = carry_open_groups
         self.stop_checkpoint = None
         self.low_space_stop = False
         self.last_state_bytes = 0
@@ -210,11 +256,43 @@ class FullCheckpointer(P.PeriodicCheckpointer):
     def externals(self):
         return dict(sinks=self.driver.sinks, checkpointer=self, stage_spawn=self.driver.stage_spawn)
 
+    def _partial_adapter_save(self, state, descriptor, *, completed_mbo_records, locked):
+        """Persist the existing open-group adapter state beside the full driver."""
+        sequence = self.sequence + 1
+        paths = (P.adapter_state_path(self.checkpoint_dir, sequence),
+                 P.controller_state_path(self.checkpoint_dir, sequence),
+                 P.checkpoint_path(self.checkpoint_dir, sequence))
+        P.write_gzip_json_atomic(paths[0], state)
+        save_new(paths[1], descriptor)
+        checkpoint = _partial_checkpoint(run_id=self.run_id, controller=self.controller,
+            memory_mode=self.memory_mode, sequence=sequence, source_manifest_hash=self.source_manifest_hash,
+            completed_mbo_records=completed_mbo_records, total_mbo_records=self.total_mbo_records,
+            event_group_open=descriptor['adapter_state']['event_group_open'],
+            adapter_state_hash=state['state_hash'], controller_state_hash=P.canonical_hash(descriptor),
+            previous_checkpoint_hash=self._previous_hash, phase=self.phase, locked=locked)
+        pending = paths[2].with_suffix('.pending')
+        save_new(pending, checkpoint)
+        os.link(pending, paths[2])
+        sync_directory(self.checkpoint_dir)
+        pending.unlink()
+        self._sequence, self._previous_hash = sequence, checkpoint['checkpoint_hash']
+        self._last_saved_records, self._last_saved_at = completed_mbo_records, self._monotonic()
+        self._saved.append(checkpoint)
+        if self._durable_sync is not None:
+            self._durable_sync(paths)
+        self.report_progress(completed_mbo_records)
+        return checkpoint
+
     def _write(self, adapter, *, completed_mbo_records, event_group_open, controller_state, locked,
                interval_save=True):
         if self.driver is None or self.driver.counters.records_seen != completed_mbo_records:
             raise ValueError('full driver and checkpoint cursor differ')
-        adapter.assert_groups_closed()
+        partial = None
+        if self.carry_open_groups:
+            from research.kalshi.frankie_boss.mbo_resume_state import export_adapter_state
+            partial = export_adapter_state(adapter, include_open_groups=True)
+        if not self.carry_open_groups or locked:
+            adapter.assert_groups_closed()
         sequence = self.sequence + 1
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
         state_path = self.checkpoint_dir / ('driver-state-%06d.pkl.gz' % sequence)
@@ -244,6 +322,9 @@ class FullCheckpointer(P.PeriodicCheckpointer):
             driver_identity=self.driver_identity, driver_state=state_pin,
             ledgers=ledgers, completed_mbo_records=completed_mbo_records,
             finalized=locked, parent_checkpoint=self.parent_checkpoint)
+        if partial is not None:
+            descriptor['adapter_state'] = dict(schema=partial['schema'], sha256=partial['state_hash'],
+                event_group_open=any(book.event_group for book in adapter.books.values()))
         disk = self.disk_projection()
         if disk is not None:
             descriptor['disk'] = disk                  # recorded at every save, never compared
@@ -254,11 +335,15 @@ class FullCheckpointer(P.PeriodicCheckpointer):
             if not isinstance(position, dict):
                 raise ValueError('native input checkpoint position must be a durable mapping')
             descriptor['input_position'] = position
-        checkpoint = super()._write(adapter, completed_mbo_records=completed_mbo_records,
-            event_group_open=event_group_open, controller_state=descriptor, locked=locked)
+        if partial is None:
+            checkpoint = super()._write(adapter, completed_mbo_records=completed_mbo_records,
+                event_group_open=event_group_open, controller_state=descriptor, locked=locked)
+        else:
+            checkpoint = self._partial_adapter_save(partial, descriptor,
+                completed_mbo_records=completed_mbo_records, locked=locked)
         # Durable readback verifies the adapter chain, controller descriptor and full
         # serialized bytes. Restoration uses the same pinned runtime and object graph.
-        if P.load_chain(self.checkpoint_dir)[-1] != checkpoint:
+        if load_chain(self.checkpoint_dir)[-1] != checkpoint:
             raise ValueError('checkpoint chain readback differs')
         actual = json.loads(P.controller_state_path(self.checkpoint_dir, sequence).read_bytes())
         if P.canonical_hash(actual) != checkpoint['controller_state_hash'] or actual != descriptor:
@@ -275,15 +360,17 @@ class FullCheckpointer(P.PeriodicCheckpointer):
 
     def maybe_save(self, adapter, **kwargs):
         # One instrument's F_LAST can leave another instrument's group open.
-        # Neither a periodic nor a requested save may serialize that boundary.
-        if kwargs.get('event_group_open') or any(book.event_group for book in adapter.books.values()):
+        # Old saved runs keep their closed-group checkpoint contract. New
+        # member-bound runs retain every instrument's open state in the full save.
+        if not self.carry_open_groups and (kwargs.get('event_group_open')
+                                          or any(book.event_group for book in adapter.books.values())):
             return None
         # Greg, 2026-10-09: no reserve gate. The traversal keeps running while the rest of its work fits; only when the
-        # projected bytes (the next save plus the ledgers' remaining bytes) exceed the free space is the next closed
-        # group saved and the traversal stopped (an actual ENOSPC also stops it, as any crash does)
+        # projected bytes (the next save plus the ledgers' remaining bytes) exceed the free space is the next
+        # checkpoint saved and the traversal stopped (an actual ENOSPC also stops it, as any crash does)
         disk = self.disk_projection()
         if disk is not None and not disk['fits'] and not self.low_space_stop:
-            self._last_saved_at = 0  # Save the next closed group before stopping.
+            self._last_saved_at = 0  # Save at this checkpoint call before stopping.
             self.low_space_stop = True
         requested = (self.save_requested is not None and self.save_requested()
                      and getattr(self.driver, '_frankie_reconstruction_checkpoint', None) is None)
@@ -310,7 +397,7 @@ class FullCheckpointer(P.PeriodicCheckpointer):
 
 def read_checkpoint(path, identity, *, continuation_binding=None):
     path = safe_path(path)
-    latest = P.load_chain(path.parent)[-1]
+    latest = load_chain(path.parent)[-1]
     if path != P.checkpoint_path(path.parent, latest['sequence']) :
         raise ValueError('latest checkpoint required')
     if (latest['run_id'] != identity['run_id'] or
@@ -332,8 +419,20 @@ def read_checkpoint(path, identity, *, continuation_binding=None):
             raise ValueError('full checkpoint runtime or producer identity differs')
         # recorded in the native receipt (frankie_box_bedrock.run: recovery.runtime_acceptance)
         latest['_runtime_acceptance'] = acceptance
+        if latest.get('schema') == PARTIAL_CHECKPOINT_SCHEMA:
+            from research.kalshi.frankie_boss.mbo_resume_state import OPEN_SCHEMA
+            expected = dict(schema=OPEN_SCHEMA, sha256=latest['adapter_state_hash'],
+                            event_group_open=latest['event_group_open'])
+            if (descriptor.get('adapter_state') != expected or state.get('schema') != OPEN_SCHEMA
+                    or descriptor['runtime'].get('format') != 2
+                    or bool(any(book['event_group'] for book in state['books'])) != latest['event_group_open']):
+                raise ValueError('native partial adapter state differs from its full save')
+        elif 'adapter_state' in descriptor:
+            raise ValueError('partial adapter state requires its explicit checkpoint format')
         if witness(safe_path(descriptor['driver_state']['path'])) != descriptor['driver_state']:
             raise ValueError('full checkpoint bytes differ')
+    if latest.get('schema') == PARTIAL_CHECKPOINT_SCHEMA and descriptor is None:
+        raise ValueError('partial native checkpoint requires the full calculation state')
     if latest['locked'] and descriptor is None:
         raise ValueError('terminal adapter-only checkpoint lacks finalized calculations')
     if descriptor is None and continuation_binding is not None:
@@ -352,7 +451,16 @@ def restore_driver(descriptor, checkpointer, sinks, stage_spawn):
     if (driver.counters.records_seen != descriptor['completed_mbo_records'] or
             driver.sinks is not sinks or driver.run.sinks is not sinks or driver.checkpointer is not checkpointer):
         raise ValueError('restored driver bindings or cursor differ')
-    driver.adapter.assert_groups_closed()
+    if 'adapter_state' in descriptor:
+        from research.kalshi.frankie_boss.mbo_resume_state import export_adapter_state
+        if not checkpointer.carry_open_groups:
+            raise ValueError('partial native state requires its member-bound continuation route')
+        state = export_adapter_state(driver.adapter, include_open_groups=True)
+        if (state['schema'] != descriptor['adapter_state']['schema']
+                or state['state_hash'] != descriptor['adapter_state']['sha256']):
+            raise ValueError('restored partial native adapter differs from its saved state')
+    else:
+        driver.adapter.assert_groups_closed()
     checkpointer.driver = driver
     return driver
 
@@ -424,6 +532,13 @@ def consume_recovery(driver, records, total, progress, checkpoint=None, descript
                 # the durable state and this cursor now describe the same boundary.
                 from research.kalshi.frankie_boss.parallel_teacher import TeacherSaved
                 raise TeacherSaved('native ROOT saved at %s' % driver.checkpointer.checkpoint_dir)
+            if (driver.checkpointer.carry_open_groups and driver.checkpointer.save_requested is not None
+                    and driver.checkpointer.save_requested() and target is None):
+                # The driver has returned from this INPUT's application. Preserve
+                # the partial calculation and all open groups at this position;
+                # do not read ahead looking for another instrument's F_LAST.
+                driver.checkpointer.save_boundary()
+                driver.checkpointer.raise_if_requested()
             stage = 'root-native-reconstruct' if target is not None and done < target else 'root-native-records'
             if progress:
                 progress.update(stage, done, total, force=False)
