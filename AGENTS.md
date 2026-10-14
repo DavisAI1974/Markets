@@ -16,6 +16,8 @@
 
 ## Current execution boundaries
 
+- **2026-10-14 03:19 ET follow-up:** after the active second-set pass finishes, Greg requests a focused change to collect complete findings and second-set reading in one sidecar traversal (or equivalent verified reuse). The deployed moved-findings cache fix does not do this. Preserve original schemas, evidence, source identity, all 99/second-set bindings and exact partial continuation. No draft for this change exists yet; no broader 30-day work or launch is authorized. Read SESSION15's new-chat direction.
+
 - AWS CPU only; no Pods. Exactly three held 16-CPU lanes: two main and one Linux, each with 15 workers plus coordinator. Keep giant evidence on its owning lane.
 - No starts, AWS installations, compute dispatch, training, data/scientific runs or model calls without Greg's explicit authorization.
 - No extra tests or validator framework. One real E2E only after wiring/discussions and explicit AWS go; thirty days require separate authorization.

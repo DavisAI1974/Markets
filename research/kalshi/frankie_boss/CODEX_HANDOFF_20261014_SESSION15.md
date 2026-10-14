@@ -4,13 +4,47 @@ Repository `DavisAI1974/Markets`, branch `ccr-d2f8f826-iefeah-frankie`.
 Fetch CURRENT HEAD and preserve newer work. Runtime fix published and deployed:
 `02d61cfe778fceb687d77db45eda1a134f890bcd`.
 
+## New chat direction, 2026-10-14 03:19 ET
+
+Greg requested a new chat while the current complete second-set read is still
+running. Do NOT restart it. Read live owner/queue state first; the backup
+completion watch can also resume this same owner after its protective save,
+so do not race it with a second resume.
+
+Greg now explicitly requests one focused follow-up efficiency change: after
+this active part finishes, collect the second-set reading during the first
+findings traversal (or equivalent verified reuse), rather than rereading the
+161 GB sidecar. It must retain complete row/plane evidence, role-independent
+measurement, source identity, partial state and exact continuation. This
+specific change supersedes the earlier deferral for this one efficiency issue;
+no broader 30-day changes or 30-day launch are authorized. The currently
+deployed 02d61cf fix handles moved teacher-findings reuse and account locking;
+it does NOT fold findings and second-set reading into one traversal. No source
+draft for the fold has been written, integrated or deployed.
+
+Source entry points for that follow-up: `teacher_findings.compute` already
+walks `TR.SidecarStream` for the complete findings, while
+`teacher_rows._second_set_reading` separately walks the same sidecar to count
+roles, plane references, missing ordinal ranges and book status. New
+`shared-products/second-set-reading.json` shares that latter reading among
+roles, but its initial creation still performs the extra pass. Preserve the
+original schemas, counts, types/order, hash/source checks and invalidation for
+changed dependencies; do not substitute findings alone for second-set evidence.
+Inspect these existing functions before choosing a change. Do not interrupt
+the live read to apply it.
+
 Greg explicitly authorized finishing the remaining one-day workflow, cleanup
 first, faster disks, and stopping unused compute. His later “Proceed” includes
 continuing after the classroom wrapper's protective save. SESSION14's earlier
 no-start/no-resume gate is historical. No 30-day work, replacement runners,
 extra test framework or deferred draft integration is authorized here.
 
-## Latest verified runtime, 2026-10-14 07:10 UTC
+## Latest verified runtime, 2026-10-14 07:19:52 UTC
+
+Documentation was staged as `85da915b559c06efbe2d19acd4ec7cb650f99bcc`, verified
+4,181 files; runtime source is unchanged from fix 02d61cf. The running owner
+keeps its 02d61cf entrypoint until the boundary. Resolve current checkout for
+its next resume; do not restart a live worker for documentation changes.
 
 AWS account is Greg Davis's `568968024170`, region `us-east-1`.
 Main `i-035994afa8bdf66a5` is running, r7i.16xlarge, 64 CPUs.
@@ -26,7 +60,7 @@ Whole-day classroom was saved after `package`, not finished. Search/lessons,
 exchange, Jev, meeting, school and reports remain the existing remaining route.
 
 Owner worker PID 3122 runs the verified 02d61cf checkout. It is making one
-complete shared second-set reading and has advanced through 110,804,434,944
+complete shared second-set reading and has advanced through 143,767,875,584
 bytes of the 161,126,241,394-byte sidecar. Its shared-product lock prevents a
 second consumer from duplicating that pass. Do not interrupt this progressing
 read. The new shared reading product did not exist at startup.
