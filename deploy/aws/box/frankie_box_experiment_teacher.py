@@ -755,7 +755,52 @@ def _second_set_prefix(open_market, needed, SS, book_needed=0, changes=True, lab
     return records, book
 
 
-def _second_set(out, open_market, market, second, rows, SS, feed=None):  # noqa: C901
+def _book_record_part(path, identity, rows, record_at, *, cursor_group, groups, windows, whole_day,
+                      group_labels, running, save_requested=None):
+    """Continue inside a second-set part with its output and whole-day carry.
+
+    Each row retains its original plane join beside the book result. The save
+    position is actual progress, independent of the part's packaging boundaries
+    or the timing-run markers. Read-only integer window caches are rebuilt for
+    the next row; previously produced rows and running totals are not recomputed.
+    """
+    from research.kalshi.frankie_boss import parallel_teacher as PT, teacher_book_read as TBR
+    TP = _box_module('frankie_box_teacher_products')
+    writer = TP.RecordWriter(path, identity, resume=True)
+    try:
+        if writer.count > len(rows):
+            raise ValueError('partial teacher book output exceeds its original row range')
+        saved = writer.continuation
+        if saved is not None:
+            if (set(saved) != {'next_record', 'running'}
+                    or saved['next_record'] != identity['start'] + writer.count):
+                raise ValueError('partial teacher book state and output position differ')
+            running.clear()
+            running.update(saved['running'])
+        else:
+            writer.save(dict(next_record=identity['start'], running=running))
+
+        def stop():
+            if save_requested is not None and save_requested():
+                raise PT.TeacherSaved('teacher second set saved inside its part; next row %d'
+                                      % (identity['start'] + writer.count))
+
+        stop()
+        offset = writer.count
+        entries = TBR.iter_assemble(rows[offset:], cursor_group, groups, windows, whole_day=whole_day,
+                                    group_labels=group_labels, running=running)
+        for index, entry in enumerate(entries, offset):
+            writer.append(dict(record_at(identity['start'] + index, rows[index]), book=entry))
+            writer.save(dict(next_record=identity['start'] + writer.count, running=running))
+            stop()
+        if writer.count != len(rows):
+            raise ValueError('teacher book output does not cover its complete original row range')
+        return writer.finish()
+    finally:
+        writer.close()
+
+
+def _second_set(out, open_market, market, second, rows, SS, feed=None, save_requested=None):  # noqa: C901
     """The teacher's second set for every row, written beside the rows (teacher-second-set.json, hash-bound parts) and
     summarized for the receipt. The rows the walk read carry their join from the walk; rows read by an earlier process
     whose save holds no join are joined here from a fresh reader of the same ROOT (merged at publication). A row left
@@ -823,20 +868,22 @@ def _second_set(out, open_market, market, second, rows, SS, feed=None):  # noqa:
             pin = dict(path=str(path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
             if len(store) != stop - start:
                 raise ValueError('retained full teacher block has another adapter-row count')
+            carried = store.continuation()
+            if carried is not None:
+                if set(carried) != {'next_record', 'running'} or carried['next_record'] != stop:
+                    raise ValueError('completed teacher book carry has another position')
+                running.clear()
+                running.update(carried['running'])
+                running_until = stop
         else:
             # Existing parts need no arithmetic. Reconstruct their carry only
             # when a later missing part will actually consume it.
-            if running_until < start:
+            if running_until < start and not path.with_suffix('.progress.pkl').is_file():
                 TBR.advance_running(running, rows[running_until:start], cursor_group, groups, windows)
-            writer = TP.RecordWriter(path, part_identity)
-            try:
-                entries = TBR.iter_assemble(rows[start:stop], cursor_group, groups, windows,
-                    whole_day=bool(walked.get('changes')), group_labels=group_labels, running=running)
-                for index, entry in enumerate(entries, start):
-                    writer.append(dict(records[index], book=entry))
-                pin = writer.finish()
-            finally:
-                writer.close()
+            pin = _book_record_part(path, part_identity, rows[start:stop], lambda index, row: records[index],
+                cursor_group=cursor_group, groups=groups, windows=windows,
+                whole_day=bool(walked.get('changes')), group_labels=group_labels, running=running,
+                save_requested=save_requested)
             running_until = stop
         parts.append(dict(start=start, stop=stop, pin=pin))
     joined = TP.JoinedRecords(dict(rows=len(rows), parts=parts))
@@ -1332,19 +1379,20 @@ class _BlockFeed:
             store = TP.RecordStore(path, identity=identity)
             if len(store) != len(span):
                 raise ValueError('sealed full teacher block has another adapter-row count')
-            self.TBR.advance_running(self.running, span, self.cg, self.groups, self.windows)
+            carried = store.continuation()
+            if carried is None:
+                self.TBR.advance_running(self.running, span, self.cg, self.groups, self.windows)
+            else:
+                if set(carried) != {'next_record', 'running'} or carried['next_record'] != b:
+                    raise ValueError('sealed teacher book carry has another position')
+                self.running.clear()
+                self.running.update(carried['running'])
             raw = path.read_bytes()
             pin = dict(path=str(path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
         else:
-            writer = TP.RecordWriter(path, identity)
-            try:
-                entries = self.TBR.iter_assemble(span, self.cg, self.groups, self.windows, whole_day=self.changes,
-                                                group_labels=self.group_labels, running=self.running)
-                for row, entry in zip(span, entries):
-                    writer.append(dict(self.records(row[6]), book=entry))
-                pin = writer.finish()
-            finally:
-                writer.close()
+            pin = _book_record_part(path, identity, span, lambda index, row: self.records(row[6]),
+                cursor_group=self.cg, groups=self.groups, windows=self.windows, whole_day=self.changes,
+                group_labels=self.group_labels, running=self.running)
             store = TP.RecordStore(path, pin=pin, identity=identity)
         extra['second_set']['full_adapter_rows'] = dict(rows=len(store), pin=pin)
         entries, read_index, joined = iter(store), -1, None
@@ -2308,7 +2356,7 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
             if feed is not None:
                 feed.entity = hashes
             second_set, second_records, second_header = _second_set(out, open_market, market, second, rows, SS,
-                                                                    feed=feed)
+                                                                    feed=feed, save_requested=save_requested)
             phase('second_set')
         collector.exit()
         walked = time.time() - started

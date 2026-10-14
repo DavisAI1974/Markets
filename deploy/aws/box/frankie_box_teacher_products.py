@@ -15,6 +15,7 @@ import os
 import pickle
 import struct
 import tempfile
+import uuid
 from pathlib import Path
 
 RECORD_SCHEMA = 'FRANKIE_TEACHER_RECORD_STORE_V1'
@@ -66,19 +67,105 @@ def _identity_matches(retained, requested):
 
 
 class RecordWriter:
-    """One bounded pickle and one offset per record; fsync data before the manifest."""
-    def __init__(self, path, identity):
+    """One bounded pickle and offset per record, with optional partial continuation.
+
+    A progress save uses the teacher's existing hash-bound atomic state writer.
+    It binds output positions and the caller's running calculation state in one
+    publication. Unpublished bytes are retained after interruption, never erased
+    by close() or by opening a replacement writer.
+    """
+    def __init__(self, path, identity, *, resume=False):
         self.path, self.identity = Path(path), identity
         self.path.parent.mkdir(parents=True, exist_ok=True)
         if self.path.exists():
             raise FileExistsError('published teacher record store is immutable: ' + str(self.path))
-        self.data_path = self.path.with_suffix('.records')
-        self.index_path = self.path.with_suffix('.index')
-        self.data_pending = self.data_path.with_name(self.data_path.name + '.pending')
-        self.index_pending = self.index_path.with_name(self.index_path.name + '.pending')
-        self.data, self.index = self.data_pending.open('wb'), self.index_pending.open('wb')
+        self.progress_path = self.path.with_suffix('.progress.pkl')
         self.data_hash, self.index_hash = hashlib.sha256(), hashlib.sha256()
         self.count, self.size, self.closed = 0, 0, False
+        self.continuation = None
+        self._saved_position = None
+        self.data = self.index = None
+        if resume and self.progress_path.exists():
+            self._resume()
+        else:
+            if self.progress_path.exists():
+                raise ValueError('partial teacher output requires its saved continuation')
+            self.data_pending, self.index_pending = self._new_paths()
+            self.data, self.index = self.data_pending.open('xb'), self.index_pending.open('xb')
+
+    def _new_paths(self):
+        name = self.path.stem + '.' + uuid.uuid4().hex
+        return (self.path.with_name(name + '.records.pending'), self.path.with_name(name + '.index.pending'))
+
+    def _resume(self):
+        from research.kalshi.frankie_boss.parallel_teacher import _load_raw_state
+        saved = _load_raw_state(self.progress_path)
+        if (saved.get('schema') != RECORD_SCHEMA or saved.get('format') != 1
+                or not _identity_matches(saved['identity'], self.identity)):
+            raise ValueError('partial teacher output belongs to another source, range or save format')
+        self.count, self.size = saved['rows'], saved['data']['bytes']
+        if (type(self.count) is not int or self.count < 0 or type(self.size) is not int or self.size < 0
+                or saved['index']['bytes'] != self.count * _OFFSET.size):
+            raise ValueError('partial teacher output positions differ')
+        paths = [Path(saved[name]['path']) for name in ('data', 'index')]
+        sizes = [self.size, self.count * _OFFSET.size]
+        for path, size in zip(paths, sizes):
+            if path.parent.resolve() != self.path.parent.resolve() or path.stat().st_size < size:
+                raise ValueError('partial teacher output is missing its saved extent')
+        # A process can die between an output write and its state publication.
+        # Preserve that entire attempt. Copy only the acknowledged prefix to a
+        # new write generation; never truncate the retained file or replay its
+        # calculations. A clean cooperative save appends to its original files.
+        fork = any(path.stat().st_size != size for path, size in zip(paths, sizes))
+        targets = self._new_paths() if fork else paths
+        handles = []
+        try:
+            for name, path, target, size, digest in zip(
+                    ('data', 'index'), paths, targets, sizes, (self.data_hash, self.index_hash)):
+                output = target.open('xb') if fork else None
+                if output is not None:
+                    handles.append(output)
+                with path.open('rb') as source:
+                    remaining = size
+                    while remaining:
+                        chunk = source.read(min(1 << 20, remaining))
+                        if not chunk:
+                            raise ValueError('partial teacher output ended before its saved position')
+                        digest.update(chunk)
+                        if output is not None:
+                            output.write(chunk)
+                        remaining -= len(chunk)
+                if digest.hexdigest() != saved[name]['sha256']:
+                    raise ValueError('partial teacher output differs from its saved bytes')
+            if not fork:
+                handles = [path.open('ab') for path in targets]
+            self.data, self.index = handles
+            self.data_pending, self.index_pending = targets
+            self.continuation = saved['continuation']
+            self._saved_position = (self.count, self.size, self.data_hash.hexdigest(), self.index_hash.hexdigest())
+            # Publish a copied generation before it accepts another record.
+            if fork:
+                self.save(self.continuation)
+        except BaseException:
+            for handle in handles:
+                handle.close()
+            raise
+
+    def save(self, continuation):
+        """Retain a partial output and the exact calculation state that made it."""
+        from research.kalshi.frankie_boss.parallel_teacher import _save_raw_state
+        if self.closed:
+            raise ValueError('teacher output writer is closed')
+        for handle in (self.data, self.index):
+            handle.flush()
+            os.fsync(handle.fileno())
+        _save_raw_state(self.progress_path, dict(schema=RECORD_SCHEMA, format=1, identity=self.identity,
+            rows=self.count,
+            data=dict(path=str(self.data_pending), bytes=self.size, sha256=self.data_hash.hexdigest()),
+            index=dict(path=str(self.index_pending), bytes=self.count * _OFFSET.size,
+                       sha256=self.index_hash.hexdigest()), continuation=continuation))
+        self.continuation = continuation
+        self._saved_position = (self.count, self.size, self.data_hash.hexdigest(), self.index_hash.hexdigest())
 
     def append(self, record):
         raw = pickle.dumps(record, protocol=pickle.HIGHEST_PROTOCOL)
@@ -94,6 +181,9 @@ class RecordWriter:
         self.count += 1
 
     def finish(self):
+        if self._saved_position is not None and self._saved_position != (
+                self.count, self.size, self.data_hash.hexdigest(), self.index_hash.hexdigest()):
+            raise ValueError('teacher final output requires its matching calculation continuation')
         for handle in (self.data, self.index):
             handle.flush()
             os.fsync(handle.fileno())
@@ -115,23 +205,29 @@ class RecordWriter:
                         digest.update(chunk)
                 if digest.hexdigest() != expected:
                     raise ValueError('immutable teacher record file differs from its name')
-            pending.unlink()
+            # The progress save still refers to this name until the manifest is
+            # durable. Retain its hard link, including after final publication.
         from research.kalshi.frankie_boss.operations.ingest_block_sources import file_claim
         data_claim = file_claim(self.data_path, self.size, self.data_hash.hexdigest(), 'teacher product write stream')
-        return _write_json(self.path, dict(schema=RECORD_SCHEMA, identity=self.identity, rows=self.count,
+        body = dict(schema=RECORD_SCHEMA, identity=self.identity, rows=self.count,
             data=dict(path=str(self.data_path), bytes=self.size, sha256=self.data_hash.hexdigest()),
             index=dict(path=str(self.index_path), bytes=self.count * _OFFSET.size,
                        sha256=self.index_hash.hexdigest()),
             data_claim=data_claim,
-            encoding='uint64 big-endian length, sha256 digest, independent pickle; index uint64 byte offsets'))
+            encoding='uint64 big-endian length, sha256 digest, independent pickle; index uint64 byte offsets')
+        if self.progress_path.is_file():
+            raw = self.progress_path.read_bytes()
+            body['continuation'] = dict(path=str(self.progress_path), bytes=len(raw),
+                                        sha256=hashlib.sha256(raw).hexdigest())
+        return _write_json(self.path, body)
 
     def close(self):
         if not self.closed:
             self.data.close()
             self.index.close()
             self.closed = True
-        for pending in (self.data_pending, self.index_pending):
-            pending.unlink(missing_ok=True)
+        # A stopped writer's partial output and its progress state are evidence.
+        # The next process continues them; close is not a cleanup instruction.
 
 
 class RecordStore:
@@ -167,6 +263,25 @@ class RecordStore:
 
     def __len__(self):
         return self.manifest['rows']
+
+    def continuation(self):
+        """The calculation carry pinned with this completed part, if retained."""
+        pin = self.manifest.get('continuation')
+        if pin is None:
+            return None
+        from research.kalshi.frankie_boss.parallel_teacher import _load_raw_state
+        path = Path(pin['path'])
+        raw = path.read_bytes()
+        if len(raw) != pin['bytes'] or hashlib.sha256(raw).hexdigest() != pin['sha256']:
+            raise ValueError('teacher part continuation differs from its manifest pin')
+        saved = _load_raw_state(path)
+        if (saved.get('schema') != RECORD_SCHEMA or saved.get('format') != 1
+                or not _identity_matches(saved['identity'], self.manifest['identity'])
+                or saved['rows'] != len(self)
+                or any(saved[k][v] != self.manifest[k][v] for k in ('data', 'index')
+                       for v in ('bytes', 'sha256'))):
+            raise ValueError('teacher part continuation differs from its completed output')
+        return saved['continuation']
 
     @staticmethod
     def _record(handle, total_bytes):

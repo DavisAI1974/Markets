@@ -112,7 +112,8 @@ def heartbeat(phase, done, total=None, unit=None, every=None, **extra):
 # (set by the runner: its data identity and save format; Greg, 2026-10-09: the code version is recorded, never compared),
 # the operation and its whole job list: another day, source or job list never matches; a code change does not. A segment
 # directory saved under the earlier key (the digest of the whole saved identity, code fields included; legacy_identity)
-# is adopted, never lost. A sub-step's segments are removed once it returns its whole value (its phase then saves it).
+# is adopted, never lost. Sub-step saves remain retained when the result returns:
+# the enclosing phase may not yet have published its own save at that point.
 # Configured by the classroom V2 runner (SEGMENT_SAVES: directory, identity digest, legacy_identity, save_requested,
 # every_s); without it nothing is saved here (as before).
 SEGMENT_SCHEMA = 'FRANKIE_CLASSROOM_SEGMENT_SAVE_V1'
@@ -153,6 +154,7 @@ class _Segments:
         self.saved, self.last = 0, time.monotonic()
         self.record = SEGMENT_RECORD.setdefault(operation, dict(saves=0, resumed_values=0, segments_loaded=0))
         self.record.update(enabled=self.enabled, every_s=self.every,
+                           save_rule='each returned in-order result; every_s is recorded only',
                            directory=str(self.directory) if self.directory else None,
                            legacy_key_adopted=adopted is not None)
 
@@ -173,34 +175,34 @@ class _Segments:
         return values
 
     def offer(self, values):
-        """After an in-order arrival: `values` = every final value so far. Saves the new ones when the interval passed or
-        a save was requested; on a requested save raises TeacherSaved (exit 75) after the segment is durable."""
+        """Retain the returned portion of an operation as it arrives.
+
+        Neither a timer nor completion of the whole operation is a save gate.
+        On request, stop after the partial result has been made durable.
+        """
         import time
         if not self.enabled:
             return
         requested = bool(self.save_requested and self.save_requested())
-        if requested or time.monotonic() - self.last >= self.every:
-            if len(values) > self.saved:
-                from research.kalshi.frankie_boss.parallel_teacher import _save_raw_state
-                _save_raw_state(self.directory / ('seg-%012d.pkl' % self.saved),
-                                dict(schema=SEGMENT_SCHEMA, key=self.key, operation=self.operation, start=self.saved,
-                                     values=list(values[self.saved:])))
-                self.saved = len(values)
-                self.record['saves'] += 1
-                self.record['saved_values'] = self.saved
-            self.last = time.monotonic()
+        if len(values) > self.saved:
+            from research.kalshi.frankie_boss.parallel_teacher import _save_raw_state
+            _save_raw_state(self.directory / ('seg-%012d.pkl' % self.saved),
+                            dict(schema=SEGMENT_SCHEMA, key=self.key, operation=self.operation, start=self.saved,
+                                 values=list(values[self.saved:])))
+            self.saved = len(values)
+            self.record['saves'] += 1
+            self.record['saved_values'] = self.saved
+        self.last = time.monotonic()
         if requested:
             from research.kalshi.frankie_boss.parallel_teacher import TeacherSaved
             self.record['stopped_at'] = self.saved
-            raise TeacherSaved('classroom %s saved at %d values (a closed boundary); a resume continues there'
+            raise TeacherSaved('classroom %s saved its partial result at %d values; a resume continues there'
                                % (self.operation, self.saved))
 
     def done(self):
-        """The sub-step returned its whole value: its segments are no longer the resume point (its phase saves it)."""
+        """Keep the partial saves until and after the enclosing phase publishes."""
         if self.enabled and self.directory.is_dir():
-            import shutil
-            shutil.rmtree(self.directory, ignore_errors=True)
-            self.record['removed_after_completion'] = True
+            self.record['retained_after_completion'] = True
 
 
 SCHEMA = 'FRANKIE_BOX_CLASSROOM_CODE_V1'

@@ -3,6 +3,21 @@
 Written by Claude at the end of session 13 for Codex (or a fresh Claude). Greg's usage is low; this file is meant to be
 enough on its own. All times are UTC (Z). Nothing in here is a guess unless it says "unknown" or "expected".
 
+**Greg's latest clarification, October 14 ET:** keep ALL 99 planes and the teacher's second set pinned together
+with the existing original row keys, event flow, source cursors and causal clocks. Recovery must retain partial
+calculations and partial output when a process is one-third done, then continue at its saved position. Reuse the
+existing save hooks; do not impose arbitrary timer, group or stage-completion recovery cutoffs. Timing/readiness
+markers are not recovery gates. This is a requirement, not a claim that every existing path already satisfies it.
+
+Current source follow-up: second-set book-record parts now retain partial output positions and running totals with
+the existing teacher atomic save helper, and reuse the saved prefix/carry when reopened. Interrupted files are
+preserved. Completed parts retain their carry as well. Classroom segment saves retain each returned in-order
+portion immediately and keep it after the sub-step returns, closing the former deletion-before-phase-save gap.
+Individual in-flight row/worker calculations, out-of-order result retention, native open-group continuation and
+sequential ingest recovery are not established by these changes. No new native checkpoint protocol was installed.
+Source review, AST parsing and diff checks only; no tests, scientific execution, benchmark, AWS mutation or start.
+See the precise limits and revised timing-marker wording in NATIVE_STREAM_TIMING_SCOPE_20261014.md.
+
 **Current source contract and next timing scope:** read
 `NATIVE_STREAM_TIMING_SCOPE_20261014.md`. New fresh sequential day ingests with prepared INPUTs select
 `FRANKIE_NATIVE_DBN_MEMBER_PROVENANCE_V1`: original verified DBN member hashes on native rows, with the
@@ -12,7 +27,8 @@ This resolves the per-record final-journal-hash dependency in source; it does no
 The committed-prefix notifications, continuing ROOT consumers and shared-picture/teacher segment readers remain
 to be wired. Existing full-day checks stay in place. The bounded timing scope is one block-1 classroom gauge plus
 one contiguous 35-minute ingestion/ROOT prefix (first frontier at 30 minutes, then continue from the saved cursor),
-in one attended session with a 30-minute wall-work budget. That combined run is not launch-ready until the actual
+in one attended session with a 30-minute wall-work budget. Save/reopen at actual partial progress within that scope;
+30/35-minute markers do not restrict recovery. That combined run is not launch-ready until the actual
 continuation entry point and bounded stop path exist. Do not substitute a saved-day resume. No AWS start, mutation,
 scientific execution, test or benchmark was performed; only source review, syntax parsing and diff checks.
 

@@ -4,6 +4,40 @@ Status: source-built provenance; runtime unverified; AWS start NOT authorized.
 This is the scope for Greg's next timing decision, not a launch instruction.
 The operational state and saved-day paths remain in CODEX_HANDOFF_20261014_SESSION13.md.
 
+## Recovery and joined-evidence requirement
+
+Greg clarified on October 14 ET that ALL 99 planes and the teacher's second set
+must stay pinned together as they are now: the same original event flow, row
+keys, source cursors, causal clocks, plane references and book/flow values.
+Earlier computation must preserve that joined picture through publication and
+recovery. Pending calculations retain their pending state and actual availability.
+
+Recovery includes a process that is one-third through its calculations or output.
+Retain intermediate calculations, running totals, unfinished groups and horizons,
+partial output bytes, returned worker results and exact read/write positions.
+Continue the same process from its saved progress, using the existing save hooks;
+neither completion of a stage nor a selected time/group cutoff is a prerequisite
+for recovery. A status sentence saying outputs were saved is not a replacement
+for the actual partial state. Preserve retained attempts and source data.
+
+The current source adds partial continuation inside the second-set book-record
+writer using `parallel_teacher._save_raw_state`: each produced row's joined
+planes/book output and running calculation carry are saved at one matching
+position. Resume reads the saved extent and continues at the next row. Complete
+parts also retain their carry. Interrupted output generations are retained, and
+an unacknowledged suffix is preserved when a new write generation is needed.
+This saves progress within a part; it does not serialize the interpreter in the
+middle of an individual row's arithmetic or pickle write.
+
+The classroom's existing segment saves now persist each returned in-order portion
+without waiting for the former 120-second interval. They remain after a sub-step
+returns, covering the gap before the enclosing phase is saved. This does not yet
+establish persistence inside every worker calculation or for every out-of-order
+result. Legacy ROOT already saves open groups, binner, pending rows and spool
+positions. Native and sequential ingestion still need their actual remaining
+partial-continuation gaps addressed; do not describe recovery as pipeline-wide
+complete. These changes have source/syntax review only, with no runtime claim.
+
 ## The hash dependency
 
 New fresh sequential compact ingests with prepared INPUTs use
@@ -49,6 +83,7 @@ continuation wiring remains source work, not a deployed streaming capability:
 - ROOT must hold one native/legacy state across temporary EOF, consume each new
   INPUT once, preserve all instruments' pending groups and calculator horizons,
   and save/resume at its original cursor without replaying the accumulated prefix.
+  Wire the existing partial-calculation saves; do not add timed recovery gates.
   A single instrument's F_LAST cannot stand in for closure of every open group.
 - The shared-picture/teacher route must read committed calculation segments with
   their actual availability, retaining pending producers as pending. Final native
@@ -69,17 +104,19 @@ above and Greg's explicit go. Two bounded legs in that same session:
 | Leg | Data and work | Stop boundary | What it measures |
 | --- | --- | --- | --- |
 | Classroom gauge | Existing 20231018 sealed block 1, 1,588 rows, complete classroom plus external section, one lesson at a time, evidence encoding shadow | One block-1 session | Existing comparable gauge, hash-byte equality, per-step time, memory, external-key reuse and write-once store |
-| Ingest/ROOT continuation | Original 20231018 opening state and contiguous first 35 receive-clock minutes, every original record/field in order, first committed frontier at 30 minutes and continuation to 35 | Cooperative saved prefix; no true-day EOF or native finalization | Actual new ingestion preparation, member stamping, first-frontier startup, increment consumption, prefix save/restore and available teacher evidence |
+| Ingest/ROOT continuation | Original 20231018 opening state and contiguous first 35 receive-clock minutes, every original record/field in order, first readiness at 30 minutes | Cooperative save of actual in-progress calculations and output; no true-day EOF or native finalization | Actual new ingestion preparation, member stamping, first-frontier startup, increment consumption, partial-state save/restore and available teacher evidence |
 
 Measure coverage from the first accepted INPUT receive clock, using the original
 cursor order and its receive-clock high-water mark; late arrivals are never
 sorted into an earlier prefix. The 35-minute extent is a timing boundary, not a new trading day and not a
-completed-source manifest. Preserve the next unread original cursor, pending
+completed-source manifest. These are readiness/measurement markers, never the
+only permitted recovery positions. Preserve the next unread original cursor, pending
 instrument groups and unresolved horizons at the stop. If a safe save cannot
 preserve them at that exact prefix, fix that source capability before launch;
-do not silently extend the slice until a convenient group closes. Save/reopen the
-same prefix during this leg and continue once from 30 to 35 minutes; never compute
-the first 30 minutes again. No success claim from an empty or already-complete
+do not silently extend the slice until a convenient group closes. Request one
+save during active partial work, reopen that same saved position, and continue
+within the 35-minute measurement extent; no mandatory stop at exactly 30 minutes
+and no recomputation of the already calculated prefix. No success claim from an empty or already-complete
 resume. Existing teacher block-1 work may start earlier when its own inputs exist.
 
 Use the full original manifest as the identity and progress denominator. Source
