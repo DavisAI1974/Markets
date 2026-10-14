@@ -236,6 +236,13 @@ def _read_receipt(rows_dir):
 
 
 def compute(rows_dir):
+    """Compute findings and the complete second-set sidecar measurement in one protected traversal."""
+    import frankie_box_teacher_rows as TR
+    with TR._reading_lock(rows_dir):
+        return _compute(rows_dir)
+
+
+def _compute(rows_dir):
     """One streaming pass over the teacher's rows sidecar: every pinned and every book-derived column per state bucket
     (count, p50, p90, max, min), the buckets against the pinned columns' states and reasons, the book depth per side,
     and every book-vs-event difference (written whole to DIFFERENCES_FILE). Writes FINDINGS_FILE; returns the findings.
@@ -251,6 +258,7 @@ def compute(rows_dir):
         _write_json(rows_dir / FINDINGS_FILE, findings)
         return findings
     stat = _sidecar_stat(side)
+    reading_sources = TR._sidecar_reading_sources(rows_dir)
     failures = {}
 
     def failed(part, error):
@@ -264,6 +272,8 @@ def compute(rows_dir):
         _write_json(rows_dir / FINDINGS_FILE, findings)
         return findings
     row_keys = stream.fields('row_keys')
+    reading = TR._SidecarReading(stream)
+    reading_error = None
     labels_carried = STATE_LABELS_KEY in row_keys
     book_key = stream.role('book_columns')
     dims = {name: _Dim(0) for name in DSTATE_DIMS}
@@ -288,6 +298,12 @@ def compute(rows_dir):
             except Exception as error:  # noqa: BLE001 - a line the reader cannot read: the rows before it stand
                 stream_error = dict(after_rows=n, error='%s: %s' % (type(error).__name__, error))
                 break
+            if reading_error is None:
+                try:
+                    reading.add(n, row)
+                except Exception as error:
+                    reading_error = error
+                    failed('second-set reading', error)
             # ---- the row's buckets
             touched = {}
             try:
@@ -392,6 +408,12 @@ def compute(rows_dir):
         os.fsync(diffs.fileno())
     pending.replace(diff_path)
     stream.close()
+    if stream_error is None and reading_error is None:
+        try:
+            receipt, _ = _read_receipt(rows_dir)
+            TR._remember_sidecar_reading(rows_dir, reading.record(receipt), reading_sources)
+        except Exception as error:
+            failed('second-set reading publication', error)
     largest.sort(key=lambda item: -item[0])
     # ---- the distributions, per dimension and bucket
     all_codes = np.zeros(n, dtype=np.int32)
@@ -483,6 +505,13 @@ def _write_json(path, value):
 
 
 def load_or_compute(rows_dir):
+    """Reuse retained findings, or produce both row measurements under the shared publication lock."""
+    import frankie_box_teacher_rows as TR
+    with TR._reading_lock(rows_dir):
+        return _load_or_compute(rows_dir)
+
+
+def _load_or_compute(rows_dir):
     """The findings beside the rows when they were computed by this FORMAT from the sidecar as it is now (its bytes and
     mtime unchanged, or the moved file's complete source claim still holds); else computed again. A findings file
     written before the sidecar existed, by a failed pass or by another FORMAT is never reused. The retained findings
@@ -513,7 +542,7 @@ def load_or_compute(rows_dir):
                         return body
             except (OSError, ValueError, ImportError):
                 pass                    # no matching complete-source witness: the existing full pass
-    return compute(rows_dir)
+    return _compute(rows_dir)
 
 
 def correlations(rows_dir):

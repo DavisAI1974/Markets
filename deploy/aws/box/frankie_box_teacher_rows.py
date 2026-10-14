@@ -29,6 +29,7 @@
 """
 import hashlib
 import json
+from contextlib import contextmanager
 from pathlib import Path
 
 ROWS_FILE = 'host-dipole-classroom-source.c15.json'
@@ -892,6 +893,129 @@ def _pinned_list(rows_dir, pin, name):
                 pinned=dict(sha256=pin.get('sha256'), count=pin.get('count')) if pin else None, how='streamed whole')
 
 
+class _SidecarReading:
+    """The second-set measurement, fed by the same decoded rows as the findings."""
+
+    def __init__(self, stream):
+        self.stream = stream
+        self.roles = {role: stream.role(role) for role in READ_ROLES}
+        self.carrying = {role: 0 for role in READ_ROLES}
+        self.without = {role: [] for role in READ_ROLES}
+        self.entries, self.references, self.element_rows, self.empty_rows, self.book_status = {}, 0, 0, 0, {}
+
+    def add(self, ordinal, row):
+        for role, key in self.roles.items():
+            if key is not None and row.get(key) is not None:
+                self.carrying[role] += 1
+            else:
+                self.without[role].append(ordinal)
+        planes = row.get(self.roles['planes']) if self.roles['planes'] else None
+        for entry, value in (planes or {}).items():
+            slot = self.entries.setdefault(entry, dict(rows_with_references=0, references=0, rows_element=0,
+                                                       rows_without=0))
+            if isinstance(value, list):
+                if value:
+                    slot['rows_with_references'] += 1
+                    slot['references'] += len(value)
+                    self.references += len(value)
+                else:
+                    slot['rows_without'] += 1
+                    self.empty_rows += 1
+            else:
+                slot['rows_element'] += 1
+                self.element_rows += 1
+        book = row.get(self.roles['book_columns']) if self.roles['book_columns'] else None
+        status = book.get('status') if isinstance(book, dict) else None
+        self.book_status[str(status)] = self.book_status.get(str(status), 0) + 1
+
+    def record(self, receipt):
+        stream = self.stream
+        record = stream.record()
+        streams = _reading_streams(stream.header)
+        absent_streams = sorted(n for n, s in streams.items() if not s['on_disk'])
+        return dict(status='read', how='streamed whole, row by row', path=record['path'], bytes=record['bytes'],
+                    sha256=record['sha256'], rows=record['rows'], format=record['format'],
+                    check=sidecar_check(stream, receipt), roles=self.roles, carrying=self.carrying,
+                    without={r: dict(rows=len(o), ordinal_ranges=_ranges(o)) for r, o in self.without.items()},
+                    planes=dict(entries=len(self.entries), references=self.references, element_rows=self.element_rows,
+                                rows_without=self.empty_rows, per_entry=self.entries),
+                    book_columns_status=self.book_status, streams=streams, streams_not_on_disk=absent_streams,
+                    clock_lock_time=stream.header.get('clock_lock_time'),
+                    entries_not_carried=stream.header.get('entries_not_carried'),
+                    plane_values='by reference: each [source, source_ordinal, ...] names a row of a ROOT stream file '
+                                 '(read at use by PlaneResolver); not copied')
+
+
+def _reading_streams(header):
+    streams = {}
+    for name, pin in sorted((header.get('streams') or {}).items()):
+        named = pin.get('path') if isinstance(pin, dict) else None
+        ident = _file_identity(named) if named else None
+        streams[name] = dict(path=named, pinned_bytes=(pin or {}).get('bytes') if isinstance(pin, dict) else None,
+                             sha256=(pin or {}).get('sha256') if isinstance(pin, dict) else None,
+                             on_disk=ident is not None and pin.get('bytes') in (None, ident['bytes']),
+                             reason=None if ident is not None else 'the pinned stream file is not on disk')
+    return streams
+
+
+def _sidecar_reading_sources(rows_dir):
+    # Counts/roles/ordinals depend only on the sidecar. Referenced files' current
+    # availability is refreshed by stat; their values are read by PlaneResolver at use.
+    side = sidecar_of(rows_dir)
+    return {str(side): _dependency_identity(side)}
+
+
+def _cached_sidecar_reading(rows_dir, receipt):
+    """Reuse only the sidecar measurement; late lists/receipt parts are still read afresh."""
+    from types import SimpleNamespace
+    sources = _sidecar_reading_sources(rows_dir)
+    _, header, _ = sidecar_header(rows_dir)
+    for name in ('second-set-sidecar-reading.json', 'second-set-reading.json'):
+        try:
+            kept = _product_read(Path(rows_dir) / 'shared-products' / name)
+            record = kept['record']
+            if name == 'second-set-reading.json':
+                if record.get('schema') != READING_SCHEMA:
+                    continue
+                record = record['parts']['rows_sidecar']
+            elif kept.get('schema') != READING_SCHEMA:
+                continue
+            if (record.get('status') == 'read' and sources.get(record.get('path')) is not None
+                    and all(kept['sources'].get(n) == ident for n, ident in sources.items())):
+                streams = _reading_streams(header)
+                return dict(record, check=sidecar_check(SimpleNamespace(sha256=record['sha256'], rows=record['rows']),
+                                                       receipt), streams=streams,
+                            streams_not_on_disk=sorted(n for n, s in streams.items() if not s['on_disk']))
+        except (OSError, ValueError, KeyError, TypeError, IndexError, AttributeError):
+            pass
+    return None
+
+
+def _remember_sidecar_reading(rows_dir, record, before):
+    after = _sidecar_reading_sources(rows_dir)
+    if before == after and record.get('bytes') == (after.get(record.get('path')) or {}).get('bytes'):
+        _try_product_write(Path(rows_dir) / 'shared-products' / 'second-set-sidecar-reading.json',
+                           dict(schema=READING_SCHEMA, sources=after, record=record))
+        from frankie_box_filehash import remember
+        remember(record['path'], record)
+
+
+@contextmanager
+def _reading_lock(rows_dir):
+    """One publication lock for findings and second-set readers of the same rows."""
+    import fcntl
+    path = Path(rows_dir) / 'shared-products' / 'second-set-reading.lock'
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        handle = path.open('a+b')
+    except OSError:
+        yield
+        return
+    with handle:
+        fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+        yield
+
+
 def _second_set_reading(rows_dir, reader):
     """The whole second set as read by one teacher (`reader` names it): READING_SCHEMA record. Never raises for a part:
     a part that cannot be read is listed with its reason. Deterministic for the same files (no clock, no timing)."""
@@ -927,56 +1051,17 @@ def _second_set_reading(rows_dir, reader):
         if not side.is_file():
             return dict(status='absent', path=str(side), reason='no rows sidecar beside the teacher rows (%s)' % (
                 (receipt.get('rows_sidecar') or {}).get('reason') or 'a teacher before the second set'))
+        cached = _cached_sidecar_reading(rows_dir, receipt)
+        if cached is not None:
+            return cached
+        before = _sidecar_reading_sources(rows_dir)
         stream = SidecarStream(side)
-        roles = {role: stream.role(role) for role in READ_ROLES}
-        carrying = {role: 0 for role in READ_ROLES}
-        without = {role: [] for role in READ_ROLES}
-        entries, references, element_rows, empty_rows, book_status = {}, 0, 0, 0, {}
+        reading = _SidecarReading(stream)
         for ordinal, row in enumerate(stream):
-            for role, key in roles.items():
-                if key is not None and row.get(key) is not None:
-                    carrying[role] += 1
-                else:
-                    without[role].append(ordinal)
-            planes = row.get(roles['planes']) if roles['planes'] else None
-            for entry, value in (planes or {}).items():
-                slot = entries.setdefault(entry, dict(rows_with_references=0, references=0, rows_element=0,
-                                                      rows_without=0))
-                if isinstance(value, list):
-                    if value:
-                        slot['rows_with_references'] += 1
-                        slot['references'] += len(value)
-                        references += len(value)
-                    else:
-                        slot['rows_without'] += 1
-                        empty_rows += 1
-                else:
-                    slot['rows_element'] += 1
-                    element_rows += 1
-            book = row.get(roles['book_columns']) if roles['book_columns'] else None
-            status = book.get('status') if isinstance(book, dict) else None
-            book_status[str(status)] = book_status.get(str(status), 0) + 1
-        record = stream.record()
-        streams = {}
-        for name, pin in sorted((stream.header.get('streams') or {}).items()):
-            named = pin.get('path') if isinstance(pin, dict) else None
-            ident = _file_identity(named) if named else None
-            streams[name] = dict(path=named, pinned_bytes=(pin or {}).get('bytes') if isinstance(pin, dict) else None,
-                                 sha256=(pin or {}).get('sha256') if isinstance(pin, dict) else None,
-                                 on_disk=ident is not None and pin.get('bytes') in (None, ident['bytes']),
-                                 reason=None if ident is not None else 'the pinned stream file is not on disk')
-        absent_streams = sorted(n for n, s in streams.items() if not s['on_disk'])
-        return dict(status='read', how='streamed whole, row by row', path=record['path'], bytes=record['bytes'],
-                    sha256=record['sha256'], rows=record['rows'], format=record['format'],
-                    check=sidecar_check(stream, receipt), roles=roles, carrying=carrying,
-                    without={r: dict(rows=len(o), ordinal_ranges=_ranges(o)) for r, o in without.items()},
-                    planes=dict(entries=len(entries), references=references, element_rows=element_rows,
-                                rows_without=empty_rows, per_entry=entries),
-                    book_columns_status=book_status, streams=streams, streams_not_on_disk=absent_streams,
-                    clock_lock_time=stream.header.get('clock_lock_time'),
-                    entries_not_carried=stream.header.get('entries_not_carried'),
-                    plane_values='by reference: each [source, source_ordinal, ...] names a row of a ROOT stream file '
-                                 '(read at use by PlaneResolver); not copied')
+            reading.add(ordinal, row)
+        record = reading.record(receipt)
+        _remember_sidecar_reading(rows_dir, record, before)
+        return record
 
     def second_file():
         path = rows_dir / (second.get('file') or SECOND_SET_PKL)
@@ -1110,18 +1195,18 @@ def _shared_reading(rows_dir):
 
 def second_set_reading(rows_dir, reader):
     """A single complete role-neutral reading; role wrappers retain the existing document schema."""
-    import fcntl
     path = Path(rows_dir) / 'shared-products' / 'second-set-reading.json'
     record = _shared_reading(rows_dir)
     if record is None:
-        try:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            lock_file = path.with_suffix('.lock').open('a+b')
-        except OSError:
-            return _second_set_reading(rows_dir, reader)
-        # Only requests for this same product share this lock; independent work continues.
-        with lock_file as lock:
-            fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+        # A cold reader also makes the findings while each complete row is decoded.
+        # Older retained findings need only their missing sidecar measurement.
+        if _cached_sidecar_reading(rows_dir, {}) is None:
+            try:
+                import frankie_box_teacher_findings as TF
+                TF.load_or_compute(rows_dir)
+            except Exception:
+                pass                 # findings failure never prevents the original second-set reading
+        with _reading_lock(rows_dir):
             record = _shared_reading(rows_dir)
             if record is None:
                 before = _reading_sources(rows_dir)
@@ -1129,6 +1214,7 @@ def second_set_reading(rows_dir, reader):
                 after = _reading_sources(rows_dir, record)
                 if all(after.get(name) == ident for name, ident in before.items()):
                     _try_product_write(path, dict(sources=after, record=record))
+
     return dict(record, reader=reader)
 
 
