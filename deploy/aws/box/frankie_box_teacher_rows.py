@@ -335,15 +335,15 @@ def sidecar_check(stream, teacher_receipt):
 class PlaneResolver:
     """Read the stream rows the plane references name. streams: the sidecar header's {name: pin(path, bytes, sha256)};
     day_file: the day file of the external publications ('external.<point>' references: its points[<point>].rows).
-    One forward pass per stream file; a reference to an earlier row than the reader's position is served from the
-    cache, else the file is read again from its start (counted: re_reads). Never raises for a reference: an unreadable
+    One forward pass learns compact row offsets, shared with the market timeline. Earlier references seek directly
+    to their indexed row; they never scan the source prefix again. Never raises for a reference: an unreadable
     one is returned as {'reference': ..., 'unresolved': reason}."""
 
     def __init__(self, streams, day_file=None):
         self.streams = dict(streams or {})
         self.day_file, self._day = day_file, None
         self._readers, self.cache = {}, {}
-        self.counts = dict(resolved=0, from_cache=0, unresolved=0, re_reads=0, lines_read=0)
+        self.counts = dict(resolved=0, from_cache=0, unresolved=0, re_reads=0, lines_read=0, indexed_seeks=0)
         self.unresolved = {}
 
     def _reader(self, source):
@@ -356,7 +356,9 @@ class PlaneResolver:
         state = self._readers.get(source)
         if state is None:
             try:
-                state = self._readers[source] = dict(handle=path.open('rb'), next=0)
+                from frankie_box_row_index import RowIndex
+                index = RowIndex(pin)
+                state = self._readers[source] = dict(handle=path.open('rb'), next=0, index=index)
             except OSError as error:
                 return None, 'the pinned stream file %s cannot be opened (%s)' % (path, error)
         return state, None
@@ -367,15 +369,23 @@ class PlaneResolver:
         state, why = self._reader(source)
         if state is None:
             return None, why
-        if ordinal < state['next']:
-            state['handle'].seek(0)
-            state['next'] = 0
-            self.counts['re_reads'] += 1
+        if ordinal < 0:
+            return None, 'the pinned stream %s has no negative row %d' % (source, ordinal)
+        position = state['index'].position(ordinal)
+        if position is not None and ordinal != state['next']:
+            state['handle'].seek(position)
+            state['next'] = ordinal
+            self.counts['indexed_seeks'] += 1
+        elif position is None and state['next'] < len(state['index'].offsets) - 1:
+            state['next'] = len(state['index'].offsets) - 1
+            state['handle'].seek(state['index'].offsets[-1])
         line = None
         while state['next'] <= ordinal:
+            begun = state['handle'].tell()
             line = state['handle'].readline()
             if not line:
                 return None, 'the pinned stream %s ends before row %d' % (source, ordinal)
+            state['index'].observe(state['next'], begun, len(line))
             state['next'] += 1
             self.counts['lines_read'] += 1
         value = json.loads(line)
@@ -437,6 +447,7 @@ class PlaneResolver:
     def close(self):
         for state in self._readers.values():
             state['handle'].close()
+            state['index'].close()
         self._readers.clear()
 
     def record(self):
@@ -617,21 +628,35 @@ def second_set_summary(lesson):
     return out
 
 
-def second_set_at_cutoff(rows_dir, through_cursor, *, day_file=None, blocks=None):
-    """The second set of the last teacher row at or before the cutoff (through_cursor), its planes resolved by reading
-    their references: the teacher's own instant at the cutoff, aligned on its key and clocks. (record, None) or
-    (None, why). One pass over the sidecar."""
-    side = sidecar_of(rows_dir)
-    if not side.is_file():
-        return None, 'no rows sidecar beside the teacher rows (a teacher before the second set)'
-    stream = SidecarStream(side) if blocks is None else BlockSidecarStream(rows_dir, blocks)
-    last, after = None, 0
-    for row in stream:
-        cursor = row.get('cursor')
-        if type(cursor) is int and cursor <= through_cursor:
-            last = row
-        else:
-            after += 1
+def _cutoff_identity(rows_dir, day_file):
+    side, header, why = sidecar_header(rows_dir)
+    paths = {str(side), str(Path(rows_dir) / TEACHER_RECEIPT_FILE)}
+    if day_file is not None:
+        paths.add(str(Path(day_file)))
+    streams = header.get('streams') if isinstance(header, dict) else None
+    for pin in (streams if isinstance(streams, dict) else {}).values():
+        if isinstance(pin, dict) and pin.get('path'):
+            paths.add(pin['path'])
+    return dict(files={path: _dependency_identity(path) for path in sorted(paths)}, header=header, why=why)
+
+
+def _cutoff_product(rows_dir, through_cursor, day_file):
+    key = hashlib.sha256(json.dumps([through_cursor, str(day_file) if day_file else None]).encode()).hexdigest()
+    return Path(rows_dir) / 'shared-products' / ('second-set-cutoff-' + key + '.json')
+
+
+def _kept_cutoff(rows_dir, through_cursor, day_file):
+    try:
+        kept = _product_read(_cutoff_product(rows_dir, through_cursor, day_file))
+        if (kept.get('inputs') == _cutoff_identity(rows_dir, day_file)
+                and kept['record'].get('through_cursor') == through_cursor):
+            return kept['record']
+    except (OSError, ValueError, KeyError, TypeError, IndexError, AttributeError):
+        pass
+    return None
+
+
+def _cutoff_from_row(stream, last, after, through_cursor, day_file):
     if last is None:
         return None, 'no teacher row at or before the cutoff cursor %s' % through_cursor
     roles = {role: stream.role(role) for role in ROLE_KEYS}
@@ -649,44 +674,65 @@ def second_set_at_cutoff(rows_dir, through_cursor, *, day_file=None, blocks=None
                      'read by their references'), None
 
 
-def second_set_field(rows_dir, role, leaf, *, entry=None, day_file=None, through_cursor=None):
-    """One second-set leaf per teacher row, streamed (the exchange's claim ledger on a second-set name): yields
-    (cursor, value, why) for every row; `leaf` a dotted path inside the role's value (for planes: `entry` names the
-    plane entry (entry names carry dots) and `leaf` the dotted path inside each resolved row; the value is the list of
-    that leaf over all the entry's references at the row). why is None when a value
-    is there, else the reason it is not (listed by the caller, never dropped)."""
+def second_set_at_cutoff(rows_dir, through_cursor, *, day_file=None, blocks=None):
+    """One shared exact cutoff product. Block-bound reads retain their own explicit lock/range scope."""
     side = sidecar_of(rows_dir)
-    stream = SidecarStream(side)
+    if not side.is_file():
+        return None, 'no rows sidecar beside the teacher rows (a teacher before the second set)'
+    kept = _kept_cutoff(rows_dir, through_cursor, day_file) if blocks is None else None
+    if kept is not None:
+        return kept, None
+    inputs = _cutoff_identity(rows_dir, day_file) if blocks is None else None
+    stream = SidecarStream(side) if blocks is None else BlockSidecarStream(rows_dir, blocks)
+    last, after = None, 0
+    for row in stream:
+        cursor = row.get('cursor')
+        if type(cursor) is int and cursor <= through_cursor:
+            last = row
+        else:
+            after += 1
+    record, why = _cutoff_from_row(stream, last, after, through_cursor, day_file)
+    if record is not None and blocks is None and inputs == _cutoff_identity(rows_dir, day_file):
+        _try_product_write(_cutoff_product(rows_dir, through_cursor, day_file), dict(inputs=inputs, record=record))
+    return record, why
+
+
+def _second_set_value(row, stream, resolver, role, entry, leaf):
     key = stream.role(role)
-    resolver = PlaneResolver(stream.header.get('streams'), day_file=day_file) if role == 'planes' else None
+    value = row.get(key) if key else None
+    if value is None:
+        return None, 'the row carries no %s' % role
     parts = [p for p in str(leaf).split('.') if p] if leaf else []
+    if role == 'planes':
+        carried = value.get(entry) if isinstance(value, dict) else None
+        if not isinstance(carried, list) or not carried:
+            return None, ((row.get(stream.role('planes_absent') or '') or {}).get(entry)
+                          or 'entry %s not carried by a plane row here' % entry)
+        values = []
+        for ref in carried:
+            got = resolver.resolve(ref)
+            values.append(_dig(got.get('value'), parts) if 'value' in got else None)
+        return values, None
+    found = _dig(value, parts)
+    return found, None if found is not None else "leaf %s absent in this row's %s" % (leaf, role)
+
+
+def second_set_field(rows_dir, role, leaf, *, entry=None, day_file=None, through_cursor=None):
+    """One exact leaf per row. Multi-leaf consumers use second_set_leaf_ledgers for one shared pass."""
+    stream = SidecarStream(sidecar_of(rows_dir))
+    resolver = PlaneResolver(stream.header.get('streams'), day_file=day_file) if role == 'planes' else None
     try:
         for row in stream:
             cursor = row.get('cursor')
             if through_cursor is not None and (type(cursor) is not int or cursor > through_cursor):
-                yield cursor, None, 'after the cutoff'      # not read further, never resolved
+                yield cursor, None, 'after the cutoff'
                 continue
-            value = row.get(key) if key else None
-            if value is None:
-                yield cursor, None, 'the row carries no %s' % role
-                continue
-            if role == 'planes':
-                rest = parts
-                carried = value.get(entry) if isinstance(value, dict) else None
-                if not isinstance(carried, list) or not carried:
-                    yield cursor, None, ((row.get(stream.role('planes_absent') or '') or {}).get(entry)
-                                         or 'entry %s not carried by a plane row here' % entry)
-                    continue
-                values = []
-                for ref in carried:
-                    got = resolver.resolve(ref)
-                    values.append(_dig(got.get('value'), rest) if 'value' in got else None)
+            value, why = _second_set_value(row, stream, resolver, role, entry, leaf)
+            if resolver is not None:
                 resolver.clear()
-                yield cursor, values, None
-                continue
-            found = _dig(value, parts)
-            yield cursor, found, None if found is not None else 'leaf %s absent in this row\'s %s' % (leaf, role)
+            yield cursor, value, why
     finally:
+        stream.close()
         if resolver is not None:
             resolver.close()
 
@@ -708,45 +754,81 @@ SECOND_SET_NAME_RE = (r'dipole\.second_set\.(?:(planes)\[([^\]]+)\](?:\.(.+))?|(
 
 
 def second_set_leaf_ledger(rows_dir, name, *, through_cursor=None, day_file=None):
-    """(ledger, summary) of one second-set leaf (dipole.second_set.<key|clocks|book_columns|state_split>.<leaf> or
-    dipole.second_set.planes[<entry>].<leaf>) over every teacher row of the sidecar, or (None, why). through_cursor:
-    rows after it are not ledgered (counted in summary.rows_after_cutoff_excluded, never read into the ledger). A row
-    without a finite number is MISSING with its reason counted; a plane with several references at one row is not
-    reduced to one value (listed with the count)."""
+    """Compatibility entry point: identical single-leaf result from the batched reader."""
+    return second_set_leaf_ledgers(rows_dir, (name,), through_cursor=through_cursor, day_file=day_file)[name]
+
+
+def second_set_leaf_ledgers(rows_dir, names, *, through_cursor=None, day_file=None, cutoff_result=None):
+    """Every requested exact ledger from one sidecar pass and one resolver per source.
+
+    Results map each name to (ledger, summary), or (None, reason). Missingness, finite-number
+    rules, multiple-reference refusal, row order and arithmetic are the single-leaf rules.
+    Plane rows used by several leaves are decoded once per teacher row, then released.
+    """
     import math
     import re
     from research.kalshi.frankie_boss import dipole_classroom as DC
-    match = re.fullmatch(SECOND_SET_NAME_RE, str(name))
-    if match is None:
-        return None, ('not a second-set leaf name (dipole.second_set.<key|clocks|book_columns|state_split>.<leaf> or '
-                      'planes[<entry>].<leaf>)')
-    role, entry, leaf = (('planes', match[2], match[3] or '') if match[1] else (match[4], None, match[5]))
-    if not sidecar_of(rows_dir).is_file():
-        return None, 'no rows sidecar beside the teacher rows (a teacher before the second set)'
-    ledger, reasons, after = [], {}, 0
-    for cursor, value, why in second_set_field(rows_dir, role, leaf, entry=entry, day_file=day_file,
-                                               through_cursor=through_cursor):
-        if through_cursor is not None and (type(cursor) is not int or cursor > through_cursor):
-            after += 1
-            continue
-        if why is None and role == 'planes':
-            numeric = [v for v in value if type(v) in (int, float) and math.isfinite(v)]
-            if len(value) != 1:
-                why = '%d references at this row: not reduced to one value' % len(value)
-            elif not numeric:
-                why = 'the referenced row carries no finite number at this leaf'
-            else:
-                value = numeric[0]
-        elif why is None and (type(value) not in (int, float) or isinstance(value, bool) or not math.isfinite(value)):
-            why = 'not a finite number (%s)' % type(value).__name__
-        if why is not None:
-            reasons[why] = reasons.get(why, 0) + 1
-        ledger.append(dict(cursor=cursor, value=value if why is None else None, state='PRESENT' if why is None else 'MISSING'))
-    available = sum(p['state'] == 'PRESENT' for p in ledger)
-    return ledger, dict(series=name, entity=None, leaf=leaf, role=role, entry=entry, rows=len(ledger),
-                        available=available, unavailable=reasons, direction=DC._direction(ledger),
-                        through_cursor=through_cursor, rows_after_cutoff_excluded=after,
-                        representation='the teacher\'s second set (rows sidecar); a plane read by its reference')
+    results, specs = {}, {}
+    for name in dict.fromkeys(names):
+        match = re.fullmatch(SECOND_SET_NAME_RE, str(name))
+        if match is None:
+            results[name] = (None, 'not a second-set leaf name (dipole.second_set.<key|clocks|book_columns|state_split>.<leaf> or '
+                            'planes[<entry>].<leaf>)')
+        elif not sidecar_of(rows_dir).is_file():
+            results[name] = (None, 'no rows sidecar beside the teacher rows (a teacher before the second set)')
+        else:
+            specs[name] = (('planes', match[2], match[3] or '') if match[1] else (match[4], None, match[5]))
+    if not specs:
+        if cutoff_result is not None:
+            cutoff_result[:] = second_set_at_cutoff(rows_dir, through_cursor, day_file=day_file)
+        return results
+    ledgers, reasons = {name: [] for name in specs}, {name: {} for name in specs}
+    available, after = {name: 0 for name in specs}, 0
+    last = None
+    inputs = _cutoff_identity(rows_dir, day_file) if cutoff_result is not None else None
+    stream = SidecarStream(sidecar_of(rows_dir))
+    resolver = PlaneResolver(stream.header.get('streams'), day_file=day_file)
+    try:
+        for row in stream:
+            cursor = row.get('cursor')
+            if through_cursor is not None and (type(cursor) is not int or cursor > through_cursor):
+                after += 1
+                continue
+            last = row
+            for name, (role, entry, leaf) in specs.items():
+                value, why = _second_set_value(row, stream, resolver, role, entry, leaf)
+                if why is None and role == 'planes':
+                    numeric = [v for v in value if type(v) in (int, float) and math.isfinite(v)]
+                    if len(value) != 1:
+                        why = '%d references at this row: not reduced to one value' % len(value)
+                    elif not numeric:
+                        why = 'the referenced row carries no finite number at this leaf'
+                    else:
+                        value = numeric[0]
+                elif why is None and (type(value) not in (int, float) or isinstance(value, bool) or not math.isfinite(value)):
+                    why = 'not a finite number (%s)' % type(value).__name__
+                if why is not None:
+                    reasons[name][why] = reasons[name].get(why, 0) + 1
+                else:
+                    available[name] += 1
+                ledgers[name].append(dict(cursor=cursor, value=value if why is None else None,
+                                         state='PRESENT' if why is None else 'MISSING'))
+            resolver.clear()
+    finally:
+        stream.close()
+        resolver.close()
+    if cutoff_result is not None:
+        record, why = _cutoff_from_row(stream, last, after, through_cursor, day_file)
+        cutoff_result[:] = record, why
+        if record is not None and inputs == _cutoff_identity(rows_dir, day_file):
+            _try_product_write(_cutoff_product(rows_dir, through_cursor, day_file), dict(inputs=inputs, record=record))
+    for name, (role, entry, leaf) in specs.items():
+        ledger = ledgers[name]
+        results[name] = (ledger, dict(series=name, entity=None, leaf=leaf, role=role, entry=entry, rows=len(ledger),
+                                     available=available[name], unavailable=reasons[name], direction=DC._direction(ledger),
+                                     through_cursor=through_cursor, rows_after_cutoff_excluded=after,
+                                     representation="the teacher's second set (rows sidecar); a plane read by its reference"))
+    return results
 
 
 # ---- a teacher's own reading of the whole second set (Greg, 2026-10-09: "BOTH teachers are getting the 2nd group")
@@ -810,7 +892,7 @@ def _pinned_list(rows_dir, pin, name):
                 pinned=dict(sha256=pin.get('sha256'), count=pin.get('count')) if pin else None, how='streamed whole')
 
 
-def second_set_reading(rows_dir, reader):
+def _second_set_reading(rows_dir, reader):
     """The whole second set as read by one teacher (`reader` names it): READING_SCHEMA record. Never raises for a part:
     a part that cannot be read is listed with its reason. Deterministic for the same files (no clock, no timing)."""
     rows_dir = Path(rows_dir)
@@ -902,6 +984,7 @@ def second_set_reading(rows_dir, reader):
         if ident is None:
             return dict(status='absent', path=str(path), reason=second.get('reason') or 'not on disk')
         return dict(status='read', path=str(path), bytes=ident['bytes'], sha256=second.get('sha256'),
+                    **({'storage': second['storage']} if second.get('storage') else {}),
                     how='pinned by the teacher receipt (teacher_second_set.sha256); the same '
                     'records are read row by row in the rows sidecar, so it is not read a second time')
 
@@ -950,11 +1033,112 @@ def second_set_reading(rows_dir, reader):
     return out
 
 
+def _reading_sources(rows_dir, record=None):
+    """All dependencies, including currently absent late publications and referenced plane files."""
+    rows_dir = Path(rows_dir)
+    names = {str(rows_dir / name) for name in (TEACHER_RECEIPT_FILE, SIDECAR_FILE, SECOND_SET_PKL,
+             'teacher-second-set.json', STATE_SPLIT_DAY_FILE, MISMATCHES_LIST, BOOK_DIFFERENCES_LIST,
+             RECONCILIATION_LIST)}
+    _, header, _ = sidecar_header(rows_dir)
+    streams = header.get('streams') if isinstance(header, dict) else None
+    for pin in (streams if isinstance(streams, dict) else {}).values():
+        if isinstance(pin, dict) and pin.get('path'):
+            names.add(pin['path'])
+    if record:
+        for part in record.get('parts', {}).values():
+            if part.get('path'):
+                names.add(part['path'])
+        for pin in ((record.get('parts', {}).get('rows_sidecar') or {}).get('streams') or {}).values():
+            if pin.get('path'):
+                names.add(pin['path'])
+    return {name: _dependency_identity(name) for name in sorted(names)}
+
+
+def _dependency_identity(path):
+    from frankie_box_row_index import file_identity
+    try:
+        return file_identity(path)
+    except OSError:
+        return None
+
+
+def _product_write(path, value):
+    """Atomic derived-product publication; never touches a native receipt or checkpoint."""
+    import os
+    import tempfile
+    from research.kalshi.frankie_boss.c15_journal import evidence_bytes
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    pending = None
+    try:
+        with tempfile.NamedTemporaryFile(dir=path.parent, prefix='pending-', delete=False) as out:
+            pending = Path(out.name)
+            # The typed codec retains insertion order, tuples and referenced plane
+            # values. Ordinary sorted JSON would change later evidence hashes.
+            out.write(evidence_bytes(value))
+            out.flush()
+            os.fsync(out.fileno())
+        os.replace(pending, path)
+    finally:
+        if pending is not None:
+            pending.unlink(missing_ok=True)
+
+
+def _try_product_write(path, value):
+    try:
+        _product_write(path, value)
+    except OSError:
+        pass                 # a cache write failure must not hide readable scientific evidence
+
+
+def _product_read(path):
+    from research.kalshi.frankie_boss.c15_journal import unpack
+    return unpack(json.loads(Path(path).read_bytes()))
+
+
+def _shared_reading(rows_dir):
+    path = Path(rows_dir) / 'shared-products' / 'second-set-reading.json'
+    try:
+        kept = _product_read(path)
+        record = kept['record']
+        if (record.get('schema') == READING_SCHEMA and kept.get('sources') == _reading_sources(rows_dir, record)):
+            return record
+    except (OSError, ValueError, KeyError, TypeError, IndexError, AttributeError):
+        pass
+    return None
+
+
+def second_set_reading(rows_dir, reader):
+    """A single complete role-neutral reading; role wrappers retain the existing document schema."""
+    import fcntl
+    path = Path(rows_dir) / 'shared-products' / 'second-set-reading.json'
+    record = _shared_reading(rows_dir)
+    if record is None:
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            lock_file = path.with_suffix('.lock').open('a+b')
+        except OSError:
+            return _second_set_reading(rows_dir, reader)
+        # Only requests for this same product share this lock; independent work continues.
+        with lock_file as lock:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+            record = _shared_reading(rows_dir)
+            if record is None:
+                before = _reading_sources(rows_dir)
+                record = _second_set_reading(rows_dir, 'shared')
+                after = _reading_sources(rows_dir, record)
+                if all(after.get(name) == ident for name, ident in before.items()):
+                    _try_product_write(path, dict(sources=after, record=record))
+    return dict(record, reader=reader)
+
+
 def _identity_of(rows_dir, parts, receipt_sha256):
     """The files a reading read (stats) and the receipt's sha256: equal identity = the same reading (reuse)."""
     ident = {name: _file_identity(Path(part['path'])) for name, part in sorted(parts.items())
              if part.get('path') and name != 'account'}
     ident['receipt'] = receipt_sha256
+    ident['referenced_streams'] = {name: _dependency_identity(pin['path']) for name, pin in
+                                 ((parts.get('rows_sidecar') or {}).get('streams') or {}).items() if pin.get('path')}
     return ident
 
 
@@ -972,7 +1156,11 @@ def second_set_reading_file(rows_dir, out_path, reader, *, reuse_on=None):
 
     def receipt_sha():
         try:
-            return hashlib.sha256((Path(rows_dir) / TEACHER_RECEIPT_FILE).read_bytes()).hexdigest()
+            shared = _shared_reading(rows_dir)
+            if shared is not None:
+                return (shared.get('receipt') or {}).get('sha256')
+            from frankie_box_filehash import sha256_file
+            return sha256_file(Path(rows_dir) / TEACHER_RECEIPT_FILE)
         except OSError:
             return None
 

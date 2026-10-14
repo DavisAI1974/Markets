@@ -61,10 +61,11 @@ import sys
 import threading
 import time
 from pathlib import Path
+from dataclasses import dataclass
 from typing import Any, Mapping
 
 from . import dipole_classroom as classroom
-from .c15_journal import evidence_hash
+from .c15_journal import evidence_hash, evidence_bytes, unpack
 from .c15_normalizer import COLUMNS
 
 KEY_SCHEMA = 'DIPOLE_CLASSROOM_EXTERNAL_KEY_V1'
@@ -828,7 +829,48 @@ def build_external_key(snapshot: Mapping[str, Any], day_file, day_file_sha256, *
     return body_out
 
 
+@dataclass(frozen=True, init=False)
+class VerifiedExternalKey:
+    """One lesson's verified key, owned as immutable bytes rather than a live dict.
+
+    Consumers get independent ordinary mappings, so mutating the source or any
+    returned value cannot stale this verification. JSON-native keys use the C
+    JSON reader; unusual accepted evidence types retain their tagged encoding.
+    The handle is local to a lesson, never added to a persisted package.
+    """
+    _encoded: bytes
+    _json: bool
+
+    def __init__(self, key):
+        owned = self._from_verified(verify_external_key(key))
+        object.__setattr__(self, '_encoded', owned._encoded)
+        object.__setattr__(self, '_json', owned._json)
+
+    @classmethod
+    def _from_verified(cls, key):
+        """Capture a key just built or checked by ensure_external_section."""
+        try:
+            # No sort_keys here: evidence mappings retain insertion order.
+            encoded = json.dumps(key, separators=(',', ':'), ensure_ascii=True, allow_nan=False).encode('utf-8')
+            ordinary = json.loads(encoded)
+            native = ordinary == key
+        except (TypeError, ValueError):
+            native = False
+        if not native:
+            encoded = evidence_bytes(key)
+        owned = object.__new__(cls)
+        object.__setattr__(owned, '_encoded', encoded)
+        object.__setattr__(owned, '_json', native)
+        return owned
+
+    def materialize(self):
+        value = json.loads(self._encoded)
+        return value if self._json else unpack(value)
+
+
 def verify_external_key(key: Mapping[str, Any]) -> dict:
+    if type(key) is VerifiedExternalKey:
+        return key.materialize()
     if key.get('schema') != KEY_SCHEMA:
         raise ValueError('an external classroom key is required')
     if evidence_hash({k: v for k, v in key.items() if k != 'external_key_hash'}) != key.get('external_key_hash'):
@@ -836,7 +878,8 @@ def verify_external_key(key: Mapping[str, Any]) -> dict:
     return dict(key)
 
 
-def ensure_external_section(directory, snapshot, day_file, day_file_sha256, *, trading_day, built_by, extra=None):
+def ensure_external_section(directory, snapshot, day_file, day_file_sha256, *, trading_day, built_by, extra=None,
+                            key_scope=None):
     """Build once, retaining the complete publication body before writing the section/receipt pair.
 
     A valid retained section without its receipt can finish publication from that section;
@@ -884,6 +927,10 @@ def ensure_external_section(directory, snapshot, day_file, day_file_sha256, *, t
                retained['receipt'] if retained is not None else dict(expected, built_by=built_by, **(extra or {})))
     if any(receipt.get(k) != v for k, v in expected.items()):
         raise ValueError(f'{receipt_path} differs from the retained section or input identity; refused')
+    if key_scope is not None:
+        # New keys were hashed by their builder; retained keys were verified
+        # above. Preserve that trust boundary once, in an immutable local scope.
+        key_scope['key'] = VerifiedExternalKey._from_verified(key)
     if path.exists() and receipt_path.exists():
         return key, dict(receipt, reused=True)
     directory.mkdir(parents=True, exist_ok=True)

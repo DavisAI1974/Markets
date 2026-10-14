@@ -25,6 +25,7 @@ import json
 import bisect
 import re
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 
 # The one 99-entry registry (Greg, 2026-10-07): the entry list comes from frankie_box_all99_coverage; this piece keeps
@@ -4231,14 +4232,28 @@ BLOCK_DAY_END = (
 
 
 # Written ONCE per block (2026-10-09, a2 block 1: 3,180 MB for 1,588 rows, the same answer set under five wrappers):
-# every subtree of a block file whose compact JSON is at least BLOCK_STORE_MIN bytes is written once, as one line of
+# every container subtree of a block file whose compact JSON is at least BLOCK_STORE_MIN bytes is written once, as one line of
 # <block>/store.jsonl, and every file that holds it (ledgers, teachback, code answers, grades, the brain update, the
 # second set record, ...) holds {"$ref": {file, sha256, bytes: [start, end)}} instead of a copy. block_load(path) gives
 # the whole value back (each range checked against its sha256). Nothing computed, answered, graded or carried changes:
-# only how it is written. store.index.jsonl lists sha256 -> byte range so a later writer of the same block reuses lines.
+# only how it is written. Large immutable narrative strings also have their own lines, encoded once per open store.
+# store.index.jsonl lists sha256 -> byte range so a later writer of the same block reuses lines.
 BLOCK_STORE = 'store.jsonl'
 BLOCK_STORE_INDEX = 'store.index.jsonl'
 BLOCK_STORE_MIN = 16384
+
+
+@dataclass(frozen=True)
+class _BlockJSON:
+    """An immutable, store-owned serialization snapshot; never a scientific value.
+
+    The bytes already contain the old normalized JSON and child references.
+    Holding bytes, rather than a mutable object's identity, makes later reuse
+    independent of anything a caller does to the original dict/list.
+    """
+    owner: object
+    encoded: bytes
+    container: bool
 
 
 class _BlockStore:
@@ -4246,6 +4261,10 @@ class _BlockStore:
         self.dir = Path(directory)
         self.path, self.index_path = self.dir / BLOCK_STORE, self.dir / BLOCK_STORE_INDEX
         self.seen, self.written, self.reused = {}, 0, 0
+        self._serialization_owner = object()
+        self._text_snapshots = {}
+        self.text_serializations_reused = 0
+        self.text_bytes_serialized, self.text_bytes_reused = 0, 0
         size = self.path.stat().st_size if self.path.is_file() else 0
         if self.index_path.is_file():
             for line in self.index_path.read_text(encoding='utf-8').splitlines():
@@ -4259,6 +4278,85 @@ class _BlockStore:
         self.index = self.index_path.open('a', encoding='utf-8')
         import threading
         self.lock = threading.Lock()
+
+    def _default(self, value):
+        if type(value) is _BlockJSON:
+            self._owned(value)
+            return json.loads(value.encoded)
+        return str(value)
+
+    def _owned(self, value):
+        if value.owner is not self._serialization_owner:
+            raise ValueError('serialized block value belongs to another store')
+
+    def document(self, value):
+        """Serialize a completed output once, leaving its top-level shape intact.
+
+        Exact old normalization is intentional: default=str, tuple-to-list,
+        float spelling and JSON key coercion precede child storage. Explicit
+        sealed children are substituted before that normalization. The scope is
+        this open block store; no mutable identity is cached.
+        """
+        if type(value) is _BlockJSON:
+            self._owned(value)
+            return value
+        value = self._normalize(value)
+        if isinstance(value, dict):
+            value = {k: _by_reference(v, self) for k, v in value.items()}
+        elif isinstance(value, list):
+            value = [_by_reference(v, self) for v in value]
+        encoded = json.dumps(value, sort_keys=True, separators=(',', ':'), default=str).encode()
+        return _BlockJSON(self._serialization_owner, encoded, isinstance(value, (dict, list)))
+
+    def _normalize(self, value):
+        active = set()
+
+        def prepare(node):
+            # Strings are already immutable. This table is keyed by their full
+            # value, never by the identity of a mutable scientific object. The
+            # same narrative occurs under the component answer, teachback and
+            # carried lesson; encode it once on this block's owning store.
+            if type(node) is str and len(node) >= BLOCK_STORE_MIN:
+                retained = self._text_snapshots.get(node)
+                if retained is None:
+                    encoded = json.dumps(node, ensure_ascii=True).encode()
+                    ref = json.dumps(self.put(encoded), sort_keys=True, separators=(',', ':')).encode()
+                    sealed = _BlockJSON(self._serialization_owner, ref, False)
+                    self._text_snapshots[node] = (sealed, len(encoded))
+                    self.text_bytes_serialized += len(encoded)
+                else:
+                    sealed, encoded_bytes = retained
+                    self.text_serializations_reused += 1
+                    self.text_bytes_reused += encoded_bytes
+                    self.reused += encoded_bytes
+                return sealed
+            if isinstance(node, (dict, list, tuple)):
+                identity = id(node)
+                if identity in active:
+                    raise ValueError('Circular reference detected')
+                active.add(identity)
+                try:
+                    if isinstance(node, dict):
+                        return {k: prepare(v) for k, v in node.items()}
+                    return [prepare(v) for v in node]
+                finally:
+                    active.remove(identity)
+            return node
+
+        return json.loads(json.dumps(prepare(value), sort_keys=True, default=self._default))
+
+    def seal(self, value):
+        """Own an output subtree once and reuse its bytes in subsequent wrappers.
+
+        A document keeps its root inline; a subtree applies the old size rule
+        to that same root after its children have been stored. Large immutable
+        narrative strings are shared by _normalize; other scalars stay inline.
+        """
+        value = self.document(value)
+        if value.container and len(value.encoded) >= BLOCK_STORE_MIN:
+            encoded = json.dumps(self.put(value.encoded), sort_keys=True, separators=(',', ':')).encode()
+            return _BlockJSON(self._serialization_owner, encoded, True)
+        return value
 
     def put(self, data):
         sha = hashlib.sha256(data).hexdigest()
@@ -4292,6 +4390,7 @@ class _BlockStore:
         self.flush()
         self.handle.close()
         self.index.close()
+        self._text_snapshots.clear()
 
 
 def _by_reference(value, store):
@@ -4400,11 +4499,13 @@ def _block_dump_timed(path, body, store=None):
     import os
     # the canonical form the lesson and answer files carried before the store (default=str: a bytes value is written as
     # its str, never refused; 2026-10-09 a2 block 4: json_form has no default and refused the lesson record)
-    body = json.loads(json.dumps(body, sort_keys=True, default=str))
-    if store is not None and isinstance(body, dict):
-        body = {k: _by_reference(v, store) for k, v in body.items()}
-    elif store is not None and isinstance(body, list):
-        body = [_by_reference(v, store) for v in body]
+    if store is not None:
+        body = json.loads(store.document(body).encoded)
+        # Publish references only after their bytes and index are durable. A
+        # process death between files must leave every published file readable.
+        store.flush()
+    else:
+        body = json.loads(json.dumps(body, sort_keys=True, default=str))
     data = (json.dumps(body, indent=1, sort_keys=True, default=str) + '\n').encode()
     pending = Path(str(path) + '.pending')
     with pending.open('wb') as handle:
@@ -4456,6 +4557,8 @@ def block_session(teacher_rows, directory, n, *, day, brain, previous=None, day_
     """The whole classroom session on block n (see BLOCK_SESSION_SCHEMA above). Writes <directory>/blocks/<n>/ and
     session.json last; returns its record. Raises nothing for the data: a failure is session.json's status."""
     import time
+    from research.kalshi.frankie_boss.c15_journal import encoding_report
+    encoding_before = encoding_report()
     out = Path(directory) / 'blocks' / str(n)
     out.mkdir(parents=True, exist_ok=True)
     began = time.monotonic()
@@ -4476,6 +4579,8 @@ def block_session(teacher_rows, directory, n, *, day, brain, previous=None, day_
         clock.mark('store_close')
     record['store'] = dict(file=BLOCK_STORE, index=BLOCK_STORE_INDEX, min_bytes=BLOCK_STORE_MIN,
                            bytes_written=store.written, bytes_referenced_again=store.reused, parts=len(store.seen),
+                           text_serializations_reused=store.text_serializations_reused,
+                           text_bytes_serialized=store.text_bytes_serialized, text_bytes_reused=store.text_bytes_reused,
                            rule='every part of at least min_bytes compact JSON written once; the files hold it by '
                                 'reference (block_load resolves)')
     record = dict(schema=BLOCK_SESSION_SCHEMA, day=day, block=n, **record, written=written, listed=listed,
@@ -4489,6 +4594,7 @@ def block_session(teacher_rows, directory, n, *, day, brain, previous=None, day_
         record['teacher_report_error'] = '%s: %s' % (type(error).__name__, error)
     clock.mark('teacher_report')
     record['steps'] = steps
+    record['evidence_encoding'] = encoding_report(encoding_before)
     record['steps_rule'] = ('wall seconds per step as it ran (instrumentation only); store_writes = every _block_dump; '
                             'session.json itself is written after this record')
     _BLOCK_CLOCK[0] = None
@@ -4618,8 +4724,14 @@ def _block_session(teacher_rows, out, n, *, day, brain, previous, day_file, day_
     files = {'teachback': teachback, 'post-grade': grade, 'novel-findings': list(novel),
              'novelty-investigation': novelty, 'correction-request': correction, 'correction-response': reply,
              'acknowledgement': ack, 'completion': completion}
+    document = store.document if store is not None else lambda value: value
+    seal = store.seal if store is not None else lambda value: value
+    serialized = {}
     for name, body in files.items():
-        written[name] = _block_dump(out / ('%s.json' % name), body, store)
+        if name == 'correction-request':
+            body = dict(body, novelty_investigation=seal(serialized['novelty-investigation']))
+        serialized[name] = document(body)
+        written[name] = _block_dump(out / ('%s.json' % name), serialized[name], store)
     written['transcript.md'] = _block_rendered(transcript, 'transcript.md',
                                                'dipole_classroom_final_review.render_final_transcript')
     clock.mark('transcript_sha')
@@ -4629,8 +4741,11 @@ def _block_session(teacher_rows, out, n, *, day, brain, previous, day_file, day_
     # the checked lesson he carries into his brain (published once per day: BLOCK_DAY_END)
     written['brain-update'] = _block_dump(out / 'brain-update.json', store=store, body=dict(
         schema='FRANKIE_CLASSROOM_BLOCK_BRAIN_UPDATE_V1', day=day, block=n, mode=mode, checked=True,
-        completion=completion, acknowledgement=ack, history_entry=completion,
-        corrected_ledgers=reply, novel_findings=list(novel), novelty_investigation=novelty,
+        completion=seal(serialized['completion']), acknowledgement=seal(serialized['acknowledgement']),
+        history_entry=seal(serialized['completion']),
+        corrected_ledgers=seal(serialized['correction-response']),
+        novel_findings=seal(serialized['novel-findings']),
+        novelty_investigation=seal(serialized['novelty-investigation']),
         rule='the checked lesson of this block (graded, corrected, acknowledged); filed into Frankie\'s brain with the '
              'day\'s entry <day>-cycle-00 (one entry per day, R16)'))
     store.flush()
@@ -4671,6 +4786,8 @@ class _BlockExternal:
 
     def _measured(self, clock):
         import time
+        from research.kalshi.frankie_boss.c15_journal import encoding_report
+        encoding_before = encoding_report()
         wall, cpu = time.monotonic(), clock()
         try:
             value = self._compute(**{k: v for k, v in self.inputs.items() if k not in ('written', 'listed', 'store')})
@@ -4680,6 +4797,7 @@ class _BlockExternal:
                                                                                                error))])
         value['external']['process'] = dict(wall_seconds=round(time.monotonic() - wall, 3),
                                             cpu_seconds=round(clock() - cpu, 3))
+        value['external']['evidence_encoding'] = encoding_report(encoding_before)
         return value
 
     def _child(self, send):
@@ -4708,7 +4826,12 @@ class _BlockExternal:
             self.thread.join()
             value = self.value
         written, listed, store = self.inputs['written'], self.inputs['listed'], self.inputs['store']
+        serialized_grade = None
         for name, body in value['files']:
+            if name == 'external-correction-request' and serialized_grade is not None and store is not None:
+                body = dict(body, post_grade=store.seal(serialized_grade))
+            if name == 'external-post-grade' and store is not None:
+                serialized_grade = body = store.document(body)
             written[name] = _block_dump(self.out / ('%s.json' % name), body, store)
         if value.get('rendered') is not None:
             written['classroom-external.md'] = value['rendered']
@@ -4733,17 +4856,18 @@ class _BlockExternal:
         if day_file is None or not day_sha256:
             return dict(external=dict(status='not_run', reason='no day file given to the block session', seconds={}),
                         files=[], rendered=None, listed=[])
+        key_scope = {}
         key, section = EXT.ensure_external_section(out, snapshot, day_file, day_sha256, trading_day=day,
-                                                   built_by='classroom block %d' % n)
+                                                   built_by='classroom block %d' % n, key_scope=key_scope)
         mark('external.section')
-        pre = EXT.build_external_pre_message(key, mode=mode, prior_grade=prior_external_grade)
+        pre = EXT.build_external_pre_message(key_scope['key'], mode=mode, prior_grade=prior_external_grade)
         binding = EXT.build_external_binding(key, pre, v1_binding=pkg['binding'])
         ext_visible = EXT.model_visible_external(binding, pre)
         import frankie_box_classroom_external_code as KX
         ledgers = KX.answers(ext_visible, dipole_visible=visible, learner_context=learner_context,
                              independent_evidence=None, knowledge=knowledge, school=school)
         mark('external.answers')
-        ext_grade = EXT.grade_external(key, ledgers)
+        ext_grade = EXT.grade_external(key_scope['key'], ledgers)
         request_v2 = {'attachment': {'dipole_classroom': visible, 'dipole_external': ext_visible}}
         ext_correction = EXT.correction_request(original_request_sha256=digest(request_v2), session_id=session_id,
                                                 model_identity=model, grade=ext_grade)
@@ -4764,23 +4888,95 @@ class _BlockExternal:
         return dict(external=external, files=files, rendered=rendered, listed=[])
 
 
+def _block_published_header(path):
+    """Read a published object's root, without expanding its potentially large child references."""
+    path = Path(path)
+    value = json.loads(path.read_bytes())
+    seen = set()
+    while isinstance(value, dict) and len(value) == 1 and '$ref' in value:
+        ref = value['$ref']
+        if not isinstance(ref, dict) or ref.get('file') != BLOCK_STORE:
+            raise ValueError('unrecognized block root reference')
+        sha = ref['sha256']
+        if sha in seen:
+            raise ValueError('cyclic block root reference')
+        seen.add(sha)
+        start, end = ref['bytes']
+        with (path.parent / BLOCK_STORE).open('rb') as handle:
+            handle.seek(start)
+            data = handle.read(end - start)
+        if hashlib.sha256(data).hexdigest() != sha:
+            raise ValueError('block root reference differs from its sha256')
+        value = json.loads(data)
+    if not isinstance(value, dict):
+        raise ValueError('block publication is not an object')
+    return value
+
+
+def _block_lesson_ready(here):
+    try:
+        lesson = _block_published_header(Path(here) / 'lesson.json')
+        second = _block_published_header(Path(here) / 'second_set.json')
+        summary = lesson.get('second_set') or {}
+        if lesson.get('schema') != BLOCK_LESSON_SCHEMA:
+            return False, 'lesson has no native block schema'
+        if (summary.get('status') not in ('carried', 'not_carried', 'absent')
+                or second.get('status') != summary.get('status')):
+            return False, 'block second set is not complete: %s / %s' % (summary.get('status'), second.get('status'))
+    except (OSError, ValueError, TypeError, KeyError, IndexError, AttributeError) as error:
+        return False, 'block lesson is unreadable: %s: %s' % (type(error).__name__, error)
+    return True, None
+
+
+def block_ready(here):
+    """(ready, reason) for a native block publication; failed or merely saved files never advance the queue."""
+    ready, why = _block_lesson_ready(here)
+    if not ready:
+        return ready, why
+    try:
+        session = _block_published_header(Path(here) / 'session.json')
+        if session.get('schema') != BLOCK_SESSION_SCHEMA:
+            return False, 'session has no native block schema'
+        if session.get('status') not in ('complete', 'empty', 'day_end_mode'):
+            return False, 'block session is not complete: %s (%s)' % (session.get('status'), session.get('reason'))
+        if session['status'] == 'complete':
+            answers = _block_published_header(Path(here) / 'code-answers.json')
+            if answers.get('second_set') not in ('carried', 'not_carried', 'absent'):
+                return False, 'block answers used an incomplete second set: %s' % answers.get('second_set')
+        external = session.get('external') or {}
+        if external and external.get('status') not in ('complete', 'not_run', 'absent', 'not_carried'):
+            return False, 'block external session is not complete: %s (%s)' % (external.get('status'), external.get('reason'))
+    except (OSError, ValueError, TypeError, KeyError, IndexError, AttributeError) as error:
+        return False, 'block session is unreadable: %s: %s' % (type(error).__name__, error)
+    return True, None
+
+
 def block_work(teacher_rows, directory, n, day, brain, previous, day_file, day_sha256):
-    """One block in one worker process: its lesson (when not written yet), then its whole session (when no session.json
-    stands). Returns a short record; the block's own files are the result."""
+    """Retry the incomplete native piece of one block, retaining its existing store and successful publications."""
     here = Path(directory) / 'blocks' / str(n)
     out = dict(block=n, pid=__import__('os').getpid())
-    if (here / 'lesson.json').is_file() and (here / 'second_set.json').is_file():
+    lesson_ready, _ = _block_lesson_ready(here)
+    if lesson_ready:
         out['lesson'] = 'kept'
     else:
         made = block_lesson(teacher_rows, directory, n, day_file=day_file)
         out['lesson'] = dict(rows=made['rows'], second_set=made['second_set'])
-    if (here / 'session.json').is_file():
+        ready, why = _block_lesson_ready(here)
+        if not ready:
+            out['session'] = dict(status='failed', reason=why)
+            out['ready'], out['reason'] = False, why
+            return out
+    # A session computed against a failed lesson cannot be reused after that lesson is repaired.
+    ready, _ = block_ready(here)
+    if lesson_ready and ready:
         out['session'] = 'kept'
+        out['ready'], out['reason'] = True, None
         return out
     session = block_session(teacher_rows, directory, n, day=day, brain=brain, previous=previous, day_file=day_file,
                             day_sha256=day_sha256)
     out['session'] = dict(status=session.get('status'), mode=session.get('mode'), reason=session.get('reason'),
                           seconds=session.get('seconds'), report=str(here / 'TEACHER_REPORT.md'))
+    out['ready'], out['reason'] = block_ready(here)
     return out
 
 

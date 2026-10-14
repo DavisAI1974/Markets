@@ -39,11 +39,10 @@ the line has a done entry: the plan's PREVIOUS_CLASSROOM, else the most recently
 and flagged previous_trade_date_later. Greg 2026-10-06: this experiment's school reader also uses completed workflow
 order, not trading-date order; learned discovery knowledge from later market dates is eligible at the next boundary.
 
-WHAT THE CLASS WORKER RUNS per day (everything that carries his previous day), in order, through the orchestrator's own
-step methods (frankie_box_experiment.Run; nothing re-implemented): classroom FIRST, then data export and causal search,
-batch scientific-teacher lessons, Frankie's own novel findings tested, exchange, voice (not wired: passes as listed),
-school and reports. Jev's material relay stays the orchestrator's step (a hand-off to
-his Pod, never carried into the next class). Receipts per step in the run's own directory
+WHAT THE CLASS WORKER RUNS per day through the orchestrator's own step methods: the serial classroom lesson chain runs
+beside independent data export then causal search, on disjoint subsets of the same owner booking. Both join before
+batch scientific-teacher lessons and Frankie's novel findings tests, then exchange, Jev and his checked knowledge,
+voice, school and reports. Jev's raw claims never reopen the exchange's frozen selection. Receipts per step in the run's own directory
 (/opt/frankie-box/work/experiment/<run>/days/<day>/<stage>.json), so a restart resumes exactly: finished steps are skipped.
 
 A DAY THAT WAITS RESUMES BY ITSELF. The worker keeps the front entry and polls it (POLL seconds, default 60) instead of
@@ -135,7 +134,7 @@ def parse_scope(text):
 
 def in_scope(x, scope):
     return x['run'] == scope['run'] and x['day'] in scope['days']
-CLASS_STAGES = ('classroom', 'data', 'search', 'batch_lessons', 'frankie_lessons', 'exchange', 'voice', 'school', 'reports')
+CLASS_STAGES = ('classroom', 'data', 'search', 'batch_lessons', 'frankie_lessons', 'exchange', 'jev', 'voice', 'school', 'reports')
 CORES_PER_SLOT = 16                       # a box day-run slot: exactly 16 booked CPUs (the core ledger's rule)
 # the Run settings an entry carries (the enqueuer's orchestrator arguments), so the worker builds the same Run
 SETTINGS = dict(ingest_workers=31, parallel_days=4, ingest_mode='sequential', ingest_observation='full',
@@ -1233,16 +1232,76 @@ def frankie_lessons(run, e):
                       lessons=[str(w) for w in written], cpu_booking=cpu)
 
 
+def _classroom_and_search(run, e, entry, code_root, commit, log):
+    """One classroom lesson chain beside independent data/search on its own Run.
+
+    The two Run objects share only durable owner state. Mutable child bookkeeping,
+    stop reasons and CPU receipts are never shared between the threads.
+    """
+    from concurrent.futures import ThreadPoolExecutor
+    import frankie_box_hub_runtime as HR
+    held, why = run.cores.held_booking(entry['slot_booking'])
+    if held is None:
+        return dict(status='waiting', reason=why), []
+    lanes = HR.parallel_cpus(run.cores, entry['slot_booking'])
+    parallel = lanes is not None
+    lanes = lanes or [held['cpus'], held['cpus']]
+    old_cpus = getattr(run, '_parallel_cpus', None)
+    run._parallel_cpus = lanes[0]
+
+    def prepare():
+        other, other_entry = _run_for(entry, code_root, commit, log)
+        other.slot_booking = entry['slot_booking']
+        other._parallel_cpus = lanes[1]
+        import frankie_box_hub_runtime as HR
+        waiting = HR.await_prerequisites(other, other_entry, ('teacher',))
+        if waiting:
+            return [('data', waiting)]
+        results = []
+        for stage in ('data', 'search'):
+            result = other.hub_stage(stage, other_entry,
+                lambda stage=stage: other.receipt(stage, e['day']) if passed(other, stage, e['day'])
+                else other.guarded(stage, other_entry))
+            results.append((stage, result))
+            if not result or result.get('status') not in ('done', 'reused', 'skipped', 'not_run'):
+                break
+        return results
+
+    try:
+        if parallel:
+            with ThreadPoolExecutor(max_workers=1) as pool:
+                future = pool.submit(prepare)
+                try:
+                    classroom = run.hub_stage('classroom', e,
+                        lambda: run.receipt('classroom', e['day']) if passed(run, 'classroom', e['day']) else run.classroom(e))
+                    prepared = future.result()
+                except BaseException:
+                    # A running future cannot be cancelled. Request the existing
+                    # owner's cooperative save before executor shutdown joins it.
+                    if run.owner and not run.save_requested():
+                        request_save(run.plan['run'], e['day'], 'parallel classroom/search interrupted')
+                    raise
+        else:
+            classroom = run.hub_stage('classroom', e,
+                lambda: run.receipt('classroom', e['day']) if passed(run, 'classroom', e['day']) else run.classroom(e))
+            prepared = prepare() if classroom and classroom.get('status') in ('done', 'reused') else []
+    finally:
+        run._parallel_cpus = old_cpus
+    # Early block streaming can finish before whole-day teacher publication.
+    # Retry only the prerequisite wait at this genuine completion event.
+    if classroom and classroom.get('status') in ('done', 'reused') and any(
+            r and r.get('status') == 'waiting' for _, r in prepared):
+        prepared = prepare()
+    return classroom, prepared
+
+
 def class_day(entry, previous, school_day, code_root, commit, log):
     """Run one classroom-arm day inside the SAME held 16-CPU slot.
 
-    Canonical order (Greg, settled 2026-09-30; reconciled 2026-10-06):
-      classroom immediately after the BOSS teacher read -> data export -> search -> batch scientific-teacher lessons
-      -> today's Frankie findings tested -> three-way exchange -> bounded meeting -> school -> reports.
-
-    The classroom is deliberately before search: Frankie first learns from ROOT + the BOSS teacher.  The later
-    scientific-teacher pass tests his resulting claims against the causal search before the meeting.  Nothing here
-    releases or re-books the day's slot.
+    The classroom reads ROOT and BOSS teacher products while independent data/search
+    preparation runs beside it. Their joined outputs feed the scientific tests,
+    frozen exchange, Jev's checked knowledge, meeting, school and reports. Each
+    classroom lesson remains serial. Both branches use the same retained booking.
     """
     why = _source_wait(entry, code_root, commit)
     if why:
@@ -1264,6 +1323,8 @@ def class_day(entry, previous, school_day, code_root, commit, log):
         receipt_key = receipt_key or day
         facts['stages'][stage] = dict(status=r['status'], reason=r.get('reason'),
                                       receipt=str(run.receipt_path(receipt_stage, receipt_key)))
+        if r.get('hub_pending'):
+            return 'waiting', '%s: %s' % (stage, r.get('reason'))
         if r['status'] == 'waiting' and not passed(run, receipt_stage, receipt_key):
             return 'waiting', '%s: %s' % (stage, r.get('reason'))
         if not passed(run, receipt_stage, receipt_key):
@@ -1279,30 +1340,21 @@ def class_day(entry, previous, school_day, code_root, commit, log):
         run.check_save()
         return None, None
 
-    # 1. Frankie learns immediately after the BOSS teacher's read.
-    if passed(run, 'classroom', day):
-        r = run.receipt('classroom', day)
-    else:
-        r = run.classroom(e)
-        if r is None:
-            why = (run.stopped or {}).get('reason')
-            run.stopped = None
-            return 'waiting', 'classroom: %s' % why, facts
-        run.reserve_after_classroom(e)
+    # Classroom lessons remain serial. Independent preparation runs beside them.
+    r, prepared = _classroom_and_search(run, e, entry, code_root, commit, log)
+    if r is None:
+        why = (run.stopped or {}).get('reason')
+        run.stopped = None
+        return 'waiting', 'classroom: %s' % why, facts
+    run.reserve_after_classroom(e)
     state, why = keep('classroom', r)
     if state:
         return state, why, facts
 
-    # 2. Build/search the causal evidence only after Frankie's classroom work exists.
-    for stage in ('data', 'search'):
-        if passed(run, stage, day):
-            r = run.receipt(stage, day)
-        else:
-            r = run.guarded(stage, e)
-            if r is None:
-                why = (run.stopped or {}).get('reason')
-                run.stopped = None
-                return 'waiting', '%s: %s' % (stage, why), facts
+    # Both prerequisite branches have now joined; each retained result is checked.
+    for stage, r in prepared:
+        if r is None:
+            return 'waiting', '%s has no completed result' % stage, facts
         state, why = keep(stage, r)
         if state:
             return state, why, facts
@@ -1312,38 +1364,37 @@ def class_day(entry, previous, school_day, code_root, commit, log):
     if key and key.startswith('discovery') and not run.finished('lessons', key):
         run.check_save()
         batch = [d for d in run.plan['days'] if run.batch_of(d['day']) == key]
-        r = run.lessons(key, batch) or {}
+        r = run.hub_stage('batch_lessons', e, lambda: run.lessons(key, batch)) or {}
     else:
         r = run.receipt('lessons', key) if key else None
         if r is None:
             r = dict(status='skipped', reason='no discovery batch for this day')
-    if key:
+        r = run.hub_stage('batch_lessons', e, lambda: r)
+    if key and key.startswith('discovery'):
         state, why = keep('batch_lessons', r, 'lessons', key)
         if state:
             return state, why, facts
     else:
         facts['stages']['batch_lessons'] = dict(status=r['status'], reason=r.get('reason'), receipt=None)
+        if r.get('hub_pending'):
+            return 'waiting', 'batch_lessons: ' + str(r.get('reason')), facts
 
     # 4. Test this day's new Frankie findings against the search.
-    if passed(run, 'frankie_lessons', day):
-        r = run.receipt('frankie_lessons', day)
-    else:
-        run.check_save()
-        r = frankie_lessons(run, e)
+    run.check_save()
+    r = run.hub_stage('frankie_lessons', e,
+        lambda: run.receipt('frankie_lessons', day) if passed(run, 'frankie_lessons', day) else frankie_lessons(run, e))
     state, why = keep('frankie_lessons', r)
     if state:
         return state, why, facts
 
     # 5. Only now do the teachers and Frankie meet; then retain the day.
-    for stage in ('exchange', 'voice', 'school', 'reports'):
-        if passed(run, stage, day):
-            r = run.receipt(stage, day)
-        else:
-            r = run.guarded(stage, e)
-            if r is None:
-                why = (run.stopped or {}).get('reason')
-                run.stopped = None
-                return 'waiting', '%s: %s' % (stage, why), facts
+    for stage in ('exchange', 'jev', 'voice', 'school', 'reports'):
+        r = run.hub_stage(stage, e,
+            lambda stage=stage: run.receipt(stage, day) if passed(run, stage, day) else run.guarded(stage, e))
+        if r is None:
+            why = (run.stopped or {}).get('reason')
+            run.stopped = None
+            return 'waiting', '%s: %s' % (stage, why), facts
         state, why = keep(stage, r)
         if state:
             return state, why, facts
@@ -1942,18 +1993,11 @@ def _finish_steps(run, e, code_root, commit, log):
             facts['teacher'].update(rows=None, rows_refused=why)
             return 'failed', facts
         if rows is None:
-            # THE MISSING-COVERAGE RULE (Greg, 2026-10-07): no teacher rows for the day (the teacher step failed or is
-            # still waiting at the bound, or its policy wait) is thinner evidence, not a rejected day. The day goes on; each consumer records its own disposition
-            # (the classroom waits on the rows it needs, the data export lists them missing and searches without them,
-            # a later teacher result would be a second export of the day, declined there). Named here and on the entry.
+            # A failed required producer is not missing source coverage. Retain
+            # its owner/checkpoint and let recovery revive it; dependents wait.
             facts['teacher'].update(rows=None, rows_waiting=why,
-                                    rows_missing='no teacher rows for the day after the teacher step ended %s%s: the day goes '
-                                                 'on without them (missing-coverage rule); the classroom waits on them, the '
-                                                 'data export lists them missing and a later teacher result is a second '
-                                                 'export of the day (declined there)' % (
-                                                     t.get('status') or 'not run',
-                                                     (' (%s)' % (why or t.get('reason'))) if (why or t.get('reason')) else ''))
-            log('teacher %s %s: %s' % (run.plan['run'], e['day'], facts['teacher']['rows_missing']))
+                                    recovery_required='teacher publication incomplete; revive its saved operation')
+            return 'waiting', facts
         else:
             facts['teacher'].update(rows=str(rows), source=source, brain_entries=t.get('brain_entries'))
     else:
@@ -2499,26 +2543,25 @@ def _note_release(x, holder):
 
 
 def _release_owner(x, why, failed_finish=False):
-    """A failed (never saved) day gives its owner binding up: kept as history, so the once-per-worker retry binds afresh
-    (the next attempt number, any free 16 CPUs) exactly as before the contract. The booking itself was released by the
-    thread's end. Never for a saved/unknown day."""
+    """Failed finish work keeps its exact owner; other release boundaries archive it.
+
+    A standing save marker is never retired by failure recovery.
+    """
     owner = x.get('owner')
     if owner is None:
+        return
+    if failed_finish:
+        # A dead calculation resumes the same saved attempt. Rebooking may change
+        # CPU placement, never the native owner/checkpoint identity.
+        if owner.get('marker') and Path(owner['marker']).exists():
+            return
+        _rebook_owner(x, why)
         return
     archived = _archive_marker(owner.get('marker'), 'stale')
     if archived:
         x['save_request'] = None
         x.setdefault('save_requests_stale', []).append(dict(archived=archived, why=why, at_utc=utc()))
     x.setdefault('owner_history', []).append(dict(owner, released_utc=utc(), released_why=why))
-    if failed_finish:
-        # R-C (fresh review): the bookings this owner held, carried to the retry's binding (_bind_owner), which turns
-        # them into a queue rebook decision only when the day's retained Jev request made no progress (its helper
-        # receipt failed or absent), so Run.jev_rebooked mints the .rebookN successor instead of refusing forever
-        held = list(owner.get('held_bookings') or [])
-        if owner.get('booking') and not any(h.get('booking') == owner['booking'] for h in held):
-            held.append(dict(booking=owner['booking'], cpus=sorted(owner.get('cpus') or [])))
-        x['failed_finish_bookings'] = dict(held_bookings=held, booking=owner.get('booking'), cpus=owner.get('cpus'),
-                                           attempt=owner.get('attempt'), released_utc=utc(), why=why)
     x['owner'] = None
 
 
@@ -3244,6 +3287,10 @@ def resume_owner(run, day, by, rebook=False):
         owner = x.get('owner')
         if owner is None:
             raise SystemExit('%s %s has no owner binding; nothing to resume' % (run, day))
+        if os.environ.get('HUB_DOCTOR_HUB_DIR') and (
+                x.get('state') == 'saved' or (x.get('finish') or {}).get('state') == 'saved' or
+                (owner.get('marker') and Path(owner['marker']).exists())):
+            raise SystemExit('hub doctor cannot resume an intentionally saved owner')
         # 2026-10-09: a holder that is gone (finish 'running' on a done entry, or a 'running' owned entry) is reconciled
         # here, in this call, as a worker pass would; a live holder is left as it is and the refusal below stands
         reconciled = _resume_reconcile_dead_holder(x, by)
@@ -3418,10 +3465,34 @@ def kick_after_resume(run, day, by, code_root=None, commit=None, log=print):
 
 # ------------------------------------------------------------------------------------------------------ main
 
+def doctor_recover(run, day, code_root, commit, log=print):
+    """Revive only an unfinished operation; a standing save is never cleared."""
+    with locked():
+        doc = load('root')
+        entry = next((x for x in doc['entries'] if x['run'] == run and x['day'] == day), None)
+        if entry is None or not entry.get('owner'):
+            raise ValueError('doctor needs the retained run/day owner')
+        owner = entry['owner']
+        finish = entry.get('finish') or {}
+        if (entry.get('state') == 'saved' or finish.get('state') == 'saved' or
+                (owner.get('marker') and Path(owner['marker']).exists())):
+            return dict(status='saved', reason='intentional owner save; doctor leaves it untouched')
+        reconcile = _resume_reconcile_dead_holder(entry, 'hub doctor')
+        if reconcile:
+            save('root', doc)
+        unknown = entry.get('state') == 'unknown' or (entry.get('finish') or {}).get('state') == 'unknown'
+        active = entry.get('state') == 'running' or (entry.get('finish') or {}).get('state') == 'running'
+        if active:
+            return dict(status='waiting', reason='live owner is finishing its operation boundary')
+    if unknown:
+        resume_owner(run, day, 'hub doctor')
+    return dict(status='requested', kick=kick_after_resume(run, day, 'hub doctor', code_root, commit, log=log))
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument('--action', required=True, choices=('show', 'enqueue', 'worker', 'kick', 'handover', 'save', 'status', 'resume',
-                                                      'retire', 'parked-watch'))
+                                                      'retire', 'parked-watch', 'doctor-recover'))
     p.add_argument('--reason', help='retire: the recorded reason')
     p.add_argument('--wait-lock', action='store_true', help='worker: wait for the running worker to end (handover)')
     p.add_argument('--line', choices=LINES)
@@ -3442,6 +3513,13 @@ def main():
                         'save ONLY); off (default) retains it exactly as before')
     p.add_argument('--release-reason', help='save --release-booking on: the recorded reason')
     a = p.parse_args()
+    if a.action == 'doctor-recover':
+        import re
+        if not (a.run and re.fullmatch('[A-Za-z0-9_-]{1,64}', a.run) and
+                a.day and re.fullmatch('[0-9]{8}', a.day)):
+            raise SystemExit('doctor-recover requires exact --run and --day')
+        print(json.dumps(doctor_recover(a.run, a.day, a.code_root, a.commit), default=str))
+        return 0
     if a.action == 'show':
         if a.events != 'all' and not a.events.isdigit():
             raise SystemExit('--events: a number or all')

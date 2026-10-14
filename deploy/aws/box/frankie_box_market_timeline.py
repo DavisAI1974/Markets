@@ -191,13 +191,14 @@ def _rows(pin, *, packed, timing=None, verify=True, where=None, start=None, iden
     before it are neither read nor hashed again; the pin is checked at exhaustion exactly as from byte 0."""
     from research.kalshi.frankie_boss.c15_journal import unpack
     from time import perf_counter
+    from frankie_box_row_index import RowIndex
     offset, first = (int(start['offset']), int(start['ordinal'])) if start else (0, 0)
     hashed = _line_hasher(start.get('sha256') if start else None, offset) if verify else None
     where = {} if where is None else where
     where.update(row_start=None, next_offset=offset, next_ordinal=first, hasher=hashed)
     size, held = offset, None
     spent = 0.0
-    with _local(pin['path']).open('rb') as stream:
+    with _local(pin['path']).open('rb') as stream, RowIndex(pin) as row_index:
         stream.seek(offset)
         mark = perf_counter()
         for ordinal, raw in enumerate(stream, first):
@@ -206,6 +207,7 @@ def _rows(pin, *, packed, timing=None, verify=True, where=None, start=None, iden
             if verify:
                 held = raw
             begun, size = size, size + len(raw)
+            row_index.observe(ordinal, begun, len(raw))
             row = json.loads(raw)
             row = unpack(row) if packed else row
             if identify is not None:
@@ -355,7 +357,9 @@ def _rows_parallel(pin, *, packed, timing, workers, verify=True, where=None, sta
     import collections
     import multiprocessing
     from time import perf_counter
+    from frankie_box_row_index import RowIndex
     path = str(_local(pin['path']))
+    row_index = RowIndex(pin)             # source access can fail; do this before starting any workers
     offset, ordinal = (int(start['offset']), int(start['ordinal'])) if start else (0, 0)
     snapshot = start.get('sha256') if start else None
     if verify and offset and snapshot is None:
@@ -398,6 +402,7 @@ def _rows_parallel(pin, *, packed, timing, workers, verify=True, where=None, sta
             spent += perf_counter() - mark
             timing['decode_seconds'] = round(spent, 3)
             for row, length in zip(rows, lengths):
+                row_index.observe(ordinal, begun, length)
                 where['row_start'], where['next_offset'], where['next_ordinal'] = begun, begun + length, ordinal + 1
                 if identify is not None:          # the worker sent the identity; the value is the line's reference
                     row = _Identified((row, RowRef(path, begun, length, ordinal, packed)))
@@ -413,6 +418,7 @@ def _rows_parallel(pin, *, packed, timing, workers, verify=True, where=None, sta
                 raise ValueError('shared market rows differ from their source pin: ' + pin['path'])
         finished = True
     finally:
+        row_index.close()
         if hasher is not None and not finished:
             hasher.stop()
         pool.terminate()

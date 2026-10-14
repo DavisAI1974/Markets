@@ -611,6 +611,8 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     from research.kalshi.frankie_boss import dipole_classroom_session as S, dipole_classroom_resolution as R
     from research.kalshi.frankie_boss import dipole_classroom_external as EXT, dipole_classroom_v2 as V2
     from research.kalshi.frankie_boss import sunday_execution as SE
+    from research.kalshi.frankie_boss import c15_journal as J
+    encoding_started = J.encoding_report()
     from research.kalshi.frankie_boss.frankie_principal_adapter import digest, json_form
     C, K, BR = _box('frankie_box_classroom'), _box('frankie_box_classroom_code'), _box('frankie_box_brain')
     KX = _box('frankie_box_classroom_external_code')
@@ -942,12 +944,25 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     save()
     stop()
     started = state['started']
+    external_key_scope = {}
+
+    def prepare_package():
+        import frankie_box_teacher_rows as TR
+        import frankie_box_teacher_products as TP
+        rows_path = teacher_rows / teacher_receipt['rows_file']['file']
+        snapshot, stream = TR.load(rows_path)
+        if not stream.snapshot_ok or stream.sha256 != teacher_receipt['rows_file']['sha256']:
+            raise ValueError('shared teacher snapshot differs from its published rows')
+        key, _ = TP.ensure_teacher_key(rows_path, snapshot=snapshot, snapshot_hash_verified=stream.snapshot_hash)
+        return V2.prepare_cycle_v2(p['attachment'], request_id=p['request_id'], cycle_index=0, cycle_count=1,
+            source_hash=p['source_hash'], as_of=p['as_of'], through_cursor=p['through_cursor'],
+            history=history, prior_grade=prior_grade, section_directory=teacher_rows,
+            day_file=day_file, day_file_sha256=day_sha, trading_day=day,
+            prior_external_grade=prior_external_grade, built_by='classroom V2',
+            shared_snapshot=snapshot, shared_teacher_key=key, external_key_scope=external_key_scope)
+
     try:
-        pkg2 = phase('package', lambda: V2.prepare_cycle_v2(p['attachment'], request_id=p['request_id'], cycle_index=0, cycle_count=1,
-                                   source_hash=p['source_hash'], as_of=p['as_of'], through_cursor=p['through_cursor'],
-                                   history=history, prior_grade=prior_grade, section_directory=teacher_rows,
-                                   day_file=day_file, day_file_sha256=day_sha, trading_day=day,
-                                   prior_external_grade=prior_external_grade, built_by='classroom V2'))
+        pkg2 = phase('package', prepare_package)
     except EXT.DayExternalRefused as error:
         raise SystemExit('the day file of the historical data points: %s' % error)
     pkg, ext = pkg2['v1'], pkg2['external']
@@ -1269,7 +1284,11 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                                            reply.get('dipole_scientific_exchange')))
 
     # ---- the external section: the host's exact grade and its correction turn
-    ext_grade = phase('external_grade', lambda: EXT.grade_external(ext['teacher_key'], ext_ledgers))
+    def grade_external():
+        if 'key' not in external_key_scope:
+            external_key_scope['key'] = EXT.VerifiedExternalKey(ext['teacher_key'])
+        return EXT.grade_external(external_key_scope['key'], ext_ledgers)
+    ext_grade = phase('external_grade', grade_external)
     ext_correction = phase('external_correction', lambda: EXT.correction_request(original_request_sha256=request_v2_sha256, session_id=session_id,
                                             model_identity=MODEL_IDENTITY, grade=ext_grade))
     ext_parsed = phase('external_correction_answer', lambda: C.parse_correction(json.dumps(K.correction_answer(ext_correction)), ext_correction))
@@ -1382,6 +1401,7 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     # a heartbeat that could not be written (the probe module failed to import), counted per error; {} = none
     received['probe_errors'] = dict(K.PROBE_ERRORS)
     received['output_pins'] = dict(PIN_RECORD)              # where the output sha256s ran and how long
+    received['evidence_encoding'] = J.encoding_report(encoding_started)
     # one pass (Greg, 2026-10-09): no seal re-read of the journal; the witness basis is on journal_witness
     key = ext['teacher_key']
     result = dict(schema=SCHEMA, day=day, status='complete', mode=mode, components=report['components'],

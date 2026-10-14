@@ -278,6 +278,15 @@ def _dimension_ledger(snapshot: Mapping[str, Any], index: int) -> tuple[dict, ..
     return tuple(_ledger_point(row, index, name) for row in snapshot["rows"])
 
 
+def _dimension_ledgers(snapshot: Mapping[str, Any]) -> dict:
+    """All component ledgers from the same row traversal and the same point step."""
+    ledgers = {name: [] for name in COLUMNS}
+    for row in snapshot['rows']:
+        for index, name in enumerate(COLUMNS):
+            ledgers[name].append(_ledger_point(row, index, name))
+    return {name: tuple(points) for name, points in ledgers.items()}
+
+
 def _first_last_present(ledger: Sequence[Mapping[str, Any]]):
     present = [point for point in ledger if point["state"] == TargetState.PRESENT.name]
     return (present[0], present[-1]) if present else (None, None)
@@ -368,12 +377,11 @@ def build_teacher_key(snapshot: Mapping[str, Any], previous_snapshot: Mapping[st
     if previous_snapshot is not None:
         if previous_snapshot.get("schema") != SOURCE_SCHEMA or previous_snapshot["cycle_index"] != snapshot["cycle_index"]-1:
             raise ValueError("previous classroom snapshot must be the immediately preceding cycle")
-        for index,name in enumerate(COLUMNS):
-            ledger=_dimension_ledger(previous_snapshot,index)
+        for name, ledger in _dimension_ledgers(previous_snapshot).items():
             previous[name]={"terminal":ledger[-1],"direction":_direction(ledger),"state_counts":_state_counts(ledger)}
-    dimensions=[];ledgers={};directions={}
+    dimensions=[];ledgers=_dimension_ledgers(snapshot);directions={}
     for index,name in enumerate(COLUMNS):
-        ledger=_dimension_ledger(snapshot,index);ledgers[name]=ledger;direction=_direction(ledger);directions[name]=direction
+        ledger=ledgers[name];direction=_direction(ledger);directions[name]=direction
         nonpresent=tuple({"cursor":p["cursor"],"state":p["state"],"reason":p["raw_reason"]} for p in ledger
             if p["state"] != TargetState.PRESENT.name)
         dimensions.append({"name":name,"role":ROLE_DEFINITIONS[name]+" "+CALCULATION_SCOPE_NOTE,"behavior_basis":BEHAVIOR_BASIS[name],

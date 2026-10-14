@@ -109,12 +109,10 @@ every step") makes the day's one held booking 32 CPUs and every stage of the day
 and its Jev context read on the lane's pinned pools, Jev and the meeting (voice) with llama-server threads from their one
 setting each (JEV_THREADS, MEETING_THREADS; default the lane size). The ingest of a lone day takes the plan's day size
 (Run.ingest_size; days side by side share the box), never the old fixed WORKERS=7 / 8 CPUs. Within a day the stages
-still run one after another on the booking. Most later stages read an earlier one's output or the brain an earlier one
-publishes into. Two pairs are data-independent: the classroom and the data export (held apart by the settled order,
-"build/search the causal evidence only after Frankie's classroom work exists"), and the exchange's shared-market read
-(jev_context_read's EXCHANGE_CONTEXT_ONLY read) and the lessons. Every member of both pairs is a pinned pool
-sized to the whole lane, so side by side they would either share the same 32 CPUs (no measured gain) or split them into
-disjoint halves (each step below the day's 32); neither runs side by side until a canary measures a gain.
+respect the native prerequisites on the booking. On queued classroom days, sealed classroom lessons can run beside
+the teacher; independent data export/search then takes the teacher's subset after its publication. Physical sibling
+groups stay together in disjoint subsets of the same booking. A one-group booking stays sequential. The lesson chain
+remains serial, and all whole-day gates still stand. The direct nonqueue route follows the dependency order serially.
 
 RESUME. A receipt per day and step (per batch for teacher and lessons) under /opt/frankie-box/work/experiment/<run>/.
 A restart with the same plan skips every step whose receipt says done or reused and runs the rest; a different plan
@@ -300,6 +298,15 @@ def sha256_file(path):
 
 def canonical(value):
     return json.dumps(value, sort_keys=True, separators=(',', ':'))
+
+
+def _bind_parallel_worker(cpus):
+    """A block worker's share of its existing day booking (never a new booking)."""
+    if cpus:
+        os.sched_setaffinity(0, set(cpus))
+        import frankie_box_cores as C
+        os.environ['FRANKIE_LANE_CPUS'] = C.cpu_list(cpus)
+        os.environ['FRANKIE_STAGE_CPUS'] = C.cpu_list(cpus)
 
 
 def new_bytes(path):
@@ -1354,6 +1361,11 @@ class Run:
             self.owned_attempt = owner.get('attempt')
             self.stop_marker = owner.get('marker') or self.stop_marker
 
+    def hub_stage(self, stage, entry, calculate=None):
+        """The native stage remains the computation/checkpoint owner; the hub binds its inputs."""
+        import frankie_box_hub_runtime as HR
+        return HR.run_stage(self, entry, stage, calculate or (lambda: getattr(self, stage)(entry)))
+
     def save_requested(self):
         marker = self.stop_marker
         return bool(marker and Path(marker).is_file())
@@ -1689,6 +1701,11 @@ class Run:
         if stage in ('voice', 'school', 'reports') and not successor:
             self.require_current_exchange(key[:8], env)
         full = dict(os.environ, MARKETS_SHA=self.commit, CODE_ROOT=str(self.code_root), **{k: str(v) for k, v in env.items()})
+        import frankie_box_hub_runtime as HR
+        full.update(HR.child_environment(env))
+        full.pop('FRANKIE_STAGE_CPUS', None)
+        if getattr(self, '_parallel_cpus', None):
+            full['FRANKIE_STAGE_CPUS'] = self.cores.cpu_list(self._parallel_cpus)
         # the day's own save marker reaches the child, and only the day's: a sibling lane's marker never leaks across threads
         full.pop('FRANKIE_LANE_STOP_FILE', None)
         if self.stop_marker:
@@ -1731,13 +1748,24 @@ class Run:
             code = None
             try:
                 with subprocess.Popen(command, env=full, stdout=out, stderr=subprocess.STDOUT) as proc:
+                    HR.attach_child(proc.pid)
                     if heartbeat is not None:
                         heartbeat.start(proc.pid)
                     try:
                         code = proc.wait()
                     except BaseException:
-                        proc.kill()               # subprocess.run's own behaviour on an interrupted wait, unchanged
+                        # Preserve the child's native save boundary before the
+                        # parallel caller joins its sibling operation.
+                        if self.owner and not self.save_requested():
+                            import frankie_box_frankie_queue as Q
+                            Q.request_save(self.plan['run'], key[:8], 'stage interrupted: ' + stage)
+                        elif not self.owner:
+                            import signal
+                            proc.send_signal(signal.SIGTERM)
+                        code = proc.wait()
                         raise
+                    finally:
+                        HR.attach_child(None)
             finally:
                 if heartbeat is not None:
                     heartbeat.stop('exited' if code is not None else 'not started or interrupted', code)
@@ -1892,6 +1920,11 @@ class Run:
         return (e['opening_receipt'], None) if e.get('opening_receipt') else (None, None)
 
     def root(self, e):
+        if self.owned_attempt:
+            return self.hub_stage('root', e, lambda: self._root(e))
+        return self._root(e)
+
+    def _root(self, e):
         remote = self.remote_root(e['day'])
         if remote is not None:
             return remote
@@ -1987,7 +2020,7 @@ class Run:
         except ValueError as error:
             return self.record('root', e['day'], 'refused', reason=str(error))
         env = dict(INGESTION_RECEIPT=ing['receipt'], INGESTION_RECEIPT_SHA256=ing['receipt_sha256'], DAY=e['day'],
-                   DAY_ROLE=e['role'], OUTPUT_ROOT=output, DATA_WORKERS=self.day_cpus() - 1,
+                   DAY_ROLE=e['role'], OUTPUT_ROOT=output, DATA_WORKERS=max(1, self.day_cpus() - 1),
                    DIGEST=digest_setting['value'],
                    RESUME='on' if resume else 'off',
                    # the ROOT's own finalize preflight keeps this Run's floor (2026-10-08; Session._finalize_projection)
@@ -2654,9 +2687,12 @@ class Run:
             import frankie_box_frankie_queue as Q
             with Q.class_running(self.log):
                 block_lessons = self.class_blocks(e, TEACHER_ROWS / day, d, previous=previous)
-            if block_lessons.get('status') != 'complete' and self.day_rows(e)[0] is None:
-                # a failed block publication with the whole-day rows published goes on to the whole-day lesson (listed)
-                return self.record('classroom', day, 'waiting', block_lessons=block_lessons,
+            if block_lessons.get('status') != 'complete':
+                # Whole-day rows do not replace an unfinished block lesson. The
+                # same owner retries that block before later lessons proceed.
+                return self.record('classroom', day,
+                                   'failed' if block_lessons.get('status') == 'failed' else 'waiting',
+                                   block_lessons=block_lessons,
                                    reason='the classroom took %d sealed block(s); the teacher\'s blocks stopped: %s (%s)'
                                           % (len(block_lessons.get('blocks') or ()), block_lessons.get('status'),
                                              block_lessons.get('reason')))
@@ -2775,45 +2811,49 @@ class Run:
         self.log('classroom %s: warmed for the block workers: %s' % (e['day'], json.dumps(warm, default=str)))
         ready, waited, why = K._fork_ready()
         context = 'fork' if ready else 'spawn'
-        pool = CF.ProcessPoolExecutor(max_workers=workers, mp_context=MP.get_context(context))
+        pool = CF.ProcessPoolExecutor(max_workers=workers, mp_context=MP.get_context(context),
+                                      initializer=_bind_parallel_worker,
+                                      initargs=(getattr(self, '_parallel_cpus', ()),))
         self.log('classroom %s: block sessions one lesson at a time: %d worker process(es) (%s%s)' % (
             e['day'], workers, context, '' if ready else ': ' + str(why)))
-        futures = {}
+        sessions = {}
 
-        def done(future, n):
-            try:
-                value = future.result()
-                session = value.get('session') or {}
-                self.log('classroom %s: block %d (pid %s) lesson %s; session %s' % (
-                    e['day'], n, value.get('pid'), value.get('lesson'), session if isinstance(session, str) else
-                    '%s (mode %s, %s s)%s; report %s' % (session.get('status'), session.get('mode'),
-                                                        session.get('seconds'), (': ' + str(session.get('reason')))
-                                                        if session.get('reason') else '', session.get('report'))))
-            except BaseException as error:  # noqa: BLE001 - recorded; the block has no session.json and is redone
-                self.log('classroom %s: block %d worker failed: %s: %s' % (e['day'], n, type(error).__name__, error))
+        class BlockFailure(Exception):
+            pass
 
         def submit(n, manifest):
             here = d / 'blocks' / str(n)
-            if (here / 'session.json').is_file() and (here / 'lesson.json').is_file() and \
-                    (here / 'second_set.json').is_file():
-                return dict(block=n, lesson='kept', session='kept')
+            ready, why = K.block_ready(here)
+            if ready:
+                sessions[n] = dict(block=n, lesson='kept', session='kept')
+                return sessions[n]
             future = pool.submit(K.block_work, rows_dir, d, n, e['day'], brain, previous, day_file, day_sha)
-            future.add_done_callback(lambda f, n=n: done(f, n))
-            futures[n] = future
-            return dict(block=n, submitted=True)
+            # Do not enqueue block n+1 before n's actual native result exists.
+            # A one-worker pool alone would still queue later lessons after a
+            # returned failed session; that would skip its required recovery.
+            try:
+                value = future.result()
+            except Exception as error:
+                sessions[n] = dict(block=n, error='%s: %s' % (type(error).__name__, error))
+                raise BlockFailure('block %d worker failed: %s' % (n, sessions[n]['error'])) from error
+            sessions[n] = value
+            ready, why = K.block_ready(here)
+            self.log('classroom %s: block %d result %s' % (e['day'], n, json.dumps(value, default=str)))
+            if not ready:
+                raise BlockFailure('block %d remains incomplete: %s' % (n, why))
+            self.check_save()
+            return value
         try:
             followed = TR.follow_blocks(rows_dir, submit, waiter, check=self.check_save)
-            sessions = {}
-            for n, future in sorted(futures.items()):
-                try:
-                    sessions[n] = future.result()
-                except BaseException as error:  # noqa: BLE001
-                    sessions[n] = dict(block=n, error='%s: %s' % (type(error).__name__, error))
             followed.update(workers=workers, context=context, sessions=sessions)
-            if any('error' in value for value in sessions.values()) and followed.get('status') == 'complete':
-                followed.update(status='failed', reason='block worker(s) failed: %s' % sorted(
-                    n for n, value in sessions.items() if 'error' in value))
             return followed
+        except BlockFailure as error:
+            return dict(status='failed', reason=str(error), blocks=list(sessions.values()),
+                        sessions=sessions, workers=workers, context=context)
+        except BaseException:
+            if self.owner and not self.save_requested():
+                Q.request_save(self.plan['run'], e['day'], 'classroom block interrupted')
+            raise
         finally:
             waiter.close()
             pool.shutdown(wait=True, cancel_futures=True)
@@ -2835,6 +2875,9 @@ class Run:
         import frankie_box_frankie_queue as Q
         import frankie_box_wake as W
         rows_dir = TEACHER_ROWS / e['day']
+        import frankie_box_hub_runtime as HR
+        if HR.parallel_cpus(self.cores, self.slot_booking) is None:
+            return None                         # one physical group: keep teacher/classroom sequential
         dirs = [rows_dir, rows_dir / 'blocks', Q.wake_dir()]
         root = self.root_on_disk(e) or {}
         if root.get('calculations'):
@@ -3206,6 +3249,8 @@ class Run:
         is wider than the plan and every later stage scales to it); before the booking, plan day_cpus, else the
         ledger's DAY_RUN_CPUS (16, Greg 2026-09-29: "Correct 16"). Every worker count the orchestrator hands a stage is
         this minus one coordinator; the stages that read their affinity or FRANKIE_LANE_CPUS scale too."""
+        if getattr(self, '_parallel_cpus', None):
+            return len(self._parallel_cpus)
         booking = getattr(self, 'slot_booking', None)
         if booking:
             try:
@@ -4736,6 +4781,12 @@ class Run:
         return (path, successor), None
 
     def teacher(self, batch_key, entries):
+        if len(entries) == 1 and (self.owned_attempt or
+                                 (self.receipt('root', entries[0]['day']) or {}).get('calculations')):
+            return self.hub_stage('teacher', entries[0], lambda: self._teacher(batch_key, entries))
+        return self._teacher(batch_key, entries)
+
+    def _teacher(self, batch_key, entries):
         refused = {}                                     # day -> why its retained teacher knowledge is not taught again
         self.check_save()
         remote = {e['day']: self.remote_stage('teacher', e['day']) for e in entries if self.remote_root(e['day'])}
@@ -4838,9 +4889,14 @@ class Run:
         if policy:
             env.update(SHARED_MARKET_POLICY=policy, CALCULATION_ROOTS=','.join(roots[d] for d, _ in receipts))
         door = self.early_class_door([e for e in todo if e['day'] in dict(receipts)])
+        original_cpus = getattr(self, '_parallel_cpus', None)
+        if door is not None:
+            import frankie_box_hub_runtime as HR
+            self._parallel_cpus = HR.parallel_cpus(self.cores, self.slot_booking)[1]
         try:
             code, log = self.child('teacher', batch_key, 'frankie_box_experiment_teacher.sh', env)
         finally:
+            self._parallel_cpus = original_cpus
             if door is not None:
                 door[0].set()
                 import frankie_box_frankie_queue as Q
@@ -5155,8 +5211,9 @@ class Run:
             if stream.sha256 != source_sha:
                 self.log('teacher knowledge %s: the rows streamed hash to %s, the recorded sha256 (%s) is %s; the '
                          'recorded one is kept on the entry' % (day, stream.sha256, source_basis, source_sha))
-            key = I._repin_teacher_key_correlations(DC.build_teacher_key(
-                snapshot, snapshot_hash_verified=stream.snapshot_hash))
+            import frankie_box_teacher_products as TP
+            key, shared_key = TP.ensure_teacher_key(rows_path, snapshot=snapshot,
+                                                   snapshot_hash_verified=stream.snapshot_hash)
             findings = []
             for dimension in key['dimensions']:
                 # These are the reviewed teacher's measured outputs, not a summary replacing the retained observations.
@@ -5333,7 +5390,7 @@ class Run:
         # DATA_WORKERS: the export pins its hashing in a largest-first process pool (workflow_reports, 2026-10-07); the
         # 15 workers of the held 16-CPU lane, as ROOT and search; without it the export hashes serially
         env = dict(ACTION='export', DAY=e['day'], CYCLE=CYCLE, CALCULATIONS=root['calculations'], INGEST=ing['ingest'],
-                   DATA_WORKERS=self.day_cpus() - 1)
+                   DATA_WORKERS=max(1, self.day_cpus() - 1))
         for key, var in (('launch', 'LAUNCH'), ('preparation', 'PREPARATION'), ('principal_inputs', 'PRINCIPAL_INPUTS'),
                          ('host_config', 'HOST_CONFIG'), ('run', 'RUN')):
             if e.get(key):
@@ -5406,7 +5463,7 @@ class Run:
                                           if pin else ''))
         if not self.disk_ok('search'):
             return None
-        env = dict(DAY=e['day'], CYCLE=CYCLE, DAY_ROLE=e['role'], LAGS=self.plan['lags'], WORKERS=self.day_cpus() - 1)
+        env = dict(DAY=e['day'], CYCLE=CYCLE, DAY_ROLE=e['role'], LAGS=self.plan['lags'], WORKERS=max(1, self.day_cpus() - 1))
         if self.plan['transforms']:
             env['TRANSFORMS'] = self.plan['transforms']
         if e['role'] == 'confirmation':
@@ -5789,12 +5846,12 @@ class Run:
             # with the class line on (--frankie-queue on), an arm day ENTERS the line here instead (arrival order, one class
             # at a time by the class worker, which also reserves its report number = its school day)
             enqueued = False
-            for stage in ('classroom', 'jev'):
+            for stage in ('classroom',):
                 if stage in stages and not self.stopped:
                     for e in entries:
                         owned = stage == 'classroom' and self.queue_owned(e)
                         if not self.stopped and not self.finished(stage, e['day']):
-                            r = self.enqueue_classroom(e) if owned else getattr(self, stage)(e)
+                            r = self.enqueue_classroom(e) if owned else self.hub_stage(stage, e)
                             enqueued = enqueued or (owned and (r or {}).get('status') == 'queued')
                         if stage == 'classroom' and not owned and {'jev', 'school', 'reports'} & set(stages):
                             self.reserve_after_classroom(e)
@@ -5806,11 +5863,11 @@ class Run:
                     todo = [e for e in entries if not self.finished(stage, e['day'])]
                     if parallel > 1:
                         with ThreadPoolExecutor(parallel) as pool:
-                            list(pool.map(getattr(self, stage), todo))
+                            list(pool.map(lambda e: self.hub_stage(stage, e), todo))
                     else:
                         for e in todo:
                             if not self.stopped:
-                                getattr(self, stage)(e)
+                                self.hub_stage(stage, e)
                     for e in entries:
                         tick(stage, e['day'])
             if 'lessons' in stages and not self.stopped:
@@ -5823,12 +5880,24 @@ class Run:
                 self.survivors(key, entries)       # the boundary of a batch whose lessons finished before stage 10 existed
             # after the lessons: the three-way exchange of each arm day, its meeting, the school knowledge
             # base, then the day reports (they carry the exchange; rebuilt once when it arrives after them)
-            for stage in ('exchange', 'voice', 'school', 'reports'):
+            # The queue and direct route share the same dependency order. Jev's
+            # checked knowledge is published before meeting/school/report readers.
+            # His raw claims never reopen the exchange's frozen lesson selection.
+            import frankie_box_frankie_queue as Q
+            for e in entries:
+                if e['classroom_arm'] and not self.queue_owned(e) and 'exchange' in stages:
+                    self.hub_stage('batch_lessons', e, lambda e=e: self.receipt('lessons', self.batch_of(e['day']))
+                                   if e['role'] == 'discovery' else
+                                   dict(status='skipped', reason='no discovery batch for this day'))
+                    self.hub_stage('frankie_lessons', e,
+                        lambda e=e: self.receipt('frankie_lessons', e['day'])
+                        if self.finished('frankie_lessons', e['day']) else Q.frankie_lessons(self, e))
+            for stage in ('exchange', 'jev', 'voice', 'school', 'reports'):
                 if stage in stages and not self.stopped:
                     for e in entries:
                         if not self.stopped and not self.queue_owned(e) and (not self.finished(stage, e['day']) or
                                                                              (stage == 'reports' and self.reports_stale(e))):
-                            self.guarded(stage, e)       # a class-line day's class side is the class worker's
+                            self.hub_stage(stage, e, lambda stage=stage, e=e: self.guarded(stage, e))
                         tick(stage, e['day'])
             # the one-day inspection after the batch's last stage loop (the ROOT line writes its own after _finish_day):
             # every piece's record of what it received, used and produced, whatever the day's outcome; never a gate

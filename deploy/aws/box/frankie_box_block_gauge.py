@@ -28,7 +28,11 @@ def main():
     p.add_argument('--out', required=True)
     p.add_argument('--block', type=int, default=1)
     p.add_argument('--brain', default=None)
+    p.add_argument('--evidence-encoding', choices=('legacy', 'shadow', 'fast'), default='shadow',
+                   help='shadow compares exact bytes during this same small run; comparison costs reported separately')
     a = p.parse_args()
+    # Set before importing the evidence modules, including in the forked external piece.
+    os.environ['FRANKIE_EVIDENCE_ENCODING'] = a.evidence_encoding
     import frankie_box_classroom_code as K
     import frankie_box_experiment as X
     commit = subprocess.run(['git', '-C', str(HERE.parents[2]), 'rev-parse', '--short=8', 'HEAD'], capture_output=True,
@@ -47,6 +51,9 @@ def main():
                   rows=session.get('rows'), status=session.get('status'), wall_seconds=wall,
                   session_seconds=session.get('seconds'), lesson_seconds=session.get('lesson_seconds'),
                   steps=dict(sorted(steps.items(), key=lambda kv: -kv[1])), work=record, out=str(out))
+    result['evidence_encoding'] = a.evidence_encoding
+    result['encoding'] = session.get('evidence_encoding')
+    result['external_encoding'] = (session.get('external') or {}).get('evidence_encoding')
     (out / 'gauge.json').write_text(json.dumps(result, indent=1, default=str) + '\n')
     line = dict(commit=commit, at_utc=stamp, block=a.block, rows=result['rows'], status=result['status'],
                 wall=wall, session=result['session_seconds'])
@@ -54,7 +61,7 @@ def main():
         handle.write(json.dumps(line) + '\n')
     print('BLOCK_GAUGE ' + json.dumps(line))
     print('STEPS ' + json.dumps({k: round(v, 1) for k, v in result['steps'].items() if v >= 0.5}))
-    return 0
+    return 0 if result['status'] == 'complete' and (session.get('external') or {}).get('status') in ('complete', 'not_run') else 1
 
 
 if __name__ == '__main__':

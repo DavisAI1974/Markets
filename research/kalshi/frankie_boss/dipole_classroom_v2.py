@@ -31,20 +31,25 @@ def _v1_hashes(v1):
 def prepare_cycle_v2(teacher: Mapping[str, Any], *, request_id: str, cycle_index: int, cycle_count: int, source_hash: str,
                      as_of: int, through_cursor: int, history: Sequence[Mapping[str, Any]] = (),
                      prior_grade: Mapping[str, Any] | None = None, section_directory, day_file, day_file_sha256,
-                     trading_day, prior_external_grade: Mapping[str, Any] | None = None, built_by='classroom V2') -> dict:
+                     trading_day, prior_external_grade: Mapping[str, Any] | None = None, built_by='classroom V2',
+                     shared_snapshot=None, shared_teacher_key=None, external_key_scope=None) -> dict:
     v1 = prepare_integrated_cycle(teacher, request_id=request_id, cycle_index=cycle_index, cycle_count=cycle_count,
                                   source_hash=source_hash, as_of=as_of, through_cursor=through_cursor, history=history,
-                                  prior_grade=prior_grade)
+                                  prior_grade=prior_grade, shared_snapshot=shared_snapshot,
+                                  shared_teacher_key=shared_teacher_key)
     before = _v1_hashes(v1)
+    external_key_scope = {} if external_key_scope is None else external_key_scope
     key, section_receipt = EXT.ensure_external_section(section_directory, v1['source'], day_file, day_file_sha256,
-                                                       trading_day=trading_day, built_by=built_by)
+                                                       trading_day=trading_day, built_by=built_by,
+                                                       key_scope=external_key_scope)
     v1_dirs = {d['name']: d['first_to_last_present_direction'] for d in v1['teacher_key']['dimensions']}
     if any(key['dipole_directions'][c] != v1_dirs[c] for c in COLUMNS):
         raise ValueError('the external section and the classroom key read the Dipole rows differently; refused')
     if key['cutoff_ns'] != as_of:
         raise ValueError('the external section was read at another cutoff than the classroom as_of; refused')
     mode = v1['binding']['mode']
-    pre = EXT.build_external_pre_message(key, mode=mode, prior_grade=prior_external_grade)
+    key_scope = external_key_scope['key']
+    pre = EXT.build_external_pre_message(key_scope, mode=mode, prior_grade=prior_external_grade)
     binding = EXT.build_external_binding(key, pre, v1_binding=v1['binding'])
     after = _v1_hashes(v1)
     if after != before:

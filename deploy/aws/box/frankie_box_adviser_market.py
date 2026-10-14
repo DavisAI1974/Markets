@@ -2194,11 +2194,15 @@ def jev_second_set(rows_dir, through_cursor, as_of, *, names=(), day_file=None):
     import frankie_box_teacher_rows as TR
     record = dict(schema=JEV_SECOND_SET_SCHEMA, format=JEV_SECOND_SET_FORMAT, through_cursor=through_cursor, as_of=as_of,
                   day_file=str(day_file) if day_file else None)
-    at_cutoff, why = TR.second_set_at_cutoff(rows_dir, through_cursor, day_file=day_file)
+    names = tuple(dict.fromkeys(names or ()))
+    cutoff_result = []
+    shared_ledgers = TR.second_set_leaf_ledgers(rows_dir, names, through_cursor=through_cursor,
+                                               day_file=day_file, cutoff_result=cutoff_result)
+    at_cutoff, why = cutoff_result
     record['at_cutoff'] = at_cutoff if at_cutoff is not None else dict(status='absent', reason=why)
     ledgers, listed = {}, []
-    for name in dict.fromkeys(names or ()):
-        ledger, summary = TR.second_set_leaf_ledger(rows_dir, name, through_cursor=through_cursor, day_file=day_file)
+    for name in names:
+        ledger, summary = shared_ledgers[name]
         if ledger is None:
             listed.append(dict(series=name, reason=summary))
             continue

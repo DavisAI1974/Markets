@@ -34,12 +34,13 @@ register(piece, spec) does the same in code). A spec: {"argv": [...], "env": {..
 argv and env values are formatted with {hub_dir} {piece} {run} {day} {round} {python} {box} {code_root}
 (code_root = readlink -f /opt/frankie-box/code/current, resolved only when a spec names it; the queue script is looked for
 there and under its markets/ checkout; absent = a 'doctor-error', the revive not started).
-  root, teacher, classroom, teacher-2, exchange, jev, school, reports   the queue's resume of the day's worker: bash
-        <code_root>/deploy/aws/box/frankie_box_frankie_queue.sh with ACTION=resume RUN=<run> DAY=<day> CODE_ROOT=<code_root>
-        (run and day from hub.json). The worker resumes the day from its own save point; the resume itself exits once it
-        has handed the day back to the line (teacher-2, the second teacher turn, runs inside the day's class line, and
-        reports is the class worker's day-reports step: the same resume). process_is_piece false: its exit is recorded;
-        a non-zero exit is a 'doctor-error', not relaunched, because the revival failed rather than the piece dying again.
+  Native day operations call the queue's doctor-recover action with the exact run/day.
+        It leaves intentional saves and live owner boundaries alone, reconciles a dead owner,
+        and resumes/kicks only the same retained attempt. Runtime operations record native
+        child PIDs too, so an orphan child finishes before its coordinator is revived.
+        Failed launch requests remain pending in runtime.json. Another attempt requires a
+        genuine operation/queue change; the doctor's own log writes never cause a retry storm.
+        A standing save marker or saved native operation disables automatic revival.
   forecaster   the spokes module's run_spoke(piece, hub_dir, day_sources(day, run)) as a standalone process (the doctor's
         own checkout, {box}); process_is_piece true.
 
@@ -69,18 +70,20 @@ import frankie_box_wake as W  # noqa: E402 - the box's stdlib-only event waker, 
 
 CODE_CURRENT = Path('/opt/frankie-box/code/current')
 QUEUE_SH = 'deploy/aws/box/frankie_box_frankie_queue.sh'
-DAY_PIECES = ('root', 'teacher', 'classroom', 'teacher-2', 'exchange', 'jev', 'school', 'reports')  # the queue resumes all
+DAY_PIECES = ('root', 'teacher', 'classroom', 'teacher-2', 'data', 'search', 'batch_lessons',
+              'frankie_lessons', 'exchange', 'jev', 'voice', 'school', 'reports')
 SPOKE_SNIPPET = ('import sys; sys.path.insert(0, sys.argv[1]); import frankie_box_hub_spokes as S; '
                  'piece, hub, run, day = sys.argv[2:6]; '
                  'S.run_spoke(piece, hub, S.day_sources(day, run or None))')
 
 
 def _queue_resume_spec():
-    return dict(argv=['/bin/bash', '{code_root}/' + QUEUE_SH],
-                env=dict(ACTION='resume', RUN='{run}', DAY='{day}', CODE_ROOT='{code_root}'),
+    return dict(argv=['{python}', '-B', '{code_root}/deploy/aws/box/frankie_box_frankie_queue.py',
+                     '--action', 'doctor-recover', '--run', '{run}', '--day', '{day}', '--code-root', '{code_root}'],
+                env={},
                 process_is_piece=False,
-                note='the queue resumes the day\'s worker from its own save (ACTION=resume RUN DAY on the newest '
-                     'staged checkout); the worker takes the piece\'s turn again')
+                note='doctor-recover keeps the exact owner attempt, never clears an intentional save, and kicks '
+                     'only that run/day at its native checkpoint')
 
 
 REVIVERS = {p: _queue_resume_spec() for p in DAY_PIECES}
@@ -182,6 +185,7 @@ class Doctor:
         self.waits = 0
         self.timed_waits = 0
         self.last_error = None
+        self.runtime_attempts = {}       # retry only on a new native/queue event, never on our own log write
 
     # ---- events
     def ev(self, name, piece=None, **facts):
@@ -239,6 +243,11 @@ class Doctor:
         lock = H._read_lock(self.hub_dir)
         turn = H._turn(self.hub_dir)
         watch = []
+        runtime = H._load(self.hub_dir / 'runtime.json') or {}
+        marker = runtime.get('marker')
+        if (marker and Path(marker).exists()) or any(
+                op.get('status') == 'saved' for op in runtime.get('operations', {}).values()):
+            return watch                # intentional saves require the user's ordinary resume
         live = {}                   # piece -> live pids in the hub (holder or waiter)
         deaths = []
         if lock is not None:
@@ -271,7 +280,7 @@ class Doctor:
                 if child['piece'] in order and not H._round_written(self.hub_dir, child['piece'], rnd):
                     deaths.append((child['piece'], pid, 'revived-process-exited', dict(exit_code=code)))
             elif code != 0:
-                self.error('the reviver of %s exited %s: the revival failed (not relaunched; see its log)'
+                self.error('the reviver of %s exited %s: recovery remains pending until a native/queue change'
                            % (child['piece'], code), child['piece'], reviver_pid=pid, exit_code=code,
                            log=child['log'], log_tail=_tail(child['log']))
         for piece, pid, cause, facts in deaths:
@@ -297,12 +306,45 @@ class Doctor:
             new = self.revive(piece, dead_pid=pid, hub_doc=hub_doc)
             if new is not None:
                 watch.append(new)
+        # Native children can fail while their queue worker remains alive. Their
+        # durable operation boundary, rather than lock ownership, drives revival.
+        for piece, operation in runtime.get('operations', {}).items():
+            import frankie_box_hub_runtime as HR
+            pid = operation.get('pid')
+            active = HR.active_pid(operation)
+            if operation.get('status') == 'running' and active is not None:
+                watch.append(active)
+                continue
+            pending = operation.get('recovery_pending') or (
+                operation.get('status') == 'running' and active is None)
+            if not pending or any(c['piece'] == piece for c in self.children.values()):
+                continue
+            queue_marks = []
+            for path in runtime.get('recovery_watch', []):
+                try:
+                    s = os.stat(path)
+                    queue_marks.append((path, s.st_ino, s.st_mtime_ns, s.st_size))
+                except OSError:
+                    queue_marks.append((path, None))
+            signature = (operation.get('started_utc'), operation.get('ended_utc'), tuple(queue_marks))
+            if self.runtime_attempts.get(piece) == signature:
+                continue
+            self.runtime_attempts[piece] = signature
+            new = self.revive(piece, dead_pid=pid, hub_doc=hub_doc)
+            if new is not None:
+                watch.append(new)
         return [p for p in watch if p is not None]
 
     # ---- revive one piece
     def revive(self, piece, dead_pid=None, hub_doc=None):
         """Start `piece`'s reviver detached; record 'doctor-revived' (new pid, count). Returns the new pid or None
         (every None is an event: no reviver, or the failure)."""
+        runtime = H._load(self.hub_dir / 'runtime.json') or {}
+        marker = runtime.get('marker')
+        if (marker and Path(marker).exists()) or any(
+                op.get('status') == 'saved' for op in runtime.get('operations', {}).values()):
+            self.ev('doctor-no-revive', piece, reason='intentional owner save remains standing')
+            return None
         spec = self.revivers.get(piece)
         if spec is None:
             self.ev('doctor-no-reviver', piece, dead_pid=dead_pid, known=sorted(self.revivers),
@@ -378,10 +420,8 @@ class Doctor:
             fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
         except OSError:
             lock.seek(0)
-            self.error('another doctor watches this hub (lock %s: %s)' % (self.state_dir / 'doctor.lock',
-                                                                         lock.read().strip()))
             lock.close()
-            return 1
+            return 0                          # another process won the single-doctor race
         lock.seek(0)
         lock.truncate()
         lock.write('%d\n' % os.getpid())
@@ -389,7 +429,9 @@ class Doctor:
         previous = {s: signal.signal(s, _stop) for s in (signal.SIGTERM, signal.SIGINT)}
         waiter = None
         try:
-            waiter = W.Waiter([self.hub_dir, self.hub_dir / 'pieces'])
+            runtime = H._load(self.hub_dir / 'runtime.json') or {}
+            paths = [self.hub_dir, self.hub_dir / 'pieces'] + [Path(p).parent for p in runtime.get('recovery_watch', [])]
+            waiter = W.Waiter(list(dict.fromkeys(paths)))
             if waiter.fd is None:
                 self.error('no inotify on this host: the doctor will not fall back to a timed poll')
                 return 1
@@ -406,6 +448,10 @@ class Doctor:
                 try:
                     watch = self.scan()
                     self.last_error = None
+                    runtime = H._load(self.hub_dir / 'runtime.json') or {}
+                    if runtime.get('operations', {}).get('reports', {}).get('status') == 'complete':
+                        self.ev('doctor-finished', None, reason='the final reports operation is complete')
+                        return 0
                 except _Stop:
                     raise
                 except Exception as error:  # noqa: BLE001 - recorded, and the doctor keeps watching

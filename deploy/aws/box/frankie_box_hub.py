@@ -4,7 +4,8 @@ LOCK: one piece in or out at a time; a waiter is recorded by name and woken even
 timed out, never killed; a second lap only when a piece added something new.
 
 Standard library only (plus the box's own stdlib-only waker, frankie_box_wake.py, beside this file). POSIX box (Linux:
-inotify + pidfd). Not wired into any chain: a spoke calls it.
+inotify + pidfd). frankie_box_hub_runtime binds and publishes native experiment operations through this core;
+its calculations release the turn while their exact input references remain leased.
 
 LAYOUT: <hub_root>/<run>/<day>/
   hub.json          schema FRANKIE_HUB_V1: run, day, created_utc, pinned_sources {name: {path, sha256, bytes}}, round
@@ -113,6 +114,7 @@ import hashlib
 import json
 import os
 import sys
+import threading
 import time
 import uuid
 from pathlib import Path
@@ -441,7 +443,7 @@ def _check_piece(hub_dir, piece):
 
 def _round_written(hub_dir, piece, rnd):
     doc = _load(Path(hub_dir) / 'pieces' / ('%s.json' % piece))
-    return bool(doc) and doc.get('round') == rnd
+    return bool(doc) and doc.get('round') == rnd and doc.get('complete', True)
 
 
 def prerequisites_of(hub_doc, piece):
@@ -550,7 +552,9 @@ def take_turn(hub_dir, piece, pid=None, ordered=False):
                 turn = _turn(hub_dir) or _empty_turn()
                 lock = _read_lock(hub_dir)
                 turn, lock, changed = _reap(hub_dir, turn, lock)
-                if lock is not None and lock.get('piece') == piece and lock.get('pid') == pid and not enrolled:
+                if (lock is not None and lock.get('piece') == piece and lock.get('pid') == pid and not enrolled
+                        and lock.get('requester_pid') == os.getpid()
+                        and lock.get('thread_id') == threading.get_ident()):
                     event(hub_dir, 'take-held', piece, token=lock.get('token'), note='this piece and pid already hold it')
                     if changed:
                         _dump(hub_dir / 'turn.json', turn)
@@ -562,7 +566,8 @@ def take_turn(hub_dir, piece, pid=None, ordered=False):
                 eligible = [w for w in turn['waiters'] if _eligible(hub_dir, w, hub_doc)]
                 if lock is None and eligible and eligible[0]['ticket'] == ticket:
                     token = uuid.uuid4().hex
-                    record = dict(piece=piece, pid=pid, pid_start=start, token=token, since_utc=utc())
+                    record = dict(piece=piece, pid=pid, pid_start=start, token=token, since_utc=utc(),
+                                  requester_pid=os.getpid(), thread_id=threading.get_ident())
                     if not _create_lock(hub_dir, record):  # cannot happen under the flock; listed if it ever does
                         event(hub_dir, 'error', piece, message='turn.lock appeared under the flock; re-checking')
                         continue
@@ -805,7 +810,8 @@ def _inside(hub_dir, path):
 def _hub_files(hub_dir, hub_doc):
     """The hub's own files (never cleaned): hub.json, the turn files, the event log, each piece's file."""
     hub_dir = Path(hub_dir)
-    own = {hub_dir / n for n in ('hub.json', 'turn.json', 'turn.lock', 'turn.meta', 'events.jsonl')}
+    own = {hub_dir / n for n in ('hub.json', 'turn.json', 'turn.lock', 'turn.meta', 'events.jsonl', 'runtime.json')}
+    own.update((hub_dir / 'readers').glob('*'))
     own.update(hub_dir / 'pieces' / ('%s.json' % p) for p in hub_doc.get('pieces') or [])
     return {os.path.realpath(str(p)) for p in own}
 
@@ -826,6 +832,12 @@ def _referenced(hub_dir, hub_doc, extra=()):
     for a in extra:
         if a.get('path'):
             out.add(os.path.realpath(a['path']))
+    # A calculation releases the turn while it works. Its bound inputs remain
+    # owned by that reader until publication or a durable failure/save boundary.
+    for reader in (Path(hub_dir) / 'readers').glob('*.json'):
+        for a in (_load(reader) or {}).get('inputs', []):
+            if a.get('path'):
+                out.add(os.path.realpath(a['path']))
     return out
 
 
@@ -924,6 +936,22 @@ def write(hub_dir, piece, token, additions):
     rnd = hub_doc.get('round')
     path = hub_dir / 'pieces' / ('%s.json' % piece)
     old = {(a.get('kind'), addition_key(a)): a for a in (_piece_doc(hub_dir, piece) or {}).get('additions') or []}
+    incoming = {(a.get('kind'), addition_key(a)): a for a in additions}
+    immutable_fields = ('key', 'content_sha256', 'path', 'value', 'sha256', 'bytes')
+    for key, prior in old.items():
+        if key[0] == SEALED_TRADE_KIND:
+            replacement = incoming.get(key)
+            if replacement is None or any(replacement.get(k) != prior.get(k) for k in immutable_fields):
+                _fail(hub_dir, 'sealed trade cannot be replaced or removed', piece, key=key[1])
+    for other in hub_doc.get('pieces') or []:
+        if other == piece:
+            continue
+        for prior in (_piece_doc(hub_dir, other) or {}).get('additions', []):
+            key = (prior.get('kind'), addition_key(prior))
+            if key[0] == SEALED_TRADE_KIND and key in incoming and any(
+                    incoming[key].get(k) != prior.get(k) for k in immutable_fields):
+                _fail(hub_dir, 'sealed trade belongs to its original immutable publication', piece,
+                      key=key[1], owner=other)
     sealed = _sealed_pins(hub_dir, hub_doc, extra=additions)
     unmatched = 0
     current, seen, superseded = [], set(), []
@@ -966,7 +994,7 @@ def write(hub_dir, piece, token, additions):
         event(hub_dir, 'remove', piece, kind=k[0], key=k[1], old_sha256=old[k].get('content_sha256'), round=rnd,
               reason='absent from the piece\'s current set')
         superseded.append((old[k], 'removed'))
-    _dump(path, dict(piece=piece, schema=PIECE_SCHEMA, round=rnd, written_utc=utc(), additions=current))
+    _dump(path, dict(piece=piece, schema=PIECE_SCHEMA, round=rnd, written_utc=utc(), complete=True, additions=current))
     _unlink_superseded(hub_dir, piece, superseded, hub_doc)
     event(hub_dir, 'write', piece, round=rnd, additions=len(current), added=added, replaced=replaced, kept=kept,
           removed=len(removed), unmatched_pins=unmatched, kinds=sorted({a['kind'] for a in current}))
@@ -1021,7 +1049,7 @@ def next_lap(hub_dir, token=None):
         held_before, written_now, wrote = set(), {}, []
         for p in doc.get('pieces') or []:
             pd = _piece_doc(hub_dir, p) or {}
-            if pd.get('round') == rnd:
+            if _round_written(hub_dir, p, rnd):
                 wrote.append(p)
             for a in pd.get('additions') or []:
                 if (a.get('since_round') or 0) < rnd:
@@ -1035,6 +1063,8 @@ def next_lap(hub_dir, token=None):
             new_by_piece[p] = fresh
         another = any(new_by_piece.values())
         missing = [p for p in doc.get('pieces') or [] if p not in wrote]
+        if missing:
+            _fail(hub_dir, 'cannot close a lap with unfinished pieces', None, missing_turns=missing, round=rnd)
         lap = dict(round=rnd, closed_utc=utc(), wrote=wrote, missing_turns=missing, new_by_piece=new_by_piece,
                    new_total=len(counted), another_lap=another)
         doc.setdefault('laps', []).append(lap)

@@ -15,7 +15,7 @@ import uuid
 from pathlib import Path
 from typing import Callable
 
-from .c15_journal import EvidenceJournal, SCHEMA as JOURNAL_SCHEMA, evidence_hash, canonical_bytes, pack, unpack
+from .c15_journal import EvidenceJournal, SCHEMA as JOURNAL_SCHEMA, evidence_hash, evidence_bytes, canonical_bytes, pack, unpack
 from .controller_journal import ControllerJournal, SCHEMA as CONTROLLER_SCHEMA
 from .rolling_forecast import RollingForecastBook, SCHEMA as BOOK_SCHEMA
 from .feedback_cycle import _exclusive
@@ -43,7 +43,7 @@ def _adapter_identity(adapter_class):
 
 
 def _save(path,body):
-    raw=canonical_bytes(pack(body))
+    raw=evidence_bytes(body)
     path=Path(path)
     def sync_directories():
         # POSIX rename durability includes the containing directory. Callers
@@ -71,7 +71,7 @@ def _save(path,body):
 
 def _load(path):
     raw=Path(path).read_bytes();body=unpack(json.loads(raw))
-    if canonical_bytes(pack(body))!=raw:raise ValueError('noncanonical Sunday execution evidence')
+    if evidence_bytes(body)!=raw:raise ValueError('noncanonical Sunday execution evidence')
     return body
 
 

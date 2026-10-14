@@ -106,9 +106,11 @@ def prepare_integrated_cycle(
     prior_grade: Mapping[str, Any] | None = None,
     learning_history: Mapping[str, Any] | None = None,
     shared_knowledge: Mapping[str, Any] | None = None,
+    shared_snapshot: Mapping[str, Any] | None = None,
+    shared_teacher_key: Mapping[str, Any] | None = None,
 ) -> dict:
     """Build the final reviewed classroom package without the intermediate hardening layer."""
-    snapshot = classroom.snapshot_teacher_attachment(
+    snapshot = shared_snapshot if shared_snapshot is not None else classroom.snapshot_teacher_attachment(
         teacher,
         request_id=request_id,
         cycle_index=cycle_index,
@@ -117,10 +119,13 @@ def prepare_integrated_cycle(
         as_of=as_of,
         through_cursor=through_cursor,
     )
+    if shared_snapshot is not None and snapshot.get('teacher_attachment_hash') != teacher.get('attachment_hash'):
+        raise ValueError('shared classroom snapshot belongs to another teacher attachment')
     return prepare_integrated_cycle_from_snapshot(
         snapshot, request_id=request_id, cycle_index=cycle_index, cycle_count=cycle_count, source_hash=source_hash,
         as_of=as_of, through_cursor=through_cursor, previous_snapshot=previous_snapshot, history=history,
-        prior_grade=prior_grade, learning_history=learning_history, shared_knowledge=shared_knowledge)
+        prior_grade=prior_grade, learning_history=learning_history, shared_knowledge=shared_knowledge,
+        shared_teacher_key=shared_teacher_key)
 
 
 def prepare_integrated_cycle_from_snapshot(
@@ -137,13 +142,29 @@ def prepare_integrated_cycle_from_snapshot(
     prior_grade: Mapping[str, Any] | None = None,
     learning_history: Mapping[str, Any] | None = None,
     shared_knowledge: Mapping[str, Any] | None = None,
+    shared_teacher_key: Mapping[str, Any] | None = None,
 ) -> dict:
     """prepare_integrated_cycle from a snapshot already made (the teacher's sealed blocks, 2026-10-09: a block's
     snapshot rows come from its sealed sidecar lines). The key, the mode, the pre-message and the binding exactly as
     prepare_integrated_cycle builds them."""
-    key = _repin_teacher_key_correlations(
-        classroom.build_teacher_key(snapshot, previous_snapshot)
-    )
+    if shared_teacher_key is None:
+        key = _repin_teacher_key_correlations(classroom.build_teacher_key(snapshot, previous_snapshot))
+    else:
+        # Only the owner-local, source-bound full-key loader supplies this path.
+        # Its records are hash-checked before loading; no mutable-object hash memo.
+        key = shared_teacher_key
+        if (key.get('schema') != classroom.KEY_SCHEMA
+                or key.get('source_snapshot_hash') != snapshot.get('source_snapshot_hash')
+                or key.get('teacher_attachment_hash') != snapshot.get('teacher_attachment_hash')
+                or key.get('request_id') != request_id or key.get('cycle_index') != cycle_index
+                or tuple(key.get('coverage_columns') or ()) != tuple(classroom.COLUMNS)
+                or key.get('relationship_pairs_scanned') != classroom.PAIR_COUNT
+                or len(key.get('relationship_scan') or ()) != classroom.PAIR_COUNT):
+            raise ValueError('shared teacher key belongs to another classroom source or cycle')
+    if any(snapshot.get(name) != value for name, value in (
+            ('request_id', request_id), ('cycle_index', cycle_index), ('cycle_count', cycle_count),
+            ('source_hash', source_hash), ('as_of', as_of), ('through_cursor', through_cursor))):
+        raise ValueError('shared classroom snapshot belongs to another request or cutoff')
     mode = select_integrated_mode(history)
     message = classroom.build_pre_message(key, mode=mode, prior_grade=prior_grade)
     message = {k: v for k, v in message.items() if k != "teacher_message_hash"}

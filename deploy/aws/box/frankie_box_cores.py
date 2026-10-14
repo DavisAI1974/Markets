@@ -1323,16 +1323,31 @@ def cmd_run_inside(a, command):
     if b is None:
         emit_outcome(a, dict(status='refused', reason=why))
         return REFUSED_EXIT
+    stage_cpus = b['cpus']
+    requested = os.environ.get('FRANKIE_STAGE_CPUS')
+    if requested is not None:
+        try:
+            stage_cpus = parse_list(requested)
+        except (ValueError, TypeError):
+            stage_cpus = []
+        if (not stage_cpus or not set(stage_cpus).issubset(b['cpus'])
+                or a.stage in STAGE_CPUS):
+            emit_outcome(a, dict(status='refused', reason='FRANKIE_STAGE_CPUS must be a nonempty subset of the live '
+                                'held booking and may not override a separately claimed stage'))
+            return REFUSED_EXIT
     if a.stage in STAGE_CPUS:
         return cmd_run_step(a, b, command)
-    emit_outcome(a, dict(status='booked', booking=b['booking'], cpus=b['cpu_list'], parent_cpu=b['parent_cpu'],
-                         inside=True, reason='inside the day\'s held slot %s: CPUs %s' % (b['booking'], b['cpu_list'])))
-    print('### inside the held day slot %s: CPUs %s (stage %s)' % (b['booking'], b['cpu_list'], a.stage), flush=True)
-    # FRANKIE_LANE_CPUS too (the held lane's CPUs, the name boss_session/granite read first), so every stage child sees
-    # the day's full lane list, never the host count (Greg, 2026-10-07: everything pinned for day 1)
-    env = dict(os.environ, FRANKIE_CPU_BOOKING=b['booking'], FRANKIE_BOOKED_CPUS=b['cpu_list'], FRANKIE_LANE_CPUS=b['cpu_list'])
+    selected = cpu_list(stage_cpus)
+    parent_cpu = b['parent_cpu'] if b['parent_cpu'] in stage_cpus else stage_cpus[0]
+    emit_outcome(a, dict(status='booked', booking=b['booking'], cpus=selected, parent_cpu=parent_cpu,
+                         held_cpus=b['cpu_list'], inside=True,
+                         reason='inside the day\'s held slot %s: CPUs %s' % (b['booking'], selected)))
+    print('### inside the held day slot %s: CPUs %s (stage %s)' % (b['booking'], selected, a.stage), flush=True)
+    # A concurrent branch sees only its assigned subset, including through APIs
+    # that read FRANKIE_LANE_CPUS before affinity. The enclosing booking stays held.
+    env = dict(os.environ, FRANKIE_CPU_BOOKING=b['booking'], FRANKIE_BOOKED_CPUS=selected, FRANKIE_LANE_CPUS=selected)
     try:
-        child = subprocess.Popen(['taskset', '-c', b['cpu_list']] + command, env=env)
+        child = subprocess.Popen(['taskset', '-c', selected] + command, env=env)
     except OSError as error:
         print('### the step did not start (%s); the slot stays held' % error, flush=True)
         return 1

@@ -3,6 +3,43 @@
 Written by Claude at the end of session 13 for Codex (or a fresh Claude). Greg's usage is low; this file is meant to be
 enough on its own. All times are UTC (Z). Nothing in here is a guess unless it says "unknown" or "expected".
 
+**Codex continuation, 2026-10-14 (Greg's evening of October 13 ET):** Greg authorized the complete efficiency design
+and source integration before any test: share exact calculations/tables, remove unnecessary passes, wire the hub,
+then use one small timing run as the test. He explicitly approved: "Do the faster hash encoder if it doesn't change
+anything". The candidate preserves the existing evidence bytes/hash formula; raw-value canonicalization remains
+unchanged and PrePacked values retain the legacy fallback. The gauge defaults to shadow comparison in that same
+small run, with comparison costs reported separately. Source changes are not runtime verification. AWS access works;
+a fresh DescribeInstances read still shows the main box STOPPED, KeepRunning=false. No source work starts or resumes
+the box. The saved a2 day, all retained data and infrastructure remain unchanged. These instructions supersede the
+older ordering and unanswered hash-choice wording below.
+
+Greg also clarified that safe steps should start when the first 30 minutes of a day have been ingested, then consume
+new data incrementally. This is a data-readiness threshold, not a 30-minute wall-clock delay. Preserve complete event
+groups, original cursor order, carry state, look-ahead/answer boundaries and exact reduction order. A step that needs
+the whole day may prepare its independent inputs early but must finalize only after those dependencies exist. Do not
+restart or replay the accumulated prefix for every new block. Existing first-five-minute teacher/classroom lessons
+may start earlier when their own inputs are ready; the block-1 timing gauge stays unchanged.
+
+Source review distinguishes two different boundaries: teacher-to-classroom sealed-block consumption already exists;
+raw compact ingestion to ROOT still requires the whole-day seal. The latter is NOT implemented by removing a hub
+prerequisite: it needs committed prefix boundaries and continuable consumers. Do not claim the current source runs
+ROOT or the teacher after the first 30 minutes of raw ingestion. The historical handoff is evidence to check against
+the code and observed state, not an authority overriding Greg or a guarantee that its conclusions are correct.
+
+The coherent streaming design is one continuing day, not repeated prefix runs:
+
+| Boundary | Start/continue rule | Completion rule |
+|---|---|---|
+| Compact ingest | At 30 minutes of receive-clock coverage, drain pending encoders and publish a committed frontier with original ordinal range, count/head, source identity and opening/carry state; notify on subsequent committed increments | Publish the original whole-day completion only after full conformance |
+| ROOT legacy/native | Consume each newly committed INPUT once; preserve adapter, pending groups, binner and scientific calculator state; temporary EOF means await the next frontier | Finalize once at true day EOF and reconcile accumulated counts/head with the final source |
+| Shared market picture / teacher | Read committed source and calculation segments at their original causal availability; keep unresolved groups/horizons pending | Whole-day products retain their full-day dependencies |
+| Classroom | Consume sealed teacher blocks in order, one successful lesson at a time, as soon as their own evidence is available | Whole-day lesson remains separate from block completion |
+| Day-end | Prepare only independent inputs early | Final key, terminal outcomes, final projections, exchange, school and reports wait for their actual prerequisites |
+
+The first three new frontier contracts above remain source work, not a deployed capability. Existing complete-source
+identities cannot be replaced by successively larger prefix identities; current saved attempts must keep their original
+contracts. A single instrument's F_LAST is not proof that every instrument group is closed: carry open groups explicitly.
+
 ## 0. READ THIS FIRST: the box is STOPPED and the day is SAVED mid day-end (read on the box 2026-10-14 01:2xZ)
 
 - Box `i-035994afa8bdf66a5` is STOPPED, tag KeepRunning=false. Greg had it stopped on 2026-10-14 at about 01:0xZ,
@@ -48,7 +85,8 @@ enough on its own. All times are UTC (Z). Nothing in here is a guess unless it s
 - Hub design and calculation order: `research/kalshi/frankie_boss/HUB_CALC_ORDER_MAP_20261009.md`.
 - `AGENTS.md` older pointers (CURRENT_WORKFLOW_SETUP_20261007, CODEX_HANDOFF_20261007_WORKFLOW_CONTINUATION, the
   three 16-CPU lanes, "no starts without Greg's go") are BACKGROUND. They are superseded by Greg's session 10-12 rules
-  in section 3: the one-day E2E is authorized and running on one 64-CPU box, and keeping it running is priority one.
+  in section 3 and his current instructions above. The earlier one-day E2E authorization is not permission to restart
+  this stopped box or resume the saved day; the current test scope is a small timing run after source work.
 
 ## 2. What the project is and what we are trying to accomplish
 
@@ -74,7 +112,7 @@ The pieces of one day, in the order the data flows:
    the teacher account, brain entry `<day>-cycle-00`), then Jev (a blind comparison adviser), the exchange, the
    meeting, the school (consolidated knowledge), and the numbered day reports.
 
-**The immediate goal (Greg's gate):** run ONE day, `e2e-20231018-a2/20231018`, end to end through every piece, on
+**The earlier goal (historical, not current launch authorization):** run ONE day, `e2e-20231018-a2/20231018`, end to end through every piece, on
 the box, with the full science. The deliverable Greg wants to read is the teacher's second set and its first-person
 TEACHER REPORT for the whole day.
 
@@ -158,7 +196,7 @@ on Oct 9 overrode them); they are not from this run's end.
 - 2026-10-14: AWS back. Box stopped on Greg's order (about 01:0xZ), started for a 10-minute read-only look
   (01:2xZ; section 4), stopped again. Nothing was lost by the stops: the box had been idle and the class saved.
 
-## 6. The decision waiting on Greg: the evidence-hash cost
+## 6. The evidence-hash cost (byte-identical faster encoder now approved; see continuation above)
 
 Profile of block 1 (`deploy/aws/box/frankie_box_block_profile.py`, cProfile): the external section spends almost all
 its time in `research/kalshi/frankie_boss/c15_journal.py` `evidence_hash` -> `causal_packet.py` `canonical_bytes` ->
@@ -176,7 +214,7 @@ Facts proven (locally by Claude and by a helper agent; no box run):
 - The fast path is valid ONLY inside `evidence_hash` (and the journal's `canonical_bytes(pack(...))` uses). It must
   never replace `canonical_bytes` on raw values, where `_canon` quantizes floats, sorts mapping keys and converts numpy.
 
-Recommendation given to Greg (he has not picked):
+Recommendation originally given to Greg (historical; the continuation above records his approval):
 - (b) First: the fast canonicalizer inside `evidence_hash`, run in SHADOW mode on the box (every call computes both
   ways and asserts equal) on block 1 and one large block, then switch.
 - (a) Then: hash each object once per block and carry the hash at the named sites (the external key enters 5 large
@@ -188,8 +226,9 @@ Recommendation given to Greg (he has not picked):
   file and slice per cutoff (block 1 section sha `052d6fe90ba24d753b3029388105d812ea6644e307e755e0959913f310caecc7`
   must reproduce); one external section in the hub for all spokes; incremental per block.
 
-Do not implement any of this until Greg picks (rule 5). When he does: build, prove byte-identical hashes in shadow
-mode and on the gauge, push to the box, restart only the class worker (never the teacher for a classroom change).
+Greg has now approved the byte-identical faster encoder. Integrate all authorized efficiency work before the one
+small timing run; its shadow mode compares the candidate and legacy bytes. Do not substitute a full day resume for
+that test, and do not claim a speedup from source inspection or from shadow-inclusive wall time.
 
 Greg's two unanswered questions from session 12 (ask him; do not guess): "the piece that speeds it up 250 M per sec"
 and "the other 8 on 8 consecutive days".
@@ -263,18 +302,19 @@ systemd-run --unit=frankie-gauge-$(date +%s) --collect -p WorkingDirectory=$CR s
 
 ## 8. Next steps, in order (only on Greg's word)
 
-1. Ask Greg what he wants next: finish this day's day-end (the resume below), or the small timing-slice checks he
-   says were the intent. Do not start the box until he says.
-2. To finish the day: start the box, tag KeepRunning=true, `swapon` (section 7), find what requested the 00:09Z
+1. Complete and review the integrated efficiency source changes, push with [skip ci], then present the concrete
+   block-1 timing run. This small run is the test; no separate test suite, per-change benchmarks or full-day resume.
+   Start the box only with Greg's word, restore disk run speed first, keep visibility throughout and stop promptly.
+2. If separately authorized to finish the saved day: start the box, tag KeepRunning=true, `swapon` (section 7), find what requested the 00:09Z
    classroom stop (section 4) so it cannot recur unseen, then `ACTION=resume`. The whole-day classroom continues from
    its saved `package` phase; then Jev, exchange, meeting, school and the day reports. Watch it the whole time; stop
    the box the moment it is done or if access to it is lost.
 3. Bring the whole-day teacher account (`teacher-account.md`, 281 MB; read it on the box or excerpt it) and the
    day-end reports to Greg; the block-1 report is already in the repo (`TEACHER_REPORT_20231018_BLOCK1.md`).
-4. Greg's pick on the evidence-hash fix (section 6) and his two open questions. Build only after he picks.
-5. After the day and Greg's read: remove the swapfile; revert the archive volume to baseline (it is 2 TB, still
-   billing); then the hub wiring (compare each piece by value with `frankie_box_hub_compare.py` before switching it),
-   the one-pass build, the ROOT fix; then the 30-day run on Greg's go.
+4. The two historical questions ("250 M per sec" and "the other 8 on 8 consecutive days") still need Greg's meaning.
+   They are not permission to start more days or change the scientific work.
+5. Discuss the swapfile and archive-volume change separately. Keep all data, snapshots, S3 and Lightsail as directed.
+   Neither an extended run nor removal/resizing of retained storage follows from source optimization approval.
 
 ## 9. Traps learned the hard way
 

@@ -27,7 +27,7 @@ module reads those books whole, additively; nothing pinned is called differently
 Values are plain ints, floats, strings, tuples and dicts; a quantity with no number has state MISSING and its reason,
 exactly like the pinned columns. FORMAT is bumped only when this shape changes.
 """
-from collections import Counter
+from collections import Counter, deque, namedtuple
 import math
 
 FORMAT = 1
@@ -354,6 +354,146 @@ def window(results, side):
     return columns(total)
 
 
+_WindowPart = namedtuple('_WindowPart', 'exact read book events reasons incomplete listing label_names labels '
+                        'split_book split_events')
+
+
+def _window_part(result, label, side, split):
+    """Own a group's integer contributions; never retain a mutable counter alias."""
+    names = tuple(dict.fromkeys(label)) if split and label else ()
+    if result is None:
+        return _WindowPart(True, False, (), (), (), (), (), names, (), (), ())
+    part = result['sides'][side]
+    book, events = tuple(part['book'].items()), tuple(part['events'].items())
+    reasons = tuple((measure, tuple(found['reasons'].items())) for measure, found in part['differs'].items())
+    incomplete, listing = tuple(part['incomplete'].items()), tuple(result['listing'].items())
+    exact = all(type(count) is int for pairs in (book, events, incomplete, listing, *(p for _, p in reasons))
+                for _, count in pairs)
+    # A noninteger counter always uses the original ordered reductions. Do not
+    # subtract floats, Decimal values, bools or scalar subclasses into a cache.
+    if not exact:
+        return _WindowPart(False, True, (), (), (), (), (), names, (), (), ())
+    split_book = tuple((k, part['book'][k]) for k in BOOK_PARTS) if split else ()
+    split_events = tuple((k, part['events'][k]) for k in EVENT_PARTS) if split else ()
+    labels = tuple((name, label_key(label[name])) for name in names)
+    return _WindowPart(True, True, book, events, reasons, incomplete, listing, names, labels,
+                       split_book, split_events)
+
+
+def _adjust_supported(counts, support, pairs, sign):
+    """Integer sums with exact key presence, including explicitly supplied zeros.
+
+    Counter subtraction removes nonpositive entries, while Counter.subtract
+    retains expired entries. Neither matches repeated Counter.update over the
+    current window. Support counts remove a key only after its last contributor
+    leaves, irrespective of the resulting numeric sum.
+    """
+    for key, count in pairs:
+        support[key] += sign
+        if support[key]:
+            counts[key] += sign * count
+        else:
+            del support[key]
+            del counts[key]
+
+
+def _split_adjust(bucket, part, sign):
+    bucket['groups'] += sign
+    for key, count in part.split_events:
+        bucket['events'][key] += sign * count
+    for key, count in part.split_book:
+        bucket['book'][key] += sign * count
+
+
+class _SlidingWindow:
+    """An integer-only reduction owned by one read-only producer row span.
+
+    Callers key it by entity, slot, length and side. Each entered group is
+    captured as immutable contributions; no cache escapes iter_assemble and no
+    scientific row, whole-day carry or saved-state schema contains this object.
+    """
+    def __init__(self, side, split):
+        self.side, self.split = side, split
+        self.end = None
+        self.parts = deque()
+        self.total, self.support = _empty(), _empty()
+        self.bad = 0
+        self.fields, self.buckets = Counter(), {}
+
+    def _apply(self, part, sign):
+        # Even an unread group contributes label FIELD NAMES in state_split.
+        for name in part.label_names:
+            self.fields[name] += sign
+            if not self.fields[name]:
+                del self.fields[name]
+        if not part.exact:
+            self.bad += sign
+            return
+        if not part.read:
+            self.total['not_read'] += sign
+            return
+        self.total['groups'] += sign
+        for name in ('book', 'events', 'incomplete', 'listing'):
+            _adjust_supported(self.total[name], self.support[name], getattr(part, name), sign)
+        for measure, pairs in part.reasons:
+            _adjust_supported(self.total['reasons'][measure], self.support['reasons'][measure], pairs, sign)
+        for name, key in part.labels:
+            buckets = self.buckets.setdefault(name, {})
+            bucket = buckets.setdefault(key, dict(groups=0, events=Counter(), book=Counter()))
+            _split_adjust(bucket, part, sign)
+            if not bucket['groups']:
+                del buckets[key]
+            if not buckets:
+                del self.buckets[name]
+
+    def advance(self, key, start, end, groups, labels):
+        """Only monotonic ranges enter here; backwards requests use the original path."""
+        while self.parts and self.parts[0][0] < start:
+            _, part = self.parts.popleft()
+            self._apply(part, -1)
+        first = start if self.end is None else max(start, self.end + 1)
+        for ordinal in range(first, end + 1):
+            part = _window_part(groups.get((key, ordinal)),
+                                labels.get((key, ordinal)) if labels is not None else None,
+                                self.side, self.split)
+            self.parts.append((ordinal, part))
+            self._apply(part, 1)
+        self.end = end
+
+    def state_split(self):
+        """Fresh sorted outputs; exact integer unknown buckets include every read group."""
+        groups = self.total['groups']
+        events = Counter({k: self.total['events'][k] for k in EVENT_PARTS}) if groups else Counter()
+        book = Counter({k: self.total['book'][k] for k in BOOK_PARTS}) if groups else Counter()
+        out = {}
+        for name in (sorted(self.fields) if groups else ()):
+            known_events, known_book, known_groups = Counter(), Counter(), 0
+            buckets = {}
+            for key, bucket in self.buckets.get(name, {}).items():
+                known_groups += bucket['groups']
+                known_events.update(bucket['events'])
+                known_book.update(bucket['book'])
+                buckets[key] = dict(groups=bucket['groups'], events=dict(sorted(bucket['events'].items())),
+                                    book=dict(sorted(bucket['book'].items())))
+            unknown_groups = groups - known_groups
+            if unknown_groups:
+                buckets[STATE_UNKNOWN] = dict(groups=unknown_groups,
+                    events={k: events[k] - known_events[k] for k in sorted(EVENT_PARTS)},
+                    book={k: book[k] - known_book[k] for k in sorted(BOOK_PARTS)})
+            summed_events, summed_book, summed_groups = Counter(), Counter(), 0
+            for bucket in buckets.values():
+                summed_events.update(bucket['events'])
+                summed_book.update(bucket['book'])
+                summed_groups += bucket['groups']
+            out[name] = dict(buckets=dict(sorted(buckets.items())), unknown_groups=unknown_groups,
+                             sums_back=(summed_events == events and summed_book == book and summed_groups == groups))
+        return dict(format=SPLIT_FORMAT, side=self.side,
+                    totals=dict(groups=groups, events=dict(sorted(events.items())), book=dict(sorted(book.items()))),
+                    groups_not_read=self.total['not_read'], fields=out,
+                    all_sum_back=all(field['sums_back'] for field in out.values()),
+                    unknown_rule='a group whose closing instant carries no row of that plane: %s' % STATE_UNKNOWN)
+
+
 def advance_running(running, rows, cursor_group, groups, windows):
     """The whole-day running window of assemble() advanced over `rows` without building their entries (a resumed
     block feed replays the rows its earlier process sealed: the carry crosses the block boundary unchanged)."""
@@ -378,16 +518,26 @@ def assemble(rows, cursor_group, groups, windows, *, whole_day, group_labels=Non
     called on it (slot -> (key, end ordinal, length, side)); `whole_day` adds the whole-day running window on the
     short window's side (the teacher changes' long horizon). A row that closes no group reads NOT_F_LAST and a receipt
     row with no window the pinned R3's own reason (its R3 column), exactly as the pinned columns do."""
+    return list(iter_assemble(rows, cursor_group, groups, windows, whole_day=whole_day,
+                              group_labels=group_labels, running=running))
+
+
+def iter_assemble(rows, cursor_group, groups, windows, *, whole_day, group_labels=None, running=None):
+    """assemble's exact row arithmetic, yielding one complete book read at a time.
+
+    The producer writes each yielded record before requesting the next. No
+    whole-day list of expanded windows or pickle memo is retained.
+    """
     from .c15_teacher import value
     from .c15_normalizer import State
     # running: the whole-day window's carry (a dict the caller keeps across calls on consecutive row spans, the
     # teacher's sealed blocks); None: a fresh one, the whole day in one call (unchanged)
     running = {} if running is None else running
-    out = []
+    sliding = {}                             # read-only span scope; rebuilt after skipped/restored spans
     for row in rows:
         cursor, has_receipt, combined = row[6], row[1], row[3]
         if not has_receipt:
-            out.append(dict(status='NOT_F_LAST', columns=value(state=State.MISSING, reason='NOT_F_LAST')))
+            yield dict(status='NOT_F_LAST', columns=value(state=State.MISSING, reason='NOT_F_LAST'))
             continue
         key, ordinal = cursor_group.get(cursor, (None, None))
         result = groups.get((key, ordinal)) if key is not None else None
@@ -395,11 +545,29 @@ def assemble(rows, cursor_group, groups, windows, *, whole_day, group_labels=Non
         slots = windows.get(cursor) or {}
         reads = {}
         for slot, (wkey, end, length, side) in sorted(slots.items()):
-            ordinals = range(end - length + 1, end + 1)
-            results = [groups.get((wkey, o)) for o in ordinals]
-            reads[slot] = dict(side=side, length=length, **window(results, side))
+            start = end - length + 1
+            cache_key = (wkey, slot, length, side)
+            held_window = sliding.get(cache_key)
+            backwards = held_window is not None and end < held_window.end
+            if backwards:
+                del sliding[cache_key]
+            if not backwards and type(start) is int and type(end) is int:
+                if held_window is None:
+                    held_window = sliding[cache_key] = _SlidingWindow(side, group_labels is not None)
+                held_window.advance(wkey, start, end, groups, group_labels)
+            else:
+                held_window = None
+            if held_window is None or held_window.bad:
+                ordinals = range(start, end + 1)
+                results = [groups.get((wkey, o)) for o in ordinals]
+                read = window(results, side)
+                split = (state_split(results, [group_labels.get((wkey, o)) for o in ordinals], side)
+                         if group_labels is not None else None)
+            else:
+                read = columns(held_window.total)
+                split = held_window.state_split() if group_labels is not None else None
+            reads[slot] = dict(side=side, length=length, **read)
             if group_labels is not None:
-                split = state_split(results, [group_labels.get((wkey, o)) for o in ordinals], side)
                 split['pinned_check'] = pinned_check(split, combined, length) if slot == 'short' else dict(
                     status='not compared', reason='the pinned long horizon is the running whole-day total')
                 reads[slot]['state_split'] = split
@@ -415,5 +583,4 @@ def assemble(rows, cursor_group, groups, windows, *, whole_day, group_labels=Non
             reason = combined[7].get('reason') if len(combined) > 7 and isinstance(combined[7], dict) else None
             entry['windows_absent'] = reason or 'no window'
         entry['windows'] = reads
-        out.append(entry)
-    return out
+        yield entry

@@ -603,6 +603,17 @@ def _write_ledger_save(retain_dir, measure, raw_pin, notes):
         notes['ledger_save_written'] = 'not saved (%s: %s)' % (type(error).__name__, str(error)[:200])
 
 
+def _shared_key_measure(measure, path, notes, *, snapshot=None, snapshot_hash_verified=None):
+    import frankie_box_teacher_products as TP
+    key, pin = TP.ensure_teacher_key(path, snapshot=snapshot, snapshot_hash_verified=snapshot_hash_verified)
+    if key['source_snapshot_hash'] != measure['source_snapshot_hash']:
+        raise ValueError('shared teacher key differs from the exchange rows')
+    measure['ledgers'] = {d['name']: d['observations'] for d in key['dimensions']}
+    measure['_shared_teacher_key'] = key
+    notes['shared_teacher_key'] = pin
+    return measure
+
+
 def teacher_rows(path, retain_dir=None, notes=None):
     """(the BOSS teacher's measurement of the day, None) or (None, why): its Dipole rows snapshot, checked against its
     own source_snapshot_hash, read into the per-component ledgers the teacher key is built from.
@@ -628,7 +639,7 @@ def teacher_rows(path, retain_dir=None, notes=None):
             saved = _load_ledger_save(retain_dir, claimed_pin, notes)
             if saved is not None and saved.get('path') == str(path):
                 notes['rows_hash_basis'] = 'claim'
-                return saved, None
+                return _shared_key_measure(saved, path, notes), None
             notes['rows_claim'] = (notes.get('rows_claim') or '') + ('; the saved measurement itself was not usable, '
                                                                      'so the rows are read (parsed) in full')
     # the rows streamed one at a time (frankie_box_teacher_rows: never the whole file, its packed tree and the snapshot
@@ -642,7 +653,7 @@ def teacher_rows(path, retain_dir=None, notes=None):
         if retain_dir is not None:
             saved = _load_ledger_save(retain_dir, raw_pin, notes)
             if saved is not None and saved.get('path') == str(path):
-                return saved, None
+                return _shared_key_measure(saved, path, notes), None
     else:
         raw_pin = None
     try:
@@ -653,7 +664,8 @@ def teacher_rows(path, retain_dir=None, notes=None):
             if retain_dir is not None:
                 saved = _load_ledger_save(retain_dir, raw_pin, notes)
                 if saved is not None and saved.get('path') == str(path):
-                    return saved, None
+                    return _shared_key_measure(saved, path, notes, snapshot=snapshot,
+                                               snapshot_hash_verified=stream.snapshot_hash), None
         elif stream.sha256 != raw_pin['sha256']:
             notes['rows_hash_basis'] += '; the stream hashed to %s (the claim names %s): the stream\'s value is used' % (
                 stream.sha256, raw_pin['sha256'])
@@ -662,15 +674,14 @@ def teacher_rows(path, retain_dir=None, notes=None):
             return None, '%s is not a complete %s' % (path, DC.SOURCE_SCHEMA)
         if not stream.snapshot_ok:
             return None, '%s differs from its own source_snapshot_hash' % path
-        ledgers = _ledgers(snapshot, COLUMNS)
     except (ValueError, KeyError, TypeError) as error:
         return None, '%s could not be read (%s: %s)' % (path, type(error).__name__, error)
     measure = dict(path=str(path), sha256=raw_pin['sha256'], bytes=stream.bytes, rows=len(snapshot['rows']),
                    source_snapshot_hash=snapshot['source_snapshot_hash'], as_of=snapshot['as_of'],
-                   through_cursor=snapshot['through_cursor'], ledgers=ledgers, columns=tuple(COLUMNS),
+                   through_cursor=snapshot['through_cursor'], columns=tuple(COLUMNS),
                    retained_rows=snapshot['rows'])
-    if retain_dir is not None:
-        _write_ledger_save(retain_dir, measure, raw_pin, notes)
+    _shared_key_measure(measure, path, notes, snapshot=snapshot, snapshot_hash_verified=stream.snapshot_hash)
+    notes['ledger_save'] = 'the shared full teacher key owns these exact ledgers; existing legacy saves retained'
     return measure, None
 
 
@@ -899,6 +910,8 @@ def _second_set_ledger(measure, name):
     """(ledger, summary) of one second-set leaf over every teacher row (frankie_box_teacher_rows.second_set_leaf_ledger:
     streamed from the rows sidecar beside the rows, planes read by their references), or (None, why)."""
     import frankie_box_teacher_rows as TR
+    if name in measure.get('_second_set_ledgers', {}):
+        return measure['_second_set_ledgers'][name]
     return TR.second_set_leaf_ledger(Path(measure['path']).parent, name)
 
 
@@ -995,12 +1008,15 @@ def component_of(name, columns):
 def measure_component(measure, name):
     from research.kalshi.frankie_boss import dipole_classroom as DC
     ledger = measure['ledgers'][name]
+    dimension = next((d for d in measure.get('_shared_teacher_key', {}).get('dimensions', ()) if d['name'] == name), None)
     reasons = {}
     for p in ledger:
         if p['state'] != 'PRESENT':
             key = '%s: %s' % (p['state'], p.get('raw_reason') or '(no reason recorded)')
             reasons[key] = reasons.get(key, 0) + 1
-    return dict(name=name, cursors=len(ledger), state_counts=DC._state_counts(ledger), direction=DC._direction(ledger),
+    return dict(name=name, cursors=len(ledger),
+                state_counts=copy.deepcopy(dimension['state_counts']) if dimension else DC._state_counts(ledger),
+                direction=dimension['first_to_last_present_direction'] if dimension else DC._direction(ledger),
                 terminal_state=ledger[-1]['state'] if ledger else None, nonpresent_reasons=reasons)
 
 
@@ -1008,6 +1024,18 @@ def measure_pair(measure, a, b):
     """The teacher's own pair measurement, exactly as its key computes it (dipole_classroom._direction_relation, _pearson,
     _co_movement): the coefficient over its own overlap and the co-movement counts, per pair and per day."""
     from research.kalshi.frankie_boss import dipole_classroom as DC
+    for relation in measure.get('_shared_teacher_key', {}).get('relationship_scan', ()):
+        if (relation['left'], relation['right']) == (a, b):
+            return {key: copy.deepcopy(relation[key]) for key in ('direction_relation', 'correlation', 'co_movement')}
+        if (relation['left'], relation['right']) == (b, a):
+            result = {key: copy.deepcopy(relation[key]) for key in ('direction_relation', 'correlation', 'co_movement')}
+            co = result['co_movement']
+            co['ledger_lengths'] = list(reversed(co['ledger_lengths']))
+            co['state_pairs'] = dict(sorted(('|'.join(reversed(key.split('|'))), value)
+                                           for key, value in co['state_pairs'].items()))
+            steps = co['steps']
+            steps['left_moved_only'], steps['right_moved_only'] = steps['right_moved_only'], steps['left_moved_only']
+            return result
     la, lb = measure['ledgers'][a], measure['ledgers'][b]
     return dict(direction_relation=DC._direction_relation(DC._direction(la), DC._direction(lb)),
                 correlation=DC._pearson(la, lb), co_movement=DC._co_movement(la, lb))
@@ -1675,6 +1703,12 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
     # memo, a fresh copy per item, and computes any key the pool did not return at the item's own turn.
     if measure is not None:
         _evidence_producers(measure)          # set once before the fork, exactly as the first count would have set it
+        import frankie_box_teacher_rows as TR
+        second_names = list(dict.fromkeys(name for doc, _ in docs for result in doc.get('results') or []
+                                          for name in claimed_names(finite(result))
+                                          if str(name).startswith(SECOND_SET_PREFIX)))
+        if second_names:
+            measure['_second_set_ledgers'] = TR.second_set_leaf_ledgers(Path(measure['path']).parent, second_names)
     tasks = _prefetch_tasks(docs, measure)
     plan = AM.reader_plan()
     evidence_pool = AM.PinnedMap(_exchange_task, measure, tasks,

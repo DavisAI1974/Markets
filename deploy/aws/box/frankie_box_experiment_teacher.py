@@ -46,6 +46,7 @@ OUT = Path('/opt/frankie-box/work/experiment-teacher-rows')
 ROWS_FILE = 'host-dipole-classroom-source.c15.json'
 NG_TICK_RAW = 1_000_000            # NG tick 0.001 in the DBN fixed-point price (1e-9)
 SECOND_SET_FILE = 'teacher-second-set.pkl'
+SECOND_SET_STREAM = 'teacher-second-set.json'
 
 
 
@@ -755,13 +756,14 @@ def _second_set_prefix(open_market, needed, SS, book_needed=0, changes=True, lab
 
 
 def _second_set(out, open_market, market, second, rows, SS, feed=None):  # noqa: C901
-    """The teacher's second set for every row, written beside the rows (teacher-second-set.pkl, hash-bound) and
+    """The teacher's second set for every row, written beside the rows (teacher-second-set.json, hash-bound parts) and
     summarized for the receipt. The rows the walk read carry their join from the walk; rows read by an earlier process
     whose save holds no join are joined here from a fresh reader of the same ROOT (merged at publication). A row left
     without its join refuses the publication (the reason listed); a join whose picture identity or clocks differ from
     the row's own is listed with both values, never aligned."""
     import frankie_box_all99_coverage as ALL99
     from research.kalshi.frankie_boss import parallel_teacher as PT, teacher_book_read as TBR
+    TP = _box_module('frankie_box_teacher_products')
     needed = len(rows) - len(second['records'])
     if needed < 0:
         raise ValueError('the teacher second set holds %d joins for %d rows; the rows do not leave the teacher'
@@ -802,16 +804,60 @@ def _second_set(out, open_market, market, second, rows, SS, feed=None):  # noqa:
     windows = {**read['windows'], **walked['windows']}
     cursor_group = {**read['cursor_group'], **walked['cursor_group']}
     group_labels = _group_labels(rows, records, cursor_group)
-    reads = TBR.assemble(rows, cursor_group, groups, windows, whole_day=bool(walked.get('changes')),
-                         group_labels=group_labels)
+    # Sealed blocks already computed these full adapter-row records. Their
+    # entity-only sidecar is a view, never the replacement for the complete set.
+    # Old block saves have no record store: assemble just those missing ranges.
+    identity = dict(format=SS.FORMAT, shared_market_identity=json.loads(json.dumps(market.identity)),
+                    whole_day=bool(walked.get('changes')))
+    ranges = ([tuple(block['cursor_range']) for block in feed.sealer.manifest['blocks']]
+              if feed is not None and feed.mode != 'failed' else [])
+    covered = ranges[-1][1] if ranges else 0
+    ranges.extend((start, min(start + 4096, len(rows))) for start in range(covered, len(rows), 4096))
+    parts, running, running_until = [], {}, 0
+    for start, stop in ranges:
+        path = out / 'teacher-second-set-blocks' / ('%012d-%012d.json' % (start, stop))
+        part_identity = dict(identity, start=start, stop=stop)
+        if path.is_file():
+            store = TP.RecordStore(path, identity=part_identity)
+            raw = path.read_bytes()
+            pin = dict(path=str(path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+            if len(store) != stop - start:
+                raise ValueError('retained full teacher block has another adapter-row count')
+        else:
+            # Existing parts need no arithmetic. Reconstruct their carry only
+            # when a later missing part will actually consume it.
+            if running_until < start:
+                TBR.advance_running(running, rows[running_until:start], cursor_group, groups, windows)
+            writer = TP.RecordWriter(path, part_identity)
+            try:
+                entries = TBR.iter_assemble(rows[start:stop], cursor_group, groups, windows,
+                    whole_day=bool(walked.get('changes')), group_labels=group_labels, running=running)
+                for index, entry in enumerate(entries, start):
+                    writer.append(dict(records[index], book=entry))
+                pin = writer.finish()
+            finally:
+                writer.close()
+            running_until = stop
+        parts.append(dict(start=start, stop=stop, pin=pin))
+    joined = TP.JoinedRecords(dict(rows=len(rows), parts=parts))
     day_split = _day_state_split(groups, group_labels, TBR)
-    unread = [row[6] for row, entry in zip(rows, reads) if entry.get('status') == 'GROUP_NOT_READ']
+    carried, not_carried = _carriers()
+    account_scan = _new_account_scan()
+    unread, split_sum_back, pinned_equal, pinned_not_equal = [], 0, 0, []
+    for row, record in zip(rows, joined):
+        _account_record(account_scan, record, carried)
+        entry = record['book']
+        if entry.get('status') == 'GROUP_NOT_READ':
+            unread.append(row[6])
+        split_sum_back += sum(bool(read.get('state_split', {}).get('all_sum_back'))
+                              for read in (entry.get('windows') or {}).values())
+        check_pinned = ((entry.get('windows') or {}).get('short') or {}).get('state_split', {}).get('pinned_check', {})
+        pinned_equal += bool(check_pinned.get('all_equal'))
+        if check_pinned.get('status') == 'compared' and not check_pinned['all_equal']:
+            pinned_not_equal.append(row[6])
     if unread:
         raise ValueError('the teacher book read lacks %d group(s) (first rows %s); a row without its book read does not '
                          'leave the teacher' % (len(unread), unread[:10]))
-    for record, entry in zip(records, reads):
-        record['book'] = entry
-    carried, not_carried = _carriers()
     lock = max(row[4] for row in rows)
     header = dict(schema=SS.SCHEMA, format=SS.FORMAT, key_fields=SS.KEY_FIELDS, clock_fields=SS.CLOCK_FIELDS,
                   plane_reference=SS.PLANE_REFERENCE, state_reference=SS.STATE_REFERENCE,
@@ -839,14 +885,8 @@ def _second_set(out, open_market, market, second, rows, SS, feed=None):  # noqa:
                                            'buckets with the event and book parts, sums_back per field, pinned_check '
                                            'against the row\'s pinned columns',
                                    day=day_split['summary'], day_file=STATE_SPLIT_FILE,
-                                   rows_all_sum_back=sum(1 for entry in reads for read in (entry.get('windows') or {})
-                                                         .values() if read.get('state_split', {}).get('all_sum_back')),
-                                   rows_pinned_equal=sum(1 for entry in reads if ((entry.get('windows') or {}).get(
-                                       'short') or {}).get('state_split', {}).get('pinned_check', {}).get('all_equal')),
-                                   rows_pinned_not_equal=[row[6] for row, entry in zip(rows, reads) if (
-                                       ((entry.get('windows') or {}).get('short') or {}).get('state_split', {})
-                                       .get('pinned_check', {}).get('status') == 'compared'
-                                       and not entry['windows']['short']['state_split']['pinned_check']['all_equal'])]),
+                                   rows_all_sum_back=split_sum_back, rows_pinned_equal=pinned_equal,
+                                   rows_pinned_not_equal=pinned_not_equal),
                   book_read=dict(schema=TBR.SCHEMA, format=TBR.FORMAT, groups=len(groups),
                                  groups_read_in_walk=len(walked['groups']), groups_read_at_publication=len(read['groups']),
                                  rows_read_at_publication=book_needed, windows=sum(len(v) for v in windows.values()),
@@ -859,17 +899,19 @@ def _second_set(out, open_market, market, second, rows, SS, feed=None):  # noqa:
         json.dump(day_split, handle, sort_keys=True)
     os.replace(out / (STATE_SPLIT_FILE + '.pending'), out / STATE_SPLIT_FILE)
     header['state_split']['day_file_sha256'] = _sha256(out / STATE_SPLIT_FILE)
-    path = out / SECOND_SET_FILE
-    PT._save_raw_state(path, dict(header, records=records))
     mismatches = _write_list(out / MISMATCHES_FILE, header['mismatches'])
     header['mismatches_file'] = mismatches
+    path = out / SECOND_SET_STREAM
+    publication, joined, header = TP.publish_joined(path, header, parts, identity=identity)
+    joined.account_scan = account_scan
+    joined.cursor_positions = {record['key']['adapter_cursor']: index for index, record in enumerate(records)}
     summary = dict({k: v for k, v in header.items() if k not in ('carriers', 'entries_carried', 'mismatches', 'streams')},
-                file=SECOND_SET_FILE, sha256=_sha256(path), mismatches=mismatches,
+                file=SECOND_SET_STREAM, storage=TP.JOINED_SCHEMA, sha256=publication['sha256'], mismatches=mismatches,
                 streams={name: value['pin'] for name, value in header['streams'].items()},
                 entries_not_carried=[item['entry'] for item in not_carried],
-                file_format='64 hex digits of the sha256 of the bytes after them, then the pickle of the header with '
-                            '`records` (parallel_teacher._load_raw_state reads it)')
-    return summary, records, header
+                file_format='versioned manifest and complete adapter-row parts; independently hash-bound pickle '
+                            'records with uint64 offset indexes (frankie_box_teacher_products.load_joined)')
+    return summary, joined, header
 
 
 def _carriers():
@@ -1101,7 +1143,11 @@ def _write_rows_sidecar(out, source, records, header, SS):
     header (schema, FORMAT, the row keys, the key and clock fields, the stream pins), then every snapshot row with its
     second set (SIDECAR_ROW_KEYS), joined by the row cursor. Values are written whole (json; floats round-trip)."""
     import hashlib
-    by_cursor = {record['key']['adapter_cursor']: record for record in records}
+    # The full book records stay on disk. Keep only an integer cursor index for
+    # this fallback; the normal sealed-block path already wrote the sidecar.
+    by_cursor = getattr(records, 'cursor_positions', None)
+    if by_cursor is None:
+        by_cursor = {record['key']['adapter_cursor']: index for index, record in enumerate(records)}
     carried = header['entries_carried']
     path, temporary = out / ROWS_SIDECAR, out / (ROWS_SIDECAR + '.pending')
     digest, lines, unjoined = hashlib.sha256(), 0, []
@@ -1120,10 +1166,11 @@ def _write_rows_sidecar(out, source, records, header, SS):
                    streams={name: value['pin'] for name, value in header['streams'].items()},
                    entries_not_carried=header['entries_not_carried']))
         for row in source['rows']:
-            record = by_cursor.get(row['cursor'])
-            if record is None:
+            ordinal = by_cursor.get(row['cursor'])
+            if ordinal is None:
                 unjoined.append(row['cursor'])
                 continue
+            record = records[ordinal]
             write(_sidecar_document(row, record, record['book'], carried, lock, SS))
             lines += 1
         handle.flush()
@@ -1218,6 +1265,8 @@ class _BlockFeed:
                                          'clock instead' % basis, header=header, sidecar_name=ROWS_SIDECAR,
                                          log=lambda text: print(text, flush=True), wake_dir=wake, setting=setting)
         self.changes = PT._changes_applied()
+        self.record_identity = dict(format=SS.FORMAT, shared_market_identity=json.loads(json.dumps(market.identity)),
+                                    whole_day=self.changes)
         self.mode = 'off' if self.sealer.complete else 'pending'     # pending -> walk | merge
         self.error = None
         self.pending = deque()
@@ -1274,16 +1323,40 @@ class _BlockFeed:
 
     def _lines(self, block, extra):
         import math
+        TP = _box_module('frankie_box_teacher_products')
         a, b = block['cursor_range']
         span = self.rows[a:b]
-        entries = self.TBR.assemble(span, self.cg, self.groups, self.windows, whole_day=self.changes,
-                                    group_labels=self.group_labels, running=self.running)
+        path = self.out / 'teacher-second-set-blocks' / ('%012d-%012d.json' % (a, b))
+        identity = dict(self.record_identity, start=a, stop=b)
+        if path.is_file():
+            store = TP.RecordStore(path, identity=identity)
+            if len(store) != len(span):
+                raise ValueError('sealed full teacher block has another adapter-row count')
+            self.TBR.advance_running(self.running, span, self.cg, self.groups, self.windows)
+            raw = path.read_bytes()
+            pin = dict(path=str(path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+        else:
+            writer = TP.RecordWriter(path, identity)
+            try:
+                entries = self.TBR.iter_assemble(span, self.cg, self.groups, self.windows, whole_day=self.changes,
+                                                group_labels=self.group_labels, running=self.running)
+                for row, entry in zip(span, entries):
+                    writer.append(dict(self.records(row[6]), book=entry))
+                pin = writer.finish()
+            finally:
+                writer.close()
+            store = TP.RecordStore(path, pin=pin, identity=identity)
+        extra['second_set']['full_adapter_rows'] = dict(rows=len(store), pin=pin)
+        entries, read_index, joined = iter(store), -1, None
         wanted = [k for k, row in enumerate(span) if row[6] in self.entity]
         sums, lock, columns = {}, block['teacher_as_of'], self.DC.COLUMNS
         for start in range(0, len(wanted), BLOCK_TARGET_CHUNK):
             part = wanted[start:start + BLOCK_TARGET_CHUNK]
             made = self.PT.block_targets(self.teacher, [span[k] for k in part], self.rc['manifest_hash'])
             for k, (target, receipt) in zip(part, made):
+                while read_index < k:
+                    joined = next(entries)
+                    read_index += 1
                 row = span[k]
                 snap = self.DC._target_row(target, row[3], receipt, row[6])
                 if len(row) > 8:
@@ -1301,7 +1374,7 @@ class _BlockFeed:
                     if component['value'] is not None:
                         slot['present'] += 1
                         slot['values'].append(component['value'])
-                yield _sidecar_line(snap, self.records(row[6]), entries[k], self.carried, lock, self.SS)
+                yield _sidecar_line(snap, joined, joined['book'], self.carried, lock, self.SS)
         extra['pinned_sums'] = {name: dict(present=slot['present'], sum=math.fsum(slot['values']), states=slot['states'])
                                 for name, slot in sums.items()}
         extra['snapshot_rows'] = len(wanted)
@@ -1309,9 +1382,9 @@ class _BlockFeed:
     def _seal(self, block):
         a, b = block['cursor_range']
         extra = dict(mode=self.mode,
-                     second_set=dict(records=[a, b], file=SECOND_SET_FILE,
+                     second_set=dict(records=[a, b], file=SECOND_SET_STREAM,
                                      carried_in='this block\'s sidecar lines: each row\'s key, clocks, plane references, '
-                                                'book columns, state split and labels (teacher-second-set.pkl records '
+                                                'book columns, state split and labels (teacher-second-set.json records '
                                                 '[a, b) at the final publication)'),
                      carried_state=dict(
                          book_running={str(k): v['upto'] for k, v in self.running.items()},
@@ -1469,6 +1542,41 @@ class _BlockFeed:
 ACCOUNT_FORMAT = 1
 
 
+def _new_account_scan():
+    from collections import Counter
+    from research.kalshi.frankie_boss import teacher_book_read as TBR
+    return dict(present=Counter(), absent_reasons={}, clocks=Counter(), labels=set(),
+                reconciliation=Counter(), examples=[],
+                sides={side: dict(book=Counter(), events=Counter()) for side in TBR.SIDES})
+
+
+def _account_record(scan, record, carried):
+    """All record-derived account values gathered on the joined-record stream."""
+    from collections import Counter
+    seen = set()
+    for _, _, _, _, _, entries in record['planes']:
+        seen.update(entries)
+    for entry, how in carried.items():
+        if how['carrier'] in ('input', 'clock', 'availability', 'opening') or entry in seen:
+            scan['present'][entry] += 1
+        else:
+            reason = ('completed-only: a post-stream aggregate, never a value in a live picture'
+                      if how['carrier'] == 'completed' else 'no %s row was placed at this instant' % how['carrier'])
+            scan['absent_reasons'].setdefault(entry, Counter())[reason] += 1
+    scan['clocks'].update(_clocks_carried(record))
+    scan['labels'].update(record.get('state_labels') or ())
+    group = (record.get('book') or {}).get('group')
+    if group:
+        for side, part in group['sides'].items():
+            scan['sides'][side]['book'].update(part['book'])
+            scan['sides'][side]['events'].update(part['events'])
+            for measure, found in part['differs'].items():
+                for reason in found['reasons']:
+                    scan['reconciliation']['%s:%s' % (measure, reason)] += 1
+                scan['examples'].append((abs(found['book'] - found['events']), record['key']['adapter_cursor'],
+                    side, measure, found['book'], found['events'], found['reasons']))
+
+
 def _teacher_account(rows, records, header, *, raw_saves, cpu_pinning, phases, walked, processed, out):
     """The facts the teacher's own account is written from (Greg, 2026-10-09: which data it saw together, what it lacks,
     what it would want, what would give better outputs, beside its findings). Every number is counted from this run's
@@ -1480,16 +1588,16 @@ def _teacher_account(rows, records, header, *, raw_saves, cpu_pinning, phases, w
     account = dict(schema='FRANKIE_TEACHER_ACCOUNT_V1', format=ACCOUNT_FORMAT,
                    basis='counted from this run (rows, second set, pools, clocks); nothing estimated')
     # (e) the pinned columns' coverage: per column, the states and reasons over every row
-    pinned = {}
-    for index, name in enumerate(CONTROL_COLUMNS):
-        states, reasons = Counter(), Counter()
-        for row in rows:
+    counts = {name: (Counter(), Counter()) for name in CONTROL_COLUMNS}
+    for row in rows:
+        for index, name in enumerate(CONTROL_COLUMNS):
+            states, reasons = counts[name]
             value = row[3][index]
             states[value.get('state')] += 1
             if value.get('reason'):
                 reasons[value['reason']] += 1
-        pinned[name] = dict(states={str(k): v for k, v in sorted(states.items(), key=str)},
-                            reasons=dict(sorted(reasons.items())))
+    pinned = {name: dict(states={str(k): v for k, v in sorted(states.items(), key=str)},
+                         reasons=dict(sorted(reasons.items()))) for name, (states, reasons) in counts.items()}
     science = dict(pinned_columns=pinned)
     if records is None:
         account.update(read_together=dict(status='no second set', reason='no shared market reader on this ROOT'),
@@ -1497,21 +1605,12 @@ def _teacher_account(rows, records, header, *, raw_saves, cpu_pinning, phases, w
         return account
     # (a) what was read together per row
     carried = header['entries_carried']
-    present, absent_reasons = Counter(), {}
-    clocks_present = Counter()
-    for record in records:
-        seen = set()
-        for _, _, _, _, _, entries in record['planes']:
-            seen.update(entries)
-        for entry, how in carried.items():
-            if how['carrier'] in ('input', 'clock', 'availability', 'opening') or entry in seen:
-                present[entry] += 1
-            else:
-                reason = ('completed-only: a post-stream aggregate, never a value in a live picture'
-                          if how['carrier'] == 'completed' else 'no %s row was placed at this instant' % how['carrier'])
-                absent_reasons.setdefault(entry, Counter())[reason] += 1
-        for clock in _clocks_carried(record):
-            clocks_present[clock] += 1
+    scan = getattr(records, 'account_scan', None)
+    if scan is None:
+        scan = _new_account_scan()
+        for record in records:
+            _account_record(scan, record, carried)
+    present, absent_reasons, clocks_present = scan['present'], scan['absent_reasons'], scan['clocks']
     total = len(records)
     planes = {entry: dict(carrier=how['carrier'], rows_present=present[entry], rows_absent=total - present[entry],
                           absent_reasons=dict(absent_reasons.get(entry, {})))
@@ -1520,26 +1619,15 @@ def _teacher_account(rows, records, header, *, raw_saves, cpu_pinning, phases, w
         rows=total, planes=planes, clocks=dict(carried_rows=dict(clocks_present), fields=list(header['clock_fields'])),
         book_columns=['book_balance', 'book_absorption', 'counts', 'event_incomplete', 'reconciliation', 'group.depth',
                       'group.touches', 'group.sides'],
-        state_split=dict(status='built', planes=sorted({name.split('|')[0] for record in records
-                                                        for name in record.get('state_labels') or ()}),
-                         label_fields=sorted({name for record in records for name in record.get('state_labels') or ()}),
+        state_split=dict(status='built', planes=sorted({name.split('|')[0] for name in scan['labels']}),
+                         label_fields=sorted(scan['labels']),
                          dipole='teacher.dstate (the teacher row\'s own DState)'))
     # (b) missing or thin
-    reconciliation, examples = Counter(), []
-    for record in records:
-        group = (record.get('book') or {}).get('group')
-        if not group:
-            continue
-        for side, part in group['sides'].items():
-            for measure, found in part['differs'].items():
-                for reason in found['reasons']:
-                    reconciliation['%s:%s' % (measure, reason)] += 1
-                examples.append((abs(found['book'] - found['events']), record['key']['adapter_cursor'], side, measure,
-                                 found['book'], found['events'], found['reasons']))
+    reconciliation, examples = scan['reconciliation'], scan['examples']
     examples.sort(key=lambda item: (-item[0], item[1], item[2], item[3]))
-    differences = _write_list(out / DIFFERENCES_FILE, [
+    differences = _write_list(out / DIFFERENCES_FILE, (
         dict(cursor=c, side=sd, measure=m, book=b, events=e, difference=d, reasons=r)
-        for d, c, sd, m, b, e, r in examples])
+        for d, c, sd, m, b, e, r in examples))
     guard = (cpu_pinning.get('raw_pool') or {}).get('guard') or {}
     account['missing_or_thin'] = dict(
         planes_never_carried=header['entries_not_carried'],
@@ -1575,13 +1663,7 @@ def _teacher_account(rows, records, header, *, raw_saves, cpu_pinning, phases, w
                       rows_read_again_at_publication=header['merged_at_publication'],
                       reader_seek=raw_saves.get('reader_seek') if isinstance(raw_saves, dict) else None))
     # (e) findings
-    sides = {side: dict(book=Counter(), events=Counter()) for side in TBR.SIDES}
-    for record in records:
-        group = (record.get('book') or {}).get('group')
-        if group:
-            for side, part in group['sides'].items():
-                sides[side]['book'].update(part['book'])
-                sides[side]['events'].update(part['events'])
+    sides = scan['sides']
     science.update(book_vs_events={side: dict(book=dict(value['book']), events=dict(value['events']))
                                    for side, value in sides.items()},
                    state_split=dict(header.get('state_split') or {}, status='built',

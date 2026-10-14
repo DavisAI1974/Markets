@@ -3,9 +3,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
 import sqlite3
 import struct
+import time
 from types import MappingProxyType
 
 
@@ -33,6 +35,11 @@ except ImportError:
     from causal_packet import canonical_bytes
 
 SCHEMA = "C15_FULL_EVIDENCE_V1"
+_HASH_PREFIX = SCHEMA.encode() + b"\0"
+_ENCODING_MODE = os.environ.get('FRANKIE_EVIDENCE_ENCODING') or (
+    'shadow' if os.environ.get('FRANKIE_EVIDENCE_SHADOW', '').lower() in ('1', 'true', 'on') else 'fast')
+_ENCODING_COUNTS = dict(shadow_calls=0, shadow_bytes=0, legacy_seconds=0.0, candidate_seconds=0.0,
+                        prepacked_legacy_calls=0, mismatches=0)
 
 
 OBSERVATION_SENTINEL = '@@C15-OBSERVATION-SPLICE-9c1f@@'   # the placeholder the compact writer replaces with the observation's bytes
@@ -68,7 +75,7 @@ class PrePacked(dict):
     __slots__ = ('tree',)
 
 
-def pack(value):
+def pack(value, _prepacked=None):
     """Tag every node so exact floats/bytes cannot collide with user mappings.
 
     canonical_bytes remains the hash authority. IEEE-754 bytes avoid its
@@ -93,17 +100,19 @@ def pack(value):
     if kind is bytes:
         return ["bytes", value.hex()]
     if kind is list or kind is FrozenList:
-        return ["list", [pack(v) for v in value]]
+        return ["list", [pack(v, _prepacked) for v in value]]
     if kind is tuple:
-        return ["tuple", [pack(v) for v in value]]
+        return ["tuple", [pack(v, _prepacked) for v in value]]
     if kind is dict or kind is MappingProxyType:
         items = []
         for key, val in value.items():
             if type(key) is not str:
                 raise ValueError("evidence must use explicit mappings, sequences, bytes and primitive values")
-            items.append([key, pack(val)])
+            items.append([key, pack(val, _prepacked)])
         return ["dict", items]
     if kind is PrePacked:
+        if _prepacked is not None:
+            _prepacked[0] = True
         return value.tree
     raise ValueError("evidence must use explicit mappings, sequences, bytes and primitive values")
 
@@ -126,8 +135,76 @@ def unpack(value):
     raise ValueError("unknown evidence value tag")
 
 
-def evidence_hash(payload):
-    return hashlib.sha256(SCHEMA.encode() + b"\0" + canonical_bytes(pack(payload))).hexdigest()
+def encoding_report(before=None):
+    """Process-local instrumentation, or its delta since a supplied snapshot.
+
+    Forked owners take their own starting snapshot so inherited parent counts
+    are not reported again. Counters time encoding only, excluding the shared
+    pack pass; they never affect scientific content or hashes.
+    """
+    values = dict(_ENCODING_COUNTS)
+    if before is not None:
+        values = {key: value - before.get(key, 0) for key, value in values.items()}
+    return dict(mode=_ENCODING_MODE, **values)
+
+
+def evidence_bytes(payload, *, mode=None, shadow=None):
+    """The existing exact evidence encoding, without copying an already tagged tree.
+
+    pack's ordinary branches emit only lists and exact strings, integers and
+    booleans. The packet canonicalizer is therefore the identity on that tree.
+    Mapping entries stay in insertion order: they are a LIST of pairs here, not
+    a JSON object. PrePacked can supply an arbitrary tree, so it retains the
+    original canonicalizer (including its float/numpy handling).
+
+    FRANKIE_EVIDENCE_ENCODING=legacy|shadow|fast selects the implementation;
+    fast is the default. FRANKIE_EVIDENCE_SHADOW=on is a compatibility
+    spelling for shadow. Shadow compares both and returns the legacy bytes.
+    No scientific input, persisted byte or digest includes the mode.
+    """
+    selected = mode if mode is not None else _ENCODING_MODE
+    if shadow is not None:
+        if mode is not None:
+            raise ValueError('choose encoding mode or shadow, not both')
+        selected = 'shadow' if shadow else 'fast'
+    if selected not in ('legacy', 'shadow', 'fast'):
+        raise ValueError('evidence encoding must be legacy, shadow or fast')
+    prepacked = [False]
+    tree = pack(payload, prepacked)
+    if selected == 'legacy':
+        return canonical_bytes(tree)
+    if prepacked[0]:
+        _ENCODING_COUNTS['prepacked_legacy_calls'] += 1
+        return canonical_bytes(tree)
+    began = time.perf_counter() if selected == 'shadow' else None
+    encoded = json.dumps(tree, sort_keys=True, separators=(',', ':'), ensure_ascii=True).encode('utf-8')
+    if selected == 'shadow':
+        candidate_seconds = time.perf_counter() - began
+        began = time.perf_counter()
+        legacy = canonical_bytes(tree)
+        legacy_seconds = time.perf_counter() - began
+        _ENCODING_COUNTS['shadow_calls'] += 1
+        _ENCODING_COUNTS['shadow_bytes'] += len(encoded)
+        _ENCODING_COUNTS['candidate_seconds'] += candidate_seconds
+        _ENCODING_COUNTS['legacy_seconds'] += legacy_seconds
+        if encoded != legacy:
+            _ENCODING_COUNTS['mismatches'] += 1
+            raise ValueError('fast evidence encoding differs from the original canonical bytes')
+        return legacy
+    return encoded
+
+
+def evidence_hash_bytes(encoded):
+    """Hash bytes already produced by evidence_bytes; callers own their scope."""
+    if type(encoded) is not bytes:
+        raise TypeError('encoded evidence must be bytes')
+    digest = hashlib.sha256(_HASH_PREFIX)
+    digest.update(encoded)
+    return digest.hexdigest()
+
+
+def evidence_hash(payload, *, mode=None, shadow=None):
+    return evidence_hash_bytes(evidence_bytes(payload, mode=mode, shadow=shadow))
 
 
 class EvidenceJournal:
@@ -160,8 +237,8 @@ class EvidenceJournal:
             raise ValueError("entry kind required")
         envelope = dict(schema=SCHEMA, ordinal=self.count, previous_hash=self.head_hash,
                         kind=kind, payload=payload)
-        body = canonical_bytes(pack(envelope))
-        digest = evidence_hash(envelope)
+        body = evidence_bytes(envelope)
+        digest = evidence_hash_bytes(body)
         with self.connection:
             self.connection.execute("INSERT INTO entries VALUES (?, ?, ?, ?)",
                                     (self.count, kind, body, digest))
@@ -175,11 +252,12 @@ class EvidenceJournal:
         for ordinal, kind, body, digest in self.connection.execute(
                 "SELECT ordinal, kind, body, digest FROM entries ORDER BY ordinal"):
             envelope = unpack(json.loads(body))
-            if (body != canonical_bytes(pack(envelope))
+            encoded = evidence_bytes(envelope)
+            if (body != encoded
                     or ordinal != count or envelope["ordinal"] != ordinal
                     or envelope["schema"] != SCHEMA or envelope["kind"] != kind
                     or envelope["previous_hash"] != previous
-                    or evidence_hash(envelope) != digest):
+                    or evidence_hash_bytes(encoded) != digest):
                 raise ValueError("evidence journal continuity or hash mismatch")
             previous, count = digest, count + 1
             yield envelope

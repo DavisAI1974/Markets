@@ -879,13 +879,25 @@ def _sha256_small(path, hash_max=HASH_MAX):
         size = p.stat().st_size
     except OSError:
         return None, None, 'not on disk'
+    # Reuse the producer's durable write-stream witness before any whole-file
+    # pass. These are the same inode/filesystem/tail checks as native readers.
+    import frankie_box_brain as BR
+    from research.kalshi.frankie_boss.operations.ingest_block_sources import claim_still_holds
+    st = p.stat()
+    for directory in (p.parent, *p.parents):
+        if (directory / 'file-claims.jsonl').is_file():
+            claim = BR.file_claims(directory).get((st.st_ino, st.st_size, st.st_mtime_ns))
+            if claim and claim_still_holds(claim, p) is not None:
+                from frankie_box_filehash import remember
+                remember(p, claim)
+                return st.st_size, claim['sha256'], 'producer write-stream claim'
+        if directory == BOX_ROOT or directory == directory.parent:
+            break
     if hash_max is not None and size > hash_max:
         return size, None, 'not hashed by the spoke (over %d bytes); the comparison streams it' % hash_max
-    h = hashlib.sha256()
-    with p.open('rb') as f:
-        for chunk in iter(lambda: f.read(1 << 20), b''):
-            h.update(chunk)
-    return size, h.hexdigest(), 'hashed by the spoke'
+    from frankie_box_filehash import witness
+    pin = witness(p)
+    return pin['bytes'], pin['sha256'], 'owner-local unchanged-file witness'
 
 
 def _file_addition(name, kind, producer, path, *, pin=None, hash_max=HASH_MAX, known_by=None):
@@ -1125,8 +1137,13 @@ def publications(piece, sources, hash_max=HASH_MAX):
                            hash_max=hash_max))
         for name in ('teacher-second-set-mismatches.jsonl', 'teacher-book-event-differences.jsonl',
                      'teacher-reconciliation-differences.jsonl', 'teacher-account.json', 'teacher-account.md',
-                     'shared-market-context.json', 'teacher-second-set-read.boss.json'):
+                     'shared-market-context.json', 'teacher-second-set-read.boss.json', 'teacher-key.json'):
             add(_file_addition('teacher ' + name, 'file', 'teacher', rows / name, hash_max=hash_max))
+        for p in sorted((rows / 'teacher-key').rglob('*')):
+            if not p.is_file() or p.suffix not in ('.json', '.records', '.index'):
+                continue
+            add(_file_addition('teacher ' + p.relative_to(rows).as_posix(), 'file', 'teacher', p,
+                               hash_max=hash_max))
         for p in _files_in(rows / 'external-section'):
             add(_file_addition('teacher external-section/' + p.name, 'file', 'teacher', p, hash_max=hash_max))
         if isinstance(rc.get('account'), dict):
@@ -1177,6 +1194,9 @@ def publications(piece, sources, hash_max=HASH_MAX):
     if piece == 'jev':
         for p in _files_in(sources.get('jev_out'), ('*.json', '*.md')):
             add(_file_addition('jev ' + p.name, 'file', 'jev', p, hash_max=hash_max))
+        for p in _files_in(Path(sources['brain']) / (sources['day'] + '-jev-tested')):
+            add(_file_addition('jev checked knowledge ' + p.name, 'brain entry', 'jev / scientific teacher',
+                               p, hash_max=hash_max))
         return out
     if piece == 'school':
         brain, day = Path(sources['brain']), sources['day']
