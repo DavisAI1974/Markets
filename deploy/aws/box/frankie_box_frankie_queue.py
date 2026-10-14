@@ -331,7 +331,7 @@ def start_parked_watch(code_root, commit, log=print):
             os.close(fd)
     except OSError:
         pass
-    argv = [sys.executable, '-B', str(HERE / 'frankie_box_frankie_queue.py'), '--action', 'parked-watch',
+    argv = [sys.executable, '-B', str(Path(code_root) / 'deploy/aws/box/frankie_box_frankie_queue.py'), '--action', 'parked-watch',
             '--code-root', str(code_root), '--commit', str(commit)]
     env = dict(PYTHONDONTWRITEBYTECODE='1', PYTHONNOUSERSITE='1', PYTHONPATH=str(code_root), HOME=os.environ.get('HOME') or '/root',
                MARKETS_SHA=str(commit), CODE_ROOT=str(code_root), **_run_settings_env())
@@ -790,7 +790,7 @@ def kick(line, code_root, commit, max_seconds, poll_seconds, by, log=print, scop
     probe.close()                         # released: the new worker takes it (a race with another kick: one of them exits)
     (QUEUE / 'logs').mkdir(parents=True, exist_ok=True)
     log_path = QUEUE / 'logs' / ('%s-worker.log' % line)
-    argv = [sys.executable, '-B', str(HERE / 'frankie_box_frankie_queue.py'), '--action', 'worker', '--line', line,
+    argv = [sys.executable, '-B', str(Path(code_root) / 'deploy/aws/box/frankie_box_frankie_queue.py'), '--action', 'worker', '--line', line,
             '--code-root', str(code_root), '--commit', commit, '--max-seconds', str(worker_limit()),
             '--poll-seconds', str(int(poll_seconds)), '--scope', scope['text']]
     settings = _run_settings_env() if run_settings is None else dict(run_settings)
@@ -948,7 +948,7 @@ def handover(line, code_root, commit, max_seconds, poll_seconds, log=print, scop
                 pass
     (QUEUE / 'logs').mkdir(parents=True, exist_ok=True)
     log_path = QUEUE / 'logs' / ('%s-worker.log' % line)
-    argv = [sys.executable, '-B', str(HERE / 'frankie_box_frankie_queue.py'), '--action', 'worker', '--line', line,
+    argv = [sys.executable, '-B', str(Path(code_root) / 'deploy/aws/box/frankie_box_frankie_queue.py'), '--action', 'worker', '--line', line,
             '--code-root', str(code_root), '--commit', commit, '--max-seconds', str(worker_limit()),
             '--poll-seconds', str(int(poll_seconds)), '--wait-lock', '--scope', scope['text']]
     env = dict(PYTHONDONTWRITEBYTECODE='1', PYTHONNOUSERSITE='1', PYTHONPATH=str(code_root), HOME=os.environ.get('HOME') or '/root',
