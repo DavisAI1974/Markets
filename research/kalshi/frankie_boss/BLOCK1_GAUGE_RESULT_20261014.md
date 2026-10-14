@@ -1,8 +1,10 @@
 # Block-1 updated-code gauge: passed, October 14, 2026
 
 Greg authorized the gauge, then directed use of another existing box to avoid
-the main disks' unfinished performance reductions. No saved-a2 resume was
-authorized or performed. No ingestion, ROOT continuation, replacement runner,
+the main disks' unfinished performance reductions. During this gauge no saved-a2
+resume was authorized or performed. Greg subsequently authorized finishing the
+remaining saved day; read CODEX_HANDOFF_20261014_SESSION15.md for current runtime
+and disk ownership. No ingestion, ROOT continuation, replacement runner,
 extra test framework or 30-day work was run.
 
 Measured source: `88d1e7b8eaa8ed9bc4b6858ec0213f87299dad36`, runtime source
@@ -60,12 +62,13 @@ block store, lesson, second-set output, classroom/external outputs and teacher
 report. The CPU booking released with exit 0. The original source mounts were
 cleanly unmounted afterward.
 
-The main box's original root/archive disks are returned to their original
-device mappings; both boxes are stopped and KeepRunning=false. Saved
-`e2e-20231018-a2/20231018` remains untouched. Its whole-day classroom still needs
-separate explicit authorization to resume. The main box's deployed checkout
-was not changed during this gauge; stage the updated source before any later
-saved-day execution.
+At gauge cleanup the main box's original root/archive disks were returned to
+their original device mappings, both boxes were stopped and KeepRunning=false,
+and saved `e2e-20231018-a2/20231018` was untouched. The main box's deployed
+checkout was not changed during this gauge. Greg subsequently authorized the
+remaining day, updated source was staged, and the second box's fast disk was
+attached to main for continuation output. SESSION15 supplies the current state;
+this gauge cleanup paragraph is not a current stopped-state assertion.
 
 This verifies this block's classroom/external run and the exercised encoder
 comparisons. It does not verify ingestion/ROOT streaming, pipeline-wide exact
