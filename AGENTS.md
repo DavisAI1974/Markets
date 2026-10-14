@@ -2,6 +2,8 @@
 
 ## Start here
 
+- **LATEST SCOPE (2026-10-14, 01:34 ET): read research/kalshi/frankie_boss/CODEX_HANDOFF_20261014_SESSION14.md first, then BLOCK1_GAUGE_SCOPE_20261014.md.** Greg wants Claude's existing five-minute block-1 gauge on OUR UPDATED efficiency code. Ingest/ROOT continuation and replacement gauge code are deferred on separate local branches; do not make them prerequisites for the gauge. No AWS start or saved-a2 resume without Greg's explicit word. SESSION13 below supplies the prior state and operational commands; its older combined timing scope is superseded.
+
 - **CURRENT (2026-10-14): read research/kalshi/frankie_boss/CODEX_HANDOFF_20261014_SESSION13.md FIRST.** Work branch ccr-d2f8f826-iefeah-frankie (shallow: git fetch --deepen=400). Box i-035994afa8bdf66a5 is STOPPED. Day e2e-20231018-a2/20231018: teacher and ROOT done, whole-day classroom saved after its first phase, Jev/exchange/school/reports not run. Do not start the box or resume without Greg's word (2026-10-14: he wanted small timing-slice checks). Greg's session 10-12 rules in that handoff supersede the older boundaries below (three 16-CPU lanes, no starts without a go). The bullets below are background.
 - Apply using-agent-skills, then context-engineering when available. Locate missing named skills before proceeding.
 - Read research/kalshi/frankie_boss/CURRENT_WORKFLOW_SETUP_20261007.md and CODEX_HANDOFF_20261007_WORKFLOW_CONTINUATION.md first. They record current source boundaries, active ownership, remaining workflow work and the agreed E2E, one-day inspection, then three-day sequence. CODEX_HANDOFF_20261006_NIGHT.md and earlier handoffs remain background.
