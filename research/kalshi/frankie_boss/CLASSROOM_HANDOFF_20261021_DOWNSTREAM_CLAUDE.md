@@ -114,3 +114,70 @@ container's placeholder AWS env vars must be unset so the real pair is used). Bo
 `/opt/frankie-box/venv/bin/python`. Check scripts as heredocs into `/dev/shm`, run from the source root,
 removed in the same command; fixtures in `tempfile.mkdtemp`, removed in `finally`. SSM output is capped at
 about 24 KB per command, so large reads go in chunks.
+
+---
+
+# Update, 2026-10-21 ~17:45 UTC: ownership confirmed, host mirrors landed
+
+The other window confirmed (screenshot relayed by Greg) that this window owns the classroom and
+external-ledger validation, grading and streaming-hash integration; it keeps Search's calculation and
+checkpoint ledger and the deployment. Two more increments landed on the box branch after `dd5c8d0`.
+
+## Exact resume state
+
+- Source `/opt/frankie-box/work/source-indexed-consumers-20261021`, branch `codex/indexed-consumers-20261021`,
+  HEAD `caab10a`, clean. History: `a7cf1df` -> `7f0dcdc` (answers, notes, JSON, renderer) -> `dd5c8d0`
+  (streamed C15 hash) -> `45dc7ff` (external host mirror) -> `caab10a` (classroom host mirror). All `[skip ci]`,
+  private, not pushed.
+- Receipts in `/opt/frankie-box/work/handoffs/`: `indexed-classroom-render-notes-20261021.json`,
+  `indexed-classroom-c15-stream-20261021.json`, `indexed-classroom-external-host-20261021.json`,
+  `indexed-classroom-host-20261021.json`. Checkpoints appended to `downstream-new-chat-20261021.md`.
+- Nothing deployed, no admission opened, no model or scientific run, no Search, BuildMap, instance, owner,
+  booking or ingestion change, no leftover fixtures.
+
+## The method used for the host seam (design decision taken by this window)
+
+The native validators and graders stay byte-identical and still refuse retained values. Each private mirror is
+the native function's own text with recorded substitutions only, generated programmatically from the source,
+not retyped: exact `dict`/`list` type checks become `is_dict`/`is_list` (a saved document or a retained
+Sequence/Notes view beside dict/list), `_text`/`_nonempty` become a streamed nonempty check over a retained
+Text's pieces, `_same`/`_canon` become a streamed canonical compare, `evidence_hash` becomes the streamed C15
+encoding, `list(questions)` becomes a retained sequence under a store, and the grade body's native
+`json.loads(_canon(body))` becomes an owned copy with sorted string keys that keeps retained views as
+references. Every accept, every refusal message, every normalized result and every hash is proven equal to
+the native function on the materialized value.
+
+## `45dc7ff` frankie_box_retained_grading.py (external section)
+
+`validate_external_ledgers`, `grade_external(values=)`, `correction_request`, `finish_external`, and
+`retain_grade(path, key, ledgers)` which seals a retained ledgers document's post-grade as its own document
+with reuse. Proven: accept counts equal; all 26 refusal messages equal across native, mirror-on-native and
+mirror-on-retained (plus a whitespace-only retained Text); grade fields, both corrections, teachback and
+post-grade hashes equal; correction request and completion equal including `request_sha256` and
+`completion_hash`; the streamed hash of the retained grade equals the native hash; native still refuses.
+
+## `caab10a` frankie_box_retained_host.py (classroom side)
+
+`validate_teachback`, `_claim_components`, `_claim_relationships`, `validate_novel_findings`,
+`assemble(values=)`, `validate`, with `_observation_explanation` extending a sealed Text in the writable
+assembly store (the one place native code would write into a read-only source; fixed in the mirror only).
+Proven on a full 19-component, 171-pair fixture in GUIDED and TEACH: assembly and dropped findings equal,
+validate report equal on native and retained, C15 ledger hash equal, rendered Markdown equal, all 45 refusal
+messages equal; native still refuses retained ledgers.
+
+## What the private path can now do, end to end, without materializing retained text
+
+Build the note index and the component, summary and external answers; assemble and validate both ledger
+sets; render exact Markdown; hash with the native C15 encoding; grade, request correction and finish the
+external section. Each step is proven against native.
+
+## Still open, in order
+
+1. Runner wiring: `frankie_box_experiment_classroom_v2` phases (`assembly`, `answer_report`,
+   `external_report`, grade and `external_finish`) still call the native functions. Wiring the private path in
+   behind an explicit opt-in, with ordinary admission still closed, is Greg's call.
+2. Classroom-side grade, correction and transcript consumers beyond `validate`.
+3. Shared-market input text (private wrappers refuse it explicitly), actual corpus and model evidence
+   delivery (no model calls), the narrow nonempty measured indexed science composition check, and the
+   `_canon` round trips in the external key path.
+4. The six substantial downstream groups from the 13:08 checkpoint beyond these.
