@@ -1,0 +1,58 @@
+--- a/deploy/aws/box/frankie_box_search_catalog.py	2026-10-21 13:44:00.169634733 +0000
++++ b/deploy/aws/box/frankie_box_search_catalog.py	2026-10-21 13:44:00.269827554 +0000
+@@ -12,7 +12,9 @@
+ import os
+ import pickle
+ from pathlib import Path
++import socket
+ import sqlite3
++import time
+ import zlib
+ 
+ import numpy as np
+@@ -105,7 +107,7 @@
+             raise ValueError('search catalog identity differs')
+         stat = Path(self.path).stat()
+         if [stat.st_size, stat.st_mtime_ns] != self.receipt['stat']:
+-            raise ValueError('immutable search catalog changed; retained')
++            self._verify_restamped(stat)
+         # Native sources remain independently bound, including their original
+         # header. Device IDs are deliberately absent: NFS uses another st_dev.
+         for pin in self.receipt.get('sources', []):
+@@ -115,6 +117,36 @@
+         self._db = None
+         self._pid = None
+ 
++    def _verify_restamped(self, stat):
++        """The seal is content-addressed: the receipt pins the SHA256 of the bytes, and
++        the stat is only the cheap gate in front of it. A sealed file can be restamped
++        without any write: when another NFS client stats a file whose writer still holds
++        a write delegation, nfsd asks the holder (CB_GETATTR) and, for a holder without
++        delegated timestamps (an NFSv4.1 mount), sets mtime and ctime to the server's
++        current time (fs/nfsd/nfs4state.c nfsd4_deleg_getattr_conflict ->
++        cb_getattr_update_times). Group 2050 of 20231018, 2026-10-21 12:24:02.225 UTC,
++        was exactly that: same bytes, same size, same sha256, a new mtime equal to its ctime.
++        Equal size and equal digest re-mint the stat and retain the superseded one in the
++        receipt; a different size or digest stays refused and retained."""
++        pinned = self.receipt['stat']
++        if stat.st_size != pinned[0]:
++            raise ValueError('immutable search catalog changed; retained')
++        with open(self.path, 'rb') as f:
++            digest = hashlib.file_digest(f, 'sha256').hexdigest()
++        after = Path(self.path).stat()
++        if digest != self.receipt['sha256'] or [after.st_size, after.st_mtime_ns] != [stat.st_size, stat.st_mtime_ns]:
++            raise ValueError('immutable search catalog changed; retained')
++        receipt = dict(self.receipt)
++        receipt['stat_superseded'] = list(self.receipt.get('stat_superseded', [])) + [dict(
++            stat=pinned, at=time.time(), host=socket.gethostname(),
++            why='metadata restamped without a write; bytes verified against the sealed sha256')]
++        receipt['stat'] = [stat.st_size, stat.st_mtime_ns]
++        try:
++            _atomic_json(self.path + '.json', receipt)
++        except OSError:
++            pass  # a read-only mount keeps the verified receipt in memory; the next writer re-mints it
++        self.receipt = receipt
++
+     @property
+     def db(self):
+         if self._pid != os.getpid():
