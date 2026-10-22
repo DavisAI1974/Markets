@@ -1,0 +1,13 @@
+Loading exact price clocks and family starts
+Analyzing elapsed-time paths, nearby periods, and second-set dispositions
+families 100
+families 200
+families 300
+families 400
+families 500
+families 600
+families 700
+Joining all 13 external points with separate series and publication provenance
+Summarizing both directions, flat evidence, stability, and stale-price sensitivity
+Saving complete retained group sequence with exact second-set links
+{"family_count":749,"feature_rows":951979,"checkpoint":"ac1040dbf174c9a1184ef2ec81633d54687d02e2","external_links":232190,"price_policy":"same instrument, exact ns/cursor as-of endpoints, age retained, outside retained price bounds missing","elapsed_windows":20223,"analysis":"descriptive; no model, predictor selection, backtest, or causal claim","external_series":62,"external_publication_policy":"strictly earlier ns; nominal/rule-based provenance preserved in external_point_provenance","sample_count":3745,"source_database":"/opt/frankie-box/work/family-research-20261022/alignment.sqlite","limitation":"one retained market day; overlapping windows and nearby controls are dependent; no significance claims; 99 registry roles retained, not 99 numerical predictors; only documented numeric source fields summarized","price_unit_errors":0,"source_sha256_from_completed_handoff":"e16f8d6bb6a95b6eceff86be81b6942ef755a91b9e4b6ae36f88e49a080f0429"}

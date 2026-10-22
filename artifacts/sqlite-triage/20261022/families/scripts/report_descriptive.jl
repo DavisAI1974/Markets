@@ -1,7 +1,7 @@
 using SQLite, DBInterface, CSV, DataFrames, JSON3, Statistics
 include("descriptive_math.jl")
 const BASE=get(ENV,"FAMILY_RESEARCH_DIR","/opt/frankie-box/work/family-research-20261022")
-const OUT=joinpath(BASE,"descriptive-v1")
+const OUT=get(ENV,"FAMILY_ANALYSIS_OUT",joinpath(BASE,"descriptive-v1"))
 load(name)=CSV.read(joinpath(OUT,name*".csv"),DataFrame)
 save(name,rows)=CSV.write(joinpath(OUT,name*".csv"),rows isa DataFrame ? rows : DataFrame(rows))
 db=SQLite.DB(joinpath(BASE,"alignment.sqlite"));DBInterface.execute(db,"PRAGMA query_only=ON")
@@ -15,6 +15,10 @@ append!(fd,DataFrame(sample_id=geometry.sample_id,feature=geometry.feature,value
 complete=load("complete_context_measurements");basecomplete=complete[complete.lag_s.==0,:]
 fd=fd[.!startswith.(fd.feature,"root."),:]
 append!(fd,DataFrame(sample_id=basecomplete.sample_id,feature=basecomplete.feature,value=basecomplete.value,state=fill(missing,nrow(basecomplete)),reason=fill("",nrow(basecomplete)),age_s=basecomplete.age_s,source=fill("indexed_root_native_group_context",nrow(basecomplete)),source_ref=basecomplete.source_ordinal);promote=true)
+if isfile(joinpath(OUT,"enriched_context_measurements.csv"))
+    added=load("enriched_context_measurements");added=added[added.lag_s.==0,:]
+    append!(fd,DataFrame(sample_id=added.sample_id,feature=added.feature,value=added.value,state=fill(missing,nrow(added)),reason=added.reason,age_s=added.age_s,source=fill("all_agreed_enrichments_v2",nrow(added)),source_ref=added.source_ordinal);promote=true)
+end
 pc=q("SELECT * FROM price_clock ORDER BY instrument_id,available_ns,group_close_input_cursor,source_ordinal")
 pg=Dict(g.instrument_id[1]=>g for g in groupby(pc,:instrument_id))
 diagnostics=NamedTuple[]

@@ -1,0 +1,36 @@
+{
+  "schema": "FAMILY_ALL_ADDITIONS_READY_V2",
+  "all_agreed_areas_accounted_for": true,
+  "families": 749,
+  "contexts": 10486,
+  "numeric_rows": 7615124,
+  "features": 969,
+  "structural_counter_checks": 20972,
+  "structural_counter_mismatches": 0,
+  "directly_observed_zero_counts": 64926,
+  "external_feature_rows": 4215372,
+  "extended_weather_rows": 2548098,
+  "excluded_input_sections": [
+    "candidate",
+    "episode",
+    "response"
+  ],
+  "missing_policy": "No family or retained source row excluded; see remaining_gaps.csv; missing is never filled from future knowledge.",
+  "original_counts": "771787 second-set rows, 583688 groups, 749 families, 329658 external rows, 13 conceptual points, 99 registry identities/dispositions, 30739 trades remain pinned",
+  "source_database_mode": "read only",
+  "final_analysis_started": false,
+  "final_lifecycle_numeric_rows": 757280,
+  "complete_lifecycle_quality_rows": 1021088,
+  "lifecycle_dimensions": "section, side, queue/ladder scope, observation type, horizon_ns, window_seconds; no pooling across these dimensions",
+  "lifecycle_age_policy": "Publication ages retained in links; numerical age conservatively includes flow-bin observation age; no early availability inferred from an old event timestamp",
+  "frozen_input_hashes": {
+    "enriched_context_measurements.csv": "2923d2682ced48125abde9f1f00d4666319a372fad1281010a35917ed2ea1064",
+    "quote_windows.csv": "83c26517885c16ca33cea970ac3b0196f3c67582cdfb105b193ead52ab670412",
+    "remaining_gaps.csv": "d29f2368421470bd66e6a08947a9ccd7fc59a351b6ce536abb68772116759aa5",
+    "enrichment_receipt.json": "4be31173f93c798f150b9d52856a24a1931e7a5f31028b2462a7cb139e82c45f",
+    "lifecycle_context_links.csv": "f99785e522001d3f89336603de31268ce861b93fe80f519dbe476a1c93f9c97b",
+    "lifecycle_original_rows.jsonl.gz": "e4e0d3d80b49cd86809a0917503b5e29e573857b9616f9f168507d9887badcef",
+    "external_extended_asof.jsonl.gz": "aa185e0332b0eb55d5082adc39643bf7f6159961de602679ad0bacf6f33f01f9",
+    "native_quality_contexts.jsonl.gz": "eaa4f5681026130f9ea032e11645c97ff4521d28ea77608e22c71e41ff34c491"
+  }
+}

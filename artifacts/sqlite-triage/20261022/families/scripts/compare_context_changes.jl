@@ -1,9 +1,16 @@
 using CSV,DataFrames,Statistics,JSON3
 const BASE=get(ENV,"FAMILY_RESEARCH_DIR","/opt/frankie-box/work/family-research-20261022")
-const OUT=joinpath(BASE,"descriptive-v1")
+const OUT=get(ENV,"FAMILY_ANALYSIS_OUT",joinpath(BASE,"descriptive-v1"))
 context=CSV.read(joinpath(OUT,"complete_context_measurements.csv"),DataFrame)
 samples=CSV.read(joinpath(OUT,"samples.csv"),DataFrame)
+if isfile(joinpath(OUT,"enriched_context_measurements.csv"))
+    added=CSV.read(joinpath(OUT,"enriched_context_measurements.csv"),DataFrame)
+    append!(context,select(added,:sample_id,:lag_s,:feature,:value,:age_s,:source_ordinal);cols=:union,promote=true)
+    weather=CSV.read(joinpath(OUT,"external_last_observed_measurements.csv"),DataFrame)
+    append!(context,DataFrame(sample_id=weather.sample_id,lag_s=zeros(Int,nrow(weather)),feature=weather.feature,value=weather.value,age_s=weather.publication_age_s,source_ordinal=weather.source_ordinal);cols=:union,promote=true)
+end
 lookup=Dict((r.sample_id,r.lag_s,r.feature)=>r.value for r in eachrow(context))
+age_lookup=Dict((r.sample_id,r.lag_s,r.feature)=>r.age_s for r in eachrow(context))
 features=sort(unique(context.feature));changes=NamedTuple[]
 for s in eachrow(samples)
     s.phase in ["onset","near_before","near_after"] || continue
@@ -12,7 +19,7 @@ for s in eachrow(samples)
         a=get(lookup,(s.sample_id,lag,feature),missing)
         b=get(lookup,(endpoint,0,feature),missing)
         delta=ismissing(a) || ismissing(b) ? missing : b-a
-        push!(changes,(family_id=s.family_id,sample_id=s.sample_id,phase=s.phase,lag_s=lag,feature=feature,change=delta,chronological_quarter=s.chronological_quarter))
+        push!(changes,(family_id=s.family_id,sample_id=s.sample_id,phase=s.phase,lag_s=lag,feature=feature,change=delta,from_age_s=get(age_lookup,(s.sample_id,lag,feature),missing),to_age_s=get(age_lookup,(endpoint,0,feature),missing),chronological_quarter=s.chronological_quarter))
     end
 end
 ch=DataFrame(changes)
@@ -20,7 +27,9 @@ CSV.write(joinpath(OUT,"root_native_prestart_changes.csv"),ch)
 summary=NamedTuple[]
 for g in groupby(ch,[:feature,:lag_s,:phase,:chronological_quarter])
     v=collect(skipmissing(g.change))
-    push!(summary,(feature=g.feature[1],lag_s=g.lag_s[1],phase=g.phase[1],chronological_quarter=g.chronological_quarter[1],master_n=nrow(g),available_n=length(v),mean_change=isempty(v) ? missing : mean(v),median_change=isempty(v) ? missing : median(v),positive_n=count(>(0),v),negative_n=count(<(0),v),flat_n=count(==(0),v)))
+    fresh=[r.change for r in eachrow(g) if !ismissing(r.change) && !ismissing(r.from_age_s) && !ismissing(r.to_age_s) && r.from_age_s<=5 && r.to_age_s<=5]
+    old=count(r->!ismissing(r.change) && !ismissing(r.from_age_s) && !ismissing(r.to_age_s) && (r.from_age_s>120 || r.to_age_s>120),eachrow(g))
+    push!(summary,(feature=g.feature[1],lag_s=g.lag_s[1],phase=g.phase[1],chronological_quarter=g.chronological_quarter[1],master_n=nrow(g),available_n=length(v),mean_change=isempty(v) ? missing : mean(v),median_change=isempty(v) ? missing : median(v),positive_n=count(>(0),v),negative_n=count(<(0),v),flat_n=count(==(0),v),both_input_ages_le5s_n=length(fresh),mean_change_both_input_ages_le5s=isempty(fresh) ? missing : mean(fresh),available_pair_with_age_over120s_n=old))
 end
 CSV.write(joinpath(OUT,"root_native_prestart_change_summary.csv"),DataFrame(summary))
 change_lookup=Dict((r.family_id,r.phase,r.lag_s,r.feature)=>r.change for r in eachrow(ch))

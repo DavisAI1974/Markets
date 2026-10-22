@@ -1,0 +1,6 @@
+Second-set clocks and lifecycle references extracted: 6265
+Lifecycle unique rows, links, rejected: 78389 163873 0
+Native continuity, anchor and structural provenance retained: 6265
+External extended as-of rows: 1468040
+Quote endpoint windows and source unit checks: 20223 252600
+{"schema": "FAMILY_ENRICHED_INPUTS_V2", "contexts": 10486, "families": 749, "historical_points": 13, "plane_registry_roles": 99, "second_set_source_rows": 771787, "unique_second_set_offsets": 6265, "lifecycle_unique_rows": 78389, "lifecycle_context_links": 163873, "rejected_future_or_instrument_links": 0, "lifecycle_sections": {"recurrence": 6265, "mirror": 6265, "ladder": 12530, "absorption": 6265, "flow_substrate": 8088, "replenishment": 30687, "queue": 7893, "candidate": 42, "episode": 88, "response": 266}, "added_numeric_rows": 679571, "native_quality_groups": 6265, "external_series": 70, "extended_external_rows": 1468040, "quote_windows": 20223, "quote_unit_checks": 252600, "quote_unique_groups": 12630}

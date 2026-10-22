@@ -1,0 +1,12 @@
+area,disposition
+queue_far_side,276054 of 771787 original rows undefined/not-last; retain NOT_F_LAST/NO_FLOW/SIDE_UNDEFINED; both-side observed ages already available
+pullback_completed_steps,"No completed last step at 701/749 prestarts, no previous step at 743/749; ongoing step remains separate, no future completion backfill"
+calendar_prior_publication,Saved calendar source not published at 659/749 starts; no independently demonstrated historical calendar count is available in the retained inputs
+forecast_vintage_edges,Specific model/horizon/target-day series have no earlier publication at early starts; latest and immediate prior vintages remain separately missing
+weather_missing_fields,Only genuinely earlier same-station numeric measurements used; fields with no prior measurement remain missing
+pre_session_trades,"No earlier trades in retained price source for 26 T-120, 8 before-start and 7 onset contexts; opening-book evidence does not manufacture a prior trade"
+post_session_endpoints,Actual group/price bounds enforced independently; no invented flat prices after the retained session
+rolling_dictionary_omissions,"Complete structural action/side strings now counted directly and reconciled; unknown rolling-window dictionary keys remain absent, source-null stays null"
+terminal_candidate_response_knowledge,"Full original records retained with known-by clocks as later/provenance evidence; candidate, recognition, response and outcome labels are excluded from numerical input features"
+ladder_price_units,Original ladder price/gap fields retained; unverified ladder scales are not promoted to price features; validated native bid/ask/mid supplied separately
+additional_days,One retained trading day; earlier SQLite catalog runs do not add independent days or observations

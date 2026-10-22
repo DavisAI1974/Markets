@@ -1,0 +1,601 @@
+{
+  "files": [
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/descriptive-v1/samples.csv",
+      "source_bytes": 510001,
+      "source_sha256": "b680c9bc5fa63304f950e0849848717631df2484b6d1ed5610cf1011ce9efce8",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/descriptive-v1/samples.csv",
+      "saved_sha256": "b680c9bc5fa63304f950e0849848717631df2484b6d1ed5610cf1011ce9efce8",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/descriptive-v1/elapsed_windows.csv",
+      "source_bytes": 3460578,
+      "source_sha256": "80d83eaaa45913f250910f7fea501dc78694cc88999c0da35202b345f733e22c",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/descriptive-v1/elapsed_windows.csv.gz",
+      "saved_sha256": "f702adde2a7911b9c03da2451213c06cecb075cc60e8e85020436ff744d39936",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/descriptive-v1/direction_summary.csv",
+      "source_bytes": 151671,
+      "source_sha256": "489dfa0b7ee8791ae731685cc94794034568915939b804cd9d637d0d553c3d74",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/descriptive-v1/direction_summary.csv",
+      "saved_sha256": "489dfa0b7ee8791ae731685cc94794034568915939b804cd9d637d0d553c3d74",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/descriptive-v1/feature_availability.csv",
+      "source_bytes": 32986,
+      "source_sha256": "a91455049ccec3ccfe99d07c70870e46a01e85c5278d47b6d666c3f282a8d7a7",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/descriptive-v1/feature_availability.csv",
+      "saved_sha256": "a91455049ccec3ccfe99d07c70870e46a01e85c5278d47b6d666c3f282a8d7a7",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/descriptive-v1/exploratory_associations.csv",
+      "source_bytes": 35455703,
+      "source_sha256": "059f8e82554b82d5d5c725e9caa59d854b4a3f51f1d1e4f8260366d05ec8a483",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/descriptive-v1/exploratory_associations.csv.gz",
+      "saved_sha256": "f58a94ae57544839aa2d47f368355d1a08c17926c07ab3f67ae07db3f3260403",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/descriptive-v1/prestart_feature_changes.csv",
+      "source_bytes": 29953401,
+      "source_sha256": "d54115af6a791e6e54bba191674222d48598adbbbf529acfb5776c4d2715e6da",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/descriptive-v1/prestart_feature_changes.csv.gz",
+      "saved_sha256": "d76a60b8b48f3dd83a026eab8dc55d88ff5826008469cf0c168510eb2641f6ce",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/descriptive-v1/prestart_nearby_feature_pairs.csv",
+      "source_bytes": 15898776,
+      "source_sha256": "10a03a662db358becf453c8eff0b3ec2a4b86cba422490d270fddaf8f08fbe32",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/descriptive-v1/prestart_nearby_feature_pairs.csv.gz",
+      "saved_sha256": "4ce89df6d26e39395994f85c288244d89af8b4d7d7c64232652e1a3acc8c9136",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/descriptive-v1/prestart_nearby_feature_summary.csv",
+      "source_bytes": 106081,
+      "source_sha256": "c7f204125455452566abfdac2cdc3fe5723498263045671cadeb0c6cdd277a6a",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/descriptive-v1/prestart_nearby_feature_summary.csv",
+      "saved_sha256": "c7f204125455452566abfdac2cdc3fe5723498263045671cadeb0c6cdd277a6a",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/descriptive-v1/root_native_prestart_changes.csv",
+      "source_bytes": 468710674,
+      "source_sha256": "751fa90d92595a26a1592b9d2967e616ff04b6814f70fb4d9ecd707407075cd8",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/descriptive-v1/root_native_prestart_changes.csv.gz",
+      "saved_sha256": "52eab6eedfeacf5c22cd74b455c85eee2f61fcba55c7e6aec0815fcc6a530181",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/descriptive-v1/root_native_prestart_change_summary.csv",
+      "source_bytes": 2356832,
+      "source_sha256": "ef69dc8516cf29cac0150142ba48af9aa47214260b9515008a5a6c5d93d2aee1",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/descriptive-v1/root_native_prestart_change_summary.csv.gz",
+      "saved_sha256": "264c24145b1aff1519155304581486439310bb55998abca0854f175a78e6f148",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/descriptive-v1/root_native_nearby_change_summary.csv",
+      "source_bytes": 1588180,
+      "source_sha256": "878bea20f19731bd5068cb23bd7b07145e2bcf95376f7d6b77e13c1e4ee5939a",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/descriptive-v1/root_native_nearby_change_summary.csv.gz",
+      "saved_sha256": "0e9e2a722c10f49b8803af68b7b69ffb055e7c4e5c68536768506f4252c5f723",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/descriptive-v1/external_pre120_changes.csv",
+      "source_bytes": 15728573,
+      "source_sha256": "8cc887327a985fe374c7c75834259b1bf5a9836105c4d561d45b01b0a5c23c6c",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/descriptive-v1/external_pre120_changes.csv.gz",
+      "saved_sha256": "4dab7c1281998bbac8d0423afe399f417a635c71ba8b10ae166ee0e813681dd3",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/descriptive-v1/direction_freshness_sensitivity.csv",
+      "source_bytes": 22684,
+      "source_sha256": "8041c84f6099bbbb3b35731b42473c961b7a48106072dd5094aa446b38573bce",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/descriptive-v1/direction_freshness_sensitivity.csv",
+      "saved_sha256": "8041c84f6099bbbb3b35731b42473c961b7a48106072dd5094aa446b38573bce",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/descriptive-v1/prior_price_diagnostics.csv",
+      "source_bytes": 214005,
+      "source_sha256": "bd820009b40c6562b94615864298b35b0e9d24ca051c6d3466c1ef06c25bd604",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/descriptive-v1/prior_price_diagnostics.csv",
+      "saved_sha256": "bd820009b40c6562b94615864298b35b0e9d24ca051c6d3466c1ef06c25bd604",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/descriptive-v1/feature_phase_availability.csv",
+      "source_bytes": 599090,
+      "source_sha256": "1ec0dc138048760be78ec15ae287ec7f97c4d5da685cf36d0a978dcf87dd4e0c",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/descriptive-v1/feature_phase_availability.csv",
+      "saved_sha256": "1ec0dc138048760be78ec15ae287ec7f97c4d5da685cf36d0a978dcf87dd4e0c",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/descriptive-v1/all_second_set_component_dispositions.csv",
+      "source_bytes": 3307,
+      "source_sha256": "4d1317215f1a2e837a8c678c663dc97c41572b4551e87eefdd6070194f5e63cb",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/descriptive-v1/all_second_set_component_dispositions.csv",
+      "saved_sha256": "4d1317215f1a2e837a8c678c663dc97c41572b4551e87eefdd6070194f5e63cb",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/descriptive-v1/plane_disposition_summary.csv",
+      "source_bytes": 196,
+      "source_sha256": "0ffca22d1365c9909673abfdeaa7b3136c9eb65fbc6d69e9cdb9fc41a7ef0651",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/descriptive-v1/plane_disposition_summary.csv",
+      "saved_sha256": "0ffca22d1365c9909673abfdeaa7b3136c9eb65fbc6d69e9cdb9fc41a7ef0651",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/descriptive-v1/nearby_price_pairs.csv",
+      "source_bytes": 1572548,
+      "source_sha256": "8a030a963b77e00df7357770f689d84eb57d3e2b8b933143a22809346a3f50e0",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/descriptive-v1/nearby_price_pairs.csv.gz",
+      "saved_sha256": "6a4bf19fc5c771b64862f4154130b8973f24ce1b9d6cac0462defea774c1be6e",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/descriptive-v1/nearby_price_summary.csv",
+      "source_bytes": 1043,
+      "source_sha256": "64c3536a7b5c92694d2b0db57b67ae032d2884c4dde6623a6ec499d34b6ef57a",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/descriptive-v1/nearby_price_summary.csv",
+      "saved_sha256": "64c3536a7b5c92694d2b0db57b67ae032d2884c4dde6623a6ec499d34b6ef57a",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/descriptive-v1/overlap_counts.csv",
+      "source_bytes": 116980,
+      "source_sha256": "9b967c39dbd93fca54ac39a87a99b205449295db739c0166d83229cb12e87718",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/descriptive-v1/overlap_counts.csv",
+      "saved_sha256": "9b967c39dbd93fca54ac39a87a99b205449295db739c0166d83229cb12e87718",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/descriptive-v1/overlap_summary.csv",
+      "source_bytes": 217,
+      "source_sha256": "9bfcf7eb788e6b43a6c8efc09afec5b632cf891f6a94386256c89781285ec52c",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/descriptive-v1/overlap_summary.csv",
+      "saved_sha256": "9bfcf7eb788e6b43a6c8efc09afec5b632cf891f6a94386256c89781285ec52c",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/descriptive-v1/association_stability.csv",
+      "source_bytes": 9801415,
+      "source_sha256": "493473c9cf3a293e086c8ccba223551b5603c9a8a9dc8211a859e490eceb6bf5",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/descriptive-v1/association_stability.csv.gz",
+      "saved_sha256": "146bee4244ed14eaa490bcf0af14a67d85f7c2ea96b84c06d38c90d766c2fb3f",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/descriptive-v1/analysis_receipt.json",
+      "source_bytes": 915,
+      "source_sha256": "6d294207ebbf0a211275f796bb46a69ed0a4237893da7cef88905910a3787fee",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/descriptive-v1/analysis_receipt.json",
+      "saved_sha256": "6d294207ebbf0a211275f796bb46a69ed0a4237893da7cef88905910a3787fee",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/descriptive-v1/run_receipt.json",
+      "source_bytes": 948,
+      "source_sha256": "5b78db5cf8aea7633c594dcb1cb6650bb5d0781ba77f7851fbb4c1d9c94ff21d",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/descriptive-v1/run_receipt.json",
+      "saved_sha256": "5b78db5cf8aea7633c594dcb1cb6650bb5d0781ba77f7851fbb4c1d9c94ff21d",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/descriptive-v1/revised-run.log",
+      "source_bytes": 1389,
+      "source_sha256": "f4bb4472423f2601361a617d73fc6e3985b6356a3d16b4cdf41d41c0895249c9",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/descriptive-v1/revised-run.log",
+      "saved_sha256": "f4bb4472423f2601361a617d73fc6e3985b6356a3d16b4cdf41d41c0895249c9",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/descriptive-v1/revised-summary.log",
+      "source_bytes": 6602,
+      "source_sha256": "f9fe14e64ed704158fd4a17e8b31efa3174ba9f8be83a94000ddb346cc8e1942",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/descriptive-v1/revised-summary.log",
+      "saved_sha256": "f9fe14e64ed704158fd4a17e8b31efa3174ba9f8be83a94000ddb346cc8e1942",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/descriptive-v1/revised-changes.log",
+      "source_bytes": 291,
+      "source_sha256": "efb9c259334d9ed5c83107792c4e3f85b58f053f13b6cadbdfd459092fb4adbd",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/descriptive-v1/revised-changes.log",
+      "saved_sha256": "efb9c259334d9ed5c83107792c4e3f85b58f053f13b6cadbdfd459092fb4adbd",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/descriptive-v1/revised-report.log",
+      "source_bytes": 19167,
+      "source_sha256": "2cc69c4be99ef1a882c727a4a1ba61b9d6d5655fbc8c7eea69cf4cb4e79fd2b4",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/descriptive-v1/revised-report.log",
+      "saved_sha256": "2cc69c4be99ef1a882c727a4a1ba61b9d6d5655fbc8c7eea69cf4cb4e79fd2b4",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/prestart_feature_changes.csv",
+      "source_bytes": 29953401,
+      "source_sha256": "d54115af6a791e6e54bba191674222d48598adbbbf529acfb5776c4d2715e6da",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/prestart_feature_changes.csv.gz",
+      "saved_sha256": "a5a90062516e53ce351b3977b230808b3272485236d46f8a27700ed65556c7e3",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/prior_price_diagnostics.csv",
+      "source_bytes": 214005,
+      "source_sha256": "bd820009b40c6562b94615864298b35b0e9d24ca051c6d3466c1ef06c25bd604",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/prior_price_diagnostics.csv",
+      "saved_sha256": "bd820009b40c6562b94615864298b35b0e9d24ca051c6d3466c1ef06c25bd604",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/quote_windows.csv",
+      "source_bytes": 4313944,
+      "source_sha256": "83c26517885c16ca33cea970ac3b0196f3c67582cdfb105b193ead52ab670412",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/quote_windows.csv.gz",
+      "saved_sha256": "e3d45aa708cc58d491848b9b7edd423a56cb53b967d8dc884bb8c3b6f91e16e4",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/analysis_receipt.json",
+      "source_bytes": 915,
+      "source_sha256": "6e764c9f846a546532162531eeb384c09771a85950f472dac4630603fdde2c5d",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/analysis_receipt.json",
+      "saved_sha256": "6e764c9f846a546532162531eeb384c09771a85950f472dac4630603fdde2c5d",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/external_pre120_changes.csv",
+      "source_bytes": 15728573,
+      "source_sha256": "8cc887327a985fe374c7c75834259b1bf5a9836105c4d561d45b01b0a5c23c6c",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/external_pre120_changes.csv.gz",
+      "saved_sha256": "16220374feb8b0a08369981da5469546d03cc10394f92802558858dcc039220b",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/feature_phase_availability.csv",
+      "source_bytes": 975133,
+      "source_sha256": "816651d4d8455dd02523e494db827c9cefa1c2a5e27cf40d438dc7ac97c8822a",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/feature_phase_availability.csv",
+      "saved_sha256": "816651d4d8455dd02523e494db827c9cefa1c2a5e27cf40d438dc7ac97c8822a",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/math-tests.log",
+      "source_bytes": 96,
+      "source_sha256": "bb8a66ba1b1190b33baa262538e79b445c276dadef87913f78a334610d23782b",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/math-tests.log",
+      "saved_sha256": "bb8a66ba1b1190b33baa262538e79b445c276dadef87913f78a334610d23782b",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/collect-inputs.log",
+      "source_bytes": 997,
+      "source_sha256": "182e82547c2915a9ca3f6494aac6f6d7a53290ce4299d618d5b65bdb364a34d6",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/collect-inputs.log",
+      "saved_sha256": "182e82547c2915a9ca3f6494aac6f6d7a53290ce4299d618d5b65bdb364a34d6",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/enrichment_receipt.json",
+      "source_bytes": 4177,
+      "source_sha256": "4be31173f93c798f150b9d52856a24a1931e7a5f31028b2462a7cb139e82c45f",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/enrichment_receipt.json",
+      "saved_sha256": "4be31173f93c798f150b9d52856a24a1931e7a5f31028b2462a7cb139e82c45f",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/overlap_summary.csv",
+      "source_bytes": 217,
+      "source_sha256": "9bfcf7eb788e6b43a6c8efc09afec5b632cf891f6a94386256c89781285ec52c",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/overlap_summary.csv",
+      "saved_sha256": "9bfcf7eb788e6b43a6c8efc09afec5b632cf891f6a94386256c89781285ec52c",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/exploratory_associations.csv",
+      "source_bytes": 55630645,
+      "source_sha256": "71f3e2d3920230b43ac7d4abe173fe7a88548be219ac556d0d138c6c4fd33c02",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/exploratory_associations.csv.gz",
+      "saved_sha256": "49d764d91a27ca4b403fcb05abe194fac6c554c729929f76b831cc33de1ab555",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/root_native_nearby_change_summary.csv",
+      "source_bytes": 4370780,
+      "source_sha256": "d170227f5f0826c366c97c4987fed2ead00f2976c8ce0d9479423823365bafd1",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/root_native_nearby_change_summary.csv.gz",
+      "saved_sha256": "d2323de018142e0397ff50e8a5c9cabf6cb3855d1125952b35cdeeb0351c1f71",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/enriched_context_measurements.csv",
+      "source_bytes": 1121214055,
+      "source_sha256": "2923d2682ced48125abde9f1f00d4666319a372fad1281010a35917ed2ea1064",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/enriched_context_measurements.csv.gz",
+      "saved_sha256": "4611f7b302c832977cc17914cb29eb9884bafa8e17d571b4ac76ff5be5e42447",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/Project.toml",
+      "source_bytes": 303,
+      "source_sha256": "884a056b4570410e3e0e5aa2078ca1b8f87708a620c80b14dffaa6a3ab46369f",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/Project.toml",
+      "saved_sha256": "884a056b4570410e3e0e5aa2078ca1b8f87708a620c80b14dffaa6a3ab46369f",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/root_native_prestart_changes.csv",
+      "source_bytes": 1572997720,
+      "source_sha256": "6085c161336ac55392278a7a67bed7717d3455dd151daa8a3ce525d61e700be1",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/root_native_prestart_changes.csv.gz",
+      "saved_sha256": "ff961f364509a4bdf1309ec5df8191ba23aa1ba9b90b774b731969a91be570d4",
+      "parts": [
+        {
+          "path": "artifacts/sqlite-triage/20261022/families/enriched-v2/root_native_prestart_changes.csv.gz.part001",
+          "bytes": 80000000,
+          "sha256": "9696c00619caf78ecc839dc0d0cbe7f800e67b8c9d2cf8fed00fe76cdca02c19"
+        },
+        {
+          "path": "artifacts/sqlite-triage/20261022/families/enriched-v2/root_native_prestart_changes.csv.gz.part002",
+          "bytes": 16876271,
+          "sha256": "1e366a7c6af0b03ee7eadc8ebdaab46d1fa3e1bb132d4bb6296916370d01edea"
+        }
+      ]
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/prepare.log",
+      "source_bytes": 795,
+      "source_sha256": "b807a9eb9f02570ef566b2f8c436974a82e4fde5f10f67453f8caf56801d596a",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/prepare.log",
+      "saved_sha256": "b807a9eb9f02570ef566b2f8c436974a82e4fde5f10f67453f8caf56801d596a",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/external_extended_availability.csv",
+      "source_bytes": 8021,
+      "source_sha256": "d0405dd950a3e42966de4b1655eb8fc302868ce642bfda8a1992ea0e2bdb4fe3",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/external_extended_availability.csv",
+      "saved_sha256": "d0405dd950a3e42966de4b1655eb8fc302868ce642bfda8a1992ea0e2bdb4fe3",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/prestart_nearby_feature_summary.csv",
+      "source_bytes": 106081,
+      "source_sha256": "c7f204125455452566abfdac2cdc3fe5723498263045671cadeb0c6cdd277a6a",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/prestart_nearby_feature_summary.csv",
+      "saved_sha256": "c7f204125455452566abfdac2cdc3fe5723498263045671cadeb0c6cdd277a6a",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/lifecycle_quality_dispositions.csv",
+      "source_bytes": 38813448,
+      "source_sha256": "a7f2a64c0a4e2bdf824dd375635b2d2109292796d16a810261860a62d40571cf",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/lifecycle_quality_dispositions.csv.gz",
+      "saved_sha256": "1844cc65f91c07e2de7e2026f1bb34379098fac51e77bc03d3f9a81483b7bcd2",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/extended_second_set.csv",
+      "source_bytes": 14062916,
+      "source_sha256": "cef874f297de68e4d24e09f0b2ab17ceea98f42af2e37da98742727cab115aaf",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/extended_second_set.csv.gz",
+      "saved_sha256": "2a02a430ecdab71f0874ca728cd6524ce9df6d4812d012f9853a382577d6ad8c",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/analysis.log",
+      "source_bytes": 28311,
+      "source_sha256": "b37b5675a1b8b01ac84fbc8ff09e947f55984fc60e5f608b2e560ec80ec9717c",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/analysis.log",
+      "saved_sha256": "b37b5675a1b8b01ac84fbc8ff09e947f55984fc60e5f608b2e560ec80ec9717c",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/lifecycle_complete_quality.csv.gz",
+      "source_bytes": 4006305,
+      "source_sha256": "684033a8952829efd33ee398a558bf64e6ef87c3dd21fb0de51ffa402c34c0f8",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/lifecycle_complete_quality.csv.gz",
+      "saved_sha256": "684033a8952829efd33ee398a558bf64e6ef87c3dd21fb0de51ffa402c34c0f8",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/nearby_price_summary.csv",
+      "source_bytes": 1043,
+      "source_sha256": "64c3536a7b5c92694d2b0db57b67ae032d2884c4dde6623a6ec499d34b6ef57a",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/nearby_price_summary.csv",
+      "saved_sha256": "64c3536a7b5c92694d2b0db57b67ae032d2884c4dde6623a6ec499d34b6ef57a",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/completed_analysis_receipt.json",
+      "source_bytes": 2207,
+      "source_sha256": "4ee2334f3945c59c83f919cee87fa27a747e11d352426c57f0254875e0f738c2",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/completed_analysis_receipt.json",
+      "saved_sha256": "4ee2334f3945c59c83f919cee87fa27a747e11d352426c57f0254875e0f738c2",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/root_native_prestart_change_summary.csv",
+      "source_bytes": 7331537,
+      "source_sha256": "4f1c8a836469fdc4d5f0234a50d304fd7d4712549610b0d6a465ea6d1ed5454f",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/root_native_prestart_change_summary.csv.gz",
+      "saved_sha256": "b8e73b0e839369d320cfeed688aa12234655bf2f4a8b6dfd92d18980547f9e2b",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/gate.log",
+      "source_bytes": 1208,
+      "source_sha256": "2a0610baf1f176995b4feb8078a9b009fffe0f55c0e05e5b3f64fa6b4c95ddc8",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/gate.log",
+      "saved_sha256": "2a0610baf1f176995b4feb8078a9b009fffe0f55c0e05e5b3f64fa6b4c95ddc8",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/lifecycle_original_rows.jsonl.gz",
+      "source_bytes": 10563726,
+      "source_sha256": "e4e0d3d80b49cd86809a0917503b5e29e573857b9616f9f168507d9887badcef",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/lifecycle_original_rows.jsonl.gz",
+      "saved_sha256": "e4e0d3d80b49cd86809a0917503b5e29e573857b9616f9f168507d9887badcef",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/second_set_clock_flow_receipts.jsonl.gz",
+      "source_bytes": 1764297,
+      "source_sha256": "9d937d05ca91742e8cd87ae731f9a2ac18da01088fd191bff3a80a6c4193f019",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/second_set_clock_flow_receipts.jsonl.gz",
+      "saved_sha256": "9d937d05ca91742e8cd87ae731f9a2ac18da01088fd191bff3a80a6c4193f019",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/plane_disposition_summary.csv",
+      "source_bytes": 196,
+      "source_sha256": "0ffca22d1365c9909673abfdeaa7b3136c9eb65fbc6d69e9cdb9fc41a7ef0651",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/plane_disposition_summary.csv",
+      "saved_sha256": "0ffca22d1365c9909673abfdeaa7b3136c9eb65fbc6d69e9cdb9fc41a7ef0651",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/association_stability.csv",
+      "source_bytes": 14812393,
+      "source_sha256": "454ac3b1b3f650058928915c40fdba809a2a55bb843b311c033dfcadb8bf3b89",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/association_stability.csv.gz",
+      "saved_sha256": "890fbfd418015aa7578f24d799e6d11b587f3d7e7b34f68417fbc80cd90b780d",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/quote_endpoint_receipts.jsonl.gz",
+      "source_bytes": 1508130,
+      "source_sha256": "8747df823252df8d6958b3d8d4387604da8d1c0c9db0b91d6e2cc02405099d6d",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/quote_endpoint_receipts.jsonl.gz",
+      "saved_sha256": "8747df823252df8d6958b3d8d4387604da8d1c0c9db0b91d6e2cc02405099d6d",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/native_quality_contexts.jsonl.gz",
+      "source_bytes": 1071553,
+      "source_sha256": "eaa4f5681026130f9ea032e11645c97ff4521d28ea77608e22c71e41ff34c491",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/native_quality_contexts.jsonl.gz",
+      "saved_sha256": "eaa4f5681026130f9ea032e11645c97ff4521d28ea77608e22c71e41ff34c491",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/direction_freshness_sensitivity.csv",
+      "source_bytes": 22684,
+      "source_sha256": "8041c84f6099bbbb3b35731b42473c961b7a48106072dd5094aa446b38573bce",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/direction_freshness_sensitivity.csv",
+      "saved_sha256": "8041c84f6099bbbb3b35731b42473c961b7a48106072dd5094aa446b38573bce",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/lifecycle_field_inventory.csv",
+      "source_bytes": 17483,
+      "source_sha256": "3eb7f4535f1424116426f8d48b690499cc28d509da5060d876fcdf5bb84b6a30",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/lifecycle_field_inventory.csv",
+      "saved_sha256": "3eb7f4535f1424116426f8d48b690499cc28d509da5060d876fcdf5bb84b6a30",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/quote_trade_pairs.csv",
+      "source_bytes": 5541651,
+      "source_sha256": "409135a458f5b18bca94d30a62e7a201da75ef7986fa3d309be923a81ae13076",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/quote_trade_pairs.csv.gz",
+      "saved_sha256": "2b4051f69c4529384d3303c8e489a57f26954018143696822a1804d9e77b3bea",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/quote_trade_summary.csv",
+      "source_bytes": 214443,
+      "source_sha256": "2695b4893b554d6cb04952147818ad17fac1a7278fba658bd2b8c304c93c7bd9",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/quote_trade_summary.csv",
+      "saved_sha256": "2695b4893b554d6cb04952147818ad17fac1a7278fba658bd2b8c304c93c7bd9",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/remaining_gaps.csv",
+      "source_bytes": 1804,
+      "source_sha256": "d29f2368421470bd66e6a08947a9ccd7fc59a351b6ce536abb68772116759aa5",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/remaining_gaps.csv",
+      "saved_sha256": "d29f2368421470bd66e6a08947a9ccd7fc59a351b6ce536abb68772116759aa5",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/external_extended_asof.jsonl.gz",
+      "source_bytes": 12989963,
+      "source_sha256": "aa185e0332b0eb55d5082adc39643bf7f6159961de602679ad0bacf6f33f01f9",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/external_extended_asof.jsonl.gz",
+      "saved_sha256": "aa185e0332b0eb55d5082adc39643bf7f6159961de602679ad0bacf6f33f01f9",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/native_measurements.csv",
+      "source_bytes": 8454402,
+      "source_sha256": "c270fc39c7670c5796ab76e00df06cd453e17761bb781ab0faf2a35a1058cf16",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/native_measurements.csv.gz",
+      "saved_sha256": "5f696f276b2b7cfadc09af1716978d60f9a1c4db20e7722b938fabff6c1ca8aa",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/overlap_counts.csv",
+      "source_bytes": 116980,
+      "source_sha256": "9b967c39dbd93fca54ac39a87a99b205449295db739c0166d83229cb12e87718",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/overlap_counts.csv",
+      "saved_sha256": "9b967c39dbd93fca54ac39a87a99b205449295db739c0166d83229cb12e87718",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/all_additions_ready.json",
+      "source_bytes": 2118,
+      "source_sha256": "1c2b61491d160f36ae614c01940482d463388d974f486070057c9e0c6b71fb34",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/all_additions_ready.json",
+      "saved_sha256": "1c2b61491d160f36ae614c01940482d463388d974f486070057c9e0c6b71fb34",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/Manifest.toml",
+      "source_bytes": 14375,
+      "source_sha256": "b4dc8d8c00cb0fddf4834a9dc97bb998219b6e35fe065e6477ac48ee4f74a536",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/Manifest.toml",
+      "saved_sha256": "b4dc8d8c00cb0fddf4834a9dc97bb998219b6e35fe065e6477ac48ee4f74a536",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/lifecycle_context_links.csv",
+      "source_bytes": 39890003,
+      "source_sha256": "f99785e522001d3f89336603de31268ce861b93fe80f519dbe476a1c93f9c97b",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/lifecycle_context_links.csv.gz",
+      "saved_sha256": "07bc4c927591e741532640583047b08c49ae2ba5d82343ab41282e985621e3fd",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/prestart_nearby_feature_pairs.csv",
+      "source_bytes": 15898776,
+      "source_sha256": "10a03a662db358becf453c8eff0b3ec2a4b86cba422490d270fddaf8f08fbe32",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/prestart_nearby_feature_pairs.csv.gz",
+      "saved_sha256": "5c07fa4bf3fae132ac611b8d15d91d5dc65d1fe7d121fc2594e3d1d0aabfb0a5",
+      "parts": []
+    },
+    {
+      "source_path": "/opt/frankie-box/work/family-research-20261022/enriched-v2/all_second_set_component_dispositions.csv",
+      "source_bytes": 3307,
+      "source_sha256": "4d1317215f1a2e837a8c678c663dc97c41572b4551e87eefdd6070194f5e63cb",
+      "saved_path": "artifacts/sqlite-triage/20261022/families/enriched-v2/all_second_set_component_dispositions.csv",
+      "saved_sha256": "4d1317215f1a2e837a8c678c663dc97c41572b4551e87eefdd6070194f5e63cb",
+      "parts": []
+    }
+  ],
+  "input_bundle_sha256": "3600071f33d6198c108e7e07ff7b1d08f804f1661732e2970c27203afdefba77",
+  "policy": "Baseline and enriched actual outputs. Frozen baseline input symlinks refer to the preserved input bundle and repository. Concatenate any numbered parts in order before decompression."
+}

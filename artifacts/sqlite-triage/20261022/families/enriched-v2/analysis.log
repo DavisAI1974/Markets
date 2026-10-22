@@ -1,0 +1,168 @@
+Extending pre-start and nearby second-set comparisons to 5/10 minutes
+Computing exploratory associations with explicit constant/missing results
+Native price_raw/1e9 checks: 44940
+ONSET DIRECTION: fresh endpoint ages <=5 seconds; all quarters combined
+{"mean":-0.0002418300653594563,"median":0.0,"h":1,"mean_signed":-0.0002418300653594563,"master_n":306,"direction":"up","down":107,"fresh_n":306,"up":86,"flat":113}
+{"mean":0.00020579710144927844,"median":0.0,"h":1,"mean_signed":-0.00020579710144927844,"master_n":347,"direction":"down","down":70,"fresh_n":345,"up":127,"flat":148}
+{"mean":0.00012857142857143345,"median":0.0,"h":1,"mean_signed":null,"master_n":70,"direction":"flat","down":10,"fresh_n":70,"up":16,"flat":44}
+{"mean":-0.0007368421052632637,"median":0.0,"h":1,"mean_signed":null,"master_n":26,"direction":"missing","down":8,"fresh_n":19,"up":1,"flat":10}
+{"mean":-0.0002622950819671871,"median":0.0,"h":5,"mean_signed":-0.0002622950819671871,"master_n":306,"direction":"up","down":119,"fresh_n":305,"up":94,"flat":92}
+{"mean":0.00022965116279068917,"median":0.0,"h":5,"mean_signed":-0.00022965116279068917,"master_n":347,"direction":"down","down":75,"fresh_n":344,"up":144,"flat":125}
+{"mean":0.00010144927536232697,"median":0.0,"h":5,"mean_signed":null,"master_n":70,"direction":"flat","down":12,"fresh_n":69,"up":19,"flat":38}
+{"mean":-0.0009473684210526675,"median":0.0,"h":5,"mean_signed":null,"master_n":26,"direction":"missing","down":8,"fresh_n":19,"up":2,"flat":9}
+{"mean":-0.0005639810426540337,"median":-0.0009999999999998899,"h":20,"mean_signed":-0.0005639810426540337,"master_n":306,"direction":"up","down":107,"fresh_n":211,"up":73,"flat":31}
+{"mean":0.00030923694779116094,"median":0.0,"h":20,"mean_signed":-0.00030923694779116094,"master_n":347,"direction":"down","down":84,"fresh_n":249,"up":114,"flat":51}
+{"mean":0.000676470588235311,"median":0.0,"h":20,"mean_signed":null,"master_n":70,"direction":"flat","down":15,"fresh_n":34,"up":16,"flat":3}
+{"mean":-0.00019999999999997797,"median":-0.0009999999999998899,"h":20,"mean_signed":null,"master_n":26,"direction":"missing","down":3,"fresh_n":5,"up":2,"flat":0}
+{"mean":-0.0005492227979274789,"median":-0.0009999999999998899,"h":60,"mean_signed":-0.0005492227979274789,"master_n":306,"direction":"up","down":111,"fresh_n":193,"up":66,"flat":16}
+{"mean":0.00029694323144103667,"median":0.0009999999999998899,"h":60,"mean_signed":-0.00029694323144103667,"master_n":347,"direction":"down","down":83,"fresh_n":229,"up":115,"flat":31}
+{"mean":0.00017857142857144063,"median":0.0,"h":60,"mean_signed":null,"master_n":70,"direction":"flat","down":10,"fresh_n":28,"up":12,"flat":6}
+{"mean":-0.0035555555555555093,"median":-0.0030000000000001137,"h":60,"mean_signed":null,"master_n":26,"direction":"missing","down":9,"fresh_n":9,"up":0,"flat":0}
+{"mean":-0.0014020618556700884,"median":-0.0009999999999998899,"h":120,"mean_signed":-0.0014020618556700884,"master_n":306,"direction":"up","down":107,"fresh_n":194,"up":70,"flat":17}
+{"mean":0.0006772727272727435,"median":0.0009999999999998899,"h":120,"mean_signed":-0.0006772727272727435,"master_n":347,"direction":"down","down":89,"fresh_n":220,"up":115,"flat":16}
+{"mean":0.0012068965517241582,"median":0.0,"h":120,"mean_signed":null,"master_n":70,"direction":"flat","down":11,"fresh_n":29,"up":14,"flat":4}
+{"mean":0.0,"median":0.0,"h":120,"mean_signed":null,"master_n":26,"direction":"missing","down":0,"fresh_n":2,"up":0,"flat":2}
+{"mean":-9.923781225699724e-18,"median":-0.0009999999999998899,"h":300,"mean_signed":-9.923781225699724e-18,"master_n":306,"direction":"up","down":90,"fresh_n":179,"up":78,"flat":11}
+{"mean":0.00044019138755980265,"median":0.0,"h":300,"mean_signed":-0.00044019138755980265,"master_n":347,"direction":"down","down":101,"fresh_n":209,"up":103,"flat":5}
+{"mean":0.001085714285714293,"median":0.0,"h":300,"mean_signed":null,"master_n":70,"direction":"flat","down":17,"fresh_n":35,"up":16,"flat":2}
+{"mean":null,"median":null,"h":300,"mean_signed":null,"master_n":26,"direction":"missing","down":0,"fresh_n":0,"up":0,"flat":0}
+{"mean":-0.0024598930481283493,"median":-0.0040000000000000036,"h":600,"mean_signed":-0.0024598930481283493,"master_n":306,"direction":"up","down":117,"fresh_n":187,"up":65,"flat":5}
+{"mean":-0.00016410256410254604,"median":-0.0019999999999997797,"h":600,"mean_signed":0.00016410256410254604,"master_n":347,"direction":"down","down":105,"fresh_n":195,"up":78,"flat":12}
+{"mean":0.0003793103448276057,"median":-0.0009999999999998899,"h":600,"mean_signed":null,"master_n":70,"direction":"flat","down":16,"fresh_n":29,"up":13,"flat":0}
+{"mean":-0.0044999999999999485,"median":-0.0044999999999999485,"h":600,"mean_signed":null,"master_n":26,"direction":"missing","down":2,"fresh_n":2,"up":0,"flat":0}
+{"mean":-0.001857142857142868,"median":-0.0014999999999998348,"h":1800,"mean_signed":-0.001857142857142868,"master_n":306,"direction":"up","down":99,"fresh_n":196,"up":94,"flat":3}
+{"mean":-0.004771573604060929,"median":-0.006000000000000227,"h":1800,"mean_signed":0.004771573604060929,"master_n":347,"direction":"down","down":121,"fresh_n":197,"up":73,"flat":3}
+{"mean":-0.0004848484848485391,"median":0.004999999999999893,"h":1800,"mean_signed":null,"master_n":70,"direction":"flat","down":12,"fresh_n":33,"up":21,"flat":0}
+{"mean":0.002666666666666669,"median":0.0030000000000001137,"h":1800,"mean_signed":null,"master_n":26,"direction":"missing","down":0,"fresh_n":3,"up":3,"flat":0}
+{"mean":-0.009657142857142852,"median":-0.01100000000000012,"h":3600,"mean_signed":-0.009657142857142852,"master_n":306,"direction":"up","down":108,"fresh_n":175,"up":65,"flat":2}
+{"mean":-0.0031049999999999845,"median":-0.002000000000000224,"h":3600,"mean_signed":0.0031049999999999845,"master_n":347,"direction":"down","down":106,"fresh_n":200,"up":91,"flat":3}
+{"mean":-0.0037931034482759037,"median":0.0009999999999998899,"h":3600,"mean_signed":null,"master_n":70,"direction":"flat","down":12,"fresh_n":29,"up":16,"flat":1}
+{"mean":0.010499999999999954,"median":0.010499999999999954,"h":3600,"mean_signed":null,"master_n":26,"direction":"missing","down":0,"fresh_n":2,"up":2,"flat":0}
+Association dispositions: 4×2 DataFrame
+ Row │ disposition            rows
+     │ String                 Int64
+─────┼───────────────────────────────
+   1 │ descriptive_only       226187
+   2 │ constant_feature       107769
+   3 │ fewer_than_3_pairs      87923
+   4 │ constant_price_change    3461
+Finished descriptive follow-up; no model or significance claims
+{"nearby_comparisons":39696,"root_native_feature_count":1654,"external_pre120_rows":150549,"policy":"Every family is retained for every feature/lag; unavailable endpoints remain missing; actual onset cohort ends strictly before its first-observed start.","root_native_prestart_rows":11149614}
+DIRECTION ALL FOUR ENDPOINTS <=5s
+36×13 DataFrame
+ Row │ phase     horizon_s  pre_direction  sensitivity                     master_n  available_n  mean_change        median_change  up_n   down_n  flat_n  signed_pair_n  mean_signed_change
+     │ String15  Int64      String7        String                          Int64     Int64        Float64?           Float64?       Int64  Int64   Int64   Int64          Float64?
+─────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   1 │ onset             1  missing        pre_and_future_endpoints_fresh        26            0  missing             missing           0       0       0              0   missing
+   2 │ onset             5  missing        pre_and_future_endpoints_fresh        26            0  missing             missing           0       0       0              0   missing
+   3 │ onset            20  missing        pre_and_future_endpoints_fresh        26            0  missing             missing           0       0       0              0   missing
+   4 │ onset            60  missing        pre_and_future_endpoints_fresh        26            0  missing             missing           0       0       0              0   missing
+   5 │ onset           120  missing        pre_and_future_endpoints_fresh        26            0  missing             missing           0       0       0              0   missing
+   6 │ onset           300  missing        pre_and_future_endpoints_fresh        26            0  missing             missing           0       0       0              0   missing
+   7 │ onset           600  missing        pre_and_future_endpoints_fresh        26            0  missing             missing           0       0       0              0   missing
+   8 │ onset          1800  missing        pre_and_future_endpoints_fresh        26            0  missing             missing           0       0       0              0   missing
+   9 │ onset          3600  missing        pre_and_future_endpoints_fresh        26            0  missing             missing           0       0       0              0   missing
+  10 │ onset             1  down           pre_and_future_endpoints_fresh       347          182        0.000236264         0.0        69      35      78            182        -0.000236264
+  11 │ onset             5  down           pre_and_future_endpoints_fresh       347          181        0.00019337          0.0        78      42      61            181        -0.00019337
+  12 │ onset            20  down           pre_and_future_endpoints_fresh       347          143        0.000342657         0.0        62      47      34            143        -0.000342657
+  13 │ onset            60  down           pre_and_future_endpoints_fresh       347          147        0.000367347         0.001      75      56      16            147        -0.000367347
+  14 │ onset           120  down           pre_and_future_endpoints_fresh       347          140        0.00085             0.001      73      56      11            140        -0.00085
+  15 │ onset           300  down           pre_and_future_endpoints_fresh       347          131        0.000572519         0.0        63      64       4            131        -0.000572519
+  16 │ onset           600  down           pre_and_future_endpoints_fresh       347          120       -0.000416667        -0.002      44      68       8            120         0.000416667
+  17 │ onset          1800  down           pre_and_future_endpoints_fresh       347          119       -0.00305042         -0.003      53      63       3            119         0.00305042
+  18 │ onset          3600  down           pre_and_future_endpoints_fresh       347          121       -0.00432231         -0.003      56      64       1            121         0.00432231
+  19 │ onset             1  flat           pre_and_future_endpoints_fresh        70           20        0.00035             0.0         8       4       8              0   missing
+  20 │ onset             5  flat           pre_and_future_endpoints_fresh        70           19        0.000263158         0.001      10       7       2              0   missing
+  21 │ onset            20  flat           pre_and_future_endpoints_fresh        70           15        0.00133333          0.0         7       6       2              0   missing
+  22 │ onset            60  flat           pre_and_future_endpoints_fresh        70           12       -0.000333333         0.0         5       5       2              0   missing
+  23 │ onset           120  flat           pre_and_future_endpoints_fresh        70           14        0.002               0.001       7       7       0              0   missing
+  24 │ onset           300  flat           pre_and_future_endpoints_fresh        70           14        0.00364286          0.003       8       6       0              0   missing
+  25 │ onset           600  flat           pre_and_future_endpoints_fresh        70           15        0.00186667         -0.001       7       8       0              0   missing
+  26 │ onset          1800  flat           pre_and_future_endpoints_fresh        70           16        0.0015              0.0065     11       5       0              0   missing
+  27 │ onset          3600  flat           pre_and_future_endpoints_fresh        70           11       -0.00690909          0.0         5       5       1              0   missing
+  28 │ onset             1  up             pre_and_future_endpoints_fresh       306          165       -0.000230303         0.0        50      58      57            165        -0.000230303
+  29 │ onset             5  up             pre_and_future_endpoints_fresh       306          164       -0.000182927         0.0        56      60      48            164        -0.000182927
+  30 │ onset            20  up             pre_and_future_endpoints_fresh       306          128       -0.000828125        -0.001      40      69      19            128        -0.000828125
+  31 │ onset            60  up             pre_and_future_endpoints_fresh       306          127       -0.000251969        -0.001      46      70      11            127        -0.000251969
+  32 │ onset           120  up             pre_and_future_endpoints_fresh       306          121       -0.0018843          -0.002      40      72       9            121        -0.0018843
+  33 │ onset           300  up             pre_and_future_endpoints_fresh       306          125        0.000376            0.0        57      60       8            125         0.000376
+  34 │ onset           600  up             pre_and_future_endpoints_fresh       306          112       -0.002              -0.003      42      67       3            112        -0.002
+  35 │ onset          1800  up             pre_and_future_endpoints_fresh       306          125       -0.00572            -0.006      46      77       2            125        -0.00572
+  36 │ onset          3600  up             pre_and_future_endpoints_fresh       306          111       -0.0147838          -0.014      33      77       1            111        -0.0147838
+NEARBY PRICE COMPARISONS
+18×6 DataFrame
+ Row │ horizon_s  control_phase  master_n  available_n  mean_difference  median_difference
+     │ Int64      String15       Int64     Int64        Float64          Float64
+─────┼─────────────────────────────────────────────────────────────────────────────────────
+   1 │         1  near_before         749          718      2.78552e-5               0.0
+   2 │         1  near_after          749          737      1.62822e-5               0.0
+   3 │         5  near_before         749          718      3.20334e-5               0.0
+   4 │         5  near_after          749          737      4.88467e-5               0.0
+   5 │        20  near_before         749          718     -4.17827e-5               0.0
+   6 │        20  near_after          749          736      1.08696e-5               0.0
+   7 │        60  near_before         749          718      4.45682e-5               0.0
+   8 │        60  near_after          749          736     -8.83152e-5               0.0
+   9 │       120  near_before         749          718     -5.57103e-5               0.0
+  10 │       120  near_after          749          736     -0.000182065              0.0
+  11 │       300  near_before         749          714      0.000383754              0.0
+  12 │       300  near_after          749          736     -0.000391304             -0.001
+  13 │       600  near_before         749          713     -0.00135624               0.0
+  14 │       600  near_after          749          736     -0.000866848             -0.001
+  15 │      1800  near_before         749          712     -0.00131882               0.0
+  16 │      1800  near_after          749          732     -0.000564208             -0.001
+  17 │      3600  near_before         749          700     -0.00105286               0.0
+  18 │      3600  near_after          749          720     -0.000258333             -0.001
+OVERLAP
+5×4 DataFrame
+ Row │ horizon_s  mean_other_starts  max_other_starts  starts_with_overlap
+     │ Int64      Float64            Int64             Int64
+─────┼─────────────────────────────────────────────────────────────────────
+   1 │       120            6.51001                39                  688
+   2 │       300           13.9973                 61                  725
+   3 │       600           24.6622                 86                  740
+   4 │      1800           67.0093                164                  749
+   5 │      3600          120.417                 247                  749
+SECOND-SET BEFORE START AVAILABILITY
+19×9 DataFrame
+ Row │ feature                            phase         master_n  available_n  missing_n  distinct_n  median_age_s  age_over_120s_n  age_over_day_n
+     │ String                             String15      Int64     Int64        Int64      Int64       Float64?      Int64            Int64
+─────┼──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   1 │ second.far_front_age_log           before_start       749            6        743           6     5.4065e-5                2               0
+   2 │ second.far_queue_age_p90_log       before_start       749            6        743           6     5.4065e-5                2               0
+   3 │ second.far_size_hhi                before_start       749            6        743           6     5.4065e-5                2               0
+   4 │ second.far_replenish_log1p_64      before_start       749            6        743           6     5.4065e-5                2               0
+   5 │ second.far_replenish_log1p_1024    before_start       749            6        743           6     5.4065e-5                2               0
+   6 │ second.far_priority_loss_rate_64   before_start       749            3        746           3     5.4065e-5                2               0
+   7 │ second.far_priority_loss_rate_10…  before_start       749            5        744           5     5.4065e-5                2               0
+   8 │ second.far_absorption_share_64     before_start       749            6        743           6     5.4065e-5                2               0
+   9 │ second.far_absorption_share_1024   before_start       749            6        743           6     5.4065e-5                2               0
+  10 │ second.far_identity_survival_64    before_start       749            6        743           6     5.4065e-5                2               0
+  11 │ second.far_identity_survival_1024  before_start       749            6        743           5     5.4065e-5                2               0
+  12 │ second.far_size_retention_64       before_start       749            6        743           6     5.4065e-5                2               0
+  13 │ second.far_size_retention_1024     before_start       749            6        743           5     5.4065e-5                2               0
+  14 │ second.unresolved_age_groups_log   before_start       749            6        743           6     5.4065e-5                2               0
+  15 │ second.extension_count_log         before_start       749            6        743           2     5.4065e-5                2               0
+  16 │ second.step_ratio_log              before_start       749            0        749           0     5.4065e-5                2               0
+  17 │ second.pullback_ticks_last_log     before_start       749            1        748           1     5.4065e-5                2               0
+  18 │ second.step_duration_groups_log    before_start       749            1        748           1     5.4065e-5                2               0
+  19 │ second.pullback_ticks_prev_log     before_start       749            0        749           0     5.4065e-5                2               0
+LARGEST STRICT PRESTART DESCRIPTIVE CORRELATIONS: exploratory, dependent, uncorrected
+12×10 DataFrame
+ Row │ feature                            phase         horizon_s  overall_pair_n  overall_correlation  quarter_pair_counts  quarter_correlations             all_quarters_at_least_30_pairs  same_sign_all_quarters  abs_correlation
+     │ String                             String15      Int64      Int64           Float64?             String               String                           Bool                            Bool                    Float64
+─────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   1 │ second.unresolved_age_groups_log   before_start         60               3            -0.999317  1|0|1|1              missing|missing|missing|missing                           false                   false         0.999317
+   2 │ second.far_identity_survival_1024  before_start         60               3            -0.998123  1|0|1|1              missing|missing|missing|missing                           false                   false         0.998123
+   3 │ second.far_size_retention_1024     before_start         60               3            -0.998123  1|0|1|1              missing|missing|missing|missing                           false                   false         0.998123
+   4 │ second.far_identity_survival_64    before_start         60               3            -0.994676  1|0|1|1              missing|missing|missing|missing                           false                   false         0.994676
+   5 │ second.far_size_retention_64       before_start         60               3            -0.994676  1|0|1|1              missing|missing|missing|missing                           false                   false         0.994676
+   6 │ second.far_size_hhi                before_start       3600               3             0.987134  0|0|1|2              missing|missing|missing|missing                           false                   false         0.987134
+   7 │ second.far_queue_age_p90_log       before_start       1800               4            -0.98555   0|0|2|2              missing|missing|missing|missing                           false                   false         0.98555
+   8 │ second.far_priority_loss_rate_10…  before_start       1800               4             0.982199  0|0|2|2              missing|missing|missing|missing                           false                   false         0.982199
+   9 │ second.far_absorption_share_1024   before_start         60               3             0.981473  1|0|1|1              missing|missing|missing|missing                           false                   false         0.981473
+  10 │ second.far_queue_age_p90_log       before_start        120               4            -0.979669  0|0|2|2              missing|missing|missing|missing                           false                   false         0.979669
+  11 │ second.far_size_hhi                before_start         60               3            -0.97757   1|0|1|1              missing|missing|missing|missing                           false                   false         0.97757
+  12 │ second.far_priority_loss_rate_10…  before_start        120               4             0.971535  0|0|2|2              missing|missing|missing|missing                           false                   false         0.971535
+{"source_component_disposition_rows":80,"plane_roles":99,"descriptive_association_rows":425340,"all_four_price_endpoint_freshness_s":5,"multiple_comparison_policy":"All computed comparisons saved, including missing/constant; no p-values, selected model, predictive target, significance or tradability claim.","chronology_policy":"four equal elapsed-time quarters; availability counts and signs reported separately","future_price_endpoints_freshness_s":5,"dependence_policy":"overlap counts retained; nearby controls can include other first-observed starts; no independent-sample inference","prestart_feature_change_policy":"onset cohort ends strictly before start; separate contemporaneous onset association rows","source_preservation":"alignment.sqlite is read only; complete raw source rows and all offsets remain pinned; numerical analyses cover documented selected measurements, not every byte of all payloads"}
+{"frozen_input_hashes":{"lifecycle_original_rows.jsonl.gz":"e4e0d3d80b49cd86809a0917503b5e29e573857b9616f9f168507d9887badcef","quote_windows.csv":"83c26517885c16ca33cea970ac3b0196f3c67582cdfb105b193ead52ab670412","remaining_gaps.csv":"d29f2368421470bd66e6a08947a9ccd7fc59a351b6ce536abb68772116759aa5","native_quality_contexts.jsonl.gz":"eaa4f5681026130f9ea032e11645c97ff4521d28ea77608e22c71e41ff34c491","enrichment_receipt.json":"4be31173f93c798f150b9d52856a24a1931e7a5f31028b2462a7cb139e82c45f","lifecycle_context_links.csv":"f99785e522001d3f89336603de31268ce861b93fe80f519dbe476a1c93f9c97b","external_extended_asof.jsonl.gz":"aa185e0332b0eb55d5082adc39643bf7f6159961de602679ad0bacf6f33f01f9","enriched_context_measurements.csv":"2923d2682ced48125abde9f1f00d4666319a372fad1281010a35917ed2ea1064"},"quote_trade_pair_rows":20223,"contexts":10486,"original_counts":"771787 second-set rows, 583688 groups, 749 families, 329658 external rows, 13 conceptual points, 99 registry identities/dispositions, 30739 trades remain pinned","source_database_mode":"read only","quote_trade_summary_rows":1620,"directly_observed_zero_counts":64926,"excluded_input_sections":["candidate","episode","response"],"missing_policy":"No family or retained source row excluded; see remaining_gaps.csv; missing is never filled from future knowledge.","final_lifecycle_numeric_rows":757280,"extended_weather_rows":2548098,"numeric_rows":7615124,"lifecycle_age_policy":"Publication ages retained in links; numerical age conservatively includes flow-bin observation age; no early availability inferred from an old event timestamp","structural_counter_mismatches":0,"external_feature_rows":4215372,"complete_lifecycle_quality_rows":1021088,"final_analysis_completed":true,"analysis_policy":"One enriched descriptive batch; frozen baseline reused; all additions present before numerical rerun; no fitted model or backtest.","structural_counter_checks":20972,"all_agreed_areas_accounted_for":true,"families":749,"schema":"FAMILY_ALL_ADDITIONS_READY_V2","final_analysis_started":true,"lifecycle_dimensions":"section, side, queue/ladder scope, observation type, horizon_ns, window_seconds; no pooling across these dimensions","features":969}
+ENRICHED_ALL_ADDITIONS_ANALYSIS_COMPLETE

@@ -1,0 +1,49 @@
+Extending pre-start and nearby second-set comparisons to 5/10 minutes
+Computing exploratory associations with explicit constant/missing results
+Native price_raw/1e9 checks: 44940
+ONSET DIRECTION: fresh endpoint ages <=5 seconds; all quarters combined
+{"mean":-0.0002418300653594563,"median":0.0,"h":1,"mean_signed":-0.0002418300653594563,"master_n":306,"direction":"up","down":107,"fresh_n":306,"up":86,"flat":113}
+{"mean":0.00020579710144927844,"median":0.0,"h":1,"mean_signed":-0.00020579710144927844,"master_n":347,"direction":"down","down":70,"fresh_n":345,"up":127,"flat":148}
+{"mean":0.00012857142857143345,"median":0.0,"h":1,"mean_signed":null,"master_n":70,"direction":"flat","down":10,"fresh_n":70,"up":16,"flat":44}
+{"mean":-0.0007368421052632637,"median":0.0,"h":1,"mean_signed":null,"master_n":26,"direction":"missing","down":8,"fresh_n":19,"up":1,"flat":10}
+{"mean":-0.0002622950819671871,"median":0.0,"h":5,"mean_signed":-0.0002622950819671871,"master_n":306,"direction":"up","down":119,"fresh_n":305,"up":94,"flat":92}
+{"mean":0.00022965116279068917,"median":0.0,"h":5,"mean_signed":-0.00022965116279068917,"master_n":347,"direction":"down","down":75,"fresh_n":344,"up":144,"flat":125}
+{"mean":0.00010144927536232697,"median":0.0,"h":5,"mean_signed":null,"master_n":70,"direction":"flat","down":12,"fresh_n":69,"up":19,"flat":38}
+{"mean":-0.0009473684210526675,"median":0.0,"h":5,"mean_signed":null,"master_n":26,"direction":"missing","down":8,"fresh_n":19,"up":2,"flat":9}
+{"mean":-0.0005639810426540337,"median":-0.0009999999999998899,"h":20,"mean_signed":-0.0005639810426540337,"master_n":306,"direction":"up","down":107,"fresh_n":211,"up":73,"flat":31}
+{"mean":0.00030923694779116094,"median":0.0,"h":20,"mean_signed":-0.00030923694779116094,"master_n":347,"direction":"down","down":84,"fresh_n":249,"up":114,"flat":51}
+{"mean":0.000676470588235311,"median":0.0,"h":20,"mean_signed":null,"master_n":70,"direction":"flat","down":15,"fresh_n":34,"up":16,"flat":3}
+{"mean":-0.00019999999999997797,"median":-0.0009999999999998899,"h":20,"mean_signed":null,"master_n":26,"direction":"missing","down":3,"fresh_n":5,"up":2,"flat":0}
+{"mean":-0.0005492227979274789,"median":-0.0009999999999998899,"h":60,"mean_signed":-0.0005492227979274789,"master_n":306,"direction":"up","down":111,"fresh_n":193,"up":66,"flat":16}
+{"mean":0.00029694323144103667,"median":0.0009999999999998899,"h":60,"mean_signed":-0.00029694323144103667,"master_n":347,"direction":"down","down":83,"fresh_n":229,"up":115,"flat":31}
+{"mean":0.00017857142857144063,"median":0.0,"h":60,"mean_signed":null,"master_n":70,"direction":"flat","down":10,"fresh_n":28,"up":12,"flat":6}
+{"mean":-0.0035555555555555093,"median":-0.0030000000000001137,"h":60,"mean_signed":null,"master_n":26,"direction":"missing","down":9,"fresh_n":9,"up":0,"flat":0}
+{"mean":-0.0014020618556700884,"median":-0.0009999999999998899,"h":120,"mean_signed":-0.0014020618556700884,"master_n":306,"direction":"up","down":107,"fresh_n":194,"up":70,"flat":17}
+{"mean":0.0006772727272727435,"median":0.0009999999999998899,"h":120,"mean_signed":-0.0006772727272727435,"master_n":347,"direction":"down","down":89,"fresh_n":220,"up":115,"flat":16}
+{"mean":0.0012068965517241582,"median":0.0,"h":120,"mean_signed":null,"master_n":70,"direction":"flat","down":11,"fresh_n":29,"up":14,"flat":4}
+{"mean":0.0,"median":0.0,"h":120,"mean_signed":null,"master_n":26,"direction":"missing","down":0,"fresh_n":2,"up":0,"flat":2}
+{"mean":-9.923781225699724e-18,"median":-0.0009999999999998899,"h":300,"mean_signed":-9.923781225699724e-18,"master_n":306,"direction":"up","down":90,"fresh_n":179,"up":78,"flat":11}
+{"mean":0.00044019138755980265,"median":0.0,"h":300,"mean_signed":-0.00044019138755980265,"master_n":347,"direction":"down","down":101,"fresh_n":209,"up":103,"flat":5}
+{"mean":0.001085714285714293,"median":0.0,"h":300,"mean_signed":null,"master_n":70,"direction":"flat","down":17,"fresh_n":35,"up":16,"flat":2}
+{"mean":null,"median":null,"h":300,"mean_signed":null,"master_n":26,"direction":"missing","down":0,"fresh_n":0,"up":0,"flat":0}
+{"mean":-0.0024598930481283493,"median":-0.0040000000000000036,"h":600,"mean_signed":-0.0024598930481283493,"master_n":306,"direction":"up","down":117,"fresh_n":187,"up":65,"flat":5}
+{"mean":-0.00016410256410254604,"median":-0.0019999999999997797,"h":600,"mean_signed":0.00016410256410254604,"master_n":347,"direction":"down","down":105,"fresh_n":195,"up":78,"flat":12}
+{"mean":0.0003793103448276057,"median":-0.0009999999999998899,"h":600,"mean_signed":null,"master_n":70,"direction":"flat","down":16,"fresh_n":29,"up":13,"flat":0}
+{"mean":-0.0044999999999999485,"median":-0.0044999999999999485,"h":600,"mean_signed":null,"master_n":26,"direction":"missing","down":2,"fresh_n":2,"up":0,"flat":0}
+{"mean":-0.001857142857142868,"median":-0.0014999999999998348,"h":1800,"mean_signed":-0.001857142857142868,"master_n":306,"direction":"up","down":99,"fresh_n":196,"up":94,"flat":3}
+{"mean":-0.004771573604060929,"median":-0.006000000000000227,"h":1800,"mean_signed":0.004771573604060929,"master_n":347,"direction":"down","down":121,"fresh_n":197,"up":73,"flat":3}
+{"mean":-0.0004848484848485391,"median":0.004999999999999893,"h":1800,"mean_signed":null,"master_n":70,"direction":"flat","down":12,"fresh_n":33,"up":21,"flat":0}
+{"mean":0.002666666666666669,"median":0.0030000000000001137,"h":1800,"mean_signed":null,"master_n":26,"direction":"missing","down":0,"fresh_n":3,"up":3,"flat":0}
+{"mean":-0.009657142857142852,"median":-0.01100000000000012,"h":3600,"mean_signed":-0.009657142857142852,"master_n":306,"direction":"up","down":108,"fresh_n":175,"up":65,"flat":2}
+{"mean":-0.0031049999999999845,"median":-0.002000000000000224,"h":3600,"mean_signed":0.0031049999999999845,"master_n":347,"direction":"down","down":106,"fresh_n":200,"up":91,"flat":3}
+{"mean":-0.0037931034482759037,"median":0.0009999999999998899,"h":3600,"mean_signed":null,"master_n":70,"direction":"flat","down":12,"fresh_n":29,"up":16,"flat":1}
+{"mean":0.010499999999999954,"median":0.010499999999999954,"h":3600,"mean_signed":null,"master_n":26,"direction":"missing","down":0,"fresh_n":2,"up":2,"flat":0}
+Association dispositions: 4×2 DataFrame
+ Row │ disposition            rows
+     │ String                 Int64
+─────┼───────────────────────────────
+   1 │ descriptive_only       174213
+   2 │ constant_feature        55966
+   3 │ fewer_than_3_pairs      53050
+   4 │ constant_price_change    2746
+Finished descriptive follow-up; no model or significance claims
