@@ -25,6 +25,11 @@ def process_token(pid):
         return None
 
 
+def coordinator_source(config):
+    return pathlib.Path(config.get('coordinator_source',
+        str(pathlib.Path(config['base'])/'full-context-audit/scripts/resume_multibox_candidate.py')))
+
+
 def imds_instance():
     # Fixed local IMDS endpoint, no proxy or user-controlled URL.
     opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
@@ -149,6 +154,9 @@ def run(config, shutdown=None):
         fcntl.flock(lock,fcntl.LOCK_EX | fcntl.LOCK_NB)
         require(imds_instance() == config['instance'], 'IMDS instance mismatch')
         require(config['shutdown_behavior_verified'] == 'stop', 'stop behavior not verified')
+        if config.get('coordinator_source_sha256'):
+            require(hashlib.sha256(coordinator_source(config).read_bytes()).hexdigest() ==
+                    config['coordinator_source_sha256'], 'replacement coordinator source changed')
         for name,expected in config.get('numerical_helper_sha256',{}).items():
             require(hashlib.sha256((pathlib.Path(config['base'])/'full-context-audit/scripts'/name).read_bytes()).hexdigest()
                     == expected, 'numerical helper changed')
@@ -158,7 +166,7 @@ def run(config, shutdown=None):
         token = process_token(config['pid'])
         if token is not None:
             cmd = pathlib.Path('/proc',str(config['pid']),'cmdline').read_bytes().split(b'\0')
-            require(str(pathlib.Path(config['base'])/'full-context-audit/scripts/resume_multibox_candidate.py').encode() in cmd
+            require(str(coordinator_source(config)).encode() in cmd
                     and b'--execute' in cmd and cmd[cmd.index(b'--worker-id')+1].decode() == config['owner'],
                     'unexpected coordinator command')
         wait_exact_exit(config)
