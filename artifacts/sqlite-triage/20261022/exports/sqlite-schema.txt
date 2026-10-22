@@ -1,0 +1,11 @@
+DATABASE /opt/frankie-box/work/experiment-search/20231018/cycle-00/discovery.partial/recovery/indexed-v1/cells.sqlite BYTES 33792499712
+["index", "labels_order", "CREATE INDEX labels_order ON labels(whole,column_name,value_text)"]
+["index", "labels_selection", "CREATE INDEX labels_selection ON labels(selection)"]
+["table", "labels", "CREATE TABLE labels\n        (original INTEGER PRIMARY KEY, key BLOB UNIQUE NOT NULL, selection INTEGER NOT NULL,\n         whole INTEGER NOT NULL, column_name TEXT NOT NULL, value_text TEXT NOT NULL, body BLOB NOT NULL, pin BLOB NOT NULL)"]
+["table", "metadata", "CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL)"]
+["table", "ordering", "CREATE TABLE ordering (ordinal INTEGER PRIMARY KEY, original INTEGER UNIQUE NOT NULL)"]
+["table", "selections", "CREATE TABLE selections\n        (id INTEGER PRIMARY KEY, digest BLOB UNIQUE NOT NULL, size INTEGER NOT NULL, body BLOB NOT NULL, pin BLOB NOT NULL)"]
+DATABASE /opt/frankie-box/work/experiment-search/20231018/cycle-00/discovery.partial/recovery/factored-v2/group-tasks-finite-2-6.sqlite BYTES 110800896
+["table", "metadata", "CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL)"]
+["table", "tasks", "CREATE TABLE tasks (ordinal INTEGER PRIMARY KEY, body BLOB NOT NULL, pin BLOB NOT NULL)"]
+
