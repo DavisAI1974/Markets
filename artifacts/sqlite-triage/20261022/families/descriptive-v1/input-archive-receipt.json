@@ -1,0 +1,11 @@
+{
+  "bucket": "bento-568968024170-us-east-2-an",
+  "region": "us-east-2",
+  "key": "frankie/family-prebirth/20261022/family-input-completeness.tar.gz",
+  "bytes": 75926238,
+  "sha256": "3600071f33d6198c108e7e07ff7b1d08f804f1661732e2970c27203afdefba77",
+  "manifest_verified_saved_files": 43,
+  "upload_http_status": 200,
+  "archive_and_uncompressed_file_hashes_verified": true,
+  "status": "input completion only; revised statistical rerun paused"
+}

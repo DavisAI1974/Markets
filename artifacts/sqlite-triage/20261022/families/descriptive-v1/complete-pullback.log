@@ -1,0 +1,9 @@
+{"definition":"Source completed-step fields unchanged. Added separately named ongoing pullback depth from stored causal D-state. Frozen/undefined anchor states remain missing, never imputed.","pullback_measurement_rows":31458,"source_completed_pullback_agreements":728,"status":"input completion only; statistical rerun remains paused","family_link_rows":10486,"context_rows":10486,"distinct_target_families":749}
+BEFORE START
+3×6 DataFrame
+ Row │ feature                            phase         lag_s  master_n  available_n  missing_n
+     │ String                             String15?     Int64  Int64     Int64        Int64
+─────┼──────────────────────────────────────────────────────────────────────────────────────────
+   1 │ geometry.ongoing_pullback_depth_…  before_start      0       749          617        132
+   2 │ geometry.completed_pullback_last…  before_start      0       749           48        701
+   3 │ geometry.completed_pullback_prev…  before_start      0       749            6        743

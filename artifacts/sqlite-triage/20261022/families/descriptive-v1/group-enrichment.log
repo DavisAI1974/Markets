@@ -1,0 +1,1 @@
+{"source_receipts":10486,"policy":"Actual latest completed group, same instrument, no later than cutoff/cursor; source age and event disposition retained. These are separate historical observations, not imputed current-event values.","extended_group_measurement_rows":128079,"group_measurement_rows":71155}

@@ -1,0 +1,27 @@
+name,sql
+prebirth_groups,"CREATE VIEW prebirth_groups AS SELECT f.family_id AS target_family_id,f.start_recv_ns,g.* FROM family_start f JOIN group_event g ON g.recv_ns>=f.window_start_ns AND g.recv_ns<f.start_recv_ns AND g.input_cursor<f.input_cursor"
+prebirth_external_updates,"CREATE VIEW prebirth_external_updates AS SELECT f.family_id,f.start_recv_ns,e.* FROM family_start f JOIN external_row e ON e.published_ns>=f.window_start_ns AND e.published_ns<f.start_recv_ns"
+external_known_before_start,"CREATE VIEW external_known_before_start AS SELECT f.family_id,f.start_recv_ns,e.* FROM family_start f JOIN external_row e ON e.published_ns<f.start_recv_ns"
+prebirth_prices,"CREATE VIEW prebirth_prices AS SELECT f.family_id AS target_family_id,f.start_recv_ns,p.*,c.available_ns,
+            c.trade_input_cursor,c.group_close_input_cursor FROM family_start f JOIN price_clock c
+            ON c.available_ns>=f.window_start_ns AND c.available_ns<f.start_recv_ns
+            AND c.group_close_input_cursor<f.input_cursor JOIN price_row p ON p.source_ordinal=c.source_ordinal"
+trade_market_alignment,"CREATE VIEW trade_market_alignment AS SELECT p.*,t.source_offset AS trade_second_set_offset,
+        t.source_length AS trade_second_set_length,t.known_by_ns AS trade_known_by_ns,
+        t.raw_components_json AS second_set_components_at_trade,t.coverage_json AS trade_coverage,
+        (SELECT max(b.source_offset) FROM second_set_clock b WHERE b.source_offset<t.source_offset) AS prior_second_set_offset,
+        e.source_offset AS emitted_second_set_offset,e.known_by_ns AS emission_known_by_ns,
+        t.event_ns AS second_set_trade_event_ns,t.receive_ns AS second_set_trade_receive_ns
+        FROM price_clock p LEFT JOIN second_set_clock t ON t.input_cursor=p.trade_input_cursor AND t.instrument_id=p.instrument_id
+        LEFT JOIN second_set_clock e ON e.input_cursor=p.group_close_input_cursor AND e.instrument_id=p.instrument_id"
+family_market_alignment,"CREATE VIEW family_market_alignment AS SELECT f.*,c.source_offset AS second_set_offset,c.source_length AS second_set_length,
+        c.known_by_ns,c.raw_components_json,c.coverage_json FROM family_start f
+        LEFT JOIN second_set_clock c ON c.input_cursor=f.input_cursor"
+group_market_alignment,"CREATE VIEW group_market_alignment AS SELECT g.*,c.source_offset AS second_set_offset,c.known_by_ns
+        FROM group_event g LEFT JOIN second_set_clock c ON c.input_cursor=g.input_cursor AND c.instrument_id=g.instrument_id"
+combined_clock_events,"CREATE VIEW combined_clock_events AS
+        SELECT known_by_ns AS available_ns,input_cursor AS source_cursor,'second_set' AS kind,cast(source_offset as text) AS record_key FROM second_set_clock
+        UNION ALL SELECT available_ns,group_close_input_cursor,'price',cast(source_ordinal as text) FROM price_clock
+        UNION ALL SELECT published_ns,NULL,'external_13',point_name||':'||source_ordinal FROM external_row
+        UNION ALL SELECT c.known_by_ns,f.input_cursor,'family_start',f.family_id FROM family_start f
+          LEFT JOIN second_set_clock c ON c.input_cursor=f.input_cursor"

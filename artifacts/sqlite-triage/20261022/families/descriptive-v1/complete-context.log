@@ -1,0 +1,11 @@
+Indexed completed-group contexts 1000/10486
+Indexed completed-group contexts 2000/10486
+Indexed completed-group contexts 3000/10486
+Indexed completed-group contexts 4000/10486
+Indexed completed-group contexts 5000/10486
+Indexed completed-group contexts 6000/10486
+Indexed completed-group contexts 7000/10486
+Indexed completed-group contexts 8000/10486
+Indexed completed-group contexts 9000/10486
+Indexed completed-group contexts 10000/10486
+{"indexed_contexts":10486,"numeric_measurement_rows":5803712,"native_raw_price_unit_checks":209720,"policy":"Read exact previously validated offsets only. All rows retained; observations carry original group clocks/cursors/ages. Source payloads remain pinned. No raw identifier, absolute timestamp, teacher knowledge or future label is a numerical feature."}

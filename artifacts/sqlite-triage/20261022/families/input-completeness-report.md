@@ -37,6 +37,12 @@ For last completed pullback, the 701 unavailable observations comprise 559 NO_CO
 
 NO_FLOW means the sum of buy- and sell-side traded sizes is zero in the preceding 64 same-instrument event groups. These are groups, not seconds. Orders and cancellations can still occur. The source needs that flow to select a far-side direction.
 
+## Queue-age coverage
+
+For the cited second-set far-front queue-age field, all 771,787 source rows remain present. Of the 276,054 unavailable numerical cells, 188,099 are NOT_F_LAST input events, 51,976 are NO_FLOW, and 35,979 are SIDE_UNDEFINED. Among the 583,688 completed groups, 495,733 are numerically available (about 85%). The other completed-group observations do not define the flow-selected far side.
+
+The underlying bid and ask information is available independently of that selection. In the expanded native inputs, **each of the following is available at all 749 strictly pre-start cutoffs**, with no explicit null or unmaterialized key: `native.book.bid_levels.rank1.front_order_age_s`, `native.book.ask_levels.rank1.front_order_age_s`, `native.book.bid_levels.rank1.queue_age_p90_s`, and `native.book.ask_levels.rank1.queue_age_p90_s`. Their median observation age is 0.024690523 seconds; individual ages, seeded/observed priority provenance and source limitations remain attached. These are observed priority ages, not proof of original order birth. Both sides are kept separately; neither is relabelled as a far side when direction is undefined.
+
 ## Remaining source limitations
 
 - Some native elapsed durations have no valid historical anchor; some measurement dictionaries do not materialize every key. Explicit nulls and unmaterialized keys remain distinguishable. They are not silently filled with zero.

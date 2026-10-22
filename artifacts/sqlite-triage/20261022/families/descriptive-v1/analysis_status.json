@@ -1,0 +1,19 @@
+{
+  "status": "INPUT_COMPLETION_ONLY_REVISED_ANALYSIS_PAUSED",
+  "cancelled_expanded_analysis_command": "42412a51-fe01-490d-a35d-109d8ac382ad",
+  "completed_initial_analysis_command": "79662464-e511-4bd1-a019-992e38281af0",
+  "input_audit_command": "d2c07fe9-fc53-453f-81f3-4c47261f6c59",
+  "temperature_completion_command": "e02c2fd8-b4e0-44a3-8897-42b2dbd9712a",
+  "pullback_completion_command": "e29afc24-5d9a-4173-b9f9-167ea7ad6997",
+  "initial_pass_is_preliminary": true,
+  "revised_price_direction_code_pending_rerun": true,
+  "temperature_before_start_pairs": 13482,
+  "temperature_before_start_missing_pairs": 0,
+  "ongoing_pullback_before_start_available": 617,
+  "ongoing_pullback_before_start_missing": 132,
+  "last_completed_pullback_available": 48,
+  "previous_completed_pullback_available": 6,
+  "families": 749,
+  "indexed_contexts": 10486,
+  "no_model_or_backtest": true
+}

@@ -1,0 +1,39 @@
+Resume the family research from this INPUT-COMPLETION checkpoint. Read input-completeness-report.md and descriptive-v1/analysis_status.json first; the older family-analysis-handoff.txt describes the prior checkpoint.
+
+The user requested that missing available data be added and remaining gaps disclosed BEFORE another statistical rerun. That revised rerun remains paused. The first descriptive Julia pass ran; its inputs omitted available context. An expanded rerun was cancelled (SSM 42412a51-fe01-490d-a35d-109d8ac382ad). Do not present interim associations as final signals. No model, chosen predictive target, EvoTrees fit or backtest has run.
+
+All completed reconstruction, clock verification, source binding, database restoration and Julia installation from the older handoff remain complete. Do not repeat them. Bedrock/teacher is the confirmed second set. No source data was rejected or deleted.
+
+Persistent AWS paths remain:
+/opt/frankie-box/work/family-research-20261022/alignment.sqlite
+/opt/frankie-box/work/family-research-20261022/descriptive-v1
+/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/bin/julia
+Project: /opt/frankie-box/work/family-research-20261022/julia-env
+JULIA_DEPOT_PATH=/opt/frankie-box/work/family-research-20261022/julia-depot
+Use --startup-file=no --project=<project>. EC2 i-035994afa8bdf66a5, us-east-1; AWS plugin run_script/SSM only, no AWS CLI.
+
+Input completion actually performed:
+- 749 target families and all 583,688 retained groups remain pinned.
+- 10,486 exact indexed ROOT/native contexts read without scanning source files or enumerating the recovery directory; 5,803,712 measurement rows saved.
+- 71,155 completed-group second-set measurements plus 128,079 lookback measurements added. Latest-event and completed-group views remain separate with ages and dispositions.
+- All 13 external concepts, original 62 source series, all 99 registry identities/dispositions, and all 30,739 timestamped trades remain linked.
+- Same-station, same-field historical published weather observations added separately: 18 stations x 21 measurements x 3,745 snapshots = 1,415,610 rows. Temperature is available for all 18 x 749 = 13,482 strictly pre-start station/family pairs. Original latest-report M values remain unchanged. Both publication and measurement ages are saved.
+- Bid and ask rank-1 front-order age and queue-age p90 are each available for all 749 pre-start contexts. This retains queue information without inventing a flow-selected far side.
+- Stored D-state read at 6,265 unique validated offsets covering all 10,486 contexts. 31,458 pullback rows and full family/source linkage saved. 728 present completed-step contextual values agreed with source log1p conversion.
+- Ongoing pullback depth is separately available for 617/749 pre-start contexts. 132 remain undefined/frozen. Original last-completed pullback remains available for 48; previous-completed pullback and step ratio for 6. Do not redefine those fields or fill absent completed events using future prices.
+
+Remaining reasons are explicit: NO_FLOW, SIDE_UNDEFINED, NO_COMPLETED_STEP, CHAIN_BROKEN, no valid duration anchor, source-null/unmaterialized keys, no earlier publication, stale measurements, and retained-price interval censoring. Queue-age 495,733/771,787 refers to event rows: 188,099 NOT_F_LAST rows, 51,976 NO_FLOW rows, 35,979 SIDE_UNDEFINED rows. Completed-group availability is about 85%. NO_FLOW is zero buy+sell traded size in the preceding 64 instrument groups, not 64 seconds or a lost dataset.
+
+Source definitions were inspected in /opt/frankie-box/work/source-indexed-consumers-20261021/research/kalshi/frankie_boss/{c15_teacher.py,c15_teacher_r3.py,c15_dstate.py}. The original far-side and completed-step equations were not changed. Ongoing pullback is a differently named causal geometry measurement. Frozen geometry remains unavailable, not current.
+
+Reports, inventories, compressed actual input tables, Project.toml and Manifest.toml are in this repository under artifacts/sqlite-triage/20261022/families/descriptive-v1/. Original uncompressed analysis inputs remain on EC2. For large saved tables, use gzip.open or decompress the .csv.gz file; these are actual outputs, not placeholder reports.
+
+Durable input bundle: s3://bento-568968024170-us-east-2-an/frankie/family-prebirth/20261022/family-input-completeness.tar.gz (us-east-2), 75,926,238 bytes, SHA256 3600071f33d6198c108e7e07ff7b1d08f804f1661732e2970c27203afdefba77. Uploaded and downloaded successfully; every saved file and its uncompressed digest verified against artifact_manifest.json. Do not download the database or Julia again.
+
+Before a revised analysis, note the prepared strict pre-start price-direction correction in run_descriptive.jl: onset cohort's prior price window now ends at T0-1 ns and cursor < family start cursor. Earlier direction summaries were onset-ended and preliminary. The revised full pipeline has NOT run and still needs end-to-end validation when the user proceeds.
+
+Pending statistical run order, using completed input caches: run_descriptive.jl -> summarize_descriptive.jl -> compare_context_changes.jl -> report_descriptive.jl. The summarizer now includes completed-group, expanded native/ROOT, historical-weather and ongoing-geometry measurements. Preserve all rows and missingness, use exact as-of clocks, keep instruments/models/horizons/stations separate, report flat/contradictory/inconclusive evidence, nearby comparisons, ages/censoring, chronological stability, overlap and multiple comparisons. One retained day only; no established predictive or trading claim.
+
+Math boundary tests passed 9/9. Actual input builders and their source/unit checks ran. Revised downstream analysis source edits are pending the revised run. drafts/test_family_analysis_math.py.draft remains unimplemented and must never be described as passing functionality.
+
+No subagents, monitors, new chats or messages to other chats were used. Main E:/Markets unrelated changes were preserved by reusing the existing checkpoint checkout at C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo.

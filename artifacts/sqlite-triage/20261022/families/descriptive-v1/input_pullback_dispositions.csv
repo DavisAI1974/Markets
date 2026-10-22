@@ -1,0 +1,123 @@
+feature,phase,lag_s,state,reason,rows
+geometry.ongoing_pullback_depth_ticks,pre120,0,1,source geometry frozen or undefined: SIDE_UNDEFINED,208
+geometry.completed_pullback_last_ticks,pre120,0,1,SIDE_UNDEFINED,208
+geometry.completed_pullback_previous_ticks,pre120,0,1,SIDE_UNDEFINED,208
+geometry.ongoing_pullback_depth_ticks,before_start,0,1,source geometry frozen or undefined: SIDE_UNDEFINED,132
+geometry.completed_pullback_last_ticks,before_start,0,1,SIDE_UNDEFINED,132
+geometry.completed_pullback_previous_ticks,before_start,0,1,SIDE_UNDEFINED,132
+geometry.ongoing_pullback_depth_ticks,onset,0,1,source geometry frozen or undefined: SIDE_UNDEFINED,48
+geometry.completed_pullback_last_ticks,onset,0,1,SIDE_UNDEFINED,48
+geometry.completed_pullback_previous_ticks,onset,0,1,SIDE_UNDEFINED,48
+geometry.ongoing_pullback_depth_ticks,onset,120,1,source geometry frozen or undefined: SIDE_UNDEFINED,208
+geometry.completed_pullback_last_ticks,onset,120,1,SIDE_UNDEFINED,208
+geometry.completed_pullback_previous_ticks,onset,120,1,SIDE_UNDEFINED,208
+geometry.ongoing_pullback_depth_ticks,onset,300,1,source geometry frozen or undefined: SIDE_UNDEFINED,151
+geometry.completed_pullback_last_ticks,onset,300,1,SIDE_UNDEFINED,151
+geometry.completed_pullback_previous_ticks,onset,300,1,SIDE_UNDEFINED,151
+geometry.ongoing_pullback_depth_ticks,onset,600,1,source geometry frozen or undefined: SIDE_UNDEFINED,201
+geometry.completed_pullback_last_ticks,onset,600,1,SIDE_UNDEFINED,201
+geometry.completed_pullback_previous_ticks,onset,600,1,SIDE_UNDEFINED,201
+geometry.ongoing_pullback_depth_ticks,near_before,0,1,source geometry frozen or undefined: SIDE_UNDEFINED,201
+geometry.completed_pullback_last_ticks,near_before,0,1,SIDE_UNDEFINED,201
+geometry.completed_pullback_previous_ticks,near_before,0,1,SIDE_UNDEFINED,201
+geometry.ongoing_pullback_depth_ticks,near_before,120,1,source geometry frozen or undefined: SIDE_UNDEFINED,158
+geometry.completed_pullback_last_ticks,near_before,120,1,SIDE_UNDEFINED,158
+geometry.completed_pullback_previous_ticks,near_before,120,1,SIDE_UNDEFINED,158
+geometry.ongoing_pullback_depth_ticks,near_before,300,1,source geometry frozen or undefined: SIDE_UNDEFINED,200
+geometry.completed_pullback_last_ticks,near_before,300,1,SIDE_UNDEFINED,200
+geometry.completed_pullback_previous_ticks,near_before,300,1,SIDE_UNDEFINED,200
+geometry.ongoing_pullback_depth_ticks,near_before,600,1,source geometry frozen or undefined: SIDE_UNDEFINED,198
+geometry.completed_pullback_last_ticks,near_before,600,1,SIDE_UNDEFINED,198
+geometry.completed_pullback_previous_ticks,near_before,600,1,SIDE_UNDEFINED,198
+geometry.ongoing_pullback_depth_ticks,near_after,0,1,source geometry frozen or undefined: SIDE_UNDEFINED,166
+geometry.completed_pullback_last_ticks,near_after,0,1,SIDE_UNDEFINED,166
+geometry.completed_pullback_previous_ticks,near_after,0,1,SIDE_UNDEFINED,166
+geometry.ongoing_pullback_depth_ticks,near_after,120,1,source geometry frozen or undefined: SIDE_UNDEFINED,182
+geometry.completed_pullback_last_ticks,near_after,120,1,SIDE_UNDEFINED,182
+geometry.completed_pullback_previous_ticks,near_after,120,1,SIDE_UNDEFINED,182
+geometry.ongoing_pullback_depth_ticks,near_after,300,1,source geometry frozen or undefined: SIDE_UNDEFINED,155
+geometry.completed_pullback_last_ticks,near_after,300,1,SIDE_UNDEFINED,155
+geometry.completed_pullback_previous_ticks,near_after,300,1,SIDE_UNDEFINED,155
+geometry.ongoing_pullback_depth_ticks,near_after,600,1,source geometry frozen or undefined: SIDE_UNDEFINED,48
+geometry.completed_pullback_last_ticks,near_after,600,1,SIDE_UNDEFINED,48
+geometry.completed_pullback_previous_ticks,near_after,600,1,SIDE_UNDEFINED,48
+geometry.ongoing_pullback_depth_ticks,near_after,0,0,observed current geometry; distinct from completed-step pullback,583
+geometry.completed_pullback_last_ticks,near_after,0,1,NO_COMPLETED_STEP,537
+geometry.completed_pullback_previous_ticks,near_after,0,1,NO_COMPLETED_STEP,575
+geometry.ongoing_pullback_depth_ticks,near_after,120,0,observed current geometry; distinct from completed-step pullback,567
+geometry.completed_pullback_last_ticks,near_after,120,1,NO_COMPLETED_STEP,523
+geometry.completed_pullback_previous_ticks,near_after,120,1,NO_COMPLETED_STEP,563
+geometry.ongoing_pullback_depth_ticks,near_after,300,0,observed current geometry; distinct from completed-step pullback,594
+geometry.completed_pullback_last_ticks,near_after,300,1,NO_COMPLETED_STEP,566
+geometry.completed_pullback_previous_ticks,near_after,300,1,NO_COMPLETED_STEP,590
+geometry.ongoing_pullback_depth_ticks,onset,0,0,observed current geometry; distinct from completed-step pullback,701
+geometry.completed_pullback_last_ticks,onset,0,1,NO_COMPLETED_STEP,596
+geometry.completed_pullback_previous_ticks,onset,0,1,NO_COMPLETED_STEP,686
+geometry.ongoing_pullback_depth_ticks,near_after,600,0,observed current geometry; distinct from completed-step pullback,701
+geometry.completed_pullback_last_ticks,near_after,600,1,NO_COMPLETED_STEP,596
+geometry.completed_pullback_previous_ticks,near_after,600,1,NO_COMPLETED_STEP,686
+geometry.ongoing_pullback_depth_ticks,before_start,0,0,observed current geometry; distinct from completed-step pullback,617
+geometry.completed_pullback_last_ticks,before_start,0,1,NO_COMPLETED_STEP,559
+geometry.completed_pullback_previous_ticks,before_start,0,1,NO_COMPLETED_STEP,601
+geometry.completed_pullback_last_ticks,before_start,0,0,,48
+geometry.completed_pullback_last_ticks,onset,0,0,,97
+geometry.completed_pullback_last_ticks,near_after,600,0,,97
+geometry.ongoing_pullback_depth_ticks,pre120,0,0,observed current geometry; distinct from completed-step pullback,541
+geometry.completed_pullback_last_ticks,pre120,0,1,NO_COMPLETED_STEP,505
+geometry.completed_pullback_previous_ticks,pre120,0,1,NO_COMPLETED_STEP,538
+geometry.ongoing_pullback_depth_ticks,onset,120,0,observed current geometry; distinct from completed-step pullback,541
+geometry.completed_pullback_last_ticks,onset,120,1,NO_COMPLETED_STEP,505
+geometry.completed_pullback_previous_ticks,onset,120,1,NO_COMPLETED_STEP,538
+geometry.ongoing_pullback_depth_ticks,onset,300,0,observed current geometry; distinct from completed-step pullback,598
+geometry.completed_pullback_last_ticks,onset,300,1,NO_COMPLETED_STEP,566
+geometry.completed_pullback_previous_ticks,onset,300,1,NO_COMPLETED_STEP,596
+geometry.ongoing_pullback_depth_ticks,onset,600,0,observed current geometry; distinct from completed-step pullback,548
+geometry.completed_pullback_last_ticks,onset,600,1,NO_COMPLETED_STEP,508
+geometry.completed_pullback_previous_ticks,onset,600,1,NO_COMPLETED_STEP,542
+geometry.ongoing_pullback_depth_ticks,near_before,0,0,observed current geometry; distinct from completed-step pullback,548
+geometry.completed_pullback_last_ticks,near_before,0,1,NO_COMPLETED_STEP,508
+geometry.completed_pullback_previous_ticks,near_before,0,1,NO_COMPLETED_STEP,542
+geometry.ongoing_pullback_depth_ticks,near_before,120,0,observed current geometry; distinct from completed-step pullback,591
+geometry.completed_pullback_last_ticks,near_before,120,1,NO_COMPLETED_STEP,548
+geometry.completed_pullback_previous_ticks,near_before,120,1,NO_COMPLETED_STEP,588
+geometry.completed_pullback_last_ticks,before_start,0,1,CHAIN_BROKEN,10
+geometry.completed_pullback_previous_ticks,before_start,0,1,CHAIN_BROKEN,10
+geometry.ongoing_pullback_depth_ticks,near_before,300,0,observed current geometry; distinct from completed-step pullback,549
+geometry.completed_pullback_last_ticks,near_before,300,1,NO_COMPLETED_STEP,500
+geometry.completed_pullback_previous_ticks,near_before,300,1,NO_COMPLETED_STEP,543
+geometry.ongoing_pullback_depth_ticks,near_before,600,0,observed current geometry; distinct from completed-step pullback,551
+geometry.completed_pullback_last_ticks,near_before,600,1,NO_COMPLETED_STEP,518
+geometry.completed_pullback_previous_ticks,near_before,600,1,NO_COMPLETED_STEP,547
+geometry.completed_pullback_last_ticks,near_after,120,0,,44
+geometry.completed_pullback_previous_ticks,near_after,120,0,,4
+geometry.completed_pullback_last_ticks,near_after,0,0,,42
+geometry.completed_pullback_previous_ticks,near_after,0,0,,4
+geometry.completed_pullback_last_ticks,near_after,300,0,,28
+geometry.completed_pullback_previous_ticks,near_after,300,0,,4
+geometry.completed_pullback_previous_ticks,before_start,0,0,,6
+geometry.completed_pullback_previous_ticks,onset,0,0,,7
+geometry.completed_pullback_previous_ticks,near_after,600,0,,7
+geometry.completed_pullback_last_ticks,onset,300,0,,32
+geometry.completed_pullback_last_ticks,near_before,120,0,,43
+geometry.completed_pullback_previous_ticks,near_before,120,0,,3
+geometry.completed_pullback_last_ticks,near_before,600,0,,33
+geometry.completed_pullback_last_ticks,onset,600,0,,40
+geometry.completed_pullback_previous_ticks,onset,600,0,,6
+geometry.completed_pullback_last_ticks,near_before,0,0,,40
+geometry.completed_pullback_previous_ticks,near_before,0,0,,6
+geometry.completed_pullback_last_ticks,near_before,300,0,,48
+geometry.completed_pullback_last_ticks,pre120,0,0,,36
+geometry.completed_pullback_last_ticks,onset,120,0,,36
+geometry.completed_pullback_last_ticks,near_after,0,1,CHAIN_BROKEN,4
+geometry.completed_pullback_previous_ticks,near_after,0,1,CHAIN_BROKEN,4
+geometry.completed_pullback_previous_ticks,near_before,300,0,,5
+geometry.completed_pullback_previous_ticks,near_before,600,0,,4
+geometry.completed_pullback_previous_ticks,onset,300,0,,2
+geometry.completed_pullback_last_ticks,near_before,300,1,CHAIN_BROKEN,1
+geometry.completed_pullback_previous_ticks,near_before,300,1,CHAIN_BROKEN,1
+geometry.completed_pullback_previous_ticks,pre120,0,0,,3
+geometry.completed_pullback_previous_ticks,onset,120,0,,3
+geometry.completed_pullback_last_ticks,onset,0,1,CHAIN_BROKEN,8
+geometry.completed_pullback_previous_ticks,onset,0,1,CHAIN_BROKEN,8
+geometry.completed_pullback_last_ticks,near_after,600,1,CHAIN_BROKEN,8
+geometry.completed_pullback_previous_ticks,near_after,600,1,CHAIN_BROKEN,8

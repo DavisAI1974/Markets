@@ -1,0 +1,1 @@
+{"stations":18,"policy":"Same-station, same-field, actually published historical measurement; timestamp, age, source ordinal retained; latest-report missingness remains unchanged; no interpolation or future backfill.","measurements_per_station":21,"added_observation_rows":1415610}
