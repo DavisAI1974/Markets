@@ -1,0 +1,12 @@
+{
+  "file": "family-alignment.sqlite",
+  "bytes": 6542319616,
+  "sha256": "e16f8d6bb6a95b6eceff86be81b6942ef755a91b9e4b6ae36f88e49a080f0429",
+  "archive": "family-alignment.sqlite.gz",
+  "archive_bytes": 674723676,
+  "archive_sha256": "c8a54a09acdea05da0c1eb245aa83a972e789c14a2899081a7ec559be4fbd2a5",
+  "s3_bucket": "bento-568968024170-us-east-2-an",
+  "s3_key": "frankie/family-prebirth/20261022/family-alignment.sqlite.gz",
+  "seconds": 25.59,
+  "decompressed_hash_verified": true
+}
