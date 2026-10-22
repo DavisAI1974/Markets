@@ -1,0 +1,20 @@
+{
+  "schema": "TIMESTAMPED_ALL_MODEL_CONTEXT_QUOTES_V1",
+  "status": "complete",
+  "coverage_gate": "NOT_PASSED",
+  "unique_native_records": 6265,
+  "aligned_contexts": 10486,
+  "families": 749,
+  "checks": {
+    "full_depth_conservation_checks": 12530,
+    "touch_alias_checks": 12530,
+    "TWO_SIDED": 6265
+  },
+  "clocks": "Exact integer event, receive, completed-group known-by, cutoff and cursor cap remain separate; age is cutoff minus known-by.",
+  "limitations": [
+    "Complete observed group snapshots only; this does not establish continuous FIFO survival or partial intra-group states.",
+    "Crossed, locked, one-sided and empty states are retained explicitly. No synthetic quote or trade fill is made.",
+    "This exports all retained model contexts; the existing consecutive-window export remains a separately scoped object.",
+    "No v4 matrix or fit is asserted."
+  ]
+}

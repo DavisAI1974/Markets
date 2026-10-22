@@ -1,0 +1,17 @@
+{
+  "schema": "NATIVE_SECOND_FEATURE_IDENTITY_AUDIT_V1",
+  "status": "complete",
+  "coverage_gate": "NOT_PASSED",
+  "unique_records": 6265,
+  "numeric_cells_compared": 29497352,
+  "categorical_cells_compared": 858166,
+  "field_identities": 66911,
+  "source_coordinate_stream_sha256": "45114d1c694750de2ed7747a55bc60b432f61e8bf2792b44755ec55e145b908b",
+  "normalized_source_or_kind_collisions": 0,
+  "saved_component_values_changed": false,
+  "code_sha256": "ef96967871dd278449265736986f5c6737afa23c98361db91dbb2b953a89868e",
+  "limitations": [
+    "Verifies actual normalized identities, source paths, units and saved values; generic source-defined units still need semantic source-role review.",
+    "This does not establish complete field-consumer coverage, a v4 matrix, or any fitted model."
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "schema": "CANONICAL_NATIVE_DEFINITION_REFERENCE_V1",
+  "files": [
+    {
+      "path": "full-context-audit/scripts/source_reference/native_calculation_runner.py",
+      "reference_commit": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+      "git_blob_sha": "385ebe36964450de3663ae3cf814b9187f5f155a",
+      "bytes": 44974,
+      "sha256": "afa1cbc075937ab9f3e649d18139c471fc87afbefa1ee54c8c7565c64367302b",
+      "role": "canonical definition reference; not claimed identical to execution checkout db96f24f"
+    },
+    {
+      "path": "full-context-audit/scripts/source_reference/native_candidate_adapter.py",
+      "reference_commit": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+      "git_blob_sha": "c9aa120688cbdefbd150d717caf0a7cb3b1857cd",
+      "bytes": 36573,
+      "sha256": "2369340a1e257fbd87c17fe760ec8c25263bfe96cadbafad4107f158d0544793",
+      "role": "canonical definition reference; not claimed identical to execution checkout db96f24f"
+    },
+    {
+      "path": "full-context-audit/scripts/source_reference/native_detector_coverage.py",
+      "reference_commit": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+      "git_blob_sha": "23e2821ca7744689eeca6c49b9f163853dd9f1fb",
+      "bytes": 31777,
+      "sha256": "b677af87333e87f37d3176873f91d047406fc5e9fd212b88af22653471ed0166",
+      "role": "canonical definition reference; not claimed identical to execution checkout db96f24f"
+    },
+    {
+      "path": "full-context-audit/scripts/source_reference/native_dipole.py",
+      "reference_commit": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+      "git_blob_sha": "31ad28376ff82e9e7299a80dbc96eec6226ca596",
+      "bytes": 20819,
+      "sha256": "184761568c0470f0ec826a3c40e83742d8d09ced63b186f63f8f03645f3b7a23",
+      "role": "canonical definition reference; not claimed identical to execution checkout db96f24f"
+    },
+    {
+      "path": "full-context-audit/scripts/source_reference/native_exhaustion.py",
+      "reference_commit": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+      "git_blob_sha": "e8c3c125d620a73197703d68dbdebacef9cd05cc",
+      "bytes": 24187,
+      "sha256": "8e25fe9b25f9b83110aa64e1ebfbd1607528bb65738ad686243ec39fb2347094",
+      "role": "canonical definition reference; not claimed identical to execution checkout db96f24f"
+    },
+    {
+      "path": "full-context-audit/scripts/source_reference/native_full_capture_adapter.py",
+      "reference_commit": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+      "git_blob_sha": "5402a7023d91191db9ce505cbc2337d9e2315c66",
+      "bytes": 32392,
+      "sha256": "d45febff374323d0ef1713078ac68775bad69d3f372f5d595503479ac52b59a4",
+      "role": "canonical definition reference; not claimed identical to execution checkout db96f24f"
+    },
+    {
+      "path": "full-context-audit/scripts/source_reference/native_lineage.py",
+      "reference_commit": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+      "git_blob_sha": "f514f4f67998fb02ac00319d6d8d364c19c53880",
+      "bytes": 20678,
+      "sha256": "410bdaec363a97e2a7f64de68da54f8cd30d252d65aabc697d26cd5290284167",
+      "role": "canonical definition reference; not claimed identical to execution checkout db96f24f"
+    },
+    {
+      "path": "full-context-audit/scripts/source_reference/native_recognition.py",
+      "reference_commit": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+      "git_blob_sha": "42e09307f8e265a719ff60d2aa52d79fc11cb306",
+      "bytes": 12706,
+      "sha256": "0b279fda54cedcd3c812580da181356814afe4a35dffc52379d64814a716ac7c",
+      "role": "canonical definition reference; not claimed identical to execution checkout db96f24f"
+    },
+    {
+      "path": "full-context-audit/scripts/source_reference/native_replay_driver.py",
+      "reference_commit": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+      "git_blob_sha": "eff6ee1d26fea75e6d9515452e09f63b35cf4be6",
+      "bytes": 85491,
+      "sha256": "67996f3e1da9f6584bcca888eefe015c3b31508b9451335a76e2f49bfd7a8762",
+      "role": "canonical definition reference; not claimed identical to execution checkout db96f24f"
+    },
+    {
+      "path": "full-context-audit/scripts/source_reference/native_roll20.py",
+      "reference_commit": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+      "git_blob_sha": "20f247fa358e59ee1974ffb22d65c4a1dd82835c",
+      "bytes": 12887,
+      "sha256": "8e0a8dd6111cf65dfd87ac153f72824c75fe372da55f24a7ea0c278517d58179",
+      "role": "canonical definition reference; not claimed identical to execution checkout db96f24f"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "root_component_imported_measurements_sha256": "c417c4510c30487b2a9058b2d8c3cb3ad4587bf0cc4dd1edc70a276d5f947705",
+  "retained_original_code_path": "/opt/frankie-box/work/family-research-20261022/full-context-audit/scripts/full_context_measurements.py.before-name-collision-guard",
+  "root_script_sha256": "636fa760cf538611df88c23b5769c162da084f76d3f2f42e2cce41ebf7e6c5c8",
+  "note": "ROOT extraction completed with the checkpoint Measurements implementation. The later collision audit has a new version and leaves its data unchanged."
+}

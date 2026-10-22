@@ -1,0 +1,31 @@
+{
+  "schema": "DIPOLE_EVENT_PHASE_RECONSTRUCTION_V1",
+  "status": "complete",
+  "coverage_gate": "NOT_PASSED",
+  "phase_counts": {
+    "BIRTH": 1319,
+    "PERSISTENCE": 51861,
+    "REVERSAL": 862
+  },
+  "terminal_path_counts": {
+    "REVERSAL": 862
+  },
+  "paths": 862,
+  "stages": 54042,
+  "basis": "Canonical native_candidate_adapter at 2ebb8ce8: decide phase before observing stage; persistence threshold three opposite completed seconds.",
+  "assumptions": [
+    "Polarity sign agrees with the absolute classified buy-minus-sell lots, as the source roll20 denominator is nonnegative; no-volume has zero signed lots and no direction.",
+    "The canonical persistence default is three; separate execution-parameter byte identity remains an open provenance check."
+  ],
+  "rules": [
+    "Stage zero is BIRTH. A non-opposed completed second starts PERSISTENCE once. The third consecutive opposed completed second is REVERSAL and terminates.",
+    "Censoring is a terminal observation boundary, not a fabricated reversal stage.",
+    "Actual full-row emission/cursor availability is retained on every reconstructed stage. No terminal phase is backfilled to earlier stages.",
+    "Event phase stays separate from orientation, session phase and octave stage-index bin."
+  ],
+  "limitations": [
+    "Reconstructed labels are explicitly distinguished from directly stored stage fields.",
+    "These are retrospective path diagnostics available only with their retained source rows, not newly emitted real-time signals.",
+    "Family, orientation and phase strata are retained; no pooled across-phase causal effect or tradable signal is asserted."
+  ]
+}

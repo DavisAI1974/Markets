@@ -1,0 +1,9 @@
+{
+  "bucket": "bento-568968024170-us-east-2-an",
+  "key": "frankie/day_external/20231017/day-external.json",
+  "etag": "3e4b06be7d420227f6c4eb597167f0d1",
+  "bytes": 38223416,
+  "sha256": "8c9bf49fda3adf984c191ed06c13ee7c04117777a9535b485c9cbe15400e2c71",
+  "saved_path": "/opt/frankie-box/work/family-research-20261022/full-context-audit/historical-source-additions/20231017-day-external-3e4b06be.json",
+  "role": "newer_prior_day_source_variant_pending_semantic_asof_review"
+}

@@ -30,6 +30,9 @@ class Measurements:
     def add(self,name,value,unit,path):
         assert value is None or isinstance(value,bool) or number(value),(name,value)
         name=norm(name)
+        assert name not in self.categories,('numeric_category_collision',name)
+        if name in self.source_paths:
+            assert self.source_paths[name]==path and self.units[name]==unit,('normalized_source_collision',name,path,self.source_paths[name])
         if name in self.numeric:assert self.numeric[name]==value, name
         self.numeric[name]=float(value) if value is not None else None
         self.units[name]=unit;self.source_paths[name]=path
@@ -37,7 +40,12 @@ class Measurements:
     def category(self,name,value,path):
         if value is None:value={'source_state':'NULL'}
         assert isinstance(value,(str,bool,int,dict,list)),(name,value)
-        name=norm(name);self.categories[name]=json.dumps(value,sort_keys=True,separators=(',',':'))
+        name=norm(name)
+        assert name not in self.numeric,('numeric_category_collision',name)
+        if name in self.source_paths:assert self.source_paths[name]==path,('normalized_source_collision',name,path,self.source_paths[name])
+        encoded=json.dumps(value,sort_keys=True,separators=(',',':'))
+        if name in self.categories:assert self.categories[name]==encoded,('category_value_collision',name)
+        self.categories[name]=encoded
         self.units[name]='categorical_observation';self.source_paths[name]=path
 
     def counts(self,obj,prefix,source_prefix=None):

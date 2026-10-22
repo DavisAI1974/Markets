@@ -1,0 +1,9 @@
+{
+  "schema": "VERIFIED_COMPONENT_ARCHIVE_V1",
+  "name": "external-history-v4-normalized-v1",
+  "path": "/opt/frankie-box/work/family-research-20261022/continuation-archives-v1/external-history-v4-normalized-v1.tar.gz",
+  "bytes": 3788033203,
+  "sha256": "2e6808cf2e1ca07e89ae3260d237d81327418dd28a1710c81ba7f0b733b656b0",
+  "member_files": 13,
+  "coverage_gate": "NOT_PASSED"
+}

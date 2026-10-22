@@ -1,0 +1,29 @@
+{
+  "schema": "EXTERNAL_SCOPED_HISTORY_FEATURE_TIMELINE_V1",
+  "status": "complete",
+  "coverage_gate": "NOT_PASSED",
+  "counts": {
+    "consumed_observations": 5275928,
+    "consumed_numeric_emissions": 20380668,
+    "consumed_category_emissions": 6349614,
+    "timeline_rows": 187766
+  },
+  "consumed_scopes": 38677,
+  "registered_features": 1652923,
+  "context_cutoff_min_ns": 1697577903329548912,
+  "context_cutoff_max_ns": 1697663198264204946,
+  "rules": [
+    "Every resolved known observation contributes once, in exact availability order, to its own dimensional scope.",
+    "Latest and previous observations use semantic vintage; a late older observation cannot overwrite a newer vintage.",
+    "All known present values contribute to count/min/max/mean/population variance; unavailable and absent fields remain distinct.",
+    "Current source missingness is never replaced by the separately labelled last-present measurement.",
+    "Equal unranked vintages remain explicit conflicts; no hash is used as a numerical predictor or a tie-breaking winner.",
+    "Coincident curve arrivals use known primary source order when every tied occurrence has that order; otherwise their order is unresolved. Event timestamps do not fabricate receive order.",
+    "Absolute clocks remain provenance; derive ages at the exact consuming context cutoff."
+  ],
+  "limitations": [
+    "These are overlapping historical observations and summaries, not new independently aligned market days.",
+    "History aggregation requires one event per observation in this dataset; the builder refuses revised-event datasets until removal/update math is implemented.",
+    "Units, context-level consumption, full knowledge/99-plane gate, matrix verification and all model reruns remain incomplete."
+  ]
+}

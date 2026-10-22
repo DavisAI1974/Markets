@@ -1,0 +1,32 @@
+{
+  "status": "complete",
+  "coverage_gate": "NOT_PASSED",
+  "schema": "DIPOLE_BOOK_CLOCK_AUDIT_V1",
+  "stages": 54042,
+  "selected_native_ordinals": 21437,
+  "source_scope": {
+    "instrument_id": 150611,
+    "continuity_segment": 19648,
+    "first_cursor": 490
+  },
+  "producer_rule": "Stage zero uses opening emission cursor; later stages use first complete group in a later receive second, or last group for stream close.",
+  "past_rule": "Last complete same-instrument, same-continuity-scope group with receive <= stage bin timestamp; no future fill.",
+  "counts": {
+    "stages": 54042,
+    "producer_hypothesis_mismatch_stages": 0,
+    "producer_after_stage_bin": 54042,
+    "no_past_book": 0,
+    "source_vs_past_book_changed_stages": 45879,
+    "source_vs_past_mid_changed_stages": 8925,
+    "stage_zero": 862,
+    "coupling_changed_paths": 671
+  },
+  "native_cached_coordinates": 1246,
+  "new_exact_indexed_bytes": 5792655571,
+  "interpretation": "Producer assignment is compared against canonical definition reference and retained payloads. Actual execution checkout identity stays separate. Past-book comparison is a scientific alternative, not a replacement for frozen source evidence.",
+  "limitations": [
+    "A second-bin label is not an exact book observation clock. Completed-second flow is also only available later.",
+    "Couplings compare midpoint price units, not executable bid/ask returns, fees or fills.",
+    "No continuous FIFO survival, extra market days, v4 matrix or fit is established."
+  ]
+}

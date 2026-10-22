@@ -1,0 +1,112 @@
+{
+  "schema": "EXTERNAL_ASOF_OBSERVATION_RESOLUTION_V1",
+  "status": "complete",
+  "coverage_gate": "NOT_PASSED",
+  "context_cutoff_min_ns": 1697577903329548912,
+  "context_cutoff_max_ns": 1697663198264204946,
+  "counts": {
+    "observations": 5275928,
+    "source_records": 7679916,
+    "normalized_variants_at_occurrence_coordinates": 5804439,
+    "future_variants_withheld": 0,
+    "resolution_events": 5275928,
+    "unranked_numeric_conflict_cells": 45220,
+    "primary_unavailable_cells_retained": 389931
+  },
+  "by_point": {
+    "calendar.sessions_since_prompt_expiry": {
+      "resolution_events": 17,
+      "unranked_numeric_conflict_cells": 0
+    },
+    "cot.023391": {
+      "resolution_events": 302,
+      "unranked_numeric_conflict_cells": 0
+    },
+    "cot.023392": {
+      "resolution_events": 302,
+      "unranked_numeric_conflict_cells": 0
+    },
+    "cot.0233AG": {
+      "resolution_events": 298,
+      "unranked_numeric_conflict_cells": 0
+    },
+    "cot.0233AH": {
+      "resolution_events": 302,
+      "unranked_numeric_conflict_cells": 0
+    },
+    "cot.023651": {
+      "resolution_events": 302,
+      "unranked_numeric_conflict_cells": 0
+    },
+    "curve.definitions": {
+      "resolution_events": 32437,
+      "unranked_numeric_conflict_cells": 0
+    },
+    "curve.settled_shape": {
+      "resolution_events": 285,
+      "unranked_numeric_conflict_cells": 40
+    },
+    "curve.statistics": {
+      "resolution_events": 643905,
+      "unranked_numeric_conflict_cells": 0
+    },
+    "curve.traded_shape": {
+      "resolution_events": 835462,
+      "unranked_numeric_conflict_cells": 42820
+    },
+    "curve.trades": {
+      "resolution_events": 3286712,
+      "unranked_numeric_conflict_cells": 0
+    },
+    "eia930.hourly": {
+      "resolution_events": 140940,
+      "unranked_numeric_conflict_cells": 0
+    },
+    "eia930.us48": {
+      "resolution_events": 1719,
+      "unranked_numeric_conflict_cells": 0
+    },
+    "mos.disagreement_by_cycle": {
+      "resolution_events": 102,
+      "unranked_numeric_conflict_cells": 0
+    },
+    "mos.gw_by_cycle": {
+      "resolution_events": 961,
+      "unranked_numeric_conflict_cells": 0
+    },
+    "mos.raw": {
+      "resolution_events": 106800,
+      "unranked_numeric_conflict_cells": 0
+    },
+    "storage.estimate": {
+      "resolution_events": 11,
+      "unranked_numeric_conflict_cells": 0
+    },
+    "storage.estimate_captures": {
+      "resolution_events": 12,
+      "unranked_numeric_conflict_cells": 0
+    },
+    "storage.weekly": {
+      "resolution_events": 419,
+      "unranked_numeric_conflict_cells": 0
+    },
+    "weather.gw_daily": {
+      "resolution_events": 57,
+      "unranked_numeric_conflict_cells": 0
+    },
+    "weather.obs_hourly": {
+      "resolution_events": 224583,
+      "unranked_numeric_conflict_cells": 2360
+    }
+  },
+  "rules": [
+    "Filter by exact integer availability before checking primary-source precedence.",
+    "Known primary nulls, missing markers and deletions remain unavailable; no alternative value silently fills them.",
+    "Unranked numeric disagreements are unknown with every finite alternative and missingness state retained.",
+    "Source-occurrence multiplicity is distinct from normalized content and observation counts.",
+    "Initial as-of resolution plus all within-window revision arrivals are retained; raw earlier and later versions remain in the immutable catalogs."
+  ],
+  "remaining": [
+    "Scope-vintage selection, per-context history features, field units and ages, knowledge/99-plane coverage gate, v4 matrix and all fits remain owed."
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "schema": "VERIFIED_COMPONENT_ARCHIVE_V1",
+  "name": "full-context-continuation-v1",
+  "path": "/opt/frankie-box/work/family-research-20261022/continuation-archives-v1/full-context-continuation-v1.tar.gz",
+  "bytes": 181035517,
+  "sha256": "eb2b860d452d1a462ef609e44a8c6aad4b89d71f28d9de049b15b3b6c585e4e1",
+  "member_files": 14,
+  "coverage_gate": "NOT_PASSED"
+}

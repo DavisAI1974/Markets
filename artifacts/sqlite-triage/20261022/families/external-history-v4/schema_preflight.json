@@ -1,0 +1,2246 @@
+[
+  {
+    "source_id": "pinned-current-db",
+    "point": "calendar.sessions_since_prompt_expiry",
+    "fields": 5,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "pinned-current-db",
+    "point": "cot.023391",
+    "fields": 22,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "pinned-current-db",
+    "point": "cot.023392",
+    "fields": 22,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "pinned-current-db",
+    "point": "cot.0233AG",
+    "fields": 22,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "pinned-current-db",
+    "point": "cot.0233AH",
+    "fields": 22,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "pinned-current-db",
+    "point": "cot.023651",
+    "fields": 22,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "pinned-current-db",
+    "point": "curve.definitions",
+    "fields": 6,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "pinned-current-db",
+    "point": "curve.settled_shape",
+    "fields": 14,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "pinned-current-db",
+    "point": "curve.statistics",
+    "fields": 11,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "pinned-current-db",
+    "point": "curve.traded_shape",
+    "fields": 14,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "pinned-current-db",
+    "point": "curve.trades",
+    "fields": 8,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "pinned-current-db",
+    "point": "eia930.hourly",
+    "fields": 8,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "pinned-current-db",
+    "point": "eia930.us48",
+    "fields": 6,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "pinned-current-db",
+    "point": "mos.disagreement_by_cycle",
+    "fields": 6,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "pinned-current-db",
+    "point": "mos.gw_by_cycle",
+    "fields": 11,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "pinned-current-db",
+    "point": "mos.raw",
+    "fields": 7,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "pinned-current-db",
+    "point": "storage.estimate",
+    "fields": 10,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "pinned-current-db",
+    "point": "storage.weekly",
+    "fields": 10,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "pinned-current-db",
+    "point": "weather.gw_daily",
+    "fields": 9,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "pinned-current-db",
+    "point": "weather.obs_hourly",
+    "fields": 30,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "manifest:45f14d5d8d1efa0e7480fed38318536383d3e0e922db0ac839a47df599e9de31",
+    "point": "calendar.sessions_since_prompt_expiry",
+    "fields": 4,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:45f14d5d8d1efa0e7480fed38318536383d3e0e922db0ac839a47df599e9de31",
+    "point": "cot.023391",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:45f14d5d8d1efa0e7480fed38318536383d3e0e922db0ac839a47df599e9de31",
+    "point": "cot.023392",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:45f14d5d8d1efa0e7480fed38318536383d3e0e922db0ac839a47df599e9de31",
+    "point": "cot.0233AG",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:45f14d5d8d1efa0e7480fed38318536383d3e0e922db0ac839a47df599e9de31",
+    "point": "cot.0233AH",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:45f14d5d8d1efa0e7480fed38318536383d3e0e922db0ac839a47df599e9de31",
+    "point": "cot.023651",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:45f14d5d8d1efa0e7480fed38318536383d3e0e922db0ac839a47df599e9de31",
+    "point": "curve.definitions",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:45f14d5d8d1efa0e7480fed38318536383d3e0e922db0ac839a47df599e9de31",
+    "point": "curve.settled_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:45f14d5d8d1efa0e7480fed38318536383d3e0e922db0ac839a47df599e9de31",
+    "point": "curve.statistics",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:45f14d5d8d1efa0e7480fed38318536383d3e0e922db0ac839a47df599e9de31",
+    "point": "curve.traded_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:45f14d5d8d1efa0e7480fed38318536383d3e0e922db0ac839a47df599e9de31",
+    "point": "curve.trades",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:45f14d5d8d1efa0e7480fed38318536383d3e0e922db0ac839a47df599e9de31",
+    "point": "eia930.hourly",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:45f14d5d8d1efa0e7480fed38318536383d3e0e922db0ac839a47df599e9de31",
+    "point": "eia930.us48",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:45f14d5d8d1efa0e7480fed38318536383d3e0e922db0ac839a47df599e9de31",
+    "point": "mos.disagreement_by_cycle",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:45f14d5d8d1efa0e7480fed38318536383d3e0e922db0ac839a47df599e9de31",
+    "point": "mos.gw_by_cycle",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:45f14d5d8d1efa0e7480fed38318536383d3e0e922db0ac839a47df599e9de31",
+    "point": "mos.raw",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:45f14d5d8d1efa0e7480fed38318536383d3e0e922db0ac839a47df599e9de31",
+    "point": "storage.estimate_captures",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:45f14d5d8d1efa0e7480fed38318536383d3e0e922db0ac839a47df599e9de31",
+    "point": "storage.weekly",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:45f14d5d8d1efa0e7480fed38318536383d3e0e922db0ac839a47df599e9de31",
+    "point": "weather.gw_daily",
+    "fields": 8,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:45f14d5d8d1efa0e7480fed38318536383d3e0e922db0ac839a47df599e9de31",
+    "point": "weather.obs_hourly",
+    "fields": 29,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:9ce963a69b6883a44ffce9d8b2a6d58ae16ddee61b3c54e733480a24d4e3d57f",
+    "point": "calendar.sessions_since_prompt_expiry",
+    "fields": 4,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:9ce963a69b6883a44ffce9d8b2a6d58ae16ddee61b3c54e733480a24d4e3d57f",
+    "point": "cot.023391",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:9ce963a69b6883a44ffce9d8b2a6d58ae16ddee61b3c54e733480a24d4e3d57f",
+    "point": "cot.023392",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:9ce963a69b6883a44ffce9d8b2a6d58ae16ddee61b3c54e733480a24d4e3d57f",
+    "point": "cot.0233AG",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:9ce963a69b6883a44ffce9d8b2a6d58ae16ddee61b3c54e733480a24d4e3d57f",
+    "point": "cot.0233AH",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:9ce963a69b6883a44ffce9d8b2a6d58ae16ddee61b3c54e733480a24d4e3d57f",
+    "point": "cot.023651",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:9ce963a69b6883a44ffce9d8b2a6d58ae16ddee61b3c54e733480a24d4e3d57f",
+    "point": "curve.definitions",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:9ce963a69b6883a44ffce9d8b2a6d58ae16ddee61b3c54e733480a24d4e3d57f",
+    "point": "curve.settled_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:9ce963a69b6883a44ffce9d8b2a6d58ae16ddee61b3c54e733480a24d4e3d57f",
+    "point": "curve.statistics",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:9ce963a69b6883a44ffce9d8b2a6d58ae16ddee61b3c54e733480a24d4e3d57f",
+    "point": "curve.traded_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:9ce963a69b6883a44ffce9d8b2a6d58ae16ddee61b3c54e733480a24d4e3d57f",
+    "point": "curve.trades",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:9ce963a69b6883a44ffce9d8b2a6d58ae16ddee61b3c54e733480a24d4e3d57f",
+    "point": "eia930.hourly",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:9ce963a69b6883a44ffce9d8b2a6d58ae16ddee61b3c54e733480a24d4e3d57f",
+    "point": "eia930.us48",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:9ce963a69b6883a44ffce9d8b2a6d58ae16ddee61b3c54e733480a24d4e3d57f",
+    "point": "mos.disagreement_by_cycle",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:9ce963a69b6883a44ffce9d8b2a6d58ae16ddee61b3c54e733480a24d4e3d57f",
+    "point": "mos.gw_by_cycle",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:9ce963a69b6883a44ffce9d8b2a6d58ae16ddee61b3c54e733480a24d4e3d57f",
+    "point": "mos.raw",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:9ce963a69b6883a44ffce9d8b2a6d58ae16ddee61b3c54e733480a24d4e3d57f",
+    "point": "storage.estimate_captures",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:9ce963a69b6883a44ffce9d8b2a6d58ae16ddee61b3c54e733480a24d4e3d57f",
+    "point": "storage.weekly",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:9ce963a69b6883a44ffce9d8b2a6d58ae16ddee61b3c54e733480a24d4e3d57f",
+    "point": "weather.gw_daily",
+    "fields": 8,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:9ce963a69b6883a44ffce9d8b2a6d58ae16ddee61b3c54e733480a24d4e3d57f",
+    "point": "weather.obs_hourly",
+    "fields": 29,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:d9d9a7bdfe8395f3b0da0a3b848b454088147941a37f98c3bdfa63791776fcf0",
+    "point": "calendar.sessions_since_prompt_expiry",
+    "fields": 4,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:d9d9a7bdfe8395f3b0da0a3b848b454088147941a37f98c3bdfa63791776fcf0",
+    "point": "cot.023391",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:d9d9a7bdfe8395f3b0da0a3b848b454088147941a37f98c3bdfa63791776fcf0",
+    "point": "cot.023392",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:d9d9a7bdfe8395f3b0da0a3b848b454088147941a37f98c3bdfa63791776fcf0",
+    "point": "cot.0233AG",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:d9d9a7bdfe8395f3b0da0a3b848b454088147941a37f98c3bdfa63791776fcf0",
+    "point": "cot.0233AH",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:d9d9a7bdfe8395f3b0da0a3b848b454088147941a37f98c3bdfa63791776fcf0",
+    "point": "cot.023651",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:d9d9a7bdfe8395f3b0da0a3b848b454088147941a37f98c3bdfa63791776fcf0",
+    "point": "curve.definitions",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:d9d9a7bdfe8395f3b0da0a3b848b454088147941a37f98c3bdfa63791776fcf0",
+    "point": "curve.settled_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:d9d9a7bdfe8395f3b0da0a3b848b454088147941a37f98c3bdfa63791776fcf0",
+    "point": "curve.statistics",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:d9d9a7bdfe8395f3b0da0a3b848b454088147941a37f98c3bdfa63791776fcf0",
+    "point": "curve.traded_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:d9d9a7bdfe8395f3b0da0a3b848b454088147941a37f98c3bdfa63791776fcf0",
+    "point": "curve.trades",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:d9d9a7bdfe8395f3b0da0a3b848b454088147941a37f98c3bdfa63791776fcf0",
+    "point": "eia930.hourly",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:d9d9a7bdfe8395f3b0da0a3b848b454088147941a37f98c3bdfa63791776fcf0",
+    "point": "eia930.us48",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:d9d9a7bdfe8395f3b0da0a3b848b454088147941a37f98c3bdfa63791776fcf0",
+    "point": "mos.disagreement_by_cycle",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:d9d9a7bdfe8395f3b0da0a3b848b454088147941a37f98c3bdfa63791776fcf0",
+    "point": "mos.gw_by_cycle",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:d9d9a7bdfe8395f3b0da0a3b848b454088147941a37f98c3bdfa63791776fcf0",
+    "point": "mos.raw",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:d9d9a7bdfe8395f3b0da0a3b848b454088147941a37f98c3bdfa63791776fcf0",
+    "point": "storage.estimate_captures",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:d9d9a7bdfe8395f3b0da0a3b848b454088147941a37f98c3bdfa63791776fcf0",
+    "point": "storage.weekly",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:d9d9a7bdfe8395f3b0da0a3b848b454088147941a37f98c3bdfa63791776fcf0",
+    "point": "weather.gw_daily",
+    "fields": 8,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:d9d9a7bdfe8395f3b0da0a3b848b454088147941a37f98c3bdfa63791776fcf0",
+    "point": "weather.obs_hourly",
+    "fields": 29,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8d440319382a180a7c758c722eb09591a96ecb42c4f3a44cfdd6cd1c5bd7c0b",
+    "point": "calendar.sessions_since_prompt_expiry",
+    "fields": 4,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8d440319382a180a7c758c722eb09591a96ecb42c4f3a44cfdd6cd1c5bd7c0b",
+    "point": "cot.023391",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8d440319382a180a7c758c722eb09591a96ecb42c4f3a44cfdd6cd1c5bd7c0b",
+    "point": "cot.023392",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8d440319382a180a7c758c722eb09591a96ecb42c4f3a44cfdd6cd1c5bd7c0b",
+    "point": "cot.0233AG",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8d440319382a180a7c758c722eb09591a96ecb42c4f3a44cfdd6cd1c5bd7c0b",
+    "point": "cot.0233AH",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8d440319382a180a7c758c722eb09591a96ecb42c4f3a44cfdd6cd1c5bd7c0b",
+    "point": "cot.023651",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8d440319382a180a7c758c722eb09591a96ecb42c4f3a44cfdd6cd1c5bd7c0b",
+    "point": "curve.definitions",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8d440319382a180a7c758c722eb09591a96ecb42c4f3a44cfdd6cd1c5bd7c0b",
+    "point": "curve.settled_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8d440319382a180a7c758c722eb09591a96ecb42c4f3a44cfdd6cd1c5bd7c0b",
+    "point": "curve.statistics",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8d440319382a180a7c758c722eb09591a96ecb42c4f3a44cfdd6cd1c5bd7c0b",
+    "point": "curve.traded_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8d440319382a180a7c758c722eb09591a96ecb42c4f3a44cfdd6cd1c5bd7c0b",
+    "point": "curve.trades",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8d440319382a180a7c758c722eb09591a96ecb42c4f3a44cfdd6cd1c5bd7c0b",
+    "point": "eia930.hourly",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8d440319382a180a7c758c722eb09591a96ecb42c4f3a44cfdd6cd1c5bd7c0b",
+    "point": "eia930.us48",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8d440319382a180a7c758c722eb09591a96ecb42c4f3a44cfdd6cd1c5bd7c0b",
+    "point": "mos.disagreement_by_cycle",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8d440319382a180a7c758c722eb09591a96ecb42c4f3a44cfdd6cd1c5bd7c0b",
+    "point": "mos.gw_by_cycle",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8d440319382a180a7c758c722eb09591a96ecb42c4f3a44cfdd6cd1c5bd7c0b",
+    "point": "mos.raw",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8d440319382a180a7c758c722eb09591a96ecb42c4f3a44cfdd6cd1c5bd7c0b",
+    "point": "storage.estimate_captures",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8d440319382a180a7c758c722eb09591a96ecb42c4f3a44cfdd6cd1c5bd7c0b",
+    "point": "storage.weekly",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8d440319382a180a7c758c722eb09591a96ecb42c4f3a44cfdd6cd1c5bd7c0b",
+    "point": "weather.gw_daily",
+    "fields": 8,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8d440319382a180a7c758c722eb09591a96ecb42c4f3a44cfdd6cd1c5bd7c0b",
+    "point": "weather.obs_hourly",
+    "fields": 29,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:75451caf9b525422f3f6f9dc6151cc0d68babcff8f620b8f4b1cb7659e818219",
+    "point": "calendar.sessions_since_prompt_expiry",
+    "fields": 4,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:75451caf9b525422f3f6f9dc6151cc0d68babcff8f620b8f4b1cb7659e818219",
+    "point": "cot.023391",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:75451caf9b525422f3f6f9dc6151cc0d68babcff8f620b8f4b1cb7659e818219",
+    "point": "cot.023392",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:75451caf9b525422f3f6f9dc6151cc0d68babcff8f620b8f4b1cb7659e818219",
+    "point": "cot.0233AG",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:75451caf9b525422f3f6f9dc6151cc0d68babcff8f620b8f4b1cb7659e818219",
+    "point": "cot.0233AH",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:75451caf9b525422f3f6f9dc6151cc0d68babcff8f620b8f4b1cb7659e818219",
+    "point": "cot.023651",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:75451caf9b525422f3f6f9dc6151cc0d68babcff8f620b8f4b1cb7659e818219",
+    "point": "curve.definitions",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:75451caf9b525422f3f6f9dc6151cc0d68babcff8f620b8f4b1cb7659e818219",
+    "point": "curve.settled_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:75451caf9b525422f3f6f9dc6151cc0d68babcff8f620b8f4b1cb7659e818219",
+    "point": "curve.statistics",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:75451caf9b525422f3f6f9dc6151cc0d68babcff8f620b8f4b1cb7659e818219",
+    "point": "curve.traded_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:75451caf9b525422f3f6f9dc6151cc0d68babcff8f620b8f4b1cb7659e818219",
+    "point": "curve.trades",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:75451caf9b525422f3f6f9dc6151cc0d68babcff8f620b8f4b1cb7659e818219",
+    "point": "eia930.hourly",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:75451caf9b525422f3f6f9dc6151cc0d68babcff8f620b8f4b1cb7659e818219",
+    "point": "eia930.us48",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:75451caf9b525422f3f6f9dc6151cc0d68babcff8f620b8f4b1cb7659e818219",
+    "point": "mos.disagreement_by_cycle",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:75451caf9b525422f3f6f9dc6151cc0d68babcff8f620b8f4b1cb7659e818219",
+    "point": "mos.gw_by_cycle",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:75451caf9b525422f3f6f9dc6151cc0d68babcff8f620b8f4b1cb7659e818219",
+    "point": "mos.raw",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:75451caf9b525422f3f6f9dc6151cc0d68babcff8f620b8f4b1cb7659e818219",
+    "point": "storage.estimate_captures",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:75451caf9b525422f3f6f9dc6151cc0d68babcff8f620b8f4b1cb7659e818219",
+    "point": "storage.weekly",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:75451caf9b525422f3f6f9dc6151cc0d68babcff8f620b8f4b1cb7659e818219",
+    "point": "weather.gw_daily",
+    "fields": 8,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:75451caf9b525422f3f6f9dc6151cc0d68babcff8f620b8f4b1cb7659e818219",
+    "point": "weather.obs_hourly",
+    "fields": 29,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:4b10ea92eb368e723768272f539304761c2cb5310b36b0855cd0a7b76c049639",
+    "point": "calendar.sessions_since_prompt_expiry",
+    "fields": 4,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:4b10ea92eb368e723768272f539304761c2cb5310b36b0855cd0a7b76c049639",
+    "point": "cot.023391",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:4b10ea92eb368e723768272f539304761c2cb5310b36b0855cd0a7b76c049639",
+    "point": "cot.023392",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:4b10ea92eb368e723768272f539304761c2cb5310b36b0855cd0a7b76c049639",
+    "point": "cot.0233AG",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:4b10ea92eb368e723768272f539304761c2cb5310b36b0855cd0a7b76c049639",
+    "point": "cot.0233AH",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:4b10ea92eb368e723768272f539304761c2cb5310b36b0855cd0a7b76c049639",
+    "point": "cot.023651",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:4b10ea92eb368e723768272f539304761c2cb5310b36b0855cd0a7b76c049639",
+    "point": "curve.definitions",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:4b10ea92eb368e723768272f539304761c2cb5310b36b0855cd0a7b76c049639",
+    "point": "curve.settled_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:4b10ea92eb368e723768272f539304761c2cb5310b36b0855cd0a7b76c049639",
+    "point": "curve.statistics",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:4b10ea92eb368e723768272f539304761c2cb5310b36b0855cd0a7b76c049639",
+    "point": "curve.traded_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:4b10ea92eb368e723768272f539304761c2cb5310b36b0855cd0a7b76c049639",
+    "point": "curve.trades",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:4b10ea92eb368e723768272f539304761c2cb5310b36b0855cd0a7b76c049639",
+    "point": "eia930.hourly",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:4b10ea92eb368e723768272f539304761c2cb5310b36b0855cd0a7b76c049639",
+    "point": "eia930.us48",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:4b10ea92eb368e723768272f539304761c2cb5310b36b0855cd0a7b76c049639",
+    "point": "mos.disagreement_by_cycle",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:4b10ea92eb368e723768272f539304761c2cb5310b36b0855cd0a7b76c049639",
+    "point": "mos.gw_by_cycle",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:4b10ea92eb368e723768272f539304761c2cb5310b36b0855cd0a7b76c049639",
+    "point": "mos.raw",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:4b10ea92eb368e723768272f539304761c2cb5310b36b0855cd0a7b76c049639",
+    "point": "storage.estimate_captures",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:4b10ea92eb368e723768272f539304761c2cb5310b36b0855cd0a7b76c049639",
+    "point": "storage.weekly",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:4b10ea92eb368e723768272f539304761c2cb5310b36b0855cd0a7b76c049639",
+    "point": "weather.gw_daily",
+    "fields": 8,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:4b10ea92eb368e723768272f539304761c2cb5310b36b0855cd0a7b76c049639",
+    "point": "weather.obs_hourly",
+    "fields": 29,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:fdc272b04238002251a48fe70c9f9483fb5b396b7dca5a24352dd17e4378a776",
+    "point": "calendar.sessions_since_prompt_expiry",
+    "fields": 4,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:fdc272b04238002251a48fe70c9f9483fb5b396b7dca5a24352dd17e4378a776",
+    "point": "cot.023391",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:fdc272b04238002251a48fe70c9f9483fb5b396b7dca5a24352dd17e4378a776",
+    "point": "cot.023392",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:fdc272b04238002251a48fe70c9f9483fb5b396b7dca5a24352dd17e4378a776",
+    "point": "cot.0233AG",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:fdc272b04238002251a48fe70c9f9483fb5b396b7dca5a24352dd17e4378a776",
+    "point": "cot.0233AH",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:fdc272b04238002251a48fe70c9f9483fb5b396b7dca5a24352dd17e4378a776",
+    "point": "cot.023651",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:fdc272b04238002251a48fe70c9f9483fb5b396b7dca5a24352dd17e4378a776",
+    "point": "curve.definitions",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:fdc272b04238002251a48fe70c9f9483fb5b396b7dca5a24352dd17e4378a776",
+    "point": "curve.settled_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:fdc272b04238002251a48fe70c9f9483fb5b396b7dca5a24352dd17e4378a776",
+    "point": "curve.statistics",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:fdc272b04238002251a48fe70c9f9483fb5b396b7dca5a24352dd17e4378a776",
+    "point": "curve.traded_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:fdc272b04238002251a48fe70c9f9483fb5b396b7dca5a24352dd17e4378a776",
+    "point": "curve.trades",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:fdc272b04238002251a48fe70c9f9483fb5b396b7dca5a24352dd17e4378a776",
+    "point": "eia930.hourly",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:fdc272b04238002251a48fe70c9f9483fb5b396b7dca5a24352dd17e4378a776",
+    "point": "eia930.us48",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:fdc272b04238002251a48fe70c9f9483fb5b396b7dca5a24352dd17e4378a776",
+    "point": "mos.disagreement_by_cycle",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:fdc272b04238002251a48fe70c9f9483fb5b396b7dca5a24352dd17e4378a776",
+    "point": "mos.gw_by_cycle",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:fdc272b04238002251a48fe70c9f9483fb5b396b7dca5a24352dd17e4378a776",
+    "point": "mos.raw",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:fdc272b04238002251a48fe70c9f9483fb5b396b7dca5a24352dd17e4378a776",
+    "point": "storage.estimate_captures",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:fdc272b04238002251a48fe70c9f9483fb5b396b7dca5a24352dd17e4378a776",
+    "point": "storage.weekly",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:fdc272b04238002251a48fe70c9f9483fb5b396b7dca5a24352dd17e4378a776",
+    "point": "weather.gw_daily",
+    "fields": 8,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:fdc272b04238002251a48fe70c9f9483fb5b396b7dca5a24352dd17e4378a776",
+    "point": "weather.obs_hourly",
+    "fields": 29,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1ee038440136246133a5e0a4427b4fe9e34e8c8192008557173238660b80ffb2",
+    "point": "calendar.sessions_since_prompt_expiry",
+    "fields": 4,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1ee038440136246133a5e0a4427b4fe9e34e8c8192008557173238660b80ffb2",
+    "point": "cot.023391",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1ee038440136246133a5e0a4427b4fe9e34e8c8192008557173238660b80ffb2",
+    "point": "cot.023392",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1ee038440136246133a5e0a4427b4fe9e34e8c8192008557173238660b80ffb2",
+    "point": "cot.0233AG",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1ee038440136246133a5e0a4427b4fe9e34e8c8192008557173238660b80ffb2",
+    "point": "cot.0233AH",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1ee038440136246133a5e0a4427b4fe9e34e8c8192008557173238660b80ffb2",
+    "point": "cot.023651",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1ee038440136246133a5e0a4427b4fe9e34e8c8192008557173238660b80ffb2",
+    "point": "curve.definitions",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1ee038440136246133a5e0a4427b4fe9e34e8c8192008557173238660b80ffb2",
+    "point": "curve.settled_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1ee038440136246133a5e0a4427b4fe9e34e8c8192008557173238660b80ffb2",
+    "point": "curve.statistics",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1ee038440136246133a5e0a4427b4fe9e34e8c8192008557173238660b80ffb2",
+    "point": "curve.traded_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1ee038440136246133a5e0a4427b4fe9e34e8c8192008557173238660b80ffb2",
+    "point": "curve.trades",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1ee038440136246133a5e0a4427b4fe9e34e8c8192008557173238660b80ffb2",
+    "point": "eia930.hourly",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1ee038440136246133a5e0a4427b4fe9e34e8c8192008557173238660b80ffb2",
+    "point": "eia930.us48",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1ee038440136246133a5e0a4427b4fe9e34e8c8192008557173238660b80ffb2",
+    "point": "mos.disagreement_by_cycle",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1ee038440136246133a5e0a4427b4fe9e34e8c8192008557173238660b80ffb2",
+    "point": "mos.gw_by_cycle",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1ee038440136246133a5e0a4427b4fe9e34e8c8192008557173238660b80ffb2",
+    "point": "mos.raw",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1ee038440136246133a5e0a4427b4fe9e34e8c8192008557173238660b80ffb2",
+    "point": "storage.estimate_captures",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1ee038440136246133a5e0a4427b4fe9e34e8c8192008557173238660b80ffb2",
+    "point": "storage.weekly",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1ee038440136246133a5e0a4427b4fe9e34e8c8192008557173238660b80ffb2",
+    "point": "weather.gw_daily",
+    "fields": 8,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1ee038440136246133a5e0a4427b4fe9e34e8c8192008557173238660b80ffb2",
+    "point": "weather.obs_hourly",
+    "fields": 29,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8e729ac62c6b3838674e54299b2ca7d51d2ae4c3f16c7f8e79600234ea84b5a",
+    "point": "calendar.sessions_since_prompt_expiry",
+    "fields": 4,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8e729ac62c6b3838674e54299b2ca7d51d2ae4c3f16c7f8e79600234ea84b5a",
+    "point": "cot.023391",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8e729ac62c6b3838674e54299b2ca7d51d2ae4c3f16c7f8e79600234ea84b5a",
+    "point": "cot.023392",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8e729ac62c6b3838674e54299b2ca7d51d2ae4c3f16c7f8e79600234ea84b5a",
+    "point": "cot.0233AG",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8e729ac62c6b3838674e54299b2ca7d51d2ae4c3f16c7f8e79600234ea84b5a",
+    "point": "cot.0233AH",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8e729ac62c6b3838674e54299b2ca7d51d2ae4c3f16c7f8e79600234ea84b5a",
+    "point": "cot.023651",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8e729ac62c6b3838674e54299b2ca7d51d2ae4c3f16c7f8e79600234ea84b5a",
+    "point": "curve.definitions",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8e729ac62c6b3838674e54299b2ca7d51d2ae4c3f16c7f8e79600234ea84b5a",
+    "point": "curve.settled_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8e729ac62c6b3838674e54299b2ca7d51d2ae4c3f16c7f8e79600234ea84b5a",
+    "point": "curve.statistics",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8e729ac62c6b3838674e54299b2ca7d51d2ae4c3f16c7f8e79600234ea84b5a",
+    "point": "curve.traded_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8e729ac62c6b3838674e54299b2ca7d51d2ae4c3f16c7f8e79600234ea84b5a",
+    "point": "curve.trades",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8e729ac62c6b3838674e54299b2ca7d51d2ae4c3f16c7f8e79600234ea84b5a",
+    "point": "eia930.hourly",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8e729ac62c6b3838674e54299b2ca7d51d2ae4c3f16c7f8e79600234ea84b5a",
+    "point": "eia930.us48",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8e729ac62c6b3838674e54299b2ca7d51d2ae4c3f16c7f8e79600234ea84b5a",
+    "point": "mos.disagreement_by_cycle",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8e729ac62c6b3838674e54299b2ca7d51d2ae4c3f16c7f8e79600234ea84b5a",
+    "point": "mos.gw_by_cycle",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8e729ac62c6b3838674e54299b2ca7d51d2ae4c3f16c7f8e79600234ea84b5a",
+    "point": "mos.raw",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8e729ac62c6b3838674e54299b2ca7d51d2ae4c3f16c7f8e79600234ea84b5a",
+    "point": "storage.estimate_captures",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8e729ac62c6b3838674e54299b2ca7d51d2ae4c3f16c7f8e79600234ea84b5a",
+    "point": "storage.weekly",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8e729ac62c6b3838674e54299b2ca7d51d2ae4c3f16c7f8e79600234ea84b5a",
+    "point": "weather.gw_daily",
+    "fields": 8,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:f8e729ac62c6b3838674e54299b2ca7d51d2ae4c3f16c7f8e79600234ea84b5a",
+    "point": "weather.obs_hourly",
+    "fields": 29,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:30f044e1c65cf3d32fbd950d10e78e9b084bcb1fd213e3ee52cff404df35821a",
+    "point": "calendar.sessions_since_prompt_expiry",
+    "fields": 4,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:30f044e1c65cf3d32fbd950d10e78e9b084bcb1fd213e3ee52cff404df35821a",
+    "point": "cot.023391",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:30f044e1c65cf3d32fbd950d10e78e9b084bcb1fd213e3ee52cff404df35821a",
+    "point": "cot.023392",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:30f044e1c65cf3d32fbd950d10e78e9b084bcb1fd213e3ee52cff404df35821a",
+    "point": "cot.0233AG",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:30f044e1c65cf3d32fbd950d10e78e9b084bcb1fd213e3ee52cff404df35821a",
+    "point": "cot.0233AH",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:30f044e1c65cf3d32fbd950d10e78e9b084bcb1fd213e3ee52cff404df35821a",
+    "point": "cot.023651",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:30f044e1c65cf3d32fbd950d10e78e9b084bcb1fd213e3ee52cff404df35821a",
+    "point": "curve.definitions",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:30f044e1c65cf3d32fbd950d10e78e9b084bcb1fd213e3ee52cff404df35821a",
+    "point": "curve.settled_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:30f044e1c65cf3d32fbd950d10e78e9b084bcb1fd213e3ee52cff404df35821a",
+    "point": "curve.statistics",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:30f044e1c65cf3d32fbd950d10e78e9b084bcb1fd213e3ee52cff404df35821a",
+    "point": "curve.traded_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:30f044e1c65cf3d32fbd950d10e78e9b084bcb1fd213e3ee52cff404df35821a",
+    "point": "curve.trades",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:30f044e1c65cf3d32fbd950d10e78e9b084bcb1fd213e3ee52cff404df35821a",
+    "point": "eia930.hourly",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:30f044e1c65cf3d32fbd950d10e78e9b084bcb1fd213e3ee52cff404df35821a",
+    "point": "eia930.us48",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:30f044e1c65cf3d32fbd950d10e78e9b084bcb1fd213e3ee52cff404df35821a",
+    "point": "mos.disagreement_by_cycle",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:30f044e1c65cf3d32fbd950d10e78e9b084bcb1fd213e3ee52cff404df35821a",
+    "point": "mos.gw_by_cycle",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:30f044e1c65cf3d32fbd950d10e78e9b084bcb1fd213e3ee52cff404df35821a",
+    "point": "mos.raw",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:30f044e1c65cf3d32fbd950d10e78e9b084bcb1fd213e3ee52cff404df35821a",
+    "point": "storage.estimate_captures",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:30f044e1c65cf3d32fbd950d10e78e9b084bcb1fd213e3ee52cff404df35821a",
+    "point": "storage.weekly",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:30f044e1c65cf3d32fbd950d10e78e9b084bcb1fd213e3ee52cff404df35821a",
+    "point": "weather.gw_daily",
+    "fields": 8,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:30f044e1c65cf3d32fbd950d10e78e9b084bcb1fd213e3ee52cff404df35821a",
+    "point": "weather.obs_hourly",
+    "fields": 29,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:b5308e408ff0fdd8b558c6365b1553df55f2151f5d0672bf032cc704fc039870",
+    "point": "calendar.sessions_since_prompt_expiry",
+    "fields": 4,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:b5308e408ff0fdd8b558c6365b1553df55f2151f5d0672bf032cc704fc039870",
+    "point": "cot.023391",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:b5308e408ff0fdd8b558c6365b1553df55f2151f5d0672bf032cc704fc039870",
+    "point": "cot.023392",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:b5308e408ff0fdd8b558c6365b1553df55f2151f5d0672bf032cc704fc039870",
+    "point": "cot.0233AG",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:b5308e408ff0fdd8b558c6365b1553df55f2151f5d0672bf032cc704fc039870",
+    "point": "cot.0233AH",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:b5308e408ff0fdd8b558c6365b1553df55f2151f5d0672bf032cc704fc039870",
+    "point": "cot.023651",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:b5308e408ff0fdd8b558c6365b1553df55f2151f5d0672bf032cc704fc039870",
+    "point": "curve.definitions",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:b5308e408ff0fdd8b558c6365b1553df55f2151f5d0672bf032cc704fc039870",
+    "point": "curve.settled_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:b5308e408ff0fdd8b558c6365b1553df55f2151f5d0672bf032cc704fc039870",
+    "point": "curve.statistics",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:b5308e408ff0fdd8b558c6365b1553df55f2151f5d0672bf032cc704fc039870",
+    "point": "curve.traded_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:b5308e408ff0fdd8b558c6365b1553df55f2151f5d0672bf032cc704fc039870",
+    "point": "curve.trades",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:b5308e408ff0fdd8b558c6365b1553df55f2151f5d0672bf032cc704fc039870",
+    "point": "eia930.hourly",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:b5308e408ff0fdd8b558c6365b1553df55f2151f5d0672bf032cc704fc039870",
+    "point": "eia930.us48",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:b5308e408ff0fdd8b558c6365b1553df55f2151f5d0672bf032cc704fc039870",
+    "point": "mos.disagreement_by_cycle",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:b5308e408ff0fdd8b558c6365b1553df55f2151f5d0672bf032cc704fc039870",
+    "point": "mos.gw_by_cycle",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:b5308e408ff0fdd8b558c6365b1553df55f2151f5d0672bf032cc704fc039870",
+    "point": "mos.raw",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:b5308e408ff0fdd8b558c6365b1553df55f2151f5d0672bf032cc704fc039870",
+    "point": "storage.estimate_captures",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:b5308e408ff0fdd8b558c6365b1553df55f2151f5d0672bf032cc704fc039870",
+    "point": "storage.weekly",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:b5308e408ff0fdd8b558c6365b1553df55f2151f5d0672bf032cc704fc039870",
+    "point": "weather.gw_daily",
+    "fields": 8,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:b5308e408ff0fdd8b558c6365b1553df55f2151f5d0672bf032cc704fc039870",
+    "point": "weather.obs_hourly",
+    "fields": 29,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1d4a6eebd6f7982b6978bfda412c041e23e8dce989971ea792ffd24733ab9104",
+    "point": "calendar.sessions_since_prompt_expiry",
+    "fields": 4,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1d4a6eebd6f7982b6978bfda412c041e23e8dce989971ea792ffd24733ab9104",
+    "point": "cot.023391",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1d4a6eebd6f7982b6978bfda412c041e23e8dce989971ea792ffd24733ab9104",
+    "point": "cot.023392",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1d4a6eebd6f7982b6978bfda412c041e23e8dce989971ea792ffd24733ab9104",
+    "point": "cot.0233AG",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1d4a6eebd6f7982b6978bfda412c041e23e8dce989971ea792ffd24733ab9104",
+    "point": "cot.0233AH",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1d4a6eebd6f7982b6978bfda412c041e23e8dce989971ea792ffd24733ab9104",
+    "point": "cot.023651",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1d4a6eebd6f7982b6978bfda412c041e23e8dce989971ea792ffd24733ab9104",
+    "point": "curve.definitions",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1d4a6eebd6f7982b6978bfda412c041e23e8dce989971ea792ffd24733ab9104",
+    "point": "curve.settled_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1d4a6eebd6f7982b6978bfda412c041e23e8dce989971ea792ffd24733ab9104",
+    "point": "curve.statistics",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1d4a6eebd6f7982b6978bfda412c041e23e8dce989971ea792ffd24733ab9104",
+    "point": "curve.traded_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1d4a6eebd6f7982b6978bfda412c041e23e8dce989971ea792ffd24733ab9104",
+    "point": "curve.trades",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1d4a6eebd6f7982b6978bfda412c041e23e8dce989971ea792ffd24733ab9104",
+    "point": "eia930.hourly",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1d4a6eebd6f7982b6978bfda412c041e23e8dce989971ea792ffd24733ab9104",
+    "point": "eia930.us48",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1d4a6eebd6f7982b6978bfda412c041e23e8dce989971ea792ffd24733ab9104",
+    "point": "mos.disagreement_by_cycle",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1d4a6eebd6f7982b6978bfda412c041e23e8dce989971ea792ffd24733ab9104",
+    "point": "mos.gw_by_cycle",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1d4a6eebd6f7982b6978bfda412c041e23e8dce989971ea792ffd24733ab9104",
+    "point": "mos.raw",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1d4a6eebd6f7982b6978bfda412c041e23e8dce989971ea792ffd24733ab9104",
+    "point": "storage.weekly",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1d4a6eebd6f7982b6978bfda412c041e23e8dce989971ea792ffd24733ab9104",
+    "point": "weather.gw_daily",
+    "fields": 8,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:1d4a6eebd6f7982b6978bfda412c041e23e8dce989971ea792ffd24733ab9104",
+    "point": "weather.obs_hourly",
+    "fields": 29,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:ea1743657277553846ca4ff5de3bbd17b7d353017b23420558fd99072b2066f9",
+    "point": "calendar.sessions_since_prompt_expiry",
+    "fields": 4,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:ea1743657277553846ca4ff5de3bbd17b7d353017b23420558fd99072b2066f9",
+    "point": "cot.023391",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:ea1743657277553846ca4ff5de3bbd17b7d353017b23420558fd99072b2066f9",
+    "point": "cot.023392",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:ea1743657277553846ca4ff5de3bbd17b7d353017b23420558fd99072b2066f9",
+    "point": "cot.0233AG",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:ea1743657277553846ca4ff5de3bbd17b7d353017b23420558fd99072b2066f9",
+    "point": "cot.0233AH",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:ea1743657277553846ca4ff5de3bbd17b7d353017b23420558fd99072b2066f9",
+    "point": "cot.023651",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:ea1743657277553846ca4ff5de3bbd17b7d353017b23420558fd99072b2066f9",
+    "point": "curve.definitions",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:ea1743657277553846ca4ff5de3bbd17b7d353017b23420558fd99072b2066f9",
+    "point": "curve.settled_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:ea1743657277553846ca4ff5de3bbd17b7d353017b23420558fd99072b2066f9",
+    "point": "curve.statistics",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:ea1743657277553846ca4ff5de3bbd17b7d353017b23420558fd99072b2066f9",
+    "point": "curve.traded_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:ea1743657277553846ca4ff5de3bbd17b7d353017b23420558fd99072b2066f9",
+    "point": "curve.trades",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:ea1743657277553846ca4ff5de3bbd17b7d353017b23420558fd99072b2066f9",
+    "point": "eia930.hourly",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:ea1743657277553846ca4ff5de3bbd17b7d353017b23420558fd99072b2066f9",
+    "point": "eia930.us48",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:ea1743657277553846ca4ff5de3bbd17b7d353017b23420558fd99072b2066f9",
+    "point": "mos.disagreement_by_cycle",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:ea1743657277553846ca4ff5de3bbd17b7d353017b23420558fd99072b2066f9",
+    "point": "mos.gw_by_cycle",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:ea1743657277553846ca4ff5de3bbd17b7d353017b23420558fd99072b2066f9",
+    "point": "mos.raw",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:ea1743657277553846ca4ff5de3bbd17b7d353017b23420558fd99072b2066f9",
+    "point": "storage.weekly",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:ea1743657277553846ca4ff5de3bbd17b7d353017b23420558fd99072b2066f9",
+    "point": "weather.gw_daily",
+    "fields": 8,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:ea1743657277553846ca4ff5de3bbd17b7d353017b23420558fd99072b2066f9",
+    "point": "weather.obs_hourly",
+    "fields": 29,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:da894f0a26f2f6c29bf57fb210a16d0c8342c38cb0e56e79e9f2ffe7d5df173c",
+    "point": "calendar.sessions_since_prompt_expiry",
+    "fields": 4,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:da894f0a26f2f6c29bf57fb210a16d0c8342c38cb0e56e79e9f2ffe7d5df173c",
+    "point": "cot.023391",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:da894f0a26f2f6c29bf57fb210a16d0c8342c38cb0e56e79e9f2ffe7d5df173c",
+    "point": "cot.023392",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:da894f0a26f2f6c29bf57fb210a16d0c8342c38cb0e56e79e9f2ffe7d5df173c",
+    "point": "cot.0233AG",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:da894f0a26f2f6c29bf57fb210a16d0c8342c38cb0e56e79e9f2ffe7d5df173c",
+    "point": "cot.0233AH",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:da894f0a26f2f6c29bf57fb210a16d0c8342c38cb0e56e79e9f2ffe7d5df173c",
+    "point": "cot.023651",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:da894f0a26f2f6c29bf57fb210a16d0c8342c38cb0e56e79e9f2ffe7d5df173c",
+    "point": "curve.definitions",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:da894f0a26f2f6c29bf57fb210a16d0c8342c38cb0e56e79e9f2ffe7d5df173c",
+    "point": "curve.settled_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:da894f0a26f2f6c29bf57fb210a16d0c8342c38cb0e56e79e9f2ffe7d5df173c",
+    "point": "curve.statistics",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:da894f0a26f2f6c29bf57fb210a16d0c8342c38cb0e56e79e9f2ffe7d5df173c",
+    "point": "curve.traded_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:da894f0a26f2f6c29bf57fb210a16d0c8342c38cb0e56e79e9f2ffe7d5df173c",
+    "point": "curve.trades",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:da894f0a26f2f6c29bf57fb210a16d0c8342c38cb0e56e79e9f2ffe7d5df173c",
+    "point": "eia930.hourly",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:da894f0a26f2f6c29bf57fb210a16d0c8342c38cb0e56e79e9f2ffe7d5df173c",
+    "point": "eia930.us48",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:da894f0a26f2f6c29bf57fb210a16d0c8342c38cb0e56e79e9f2ffe7d5df173c",
+    "point": "mos.disagreement_by_cycle",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:da894f0a26f2f6c29bf57fb210a16d0c8342c38cb0e56e79e9f2ffe7d5df173c",
+    "point": "mos.gw_by_cycle",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:da894f0a26f2f6c29bf57fb210a16d0c8342c38cb0e56e79e9f2ffe7d5df173c",
+    "point": "mos.raw",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:da894f0a26f2f6c29bf57fb210a16d0c8342c38cb0e56e79e9f2ffe7d5df173c",
+    "point": "storage.weekly",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:da894f0a26f2f6c29bf57fb210a16d0c8342c38cb0e56e79e9f2ffe7d5df173c",
+    "point": "weather.gw_daily",
+    "fields": 8,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:da894f0a26f2f6c29bf57fb210a16d0c8342c38cb0e56e79e9f2ffe7d5df173c",
+    "point": "weather.obs_hourly",
+    "fields": 29,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:2073697e3a3b9be12330a3d83b5c0c3e114ec2be6a5a0ec0db5ba96f72129409",
+    "point": "calendar.sessions_since_prompt_expiry",
+    "fields": 4,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:2073697e3a3b9be12330a3d83b5c0c3e114ec2be6a5a0ec0db5ba96f72129409",
+    "point": "cot.023391",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:2073697e3a3b9be12330a3d83b5c0c3e114ec2be6a5a0ec0db5ba96f72129409",
+    "point": "cot.023392",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:2073697e3a3b9be12330a3d83b5c0c3e114ec2be6a5a0ec0db5ba96f72129409",
+    "point": "cot.0233AG",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:2073697e3a3b9be12330a3d83b5c0c3e114ec2be6a5a0ec0db5ba96f72129409",
+    "point": "cot.0233AH",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:2073697e3a3b9be12330a3d83b5c0c3e114ec2be6a5a0ec0db5ba96f72129409",
+    "point": "cot.023651",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:2073697e3a3b9be12330a3d83b5c0c3e114ec2be6a5a0ec0db5ba96f72129409",
+    "point": "curve.definitions",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:2073697e3a3b9be12330a3d83b5c0c3e114ec2be6a5a0ec0db5ba96f72129409",
+    "point": "curve.settled_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:2073697e3a3b9be12330a3d83b5c0c3e114ec2be6a5a0ec0db5ba96f72129409",
+    "point": "curve.statistics",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:2073697e3a3b9be12330a3d83b5c0c3e114ec2be6a5a0ec0db5ba96f72129409",
+    "point": "curve.traded_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:2073697e3a3b9be12330a3d83b5c0c3e114ec2be6a5a0ec0db5ba96f72129409",
+    "point": "curve.trades",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:2073697e3a3b9be12330a3d83b5c0c3e114ec2be6a5a0ec0db5ba96f72129409",
+    "point": "eia930.hourly",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:2073697e3a3b9be12330a3d83b5c0c3e114ec2be6a5a0ec0db5ba96f72129409",
+    "point": "eia930.us48",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:2073697e3a3b9be12330a3d83b5c0c3e114ec2be6a5a0ec0db5ba96f72129409",
+    "point": "mos.disagreement_by_cycle",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:2073697e3a3b9be12330a3d83b5c0c3e114ec2be6a5a0ec0db5ba96f72129409",
+    "point": "mos.gw_by_cycle",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:2073697e3a3b9be12330a3d83b5c0c3e114ec2be6a5a0ec0db5ba96f72129409",
+    "point": "mos.raw",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:2073697e3a3b9be12330a3d83b5c0c3e114ec2be6a5a0ec0db5ba96f72129409",
+    "point": "storage.weekly",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:2073697e3a3b9be12330a3d83b5c0c3e114ec2be6a5a0ec0db5ba96f72129409",
+    "point": "weather.gw_daily",
+    "fields": 8,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:2073697e3a3b9be12330a3d83b5c0c3e114ec2be6a5a0ec0db5ba96f72129409",
+    "point": "weather.obs_hourly",
+    "fields": 29,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:944376d372fb92f036287b40182c7d036425ecf9958afa0685a57c67e4dff369",
+    "point": "calendar.sessions_since_prompt_expiry",
+    "fields": 4,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:944376d372fb92f036287b40182c7d036425ecf9958afa0685a57c67e4dff369",
+    "point": "cot.023391",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:944376d372fb92f036287b40182c7d036425ecf9958afa0685a57c67e4dff369",
+    "point": "cot.023392",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:944376d372fb92f036287b40182c7d036425ecf9958afa0685a57c67e4dff369",
+    "point": "cot.0233AG",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:944376d372fb92f036287b40182c7d036425ecf9958afa0685a57c67e4dff369",
+    "point": "cot.0233AH",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:944376d372fb92f036287b40182c7d036425ecf9958afa0685a57c67e4dff369",
+    "point": "cot.023651",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:944376d372fb92f036287b40182c7d036425ecf9958afa0685a57c67e4dff369",
+    "point": "curve.definitions",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:944376d372fb92f036287b40182c7d036425ecf9958afa0685a57c67e4dff369",
+    "point": "curve.settled_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:944376d372fb92f036287b40182c7d036425ecf9958afa0685a57c67e4dff369",
+    "point": "curve.statistics",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:944376d372fb92f036287b40182c7d036425ecf9958afa0685a57c67e4dff369",
+    "point": "curve.traded_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:944376d372fb92f036287b40182c7d036425ecf9958afa0685a57c67e4dff369",
+    "point": "curve.trades",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:944376d372fb92f036287b40182c7d036425ecf9958afa0685a57c67e4dff369",
+    "point": "eia930.hourly",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:944376d372fb92f036287b40182c7d036425ecf9958afa0685a57c67e4dff369",
+    "point": "eia930.us48",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:944376d372fb92f036287b40182c7d036425ecf9958afa0685a57c67e4dff369",
+    "point": "mos.disagreement_by_cycle",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:944376d372fb92f036287b40182c7d036425ecf9958afa0685a57c67e4dff369",
+    "point": "mos.gw_by_cycle",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:944376d372fb92f036287b40182c7d036425ecf9958afa0685a57c67e4dff369",
+    "point": "mos.raw",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:944376d372fb92f036287b40182c7d036425ecf9958afa0685a57c67e4dff369",
+    "point": "storage.weekly",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:944376d372fb92f036287b40182c7d036425ecf9958afa0685a57c67e4dff369",
+    "point": "weather.gw_daily",
+    "fields": 8,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:944376d372fb92f036287b40182c7d036425ecf9958afa0685a57c67e4dff369",
+    "point": "weather.obs_hourly",
+    "fields": 29,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:3b169f86b0b433528381e407012aac496c407e7d0cbf3f5adb7c3b87bbeccaf0",
+    "point": "calendar.sessions_since_prompt_expiry",
+    "fields": 4,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:3b169f86b0b433528381e407012aac496c407e7d0cbf3f5adb7c3b87bbeccaf0",
+    "point": "cot.023391",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:3b169f86b0b433528381e407012aac496c407e7d0cbf3f5adb7c3b87bbeccaf0",
+    "point": "cot.023392",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:3b169f86b0b433528381e407012aac496c407e7d0cbf3f5adb7c3b87bbeccaf0",
+    "point": "cot.0233AG",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:3b169f86b0b433528381e407012aac496c407e7d0cbf3f5adb7c3b87bbeccaf0",
+    "point": "cot.0233AH",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:3b169f86b0b433528381e407012aac496c407e7d0cbf3f5adb7c3b87bbeccaf0",
+    "point": "cot.023651",
+    "fields": 21,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:3b169f86b0b433528381e407012aac496c407e7d0cbf3f5adb7c3b87bbeccaf0",
+    "point": "curve.definitions",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:3b169f86b0b433528381e407012aac496c407e7d0cbf3f5adb7c3b87bbeccaf0",
+    "point": "curve.settled_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:3b169f86b0b433528381e407012aac496c407e7d0cbf3f5adb7c3b87bbeccaf0",
+    "point": "curve.statistics",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:3b169f86b0b433528381e407012aac496c407e7d0cbf3f5adb7c3b87bbeccaf0",
+    "point": "curve.traded_shape",
+    "fields": 13,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:3b169f86b0b433528381e407012aac496c407e7d0cbf3f5adb7c3b87bbeccaf0",
+    "point": "curve.trades",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:3b169f86b0b433528381e407012aac496c407e7d0cbf3f5adb7c3b87bbeccaf0",
+    "point": "eia930.hourly",
+    "fields": 7,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:3b169f86b0b433528381e407012aac496c407e7d0cbf3f5adb7c3b87bbeccaf0",
+    "point": "eia930.us48",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:3b169f86b0b433528381e407012aac496c407e7d0cbf3f5adb7c3b87bbeccaf0",
+    "point": "mos.disagreement_by_cycle",
+    "fields": 5,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:3b169f86b0b433528381e407012aac496c407e7d0cbf3f5adb7c3b87bbeccaf0",
+    "point": "mos.gw_by_cycle",
+    "fields": 10,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:3b169f86b0b433528381e407012aac496c407e7d0cbf3f5adb7c3b87bbeccaf0",
+    "point": "mos.raw",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:3b169f86b0b433528381e407012aac496c407e7d0cbf3f5adb7c3b87bbeccaf0",
+    "point": "storage.weekly",
+    "fields": 6,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:3b169f86b0b433528381e407012aac496c407e7d0cbf3f5adb7c3b87bbeccaf0",
+    "point": "weather.gw_daily",
+    "fields": 8,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "manifest:3b169f86b0b433528381e407012aac496c407e7d0cbf3f5adb7c3b87bbeccaf0",
+    "point": "weather.obs_hourly",
+    "fields": 29,
+    "clock_rule": "SOURCE_PUBLICATION_PLUS_EXPLICIT_READER_EVENT_PLACEMENT"
+  },
+  {
+    "source_id": "s3-sha256:8c9bf49fda3adf984c191ed06c13ee7c04117777a9535b485c9cbe15400e2c71",
+    "point": "calendar.sessions_since_prompt_expiry",
+    "fields": 5,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "s3-sha256:8c9bf49fda3adf984c191ed06c13ee7c04117777a9535b485c9cbe15400e2c71",
+    "point": "cot.023391",
+    "fields": 22,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "s3-sha256:8c9bf49fda3adf984c191ed06c13ee7c04117777a9535b485c9cbe15400e2c71",
+    "point": "cot.023392",
+    "fields": 22,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "s3-sha256:8c9bf49fda3adf984c191ed06c13ee7c04117777a9535b485c9cbe15400e2c71",
+    "point": "cot.0233AG",
+    "fields": 22,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "s3-sha256:8c9bf49fda3adf984c191ed06c13ee7c04117777a9535b485c9cbe15400e2c71",
+    "point": "cot.0233AH",
+    "fields": 22,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "s3-sha256:8c9bf49fda3adf984c191ed06c13ee7c04117777a9535b485c9cbe15400e2c71",
+    "point": "cot.023651",
+    "fields": 22,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "s3-sha256:8c9bf49fda3adf984c191ed06c13ee7c04117777a9535b485c9cbe15400e2c71",
+    "point": "curve.definitions",
+    "fields": 6,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "s3-sha256:8c9bf49fda3adf984c191ed06c13ee7c04117777a9535b485c9cbe15400e2c71",
+    "point": "curve.settled_shape",
+    "fields": 14,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "s3-sha256:8c9bf49fda3adf984c191ed06c13ee7c04117777a9535b485c9cbe15400e2c71",
+    "point": "curve.statistics",
+    "fields": 11,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "s3-sha256:8c9bf49fda3adf984c191ed06c13ee7c04117777a9535b485c9cbe15400e2c71",
+    "point": "curve.traded_shape",
+    "fields": 14,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "s3-sha256:8c9bf49fda3adf984c191ed06c13ee7c04117777a9535b485c9cbe15400e2c71",
+    "point": "curve.trades",
+    "fields": 8,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "s3-sha256:8c9bf49fda3adf984c191ed06c13ee7c04117777a9535b485c9cbe15400e2c71",
+    "point": "eia930.hourly",
+    "fields": 8,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "s3-sha256:8c9bf49fda3adf984c191ed06c13ee7c04117777a9535b485c9cbe15400e2c71",
+    "point": "eia930.us48",
+    "fields": 6,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "s3-sha256:8c9bf49fda3adf984c191ed06c13ee7c04117777a9535b485c9cbe15400e2c71",
+    "point": "mos.disagreement_by_cycle",
+    "fields": 6,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "s3-sha256:8c9bf49fda3adf984c191ed06c13ee7c04117777a9535b485c9cbe15400e2c71",
+    "point": "mos.gw_by_cycle",
+    "fields": 11,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "s3-sha256:8c9bf49fda3adf984c191ed06c13ee7c04117777a9535b485c9cbe15400e2c71",
+    "point": "mos.raw",
+    "fields": 7,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "s3-sha256:8c9bf49fda3adf984c191ed06c13ee7c04117777a9535b485c9cbe15400e2c71",
+    "point": "storage.estimate",
+    "fields": 10,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "s3-sha256:8c9bf49fda3adf984c191ed06c13ee7c04117777a9535b485c9cbe15400e2c71",
+    "point": "storage.weekly",
+    "fields": 10,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "s3-sha256:8c9bf49fda3adf984c191ed06c13ee7c04117777a9535b485c9cbe15400e2c71",
+    "point": "weather.gw_daily",
+    "fields": 9,
+    "clock_rule": "SOURCE_READER_STAMP"
+  },
+  {
+    "source_id": "s3-sha256:8c9bf49fda3adf984c191ed06c13ee7c04117777a9535b485c9cbe15400e2c71",
+    "point": "weather.obs_hourly",
+    "fields": 30,
+    "clock_rule": "SOURCE_READER_STAMP"
+  }
+]

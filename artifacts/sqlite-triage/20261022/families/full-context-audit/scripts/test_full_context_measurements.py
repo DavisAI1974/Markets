@@ -3,6 +3,13 @@ from full_context_measurements import Measurements,native_measurements,second_me
 
 
 class FullMeasurementTests(unittest.TestCase):
+    def test_name_normalization_cannot_merge_different_sources_or_kinds(self):
+        out=Measurements();out.add('a|b',1,'count','source.one')
+        with self.assertRaises(AssertionError):out.add('a_b',1,'count','source.two')
+        with self.assertRaises(AssertionError):out.category('a_b','1','source.one')
+        other=Measurements();other.category('a|b','x','source.one')
+        with self.assertRaises(AssertionError):other.category('a_b','x','source.two')
+
     def test_counts_do_not_turn_unavailable_values_into_zero(self):
         out=Measurements();out.counts({'a':{'value':0,'state':'MISSING','reason':'NO_FLOW'},'b':{'value':0,'state':'PRESENT','reason':''}},'book')
         self.assertIsNone(out.numeric['book.a.value']);self.assertEqual(out.numeric['book.b.value'],0)

@@ -1,0 +1,23 @@
+{
+  "schema": "ROOT_FULL_CONTEXT_EXTRACTION_V1",
+  "status": "complete",
+  "coverage_gate": "NOT_PASSED",
+  "unique_records": 6265,
+  "identity_and_alias_checks": {
+    "full_depth_level_aliases": 2786032,
+    "order_identity_matches": 6993462,
+    "future_last_update_clocks": 0,
+    "ordered_raw_message_aliases": 20418,
+    "fill_signature_aliases": 6265
+  },
+  "numeric_fields": 5034,
+  "categorical_fields": 5252,
+  "saved_bytes": 116893886,
+  "saved_sha256": "a6f0edfd04ec532b9407b549c668d2cf09452c280a13e3b374e409ad4288a3ba",
+  "limitations": [
+    "Identity checks reconcile each complete snapshot; they do not establish unobserved between-context survival or true order birth.",
+    "Clock-invalid update ages remain unavailable with an independent state; no negative age or zero fill is invented.",
+    "Full books, raw message clocks/IDs/wire bytes and discovery/family linkage remain in indexed source provenance.",
+    "Registry aliases and existing v3 numeric values still require frozen-matrix value/unit reconciliation. No model fit is asserted."
+  ]
+}

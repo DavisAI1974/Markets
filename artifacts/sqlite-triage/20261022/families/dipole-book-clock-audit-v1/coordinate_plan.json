@@ -1,0 +1,12 @@
+{
+  "schema": "DIPOLE_BOOK_CLOCK_COORDINATE_PLAN_V1",
+  "stages": 54042,
+  "selected_native_ordinals": 21437,
+  "source_scope": {
+    "instrument_id": 150611,
+    "continuity_segment": 19648,
+    "first_cursor": 490
+  },
+  "producer_rule": "Stage zero uses opening emission cursor; later stages use first complete group in a later receive second, or last group for stream close.",
+  "past_rule": "Last complete same-instrument, same-continuity-scope group with receive <= stage bin timestamp; no future fill."
+}

@@ -1,0 +1,70 @@
+{
+  "schema": "VERIFIED_COMPONENT_MANIFEST_V1",
+  "files": [
+    {
+      "path": "external-history-v4/coincident_stream_occurrence_counts.csv",
+      "bytes": 35629,
+      "sha256": "a971562908efa1c16cdad9ff00c5184dcf420762076ece05d957c2f5b686bd22"
+    },
+    {
+      "path": "external-history-v4/measurement_state_counts.csv",
+      "bytes": 14114,
+      "sha256": "485af2fb51d28c55a78fd6ae350648cde8be5ad2863420bf0cc7ea0a008543dc"
+    },
+    {
+      "path": "external-history-v4/normalization.log",
+      "bytes": 13436,
+      "sha256": "292830ee981e6354f1696141f94470aed4ba5a2c67e14665eecaec02e73a74c1"
+    },
+    {
+      "path": "external-history-v4/occurrence-links.log",
+      "bytes": 2143,
+      "sha256": "fb40bd661c13dbb916992f6d38811830e7376d67715e4b0b53c33b281d1c19d5"
+    },
+    {
+      "path": "external-history-v4/occurrence_links.sqlite",
+      "bytes": 4621475840,
+      "sha256": "553c9b41a0b44a42f5b88545e5dc67741dd8caf2b145a050550a8569726c6c03"
+    },
+    {
+      "path": "external-history-v4/occurrence_links_receipt.json",
+      "bytes": 894,
+      "sha256": "d7a5a250dcee793c3fc6d17ce4bc786b070a092d50251d4d24f218464db5765e"
+    },
+    {
+      "path": "external-history-v4/schema_preflight.json",
+      "bytes": 83098,
+      "sha256": "dc1c2d8e1079c92fea93ca0168eb2db3459e338e90b25094f07453f7fdace4d3"
+    },
+    {
+      "path": "external-history-v4/scoped_history.sqlite",
+      "bytes": 8941207552,
+      "sha256": "74bc6de27a97f7f074957d36d64481d8bbe3e6ef6c0b9873cc42a1c015f6117a"
+    },
+    {
+      "path": "external-history-v4/scoped_history.sqlite-shm",
+      "bytes": 32768,
+      "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+    },
+    {
+      "path": "external-history-v4/scoped_history.sqlite-wal",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "external-history-v4/scoped_history_receipt.json",
+      "bytes": 7866,
+      "sha256": "31a4396f014791a3cefc33e466baf037bedeef70066e38d1ce235b613c9b2964"
+    },
+    {
+      "path": "external-history-v4/source_field_dispositions.csv",
+      "bytes": 30826,
+      "sha256": "cb2327fa94c19f4e921d5b6a55fc68b11b594eaf472a439cbfa685b4f578ee47"
+    },
+    {
+      "path": "external-history-v4/source_record_counts.csv",
+      "bytes": 34717,
+      "sha256": "98afcb81a2e5d2007aaaf96c1f6f93f99e18bf5a308d77b021b8a3a339220676"
+    }
+  ]
+}

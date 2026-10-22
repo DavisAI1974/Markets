@@ -1,0 +1,35 @@
+{
+  "schema": "COMPLETE_EPISODE_PATH_AND_EMISSION_AUDIT_V1",
+  "status": "complete",
+  "coverage_gate": "NOT_PASSED",
+  "source_records_by_section": {
+    "recurrence": 6265,
+    "mirror": 6265,
+    "ladder": 12530,
+    "absorption": 6265,
+    "flow_substrate": 8088,
+    "replenishment": 30687,
+    "queue": 7893,
+    "candidate": 42,
+    "episode": 1726,
+    "response": 266,
+    "lineage": 308611,
+    "detector_coverage": 2
+  },
+  "episode_records": 1726,
+  "distinct_candidates": 863,
+  "complete_paths": 862,
+  "withheld_no_predecessor": 1,
+  "path_stages": 54042,
+  "context_rows": 10486,
+  "families": 749,
+  "detector_partition_checks": 2,
+  "open_research_flags": 862,
+  "limitations": [
+    "1726 episode records represent opening and complete records for 863 candidates, not 1726 independent candidates.",
+    "Path checks reproduce declared arithmetic; stage-zero book/flow sourcing is separately flagged, not assumed contemporaneous at birth.",
+    "Every complete path is available only at its actual full-row emission. STREAM_END/SEGMENT_CLOSE facts are never moved earlier.",
+    "Stage-index octaves do not establish event-phase labels; event phases and model-input roles still require consumer accounting.",
+    "No v4 matrix or model fit is asserted."
+  ]
+}

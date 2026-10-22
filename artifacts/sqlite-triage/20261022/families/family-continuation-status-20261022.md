@@ -2,7 +2,89 @@
 
 Continues the complete handoff at `9064cdf69bc6fa23fd37380b68dbe1538cd26025`.
 V3 remains frozen. The full coverage gate remains **NOT_PASSED**. No v4 matrix
-or model fit is claimed by the component below; the complete rerun remains owed.
+or full-coverage model result is claimed. The complete certified rerun remains owed.
+
+## Latest user steering: one pass, start Julia promptly
+
+The user requested one verification pass and Julia running within ten minutes.
+At 16:04:54 UTC on October 22, the expanded candidate suite was launched, about
+six minutes after that instruction. Julia build PID `15138`; launcher PID
+`15137`; launch SSM `9b544398-ee63-4ac4-8186-85b17bebb6f6`.
+
+Persistent candidate input/output directories:
+`joint-inputs-v4-candidate-20261022` and
+`joint-models-v4-candidate-20261022`. This explicitly labelled candidate benchmark
+does **not** certify the full 99-plane semantic gate. The manifest retains that
+gate as NOT_PASSED, with unresolved units/knowledge mappings visible. V3 stays
+frozen. Do not silently relabel this as a fully covered V4 result.
+
+The suite builds the expanded matrix, performs the single existing rules check,
+then starts the original core and neural model suites. Targets, chronological
+folds, family separation, purge/600-second embargo, training-only preprocessing,
+fixed seeds and neural epochs stay as declared. No prior fitted states are copied.
+Core includes constant/ridge/EvoTrees shallow/deep/MAE/quantiles/group/history
+refits and PCA/k-means; neural includes neural tree, residual MLP and TabM.
+Build/start is not model completion. Inspect actual output receipts for results.
+
+## Additional completed components
+
+- Normalized all 7,679,916 provenance records from 19 sources, across 38,677
+  dimensional scopes. All 270 canonical field roles have explicit dispositions.
+  The original raw/catalog files are unchanged. The new Oct17 version is included.
+- Preserved coincident curve messages: 343,700 additional same-stamp source
+  occurrences are retained. Content hashes and coarse observation IDs are not
+  substituted for event counts.
+- Resolved 5,275,928 observation states using exact availability before primary
+  precedence. Retained 45,220 unranked numeric conflict cells and 389,931 primary
+  unavailable cells; no alternate fill of a primary null/deletion/missing marker.
+- Consumed every resolved observation into scoped historical timelines: 20,380,668
+  numeric emissions, 6,349,614 categorical emissions, 187,766 timeline rows and
+  1,652,923 registered feature/clock roles. This does not create extra aligned
+  market days. Units and final semantic coverage remain incomplete.
+- Full ROOT extraction: 6,265 contexts; 2,786,032 level aliases, 6,993,462
+  identity-linked FIFO order observations, zero future order-update clocks.
+  Ordered snapshots do not establish unobserved continuous survival or true birth.
+- Stricter native/second feature-identity checks found zero collisions across
+  66,911 identities, comparing 29,497,352 numeric and 858,166 categorical cells
+  exactly with the already saved extraction. The old payload was not rewritten.
+- Episode audit: 1,726 opening/complete records correspond to 863 candidates,
+  862 complete paths and one withheld NO_PREDECESSOR path; 54,042 stages.
+  Actual full-row emissions and cursor caps are retained, including censoring.
+- Every stage-book assignment matches the canonical caller hypothesis. Every
+  assigned book arrived later than its stage bin. Strictly past books differ at
+  45,879 stages, with midpoint differences at 8,925 stages and different coupling
+  on 671 paths. Both views are saved; midpoint coupling is not executable return.
+- Explicit source-rule phase reconstruction keeps event phase separate from
+  stage octave, session phase and orientation: 1,319 BIRTH, 51,861 PERSISTENCE,
+  862 REVERSAL stages. These are labelled reconstructions with actual row
+  availability, not directly stored stage fields or backdated input signals.
+- Exact bid/ask exports cover all 10,486 model contexts and 749 families.
+  12,530 full-depth conservation and 12,530 touch-price checks passed. All 6,265
+  selected unique snapshots were two-sided. Consecutive-window data is separate.
+- 59 local Python tests passed before the candidate build was launched. No new
+  rounds of broad verification are being added after the user's one-pass request.
+
+Semantic review notes and explicitly unresolved mappings are saved in
+`knowledge-semantic-review-working-notes.md`. All 72 canonical source files are
+recovered; a complete file-level semantic-review count is not yet established.
+
+## New durable archives
+
+Bucket `bento-568968024170-us-east-2-an`, region `us-east-2`, common key prefix
+`frankie/family-prebirth/20261022/`:
+
+| Archive | Bytes | SHA256 |
+| --- | ---: | --- |
+| `full-context-continuation-v1-eb2b860d.tar.gz` | 181035517 | `eb2b860d452d1a462ef609e44a8c6aad4b89d71f28d9de049b15b3b6c585e4e1` |
+| `external-history-v4-normalized-v1-2e6808cf.tar.gz` | 3788033203 | `2e6808cf2e1ca07e89ae3260d237d81327418dd28a1710c81ba7f0b733b656b0` |
+| `dipole-book-clock-audit-v1-b3be15d9.tar.gz` | 3898548 | `b3be15d9d60f9e2d9a6465ef68c3ad731d871324474e1d0b5e5fad8c315ce471` |
+| `asof-quotes-phases-v1-258d1951.tar.gz` | 1833955983 | `258d1951e16029d3b42222da7e6145ae3e6f807f24f654b3c24f7b925cea696b` |
+
+The first three archives have HTTP-200 uploads, local downloads and all 35 member
+hashes verified in one transport pass. The as-of/quotes/phases archive has been
+created and its upload dispatched; transport completion is recorded separately.
+Large archives remain outside Git; compact receipts, registries, code and
+scientific comparisons are saved in the repository.
 
 ## Original external classroom: completed reproduction
 
@@ -52,6 +134,8 @@ that named object with an If-Match ETag guard; no recovery-directory scan.
 38,223,416 bytes, ETag `3e4b06be7d420227f6c4eb597167f0d1`, SHA256
 `8c9bf49fda3adf984c191ed06c13ee7c04117777a9535b485c9cbe15400e2c71`.
 Saved under persistent `full-context-audit/historical-source-additions/`.
-This additional version is **not yet normalized, aligned or fitted**. The
-previous history catalog remains unchanged. Semantic stamp/alias/revision
-review must precede using it as a history fill.
+This additional version is normalized and included in the scoped historical
+timeline described above. The previous history catalog remains unchanged.
+Original publication stamps, explicit reader placements, dimensional scopes and
+unresolved source variants remain available; no favorable revision is selected
+to fill a current primary missing value.

@@ -1,0 +1,15 @@
+{
+  "schema": "EXTERNAL_SOURCE_OCCURRENCE_LINKS_V1",
+  "status": "complete",
+  "coverage_gate": "NOT_PASSED",
+  "source_records": 7679916,
+  "simultaneous_stream_messages_retained": 343700,
+  "original_normalized_catalog_changed": false,
+  "rule": "Curve stream coordinate = dimensional scope + original publication ns + event ns + stable same-stamp source position. Other natural observation/vintage keys remain scoped.",
+  "limitations": [
+    "No exchange sequence is fabricated; same-stamp position is the retained source order.",
+    "A source version adding/removing messages can change position matching. Conflicting payloads at a matched coordinate must stay explicit.",
+    "Normalized variant counts and observation coordinates must never substitute for source-message counts.",
+    "As-of revision resolution, full field consumer coverage and the v4 matrix remain incomplete."
+  ]
+}

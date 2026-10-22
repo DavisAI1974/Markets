@@ -1,0 +1,17 @@
+{
+  "status": "queued_build_then_all_models",
+  "coverage_gate": "NOT_PASSED",
+  "user_priority": "one pass; start Julia within ten minutes",
+  "suite": "All existing constant/ridge/EvoTrees depth3/depth5/MAE/q10/q90/source-group/history refits; neural_tree/residual_mlp/TabM fixed25epochs; PCA12 and kmeans3/5; unchanged targets/folds/600s embargo and training-only preprocessing",
+  "disposition": "Expanded candidate benchmark pending full semantic coverage; v3 remains frozen; no claim of full v4 certification",
+  "scripts": {
+    "run_joint_models.jl": "babf51739e0264ac3ce57d6b5b63c44bbbc50d688abae9da3c282bb25ac38c4b",
+    "test_model_rules.jl": "ed860ca5f46c1863b5630cc5281c1a55e9406a9101a7e048e0f6291f19472676",
+    "model_rules.jl": "ed57115cdea48aeb78bcfb09fd6d17a011649a42c762963da4a616e8aa88951b",
+    "run_neural_models.jl": "339cdadbf09de9c7e342f28f798e210a41db598db12dfe5945a24124b3ebbb22",
+    "analyze_joint_interactions.jl": "b6d191149e61f18ed425f3c1262c0531f317664e43d0db727b49b8a90eac196e",
+    "summarize_joint_models.jl": "c3cee285a02db03e51c669c4a7982794dae7c2838cccbeb64e3e1bba8b62d3d9",
+    "descriptive_math.jl": "6126bd02bda3ca70738d0ba8842f651d55a19cdd9ce6914b134b548e28698d91",
+    "analyze_observed_price_paths.jl": "df8dfff6869c58c466b8d61e4a17437c1f27f75c59452c4f25ce3530a0e20698"
+  }
+}

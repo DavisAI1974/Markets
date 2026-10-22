@@ -1,0 +1,46 @@
+[
+  {
+    "name": "full-context-continuation-v1",
+    "sha": "eb2b860d452d1a462ef609e44a8c6aad4b89d71f28d9de049b15b3b6c585e4e1",
+    "bytes": 181035517,
+    "key": "frankie/family-prebirth/20261022/full-context-continuation-v1-eb2b860d.tar.gz",
+    "status": "verified",
+    "local_archive": "C:\\Users\\A\\Documents\\Codex\\2026-10-22\\family-continuation-archives\\full-context-continuation-v1.tar.gz",
+    "member_files_verified": 14,
+    "manifest_verified": true,
+    "coverage_gate": "NOT_PASSED"
+  },
+  {
+    "name": "external-history-v4-normalized-v1",
+    "sha": "2e6808cf2e1ca07e89ae3260d237d81327418dd28a1710c81ba7f0b733b656b0",
+    "bytes": 3788033203,
+    "key": "frankie/family-prebirth/20261022/external-history-v4-normalized-v1-2e6808cf.tar.gz",
+    "status": "verified",
+    "local_archive": "C:\\Users\\A\\Documents\\Codex\\2026-10-22\\family-continuation-archives\\external-history-v4-normalized-v1.tar.gz",
+    "member_files_verified": 13,
+    "manifest_verified": true,
+    "coverage_gate": "NOT_PASSED"
+  },
+  {
+    "name": "continuation-review-package-v1",
+    "sha": "0c49533d39c97c8698e73bc1fa775534282c24e167ee35612141b07909c16d7f",
+    "bytes": 257176,
+    "key": "frankie/family-prebirth/20261022/continuation-review-package-v1-0c49533d.tar.gz",
+    "status": "verified",
+    "local_archive": "C:\\Users\\A\\Documents\\Codex\\2026-10-22\\family-continuation-archives\\continuation-review-package-v1.tar.gz",
+    "member_files_verified": 24,
+    "manifest_verified": false,
+    "coverage_gate": "NOT_PASSED"
+  },
+  {
+    "name": "dipole-book-clock-audit-v1",
+    "bytes": 3898548,
+    "sha": "b3be15d9d60f9e2d9a6465ef68c3ad731d871324474e1d0b5e5fad8c315ce471",
+    "key": "frankie/family-prebirth/20261022/dipole-book-clock-audit-v1-b3be15d9.tar.gz",
+    "status": "verified",
+    "local_archive": "C:\\Users\\A\\Documents\\Codex\\2026-10-22\\family-continuation-archives\\dipole-book-clock-audit-v1.tar.gz",
+    "member_files_verified": 8,
+    "manifest_verified": true,
+    "coverage_gate": "NOT_PASSED"
+  }
+]
