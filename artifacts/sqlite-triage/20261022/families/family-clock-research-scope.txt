@@ -26,11 +26,11 @@ Established facts:
 - "Start" currently means first observed structural-family instance in retained data. It is not proof of original order birth.
 - All 99 registry entries and all 13 conceptual points are pinned; 329,658 external rows are retained.
 - All 30,739 price rows now have original integer-nanosecond trade event and receive clocks, plus exact group-close availability. Every source price, size and instrument matched; zero clock-verification issues. The price timestamp prerequisite is complete.
-- Two pre-start context snapshots per family have been extracted. They are not a full chronological replay. Eighteen second-set lookups initially returned no row; direct source checks found records for two of them, so these are unresolved lookup results rather than established source gaps.
+- The full 771,787-row confirmed second-set sequence was decoded, indexed and hashed. Every family, group and trade matched the second set, with zero clock discrepancies. All 18 initial pre-start lookup errors were corrected from the complete index.
 - Interval native member and ROOT frame values remain in pinned source files with offset references; anchor snapshots contain actual records. No claim is made that every source byte has been analyzed.
 
 Run status:
-The family combined-clock run is IN_PROGRESS, started only after price clock verification succeeded.
-It reads the complete confirmed second-set sequence, retains all 13 data points and 99 plane identities/dispositions, and joins original family and trade cursors.
-It reconstructs chronology without fitting a model or choosing an outcome. Full source payloads stay in pinned files with exact byte references and integrity hashes; this does not claim every native/ROOT payload has been reread or statistically analyzed.
+The family combined-clock run is COMPLETE, started only after price clock verification succeeded.
+It walked 1,132,933 combined clock records, retained all 13 data points and 99 plane identities/dispositions, and joined original family and trade cursors.
+It reconstructed chronology without fitting a model or choosing an outcome. Full source payloads stay in pinned files with exact byte references and integrity hashes; this does not claim every native/ROOT payload has been reread or statistically analyzed.
 No subset replaces this combined run.
