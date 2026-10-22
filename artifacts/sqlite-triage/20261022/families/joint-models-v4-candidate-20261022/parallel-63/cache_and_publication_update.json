@@ -1,0 +1,12 @@
+{
+  "status": "deployed_without_interrupting_active_fits",
+  "prepared_cache_limit": 6,
+  "min_free_disk_gib": 100,
+  "shared_preprocessing": true,
+  "files": {
+    "run_core_task.jl": "80085208679a3acf8e608abcb70c3e643acaf9645996020fbc1e6f54a0721e82",
+    "shared.jl": "6380bc51e0dc670f3ddb986aa5dc2bf4694c4339ffdeb858fc523cc453ba61c2",
+    "pool_cache_guard.py": "d23fa45f8d95c742286c337efd0052a5c9f0ffcdcceadc9e04fa1a428564256b",
+    "parallel_artifact_helpers.jl": "ff23a2967dcdb53649fe8d6a0631b9790b4c44fa7527dbdfdb497478b09db39d"
+  }
+}

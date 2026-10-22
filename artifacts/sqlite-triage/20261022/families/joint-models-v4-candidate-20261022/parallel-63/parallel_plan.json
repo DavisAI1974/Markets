@@ -1,0 +1,20 @@
+{
+  "status": "running",
+  "workers": 63,
+  "preparation_workers": 4,
+  "fit_workers_during_preparation": 59,
+  "fit_workers_after_preparation": 63,
+  "cpu_affinity": 64,
+  "single_cpu_threads_per_worker": true,
+  "shared_raw_matrix": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/shared/raw.bin",
+  "prepared_folds": "memory-mapped once per cohort; no per-worker full matrix deserialization",
+  "original_source_sha256": {
+    "core": "babf51739e0264ac3ce57d6b5b63c44bbbc50d688abae9da3c282bb25ac38c4b",
+    "neural": "339cdadbf09de9c7e342f28f798e210a41db598db12dfe5945a24124b3ebbb22"
+  },
+  "completed_serial_core": 0,
+  "completed_serial_neural": 8,
+  "cohorts": 63,
+  "coverage_gate": "NOT_PASSED",
+  "changes": "Scheduler, read-only memory maps, allocation-saving views, BLAS threads 8 to 1. Thread reduction may change floating-point last bits; algorithms/hyperparameters/splits/targets unchanged."
+}

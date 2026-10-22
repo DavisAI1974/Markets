@@ -6,6 +6,38 @@ or full-coverage model result is claimed. The complete certified rerun remains o
 
 ## Latest user steering: one pass, start Julia promptly
 
+### Superseding execution change: 63 workers on the same AWS instance
+
+The user requested parallel processes and immediate redeployment. The initial
+two-process executor is superseded by `parallel-63/` within the candidate output
+directory. The matrix build finished and its 26/26 preparation checks passed;
+initial fits began at 16:17:41 UTC. All computations use the AWS machine's RAM.
+
+The parallel executor has 63 compute slots: four prepared-fold jobs plus up to
+59 fit jobs during preparation, and 63 fit slots after preparation. Julia, BLAS,
+OpenMP and MKL are restricted to one CPU thread per worker. A single read-only
+34,601,642,880-byte matrix is memory-mapped, with prepared folds also shared;
+workers do not each deserialize a private copy of the complete matrix.
+
+The one runtime deployment pass (`a2909877-6781-4c31-b324-7c4f2a8215dd`) observed
+63 Julia workers, 95.7% machine CPU utilization, 13 completed isolated fit jobs,
+zero job errors, and 79,353,332 KiB available RAM. Disk-cache admission is bounded
+and completed dense fold caches can be reproduced from the frozen inputs; model
+states, raw data, provenance, failed records and metadata are retained.
+
+Eight committed serial neural results are kept and skipped in the new queue.
+Uncommitted core states/logs are preserved in `parallel-63/serial-prefix` and are
+not promoted to completed results. Targets, family splits, embargo, seeds,
+hyperparameters and epoch counts are unchanged. Thread-count changes can affect
+floating-point last bits; no bit-identical fit claim is made. The full semantic
+coverage gate remains NOT_PASSED, so this remains a candidate benchmark.
+
+Use `parallel-redeploy.log`, `parallel-63/parallel_plan.json` and isolated
+`parallel-63/jobs/*/job_receipt.json` for current execution status. The initial
+`run_suite.sh` launcher and two fit processes were stopped after their outputs
+were preserved. No instance lifecycle action, monitor, agent, chat or live order
+was created.
+
 The user requested one verification pass and Julia running within ten minutes.
 At 16:04:54 UTC on October 22, the expanded candidate suite was launched, about
 six minutes after that instruction. Julia build PID `15138`; launcher PID

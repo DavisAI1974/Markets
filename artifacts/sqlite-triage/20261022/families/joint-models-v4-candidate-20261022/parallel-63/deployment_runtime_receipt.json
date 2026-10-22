@@ -1,0 +1,16 @@
+{
+  "status": "parallel_execution_running",
+  "ssm_runtime_check": "a2909877-6781-4c31-b324-7c4f2a8215dd",
+  "instance_id": "i-035994afa8bdf66a5",
+  "region": "us-east-1",
+  "available_cpus": 64,
+  "parallel_julia_workers": 63,
+  "machine_cpu_busy_percent": 95.7,
+  "completed_jobs_at_check": 13,
+  "jobs_with_errors_at_check": 0,
+  "available_ram_kib": 79353332,
+  "free_disk_gib": 121.2,
+  "shared_raw_matrix_bytes": 34601642880,
+  "coverage_gate": "NOT_PASSED",
+  "scope": "One runtime deployment pass; these are observations at that check, not continuously monitored values."
+}
