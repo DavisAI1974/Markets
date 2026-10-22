@@ -10,14 +10,16 @@ from summarize_layer_review import read, write, group, num, sign
 def main():
     b=pathlib.Path(os.environ.get('FAMILY_RESEARCH_DIR','/opt/frankie-box/work/family-research-20261022'))
     version=os.environ.get('LAYER_REVIEW_VERSION','v3');out=b/('layer-review-'+version);models=b/('joint-models-'+version)
-    pairs={r['pair_id']:r for r in read(out/'pair_audit.csv')};flags=[]
+    model_only=os.environ.get('CONTRADICTION_MODEL_ONLY')=='1'
+    out.mkdir(exist_ok=True)
+    pairs={} if model_only else {r['pair_id']:r for r in read(out/'pair_audit.csv')};flags=[]
     def add(kind, key, one, two, support, source, question):
         identity=json.dumps([version,kind,key],sort_keys=True)
         flags.append(dict(research_id=hashlib.sha256(identity.encode()).hexdigest()[:20],run_version=version,
             conflict_type=kind,comparison_key=json.dumps(key,sort_keys=True),answer_one=str(one),answer_two=str(two),
             support=json.dumps(support,sort_keys=True),evidence_file=source,research_status='open',
             scientific_question=question,disposition='unresolved;descriptive;no_signal_promotion_or_test_based_retuning'))
-    for r in read(out/'matched_context_contrasts.csv'):
+    for r in ([] if model_only else read(out/'matched_context_contrasts.csv')):
         p=pairs[r['pair_id']];a,c=num(p['contrast']),num(r['contrast_min10'])
         if math.isfinite(a) and math.isfinite(c) and sign(a)*sign(c)<0:
             add('pooled_vs_matched_response_sign',dict(pair_id=r['pair_id'],outcome=r['outcome'],horizon_s=r['horizon_s'],
@@ -26,13 +28,13 @@ def main():
                 pooled_joint_finite_n=p['joint_finite_n'],pooled_heldout_n=p['heldout_n']),
                 'matched_context_contrasts.csv + pair_audit.csv',
                 'Does phase, prior direction, intraday chronology, source age, overlap or missingness explain the sign reversal? Same outcome/horizon/model; conditioning differs.')
-    for r in read(out/'exact_pair_fold_stability.csv'):
+    for r in ([] if model_only else read(out/'exact_pair_fold_stability.csv')):
         if r['opposite_signs_across_folds']=='True':
             add('exact_pair_response_sign_across_folds',dict(outcome=r['outcome'],horizon_s=r['horizon_s'],model=r['model'],
                 feature_a=r['feature_a'],feature_b=r['feature_b']),r['eligible_fold_signs'],'opposite signs',
                 dict(eligible_folds=r['eligible_folds'],selected_folds=r['selected_folds']),
                 'exact_pair_fold_stability.csv','Does the same pair reverse across chronological heldout periods because of regime, cutpoints, source scope or limited support?')
-    for r in read(out/'all_ablation_summaries.csv'):
+    for r in ([] if model_only else read(out/'all_ablation_summaries.csv')):
         if int(r['helped_folds']) and int(r['hurt_folds']):
             add('source_block_helped_and_hurt_across_folds',dict(outcome=r['outcome'],horizon_s=r['horizon_s'],source_group=r['source_group']),
                 f"helped {r['helped_folds']} folds",f"hurt {r['hurt_folds']} folds",
@@ -60,18 +62,19 @@ def main():
                 dict(n=rs[0]['heldout_n'],mean_observed=rs[0]['mean_observed']),
                 'phase_direction_model_diagnostics.csv','Different architectures answer the same signed-price/cohort question differently. Check calibration, preprocessing, error tails and source dependence; this is not two different buy/ask targets.')
     # Preserve researcher dispositions when the registry is regenerated.
-    dest=out/'contradiction_research_registry.csv'
+    stem='model_conflict_research' if model_only else 'contradiction_research'
+    dest=out/(stem+'_registry.csv')
     if dest.exists():
         old={r['research_id']:r for r in read(dest)}
         for r in flags:
             if r['research_id'] in old:r['research_status']=old[r['research_id']]['research_status']
     write(dest,flags)
     counts={key[0]:len(rs) for key,rs in group(flags,['conflict_type']).items()}
-    receipt={'version':version,'research_flags':len(flags),'by_type':counts,
+    receipt={'version':version,'review_scope':'model_metrics_and_cohort_direction_only' if model_only else 'full_saved_layer_review','research_flags':len(flags),'by_type':counts,
         'meaning':'Different strata/models/folds can give opposing answers; retained for scientific explanation, not hidden, resolved by cherry-picking or treated as automatic data errors.',
         'scope':'Same target/horizon and explicit context comparison; opposite bid/ask sides or distinct horizons are different questions and are not automatically logical contradictions.',
         'additional_inconclusive_cases':'See pair coverage/missing cells and matched-context support; absence of an eligible contrast is not evidence of no interaction.'}
-    (out/'contradiction_research_receipt.json').write_text(json.dumps(receipt,indent=2)+'\n');print(json.dumps(receipt))
+    (out/(stem+'_receipt.json')).write_text(json.dumps(receipt,indent=2)+'\n');print(json.dumps(receipt))
 
 
 if __name__=='__main__':main()

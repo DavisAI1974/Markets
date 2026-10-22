@@ -42,6 +42,11 @@ class ContradictionTests(unittest.TestCase):
                 again=read(out/'contradiction_research_registry.csv')
                 self.assertEqual({r['research_id'] for r in flags},{r['research_id'] for r in again})
                 self.assertEqual(again[0]['research_status'],'under_scientific_review')
+                with patch.dict(os.environ,CONTRADICTION_MODEL_ONLY='1'):
+                    main()
+                    partial=read(out/'model_conflict_research_registry.csv')
+                    self.assertEqual(len(partial),2)
+                    self.assertEqual(len(read(out/'contradiction_research_registry.csv')),4)
 
 
 if __name__=='__main__':unittest.main()

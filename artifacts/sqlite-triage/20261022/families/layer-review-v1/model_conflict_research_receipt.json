@@ -1,0 +1,12 @@
+{
+  "version": "v1",
+  "review_scope": "model_metrics_and_cohort_direction_only",
+  "research_flags": 202,
+  "by_type": {
+    "model_beats_and_loses_to_benchmark_across_folds": 59,
+    "models_predict_opposite_mean_directions_same_cohort": 143
+  },
+  "meaning": "Different strata/models/folds can give opposing answers; retained for scientific explanation, not hidden, resolved by cherry-picking or treated as automatic data errors.",
+  "scope": "Same target/horizon and explicit context comparison; opposite bid/ask sides or distinct horizons are different questions and are not automatically logical contradictions.",
+  "additional_inconclusive_cases": "See pair coverage/missing cells and matched-context support; absence of an eligible contrast is not evidence of no interaction."
+}

@@ -46,7 +46,7 @@
     "half_hour_matched_sign_reversal_strata": 21,
     "phase_direction_half_hour_strata_with_ten_per_corner": 0
   },
-  "contradiction_registry": "Local tested generator ready; remote upload failed before SendCommand because session expired. Do not claim remote registry has been generated.",
+  "contradiction_registry": "Local v1 model_conflict_research_registry.csv generated with 202 flags: 59 mixed fold benchmark comparisons and 143 opposing model mean directions on matched cohorts. Full saved-layer and v3 registries remain pending; remote upload failed before SendCommand because session expired.",
   "pending": [
     "After AWS reconnection inspect full_suite_command; never blindly relaunch or overwrite v3.",
     "Upload flag_research_contradictions.py and test_research_contradictions.py through SSM.",
