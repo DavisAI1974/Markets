@@ -1,0 +1,122 @@
+FAMILY RESEARCH -- A OOM RECOVERY -- 2026-10-22 21:56 UTC
+
+This supersedes A's coordinator/run/hook and scheduling details in
+family-save-stop-armed-20261022.txt. Read that handoff and its full scientific
+foundations. B/C/D ownership, coordinators, sources and hooks are unchanged.
+Work only in the clean C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo.
+No dirty E:/Markets, AWS CLI, subagents, new chats, messages, live orders, IAM
+changes, new instances, termination or storage deletion. The user authorized
+unattended recovery/restart and save-before-stop; no further confirmation needed.
+
+FAILURE AND PRESERVATION
+Heartbeat found A's recovery state had not advanced since21:10, despite a live
+coordinator. B/C/D continued progressing normally. A kernel journal records global
+OOM at21:12:49 UTC killing Julia5601 (about39,325,840KiB anonymous RSS).
+The A log ends with mandatory neural absolute_mid_price_change/20/fold4
+tabm_ensemble failing with missing wrapper report returncode125.
+Do not infer every failed attempt was individually matched to the kernel victim.
+Original coordinator7072 had entered its exception/failure-drain path, waiting
+for surviving fits while dispatching nothing new. Root vmstat oom_kill=1.
+The failure predates the initial save-stop service installation. A live PID
+and old running checkpoint alone did not establish healthy dispatch.
+
+No surviving numerical fit was killed or restarted. A's waiting completion hook
+alone was stopped, the draining coordinator alone paused, then current wrappers
+and children were captured with exact PID/start token, task, report, cache/output,
+command and CPU lease. Assignment ownership, unique keys/CPUs and no live Julia
+orphan were enforced. The manifest was saved locally and uploaded/read back
+identically before coordinator7072 alone was retired. Existing failed attempts
+and coherent artifacts were retained. Original source files were not edited.
+
+ROOT=/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63
+Capture ROOT/guarded-A-capture-20261022T215350Z.json contains30 live wrappers/
+30 live Julia fits, saved training-preparation indexes, old checkpoint, failure
+log and kernel evidence. This is historical after the handoff: never reuse it as
+the current worker inventory for another recovery. Capture fresh leases.
+Launch ROOT/guarded-A-launch-20261022T215350Z.json.
+Old recovery ROOT/memory-recovery-20261022T204459Z-4b147afc remains retained;
+its hook-status is disarmed_for_guarded_recovery.
+
+ISOLATED SCHEDULING REPAIR
+BASE=/opt/frankie-box/work/family-research-20261022
+New source BASE/guarded-recovery-A-20261022T215350Z/resume_multibox_candidate.py
+SHA256 a2ea33f5de3c5a12a95abf51ca6c4bad51d8300af811f115f69f76d7369eb4b3
+Same helper multibox_support.py copied beside it without changes.
+Only3 source substitutions: apply the existing3second fit-dispatch spacing to A,
+increase A's actual MemAvailable admission floor64->192GiB, and update plan-only
+headroom metadata. All algorithms, targets, splits, seeds, epochs, numerical Julia
+source, task definitions and immutable63cohort ownership are unchanged.
+Configured maximum96physical workers; per-fit memory remains unlimited. This is
+host admission headroom, not a memory cap or per-job estimate. Live growing fits
+remain unbounded; the repair is not a proof that OOM can never recur.
+Original BASE/full-context-audit/scripts/resume_multibox_candidate.py and
+multibox_support.py retain their prior hashes; B/C/D still execute those originals.
+The original A loop allowed rapid bulk fit dispatch before allocations became
+visible; this is a plausible contributor, not a separately reproduced causal proof.
+
+CURRENT A
+Instance i-035994afa8bdf66a5, us-east-1, same machine/boot.
+Coordinator7959/start1591203, only one coordinator verified.
+Command uses new source, --execute --max-workers96 --worker-id A, the same
+ROOT/four-box-ownership-20261022.json, and the fresh guarded-A capture above.
+Assignment SHA256 e08cabcf166ec07c1df712c714d11cda44e67cf5d94e02ca544a1ee9b69f0f6f
+Run ROOT/memory-recovery-20261022T215351Z-a7dd764c
+Log BASE/joint-models-v4-candidate-20261022/parallel-A-guarded-20261022T215350Z.log
+At21:56:30 UTC: running,687 coherent committed results,60live wrappers/Julia,
+zero queued fits in current prepared work,12unregistered cohorts still mandatory.
+All30 captured fits accounted:29live with same tokens +1coherent completed,
+zero missing. No duplicate task or CPU leases in the fresh capture validation.
+Host oom_kill still1, no additional event since the incident at that snapshot.
+Other checkpoint counts21:55:54: B378committed/96active, C107/30, D78/30.
+These are snapshots, not completion claims or a guaranteed runtime estimate.
+
+SAVE-STOP REARMED AND VERIFIED
+A family-save-stop.service MainPID8098 is active/running, waiting via kernel
+pidfd for coordinator7959/start1591203. Actual fdinfo target verified.
+Config BASE/save-stop-20261022/config.json now references the new run/source,
+and pins that source SHA256 as well as original pure helper hashes.
+Callback now supports an explicit pinned coordinator_source; default behavior
+for B/C/D remains unchanged. Only A received this lifecycle-code update.
+B/C/D hooks6059/4078/3046 remain active waiting for5246/3102/2164 respectively.
+No instance was stopped/rebooted. All four completion hooks remain fail-closed:
+mandatory completion, archive SHA256/length verification, identical durable
+proof read-back, fresh quiescence/identity, sync, then OS shutdown-to-stop.
+A still must finish the sole global finalization/PCA/three postprocessors,
+coverage checks and complete archive. No failed/missing task may be skipped.
+
+Durable bucket frankie-granite42-568968024170-us-east-1/account568968024170.
+Under host-deliveries/family-research-20261022/save-stop/<assignment-digest>/:
+A-recovery-capture-20261022T215350Z.json verified identical before handoff.
+A-installation.json refreshed and read back identically for replacement config.
+A-stop-proof.json still appears only after actual mandatory completion/backup.
+Same B/C/D transfer archives and lifecycle/final-archive prefix as prior handoff.
+Retain all EBS, frozen snap-0d3e867c1240b6528, failed attempts and Search disks.
+
+TESTS / EVIDENCE
+34/34 focused tests passed on A Linux, including recovery patch equivalence,
+duplicate/unowned task/CPU/orphan capture refusals, fitted-artifact recovery,
+failure preservation, full lifecycle suite with mocked shutdown and final coverage.
+Recovery copy is byte-identical to original after reversing exactly3 scheduling/
+metadata substitutions. Callback accepts/pins the isolated source path/hash.
+Initial test deployment had test-fixture path/import errors, corrected before any
+coordinator mutation. One read-only verification used a wrongly escaped NUL split;
+corrected before successful coordinator-count verification; no execution failure.
+Test SSM19bfb1d4-b866-48ca-bbd6-0a097fac58e7.
+Capture/launch SSM7fe2db76-d003-4aaf-89fd-ed57e3337eda.
+Rearm SSMa12d5cdd-8fef-4eff-a136-c1fcbde480b3.
+A verified SSM1a60d064-b3f7-4083-837c-a3b8be967771.
+B/C/D verified SSM596261f0-1f30-416f-8899-a2904bd7ce26.
+See family-A-guarded-recovery-verification-20261022.json for exact evidence/config.
+
+CONTINUE
+One compact status/receipt check per heartbeat; no raw restores, huge scans,
+rehashing frozen databases/inputs, duplicate finalizer, rerunning successful fits
+or modifying live numerical source. If another failure occurs, first capture
+fresh exact inventory. The one-time recovery helper intentionally validates the
+original source/PID and specific prior125failure; do not rerun it blindly against
+the new coordinator. Keep healthy fits alive through any recovery.
+Keep heartbeat family-research-save-and-stop active until final data and all
+possible stops are verified, then remove/deactivate it through automation_update.
+V3 frozen, semantic coverage NOT_PASSED, one aligned retained market day.
+Unfavorable/contrary/inconclusive evidence and unresolved repeated residual_mlp
+prediction/logloss differences remain mandatory retained scientific evidence.
