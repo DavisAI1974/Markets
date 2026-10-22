@@ -552,13 +552,26 @@ Using the 18 calculation areas as a starting reference, the expected bucket dist
 
 ### Next step when a box becomes accessible
 
-The first query to run against cells.sqlite once a box is available:
+Run the queries in DROP_IN_CODEX_SQLITE_TRIAGE_20261022.md. Skip the set-aside fields
+entirely in the query — order IDs, storage positions, infrastructure, integrity, instrument
+scope, calendar labels are already classified and querying them wastes box time.
 
-1. Count distinct selections by field category (join on field name, bucket into the 17 categories)
-2. Count groups whose ALL conditions fall in set-aside classes vs. ANY condition outside
-3. Pull the first 20 surviving non-set-aside groups with their full condition sets for Greg to inspect
+What we are actually after is the conjunctions. A group with two or more surviving conditions
+is a conjunctive hypothesis: "find observations where condition A AND condition B are both
+true simultaneously." The 18 calculation areas tell us what each field means. They do not
+tell us which fields were combined together into a single group definition. That only exists
+in the SQLite. Those combinations represent the actual hypotheses the experiment search was
+testing, and some of them will cross calculation area boundaries in ways that may or may not
+make sense. Seeing which conjunctions dominate is the informative output — not the raw count.
 
-Do not attempt to run this query through the NFS mount while main is stopped.
+Query sequence:
+1. Schema inspection only — paste output, confirm table structure before writing any query
+2. Field names that survive the filter (Query A) — short list, fast
+3. Surviving group count and first 20 examples showing all conditions per group (Query B)
+
+If the schema shows conditions are not in a standard join table, stop and report back.
+Do not attempt a Python loop over 1.5M rows without confirming that approach first.
+Do not attempt to run any query through the NFS mount while main is stopped.
 
 ---
 
