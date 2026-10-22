@@ -1,0 +1,200 @@
+{
+  "path": "/opt/frankie-box/work/experiment-teacher-rows/20231018/host-dipole-classroom-source.c15.rows.jsonl",
+  "bytes": 161126241394,
+  "header_sha256": "6ee92f09a548b04aac8dcff6dcf4c520c3e1f466a333a2c1c81feb39d75cd816",
+  "expected_rows": null,
+  "partitions": [
+    {
+      "partition": 0,
+      "path": "/tmp/codex-family-starts-20261022/clock-shard-00.sqlite",
+      "begin": 12139,
+      "end": 6713770769,
+      "rows": 38823,
+      "sha256": "c20eca1fed7c6aaa1cc6be53da295ebd864e0091d5484e447ffb99be677a6627"
+    },
+    {
+      "partition": 1,
+      "path": "/tmp/codex-family-starts-20261022/clock-shard-01.sqlite",
+      "begin": 6713770769,
+      "end": 13427348022,
+      "rows": 31669,
+      "sha256": "3c0c0c01458079253d5805b8c40cde675c42e9e9feefbd12e992ee4fed6f2115"
+    },
+    {
+      "partition": 2,
+      "path": "/tmp/codex-family-starts-20261022/clock-shard-02.sqlite",
+      "begin": 13427348022,
+      "end": 20140795619,
+      "rows": 31694,
+      "sha256": "2f8af16b740b087ac512921c07911eaefef1359d856c15b06d421f53caea6ec4"
+    },
+    {
+      "partition": 3,
+      "path": "/tmp/codex-family-starts-20261022/clock-shard-03.sqlite",
+      "begin": 20140795619,
+      "end": 26854555127,
+      "rows": 31986,
+      "sha256": "7b3bd3e8fbb63f211650f36fec65d7facf29a87ce86563cb7bef6b41dc6ce76d"
+    },
+    {
+      "partition": 4,
+      "path": "/tmp/codex-family-starts-20261022/clock-shard-04.sqlite",
+      "begin": 26854555127,
+      "end": 33568188214,
+      "rows": 31792,
+      "sha256": "c930aae160d3b7c167bcc1dc1723a7c0704bebf3e472e5cc8bffedcd9f3df11a"
+    },
+    {
+      "partition": 5,
+      "path": "/tmp/codex-family-starts-20261022/clock-shard-05.sqlite",
+      "begin": 33568188214,
+      "end": 40281579128,
+      "rows": 31868,
+      "sha256": "33395c8065aad4bbd2eeb0614665afa57525ef65a160119f4de0ce9206b42ca9"
+    },
+    {
+      "partition": 6,
+      "path": "/tmp/codex-family-starts-20261022/clock-shard-06.sqlite",
+      "begin": 40281579128,
+      "end": 46995195401,
+      "rows": 32061,
+      "sha256": "9cf61a599085573900f991aee2a40200daf7cb4f9521b189f26effbc4e636cd0"
+    },
+    {
+      "partition": 7,
+      "path": "/tmp/codex-family-starts-20261022/clock-shard-07.sqlite",
+      "begin": 46995195401,
+      "end": 53708826763,
+      "rows": 31996,
+      "sha256": "261c76e5f3e1775f704cb3b1d398f266dce4a04ca6075e1b267c3bf1ca8add82"
+    },
+    {
+      "partition": 8,
+      "path": "/tmp/codex-family-starts-20261022/clock-shard-08.sqlite",
+      "begin": 53708826763,
+      "end": 60422361918,
+      "rows": 32206,
+      "sha256": "2860e208ebaf84a5cb3b5bd21b55efd132b3f3cf0a32efc2905a003699290a23"
+    },
+    {
+      "partition": 9,
+      "path": "/tmp/codex-family-starts-20261022/clock-shard-09.sqlite",
+      "begin": 60422361918,
+      "end": 67136142434,
+      "rows": 32047,
+      "sha256": "8f042b6b4ccc763f40a504a8e61b5994aef35ca2829ec5489fe61c7127399bbf"
+    },
+    {
+      "partition": 10,
+      "path": "/tmp/codex-family-starts-20261022/clock-shard-10.sqlite",
+      "begin": 67136142434,
+      "end": 73849541241,
+      "rows": 32071,
+      "sha256": "46053a1a1b6c4b73e9d4cb9a8dc6352a3720044487beff5d369517b9e0486b94"
+    },
+    {
+      "partition": 11,
+      "path": "/tmp/codex-family-starts-20261022/clock-shard-11.sqlite",
+      "begin": 73849541241,
+      "end": 80563156115,
+      "rows": 32037,
+      "sha256": "6a537b27294cdcc642f15949308722eb95b9ff0b2a827031e26432ef2ee19003"
+    },
+    {
+      "partition": 12,
+      "path": "/tmp/codex-family-starts-20261022/clock-shard-12.sqlite",
+      "begin": 80563156115,
+      "end": 87276852195,
+      "rows": 31938,
+      "sha256": "6fd1547a88b2e1bcb1bd03b9803a99f53876f1e8537647b9082c7562962c51ae"
+    },
+    {
+      "partition": 13,
+      "path": "/tmp/codex-family-starts-20261022/clock-shard-13.sqlite",
+      "begin": 87276852195,
+      "end": 93990424329,
+      "rows": 31976,
+      "sha256": "90d7e19c009f57048fb5e24a3dd29a10099c9094316dbed1e60758714f0f2ea1"
+    },
+    {
+      "partition": 14,
+      "path": "/tmp/codex-family-starts-20261022/clock-shard-14.sqlite",
+      "begin": 93990424329,
+      "end": 100704023112,
+      "rows": 31863,
+      "sha256": "67c486aaabd774824b1cd88c8cba911ce38343bc93298ef9ea21c3a92acd3ac2"
+    },
+    {
+      "partition": 15,
+      "path": "/tmp/codex-family-starts-20261022/clock-shard-15.sqlite",
+      "begin": 100704023112,
+      "end": 107417572696,
+      "rows": 31760,
+      "sha256": "53ab42be4f2c91a0f60c8e1b93f7747a5766e1ed7e4a211087c6e58a9eb0536e"
+    },
+    {
+      "partition": 16,
+      "path": "/tmp/codex-family-starts-20261022/clock-shard-16.sqlite",
+      "begin": 107417572696,
+      "end": 114131151502,
+      "rows": 31810,
+      "sha256": "e86accbc1d4a961e979e5fc469970afaba35b82cd77c8e799076d34c4aae532d"
+    },
+    {
+      "partition": 17,
+      "path": "/tmp/codex-family-starts-20261022/clock-shard-17.sqlite",
+      "begin": 114131151502,
+      "end": 120844820119,
+      "rows": 31867,
+      "sha256": "8fa2809e9017afef8d811bbef07c2139def9f1de8a664c5b5462457f8811c348"
+    },
+    {
+      "partition": 18,
+      "path": "/tmp/codex-family-starts-20261022/clock-shard-18.sqlite",
+      "begin": 120844820119,
+      "end": 127558433653,
+      "rows": 31775,
+      "sha256": "a757f3e8a86aea3dca9440b0c428ad53c186a0ed4f6e96f5f11e26c72e9304c5"
+    },
+    {
+      "partition": 19,
+      "path": "/tmp/codex-family-starts-20261022/clock-shard-19.sqlite",
+      "begin": 127558433653,
+      "end": 134271968577,
+      "rows": 31746,
+      "sha256": "b5c089bc3a584c29c4d06e802594b5d2011e52a8817f66750bacbd4f660357ba"
+    },
+    {
+      "partition": 20,
+      "path": "/tmp/codex-family-starts-20261022/clock-shard-20.sqlite",
+      "begin": 134271968577,
+      "end": 140985474840,
+      "rows": 31783,
+      "sha256": "9fa6e650453e7607fe8d7781e70d6a0226a14fe5c7e4e1d147db36be067a85d2"
+    },
+    {
+      "partition": 21,
+      "path": "/tmp/codex-family-starts-20261022/clock-shard-21.sqlite",
+      "begin": 140985474840,
+      "end": 147699246260,
+      "rows": 32075,
+      "sha256": "d42907c768cd97cd9aa129fe62be8c63bed510ac8d0d0ef68bc38e38621a7aa4"
+    },
+    {
+      "partition": 22,
+      "path": "/tmp/codex-family-starts-20261022/clock-shard-22.sqlite",
+      "begin": 147699246260,
+      "end": 154412700342,
+      "rows": 31474,
+      "sha256": "f4d6881c641e558d1d84f495eca4eb69bb9fdc902fc3889a417939027f205e6c"
+    },
+    {
+      "partition": 23,
+      "path": "/tmp/codex-family-starts-20261022/clock-shard-23.sqlite",
+      "begin": 154412700342,
+      "end": 161126241394,
+      "rows": 31470,
+      "sha256": "c6fb843b706174105b2fd276341300d1207a5d839ddb0a416a06e51ba2145641"
+    }
+  ]
+}
