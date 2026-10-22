@@ -550,47 +550,295 @@ Using the 18 calculation areas as a starting reference, the expected bucket dist
   figure). Requires the SQLite.
 - Whether catalog entries added after the historical checkpoint are included in the task plan.
 
-### Schema and triage status — October 22 2026
+### Schema and triage status — October 22 2026 (COMPLETE)
 
-**Schema confirmed.** The triage Python script ran on the main box on October 22 2026.
-Results are saved in `/tmp/codex-sqlite-triage-20261022.json` on i-035994afa8bdf66a5.
-The box is now stopped. When it is next available, retrieve that file per the drop-in.
+**Schema confirmed. Triage complete.** The fresh triage script ran on the main box on
+October 22 2026 (run_utc approximately 2026-10-22T01:24Z). Results were retrieved in full
+and are recorded here. The fresh run's output file is
+`/tmp/codex-sqlite-triage-fresh-20261022.json` on i-035994afa8bdf66a5. The box is now stopped.
+The earlier run saved to `/tmp/codex-sqlite-triage-20261022.json`; both paths refer to the same
+run since the fresh script overwrote. The drop-in section 3 references the fresh path.
 
-**Critical schema finding:** The tasks table stores only `(ordinal, body, pin)`. No join table
-exists. Each body is a pickle of `(ordinal, (selection_id, None))`. SQL JOINs against the
-tasks table cannot produce conjunctions. The Python approach is the only correct method. The
+**Critical schema finding (standing):** The tasks table stores only `(ordinal, body, pin)`. No
+join table exists. Each body is a pickle of `(ordinal, (selection_id, None))`. SQL JOINs against
+the tasks table cannot produce conjunctions. The Python approach is the only correct method. The
 original drop-in SQL queries were architecturally wrong; the drop-in has been corrected.
 
-**Two calendar exclusions added:** `trading_day` and `trading_weekday` were correctly identified
-by Codex and added to the exclusion set. They are now in the drop-in's set-aside calendar class.
+**Two calendar exclusions confirmed:** `trading_day` and `trading_weekday` are in the exclusion
+set for this run. They belong in the set-aside calendar class.
 
-**Partial results seen before output was cut off:**
-Top surviving fields by distinct_selections (from the interrupted paste):
-- `native.lifecycle.queue[0].level_event_key_at_exit`: 262,119 distinct selections
-- `native.lifecycle.replenishment[N].level_event_key` fields: high counts across multiple N values
-- `native.lifecycle.absorption[0].family_id`, `native.member.row.family_id`,
-  `structures.candidate_family_id`: 763 distinct selections each
-The output was cut before the complete field list was captured.
+---
 
-**Interpretation note from triage script (verbatim):** "Task rows reference unique observation
-masks; labels on one selection are aliases, not proof of an explicit AND hypothesis."
+#### Triage counts
 
-**What this means for the conjunctions question:** The dominant surviving fields are
-level_event_key fields (positional queue identities) and family_id fields (structural family
-references). Both are in the categories withheld from automatic set-aside pending inspection
-(categories 14 and 11 in the living plan). The question of whether these are behavioral content
-or identity-like references is not settled by the field counts alone.
+| Metric | Value |
+|--------|-------|
+| Total tasks in SQLite | 1,594,763 |
+| Surviving tasks (selection_id has at least one surviving label) | 74,309 (4.66%) |
+| Surviving catalog selections | 364,393 |
+| Surviving positional column names (210,412 full names → leaf fields below) | 210,412 |
+| Runtime | 161.88 seconds |
 
-**Next step when the box is available:**
-1. Retrieve and paste the full `/tmp/codex-sqlite-triage-20261022.json` output (section 3 of
-   the corrected drop-in). This gives the complete surviving field list, task count, and first 20
-   surviving tasks with all their conditions.
-2. If the file is gone (instance terminated, not stopped), re-run section 4 of the drop-in.
-3. After retrieving the output, record here: total surviving tasks, total surviving selections,
-   complete field list, and the conjunction patterns from the first 20 tasks.
+The four-count discrepancy remains: SQLite records 1,594,763 tasks; the assembly figure was
+1,594,767. This is unresolved and requires tracing when the box is available.
 
-Do not attempt SQL queries against the tasks table. Do not run any query through the NFS
-mount while main is stopped.
+---
+
+#### Complete normalized label counts (leaf field names, all surviving occurrences)
+
+These are leaf field names after stripping array indices. Count = total label occurrences across
+all surviving selections, not distinct selections.
+
+```
+    320037  level_event_key
+    281431  level_event_key_at_exit
+    172126  side
+     23013  family_id
+     15076  action
+     11595  value
+      7965  price_relations
+      6729  clock
+      5747  exit_family_id
+      5334  session_phase
+      5181  emitted_on
+      5055  continuity_segment
+      4759  direction
+      4404  emitting_section
+      3958  opened_basis
+      3904  cancels_ahead_basis
+      3314  side_string
+      3198  status
+      3102  orientation
+      2743  window_direction
+      2706  classification
+      2705  no_direction_reason
+      2703  binning_clock
+      2322  stage_bin
+      2322  stage_bin_rule
+      2287  candidate_family_id
+      1766  mirror_pair_key
+      1728  touch_state_at_open
+      1657  mirror_side_string
+      1447  action_string
+      1446  outcome
+      1343  to_node
+      1280  from_node
+      1113  attribution_rule
+      1113  neighborhood_arrival_ratio_formula
+       803  touch_state
+       776  observation
+       728  liquidity_kind_basis
+       727  liquidity_kind
+       718  section
+       718  source_missing_fields
+       718  source_null_fields
+       717  legacy_rows
+       717  price_relation_basis
+       717  refill_attribution
+       717  self_restoration_policy
+       563  neighbour_offset_ticks
+       563  unattributed_reason
+       490  side_orientation
+       484  depth_label
+       484  role
+       484  transition_type
+       455  adapter_revision
+       455  census_view
+       394  node
+       311  birth_family_id
+       190  birth_session_phase
+       149  terminal_status
+       110  exit_session_phase
+        96  touch_disposition
+        90  transition
+        80  stratum_basis
+        75  causal_availability_clock
+        74  priority_time_semantics
+        69  terminal_basis
+        66  carried_native_family
+        57  queue_scope
+        26  from_direction
+        26  to_direction
+        17  basis
+        16  reading_resolution
+        12  class
+        12  terminal_action
+        11  recognized_recv_ns_basis
+        10  absent_channels
+         9  selection_rule
+         9  threshold_rule
+         9  formula
+         9  label
+         9  terminal_side
+         8  availability_note
+         8  direction_note
+         8  anchor_basis
+         6  sign_reversals
+         6  failed_states
+         6  terminal_phase
+         6  discovery_status
+         5  disposition
+         5  top_level_qty_by_action
+         3  recognition_outcome
+         3  action_count
+         3  action_qty
+         3  action_side_count
+         3  action_side_qty
+         2  ladder_scope
+         2  level_births
+         2  level_deaths
+         1  prominence_rule
+         1  occasion
+         1  parameter_signature
+         1  partition_formula
+         1  session_phase_at_close
+         1  unit
+         1  incomplete_note
+         1  gaps
+         1  displayed_volume_basis
+         1  scope
+         1  confirmed_at_this_cutoff
+         1  decision_basis
+         1  integrity_delta
+         1  interpretation_domain
+         1  within_group_receive_gaps_ns
+```
+
+**Dominant fields:** `level_event_key` (320,037) and `level_event_key_at_exit` (281,431) together
+account for over half of all surviving label occurrences. `side` (172,126) is next. `family_id`
+(23,013) plus `exit_family_id` (5,747) and `candidate_family_id` (2,287) and `birth_family_id`
+(311) together total about 31,358. All other surviving fields are below 16,000.
+
+---
+
+#### First 20 surviving tasks — two distinct populations
+
+**Population A — Task 1 (ordinal 1, selection_id 1): external-context reference frame.**
+This task has several hundred labels covering all external data available on 2023-10-18:
+- COT positioning: 5 contracts (NAT GAS ICE LD1/ICE, NAT GAS ICE PEN/ICE, HENRY HUB BASIS/ICE,
+  HENRY HUB INDEX/ICE, NAT GAS NYME/NYMEX), fields contract_code, market_name,
+  publication_confidence="derived", report_date="2023-10-10"
+- Forward curve: settled_shape and traded_shape regime="contango", front=NGX3, next=NGZ3
+- Curve trades: ~40 instruments (calendar spreads, outrights NGF26, NGX25, etc.) with per-instrument
+  side condition (B/A/N)
+- EIA-930 hourly: 7 respondents (CISO, ERCO, MISO, PJM, SOCO, SWPP, US48),
+  fueltype_or_type="TI", route="region-data", units="megawatthours"
+- MOS weather: GFS D+0/1, MEX D+0..6, NAM D+0/1, various runtime_utc
+- Storage: print_date="2023-10-12", week_ending="2023-10-06", EIA WNGSR source
+- Hourly weather at 19 stations: ice_accretion, peak_wind, skyc1-4, skyl1-4, snowdepth, vsby
+- Book levels: `frames.book.ask_levels_full[0..150].side="A"` and
+  `frames.book.bid_levels_full[0..131].side="B"` — structurally constant (ask always A, bid
+  always B). These conditions survive the filter but test an algebraic tautology: ask slots
+  always carry side A, bid slots always carry side B. They have zero discriminating power.
+- Observation orders: `frames.observation.orders[0..392].side` = "A" or "B" — varies by order
+  (B-dominated with some A gaps). These are not constant and may describe real side patterns.
+- Native frame: adapter_revision="NG_EXHAUSTION_MBO_V4_STATE_ADAPTER_V2_20260823",
+  census_view="V4_NATIVE_FULL", causal_availability_clock="ts_recv_ns"
+- Lifecycle sections: absorption, ladder, mirror, recurrence — clock, emitted_on, emitting_section,
+  side, touch_state fields per section
+
+This is a global context observation: the group contains the state of the entire external data
+universe on that session date. It is not a conjunction of market behavioral conditions. The labels
+that survive are external data state descriptions, not candidate-selection criteria.
+
+**Population B — Tasks 2-20 (ordinals 2-20, selection_ids 5-24): structural metadata survivors.**
+Each of these tasks has approximately 30 labels total, nearly all set-aside, with only 3-4
+surviving conditions per task. The surviving conditions are:
+
+1. `journal.group.entries[N].payload.legacy_rows = "[]"` — the N-th journal entry has an empty
+   legacy-rows list. N increments across tasks (19, 21, 23, 25, ..., 53).
+2. `native.lifecycle.recurrence[0].gaps[K].continuity_segment = "19648"` — the K-th gap in the
+   first recurrence section has continuity_segment equal to the integer 19648. K increments across
+   tasks (9, 10, 11, 12, ..., 26).
+3. `native.member.row.raw_actions[N].source_missing_fields = "[]"` — the N-th raw action has an
+   empty missing-fields list.
+4. `native.member.row.raw_actions[N].source_null_fields = "[]"` — the N-th raw action has an
+   empty null-fields list.
+
+The continuity_segment value "19648" is IDENTICAL across all of these tasks. It is a fixed run
+identifier for one recurrence execution, not a varying market condition. The empty-list fields
+(`legacy_rows=[]`, `source_missing_fields=[]`, `source_null_fields=[]`) are structural
+completeness metadata, not market behavioral conditions.
+
+These tasks survive the current filter only because none of these field names appear in any
+named exclusion class. They are surviving through a gap in the exclusion list, not because they
+contain market information.
+
+---
+
+#### New set-aside candidates — pending Greg's ruling
+
+The following fields survive the current filter but are NOT market conditions. They require a
+ruling before they can be added to any set-aside class.
+
+| Field | Observed values | Why it is not a market condition |
+|-------|----------------|----------------------------------|
+| `legacy_rows` | `"[]"` (empty list) | Completeness metadata. Indicates no legacy rows were carried. A structural property of a stored record, not an observation of market behavior. |
+| `source_missing_fields` | `"[]"` (empty list) | Source data quality metadata. Indicates no fields were missing at ingestion. Not a market condition. |
+| `source_null_fields` | `"[]"` (empty list) | Source data quality metadata. Indicates no fields were null at ingestion. Not a market condition. |
+| `continuity_segment` | `"19648"` (fixed integer, same across all 19 tasks 2-20) | A recurrence run identifier. Identifies one specific execution of the recurrence computation, not a varying market observation. If groups are conditioned on this value, they are conditioned on "was computed in run 19648," not on any market state. |
+
+These four fields should be considered for addition to the "Source and process metadata" set-aside
+class or a new "Structural completeness metadata" class. No action taken pending Greg's ruling.
+
+---
+
+#### Two fields requiring a ruling before the dominant counts can be interpreted
+
+| Field | Count | Category in living plan | Status |
+|-------|-------|------------------------|--------|
+| `level_event_key` | 320,037 label occurrences | Category 14 (withheld) | Still withheld. Whether a level event key encodes geometric market content (price level birth, death, gap) or is an arbitrary key must be verified from the source producer before ruling. |
+| `level_event_key_at_exit` | 281,431 label occurrences | Category 14 (withheld) | Same as above. |
+
+Until category 14 is ruled, the surviving task count (74,309) cannot be interpreted as
+"74,309 groups with market conditions." A large share may survive only because of level_event_key
+conditions that turn out to be identity-like references.
+
+---
+
+#### Book level side conditions — tautology finding
+
+In task 1, the conditions `frames.book.ask_levels_full[N].side = "A"` (for N=0 to 150) and
+`frames.book.bid_levels_full[N].side = "B"` (for N=0 to 131) survive the filter. These are
+structurally constant: ask level slots always carry side A, bid level slots always carry side B
+by definition of the book representation. A condition that is always true carries no information
+and selects every observation equally. These conditions are tautologies and belong in the
+"Source and process metadata" or "Needs definition" bucket pending ruling. They are distinct
+from `frames.observation.orders[N].side`, where the value varies by order.
+
+---
+
+#### Interpretation note from triage script (verbatim)
+
+"Task rows reference unique observation masks; labels on one selection are aliases, not proof
+of an explicit AND hypothesis."
+
+This means: labels on one selection describe what was true when that observation mask was saved.
+A selection with five surviving labels does not establish that a group was built by combining five
+behavioral conditions. The task plan records a single observation mask per task; the conjunction
+question requires examining what those masks are selecting, which is what the first 20 tasks
+begin to answer.
+
+---
+
+#### Next step
+
+The triage output is fully retrieved and recorded above. The box can remain stopped.
+
+The remaining open items are:
+1. **Ruling on category 14** (level_event_key, level_event_key_at_exit): Greg's decision on
+   whether these are identity-like references or behavioral content. This determines whether
+   the dominant surviving field counts indicate real market condition groups or a second identity
+   class that needs set-aside.
+2. **Ruling on new set-aside candidates** (legacy_rows, source_missing_fields, source_null_fields,
+   continuity_segment): Greg's decision on whether to add these to a set-aside class.
+3. **Ruling on book level side tautologies**: Whether `frames.book.ask_levels_full[N].side="A"`
+   and `frames.book.bid_levels_full[N].side="B"` should be excluded as structurally constant.
+4. **Four-count reconciliation** (1,594,763 vs 1,594,767): Requires the SQLite when the box
+   is available.
+
+Do not attempt SQL queries against the tasks table. Do not restart any box without Greg's
+authorization.
 
 ---
 

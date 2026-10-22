@@ -3,9 +3,12 @@
 **Author of this drop-in:** Claude (S115 session, October 22 2026)  
 **Work belongs to:** Greg Davis, DavisAI Markets
 
-**STATUS AS OF OCTOBER 22 2026:** Schema confirmed. Triage script ran on the main box.
-Full results are in `/tmp/codex-sqlite-triage-20261022.json` on i-035994afa8bdf66a5.
-The box is now stopped. When the box is next available, start the retrieval section below.
+**STATUS AS OF OCTOBER 22 2026:** Schema confirmed. Triage ran twice. The first run saved to
+`/tmp/codex-sqlite-triage-20261022.json`; the fresh run saved to
+`/tmp/codex-sqlite-triage-fresh-20261022.json`. Both are on i-035994afa8bdf66a5.
+**Full triage output has been retrieved and recorded in the living plan** (Entry 1, "Schema and
+triage status — October 22 2026 (COMPLETE)"). The box is stopped.
+The retrieval section below is now complete; rerun section 4 only if re-verification is needed.
 
 **What we are actually after — the conjunctions.** A group with two or more surviving
 conditions is a conjunctive hypothesis: "find observations where condition A AND condition B
