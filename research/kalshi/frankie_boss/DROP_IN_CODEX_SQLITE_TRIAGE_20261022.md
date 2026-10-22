@@ -7,6 +7,14 @@
 run two queries that skip all the already-classified noise, paste the output. Nothing else.
 No compute, no catalog edits, no service start.
 
+**What we are actually after — the conjunctions.** A group with two or more surviving
+conditions is a conjunctive hypothesis: "find observations where condition A AND condition B
+are both true simultaneously." The 18 calculation areas tell us what each field means. They
+do not tell us which fields were combined together into a single group definition. That only
+exists in the SQLite. Those combinations are the actual hypotheses the experiment search was
+testing. Seeing which conjunctions dominate — and whether they cross calculation area
+boundaries — is the informative output. The raw count of set-aside groups is secondary.
+
 ---
 
 ## Already classified — do not query these
