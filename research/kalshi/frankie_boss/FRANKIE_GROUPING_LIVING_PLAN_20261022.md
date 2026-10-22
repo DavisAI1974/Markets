@@ -124,7 +124,7 @@ Session, source and instrument references remain usable for lawful data associat
 | 11 | Family labels and references | family_id; birth_family_id; exit_family_id; candidate_family_id. The verified candidate-family label hashes a structural descriptor; it is not an arbitrary order identity. |
 | 12 | Candidate identities | candidate_id |
 | 13 | Structure identities | structure_id |
-| 14 | Level event identities | level_event_key; level_event_key_at_exit |
+| 14 | Level event references | level_event_key; level_event_key_at_exit. RULING (Greg, 2026-10-22): kept. Use these to reach the underlying level event conditions (birth, death, gap, price geometry). The key is a reference; the associated event's properties are the market content. Not set aside. |
 | 15 | Mirror pattern keys | mirror_pair_key describes a side string and its A/B-swapped version. Observed example AAAN\|BBBN. Keep orientation separate. |
 | 16 | Lineage references and recurrence codes | node_id and parent_id can refer to an order. Recurrence node, from_node and to_node encode action\|side, such as A\|A or C\|B. These are different meanings. |
 | 17 | Episode attribution identities | attributed_to_episode_ids |
@@ -508,7 +508,7 @@ not set them aside automatically until their content is verified.
 | Field | Category | Reason for withhold |
 |-------|----------|---------------------|
 | contract | 2 (Instrument and contract identities) | May encode front-month vs. deferred term structure, which is market context. Verify what values appear in the catalog and what they represent. |
-| level_event_key, level_event_key_at_exit | 14 (Level event identities) | Named as identities, but "level event" may encode geometric or behavioral content (a price level birth, death, or gap event). Verify the key format before ruling. |
+| level_event_key, level_event_key_at_exit | 14 (Level event references) | RULED (Greg, 2026-10-22): kept. These are references to level events whose underlying conditions carry market content. Follow the key to reach the associated event properties. Not set aside. See Category 14 ruling section below. |
 | mirror_pair_key (when value is AAAB\|BBBA or similar) | 15 (Mirror pattern keys) | The key is a side sequence code. AAAB\|BBBA encodes behavioral content (three ask-side messages then one bid-side message). A condition "mirror_pair_key = AAAB\|BBBA" is testing for a real side sequence pattern, not an arbitrary identity. This field is NOT in the set-aside classes. Groups conditioned on mirror_pair_key values go into Events and sequences. |
 
 ### Calculation areas mapped to buckets
@@ -783,16 +783,29 @@ class or a new "Structural completeness metadata" class. No action taken pending
 
 ---
 
-#### Two fields requiring a ruling before the dominant counts can be interpreted
+#### Category 14 ruling — Greg, October 22 2026
 
-| Field | Count | Category in living plan | Status |
-|-------|-------|------------------------|--------|
-| `level_event_key` | 320,037 label occurrences | Category 14 (withheld) | Still withheld. Whether a level event key encodes geometric market content (price level birth, death, gap) or is an arbitrary key must be verified from the source producer before ruling. |
-| `level_event_key_at_exit` | 281,431 label occurrences | Category 14 (withheld) | Same as above. |
+**`level_event_key` and `level_event_key_at_exit` are KEPT. Use them to reach the underlying
+conditions they are associated with.**
 
-Until category 14 is ruled, the surviving task count (74,309) cannot be interpreted as
-"74,309 groups with market conditions." A large share may survive only because of level_event_key
-conditions that turn out to be identity-like references.
+A group conditioned on a level_event_key value is not being examined for the key itself. The key
+is a reference to a level event that carries its own set of conditions: birth type, death type,
+gap geometry, price location, surrounding book state, timing, and other behavioral properties.
+The key locates that event; the event's conditions are the actual market content.
+
+This means:
+- Do NOT set aside groups containing level_event_key or level_event_key_at_exit conditions.
+- When inspecting such a group, follow the key to the associated level event and examine what
+  conditions describe that event.
+- The 320,037 level_event_key occurrences and 281,431 level_event_key_at_exit occurrences
+  represent references into level event data, not arbitrary identity values.
+- Classification of these groups goes into whichever bucket the underlying level event content
+  belongs to — primarily Market conditions (4.9 Price ladder: level births and deaths, gaps,
+  occupied geometry) or Events and sequences, depending on what the associated event describes.
+
+Category 14 ("Level event identities") in the living plan field table is superseded by this
+ruling. These fields are references with market content reachable through them, not pure
+identity exclusions.
 
 ---
 
