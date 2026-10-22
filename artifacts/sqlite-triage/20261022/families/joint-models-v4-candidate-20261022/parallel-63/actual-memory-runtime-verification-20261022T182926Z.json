@@ -1,0 +1,151 @@
+{
+  "utc": "2026-10-22T18:29:26Z",
+  "state_mtime_utc": "2026-10-22T18:28:48Z",
+  "coordinator_pids": [],
+  "status": "running",
+  "state_extra": {
+    "status": "running",
+    "coverage_gate": "NOT_PASSED",
+    "all_declared_tasks_mandatory": true,
+    "per_job_memory_caps": "unlimited",
+    "admission_policy": "actual MemAvailable above host floor; no job estimates",
+    "cpu_placement": "one worker per physical core, sockets interleaved",
+    "phase": 0,
+    "active_jobs": 96,
+    "queued_jobs": 438,
+    "queued_preparations": 43,
+    "deferred_memory_jobs": []
+  },
+  "registered_cohorts": 22,
+  "unregistered_cohorts": 41,
+  "required": 748,
+  "committed": 212,
+  "required_by_class": {
+    "shallow_or_ablation": 594,
+    "depth5": 22,
+    "ridge": 22,
+    "baseline": 44,
+    "neural:neural_tree": 22,
+    "neural:residual_mlp": 22,
+    "neural:tabm_ensemble": 22
+  },
+  "committed_by_class": {
+    "shallow_or_ablation": 141,
+    "ridge": 8,
+    "baseline": 44,
+    "depth5": 3,
+    "neural:neural_tree": 5,
+    "neural:residual_mlp": 7,
+    "neural:tabm_ensemble": 4
+  },
+  "remaining_registered_by_class": {
+    "depth5": 19,
+    "shallow_or_ablation": 453,
+    "ridge": 14,
+    "neural:tabm_ensemble": 18,
+    "neural:neural_tree": 17,
+    "neural:residual_mlp": 15
+  },
+  "complete_registered_cohorts": [
+    [
+      "absolute_mid_price_change",
+      "1",
+      "3"
+    ],
+    [
+      "absolute_mid_price_change",
+      "120",
+      "3"
+    ]
+  ],
+  "worker_count": 96,
+  "duplicate_task_keys": [],
+  "memory_kib": {
+    "MemTotal": 1560349684,
+    "MemAvailable": 346827124
+  },
+  "disk_free_gib": 112.13,
+  "oom_kill": [
+    "oom_kill 0"
+  ],
+  "log_bytes": 2356,
+  "log_tail": [
+    "{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"1800\", \"2\"], \"model\": \"dropgroup:external.weather\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}",
+    "{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"1\", \"4\"], \"model\": \"dropgroup:external.calendar\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}",
+    "{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"1\", \"4\"], \"model\": \"dropgroup:causal_pullback_geometry\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}",
+    "{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"1800\", \"2\"], \"model\": \"dropgroup:external.storage.estimate\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}",
+    "{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"1800\", \"2\"], \"model\": \"dropgroup:external.storage.weekly\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}",
+    "{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"1800\", \"2\"], \"model\": \"drop_history\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}",
+    "{\"kind\": \"neural\", \"cohort\": [\"absolute_mid_price_change\", \"1800\", \"2\"], \"model\": \"residual_mlp\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}",
+    "{\"kind\": \"neural\", \"cohort\": [\"absolute_mid_price_change\", \"120\", \"4\"], \"model\": \"residual_mlp\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}"
+  ],
+  "state_path": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T182638Z-b253c45d/recovery-plan.json",
+  "adopted_live": 54,
+  "adopted_finished": [
+    {
+      "pid": 3199,
+      "returncode": 0
+    },
+    {
+      "pid": 3200,
+      "returncode": 0
+    },
+    {
+      "pid": 3201,
+      "returncode": 0
+    },
+    {
+      "pid": 3203,
+      "returncode": 0
+    },
+    {
+      "pid": 3210,
+      "returncode": 0
+    },
+    {
+      "pid": 3211,
+      "returncode": 0
+    },
+    {
+      "pid": 4077,
+      "returncode": 0
+    },
+    {
+      "pid": 4243,
+      "returncode": 0
+    },
+    {
+      "pid": 4244,
+      "returncode": 0
+    },
+    {
+      "pid": 4253,
+      "returncode": 0
+    },
+    {
+      "pid": 4295,
+      "returncode": 0
+    },
+    {
+      "pid": 4371,
+      "returncode": 0
+    },
+    {
+      "pid": 4376,
+      "returncode": 0
+    }
+  ],
+  "adopted_unresolved": [],
+  "all_caps_unlimited": true,
+  "all_single_cpu": true,
+  "duplicate_cpu_assignments": [],
+  "worker_groups": {
+    "shallow_or_ablation": 83,
+    "depth5": 4,
+    "neural:tabm_ensemble": 4,
+    "neural:neural_tree": 3,
+    "neural:residual_mlp": 1,
+    "ridge": 1
+  },
+  "evidence_path": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/actual-memory-runtime-verification-20261022T1827.json"
+}

@@ -1,0 +1,15 @@
+{
+  "receipt_path": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/actual-memory-handoff-20261022T182637Z.json",
+  "utc": "2026-10-22T18:26:37Z",
+  "new_coordinator_pid": 4409,
+  "old_coordinator_pid": 3777,
+  "manifest": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/actual-memory-adoption-20261022T182637Z.json",
+  "old_committed": 198,
+  "adopted_jobs": 67,
+  "numerical_workers_before": 67,
+  "source_sha256": "c16b84a37fef2fae060c7456e4e3ca201e844e4c3c2808265c3895904d91a4d0",
+  "log": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-actual-memory-resume.log",
+  "admission_policy": "no per-job estimates; actual MemAvailable > 64 GiB; ceiling 96",
+  "no_numerical_fit_restarted": true,
+  "coverage_gate": "NOT_PASSED"
+}
