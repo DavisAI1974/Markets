@@ -1,0 +1,33 @@
+{
+  "status": "uploaded_and_streamed_get_sha256_verified",
+  "bucket": "bento-568968024170-us-east-2-an",
+  "region": "us-east-2",
+  "archives": [
+    {
+      "file": "family-full-context-v4-incomplete-inputs.tar.gz",
+      "key": "frankie/family-prebirth/20261022/family-full-context-v4-incomplete-inputs-7f823885.tar.gz",
+      "bytes": 2672048419,
+      "sha256": "7f823885195d4b9b15414790e73737e8141d1324b31093586ccec6714288e5e9"
+    },
+    {
+      "file": "family-v3-frozen-model-states-and-jobs.tar.gz",
+      "key": "frankie/family-prebirth/20261022/family-v3-frozen-model-states-and-jobs-b3f9d4df.tar.gz",
+      "bytes": 1171303228,
+      "sha256": "b3f9d4df0883b7423f38f6b78aec0ea1e49f5b2d5c6831e9f43170196fbdcafb"
+    },
+    {
+      "file": "family-full-context-handoff-outputs-v2.tar.gz",
+      "key": "frankie/family-prebirth/20261022/family-full-context-handoff-outputs-v2-b5a047bb.tar.gz",
+      "bytes": 3790533,
+      "sha256": "b5a047bba9bd8533ae2e8c4be402c20c312cd8a312f5603cdc65886d869ecc7a"
+    }
+  ],
+  "upload_command": "cbddcc6c-19b7-45d8-b5b6-dec9549b6889",
+  "coverage_gate": "NOT_PASSED",
+  "v4_matrix_built": false,
+  "v4_fits_started": false,
+  "verification_command": "8b842832-acd4-447e-9360-9ff9184e2b6d",
+  "s3_head_lengths_verified": true,
+  "local_handoff_output_files_verified": 108,
+  "local_handoff_output_archive_sha256": "b5a047bba9bd8533ae2e8c4be402c20c312cd8a312f5603cdc65886d869ecc7a"
+}

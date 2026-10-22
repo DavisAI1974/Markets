@@ -1,0 +1,425 @@
+{
+  "coverage_gate": "NOT_PASSED",
+  "files": [
+    {
+      "path": "dipole-audit-v1/classroom_claim_review_receipt.json",
+      "bytes": 706,
+      "sha256": "20f4e6a9b3569b2147b03a9cbe17d1d2d3028c5926c8cc0a07decdfe4332e795"
+    },
+    {
+      "path": "dipole-audit-v1/complete_component_input_receipt.json",
+      "bytes": 11868,
+      "sha256": "58c7cebc1b0b9fe4534b44c02d5e16f184d171884b3a342bcf614803a6a2b676"
+    },
+    {
+      "path": "dipole-audit-v1/complete_pair_checks.csv",
+      "bytes": 844542,
+      "sha256": "450a5d60e826d59defdc9c56997021e1be3998ed000186d94b155eea41377db6"
+    },
+    {
+      "path": "dipole-audit-v1/complete_pair_checks_receipt.json",
+      "bytes": 1277,
+      "sha256": "9da6699a4ec22299023ad5b8b9b5ec09743fc43755936de522978be214893e02"
+    },
+    {
+      "path": "dipole-audit-v1/complete_pair_state_counts.csv",
+      "bytes": 953097,
+      "sha256": "6c10211c342270b9d1b590ce4dddc456e26fef16b51b342e788e299b3359dcd4"
+    },
+    {
+      "path": "dipole-audit-v1/dipole_contradiction_research_registry.csv",
+      "bytes": 726736,
+      "sha256": "6d08c410f6b99dd8c19141153d047d1bee02deb41554fc7a29dc6d5c9de129d7"
+    },
+    {
+      "path": "dipole-audit-v1/external_classroom_claim_dispositions.csv",
+      "bytes": 142107,
+      "sha256": "de0e47eec8efc4259c13dd531b350b6a22d2c85f7fe90d808f2c88b0de7faaf9"
+    },
+    {
+      "path": "dipole-audit-v1/native_classroom_claim_checks.csv",
+      "bytes": 48107,
+      "sha256": "2520899c1c4e95c674e8a19b7d0b8434d101b53fc07b448288fecc16d23a4860"
+    },
+    {
+      "path": "full-context-audit/brain-manifests/20211004-cycle-00--MANIFEST.json.json",
+      "bytes": 3208,
+      "sha256": "8faf1cdda3ed740c5e09593db5584247be421453124ea9208f94fa8162639533"
+    },
+    {
+      "path": "full-context-audit/brain-manifests/20211005-external--MANIFEST.json.json",
+      "bytes": 958,
+      "sha256": "f2590e4d94f4ccb49318c2950a9897731bc68964703d97edf058f8b6625ae24b"
+    },
+    {
+      "path": "full-context-audit/brain-manifests/20211006-external--MANIFEST.json.json",
+      "bytes": 957,
+      "sha256": "1e2462db28aeac6d2dc7745ebcfd5e0e15a6ab428cb9f7eda9687dbb98c141da"
+    },
+    {
+      "path": "full-context-audit/brain-manifests/20211012-external--MANIFEST.json.json",
+      "bytes": 958,
+      "sha256": "796a58bd10072a00dfd7cfbb559dac3891ddad9e4c69353508f1bc1facce900d"
+    },
+    {
+      "path": "full-context-audit/brain-manifests/20211013-external--MANIFEST.json.json",
+      "bytes": 957,
+      "sha256": "278939541dd34e73b41b844481415617b1d330acc32360198178b41fa7ba9e6e"
+    },
+    {
+      "path": "full-context-audit/brain-manifests/20211020-external--MANIFEST.json.json",
+      "bytes": 958,
+      "sha256": "a8e56f4090b243df0b2b3563543862414d1d713d1607d1d195b9cbf8c4599392"
+    },
+    {
+      "path": "full-context-audit/brain-manifests/20221004-external--MANIFEST.json.json",
+      "bytes": 957,
+      "sha256": "891268f55baeb44697fd4fbbc5b41bcfca102ff7d1e42fce20a021bcab8e912c"
+    },
+    {
+      "path": "full-context-audit/brain-manifests/20221005-external--MANIFEST.json.json",
+      "bytes": 957,
+      "sha256": "7b0898707f44b142a43c5dd8e27aa160c0c9cbe3c058def1c8f661f0bfa8d79b"
+    },
+    {
+      "path": "full-context-audit/brain-manifests/20221011-external--MANIFEST.json.json",
+      "bytes": 957,
+      "sha256": "950613707d6f6a9a7c1a4ac1866943d3ca2fa0ffea2753784482aed311d7ddab"
+    },
+    {
+      "path": "full-context-audit/brain-manifests/20221012-external--MANIFEST.json.json",
+      "bytes": 957,
+      "sha256": "b6ec5a0788f32662c86dad29aa1d0d1df54b0e286aeebc6135d9a12e7407b641"
+    },
+    {
+      "path": "full-context-audit/brain-manifests/20221018-external--MANIFEST.json.json",
+      "bytes": 957,
+      "sha256": "686a2de236d82d3e39dbe26fb93e3b0a0fe362440c0c796528ffbcf0ce41512b"
+    },
+    {
+      "path": "full-context-audit/brain-manifests/20221019-external--MANIFEST.json.json",
+      "bytes": 957,
+      "sha256": "a8e9c347b08ffe804d28fcb09ee9947c0de6c8cf626e405985c35a08d71f86c8"
+    },
+    {
+      "path": "full-context-audit/brain-manifests/20231003-external--MANIFEST.json.json",
+      "bytes": 956,
+      "sha256": "071962d085016fadfe54449f5c86eb64afdeca789a5d3726123843b1c1dfd1f7"
+    },
+    {
+      "path": "full-context-audit/brain-manifests/20231004-external--MANIFEST.json.json",
+      "bytes": 956,
+      "sha256": "b715430a61e1de2a3489daf0dca8c35eb38ba09a6ba2b48f0c9ce23e1bdbe39c"
+    },
+    {
+      "path": "full-context-audit/brain-manifests/20231010-external--MANIFEST.json.json",
+      "bytes": 957,
+      "sha256": "44fe30391a85322686311fb77d576bed9a056ed31119a986d096c90e58b32a7e"
+    },
+    {
+      "path": "full-context-audit/brain-manifests/20231011-external--MANIFEST.json.json",
+      "bytes": 957,
+      "sha256": "ab6aece46f1143e0615387bbd5c61a39d8230b03135cacc717b4578031c87d83"
+    },
+    {
+      "path": "full-context-audit/brain-manifests/20231017-external--MANIFEST.json.json",
+      "bytes": 957,
+      "sha256": "c36baa174ace4a4e83045fa1a90b3f5444de44a6c27c4c228b44296ad13096f5"
+    },
+    {
+      "path": "full-context-audit/brain-manifests/20231018-cycle-00--MANIFEST.json.json",
+      "bytes": 12113,
+      "sha256": "28acb21f395c9cbf2df76f5f09a74156eb91f7c8047a6ae54846c54c204a3066"
+    },
+    {
+      "path": "full-context-audit/brain-manifests/20231018-cycle-00--MANIFEST.json.retained-169c964163cff22fe800016034836a4d3a24ec8f0bb91ce6d8fc296e5e55592f.json",
+      "bytes": 10868,
+      "sha256": "f5ea59154eaf2d87f6a5249183b9694271d0da2e5edbafe0ee1e8a88456e34b7"
+    },
+    {
+      "path": "full-context-audit/brain-manifests/20231018-cycle-00--MANIFEST.json.retained-32b1ea1fe4f2587912a6e2a2dbc079c2dffd58e617d85ef459d7b5c06816e71f.json",
+      "bytes": 9677,
+      "sha256": "387b09fedb40c53196522d849b6e87bcbbdc5c562ff7b5f317fececdf358d13e"
+    },
+    {
+      "path": "full-context-audit/brain-manifests/20231018-day-file--MANIFEST.json.json",
+      "bytes": 732,
+      "sha256": "78e879b4a7ca09d6bb8a2a446be9486f043f173c8cd56d3b6737ee8dd1e3beeb"
+    },
+    {
+      "path": "full-context-audit/brain-manifests/20231018-day-file.superseded-20261007T195337Z--MANIFEST.json.json",
+      "bytes": 732,
+      "sha256": "3ba1793b2ce4fa59ca8ffa9a53988cf42fee402694027c14433b8cada818f3c8"
+    },
+    {
+      "path": "full-context-audit/brain-manifests/20231018-external--MANIFEST.json.json",
+      "bytes": 957,
+      "sha256": "de77d74321e6160f7511afbdcd058effadd4f74d9aff5885132be4d69b6184bb"
+    },
+    {
+      "path": "full-context-audit/brain-manifests/20231018-ingest--MANIFEST.json.json",
+      "bytes": 650,
+      "sha256": "90d05de06e17c5e3d41588583494bf6e1ea3a8a9342cb1553a8a328047b1a1e5"
+    },
+    {
+      "path": "full-context-audit/brain-manifests/20231018-root--MANIFEST.json.json",
+      "bytes": 842,
+      "sha256": "36ab7cd4d8f7ca4e6d96fd3f1afc92e7b7494a873ea2c8d70bbc123e6f4cb409"
+    },
+    {
+      "path": "full-context-audit/brain-manifests/20231018-teacher--MANIFEST.json.json",
+      "bytes": 1281,
+      "sha256": "48cdc73fe2151e44445be5a2790b39a865cd9148e20f5ae346b8ae258cd70b3c"
+    },
+    {
+      "path": "full-context-audit/brain-manifests/20231018-teacher-account--MANIFEST.json.json",
+      "bytes": 1566,
+      "sha256": "da80711d2d1c3f4bfcf3b5929874f8ee2335e290376124f252f4f756c23868bf"
+    },
+    {
+      "path": "full-context-audit/brain-manifests/20231018-teacher-second-set--MANIFEST.json.json",
+      "bytes": 3155,
+      "sha256": "0a1abe62589f06e9819994654fe241de52f4f9cfe34f3c83acf35aa556fb8e3c"
+    },
+    {
+      "path": "full-context-audit/brain-manifests/cycle-00--MANIFEST.json.json",
+      "bytes": 1931,
+      "sha256": "f2bc3695a3a9eb76bf01581ee1d548c1917a669b58521cb54b7bb2bc830d1b5a"
+    },
+    {
+      "path": "full-context-audit/brain_manifest_inventory.json",
+      "bytes": 34207,
+      "sha256": "e97315bee0f78e3793b9e0f9f5cd9b6c2522f8800a2b22fccac30c9b31760104"
+    },
+    {
+      "path": "full-context-audit/canonical-99-registry.json",
+      "bytes": 37242,
+      "sha256": "7ee754f1f9b080cdc5b7b68cf75829897d6216a1fadbb4b8a5ecd7b4f2133e06"
+    },
+    {
+      "path": "full-context-audit/canonical-source-recovery.json",
+      "bytes": 50465,
+      "sha256": "40b383f069a41d998267c6f5f826d2dd5c5baac9fcd1e8cbe6b891f4d0aae74f"
+    },
+    {
+      "path": "full-context-audit/complete-dipole-checks.log",
+      "bytes": 1547,
+      "sha256": "c7d12444389a459ff9e96a390112560b79ef95a8194d1b180bc92e2692581289"
+    },
+    {
+      "path": "full-context-audit/complete-dipole-inputs.log",
+      "bytes": 1298,
+      "sha256": "37a4c4ce6c30a443e7b761ac120e803c6c3ae6d4969ca51fd8e93af3b7a97c66"
+    },
+    {
+      "path": "full-context-audit/complete_field_inventory.csv",
+      "bytes": 22420031,
+      "sha256": "3923b29c09805994a86bffefef904f1a2d5e812b209258b67e7589b66b62fc60"
+    },
+    {
+      "path": "full-context-audit/external-history-collection.log",
+      "bytes": 275,
+      "sha256": "50796b836a8d932bb6c37791402cd037b5c97d548070436dbc780ee4ce600401"
+    },
+    {
+      "path": "full-context-audit/field-inventory.log",
+      "bytes": 4895,
+      "sha256": "8ad50933e0ffd87d0778b39f7802f425e4a4a8881181bef26876d11671d9f0dd"
+    },
+    {
+      "path": "full-context-audit/field_inventory_receipt.json",
+      "bytes": 4741,
+      "sha256": "0f7bc38f933a2aff6ca714088b6148db27863cca7423c56fc7da433f244ac5f4"
+    },
+    {
+      "path": "full-context-audit/native_entries.json",
+      "bytes": 12291,
+      "sha256": "b0d28751dff2a5d1bc7d39c8d4a4d198d6f70a29bc6e2be32dbbdea3b5d49b83"
+    },
+    {
+      "path": "full-context-audit/runtime-knowledge/20211004-cycle-00/8c259af3768c0ab133f5272b4b982ec365ab95afc85e5dc98b775b6dc7c78d28--derive.md",
+      "bytes": 74687,
+      "sha256": "8c259af3768c0ab133f5272b4b982ec365ab95afc85e5dc98b775b6dc7c78d28"
+    },
+    {
+      "path": "full-context-audit/runtime-knowledge/20211004-cycle-00/d7fa46334570a804d9540a52c89625519dd44fc3c1d1d0cfafe0ab47f44a7399--derived-files.md",
+      "bytes": 5553,
+      "sha256": "d7fa46334570a804d9540a52c89625519dd44fc3c1d1d0cfafe0ab47f44a7399"
+    },
+    {
+      "path": "full-context-audit/runtime-knowledge/20231018-cycle-00/0e096c03eefd9cf914b40d6268cd0cb023185ef4d05f994ed89049794f445ec0--experiment-directive.json",
+      "bytes": 12055,
+      "sha256": "0e096c03eefd9cf914b40d6268cd0cb023185ef4d05f994ed89049794f445ec0"
+    },
+    {
+      "path": "full-context-audit/runtime-knowledge/20231018-cycle-00/534bcff18d8c9622c69a56c5b492e637ae41b1e820bac9c3831d81f74f92e126--derive.md",
+      "bytes": 80922,
+      "sha256": "534bcff18d8c9622c69a56c5b492e637ae41b1e820bac9c3831d81f74f92e126"
+    },
+    {
+      "path": "full-context-audit/runtime-knowledge/20231018-cycle-00/9df5db9b427e5c8da32a6c90019c5e4afb2fb55bffa41776f689face8ee43d9f--classroom-findings.json",
+      "bytes": 91716,
+      "sha256": "9df5db9b427e5c8da32a6c90019c5e4afb2fb55bffa41776f689face8ee43d9f"
+    },
+    {
+      "path": "full-context-audit/runtime-knowledge/20231018-cycle-00/a41c1a48c05f271145d0d1c6b567a55e67626071ffec88ffc46d00c294165c20--derived-files.md",
+      "bytes": 5679,
+      "sha256": "a41c1a48c05f271145d0d1c6b567a55e67626071ffec88ffc46d00c294165c20"
+    },
+    {
+      "path": "full-context-audit/runtime-knowledge/20231018-cycle-00/d5d668dbceb2598a085e38c8480fbda985941363e4df5a27c826525a62f657c0--classroom-external-findings.json",
+      "bytes": 405138,
+      "sha256": "d5d668dbceb2598a085e38c8480fbda985941363e4df5a27c826525a62f657c0"
+    },
+    {
+      "path": "full-context-audit/runtime-knowledge/20231018-cycle-00/f6a87d7ee240fbda08684b6263c05b6627cb135428269ea709768d1a066a3aee--classroom-external.md",
+      "bytes": 1626302,
+      "sha256": "f6a87d7ee240fbda08684b6263c05b6627cb135428269ea709768d1a066a3aee"
+    },
+    {
+      "path": "full-context-audit/runtime-knowledge/20231018-day-file/74865fabc288189d7c7b172685151ad3af8c2f4847f3506f7637ab3d7d8038e1--stage-knowledge.json",
+      "bytes": 37910,
+      "sha256": "74865fabc288189d7c7b172685151ad3af8c2f4847f3506f7637ab3d7d8038e1"
+    },
+    {
+      "path": "full-context-audit/runtime-knowledge/20231018-day-file.superseded-20261007T195337Z/c6f3e15ea864211aa5df2da45e9fb84070bf5ecf0aae42529bc42fda8d877f64--stage-knowledge.json",
+      "bytes": 38345,
+      "sha256": "c6f3e15ea864211aa5df2da45e9fb84070bf5ecf0aae42529bc42fda8d877f64"
+    },
+    {
+      "path": "full-context-audit/runtime-knowledge/20231018-ingest/a199603bcfb190311ed612f1e9fc97e46a526704345ee3bfa5ca673175453653--stage-knowledge.json",
+      "bytes": 5283,
+      "sha256": "a199603bcfb190311ed612f1e9fc97e46a526704345ee3bfa5ca673175453653"
+    },
+    {
+      "path": "full-context-audit/runtime-knowledge/20231018-root/d5227b76664e862115de08a9f61fd639c622309b3c38252d3597ab1505c13259--stage-knowledge.json",
+      "bytes": 191047,
+      "sha256": "d5227b76664e862115de08a9f61fd639c622309b3c38252d3597ab1505c13259"
+    },
+    {
+      "path": "full-context-audit/runtime-knowledge/20231018-teacher/7d26bf2bd66e754d8e842f4109abadcdcd165109d3ed695afaaa094aea74c8ec--stage-knowledge.json",
+      "bytes": 245785,
+      "sha256": "7d26bf2bd66e754d8e842f4109abadcdcd165109d3ed695afaaa094aea74c8ec"
+    },
+    {
+      "path": "full-context-audit/runtime-knowledge/20231018-teacher-account/12e2eea4e6b27c484fdcee3ecc7062b846d553b8122367f7f8f6d3aa1f700ea3--stage-knowledge.json",
+      "bytes": 112202,
+      "sha256": "12e2eea4e6b27c484fdcee3ecc7062b846d553b8122367f7f8f6d3aa1f700ea3"
+    },
+    {
+      "path": "full-context-audit/runtime-knowledge/20231018-teacher-second-set/2c1c59d9fd0363d206ab6560dc43fe8bfa4f7266937bbadf8f06a65a58f79708--stage-knowledge.json",
+      "bytes": 36926,
+      "sha256": "2c1c59d9fd0363d206ab6560dc43fe8bfa4f7266937bbadf8f06a65a58f79708"
+    },
+    {
+      "path": "full-context-audit/runtime-knowledge/cycle-00/1c50dfde02e75ab3f519ba22e9c16fc9c3326ab7be4ee355273f1c830d787121--accounting-and-ledgers.md",
+      "bytes": 103515,
+      "sha256": "1c50dfde02e75ab3f519ba22e9c16fc9c3326ab7be4ee355273f1c830d787121"
+    },
+    {
+      "path": "full-context-audit/runtime-knowledge/cycle-00/1dbb75a08c3dd1740ff430842c813298454067ba633266dd49637eb0bd783004--derivation-digest-full.md",
+      "bytes": 145236,
+      "sha256": "1dbb75a08c3dd1740ff430842c813298454067ba633266dd49637eb0bd783004"
+    },
+    {
+      "path": "full-context-audit/runtime-knowledge/cycle-00/5fc9ad9e8659a512520ae8e3636c269f7ad2e1cc3a020ff99d582419ff64c9dc--derived-files.md",
+      "bytes": 698,
+      "sha256": "5fc9ad9e8659a512520ae8e3636c269f7ad2e1cc3a020ff99d582419ff64c9dc"
+    },
+    {
+      "path": "full-context-audit/runtime-knowledge/cycle-00/82c562feb4c4b76c677427e7e816a177bcd7becc469d1a0380091721ba0fea74--analysis.md",
+      "bytes": 27568,
+      "sha256": "82c562feb4c4b76c677427e7e816a177bcd7becc469d1a0380091721ba0fea74"
+    },
+    {
+      "path": "full-context-audit/runtime-knowledge/cycle-00/864ba0b039d57294f0531db25133fa584cb1093d3fe523bb8029b85eb9e059b3--derive.md",
+      "bytes": 3613,
+      "sha256": "864ba0b039d57294f0531db25133fa584cb1093d3fe523bb8029b85eb9e059b3"
+    },
+    {
+      "path": "full-context-audit/runtime-knowledge/external_classroom_claims.json",
+      "bytes": 425126,
+      "sha256": "24abd35d52e9672b997d067c92b91601f16b776042263ed82c67aed1ffa25a4e"
+    },
+    {
+      "path": "full-context-audit/runtime-knowledge/native_classroom_claims.json",
+      "bytes": 94891,
+      "sha256": "ec44eb470a4f01b6bc9352c19d2d168205eaef3e43ef4191f0c2db4d5125380e"
+    },
+    {
+      "path": "full-context-audit/runtime-knowledge-collection.log",
+      "bytes": 160,
+      "sha256": "fd536866ebbce3c33cfeb0364b62daa2f26905fe04617eac086d4033931fe0ca"
+    },
+    {
+      "path": "full-context-audit/runtime_knowledge_recovery.json",
+      "bytes": 32386,
+      "sha256": "ca0f9d4bd80826fb7841eba89efbb44356cbf1e4bd32da669dc0347be66d3a30"
+    },
+    {
+      "path": "full-context-audit/scripts/audit_full_context_sources.py",
+      "bytes": 8407,
+      "sha256": "05563993e8d94eb3a106e7801df7f64462471d24de7d197f475fb7abb4762866"
+    },
+    {
+      "path": "full-context-audit/scripts/collect_manifested_external_history.py",
+      "bytes": 7150,
+      "sha256": "b5cf94eeac76ecc0fb70b954f9794b0d4fbcfec19888bd716284cfa8406f1b05"
+    },
+    {
+      "path": "full-context-audit/scripts/collect_runtime_knowledge.py",
+      "bytes": 3356,
+      "sha256": "5b51c72e72dc1f01f4b38240f0c263153b69329cf2e3d7edf5f3c855e439a02f"
+    },
+    {
+      "path": "full-context-audit/scripts/dipole_pair_math.jl",
+      "bytes": 2770,
+      "sha256": "f4fb3236f913b76e95d640e64bed9c46cad6ea13611e7a79a97b23b94ea499fa"
+    },
+    {
+      "path": "full-context-audit/scripts/family_clock_sources.py",
+      "bytes": 2389,
+      "sha256": "207f3f6af02ac29559a60e4ee12f066b6e14c31de756cb9e3e70360c49f8a157"
+    },
+    {
+      "path": "full-context-audit/scripts/prepare_complete_dipole_checks.py",
+      "bytes": 4865,
+      "sha256": "1d4721d39ea00b147a352a0c526a87741eeacca06ae4aaee70621f42385a7213"
+    },
+    {
+      "path": "full-context-audit/scripts/review_complete_dipole_claims.py",
+      "bytes": 6134,
+      "sha256": "132fb6f06dff6cb78a3e6bf8e238a3d4cfdf48f03924e503f9fd19743946261d"
+    },
+    {
+      "path": "full-context-audit/scripts/run_complete_dipole_checks.jl",
+      "bytes": 3621,
+      "sha256": "391026bbdf58baca852f7fffd9595be1d4818d1cd5e5392c742684e6c0d80d76"
+    },
+    {
+      "path": "full-context-audit/scripts/test_complete_dipole_checks.py",
+      "bytes": 1053,
+      "sha256": "4f8ad121cb920d5544f6466e8243e4d658e51d5033315ab0f1a4e2f4cdb9c429"
+    },
+    {
+      "path": "full-context-audit/scripts/test_dipole_pair_math.jl",
+      "bytes": 1382,
+      "sha256": "a6df905c07236af4ae6dcfe8b752a1a9c0d095fa42a6f34d5f2909cf7a123fe8"
+    },
+    {
+      "path": "full-context-audit/scripts/test_full_context_sources.py",
+      "bytes": 1357,
+      "sha256": "a7c4684f909181f14aaa1a83eb41c514353fdd89e889dabb0a54e5ba010db1f8"
+    },
+    {
+      "path": "full-context-audit/scripts/test_manifested_external_history.py",
+      "bytes": 1129,
+      "sha256": "760b2bc70c6066fff1efd41e53519e7a00c3096bc3f744a6b27741424a16ec0b"
+    },
+    {
+      "path": "joint-models-v3/frozen_for_99_plane_audit.json",
+      "bytes": 3463,
+      "sha256": "89d940364b36b1cc5930b84bcbcd76171875d991f3a29bd4a7bb023370e57e34"
+    }
+  ]
+}

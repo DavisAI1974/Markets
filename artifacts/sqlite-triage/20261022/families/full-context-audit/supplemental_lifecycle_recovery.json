@@ -1,0 +1,44 @@
+{
+  "schema": "SUPPLEMENTAL_SAVED_LIFECYCLE_PLANES_V1",
+  "status": "complete",
+  "coverage_gate": "NOT_PASSED",
+  "sources": [
+    {
+      "plane": "derived_unresolved_age_chain_trajectory",
+      "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.projection-v2/published-238b8654652849868f84d2cf30517abe/derived_unresolved_age_chain_trajectory.json.gz",
+      "bytes": 6276720,
+      "sha256": "9d58cc1bc67d410595525d09cdc14724378ceb4ecec11cf4e1b8cc7afe2f1eca",
+      "rows": 310337,
+      "carrier": "lifecycle `lineage` rows (still-open lineages) and `episode` rows (4.10 exhaustion state)"
+    },
+    {
+      "plane": "prebirth_negative_opportunity_cases",
+      "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.projection-v2/published-238b8654652849868f84d2cf30517abe/prebirth_negative_opportunity_cases.json.gz",
+      "bytes": 1706603,
+      "sha256": "a2e0efc30b77172b0299db9b6f896a5c641caa4bc802b0ae168c530b0db8445b",
+      "rows": 1728,
+      "carrier": "lifecycle `episode` rows with MISSED / CENSORED outcomes (4.11) and `detector_coverage` rows"
+    }
+  ],
+  "new_unique_rows": {
+    "lineage": 308611,
+    "episode": 1638,
+    "detector_coverage": 2
+  },
+  "duplicate_cached_rows": 176,
+  "duplicate_projection_rows": 1638,
+  "emission_phases": {
+    "lineage|SEGMENT_CLOSE": 484,
+    "episode|CANDIDATE_EPISODE": 1638,
+    "lineage|STREAM_END": 308127,
+    "detector_coverage|SEGMENT_CLOSE": 1,
+    "detector_coverage|STREAM_END": 1
+  },
+  "field_paths": 239,
+  "limits": [
+    "Lineage entered_recv_ns/exited_recv_ns are event facts, not availability. SEGMENT_CLOSE rows are unusable before emission.",
+    "Full episode stages/path outcomes must not be backfilled to their earlier starts.",
+    "Source names such as unresolved/prebirth do not establish a live at-risk predictor. Actual carrier and emission determine role.",
+    "Recovered rows have not yet been as-of aligned, numerically extracted or fitted."
+  ]
+}

@@ -1,0 +1,158 @@
+{
+  "protocol_id": "NG_EXHAUSTION_CHAIN_STEP1_5Y_V4_NATIVE_CENSUS_PROTOCOL_20260820",
+  "status": "BINDING_ADDITIVE_STRUCTURAL_CENSUS_PROTOCOL",
+  "build_preparation_authorized": true,
+  "full_five_year_census_authorized": false,
+  "v4_predictive_empirical_launch_authorized": false,
+  "purpose": "Build and freeze the expanded structural exhaustion-chain population before later blind causal prediction/testing.",
+  "sequence": [
+    "VERIFY_5Y_SOURCE_AND_COVERAGE",
+    "TINY_MBO_ADAPTER_AND_EQUIVALENCE_PREFLIGHT",
+    "LEGACY_CONTROL_STRUCTURAL_CENSUS",
+    "V4_NATIVE_FULL_STRUCTURAL_CENSUS",
+    "FREEZE_CROSSWALK_AND_POPULATION_REGISTRY",
+    "SUPPORT_AND_CHARACTERIZATION",
+    "SMALL_BLIND_V4_PREDICTION_PILOTS",
+    "D_SPECIFIC_YEAR_SPECIFIC_PREDICTIVE_RUNS",
+    "FULL_EMPIRICAL_AND_P0_VALIDATION_LAST"
+  ],
+  "frozen_original_files_mutable": false,
+  "long_history_precedent": [
+    "research/NG_EXHAUSTION_CHAIN_PHASE1_54W_EXECUTION_PROTOCOL_20260817.json",
+    "research/ng_exhaustion_chain_canonical_54w_shard_20260817.py",
+    "research/ng_exhaustion_chain_canonical_54w_merge_20260817.py",
+    "research/ng_exhaustion_chain_phase1_structural_54w_20260817.py",
+    "research/ng_exhaustion_chain_phase1_causal_54w_20260817.py",
+    "research/ng_exhaustion_chain_phase1_reconcile_55w_20260817.py"
+  ],
+  "census_views": {
+    "LEGACY_CONTROL": {
+      "purpose": "Preserve comparability with frozen Step-1 chain doctrine using an MBO-derived trade/top-10 compatibility surface.",
+      "overlap_equivalence_required": true,
+      "frozen_detector_endpoint_lineage_doctrine_reused": true,
+      "family_time_shape_book_may_define_phase1_boundary": false,
+      "overwrites_frozen_55w_population": false
+    },
+    "V4_NATIVE_FULL": {
+      "purpose": "Discover structural organization using every lawful causal channel Frankie is expected to receive.",
+      "is_new_research_not_rewrite_of_frozen_phase1": true,
+      "full_mbo_first_class": true,
+      "may_discover_different_structure": true,
+      "novel_structure_gets_new_versioned_identity": true,
+      "future_or_reveal_information_allowed": false
+    }
+  },
+  "mbo_source": {
+    "dataset": "GLBX.MDP3",
+    "schema": "mbo",
+    "requested_continuous_symbol": "NG.v.0",
+    "range_start": "2021-08-20",
+    "range_end": "2026-08-20",
+    "native_dbn_is_canonical": true,
+    "priority_id_native_field_expected": false,
+    "fifo_priority_reconstructed_from_message_and_snapshot_order": true,
+    "state_snapshot_emission_requires_f_last": true,
+    "snapshot_bootstrap_counts_as_live_activity": false
+  },
+  "mbo_actions": {
+    "A": "ADD_RESTING_ORDER",
+    "C": "CANCEL_OR_REDUCE_RESTING_ORDER_BY_REPORTED_SIZE",
+    "M": "MODIFY_ORDER; PRICE_CHANGE_OR_SIZE_INCREASE_LOSES_FIFO_PRIORITY; SAME_PRICE_NONINCREASE_RETAINS_PRIORITY",
+    "R": "CLEAR_RESTING_BOOK",
+    "T": "AGGRESSING_TRADE; DOES_NOT_ITSELF_MUTATE_RESTING_BOOK",
+    "F": "RESTING_FILL_DETAIL; DOES_NOT_ITSELF_MUTATE_RESTING_BOOK",
+    "N": "NO_BOOK_MUTATION"
+  },
+  "v4_native_channels": [
+    "RAW_MBO_ACTIONS",
+    "ORDER_ID",
+    "RECONSTRUCTED_FIFO_PRIORITY",
+    "SEQUENCE",
+    "CHANNEL_ID",
+    "PUBLISHER_ID",
+    "INSTRUMENT_ID",
+    "TS_EVENT",
+    "TS_RECV",
+    "TS_IN_DELTA",
+    "ADD_CANCEL_MODIFY_TRADE_FILL_CLEAR_ACTIVITY",
+    "FULL_DEPTH_BOOK",
+    "TOP_N_BOOK",
+    "QUEUE_DEPTH_AND_ORDER_COUNT",
+    "QUEUE_AGE_AND_SURVIVAL",
+    "DEPLETION_AND_TOP_LEVEL_ADD_ACTIVITY",
+    "SPREAD_AND_BOOK_IMBALANCE",
+    "TRADE_AGGRESSOR_SIDE",
+    "PRICE_PATH",
+    "SIGNED_FLOW",
+    "DIPOLE_ROLL20_TRAJECTORY",
+    "EVENT_KNOWN_BY_AND_MULTI_CLOCK_AVAILABILITY",
+    "MISSINGNESS_STALENESS_STATE",
+    "UNRESOLVED_PREDECESSOR_LIFECYCLE",
+    "SOURCE_CONTRACT_ROLL_PROVENANCE",
+    "LAWFUL_TIME_SESSION_CONTEXT"
+  ],
+  "required_provenance": [
+    "dataset",
+    "schema",
+    "requested_continuous_symbol",
+    "resolved_raw_symbol_or_contract",
+    "instrument_id",
+    "publisher_id",
+    "channel_id",
+    "source_dbn_object_key",
+    "source_dbn_sha256",
+    "databento_job_or_segment_identity",
+    "event_receive_timestamp_range",
+    "continuous_mapping_roll_interval",
+    "mapping_source",
+    "adapter_revision_hash"
+  ],
+  "required_census_outputs": [
+    "census_view",
+    "chain_id",
+    "chain_origin_event_id",
+    "ordered_member_event_ids",
+    "predecessor_successor_ancestry",
+    "realized_or_reset_boundary",
+    "realized_structural_depth",
+    "elapsed_time_length",
+    "per_link_inherited_information_evidence_and_uncertainty",
+    "per_link_causal_executable_status",
+    "censored_unresolved_status",
+    "source_contract_roll_provenance_hash",
+    "adapter_engine_ruleset_hashes",
+    "preservation_and_integrity_records"
+  ],
+  "crosswalk_policy": {
+    "required": true,
+    "overwrite_either_view": false,
+    "preserve_agreement_and_disagreement": true,
+    "record_splits_merges_depth_reset_and_support_differences": true
+  },
+  "validation_before_large_run": [
+    "SYNTHETIC_MBO_STATE_ADVERSARIAL_TESTS",
+    "TINY_NATIVE_DBN_PARSE_AND_METADATA_PREFLIGHT",
+    "OVERLAP_LEGACY_CONTROL_EQUIVALENCE_TEST",
+    "FREEZE_EQUIVALENCE_MISMATCH_POLICY",
+    "SMALL_STRUCTURAL_CENSUS_PILOT_ONLY_IF_SEPARATELY_AUTHORIZED"
+  ],
+  "large_run_policy": {
+    "save_full_five_year_census_for_later": true,
+    "year_week_sharding_allowed_for_execution": true,
+    "sharding_may_change_population_or_semantics": false,
+    "exact_reconciliation_required": true,
+    "preserve_every_case": true,
+    "preservation_policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL"
+  },
+  "relationship_to_per_d_protocol": "The per-D/per-year protocol governs later predictive testing after Step-1 freezes the structural population; it does not require D membership before the census that discovers it.",
+  "protected_mutations": {
+    "frozen_detector": false,
+    "frozen_canonical_55w_rows": false,
+    "frozen_phase1_phase2_findings": false,
+    "runway_clock": false,
+    "permanent_frankie": false,
+    "frankie_1": false,
+    "spawn_py": false,
+    "frozen_v3_artifacts": false
+  }
+}

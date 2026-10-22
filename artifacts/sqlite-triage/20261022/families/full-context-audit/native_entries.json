@@ -1,0 +1,314 @@
+{
+  "entries": {
+    "clock_model_evaluation": {
+      "carrier_source": "projection plan crosswalk (clocks.decision_ts_recv_ns with decision_basis (REPLAY_EARLIEST_LAWFUL_AVAILABILITY by default); receipt clocks.decision_time_ns)",
+      "ledgers": [
+        "exact_member_rows.jsonl",
+        "exact_lifecycle_rows.jsonl"
+      ],
+      "member": [
+        "clocks.decision_ts_recv_ns",
+        "decision_basis",
+        "f_last_to_decision_delay_ns"
+      ],
+      "projected_file": "work/derived/.projection-v2/published-238b8654652849868f84d2cf30517abe/clock_model_evaluation.json.gz",
+      "root_count": 583688,
+      "root_reason": null,
+      "root_status": "derived",
+      "sections": []
+    },
+    "clock_prospective_discovery_confirmation": {
+      "carrier_source": "projection plan crosswalk (lifecycle `episode` rows: recognized_recv_ns (first lawful call) and precursor_recv_ns; `candidate` rows: available_second. NOT on the member row the receipt names for this group)",
+      "ledgers": [
+        "exact_member_rows.jsonl",
+        "exact_lifecycle_rows.jsonl"
+      ],
+      "member": [],
+      "projected_file": "work/derived/.projection-v2/published-238b8654652849868f84d2cf30517abe/clock_prospective_discovery_confirmation.json.gz",
+      "root_count": 2589,
+      "root_reason": null,
+      "root_status": "derived",
+      "sections": [
+        "episode",
+        "candidate"
+      ]
+    },
+    "complete_state_reset_bootstrap_receipts": {
+      "carrier_source": "projection plan crosswalk (integrity_delta (per group), capture_observations (cumulative), snapshot_bootstrap_only)",
+      "ledgers": [
+        "exact_member_rows.jsonl",
+        "exact_lifecycle_rows.jsonl"
+      ],
+      "member": [
+        "integrity_delta",
+        "capture_observations",
+        "snapshot_bootstrap_only"
+      ],
+      "projected_file": "work/derived/.projection-v2/published-238b8654652849868f84d2cf30517abe/complete_state_reset_bootstrap_receipts.json.gz",
+      "root_count": 583688,
+      "root_reason": null,
+      "root_status": "derived",
+      "sections": []
+    },
+    "contract_session_roll_state": {
+      "carrier_source": "projection plan crosswalk (session_phase, continuity_segment (ExchangeSessionRule via member_clock_row); raw_symbol, instrument_id)",
+      "ledgers": [
+        "exact_member_rows.jsonl",
+        "exact_lifecycle_rows.jsonl"
+      ],
+      "member": [
+        "session_phase",
+        "continuity_segment",
+        "raw_symbol",
+        "instrument_id"
+      ],
+      "projected_file": "work/derived/.projection-v2/published-238b8654652849868f84d2cf30517abe/contract_session_roll_state.json.gz",
+      "root_count": 583688,
+      "root_reason": null,
+      "root_status": "derived",
+      "sections": []
+    },
+    "depletion_and_replenishment": {
+      "carrier_source": "projection plan crosswalk (lifecycle `replenishment` rows (4.7 removals, refills, matured horizons); activity.<window>.top_level_cancel_qty_derived)",
+      "ledgers": [
+        "exact_member_rows.jsonl",
+        "exact_lifecycle_rows.jsonl"
+      ],
+      "member": [
+        "activity_since.*.top_level_cancel_qty_derived"
+      ],
+      "projected_file": "work/derived/.projection-v2/published-238b8654652849868f84d2cf30517abe/depletion_and_replenishment.json.gz",
+      "root_count": 1537042,
+      "root_reason": null,
+      "root_status": "derived",
+      "sections": [
+        "replenishment"
+      ]
+    },
+    "derived_ancestry_gaps": {
+      "carrier_source": "projection plan crosswalk (lifecycle `lineage` rows (4.13, ORDER_ID_LINEAGE_V1) and `recurrence` rows (4.14 gaps))",
+      "ledgers": [
+        "exact_member_rows.jsonl",
+        "exact_lifecycle_rows.jsonl"
+      ],
+      "member": [],
+      "projected_file": "work/derived/.projection-v2/published-238b8654652849868f84d2cf30517abe/derived_ancestry_gaps.json.gz",
+      "root_count": 892299,
+      "root_reason": null,
+      "root_status": "derived",
+      "sections": [
+        "lineage",
+        "recurrence"
+      ]
+    },
+    "derived_price_flow_book_paths": {
+      "carrier_source": "projection plan crosswalk (book_regime.* per group; book_full.best_bid / mid; lifecycle `flow_substrate` and `ladder` rows)",
+      "ledgers": [
+        "exact_member_rows.jsonl",
+        "exact_lifecycle_rows.jsonl"
+      ],
+      "member": [
+        "book_regime.best_bid",
+        "book_regime.total_depth",
+        "book_regime.order_count",
+        "book_full.mid"
+      ],
+      "projected_file": "work/derived/.projection-v2/published-238b8654652849868f84d2cf30517abe/derived_price_flow_book_paths.json.gz",
+      "root_count": 1837464,
+      "root_reason": null,
+      "root_status": "derived",
+      "sections": [
+        "flow_substrate",
+        "ladder"
+      ]
+    },
+    "derived_unresolved_age_chain_trajectory": {
+      "carrier_source": "projection plan crosswalk (lifecycle `lineage` rows (still-open lineages) and `episode` rows (4.10 exhaustion state))",
+      "ledgers": [
+        "exact_member_rows.jsonl",
+        "exact_lifecycle_rows.jsonl"
+      ],
+      "member": [],
+      "projected_file": "work/derived/.projection-v2/published-238b8654652849868f84d2cf30517abe/derived_unresolved_age_chain_trajectory.json.gz",
+      "root_count": 310337,
+      "root_reason": null,
+      "root_status": "derived",
+      "sections": [
+        "lineage",
+        "episode"
+      ]
+    },
+    "derived_v4_mechanics_fifo_features": {
+      "carrier_source": "projection plan crosswalk (activity_full.<window>.* ; book_full.bid_levels_full[].fifo_queue[]; capture_observations; lifecycle `queue` rows (4.6))",
+      "ledgers": [
+        "exact_member_rows.jsonl",
+        "exact_lifecycle_rows.jsonl"
+      ],
+      "member": [
+        "activity_since.*.top_level_qty_by_action",
+        "activity_since.*.action_side_count",
+        "book_full.bid_levels_full[].fifo_queue[]",
+        "capture_observations"
+      ],
+      "projected_file": "work/derived/.projection-v2/published-238b8654652849868f84d2cf30517abe/derived_v4_mechanics_fifo_features.json.gz",
+      "root_count": 865609,
+      "root_reason": null,
+      "root_status": "derived",
+      "sections": [
+        "queue"
+      ]
+    },
+    "order_lifecycle_clears": {
+      "carrier_source": "projection plan crosswalk (capture_observations.book_clear / book_clear_orders_removed / book_clear_qty_removed; integrity_delta)",
+      "ledgers": [
+        "exact_member_rows.jsonl",
+        "exact_lifecycle_rows.jsonl"
+      ],
+      "member": [
+        "capture_observations",
+        "integrity_delta",
+        "raw_actions[].book_effect"
+      ],
+      "projected_file": "work/derived/.projection-v2/published-238b8654652849868f84d2cf30517abe/order_lifecycle_clears.json.gz",
+      "root_count": 583688,
+      "root_reason": null,
+      "root_status": "derived",
+      "sections": []
+    },
+    "order_lifecycle_fills": {
+      "carrier_source": "projection plan crosswalk (structure.fill_disposition (filled / cancelled / modified / unresolved fill order ids); raw_actions[] where action == F is carried on the member row)",
+      "ledgers": [
+        "exact_member_rows.jsonl",
+        "exact_lifecycle_rows.jsonl"
+      ],
+      "member": [
+        "structure.fill_disposition",
+        "structure.fill_disposition.class",
+        "structure.fill_disposition.filled_order_ids",
+        "raw_actions[]"
+      ],
+      "projected_file": "work/derived/.projection-v2/published-238b8654652849868f84d2cf30517abe/order_lifecycle_fills.json.gz",
+      "root_count": 583688,
+      "root_reason": null,
+      "root_status": "derived",
+      "sections": []
+    },
+    "prebirth_ancestry_successor_opportunity": {
+      "carrier_source": "projection plan crosswalk (lifecycle `lineage` rows: a group's initiating order id parents the ids it touched first)",
+      "ledgers": [
+        "exact_member_rows.jsonl",
+        "exact_lifecycle_rows.jsonl"
+      ],
+      "member": [],
+      "projected_file": "work/derived/.projection-v2/published-238b8654652849868f84d2cf30517abe/prebirth_ancestry_successor_opportunity.json.gz",
+      "root_count": 308611,
+      "root_reason": null,
+      "root_status": "derived",
+      "sections": [
+        "lineage"
+      ]
+    },
+    "prebirth_negative_opportunity_cases": {
+      "carrier_source": "projection plan crosswalk (lifecycle `episode` rows with MISSED / CENSORED outcomes (4.11) and `detector_coverage` rows)",
+      "ledgers": [
+        "exact_member_rows.jsonl",
+        "exact_lifecycle_rows.jsonl"
+      ],
+      "member": [],
+      "projected_file": "work/derived/.projection-v2/published-238b8654652849868f84d2cf30517abe/prebirth_negative_opportunity_cases.json.gz",
+      "root_count": 1728,
+      "root_reason": null,
+      "root_status": "derived",
+      "sections": [
+        "detector_coverage",
+        "episode"
+      ]
+    },
+    "prebirth_predecessor_at_risk_state": {
+      "carrier_source": "projection plan crosswalk (lifecycle `episode` rows (4.10 exhaustion state, 4.12 dipole runway) opened at a candidate's available_second)",
+      "ledgers": [
+        "exact_member_rows.jsonl",
+        "exact_lifecycle_rows.jsonl"
+      ],
+      "member": [],
+      "projected_file": "work/derived/.projection-v2/published-238b8654652849868f84d2cf30517abe/prebirth_predecessor_at_risk_state.json.gz",
+      "root_count": 2589,
+      "root_reason": null,
+      "root_status": "derived",
+      "sections": [
+        "episode",
+        "candidate"
+      ]
+    },
+    "prebirth_stopped_chain_false_context_controls": {
+      "carrier_source": "projection plan crosswalk (lifecycle `episode` rows carrying 4.11 failed_states; `detector_coverage` rows (4.0b rejections))",
+      "ledgers": [
+        "exact_member_rows.jsonl",
+        "exact_lifecycle_rows.jsonl"
+      ],
+      "member": [],
+      "projected_file": "work/derived/.projection-v2/published-238b8654652849868f84d2cf30517abe/prebirth_stopped_chain_false_context_controls.json.gz",
+      "root_count": 1728,
+      "root_reason": null,
+      "root_status": "derived",
+      "sections": [
+        "detector_coverage",
+        "episode"
+      ]
+    },
+    "prebirth_unresolved_chain_extension_state": {
+      "carrier_source": "projection plan crosswalk (lifecycle `lineage` rows (open, extended, censored lineages))",
+      "ledgers": [
+        "exact_member_rows.jsonl",
+        "exact_lifecycle_rows.jsonl"
+      ],
+      "member": [],
+      "projected_file": "work/derived/.projection-v2/published-238b8654652849868f84d2cf30517abe/prebirth_unresolved_chain_extension_state.json.gz",
+      "root_count": 308611,
+      "root_reason": null,
+      "root_status": "derived",
+      "sections": [
+        "lineage"
+      ]
+    },
+    "price_and_book_path": {
+      "carrier_source": "projection plan crosswalk (book_full.best_bid / best_ask / mid; book_regime.* (4.2 per group); structure.price_raw_min / price_raw_max / price_raw_span; lifecycle `ladder` rows (4.9))",
+      "ledgers": [
+        "exact_member_rows.jsonl",
+        "exact_lifecycle_rows.jsonl"
+      ],
+      "member": [
+        "book_full.best_bid",
+        "book_full.best_ask",
+        "book_full.mid",
+        "book_regime.best_bid",
+        "book_regime.total_depth",
+        "structure.price_raw_span"
+      ],
+      "projected_file": "work/derived/.projection-v2/published-238b8654652849868f84d2cf30517abe/price_and_book_path.json.gz",
+      "root_count": 1751064,
+      "root_reason": null,
+      "root_status": "derived",
+      "sections": [
+        "ladder"
+      ]
+    },
+    "resilience_and_recovery": {
+      "carrier_source": "projection plan crosswalk (lifecycle `replenishment` (time-to-restoration) and `absorption` (4.8 runways) rows)",
+      "ledgers": [
+        "exact_member_rows.jsonl",
+        "exact_lifecycle_rows.jsonl"
+      ],
+      "member": [],
+      "projected_file": "work/derived/.projection-v2/published-238b8654652849868f84d2cf30517abe/resilience_and_recovery.json.gz",
+      "root_count": 1537042,
+      "root_reason": null,
+      "root_status": "derived",
+      "sections": [
+        "replenishment",
+        "absorption"
+      ]
+    }
+  },
+  "rule": "the search reads the exact native ledgers once (exact emission cursor on the F_LAST axis); the projected layer files are the same rows, linked for availability; nothing averaged"
+}

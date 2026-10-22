@@ -1,0 +1,60 @@
+{
+  "status": "handoff_checkpoint_incomplete_full_context_project",
+  "coverage_gate": "NOT_PASSED",
+  "v3": "frozen partial-coverage benchmark; all189 neural configurations complete; full core suite incomplete",
+  "v4_matrix_built": false,
+  "v4_fits_started": false,
+  "families_retained": 749,
+  "selected_samples": 3745,
+  "selected_contexts": 10486,
+  "unique_selected_groups": 6265,
+  "canonical_layers": 99,
+  "canonical_source_files_recovered": 72,
+  "canonical_source_bytes": 2777529,
+  "original_historical_concepts": 13,
+  "original_external_tables": 20,
+  "original_external_rows": 329658,
+  "full_context_inventory_field_paths": 78000,
+  "native_second_component": {
+    "numeric_source_cells": 29497352,
+    "numeric_field_identities": 47792,
+    "categorical_fields": 19119,
+    "categorical_levels": 20572,
+    "complete_depth_alias_reconciliations": 6265,
+    "payload_sha256": "d058d04fbdb90b93f15c06f2b8649733a9a7bb450b27d0196251a81cde85aafd"
+  },
+  "external_history": {
+    "manifested_file_versions": 17,
+    "source_provenance_records": 7316244,
+    "unique_row_variants": 5613624,
+    "asof_alignment_complete": false,
+    "model_consumption": false
+  },
+  "supplemental_lifecycle_new_rows": {
+    "lineage": 308611,
+    "episode": 1638,
+    "detector_coverage": 2
+  },
+  "native_dipole_checks": {
+    "retained_rows": 771787,
+    "components": 19,
+    "pairs": 171,
+    "summary_rows": 3420,
+    "source_classroom_claims_reproduced": 69,
+    "open_overlapping_research_flags": 225,
+    "external_classroom_claims_retained_pending_check": 441
+  },
+  "local_output_hash_verification": {
+    "original_progress_export_files": 99,
+    "original_progress_reconstructed_sources": 96,
+    "latest_full_context_output_files": 108
+  },
+  "tests": {
+    "local_python": 24,
+    "julia_dipole_math": 9,
+    "existing_v3_model_preparation": 26
+  },
+  "next": "Read complete handoff; finish semantic99/knowledge coverage, full external/lifecycle as-of alignment and verified v4 matrix, then rerun ALL models.",
+  "handoff": "family-full-context-analysis-handoff.txt",
+  "large_archive_transport_receipt": "full-context-handoff-transport-receipt.json"
+}

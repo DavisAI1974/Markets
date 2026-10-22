@@ -1,0 +1,51 @@
+{
+  "name": "NG exhaustion chain Phase-1 54-week execution adapter",
+  "date": "2026-08-17",
+  "status": "FROZEN_BEFORE_54W_RESULTS",
+  "base_freeze": "research/NG_EXHAUSTION_CHAIN_PHASE1_54W_BASE_FREEZE_20260817.json",
+  "authoritative_existing_phase1": {
+    "canonical_builder": "research/ng_exhaustion_chain_canonical_table_20260817.py",
+    "structural_engine": "research/ng_exhaustion_chain_phase1_discovery_20260817.py",
+    "causal_engine": "research/ng_exhaustion_chain_phase1_causal_20260817.py",
+    "study_contract": "research/NG_EXHAUSTION_CHAIN_STUDY_CONTRACT_20260817.json",
+    "discovery_protocol": "research/NG_EXHAUSTION_CHAIN_PHASE1_DISCOVERY_PROTOCOL_20260817.json",
+    "mechanism_addendum": "research/NG_EXHAUSTION_CHAIN_PHASE1_MECHANISM_ADDENDUM_20260817.json",
+    "causal_protocol": "research/NG_EXHAUSTION_CHAIN_PHASE1_CAUSAL_PROTOCOL_20260817.json"
+  },
+  "rule": "Do not replace or reinterpret the prior Phase-1 machinery. Extend the existing calculators from the three-week pilot to the frozen 54-week base by removing pilot-only week/event-count assertions and by adding temporally honest whole-week validation appropriate to the longer history. The existing behavioral vectors, nonlinear models, lineage semantics, causal-availability semantics, detector, endpoint and chain interpretation remain authoritative.",
+  "existing_nonlinear_work_must_be_reused": true,
+  "existing_model_families": ["ridge", "distance-weighted KNN", "extra trees"],
+  "existing_behavior_only_full_path_dimensions": 22,
+  "existing_sparse_sensitivity_dimensions": 8,
+  "canonicalization": {
+    "week_streaming_is_execution_only": true,
+    "detector_semantics_may_change": false,
+    "endpoint_semantics_may_change": false,
+    "week_boundary_semantics_may_change": false,
+    "pilot_equivalence_after_merge_required": true,
+    "frozen_reveal_holdout_events_expected": 3429,
+    "event_table_hash_required": true,
+    "schema_hash_required": true
+  },
+  "full_history_validation_adapter": {
+    "outer_unit": "whole trading week",
+    "random_event_split_allowed": false,
+    "multiple_out_of_time_eras_required": true,
+    "per_week_stability_required": true,
+    "tuning_inside_training_eras_only": true,
+    "later_untouched_confirmation_segment_required_where_practical": true,
+    "note": "These validation requirements come from the committed full-history handoff; they adapt the prior three-week leave-one-week-out pilot to 54 weeks without changing the underlying Phase-1 calculators."
+  },
+  "repair_week_insert": {
+    "week": "20260329",
+    "must_use_same_canonical_detector": true,
+    "must_not_rebuild_54w_base": true,
+    "score_separately_after_repair": true,
+    "phase2_unlock_after_reconciliation_only": true
+  },
+  "hard_walls": {
+    "phase2_allowed": false,
+    "permanent_frankie_mutable": false,
+    "runway_clock_mutable": false
+  }
+}

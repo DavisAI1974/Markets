@@ -1,0 +1,46 @@
+{
+  "files": [
+    {
+      "source_path": "/opt/frankie-box/work/source-indexed-consumers-20261021/research/kalshi/frankie_boss/c15_dstate.py",
+      "saved_path": "/opt/frankie-box/work/family-research-20261022/full-context-audit/scripts/source_reference/c15_dstate.py",
+      "bytes": 15221,
+      "sha256": "0347563ba14884a2980a86c8aca7958068d5c9f5c54ff22d3954966c6d89e5fc",
+      "role": "source definition reference; not executed as production code"
+    },
+    {
+      "source_path": "/opt/frankie-box/work/source-indexed-consumers-20261021/research/kalshi/frankie_boss/dipole_classroom.py",
+      "saved_path": "/opt/frankie-box/work/family-research-20261022/full-context-audit/scripts/source_reference/dipole_classroom.py",
+      "bytes": 48253,
+      "sha256": "41b75ff0552c59ef39c3dd948bcdd5666fbfb5ea1838e8f9b3f095b7c1aedfdb",
+      "role": "source definition reference; not executed as production code"
+    },
+    {
+      "source_path": "/opt/frankie-box/work/source-indexed-consumers-20261021/research/kalshi/frankie_boss/dipole_classroom_external.py",
+      "saved_path": "/opt/frankie-box/work/family-research-20261022/full-context-audit/scripts/source_reference/dipole_classroom_external.py",
+      "bytes": 84034,
+      "sha256": "17be04c5e3eb93ec700798d88af87b0d1c165f9fee5b868ce77e82511fa30e5d",
+      "role": "source definition reference; not executed as production code"
+    },
+    {
+      "source_path": "/opt/frankie-box/work/source-indexed-consumers-20261021/research/kalshi/frankie_boss/teacher_book_read.py",
+      "saved_path": "/opt/frankie-box/work/family-research-20261022/full-context-audit/scripts/source_reference/teacher_book_read.py",
+      "bytes": 31879,
+      "sha256": "ca13b680d7d8162cfb2694d0ae174fa548478d6eb9af8f1f5145bbeb5a6a0c50",
+      "role": "source definition reference; not executed as production code"
+    },
+    {
+      "source_path": "/opt/frankie-box/work/source-indexed-consumers-20261021/research/kalshi/frankie_boss/dipole_target.py",
+      "saved_path": "/opt/frankie-box/work/family-research-20261022/full-context-audit/scripts/source_reference/dipole_target.py",
+      "bytes": 15465,
+      "sha256": "e3f89eaca9553271ba7ec1e505d21a1b07c681f9fb9ca0673fa11cc515b4ab82",
+      "role": "source definition reference; not executed as production code"
+    },
+    {
+      "source_path": "/opt/frankie-box/work/source-indexed-consumers-20261021/deploy/aws/box/frankie_box_brain.py",
+      "saved_path": "/opt/frankie-box/work/family-research-20261022/full-context-audit/scripts/source_reference/frankie_box_brain.py",
+      "bytes": 106556,
+      "sha256": "2ac1d1794804149154faa6ade5c49cffe9276b39fd683de9a82c57a69d91bf8b",
+      "role": "source definition reference; not executed as production code"
+    }
+  ]
+}

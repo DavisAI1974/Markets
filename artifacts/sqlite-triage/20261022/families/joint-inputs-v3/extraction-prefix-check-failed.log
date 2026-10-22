@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/scripts/augment_full_depth_inputs.py", line 118, in <module>
+    if __name__=='__main__': main()
+                             ^^^^^^
+  File "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/scripts/augment_full_depth_inputs.py", line 92, in main
+    values=measurements(j); names.update(values); rows+=len(values)
+           ^^^^^^^^^^^^^^^
+  File "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/scripts/augment_full_depth_inputs.py", line 30, in measurements
+    assert full[:len(top)] == top, 'full/top book prefix disagreement'
+           ^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: full/top book prefix disagreement

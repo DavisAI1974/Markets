@@ -1,0 +1,11 @@
+Completed classroom_float32 all_retained
+Completed classroom_float32 elapsed_quarter_1
+Completed classroom_float32 elapsed_quarter_2
+Completed classroom_float32 elapsed_quarter_3
+Completed classroom_float32 elapsed_quarter_4
+Completed raw_float64 all_retained
+Completed raw_float64 elapsed_quarter_1
+Completed raw_float64 elapsed_quarter_2
+Completed raw_float64 elapsed_quarter_3
+Completed raw_float64 elapsed_quarter_4
+{"elapsed_periods":5,"source_definition":"dipole_classroom.py _direction, _direction_relation and _co_movement: individual first/last PRESENT endpoint relation; paired-PRESENT compression for steps. Pearson minimum8, zero variance unavailable.","source_rows":771787,"methods":["source_compressed_present","consecutive_completed_groups_same_instrument"],"components":19,"endpoint_step_disagreement_rows":966,"summary_rows":3420,"precisions":["classroom_float32","raw_float64"],"limits":["Endpoint relation and step dominance are distinct descriptive questions; disagreement is an open scientific item, not a logical impossibility.","One retained day. No prospective market prediction, p-value, independent-day validation or causal claim.","Continuity segment is not available in the complete compact DB sequence; adjacency sensitivity does not prove reset-free continuity."],"pairs":171,"status":"complete","sensitivity_definition":"Step counts require adjacent completed group ordinals, same instrument and nondecreasing known-by clock. This is additional sensitivity, never silently substituted for the original definition."}

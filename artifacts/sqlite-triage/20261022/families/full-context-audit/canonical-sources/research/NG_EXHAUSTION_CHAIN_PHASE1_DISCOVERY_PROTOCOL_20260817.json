@@ -1,0 +1,74 @@
+{
+  "name": "NG exhaustion chain phase-1 discovery protocol",
+  "date": "2026-08-17",
+  "status": "FROZEN_BEFORE_FORMAL_PHASE1_RUN",
+  "canonical_input": {
+    "artifact_id": 9279077256,
+    "workflow_run": 32002711480,
+    "event_count": 12991,
+    "weeks": ["20250713", "20250921", "20250928"],
+    "contract": "research/NG_EXHAUSTION_CHAIN_STUDY_CONTRACT_20260817.json"
+  },
+  "phase_separation": {
+    "phase1_goal": "Discover how many sequential aftermath links carry out-of-sample predictive dependence and whether deeper dependence belongs to the same origin or behaves like a fresh first-order restart.",
+    "phase1_characteristics_forbidden": [
+      "family",
+      "frozen A post-state",
+      "seed aftermath label",
+      "pre-exhaustion geometry",
+      "late flow",
+      "book imbalance/change",
+      "time of day",
+      "session position",
+      "hours since reopen",
+      "inter-event time",
+      "source date"
+    ],
+    "phase2_only": "After phase-1 chain depth/boundaries are frozen, characterize the discovered chain instances using the forbidden fields above and any other legal contextual characteristics."
+  },
+  "behavior_only_vectors": {
+    "primary_full_path": {
+      "dimensions": 22,
+      "fields": [
+        "next exhaustion same-vs-flip encoded +/-1",
+        "signed post-end displacement at 5,10,20,30,60,120,300s",
+        "MFE at 5,10,20,30,60,120,300s",
+        "MAE at 5,10,20,30,60,120,300s"
+      ],
+      "continuous_transform": "asinh tick values; next-same remains +/-1",
+      "standardization": "training weeks only"
+    },
+    "sparse_sensitivity": {
+      "dimensions": 8,
+      "fields": [
+        "next exhaustion same-vs-flip encoded +/-1",
+        "signed post-end displacement at 5,10,20,30,60,120,300s"
+      ],
+      "role": "sensitivity check for omitted-state effects; cannot override the primary full-path result"
+    }
+  },
+  "validation": {
+    "outer": "leave-one-trading-week-out; every scored event is predicted only by models fit on the other two weeks",
+    "inner": "for each outer split and lag depth, choose model hyperparameters by alternating the two training weeks as train/validation; no outer-test tuning",
+    "lag_depths": [0,1,2,3,4,5,6],
+    "lag_semantics": "D=1 asks whether the immediately prior aftermath predicts the current aftermath over an unconditional model. D=2 asks whether adding the aftermath two events back improves beyond D=1. D=3 asks whether the origin three events back still adds beyond the two more recent aftermaths, and so on.",
+    "models": {
+      "ridge": "linear multi-output ridge; alpha chosen from a fixed log grid by inner week validation",
+      "knn": "nonlinear distance-weighted KNN multi-output regressor; k chosen from a fixed support grid by inner week validation",
+      "extra_trees": "nonlinear tree ensemble; min_samples_leaf chosen from a fixed support grid by inner week validation"
+    }
+  },
+  "chain_evidence_rules": {
+    "aggregate_confirmed_depth": "A lag depth is confirmed only if its incremental outer-test loss improvement over D-1 has the same beneficial sign on all three weeks and across all three model families on the primary full-path vector.",
+    "aggregate_candidate_depth": "If two of three model families improve on all three weeks but the third does not, preserve the depth as a candidate/sensitivity finding, not a frozen chain link.",
+    "origin_lineage_test": "For each origin and depth D, compute the out-of-sample per-instance loss improvement from adding exactly that oldest origin aftermath. Test whether D=1 positive lineage makes D=2 positive lineage more likely than expected from their marginal rates. Repeat D=2->D=3. A true inherited chain should show positive cross-depth association; population-level memory without positive association is treated as restart/re-origin behavior rather than one continuous chain.",
+    "no_chain_cell_names": true,
+    "no_long_short_cutoff_before_results": true
+  },
+  "stop_rule": "Continue lag depth until confirmed incremental improvement disappears. After two successive unconfirmed depths, deeper depths may be reported only as sensitivity and cannot define phase-1 chain boundaries without a new preregistered test.",
+  "promotion": {
+    "forward_live_required": true,
+    "permanent_frankie_mutation": false,
+    "runway_clock_mutation": false
+  }
+}

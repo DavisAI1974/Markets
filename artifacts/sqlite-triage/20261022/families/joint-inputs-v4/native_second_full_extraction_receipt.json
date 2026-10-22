@@ -1,0 +1,24 @@
+{
+  "schema": "FULL_NATIVE_SECOND_CONTEXT_EXTRACTION_V1",
+  "status": "complete",
+  "coverage_gate": "NOT_PASSED",
+  "unique_records": 6265,
+  "numeric_cells": 29497352,
+  "numeric_feature_identities": 47792,
+  "categorical_fields": 19119,
+  "categorical_levels": 20572,
+  "complete_native_second_depth_reconciliation": "all selected records passed",
+  "saved_bytes": 229953002,
+  "saved_sha256": "d058d04fbdb90b93f15c06f2b8649733a9a7bb450b27d0196251a81cde85aafd",
+  "remaining": [
+    "Complete external-history variant/availability resolution and full dimensional features.",
+    "Complete supplemental lifecycle and knowledge/plane coverage accounting.",
+    "Build and verify the expanded frozen matrix and structured consumer receipts before all-model rerun."
+  ],
+  "limitations": [
+    "Queue positions and ranks are state coordinates; changes do not imply the same order or price level identity.",
+    "Categorical vocabularies retain all observed labels; fit preprocessing must remain training-only.",
+    "Source IDs, absolute clocks, future/identity buckets and narratives remain in structured raw evidence, not numerical predictors."
+  ],
+  "metadata_correction": "Removed empty vocabulary entries accidentally created for numeric registry rows; numerical/category values and extracted payload unchanged."
+}

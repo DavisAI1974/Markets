@@ -1,0 +1,20 @@
+{
+  "at": 1790712060.044277,
+  "attachments": [
+    {
+      "bytes": 38297987,
+      "ingest_copies": [
+        "/opt/frankie-box/work/ingest-20211013-ingest-1790681387/day-external.json"
+      ],
+      "name": "day-external.json",
+      "run_copy": "/opt/frankie-box/work/day-external/days-20260929-3-ext-20211013-a1/20211013/day-external.json",
+      "s3_key": "frankie/day_external/20211013/day-external.json",
+      "s3_receipt_key": "frankie/day_external/20211013/day-external-receipt.json",
+      "sha256": "f8d440319382a180a7c758c722eb09591a96ecb42c4f3a44cfdd6cd1c5bd7c0b"
+    }
+  ],
+  "day": "20211013",
+  "entry_kind": "attachment",
+  "note": "Frankie's 13 historical data points of the day, ATTACHED by day key; not his reasoning, not read into his corpus (the brain loader reads only cycle and lessons entries); every reader of the ingest finds it by this key, the ingest directory or the S3 key",
+  "schema": "FRANKIE_BOX_BRAIN_ATTACHMENT_V1"
+}

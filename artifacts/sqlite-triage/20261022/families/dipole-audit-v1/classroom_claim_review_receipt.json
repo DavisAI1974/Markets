@@ -1,0 +1,22 @@
+{
+  "status": "complete_native_pair_claim_review",
+  "native_claims": 69,
+  "checked_native_relationship_refs": 69,
+  "reproduced": 69,
+  "not_fully_reproduced": 0,
+  "external_claims_retained": 441,
+  "external_claims_rechecked": 0,
+  "open_research_flags": 225,
+  "flag_counts": {
+    "chronological_step_direction_reversal": 60,
+    "endpoint_vs_step_direction": 69,
+    "float32_vs_raw_step_counts": 47,
+    "individual_vs_matched_endpoint_support": 16,
+    "missing_group_bridge_sensitivity": 33
+  },
+  "coverage_gate": "NOT_PASSED",
+  "limitations": [
+    "Claims and flags overlap and are not independent discoveries.",
+    "This review does not complete full-99-plane fitted-input coverage."
+  ]
+}

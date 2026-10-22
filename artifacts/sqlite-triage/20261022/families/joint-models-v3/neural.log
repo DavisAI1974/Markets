@@ -1,0 +1,382 @@
+{"model":"neural_tree","fold":2,"h":120,"outcome":"first_observed_family_within_h","mae":0.48678026934464774,"test":300,"train":345}
+{"model":"residual_mlp","fold":2,"h":120,"outcome":"first_observed_family_within_h","mae":0.6420724983852172,"test":300,"train":345}
+{"model":"tabm_ensemble","fold":2,"h":120,"outcome":"first_observed_family_within_h","mae":0.5083997949585318,"test":300,"train":345}
+{"model":"neural_tree","fold":3,"h":120,"outcome":"first_observed_family_within_h","mae":0.42951089868889775,"test":1496,"train":641}
+{"model":"residual_mlp","fold":3,"h":120,"outcome":"first_observed_family_within_h","mae":0.7966804028619572,"test":1496,"train":641}
+{"model":"tabm_ensemble","fold":3,"h":120,"outcome":"first_observed_family_within_h","mae":0.18698721210162383,"test":1496,"train":641}
+{"model":"neural_tree","fold":4,"h":120,"outcome":"first_observed_family_within_h","mae":0.35589628107624305,"test":841,"train":2111}
+{"model":"residual_mlp","fold":4,"h":120,"outcome":"first_observed_family_within_h","mae":0.3105881523693093,"test":841,"train":2111}
+{"model":"tabm_ensemble","fold":4,"h":120,"outcome":"first_observed_family_within_h","mae":0.2681708938235411,"test":841,"train":2111}
+{"model":"neural_tree","fold":2,"h":300,"outcome":"first_observed_family_within_h","mae":0.4785210957129796,"test":300,"train":344}
+{"model":"residual_mlp","fold":2,"h":300,"outcome":"first_observed_family_within_h","mae":0.5786710831973081,"test":300,"train":344}
+{"model":"tabm_ensemble","fold":2,"h":300,"outcome":"first_observed_family_within_h","mae":0.33646884362123014,"test":300,"train":344}
+{"model":"neural_tree","fold":3,"h":300,"outcome":"first_observed_family_within_h","mae":0.4284327946961882,"test":1496,"train":637}
+{"model":"residual_mlp","fold":3,"h":300,"outcome":"first_observed_family_within_h","mae":0.48154562292146824,"test":1496,"train":637}
+{"model":"tabm_ensemble","fold":3,"h":300,"outcome":"first_observed_family_within_h","mae":0.04024619432289461,"test":1496,"train":637}
+{"model":"neural_tree","fold":4,"h":300,"outcome":"first_observed_family_within_h","mae":0.2786147790285564,"test":837,"train":2107}
+{"model":"residual_mlp","fold":4,"h":300,"outcome":"first_observed_family_within_h","mae":0.09239298826263796,"test":837,"train":2107}
+{"model":"tabm_ensemble","fold":4,"h":300,"outcome":"first_observed_family_within_h","mae":0.061986858361110946,"test":837,"train":2107}
+{"model":"neural_tree","fold":2,"h":600,"outcome":"first_observed_family_within_h","mae":0.4663176117340724,"test":300,"train":341}
+{"model":"residual_mlp","fold":2,"h":600,"outcome":"first_observed_family_within_h","mae":0.2781954236825307,"test":300,"train":341}
+{"model":"tabm_ensemble","fold":2,"h":600,"outcome":"first_observed_family_within_h","mae":0.05693545818228404,"test":300,"train":341}
+{"model":"neural_tree","fold":3,"h":600,"outcome":"first_observed_family_within_h","mae":0.42023978246883914,"test":1496,"train":634}
+{"model":"residual_mlp","fold":3,"h":600,"outcome":"first_observed_family_within_h","mae":0.08240515730757127,"test":1496,"train":634}
+{"model":"tabm_ensemble","fold":3,"h":600,"outcome":"first_observed_family_within_h","mae":0.0008157747838382613,"test":1496,"train":634}
+{"model":"neural_tree","fold":4,"h":600,"outcome":"first_observed_family_within_h","mae":0.24892418629856317,"test":831,"train":2102}
+{"model":"residual_mlp","fold":4,"h":600,"outcome":"first_observed_family_within_h","mae":0.036203362666312536,"test":831,"train":2102}
+{"model":"tabm_ensemble","fold":4,"h":600,"outcome":"first_observed_family_within_h","mae":0.015651756306709116,"test":831,"train":2102}
+{"model":"neural_tree","fold":2,"h":1,"outcome":"mid_price_change","mae":0.0009090941148288105,"test":155,"train":164}
+{"model":"residual_mlp","fold":2,"h":1,"outcome":"mid_price_change","mae":0.00100203303723717,"test":155,"train":164}
+{"model":"tabm_ensemble","fold":2,"h":1,"outcome":"mid_price_change","mae":0.0009937511103443675,"test":155,"train":164}
+{"model":"neural_tree","fold":3,"h":1,"outcome":"mid_price_change","mae":0.0008126189711012111,"test":1078,"train":315}
+{"model":"residual_mlp","fold":3,"h":1,"outcome":"mid_price_change","mae":0.0014702393703084063,"test":1078,"train":315}
+{"model":"tabm_ensemble","fold":3,"h":1,"outcome":"mid_price_change","mae":0.0010230400495035506,"test":1078,"train":315}
+{"model":"neural_tree","fold":4,"h":1,"outcome":"mid_price_change","mae":0.0005073090800746535,"test":592,"train":1376}
+{"model":"residual_mlp","fold":4,"h":1,"outcome":"mid_price_change","mae":0.0007699107360862202,"test":592,"train":1376}
+{"model":"tabm_ensemble","fold":4,"h":1,"outcome":"mid_price_change","mae":0.0007632502830034517,"test":592,"train":1376}
+{"model":"neural_tree","fold":2,"h":5,"outcome":"mid_price_change","mae":0.001066441811441095,"test":148,"train":150}
+{"model":"residual_mlp","fold":2,"h":5,"outcome":"mid_price_change","mae":0.0011161339467991808,"test":148,"train":150}
+{"model":"tabm_ensemble","fold":2,"h":5,"outcome":"mid_price_change","mae":0.0010746118222863968,"test":148,"train":150}
+{"model":"neural_tree","fold":3,"h":5,"outcome":"mid_price_change","mae":0.0012014690151183765,"test":1060,"train":293}
+{"model":"residual_mlp","fold":3,"h":5,"outcome":"mid_price_change","mae":0.0016161098389794245,"test":1060,"train":293}
+{"model":"tabm_ensemble","fold":3,"h":5,"outcome":"mid_price_change","mae":0.0015711282501159017,"test":1060,"train":293}
+{"model":"neural_tree","fold":4,"h":5,"outcome":"mid_price_change","mae":0.0007497461701452035,"test":582,"train":1337}
+{"model":"residual_mlp","fold":4,"h":5,"outcome":"mid_price_change","mae":0.0016185969406747674,"test":582,"train":1337}
+{"model":"tabm_ensemble","fold":4,"h":5,"outcome":"mid_price_change","mae":0.0010268272260081739,"test":582,"train":1337}
+{"model":"neural_tree","fold":2,"h":20,"outcome":"mid_price_change","mae":0.0014460059749275653,"test":119,"train":131}
+{"model":"residual_mlp","fold":2,"h":20,"outcome":"mid_price_change","mae":0.0014659385437599543,"test":119,"train":131}
+{"model":"tabm_ensemble","fold":2,"h":20,"outcome":"mid_price_change","mae":0.001490261886111828,"test":119,"train":131}
+{"model":"neural_tree","fold":3,"h":20,"outcome":"mid_price_change","mae":0.0019967430993974335,"test":1061,"train":245}
+{"model":"residual_mlp","fold":3,"h":20,"outcome":"mid_price_change","mae":0.0021234292686645832,"test":1061,"train":245}
+{"model":"tabm_ensemble","fold":3,"h":20,"outcome":"mid_price_change","mae":0.0021601471522636672,"test":1061,"train":245}
+{"model":"neural_tree","fold":4,"h":20,"outcome":"mid_price_change","mae":0.0011830934837066007,"test":582,"train":1289}
+{"model":"residual_mlp","fold":4,"h":20,"outcome":"mid_price_change","mae":0.0015727060485332415,"test":582,"train":1289}
+{"model":"tabm_ensemble","fold":4,"h":20,"outcome":"mid_price_change","mae":0.001585222700611168,"test":582,"train":1289}
+{"model":"neural_tree","fold":2,"h":60,"outcome":"mid_price_change","mae":0.0017493443049831174,"test":114,"train":122}
+{"model":"residual_mlp","fold":2,"h":60,"outcome":"mid_price_change","mae":0.0017538858290900208,"test":114,"train":122}
+{"model":"tabm_ensemble","fold":2,"h":60,"outcome":"mid_price_change","mae":0.0018905199913710007,"test":114,"train":122}
+{"model":"neural_tree","fold":3,"h":60,"outcome":"mid_price_change","mae":0.00306043317753283,"test":1051,"train":235}
+{"model":"residual_mlp","fold":3,"h":60,"outcome":"mid_price_change","mae":0.003115105351849649,"test":1051,"train":235}
+{"model":"tabm_ensemble","fold":3,"h":60,"outcome":"mid_price_change","mae":0.0031741230271993422,"test":1051,"train":235}
+{"model":"neural_tree","fold":4,"h":60,"outcome":"mid_price_change","mae":0.0019521723870687061,"test":580,"train":1265}
+{"model":"residual_mlp","fold":4,"h":60,"outcome":"mid_price_change","mae":0.002580679810601289,"test":580,"train":1265}
+{"model":"tabm_ensemble","fold":4,"h":60,"outcome":"mid_price_change","mae":0.002594218600425588,"test":580,"train":1265}
+{"model":"neural_tree","fold":2,"h":120,"outcome":"mid_price_change","mae":0.0022853467580471083,"test":119,"train":110}
+{"model":"residual_mlp","fold":2,"h":120,"outcome":"mid_price_change","mae":0.002236359234803389,"test":119,"train":110}
+{"model":"tabm_ensemble","fold":2,"h":120,"outcome":"mid_price_change","mae":0.0021413967371214046,"test":119,"train":110}
+{"model":"neural_tree","fold":3,"h":120,"outcome":"mid_price_change","mae":0.003967087967165119,"test":1054,"train":228}
+{"model":"residual_mlp","fold":3,"h":120,"outcome":"mid_price_change","mae":0.005823252048489873,"test":1054,"train":228}
+{"model":"tabm_ensemble","fold":3,"h":120,"outcome":"mid_price_change","mae":0.004186169457271747,"test":1054,"train":228}
+{"model":"neural_tree","fold":4,"h":120,"outcome":"mid_price_change","mae":0.002774052857497383,"test":576,"train":1260}
+{"model":"residual_mlp","fold":4,"h":120,"outcome":"mid_price_change","mae":0.0050915437831418366,"test":576,"train":1260}
+{"model":"tabm_ensemble","fold":4,"h":120,"outcome":"mid_price_change","mae":0.0041711400770992925,"test":576,"train":1260}
+{"model":"neural_tree","fold":2,"h":300,"outcome":"mid_price_change","mae":0.00334190773530687,"test":107,"train":128}
+{"model":"residual_mlp","fold":2,"h":300,"outcome":"mid_price_change","mae":0.0033668531449579557,"test":107,"train":128}
+{"model":"tabm_ensemble","fold":2,"h":300,"outcome":"mid_price_change","mae":0.0033047045114464753,"test":107,"train":128}
+{"model":"neural_tree","fold":3,"h":300,"outcome":"mid_price_change","mae":0.006136754018592638,"test":1040,"train":227}
+{"model":"residual_mlp","fold":3,"h":300,"outcome":"mid_price_change","mae":0.006381494308110268,"test":1040,"train":227}
+{"model":"tabm_ensemble","fold":3,"h":300,"outcome":"mid_price_change","mae":0.006418939252140545,"test":1040,"train":227}
+{"model":"neural_tree","fold":4,"h":300,"outcome":"mid_price_change","mae":0.004862632788880945,"test":565,"train":1248}
+{"model":"residual_mlp","fold":4,"h":300,"outcome":"mid_price_change","mae":0.007495166415189594,"test":565,"train":1248}
+{"model":"tabm_ensemble","fold":4,"h":300,"outcome":"mid_price_change","mae":0.005994390890893621,"test":565,"train":1248}
+{"model":"neural_tree","fold":2,"h":600,"outcome":"mid_price_change","mae":0.00587070271210209,"test":118,"train":118}
+{"model":"residual_mlp","fold":2,"h":600,"outcome":"mid_price_change","mae":0.005555638552560518,"test":118,"train":118}
+{"model":"tabm_ensemble","fold":2,"h":600,"outcome":"mid_price_change","mae":0.0054766574756605615,"test":118,"train":118}
+{"model":"neural_tree","fold":3,"h":600,"outcome":"mid_price_change","mae":0.00883895539948414,"test":1063,"train":232}
+{"model":"residual_mlp","fold":3,"h":600,"outcome":"mid_price_change","mae":0.008777844124023956,"test":1063,"train":232}
+{"model":"tabm_ensemble","fold":3,"h":600,"outcome":"mid_price_change","mae":0.010065621419160994,"test":1063,"train":232}
+{"model":"neural_tree","fold":4,"h":600,"outcome":"mid_price_change","mae":0.007147983014219877,"test":578,"train":1270}
+{"model":"residual_mlp","fold":4,"h":600,"outcome":"mid_price_change","mae":0.010684914986596546,"test":578,"train":1270}
+{"model":"tabm_ensemble","fold":4,"h":600,"outcome":"mid_price_change","mae":0.00999511200766151,"test":578,"train":1270}
+{"model":"neural_tree","fold":2,"h":1800,"outcome":"mid_price_change","mae":0.01022146099186143,"test":104,"train":129}
+{"model":"residual_mlp","fold":2,"h":1800,"outcome":"mid_price_change","mae":0.0100495831771449,"test":104,"train":129}
+{"model":"tabm_ensemble","fold":2,"h":1800,"outcome":"mid_price_change","mae":0.009946262510869488,"test":104,"train":129}
+{"model":"neural_tree","fold":3,"h":1800,"outcome":"mid_price_change","mae":0.015452481420998164,"test":1060,"train":217}
+{"model":"residual_mlp","fold":3,"h":1800,"outcome":"mid_price_change","mae":0.0322124507049415,"test":1060,"train":217}
+{"model":"tabm_ensemble","fold":3,"h":1800,"outcome":"mid_price_change","mae":0.02070650544473857,"test":1060,"train":217}
+{"model":"neural_tree","fold":4,"h":1800,"outcome":"mid_price_change","mae":0.014036546530271496,"test":550,"train":1219}
+{"model":"residual_mlp","fold":4,"h":1800,"outcome":"mid_price_change","mae":0.019907543111611182,"test":550,"train":1219}
+{"model":"tabm_ensemble","fold":4,"h":1800,"outcome":"mid_price_change","mae":0.01848605302787135,"test":550,"train":1219}
+{"model":"neural_tree","fold":2,"h":3600,"outcome":"mid_price_change","mae":0.01291476259389818,"test":121,"train":126}
+{"model":"residual_mlp","fold":2,"h":3600,"outcome":"mid_price_change","mae":0.013833853606380975,"test":121,"train":126}
+{"model":"tabm_ensemble","fold":2,"h":3600,"outcome":"mid_price_change","mae":0.0139174674180883,"test":121,"train":126}
+{"model":"neural_tree","fold":3,"h":3600,"outcome":"mid_price_change","mae":0.022161634283878295,"test":1060,"train":228}
+{"model":"residual_mlp","fold":3,"h":3600,"outcome":"mid_price_change","mae":0.02694616707476243,"test":1060,"train":228}
+{"model":"tabm_ensemble","fold":3,"h":3600,"outcome":"mid_price_change","mae":0.02134748706145142,"test":1060,"train":228}
+{"model":"neural_tree","fold":4,"h":3600,"outcome":"mid_price_change","mae":0.012661360055117785,"test":515,"train":1145}
+{"model":"residual_mlp","fold":4,"h":3600,"outcome":"mid_price_change","mae":0.019616533396284573,"test":515,"train":1145}
+{"model":"tabm_ensemble","fold":4,"h":3600,"outcome":"mid_price_change","mae":0.013396877937282902,"test":515,"train":1145}
+{"model":"neural_tree","fold":2,"h":1,"outcome":"absolute_mid_price_change","mae":0.000897233816616298,"test":155,"train":164}
+{"model":"residual_mlp","fold":2,"h":1,"outcome":"absolute_mid_price_change","mae":0.0009394761216278601,"test":155,"train":164}
+{"model":"tabm_ensemble","fold":2,"h":1,"outcome":"absolute_mid_price_change","mae":0.0009198368856277819,"test":155,"train":164}
+{"model":"neural_tree","fold":3,"h":1,"outcome":"absolute_mid_price_change","mae":0.0008890088379300284,"test":1078,"train":315}
+{"model":"residual_mlp","fold":3,"h":1,"outcome":"absolute_mid_price_change","mae":0.0011216902637254706,"test":1078,"train":315}
+{"model":"tabm_ensemble","fold":3,"h":1,"outcome":"absolute_mid_price_change","mae":0.001109194952468879,"test":1078,"train":315}
+{"model":"neural_tree","fold":4,"h":1,"outcome":"absolute_mid_price_change","mae":0.0006857931114582951,"test":592,"train":1376}
+{"model":"residual_mlp","fold":4,"h":1,"outcome":"absolute_mid_price_change","mae":0.0006755275400552213,"test":592,"train":1376}
+{"model":"tabm_ensemble","fold":4,"h":1,"outcome":"absolute_mid_price_change","mae":0.0005662368047464084,"test":592,"train":1376}
+{"model":"neural_tree","fold":2,"h":5,"outcome":"absolute_mid_price_change","mae":0.0009141656958869065,"test":148,"train":150}
+{"model":"residual_mlp","fold":2,"h":5,"outcome":"absolute_mid_price_change","mae":0.0009341208010446593,"test":148,"train":150}
+{"model":"tabm_ensemble","fold":2,"h":5,"outcome":"absolute_mid_price_change","mae":0.0008936704692251328,"test":148,"train":150}
+{"model":"neural_tree","fold":3,"h":5,"outcome":"absolute_mid_price_change","mae":0.0010065229958200045,"test":1060,"train":293}
+{"model":"residual_mlp","fold":3,"h":5,"outcome":"absolute_mid_price_change","mae":0.001113191519489403,"test":1060,"train":293}
+{"model":"tabm_ensemble","fold":3,"h":5,"outcome":"absolute_mid_price_change","mae":0.0013145789536893626,"test":1060,"train":293}
+{"model":"neural_tree","fold":4,"h":5,"outcome":"absolute_mid_price_change","mae":0.0007580440426725359,"test":582,"train":1337}
+{"model":"residual_mlp","fold":4,"h":5,"outcome":"absolute_mid_price_change","mae":0.0007201909171769486,"test":582,"train":1337}
+{"model":"tabm_ensemble","fold":4,"h":5,"outcome":"absolute_mid_price_change","mae":0.0007156336503655333,"test":582,"train":1337}
+{"model":"neural_tree","fold":2,"h":20,"outcome":"absolute_mid_price_change","mae":0.0011331744142025096,"test":119,"train":131}
+{"model":"residual_mlp","fold":2,"h":20,"outcome":"absolute_mid_price_change","mae":0.0011290432323971477,"test":119,"train":131}
+{"model":"tabm_ensemble","fold":2,"h":20,"outcome":"absolute_mid_price_change","mae":0.0012105072923884854,"test":119,"train":131}
+{"model":"neural_tree","fold":3,"h":20,"outcome":"absolute_mid_price_change","mae":0.0014260637162851898,"test":1061,"train":245}
+{"model":"residual_mlp","fold":3,"h":20,"outcome":"absolute_mid_price_change","mae":0.0015629247928189206,"test":1061,"train":245}
+{"model":"tabm_ensemble","fold":3,"h":20,"outcome":"absolute_mid_price_change","mae":0.0017588232458906066,"test":1061,"train":245}
+{"model":"neural_tree","fold":4,"h":20,"outcome":"absolute_mid_price_change","mae":0.0010845649430281845,"test":582,"train":1289}
+{"model":"residual_mlp","fold":4,"h":20,"outcome":"absolute_mid_price_change","mae":0.0013174446433265588,"test":582,"train":1289}
+{"model":"tabm_ensemble","fold":4,"h":20,"outcome":"absolute_mid_price_change","mae":0.0010416760204737681,"test":582,"train":1289}
+{"model":"neural_tree","fold":2,"h":60,"outcome":"absolute_mid_price_change","mae":0.0012032038971471575,"test":114,"train":122}
+{"model":"residual_mlp","fold":2,"h":60,"outcome":"absolute_mid_price_change","mae":0.0014732052227195893,"test":114,"train":122}
+{"model":"tabm_ensemble","fold":2,"h":60,"outcome":"absolute_mid_price_change","mae":0.0013943349035709617,"test":114,"train":122}
+{"model":"neural_tree","fold":3,"h":60,"outcome":"absolute_mid_price_change","mae":0.0021229530832483153,"test":1051,"train":235}
+{"model":"residual_mlp","fold":3,"h":60,"outcome":"absolute_mid_price_change","mae":0.0022704370891180005,"test":1051,"train":235}
+{"model":"tabm_ensemble","fold":3,"h":60,"outcome":"absolute_mid_price_change","mae":0.002104614232872376,"test":1051,"train":235}
+{"model":"neural_tree","fold":4,"h":60,"outcome":"absolute_mid_price_change","mae":0.001558153234932834,"test":580,"train":1265}
+{"model":"residual_mlp","fold":4,"h":60,"outcome":"absolute_mid_price_change","mae":0.0014964239014730093,"test":580,"train":1265}
+{"model":"tabm_ensemble","fold":4,"h":60,"outcome":"absolute_mid_price_change","mae":0.0015279411861544323,"test":580,"train":1265}
+{"model":"neural_tree","fold":2,"h":120,"outcome":"absolute_mid_price_change","mae":0.001405787352496045,"test":119,"train":110}
+{"model":"residual_mlp","fold":2,"h":120,"outcome":"absolute_mid_price_change","mae":0.0014792479632281827,"test":119,"train":110}
+{"model":"tabm_ensemble","fold":2,"h":120,"outcome":"absolute_mid_price_change","mae":0.0014491198585807187,"test":119,"train":110}
+{"model":"neural_tree","fold":3,"h":120,"outcome":"absolute_mid_price_change","mae":0.00276902551405339,"test":1054,"train":228}
+{"model":"residual_mlp","fold":3,"h":120,"outcome":"absolute_mid_price_change","mae":0.0028657991431973286,"test":1054,"train":228}
+{"model":"tabm_ensemble","fold":3,"h":120,"outcome":"absolute_mid_price_change","mae":0.0027823964688273857,"test":1054,"train":228}
+{"model":"neural_tree","fold":4,"h":120,"outcome":"absolute_mid_price_change","mae":0.001691953885052067,"test":576,"train":1260}
+{"model":"residual_mlp","fold":4,"h":120,"outcome":"absolute_mid_price_change","mae":0.0028879603463056575,"test":576,"train":1260}
+{"model":"tabm_ensemble","fold":4,"h":120,"outcome":"absolute_mid_price_change","mae":0.0018385366027149452,"test":576,"train":1260}
+{"model":"neural_tree","fold":2,"h":300,"outcome":"absolute_mid_price_change","mae":0.002172630730964224,"test":107,"train":128}
+{"model":"residual_mlp","fold":2,"h":300,"outcome":"absolute_mid_price_change","mae":0.002507281064821846,"test":107,"train":128}
+{"model":"tabm_ensemble","fold":2,"h":300,"outcome":"absolute_mid_price_change","mae":0.0024762954320671914,"test":107,"train":128}
+{"model":"neural_tree","fold":3,"h":300,"outcome":"absolute_mid_price_change","mae":0.0042807947713971225,"test":1040,"train":227}
+{"model":"residual_mlp","fold":3,"h":300,"outcome":"absolute_mid_price_change","mae":0.0042528009898324705,"test":1040,"train":227}
+{"model":"tabm_ensemble","fold":3,"h":300,"outcome":"absolute_mid_price_change","mae":0.004091366423361991,"test":1040,"train":227}
+{"model":"neural_tree","fold":4,"h":300,"outcome":"absolute_mid_price_change","mae":0.002902000772102466,"test":565,"train":1248}
+{"model":"residual_mlp","fold":4,"h":300,"outcome":"absolute_mid_price_change","mae":0.004271004066118479,"test":565,"train":1248}
+{"model":"tabm_ensemble","fold":4,"h":300,"outcome":"absolute_mid_price_change","mae":0.003145034701251877,"test":565,"train":1248}
+{"model":"neural_tree","fold":2,"h":600,"outcome":"absolute_mid_price_change","mae":0.0032956738965112145,"test":118,"train":118}
+{"model":"residual_mlp","fold":2,"h":600,"outcome":"absolute_mid_price_change","mae":0.0034482048898619704,"test":118,"train":118}
+{"model":"tabm_ensemble","fold":2,"h":600,"outcome":"absolute_mid_price_change","mae":0.003799360439520707,"test":118,"train":118}
+{"model":"neural_tree","fold":3,"h":600,"outcome":"absolute_mid_price_change","mae":0.005765113894541167,"test":1063,"train":232}
+{"model":"residual_mlp","fold":3,"h":600,"outcome":"absolute_mid_price_change","mae":0.005030155198249064,"test":1063,"train":232}
+{"model":"tabm_ensemble","fold":3,"h":600,"outcome":"absolute_mid_price_change","mae":0.005148058508322181,"test":1063,"train":232}
+{"model":"neural_tree","fold":4,"h":600,"outcome":"absolute_mid_price_change","mae":0.004231868570850933,"test":578,"train":1270}
+{"model":"residual_mlp","fold":4,"h":600,"outcome":"absolute_mid_price_change","mae":0.006034151163693367,"test":578,"train":1270}
+{"model":"tabm_ensemble","fold":4,"h":600,"outcome":"absolute_mid_price_change","mae":0.005459345505066895,"test":578,"train":1270}
+{"model":"neural_tree","fold":2,"h":1800,"outcome":"absolute_mid_price_change","mae":0.00589374287526768,"test":104,"train":129}
+{"model":"residual_mlp","fold":2,"h":1800,"outcome":"absolute_mid_price_change","mae":0.006105742792688453,"test":104,"train":129}
+{"model":"tabm_ensemble","fold":2,"h":1800,"outcome":"absolute_mid_price_change","mae":0.006061899397665489,"test":104,"train":129}
+{"model":"neural_tree","fold":3,"h":1800,"outcome":"absolute_mid_price_change","mae":0.010454174664764138,"test":1060,"train":217}
+{"model":"residual_mlp","fold":3,"h":1800,"outcome":"absolute_mid_price_change","mae":0.007808134063965838,"test":1060,"train":217}
+{"model":"tabm_ensemble","fold":3,"h":1800,"outcome":"absolute_mid_price_change","mae":0.008362728254630572,"test":1060,"train":217}
+{"model":"neural_tree","fold":4,"h":1800,"outcome":"absolute_mid_price_change","mae":0.006993108470318007,"test":550,"train":1219}
+{"model":"residual_mlp","fold":4,"h":1800,"outcome":"absolute_mid_price_change","mae":0.007740299971232372,"test":550,"train":1219}
+{"model":"tabm_ensemble","fold":4,"h":1800,"outcome":"absolute_mid_price_change","mae":0.0073352266211536895,"test":550,"train":1219}
+{"model":"neural_tree","fold":2,"h":3600,"outcome":"absolute_mid_price_change","mae":0.007385083526342106,"test":121,"train":126}
+{"model":"residual_mlp","fold":2,"h":3600,"outcome":"absolute_mid_price_change","mae":0.007754957979375643,"test":121,"train":126}
+{"model":"tabm_ensemble","fold":2,"h":3600,"outcome":"absolute_mid_price_change","mae":0.007374949063520745,"test":121,"train":126}
+{"model":"neural_tree","fold":3,"h":3600,"outcome":"absolute_mid_price_change","mae":0.014827435858266505,"test":1060,"train":228}
+{"model":"residual_mlp","fold":3,"h":3600,"outcome":"absolute_mid_price_change","mae":0.012917994494757277,"test":1060,"train":228}
+{"model":"tabm_ensemble","fold":3,"h":3600,"outcome":"absolute_mid_price_change","mae":0.010232721811947664,"test":1060,"train":228}
+{"model":"neural_tree","fold":4,"h":3600,"outcome":"absolute_mid_price_change","mae":0.009273497447487226,"test":515,"train":1145}
+{"model":"residual_mlp","fold":4,"h":3600,"outcome":"absolute_mid_price_change","mae":0.011242053383603248,"test":515,"train":1145}
+{"model":"tabm_ensemble","fold":4,"h":3600,"outcome":"absolute_mid_price_change","mae":0.0094389504787702,"test":515,"train":1145}
+[ Info: Following 6 arguments set to default: MLE_tree_split, k, hidden_size, tree_type, scaler, stack_size.
+[ Info: Following 2 arguments set to default: act, MLE_tree_split.
+[ Info: Following 1 arguments set to default: MLE_tree_split.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+[ Info: Following 4 arguments were not provided and will be set to default: embedding_config, gpuID, metric, early_stopping_rounds.
+{"metric_rows":189,"epochs":25,"limitation":"One retained day and dependent selected contexts; no causal influence or established tradability claim.","status":"completed","architectures":["neural_tree","residual_mlp","tabm_ensemble"],"error_rows":0,"target_or_horizon_selection":"all predeclared output definitions; no test-set tuning","inference":"per-observation architectures; frozen training preprocessing and normalization; no cross-observation inference attention","prediction_rows":118203}

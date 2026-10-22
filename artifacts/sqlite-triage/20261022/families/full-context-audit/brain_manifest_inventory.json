@@ -1,0 +1,973 @@
+[
+  {
+    "path": "/opt/frankie-box/brain/20211004-cycle-00/MANIFEST.json",
+    "keys": [
+      "at",
+      "cycle",
+      "cycle_complete",
+      "day",
+      "entries",
+      "entry_kind",
+      "knowledge_status",
+      "native_learning_performed",
+      "note",
+      "schema",
+      "unavailable"
+    ],
+    "entry_kind": "calculations_only",
+    "day": "20211004",
+    "entries": [
+      {
+        "name": "derivation-digest-full.md",
+        "bytes": 94961846,
+        "include": true,
+        "kind": "calculation findings: the derivation digest, every layer of the pin",
+        "source": "/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48/work/derivation-digest-full.md",
+        "sha256": "6e9452cfd69e98617f1904dcc9fadd2b311cb579aab9ae1918bd8cb591b9002b"
+      },
+      {
+        "name": "derive.md",
+        "bytes": 74687,
+        "include": true,
+        "kind": "calculation findings: the derivation receipt (layer statuses, producers, digests)",
+        "source": "/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48/work/derive.json",
+        "sha256": "8c259af3768c0ab133f5272b4b982ec365ab95afc85e5dc98b775b6dc7c78d28"
+      },
+      {
+        "name": "derived-files.md",
+        "bytes": 5553,
+        "include": false,
+        "kind": "witness of the derived files (their content is in the digest)",
+        "source": "/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48/work/derived",
+        "sha256": "d7fa46334570a804d9540a52c89625519dd44fc3c1d1d0cfafe0ab47f44a7399"
+      }
+    ],
+    "attachments": []
+  },
+  {
+    "path": "/opt/frankie-box/brain/20211005-external/MANIFEST.json",
+    "keys": [
+      "at",
+      "attachments",
+      "day",
+      "entry_kind",
+      "note",
+      "schema"
+    ],
+    "entry_kind": "attachment",
+    "day": "20211005",
+    "entries": [],
+    "attachments": [
+      {
+        "bytes": 47895854,
+        "ingest_copies": [
+          "/opt/frankie-box/work/ingest-20211005-ingest-1790673001/day-external.json"
+        ],
+        "name": "day-external.json",
+        "run_copy": "/opt/frankie-box/work/day-external/days-20260929-3-ext-20211005-a1/20211005/day-external.json",
+        "s3_key": "frankie/day_external/20211005/day-external.json",
+        "s3_receipt_key": "frankie/day_external/20211005/day-external-receipt.json",
+        "sha256": "45f14d5d8d1efa0e7480fed38318536383d3e0e922db0ac839a47df599e9de31"
+      }
+    ]
+  },
+  {
+    "path": "/opt/frankie-box/brain/20211006-external/MANIFEST.json",
+    "keys": [
+      "at",
+      "attachments",
+      "day",
+      "entry_kind",
+      "note",
+      "schema"
+    ],
+    "entry_kind": "attachment",
+    "day": "20211006",
+    "entries": [],
+    "attachments": [
+      {
+        "bytes": 54663145,
+        "ingest_copies": [
+          "/opt/frankie-box/work/ingest-20211006-ingest-1790675371/day-external.json"
+        ],
+        "name": "day-external.json",
+        "run_copy": "/opt/frankie-box/work/day-external/days-20260929-3-ext-20211006-a1/20211006/day-external.json",
+        "s3_key": "frankie/day_external/20211006/day-external.json",
+        "s3_receipt_key": "frankie/day_external/20211006/day-external-receipt.json",
+        "sha256": "9ce963a69b6883a44ffce9d8b2a6d58ae16ddee61b3c54e733480a24d4e3d57f"
+      }
+    ]
+  },
+  {
+    "path": "/opt/frankie-box/brain/20211012-external/MANIFEST.json",
+    "keys": [
+      "at",
+      "attachments",
+      "day",
+      "entry_kind",
+      "note",
+      "schema"
+    ],
+    "entry_kind": "attachment",
+    "day": "20211012",
+    "entries": [],
+    "attachments": [
+      {
+        "bytes": 38037120,
+        "ingest_copies": [
+          "/opt/frankie-box/work/ingest-20211012-ingest-1790681387/day-external.json"
+        ],
+        "name": "day-external.json",
+        "run_copy": "/opt/frankie-box/work/day-external/days-20260929-3-ext-20211012-a1/20211012/day-external.json",
+        "s3_key": "frankie/day_external/20211012/day-external.json",
+        "s3_receipt_key": "frankie/day_external/20211012/day-external-receipt.json",
+        "sha256": "d9d9a7bdfe8395f3b0da0a3b848b454088147941a37f98c3bdfa63791776fcf0"
+      }
+    ]
+  },
+  {
+    "path": "/opt/frankie-box/brain/20211013-external/MANIFEST.json",
+    "keys": [
+      "at",
+      "attachments",
+      "day",
+      "entry_kind",
+      "note",
+      "schema"
+    ],
+    "entry_kind": "attachment",
+    "day": "20211013",
+    "entries": [],
+    "attachments": [
+      {
+        "bytes": 38297987,
+        "ingest_copies": [
+          "/opt/frankie-box/work/ingest-20211013-ingest-1790681387/day-external.json"
+        ],
+        "name": "day-external.json",
+        "run_copy": "/opt/frankie-box/work/day-external/days-20260929-3-ext-20211013-a1/20211013/day-external.json",
+        "s3_key": "frankie/day_external/20211013/day-external.json",
+        "s3_receipt_key": "frankie/day_external/20211013/day-external-receipt.json",
+        "sha256": "f8d440319382a180a7c758c722eb09591a96ecb42c4f3a44cfdd6cd1c5bd7c0b"
+      }
+    ]
+  },
+  {
+    "path": "/opt/frankie-box/brain/20211020-external/MANIFEST.json",
+    "keys": [
+      "at",
+      "attachments",
+      "day",
+      "entry_kind",
+      "note",
+      "schema"
+    ],
+    "entry_kind": "attachment",
+    "day": "20211020",
+    "entries": [],
+    "attachments": [
+      {
+        "bytes": 36400381,
+        "ingest_copies": [
+          "/opt/frankie-box/work/ingest-20211020-ingest-1790709584/day-external.json"
+        ],
+        "name": "day-external.json",
+        "run_copy": "/opt/frankie-box/work/day-external/days-20260930-1-ext-20211020-a1/20211020/day-external.json",
+        "s3_key": "frankie/day_external/20211020/day-external.json",
+        "s3_receipt_key": "frankie/day_external/20211020/day-external-receipt.json",
+        "sha256": "75451caf9b525422f3f6f9dc6151cc0d68babcff8f620b8f4b1cb7659e818219"
+      }
+    ]
+  },
+  {
+    "path": "/opt/frankie-box/brain/20221004-external/MANIFEST.json",
+    "keys": [
+      "at",
+      "attachments",
+      "day",
+      "entry_kind",
+      "note",
+      "schema"
+    ],
+    "entry_kind": "attachment",
+    "day": "20221004",
+    "entries": [],
+    "attachments": [
+      {
+        "bytes": 34860914,
+        "ingest_copies": [
+          "/opt/frankie-box/work/ingest-20221004-ingest-1790681387/day-external.json"
+        ],
+        "name": "day-external.json",
+        "run_copy": "/opt/frankie-box/work/day-external/days-20260929-3-ext-20221004-a1/20221004/day-external.json",
+        "s3_key": "frankie/day_external/20221004/day-external.json",
+        "s3_receipt_key": "frankie/day_external/20221004/day-external-receipt.json",
+        "sha256": "4b10ea92eb368e723768272f539304761c2cb5310b36b0855cd0a7b76c049639"
+      }
+    ]
+  },
+  {
+    "path": "/opt/frankie-box/brain/20221005-external/MANIFEST.json",
+    "keys": [
+      "at",
+      "attachments",
+      "day",
+      "entry_kind",
+      "note",
+      "schema"
+    ],
+    "entry_kind": "attachment",
+    "day": "20221005",
+    "entries": [],
+    "attachments": [
+      {
+        "bytes": 32541693,
+        "ingest_copies": [
+          "/opt/frankie-box/work/ingest-20221005-ingest-1790681387/day-external.json"
+        ],
+        "name": "day-external.json",
+        "run_copy": "/opt/frankie-box/work/day-external/days-20260929-3-ext-20221005-a1/20221005/day-external.json",
+        "s3_key": "frankie/day_external/20221005/day-external.json",
+        "s3_receipt_key": "frankie/day_external/20221005/day-external-receipt.json",
+        "sha256": "fdc272b04238002251a48fe70c9f9483fb5b396b7dca5a24352dd17e4378a776"
+      }
+    ]
+  },
+  {
+    "path": "/opt/frankie-box/brain/20221011-external/MANIFEST.json",
+    "keys": [
+      "at",
+      "attachments",
+      "day",
+      "entry_kind",
+      "note",
+      "schema"
+    ],
+    "entry_kind": "attachment",
+    "day": "20221011",
+    "entries": [],
+    "attachments": [
+      {
+        "bytes": 33156354,
+        "ingest_copies": [
+          "/opt/frankie-box/work/ingest-20221011-gh-36571235912-1/day-external.json"
+        ],
+        "name": "day-external.json",
+        "run_copy": "/opt/frankie-box/work/day-external/days-20260930-1-ext-20221011-a1/20221011/day-external.json",
+        "s3_key": "frankie/day_external/20221011/day-external.json",
+        "s3_receipt_key": "frankie/day_external/20221011/day-external-receipt.json",
+        "sha256": "1ee038440136246133a5e0a4427b4fe9e34e8c8192008557173238660b80ffb2"
+      }
+    ]
+  },
+  {
+    "path": "/opt/frankie-box/brain/20221012-external/MANIFEST.json",
+    "keys": [
+      "at",
+      "attachments",
+      "day",
+      "entry_kind",
+      "note",
+      "schema"
+    ],
+    "entry_kind": "attachment",
+    "day": "20221012",
+    "entries": [],
+    "attachments": [
+      {
+        "bytes": 32930382,
+        "ingest_copies": [
+          "/opt/frankie-box/work/ingest-20221012-gh-36571235912-1/day-external.json"
+        ],
+        "name": "day-external.json",
+        "run_copy": "/opt/frankie-box/work/day-external/days-20260930-1-ext-20221012-a1/20221012/day-external.json",
+        "s3_key": "frankie/day_external/20221012/day-external.json",
+        "s3_receipt_key": "frankie/day_external/20221012/day-external-receipt.json",
+        "sha256": "f8e729ac62c6b3838674e54299b2ca7d51d2ae4c3f16c7f8e79600234ea84b5a"
+      }
+    ]
+  },
+  {
+    "path": "/opt/frankie-box/brain/20221018-external/MANIFEST.json",
+    "keys": [
+      "at",
+      "attachments",
+      "day",
+      "entry_kind",
+      "note",
+      "schema"
+    ],
+    "entry_kind": "attachment",
+    "day": "20221018",
+    "entries": [],
+    "attachments": [
+      {
+        "bytes": 36376533,
+        "ingest_copies": [
+          "/opt/frankie-box/work/ingest-20221018-gh-36571235912-1/day-external.json"
+        ],
+        "name": "day-external.json",
+        "run_copy": "/opt/frankie-box/work/day-external/days-20260930-1-ext-20221018-a1/20221018/day-external.json",
+        "s3_key": "frankie/day_external/20221018/day-external.json",
+        "s3_receipt_key": "frankie/day_external/20221018/day-external-receipt.json",
+        "sha256": "30f044e1c65cf3d32fbd950d10e78e9b084bcb1fd213e3ee52cff404df35821a"
+      }
+    ]
+  },
+  {
+    "path": "/opt/frankie-box/brain/20221019-external/MANIFEST.json",
+    "keys": [
+      "at",
+      "attachments",
+      "day",
+      "entry_kind",
+      "note",
+      "schema"
+    ],
+    "entry_kind": "attachment",
+    "day": "20221019",
+    "entries": [],
+    "attachments": [
+      {
+        "bytes": 35442019,
+        "ingest_copies": [
+          "/opt/frankie-box/work/ingest-20221019-gh-36571235912-1/day-external.json"
+        ],
+        "name": "day-external.json",
+        "run_copy": "/opt/frankie-box/work/day-external/days-20260930-1-ext-20221019-a1/20221019/day-external.json",
+        "s3_key": "frankie/day_external/20221019/day-external.json",
+        "s3_receipt_key": "frankie/day_external/20221019/day-external-receipt.json",
+        "sha256": "b5308e408ff0fdd8b558c6365b1553df55f2151f5d0672bf032cc704fc039870"
+      }
+    ]
+  },
+  {
+    "path": "/opt/frankie-box/brain/20231003-external/MANIFEST.json",
+    "keys": [
+      "at",
+      "attachments",
+      "day",
+      "entry_kind",
+      "note",
+      "schema"
+    ],
+    "entry_kind": "attachment",
+    "day": "20231003",
+    "entries": [],
+    "attachments": [
+      {
+        "bytes": 24773876,
+        "ingest_copies": [
+          "/opt/frankie-box/work/ingest-20231003-gh-36571235912-1/day-external.json"
+        ],
+        "name": "day-external.json",
+        "run_copy": "/opt/frankie-box/work/day-external/days-20260930-1-ext-20231003-a1/20231003/day-external.json",
+        "s3_key": "frankie/day_external/20231003/day-external.json",
+        "s3_receipt_key": "frankie/day_external/20231003/day-external-receipt.json",
+        "sha256": "1d4a6eebd6f7982b6978bfda412c041e23e8dce989971ea792ffd24733ab9104"
+      }
+    ]
+  },
+  {
+    "path": "/opt/frankie-box/brain/20231004-external/MANIFEST.json",
+    "keys": [
+      "at",
+      "attachments",
+      "day",
+      "entry_kind",
+      "note",
+      "schema"
+    ],
+    "entry_kind": "attachment",
+    "day": "20231004",
+    "entries": [],
+    "attachments": [
+      {
+        "bytes": 27503272,
+        "ingest_copies": [
+          "/opt/frankie-box/work/ingest-20231004-gh-36571235912-1/day-external.json"
+        ],
+        "name": "day-external.json",
+        "run_copy": "/opt/frankie-box/work/day-external/days-20260930-1-ext-20231004-a1/20231004/day-external.json",
+        "s3_key": "frankie/day_external/20231004/day-external.json",
+        "s3_receipt_key": "frankie/day_external/20231004/day-external-receipt.json",
+        "sha256": "ea1743657277553846ca4ff5de3bbd17b7d353017b23420558fd99072b2066f9"
+      }
+    ]
+  },
+  {
+    "path": "/opt/frankie-box/brain/20231010-external/MANIFEST.json",
+    "keys": [
+      "at",
+      "attachments",
+      "day",
+      "entry_kind",
+      "note",
+      "schema"
+    ],
+    "entry_kind": "attachment",
+    "day": "20231010",
+    "entries": [],
+    "attachments": [
+      {
+        "bytes": 32737849,
+        "ingest_copies": [
+          "/opt/frankie-box/work/ingest-20231010-gh-36571235912-1/day-external.json"
+        ],
+        "name": "day-external.json",
+        "run_copy": "/opt/frankie-box/work/day-external/days-20260930-1-ext-20231010-a1/20231010/day-external.json",
+        "s3_key": "frankie/day_external/20231010/day-external.json",
+        "s3_receipt_key": "frankie/day_external/20231010/day-external-receipt.json",
+        "sha256": "da894f0a26f2f6c29bf57fb210a16d0c8342c38cb0e56e79e9f2ffe7d5df173c"
+      }
+    ]
+  },
+  {
+    "path": "/opt/frankie-box/brain/20231011-external/MANIFEST.json",
+    "keys": [
+      "at",
+      "attachments",
+      "day",
+      "entry_kind",
+      "note",
+      "schema"
+    ],
+    "entry_kind": "attachment",
+    "day": "20231011",
+    "entries": [],
+    "attachments": [
+      {
+        "bytes": 34523456,
+        "ingest_copies": [
+          "/opt/frankie-box/work/ingest-20231011-gh-36571235912-1/day-external.json"
+        ],
+        "name": "day-external.json",
+        "run_copy": "/opt/frankie-box/work/day-external/days-20260930-1-ext-20231011-a1/20231011/day-external.json",
+        "s3_key": "frankie/day_external/20231011/day-external.json",
+        "s3_receipt_key": "frankie/day_external/20231011/day-external-receipt.json",
+        "sha256": "2073697e3a3b9be12330a3d83b5c0c3e114ec2be6a5a0ec0db5ba96f72129409"
+      }
+    ]
+  },
+  {
+    "path": "/opt/frankie-box/brain/20231017-external/MANIFEST.json",
+    "keys": [
+      "at",
+      "attachments",
+      "day",
+      "entry_kind",
+      "note",
+      "schema"
+    ],
+    "entry_kind": "attachment",
+    "day": "20231017",
+    "entries": [],
+    "attachments": [
+      {
+        "bytes": 30909123,
+        "ingest_copies": [
+          "/opt/frankie-box/work/ingest-20231017-gh-36571235912-1/day-external.json"
+        ],
+        "name": "day-external.json",
+        "run_copy": "/opt/frankie-box/work/day-external/days-20260930-1-ext-20231017-a1/20231017/day-external.json",
+        "s3_key": "frankie/day_external/20231017/day-external.json",
+        "s3_receipt_key": "frankie/day_external/20231017/day-external-receipt.json",
+        "sha256": "944376d372fb92f036287b40182c7d036425ecf9958afa0685a57c67e4dff369"
+      }
+    ]
+  },
+  {
+    "path": "/opt/frankie-box/brain/20231018-cycle-00/MANIFEST.json",
+    "keys": [
+      "at",
+      "attachments",
+      "cycle",
+      "cycle_complete",
+      "day",
+      "entries",
+      "entry_kind",
+      "knowledge_status",
+      "native_learning_performed",
+      "note",
+      "schema",
+      "unavailable"
+    ],
+    "entry_kind": "session",
+    "day": "20231018",
+    "entries": [
+      {
+        "name": "derivation-digest-full.md",
+        "bytes": 149941110857,
+        "include": true,
+        "kind": "calculation findings: the derivation digest, every layer of the pin",
+        "source": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derivation-digest-full.md",
+        "sha256": "45d7bc8b47c37d4a2144dff0c154f4237e1d6dadffbbf105fe79b8e5cbdb690b"
+      },
+      {
+        "name": "derive.md",
+        "bytes": 80922,
+        "include": true,
+        "kind": "calculation findings: the derivation receipt (layer statuses, producers, digests)",
+        "source": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derive.json",
+        "sha256": "534bcff18d8c9622c69a56c5b492e637ae41b1e820bac9c3831d81f74f92e126"
+      },
+      {
+        "name": "classroom.md",
+        "bytes": 1668721918,
+        "include": true,
+        "kind": "the Dipole classroom: Frankie's own teach-back of the 19-dimension surface for this cycle (case by case: set include false to keep it out)",
+        "source": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/classroom/classroom.md",
+        "sha256": "7957142b3bdcd449ee084b89f711465e8468d68a2de64e5baa1ed19b8c8dc4b8"
+      },
+      {
+        "name": "derived-files.md",
+        "bytes": 5679,
+        "include": false,
+        "kind": "witness of the derived files (their content is in the digest)",
+        "source": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived",
+        "sha256": "a41c1a48c05f271145d0d1c6b567a55e67626071ffec88ffc46d00c294165c20"
+      },
+      {
+        "name": "classroom-external.md",
+        "bytes": 1626302,
+        "include": true,
+        "kind": "the Dipole classroom's external section: Frankie's own teach-back of his historical data points beside the 19 dimensions for this cycle",
+        "source": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/classroom/classroom-external.md",
+        "sha256": "f6a87d7ee240fbda08684b6263c05b6627cb135428269ea709768d1a066a3aee"
+      },
+      {
+        "name": "classroom-findings.json",
+        "bytes": 91716,
+        "include": true,
+        "kind": "Frankie classroom claims, source-bound; scientific checking follows",
+        "source": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/classroom/novel-findings.json",
+        "sha256": "9df5db9b427e5c8da32a6c90019c5e4afb2fb55bffa41776f689face8ee43d9f"
+      },
+      {
+        "name": "classroom-external-findings.json",
+        "bytes": 405138,
+        "include": true,
+        "kind": "Frankie classroom claims, source-bound; scientific checking follows",
+        "source": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/classroom/external-novel-findings.json",
+        "sha256": "d5d668dbceb2598a085e38c8480fbda985941363e4df5a27c826525a62f657c0"
+      },
+      {
+        "name": "experiment-directive.json",
+        "bytes": 12055,
+        "include": true,
+        "kind": "the experiment's directive (Greg): what we are shooting for",
+        "source": "/opt/frankie-box/code/18be1e6164ee18abacfd578648ea9a264618e5c5-push-20261014T161154178796069Z/markets/research/kalshi/frankie_boss/knowledge/EXPERIMENT_DIRECTIVE_V1.json",
+        "sha256": "0e096c03eefd9cf914b40d6268cd0cb023185ef4d05f994ed89049794f445ec0"
+      }
+    ],
+    "attachments": [
+      {
+        "brain_attachment": "20231018-external",
+        "bytes": 35132604,
+        "included": false,
+        "name": "day-external.json",
+        "note": "the day file of his historical data points, listed (not copied into his reading corpus); every reader of the ingest reads it through operations/frankie_day_external.AsOfReader at its own cutoff",
+        "path": "/opt/frankie-box/work/ingest-20231018-gh-36571235912-1/day-external.json",
+        "s3_key": "frankie/day_external/20231018/day-external.json",
+        "s3_key_basis": "day-external-receipt.json beside the day file",
+        "schema": "FRANKIE_DAY_EXTERNAL_V1",
+        "sha256": "d006252d605432994909a52e75fcbfe7cec3e42990a98c02e91e1f65212f0bc7"
+      }
+    ]
+  },
+  {
+    "path": "/opt/frankie-box/brain/20231018-cycle-00/MANIFEST.json.retained-169c964163cff22fe800016034836a4d3a24ec8f0bb91ce6d8fc296e5e55592f",
+    "keys": [
+      "at",
+      "attachments",
+      "cycle",
+      "cycle_complete",
+      "day",
+      "entries",
+      "entry_kind",
+      "knowledge_status",
+      "native_learning_performed",
+      "note",
+      "schema",
+      "unavailable"
+    ],
+    "entry_kind": "session",
+    "day": "20231018",
+    "entries": [
+      {
+        "name": "derivation-digest-full.md",
+        "bytes": 149941110857,
+        "include": true,
+        "kind": "calculation findings: the derivation digest, every layer of the pin",
+        "source": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derivation-digest-full.md",
+        "sha256": "45d7bc8b47c37d4a2144dff0c154f4237e1d6dadffbbf105fe79b8e5cbdb690b"
+      },
+      {
+        "name": "derive.md",
+        "bytes": 80922,
+        "include": true,
+        "kind": "calculation findings: the derivation receipt (layer statuses, producers, digests)",
+        "source": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derive.json",
+        "sha256": "534bcff18d8c9622c69a56c5b492e637ae41b1e820bac9c3831d81f74f92e126"
+      },
+      {
+        "name": "classroom.md",
+        "bytes": 1668721918,
+        "include": true,
+        "kind": "the Dipole classroom: Frankie's own teach-back of the 19-dimension surface for this cycle (case by case: set include false to keep it out)",
+        "source": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/classroom/classroom.md",
+        "sha256": "7957142b3bdcd449ee084b89f711465e8468d68a2de64e5baa1ed19b8c8dc4b8"
+      },
+      {
+        "name": "derived-files.md",
+        "bytes": 5679,
+        "include": false,
+        "kind": "witness of the derived files (their content is in the digest)",
+        "source": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived",
+        "sha256": "a41c1a48c05f271145d0d1c6b567a55e67626071ffec88ffc46d00c294165c20"
+      },
+      {
+        "name": "classroom-external.md",
+        "bytes": 1626302,
+        "include": true,
+        "kind": "the Dipole classroom's external section: Frankie's own teach-back of his historical data points beside the 19 dimensions for this cycle",
+        "source": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/classroom/classroom-external.md",
+        "sha256": "f6a87d7ee240fbda08684b6263c05b6627cb135428269ea709768d1a066a3aee"
+      }
+    ],
+    "attachments": [
+      {
+        "brain_attachment": "20231018-external",
+        "bytes": 35132604,
+        "included": false,
+        "name": "day-external.json",
+        "note": "the day file of his historical data points, listed (not copied into his reading corpus); every reader of the ingest reads it through operations/frankie_day_external.AsOfReader at its own cutoff",
+        "path": "/opt/frankie-box/work/ingest-20231018-gh-36571235912-1/day-external.json",
+        "s3_key": "frankie/day_external/20231018/day-external.json",
+        "s3_key_basis": "day-external-receipt.json beside the day file",
+        "schema": "FRANKIE_DAY_EXTERNAL_V1",
+        "sha256": "d006252d605432994909a52e75fcbfe7cec3e42990a98c02e91e1f65212f0bc7"
+      }
+    ]
+  },
+  {
+    "path": "/opt/frankie-box/brain/20231018-cycle-00/MANIFEST.json.retained-32b1ea1fe4f2587912a6e2a2dbc079c2dffd58e617d85ef459d7b5c06816e71f",
+    "keys": [
+      "at",
+      "cycle",
+      "cycle_complete",
+      "day",
+      "entries",
+      "entry_kind",
+      "knowledge_status",
+      "native_learning_performed",
+      "note",
+      "schema",
+      "unavailable"
+    ],
+    "entry_kind": "session",
+    "day": "20231018",
+    "entries": [
+      {
+        "name": "derivation-digest-full.md",
+        "bytes": 149941110857,
+        "include": true,
+        "kind": "calculation findings: the derivation digest, every layer of the pin",
+        "source": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derivation-digest-full.md",
+        "sha256": "45d7bc8b47c37d4a2144dff0c154f4237e1d6dadffbbf105fe79b8e5cbdb690b"
+      },
+      {
+        "name": "derive.md",
+        "bytes": 80922,
+        "include": true,
+        "kind": "calculation findings: the derivation receipt (layer statuses, producers, digests)",
+        "source": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derive.json",
+        "sha256": "534bcff18d8c9622c69a56c5b492e637ae41b1e820bac9c3831d81f74f92e126"
+      },
+      {
+        "name": "classroom.md",
+        "bytes": 1668721918,
+        "include": true,
+        "kind": "the Dipole classroom: Frankie's own teach-back of the 19-dimension surface for this cycle (case by case: set include false to keep it out)",
+        "source": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/classroom/classroom.md",
+        "sha256": "7957142b3bdcd449ee084b89f711465e8468d68a2de64e5baa1ed19b8c8dc4b8"
+      },
+      {
+        "name": "derived-files.md",
+        "bytes": 5679,
+        "include": false,
+        "kind": "witness of the derived files (their content is in the digest)",
+        "source": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived",
+        "sha256": "a41c1a48c05f271145d0d1c6b567a55e67626071ffec88ffc46d00c294165c20"
+      }
+    ],
+    "attachments": []
+  },
+  {
+    "path": "/opt/frankie-box/brain/20231018-day-file/MANIFEST.json",
+    "keys": [
+      "cycle",
+      "day",
+      "entries",
+      "entry_kind",
+      "knowledge_status",
+      "note",
+      "schema",
+      "unavailable"
+    ],
+    "entry_kind": "stage_knowledge",
+    "day": "20231018",
+    "entries": [
+      {
+        "name": "stage-knowledge.json",
+        "bytes": 37910,
+        "include": true,
+        "kind": "immediate day-file knowledge",
+        "source": "/opt/frankie-box/work/ingest-20231018-gh-36571235912-1/day-external.json; /opt/frankie-box/work/ingest-20231018-gh-36571235912-1/day-external-receipt.json",
+        "sha256": "74865fabc288189d7c7b172685151ad3af8c2f4847f3506f7637ab3d7d8038e1"
+      }
+    ],
+    "attachments": []
+  },
+  {
+    "path": "/opt/frankie-box/brain/20231018-day-file.superseded-20261007T195337Z/MANIFEST.json",
+    "keys": [
+      "cycle",
+      "day",
+      "entries",
+      "entry_kind",
+      "knowledge_status",
+      "note",
+      "schema",
+      "unavailable"
+    ],
+    "entry_kind": "stage_knowledge",
+    "day": "20231018",
+    "entries": [
+      {
+        "name": "stage-knowledge.json",
+        "bytes": 38345,
+        "include": true,
+        "kind": "immediate day-file knowledge",
+        "source": "/opt/frankie-box/work/ingest-20231018-gh-36571235912-1/day-external.json; /opt/frankie-box/work/ingest-20231018-gh-36571235912-1/day-external-receipt.json",
+        "sha256": "c6f3e15ea864211aa5df2da45e9fb84070bf5ecf0aae42529bc42fda8d877f64"
+      }
+    ],
+    "attachments": []
+  },
+  {
+    "path": "/opt/frankie-box/brain/20231018-external/MANIFEST.json",
+    "keys": [
+      "at",
+      "attachments",
+      "day",
+      "entry_kind",
+      "note",
+      "schema"
+    ],
+    "entry_kind": "attachment",
+    "day": "20231018",
+    "entries": [],
+    "attachments": [
+      {
+        "bytes": 28498591,
+        "ingest_copies": [
+          "/opt/frankie-box/work/ingest-20231018-gh-36571235912-1/day-external.json"
+        ],
+        "name": "day-external.json",
+        "run_copy": "/opt/frankie-box/work/day-external/days-20260930-1-ext-20231018-a1/20231018/day-external.json",
+        "s3_key": "frankie/day_external/20231018/day-external.json",
+        "s3_receipt_key": "frankie/day_external/20231018/day-external-receipt.json",
+        "sha256": "3b169f86b0b433528381e407012aac496c407e7d0cbf3f5adb7c3b87bbeccaf0"
+      }
+    ]
+  },
+  {
+    "path": "/opt/frankie-box/brain/20231018-ingest/MANIFEST.json",
+    "keys": [
+      "cycle",
+      "day",
+      "entries",
+      "entry_kind",
+      "knowledge_status",
+      "note",
+      "schema",
+      "unavailable"
+    ],
+    "entry_kind": "stage_knowledge",
+    "day": "20231018",
+    "entries": [
+      {
+        "name": "stage-knowledge.json",
+        "bytes": 5283,
+        "include": true,
+        "kind": "immediate ingest knowledge",
+        "source": "/opt/frankie-box/work/ingest-20231018-gh-36571235912-1/ingestion-receipt.json",
+        "sha256": "a199603bcfb190311ed612f1e9fc97e46a526704345ee3bfa5ca673175453653"
+      }
+    ],
+    "attachments": []
+  },
+  {
+    "path": "/opt/frankie-box/brain/20231018-root/MANIFEST.json",
+    "keys": [
+      "cycle",
+      "day",
+      "entries",
+      "entry_kind",
+      "knowledge_status",
+      "note",
+      "schema",
+      "unavailable"
+    ],
+    "entry_kind": "stage_knowledge",
+    "day": "20231018",
+    "entries": [
+      {
+        "name": "stage-knowledge.json",
+        "bytes": 191047,
+        "include": true,
+        "kind": "immediate root knowledge",
+        "source": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/calculations-receipt.json; /opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derive.json; /opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/external-computation.json",
+        "sha256": "d5227b76664e862115de08a9f61fd639c622309b3c38252d3597ab1505c13259"
+      }
+    ],
+    "attachments": []
+  },
+  {
+    "path": "/opt/frankie-box/brain/20231018-teacher/MANIFEST.json",
+    "keys": [
+      "cycle",
+      "day",
+      "entries",
+      "entry_kind",
+      "knowledge_status",
+      "note",
+      "schema",
+      "source_witness",
+      "unavailable"
+    ],
+    "entry_kind": "stage_knowledge",
+    "day": "20231018",
+    "entries": [
+      {
+        "name": "stage-knowledge.json",
+        "bytes": 245785,
+        "include": true,
+        "kind": "immediate teacher knowledge",
+        "source": "/opt/frankie-box/work/experiment-teacher-rows/20231018/host-dipole-classroom-source.c15.json; /opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-knowledge.json",
+        "sha256": "7d26bf2bd66e754d8e842f4109abadcdcd165109d3ed695afaaa094aea74c8ec"
+      }
+    ],
+    "attachments": []
+  },
+  {
+    "path": "/opt/frankie-box/brain/20231018-teacher-account/MANIFEST.json",
+    "keys": [
+      "cycle",
+      "day",
+      "entries",
+      "entry_kind",
+      "knowledge_status",
+      "note",
+      "schema",
+      "source_witness",
+      "unavailable"
+    ],
+    "entry_kind": "stage_knowledge",
+    "day": "20231018",
+    "entries": [
+      {
+        "name": "stage-knowledge.json",
+        "bytes": 112202,
+        "include": true,
+        "kind": "immediate teacher-account knowledge",
+        "source": "/opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-account.json; /opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-account.md; /opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-findings.json; /opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-reconciliation-differences.jsonl",
+        "sha256": "12e2eea4e6b27c484fdcee3ecc7062b846d553b8122367f7f8f6d3aa1f700ea3"
+      }
+    ],
+    "attachments": []
+  },
+  {
+    "path": "/opt/frankie-box/brain/20231018-teacher-second-set/MANIFEST.json",
+    "keys": [
+      "cycle",
+      "day",
+      "entries",
+      "entry_kind",
+      "knowledge_status",
+      "note",
+      "schema",
+      "source_witness",
+      "unavailable"
+    ],
+    "entry_kind": "stage_knowledge",
+    "day": "20231018",
+    "entries": [
+      {
+        "name": "stage-knowledge.json",
+        "bytes": 36926,
+        "include": true,
+        "kind": "immediate teacher-second-set knowledge",
+        "source": "/opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-second-set-read.boss.json; /opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-book-event-differences.jsonl; /opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-second-set-mismatches.jsonl; /opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-reconciliation-differences.jsonl; /opt/frankie-box/work/experiment-teacher-rows/20231018/host-dipole-classroom-source.c15.rows.jsonl; /opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-second-set.pkl; /opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-state-split.json",
+        "sha256": "2c1c59d9fd0363d206ab6560dc43fe8bfa4f7266937bbadf8f06a65a58f79708"
+      }
+    ],
+    "attachments": []
+  },
+  {
+    "path": "/opt/frankie-box/brain/cycle-00/MANIFEST.json",
+    "keys": [
+      "at",
+      "cycle",
+      "entries",
+      "note",
+      "schema"
+    ],
+    "entry_kind": null,
+    "day": null,
+    "entries": [
+      {
+        "name": "derivation-digest-full.md",
+        "bytes": 145236,
+        "include": true,
+        "kind": "calculation findings: the derivation digest, every layer of the pin",
+        "source": "/opt/frankie-box/session/work/derivation-digest-full.md",
+        "sha256": "1dbb75a08c3dd1740ff430842c813298454067ba633266dd49637eb0bd783004"
+      },
+      {
+        "name": "accounting-and-ledgers.md",
+        "bytes": 103515,
+        "include": true,
+        "kind": "calculation findings: the accounting entry and the output ledgers",
+        "source": "/opt/frankie-box/session/out/response.json",
+        "sha256": "1c50dfde02e75ab3f519ba22e9c16fc9c3326ab7be4ee355273f1c830d787121"
+      },
+      {
+        "name": "analysis.md",
+        "bytes": 27568,
+        "include": true,
+        "kind": "the run analysis",
+        "source": "/opt/frankie-box/session/out/analysis.md",
+        "sha256": "82c562feb4c4b76c677427e7e816a177bcd7becc469d1a0380091721ba0fea74"
+      },
+      {
+        "name": "derive.md",
+        "bytes": 3613,
+        "include": true,
+        "kind": "calculation findings: the derivation receipt (layer statuses, producers, digests)",
+        "source": "/opt/frankie-box/session/work/derive.json",
+        "sha256": "864ba0b039d57294f0531db25133fa584cb1093d3fe523bb8029b85eb9e059b3"
+      },
+      {
+        "name": "derived-files.md",
+        "bytes": 698,
+        "include": false,
+        "kind": "witness of the derived files (their content is in the digest)",
+        "source": "/opt/frankie-box/session/work/derived",
+        "sha256": "5fc9ad9e8659a512520ae8e3636c269f7ad2e1cc3a020ff99d582419ff64c9dc"
+      }
+    ],
+    "attachments": []
+  }
+]

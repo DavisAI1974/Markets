@@ -1,0 +1,990 @@
+{
+ "day": "20231018",
+ "rule": "knowledge is filed immediately when legally available; large evidence remains exact by path/bytes/sha256",
+ "schema": "FRANKIE_STAGE_KNOWLEDGE_V1",
+ "sources": [
+  {
+   "bytes": 31887,
+   "content": {
+    "absent": [],
+    "listed": [],
+    "parts": {
+     "account": {
+      "book_columns": [
+       "book_balance",
+       "book_absorption",
+       "counts",
+       "event_incomplete",
+       "reconciliation",
+       "group.depth",
+       "group.touches",
+       "group.sides"
+      ],
+      "format": 1,
+      "how": "read whole from the teacher receipt",
+      "path": "/opt/frankie-box/work/experiment-teacher-rows/20231018/receipt.json",
+      "planes": 52,
+      "sections": [
+       "basis",
+       "format",
+       "missing_or_thin",
+       "read_together",
+       "runtime",
+       "schema",
+       "science",
+       "wants"
+      ],
+      "sha256": "d0383a30bb09b19cffad4661c52e9f273e6b707c03bdaf375d55cc9a85773322",
+      "state_split": "built",
+      "status": "read"
+     },
+     "book_event_differences_list": {
+      "bytes": 394887,
+      "check": "equal",
+      "how": "streamed whole",
+      "lines": 2562,
+      "path": "/opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-book-event-differences.jsonl",
+      "pinned": {
+       "count": 2562,
+       "sha256": "52325ecd19addde185b89ecd1f7046b357a4b846efb00fab8cb7ca6e575fd119"
+      },
+      "sha256": "52325ecd19addde185b89ecd1f7046b357a4b846efb00fab8cb7ca6e575fd119",
+      "status": "read"
+     },
+     "mismatches_list": {
+      "bytes": 0,
+      "check": "equal",
+      "how": "streamed whole",
+      "lines": 0,
+      "path": "/opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-second-set-mismatches.jsonl",
+      "pinned": {
+       "count": 0,
+       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "read"
+     },
+     "reconciliation_differences_list": {
+      "bytes": 351272,
+      "check": "no_pin",
+      "how": "streamed whole",
+      "lines": 2562,
+      "path": "/opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-reconciliation-differences.jsonl",
+      "pinned": null,
+      "sha256": "8214034715e731d89dd0ae8cd19b81c8738633ec70b1e011e590ebf06cd90d74",
+      "status": "read"
+     },
+     "rows_sidecar": {
+      "book_columns_status": {
+       "GROUP": 583688,
+       "NOT_F_LAST": 188099
+      },
+      "bytes": 161126241394,
+      "carrying": {
+       "book_columns": 771787,
+       "clocks": 771787,
+       "key": 771787,
+       "planes": 771787,
+       "state_split": 771787
+      },
+      "check": {
+       "pinned": {
+        "rows": 771787,
+        "sha256": "83081ea3ed71ecfc63c6c6d0012af37fa8c86aeb7f2e0bafc739509c4e47d985"
+       },
+       "read": {
+        "rows": 771787,
+        "sha256": "83081ea3ed71ecfc63c6c6d0012af37fa8c86aeb7f2e0bafc739509c4e47d985"
+       },
+       "status": "equal"
+      },
+      "clock_lock_time": {
+       "basis": "sealed blocks: each row's clocks.clock_lock_time.teacher_as_of is its block's teacher as_of (the latest receive clock of the rows through that block); the whole day's is on the receipt and in teacher-blocks.json",
+       "label": "teacher_as_of (lock time does not exist before Frankie reads)",
+       "per_block": true,
+       "teacher_as_of": null
+      },
+      "entries_not_carried": [
+       {
+        "entry": "controlling_rt_mission",
+        "group": "binding_common_controls",
+        "reason": "not market evidence: the registry role control is not carried by the picture",
+        "role": "control"
+       },
+       {
+        "entry": "native_calculation_contract",
+        "group": "binding_common_controls",
+        "reason": "not market evidence: the registry role control is not carried by the picture",
+        "role": "control"
+       },
+       {
+        "entry": "anchored_knowledge_manifest",
+        "group": "binding_common_controls",
+        "reason": "not market evidence: the registry role control is not carried by the picture",
+        "role": "control"
+       },
+       {
+        "entry": "selected_same_arm_profile",
+        "group": "binding_common_controls",
+        "reason": "not market evidence: the registry role control is not carried by the picture",
+        "role": "control"
+       },
+       {
+        "entry": "a_clean_promoted_positive_capsule",
+        "group": "a_clean_overlay",
+        "reason": "not market evidence: the registry role arm is not carried by the picture",
+        "role": "arm"
+       },
+       {
+        "entry": "a_memory_promoted_positive_capsule",
+        "group": "a_memory_overlay",
+        "reason": "not market evidence: the registry role arm is not carried by the picture",
+        "role": "arm"
+       },
+       {
+        "entry": "a_memory_prior_lessons_package",
+        "group": "a_memory_overlay",
+        "reason": "not market evidence: the registry role arm is not carried by the picture",
+        "role": "arm"
+       },
+       {
+        "entry": "a_memory_prior_package_proof",
+        "group": "a_memory_overlay",
+        "reason": "not market evidence: the registry role arm is not carried by the picture",
+        "role": "arm"
+       },
+       {
+        "entry": "authoritative_s135_construction",
+        "group": "current_brain_runtime",
+        "reason": "not market evidence: the registry role knowledge is not carried by the picture",
+        "role": "knowledge"
+       },
+       {
+        "entry": "complete_s105_9_brain",
+        "group": "current_brain_runtime",
+        "reason": "not market evidence: the registry role knowledge is not carried by the picture",
+        "role": "knowledge"
+       },
+       {
+        "entry": "doctrine_reasoning_play_index_evidence",
+        "group": "current_brain_runtime",
+        "reason": "not market evidence: the registry role knowledge is not carried by the picture",
+        "role": "knowledge"
+       },
+       {
+        "entry": "lawful_prior_session_carry",
+        "group": "current_brain_runtime",
+        "reason": "not market evidence: the registry role knowledge is not carried by the picture",
+        "role": "knowledge"
+       },
+       {
+        "entry": "october_outcome_wall_enforcement",
+        "group": "current_brain_runtime",
+        "reason": "not market evidence: the registry role knowledge is not carried by the picture",
+        "role": "knowledge"
+       },
+       {
+        "entry": "learned_d_structures_and_families",
+        "group": "frozen_learned_structure",
+        "reason": "not market evidence: the registry role knowledge is not carried by the picture",
+        "role": "knowledge"
+       },
+       {
+        "entry": "learned_dipoles_and_geometry",
+        "group": "frozen_learned_structure",
+        "reason": "not market evidence: the registry role knowledge is not carried by the picture",
+        "role": "knowledge"
+       },
+       {
+        "entry": "learned_pair_triplet_recurrence",
+        "group": "frozen_learned_structure",
+        "reason": "not market evidence: the registry role knowledge is not carried by the picture",
+        "role": "knowledge"
+       },
+       {
+        "entry": "learned_chains_extensions_reappearances_ancestry",
+        "group": "frozen_learned_structure",
+        "reason": "not market evidence: the registry role knowledge is not carried by the picture",
+        "role": "knowledge"
+       },
+       {
+        "entry": "phase1_discoveries_structural_falsifiers",
+        "group": "frozen_learned_structure",
+        "reason": "not market evidence: the registry role knowledge is not carried by the picture",
+        "role": "knowledge"
+       },
+       {
+        "entry": "phase2_findings_modules_timing_pox_negatives",
+        "group": "frozen_learned_structure",
+        "reason": "not market evidence: the registry role knowledge is not carried by the picture",
+        "role": "knowledge"
+       },
+       {
+        "entry": "predecessor_ancestry_unresolved_chain_state",
+        "group": "frozen_learned_structure",
+        "reason": "not market evidence: the registry role knowledge is not carried by the picture",
+        "role": "knowledge"
+       },
+       {
+        "entry": "historical_timing_lifespan_context",
+        "group": "frozen_learned_structure",
+        "reason": "not market evidence: the registry role knowledge is not carried by the picture",
+        "role": "knowledge"
+       },
+       {
+        "entry": "learned_structure_proposal_index_material",
+        "group": "frozen_learned_structure",
+        "reason": "not market evidence: the registry role knowledge is not carried by the picture",
+        "role": "knowledge"
+       },
+       {
+        "entry": "extra_agent_corrected_information_and_gap_diagnoses",
+        "group": "corrected_extra_agent_carryforward",
+        "reason": "not market evidence: the registry role knowledge is not carried by the picture",
+        "role": "knowledge"
+       },
+       {
+        "entry": "derived_roll20_and_dipole_state",
+        "group": "derived_geometry",
+        "reason": "the BOSS teacher's Dipole state rows (frankie_box_experiment_teacher), not the market picture; the per-second roll20 aggregate stays completed-only",
+        "role": "calculation"
+       },
+       {
+        "entry": "clock_model_evaluation",
+        "group": "causal_clocks",
+        "reason": "the model-evaluation clock records of the day (frankie_box_model_clock: <run>/days/<day>/model-clock.jsonl, one record per real meeting/Jev call); the native member field clocks.decision_ts_recv_ns stays the declared null (no model call inside the traversal)",
+        "role": "clock"
+       },
+       {
+        "entry": "clock_lock_time",
+        "group": "causal_clocks",
+        "reason": "stamped by each consuming piece (its as_of / through_cursor cutoff), not a market picture element",
+        "role": "clock"
+       },
+       {
+        "entry": "later_outcome_reveal",
+        "group": "sealed_target_timing",
+        "reason": "not market evidence: the registry role sealed_answer is not carried by the picture",
+        "role": "sealed_answer"
+       },
+       {
+        "entry": "target_ground_truth_onset_time",
+        "group": "sealed_target_timing",
+        "reason": "not market evidence: the registry role sealed_answer is not carried by the picture",
+        "role": "sealed_answer"
+       },
+       {
+        "entry": "s137_cognitive_shadow_runtime",
+        "group": "provisional_shadow",
+        "reason": "not market evidence: the registry role shadow is not carried by the picture",
+        "role": "shadow"
+       },
+       {
+        "entry": "hipporag_associative_retrieval",
+        "group": "provisional_shadow",
+        "reason": "not market evidence: the registry role shadow is not carried by the picture",
+        "role": "shadow"
+       },
+       {
+        "entry": "step1_existing_october_seconds",
+        "group": "sealed_step1_answer",
+        "reason": "not market evidence: the registry role sealed_answer is not carried by the picture",
+        "role": "sealed_answer"
+       },
+       {
+        "entry": "step1_populations",
+        "group": "sealed_step1_answer",
+        "reason": "not market evidence: the registry role sealed_answer is not carried by the picture",
+        "role": "sealed_answer"
+       },
+       {
+        "entry": "step1_crosswalks",
+        "group": "sealed_step1_answer",
+        "reason": "not market evidence: the registry role sealed_answer is not carried by the picture",
+        "role": "sealed_answer"
+       },
+       {
+        "entry": "step1_target_membership_receipts",
+        "group": "sealed_step1_answer",
+        "reason": "not market evidence: the registry role sealed_answer is not carried by the picture",
+        "role": "sealed_answer"
+       },
+       {
+        "entry": "step1_labels_and_classifications",
+        "group": "sealed_step1_answer",
+        "reason": "not market evidence: the registry role sealed_answer is not carried by the picture",
+        "role": "sealed_answer"
+       },
+       {
+        "entry": "step1_result_prefixes",
+        "group": "sealed_step1_answer",
+        "reason": "not market evidence: the registry role sealed_answer is not carried by the picture",
+        "role": "sealed_answer"
+       },
+       {
+        "entry": "step1_reconciliation_outputs",
+        "group": "sealed_step1_answer",
+        "reason": "not market evidence: the registry role sealed_answer is not carried by the picture",
+        "role": "sealed_answer"
+       },
+       {
+        "entry": "output_state_and_state_delta_movie",
+        "group": "append_only_outputs",
+        "reason": "not market evidence: the registry role output is not carried by the picture",
+        "role": "output"
+       },
+       {
+        "entry": "output_frankie_reasoning_movie",
+        "group": "append_only_outputs",
+        "reason": "not market evidence: the registry role output is not carried by the picture",
+        "role": "output"
+       },
+       {
+        "entry": "output_probability_movie",
+        "group": "append_only_outputs",
+        "reason": "not market evidence: the registry role output is not carried by the picture",
+        "role": "output"
+       },
+       {
+        "entry": "output_candidate_discoveries",
+        "group": "append_only_outputs",
+        "reason": "not market evidence: the registry role output is not carried by the picture",
+        "role": "output"
+       },
+       {
+        "entry": "output_first_locks_and_no_locks",
+        "group": "append_only_outputs",
+        "reason": "not market evidence: the registry role output is not carried by the picture",
+        "role": "output"
+       },
+       {
+        "entry": "output_negative_sparse_inconclusive_ledger",
+        "group": "append_only_outputs",
+        "reason": "not market evidence: the registry role output is not carried by the picture",
+        "role": "output"
+       },
+       {
+        "entry": "output_knowledge_retrieval_receipts",
+        "group": "append_only_outputs",
+        "reason": "not market evidence: the registry role output is not carried by the picture",
+        "role": "output"
+       },
+       {
+        "entry": "output_provider_invocation_response_receipts",
+        "group": "append_only_outputs",
+        "reason": "not market evidence: the registry role output is not carried by the picture",
+        "role": "output"
+       },
+       {
+        "entry": "output_answer_wall_access_receipts",
+        "group": "append_only_outputs",
+        "reason": "not market evidence: the registry role output is not carried by the picture",
+        "role": "output"
+       },
+       {
+        "entry": "output_source_state_manifest_code_model_run_hashes",
+        "group": "append_only_outputs",
+        "reason": "not market evidence: the registry role output is not carried by the picture",
+        "role": "output"
+       }
+      ],
+      "format": 3,
+      "how": "streamed whole, row by row",
+      "path": "/opt/frankie-box/work/experiment-teacher-rows/20231018/host-dipole-classroom-source.c15.rows.jsonl",
+      "plane_values": "by reference: each [source, source_ordinal, ...] names a row of a ROOT stream file (read at use by PlaneResolver); not copied",
+      "planes": {
+       "element_rows": 8489657,
+       "entries": 52,
+       "per_entry": {
+        "aggressor_and_native_signed_flow": {
+         "references": 585194,
+         "rows_element": 0,
+         "rows_with_references": 583689,
+         "rows_without": 188098
+        },
+        "canonical_predecessor_bootstrap_objects": {
+         "references": 0,
+         "rows_element": 771787,
+         "rows_with_references": 0,
+         "rows_without": 0
+        },
+        "canonical_sep_nov_2021_dbn_mbo_objects": {
+         "references": 0,
+         "rows_element": 771787,
+         "rows_with_references": 0,
+         "rows_without": 0
+        },
+        "churn_and_queue_turnover": {
+         "references": 583688,
+         "rows_element": 0,
+         "rows_with_references": 583688,
+         "rows_without": 188099
+        },
+        "clock_event_known_by": {
+         "references": 0,
+         "rows_element": 771787,
+         "rows_with_references": 0,
+         "rows_without": 0
+        },
+        "clock_event_time": {
+         "references": 0,
+         "rows_element": 771787,
+         "rows_with_references": 0,
+         "rows_without": 0
+        },
+        "clock_feature_availability": {
+         "references": 0,
+         "rows_element": 771787,
+         "rows_with_references": 0,
+         "rows_without": 0
+        },
+        "clock_prospective_discovery_confirmation": {
+         "references": 2589,
+         "rows_element": 0,
+         "rows_with_references": 1509,
+         "rows_without": 770278
+        },
+        "clock_receive_time": {
+         "references": 0,
+         "rows_element": 771787,
+         "rows_with_references": 0,
+         "rows_without": 0
+        },
+        "complete_state_reset_bootstrap_receipts": {
+         "references": 583688,
+         "rows_element": 0,
+         "rows_with_references": 583688,
+         "rows_without": 188099
+        },
+        "contract_session_roll_state": {
+         "references": 862891,
+         "rows_element": 0,
+         "rows_with_references": 618544,
+         "rows_without": 153243
+        },
+        "depletion_and_replenishment": {
+         "references": 971106,
+         "rows_element": 0,
+         "rows_with_references": 581689,
+         "rows_without": 190098
+        },
+        "derived_ancestry_gaps": {
+         "references": 584172,
+         "rows_element": 0,
+         "rows_with_references": 583688,
+         "rows_without": 188099
+        },
+        "derived_d_family_geometry": {
+         "references": 583688,
+         "rows_element": 0,
+         "rows_with_references": 583688,
+         "rows_without": 188099
+        },
+        "derived_feature_availability_timestamps": {
+         "references": 0,
+         "rows_element": 771787,
+         "rows_with_references": 0,
+         "rows_without": 0
+        },
+        "derived_open_world_predecessor_state": {
+         "references": 583688,
+         "rows_element": 0,
+         "rows_with_references": 583688,
+         "rows_without": 188099
+        },
+        "derived_price_flow_book_paths": {
+         "references": 1837463,
+         "rows_element": 0,
+         "rows_with_references": 583688,
+         "rows_without": 188099
+        },
+        "derived_unresolved_age_chain_trajectory": {
+         "references": 2210,
+         "rows_element": 0,
+         "rows_with_references": 1510,
+         "rows_without": 770277
+        },
+        "derived_v4_mechanics_fifo_features": {
+         "references": 865201,
+         "rows_element": 0,
+         "rows_with_references": 583688,
+         "rows_without": 188099
+        },
+        "fifo_queues": {
+         "references": 583688,
+         "rows_element": 0,
+         "rows_with_references": 583688,
+         "rows_without": 188099
+        },
+        "full_bid_ask_depth": {
+         "references": 583688,
+         "rows_element": 0,
+         "rows_with_references": 583688,
+         "rows_without": 188099
+        },
+        "legacy_book_imbalance": {
+         "references": 30739,
+         "rows_element": 0,
+         "rows_with_references": 29797,
+         "rows_without": 741990
+        },
+        "legacy_native_signed_flow": {
+         "references": 0,
+         "rows_element": 0,
+         "rows_with_references": 0,
+         "rows_without": 771787
+        },
+        "legacy_per_second_roll20": {
+         "references": 0,
+         "rows_element": 0,
+         "rows_with_references": 0,
+         "rows_without": 771787
+        },
+        "legacy_price": {
+         "references": 30739,
+         "rows_element": 0,
+         "rows_with_references": 29797,
+         "rows_without": 741990
+        },
+        "legacy_structure_observables": {
+         "references": 583688,
+         "rows_element": 0,
+         "rows_with_references": 583688,
+         "rows_without": 188099
+        },
+        "mechanics_actions_by_side_and_level": {
+         "references": 583688,
+         "rows_element": 0,
+         "rows_with_references": 583688,
+         "rows_without": 188099
+        },
+        "missingness_and_integrity_flags": {
+         "references": 583688,
+         "rows_element": 0,
+         "rows_with_references": 583688,
+         "rows_without": 188099
+        },
+        "native_acmrtfn_messages": {
+         "references": 0,
+         "rows_element": 771787,
+         "rows_with_references": 0,
+         "rows_without": 0
+        },
+        "october_first_source_window": {
+         "references": 0,
+         "rows_element": 771787,
+         "rows_with_references": 0,
+         "rows_without": 0
+        },
+        "order_identity_transitions": {
+         "references": 583688,
+         "rows_element": 0,
+         "rows_with_references": 583688,
+         "rows_without": 188099
+        },
+        "order_lifecycle_adds": {
+         "references": 583688,
+         "rows_element": 0,
+         "rows_with_references": 583688,
+         "rows_without": 188099
+        },
+        "order_lifecycle_cancels": {
+         "references": 583688,
+         "rows_element": 0,
+         "rows_with_references": 583688,
+         "rows_without": 188099
+        },
+        "order_lifecycle_clears": {
+         "references": 583688,
+         "rows_element": 0,
+         "rows_with_references": 583688,
+         "rows_without": 188099
+        },
+        "order_lifecycle_fills": {
+         "references": 583688,
+         "rows_element": 0,
+         "rows_with_references": 583688,
+         "rows_without": 188099
+        },
+        "order_lifecycle_modifies": {
+         "references": 583688,
+         "rows_element": 0,
+         "rows_with_references": 583688,
+         "rows_without": 188099
+        },
+        "order_lifecycle_replaces": {
+         "references": 583688,
+         "rows_element": 0,
+         "rows_with_references": 583688,
+         "rows_without": 188099
+        },
+        "order_lifecycle_trades": {
+         "references": 30739,
+         "rows_element": 0,
+         "rows_with_references": 29797,
+         "rows_without": 741990
+        },
+        "orders_and_volume_ahead": {
+         "references": 583688,
+         "rows_element": 0,
+         "rows_with_references": 583688,
+         "rows_without": 188099
+        },
+        "prebirth_ancestry_successor_opportunity": {
+         "references": 484,
+         "rows_element": 0,
+         "rows_with_references": 1,
+         "rows_without": 771786
+        },
+        "prebirth_negative_opportunity_cases": {
+         "references": 1727,
+         "rows_element": 0,
+         "rows_with_references": 1510,
+         "rows_without": 770277
+        },
+        "prebirth_predecessor_at_risk_state": {
+         "references": 2589,
+         "rows_element": 0,
+         "rows_with_references": 1509,
+         "rows_without": 770278
+        },
+        "prebirth_stopped_chain_false_context_controls": {
+         "references": 1727,
+         "rows_element": 0,
+         "rows_with_references": 1510,
+         "rows_without": 770277
+        },
+        "prebirth_unresolved_chain_extension_state": {
+         "references": 484,
+         "rows_element": 0,
+         "rows_with_references": 1,
+         "rows_without": 771786
+        },
+        "price_and_book_path": {
+         "references": 2030266,
+         "rows_element": 0,
+         "rows_with_references": 618544,
+         "rows_without": 153243
+        },
+        "price_level_and_order_counts": {
+         "references": 583688,
+         "rows_element": 0,
+         "rows_with_references": 583688,
+         "rows_without": 188099
+        },
+        "queue_age_and_survival": {
+         "references": 583688,
+         "rows_element": 0,
+         "rows_with_references": 583688,
+         "rows_without": 188099
+        },
+        "queue_concentration": {
+         "references": 583688,
+         "rows_element": 0,
+         "rows_with_references": 583688,
+         "rows_without": 188099
+        },
+        "raw_source_identity_provenance_clocks_integrity": {
+         "references": 0,
+         "rows_element": 771787,
+         "rows_with_references": 0,
+         "rows_without": 0
+        },
+        "resilience_and_recovery": {
+         "references": 1536687,
+         "rows_element": 0,
+         "rows_with_references": 583688,
+         "rows_without": 188099
+        },
+        "snapshot_bootstrap_reset_messages": {
+         "references": 0,
+         "rows_element": 771787,
+         "rows_with_references": 0,
+         "rows_without": 0
+        },
+        "spread_and_depth_imbalance": {
+         "references": 583688,
+         "rows_element": 0,
+         "rows_with_references": 583688,
+         "rows_without": 188099
+        }
+       },
+       "references": 21634455,
+       "rows_without": 14551660
+      },
+      "roles": {
+       "book_columns": "book_columns",
+       "clocks": "clocks",
+       "key": "key",
+       "planes": "planes",
+       "state_split": "state_split"
+      },
+      "rows": 771787,
+      "sha256": "83081ea3ed71ecfc63c6c6d0012af37fa8c86aeb7f2e0bafc739509c4e47d985",
+      "status": "read",
+      "streams": {
+       "native.lifecycle": {
+        "on_disk": true,
+        "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/bedrock/recovery-6f84a8a86f454010b61346b401e3eb5f/ledgers/exact_lifecycle_rows.jsonl",
+        "pinned_bytes": 7560352552,
+        "reason": null,
+        "sha256": "85cd443bb5348b987d643878d43532aca7db8f61e932c68073425f1939dfb74e"
+       },
+       "native.member": {
+        "on_disk": true,
+        "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/bedrock/recovery-6f84a8a86f454010b61346b401e3eb5f/ledgers/exact_member_rows.jsonl",
+        "pinned_bytes": 193743650444,
+        "reason": null,
+        "sha256": "5c1acca32856b08f2d2188951ae9e6c3932410f43d62e6e3e69858c370606d4c"
+       },
+       "root.frames": {
+        "on_disk": true,
+        "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/frames.jsonl",
+        "pinned_bytes": 496743568399,
+        "reason": null,
+        "sha256": "be7655b2663841df1b3662a057f86122750364b1b0678fcfd46c92798b0c1495"
+       },
+       "root.prices": {
+        "on_disk": true,
+        "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/prices.jsonl",
+        "pinned_bytes": 17393149,
+        "reason": null,
+        "sha256": "f42c17908509e9b944615521d25631ef19231da3c037252d83d03f780c74ab58"
+       },
+       "root.structures": {
+        "on_disk": true,
+        "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/structures.jsonl",
+        "pinned_bytes": 1063001944,
+        "reason": null,
+        "sha256": "37c7642ec92dc350e8d91f29a8428a94f1967bf682df57b794ded4897b9e8b8d"
+       }
+      },
+      "streams_not_on_disk": [],
+      "without": {
+       "book_columns": {
+        "ordinal_ranges": [],
+        "rows": 0
+       },
+       "clocks": {
+        "ordinal_ranges": [],
+        "rows": 0
+       },
+       "key": {
+        "ordinal_ranges": [],
+        "rows": 0
+       },
+       "planes": {
+        "ordinal_ranges": [],
+        "rows": 0
+       },
+       "state_split": {
+        "ordinal_ranges": [],
+        "rows": 0
+       }
+      }
+     },
+     "second_set_file": {
+      "bytes": 52688476687,
+      "how": "pinned by the teacher receipt (teacher_second_set.sha256); the same records are read row by row in the rows sidecar, so it is not read a second time",
+      "path": "/opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-second-set.pkl",
+      "sha256": "75cc6dcdba06b3d2073425cffdc69cce214d76b1037777a8517cba7bc492d499",
+      "status": "read"
+     },
+     "state_split_day": {
+      "bytes": 9571496,
+      "check": "equal",
+      "how": "read whole",
+      "path": "/opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-state-split.json",
+      "pinned": "8384fbf3cce44b0c59b940e9d1d12d69e47543d788f58b1320a3280ebb1a20b4",
+      "schema": "FRANKIE_TEACHER_STATE_SPLIT_DAY_V1",
+      "sha256": "8384fbf3cce44b0c59b940e9d1d12d69e47543d788f58b1320a3280ebb1a20b4",
+      "sides": {
+       "A": {
+        "all_sum_back": true,
+        "buckets": 9636,
+        "fields": 71
+       },
+       "B": {
+        "all_sum_back": true,
+        "buckets": 9636,
+        "fields": 71
+       }
+      },
+      "status": "read",
+      "summary": {
+       "all_sum_back": {
+        "A": true,
+        "B": true
+       },
+       "buckets": {
+        "A": 9636,
+        "B": 9636
+       },
+       "fields": 71,
+       "groups": 583688,
+       "unknown_groups": {
+        "A": {
+         "native.lifecycle:candidate|availability_note": 582826,
+         "native.lifecycle:candidate|candidate_id": 582826,
+         "native.lifecycle:candidate|direction_note": 582826,
+         "native.lifecycle:candidate|selection_rule": 582826,
+         "native.lifecycle:candidate|threshold_rule": 582826,
+         "native.lifecycle:candidate|window_truncated": 582826,
+         "native.lifecycle:episode|candidate_id": 582179,
+         "native.lifecycle:episode|dipole_path_withheld": 582991,
+         "native.lifecycle:episode|orientation": 582179,
+         "native.lifecycle:episode|recognition_outcome": 582826,
+         "native.lifecycle:episode|recognized_recv_ns_basis": 582826,
+         "native.lifecycle:episode|terminal_phase": 582991,
+         "native.lifecycle:flow_substrate|classification": 546391,
+         "native.lifecycle:flow_substrate|no_direction_reason": 546392,
+         "native.lifecycle:flow_substrate|polarity": 546392,
+         "native.lifecycle:flow_substrate|roll20_defined": 546392,
+         "native.lifecycle:flow_substrate|status": 546391,
+         "native.lifecycle:flow_substrate|window_direction": 546392,
+         "native.lifecycle:lineage|depth_label": 583687,
+         "native.lifecycle:lineage|node_id": 583687,
+         "native.lifecycle:lineage|parent_id": 583687,
+         "native.lifecycle:lineage|role": 583687,
+         "native.lifecycle:lineage|side_orientation": 583687,
+         "native.lifecycle:lineage|status": 583687,
+         "native.lifecycle:lineage|transition_type": 583687,
+         "native.lifecycle:queue|birth_family_id": 321490,
+         "native.lifecycle:queue|birth_session_phase": 321490,
+         "native.lifecycle:queue|censored": 321490,
+         "native.lifecycle:queue|exit_family_id": 321490,
+         "native.lifecycle:queue|exit_session_phase": 321490,
+         "native.lifecycle:queue|exit_stratum_available": 321490,
+         "native.lifecycle:queue|queue_scope": 321491,
+         "native.lifecycle:queue|resolved": 321490,
+         "native.lifecycle:queue|stratum_basis": 321490,
+         "native.lifecycle:queue|terminal_basis": 321491,
+         "native.lifecycle:queue|terminal_status": 321490,
+         "native.lifecycle:replenishment|action": 2101,
+         "native.lifecycle:replenishment|liquidity_kind": 2101,
+         "native.lifecycle:replenishment|liquidity_kind_basis": 2101,
+         "native.lifecycle:replenishment|observation": 2101,
+         "native.lifecycle:replenishment|price_is_sentinel": 2101,
+         "native.lifecycle:replenishment|unattributed_reason": 573347,
+         "native.lifecycle:response|structure_id": 581403
+        },
+        "B": {
+         "native.lifecycle:candidate|availability_note": 582826,
+         "native.lifecycle:candidate|candidate_id": 582826,
+         "native.lifecycle:candidate|direction_note": 582826,
+         "native.lifecycle:candidate|selection_rule": 582826,
+         "native.lifecycle:candidate|threshold_rule": 582826,
+         "native.lifecycle:candidate|window_truncated": 582826,
+         "native.lifecycle:episode|candidate_id": 582179,
+         "native.lifecycle:episode|dipole_path_withheld": 582991,
+         "native.lifecycle:episode|orientation": 582179,
+         "native.lifecycle:episode|recognition_outcome": 582826,
+         "native.lifecycle:episode|recognized_recv_ns_basis": 582826,
+         "native.lifecycle:episode|terminal_phase": 582991,
+         "native.lifecycle:flow_substrate|classification": 546391,
+         "native.lifecycle:flow_substrate|no_direction_reason": 546392,
+         "native.lifecycle:flow_substrate|polarity": 546392,
+         "native.lifecycle:flow_substrate|roll20_defined": 546392,
+         "native.lifecycle:flow_substrate|status": 546391,
+         "native.lifecycle:flow_substrate|window_direction": 546392,
+         "native.lifecycle:lineage|depth_label": 583687,
+         "native.lifecycle:lineage|node_id": 583687,
+         "native.lifecycle:lineage|parent_id": 583687,
+         "native.lifecycle:lineage|role": 583687,
+         "native.lifecycle:lineage|side_orientation": 583687,
+         "native.lifecycle:lineage|status": 583687,
+         "native.lifecycle:lineage|transition_type": 583687,
+         "native.lifecycle:queue|birth_family_id": 321490,
+         "native.lifecycle:queue|birth_session_phase": 321490,
+         "native.lifecycle:queue|censored": 321490,
+         "native.lifecycle:queue|exit_family_id": 321490,
+         "native.lifecycle:queue|exit_session_phase": 321490,
+         "native.lifecycle:queue|exit_stratum_available": 321490,
+         "native.lifecycle:queue|queue_scope": 321491,
+         "native.lifecycle:queue|resolved": 321490,
+         "native.lifecycle:queue|stratum_basis": 321490,
+         "native.lifecycle:queue|terminal_basis": 321491,
+         "native.lifecycle:queue|terminal_status": 321490,
+         "native.lifecycle:replenishment|action": 2101,
+         "native.lifecycle:replenishment|liquidity_kind": 2101,
+         "native.lifecycle:replenishment|liquidity_kind_basis": 2101,
+         "native.lifecycle:replenishment|observation": 2101,
+         "native.lifecycle:replenishment|price_is_sentinel": 2101,
+         "native.lifecycle:replenishment|unattributed_reason": 573347,
+         "native.lifecycle:response|structure_id": 581403
+        }
+       }
+      }
+     }
+    },
+    "read": [
+     "account",
+     "book_event_differences_list",
+     "mismatches_list",
+     "reconciliation_differences_list",
+     "rows_sidecar",
+     "second_set_file",
+     "state_split_day"
+    ],
+    "reader": "boss_teacher",
+    "receipt": {
+     "bytes": 144069865,
+     "path": "/opt/frankie-box/work/experiment-teacher-rows/20231018/receipt.json",
+     "sha256": "7c9f2247e47e62b17b1e7063689ca23679dc30dd91d240e823064d6a324a99f9"
+    },
+    "rows_dir": "/opt/frankie-box/work/experiment-teacher-rows/20231018",
+    "rule": "read whole beside the teacher's own work; plane values by reference to the ROOT's stream rows (only copies avoided); never cut, capped or sampled; an absent part is listed, never fatal; the pinned key is never rebuilt from it",
+    "schema": "FRANKIE_TEACHER_SECOND_SET_READING_V1"
+   },
+   "inline": true,
+   "path": "/opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-second-set-read.boss.json",
+   "sha256": "6d16f85f01e591f98f5904b71e73474ada94999ab0839b99619616a265726ff3"
+  },
+  {
+   "bytes": 394887,
+   "inline": false,
+   "path": "/opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-book-event-differences.jsonl",
+   "sha256": "52325ecd19addde185b89ecd1f7046b357a4b846efb00fab8cb7ca6e575fd119"
+  },
+  {
+   "bytes": 0,
+   "inline": false,
+   "path": "/opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-second-set-mismatches.jsonl",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "bytes": 351272,
+   "inline": false,
+   "path": "/opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-reconciliation-differences.jsonl",
+   "sha256": "8214034715e731d89dd0ae8cd19b81c8738633ec70b1e011e590ebf06cd90d74"
+  },
+  {
+   "bytes": 161126241394,
+   "inline": false,
+   "path": "/opt/frankie-box/work/experiment-teacher-rows/20231018/host-dipole-classroom-source.c15.rows.jsonl",
+   "sha256": "83081ea3ed71ecfc63c6c6d0012af37fa8c86aeb7f2e0bafc739509c4e47d985"
+  },
+  {
+   "bytes": 52688476687,
+   "inline": false,
+   "path": "/opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-second-set.pkl",
+   "sha256": "75cc6dcdba06b3d2073425cffdc69cce214d76b1037777a8517cba7bc492d499"
+  },
+  {
+   "bytes": 9571496,
+   "inline": false,
+   "path": "/opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-state-split.json",
+   "sha256": "8384fbf3cce44b0c59b940e9d1d12d69e47543d788f58b1320a3280ebb1a20b4"
+  }
+ ],
+ "stage": "teacher-second-set",
+ "summary": {
+  "reader": "boss_teacher",
+  "reading": {
+   "bytes": 31887,
+   "path": "/opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-second-set-read.boss.json",
+   "sha256": "6d16f85f01e591f98f5904b71e73474ada94999ab0839b99619616a265726ff3"
+  },
+  "rows": "/opt/frankie-box/work/experiment-teacher-rows/20231018/host-dipole-classroom-source.c15.json"
+ }
+}

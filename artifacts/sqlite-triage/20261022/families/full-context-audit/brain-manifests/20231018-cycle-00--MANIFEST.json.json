@@ -1,0 +1,292 @@
+{
+  "at": 1791995847.2716396,
+  "attachments": [
+    {
+      "brain_attachment": "20231018-external",
+      "bytes": 35132604,
+      "included": false,
+      "name": "day-external.json",
+      "note": "the day file of his historical data points, listed (not copied into his reading corpus); every reader of the ingest reads it through operations/frankie_day_external.AsOfReader at its own cutoff",
+      "path": "/opt/frankie-box/work/ingest-20231018-gh-36571235912-1/day-external.json",
+      "s3_key": "frankie/day_external/20231018/day-external.json",
+      "s3_key_basis": "day-external-receipt.json beside the day file",
+      "schema": "FRANKIE_DAY_EXTERNAL_V1",
+      "sha256": "d006252d605432994909a52e75fcbfe7cec3e42990a98c02e91e1f65212f0bc7"
+    }
+  ],
+  "cycle": "00",
+  "cycle_complete": null,
+  "day": "20231018",
+  "entries": [
+    {
+      "bytes": 149941110857,
+      "include": true,
+      "kind": "calculation findings: the derivation digest, every layer of the pin",
+      "name": "derivation-digest-full.md",
+      "sha256": "45d7bc8b47c37d4a2144dff0c154f4237e1d6dadffbbf105fe79b8e5cbdb690b",
+      "sha256_basis": {
+        "basis": "by claim",
+        "claim_file": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/file-claims.jsonl",
+        "claim_schema": "v2",
+        "claimed_by": "digest writer (Session._write_digest): the write-stream sha256 at 2026-10-09T12:57:57Z",
+        "placed": "hard link"
+      },
+      "source": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derivation-digest-full.md"
+    },
+    {
+      "bytes": 80922,
+      "include": true,
+      "kind": "calculation findings: the derivation receipt (layer statuses, producers, digests)",
+      "name": "derive.md",
+      "sha256": "534bcff18d8c9622c69a56c5b492e637ae41b1e820bac9c3831d81f74f92e126",
+      "source": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derive.json"
+    },
+    {
+      "bytes": 1668721918,
+      "include": true,
+      "kind": "the Dipole classroom: Frankie's own teach-back of the 19-dimension surface for this cycle (case by case: set include false to keep it out)",
+      "name": "classroom.md",
+      "sha256": "7957142b3bdcd449ee084b89f711465e8468d68a2de64e5baa1ed19b8c8dc4b8",
+      "source": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/classroom/classroom.md"
+    },
+    {
+      "bytes": 5679,
+      "include": false,
+      "kind": "witness of the derived files (their content is in the digest)",
+      "name": "derived-files.md",
+      "sha256": "a41c1a48c05f271145d0d1c6b567a55e67626071ffec88ffc46d00c294165c20",
+      "source": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived",
+      "witness_basis": {
+        "aggressor_and_native_signed_flow.json": {
+          "basis": "hashed"
+        },
+        "churn_and_queue_turnover.json": {
+          "basis": "hashed"
+        },
+        "clock_event_known_by.json": {
+          "basis": "hashed"
+        },
+        "clock_event_time.json": {
+          "basis": "hashed"
+        },
+        "clock_feature_availability.json": {
+          "basis": "hashed"
+        },
+        "clock_lock_time.json": {
+          "basis": "hashed"
+        },
+        "clock_model_evaluation.json": {
+          "basis": "hashed"
+        },
+        "clock_prospective_discovery_confirmation.json": {
+          "basis": "hashed"
+        },
+        "clock_receive_time.json": {
+          "basis": "hashed"
+        },
+        "complete_state_reset_bootstrap_receipts.json": {
+          "basis": "hashed"
+        },
+        "contract_session_roll_state.json": {
+          "basis": "hashed"
+        },
+        "depletion_and_replenishment.json": {
+          "basis": "hashed"
+        },
+        "derived_ancestry_gaps.json": {
+          "basis": "hashed"
+        },
+        "derived_d_family_geometry.json": {
+          "basis": "hashed"
+        },
+        "derived_feature_availability_timestamps.json": {
+          "basis": "hashed"
+        },
+        "derived_open_world_predecessor_state.json": {
+          "basis": "hashed"
+        },
+        "derived_price_flow_book_paths.json": {
+          "basis": "hashed"
+        },
+        "derived_roll20_and_dipole_state.json": {
+          "basis": "hashed"
+        },
+        "derived_unresolved_age_chain_trajectory.json": {
+          "basis": "hashed"
+        },
+        "derived_v4_mechanics_fifo_features.json": {
+          "basis": "hashed"
+        },
+        "fifo_queues.json": {
+          "basis": "hashed"
+        },
+        "full_bid_ask_depth.json": {
+          "basis": "hashed"
+        },
+        "legacy_book_imbalance.json": {
+          "basis": "claim",
+          "claim_file": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/file-claims.jsonl",
+          "claim_schema": "v2",
+          "claimed_by": "frankie_box_root_move.do_move: write-stream sha256 of the copy at 2026-10-09T09:38:00Z",
+          "rule": "inode, size, mtime_ns, the filesystem identity (a V2 row) and the last 64 KiB checked; any difference hashes from byte 0"
+        },
+        "legacy_book_imbalance.json.ARCHIVED.README.txt": {
+          "basis": "hashed"
+        },
+        "legacy_native_signed_flow.json": {
+          "basis": "claim",
+          "claim_file": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/file-claims.jsonl",
+          "claim_schema": "v2",
+          "claimed_by": "root reuse: receipt/derive.json sha256 (sealed on an earlier checkout) + stat + tail at 2026-10-08T03:02:14Z",
+          "rule": "inode, size, mtime_ns, the filesystem identity (a V2 row) and the last 64 KiB checked; any difference hashes from byte 0"
+        },
+        "legacy_per_second_roll20.json": {
+          "basis": "claim",
+          "claim_file": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/file-claims.jsonl",
+          "claim_schema": "v2",
+          "claimed_by": "root reuse: receipt/derive.json sha256 (sealed on an earlier checkout) + stat + tail at 2026-10-08T03:02:14Z",
+          "rule": "inode, size, mtime_ns, the filesystem identity (a V2 row) and the last 64 KiB checked; any difference hashes from byte 0"
+        },
+        "legacy_price.json": {
+          "basis": "claim",
+          "claim_file": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/file-claims.jsonl",
+          "claim_schema": "v2",
+          "claimed_by": "root reuse: receipt/derive.json sha256 (sealed on an earlier checkout) + stat + tail at 2026-10-08T03:02:14Z",
+          "rule": "inode, size, mtime_ns, the filesystem identity (a V2 row) and the last 64 KiB checked; any difference hashes from byte 0"
+        },
+        "legacy_structure_observables.json": {
+          "basis": "claim",
+          "claim_file": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/file-claims.jsonl",
+          "claim_schema": "v2",
+          "claimed_by": "root reuse: receipt/derive.json sha256 (sealed on an earlier checkout) + stat + tail at 2026-10-08T03:02:14Z",
+          "rule": "inode, size, mtime_ns, the filesystem identity (a V2 row) and the last 64 KiB checked; any difference hashes from byte 0"
+        },
+        "mechanics_actions_by_side_and_level.json": {
+          "basis": "hashed"
+        },
+        "missingness_and_integrity_flags.json": {
+          "basis": "hashed"
+        },
+        "order_identity_transitions.json": {
+          "basis": "hashed"
+        },
+        "order_lifecycle_adds.json": {
+          "basis": "hashed"
+        },
+        "order_lifecycle_cancels.json": {
+          "basis": "hashed"
+        },
+        "order_lifecycle_clears.json": {
+          "basis": "hashed"
+        },
+        "order_lifecycle_fills.json": {
+          "basis": "hashed"
+        },
+        "order_lifecycle_modifies.json": {
+          "basis": "hashed"
+        },
+        "order_lifecycle_replaces.json": {
+          "basis": "hashed"
+        },
+        "order_lifecycle_trades.json": {
+          "basis": "hashed"
+        },
+        "orders_and_volume_ahead.json": {
+          "basis": "hashed"
+        },
+        "prebirth_ancestry_successor_opportunity.json": {
+          "basis": "hashed"
+        },
+        "prebirth_negative_opportunity_cases.json": {
+          "basis": "hashed"
+        },
+        "prebirth_predecessor_at_risk_state.json": {
+          "basis": "hashed"
+        },
+        "prebirth_stopped_chain_false_context_controls.json": {
+          "basis": "hashed"
+        },
+        "prebirth_unresolved_chain_extension_state.json": {
+          "basis": "hashed"
+        },
+        "price_and_book_path.json": {
+          "basis": "hashed"
+        },
+        "price_level_and_order_counts.json": {
+          "basis": "hashed"
+        },
+        "queue_age_and_survival.json": {
+          "basis": "hashed"
+        },
+        "queue_concentration.json": {
+          "basis": "hashed"
+        },
+        "resilience_and_recovery.json": {
+          "basis": "hashed"
+        },
+        "spread_and_depth_imbalance.json": {
+          "basis": "hashed"
+        }
+      }
+    },
+    {
+      "bytes": 1626302,
+      "include": true,
+      "kind": "the Dipole classroom's external section: Frankie's own teach-back of his historical data points beside the 19 dimensions for this cycle",
+      "name": "classroom-external.md",
+      "sha256": "f6a87d7ee240fbda08684b6263c05b6627cb135428269ea709768d1a066a3aee",
+      "source": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/classroom/classroom-external.md"
+    },
+    {
+      "bytes": 91716,
+      "include": true,
+      "kind": "Frankie classroom claims, source-bound; scientific checking follows",
+      "name": "classroom-findings.json",
+      "sha256": "9df5db9b427e5c8da32a6c90019c5e4afb2fb55bffa41776f689face8ee43d9f",
+      "source": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/classroom/novel-findings.json"
+    },
+    {
+      "bytes": 405138,
+      "include": true,
+      "kind": "Frankie classroom claims, source-bound; scientific checking follows",
+      "name": "classroom-external-findings.json",
+      "sha256": "d5d668dbceb2598a085e38c8480fbda985941363e4df5a27c826525a62f657c0",
+      "source": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/classroom/external-novel-findings.json"
+    },
+    {
+      "bytes": 12055,
+      "include": true,
+      "kind": "the experiment's directive (Greg): what we are shooting for",
+      "name": "experiment-directive.json",
+      "sha256": "0e096c03eefd9cf914b40d6268cd0cb023185ef4d05f994ed89049794f445ec0",
+      "source": "/opt/frankie-box/code/18be1e6164ee18abacfd578648ea9a264618e5c5-push-20261014T161154178796069Z/markets/research/kalshi/frankie_boss/knowledge/EXPERIMENT_DIRECTIVE_V1.json"
+    }
+  ],
+  "entry_kind": "session",
+  "knowledge_status": "session_findings",
+  "native_learning_performed": null,
+  "note": "Greg, 2026-09-21: the calculation findings of cycles 0 and 1 are in the brain without a doubt; other documents case by case: set include to false to keep an entry out of the next corpus, add a file with include true to bring one in.",
+  "schema": "FRANKIE_BOX_BRAIN_ENTRY_V1",
+  "unavailable": [
+    {
+      "name": "accounting-and-ledgers.md",
+      "reason": "not written by the session",
+      "source": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/out/response.json"
+    },
+    {
+      "name": "analysis.md",
+      "reason": "not written by the session",
+      "source": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/out/analysis.md"
+    },
+    {
+      "name": "priming.md",
+      "reason": "not written by the session",
+      "source": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/teach/priming.md"
+    },
+    {
+      "name": "final classroom exchange (request, answers, correction, receipt, transcript, grade)",
+      "reason": "no principal directory given: the classroom has not been corrected and graded for this cycle",
+      "source": "principal directory"
+    }
+  ]
+}

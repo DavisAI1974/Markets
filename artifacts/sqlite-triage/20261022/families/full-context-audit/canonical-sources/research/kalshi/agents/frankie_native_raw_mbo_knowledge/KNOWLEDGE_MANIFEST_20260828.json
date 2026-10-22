@@ -1,0 +1,1476 @@
+{
+  "artifacts": [
+    {
+      "arms": [
+        "A_CLEAN",
+        "A_MEMORY"
+      ],
+      "authority": "BINDING_CURRENT_MISSION",
+      "bytes": 34562,
+      "id": "native_rt_mission",
+      "kind": "MARKDOWN",
+      "load_mode": "ALWAYS_LOAD",
+      "path": "research/kalshi/agents/frankie_native_raw_mbo_oct45_realtime_mission_20260828.md",
+      "roles": [
+        "REAL_TIME_FRANKIE"
+      ],
+      "sha256": "ff2b8103e2e0f7475db72d9f9b146f7f5196b7841a94af3190537e8016733e85"
+    },
+    {
+      "arms": [
+        "A_CLEAN",
+        "A_MEMORY"
+      ],
+      "authority": "BINDING_CURRENT_CALCULATION_CONTRACT",
+      "bytes": 21908,
+      "id": "native_calculation_contract",
+      "kind": "MARKDOWN",
+      "load_mode": "ALWAYS_LOAD",
+      "path": "research/kalshi/agents/frankie_native_raw_mbo_calculation_contract_20260828.md",
+      "roles": [
+        "REAL_TIME_FRANKIE"
+      ],
+      "sha256": "822d2cfdf8e78bfde0566f1a67929cc81a02611193167cf94a2171364b897865"
+    },
+    {
+      "arms": [
+        "A_CLEAN",
+        "A_MEMORY"
+      ],
+      "authority": "BINDING_CURRENT_DIRECTIVE",
+      "bytes": 3058,
+      "id": "first_replay_forecaster_directive",
+      "kind": "MARKDOWN",
+      "load_mode": "ALWAYS_LOAD",
+      "path": "research/kalshi/agents/frankie_native_raw_mbo_forecaster_first_replay_review_20260828.md",
+      "roles": [
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "c53634ba99ef3b267bb1db47ada392916890df49c17c8e6721ce54b7c991decd"
+    },
+    {
+      "arms": [
+        "A_CLEAN"
+      ],
+      "authority": "PROMOTED_POSITIVE_NATIVE_KNOWLEDGE",
+      "bytes": 9543,
+      "id": "a_clean_promoted_positive_knowledge",
+      "kind": "MARKDOWN",
+      "load_mode": "ALWAYS_LOAD",
+      "path": "research/kalshi/agents/frankie_native_raw_mbo_knowledge/A_CLEAN_POSITIVE_KNOWLEDGE_20260828.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "1e26a726faeb15ed5d0714c1bc850a4d347c77a324f7117fbc190910ec4b6a63"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "PROMOTED_POSITIVE_NATIVE_KNOWLEDGE",
+      "bytes": 5380,
+      "id": "a_memory_promoted_positive_knowledge",
+      "kind": "MARKDOWN",
+      "load_mode": "ALWAYS_LOAD",
+      "path": "research/kalshi/agents/frankie_native_raw_mbo_knowledge/A_MEMORY_POSITIVE_KNOWLEDGE_20260828.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "bc84a77d33393c7d04185fcbfa82794cef0efd45b4fd31f0b2ee245cfb8d9131"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "DETAILED_POSITIVE_PROVENANCE",
+      "bytes": 16870,
+      "id": "native_positive_discovery_addendum",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/kalshi/agents/frankie_native_raw_mbo_rt_positive_discovery_addendum_20260828.md",
+      "roles": [
+        "REAL_TIME_FRANKIE"
+      ],
+      "sha256": "ea8b1243e8da25b34c4c2edc383a7bb5893a4b1dfbfd94292024ff312d58ff65"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "POSITIVE_NATIVE_EVIDENCE",
+      "bytes": 17287,
+      "id": "a_memory_actual_rt_positive_report",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_RT_ACTUAL_FRANKIE_RETROSPECTIVE_POSITIVE_REPORT_20260828.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "2854c9b96d759c61c4afa750e5106c824fa81462e5a5d61ff55240f9cbda9df5"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "POSITIVE_NATIVE_EVIDENCE",
+      "bytes": 25349,
+      "id": "a_memory_forecaster_positive_review",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_FORECASTER_FIRST_REPLAY_OUTPUT_POSITIVE_REVIEW_20260828.md",
+      "roles": [
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "b02a1a19a21a878e9d0c52294db18fd2f6810624a41a7e9a5773a01538a8d9dc"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "POSITIVE_NATIVE_EVIDENCE",
+      "bytes": 12114,
+      "id": "a_memory_member_first_positive_findings",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_MEMBER_FIRST_NATIVE_MBO_POSITIVE_FINDINGS_20260828.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "7b9bd3f11c28780900d76cfefd273ac7e9591c8e450b9b86b06a04fb8c32cde6"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "POSITIVE_NATIVE_EVIDENCE_RECEIPT",
+      "bytes": 3196,
+      "id": "a_memory_member_first_recalculation_receipt",
+      "kind": "JSON",
+      "load_mode": "RETRIEVAL",
+      "path": "research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_MEMBER_FIRST_RECALCULATION_RECEIPT_20260828.json",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "094c32a4177edee9c16e92a288427d6e5d3777f23db8d2f954f0c6d5f310a7c1"
+    },
+    {
+      "arms": [
+        "A_CLEAN"
+      ],
+      "authority": "METHOD_ONLY_CAPSULE_SOURCE",
+      "bytes": 3261,
+      "id": "a_clean_method_only_capsule_source",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/kalshi/frankie_raw_mbo_benchmark/ACLEAN_METHOD_ONLY_CAPSULE_SOURCE_20260829.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "694857137e27cc84062177ed834d6a8c71fbca908e5f8d48b93b4b016fd787cb"
+    },
+    {
+      "arms": [
+        "A_CLEAN"
+      ],
+      "authority": "POSITIVE_NATIVE_EVIDENCE",
+      "bytes": 7351,
+      "id": "a_clean_s119_measured_knowledge",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/kalshi/frankie_raw_mbo_benchmark/ACLEAN_S119_MEASURED_KNOWLEDGE_SOURCE_20260902.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "5a86b82df0f869815bd68b5055d2f608802f3443d00718c46121f4c327ac8ed7"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "BINDING_CURRENT",
+      "bytes": 7763,
+      "id": "keep_research_kalshi_ng_exhaustion_frankie_data_feed_inventory_20260824_md",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "31ff5a9d7e5d2f22cc2740f1f8010d36f37a32d2e17bee2b6794140823bddbec"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "BINDING_CURRENT",
+      "bytes": 13190,
+      "id": "keep_research_kalshi_ng_exhaustion_frankie_source_file_inventory_20260824_md",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/kalshi/NG_EXHAUSTION_FRANKIE_SOURCE_FILE_INVENTORY_20260824.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "1603a4bc329c6aabd9f62ee76c755651c1059a609c7cf8a52d21217a78cce24e"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "CURRENT_BRAIN",
+      "bytes": 1739115,
+      "id": "keep_research_kalshi_knowledge_ng_brain_json",
+      "kind": "JSON",
+      "load_mode": "RETRIEVAL",
+      "path": "research/kalshi/knowledge/ng_brain.json",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "bf473faef4d5a1b8fc68a214616e6c6163f0db1794ac98818a5401225563da57"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 7321,
+      "id": "keep_research_ng_exhaustion_chain_study_contract_20260817_json",
+      "kind": "JSON",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_CHAIN_STUDY_CONTRACT_20260817.json",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "c226eff3f99347dc41f9ec32e04eaeb0d3451ee92fa5408fdf66c097e668ac79"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 2617,
+      "id": "keep_research_ng_exhaustion_chain_phase1_54w_base_freeze_20260817_json",
+      "kind": "JSON",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE1_54W_BASE_FREEZE_20260817.json",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "ab497ee95e4eede611c0bfdac677ec7324096cc47d838b7d69755f35983c4cb6"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 2872,
+      "id": "keep_research_ng_exhaustion_chain_phase1_54w_execution_protocol_20260817_json",
+      "kind": "JSON",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE1_54W_EXECUTION_PROTOCOL_20260817.json",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "5dddfbf77f1a60e30f567f2e91001cbdf7094a59aaa7e294a882ec7e4cd958d5"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 3139,
+      "id": "keep_research_ng_exhaustion_chain_phase1_causal_protocol_20260817_json",
+      "kind": "JSON",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE1_CAUSAL_PROTOCOL_20260817.json",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "1dff5c5e22510d7770d6967aa494ec7c5b1e4f4f45a64d247ce0b174a442474d"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 4359,
+      "id": "keep_research_ng_exhaustion_chain_phase1_discovery_protocol_20260817_json",
+      "kind": "JSON",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE1_DISCOVERY_PROTOCOL_20260817.json",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "635e041b4a78eea44116af1fc89352b762edd19c4b3cbd12e1c323729f35d37d"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 2798,
+      "id": "keep_research_ng_exhaustion_chain_phase1_mechanism_addendum_20260817_json",
+      "kind": "JSON",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE1_MECHANISM_ADDENDUM_20260817.json",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "49036a33fd80a01da8a864f31c4dffb4faeb5934da16d832774c3d1c76709056"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 482,
+      "id": "keep_research_ng_exhaustion_chain_phase1_55w_reconcile_launch_20260817_json",
+      "kind": "JSON",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILE_LAUNCH_20260817.json",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "171acfe17f29217e83706f2aa1c3303d473f8f35b6959984fc93cdb72aadcecd"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 11140,
+      "id": "keep_research_ng_exhaustion_chain_phase2_final_freeze_20260818_md",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_FINAL_FREEZE_20260818.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "49133cbcbfcdf589201724ee1dc60fc0c0cb059593736a5ac97caa30c68093a1"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 14018,
+      "id": "keep_research_ng_exhaustion_chain_phase2_all_agent_findings_20260818_md",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_ALL_AGENT_FINDINGS_20260818.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "d3e273b934ef31312cf1fc5ddd67345da3efd4809f4da3cc770b8f3f80ef6d7b"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 8166,
+      "id": "keep_research_ng_exhaustion_chain_phase2_findings_20260817_md",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_FINDINGS_20260817.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "0e217af8983a5492bb6bff64f109b9b8b92622cc2d694b386784fd0d37c52bbc"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 5781,
+      "id": "keep_research_ng_exhaustion_chain_phase2_timing_context_findings_20260818_md",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_TIMING_CONTEXT_FINDINGS_20260818.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "fe1810198c249390a383434eec74c90aa854a07bfaefa26f5159c6b98af2eb18"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 6255,
+      "id": "keep_research_ng_exhaustion_chain_phase2_module_novelty_findings_20260818_md",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_MODULE_NOVELTY_FINDINGS_20260818.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "fe9ea9cd380e8ccfb3b861065ed3e5369fd1cded1aadfccd10337ea238f54e14"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 9732,
+      "id": "keep_research_ng_exhaustion_chain_phase2_postexit_recurrence_findings_20260818_md",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_POSTEXIT_RECURRENCE_FINDINGS_20260818.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "da4f5c991251668344290ac10f319aabfa5df52e8f0b7321da0eefbea864d1eb"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 3185,
+      "id": "keep_research_ng_exhaustion_chain_phase2_parallel_recurrence_reconciliation_20260818_md",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_PARALLEL_RECURRENCE_RECONCILIATION_20260818.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "9e68f222832a3136b750016a9253df213bf4b4dfe44a973c07b659fa55b1b7bf"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 5561,
+      "id": "keep_research_ng_exhaustion_chain_phase2_findings_addendum_pox_20260818_md",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_FINDINGS_ADDENDUM_POX_20260818.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "3a745e98378c6abb64327175e35efbc8e36ff1eb2150c3bc842ef7731854011c"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 6300,
+      "id": "keep_research_ng_exhaustion_chain_phase2_pox_branch_reconciliation_v2_20260818_md",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_POX_BRANCH_RECONCILIATION_V2_20260818.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "83028f75d80b787742bb4cacb9eb8935f1992bac3b5a0f734bf38fb6159efe48"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 4113,
+      "id": "keep_research_ng_exhaustion_chain_phase2_pox_same_postexit_reexpression_20260818_md",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_POX_SAME_POSTEXIT_REEXPRESSION_20260818.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "08f94ea20901768fa64b82c39b023b3fab9845106cf1d17b14e5a74e3fd74d81"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 7251,
+      "id": "keep_research_ng_exhaustion_chain_phase2_reappearance_watch_map_20260818_json",
+      "kind": "JSON",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_REAPPEARANCE_WATCH_MAP_20260818.json",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "5c22e5ce72e3a0863b16cbf469b6d491edadf1e161c494ca6d4a753e058da15c"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 4158,
+      "id": "keep_research_ng_exhaustion_chain_phase2_finalization_checklist_20260818_json",
+      "kind": "JSON",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_FINALIZATION_CHECKLIST_20260818.json",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "82a95aadd0b0e4593c35197fdd98b8c8d22dda919d7d8220f924524a744e7845"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 7252,
+      "id": "keep_research_ng_exhaustion_chain_step1_original_file_map_20260820_md",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_CHAIN_STEP1_ORIGINAL_FILE_MAP_20260820.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "8d2d268401e18410a9d77473c703d239b7fc1adc020d40e0b85c25415b328246"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 10291,
+      "id": "keep_research_ng_exhaustion_chain_step1_5y_v4_native_census_protocol_20260820_md",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_CHAIN_STEP1_5Y_V4_NATIVE_CENSUS_PROTOCOL_20260820.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "3f717ad70d56c9ee3e0a002b9ff4de22d1d7cd209485ef7c7f3c1d6165ef69d1"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 6035,
+      "id": "keep_research_ng_exhaustion_chain_step1_5y_v4_native_census_protocol_20260820_json",
+      "kind": "JSON",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_CHAIN_STEP1_5Y_V4_NATIVE_CENSUS_PROTOCOL_20260820.json",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "cc40727f275303dd1978bdf4e47bdfc19821d3d530c846e173d0f8eb953cef02"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 6464,
+      "id": "keep_research_ng_exhaustion_chain_canonical_54w_merge_20260817_py",
+      "kind": "PYTHON_SOURCE",
+      "load_mode": "RETRIEVAL",
+      "path": "research/ng_exhaustion_chain_canonical_54w_merge_20260817.py",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "842f2ca650f28b602e9b7f07208a692b092ae5e65aa574ebd79d1b5a84da1e8a"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 5920,
+      "id": "keep_research_ng_exhaustion_chain_canonical_54w_shard_20260817_py",
+      "kind": "PYTHON_SOURCE",
+      "load_mode": "RETRIEVAL",
+      "path": "research/ng_exhaustion_chain_canonical_54w_shard_20260817.py",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "f6a80d415ba71aee7ec002d3d97f0a17b13ecd3ea88883999a8edc180f5136d3"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 22371,
+      "id": "keep_research_ng_exhaustion_chain_canonical_table_20260817_py",
+      "kind": "PYTHON_SOURCE",
+      "load_mode": "RETRIEVAL",
+      "path": "research/ng_exhaustion_chain_canonical_table_20260817.py",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "4325776b4d70bfa3808bce1b9473d6da75cc18c8cbe00be3cf5652f849573ffa"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 11897,
+      "id": "keep_research_ng_exhaustion_chain_phase1_discovery_20260817_py",
+      "kind": "PYTHON_SOURCE",
+      "load_mode": "RETRIEVAL",
+      "path": "research/ng_exhaustion_chain_phase1_discovery_20260817.py",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "e64d05a25aee66047750fe1923162c3694c6fc3179d979352b95853806a04cc9"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 6725,
+      "id": "keep_research_ng_exhaustion_chain_phase1_causal_54w_20260817_py",
+      "kind": "PYTHON_SOURCE",
+      "load_mode": "RETRIEVAL",
+      "path": "research/ng_exhaustion_chain_phase1_causal_54w_20260817.py",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "9325f8a83d2e567d785af197468e2d865a8b44273c938408f58ea157e8652c6b"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 4460,
+      "id": "keep_research_ng_exhaustion_chain_phase1_continuity_54w_20260817_py",
+      "kind": "PYTHON_SOURCE",
+      "load_mode": "RETRIEVAL",
+      "path": "research/ng_exhaustion_chain_phase1_continuity_54w_20260817.py",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "57897aa5af54c5afe6206117c9bf27cf961e6b9b413f7e26bea5b31948a0b94b"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 9210,
+      "id": "keep_research_ng_exhaustion_chain_phase1_falsifier_54w_20260817_py",
+      "kind": "PYTHON_SOURCE",
+      "load_mode": "RETRIEVAL",
+      "path": "research/ng_exhaustion_chain_phase1_falsifier_54w_20260817.py",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "45718cfff65b8a1b5a09d7f05c9ab8af4dc6071b2483b710171c82c3546ebb79"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 8172,
+      "id": "keep_research_ng_exhaustion_chain_phase1_lineage_54w_20260817_py",
+      "kind": "PYTHON_SOURCE",
+      "load_mode": "RETRIEVAL",
+      "path": "research/ng_exhaustion_chain_phase1_lineage_54w_20260817.py",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "16be2b7249e6cd74951670421308baf3e8c942d95b0f85aeb4228b51b201af3b"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 10492,
+      "id": "keep_research_ng_exhaustion_chain_phase1_structural_54w_20260817_py",
+      "kind": "PYTHON_SOURCE",
+      "load_mode": "RETRIEVAL",
+      "path": "research/ng_exhaustion_chain_phase1_structural_54w_20260817.py",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "2b93cfeb39cc73409f04b9d9fc61e0fe02f79823fd1df064ae819a82c27d05d9"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 20813,
+      "id": "keep_research_ng_exhaustion_chain_phase1_reconcile_55w_20260817_py",
+      "kind": "PYTHON_SOURCE",
+      "load_mode": "RETRIEVAL",
+      "path": "research/ng_exhaustion_chain_phase1_reconcile_55w_20260817.py",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "c0b226dae18b46d88ae6933cc8a450331210abf3e33f4a0d93281df3f5ddfdf9"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 11949,
+      "id": "keep_research_ng_exhaustion_chain_phase2_characterize_20260817_py",
+      "kind": "PYTHON_SOURCE",
+      "load_mode": "RETRIEVAL",
+      "path": "research/ng_exhaustion_chain_phase2_characterize_20260817.py",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "389594824363d69daa1df85a0b36400d7caec3d6ce06e89949b3be59de664055"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 6609,
+      "id": "keep_research_ng_exhaustion_chain_phase2_parallel_agents_20260818_py",
+      "kind": "PYTHON_SOURCE",
+      "load_mode": "RETRIEVAL",
+      "path": "research/ng_exhaustion_chain_phase2_parallel_agents_20260818.py",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "ffc4781a693fa354185e1a240f4b7275b8248de3c336d33a858bac1d318150d9"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 2440,
+      "id": "keep_research_ng_exhaustion_chain_state_enrich_20260817_py",
+      "kind": "PYTHON_SOURCE",
+      "load_mode": "RETRIEVAL",
+      "path": "research/ng_exhaustion_chain_state_enrich_20260817.py",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "30d220ae15786ef73e4d3a729723f932bbefdf00c238c3bb48778498c315ae9c"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 4776,
+      "id": "keep_research_ng_exhaustion_week_chain_state_roster_20260817_py",
+      "kind": "PYTHON_SOURCE",
+      "load_mode": "RETRIEVAL",
+      "path": "research/ng_exhaustion_week_chain_state_roster_20260817.py",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "ebe7f9525aaa48dff4374989e68c7cdc65e91f1d6145f3d3bb31aa684e4ec069"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 10767,
+      "id": "keep_research_ng_exhaustion_week_continuous_roster_20260817_py",
+      "kind": "PYTHON_SOURCE",
+      "load_mode": "RETRIEVAL",
+      "path": "research/ng_exhaustion_week_continuous_roster_20260817.py",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "638a13b8154863deb3816e4406d4f0cd4a9a74a860cfecce2f74c440f840a0ca"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 20557,
+      "id": "keep_research_ng_exhaustion_brain_proposal_index_20260818_md",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_BRAIN_PROPOSAL_INDEX_20260818.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "47ad3db18b936050d26a7c21534c2648d43ff830db91f0c04e889d029c478f23"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 2665,
+      "id": "keep_research_ng_exhaustion_brain_proposal_index_addendum_20260820_md",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_BRAIN_PROPOSAL_INDEX_ADDENDUM_20260820.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "cc67e9d38de3433bde4d7ed0541c71350821819d714e2fbad6a933078f36a1c7"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "CURRENT_BRAIN+FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 14248,
+      "id": "keep_research_ng_exhaustion_v4_brain_trade_proposal_clean_source_current_20260820_md",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_V4_BRAIN_TRADE_PROPOSAL_CLEAN_SOURCE_CURRENT_20260820.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "39b936ed132fa1b066a37ed5a20432e5c9ccee96ab699fc54607720a26e1cd58"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 18591,
+      "id": "keep_research_ng_exhaustion_v3_v4_brain_trade_proposal_addendum_20260820_md",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_ADDENDUM_20260820.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "07cc6b9209e79f75f540a8a3b191f7fd9de99f6138d4e97ee247702a70f076e2"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 6212,
+      "id": "keep_research_ng_exhaustion_v3_v4_brain_trade_proposal_final_addendum_20260820_md",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_FINAL_ADDENDUM_20260820.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "c585312bf731a3c7ff47d26013c08ce411c3356620eed06d928bc1485c378e7f"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 15263,
+      "id": "keep_research_kalshi_knowledge_ng_brain_exhaustion_chain_phase2_proposal_20260818_json",
+      "kind": "JSON",
+      "load_mode": "RETRIEVAL",
+      "path": "research/kalshi/knowledge/ng_brain_exhaustion_chain_phase2_proposal_20260818.json",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "c734c8c19c0974650960308b5f836c9ed26ea5b3debfc832a604a99f695b4739"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 9289,
+      "id": "keep_research_kalshi_knowledge_ng_brain_exhaustion_chain_birth_v2_proposal_20260819_json",
+      "kind": "JSON",
+      "load_mode": "RETRIEVAL",
+      "path": "research/kalshi/knowledge/ng_brain_exhaustion_chain_birth_v2_proposal_20260819.json",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "9251176dbb5657ab22107c8ab3e4c27a260a7ea995f3c745491a778e21066b14"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 10176,
+      "id": "keep_research_kalshi_knowledge_ng_brain_exhaustion_entry_timing_extension_20260818_json",
+      "kind": "JSON",
+      "load_mode": "RETRIEVAL",
+      "path": "research/kalshi/knowledge/ng_brain_exhaustion_entry_timing_extension_20260818.json",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "1b9f161bfb5e775e75bf49996a6448355bb0cbb6f9ecf670a5c27a1c582bc9b0"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 6262,
+      "id": "keep_research_kalshi_knowledge_ng_brain_exhaustion_pox_focused_proposal_20260819_json",
+      "kind": "JSON",
+      "load_mode": "RETRIEVAL",
+      "path": "research/kalshi/knowledge/ng_brain_exhaustion_pox_focused_proposal_20260819.json",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "925deedaec7687eed64e7b37aa9ed4c9515af8081f4fbbe5c856b3e5b59dcb3f"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 3923,
+      "id": "keep_research_ng_exhaustion_v4_interpretation_correction_20260820_md",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_V4_INTERPRETATION_CORRECTION_20260820.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "e8e74ffd603faf6e9e75c9659a6e434e7a8da982bee7224ef4fabdd867f10b8f"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "CURRENT_BRAIN+FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 8161,
+      "id": "keep_research_ng_exhaustion_v4_continuous_adaptive_walkforward_contract_20260820_md",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_V4_CONTINUOUS_ADAPTIVE_WALKFORWARD_CONTRACT_20260820.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "f6759964d9d65a2f0322e7b74834c27a11460094a7f6af43b5d0de5a03f3278b"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "CURRENT_BRAIN+FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 17183,
+      "id": "keep_research_ng_exhaustion_d0_d5_v4_geometric_self_adaptation_contract_20260820_md",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "00875cb7ea460e7f91cf2733cca47b9855bbb6bf2656da960c06c9311faf8e09"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 9441,
+      "id": "keep_research_ng_exhaustion_d0_d5_v4_geometric_self_adaptation_contract_20260820_json",
+      "kind": "JSON",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.json",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "e36d82e245a718624bb21a14ae1cd5d172b64630d38580d7fe4e66d9357909db"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 2218,
+      "id": "keep_research_ng_exhaustion_event_mark_clock_open_boundary_20260819_md",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_EVENT_MARK_CLOCK_OPEN_BOUNDARY_20260819.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "b3c0f05a3d43a384b7445553000234c08dcd8ba31c6ee75bc955c3547da07a2a"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "CURRENT_BRAIN+FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 7565,
+      "id": "keep_research_ng_exhaustion_v4_clean_source_prelaunch_gates_20260820_md",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_V4_CLEAN_SOURCE_PRELAUNCH_GATES_20260820.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "ac6018f9379f747d5a75108ab70bc4d129a589a327a9fbbbaf9031d79ab1180d"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 5256,
+      "id": "keep_research_ng_exhaustion_continuous_instance_timing_correction_20260820_md",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_CONTINUOUS_INSTANCE_TIMING_CORRECTION_20260820.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "553c119d0809f5f36f98752ec601adef75eb04b1c80515885487c9a6a460ca24"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 2942,
+      "id": "keep_research_ng_exhaustion_continuous_live_information_correction_20260819_md",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_CONTINUOUS_LIVE_INFORMATION_CORRECTION_20260819.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "b7d75c3f34e468c5a84503d80f2a964ba7a07653e16983050daf1844a9db98ce"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 4639,
+      "id": "keep_research_ng_exhaustion_full_causal_information_correction_20260819_md",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_FULL_CAUSAL_INFORMATION_CORRECTION_20260819.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "fc08cbe26dd25f74f0438d218d201a370aef6448ef6da3df32647e6438c5bb16"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 4731,
+      "id": "keep_research_ng_exhaustion_prior_model_price_correction_20260819_md",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_PRIOR_MODEL_PRICE_CORRECTION_20260819.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "67280c2bdf3204c3ac93a52fd44df86ee951a1f17b62b3b284e7a3b4d77b7845"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "bytes": 2493,
+      "id": "keep_research_ng_exhaustion_polarity_not_primary_target_correction_20260819_md",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_POLARITY_NOT_PRIMARY_TARGET_CORRECTION_20260819.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "d449ed24c0d2a6f51d11cd49fa734eef42d0d06440e50acb7bd0bc1f1b3b1cc7"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "EXTRA_AGENT_CARRYFORWARD",
+      "bytes": 6553,
+      "id": "keep_research_ng_exhaustion_v3_nonauthoritative_results_extra_agent_v4_carryforward_20260820_md",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_V3_NONAUTHORITATIVE_RESULTS_EXTRA_AGENT_V4_CARRYFORWARD_20260820.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "b3fa5af108ffac6272aec5310edcdda83c80ce558541d56c1aafbe4a2eb933c4"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "EXTRA_AGENT_CARRYFORWARD",
+      "bytes": 14357,
+      "id": "keep_research_ng_exhaustion_v3_extra_agent_information_findings_20260820_md",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "a99cfaad0eab23f19b17b59a98a16481c4ae9283bd5c66ced9f7e3cdd1d6f7ad"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "EXTRA_AGENT_CARRYFORWARD",
+      "bytes": 4332,
+      "id": "keep_research_ng_exhaustion_v3_extra_agent_information_findings_20260820_json",
+      "kind": "JSON",
+      "load_mode": "RETRIEVAL",
+      "path": "research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.json",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "16f894dbb4be6857b8fa4cc01add3d4c8020a7a4c97b5efcc3c3564397f6eb6b"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "POSITIVE_NATIVE_EVIDENCE",
+      "bytes": 104377,
+      "id": "own_run_research_kalshi_frankie_raw_mbo_benchmark_principal_runs_frankie_a_memory_rt_33746436209_1_frankie_findings_report_md",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/kalshi/frankie_raw_mbo_benchmark/principal_runs/frankie-a-memory-rt-33746436209-1/frankie_findings_report.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "69ab0ac6b7b2cad494af288a69bd21de1b9cfcbc25c4501e1977b509f9af7d91"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "POSITIVE_NATIVE_EVIDENCE",
+      "bytes": 103884,
+      "id": "own_run_research_kalshi_frankie_raw_mbo_benchmark_principal_runs_frankie_a_memory_rt_33746436209_1_frankie_principal_findings_json",
+      "kind": "JSON",
+      "load_mode": "RETRIEVAL",
+      "path": "research/kalshi/frankie_raw_mbo_benchmark/principal_runs/frankie-a-memory-rt-33746436209-1/frankie_principal_findings.json",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "086e5339dad64d6326e51a143b3c7351efe28825cfa1809575fdf302a1d7080e"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "POSITIVE_NATIVE_EVIDENCE_RECEIPT",
+      "bytes": 6317,
+      "id": "own_run_research_kalshi_frankie_raw_mbo_benchmark_principal_runs_frankie_a_memory_rt_33746436209_1_principal_outputs_receipt_json",
+      "kind": "JSON",
+      "load_mode": "RETRIEVAL",
+      "path": "research/kalshi/frankie_raw_mbo_benchmark/principal_runs/frankie-a-memory-rt-33746436209-1/principal_outputs/RECEIPT.json",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "0d1aff2cc30a502665761dc791a1ee7da0dba2cc262a698d7ee0acda6bf5fe02"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "PROMOTED_POSITIVE_NATIVE_KNOWLEDGE",
+      "bytes": 316023,
+      "id": "seed_a_memory_20260902",
+      "kind": "JSON",
+      "load_mode": "ALWAYS_LOAD",
+      "path": "research/kalshi/frankie_raw_mbo_benchmark/A_MEMORY_SEED_20260902.json",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "a1853918a4230341f8fa99bd113a57635615502d8a1102f331b6ff916d41128b"
+    }
+  ],
+  "external_bindings": [
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "description": "Verified lessons/insights/notes chain; old reduced market rows absent",
+      "id": "a_memory_prior_lessons_package",
+      "required_proof_sha256": "d54c61915c0d85c8b2630eb79d5e1b8911481c80883c56d75ba815fcfab20c05",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "b487acfbbea8ac8a82f42ceb555e8334057e4004740af91b9127cd2ba71e1cf8"
+    }
+  ],
+  "manifest_hash": "e302103e4b0e62b07e615fc5d93ef3a9d9ae80dacdb812c95917da7633472017",
+  "profiles": {
+    "FORECASTER_A_CLEAN_REVIEW": {
+      "always_load": [
+        "first_replay_forecaster_directive",
+        "a_clean_promoted_positive_knowledge"
+      ],
+      "arm": "A_CLEAN",
+      "external_bindings": [],
+      "retrieval_catalog": [
+        "a_clean_method_only_capsule_source"
+      ],
+      "role": "FORECASTER_FRANKIE"
+    },
+    "FORECASTER_A_MEMORY_REVIEW": {
+      "always_load": [
+        "first_replay_forecaster_directive",
+        "a_memory_promoted_positive_knowledge",
+        "seed_a_memory_20260902"
+      ],
+      "arm": "A_MEMORY",
+      "external_bindings": [],
+      "retrieval_catalog": [
+        "a_memory_actual_rt_positive_report",
+        "a_memory_forecaster_positive_review",
+        "a_memory_member_first_positive_findings",
+        "a_memory_member_first_recalculation_receipt",
+        "keep_research_kalshi_ng_exhaustion_frankie_data_feed_inventory_20260824_md",
+        "keep_research_kalshi_ng_exhaustion_frankie_source_file_inventory_20260824_md",
+        "keep_research_kalshi_knowledge_ng_brain_json",
+        "keep_research_ng_exhaustion_chain_study_contract_20260817_json",
+        "keep_research_ng_exhaustion_chain_phase1_54w_base_freeze_20260817_json",
+        "keep_research_ng_exhaustion_chain_phase1_54w_execution_protocol_20260817_json",
+        "keep_research_ng_exhaustion_chain_phase1_causal_protocol_20260817_json",
+        "keep_research_ng_exhaustion_chain_phase1_discovery_protocol_20260817_json",
+        "keep_research_ng_exhaustion_chain_phase1_mechanism_addendum_20260817_json",
+        "keep_research_ng_exhaustion_chain_phase1_55w_reconcile_launch_20260817_json",
+        "keep_research_ng_exhaustion_chain_phase2_final_freeze_20260818_md",
+        "keep_research_ng_exhaustion_chain_phase2_all_agent_findings_20260818_md",
+        "keep_research_ng_exhaustion_chain_phase2_findings_20260817_md",
+        "keep_research_ng_exhaustion_chain_phase2_timing_context_findings_20260818_md",
+        "keep_research_ng_exhaustion_chain_phase2_module_novelty_findings_20260818_md",
+        "keep_research_ng_exhaustion_chain_phase2_postexit_recurrence_findings_20260818_md",
+        "keep_research_ng_exhaustion_chain_phase2_parallel_recurrence_reconciliation_20260818_md",
+        "keep_research_ng_exhaustion_chain_phase2_findings_addendum_pox_20260818_md",
+        "keep_research_ng_exhaustion_chain_phase2_pox_branch_reconciliation_v2_20260818_md",
+        "keep_research_ng_exhaustion_chain_phase2_pox_same_postexit_reexpression_20260818_md",
+        "keep_research_ng_exhaustion_chain_phase2_reappearance_watch_map_20260818_json",
+        "keep_research_ng_exhaustion_chain_phase2_finalization_checklist_20260818_json",
+        "keep_research_ng_exhaustion_chain_step1_original_file_map_20260820_md",
+        "keep_research_ng_exhaustion_chain_step1_5y_v4_native_census_protocol_20260820_md",
+        "keep_research_ng_exhaustion_chain_step1_5y_v4_native_census_protocol_20260820_json",
+        "keep_research_ng_exhaustion_chain_canonical_54w_merge_20260817_py",
+        "keep_research_ng_exhaustion_chain_canonical_54w_shard_20260817_py",
+        "keep_research_ng_exhaustion_chain_canonical_table_20260817_py",
+        "keep_research_ng_exhaustion_chain_phase1_discovery_20260817_py",
+        "keep_research_ng_exhaustion_chain_phase1_causal_54w_20260817_py",
+        "keep_research_ng_exhaustion_chain_phase1_continuity_54w_20260817_py",
+        "keep_research_ng_exhaustion_chain_phase1_falsifier_54w_20260817_py",
+        "keep_research_ng_exhaustion_chain_phase1_lineage_54w_20260817_py",
+        "keep_research_ng_exhaustion_chain_phase1_structural_54w_20260817_py",
+        "keep_research_ng_exhaustion_chain_phase1_reconcile_55w_20260817_py",
+        "keep_research_ng_exhaustion_chain_phase2_characterize_20260817_py",
+        "keep_research_ng_exhaustion_chain_phase2_parallel_agents_20260818_py",
+        "keep_research_ng_exhaustion_chain_state_enrich_20260817_py",
+        "keep_research_ng_exhaustion_week_chain_state_roster_20260817_py",
+        "keep_research_ng_exhaustion_week_continuous_roster_20260817_py",
+        "keep_research_ng_exhaustion_brain_proposal_index_20260818_md",
+        "keep_research_ng_exhaustion_brain_proposal_index_addendum_20260820_md",
+        "keep_research_ng_exhaustion_v4_brain_trade_proposal_clean_source_current_20260820_md",
+        "keep_research_ng_exhaustion_v3_v4_brain_trade_proposal_addendum_20260820_md",
+        "keep_research_ng_exhaustion_v3_v4_brain_trade_proposal_final_addendum_20260820_md",
+        "keep_research_kalshi_knowledge_ng_brain_exhaustion_chain_phase2_proposal_20260818_json",
+        "keep_research_kalshi_knowledge_ng_brain_exhaustion_chain_birth_v2_proposal_20260819_json",
+        "keep_research_kalshi_knowledge_ng_brain_exhaustion_entry_timing_extension_20260818_json",
+        "keep_research_kalshi_knowledge_ng_brain_exhaustion_pox_focused_proposal_20260819_json",
+        "keep_research_ng_exhaustion_v4_interpretation_correction_20260820_md",
+        "keep_research_ng_exhaustion_v4_continuous_adaptive_walkforward_contract_20260820_md",
+        "keep_research_ng_exhaustion_d0_d5_v4_geometric_self_adaptation_contract_20260820_md",
+        "keep_research_ng_exhaustion_d0_d5_v4_geometric_self_adaptation_contract_20260820_json",
+        "keep_research_ng_exhaustion_event_mark_clock_open_boundary_20260819_md",
+        "keep_research_ng_exhaustion_v4_clean_source_prelaunch_gates_20260820_md",
+        "keep_research_ng_exhaustion_continuous_instance_timing_correction_20260820_md",
+        "keep_research_ng_exhaustion_continuous_live_information_correction_20260819_md",
+        "keep_research_ng_exhaustion_full_causal_information_correction_20260819_md",
+        "keep_research_ng_exhaustion_prior_model_price_correction_20260819_md",
+        "keep_research_ng_exhaustion_polarity_not_primary_target_correction_20260819_md",
+        "keep_research_ng_exhaustion_v3_nonauthoritative_results_extra_agent_v4_carryforward_20260820_md",
+        "keep_research_ng_exhaustion_v3_extra_agent_information_findings_20260820_md",
+        "keep_research_ng_exhaustion_v3_extra_agent_information_findings_20260820_json",
+        "own_run_research_kalshi_frankie_raw_mbo_benchmark_principal_runs_frankie_a_memory_rt_33746436209_1_frankie_findings_report_md",
+        "own_run_research_kalshi_frankie_raw_mbo_benchmark_principal_runs_frankie_a_memory_rt_33746436209_1_frankie_principal_findings_json",
+        "own_run_research_kalshi_frankie_raw_mbo_benchmark_principal_runs_frankie_a_memory_rt_33746436209_1_principal_outputs_receipt_json"
+      ],
+      "role": "FORECASTER_FRANKIE"
+    },
+    "RT_A_CLEAN_SECOND_PASS": {
+      "always_load": [
+        "native_rt_mission",
+        "native_calculation_contract",
+        "a_clean_promoted_positive_knowledge"
+      ],
+      "arm": "A_CLEAN",
+      "external_bindings": [],
+      "retrieval_catalog": [
+        "a_clean_method_only_capsule_source"
+      ],
+      "role": "REAL_TIME_FRANKIE"
+    },
+    "RT_A_MEMORY_SECOND_PASS": {
+      "always_load": [
+        "native_rt_mission",
+        "native_calculation_contract",
+        "a_memory_promoted_positive_knowledge",
+        "seed_a_memory_20260902"
+      ],
+      "arm": "A_MEMORY",
+      "external_bindings": [],
+      "retrieval_catalog": [
+        "native_positive_discovery_addendum",
+        "a_memory_actual_rt_positive_report",
+        "a_memory_member_first_positive_findings",
+        "a_memory_member_first_recalculation_receipt",
+        "keep_research_kalshi_ng_exhaustion_frankie_data_feed_inventory_20260824_md",
+        "keep_research_kalshi_ng_exhaustion_frankie_source_file_inventory_20260824_md",
+        "keep_research_kalshi_knowledge_ng_brain_json",
+        "keep_research_ng_exhaustion_chain_study_contract_20260817_json",
+        "keep_research_ng_exhaustion_chain_phase1_54w_base_freeze_20260817_json",
+        "keep_research_ng_exhaustion_chain_phase1_54w_execution_protocol_20260817_json",
+        "keep_research_ng_exhaustion_chain_phase1_causal_protocol_20260817_json",
+        "keep_research_ng_exhaustion_chain_phase1_discovery_protocol_20260817_json",
+        "keep_research_ng_exhaustion_chain_phase1_mechanism_addendum_20260817_json",
+        "keep_research_ng_exhaustion_chain_phase1_55w_reconcile_launch_20260817_json",
+        "keep_research_ng_exhaustion_chain_phase2_final_freeze_20260818_md",
+        "keep_research_ng_exhaustion_chain_phase2_all_agent_findings_20260818_md",
+        "keep_research_ng_exhaustion_chain_phase2_findings_20260817_md",
+        "keep_research_ng_exhaustion_chain_phase2_timing_context_findings_20260818_md",
+        "keep_research_ng_exhaustion_chain_phase2_module_novelty_findings_20260818_md",
+        "keep_research_ng_exhaustion_chain_phase2_postexit_recurrence_findings_20260818_md",
+        "keep_research_ng_exhaustion_chain_phase2_parallel_recurrence_reconciliation_20260818_md",
+        "keep_research_ng_exhaustion_chain_phase2_findings_addendum_pox_20260818_md",
+        "keep_research_ng_exhaustion_chain_phase2_pox_branch_reconciliation_v2_20260818_md",
+        "keep_research_ng_exhaustion_chain_phase2_pox_same_postexit_reexpression_20260818_md",
+        "keep_research_ng_exhaustion_chain_phase2_reappearance_watch_map_20260818_json",
+        "keep_research_ng_exhaustion_chain_phase2_finalization_checklist_20260818_json",
+        "keep_research_ng_exhaustion_chain_step1_original_file_map_20260820_md",
+        "keep_research_ng_exhaustion_chain_step1_5y_v4_native_census_protocol_20260820_md",
+        "keep_research_ng_exhaustion_chain_step1_5y_v4_native_census_protocol_20260820_json",
+        "keep_research_ng_exhaustion_chain_canonical_54w_merge_20260817_py",
+        "keep_research_ng_exhaustion_chain_canonical_54w_shard_20260817_py",
+        "keep_research_ng_exhaustion_chain_canonical_table_20260817_py",
+        "keep_research_ng_exhaustion_chain_phase1_discovery_20260817_py",
+        "keep_research_ng_exhaustion_chain_phase1_causal_54w_20260817_py",
+        "keep_research_ng_exhaustion_chain_phase1_continuity_54w_20260817_py",
+        "keep_research_ng_exhaustion_chain_phase1_falsifier_54w_20260817_py",
+        "keep_research_ng_exhaustion_chain_phase1_lineage_54w_20260817_py",
+        "keep_research_ng_exhaustion_chain_phase1_structural_54w_20260817_py",
+        "keep_research_ng_exhaustion_chain_phase1_reconcile_55w_20260817_py",
+        "keep_research_ng_exhaustion_chain_phase2_characterize_20260817_py",
+        "keep_research_ng_exhaustion_chain_phase2_parallel_agents_20260818_py",
+        "keep_research_ng_exhaustion_chain_state_enrich_20260817_py",
+        "keep_research_ng_exhaustion_week_chain_state_roster_20260817_py",
+        "keep_research_ng_exhaustion_week_continuous_roster_20260817_py",
+        "keep_research_ng_exhaustion_brain_proposal_index_20260818_md",
+        "keep_research_ng_exhaustion_brain_proposal_index_addendum_20260820_md",
+        "keep_research_ng_exhaustion_v4_brain_trade_proposal_clean_source_current_20260820_md",
+        "keep_research_ng_exhaustion_v3_v4_brain_trade_proposal_addendum_20260820_md",
+        "keep_research_ng_exhaustion_v3_v4_brain_trade_proposal_final_addendum_20260820_md",
+        "keep_research_kalshi_knowledge_ng_brain_exhaustion_chain_phase2_proposal_20260818_json",
+        "keep_research_kalshi_knowledge_ng_brain_exhaustion_chain_birth_v2_proposal_20260819_json",
+        "keep_research_kalshi_knowledge_ng_brain_exhaustion_entry_timing_extension_20260818_json",
+        "keep_research_kalshi_knowledge_ng_brain_exhaustion_pox_focused_proposal_20260819_json",
+        "keep_research_ng_exhaustion_v4_interpretation_correction_20260820_md",
+        "keep_research_ng_exhaustion_v4_continuous_adaptive_walkforward_contract_20260820_md",
+        "keep_research_ng_exhaustion_d0_d5_v4_geometric_self_adaptation_contract_20260820_md",
+        "keep_research_ng_exhaustion_d0_d5_v4_geometric_self_adaptation_contract_20260820_json",
+        "keep_research_ng_exhaustion_event_mark_clock_open_boundary_20260819_md",
+        "keep_research_ng_exhaustion_v4_clean_source_prelaunch_gates_20260820_md",
+        "keep_research_ng_exhaustion_continuous_instance_timing_correction_20260820_md",
+        "keep_research_ng_exhaustion_continuous_live_information_correction_20260819_md",
+        "keep_research_ng_exhaustion_full_causal_information_correction_20260819_md",
+        "keep_research_ng_exhaustion_prior_model_price_correction_20260819_md",
+        "keep_research_ng_exhaustion_polarity_not_primary_target_correction_20260819_md",
+        "keep_research_ng_exhaustion_v3_nonauthoritative_results_extra_agent_v4_carryforward_20260820_md",
+        "keep_research_ng_exhaustion_v3_extra_agent_information_findings_20260820_md",
+        "keep_research_ng_exhaustion_v3_extra_agent_information_findings_20260820_json",
+        "own_run_research_kalshi_frankie_raw_mbo_benchmark_principal_runs_frankie_a_memory_rt_33746436209_1_frankie_findings_report_md",
+        "own_run_research_kalshi_frankie_raw_mbo_benchmark_principal_runs_frankie_a_memory_rt_33746436209_1_frankie_principal_findings_json",
+        "own_run_research_kalshi_frankie_raw_mbo_benchmark_principal_runs_frankie_a_memory_rt_33746436209_1_principal_outputs_receipt_json"
+      ],
+      "role": "REAL_TIME_FRANKIE"
+    }
+  },
+  "schema": "FRANKIE_NATIVE_RAW_MBO_KNOWLEDGE_MANIFEST_V1",
+  "version": "native-raw-mbo-a-arms-20260828-v1"
+}

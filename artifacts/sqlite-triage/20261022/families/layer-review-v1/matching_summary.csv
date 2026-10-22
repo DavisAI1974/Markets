@@ -1,0 +1,9 @@
+matching,min_per_corner,eligible_strata,pairs_with_eligible_stratum,opposite_sign_vs_pooled_strata,pairs_with_opposite_sign
+phase,10,89,39,22,18
+phase,5,174,81,50,46
+prior_direction,10,75,53,20,18
+prior_direction,5,153,102,40,37
+30min,10,55,24,21,11
+30min,5,132,48,55,28
+phase_direction_30min,10,0,0,0,0
+phase_direction_30min,5,17,11,8,8

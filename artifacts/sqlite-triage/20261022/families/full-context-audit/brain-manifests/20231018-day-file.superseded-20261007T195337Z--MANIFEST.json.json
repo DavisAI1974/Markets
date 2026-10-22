@@ -1,0 +1,19 @@
+{
+  "cycle": "day-file",
+  "day": "20231018",
+  "entries": [
+    {
+      "bytes": 38345,
+      "include": true,
+      "kind": "immediate day-file knowledge",
+      "name": "stage-knowledge.json",
+      "sha256": "c6f3e15ea864211aa5df2da45e9fb84070bf5ecf0aae42529bc42fda8d877f64",
+      "source": "/opt/frankie-box/work/ingest-20231018-gh-36571235912-1/day-external.json; /opt/frankie-box/work/ingest-20231018-gh-36571235912-1/day-external-receipt.json"
+    }
+  ],
+  "entry_kind": "stage_knowledge",
+  "knowledge_status": "available_immediately",
+  "note": "stage knowledge committed before the workflow advances; exact large sources remain at the digest-bound paths",
+  "schema": "FRANKIE_BOX_BRAIN_ENTRY_V1",
+  "unavailable": []
+}

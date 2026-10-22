@@ -28,13 +28,15 @@
   "full_suite_command": "315bbaa5-c06c-4682-bb4a-7aeb730a8921",
   "input_archive_command": "299175f8-a7fb-4d63-8b01-0b1828f07183",
   "last_observed_fit_progress": {
-    "completed_core_configurations": 52,
-    "completed_neural_configurations": 15,
-    "execution_errors_observed": 0,
-    "model_preparation_tests_passed": 26,
-    "completion_verified": false
+    "completed_committed_serial_tasks": 18,
+    "preserved_committed_serial_metric_rows": 417,
+    "preserved_committed_serial_prediction_rows": 304317,
+    "completed_neural_configurations": 189,
+    "execution_errors_in_completed_neural_fits": 0,
+    "completion_verified": false,
+    "parallel_task_states": "retained separately; interrupted task files must not be promoted as complete"
   },
-  "access_status": "AWS plugin returned expired session token; user asked to reconnect. This does not establish that the already submitted SSM run stopped.",
+  "access_status": "AWS plugin reconnected and working; unfinished v3 core fits intentionally stopped for expanded coverage.",
   "v1_review": {
     "original_counts_and_contrasts_reproduced": 626,
     "eligible_contrasts": 101,
@@ -46,13 +48,26 @@
     "half_hour_matched_sign_reversal_strata": 21,
     "phase_direction_half_hour_strata_with_ten_per_corner": 0
   },
-  "contradiction_registry": "Local v1 model_conflict_research_registry.csv generated with 202 flags: 59 mixed fold benchmark comparisons and 143 opposing model mean directions on matched cohorts. Full saved-layer and v3 registries remain pending; remote upload failed before SendCommand because session expired.",
+  "contradiction_registry": "Full v1 contradiction_research_registry.csv saved and verified locally: 354 open review flags. Separate model-only registry has 202 overlapping flags; do not add these counts.",
   "pending": [
-    "After AWS reconnection inspect full_suite_command; never blindly relaunch or overwrite v3.",
-    "Upload flag_research_contradictions.py and test_research_contradictions.py through SSM.",
-    "After full suite completes run summarize_layer_review.py, flag_research_contradictions.py for v1 and v3, and compare_full_depth_models.py.",
-    "Collect and save actual v3 outputs, input/source receipts, research flags, comparison tables and fitted states with verified durable archive receipts.",
-    "Report favorable, unfavorable, contradictory and inconclusive results together. No established tradable signal."
+    "Finish field-by-field source and actual knowledge coverage audit for all 99 identities, all 20 external tables / 13 concepts, full confirmed second set and FIFO/lifecycle/dipole evidence.",
+    "Build a new frozen input version including all audited lawful additions; coverage gate must pass before fits.",
+    "Rerun the entire saved model suite and all comparison/contradiction reviews against the new version.",
+    "Preserve v1/v2/v3 as executed; never relabel v3 as full 99-plane consumption."
   ],
-  "prohibited_actions": "No subagents, monitors, new chats, other-chat messages, lifecycle changes, live orders, repeated runtime/DB restoration, or huge recovery scans."
+  "prohibited_actions": "No subagents, monitors, new chats, other-chat messages, lifecycle changes, live orders, repeated runtime/DB restoration, or huge recovery scans.",
+  "status": "frozen_partial_coverage_benchmark_pending_complete_99_plane_audit",
+  "freeze_command": "36c15ae8-beb7-428c-8956-2cf5c0608c52",
+  "progress_archive": {
+    "key": "frankie/family-prebirth/20261022/family-full-depth-progress-results-38c37046.tar.gz",
+    "bytes": 260143208,
+    "sha256": "38c37046a2129ef492f8e3cc0c8cd2b7421737e4b7718b82e123eb18f6d4ac11",
+    "verified_export_files": 99,
+    "verified_reconstructed_sources": 96,
+    "all_models_complete": false
+  },
+  "latest_handoff": "family-full-context-analysis-handoff.txt",
+  "full_context_status": "Native/second component extraction, source inventories, complete native pair checks and supplemental/history recovery complete; source/consumer coverage and v4 matrix/model rerun incomplete.",
+  "v4_fits_started": false,
+  "coverage_gate": "NOT_PASSED"
 }

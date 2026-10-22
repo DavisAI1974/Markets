@@ -1,0 +1,868 @@
+{"model":"training_frequency","fold":2,"h":120,"outcome":"first_observed_family_within_h","mae":0.43251207729468594,"test":300,"train":345}
+{"model":"ridge100","fold":2,"h":120,"outcome":"first_observed_family_within_h","mae":0.651371381019811,"test":300,"train":345}
+{"model":"evotrees_depth3","fold":2,"h":120,"outcome":"first_observed_family_within_h","mae":0.41637436469395955,"test":300,"train":345}
+{"model":"evotrees_depth5","fold":2,"h":120,"outcome":"first_observed_family_within_h","mae":0.42280090272426607,"test":300,"train":345}
+{"model":"dropgroup:causal_pullback_geometry","fold":2,"h":120,"outcome":"first_observed_family_within_h","mae":0.41637436469395955,"test":300,"train":345}
+{"model":"dropgroup:external.curve","fold":2,"h":120,"outcome":"first_observed_family_within_h","mae":0.41637436469395955,"test":300,"train":345}
+{"model":"dropgroup:external.est_gas_burn","fold":2,"h":120,"outcome":"first_observed_family_within_h","mae":0.41637436469395955,"test":300,"train":345}
+{"model":"dropgroup:external.mos.gw_by_cycle","fold":2,"h":120,"outcome":"first_observed_family_within_h","mae":0.41637436469395955,"test":300,"train":345}
+{"model":"dropgroup:external.weather","fold":2,"h":120,"outcome":"first_observed_family_within_h","mae":0.41637436469395955,"test":300,"train":345}
+{"model":"dropgroup:external.wind_mwh","fold":2,"h":120,"outcome":"first_observed_family_within_h","mae":0.41637436469395955,"test":300,"train":345}
+{"model":"dropgroup:lifecycle.absorption","fold":2,"h":120,"outcome":"first_observed_family_within_h","mae":0.41637436469395955,"test":300,"train":345}
+{"model":"dropgroup:lifecycle.flow_substrate","fold":2,"h":120,"outcome":"first_observed_family_within_h","mae":0.41637436469395955,"test":300,"train":345}
+{"model":"dropgroup:lifecycle.ladder","fold":2,"h":120,"outcome":"first_observed_family_within_h","mae":0.41637436469395955,"test":300,"train":345}
+{"model":"dropgroup:lifecycle.queue","fold":2,"h":120,"outcome":"first_observed_family_within_h","mae":0.41637436469395955,"test":300,"train":345}
+{"model":"dropgroup:lifecycle.recurrence","fold":2,"h":120,"outcome":"first_observed_family_within_h","mae":0.41637436469395955,"test":300,"train":345}
+{"model":"dropgroup:lifecycle.replenishment","fold":2,"h":120,"outcome":"first_observed_family_within_h","mae":0.41637436469395955,"test":300,"train":345}
+{"model":"dropgroup:native_timing_measurements","fold":2,"h":120,"outcome":"first_observed_family_within_h","mae":0.41802766303221384,"test":300,"train":345}
+{"model":"dropgroup:root_native_book_depth_queue","fold":2,"h":120,"outcome":"first_observed_family_within_h","mae":0.44949629227320353,"test":300,"train":345}
+{"model":"dropgroup:root_native_flow_structure","fold":2,"h":120,"outcome":"first_observed_family_within_h","mae":0.41637436469395955,"test":300,"train":345}
+{"model":"dropgroup:second_set_scientific_components","fold":2,"h":120,"outcome":"first_observed_family_within_h","mae":0.4172167275349299,"test":300,"train":345}
+{"model":"training_frequency","fold":3,"h":120,"outcome":"first_observed_family_within_h","mae":0.3643809388739187,"test":1496,"train":641}
+{"model":"ridge100","fold":3,"h":120,"outcome":"first_observed_family_within_h","mae":0.6132273197195143,"test":1496,"train":641}
+{"model":"evotrees_depth3","fold":3,"h":120,"outcome":"first_observed_family_within_h","mae":0.34752833823309864,"test":1496,"train":641}
+{"model":"evotrees_depth5","fold":3,"h":120,"outcome":"first_observed_family_within_h","mae":0.3277122059408675,"test":1496,"train":641}
+{"model":"dropgroup:causal_pullback_geometry","fold":3,"h":120,"outcome":"first_observed_family_within_h","mae":0.34752833823309864,"test":1496,"train":641}
+{"model":"dropgroup:external.curve","fold":3,"h":120,"outcome":"first_observed_family_within_h","mae":0.34752833823309864,"test":1496,"train":641}
+{"model":"dropgroup:external.est_gas_burn","fold":3,"h":120,"outcome":"first_observed_family_within_h","mae":0.34752833823309864,"test":1496,"train":641}
+{"model":"dropgroup:external.mos.disagreement_by_cycle","fold":3,"h":120,"outcome":"first_observed_family_within_h","mae":0.34752833823309864,"test":1496,"train":641}
+{"model":"dropgroup:external.mos.gw_by_cycle","fold":3,"h":120,"outcome":"first_observed_family_within_h","mae":0.34752833823309864,"test":1496,"train":641}
+{"model":"dropgroup:external.weather","fold":3,"h":120,"outcome":"first_observed_family_within_h","mae":0.3695461954025024,"test":1496,"train":641}
+{"model":"dropgroup:external.wind_mwh","fold":3,"h":120,"outcome":"first_observed_family_within_h","mae":0.34752833823309864,"test":1496,"train":641}
+{"model":"dropgroup:lifecycle.absorption","fold":3,"h":120,"outcome":"first_observed_family_within_h","mae":0.34752833823309864,"test":1496,"train":641}
+{"model":"dropgroup:lifecycle.flow_substrate","fold":3,"h":120,"outcome":"first_observed_family_within_h","mae":0.34752833823309864,"test":1496,"train":641}
+{"model":"dropgroup:lifecycle.ladder","fold":3,"h":120,"outcome":"first_observed_family_within_h","mae":0.3433463166064438,"test":1496,"train":641}
+{"model":"dropgroup:lifecycle.queue","fold":3,"h":120,"outcome":"first_observed_family_within_h","mae":0.34752833823309864,"test":1496,"train":641}
+{"model":"dropgroup:lifecycle.recurrence","fold":3,"h":120,"outcome":"first_observed_family_within_h","mae":0.34752833823309864,"test":1496,"train":641}
+{"model":"dropgroup:lifecycle.replenishment","fold":3,"h":120,"outcome":"first_observed_family_within_h","mae":0.34752833823309864,"test":1496,"train":641}
+{"model":"dropgroup:native_timing_measurements","fold":3,"h":120,"outcome":"first_observed_family_within_h","mae":0.34752833823309864,"test":1496,"train":641}
+{"model":"dropgroup:root_native_book_depth_queue","fold":3,"h":120,"outcome":"first_observed_family_within_h","mae":0.3392826882913151,"test":1496,"train":641}
+{"model":"dropgroup:root_native_flow_structure","fold":3,"h":120,"outcome":"first_observed_family_within_h","mae":0.34977080786530984,"test":1496,"train":641}
+{"model":"dropgroup:second_set_scientific_components","fold":3,"h":120,"outcome":"first_observed_family_within_h","mae":0.34479202298238315,"test":1496,"train":641}
+{"model":"training_frequency","fold":4,"h":120,"outcome":"first_observed_family_within_h","mae":0.29960328971566746,"test":841,"train":2111}
+{"model":"ridge100","fold":4,"h":120,"outcome":"first_observed_family_within_h","mae":0.47845162719044004,"test":841,"train":2111}
+{"model":"evotrees_depth3","fold":4,"h":120,"outcome":"first_observed_family_within_h","mae":0.31002271650237223,"test":841,"train":2111}
+{"model":"evotrees_depth5","fold":4,"h":120,"outcome":"first_observed_family_within_h","mae":0.350370659201664,"test":841,"train":2111}
+{"model":"dropgroup:causal_pullback_geometry","fold":4,"h":120,"outcome":"first_observed_family_within_h","mae":0.31002271650237223,"test":841,"train":2111}
+{"model":"dropgroup:external.curve","fold":4,"h":120,"outcome":"first_observed_family_within_h","mae":0.31002271650237223,"test":841,"train":2111}
+{"model":"dropgroup:external.est_gas_burn","fold":4,"h":120,"outcome":"first_observed_family_within_h","mae":0.31002271650237223,"test":841,"train":2111}
+{"model":"dropgroup:external.mos.disagreement_by_cycle","fold":4,"h":120,"outcome":"first_observed_family_within_h","mae":0.31002271650237223,"test":841,"train":2111}
+{"model":"dropgroup:external.mos.gw_by_cycle","fold":4,"h":120,"outcome":"first_observed_family_within_h","mae":0.31002271650237223,"test":841,"train":2111}
+{"model":"dropgroup:external.weather","fold":4,"h":120,"outcome":"first_observed_family_within_h","mae":0.3139064202835954,"test":841,"train":2111}
+{"model":"dropgroup:external.wind_mwh","fold":4,"h":120,"outcome":"first_observed_family_within_h","mae":0.31002271650237223,"test":841,"train":2111}
+{"model":"dropgroup:lifecycle.absorption","fold":4,"h":120,"outcome":"first_observed_family_within_h","mae":0.31002271650237223,"test":841,"train":2111}
+{"model":"dropgroup:lifecycle.flow_substrate","fold":4,"h":120,"outcome":"first_observed_family_within_h","mae":0.31002271650237223,"test":841,"train":2111}
+{"model":"dropgroup:lifecycle.ladder","fold":4,"h":120,"outcome":"first_observed_family_within_h","mae":0.30282578031741764,"test":841,"train":2111}
+{"model":"dropgroup:lifecycle.queue","fold":4,"h":120,"outcome":"first_observed_family_within_h","mae":0.31002271650237223,"test":841,"train":2111}
+{"model":"dropgroup:lifecycle.recurrence","fold":4,"h":120,"outcome":"first_observed_family_within_h","mae":0.31002271650237223,"test":841,"train":2111}
+{"model":"dropgroup:lifecycle.replenishment","fold":4,"h":120,"outcome":"first_observed_family_within_h","mae":0.31002271650237223,"test":841,"train":2111}
+{"model":"dropgroup:native_timing_measurements","fold":4,"h":120,"outcome":"first_observed_family_within_h","mae":0.31002271650237223,"test":841,"train":2111}
+{"model":"dropgroup:root_native_book_depth_queue","fold":4,"h":120,"outcome":"first_observed_family_within_h","mae":0.30289487471620197,"test":841,"train":2111}
+{"model":"dropgroup:root_native_flow_structure","fold":4,"h":120,"outcome":"first_observed_family_within_h","mae":0.3191604851684162,"test":841,"train":2111}
+{"model":"dropgroup:second_set_scientific_components","fold":4,"h":120,"outcome":"first_observed_family_within_h","mae":0.31845798043093415,"test":841,"train":2111}
+{"model":"training_frequency","fold":2,"h":300,"outcome":"first_observed_family_within_h","mae":0.2943023255813953,"test":300,"train":344}
+{"model":"ridge100","fold":2,"h":300,"outcome":"first_observed_family_within_h","mae":0.560462850385142,"test":300,"train":344}
+{"model":"evotrees_depth3","fold":2,"h":300,"outcome":"first_observed_family_within_h","mae":0.31066597402095797,"test":300,"train":344}
+{"model":"evotrees_depth5","fold":2,"h":300,"outcome":"first_observed_family_within_h","mae":0.3094474635521571,"test":300,"train":344}
+{"model":"dropgroup:causal_pullback_geometry","fold":2,"h":300,"outcome":"first_observed_family_within_h","mae":0.31066597402095797,"test":300,"train":344}
+{"model":"dropgroup:external.curve","fold":2,"h":300,"outcome":"first_observed_family_within_h","mae":0.31066597402095797,"test":300,"train":344}
+{"model":"dropgroup:external.est_gas_burn","fold":2,"h":300,"outcome":"first_observed_family_within_h","mae":0.31066597402095797,"test":300,"train":344}
+{"model":"dropgroup:external.mos.gw_by_cycle","fold":2,"h":300,"outcome":"first_observed_family_within_h","mae":0.31066597402095797,"test":300,"train":344}
+{"model":"dropgroup:external.weather","fold":2,"h":300,"outcome":"first_observed_family_within_h","mae":0.3133078759908676,"test":300,"train":344}
+{"model":"dropgroup:external.wind_mwh","fold":2,"h":300,"outcome":"first_observed_family_within_h","mae":0.31066597402095797,"test":300,"train":344}
+{"model":"dropgroup:lifecycle.absorption","fold":2,"h":300,"outcome":"first_observed_family_within_h","mae":0.31066597402095797,"test":300,"train":344}
+{"model":"dropgroup:lifecycle.flow_substrate","fold":2,"h":300,"outcome":"first_observed_family_within_h","mae":0.31066597402095797,"test":300,"train":344}
+{"model":"dropgroup:lifecycle.ladder","fold":2,"h":300,"outcome":"first_observed_family_within_h","mae":0.3139256916443507,"test":300,"train":344}
+{"model":"dropgroup:lifecycle.queue","fold":2,"h":300,"outcome":"first_observed_family_within_h","mae":0.31066597402095797,"test":300,"train":344}
+{"model":"dropgroup:lifecycle.recurrence","fold":2,"h":300,"outcome":"first_observed_family_within_h","mae":0.31066597402095797,"test":300,"train":344}
+{"model":"dropgroup:lifecycle.replenishment","fold":2,"h":300,"outcome":"first_observed_family_within_h","mae":0.31066597402095797,"test":300,"train":344}
+{"model":"dropgroup:native_timing_measurements","fold":2,"h":300,"outcome":"first_observed_family_within_h","mae":0.31066597402095797,"test":300,"train":344}
+{"model":"dropgroup:root_native_book_depth_queue","fold":2,"h":300,"outcome":"first_observed_family_within_h","mae":0.3290459018945694,"test":300,"train":344}
+{"model":"dropgroup:root_native_flow_structure","fold":2,"h":300,"outcome":"first_observed_family_within_h","mae":0.2958256395657857,"test":300,"train":344}
+{"model":"dropgroup:second_set_scientific_components","fold":2,"h":300,"outcome":"first_observed_family_within_h","mae":0.31066597402095797,"test":300,"train":344}
+{"model":"training_frequency","fold":3,"h":300,"outcome":"first_observed_family_within_h","mae":0.20838720103425995,"test":1496,"train":637}
+{"model":"ridge100","fold":3,"h":300,"outcome":"first_observed_family_within_h","mae":0.36449531990606526,"test":1496,"train":637}
+{"model":"evotrees_depth3","fold":3,"h":300,"outcome":"first_observed_family_within_h","mae":0.19552670630382343,"test":1496,"train":637}
+{"model":"evotrees_depth5","fold":3,"h":300,"outcome":"first_observed_family_within_h","mae":0.22834708266717227,"test":1496,"train":637}
+{"model":"dropgroup:causal_pullback_geometry","fold":3,"h":300,"outcome":"first_observed_family_within_h","mae":0.19552670630382343,"test":1496,"train":637}
+{"model":"dropgroup:external.curve","fold":3,"h":300,"outcome":"first_observed_family_within_h","mae":0.19552670630382343,"test":1496,"train":637}
+{"model":"dropgroup:external.est_gas_burn","fold":3,"h":300,"outcome":"first_observed_family_within_h","mae":0.19552670630382343,"test":1496,"train":637}
+{"model":"dropgroup:external.mos.disagreement_by_cycle","fold":3,"h":300,"outcome":"first_observed_family_within_h","mae":0.19552670630382343,"test":1496,"train":637}
+{"model":"dropgroup:external.mos.gw_by_cycle","fold":3,"h":300,"outcome":"first_observed_family_within_h","mae":0.19552670630382343,"test":1496,"train":637}
+{"model":"dropgroup:external.weather","fold":3,"h":300,"outcome":"first_observed_family_within_h","mae":0.20953432235488278,"test":1496,"train":637}
+{"model":"dropgroup:external.wind_mwh","fold":3,"h":300,"outcome":"first_observed_family_within_h","mae":0.19552670630382343,"test":1496,"train":637}
+{"model":"dropgroup:lifecycle.absorption","fold":3,"h":300,"outcome":"first_observed_family_within_h","mae":0.19552670630382343,"test":1496,"train":637}
+{"model":"dropgroup:lifecycle.flow_substrate","fold":3,"h":300,"outcome":"first_observed_family_within_h","mae":0.19552670630382343,"test":1496,"train":637}
+{"model":"dropgroup:lifecycle.ladder","fold":3,"h":300,"outcome":"first_observed_family_within_h","mae":0.19552670630382343,"test":1496,"train":637}
+{"model":"dropgroup:lifecycle.queue","fold":3,"h":300,"outcome":"first_observed_family_within_h","mae":0.19552670630382343,"test":1496,"train":637}
+{"model":"dropgroup:lifecycle.recurrence","fold":3,"h":300,"outcome":"first_observed_family_within_h","mae":0.19552670630382343,"test":1496,"train":637}
+{"model":"dropgroup:lifecycle.replenishment","fold":3,"h":300,"outcome":"first_observed_family_within_h","mae":0.19552670630382343,"test":1496,"train":637}
+{"model":"dropgroup:native_timing_measurements","fold":3,"h":300,"outcome":"first_observed_family_within_h","mae":0.19552670630382343,"test":1496,"train":637}
+{"model":"dropgroup:root_native_book_depth_queue","fold":3,"h":300,"outcome":"first_observed_family_within_h","mae":0.22025184357230038,"test":1496,"train":637}
+{"model":"dropgroup:root_native_flow_structure","fold":3,"h":300,"outcome":"first_observed_family_within_h","mae":0.19552670630382343,"test":1496,"train":637}
+{"model":"dropgroup:second_set_scientific_components","fold":3,"h":300,"outcome":"first_observed_family_within_h","mae":0.19453653179228625,"test":1496,"train":637}
+{"model":"training_frequency","fold":4,"h":300,"outcome":"first_observed_family_within_h","mae":0.13011586229890792,"test":837,"train":2107}
+{"model":"ridge100","fold":4,"h":300,"outcome":"first_observed_family_within_h","mae":0.3740905928100597,"test":837,"train":2107}
+{"model":"evotrees_depth3","fold":4,"h":300,"outcome":"first_observed_family_within_h","mae":0.12358765120717075,"test":837,"train":2107}
+{"model":"evotrees_depth5","fold":4,"h":300,"outcome":"first_observed_family_within_h","mae":0.12145516408102201,"test":837,"train":2107}
+{"model":"dropgroup:causal_pullback_geometry","fold":4,"h":300,"outcome":"first_observed_family_within_h","mae":0.12358765120717075,"test":837,"train":2107}
+{"model":"dropgroup:external.curve","fold":4,"h":300,"outcome":"first_observed_family_within_h","mae":0.1231740307921862,"test":837,"train":2107}
+{"model":"dropgroup:external.est_gas_burn","fold":4,"h":300,"outcome":"first_observed_family_within_h","mae":0.12358765120717075,"test":837,"train":2107}
+{"model":"dropgroup:external.mos.disagreement_by_cycle","fold":4,"h":300,"outcome":"first_observed_family_within_h","mae":0.12358765120717075,"test":837,"train":2107}
+{"model":"dropgroup:external.mos.gw_by_cycle","fold":4,"h":300,"outcome":"first_observed_family_within_h","mae":0.12358765120717075,"test":837,"train":2107}
+{"model":"dropgroup:external.weather","fold":4,"h":300,"outcome":"first_observed_family_within_h","mae":0.13199294126161965,"test":837,"train":2107}
+{"model":"dropgroup:external.wind_mwh","fold":4,"h":300,"outcome":"first_observed_family_within_h","mae":0.12358765120717075,"test":837,"train":2107}
+{"model":"dropgroup:lifecycle.absorption","fold":4,"h":300,"outcome":"first_observed_family_within_h","mae":0.12358765120717075,"test":837,"train":2107}
+{"model":"dropgroup:lifecycle.flow_substrate","fold":4,"h":300,"outcome":"first_observed_family_within_h","mae":0.12358765120717075,"test":837,"train":2107}
+{"model":"dropgroup:lifecycle.ladder","fold":4,"h":300,"outcome":"first_observed_family_within_h","mae":0.12358765120717075,"test":837,"train":2107}
+{"model":"dropgroup:lifecycle.queue","fold":4,"h":300,"outcome":"first_observed_family_within_h","mae":0.12358765120717075,"test":837,"train":2107}
+{"model":"dropgroup:lifecycle.recurrence","fold":4,"h":300,"outcome":"first_observed_family_within_h","mae":0.12358765120717075,"test":837,"train":2107}
+{"model":"dropgroup:lifecycle.replenishment","fold":4,"h":300,"outcome":"first_observed_family_within_h","mae":0.12358765120717075,"test":837,"train":2107}
+{"model":"dropgroup:native_timing_measurements","fold":4,"h":300,"outcome":"first_observed_family_within_h","mae":0.12358765120717075,"test":837,"train":2107}
+{"model":"dropgroup:root_native_book_depth_queue","fold":4,"h":300,"outcome":"first_observed_family_within_h","mae":0.12384812136847201,"test":837,"train":2107}
+{"model":"dropgroup:root_native_flow_structure","fold":4,"h":300,"outcome":"first_observed_family_within_h","mae":0.12345605134394291,"test":837,"train":2107}
+{"model":"dropgroup:second_set_scientific_components","fold":4,"h":300,"outcome":"first_observed_family_within_h","mae":0.12991975541610445,"test":837,"train":2107}
+{"model":"training_frequency","fold":2,"h":600,"outcome":"first_observed_family_within_h","mae":0.08431085043988268,"test":300,"train":341}
+{"model":"ridge100","fold":2,"h":600,"outcome":"first_observed_family_within_h","mae":0.32135756358348705,"test":300,"train":341}
+{"model":"evotrees_depth3","fold":2,"h":600,"outcome":"first_observed_family_within_h","mae":0.10266761501630148,"test":300,"train":341}
+{"model":"evotrees_depth5","fold":2,"h":600,"outcome":"first_observed_family_within_h","mae":0.12328656752904256,"test":300,"train":341}
+{"model":"dropgroup:causal_pullback_geometry","fold":2,"h":600,"outcome":"first_observed_family_within_h","mae":0.10266761501630148,"test":300,"train":341}
+{"model":"dropgroup:external.curve","fold":2,"h":600,"outcome":"first_observed_family_within_h","mae":0.10266761501630148,"test":300,"train":341}
+{"model":"dropgroup:external.est_gas_burn","fold":2,"h":600,"outcome":"first_observed_family_within_h","mae":0.10266761501630148,"test":300,"train":341}
+{"model":"dropgroup:external.mos.gw_by_cycle","fold":2,"h":600,"outcome":"first_observed_family_within_h","mae":0.10266761501630148,"test":300,"train":341}
+{"model":"dropgroup:external.weather","fold":2,"h":600,"outcome":"first_observed_family_within_h","mae":0.11050959328810374,"test":300,"train":341}
+{"model":"dropgroup:external.wind_mwh","fold":2,"h":600,"outcome":"first_observed_family_within_h","mae":0.10266761501630148,"test":300,"train":341}
+{"model":"dropgroup:lifecycle.absorption","fold":2,"h":600,"outcome":"first_observed_family_within_h","mae":0.10266761501630148,"test":300,"train":341}
+{"model":"dropgroup:lifecycle.flow_substrate","fold":2,"h":600,"outcome":"first_observed_family_within_h","mae":0.10266761501630148,"test":300,"train":341}
+{"model":"dropgroup:lifecycle.ladder","fold":2,"h":600,"outcome":"first_observed_family_within_h","mae":0.10266761501630148,"test":300,"train":341}
+{"model":"dropgroup:lifecycle.queue","fold":2,"h":600,"outcome":"first_observed_family_within_h","mae":0.10266761501630148,"test":300,"train":341}
+{"model":"dropgroup:lifecycle.recurrence","fold":2,"h":600,"outcome":"first_observed_family_within_h","mae":0.10266761501630148,"test":300,"train":341}
+{"model":"dropgroup:lifecycle.replenishment","fold":2,"h":600,"outcome":"first_observed_family_within_h","mae":0.10266761501630148,"test":300,"train":341}
+{"model":"dropgroup:native_timing_measurements","fold":2,"h":600,"outcome":"first_observed_family_within_h","mae":0.10266761501630148,"test":300,"train":341}
+{"model":"dropgroup:root_native_book_depth_queue","fold":2,"h":600,"outcome":"first_observed_family_within_h","mae":0.10266761501630148,"test":300,"train":341}
+{"model":"dropgroup:root_native_flow_structure","fold":2,"h":600,"outcome":"first_observed_family_within_h","mae":0.10266761501630148,"test":300,"train":341}
+{"model":"dropgroup:second_set_scientific_components","fold":2,"h":600,"outcome":"first_observed_family_within_h","mae":0.11639963785807292,"test":300,"train":341}
+{"model":"training_frequency","fold":3,"h":600,"outcome":"first_observed_family_within_h","mae":0.0447734442213937,"test":1496,"train":634}
+{"model":"ridge100","fold":3,"h":600,"outcome":"first_observed_family_within_h","mae":0.11502656715901008,"test":1496,"train":634}
+{"model":"evotrees_depth3","fold":3,"h":600,"outcome":"first_observed_family_within_h","mae":0.05930840323634326,"test":1496,"train":634}
+{"model":"evotrees_depth5","fold":3,"h":600,"outcome":"first_observed_family_within_h","mae":0.08199174351551954,"test":1496,"train":634}
+{"model":"dropgroup:causal_pullback_geometry","fold":3,"h":600,"outcome":"first_observed_family_within_h","mae":0.05930840323634326,"test":1496,"train":634}
+{"model":"dropgroup:external.curve","fold":3,"h":600,"outcome":"first_observed_family_within_h","mae":0.05930840323634326,"test":1496,"train":634}
+{"model":"dropgroup:external.est_gas_burn","fold":3,"h":600,"outcome":"first_observed_family_within_h","mae":0.05930840323634326,"test":1496,"train":634}
+{"model":"dropgroup:external.mos.disagreement_by_cycle","fold":3,"h":600,"outcome":"first_observed_family_within_h","mae":0.05930840323634326,"test":1496,"train":634}
+{"model":"dropgroup:external.mos.gw_by_cycle","fold":3,"h":600,"outcome":"first_observed_family_within_h","mae":0.05930840323634326,"test":1496,"train":634}
+{"model":"dropgroup:external.weather","fold":3,"h":600,"outcome":"first_observed_family_within_h","mae":0.050698437394305344,"test":1496,"train":634}
+{"model":"dropgroup:external.wind_mwh","fold":3,"h":600,"outcome":"first_observed_family_within_h","mae":0.05930840323634326,"test":1496,"train":634}
+{"model":"dropgroup:lifecycle.absorption","fold":3,"h":600,"outcome":"first_observed_family_within_h","mae":0.05930840323634326,"test":1496,"train":634}
+{"model":"dropgroup:lifecycle.flow_substrate","fold":3,"h":600,"outcome":"first_observed_family_within_h","mae":0.05930840323634326,"test":1496,"train":634}
+{"model":"dropgroup:lifecycle.ladder","fold":3,"h":600,"outcome":"first_observed_family_within_h","mae":0.05930840323634326,"test":1496,"train":634}
+{"model":"dropgroup:lifecycle.queue","fold":3,"h":600,"outcome":"first_observed_family_within_h","mae":0.05930840323634326,"test":1496,"train":634}
+{"model":"dropgroup:lifecycle.recurrence","fold":3,"h":600,"outcome":"first_observed_family_within_h","mae":0.05930840323634326,"test":1496,"train":634}
+{"model":"dropgroup:lifecycle.replenishment","fold":3,"h":600,"outcome":"first_observed_family_within_h","mae":0.05930840323634326,"test":1496,"train":634}
+{"model":"dropgroup:native_timing_measurements","fold":3,"h":600,"outcome":"first_observed_family_within_h","mae":0.05930840323634326,"test":1496,"train":634}
+{"model":"dropgroup:root_native_book_depth_queue","fold":3,"h":600,"outcome":"first_observed_family_within_h","mae":0.05208967147982694,"test":1496,"train":634}
+{"model":"dropgroup:root_native_flow_structure","fold":3,"h":600,"outcome":"first_observed_family_within_h","mae":0.058951540546302486,"test":1496,"train":634}
+{"model":"dropgroup:second_set_scientific_components","fold":3,"h":600,"outcome":"first_observed_family_within_h","mae":0.049905115788314434,"test":1496,"train":634}
+{"model":"training_frequency","fold":4,"h":600,"outcome":"first_observed_family_within_h","mae":0.029008531213754397,"test":831,"train":2102}
+{"model":"ridge100","fold":4,"h":600,"outcome":"first_observed_family_within_h","mae":0.050995279586794104,"test":831,"train":2102}
+{"model":"evotrees_depth3","fold":4,"h":600,"outcome":"first_observed_family_within_h","mae":0.03287901839624673,"test":831,"train":2102}
+{"model":"evotrees_depth5","fold":4,"h":600,"outcome":"first_observed_family_within_h","mae":0.0334423666396296,"test":831,"train":2102}
+{"model":"dropgroup:causal_pullback_geometry","fold":4,"h":600,"outcome":"first_observed_family_within_h","mae":0.03287901839624673,"test":831,"train":2102}
+{"model":"dropgroup:external.curve","fold":4,"h":600,"outcome":"first_observed_family_within_h","mae":0.03287901839624673,"test":831,"train":2102}
+{"model":"dropgroup:external.est_gas_burn","fold":4,"h":600,"outcome":"first_observed_family_within_h","mae":0.03287901839624673,"test":831,"train":2102}
+{"model":"dropgroup:external.mos.disagreement_by_cycle","fold":4,"h":600,"outcome":"first_observed_family_within_h","mae":0.03287901839624673,"test":831,"train":2102}
+{"model":"dropgroup:external.mos.gw_by_cycle","fold":4,"h":600,"outcome":"first_observed_family_within_h","mae":0.03287901839624673,"test":831,"train":2102}
+{"model":"dropgroup:external.weather","fold":4,"h":600,"outcome":"first_observed_family_within_h","mae":0.033631292132550915,"test":831,"train":2102}
+{"model":"dropgroup:external.wind_mwh","fold":4,"h":600,"outcome":"first_observed_family_within_h","mae":0.03287901839624673,"test":831,"train":2102}
+{"model":"dropgroup:lifecycle.absorption","fold":4,"h":600,"outcome":"first_observed_family_within_h","mae":0.03287901839624673,"test":831,"train":2102}
+{"model":"dropgroup:lifecycle.flow_substrate","fold":4,"h":600,"outcome":"first_observed_family_within_h","mae":0.03287901839624673,"test":831,"train":2102}
+{"model":"dropgroup:lifecycle.ladder","fold":4,"h":600,"outcome":"first_observed_family_within_h","mae":0.03287901839624673,"test":831,"train":2102}
+{"model":"dropgroup:lifecycle.queue","fold":4,"h":600,"outcome":"first_observed_family_within_h","mae":0.03287901839624673,"test":831,"train":2102}
+{"model":"dropgroup:lifecycle.recurrence","fold":4,"h":600,"outcome":"first_observed_family_within_h","mae":0.03287901839624673,"test":831,"train":2102}
+{"model":"dropgroup:lifecycle.replenishment","fold":4,"h":600,"outcome":"first_observed_family_within_h","mae":0.03287901839624673,"test":831,"train":2102}
+{"model":"dropgroup:native_timing_measurements","fold":4,"h":600,"outcome":"first_observed_family_within_h","mae":0.03287901839624673,"test":831,"train":2102}
+{"model":"dropgroup:root_native_book_depth_queue","fold":4,"h":600,"outcome":"first_observed_family_within_h","mae":0.03347146518250522,"test":831,"train":2102}
+{"model":"dropgroup:root_native_flow_structure","fold":4,"h":600,"outcome":"first_observed_family_within_h","mae":0.03351893816613979,"test":831,"train":2102}
+{"model":"dropgroup:second_set_scientific_components","fold":4,"h":600,"outcome":"first_observed_family_within_h","mae":0.03287901839624673,"test":831,"train":2102}
+{"model":"zero_change","fold":2,"h":1,"outcome":"mid_price_change","mae":0.0008774193548387104,"test":155,"train":164}
+{"model":"training_mean","fold":2,"h":1,"outcome":"mid_price_change","mae":0.0009086349331235239,"test":155,"train":164}
+{"model":"ridge100","fold":2,"h":1,"outcome":"mid_price_change","mae":0.001034961717663298,"test":155,"train":164}
+{"model":"evotrees_depth3","fold":2,"h":1,"outcome":"mid_price_change","mae":0.0009525999353477685,"test":155,"train":164}
+{"model":"evotrees_depth5","fold":2,"h":1,"outcome":"mid_price_change","mae":0.0009632608939297851,"test":155,"train":164}
+{"model":"evotrees_mae","fold":2,"h":1,"outcome":"mid_price_change","mae":0.0009476339220012487,"test":155,"train":164}
+{"model":"evotrees_q10","fold":2,"h":1,"outcome":"mid_price_change","mae":0.001148652296690053,"test":155,"train":164}
+{"model":"evotrees_q90","fold":2,"h":1,"outcome":"mid_price_change","mae":0.0010952332011813259,"test":155,"train":164}
+{"model":"dropgroup:causal_pullback_geometry","fold":2,"h":1,"outcome":"mid_price_change","mae":0.0009525999353477685,"test":155,"train":164}
+{"model":"dropgroup:external.curve","fold":2,"h":1,"outcome":"mid_price_change","mae":0.0009525999353477685,"test":155,"train":164}
+{"model":"dropgroup:external.est_gas_burn","fold":2,"h":1,"outcome":"mid_price_change","mae":0.0009525999353477685,"test":155,"train":164}
+{"model":"dropgroup:external.mos.gw_by_cycle","fold":2,"h":1,"outcome":"mid_price_change","mae":0.0009525999353477685,"test":155,"train":164}
+{"model":"dropgroup:external.weather","fold":2,"h":1,"outcome":"mid_price_change","mae":0.0009525999353477685,"test":155,"train":164}
+{"model":"dropgroup:external.wind_mwh","fold":2,"h":1,"outcome":"mid_price_change","mae":0.0009525999353477685,"test":155,"train":164}
+{"model":"dropgroup:lifecycle.absorption","fold":2,"h":1,"outcome":"mid_price_change","mae":0.0009525999353477685,"test":155,"train":164}
+{"model":"dropgroup:lifecycle.flow_substrate","fold":2,"h":1,"outcome":"mid_price_change","mae":0.0009525999353477685,"test":155,"train":164}
+{"model":"dropgroup:lifecycle.ladder","fold":2,"h":1,"outcome":"mid_price_change","mae":0.0009525999353477685,"test":155,"train":164}
+{"model":"dropgroup:lifecycle.queue","fold":2,"h":1,"outcome":"mid_price_change","mae":0.0009525999353477685,"test":155,"train":164}
+{"model":"dropgroup:lifecycle.recurrence","fold":2,"h":1,"outcome":"mid_price_change","mae":0.0009525999353477685,"test":155,"train":164}
+{"model":"dropgroup:lifecycle.replenishment","fold":2,"h":1,"outcome":"mid_price_change","mae":0.0009525999353477685,"test":155,"train":164}
+{"model":"dropgroup:native_timing_measurements","fold":2,"h":1,"outcome":"mid_price_change","mae":0.0009525999353477685,"test":155,"train":164}
+{"model":"dropgroup:root_native_book_depth_queue","fold":2,"h":1,"outcome":"mid_price_change","mae":0.0009670567862061242,"test":155,"train":164}
+{"model":"dropgroup:root_native_flow_structure","fold":2,"h":1,"outcome":"mid_price_change","mae":0.000939948846093331,"test":155,"train":164}
+{"model":"dropgroup:second_set_scientific_components","fold":2,"h":1,"outcome":"mid_price_change","mae":0.0009499724189777407,"test":155,"train":164}
+{"model":"drop_history","fold":2,"h":1,"outcome":"mid_price_change","mae":0.0009479151343615651,"test":155,"train":164}
+{"model":"zero_change","fold":3,"h":1,"outcome":"mid_price_change","mae":0.0007704081632653068,"test":1078,"train":315}
+{"model":"training_mean","fold":3,"h":1,"outcome":"mid_price_change","mae":0.0008087507730364899,"test":1078,"train":315}
+{"model":"ridge100","fold":3,"h":1,"outcome":"mid_price_change","mae":0.0016733446881195648,"test":1078,"train":315}
+{"model":"evotrees_depth3","fold":3,"h":1,"outcome":"mid_price_change","mae":0.0008877562127243681,"test":1078,"train":315}
+{"model":"evotrees_depth5","fold":3,"h":1,"outcome":"mid_price_change","mae":0.0009320959512369686,"test":1078,"train":315}
+{"model":"evotrees_mae","fold":3,"h":1,"outcome":"mid_price_change","mae":0.0008588275240339387,"test":1078,"train":315}
+{"model":"evotrees_q10","fold":3,"h":1,"outcome":"mid_price_change","mae":0.0012158323365948863,"test":1078,"train":315}
+{"model":"evotrees_q90","fold":3,"h":1,"outcome":"mid_price_change","mae":0.0013631541554276366,"test":1078,"train":315}
+{"model":"dropgroup:causal_pullback_geometry","fold":3,"h":1,"outcome":"mid_price_change","mae":0.0008877562127243681,"test":1078,"train":315}
+{"model":"dropgroup:external.curve","fold":3,"h":1,"outcome":"mid_price_change","mae":0.0008877562127243681,"test":1078,"train":315}
+{"model":"dropgroup:external.est_gas_burn","fold":3,"h":1,"outcome":"mid_price_change","mae":0.0008877562127243681,"test":1078,"train":315}
+{"model":"dropgroup:external.mos.disagreement_by_cycle","fold":3,"h":1,"outcome":"mid_price_change","mae":0.0008877562127243681,"test":1078,"train":315}
+{"model":"dropgroup:external.mos.gw_by_cycle","fold":3,"h":1,"outcome":"mid_price_change","mae":0.0008877562127243681,"test":1078,"train":315}
+{"model":"dropgroup:external.weather","fold":3,"h":1,"outcome":"mid_price_change","mae":0.0008877562127243681,"test":1078,"train":315}
+{"model":"dropgroup:external.wind_mwh","fold":3,"h":1,"outcome":"mid_price_change","mae":0.0008877562127243681,"test":1078,"train":315}
+{"model":"dropgroup:lifecycle.absorption","fold":3,"h":1,"outcome":"mid_price_change","mae":0.0008925687691372497,"test":1078,"train":315}
+{"model":"dropgroup:lifecycle.flow_substrate","fold":3,"h":1,"outcome":"mid_price_change","mae":0.0008877562127243681,"test":1078,"train":315}
+{"model":"dropgroup:lifecycle.ladder","fold":3,"h":1,"outcome":"mid_price_change","mae":0.0008877562127243681,"test":1078,"train":315}
+{"model":"dropgroup:lifecycle.queue","fold":3,"h":1,"outcome":"mid_price_change","mae":0.0008877562127243681,"test":1078,"train":315}
+{"model":"dropgroup:lifecycle.recurrence","fold":3,"h":1,"outcome":"mid_price_change","mae":0.0008877562127243681,"test":1078,"train":315}
+{"model":"dropgroup:lifecycle.replenishment","fold":3,"h":1,"outcome":"mid_price_change","mae":0.0008877562127243681,"test":1078,"train":315}
+{"model":"dropgroup:native_timing_measurements","fold":3,"h":1,"outcome":"mid_price_change","mae":0.0008877562127243681,"test":1078,"train":315}
+{"model":"dropgroup:root_native_book_depth_queue","fold":3,"h":1,"outcome":"mid_price_change","mae":0.0009456560456770838,"test":1078,"train":315}
+{"model":"dropgroup:root_native_flow_structure","fold":3,"h":1,"outcome":"mid_price_change","mae":0.000891687730245292,"test":1078,"train":315}
+{"model":"dropgroup:second_set_scientific_components","fold":3,"h":1,"outcome":"mid_price_change","mae":0.0008879064097889876,"test":1078,"train":315}
+{"model":"drop_history","fold":3,"h":1,"outcome":"mid_price_change","mae":0.0009762023129750713,"test":1078,"train":315}
+{"model":"zero_change","fold":4,"h":1,"outcome":"mid_price_change","mae":0.00048479729729729266,"test":592,"train":1376}
+{"model":"training_mean","fold":4,"h":1,"outcome":"mid_price_change","mae":0.0005300506265713416,"test":592,"train":1376}
+{"model":"ridge100","fold":4,"h":1,"outcome":"mid_price_change","mae":0.0016738788362165985,"test":592,"train":1376}
+{"model":"evotrees_depth3","fold":4,"h":1,"outcome":"mid_price_change","mae":0.0005682259033621232,"test":592,"train":1376}
+{"model":"evotrees_depth5","fold":4,"h":1,"outcome":"mid_price_change","mae":0.0006640804325055132,"test":592,"train":1376}
+{"model":"evotrees_mae","fold":4,"h":1,"outcome":"mid_price_change","mae":0.0005587472476736087,"test":592,"train":1376}
+{"model":"evotrees_q10","fold":4,"h":1,"outcome":"mid_price_change","mae":0.0010735095789747263,"test":592,"train":1376}
+{"model":"evotrees_q90","fold":4,"h":1,"outcome":"mid_price_change","mae":0.000875123727920042,"test":592,"train":1376}
+{"model":"dropgroup:causal_pullback_geometry","fold":4,"h":1,"outcome":"mid_price_change","mae":0.0005682259033621232,"test":592,"train":1376}
+{"model":"dropgroup:external.curve","fold":4,"h":1,"outcome":"mid_price_change","mae":0.0005748572596348952,"test":592,"train":1376}
+{"model":"dropgroup:external.est_gas_burn","fold":4,"h":1,"outcome":"mid_price_change","mae":0.0005682259033621232,"test":592,"train":1376}
+{"model":"dropgroup:external.mos.disagreement_by_cycle","fold":4,"h":1,"outcome":"mid_price_change","mae":0.0005682259033621232,"test":592,"train":1376}
+{"model":"dropgroup:external.mos.gw_by_cycle","fold":4,"h":1,"outcome":"mid_price_change","mae":0.0005682259033621232,"test":592,"train":1376}
+{"model":"dropgroup:external.weather","fold":4,"h":1,"outcome":"mid_price_change","mae":0.0005682259033621232,"test":592,"train":1376}
+{"model":"dropgroup:external.wind_mwh","fold":4,"h":1,"outcome":"mid_price_change","mae":0.0005682259033621232,"test":592,"train":1376}
+{"model":"dropgroup:lifecycle.absorption","fold":4,"h":1,"outcome":"mid_price_change","mae":0.0005682259033621232,"test":592,"train":1376}
+{"model":"dropgroup:lifecycle.flow_substrate","fold":4,"h":1,"outcome":"mid_price_change","mae":0.0005682259033621232,"test":592,"train":1376}
+{"model":"dropgroup:lifecycle.ladder","fold":4,"h":1,"outcome":"mid_price_change","mae":0.0005682259033621232,"test":592,"train":1376}
+{"model":"dropgroup:lifecycle.queue","fold":4,"h":1,"outcome":"mid_price_change","mae":0.0005682259033621232,"test":592,"train":1376}
+{"model":"dropgroup:lifecycle.recurrence","fold":4,"h":1,"outcome":"mid_price_change","mae":0.0005682259033621232,"test":592,"train":1376}
+{"model":"dropgroup:lifecycle.replenishment","fold":4,"h":1,"outcome":"mid_price_change","mae":0.0005682259033621232,"test":592,"train":1376}
+{"model":"dropgroup:native_timing_measurements","fold":4,"h":1,"outcome":"mid_price_change","mae":0.0005682259033621232,"test":592,"train":1376}
+{"model":"dropgroup:root_native_book_depth_queue","fold":4,"h":1,"outcome":"mid_price_change","mae":0.0005314535287746045,"test":592,"train":1376}
+{"model":"dropgroup:root_native_flow_structure","fold":4,"h":1,"outcome":"mid_price_change","mae":0.0005641178964409797,"test":592,"train":1376}
+{"model":"dropgroup:second_set_scientific_components","fold":4,"h":1,"outcome":"mid_price_change","mae":0.000571125652613191,"test":592,"train":1376}
+{"model":"drop_history","fold":4,"h":1,"outcome":"mid_price_change","mae":0.0006117351577676743,"test":592,"train":1376}
+{"model":"zero_change","fold":2,"h":5,"outcome":"mid_price_change","mae":0.0010304054054054404,"test":148,"train":150}
+{"model":"training_mean","fold":2,"h":5,"outcome":"mid_price_change","mae":0.0010663513513513862,"test":148,"train":150}
+{"model":"ridge100","fold":2,"h":5,"outcome":"mid_price_change","mae":0.0011832012579504171,"test":148,"train":150}
+{"model":"evotrees_depth3","fold":2,"h":5,"outcome":"mid_price_change","mae":0.001116398858617485,"test":148,"train":150}
+{"model":"evotrees_depth5","fold":2,"h":5,"outcome":"mid_price_change","mae":0.0011143775428686642,"test":148,"train":150}
+{"model":"evotrees_mae","fold":2,"h":5,"outcome":"mid_price_change","mae":0.0010906481175121448,"test":148,"train":150}
+{"model":"evotrees_q10","fold":2,"h":5,"outcome":"mid_price_change","mae":0.0010700363204121683,"test":148,"train":150}
+{"model":"evotrees_q90","fold":2,"h":5,"outcome":"mid_price_change","mae":0.0012585089810698662,"test":148,"train":150}
+{"model":"dropgroup:causal_pullback_geometry","fold":2,"h":5,"outcome":"mid_price_change","mae":0.001116398858617485,"test":148,"train":150}
+{"model":"dropgroup:external.curve","fold":2,"h":5,"outcome":"mid_price_change","mae":0.001116398858617485,"test":148,"train":150}
+{"model":"dropgroup:external.est_gas_burn","fold":2,"h":5,"outcome":"mid_price_change","mae":0.001116398858617485,"test":148,"train":150}
+{"model":"dropgroup:external.mos.gw_by_cycle","fold":2,"h":5,"outcome":"mid_price_change","mae":0.001116398858617485,"test":148,"train":150}
+{"model":"dropgroup:external.weather","fold":2,"h":5,"outcome":"mid_price_change","mae":0.001116398858617485,"test":148,"train":150}
+{"model":"dropgroup:external.wind_mwh","fold":2,"h":5,"outcome":"mid_price_change","mae":0.001116398858617485,"test":148,"train":150}
+{"model":"dropgroup:lifecycle.absorption","fold":2,"h":5,"outcome":"mid_price_change","mae":0.001116398858617485,"test":148,"train":150}
+{"model":"dropgroup:lifecycle.flow_substrate","fold":2,"h":5,"outcome":"mid_price_change","mae":0.001116398858617485,"test":148,"train":150}
+{"model":"dropgroup:lifecycle.ladder","fold":2,"h":5,"outcome":"mid_price_change","mae":0.001116398858617485,"test":148,"train":150}
+{"model":"dropgroup:lifecycle.queue","fold":2,"h":5,"outcome":"mid_price_change","mae":0.001116398858617485,"test":148,"train":150}
+{"model":"dropgroup:lifecycle.recurrence","fold":2,"h":5,"outcome":"mid_price_change","mae":0.001116398858617485,"test":148,"train":150}
+{"model":"dropgroup:lifecycle.replenishment","fold":2,"h":5,"outcome":"mid_price_change","mae":0.001116398858617485,"test":148,"train":150}
+{"model":"dropgroup:native_timing_measurements","fold":2,"h":5,"outcome":"mid_price_change","mae":0.001116398858617485,"test":148,"train":150}
+{"model":"dropgroup:root_native_book_depth_queue","fold":2,"h":5,"outcome":"mid_price_change","mae":0.0011242526619496395,"test":148,"train":150}
+{"model":"dropgroup:root_native_flow_structure","fold":2,"h":5,"outcome":"mid_price_change","mae":0.0011088569598926388,"test":148,"train":150}
+{"model":"dropgroup:second_set_scientific_components","fold":2,"h":5,"outcome":"mid_price_change","mae":0.001096030288960746,"test":148,"train":150}
+{"model":"drop_history","fold":2,"h":5,"outcome":"mid_price_change","mae":0.0011374847690087595,"test":148,"train":150}
+{"model":"zero_change","fold":3,"h":5,"outcome":"mid_price_change","mae":0.0011650943396226316,"test":1060,"train":293}
+{"model":"training_mean","fold":3,"h":5,"outcome":"mid_price_change","mae":0.0012049423658960568,"test":1060,"train":293}
+{"model":"ridge100","fold":3,"h":5,"outcome":"mid_price_change","mae":0.0019463404592045023,"test":1060,"train":293}
+{"model":"evotrees_depth3","fold":3,"h":5,"outcome":"mid_price_change","mae":0.0012808717988601912,"test":1060,"train":293}
+{"model":"evotrees_depth5","fold":3,"h":5,"outcome":"mid_price_change","mae":0.0013360240656513092,"test":1060,"train":293}
+{"model":"evotrees_mae","fold":3,"h":5,"outcome":"mid_price_change","mae":0.001212946073389964,"test":1060,"train":293}
+{"model":"evotrees_q10","fold":3,"h":5,"outcome":"mid_price_change","mae":0.0015312741054430157,"test":1060,"train":293}
+{"model":"evotrees_q90","fold":3,"h":5,"outcome":"mid_price_change","mae":0.001576487065977921,"test":1060,"train":293}
+{"model":"dropgroup:causal_pullback_geometry","fold":3,"h":5,"outcome":"mid_price_change","mae":0.0012808717988601912,"test":1060,"train":293}
+{"model":"dropgroup:external.curve","fold":3,"h":5,"outcome":"mid_price_change","mae":0.0012808717988601912,"test":1060,"train":293}
+{"model":"dropgroup:external.est_gas_burn","fold":3,"h":5,"outcome":"mid_price_change","mae":0.0012808717988601912,"test":1060,"train":293}
+{"model":"dropgroup:external.mos.disagreement_by_cycle","fold":3,"h":5,"outcome":"mid_price_change","mae":0.0012808717988601912,"test":1060,"train":293}
+{"model":"dropgroup:external.mos.gw_by_cycle","fold":3,"h":5,"outcome":"mid_price_change","mae":0.0012808717988601912,"test":1060,"train":293}
+{"model":"dropgroup:external.weather","fold":3,"h":5,"outcome":"mid_price_change","mae":0.001283195857428425,"test":1060,"train":293}
+{"model":"dropgroup:external.wind_mwh","fold":3,"h":5,"outcome":"mid_price_change","mae":0.0012808717988601912,"test":1060,"train":293}
+{"model":"dropgroup:lifecycle.absorption","fold":3,"h":5,"outcome":"mid_price_change","mae":0.0012831129952621334,"test":1060,"train":293}
+{"model":"dropgroup:lifecycle.flow_substrate","fold":3,"h":5,"outcome":"mid_price_change","mae":0.0012808717988601912,"test":1060,"train":293}
+{"model":"dropgroup:lifecycle.ladder","fold":3,"h":5,"outcome":"mid_price_change","mae":0.0012808717988601912,"test":1060,"train":293}
+{"model":"dropgroup:lifecycle.queue","fold":3,"h":5,"outcome":"mid_price_change","mae":0.0012808717988601912,"test":1060,"train":293}
+{"model":"dropgroup:lifecycle.recurrence","fold":3,"h":5,"outcome":"mid_price_change","mae":0.0012808717988601912,"test":1060,"train":293}
+{"model":"dropgroup:lifecycle.replenishment","fold":3,"h":5,"outcome":"mid_price_change","mae":0.0012808717988601912,"test":1060,"train":293}
+{"model":"dropgroup:native_timing_measurements","fold":3,"h":5,"outcome":"mid_price_change","mae":0.0012808717988601912,"test":1060,"train":293}
+{"model":"dropgroup:root_native_book_depth_queue","fold":3,"h":5,"outcome":"mid_price_change","mae":0.0012451434092111413,"test":1060,"train":293}
+{"model":"dropgroup:root_native_flow_structure","fold":3,"h":5,"outcome":"mid_price_change","mae":0.0012834191216885716,"test":1060,"train":293}
+{"model":"dropgroup:second_set_scientific_components","fold":3,"h":5,"outcome":"mid_price_change","mae":0.001281163582271717,"test":1060,"train":293}
+{"model":"drop_history","fold":3,"h":5,"outcome":"mid_price_change","mae":0.001307146169776866,"test":1060,"train":293}
+{"model":"zero_change","fold":4,"h":5,"outcome":"mid_price_change","mae":0.0007216494845360694,"test":582,"train":1337}
+{"model":"training_mean","fold":4,"h":5,"outcome":"mid_price_change","mae":0.0007640740540832234,"test":582,"train":1337}
+{"model":"ridge100","fold":4,"h":5,"outcome":"mid_price_change","mae":0.0018659715580241296,"test":582,"train":1337}
+{"model":"evotrees_depth3","fold":4,"h":5,"outcome":"mid_price_change","mae":0.0007987457341645778,"test":582,"train":1337}
+{"model":"evotrees_depth5","fold":4,"h":5,"outcome":"mid_price_change","mae":0.0008648601844807464,"test":582,"train":1337}
+{"model":"evotrees_mae","fold":4,"h":5,"outcome":"mid_price_change","mae":0.0008093049640863761,"test":582,"train":1337}
+{"model":"evotrees_q10","fold":4,"h":5,"outcome":"mid_price_change","mae":0.0014246652921980096,"test":582,"train":1337}
+{"model":"evotrees_q90","fold":4,"h":5,"outcome":"mid_price_change","mae":0.0013591278417717876,"test":582,"train":1337}
+{"model":"dropgroup:causal_pullback_geometry","fold":4,"h":5,"outcome":"mid_price_change","mae":0.0007987457341645778,"test":582,"train":1337}
+{"model":"dropgroup:external.curve","fold":4,"h":5,"outcome":"mid_price_change","mae":0.0007987457341645778,"test":582,"train":1337}
+{"model":"dropgroup:external.est_gas_burn","fold":4,"h":5,"outcome":"mid_price_change","mae":0.0007987457341645778,"test":582,"train":1337}
+{"model":"dropgroup:external.mos.disagreement_by_cycle","fold":4,"h":5,"outcome":"mid_price_change","mae":0.0007987457341645778,"test":582,"train":1337}
+{"model":"dropgroup:external.mos.gw_by_cycle","fold":4,"h":5,"outcome":"mid_price_change","mae":0.0007987457341645778,"test":582,"train":1337}
+{"model":"dropgroup:external.weather","fold":4,"h":5,"outcome":"mid_price_change","mae":0.0007869210825392055,"test":582,"train":1337}
+{"model":"dropgroup:external.wind_mwh","fold":4,"h":5,"outcome":"mid_price_change","mae":0.0007987457341645778,"test":582,"train":1337}
+{"model":"dropgroup:lifecycle.absorption","fold":4,"h":5,"outcome":"mid_price_change","mae":0.0007987457341645778,"test":582,"train":1337}
+{"model":"dropgroup:lifecycle.flow_substrate","fold":4,"h":5,"outcome":"mid_price_change","mae":0.0007987457341645778,"test":582,"train":1337}
+{"model":"dropgroup:lifecycle.ladder","fold":4,"h":5,"outcome":"mid_price_change","mae":0.0007987457341645778,"test":582,"train":1337}
+{"model":"dropgroup:lifecycle.queue","fold":4,"h":5,"outcome":"mid_price_change","mae":0.0007987457341645778,"test":582,"train":1337}
+{"model":"dropgroup:lifecycle.recurrence","fold":4,"h":5,"outcome":"mid_price_change","mae":0.0007987457341645778,"test":582,"train":1337}
+{"model":"dropgroup:lifecycle.replenishment","fold":4,"h":5,"outcome":"mid_price_change","mae":0.0007987457341645778,"test":582,"train":1337}
+{"model":"dropgroup:native_timing_measurements","fold":4,"h":5,"outcome":"mid_price_change","mae":0.0007987457341645778,"test":582,"train":1337}
+{"model":"dropgroup:root_native_book_depth_queue","fold":4,"h":5,"outcome":"mid_price_change","mae":0.000798570396297954,"test":582,"train":1337}
+{"model":"dropgroup:root_native_flow_structure","fold":4,"h":5,"outcome":"mid_price_change","mae":0.0007992058648999193,"test":582,"train":1337}
+{"model":"dropgroup:second_set_scientific_components","fold":4,"h":5,"outcome":"mid_price_change","mae":0.0007947200978235848,"test":582,"train":1337}
+{"model":"drop_history","fold":4,"h":5,"outcome":"mid_price_change","mae":0.0007817086747791607,"test":582,"train":1337}
+{"model":"zero_change","fold":2,"h":20,"outcome":"mid_price_change","mae":0.0013991596638655544,"test":119,"train":131}
+{"model":"training_mean","fold":2,"h":20,"outcome":"mid_price_change","mae":0.0014431650522804642,"test":119,"train":131}
+{"model":"ridge100","fold":2,"h":20,"outcome":"mid_price_change","mae":0.0017151692013247855,"test":119,"train":131}
+{"model":"evotrees_depth3","fold":2,"h":20,"outcome":"mid_price_change","mae":0.0017372059940789816,"test":119,"train":131}
+{"model":"evotrees_depth5","fold":2,"h":20,"outcome":"mid_price_change","mae":0.0018335718474661378,"test":119,"train":131}
+{"model":"evotrees_mae","fold":2,"h":20,"outcome":"mid_price_change","mae":0.001528221147174836,"test":119,"train":131}
+{"model":"evotrees_q10","fold":2,"h":20,"outcome":"mid_price_change","mae":0.0014890427145048716,"test":119,"train":131}
+{"model":"evotrees_q90","fold":2,"h":20,"outcome":"mid_price_change","mae":0.0023767342430389858,"test":119,"train":131}
+{"model":"dropgroup:causal_pullback_geometry","fold":2,"h":20,"outcome":"mid_price_change","mae":0.0017372059940789816,"test":119,"train":131}
+{"model":"dropgroup:external.curve","fold":2,"h":20,"outcome":"mid_price_change","mae":0.0017372059940789816,"test":119,"train":131}
+{"model":"dropgroup:external.est_gas_burn","fold":2,"h":20,"outcome":"mid_price_change","mae":0.0017372059940789816,"test":119,"train":131}
+{"model":"dropgroup:external.mos.gw_by_cycle","fold":2,"h":20,"outcome":"mid_price_change","mae":0.0017372059940789816,"test":119,"train":131}
+{"model":"dropgroup:external.weather","fold":2,"h":20,"outcome":"mid_price_change","mae":0.0017327738591754263,"test":119,"train":131}
+{"model":"dropgroup:external.wind_mwh","fold":2,"h":20,"outcome":"mid_price_change","mae":0.0017372059940789816,"test":119,"train":131}
+{"model":"dropgroup:lifecycle.absorption","fold":2,"h":20,"outcome":"mid_price_change","mae":0.0017372059940789816,"test":119,"train":131}
+{"model":"dropgroup:lifecycle.flow_substrate","fold":2,"h":20,"outcome":"mid_price_change","mae":0.0017372059940789816,"test":119,"train":131}
+{"model":"dropgroup:lifecycle.ladder","fold":2,"h":20,"outcome":"mid_price_change","mae":0.0017372059940789816,"test":119,"train":131}
+{"model":"dropgroup:lifecycle.queue","fold":2,"h":20,"outcome":"mid_price_change","mae":0.0017372059940789816,"test":119,"train":131}
+{"model":"dropgroup:lifecycle.recurrence","fold":2,"h":20,"outcome":"mid_price_change","mae":0.0017372059940789816,"test":119,"train":131}
+{"model":"dropgroup:lifecycle.replenishment","fold":2,"h":20,"outcome":"mid_price_change","mae":0.0017372059940789816,"test":119,"train":131}
+{"model":"dropgroup:native_timing_measurements","fold":2,"h":20,"outcome":"mid_price_change","mae":0.0017372059940789816,"test":119,"train":131}
+{"model":"dropgroup:root_native_book_depth_queue","fold":2,"h":20,"outcome":"mid_price_change","mae":0.0015920721292008331,"test":119,"train":131}
+{"model":"dropgroup:root_native_flow_structure","fold":2,"h":20,"outcome":"mid_price_change","mae":0.0017210316803932687,"test":119,"train":131}
+{"model":"dropgroup:second_set_scientific_components","fold":2,"h":20,"outcome":"mid_price_change","mae":0.0017428471252252007,"test":119,"train":131}
+{"model":"drop_history","fold":2,"h":20,"outcome":"mid_price_change","mae":0.0018499920724544697,"test":119,"train":131}
+{"model":"zero_change","fold":3,"h":20,"outcome":"mid_price_change","mae":0.001991988689915173,"test":1061,"train":245}
+{"model":"training_mean","fold":3,"h":20,"outcome":"mid_price_change","mae":0.0019967589297736044,"test":1061,"train":245}
+{"model":"ridge100","fold":3,"h":20,"outcome":"mid_price_change","mae":0.0024494942018519665,"test":1061,"train":245}
+{"model":"evotrees_depth3","fold":3,"h":20,"outcome":"mid_price_change","mae":0.002018465881197353,"test":1061,"train":245}
+{"model":"evotrees_depth5","fold":3,"h":20,"outcome":"mid_price_change","mae":0.002034308528161054,"test":1061,"train":245}
+{"model":"evotrees_mae","fold":3,"h":20,"outcome":"mid_price_change","mae":0.0020374475508830206,"test":1061,"train":245}
+{"model":"evotrees_q10","fold":3,"h":20,"outcome":"mid_price_change","mae":0.0021553461297954993,"test":1061,"train":245}
+{"model":"evotrees_q90","fold":3,"h":20,"outcome":"mid_price_change","mae":0.002392851913322786,"test":1061,"train":245}
+{"model":"dropgroup:causal_pullback_geometry","fold":3,"h":20,"outcome":"mid_price_change","mae":0.002018465881197353,"test":1061,"train":245}
+{"model":"dropgroup:external.curve","fold":3,"h":20,"outcome":"mid_price_change","mae":0.002018465881197353,"test":1061,"train":245}
+{"model":"dropgroup:external.est_gas_burn","fold":3,"h":20,"outcome":"mid_price_change","mae":0.002018465881197353,"test":1061,"train":245}
+{"model":"dropgroup:external.mos.disagreement_by_cycle","fold":3,"h":20,"outcome":"mid_price_change","mae":0.002018465881197353,"test":1061,"train":245}
+{"model":"dropgroup:external.mos.gw_by_cycle","fold":3,"h":20,"outcome":"mid_price_change","mae":0.002018465881197353,"test":1061,"train":245}
+{"model":"dropgroup:external.weather","fold":3,"h":20,"outcome":"mid_price_change","mae":0.0020168349960970012,"test":1061,"train":245}
+{"model":"dropgroup:external.wind_mwh","fold":3,"h":20,"outcome":"mid_price_change","mae":0.002018465881197353,"test":1061,"train":245}
+{"model":"dropgroup:lifecycle.absorption","fold":3,"h":20,"outcome":"mid_price_change","mae":0.002018465881197353,"test":1061,"train":245}
+{"model":"dropgroup:lifecycle.flow_substrate","fold":3,"h":20,"outcome":"mid_price_change","mae":0.002018465881197353,"test":1061,"train":245}
+{"model":"dropgroup:lifecycle.ladder","fold":3,"h":20,"outcome":"mid_price_change","mae":0.002018465881197353,"test":1061,"train":245}
+{"model":"dropgroup:lifecycle.queue","fold":3,"h":20,"outcome":"mid_price_change","mae":0.002018465881197353,"test":1061,"train":245}
+{"model":"dropgroup:lifecycle.recurrence","fold":3,"h":20,"outcome":"mid_price_change","mae":0.002018465881197353,"test":1061,"train":245}
+{"model":"dropgroup:lifecycle.replenishment","fold":3,"h":20,"outcome":"mid_price_change","mae":0.002018465881197353,"test":1061,"train":245}
+{"model":"dropgroup:native_timing_measurements","fold":3,"h":20,"outcome":"mid_price_change","mae":0.002018465881197353,"test":1061,"train":245}
+{"model":"dropgroup:root_native_book_depth_queue","fold":3,"h":20,"outcome":"mid_price_change","mae":0.0021273531163766247,"test":1061,"train":245}
+{"model":"dropgroup:root_native_flow_structure","fold":3,"h":20,"outcome":"mid_price_change","mae":0.0020138873516737997,"test":1061,"train":245}
+{"model":"dropgroup:second_set_scientific_components","fold":3,"h":20,"outcome":"mid_price_change","mae":0.002018465881197353,"test":1061,"train":245}
+{"model":"drop_history","fold":3,"h":20,"outcome":"mid_price_change","mae":0.0021022969497432923,"test":1061,"train":245}
+{"model":"zero_change","fold":4,"h":20,"outcome":"mid_price_change","mae":0.001126288659793809,"test":582,"train":1289}
+{"model":"training_mean","fold":4,"h":20,"outcome":"mid_price_change","mae":0.0011570605360184903,"test":582,"train":1289}
+{"model":"ridge100","fold":4,"h":20,"outcome":"mid_price_change","mae":0.0027688762561712743,"test":582,"train":1289}
+{"model":"evotrees_depth3","fold":4,"h":20,"outcome":"mid_price_change","mae":0.001222850420525936,"test":582,"train":1289}
+{"model":"evotrees_depth5","fold":4,"h":20,"outcome":"mid_price_change","mae":0.0013186663512154985,"test":582,"train":1289}
+{"model":"evotrees_mae","fold":4,"h":20,"outcome":"mid_price_change","mae":0.0011772619728451477,"test":582,"train":1289}
+{"model":"evotrees_q10","fold":4,"h":20,"outcome":"mid_price_change","mae":0.002167284251325984,"test":582,"train":1289}
+{"model":"evotrees_q90","fold":4,"h":20,"outcome":"mid_price_change","mae":0.002345035589652443,"test":582,"train":1289}
+{"model":"dropgroup:causal_pullback_geometry","fold":4,"h":20,"outcome":"mid_price_change","mae":0.001222850420525936,"test":582,"train":1289}
+{"model":"dropgroup:external.curve","fold":4,"h":20,"outcome":"mid_price_change","mae":0.001222850420525936,"test":582,"train":1289}
+{"model":"dropgroup:external.est_gas_burn","fold":4,"h":20,"outcome":"mid_price_change","mae":0.001222850420525936,"test":582,"train":1289}
+{"model":"dropgroup:external.mos.disagreement_by_cycle","fold":4,"h":20,"outcome":"mid_price_change","mae":0.001222850420525936,"test":582,"train":1289}
+{"model":"dropgroup:external.mos.gw_by_cycle","fold":4,"h":20,"outcome":"mid_price_change","mae":0.001222850420525936,"test":582,"train":1289}
+{"model":"dropgroup:external.weather","fold":4,"h":20,"outcome":"mid_price_change","mae":0.0012228672523564616,"test":582,"train":1289}
+{"model":"dropgroup:external.wind_mwh","fold":4,"h":20,"outcome":"mid_price_change","mae":0.001222850420525936,"test":582,"train":1289}
+{"model":"dropgroup:lifecycle.absorption","fold":4,"h":20,"outcome":"mid_price_change","mae":0.001222850420525936,"test":582,"train":1289}
+{"model":"dropgroup:lifecycle.flow_substrate","fold":4,"h":20,"outcome":"mid_price_change","mae":0.001222850420525936,"test":582,"train":1289}
+{"model":"dropgroup:lifecycle.ladder","fold":4,"h":20,"outcome":"mid_price_change","mae":0.001222850420525936,"test":582,"train":1289}
+{"model":"dropgroup:lifecycle.queue","fold":4,"h":20,"outcome":"mid_price_change","mae":0.001222850420525936,"test":582,"train":1289}
+{"model":"dropgroup:lifecycle.recurrence","fold":4,"h":20,"outcome":"mid_price_change","mae":0.001222850420525936,"test":582,"train":1289}
+{"model":"dropgroup:lifecycle.replenishment","fold":4,"h":20,"outcome":"mid_price_change","mae":0.001222850420525936,"test":582,"train":1289}
+{"model":"dropgroup:native_timing_measurements","fold":4,"h":20,"outcome":"mid_price_change","mae":0.001222850420525936,"test":582,"train":1289}
+{"model":"dropgroup:root_native_book_depth_queue","fold":4,"h":20,"outcome":"mid_price_change","mae":0.0011870348584400118,"test":582,"train":1289}
+{"model":"dropgroup:root_native_flow_structure","fold":4,"h":20,"outcome":"mid_price_change","mae":0.0012261763467012656,"test":582,"train":1289}
+{"model":"dropgroup:second_set_scientific_components","fold":4,"h":20,"outcome":"mid_price_change","mae":0.001222850420525936,"test":582,"train":1289}
+{"model":"drop_history","fold":4,"h":20,"outcome":"mid_price_change","mae":0.00127877191482886,"test":582,"train":1289}
+{"model":"zero_change","fold":2,"h":60,"outcome":"mid_price_change","mae":0.0017368421052631224,"test":114,"train":122}
+{"model":"training_mean","fold":2,"h":60,"outcome":"mid_price_change","mae":0.0017509347138337254,"test":114,"train":122}
+{"model":"ridge100","fold":2,"h":60,"outcome":"mid_price_change","mae":0.002180947608717018,"test":114,"train":122}
+{"model":"evotrees_depth3","fold":2,"h":60,"outcome":"mid_price_change","mae":0.0019216743275258421,"test":114,"train":122}
+{"model":"evotrees_depth5","fold":2,"h":60,"outcome":"mid_price_change","mae":0.0019122692436840095,"test":114,"train":122}
+{"model":"evotrees_mae","fold":2,"h":60,"outcome":"mid_price_change","mae":0.001781918047422775,"test":114,"train":122}
+{"model":"evotrees_q10","fold":2,"h":60,"outcome":"mid_price_change","mae":0.0018306692237074758,"test":114,"train":122}
+{"model":"evotrees_q90","fold":2,"h":60,"outcome":"mid_price_change","mae":0.002510330324363834,"test":114,"train":122}
+{"model":"dropgroup:causal_pullback_geometry","fold":2,"h":60,"outcome":"mid_price_change","mae":0.0019216743275258421,"test":114,"train":122}
+{"model":"dropgroup:external.curve","fold":2,"h":60,"outcome":"mid_price_change","mae":0.0019216743275258421,"test":114,"train":122}
+
+[11974] signal 15: Terminated
+in expression starting at /opt/frankie-box/work/family-research-20261022/joint-models-v3/scripts/run_joint_models.jl:126
+getindex at ./essentials.jl:975 [inlined]
+_scan_node! at /opt/frankie-box/work/family-research-20261022/julia-depot/packages/EvoTrees/EGJvk/src/fit-utils.jl:417 [inlined]
+get_best_split at /opt/frankie-box/work/family-research-20261022/julia-depot/packages/EvoTrees/EGJvk/src/fit-utils.jl:446
+macro expansion at /opt/frankie-box/work/family-research-20261022/julia-depot/packages/EvoTrees/EGJvk/src/fit.jl:91 [inlined]
+#grow_tree!##2 at ./threadingconstructs.jl:291
+#grow_tree!##0 at ./threadingconstructs.jl:258
+unknown function (ip: 0x797b2713f665) at (unknown file)
+_threads_call at ./threadingconstructs.jl:180
+#threading_run##0 at ./threadingconstructs.jl:190
+jfptr_YY.threading_runYY.YY.0_15113.1 at /opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/sys.so (unknown line)
+jl_apply at /cache/build/builder-amdci4-4/julialang/julia-ci/src/julia.h:2319 [inlined]
+start_task at /cache/build/builder-amdci4-4/julialang/julia-ci/src/task.c:1287
+unknown function (ip: (nil)) at (unknown file)
+unknown function (ip: 0x797b6d498e4f) at /lib/x86_64-linux-gnu/libc.so.6
+pthread_cond_wait at /lib/x86_64-linux-gnu/libc.so.6 (unknown line)
+uv_cond_wait at /workspace/srcdir/libuv/src/unix/thread.c:822
+ijl_task_get_next at /cache/build/builder-amdci4-4/julialang/julia-ci/src/scheduler.c:614
+wait at ./task.jl:1297
+#wait#392 at ./condition.jl:141
+wait at ./condition.jl:136 [inlined]
+_wait at ./task.jl:312
+threading_run at ./threadingconstructs.jl:204
+macro expansion at ./threadingconstructs.jl:228 [inlined]
+grow_tree! at /opt/frankie-box/work/family-research-20261022/julia-depot/packages/EvoTrees/EGJvk/src/fit.jl:89
+grow_evotree! at /opt/frankie-box/work/family-research-20261022/julia-depot/packages/EvoTrees/EGJvk/src/fit.jl:21
+unknown function (ip: 0x797b2713a019) at (unknown file)
+#fit#107 at /opt/frankie-box/work/family-research-20261022/julia-depot/packages/EvoTrees/EGJvk/src/fit.jl:423
+fit at /opt/frankie-box/work/family-research-20261022/julia-depot/packages/EvoTrees/EGJvk/src/fit.jl:388
+unknown function (ip: 0x797b2f1b0b23) at (unknown file)
+runmodels at /opt/frankie-box/work/family-research-20261022/joint-models-v3/scripts/run_joint_models.jl:75
+unknown function (ip: 0x797b2f1365ef) at (unknown file)
+jl_apply at /cache/build/builder-amdci4-4/julialang/julia-ci/src/julia.h:2319 [inlined]
+do_call at /cache/build/builder-amdci4-4/julialang/julia-ci/src/interpreter.c:123
+eval_value at /cache/build/builder-amdci4-4/julialang/julia-ci/src/interpreter.c:243
+eval_stmt_value at /cache/build/builder-amdci4-4/julialang/julia-ci/src/interpreter.c:194 [inlined]
+eval_body at /cache/build/builder-amdci4-4/julialang/julia-ci/src/interpreter.c:679
+jl_interpret_toplevel_thunk at /cache/build/builder-amdci4-4/julialang/julia-ci/src/interpreter.c:884
+jl_toplevel_eval_flex at /cache/build/builder-amdci4-4/julialang/julia-ci/src/toplevel.c:742
+jl_eval_toplevel_stmts at /cache/build/builder-amdci4-4/julialang/julia-ci/src/toplevel.c:585
+jl_toplevel_eval_flex at /cache/build/builder-amdci4-4/julialang/julia-ci/src/toplevel.c:683
+ijl_toplevel_eval at /cache/build/builder-amdci4-4/julialang/julia-ci/src/toplevel.c:754
+ijl_toplevel_eval_in at /cache/build/builder-amdci4-4/julialang/julia-ci/src/toplevel.c:799
+eval at ./boot.jl:489
+include_string at ./loading.jl:3045
+_include at ./loading.jl:3105
+include at ./Base.jl:309
+exec_options at ./client.jl:344
+_start at ./client.jl:577
+jfptr__start_60477.1 at /opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/sys.so (unknown line)
+jl_apply at /cache/build/builder-amdci4-4/julialang/julia-ci/src/julia.h:2319 [inlined]
+true_main at /cache/build/builder-amdci4-4/julialang/julia-ci/src/jlapi.c:985
+jl_repl_entrypoint at /cache/build/builder-amdci4-4/julialang/julia-ci/src/jlapi.c:1152
+main at /cache/build/builder-amdci4-4/julialang/julia-ci/cli/loader_exe.c:58
+unknown function (ip: 0x797b6d42a1c9) at /lib/x86_64-linux-gnu/libc.so.6
+__libc_start_main at /lib/x86_64-linux-gnu/libc.so.6 (unknown line)
+unknown function (ip: 0x4010b8) at /workspace/srcdir/glibc-2.17/csu/../sysdeps/x86_64/start.S
+unknown function (ip: (nil)) at (unknown file)
+Allocations: 469025694 (Pool: 469024906; Big: 788); GC: 1428
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].
+[ Info: The following kwargs are not supported and will be ignored: [:rng].

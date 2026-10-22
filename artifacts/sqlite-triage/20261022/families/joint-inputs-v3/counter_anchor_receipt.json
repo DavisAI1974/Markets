@@ -1,0 +1,28 @@
+{
+  "rows": 33705,
+  "changed_anchor_rows": 20091,
+  "continuity_segment_changed_rows": 470,
+  "meaning": "Raw differences remain valid differences of named source state; a counter delta across different anchors is not net order flow or a rate. Source anchors and dispositions stay provenance; no anchor repair or future backfill.",
+  "by_anchor": {
+    "last_book_reset": {
+      "n": 6741,
+      "changed": 28
+    },
+    "last_f_last_same_side": {
+      "n": 6741,
+      "changed": 6718
+    },
+    "last_touch_change": {
+      "n": 6741,
+      "changed": 6678
+    },
+    "last_trade": {
+      "n": 6741,
+      "changed": 6573
+    },
+    "session_open": {
+      "n": 6741,
+      "changed": 94
+    }
+  }
+}

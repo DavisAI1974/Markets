@@ -1,0 +1,15 @@
+ERROR: LoadError: KeyError: key (String31("mid_price_change"), 60) not found
+Stacktrace:
+ [1] getindex(h::Dict{Tuple{String31, Int64}, DataFrameRow{DataFrame, DataFrames.Index}}, key::Tuple{String31, Int64})
+   @ Base ./dict.jl:479
+ [2] summarize()
+   @ Main /opt/frankie-box/work/family-research-20261022/joint-models-v3/scripts/summarize_joint_models.jl:41
+ [3] top-level scope
+   @ /opt/frankie-box/work/family-research-20261022/joint-models-v3/scripts/summarize_joint_models.jl:109
+ [4] include(mod::Module, _path::String)
+   @ Base ./Base.jl:309
+ [5] exec_options(opts::Base.JLOptions)
+   @ Base ./client.jl:344
+ [6] _start()
+   @ Base ./client.jl:577
+in expression starting at /opt/frankie-box/work/family-research-20261022/joint-models-v3/scripts/summarize_joint_models.jl:109

@@ -1,0 +1,136 @@
+{
+  "name": "NG exhaustion entry-timing and preserve-all brain extension",
+  "date": "2026-08-18",
+  "status": "PROPOSAL_ONLY_POST_PHASE2_NO_PERMANENT_BRAIN_MUTATION",
+  "relationship": {
+    "parent_runway_proposal": "research/FRANKIE_NG_EXHAUSTION_BRAIN_LESSON_PROPOSAL_20260817.md",
+    "parent_phase2_chain_proposal": "research/kalshi/knowledge/ng_brain_exhaustion_chain_phase2_proposal_20260818.json",
+    "focused_pox_extension": "research/kalshi/knowledge/ng_brain_exhaustion_pox_focused_proposal_20260819.json",
+    "relation": "EXTENDS_PARENTS_AND_NOW_REFERENCES_FOCUSED_POX_EXTENSION_DOES_NOT_REPLACE_ANY"
+  },
+  "purpose": "Preserve the complete exhaustion-chain population while separating structural validity from entry timing. A setup that is not actionable at its earliest possible moment is not automatically a failed setup; it may become causally identifiable/actionable later while sufficient edge/runway remains.",
+  "general_lessons": [
+    {
+      "id": "exhaustion.execution.entry_hierarchy",
+      "status": "PROPOSAL",
+      "lesson": "Use an entry hierarchy. If a setup is already causally predictable and profitable at its earliest validated decision point, keep the early entry. Only setups that are not sufficiently actionable early enter the fallback survivorship/late-entry lane.",
+      "do_not_learn": "Do not delay already-predictable profitable trades merely to wait for an arbitrary survival checkpoint."
+    },
+    {
+      "id": "exhaustion.execution.late_entry_revival",
+      "status": "PROPOSAL",
+      "lesson": "Earliest-entry non-predictability or causal unavailability does not kill a structurally valid exhaustion setup. Preserve it and test the first later causal checkpoint where identity/context is available and enough expected remaining runway/edge remains to justify entry.",
+      "checkpoints_seconds": [1,2,3,4,5,10,15,20,30,45,60,90,120,180,300,600,900,1800,3600],
+      "scope": "D1, all structurally preserved D2+ chain/module cases, and focused POX cases that are not executable at an earlier checkpoint."
+    },
+    {
+      "id": "exhaustion.execution.dense_early_fallback",
+      "status": "PROPOSAL",
+      "lesson": "For fallback-only cases, search densely at +1/+2/+3/+4/+5 seconds after the relevant causal knowability point before widening the checkpoint spacing. The objective is to find the earliest moment predictability appears, not to impose a fixed minimum delay."
+    },
+    {
+      "id": "exhaustion.execution.survival_as_information",
+      "status": "PROPOSAL",
+      "lesson": "For a setup that was not initially actionable, the causal fact that it is still alive at checkpoint t is new information. At checkpoint t, model remaining lifespan and trade opportunity using only information available by t plus survival-to-t; never leak realized final duration or future path shape backward."
+    },
+    {
+      "id": "exhaustion.execution.dual_knowability_clocks",
+      "status": "PROPOSAL",
+      "lesson": "Keep detector-known and full-state-known clocks separate. Use the detector-known clock for rules needing only event identity and contemporaneous causal features; use the later full-state-known clock only for rules requiring completed h=60/post-state context."
+    },
+    {
+      "id": "exhaustion.population.preserve_all",
+      "status": "PROPOSAL",
+      "lesson": "Profitability ranks the complete valid exhaustion population; it does not define membership. Preserve short, long, directional, chop/rotation, low-support, sign-changing, losing and initially non-executable cases. Confidence and profitability are annotations, not deletion rules."
+    },
+    {
+      "id": "exhaustion.population.authoritative_ledger_separation",
+      "status": "PROPOSAL_METHOD_UPDATE_20260819",
+      "lesson": "When a focused research population has an authoritative fixed case ledger, load case identity and future labels from that ledger first. Canonical evidence and raw tape may enrich those identities but must not silently redefine population membership through an alternative enumeration.",
+      "focused_pox_policy": "FIXED_3429_DO_NOT_REOPEN"
+    },
+    {
+      "id": "exhaustion.population.reverse_backcast_provenance",
+      "status": "RESEARCH_METHOD_PROPOSAL",
+      "lesson": "When an early historical cohort lacks honest forward-OOT lineage labels because it trained the first fold, a later-trained and later-validated frozen labeler may be applied backward only as REVERSE_BACKCAST_NOT_FORWARD_OOT. Such rows may expand descriptive/profitability evidence but never count as forward validation."
+    },
+    {
+      "id": "exhaustion.execution.path_class_separation",
+      "status": "PROPOSAL",
+      "lesson": "Directional travel and chop/rotation are separate opportunity classes. Low directional efficiency is not equivalent to low profitability; preserve chop for separate range/fade/rotation research."
+    },
+    {
+      "id": "exhaustion.execution.subfamily_economics_do_not_transfer",
+      "status": "PROPOSAL_NEGATIVE_EVIDENCE_20260819",
+      "lesson": "An execution failure or success in a broad parent family cannot be automatically transferred to a focused structural subfamily. The generic D1 +0 early-entry lane failed its tune profitability gate and was effectively flat gross in confirmation before costs, so focused POX must validate its own initial-continuation economics rather than inherit a generic immediate-entry rule.",
+      "source": "research/generated/ng_exhaustion_entry_timing_revival_20260818/lane3_plus0_profitability/NG_EXHAUSTION_D1_PLUS0_EARLY_ENTRY_SUMMARY_20260818.json"
+    }
+  ],
+  "higher_order_revival": {
+    "status": "AUTHORIZED_RESEARCH_EXTENSION",
+    "finding": "No valid D2+ structural rows were intentionally deleted for lack of earliest-entry predictability. Earlier protocols explicitly preserved retrospective structural higher-order results even when causal/executable depth was smaller. Some structures were sidelined from execution because required identity/context was not available at the original entry point.",
+    "policy": "REVIVE_EXECUTION_TIMING_NOT_REWRITE_STRUCTURE",
+    "current_structural_population": {
+      "exact_D2": 1592,
+      "exact_D3": 124,
+      "exact_D4": 8,
+      "exact_D5": 1,
+      "total_D2_plus": 1725
+    },
+    "procedure": [
+      "Keep any already-causally-executable D2+ early-entry rule at its earliest validated entry.",
+      "For structurally valid D2+ cases that fail the original earliest-entry information wall, compute the first timestamp at which the required frozen detector/context inputs become causal.",
+      "From that first causal timestamp, test +1/+2/+3/+4/+5 seconds first, then wider survivorship checkpoints only if the setup remains alive/actionable.",
+      "At each checkpoint estimate remaining runway, direction/range opportunity, MFE/MAE and cost-adjusted expectancy using only checkpoint-known information.",
+      "Do not convert retrospective final chain depth, realized final duration, or future path shape into an earlier signal.",
+      "Retain cases that never become executable as structural research memory rather than deleting them."
+    ]
+  },
+  "d1_policy": {
+    "preserve_all": true,
+    "master_ledger": "research/generated/ng_exhaustion_exact_d1_master_20260818/NG_EXHAUSTION_EXACT_D1_MASTER_LEDGER_20260818.jsonl.gz",
+    "forward_exact_d1_count_current": 18837,
+    "chronology": {
+      "base_0_17": "PRELINEAGE_UNLABELED; recover only via separately validated reverse backcast",
+      "base_18_35": "D1_DISCOVERY_OOT",
+      "base_36_47": "D1_VALIDATION",
+      "base_48_53": "D1_UNTOUCHED_CONFIRMATION",
+      "held_20260329": "INSERT_ONLY_HELD"
+    },
+    "plus0_profitability_update_20260819": {
+      "status": "TUNE_GATE_FAILED",
+      "interpretation": "Negative evidence for generic D1 +0 execution only; does not kill D1 structure and does not determine focused POX economics."
+    }
+  },
+  "focused_pox_policy_20260819": {
+    "proposal": "research/kalshi/knowledge/ng_brain_exhaustion_pox_focused_proposal_20260819.json",
+    "strategy_proposal": "research/strategy_evolution/NG_EXHAUSTION_POX_TRADE_STRATEGY_PROPOSAL_20260819.json",
+    "population_policy": "FIXED_3429_DO_NOT_REOPEN",
+    "population": {"total":3429,"flip":1546,"same":1883},
+    "label_split_authority": "LATEST_USER_AUTHORITY_20260819_FROM_FROZEN_ROSTER_ARTIFACT_9279235031",
+    "initial_sign_persistence_through_plus60_approx": 0.944,
+    "state_architecture": "INITIAL_CONTINUATION_FIRST_THEN_LATER_FLIP_VS_SAME_BRANCH",
+    "D0_D5_incremental_crosswalk": "DEFERRED_UNTIL_POX_AND_D0_D5_ARE_INDEPENDENTLY_FROZEN"
+  },
+  "promotion_boundary": {
+    "permanent_frankie_mutation": false,
+    "frankie_1_mutation": false,
+    "runway_clock_mutation": false,
+    "detector_mutation": false,
+    "canonical_row_mutation": false,
+    "spawn_py_mutation": false,
+    "play_freeze": false,
+    "requirement": "Any new early-entry, focused-POX, or fallback late-entry strategy remains historical/proposal-only until a predeclared fresh prospective/OOT promotion contract is passed."
+  },
+  "do_not_learn": [
+    "Do not impose +1/+2/+3/+4/+5 seconds as mandatory delays on setups already callable at the earliest validated entry.",
+    "Do not treat survival-to-t as known before t.",
+    "Do not use realized final D1/D2/D3/D4/D5 depth or final duration to justify an earlier entry.",
+    "Do not delete structurally valid higher-order or focused-POX rows merely because an earliest-entry causal test failed.",
+    "Do not reinterpret reverse-backcast weeks as forward-OOT evidence.",
+    "Do not reconstruct the fixed 3,429 focused POX population from consecutive canonical P/O/X adjacency or another alternative population definition.",
+    "Do not generalize the generic D1 +0 profitability failure into a POX rejection; focused POX economics must be measured separately.",
+    "Do not open independent D0-D5 result artifacts to tune focused POX before its standalone freeze.",
+    "Do not merge this proposal or the focused POX extension into permanent Frankie without deliberate adjudication together with the runway parent and finalized Phase-2 chain extension."
+  ]
+}

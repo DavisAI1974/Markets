@@ -1,0 +1,19 @@
+{
+  "cycle": "ingest",
+  "day": "20231018",
+  "entries": [
+    {
+      "bytes": 5283,
+      "include": true,
+      "kind": "immediate ingest knowledge",
+      "name": "stage-knowledge.json",
+      "sha256": "a199603bcfb190311ed612f1e9fc97e46a526704345ee3bfa5ca673175453653",
+      "source": "/opt/frankie-box/work/ingest-20231018-gh-36571235912-1/ingestion-receipt.json"
+    }
+  ],
+  "entry_kind": "stage_knowledge",
+  "knowledge_status": "available_immediately",
+  "note": "stage knowledge committed before the workflow advances; exact large sources remain at the digest-bound paths",
+  "schema": "FRANKIE_BOX_BRAIN_ENTRY_V1",
+  "unavailable": []
+}

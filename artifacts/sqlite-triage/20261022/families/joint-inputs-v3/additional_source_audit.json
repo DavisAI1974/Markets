@@ -1,0 +1,26 @@
+{
+  "status": "completed",
+  "unique_source_records": 6265,
+  "contexts": 10486,
+  "source_bytes_read": 2066573626,
+  "measurement_cells": 26914305,
+  "feature_names": 5129,
+  "max_rank": {
+    "bid_levels": 281,
+    "ask_levels": 247
+  },
+  "source_unit_prefix_queue_and_asof_checks": "all passed",
+  "missing_receive_anchor_counts": {
+    "last_book_reset|UNKNOWN_SINCE_RESUME|None": 345,
+    "last_f_last_same_side|UNKNOWN_SINCE_RESUME|None": 3,
+    "last_trade|UNKNOWN_SINCE_RESUME|None": 34,
+    "session_open|EXCHANGE_CALENDAR|None": 6265
+  },
+  "limits": [
+    "No source-null, undefined flow side, absent completed step, pre-publication or session edge backfill.",
+    "FIFO order sizes, volume ahead and priority ages summarized; order IDs, absolute priority clocks and sequences remain provenance.",
+    "All observed deeper levels retained separately by side and rank; nonexistent levels remain missing, not zero.",
+    "Rounded book_regime/ladder prices remain excluded; native prices verified by price_raw/1e9.",
+    "One retained day; no new independent-day data found."
+  ]
+}

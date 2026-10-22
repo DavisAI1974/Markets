@@ -1,0 +1,2950 @@
+{
+ "day": "20231018",
+ "rule": "knowledge is filed immediately when legally available; large evidence remains exact by path/bytes/sha256",
+ "schema": "FRANKIE_STAGE_KNOWLEDGE_V1",
+ "sources": [
+  {
+   "bytes": 87474,
+   "content": {
+    "account": {
+     "basis": "counted from this run (rows, second set, pools, clocks); nothing estimated",
+     "format": 1,
+     "missing_or_thin": {
+      "book_read": {
+       "format": 1,
+       "groups": 583688,
+       "groups_read_at_publication": 329995,
+       "groups_read_in_walk": 253693,
+       "rows_read_at_publication": 432473,
+       "rule": "beside the pinned functions on the same full rows (teacher_book_read); the rows before a resume whose save held no book read are read at publication from the same reader with the same functions",
+       "schema": "FRANKIE_TEACHER_BOOK_READ_V1",
+       "whole_day": true,
+       "windows": 495733
+      },
+      "clock_mismatches": {
+       "all": {
+        "count": 0,
+        "file": "teacher-second-set-mismatches.jsonl",
+        "format": "one JSON value per line",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+       },
+       "rows": 0
+      },
+      "guard": {},
+      "planes_never_carried": [
+       {
+        "entry": "controlling_rt_mission",
+        "group": "binding_common_controls",
+        "reason": "not market evidence: the registry role control is not carried by the picture",
+        "role": "control"
+       },
+       {
+        "entry": "native_calculation_contract",
+        "group": "binding_common_controls",
+        "reason": "not market evidence: the registry role control is not carried by the picture",
+        "role": "control"
+       },
+       {
+        "entry": "anchored_knowledge_manifest",
+        "group": "binding_common_controls",
+        "reason": "not market evidence: the registry role control is not carried by the picture",
+        "role": "control"
+       },
+       {
+        "entry": "selected_same_arm_profile",
+        "group": "binding_common_controls",
+        "reason": "not market evidence: the registry role control is not carried by the picture",
+        "role": "control"
+       },
+       {
+        "entry": "a_clean_promoted_positive_capsule",
+        "group": "a_clean_overlay",
+        "reason": "not market evidence: the registry role arm is not carried by the picture",
+        "role": "arm"
+       },
+       {
+        "entry": "a_memory_promoted_positive_capsule",
+        "group": "a_memory_overlay",
+        "reason": "not market evidence: the registry role arm is not carried by the picture",
+        "role": "arm"
+       },
+       {
+        "entry": "a_memory_prior_lessons_package",
+        "group": "a_memory_overlay",
+        "reason": "not market evidence: the registry role arm is not carried by the picture",
+        "role": "arm"
+       },
+       {
+        "entry": "a_memory_prior_package_proof",
+        "group": "a_memory_overlay",
+        "reason": "not market evidence: the registry role arm is not carried by the picture",
+        "role": "arm"
+       },
+       {
+        "entry": "authoritative_s135_construction",
+        "group": "current_brain_runtime",
+        "reason": "not market evidence: the registry role knowledge is not carried by the picture",
+        "role": "knowledge"
+       },
+       {
+        "entry": "complete_s105_9_brain",
+        "group": "current_brain_runtime",
+        "reason": "not market evidence: the registry role knowledge is not carried by the picture",
+        "role": "knowledge"
+       },
+       {
+        "entry": "doctrine_reasoning_play_index_evidence",
+        "group": "current_brain_runtime",
+        "reason": "not market evidence: the registry role knowledge is not carried by the picture",
+        "role": "knowledge"
+       },
+       {
+        "entry": "lawful_prior_session_carry",
+        "group": "current_brain_runtime",
+        "reason": "not market evidence: the registry role knowledge is not carried by the picture",
+        "role": "knowledge"
+       },
+       {
+        "entry": "october_outcome_wall_enforcement",
+        "group": "current_brain_runtime",
+        "reason": "not market evidence: the registry role knowledge is not carried by the picture",
+        "role": "knowledge"
+       },
+       {
+        "entry": "learned_d_structures_and_families",
+        "group": "frozen_learned_structure",
+        "reason": "not market evidence: the registry role knowledge is not carried by the picture",
+        "role": "knowledge"
+       },
+       {
+        "entry": "learned_dipoles_and_geometry",
+        "group": "frozen_learned_structure",
+        "reason": "not market evidence: the registry role knowledge is not carried by the picture",
+        "role": "knowledge"
+       },
+       {
+        "entry": "learned_pair_triplet_recurrence",
+        "group": "frozen_learned_structure",
+        "reason": "not market evidence: the registry role knowledge is not carried by the picture",
+        "role": "knowledge"
+       },
+       {
+        "entry": "learned_chains_extensions_reappearances_ancestry",
+        "group": "frozen_learned_structure",
+        "reason": "not market evidence: the registry role knowledge is not carried by the picture",
+        "role": "knowledge"
+       },
+       {
+        "entry": "phase1_discoveries_structural_falsifiers",
+        "group": "frozen_learned_structure",
+        "reason": "not market evidence: the registry role knowledge is not carried by the picture",
+        "role": "knowledge"
+       },
+       {
+        "entry": "phase2_findings_modules_timing_pox_negatives",
+        "group": "frozen_learned_structure",
+        "reason": "not market evidence: the registry role knowledge is not carried by the picture",
+        "role": "knowledge"
+       },
+       {
+        "entry": "predecessor_ancestry_unresolved_chain_state",
+        "group": "frozen_learned_structure",
+        "reason": "not market evidence: the registry role knowledge is not carried by the picture",
+        "role": "knowledge"
+       },
+       {
+        "entry": "historical_timing_lifespan_context",
+        "group": "frozen_learned_structure",
+        "reason": "not market evidence: the registry role knowledge is not carried by the picture",
+        "role": "knowledge"
+       },
+       {
+        "entry": "learned_structure_proposal_index_material",
+        "group": "frozen_learned_structure",
+        "reason": "not market evidence: the registry role knowledge is not carried by the picture",
+        "role": "knowledge"
+       },
+       {
+        "entry": "extra_agent_corrected_information_and_gap_diagnoses",
+        "group": "corrected_extra_agent_carryforward",
+        "reason": "not market evidence: the registry role knowledge is not carried by the picture",
+        "role": "knowledge"
+       },
+       {
+        "entry": "derived_roll20_and_dipole_state",
+        "group": "derived_geometry",
+        "reason": "the BOSS teacher's Dipole state rows (frankie_box_experiment_teacher), not the market picture; the per-second roll20 aggregate stays completed-only",
+        "role": "calculation"
+       },
+       {
+        "entry": "clock_model_evaluation",
+        "group": "causal_clocks",
+        "reason": "the model-evaluation clock records of the day (frankie_box_model_clock: <run>/days/<day>/model-clock.jsonl, one record per real meeting/Jev call); the native member field clocks.decision_ts_recv_ns stays the declared null (no model call inside the traversal)",
+        "role": "clock"
+       },
+       {
+        "entry": "clock_lock_time",
+        "group": "causal_clocks",
+        "reason": "stamped by each consuming piece (its as_of / through_cursor cutoff), not a market picture element",
+        "role": "clock"
+       },
+       {
+        "entry": "later_outcome_reveal",
+        "group": "sealed_target_timing",
+        "reason": "not market evidence: the registry role sealed_answer is not carried by the picture",
+        "role": "sealed_answer"
+       },
+       {
+        "entry": "target_ground_truth_onset_time",
+        "group": "sealed_target_timing",
+        "reason": "not market evidence: the registry role sealed_answer is not carried by the picture",
+        "role": "sealed_answer"
+       },
+       {
+        "entry": "s137_cognitive_shadow_runtime",
+        "group": "provisional_shadow",
+        "reason": "not market evidence: the registry role shadow is not carried by the picture",
+        "role": "shadow"
+       },
+       {
+        "entry": "hipporag_associative_retrieval",
+        "group": "provisional_shadow",
+        "reason": "not market evidence: the registry role shadow is not carried by the picture",
+        "role": "shadow"
+       },
+       {
+        "entry": "step1_existing_october_seconds",
+        "group": "sealed_step1_answer",
+        "reason": "not market evidence: the registry role sealed_answer is not carried by the picture",
+        "role": "sealed_answer"
+       },
+       {
+        "entry": "step1_populations",
+        "group": "sealed_step1_answer",
+        "reason": "not market evidence: the registry role sealed_answer is not carried by the picture",
+        "role": "sealed_answer"
+       },
+       {
+        "entry": "step1_crosswalks",
+        "group": "sealed_step1_answer",
+        "reason": "not market evidence: the registry role sealed_answer is not carried by the picture",
+        "role": "sealed_answer"
+       },
+       {
+        "entry": "step1_target_membership_receipts",
+        "group": "sealed_step1_answer",
+        "reason": "not market evidence: the registry role sealed_answer is not carried by the picture",
+        "role": "sealed_answer"
+       },
+       {
+        "entry": "step1_labels_and_classifications",
+        "group": "sealed_step1_answer",
+        "reason": "not market evidence: the registry role sealed_answer is not carried by the picture",
+        "role": "sealed_answer"
+       },
+       {
+        "entry": "step1_result_prefixes",
+        "group": "sealed_step1_answer",
+        "reason": "not market evidence: the registry role sealed_answer is not carried by the picture",
+        "role": "sealed_answer"
+       },
+       {
+        "entry": "step1_reconciliation_outputs",
+        "group": "sealed_step1_answer",
+        "reason": "not market evidence: the registry role sealed_answer is not carried by the picture",
+        "role": "sealed_answer"
+       },
+       {
+        "entry": "output_state_and_state_delta_movie",
+        "group": "append_only_outputs",
+        "reason": "not market evidence: the registry role output is not carried by the picture",
+        "role": "output"
+       },
+       {
+        "entry": "output_frankie_reasoning_movie",
+        "group": "append_only_outputs",
+        "reason": "not market evidence: the registry role output is not carried by the picture",
+        "role": "output"
+       },
+       {
+        "entry": "output_probability_movie",
+        "group": "append_only_outputs",
+        "reason": "not market evidence: the registry role output is not carried by the picture",
+        "role": "output"
+       },
+       {
+        "entry": "output_candidate_discoveries",
+        "group": "append_only_outputs",
+        "reason": "not market evidence: the registry role output is not carried by the picture",
+        "role": "output"
+       },
+       {
+        "entry": "output_first_locks_and_no_locks",
+        "group": "append_only_outputs",
+        "reason": "not market evidence: the registry role output is not carried by the picture",
+        "role": "output"
+       },
+       {
+        "entry": "output_negative_sparse_inconclusive_ledger",
+        "group": "append_only_outputs",
+        "reason": "not market evidence: the registry role output is not carried by the picture",
+        "role": "output"
+       },
+       {
+        "entry": "output_knowledge_retrieval_receipts",
+        "group": "append_only_outputs",
+        "reason": "not market evidence: the registry role output is not carried by the picture",
+        "role": "output"
+       },
+       {
+        "entry": "output_provider_invocation_response_receipts",
+        "group": "append_only_outputs",
+        "reason": "not market evidence: the registry role output is not carried by the picture",
+        "role": "output"
+       },
+       {
+        "entry": "output_answer_wall_access_receipts",
+        "group": "append_only_outputs",
+        "reason": "not market evidence: the registry role output is not carried by the picture",
+        "role": "output"
+       },
+       {
+        "entry": "output_source_state_manifest_code_model_run_hashes",
+        "group": "append_only_outputs",
+        "reason": "not market evidence: the registry role output is not carried by the picture",
+        "role": "output"
+       }
+      ],
+      "planes_partial": {
+       "aggressor_and_native_signed_flow": {
+        "absent_reasons": {
+         "no root.frames row was placed at this instant": 188098
+        },
+        "carrier": "root.frames",
+        "rows_absent": 188098,
+        "rows_present": 583689
+       },
+       "churn_and_queue_turnover": {
+        "absent_reasons": {
+         "no root.frames row was placed at this instant": 188099
+        },
+        "carrier": "root.frames",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "clock_prospective_discovery_confirmation": {
+        "absent_reasons": {
+         "no native.lifecycle row was placed at this instant": 770278
+        },
+        "carrier": "native.lifecycle",
+        "rows_absent": 770278,
+        "rows_present": 1509
+       },
+       "complete_state_reset_bootstrap_receipts": {
+        "absent_reasons": {
+         "no native.member row was placed at this instant": 188099
+        },
+        "carrier": "native.member",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "contract_session_roll_state": {
+        "absent_reasons": {
+         "no native.member row was placed at this instant": 153243
+        },
+        "carrier": "native.member",
+        "rows_absent": 153243,
+        "rows_present": 618544
+       },
+       "depletion_and_replenishment": {
+        "absent_reasons": {
+         "no native.lifecycle row was placed at this instant": 190098
+        },
+        "carrier": "native.lifecycle",
+        "rows_absent": 190098,
+        "rows_present": 581689
+       },
+       "derived_ancestry_gaps": {
+        "absent_reasons": {
+         "no native.lifecycle row was placed at this instant": 188099
+        },
+        "carrier": "native.lifecycle",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "derived_d_family_geometry": {
+        "absent_reasons": {
+         "no root.structures row was placed at this instant": 188099
+        },
+        "carrier": "root.structures",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "derived_open_world_predecessor_state": {
+        "absent_reasons": {
+         "no root.structures row was placed at this instant": 188099
+        },
+        "carrier": "root.structures",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "derived_price_flow_book_paths": {
+        "absent_reasons": {
+         "no native.member row was placed at this instant": 188099
+        },
+        "carrier": "native.member",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "derived_unresolved_age_chain_trajectory": {
+        "absent_reasons": {
+         "no native.lifecycle row was placed at this instant": 770277
+        },
+        "carrier": "native.lifecycle",
+        "rows_absent": 770277,
+        "rows_present": 1510
+       },
+       "derived_v4_mechanics_fifo_features": {
+        "absent_reasons": {
+         "no native.member row was placed at this instant": 188099
+        },
+        "carrier": "native.member",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "fifo_queues": {
+        "absent_reasons": {
+         "no root.frames row was placed at this instant": 188099
+        },
+        "carrier": "root.frames",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "full_bid_ask_depth": {
+        "absent_reasons": {
+         "no root.frames row was placed at this instant": 188099
+        },
+        "carrier": "root.frames",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "legacy_book_imbalance": {
+        "absent_reasons": {
+         "no root.prices row was placed at this instant": 741990
+        },
+        "carrier": "root.prices",
+        "rows_absent": 741990,
+        "rows_present": 29797
+       },
+       "legacy_native_signed_flow": {
+        "absent_reasons": {
+         "completed-only: a post-stream aggregate, never a value in a live picture": 771787
+        },
+        "carrier": "completed",
+        "rows_absent": 771787,
+        "rows_present": 0
+       },
+       "legacy_per_second_roll20": {
+        "absent_reasons": {
+         "completed-only: a post-stream aggregate, never a value in a live picture": 771787
+        },
+        "carrier": "completed",
+        "rows_absent": 771787,
+        "rows_present": 0
+       },
+       "legacy_price": {
+        "absent_reasons": {
+         "no root.prices row was placed at this instant": 741990
+        },
+        "carrier": "root.prices",
+        "rows_absent": 741990,
+        "rows_present": 29797
+       },
+       "legacy_structure_observables": {
+        "absent_reasons": {
+         "no root.structures row was placed at this instant": 188099
+        },
+        "carrier": "root.structures",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "mechanics_actions_by_side_and_level": {
+        "absent_reasons": {
+         "no root.frames row was placed at this instant": 188099
+        },
+        "carrier": "root.frames",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "missingness_and_integrity_flags": {
+        "absent_reasons": {
+         "no root.frames row was placed at this instant": 188099
+        },
+        "carrier": "root.frames",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "order_identity_transitions": {
+        "absent_reasons": {
+         "no root.structures row was placed at this instant": 188099
+        },
+        "carrier": "root.structures",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "order_lifecycle_adds": {
+        "absent_reasons": {
+         "no root.frames row was placed at this instant": 188099
+        },
+        "carrier": "root.frames",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "order_lifecycle_cancels": {
+        "absent_reasons": {
+         "no root.frames row was placed at this instant": 188099
+        },
+        "carrier": "root.frames",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "order_lifecycle_clears": {
+        "absent_reasons": {
+         "no native.member row was placed at this instant": 188099
+        },
+        "carrier": "native.member",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "order_lifecycle_fills": {
+        "absent_reasons": {
+         "no native.member row was placed at this instant": 188099
+        },
+        "carrier": "native.member",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "order_lifecycle_modifies": {
+        "absent_reasons": {
+         "no root.frames row was placed at this instant": 188099
+        },
+        "carrier": "root.frames",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "order_lifecycle_replaces": {
+        "absent_reasons": {
+         "no root.frames row was placed at this instant": 188099
+        },
+        "carrier": "root.frames",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "order_lifecycle_trades": {
+        "absent_reasons": {
+         "no root.prices row was placed at this instant": 741990
+        },
+        "carrier": "root.prices",
+        "rows_absent": 741990,
+        "rows_present": 29797
+       },
+       "orders_and_volume_ahead": {
+        "absent_reasons": {
+         "no root.frames row was placed at this instant": 188099
+        },
+        "carrier": "root.frames",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "prebirth_ancestry_successor_opportunity": {
+        "absent_reasons": {
+         "no native.lifecycle row was placed at this instant": 771786
+        },
+        "carrier": "native.lifecycle",
+        "rows_absent": 771786,
+        "rows_present": 1
+       },
+       "prebirth_negative_opportunity_cases": {
+        "absent_reasons": {
+         "no native.lifecycle row was placed at this instant": 770277
+        },
+        "carrier": "native.lifecycle",
+        "rows_absent": 770277,
+        "rows_present": 1510
+       },
+       "prebirth_predecessor_at_risk_state": {
+        "absent_reasons": {
+         "no native.lifecycle row was placed at this instant": 770278
+        },
+        "carrier": "native.lifecycle",
+        "rows_absent": 770278,
+        "rows_present": 1509
+       },
+       "prebirth_stopped_chain_false_context_controls": {
+        "absent_reasons": {
+         "no native.lifecycle row was placed at this instant": 770277
+        },
+        "carrier": "native.lifecycle",
+        "rows_absent": 770277,
+        "rows_present": 1510
+       },
+       "prebirth_unresolved_chain_extension_state": {
+        "absent_reasons": {
+         "no native.lifecycle row was placed at this instant": 771786
+        },
+        "carrier": "native.lifecycle",
+        "rows_absent": 771786,
+        "rows_present": 1
+       },
+       "price_and_book_path": {
+        "absent_reasons": {
+         "no native.member row was placed at this instant": 153243
+        },
+        "carrier": "native.member",
+        "rows_absent": 153243,
+        "rows_present": 618544
+       },
+       "price_level_and_order_counts": {
+        "absent_reasons": {
+         "no root.frames row was placed at this instant": 188099
+        },
+        "carrier": "root.frames",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "queue_age_and_survival": {
+        "absent_reasons": {
+         "no root.frames row was placed at this instant": 188099
+        },
+        "carrier": "root.frames",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "queue_concentration": {
+        "absent_reasons": {
+         "no root.frames row was placed at this instant": 188099
+        },
+        "carrier": "root.frames",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "resilience_and_recovery": {
+        "absent_reasons": {
+         "no native.lifecycle row was placed at this instant": 188099
+        },
+        "carrier": "native.lifecycle",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "spread_and_depth_imbalance": {
+        "absent_reasons": {
+         "no root.frames row was placed at this instant": 188099
+        },
+        "carrier": "root.frames",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       }
+      },
+      "reconciliation": {
+       "all": {
+        "count": 2562,
+        "file": "teacher-book-event-differences.jsonl",
+        "format": "one JSON value per line",
+        "sha256": "52325ecd19addde185b89ecd1f7046b357a4b846efb00fab8cb7ca6e575fd119"
+       },
+       "by_measure_reason": {
+        "added:NO_PREVIOUS_BOOK": 2,
+        "added:ORDER_ADDED_AND_GONE_IN_GROUP": 2,
+        "added:RESET": 2,
+        "fills:ORDER_ADDED_AND_GONE_IN_GROUP": 1,
+        "fills:SEVERAL_EVENTS_ON_ONE_ORDER": 1499,
+        "fills:UNKNOWN_SIDE": 130,
+        "modifies:PRIORITY_ONLY_MODIFY": 1057,
+        "modifies:SEVERAL_EVENTS_ON_ONE_ORDER": 1057,
+        "modifies:UNKNOWN_SIDE": 96,
+        "removed:NO_PREVIOUS_BOOK": 2,
+        "removed:ORDER_ADDED_AND_GONE_IN_GROUP": 2
+       },
+       "differences": 3850,
+       "order": "largest absolute difference first, then cursor, side, measure"
+      },
+      "rows_merged_at_publication": 771787,
+      "rows_read_in_walk": 0,
+      "rows_restored_from_save": 0,
+      "state_unknown_groups": {
+       "A": {
+        "native.lifecycle:candidate|availability_note": 582826,
+        "native.lifecycle:candidate|candidate_id": 582826,
+        "native.lifecycle:candidate|direction_note": 582826,
+        "native.lifecycle:candidate|selection_rule": 582826,
+        "native.lifecycle:candidate|threshold_rule": 582826,
+        "native.lifecycle:candidate|window_truncated": 582826,
+        "native.lifecycle:episode|candidate_id": 582179,
+        "native.lifecycle:episode|dipole_path_withheld": 582991,
+        "native.lifecycle:episode|orientation": 582179,
+        "native.lifecycle:episode|recognition_outcome": 582826,
+        "native.lifecycle:episode|recognized_recv_ns_basis": 582826,
+        "native.lifecycle:episode|terminal_phase": 582991,
+        "native.lifecycle:flow_substrate|classification": 546391,
+        "native.lifecycle:flow_substrate|no_direction_reason": 546392,
+        "native.lifecycle:flow_substrate|polarity": 546392,
+        "native.lifecycle:flow_substrate|roll20_defined": 546392,
+        "native.lifecycle:flow_substrate|status": 546391,
+        "native.lifecycle:flow_substrate|window_direction": 546392,
+        "native.lifecycle:lineage|depth_label": 583687,
+        "native.lifecycle:lineage|node_id": 583687,
+        "native.lifecycle:lineage|parent_id": 583687,
+        "native.lifecycle:lineage|role": 583687,
+        "native.lifecycle:lineage|side_orientation": 583687,
+        "native.lifecycle:lineage|status": 583687,
+        "native.lifecycle:lineage|transition_type": 583687,
+        "native.lifecycle:queue|birth_family_id": 321490,
+        "native.lifecycle:queue|birth_session_phase": 321490,
+        "native.lifecycle:queue|censored": 321490,
+        "native.lifecycle:queue|exit_family_id": 321490,
+        "native.lifecycle:queue|exit_session_phase": 321490,
+        "native.lifecycle:queue|exit_stratum_available": 321490,
+        "native.lifecycle:queue|queue_scope": 321491,
+        "native.lifecycle:queue|resolved": 321490,
+        "native.lifecycle:queue|stratum_basis": 321490,
+        "native.lifecycle:queue|terminal_basis": 321491,
+        "native.lifecycle:queue|terminal_status": 321490,
+        "native.lifecycle:replenishment|action": 2101,
+        "native.lifecycle:replenishment|liquidity_kind": 2101,
+        "native.lifecycle:replenishment|liquidity_kind_basis": 2101,
+        "native.lifecycle:replenishment|observation": 2101,
+        "native.lifecycle:replenishment|price_is_sentinel": 2101,
+        "native.lifecycle:replenishment|unattributed_reason": 573347,
+        "native.lifecycle:response|structure_id": 581403
+       },
+       "B": {
+        "native.lifecycle:candidate|availability_note": 582826,
+        "native.lifecycle:candidate|candidate_id": 582826,
+        "native.lifecycle:candidate|direction_note": 582826,
+        "native.lifecycle:candidate|selection_rule": 582826,
+        "native.lifecycle:candidate|threshold_rule": 582826,
+        "native.lifecycle:candidate|window_truncated": 582826,
+        "native.lifecycle:episode|candidate_id": 582179,
+        "native.lifecycle:episode|dipole_path_withheld": 582991,
+        "native.lifecycle:episode|orientation": 582179,
+        "native.lifecycle:episode|recognition_outcome": 582826,
+        "native.lifecycle:episode|recognized_recv_ns_basis": 582826,
+        "native.lifecycle:episode|terminal_phase": 582991,
+        "native.lifecycle:flow_substrate|classification": 546391,
+        "native.lifecycle:flow_substrate|no_direction_reason": 546392,
+        "native.lifecycle:flow_substrate|polarity": 546392,
+        "native.lifecycle:flow_substrate|roll20_defined": 546392,
+        "native.lifecycle:flow_substrate|status": 546391,
+        "native.lifecycle:flow_substrate|window_direction": 546392,
+        "native.lifecycle:lineage|depth_label": 583687,
+        "native.lifecycle:lineage|node_id": 583687,
+        "native.lifecycle:lineage|parent_id": 583687,
+        "native.lifecycle:lineage|role": 583687,
+        "native.lifecycle:lineage|side_orientation": 583687,
+        "native.lifecycle:lineage|status": 583687,
+        "native.lifecycle:lineage|transition_type": 583687,
+        "native.lifecycle:queue|birth_family_id": 321490,
+        "native.lifecycle:queue|birth_session_phase": 321490,
+        "native.lifecycle:queue|censored": 321490,
+        "native.lifecycle:queue|exit_family_id": 321490,
+        "native.lifecycle:queue|exit_session_phase": 321490,
+        "native.lifecycle:queue|exit_stratum_available": 321490,
+        "native.lifecycle:queue|queue_scope": 321491,
+        "native.lifecycle:queue|resolved": 321490,
+        "native.lifecycle:queue|stratum_basis": 321490,
+        "native.lifecycle:queue|terminal_basis": 321491,
+        "native.lifecycle:queue|terminal_status": 321490,
+        "native.lifecycle:replenishment|action": 2101,
+        "native.lifecycle:replenishment|liquidity_kind": 2101,
+        "native.lifecycle:replenishment|liquidity_kind_basis": 2101,
+        "native.lifecycle:replenishment|observation": 2101,
+        "native.lifecycle:replenishment|price_is_sentinel": 2101,
+        "native.lifecycle:replenishment|unattributed_reason": 573347,
+        "native.lifecycle:response|structure_id": 581403
+       }
+      }
+     },
+     "read_together": {
+      "book_columns": [
+       "book_balance",
+       "book_absorption",
+       "counts",
+       "event_incomplete",
+       "reconciliation",
+       "group.depth",
+       "group.touches",
+       "group.sides"
+      ],
+      "clocks": {
+       "carried_rows": {
+        "clock_event_known_by": 771787,
+        "clock_event_time": 771787,
+        "clock_feature_availability": 618583,
+        "clock_model_evaluation": 583688,
+        "clock_prospective_discovery_confirmation": 583688,
+        "clock_receive_time": 771787
+       },
+       "fields": [
+        "clock_event_time",
+        "clock_receive_time",
+        "clock_event_known_by",
+        "clock_feature_availability",
+        "clock_prospective_discovery_confirmation",
+        "clock_model_evaluation",
+        "clock_lock_time"
+       ]
+      },
+      "planes": {
+       "aggressor_and_native_signed_flow": {
+        "absent_reasons": {
+         "no root.frames row was placed at this instant": 188098
+        },
+        "carrier": "root.frames",
+        "rows_absent": 188098,
+        "rows_present": 583689
+       },
+       "canonical_predecessor_bootstrap_objects": {
+        "absent_reasons": {},
+        "carrier": "opening",
+        "rows_absent": 0,
+        "rows_present": 771787
+       },
+       "canonical_sep_nov_2021_dbn_mbo_objects": {
+        "absent_reasons": {},
+        "carrier": "input",
+        "rows_absent": 0,
+        "rows_present": 771787
+       },
+       "churn_and_queue_turnover": {
+        "absent_reasons": {
+         "no root.frames row was placed at this instant": 188099
+        },
+        "carrier": "root.frames",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "clock_event_known_by": {
+        "absent_reasons": {},
+        "carrier": "clock",
+        "rows_absent": 0,
+        "rows_present": 771787
+       },
+       "clock_event_time": {
+        "absent_reasons": {},
+        "carrier": "clock",
+        "rows_absent": 0,
+        "rows_present": 771787
+       },
+       "clock_feature_availability": {
+        "absent_reasons": {},
+        "carrier": "availability",
+        "rows_absent": 0,
+        "rows_present": 771787
+       },
+       "clock_prospective_discovery_confirmation": {
+        "absent_reasons": {
+         "no native.lifecycle row was placed at this instant": 770278
+        },
+        "carrier": "native.lifecycle",
+        "rows_absent": 770278,
+        "rows_present": 1509
+       },
+       "clock_receive_time": {
+        "absent_reasons": {},
+        "carrier": "clock",
+        "rows_absent": 0,
+        "rows_present": 771787
+       },
+       "complete_state_reset_bootstrap_receipts": {
+        "absent_reasons": {
+         "no native.member row was placed at this instant": 188099
+        },
+        "carrier": "native.member",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "contract_session_roll_state": {
+        "absent_reasons": {
+         "no native.member row was placed at this instant": 153243
+        },
+        "carrier": "native.member",
+        "rows_absent": 153243,
+        "rows_present": 618544
+       },
+       "depletion_and_replenishment": {
+        "absent_reasons": {
+         "no native.lifecycle row was placed at this instant": 190098
+        },
+        "carrier": "native.lifecycle",
+        "rows_absent": 190098,
+        "rows_present": 581689
+       },
+       "derived_ancestry_gaps": {
+        "absent_reasons": {
+         "no native.lifecycle row was placed at this instant": 188099
+        },
+        "carrier": "native.lifecycle",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "derived_d_family_geometry": {
+        "absent_reasons": {
+         "no root.structures row was placed at this instant": 188099
+        },
+        "carrier": "root.structures",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "derived_feature_availability_timestamps": {
+        "absent_reasons": {},
+        "carrier": "availability",
+        "rows_absent": 0,
+        "rows_present": 771787
+       },
+       "derived_open_world_predecessor_state": {
+        "absent_reasons": {
+         "no root.structures row was placed at this instant": 188099
+        },
+        "carrier": "root.structures",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "derived_price_flow_book_paths": {
+        "absent_reasons": {
+         "no native.member row was placed at this instant": 188099
+        },
+        "carrier": "native.member",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "derived_unresolved_age_chain_trajectory": {
+        "absent_reasons": {
+         "no native.lifecycle row was placed at this instant": 770277
+        },
+        "carrier": "native.lifecycle",
+        "rows_absent": 770277,
+        "rows_present": 1510
+       },
+       "derived_v4_mechanics_fifo_features": {
+        "absent_reasons": {
+         "no native.member row was placed at this instant": 188099
+        },
+        "carrier": "native.member",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "fifo_queues": {
+        "absent_reasons": {
+         "no root.frames row was placed at this instant": 188099
+        },
+        "carrier": "root.frames",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "full_bid_ask_depth": {
+        "absent_reasons": {
+         "no root.frames row was placed at this instant": 188099
+        },
+        "carrier": "root.frames",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "legacy_book_imbalance": {
+        "absent_reasons": {
+         "no root.prices row was placed at this instant": 741990
+        },
+        "carrier": "root.prices",
+        "rows_absent": 741990,
+        "rows_present": 29797
+       },
+       "legacy_native_signed_flow": {
+        "absent_reasons": {
+         "completed-only: a post-stream aggregate, never a value in a live picture": 771787
+        },
+        "carrier": "completed",
+        "rows_absent": 771787,
+        "rows_present": 0
+       },
+       "legacy_per_second_roll20": {
+        "absent_reasons": {
+         "completed-only: a post-stream aggregate, never a value in a live picture": 771787
+        },
+        "carrier": "completed",
+        "rows_absent": 771787,
+        "rows_present": 0
+       },
+       "legacy_price": {
+        "absent_reasons": {
+         "no root.prices row was placed at this instant": 741990
+        },
+        "carrier": "root.prices",
+        "rows_absent": 741990,
+        "rows_present": 29797
+       },
+       "legacy_structure_observables": {
+        "absent_reasons": {
+         "no root.structures row was placed at this instant": 188099
+        },
+        "carrier": "root.structures",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "mechanics_actions_by_side_and_level": {
+        "absent_reasons": {
+         "no root.frames row was placed at this instant": 188099
+        },
+        "carrier": "root.frames",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "missingness_and_integrity_flags": {
+        "absent_reasons": {
+         "no root.frames row was placed at this instant": 188099
+        },
+        "carrier": "root.frames",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "native_acmrtfn_messages": {
+        "absent_reasons": {},
+        "carrier": "input",
+        "rows_absent": 0,
+        "rows_present": 771787
+       },
+       "october_first_source_window": {
+        "absent_reasons": {},
+        "carrier": "input",
+        "rows_absent": 0,
+        "rows_present": 771787
+       },
+       "order_identity_transitions": {
+        "absent_reasons": {
+         "no root.structures row was placed at this instant": 188099
+        },
+        "carrier": "root.structures",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "order_lifecycle_adds": {
+        "absent_reasons": {
+         "no root.frames row was placed at this instant": 188099
+        },
+        "carrier": "root.frames",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "order_lifecycle_cancels": {
+        "absent_reasons": {
+         "no root.frames row was placed at this instant": 188099
+        },
+        "carrier": "root.frames",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "order_lifecycle_clears": {
+        "absent_reasons": {
+         "no native.member row was placed at this instant": 188099
+        },
+        "carrier": "native.member",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "order_lifecycle_fills": {
+        "absent_reasons": {
+         "no native.member row was placed at this instant": 188099
+        },
+        "carrier": "native.member",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "order_lifecycle_modifies": {
+        "absent_reasons": {
+         "no root.frames row was placed at this instant": 188099
+        },
+        "carrier": "root.frames",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "order_lifecycle_replaces": {
+        "absent_reasons": {
+         "no root.frames row was placed at this instant": 188099
+        },
+        "carrier": "root.frames",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "order_lifecycle_trades": {
+        "absent_reasons": {
+         "no root.prices row was placed at this instant": 741990
+        },
+        "carrier": "root.prices",
+        "rows_absent": 741990,
+        "rows_present": 29797
+       },
+       "orders_and_volume_ahead": {
+        "absent_reasons": {
+         "no root.frames row was placed at this instant": 188099
+        },
+        "carrier": "root.frames",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "prebirth_ancestry_successor_opportunity": {
+        "absent_reasons": {
+         "no native.lifecycle row was placed at this instant": 771786
+        },
+        "carrier": "native.lifecycle",
+        "rows_absent": 771786,
+        "rows_present": 1
+       },
+       "prebirth_negative_opportunity_cases": {
+        "absent_reasons": {
+         "no native.lifecycle row was placed at this instant": 770277
+        },
+        "carrier": "native.lifecycle",
+        "rows_absent": 770277,
+        "rows_present": 1510
+       },
+       "prebirth_predecessor_at_risk_state": {
+        "absent_reasons": {
+         "no native.lifecycle row was placed at this instant": 770278
+        },
+        "carrier": "native.lifecycle",
+        "rows_absent": 770278,
+        "rows_present": 1509
+       },
+       "prebirth_stopped_chain_false_context_controls": {
+        "absent_reasons": {
+         "no native.lifecycle row was placed at this instant": 770277
+        },
+        "carrier": "native.lifecycle",
+        "rows_absent": 770277,
+        "rows_present": 1510
+       },
+       "prebirth_unresolved_chain_extension_state": {
+        "absent_reasons": {
+         "no native.lifecycle row was placed at this instant": 771786
+        },
+        "carrier": "native.lifecycle",
+        "rows_absent": 771786,
+        "rows_present": 1
+       },
+       "price_and_book_path": {
+        "absent_reasons": {
+         "no native.member row was placed at this instant": 153243
+        },
+        "carrier": "native.member",
+        "rows_absent": 153243,
+        "rows_present": 618544
+       },
+       "price_level_and_order_counts": {
+        "absent_reasons": {
+         "no root.frames row was placed at this instant": 188099
+        },
+        "carrier": "root.frames",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "queue_age_and_survival": {
+        "absent_reasons": {
+         "no root.frames row was placed at this instant": 188099
+        },
+        "carrier": "root.frames",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "queue_concentration": {
+        "absent_reasons": {
+         "no root.frames row was placed at this instant": 188099
+        },
+        "carrier": "root.frames",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "raw_source_identity_provenance_clocks_integrity": {
+        "absent_reasons": {},
+        "carrier": "input",
+        "rows_absent": 0,
+        "rows_present": 771787
+       },
+       "resilience_and_recovery": {
+        "absent_reasons": {
+         "no native.lifecycle row was placed at this instant": 188099
+        },
+        "carrier": "native.lifecycle",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       },
+       "snapshot_bootstrap_reset_messages": {
+        "absent_reasons": {},
+        "carrier": "input",
+        "rows_absent": 0,
+        "rows_present": 771787
+       },
+       "spread_and_depth_imbalance": {
+        "absent_reasons": {
+         "no root.frames row was placed at this instant": 188099
+        },
+        "carrier": "root.frames",
+        "rows_absent": 188099,
+        "rows_present": 583688
+       }
+      },
+      "rows": 771787,
+      "state_split": {
+       "dipole": "teacher.dstate (the teacher row's own DState)",
+       "label_fields": [
+        "native.lifecycle:absorption|price_moved",
+        "native.lifecycle:candidate|availability_note",
+        "native.lifecycle:candidate|candidate_id",
+        "native.lifecycle:candidate|direction_note",
+        "native.lifecycle:candidate|selection_rule",
+        "native.lifecycle:candidate|threshold_rule",
+        "native.lifecycle:candidate|window_truncated",
+        "native.lifecycle:episode|candidate_id",
+        "native.lifecycle:episode|dipole_path_withheld",
+        "native.lifecycle:episode|orientation",
+        "native.lifecycle:episode|recognition_outcome",
+        "native.lifecycle:episode|recognized_recv_ns_basis",
+        "native.lifecycle:episode|terminal_phase",
+        "native.lifecycle:flow_substrate|classification",
+        "native.lifecycle:flow_substrate|no_direction_reason",
+        "native.lifecycle:flow_substrate|polarity",
+        "native.lifecycle:flow_substrate|roll20_defined",
+        "native.lifecycle:flow_substrate|status",
+        "native.lifecycle:flow_substrate|window_direction",
+        "native.lifecycle:ladder|best_price_moved",
+        "native.lifecycle:ladder|ladder_scope",
+        "native.lifecycle:ladder|side",
+        "native.lifecycle:ladder|touch_state",
+        "native.lifecycle:lineage|depth_label",
+        "native.lifecycle:lineage|node_id",
+        "native.lifecycle:lineage|parent_id",
+        "native.lifecycle:lineage|role",
+        "native.lifecycle:lineage|side_orientation",
+        "native.lifecycle:lineage|status",
+        "native.lifecycle:lineage|transition_type",
+        "native.lifecycle:mirror|disposition",
+        "native.lifecycle:mirror|orientation",
+        "native.lifecycle:queue|birth_family_id",
+        "native.lifecycle:queue|birth_session_phase",
+        "native.lifecycle:queue|censored",
+        "native.lifecycle:queue|exit_family_id",
+        "native.lifecycle:queue|exit_session_phase",
+        "native.lifecycle:queue|exit_stratum_available",
+        "native.lifecycle:queue|queue_scope",
+        "native.lifecycle:queue|resolved",
+        "native.lifecycle:queue|stratum_basis",
+        "native.lifecycle:queue|terminal_basis",
+        "native.lifecycle:queue|terminal_status",
+        "native.lifecycle:replenishment|action",
+        "native.lifecycle:replenishment|liquidity_kind",
+        "native.lifecycle:replenishment|liquidity_kind_basis",
+        "native.lifecycle:replenishment|observation",
+        "native.lifecycle:replenishment|price_is_sentinel",
+        "native.lifecycle:replenishment|unattributed_reason",
+        "native.lifecycle:response|structure_id",
+        "native.member|continuity_segment",
+        "native.member|decision_basis",
+        "native.member|event_group_complete_f_last",
+        "native.member|family_id",
+        "native.member|fifo_priority_reconstructed",
+        "native.member|sequence_contiguous",
+        "native.member|session_phase",
+        "native.member|side_orientation",
+        "native.member|snapshot_bootstrap_only",
+        "root.structures|candidate_family_id",
+        "root.structures|carried_native_family",
+        "root.structures|discovery_status",
+        "root.structures|fill_disposition.class",
+        "root.structures|matches_carried_native_family",
+        "root.structures|mirror.orientation",
+        "root.structures|terminal_action",
+        "root.structures|terminal_side"
+       ],
+       "planes": [
+        "native.lifecycle:absorption",
+        "native.lifecycle:candidate",
+        "native.lifecycle:episode",
+        "native.lifecycle:flow_substrate",
+        "native.lifecycle:ladder",
+        "native.lifecycle:lineage",
+        "native.lifecycle:mirror",
+        "native.lifecycle:queue",
+        "native.lifecycle:replenishment",
+        "native.lifecycle:response",
+        "native.member",
+        "root.structures"
+       ],
+       "status": "built"
+      }
+     },
+     "runtime": {
+      "evidence_precompute": {
+       "outcome": "not_used",
+       "reason": null
+      },
+      "memory_peak_kib": 461180160,
+      "one_pass": {
+       "reader_seek": null,
+       "rows_joined_in_walk": 0,
+       "rows_read_again_at_publication": 771787
+      },
+      "phase_seconds": {
+       "close_walk": 0.004,
+       "finish_attachment": 782.553,
+       "first_input_entity": 0.207,
+       "open_shared_picture": 6.631,
+       "raw_pass_rows": 0.071,
+       "retained_receipt_checks": 0.0,
+       "second_set": 24419.255,
+       "snapshot_rows_attachment": 5182.76,
+       "verify_ingestion_receipt": 0.001,
+       "verify_sealed_journal": 8.8
+      },
+      "raw_batches": {},
+      "rows": 771787,
+      "rows_per_second": 31.61,
+      "saves": {
+       "basis": "default",
+       "every_seconds": 1800.0,
+       "identity_notes": [
+        "resumed under different code (recorded, never compared): parallel_teacher_code"
+       ],
+       "progress_errors": 0,
+       "resumed_from": {
+        "complete": true,
+        "processed": 771787
+       },
+       "rule": "exact state at a row that closes its group (F_LAST receipt), raw streams drained first; the walk continues; a resume loads it as it loads a stop-save",
+       "saves": []
+      },
+      "walk_seconds": 24419.3
+     },
+     "schema": "FRANKIE_TEACHER_ACCOUNT_V1",
+     "science": {
+      "book_vs_events": {
+       "A": {
+        "book": {
+         "added": 366667,
+         "fills": 31151,
+         "modifies": 18283,
+         "removed": 365819
+        },
+        "events": {
+         "absorption_removed": 366301,
+         "added": 366961,
+         "fills": 32424,
+         "lost": 13615,
+         "modifies": 18588,
+         "removed": 366301
+        }
+       },
+       "B": {
+        "book": {
+         "added": 390689,
+         "fills": 28026,
+         "modifies": 21140,
+         "removed": 389324
+        },
+        "events": {
+         "absorption_removed": 390145,
+         "added": 391079,
+         "fills": 30249,
+         "lost": 16326,
+         "modifies": 21914,
+         "removed": 390145
+        }
+       }
+      },
+      "pinned_columns": {
+       "extension_count_log": {
+        "reasons": {
+         "NOT_F_LAST": 188099,
+         "SIDE_UNDEFINED": 87955
+        },
+        "states": {
+         "0": 495733,
+         "1": 276054
+        }
+       },
+       "far_absorption_share_1024": {
+        "reasons": {
+         "NOT_F_LAST": 188099,
+         "NO_FLOW": 51976,
+         "SIDE_UNDEFINED": 35979
+        },
+        "states": {
+         "0": 495733,
+         "1": 276054
+        }
+       },
+       "far_absorption_share_64": {
+        "reasons": {
+         "NOT_F_LAST": 188099,
+         "NO_FLOW": 51976,
+         "SIDE_UNDEFINED": 35979
+        },
+        "states": {
+         "0": 495733,
+         "1": 276054
+        }
+       },
+       "far_front_age_log": {
+        "reasons": {
+         "NOT_F_LAST": 188099,
+         "NO_FLOW": 51976,
+         "SIDE_UNDEFINED": 35979
+        },
+        "states": {
+         "0": 495733,
+         "1": 276054
+        }
+       },
+       "far_identity_survival_1024": {
+        "reasons": {
+         "NOT_F_LAST": 188099,
+         "NO_FLOW": 51976,
+         "SIDE_UNDEFINED": 35979
+        },
+        "states": {
+         "0": 495733,
+         "1": 276054
+        }
+       },
+       "far_identity_survival_64": {
+        "reasons": {
+         "NOT_F_LAST": 188099,
+         "NO_FLOW": 51976,
+         "SIDE_UNDEFINED": 35979
+        },
+        "states": {
+         "0": 495733,
+         "1": 276054
+        }
+       },
+       "far_priority_loss_rate_1024": {
+        "reasons": {
+         "NOT_F_LAST": 188099,
+         "NO_FLOW": 51976,
+         "NO_MODIFIES": 110,
+         "SIDE_UNDEFINED": 35979
+        },
+        "states": {
+         "0": 495623,
+         "1": 276164
+        }
+       },
+       "far_priority_loss_rate_64": {
+        "reasons": {
+         "NOT_F_LAST": 188099,
+         "NO_FLOW": 51976,
+         "NO_MODIFIES": 86195,
+         "SIDE_UNDEFINED": 35979
+        },
+        "states": {
+         "0": 409538,
+         "1": 362249
+        }
+       },
+       "far_queue_age_p90_log": {
+        "reasons": {
+         "NOT_F_LAST": 188099,
+         "NO_FLOW": 51976,
+         "SIDE_UNDEFINED": 35979
+        },
+        "states": {
+         "0": 495733,
+         "1": 276054
+        }
+       },
+       "far_replenish_log1p_1024": {
+        "reasons": {
+         "NOT_F_LAST": 188099,
+         "NO_FLOW": 51976,
+         "SIDE_UNDEFINED": 35979
+        },
+        "states": {
+         "0": 495733,
+         "1": 276054
+        }
+       },
+       "far_replenish_log1p_64": {
+        "reasons": {
+         "NOT_F_LAST": 188099,
+         "NO_FLOW": 51976,
+         "SIDE_UNDEFINED": 35979
+        },
+        "states": {
+         "0": 495733,
+         "1": 276054
+        }
+       },
+       "far_size_hhi": {
+        "reasons": {
+         "NOT_F_LAST": 188099,
+         "NO_FLOW": 51976,
+         "SIDE_UNDEFINED": 35979
+        },
+        "states": {
+         "0": 495733,
+         "1": 276054
+        }
+       },
+       "far_size_retention_1024": {
+        "reasons": {
+         "NOT_F_LAST": 188099,
+         "NO_FLOW": 51976,
+         "SIDE_UNDEFINED": 35979
+        },
+        "states": {
+         "0": 495733,
+         "1": 276054
+        }
+       },
+       "far_size_retention_64": {
+        "reasons": {
+         "NOT_F_LAST": 188099,
+         "NO_FLOW": 51976,
+         "SIDE_UNDEFINED": 35979
+        },
+        "states": {
+         "0": 495733,
+         "1": 276054
+        }
+       },
+       "pullback_ticks_last_log": {
+        "reasons": {
+         "CHAIN_BROKEN": 1889,
+         "NOT_F_LAST": 188099,
+         "NO_COMPLETED_STEP": 445050,
+         "SIDE_UNDEFINED": 87955
+        },
+        "states": {
+         "0": 48794,
+         "1": 722993
+        }
+       },
+       "pullback_ticks_prev_log": {
+        "reasons": {
+         "CHAIN_BROKEN": 1889,
+         "NOT_F_LAST": 188099,
+         "NO_COMPLETED_STEP": 489244,
+         "SIDE_UNDEFINED": 87955
+        },
+        "states": {
+         "0": 4600,
+         "1": 767187
+        }
+       },
+       "step_duration_groups_log": {
+        "reasons": {
+         "CHAIN_BROKEN": 1889,
+         "NOT_F_LAST": 188099,
+         "NO_COMPLETED_STEP": 445050,
+         "SIDE_UNDEFINED": 87955
+        },
+        "states": {
+         "0": 48794,
+         "1": 722993
+        }
+       },
+       "step_ratio_log": {
+        "reasons": {
+         "CHAIN_BROKEN": 1889,
+         "NOT_F_LAST": 188099,
+         "NO_COMPLETED_STEP": 489244,
+         "SIDE_UNDEFINED": 87955
+        },
+        "states": {
+         "0": 4600,
+         "1": 767187
+        }
+       },
+       "unresolved_age_groups_log": {
+        "reasons": {
+         "NOT_F_LAST": 188099,
+         "SIDE_UNDEFINED": 87955
+        },
+        "states": {
+         "0": 495733,
+         "1": 276054
+        }
+       }
+      },
+      "state_split": {
+       "day": {
+        "all_sum_back": {
+         "A": true,
+         "B": true
+        },
+        "buckets": {
+         "A": 9636,
+         "B": 9636
+        },
+        "fields": 71,
+        "groups": 583688,
+        "unknown_groups": {
+         "A": {
+          "native.lifecycle:candidate|availability_note": 582826,
+          "native.lifecycle:candidate|candidate_id": 582826,
+          "native.lifecycle:candidate|direction_note": 582826,
+          "native.lifecycle:candidate|selection_rule": 582826,
+          "native.lifecycle:candidate|threshold_rule": 582826,
+          "native.lifecycle:candidate|window_truncated": 582826,
+          "native.lifecycle:episode|candidate_id": 582179,
+          "native.lifecycle:episode|dipole_path_withheld": 582991,
+          "native.lifecycle:episode|orientation": 582179,
+          "native.lifecycle:episode|recognition_outcome": 582826,
+          "native.lifecycle:episode|recognized_recv_ns_basis": 582826,
+          "native.lifecycle:episode|terminal_phase": 582991,
+          "native.lifecycle:flow_substrate|classification": 546391,
+          "native.lifecycle:flow_substrate|no_direction_reason": 546392,
+          "native.lifecycle:flow_substrate|polarity": 546392,
+          "native.lifecycle:flow_substrate|roll20_defined": 546392,
+          "native.lifecycle:flow_substrate|status": 546391,
+          "native.lifecycle:flow_substrate|window_direction": 546392,
+          "native.lifecycle:lineage|depth_label": 583687,
+          "native.lifecycle:lineage|node_id": 583687,
+          "native.lifecycle:lineage|parent_id": 583687,
+          "native.lifecycle:lineage|role": 583687,
+          "native.lifecycle:lineage|side_orientation": 583687,
+          "native.lifecycle:lineage|status": 583687,
+          "native.lifecycle:lineage|transition_type": 583687,
+          "native.lifecycle:queue|birth_family_id": 321490,
+          "native.lifecycle:queue|birth_session_phase": 321490,
+          "native.lifecycle:queue|censored": 321490,
+          "native.lifecycle:queue|exit_family_id": 321490,
+          "native.lifecycle:queue|exit_session_phase": 321490,
+          "native.lifecycle:queue|exit_stratum_available": 321490,
+          "native.lifecycle:queue|queue_scope": 321491,
+          "native.lifecycle:queue|resolved": 321490,
+          "native.lifecycle:queue|stratum_basis": 321490,
+          "native.lifecycle:queue|terminal_basis": 321491,
+          "native.lifecycle:queue|terminal_status": 321490,
+          "native.lifecycle:replenishment|action": 2101,
+          "native.lifecycle:replenishment|liquidity_kind": 2101,
+          "native.lifecycle:replenishment|liquidity_kind_basis": 2101,
+          "native.lifecycle:replenishment|observation": 2101,
+          "native.lifecycle:replenishment|price_is_sentinel": 2101,
+          "native.lifecycle:replenishment|unattributed_reason": 573347,
+          "native.lifecycle:response|structure_id": 581403
+         },
+         "B": {
+          "native.lifecycle:candidate|availability_note": 582826,
+          "native.lifecycle:candidate|candidate_id": 582826,
+          "native.lifecycle:candidate|direction_note": 582826,
+          "native.lifecycle:candidate|selection_rule": 582826,
+          "native.lifecycle:candidate|threshold_rule": 582826,
+          "native.lifecycle:candidate|window_truncated": 582826,
+          "native.lifecycle:episode|candidate_id": 582179,
+          "native.lifecycle:episode|dipole_path_withheld": 582991,
+          "native.lifecycle:episode|orientation": 582179,
+          "native.lifecycle:episode|recognition_outcome": 582826,
+          "native.lifecycle:episode|recognized_recv_ns_basis": 582826,
+          "native.lifecycle:episode|terminal_phase": 582991,
+          "native.lifecycle:flow_substrate|classification": 546391,
+          "native.lifecycle:flow_substrate|no_direction_reason": 546392,
+          "native.lifecycle:flow_substrate|polarity": 546392,
+          "native.lifecycle:flow_substrate|roll20_defined": 546392,
+          "native.lifecycle:flow_substrate|status": 546391,
+          "native.lifecycle:flow_substrate|window_direction": 546392,
+          "native.lifecycle:lineage|depth_label": 583687,
+          "native.lifecycle:lineage|node_id": 583687,
+          "native.lifecycle:lineage|parent_id": 583687,
+          "native.lifecycle:lineage|role": 583687,
+          "native.lifecycle:lineage|side_orientation": 583687,
+          "native.lifecycle:lineage|status": 583687,
+          "native.lifecycle:lineage|transition_type": 583687,
+          "native.lifecycle:queue|birth_family_id": 321490,
+          "native.lifecycle:queue|birth_session_phase": 321490,
+          "native.lifecycle:queue|censored": 321490,
+          "native.lifecycle:queue|exit_family_id": 321490,
+          "native.lifecycle:queue|exit_session_phase": 321490,
+          "native.lifecycle:queue|exit_stratum_available": 321490,
+          "native.lifecycle:queue|queue_scope": 321491,
+          "native.lifecycle:queue|resolved": 321490,
+          "native.lifecycle:queue|stratum_basis": 321490,
+          "native.lifecycle:queue|terminal_basis": 321491,
+          "native.lifecycle:queue|terminal_status": 321490,
+          "native.lifecycle:replenishment|action": 2101,
+          "native.lifecycle:replenishment|liquidity_kind": 2101,
+          "native.lifecycle:replenishment|liquidity_kind_basis": 2101,
+          "native.lifecycle:replenishment|observation": 2101,
+          "native.lifecycle:replenishment|price_is_sentinel": 2101,
+          "native.lifecycle:replenishment|unattributed_reason": 573347,
+          "native.lifecycle:response|structure_id": 581403
+         }
+        }
+       },
+       "day_file": "teacher-state-split.json",
+       "day_file_sha256": "8384fbf3cce44b0c59b940e9d1d12d69e47543d788f58b1320a3280ebb1a20b4",
+       "dipole": "teacher.dstate|... : the teacher row's own DState (status, state.anchor_dir, state.armed, state.broken); derived_roll20_and_dipole_state is the teacher's Dipole state rows, not a picture plane",
+       "findings": "per label field and bucket, both sides, with each bucket's share of the day's totals: teacher-state-split.json",
+       "format": 1,
+       "generic_rule": "a lifecycle section not in label_fields: every top-level text or true/false field except ['member_id', 'runway_id', 'mirror_pair_key', 'level_event_key_at_exit', 'action_string', 'side_string', 'schema', 'clock', 'binning_clock', 'emitted_on', 'emitting_section']",
+       "label_fields": {
+        "native.lifecycle:absorption": [
+         "price_moved"
+        ],
+        "native.lifecycle:detector_coverage": [],
+        "native.lifecycle:flow_substrate": [
+         "classification",
+         "window_direction",
+         "status",
+         "no_direction_reason",
+         "roll20_defined",
+         "polarity"
+        ],
+        "native.lifecycle:ladder": [
+         "ladder_scope",
+         "side",
+         "touch_state",
+         "best_price_moved"
+        ],
+        "native.lifecycle:mirror": [
+         "disposition",
+         "orientation"
+        ],
+        "native.lifecycle:queue": [
+         "terminal_status",
+         "birth_session_phase",
+         "exit_session_phase",
+         "queue_scope",
+         "stratum_basis",
+         "terminal_basis",
+         "resolved",
+         "censored",
+         "exit_stratum_available",
+         "birth_family_id",
+         "exit_family_id"
+        ],
+        "native.lifecycle:recurrence": [],
+        "native.lifecycle:replenishment": [
+         "action",
+         "liquidity_kind",
+         "liquidity_kind_basis",
+         "observation",
+         "unattributed_reason",
+         "price_is_sentinel"
+        ],
+        "native.member": [
+         "session_phase",
+         "side_orientation",
+         "family_id",
+         "decision_basis",
+         "continuity_segment",
+         "snapshot_bootstrap_only",
+         "event_group_complete_f_last",
+         "sequence_contiguous",
+         "fifo_priority_reconstructed"
+        ],
+        "root.structures": [
+         "discovery_status",
+         "candidate_family_id",
+         "carried_native_family",
+         "matches_carried_native_family",
+         "fill_disposition.class",
+         "mirror.orientation",
+         "terminal_action",
+         "terminal_side"
+        ]
+       },
+       "per_row": "each R3 short window (64 groups) on its side: every label field's buckets with the event and book parts, sums_back per field, pinned_check against the row's pinned columns",
+       "rows_all_sum_back": 495733,
+       "rows_pinned_equal": 495733,
+       "rows_pinned_not_equal": [],
+       "status": "built",
+       "unknown_bucket": "__state_unknown__"
+      }
+     },
+     "wants": {
+      "questions": [
+       {
+        "question": "why do book and event added differ (NO_PREVIOUS_BOOK)?",
+        "rows": 2
+       },
+       {
+        "question": "why do book and event added differ (ORDER_ADDED_AND_GONE_IN_GROUP)?",
+        "rows": 2
+       },
+       {
+        "question": "why do book and event added differ (RESET)?",
+        "rows": 2
+       },
+       {
+        "question": "why do book and event fills differ (ORDER_ADDED_AND_GONE_IN_GROUP)?",
+        "rows": 1
+       },
+       {
+        "question": "why do book and event fills differ (SEVERAL_EVENTS_ON_ONE_ORDER)?",
+        "rows": 1499
+       },
+       {
+        "question": "why do book and event fills differ (UNKNOWN_SIDE)?",
+        "rows": 130
+       },
+       {
+        "question": "why do book and event modifies differ (PRIORITY_ONLY_MODIFY)?",
+        "rows": 1057
+       },
+       {
+        "question": "why do book and event modifies differ (SEVERAL_EVENTS_ON_ONE_ORDER)?",
+        "rows": 1057
+       },
+       {
+        "question": "why do book and event modifies differ (UNKNOWN_SIDE)?",
+        "rows": 96
+       },
+       {
+        "question": "why do book and event removed differ (NO_PREVIOUS_BOOK)?",
+        "rows": 2
+       },
+       {
+        "question": "why do book and event removed differ (ORDER_ADDED_AND_GONE_IN_GROUP)?",
+        "rows": 2
+       }
+      ],
+      "rule": "every plane absent or partial is a want; every reconciliation class a question",
+      "wants": [
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "controlling_rt_mission"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "native_calculation_contract"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "anchored_knowledge_manifest"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "selected_same_arm_profile"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "a_clean_promoted_positive_capsule"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "a_memory_promoted_positive_capsule"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "a_memory_prior_lessons_package"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "a_memory_prior_package_proof"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "authoritative_s135_construction"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "complete_s105_9_brain"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "doctrine_reasoning_play_index_evidence"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "lawful_prior_session_carry"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "october_outcome_wall_enforcement"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "learned_d_structures_and_families"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "learned_dipoles_and_geometry"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "learned_pair_triplet_recurrence"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "learned_chains_extensions_reappearances_ancestry"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "phase1_discoveries_structural_falsifiers"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "phase2_findings_modules_timing_pox_negatives"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "predecessor_ancestry_unresolved_chain_state"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "historical_timing_lifespan_context"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "learned_structure_proposal_index_material"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "extra_agent_corrected_information_and_gap_diagnoses"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "derived_roll20_and_dipole_state"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "clock_model_evaluation"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "clock_lock_time"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "later_outcome_reveal"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "target_ground_truth_onset_time"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "s137_cognitive_shadow_runtime"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "hipporag_associative_retrieval"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "step1_existing_october_seconds"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "step1_populations"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "step1_crosswalks"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "step1_target_membership_receipts"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "step1_labels_and_classifications"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "step1_result_prefixes"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "step1_reconciliation_outputs"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "output_state_and_state_delta_movie"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "output_frankie_reasoning_movie"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "output_probability_movie"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "output_candidate_discoveries"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "output_first_locks_and_no_locks"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "output_negative_sparse_inconclusive_ledger"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "output_knowledge_retrieval_receipts"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "output_provider_invocation_response_receipts"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "output_answer_wall_access_receipts"
+       },
+       {
+        "reason": "never carried by the picture on this day",
+        "want": "output_source_state_manifest_code_model_run_hashes"
+       },
+       {
+        "reason": "absent on 188099 of 771787 rows: {'no root.frames row was placed at this instant': 188099}",
+        "want": "order_lifecycle_adds"
+       },
+       {
+        "reason": "absent on 188099 of 771787 rows: {'no root.frames row was placed at this instant': 188099}",
+        "want": "order_lifecycle_cancels"
+       },
+       {
+        "reason": "absent on 188099 of 771787 rows: {'no root.frames row was placed at this instant': 188099}",
+        "want": "order_lifecycle_modifies"
+       },
+       {
+        "reason": "absent on 188099 of 771787 rows: {'no root.frames row was placed at this instant': 188099}",
+        "want": "order_lifecycle_replaces"
+       },
+       {
+        "reason": "absent on 741990 of 771787 rows: {'no root.prices row was placed at this instant': 741990}",
+        "want": "order_lifecycle_trades"
+       },
+       {
+        "reason": "absent on 188099 of 771787 rows: {'no native.member row was placed at this instant': 188099}",
+        "want": "order_lifecycle_fills"
+       },
+       {
+        "reason": "absent on 188099 of 771787 rows: {'no native.member row was placed at this instant': 188099}",
+        "want": "order_lifecycle_clears"
+       },
+       {
+        "reason": "absent on 188099 of 771787 rows: {'no root.structures row was placed at this instant': 188099}",
+        "want": "order_identity_transitions"
+       },
+       {
+        "reason": "absent on 153243 of 771787 rows: {'no native.member row was placed at this instant': 153243}",
+        "want": "contract_session_roll_state"
+       },
+       {
+        "reason": "absent on 188099 of 771787 rows: {'no root.frames row was placed at this instant': 188099}",
+        "want": "full_bid_ask_depth"
+       },
+       {
+        "reason": "absent on 188099 of 771787 rows: {'no root.frames row was placed at this instant': 188099}",
+        "want": "price_level_and_order_counts"
+       },
+       {
+        "reason": "absent on 188099 of 771787 rows: {'no root.frames row was placed at this instant': 188099}",
+        "want": "fifo_queues"
+       },
+       {
+        "reason": "absent on 188099 of 771787 rows: {'no root.frames row was placed at this instant': 188099}",
+        "want": "queue_age_and_survival"
+       },
+       {
+        "reason": "absent on 188099 of 771787 rows: {'no root.frames row was placed at this instant': 188099}",
+        "want": "queue_concentration"
+       },
+       {
+        "reason": "absent on 188099 of 771787 rows: {'no root.frames row was placed at this instant': 188099}",
+        "want": "orders_and_volume_ahead"
+       },
+       {
+        "reason": "absent on 188099 of 771787 rows: {'no root.frames row was placed at this instant': 188099}",
+        "want": "spread_and_depth_imbalance"
+       },
+       {
+        "reason": "absent on 188099 of 771787 rows: {'no native.member row was placed at this instant': 188099}",
+        "want": "complete_state_reset_bootstrap_receipts"
+       },
+       {
+        "reason": "absent on 188099 of 771787 rows: {'no root.frames row was placed at this instant': 188099}",
+        "want": "mechanics_actions_by_side_and_level"
+       },
+       {
+        "reason": "absent on 188098 of 771787 rows: {'no root.frames row was placed at this instant': 188098}",
+        "want": "aggressor_and_native_signed_flow"
+       },
+       {
+        "reason": "absent on 190098 of 771787 rows: {'no native.lifecycle row was placed at this instant': 190098}",
+        "want": "depletion_and_replenishment"
+       },
+       {
+        "reason": "absent on 188099 of 771787 rows: {'no native.lifecycle row was placed at this instant': 188099}",
+        "want": "resilience_and_recovery"
+       },
+       {
+        "reason": "absent on 188099 of 771787 rows: {'no root.frames row was placed at this instant': 188099}",
+        "want": "churn_and_queue_turnover"
+       },
+       {
+        "reason": "absent on 153243 of 771787 rows: {'no native.member row was placed at this instant': 153243}",
+        "want": "price_and_book_path"
+       },
+       {
+        "reason": "absent on 188099 of 771787 rows: {'no root.frames row was placed at this instant': 188099}",
+        "want": "missingness_and_integrity_flags"
+       },
+       {
+        "reason": "absent on 741990 of 771787 rows: {'no root.prices row was placed at this instant': 741990}",
+        "want": "legacy_price"
+       },
+       {
+        "reason": "absent on 771787 of 771787 rows: {'completed-only: a post-stream aggregate, never a value in a live picture': 771787}",
+        "want": "legacy_native_signed_flow"
+       },
+       {
+        "reason": "absent on 771787 of 771787 rows: {'completed-only: a post-stream aggregate, never a value in a live picture': 771787}",
+        "want": "legacy_per_second_roll20"
+       },
+       {
+        "reason": "absent on 741990 of 771787 rows: {'no root.prices row was placed at this instant': 741990}",
+        "want": "legacy_book_imbalance"
+       },
+       {
+        "reason": "absent on 188099 of 771787 rows: {'no root.structures row was placed at this instant': 188099}",
+        "want": "legacy_structure_observables"
+       },
+       {
+        "reason": "absent on 188099 of 771787 rows: {'no root.structures row was placed at this instant': 188099}",
+        "want": "derived_d_family_geometry"
+       },
+       {
+        "reason": "absent on 188099 of 771787 rows: {'no root.structures row was placed at this instant': 188099}",
+        "want": "derived_open_world_predecessor_state"
+       },
+       {
+        "reason": "absent on 188099 of 771787 rows: {'no native.lifecycle row was placed at this instant': 188099}",
+        "want": "derived_ancestry_gaps"
+       },
+       {
+        "reason": "absent on 770277 of 771787 rows: {'no native.lifecycle row was placed at this instant': 770277}",
+        "want": "derived_unresolved_age_chain_trajectory"
+       },
+       {
+        "reason": "absent on 188099 of 771787 rows: {'no native.member row was placed at this instant': 188099}",
+        "want": "derived_price_flow_book_paths"
+       },
+       {
+        "reason": "absent on 188099 of 771787 rows: {'no native.member row was placed at this instant': 188099}",
+        "want": "derived_v4_mechanics_fifo_features"
+       },
+       {
+        "reason": "absent on 770278 of 771787 rows: {'no native.lifecycle row was placed at this instant': 770278}",
+        "want": "prebirth_predecessor_at_risk_state"
+       },
+       {
+        "reason": "absent on 771786 of 771787 rows: {'no native.lifecycle row was placed at this instant': 771786}",
+        "want": "prebirth_unresolved_chain_extension_state"
+       },
+       {
+        "reason": "absent on 771786 of 771787 rows: {'no native.lifecycle row was placed at this instant': 771786}",
+        "want": "prebirth_ancestry_successor_opportunity"
+       },
+       {
+        "reason": "absent on 770277 of 771787 rows: {'no native.lifecycle row was placed at this instant': 770277}",
+        "want": "prebirth_stopped_chain_false_context_controls"
+       },
+       {
+        "reason": "absent on 770277 of 771787 rows: {'no native.lifecycle row was placed at this instant': 770277}",
+        "want": "prebirth_negative_opportunity_cases"
+       },
+       {
+        "reason": "absent on 770278 of 771787 rows: {'no native.lifecycle row was placed at this instant': 770278}",
+        "want": "clock_prospective_discovery_confirmation"
+       },
+       {
+        "reason": "side A: 582826 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:candidate|availability_note"
+       },
+       {
+        "reason": "side A: 582826 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:candidate|candidate_id"
+       },
+       {
+        "reason": "side A: 582826 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:candidate|direction_note"
+       },
+       {
+        "reason": "side A: 582826 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:candidate|selection_rule"
+       },
+       {
+        "reason": "side A: 582826 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:candidate|threshold_rule"
+       },
+       {
+        "reason": "side A: 582826 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:candidate|window_truncated"
+       },
+       {
+        "reason": "side A: 582179 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:episode|candidate_id"
+       },
+       {
+        "reason": "side A: 582991 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:episode|dipole_path_withheld"
+       },
+       {
+        "reason": "side A: 582179 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:episode|orientation"
+       },
+       {
+        "reason": "side A: 582826 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:episode|recognition_outcome"
+       },
+       {
+        "reason": "side A: 582826 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:episode|recognized_recv_ns_basis"
+       },
+       {
+        "reason": "side A: 582991 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:episode|terminal_phase"
+       },
+       {
+        "reason": "side A: 546391 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:flow_substrate|classification"
+       },
+       {
+        "reason": "side A: 546392 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:flow_substrate|no_direction_reason"
+       },
+       {
+        "reason": "side A: 546392 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:flow_substrate|polarity"
+       },
+       {
+        "reason": "side A: 546392 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:flow_substrate|roll20_defined"
+       },
+       {
+        "reason": "side A: 546391 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:flow_substrate|status"
+       },
+       {
+        "reason": "side A: 546392 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:flow_substrate|window_direction"
+       },
+       {
+        "reason": "side A: 583687 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:lineage|depth_label"
+       },
+       {
+        "reason": "side A: 583687 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:lineage|node_id"
+       },
+       {
+        "reason": "side A: 583687 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:lineage|parent_id"
+       },
+       {
+        "reason": "side A: 583687 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:lineage|role"
+       },
+       {
+        "reason": "side A: 583687 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:lineage|side_orientation"
+       },
+       {
+        "reason": "side A: 583687 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:lineage|status"
+       },
+       {
+        "reason": "side A: 583687 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:lineage|transition_type"
+       },
+       {
+        "reason": "side A: 321490 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:queue|birth_family_id"
+       },
+       {
+        "reason": "side A: 321490 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:queue|birth_session_phase"
+       },
+       {
+        "reason": "side A: 321490 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:queue|censored"
+       },
+       {
+        "reason": "side A: 321490 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:queue|exit_family_id"
+       },
+       {
+        "reason": "side A: 321490 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:queue|exit_session_phase"
+       },
+       {
+        "reason": "side A: 321490 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:queue|exit_stratum_available"
+       },
+       {
+        "reason": "side A: 321491 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:queue|queue_scope"
+       },
+       {
+        "reason": "side A: 321490 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:queue|resolved"
+       },
+       {
+        "reason": "side A: 321490 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:queue|stratum_basis"
+       },
+       {
+        "reason": "side A: 321491 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:queue|terminal_basis"
+       },
+       {
+        "reason": "side A: 321490 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:queue|terminal_status"
+       },
+       {
+        "reason": "side A: 2101 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:replenishment|action"
+       },
+       {
+        "reason": "side A: 2101 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:replenishment|liquidity_kind"
+       },
+       {
+        "reason": "side A: 2101 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:replenishment|liquidity_kind_basis"
+       },
+       {
+        "reason": "side A: 2101 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:replenishment|observation"
+       },
+       {
+        "reason": "side A: 2101 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:replenishment|price_is_sentinel"
+       },
+       {
+        "reason": "side A: 573347 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:replenishment|unattributed_reason"
+       },
+       {
+        "reason": "side A: 581403 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:response|structure_id"
+       },
+       {
+        "reason": "side B: 582826 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:candidate|availability_note"
+       },
+       {
+        "reason": "side B: 582826 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:candidate|candidate_id"
+       },
+       {
+        "reason": "side B: 582826 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:candidate|direction_note"
+       },
+       {
+        "reason": "side B: 582826 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:candidate|selection_rule"
+       },
+       {
+        "reason": "side B: 582826 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:candidate|threshold_rule"
+       },
+       {
+        "reason": "side B: 582826 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:candidate|window_truncated"
+       },
+       {
+        "reason": "side B: 582179 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:episode|candidate_id"
+       },
+       {
+        "reason": "side B: 582991 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:episode|dipole_path_withheld"
+       },
+       {
+        "reason": "side B: 582179 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:episode|orientation"
+       },
+       {
+        "reason": "side B: 582826 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:episode|recognition_outcome"
+       },
+       {
+        "reason": "side B: 582826 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:episode|recognized_recv_ns_basis"
+       },
+       {
+        "reason": "side B: 582991 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:episode|terminal_phase"
+       },
+       {
+        "reason": "side B: 546391 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:flow_substrate|classification"
+       },
+       {
+        "reason": "side B: 546392 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:flow_substrate|no_direction_reason"
+       },
+       {
+        "reason": "side B: 546392 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:flow_substrate|polarity"
+       },
+       {
+        "reason": "side B: 546392 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:flow_substrate|roll20_defined"
+       },
+       {
+        "reason": "side B: 546391 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:flow_substrate|status"
+       },
+       {
+        "reason": "side B: 546392 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:flow_substrate|window_direction"
+       },
+       {
+        "reason": "side B: 583687 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:lineage|depth_label"
+       },
+       {
+        "reason": "side B: 583687 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:lineage|node_id"
+       },
+       {
+        "reason": "side B: 583687 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:lineage|parent_id"
+       },
+       {
+        "reason": "side B: 583687 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:lineage|role"
+       },
+       {
+        "reason": "side B: 583687 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:lineage|side_orientation"
+       },
+       {
+        "reason": "side B: 583687 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:lineage|status"
+       },
+       {
+        "reason": "side B: 583687 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:lineage|transition_type"
+       },
+       {
+        "reason": "side B: 321490 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:queue|birth_family_id"
+       },
+       {
+        "reason": "side B: 321490 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:queue|birth_session_phase"
+       },
+       {
+        "reason": "side B: 321490 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:queue|censored"
+       },
+       {
+        "reason": "side B: 321490 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:queue|exit_family_id"
+       },
+       {
+        "reason": "side B: 321490 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:queue|exit_session_phase"
+       },
+       {
+        "reason": "side B: 321490 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:queue|exit_stratum_available"
+       },
+       {
+        "reason": "side B: 321491 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:queue|queue_scope"
+       },
+       {
+        "reason": "side B: 321490 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:queue|resolved"
+       },
+       {
+        "reason": "side B: 321490 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:queue|stratum_basis"
+       },
+       {
+        "reason": "side B: 321491 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:queue|terminal_basis"
+       },
+       {
+        "reason": "side B: 321490 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:queue|terminal_status"
+       },
+       {
+        "reason": "side B: 2101 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:replenishment|action"
+       },
+       {
+        "reason": "side B: 2101 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:replenishment|liquidity_kind"
+       },
+       {
+        "reason": "side B: 2101 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:replenishment|liquidity_kind_basis"
+       },
+       {
+        "reason": "side B: 2101 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:replenishment|observation"
+       },
+       {
+        "reason": "side B: 2101 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:replenishment|price_is_sentinel"
+       },
+       {
+        "reason": "side B: 573347 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:replenishment|unattributed_reason"
+       },
+       {
+        "reason": "side B: 581403 group(s) with no row of that plane at their closing instant (state unknown)",
+        "want": "native.lifecycle:response|structure_id"
+       }
+      ]
+     }
+    },
+    "day": "20231018",
+    "findings": {
+     "failures": {},
+     "path": "/opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-findings.json",
+     "reason": null,
+     "rows": 771787,
+     "status": "computed",
+     "stream_error": null
+    },
+    "knowledge": {
+     "pairs": 171,
+     "path": "/opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-knowledge.json",
+     "reason": null
+    },
+    "receipt": {
+     "path": "/opt/frankie-box/work/experiment-teacher-rows/20231018/receipt.json",
+     "reason": null,
+     "status": "read"
+    },
+    "rows_sidecar": {
+     "basis": "line 1 the header, then every sealed block's rows as sealed (each row's lock its block's teacher as_of); sha256 of the file's bytes, read once; nothing rebuilt or compared",
+     "blocks": {
+      "blocks": 47,
+      "blocks_sha256": "316fcb603c71a7d70408d9bcbd735fea86472d069569a267ff5a9ef8e2d9e4d0",
+      "header": {
+       "bytes": [
+        0,
+        12139
+       ],
+       "sha256": "6ee92f09a548b04aac8dcff6dcf4c520c3e1f466a333a2c1c81feb39d75cd816"
+      },
+      "manifest": "teacher-blocks.json",
+      "rule": "blocks_sha256 = sha256 of the lines \"<index> <block json sha256> <sidecar bytes sha256>\\n\"",
+      "schedule": {
+       "clock": "clock_receive_time (each row's ts_recv_ns); a block closes at the first row whose running maximum (clock_event_known_by) reaches its end clock",
+       "lengths_ns": [
+        300000000000,
+        1800000000000
+       ],
+       "minutes": [
+        5,
+        30
+       ],
+       "origin_basis": "trading-day open America/New_York 2023-10-17 18:00 (2023-10-17T22:00:00Z)",
+       "origin_ns": 1697580000000000000,
+       "rule": "block 1 is 5 min, every later block 30 min (the last listed length repeats)"
+      },
+      "schema": "FRANKIE_TEACHER_BLOCKS_V1",
+      "sealed_bytes": 161126241394
+     },
+     "file": "host-dipole-classroom-source.c15.rows.jsonl",
+     "file_bytes": 161126241394,
+     "format": 3,
+     "row_keys": [
+      "key",
+      "clocks",
+      "clocks_absent",
+      "planes",
+      "planes_state",
+      "planes_absent",
+      "invalidated",
+      "coverage",
+      "match",
+      "book_columns",
+      "state_split",
+      "state_labels",
+      "state_label_origin"
+     ],
+     "rows": 771787,
+     "schema": "FRANKIE_TEACHER_ROWS_SIDECAR_V1",
+     "sealed_bytes": 161126241394,
+     "sha256": "83081ea3ed71ecfc63c6c6d0012af37fa8c86aeb7f2e0bafc739509c4e47d985"
+    },
+    "rule": "the teacher's own account (its receipt account) for Frankie; the findings and the per-event differences are in the files named here",
+    "schema": "FRANKIE_TEACHER_ACCOUNT_PUBLICATION_V1",
+    "state_split": {
+     "path": "/opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-state-split.json",
+     "reason": null
+    },
+    "teacher_second_set": {
+     "book_read": {
+      "format": 1,
+      "groups": 583688,
+      "groups_read_at_publication": 329995,
+      "groups_read_in_walk": 253693,
+      "rows_read_at_publication": 432473,
+      "rule": "beside the pinned functions on the same full rows (teacher_book_read); the rows before a resume whose save held no book read are read at publication from the same reader with the same functions",
+      "schema": "FRANKIE_TEACHER_BOOK_READ_V1",
+      "whole_day": true,
+      "windows": 495733
+     },
+     "clock_fields": [
+      "clock_event_time",
+      "clock_receive_time",
+      "clock_event_known_by",
+      "clock_feature_availability",
+      "clock_prospective_discovery_confirmation",
+      "clock_model_evaluation",
+      "clock_lock_time"
+     ],
+     "clock_lock_time": {
+      "basis": "the teacher's as_of (the latest receive clock of its rows), stamped once: not a picture element and never Frankie's lock",
+      "label": "teacher_as_of (lock time does not exist before Frankie reads)",
+      "teacher_as_of": 1697662799696377528
+     },
+     "clocks_compared": 771787,
+     "entries_not_carried": [
+      "controlling_rt_mission",
+      "native_calculation_contract",
+      "anchored_knowledge_manifest",
+      "selected_same_arm_profile",
+      "a_clean_promoted_positive_capsule",
+      "a_memory_promoted_positive_capsule",
+      "a_memory_prior_lessons_package",
+      "a_memory_prior_package_proof",
+      "authoritative_s135_construction",
+      "complete_s105_9_brain",
+      "doctrine_reasoning_play_index_evidence",
+      "lawful_prior_session_carry",
+      "october_outcome_wall_enforcement",
+      "learned_d_structures_and_families",
+      "learned_dipoles_and_geometry",
+      "learned_pair_triplet_recurrence",
+      "learned_chains_extensions_reappearances_ancestry",
+      "phase1_discoveries_structural_falsifiers",
+      "phase2_findings_modules_timing_pox_negatives",
+      "predecessor_ancestry_unresolved_chain_state",
+      "historical_timing_lifespan_context",
+      "learned_structure_proposal_index_material",
+      "extra_agent_corrected_information_and_gap_diagnoses",
+      "derived_roll20_and_dipole_state",
+      "clock_model_evaluation",
+      "clock_lock_time",
+      "later_outcome_reveal",
+      "target_ground_truth_onset_time",
+      "s137_cognitive_shadow_runtime",
+      "hipporag_associative_retrieval",
+      "step1_existing_october_seconds",
+      "step1_populations",
+      "step1_crosswalks",
+      "step1_target_membership_receipts",
+      "step1_labels_and_classifications",
+      "step1_result_prefixes",
+      "step1_reconciliation_outputs",
+      "output_state_and_state_delta_movie",
+      "output_frankie_reasoning_movie",
+      "output_probability_movie",
+      "output_candidate_discoveries",
+      "output_first_locks_and_no_locks",
+      "output_negative_sparse_inconclusive_ledger",
+      "output_knowledge_retrieval_receipts",
+      "output_provider_invocation_response_receipts",
+      "output_answer_wall_access_receipts",
+      "output_source_state_manifest_code_model_run_hashes"
+     ],
+     "file": "teacher-second-set.pkl",
+     "file_format": "64 hex digits of the sha256 of the bytes after them, then the pickle of the header with `records` (parallel_teacher._load_raw_state reads it)",
+     "format": 3,
+     "joined_in_walk": 0,
+     "key_fields": [
+      "adapter_cursor",
+      "input_cursor",
+      "input_journal_ordinal",
+      "source_input_index",
+      "source_member_index",
+      "session_id",
+      "instrument_id",
+      "terminal_prefix_hash"
+     ],
+     "key_rule": "record i is teacher row i: key.adapter_cursor == the row cursor, its picture the one the walk read that row with (picture.original_applied is the row's payload)",
+     "merged_at_publication": 771787,
+     "mismatches": {
+      "count": 0,
+      "file": "teacher-second-set-mismatches.jsonl",
+      "format": "one JSON value per line",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+     },
+     "mismatches_file": {
+      "count": 0,
+      "file": "teacher-second-set-mismatches.jsonl",
+      "format": "one JSON value per line",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+     },
+     "plane_reference": [
+      "source",
+      "source_ordinal",
+      "input_cursor",
+      "instrument_id",
+      "known_at_ns",
+      "entries"
+     ],
+     "plane_values": "by reference: (source, source_ordinal) names the row of that stream's pinned file the picture handed over; the values are the ROOT's receipted rows, not copied",
+     "restored_from_save": 0,
+     "rows_matched": 771787,
+     "rows_mismatched": 0,
+     "rows_total": 771787,
+     "schema": "FRANKIE_TEACHER_SECOND_SET_V1",
+     "sha256": "75cc6dcdba06b3d2073425cffdc69cce214d76b1037777a8517cba7bc492d499",
+     "state_reference": [
+      "source",
+      "source_ordinal"
+     ],
+     "state_split": {
+      "day": {
+       "all_sum_back": {
+        "A": true,
+        "B": true
+       },
+       "buckets": {
+        "A": 9636,
+        "B": 9636
+       },
+       "fields": 71,
+       "groups": 583688,
+       "unknown_groups": {
+        "A": {
+         "native.lifecycle:candidate|availability_note": 582826,
+         "native.lifecycle:candidate|candidate_id": 582826,
+         "native.lifecycle:candidate|direction_note": 582826,
+         "native.lifecycle:candidate|selection_rule": 582826,
+         "native.lifecycle:candidate|threshold_rule": 582826,
+         "native.lifecycle:candidate|window_truncated": 582826,
+         "native.lifecycle:episode|candidate_id": 582179,
+         "native.lifecycle:episode|dipole_path_withheld": 582991,
+         "native.lifecycle:episode|orientation": 582179,
+         "native.lifecycle:episode|recognition_outcome": 582826,
+         "native.lifecycle:episode|recognized_recv_ns_basis": 582826,
+         "native.lifecycle:episode|terminal_phase": 582991,
+         "native.lifecycle:flow_substrate|classification": 546391,
+         "native.lifecycle:flow_substrate|no_direction_reason": 546392,
+         "native.lifecycle:flow_substrate|polarity": 546392,
+         "native.lifecycle:flow_substrate|roll20_defined": 546392,
+         "native.lifecycle:flow_substrate|status": 546391,
+         "native.lifecycle:flow_substrate|window_direction": 546392,
+         "native.lifecycle:lineage|depth_label": 583687,
+         "native.lifecycle:lineage|node_id": 583687,
+         "native.lifecycle:lineage|parent_id": 583687,
+         "native.lifecycle:lineage|role": 583687,
+         "native.lifecycle:lineage|side_orientation": 583687,
+         "native.lifecycle:lineage|status": 583687,
+         "native.lifecycle:lineage|transition_type": 583687,
+         "native.lifecycle:queue|birth_family_id": 321490,
+         "native.lifecycle:queue|birth_session_phase": 321490,
+         "native.lifecycle:queue|censored": 321490,
+         "native.lifecycle:queue|exit_family_id": 321490,
+         "native.lifecycle:queue|exit_session_phase": 321490,
+         "native.lifecycle:queue|exit_stratum_available": 321490,
+         "native.lifecycle:queue|queue_scope": 321491,
+         "native.lifecycle:queue|resolved": 321490,
+         "native.lifecycle:queue|stratum_basis": 321490,
+         "native.lifecycle:queue|terminal_basis": 321491,
+         "native.lifecycle:queue|terminal_status": 321490,
+         "native.lifecycle:replenishment|action": 2101,
+         "native.lifecycle:replenishment|liquidity_kind": 2101,
+         "native.lifecycle:replenishment|liquidity_kind_basis": 2101,
+         "native.lifecycle:replenishment|observation": 2101,
+         "native.lifecycle:replenishment|price_is_sentinel": 2101,
+         "native.lifecycle:replenishment|unattributed_reason": 573347,
+         "native.lifecycle:response|structure_id": 581403
+        },
+        "B": {
+         "native.lifecycle:candidate|availability_note": 582826,
+         "native.lifecycle:candidate|candidate_id": 582826,
+         "native.lifecycle:candidate|direction_note": 582826,
+         "native.lifecycle:candidate|selection_rule": 582826,
+         "native.lifecycle:candidate|threshold_rule": 582826,
+         "native.lifecycle:candidate|window_truncated": 582826,
+         "native.lifecycle:episode|candidate_id": 582179,
+         "native.lifecycle:episode|dipole_path_withheld": 582991,
+         "native.lifecycle:episode|orientation": 582179,
+         "native.lifecycle:episode|recognition_outcome": 582826,
+         "native.lifecycle:episode|recognized_recv_ns_basis": 582826,
+         "native.lifecycle:episode|terminal_phase": 582991,
+         "native.lifecycle:flow_substrate|classification": 546391,
+         "native.lifecycle:flow_substrate|no_direction_reason": 546392,
+         "native.lifecycle:flow_substrate|polarity": 546392,
+         "native.lifecycle:flow_substrate|roll20_defined": 546392,
+         "native.lifecycle:flow_substrate|status": 546391,
+         "native.lifecycle:flow_substrate|window_direction": 546392,
+         "native.lifecycle:lineage|depth_label": 583687,
+         "native.lifecycle:lineage|node_id": 583687,
+         "native.lifecycle:lineage|parent_id": 583687,
+         "native.lifecycle:lineage|role": 583687,
+         "native.lifecycle:lineage|side_orientation": 583687,
+         "native.lifecycle:lineage|status": 583687,
+         "native.lifecycle:lineage|transition_type": 583687,
+         "native.lifecycle:queue|birth_family_id": 321490,
+         "native.lifecycle:queue|birth_session_phase": 321490,
+         "native.lifecycle:queue|censored": 321490,
+         "native.lifecycle:queue|exit_family_id": 321490,
+         "native.lifecycle:queue|exit_session_phase": 321490,
+         "native.lifecycle:queue|exit_stratum_available": 321490,
+         "native.lifecycle:queue|queue_scope": 321491,
+         "native.lifecycle:queue|resolved": 321490,
+         "native.lifecycle:queue|stratum_basis": 321490,
+         "native.lifecycle:queue|terminal_basis": 321491,
+         "native.lifecycle:queue|terminal_status": 321490,
+         "native.lifecycle:replenishment|action": 2101,
+         "native.lifecycle:replenishment|liquidity_kind": 2101,
+         "native.lifecycle:replenishment|liquidity_kind_basis": 2101,
+         "native.lifecycle:replenishment|observation": 2101,
+         "native.lifecycle:replenishment|price_is_sentinel": 2101,
+         "native.lifecycle:replenishment|unattributed_reason": 573347,
+         "native.lifecycle:response|structure_id": 581403
+        }
+       }
+      },
+      "day_file": "teacher-state-split.json",
+      "day_file_sha256": "8384fbf3cce44b0c59b940e9d1d12d69e47543d788f58b1320a3280ebb1a20b4",
+      "dipole": "teacher.dstate|... : the teacher row's own DState (status, state.anchor_dir, state.armed, state.broken); derived_roll20_and_dipole_state is the teacher's Dipole state rows, not a picture plane",
+      "format": 1,
+      "generic_rule": "a lifecycle section not in label_fields: every top-level text or true/false field except ['member_id', 'runway_id', 'mirror_pair_key', 'level_event_key_at_exit', 'action_string', 'side_string', 'schema', 'clock', 'binning_clock', 'emitted_on', 'emitting_section']",
+      "label_fields": {
+       "native.lifecycle:absorption": [
+        "price_moved"
+       ],
+       "native.lifecycle:detector_coverage": [],
+       "native.lifecycle:flow_substrate": [
+        "classification",
+        "window_direction",
+        "status",
+        "no_direction_reason",
+        "roll20_defined",
+        "polarity"
+       ],
+       "native.lifecycle:ladder": [
+        "ladder_scope",
+        "side",
+        "touch_state",
+        "best_price_moved"
+       ],
+       "native.lifecycle:mirror": [
+        "disposition",
+        "orientation"
+       ],
+       "native.lifecycle:queue": [
+        "terminal_status",
+        "birth_session_phase",
+        "exit_session_phase",
+        "queue_scope",
+        "stratum_basis",
+        "terminal_basis",
+        "resolved",
+        "censored",
+        "exit_stratum_available",
+        "birth_family_id",
+        "exit_family_id"
+       ],
+       "native.lifecycle:recurrence": [],
+       "native.lifecycle:replenishment": [
+        "action",
+        "liquidity_kind",
+        "liquidity_kind_basis",
+        "observation",
+        "unattributed_reason",
+        "price_is_sentinel"
+       ],
+       "native.member": [
+        "session_phase",
+        "side_orientation",
+        "family_id",
+        "decision_basis",
+        "continuity_segment",
+        "snapshot_bootstrap_only",
+        "event_group_complete_f_last",
+        "sequence_contiguous",
+        "fifo_priority_reconstructed"
+       ],
+       "root.structures": [
+        "discovery_status",
+        "candidate_family_id",
+        "carried_native_family",
+        "matches_carried_native_family",
+        "fill_disposition.class",
+        "mirror.orientation",
+        "terminal_action",
+        "terminal_side"
+       ]
+      },
+      "per_row": "each R3 short window (64 groups) on its side: every label field's buckets with the event and book parts, sums_back per field, pinned_check against the row's pinned columns",
+      "rows_all_sum_back": 495733,
+      "rows_pinned_equal": 495733,
+      "rows_pinned_not_equal": [],
+      "unknown_bucket": "__state_unknown__"
+     },
+     "streams": {
+      "native.lifecycle": {
+       "bytes": 7560352552,
+       "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/bedrock/recovery-6f84a8a86f454010b61346b401e3eb5f/ledgers/exact_lifecycle_rows.jsonl",
+       "sha256": "85cd443bb5348b987d643878d43532aca7db8f61e932c68073425f1939dfb74e"
+      },
+      "native.member": {
+       "bytes": 193743650444,
+       "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/bedrock/recovery-6f84a8a86f454010b61346b401e3eb5f/ledgers/exact_member_rows.jsonl",
+       "sha256": "5c1acca32856b08f2d2188951ae9e6c3932410f43d62e6e3e69858c370606d4c"
+      },
+      "root.frames": {
+       "bytes": 496743568399,
+       "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/frames.jsonl",
+       "sha256": "be7655b2663841df1b3662a057f86122750364b1b0678fcfd46c92798b0c1495"
+      },
+      "root.prices": {
+       "bytes": 17393149,
+       "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/prices.jsonl",
+       "sha256": "f42c17908509e9b944615521d25631ef19231da3c037252d83d03f780c74ab58"
+      },
+      "root.structures": {
+       "bytes": 1063001944,
+       "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/structures.jsonl",
+       "sha256": "37c7642ec92dc350e8d91f29a8428a94f1967bf682df57b794ded4897b9e8b8d"
+      }
+     }
+    }
+   },
+   "inline": true,
+   "path": "/opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-account.json",
+   "sha256": "d91aee929de9be1f19c16cdead7fd31c23e889144dceb264f90d175829fb9c8e"
+  },
+  {
+   "bytes": 280560936,
+   "inline": false,
+   "path": "/opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-account.md",
+   "sha256": "ca3de06bfb664b263730de3a53fcbd95f0f460df7f7eaaa916cd9d02d42cc189"
+  },
+  {
+   "bytes": 99657421,
+   "inline": false,
+   "path": "/opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-findings.json",
+   "sha256": "52ce75e0969ed0c6ecd8b594eb5618b15d360c9b55423dd45087fedb86c507f6"
+  },
+  {
+   "bytes": 351272,
+   "inline": false,
+   "path": "/opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-reconciliation-differences.jsonl",
+   "sha256": "8214034715e731d89dd0ae8cd19b81c8738633ec70b1e011e590ebf06cd90d74"
+  }
+ ],
+ "stage": "teacher-account",
+ "summary": {
+  "rows": "/opt/frankie-box/work/experiment-teacher-rows/20231018/host-dipole-classroom-source.c15.json"
+ }
+}

@@ -1,0 +1,42 @@
+{
+  "input_version": "joint-inputs-v3",
+  "output_version": "joint-models-v3",
+  "input_receipt": {
+    "added_current_features": 5129,
+    "current_features": 7025,
+    "additional_raw_finite_cells": 44439180,
+    "outcome_sha256": "6a0613a357675ba60c7d4e946592b2aa69ea0e09dd488cd0ecfa4d54ba445608",
+    "input_version": "joint-inputs-v3",
+    "v2_current_features": 1896,
+    "total_columns": 28100,
+    "source_audit": "additional_source_audit.json",
+    "all_v2_columns_values_and_missingness_unchanged": true,
+    "samples_and_outcomes_byte_identical": true,
+    "retained_alignment": "unchanged 13 concepts,99 roles,confirmed second set,timestamped prices; all exact contexts remain pinned",
+    "samples": 3745,
+    "model_fits_run_at_build": false,
+    "status": "completed",
+    "families": 749,
+    "history_seconds": [
+      120,
+      300,
+      600
+    ]
+  },
+  "suite": "all v1 constant/ridge/EvoTrees shallow/deep/MAE/quantiles/source-group/history refits, neural_tree/residual_mlp/TabM, PCA/kmeans3/kmeans5",
+  "unchanged_design": "same 749 families/3745 samples/outcomes/folds, purge and 600-second embargo, training-only preprocessing, seeds and fixed hyperparameters",
+  "postprocessing": "median comparisons, phase/direction, market states, quantile coverage, observed price paths, all conditional split pairs and heldout response grids/missingness/matched contexts",
+  "script_sha256": {
+    "review_saved_layers.jl": "8abb7a3074a5a4a7b7cfb1af9c55ae8efacc470bf2b465f54451f7601bcbef1d",
+    "run_joint_models.jl": "6ce0128a94ab5affd969235eee7eb22b99a584ed57df047e843aa27caeb9e979",
+    "test_model_rules.jl": "ed860ca5f46c1863b5630cc5281c1a55e9406a9101a7e048e0f6291f19472676",
+    "model_rules.jl": "ed57115cdea48aeb78bcfb09fd6d17a011649a42c762963da4a616e8aa88951b",
+    "run_neural_models.jl": "262704b220d33e2abf3e94b069861dd04b19c84a39f4665200db1e6b6197fc1d",
+    "analyze_joint_interactions.jl": "9f4e1c740b82a5831d8d37d2777a64ece607919a229726b5555b7198caf74dff",
+    "summarize_joint_models.jl": "66786503a9d6db1612af9a28abccc1877177569ddc499258419ae57ebf6b337e",
+    "descriptive_math.jl": "6126bd02bda3ca70738d0ba8842f651d55a19cdd9ce6914b134b548e28698d91",
+    "analyze_observed_price_paths.jl": "12a31c75061f0271694b29274f1b4242f2028c6e53df1bc43094730c8a1865dc"
+  },
+  "v1_unchanged": true,
+  "fitted_states_copied_from_old_runs": false
+}

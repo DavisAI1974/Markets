@@ -1,0 +1,87 @@
+{
+  "version": "v1",
+  "selected_pairs": 626,
+  "eligible_contrasts": 101,
+  "eligible_signed_price_contrasts": 53,
+  "ineligible_contrasts": 525,
+  "nonmissing_empty_response_cells": 1826,
+  "pairs_with_raw_missing_values": 193,
+  "selected_pairs_with_missing_indicator": 41,
+  "selected_pairs_abs_train_corr_ge095": 4,
+  "selected_pairs_abs_test_corr_ge095": 4,
+  "exact_pairs_selected_in_2plus_folds": 2,
+  "exact_pairs_eligible_in_2plus_folds": 0,
+  "exact_pairs_with_opposite_fold_signs": 0,
+  "matching": [
+    {
+      "matching": "phase",
+      "min_per_corner": 10,
+      "eligible_strata": 89,
+      "pairs_with_eligible_stratum": 39,
+      "opposite_sign_vs_pooled_strata": 22,
+      "pairs_with_opposite_sign": 18
+    },
+    {
+      "matching": "phase",
+      "min_per_corner": 5,
+      "eligible_strata": 174,
+      "pairs_with_eligible_stratum": 81,
+      "opposite_sign_vs_pooled_strata": 50,
+      "pairs_with_opposite_sign": 46
+    },
+    {
+      "matching": "prior_direction",
+      "min_per_corner": 10,
+      "eligible_strata": 75,
+      "pairs_with_eligible_stratum": 53,
+      "opposite_sign_vs_pooled_strata": 20,
+      "pairs_with_opposite_sign": 18
+    },
+    {
+      "matching": "prior_direction",
+      "min_per_corner": 5,
+      "eligible_strata": 153,
+      "pairs_with_eligible_stratum": 102,
+      "opposite_sign_vs_pooled_strata": 40,
+      "pairs_with_opposite_sign": 37
+    },
+    {
+      "matching": "30min",
+      "min_per_corner": 10,
+      "eligible_strata": 55,
+      "pairs_with_eligible_stratum": 24,
+      "opposite_sign_vs_pooled_strata": 21,
+      "pairs_with_opposite_sign": 11
+    },
+    {
+      "matching": "30min",
+      "min_per_corner": 5,
+      "eligible_strata": 132,
+      "pairs_with_eligible_stratum": 48,
+      "opposite_sign_vs_pooled_strata": 55,
+      "pairs_with_opposite_sign": 28
+    },
+    {
+      "matching": "phase_direction_30min",
+      "min_per_corner": 10,
+      "eligible_strata": 0,
+      "pairs_with_eligible_stratum": 0,
+      "opposite_sign_vs_pooled_strata": 0,
+      "pairs_with_opposite_sign": 0
+    },
+    {
+      "matching": "phase_direction_30min",
+      "min_per_corner": 5,
+      "eligible_strata": 17,
+      "pairs_with_eligible_stratum": 11,
+      "opposite_sign_vs_pooled_strata": 8,
+      "pairs_with_opposite_sign": 8
+    }
+  ],
+  "ablation_groups": 375,
+  "ablation_all_folds_flat": 196,
+  "ablation_all_folds_helped": 10,
+  "ablation_all_folds_hurt": 12,
+  "conditional_tree_pair_rows": 63807,
+  "limits": "overlapping contexts and one day; posthoc matching; no p-values, causal synergy or executable-edge claim"
+}

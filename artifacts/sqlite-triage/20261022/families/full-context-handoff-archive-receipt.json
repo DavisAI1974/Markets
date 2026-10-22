@@ -1,0 +1,22 @@
+{
+  "status": "complete_incomplete-research_checkpoint",
+  "coverage_gate": "NOT_PASSED",
+  "archives": [
+    {
+      "path": "/opt/frankie-box/work/family-research-20261022/family-full-context-v4-incomplete-inputs.tar.gz",
+      "bytes": 2672048419,
+      "sha256": "7f823885195d4b9b15414790e73737e8141d1324b31093586ccec6714288e5e9"
+    },
+    {
+      "path": "/opt/frankie-box/work/family-research-20261022/family-v3-frozen-model-states-and-jobs.tar.gz",
+      "bytes": 1171303228,
+      "sha256": "b3f9d4df0883b7423f38f6b78aec0ea1e49f5b2d5c6831e9f43170196fbdcafb"
+    },
+    {
+      "path": "/opt/frankie-box/work/family-research-20261022/family-full-context-handoff-outputs.tar.gz",
+      "bytes": 3687362,
+      "sha256": "e585a6455cccdf87a8433c31225f50ef2aed83ef6bf156f70045b83c10640a62"
+    }
+  ],
+  "remaining": "Finish source/consumer mapping and full as-of input build, then rerun all models; no v4 matrix or fit yet."
+}

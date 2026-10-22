@@ -1,0 +1,32 @@
+{
+  "cycle": "teacher",
+  "day": "20231018",
+  "entries": [
+    {
+      "bytes": 245785,
+      "include": true,
+      "kind": "immediate teacher knowledge",
+      "name": "stage-knowledge.json",
+      "sha256": "7d26bf2bd66e754d8e842f4109abadcdcd165109d3ed695afaaa094aea74c8ec",
+      "source": "/opt/frankie-box/work/experiment-teacher-rows/20231018/host-dipole-classroom-source.c15.json; /opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-knowledge.json"
+    }
+  ],
+  "entry_kind": "stage_knowledge",
+  "knowledge_status": "available_immediately",
+  "note": "stage knowledge committed before the workflow advances; exact large sources remain at the digest-bound paths",
+  "schema": "FRANKIE_BOX_BRAIN_ENTRY_V1",
+  "source_witness": [
+    {
+      "basis": "by claim",
+      "claim_file": "/opt/frankie-box/work/experiment-teacher-rows/20231018/file-claims.jsonl",
+      "claim_schema": "v2",
+      "claimed_by": "teacher-only step (frankie_box_experiment_teacher) at 2026-10-10T20:18:37Z",
+      "path": "/opt/frankie-box/work/experiment-teacher-rows/20231018/host-dipole-classroom-source.c15.json"
+    },
+    {
+      "basis": "read whole",
+      "path": "/opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-knowledge.json"
+    }
+  ],
+  "unavailable": []
+}

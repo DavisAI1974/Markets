@@ -1,0 +1,19 @@
+{
+  "cycle": "root",
+  "day": "20231018",
+  "entries": [
+    {
+      "bytes": 191047,
+      "include": true,
+      "kind": "immediate root knowledge",
+      "name": "stage-knowledge.json",
+      "sha256": "d5227b76664e862115de08a9f61fd639c622309b3c38252d3597ab1505c13259",
+      "source": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/calculations-receipt.json; /opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derive.json; /opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/external-computation.json"
+    }
+  ],
+  "entry_kind": "stage_knowledge",
+  "knowledge_status": "available_immediately",
+  "note": "stage knowledge committed before the workflow advances; exact large sources remain at the digest-bound paths",
+  "schema": "FRANKIE_BOX_BRAIN_ENTRY_V1",
+  "unavailable": []
+}

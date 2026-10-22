@@ -1,0 +1,2267 @@
+{
+  "files": [
+    {
+      "path": "joint-models-v3/all_model_fold_metrics.csv",
+      "bytes": 147366,
+      "sha256": "a8f7ce7fc43b4a0b9051746991cf6c79d79c8ede25bb99cef0e047f04301f14a"
+    },
+    {
+      "path": "joint-models-v3/chronological_splits.csv",
+      "bytes": 1781,
+      "sha256": "f0d3f246be20ec4198b995792b5c426dd5152a08ba841539797ba8841bc3355b"
+    },
+    {
+      "path": "joint-models-v3/core-resume/committed-serial-prefix/chronological_splits.csv",
+      "bytes": 1800,
+      "sha256": "e75d1b357d6f028c61ba2a22f12ba070d943178d308b66527b505ab3d2e76002"
+    },
+    {
+      "path": "joint-models-v3/core-resume/committed-serial-prefix/model_metrics.csv",
+      "bytes": 104033,
+      "sha256": "c949dadf501c1c1d2b0a6f45a4119cc871c1aaf31a7ffbb4c8ee29a565544ba4"
+    },
+    {
+      "path": "joint-models-v3/core-resume/committed-serial-prefix/model_predictions.csv",
+      "bytes": 51672967,
+      "sha256": "f98c4d7bd0b69e701a131a628d5e57200c7dfeead40ce8e4e380306bd25d3926"
+    },
+    {
+      "path": "joint-models-v3/core-resume/committed-serial-prefix/models.log",
+      "bytes": 60288,
+      "sha256": "e85e45456bb1d26509b756534ab50addd7db36c3d85790239ad123f91249455d"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold2/absolute-mid-price-change-h1-fold2-evotrees_depth3.jls",
+      "bytes": 5919988,
+      "sha256": "7110d519eac5ab7134485fcddda1524b307d7341c465d7741200d6d99e0784fb"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold2/absolute-mid-price-change-h1-fold2-evotrees_depth5.jls",
+      "bytes": 5988116,
+      "sha256": "dfb03abe92f33b4f18591534ab58e5ecc15d346e1f296ec6e1f22ec2c53ed3f3"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold2/absolute-mid-price-change-h1-fold2-evotrees_mae.jls",
+      "bytes": 5919954,
+      "sha256": "5252f7e3b194828747b2b10ce6d49ab0adb9222362e63a8be7e8ba1e68951786"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold2/absolute-mid-price-change-h1-fold2-evotrees_q10.jls",
+      "bytes": 5919959,
+      "sha256": "2aec3856a4898fa7e91c990794b67a1419426d69b1659658f95318ac1d16e9ff"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold2/absolute-mid-price-change-h1-fold2-evotrees_q90.jls",
+      "bytes": 5919963,
+      "sha256": "79bce55b2912aa5ac7b5ec3000c9cedc53679ad4cc38727944bc9633b9b7f267"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold2/absolute-mid-price-change-h1-fold2-preprocessing.jls",
+      "bytes": 2549562,
+      "sha256": "30732c00e98d198c463f360e9023f249d4d89bd504837cd401a9d35ed880c63c"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold2/chronological_splits.csv",
+      "bytes": 209,
+      "sha256": "2854afedd482ac20a2aa3c25774217416c6f7178313671d14d2628a6aac60b25"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold2/core_task_receipt.json",
+      "bytes": 56,
+      "sha256": "d067b5c099218a6eaa0022357e46db3cf14d4442a391850196d536b6c5a7f1c5"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold2/model_metrics.csv",
+      "bytes": 5473,
+      "sha256": "cf0bde44f7b542d749d7b0c72d60560eb8a8a5ec168c290cdae5eca2729e3b8f"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold2/model_predictions.csv",
+      "bytes": 801913,
+      "sha256": "5af8a0458aede766847759cb6b3f00129daee75b13359e25adb6a2eea3fd7dfe"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold2/run.log",
+      "bytes": 5211,
+      "sha256": "582933ca33cecaa15cd59821ddb085d5e4f5c343f22a92165270e424aa1ee74a"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold3/absolute-mid-price-change-h1-fold3-evotrees_depth3.jls",
+      "bytes": 6215843,
+      "sha256": "05bc2401db0a48ffe5e5f515e2dd8db2458b82be4ed4e5e820138ad90347cf88"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold3/absolute-mid-price-change-h1-fold3-evotrees_depth5.jls",
+      "bytes": 6283961,
+      "sha256": "71eceb28fbaf4ff925798de311f04ffa4436d5648b64efa496ece5c8574cec45"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold3/absolute-mid-price-change-h1-fold3-evotrees_mae.jls",
+      "bytes": 6215823,
+      "sha256": "9d58e210f825531eb9b22e1edbb400514568fdc13e70cdd036e35c26d148763a"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold3/absolute-mid-price-change-h1-fold3-evotrees_q10.jls",
+      "bytes": 6215828,
+      "sha256": "971f4eeddba9cbfca96f3b0d82fa1886ccaf749b6f42640256160570c0aae574"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold3/absolute-mid-price-change-h1-fold3-evotrees_q90.jls",
+      "bytes": 6215828,
+      "sha256": "0cb67ddd3a51554935e50d69b3742fe8f3537cf7c7a49f3ab7a4c3303d826a4c"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold3/absolute-mid-price-change-h1-fold3-preprocessing.jls",
+      "bytes": 2700598,
+      "sha256": "4148b83a39e599760d4a8b2a145ac11c595a6bd6ad3a180fe8ef1643900ef612"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold3/chronological_splits.csv",
+      "bytes": 212,
+      "sha256": "9420e1e3c68e7af50ab6b1f6f765ea88ed2d4ead48547a91e1b8728ffc4f755c"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold3/core_task_receipt.json",
+      "bytes": 57,
+      "sha256": "e359bc4f72e9df5a2e209a84f11e80b69e23fd1970c31320a023001006576118"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold3/model_metrics.csv",
+      "bytes": 5718,
+      "sha256": "65f859370642f4be54c1c729bf9137199cfa85bcb6a182bb404bc7ff8b8090c8"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold3/model_predictions.csv",
+      "bytes": 5789218,
+      "sha256": "17efe16cde93facb911852c907bfd4064467e5031fe4176681f756f4dbc7ee51"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold3/run.log",
+      "bytes": 5475,
+      "sha256": "3fb264a855206c9efd12153dcbdd7f4f1e59efea3347548ecd7efd94b217ebdf"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold4/absolute-mid-price-change-h1-fold4-evotrees_depth3.jls",
+      "bytes": 7154636,
+      "sha256": "88eed12807059437d93c0c017e3c38bcd2453894aa8dbbefa298b36f394e9e00"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold4/absolute-mid-price-change-h1-fold4-evotrees_depth5.jls",
+      "bytes": 7222718,
+      "sha256": "6e01b9888a7ac2f9860c5fd27b75f2efd2aef1f15eb4c75b94ecc343c0c94cb1"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold4/absolute-mid-price-change-h1-fold4-evotrees_mae.jls",
+      "bytes": 7154636,
+      "sha256": "2eab3508175d84ffe4f7c26b8d9e08668b5622df447b9762cd6b08e9a762690b"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold4/absolute-mid-price-change-h1-fold4-evotrees_q10.jls",
+      "bytes": 7154641,
+      "sha256": "9536aa2529cbd8a8876cabbfb0d0466e74f7c2dc68f0e898579f8c6d072f6ef8"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold4/absolute-mid-price-change-h1-fold4-evotrees_q90.jls",
+      "bytes": 7154641,
+      "sha256": "592891b1d9fc663fb0253d6adc1fd727f6efdde4e59aab5e51af62a7802769d5"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold4/absolute-mid-price-change-h1-fold4-preprocessing.jls",
+      "bytes": 3077131,
+      "sha256": "b31ce567a371b618d77ea7ad2090aae8e0f76cf16e0bf802e4d7ae172c1a4c82"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold4/run.log",
+      "bytes": 3228,
+      "sha256": "959f09e7c2d33a77cf72b46d948cc6d7c8170ff11a03ecf46154ae9bd4f3f10f"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold2/absolute-mid-price-change-h120-fold2-evotrees_depth3.jls",
+      "bytes": 5329751,
+      "sha256": "9b4004827343332b081262a898834044b1f06532dc14d8bffe8aa1a7bec270c3"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold2/absolute-mid-price-change-h120-fold2-evotrees_depth5.jls",
+      "bytes": 5397835,
+      "sha256": "adf8e2117b38d1f06ce5dbfb9b40957f39af19d86fb1099c589b3a508f31e2f0"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold2/absolute-mid-price-change-h120-fold2-evotrees_mae.jls",
+      "bytes": 5329753,
+      "sha256": "d84f5c795f34d9d44a016c2b4c3f5d7252f27fbbaea0b2495bfb7a2a22c3f865"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold2/absolute-mid-price-change-h120-fold2-evotrees_q10.jls",
+      "bytes": 5329728,
+      "sha256": "314f670c67592164a55b90c2b4dfa70344275642255588ecd80c1f1ff24ce33e"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold2/absolute-mid-price-change-h120-fold2-evotrees_q90.jls",
+      "bytes": 5329742,
+      "sha256": "084ce7a2395e3db3fd4ac60fcd6328ac3ff5aefda40b25a007e0a30e7c8313ac"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold2/absolute-mid-price-change-h120-fold2-preprocessing.jls",
+      "bytes": 2335885,
+      "sha256": "ed4be46e122d4858e17c733256406217534e1b1d8195ba667b060b1304902b36"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold2/chronological_splits.csv",
+      "bytes": 213,
+      "sha256": "cae78faa870f72ec9afd71b0b16d14c6e4eb7bb830c7cde07ef3fb42659e5da8"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold2/core_task_receipt.json",
+      "bytes": 56,
+      "sha256": "d5d3335e3ef3cea76365ff7aff1a85d524879cd339672582af8dd40d7e077bb9"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold2/model_metrics.csv",
+      "bytes": 5499,
+      "sha256": "79ae098b49b1da8eecd92eeccbda6fa6d4e6b3d5bf7cc024be1da5cad70f4375"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold2/model_predictions.csv",
+      "bytes": 632969,
+      "sha256": "936951dcd491f634217dbb5074ecc4b99ea41a33ff986630d51828b367512b01"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold2/run.log",
+      "bytes": 5262,
+      "sha256": "05bf95a8af276f304b023ffa106a90065921b51a96ef9d94d578799a280f00cb"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold3/absolute-mid-price-change-h120-fold3-evotrees_depth3.jls",
+      "bytes": 5681480,
+      "sha256": "baeca52a86604ae864acae9e287ad102eb6d43ee3247330b7ea490b6679fb35c"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold3/absolute-mid-price-change-h120-fold3-evotrees_depth5.jls",
+      "bytes": 5749572,
+      "sha256": "5ca179fb1b3c976cb67ce89c7297d806ebf1c835476b0cd23655607d7e1f1a09"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold3/absolute-mid-price-change-h120-fold3-evotrees_mae.jls",
+      "bytes": 5681474,
+      "sha256": "ffeb3ebc6b905a8299bb7370c438bcdc3921957b62e835aa440550364fb7f8e4"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold3/absolute-mid-price-change-h120-fold3-evotrees_q10.jls",
+      "bytes": 5681479,
+      "sha256": "2f2d46ee9ac581f8878cf481728505a55252a775075797796ac9f2c9dcf295b3"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold3/absolute-mid-price-change-h120-fold3-evotrees_q90.jls",
+      "bytes": 5681487,
+      "sha256": "162c025b42c48dc3a78a242438c6eb04e68c220fd9d13c4e1ccc18d39bb2ec7b"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold3/absolute-mid-price-change-h120-fold3-preprocessing.jls",
+      "bytes": 2507960,
+      "sha256": "64030431316c5d0e4616e19fb40076c1c70b55214d31151353e3fcdfec7b18b5"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold3/chronological_splits.csv",
+      "bytes": 216,
+      "sha256": "3e9ff501dd2ea97d881bb0666e65c085c154cfd25b086d4a4e130bfd11382daa"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold3/core_task_receipt.json",
+      "bytes": 57,
+      "sha256": "422be72a5d6f9bfc97bbfe059a1b702c52d8ca54679a36ea26a29b49eeae2a4f"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold3/model_metrics.csv",
+      "bytes": 5705,
+      "sha256": "41656f01e083bd6204780ba28f174034b3886b9bd1a10cf423017e14c8025f08"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold3/model_predictions.csv",
+      "bytes": 5909998,
+      "sha256": "08bc152ddb321148b5e9cd328af9f7b5b3cb306cf388ed32723991c49a424dc2"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold3/run.log",
+      "bytes": 5509,
+      "sha256": "38db17d8ff1474d5bbe8b787154fe322a02518570a45a85dfd1642195e7da729"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold4/absolute-mid-price-change-h120-fold4-evotrees_depth3.jls",
+      "bytes": 6686934,
+      "sha256": "8ede2893a1d8a41fcfaec7214e4be5d890889bfdd5be971e0f77a40e0e6254c6"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold4/absolute-mid-price-change-h120-fold4-evotrees_depth5.jls",
+      "bytes": 6754938,
+      "sha256": "be0606fc1fdb44af81a6fc43266575748f8345d8702383a99479617330975be7"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold4/absolute-mid-price-change-h120-fold4-evotrees_mae.jls",
+      "bytes": 6686934,
+      "sha256": "9d8c13edfd85cecbfdd220ce16e4b28b6b13a91ce7e5a148a839ae609b6787eb"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold4/absolute-mid-price-change-h120-fold4-evotrees_q10.jls",
+      "bytes": 6686939,
+      "sha256": "9961d0d810ce8c43b2658e32cd22f3971739acf3d5c01421bc4c634b06350c4a"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold4/absolute-mid-price-change-h120-fold4-evotrees_q90.jls",
+      "bytes": 6686939,
+      "sha256": "226c0d6cb3300036f3f748c8d8dad657f78a1ab5875bb6e18e056ff36af9dfd3"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold4/absolute-mid-price-change-h120-fold4-preprocessing.jls",
+      "bytes": 2907829,
+      "sha256": "f29f822e219f54336fbafe38deeb4bfcf1dae5e33da99aa52b6076e5f28294f7"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold4/run.log",
+      "bytes": 3941,
+      "sha256": "36b0d3b230c9ba2948fff47eb26def85e84abefe5b52e86e8f01841f30e493d1"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold2/absolute-mid-price-change-h1800-fold2-evotrees_depth3.jls",
+      "bytes": 5896118,
+      "sha256": "09f4eb18fb5e251006eee710f7fc24ee21b116147b0609001df8f5c7002c4e72"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold2/absolute-mid-price-change-h1800-fold2-evotrees_depth5.jls",
+      "bytes": 5964366,
+      "sha256": "8f7a7749fc86934cbfb3284b22d4885380c36db6c316adc016c7fb3fe5d0422b"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold2/absolute-mid-price-change-h1800-fold2-evotrees_mae.jls",
+      "bytes": 5896062,
+      "sha256": "3be353c7037080d6feda4df4d229647123315677e4d0156996aa62b91380c611"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold2/absolute-mid-price-change-h1800-fold2-evotrees_q10.jls",
+      "bytes": 5896077,
+      "sha256": "0517846ff8ba776ab124ebf27e7c63648721c7757f03928014cb2a5f50aa3637"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold2/absolute-mid-price-change-h1800-fold2-evotrees_q90.jls",
+      "bytes": 5896133,
+      "sha256": "47a4a29eb6c1ce7fad8301739b41a86a5d0ab2968c34c9a1b5c0df04ff2ac3ac"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold2/absolute-mid-price-change-h1800-fold2-preprocessing.jls",
+      "bytes": 2537008,
+      "sha256": "f7487cb67c358316b7cf67d3a00f2ad8570c45c9ead1f723b241613a55e58ea8"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold2/chronological_splits.csv",
+      "bytes": 215,
+      "sha256": "cddb967066d611febf9e4b106b40302f5c6d5adedd0fd81a8b30545eab859cd1"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold2/core_task_receipt.json",
+      "bytes": 56,
+      "sha256": "39ff0d4cfe530def2bfa2bdc6e8f4c85c4bb8dbef3dcb247145b6985f179cb73"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold2/model_metrics.csv",
+      "bytes": 5432,
+      "sha256": "ab649fdae8a77333f75244c7942baa4a77d806d3dfa3213610d789180e977611"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold2/model_predictions.csv",
+      "bytes": 557593,
+      "sha256": "2bd0db766d455bb6b628b1f1a66b7d857ac30e266264cdf32e4bf1601188a514"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold2/run.log",
+      "bytes": 5253,
+      "sha256": "395236cf39081a7621b6ddc80b7bf30e53594d15eb6dbe55aa6b814ca6f4fef4"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold3/absolute-mid-price-change-h1800-fold3-evotrees_depth3.jls",
+      "bytes": 6171985,
+      "sha256": "57b99a0d14502acd73248b1b7c0156471ec9c829503be492ef5563abd3d08cde"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold3/absolute-mid-price-change-h1800-fold3-evotrees_depth5.jls",
+      "bytes": 6240111,
+      "sha256": "e6e32ed2ca050bec0794b3e066c287e83b1aeab7694f9ffc8392666b664e513f"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold3/absolute-mid-price-change-h1800-fold3-evotrees_mae.jls",
+      "bytes": 6171959,
+      "sha256": "7955ca66f329d45b94afea51c17826fc6436dfc632244c67e0db068c4685e350"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold3/absolute-mid-price-change-h1800-fold3-evotrees_q10.jls",
+      "bytes": 6171964,
+      "sha256": "1dfe123d799282d3bf1cde1ff14dd44dd9b811466f1143a3add735ea1ae0add7"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold3/absolute-mid-price-change-h1800-fold3-evotrees_q90.jls",
+      "bytes": 6172002,
+      "sha256": "5d967878b7d94a73ea8b8ee5025a58d062b92f2d00db6d9b0bcced3e800d8a09"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold3/absolute-mid-price-change-h1800-fold3-preprocessing.jls",
+      "bytes": 2679783,
+      "sha256": "16d41fbeae4e74833870ee05ccf3c69f05ea77a3ff00cfd7f9c9804dc4140b0f"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold3/chronological_splits.csv",
+      "bytes": 218,
+      "sha256": "ce97545cf85e29a3e81045e6240cf33f69cd3f28d2d22ff239ed1780b9518870"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold3/core_task_receipt.json",
+      "bytes": 57,
+      "sha256": "c0a1681d3a72a3ba42399bc375951b3f502823ab1371d09fec43b206adf54e22"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold3/model_metrics.csv",
+      "bytes": 5647,
+      "sha256": "0e06449f6627175fa600ec2efa0c4b6b20120974a34d9c614d864a6145374065"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold3/model_predictions.csv",
+      "bytes": 5966273,
+      "sha256": "7fc179148c46af503779240cf0a3859e97a4aaa6eea0f2460d1b213d92fc0912"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold3/run.log",
+      "bytes": 5511,
+      "sha256": "41f8f6ad5d6d0436784e5e18aae1b216e200bd3b79f85d564c36cac568f2c468"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold4/absolute-mid-price-change-h1800-fold4-evotrees_depth3.jls",
+      "bytes": 7146242,
+      "sha256": "5469a03afb057ad0c0c64e2e2e922b3fb9448b6ed683a9090bc782ce56351423"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold4/absolute-mid-price-change-h1800-fold4-evotrees_depth5.jls",
+      "bytes": 7214002,
+      "sha256": "6d0e37c8aca1fcfc9e90f071f3584195d9d19c62d2884078c7e362cfa0995460"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold4/absolute-mid-price-change-h1800-fold4-evotrees_mae.jls",
+      "bytes": 7146242,
+      "sha256": "38b41fc669213cd18a191bad29dd7df9e6e075a8376cbf145f20e112d2b7edab"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold4/absolute-mid-price-change-h1800-fold4-evotrees_q10.jls",
+      "bytes": 7146247,
+      "sha256": "a8de8accad86a2ed4b587d7c3ff23e1bfc6a3b556e1ba696eed75b676fb1149b"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold4/absolute-mid-price-change-h1800-fold4-evotrees_q90.jls",
+      "bytes": 7146247,
+      "sha256": "a92705b775f61ec0769aed9105709153d8da888a77d5d03d42fc149acd2dd8c8"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold4/absolute-mid-price-change-h1800-fold4-preprocessing.jls",
+      "bytes": 3067230,
+      "sha256": "601f526050293adad73bbe3ece988922ba6957ced90e5db65147662add8636a3"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold4/run.log",
+      "bytes": 2795,
+      "sha256": "5c65fb8f160cdf89735f30bee79848285e193df816982b20bceea75de8b4dddd"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h20-fold2/absolute-mid-price-change-h20-fold2-evotrees_depth3.jls",
+      "bytes": 5857424,
+      "sha256": "592fe3d0804e052366d2ee16cc8c7b87142a128f1a78f65a85f10156c2b76540"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h20-fold2/absolute-mid-price-change-h20-fold2-evotrees_depth5.jls",
+      "bytes": 5925528,
+      "sha256": "7252481e5f6c6029a96775249c30319025368e9b2e0562d61b349292f58786fc"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h20-fold2/absolute-mid-price-change-h20-fold2-evotrees_mae.jls",
+      "bytes": 5857340,
+      "sha256": "19f23194ec4a5bf82f49053dd7a3e0a001acfde9d4d435601bca1389525b6aa1"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h20-fold2/absolute-mid-price-change-h20-fold2-evotrees_q10.jls",
+      "bytes": 5857337,
+      "sha256": "07ac7b4c29cbb3fdd12c4d7a381ae7861203405d38359fd09a3e791094a7511a"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h20-fold2/absolute-mid-price-change-h20-fold2-evotrees_q90.jls",
+      "bytes": 5857339,
+      "sha256": "e8e06ab8c69038f41a65d51b68c1c3a84293e7baa54b87ab2c27e7421dff8330"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h20-fold2/absolute-mid-price-change-h20-fold2-preprocessing.jls",
+      "bytes": 2521763,
+      "sha256": "a0e45330843b51e8a95f2735adfefee554b723b97f408acfa1012316da5ae818"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h20-fold2/chronological_splits.csv",
+      "bytes": 211,
+      "sha256": "b1c7355f21d396599c5f16b28e47b07f4be173120fe0ef8e3b449e8becd00d30"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h20-fold2/core_task_receipt.json",
+      "bytes": 56,
+      "sha256": "d5d3335e3ef3cea76365ff7aff1a85d524879cd339672582af8dd40d7e077bb9"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h20-fold2/model_metrics.csv",
+      "bytes": 5487,
+      "sha256": "da343420f5f8709a70931b7df47b2efc82056ba3a64b82eb937f348cee0487da"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h20-fold2/model_predictions.csv",
+      "bytes": 625119,
+      "sha256": "4ed6411659ced6cf055767ad90609c2ae07d6f964367f3b235a14c2a328c6cbf"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h20-fold2/run.log",
+      "bytes": 5235,
+      "sha256": "54c9a0d21785a55c636452098e5a0c8de7289a164b341a1ea8984a49983a19d6"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h20-fold3/absolute-mid-price-change-h20-fold3-evotrees_depth3.jls",
+      "bytes": 6193782,
+      "sha256": "ff62d10542f39a44d2746eb47b2168cc8650acb735e5f7ceea68a5d66d2b30d8"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h20-fold3/absolute-mid-price-change-h20-fold3-evotrees_depth5.jls",
+      "bytes": 6261828,
+      "sha256": "5c507318d1309db4559b2d464a4912c112eb57ae3d71925ebfa2910a3051350a"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h20-fold3/absolute-mid-price-change-h20-fold3-evotrees_mae.jls",
+      "bytes": 6193778,
+      "sha256": "f65a35fe6e97cb463a56d616fcbb90fa9e0a859f0aff4639c9c0310d0815ff5b"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h20-fold3/absolute-mid-price-change-h20-fold3-evotrees_q10.jls",
+      "bytes": 6193783,
+      "sha256": "96f1ba5aefd92bc2f8e903296089942c7b5144843b9b9460c2c42ef3b5930f05"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h20-fold3/absolute-mid-price-change-h20-fold3-evotrees_q90.jls",
+      "bytes": 6193791,
+      "sha256": "a97d4c57d724146bf56f55abcfd884c1a86384b4c34ddec8475fc92f5be1245c"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h20-fold3/absolute-mid-price-change-h20-fold3-preprocessing.jls",
+      "bytes": 2688764,
+      "sha256": "22433e7ca1a1140c6228d92bcf6d0bf961aafe06bf6c93f665345c16212a7402"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h20-fold3/model_metrics.csv",
+      "bytes": 5672,
+      "sha256": "9be18aaf3c0ab06b4402b8c1d90c4e9076bb5ad0758278b02f29cf9136a8eebb"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h20-fold3/model_predictions.csv.tmp",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h20-fold3/run.log",
+      "bytes": 11082,
+      "sha256": "c14269b9ecc66b465f5303daaa5114a134044cfd316396a6140ffd5b1a1fe413"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h20-fold4/absolute-mid-price-change-h20-fold4-evotrees_depth3.jls",
+      "bytes": 7145534,
+      "sha256": "1306e262620d1bdbfe87c93d381765bfde236c900b6d5fc07ca274880621aaa0"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h20-fold4/absolute-mid-price-change-h20-fold4-evotrees_depth5.jls",
+      "bytes": 7213498,
+      "sha256": "a2df69216c57958f6d348ce731d4fb451ad87edca206f6557325e273e4e6a6d3"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h20-fold4/absolute-mid-price-change-h20-fold4-evotrees_mae.jls",
+      "bytes": 7145534,
+      "sha256": "d8bf8aacb6c6cc2773cd703b87d93898ac1c99d1b1bc976990b4a1c6b27f2f13"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h20-fold4/absolute-mid-price-change-h20-fold4-preprocessing.jls",
+      "bytes": 3070260,
+      "sha256": "5e170aa34934c5961526bf6e1f98ee4a761ac6ba7e04beee96dadcb6162370df"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h20-fold4/run.log",
+      "bytes": 2373,
+      "sha256": "760de7d200aa540718a7e17d875c7720f03facee293c2520dd8f5d02a7299652"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h300-fold2/absolute-mid-price-change-h300-fold2-evotrees_depth3.jls",
+      "bytes": 5654796,
+      "sha256": "23127c4f00022e75a9f6a192e0daabe81563c5ec0ff8ee54a9353086622b0b51"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h300-fold2/absolute-mid-price-change-h300-fold2-evotrees_depth5.jls",
+      "bytes": 5722888,
+      "sha256": "efe003f1554483b7a684fe5f3a1e481766d4bd2e099a50c1b31cb46b6eb42bdf"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h300-fold2/absolute-mid-price-change-h300-fold2-evotrees_mae.jls",
+      "bytes": 5654792,
+      "sha256": "6347b3cc49db6258e63c1c216a67683a7895a779ada7e55f1cdbeb86ce7fd58a"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h300-fold2/absolute-mid-price-change-h300-fold2-evotrees_q10.jls",
+      "bytes": 5654797,
+      "sha256": "d77a9f898584289d861cfe4b30c7e78d1ab80332a171d54ab031621b409d0237"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h300-fold2/absolute-mid-price-change-h300-fold2-evotrees_q90.jls",
+      "bytes": 5654797,
+      "sha256": "73f0067ad95086d7889b90734d397b2f4751991681776aa31a140601bd068b67"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h300-fold2/absolute-mid-price-change-h300-fold2-preprocessing.jls",
+      "bytes": 2448506,
+      "sha256": "e238b0ebbbd20266b79152aaef98c8bc3a6140209088c568116a585cfb82b5d4"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h300-fold2/chronological_splits.csv",
+      "bytes": 213,
+      "sha256": "f776e11acf60c69dc6a1c2d27fa00b542a2e54572e02410b5e1ef94a9d924a28"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h300-fold2/core_task_receipt.json",
+      "bytes": 56,
+      "sha256": "32b423a827b52177bf09f6f5e743ad7ed93cc677b790eb3947cbe8cecbcd2c58"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h300-fold2/model_metrics.csv",
+      "bytes": 5474,
+      "sha256": "dfa5ffc1301ad79134d929a64b4ebeb48160908965dcb3617ac2124b19ba424d"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h300-fold2/model_predictions.csv",
+      "bytes": 576216,
+      "sha256": "d657a821662d017ed571433146766ff8564bf9ac3bc4613a8f3561d64da97430"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h300-fold2/run.log",
+      "bytes": 5261,
+      "sha256": "53612b63180aef06a9433ec259291d3a4e022281f493d1f6fd0b13b0d55a66c7"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h300-fold3/absolute-mid-price-change-h300-fold3-evotrees_depth3.jls",
+      "bytes": 5976147,
+      "sha256": "7e544953fd6f6efea2ea57ec37874547071b6129ce8a69123f93a6dbacdd8593"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h300-fold3/absolute-mid-price-change-h300-fold3-evotrees_depth5.jls",
+      "bytes": 6044273,
+      "sha256": "ea753f67d3c2474b38b1c4dcf65a5c351d243340fd7ef6027a99b3d6f1486526"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h300-fold3/absolute-mid-price-change-h300-fold3-evotrees_mae.jls",
+      "bytes": 5976139,
+      "sha256": "13b864ee500ad61bb60cc71cd22637bf681cb6b486c434c20477cdac67e6ca4e"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h300-fold3/absolute-mid-price-change-h300-fold3-evotrees_q10.jls",
+      "bytes": 5976144,
+      "sha256": "52df1e3eaff588967fbe0339886a5b74078f15eeaf2645a5676e239daef403fa"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h300-fold3/absolute-mid-price-change-h300-fold3-evotrees_q90.jls",
+      "bytes": 5976160,
+      "sha256": "a4239a6a434be3b46a3b1def3051ec4610ef3870a1e23009d9cce41ed2f6b4ac"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h300-fold3/absolute-mid-price-change-h300-fold3-preprocessing.jls",
+      "bytes": 2609223,
+      "sha256": "20c3659ed3d39af1dc762767e2bf6bf87f8b06aeb9796390757db1dcffde0992"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h300-fold3/run.log",
+      "bytes": 4588,
+      "sha256": "39f2d10bd3efaca9514f29db8383f157dfc507ba9992cae5bc137e40fe5f0713"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h300-fold4/absolute-mid-price-change-h300-fold4-evotrees_depth3.jls",
+      "bytes": 6950370,
+      "sha256": "2a397f860e2cc7ffcd0e4777a50e30be95ae6988e321b805b64cffdbc3a0c164"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h300-fold4/absolute-mid-price-change-h300-fold4-preprocessing.jls",
+      "bytes": 2998687,
+      "sha256": "49764b28fc69124b9d88dce2a9fc44f7302c73fb49696df649e5d946f8b607e2"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h300-fold4/run.log",
+      "bytes": 1962,
+      "sha256": "c2b937d3b077fb70a50e33616ea212ed45de4fd33f7f4f917b5bc0499cf616e0"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h3600-fold2/absolute-mid-price-change-h3600-fold2-evotrees_depth3.jls",
+      "bytes": 5796729,
+      "sha256": "6ddc0feae30326435637fc7487051c8b94c2c1f7c190e6d6a5b7eebdc1dcb455"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h3600-fold2/absolute-mid-price-change-h3600-fold2-preprocessing.jls",
+      "bytes": 2496948,
+      "sha256": "4a1eb2214f715b1631fae5eb964ee73edb2cb753d08111bc444420f124e964ee"
+    },
+    {
+      "path": "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h3600-fold2/run.log",
+      "bytes": 1842,
+      "sha256": "29e024ffd45a9b334a642e59938816b45a3df5d21e09a174547f03a5b54ce359"
+    },
+    {
+      "path": "joint-models-v3/core-resume/model_rules.jl",
+      "bytes": 2871,
+      "sha256": "ed57115cdea48aeb78bcfb09fd6d17a011649a42c762963da4a616e8aa88951b"
+    },
+    {
+      "path": "joint-models-v3/core-resume/resume_receipt.json",
+      "bytes": 4007,
+      "sha256": "e2c33e37d293adb0dd5618b3a5d16f40e8bbff6d1a84a24fbadaf5bef80de18d"
+    },
+    {
+      "path": "joint-models-v3/core-resume/run_core_task.jl",
+      "bytes": 11391,
+      "sha256": "76c8817ba960f1d61d3c6cf54168b0e5e7c8eb5cbab2cbacf4561d1f9b7948c8"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h1-fold2-neural_tree.jls",
+      "bytes": 9617812,
+      "sha256": "ef9196b4c1298e733a420ab9f9b5ded4d0848b4fb76323fb102593d9245441d5"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h1-fold2-residual_mlp.jls",
+      "bytes": 6799898,
+      "sha256": "4e718d87794ca3888eca55101fd42d59c49d41469af9847bd848b8d29ce8008a"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h1-fold2-tabm_ensemble.jls",
+      "bytes": 7734933,
+      "sha256": "3fe035f78c9490fa4ff62a140732d60a9fa202a014beb2a6f8950efd1070ce0d"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h1-fold3-neural_tree.jls",
+      "bytes": 10080320,
+      "sha256": "afe86068b337f067cf51d2397c6271aef74539d4bbc62616c3b0d07572bc7062"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h1-fold3-residual_mlp.jls",
+      "bytes": 7124070,
+      "sha256": "fc8c1c7ea7f961a4948cd6a5ba4b0952405c8932331b73d1ab3acf4107e729bf"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h1-fold3-tabm_ensemble.jls",
+      "bytes": 8105217,
+      "sha256": "9141f14da3a0ce4a6c12385b309e6b223a874d80b2b21328cf41f979739f1515"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h1-fold4-neural_tree.jls",
+      "bytes": 11556853,
+      "sha256": "357aa6da879267f18d235636305a1b0a1efe7a3e9c2cb1a5d2a6ca6cf6411ef9"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h1-fold4-residual_mlp.jls",
+      "bytes": 8153243,
+      "sha256": "9ada45ef5f08e0b606329b3ca0bc39c3d77a13d57b04484585022e6de3040599"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h1-fold4-tabm_ensemble.jls",
+      "bytes": 9283510,
+      "sha256": "af5f92608398fde666ab10368758e80ab67877900b1876ebf7469b14b689b325"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h120-fold2-neural_tree.jls",
+      "bytes": 8714855,
+      "sha256": "55490d86ba1735c9269b6a7d18da0097d42c14c34a47f8a0bb0f033c8af392ff"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h120-fold2-residual_mlp.jls",
+      "bytes": 6173805,
+      "sha256": "a7e5fb1605238685813cd12b01ff98e4b2b72c9a2b8f390a3af3213c123bcb12"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h120-fold2-tabm_ensemble.jls",
+      "bytes": 7016552,
+      "sha256": "cab966c75bc43cf0f632b5bc1ed9755dbd62c6dbdf83adf3d6cb45e7e795aa29"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h120-fold3-neural_tree.jls",
+      "bytes": 9264834,
+      "sha256": "b766fda388a4a7c21fa0cdc24bc1afa4acbf6ffb0c9decd8a7f40b4a28a627c2"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h120-fold3-residual_mlp.jls",
+      "bytes": 6559144,
+      "sha256": "7ee8deb171ebf07e34d6afaf0fcdf618aa4bb72681989ea87b9c34d644806a9a"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h120-fold3-tabm_ensemble.jls",
+      "bytes": 7456771,
+      "sha256": "939f14c64b6e99ea062f253d72e5c03b100865904a6498d277a2428305d0f6dc"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h120-fold4-neural_tree.jls",
+      "bytes": 10845055,
+      "sha256": "6d074b4ab6f307eb6b0a3606ed632610a87c5f7f4a03f3d02a1e5d26ef753b1d"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h120-fold4-residual_mlp.jls",
+      "bytes": 7660133,
+      "sha256": "430dc0c004a8afbba789c63c3341df7d4a7981143995b0cc8c81832ee3dcd3f4"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h120-fold4-tabm_ensemble.jls",
+      "bytes": 8717504,
+      "sha256": "6db74d050f7b09eafe0fd0133e082b0e430b354a7e973ba4a0d8bbf6a55e8269"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h1800-fold2-neural_tree.jls",
+      "bytes": 9579930,
+      "sha256": "73f47be833c23a8e06a2deb4de291b0f114b198e3552be015edce825f6024c27"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h1800-fold2-residual_mlp.jls",
+      "bytes": 6773248,
+      "sha256": "0cf8e1322b75ec669ee024a1ff858d9c238bd0ce175628aba7bc0edc4eb9a9a7"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h1800-fold2-tabm_ensemble.jls",
+      "bytes": 7704539,
+      "sha256": "ab29aac482c1fbbcc2ef274e90d0a52a00c22e0b0c2434857e245ef85ac408c9"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h1800-fold3-neural_tree.jls",
+      "bytes": 10010657,
+      "sha256": "b4afb65b9597a881abea0930332c3220377529b4fee15c3cc6c16845df3ded8f"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h1800-fold3-residual_mlp.jls",
+      "bytes": 7075431,
+      "sha256": "34992116bb6f9e3e16b67547e0142df058ff078dc1935e3e7227ec0e84695017"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h1800-fold3-tabm_ensemble.jls",
+      "bytes": 8049570,
+      "sha256": "38a73d21935dd9f1f88cfa30cd58d2c7aca6c7de7a06e38973446540f4adaf08"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h1800-fold4-neural_tree.jls",
+      "bytes": 11543480,
+      "sha256": "fc4841fe3ad0ce7d264e8792e0a1201f209003295ee35aeae3ef0b18571ca4ca"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h1800-fold4-residual_mlp.jls",
+      "bytes": 8143806,
+      "sha256": "049ed1752d9cf032e72a5a332c113260c952ce56e24bb294d666a1adbd0ed11c"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h1800-fold4-tabm_ensemble.jls",
+      "bytes": 9272761,
+      "sha256": "6ae51c3be807b39eab8baba136154cce74fec158a50826b61463cdadc796fb04"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h20-fold2-neural_tree.jls",
+      "bytes": 9519021,
+      "sha256": "02508fb0fe116d3f04dfc326ad6fad3bc1cc1d2a6bf9af450a89b2f257c2b1dd"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h20-fold2-residual_mlp.jls",
+      "bytes": 6730387,
+      "sha256": "9595e94da6420ab5177846943b023cbbf588942cc44952bb9264f6702c29f9b3"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h20-fold2-tabm_ensemble.jls",
+      "bytes": 7655662,
+      "sha256": "9ae05a37c997573e38c92b59ca53a8fed4f7105c34741c13345807029f3ef017"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h20-fold3-neural_tree.jls",
+      "bytes": 10045830,
+      "sha256": "9675b634a2a4147e4ad50ebdc18186678a9f9ce01fef292344e048c7299790d2"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h20-fold3-residual_mlp.jls",
+      "bytes": 7099756,
+      "sha256": "75cb2cf17b74024b87b6c8c321d2d6631d96804bbf190c343a67439e1e8913b6"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h20-fold3-tabm_ensemble.jls",
+      "bytes": 8077511,
+      "sha256": "08f95e0e1f04d5761b25441f5751cee4fc7273cca66fe4db5657c36345b07fc9"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h20-fold4-neural_tree.jls",
+      "bytes": 11542766,
+      "sha256": "dfa08a33f9d8b2429f27e6e49170d0e049428e625722b2b808ebf5fa22aaa45e"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h20-fold4-residual_mlp.jls",
+      "bytes": 8143284,
+      "sha256": "254ad097a0b42a66aadafa8c9cf41241e143b18d124439b3bc92355609aad901"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h20-fold4-tabm_ensemble.jls",
+      "bytes": 9272175,
+      "sha256": "af67bda7a84442b774f42793c2e0e04f1f4a86d9d8821a6a04beed2cf3476e1f"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h300-fold2-neural_tree.jls",
+      "bytes": 9212244,
+      "sha256": "3dbba5d923d850f64bfc5cb14990fe8592a0724aaee1ff612e778bbf68df9abb"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h300-fold2-residual_mlp.jls",
+      "bytes": 6517210,
+      "sha256": "4849851132e5c568795c6caa9830107656fcd0415acf81bd618e053f08b48673"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h300-fold2-tabm_ensemble.jls",
+      "bytes": 7411285,
+      "sha256": "f4e7f05a200744c3f9dd47d4c2cc4dc5c11d749ab863e7a0c0a823bd812c24c7"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h300-fold3-neural_tree.jls",
+      "bytes": 9713617,
+      "sha256": "9f687bafa33ef398e4b26db8a3388bec02e05c003c7b2dcc71c187e1dc6143fc"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h300-fold3-residual_mlp.jls",
+      "bytes": 6869111,
+      "sha256": "4c71f19d6338f616a80c7cd83be3ab3af0e009a4f4feab5269ec260be1ce82dd"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h300-fold3-tabm_ensemble.jls",
+      "bytes": 7813010,
+      "sha256": "27422f91318ae256219e48000b0bb113ed0535701f98f01e8451216e2f2c5b43"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h300-fold4-neural_tree.jls",
+      "bytes": 11246489,
+      "sha256": "a1859f410f779d2534acd24627b3657ebba7636c30ba761339d7a78cbc77cd2f"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h300-fold4-residual_mlp.jls",
+      "bytes": 7937631,
+      "sha256": "c8cbe10f3fe17df04e7e6867490cf26daf83c71d96e8debb961f7d1999ab9d85"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h300-fold4-tabm_ensemble.jls",
+      "bytes": 9036314,
+      "sha256": "67537e704907cdf8eb51369c1bcd4c6de1d32ae6d902e36269b60b171f21b3b0"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h3600-fold2-neural_tree.jls",
+      "bytes": 9422782,
+      "sha256": "ced0c37553b1960da2a5e554c4c4849d9cbc34748a261100837cd4c663def919"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h3600-fold2-residual_mlp.jls",
+      "bytes": 6662756,
+      "sha256": "e171e92f7388264d19d1647bfdf04a6be0197480df33c6ec61324b16dad75612"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h3600-fold2-tabm_ensemble.jls",
+      "bytes": 7578495,
+      "sha256": "db387dd0cd8b35117eb05ea5a5956773ba2e712dd8e342f69ffe9cbc90f932ef"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h3600-fold3-neural_tree.jls",
+      "bytes": 10032588,
+      "sha256": "e765a2c028ce034b64d3703913356b46f3f4b8b047c4be6a17a654bffb32b762"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h3600-fold3-residual_mlp.jls",
+      "bytes": 7090354,
+      "sha256": "4c6a64e8e3a74a7fb2077afa3dabd92e0401e793bb62adf83c27a26b7e385276"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h3600-fold3-tabm_ensemble.jls",
+      "bytes": 8066829,
+      "sha256": "c711cb841ec9e2b80a84e5748a5dae2d79255b95512c49526616574a4204c9b8"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h3600-fold4-neural_tree.jls",
+      "bytes": 11542163,
+      "sha256": "6294b4391ba1feaeded68ed69ffe24170439b22da823102e05085237851dc363"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h3600-fold4-residual_mlp.jls",
+      "bytes": 8142777,
+      "sha256": "bffc3f3ac6a1307f8e09737cecbb870f885e943dde3a1968c18aab4c4feb6c62"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h3600-fold4-tabm_ensemble.jls",
+      "bytes": 9271636,
+      "sha256": "ee0af616c3d6caad8fa82001b71a0ad27d1d13d4a22814233fcadd265eed1f37"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h5-fold2-neural_tree.jls",
+      "bytes": 9586472,
+      "sha256": "b35e1b8bc04504e86f8c68649c1cda6ef4f77c081e4b102bc7f5766a1f7fc134"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h5-fold2-residual_mlp.jls",
+      "bytes": 6777678,
+      "sha256": "3211e3c80d7712be03c5a67067e7bc2bb3fb76f137759592c5315573b7b62e55"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h5-fold2-tabm_ensemble.jls",
+      "bytes": 7709673,
+      "sha256": "35eaf136abe6002efabaabf0a21c1978b8ff6f475bce23af5a5514e3b19dc83f"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h5-fold3-neural_tree.jls",
+      "bytes": 10064800,
+      "sha256": "392bfa4f7c0ba7284df22d929b1c686946eddda843238958c3f35416076219e4"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h5-fold3-residual_mlp.jls",
+      "bytes": 7112966,
+      "sha256": "8a96455110f586fe0cd64dc2795c5bb6253da5abfad3e695093e5e8df82a34b3"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h5-fold3-tabm_ensemble.jls",
+      "bytes": 8092641,
+      "sha256": "b89cf6a3440be754378f6cffd306a5be3595bc19c402336ec58d3b08f10c1473"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h5-fold4-neural_tree.jls",
+      "bytes": 11550851,
+      "sha256": "d4e2c05284ac56cb5649579ba4dcb786dab46fc011c584b63e237309d638acd2"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h5-fold4-residual_mlp.jls",
+      "bytes": 8148969,
+      "sha256": "1ce95d02583df9ae0f8b94045ba70233cb106eb6df72cf04c14cdfc018815a9e"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h5-fold4-tabm_ensemble.jls",
+      "bytes": 9278660,
+      "sha256": "5c84782fe54169331b35e31f2cfd45ebc4d88851ddafc1d1b4918be35003b999"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h60-fold2-neural_tree.jls",
+      "bytes": 8993531,
+      "sha256": "ac32bf568f45e788a5ac5a9240a9d8798ac7556f39735d4be0b16a57eaaf32c2"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h60-fold2-residual_mlp.jls",
+      "bytes": 6365505,
+      "sha256": "13b4d5d6e1913c864d4bdfc46317c1d5e9347cc20266c46e479802b008a4fa36"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h60-fold2-tabm_ensemble.jls",
+      "bytes": 7237244,
+      "sha256": "ed75b93931b5d11f3f038a4b0d8cdc9220f60c42912a829f8fe5a2d9f1ad5df7"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h60-fold3-neural_tree.jls",
+      "bytes": 9501604,
+      "sha256": "b13721514962220fbd03a3a67ee7a66db6c1d40644660a9a06eb1b32f65f4fa0"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h60-fold3-residual_mlp.jls",
+      "bytes": 6722186,
+      "sha256": "26266fafbd3ec6eddb420ea093cf9e5c56a7ca746264698df630483b351211ba"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h60-fold3-tabm_ensemble.jls",
+      "bytes": 7644389,
+      "sha256": "50fe137202455ad0101ddf820524cd21d82da9aa1f36feda630a083eeffeca32"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h60-fold4-neural_tree.jls",
+      "bytes": 11009980,
+      "sha256": "795246e68793c1b5b3bb85476b972200cd66ecb871fe9413ae128e1e5772a7cb"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h60-fold4-residual_mlp.jls",
+      "bytes": 7773794,
+      "sha256": "776fd86ae8f3b013be0ee74e9d526f853776c35fe1dcc37792d40a1c006d1de8"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h60-fold4-tabm_ensemble.jls",
+      "bytes": 8848253,
+      "sha256": "c9cf67161481ddf46aaa3f1a07db79a73ee471f793905c4498091d463d48624f"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h600-fold2-neural_tree.jls",
+      "bytes": 9523501,
+      "sha256": "f69929a6d867da820649f6256e6a3b3d9d1972512a383de3fd2b48d6711d5152"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h600-fold2-residual_mlp.jls",
+      "bytes": 6733427,
+      "sha256": "23fb55c7be4fe497f3b8c8d5a15e475eb47c4d558b1f61cdce8fc4adab9c67b0"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h600-fold2-tabm_ensemble.jls",
+      "bytes": 7659182,
+      "sha256": "70416e6eae02a473f1da3e2c52a3c337ecd6dc63e6103b260bc84316021a1921"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h600-fold3-neural_tree.jls",
+      "bytes": 10023295,
+      "sha256": "30ab592204605a1a9350ec4c50a7763750018b7f669e52504461f3e7d6e091bb"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h600-fold3-residual_mlp.jls",
+      "bytes": 7084133,
+      "sha256": "146d9ebe4ae0d1c350d3db3166fd719c3abb71695fbb08391e1eca1587117b1f"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h600-fold3-tabm_ensemble.jls",
+      "bytes": 8059584,
+      "sha256": "0feee6338ed2d9e1b46701bc84b3fc81d0b7e5ba5fa012d0dae29a6afed37a04"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h600-fold4-neural_tree.jls",
+      "bytes": 11536309,
+      "sha256": "745d86ef0a28d75f8bed0576e53fdd334c9c1ab5bdee6ef1eb5899635810b9e0"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h600-fold4-residual_mlp.jls",
+      "bytes": 8138747,
+      "sha256": "9f65d5bed3a1dafbf8d828b24e81a33b9e3ab873b1621f6ce8ed2dc452c9414d"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/absolute-mid-price-change-h600-fold4-tabm_ensemble.jls",
+      "bytes": 9266998,
+      "sha256": "5d8c6f50657ed4b50737127e5d757a3e4fd1be291c28e79010f93db4d5456724"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h120-fold2-neural_tree.jls",
+      "bytes": 8714855,
+      "sha256": "a1cc2385f125765c4c9b47df308748ce2946829d338d9151948c777f73d261d7"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h120-fold2-residual_mlp.jls",
+      "bytes": 6173805,
+      "sha256": "cee49aaa0ab849b69962c0c278d1266de3fcc821c0adedc862f2ee77525556d2"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h120-fold2-tabm_ensemble.jls",
+      "bytes": 7016552,
+      "sha256": "29d682dbfc0222513f2f7126c8c20343b9b7429d4cedf3b76e55429484641388"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h120-fold3-neural_tree.jls",
+      "bytes": 9264834,
+      "sha256": "d68bf57ea0a74f4b228c14fea710a56bc2cabb92216f6f6717058ff2698e1966"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h120-fold3-residual_mlp.jls",
+      "bytes": 6559144,
+      "sha256": "ec292515fa6213370b66461bc936b6826c2ef4e3d5f5c68e0f12fb9f4a6c497b"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h120-fold3-tabm_ensemble.jls",
+      "bytes": 7456771,
+      "sha256": "d6a1b1485c082cf893a4d3a1092dc1d90579f148cfbf9e03a5dfd19a1db26be7"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h120-fold4-neural_tree.jls",
+      "bytes": 10845055,
+      "sha256": "69d6ff65e8e9d7fd619068666d4b9e122cd7990ddff4b389f3508bb8f732deed"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h120-fold4-residual_mlp.jls",
+      "bytes": 7660133,
+      "sha256": "4a65450557d8a24bbd1a28337447f5bda4233900051b95361c9c108a2bb806a5"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h120-fold4-tabm_ensemble.jls",
+      "bytes": 8717504,
+      "sha256": "1b4e8015e345ba57763ee588b313089e25d7e7aefb78e8af433a036ccf5a83dd"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h1800-fold2-neural_tree.jls",
+      "bytes": 9579930,
+      "sha256": "751456f20aae807131cfd9d450b7a6ae1163a0e6d2eaf56baf41dd6c458b4a46"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h1800-fold2-residual_mlp.jls",
+      "bytes": 6773248,
+      "sha256": "e6f80957163c581e21b84b5b24dedc58211b9bbc051966646d7d00dd5a839fff"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h1800-fold2-tabm_ensemble.jls",
+      "bytes": 7704539,
+      "sha256": "02e9308bc8efb779679ea160ba9487fbcee89b7588d4dbd5dd17ca11f871549f"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h1800-fold3-neural_tree.jls",
+      "bytes": 10010657,
+      "sha256": "7a593eef24656661250f043701814e77386d83bf9c1db1d71e01ea507f808f04"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h1800-fold3-residual_mlp.jls",
+      "bytes": 7075431,
+      "sha256": "69ec6a9a846fdd43cf12880915496775edd5f0cbae74dd52591d9c0bf1613642"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h1800-fold3-tabm_ensemble.jls",
+      "bytes": 8049570,
+      "sha256": "85df1f66691e963e74b295ee16e75e84d67a00b9f8daf410ef85bf078e7b7827"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h1800-fold4-neural_tree.jls",
+      "bytes": 11543480,
+      "sha256": "cb1e8c7c4c34893fd5d4ff852c66c9c381ca49521ce7e4d6cc0429ad6df5bc40"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h1800-fold4-residual_mlp.jls",
+      "bytes": 8143806,
+      "sha256": "9a7b4a7ca2e8a50b86bca79107fafa2cbf4a2d4eb40a9b2d51cf250ba2e76f3e"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h1800-fold4-tabm_ensemble.jls",
+      "bytes": 9272761,
+      "sha256": "64232cf2dd3f8382dbec635b557a294990ee60a7206ccf5db9d0d578119ae645"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h300-fold2-neural_tree.jls",
+      "bytes": 9212244,
+      "sha256": "cf385a53a32711382d8e5c35e0e05870a07ace8b68ecdbb4bef184fda765ecec"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h300-fold2-residual_mlp.jls",
+      "bytes": 6517210,
+      "sha256": "a31007a15b4fa541be035b445e733386681f805b763e12b4b1b9454e93e03548"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h300-fold2-tabm_ensemble.jls",
+      "bytes": 7411285,
+      "sha256": "8abb5526389efb07f45dd1adc8eb13d4e5f0f3ce86c4a4070ed1dc47ab5a3b53"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h300-fold3-neural_tree.jls",
+      "bytes": 9713617,
+      "sha256": "d5feefe083f38ba5da0684d1b893bb0f28febcbc1a665f72ab01897ff576c67f"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h300-fold3-residual_mlp.jls",
+      "bytes": 6869111,
+      "sha256": "ba76bc8b581e5eb13564bdab8cb1cd9f4619973bf91575904a0173653d59cdef"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h300-fold3-tabm_ensemble.jls",
+      "bytes": 7813010,
+      "sha256": "577fc670bcea0ef8ed85243527275984fc6101cc54f2fe35fabb6b3efbf82fe7"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h300-fold4-neural_tree.jls",
+      "bytes": 11246489,
+      "sha256": "cdf2e7edc6618f99b88c510267d79df9076fd08e994d90f223061c0107b3e65e"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h300-fold4-residual_mlp.jls",
+      "bytes": 7937631,
+      "sha256": "f3dbb14505804b6331ca1256fc9896139080cf477ee7e5a14fd6f45b4ba0b943"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h300-fold4-tabm_ensemble.jls",
+      "bytes": 9036314,
+      "sha256": "6f5656e23154bec2bd3c86f2f5372c9b5544faf731b31fd488bd6960866b7b0c"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h3600-fold2-neural_tree.jls",
+      "bytes": 9422782,
+      "sha256": "e8b99ef07107d34be6868bb22f6a6b22fa333e93bd11307068fea2d86a45f478"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h3600-fold2-residual_mlp.jls",
+      "bytes": 6662756,
+      "sha256": "de0d4b49a71e6ef374b1cd17cbe7382eb92751126ce93e71dc7f68eaaf4e57cc"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h3600-fold2-tabm_ensemble.jls",
+      "bytes": 7578495,
+      "sha256": "43e5b48273d37662317dba330a4c142ef8f653356ba0c9a246a0ddc89c3cc196"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h3600-fold3-neural_tree.jls",
+      "bytes": 10032588,
+      "sha256": "f2b7d130f1c4500690c744c9f8e574442367b354882de38571256dd87c2a85e1"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h3600-fold3-residual_mlp.jls",
+      "bytes": 7090354,
+      "sha256": "38b4486c50d14acf5b304cdd44f86b0ba37512471f3d9eff441f223011e9488d"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h3600-fold3-tabm_ensemble.jls",
+      "bytes": 8066829,
+      "sha256": "a0a7ab1fb1525e9064af250c4cefa646397944e514bb047f098663e359a7b2ea"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h3600-fold4-neural_tree.jls",
+      "bytes": 11542163,
+      "sha256": "580e2e7e2b1755d3e52f154667b3b24630ff6f627a8a62b6eefdb117d9a7cc76"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h3600-fold4-residual_mlp.jls",
+      "bytes": 8142777,
+      "sha256": "26f5dba0c7fc8f6378c59b9001f7e1978ab3f580dcbb71865d2e521133a25602"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h3600-fold4-tabm_ensemble.jls",
+      "bytes": 9271636,
+      "sha256": "63ff8a242704f7ca86fa784d23752f70aee90cff4100825fadbd5f9426c204ec"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h60-fold2-evotrees_depth3.jls",
+      "bytes": 5510368,
+      "sha256": "89d5d0ee2a2ff0886e2364dd328207c6c0f3f1aeafaccbcd3f9fae41e975d288"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h60-fold2-evotrees_depth5.jls",
+      "bytes": 5578430,
+      "sha256": "e6aabdd98b7d16e0c39d1ed8f86291d05c92c09fe8a2a7a85e46fd08aa268ef3"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h60-fold2-evotrees_mae.jls",
+      "bytes": 5510296,
+      "sha256": "fb604982d165dc263ee324e4896e777e345478e4c7ce66655c2b6e26d4093075"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h60-fold2-evotrees_q10.jls",
+      "bytes": 5510319,
+      "sha256": "74bbc6e6d4453926709718eb688eb5d78566cf9ee7dc040080cc1e3a08034364"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h60-fold2-evotrees_q90.jls",
+      "bytes": 5510301,
+      "sha256": "9bc70c4b409cfd73481007c3800e5e627d35ca2d20ed9403db9fa829fc339e6d"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h60-fold2-neural_tree.jls",
+      "bytes": 8993531,
+      "sha256": "9cdbbb25318a51fb2f24dcc75b5dee6645d1ceb9c4535d132dbab11fa232e76b"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h60-fold2-preprocessing.jls",
+      "bytes": 2397345,
+      "sha256": "5da422d4514e20757a368bf77b1cab4efdd21d221d15f91914280c38a4634797"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h60-fold2-residual_mlp.jls",
+      "bytes": 6365505,
+      "sha256": "8fbe8923d38bb44978eebf07d84aa185d9062a904b950bca21c4192c9af25a54"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h60-fold2-tabm_ensemble.jls",
+      "bytes": 7237244,
+      "sha256": "84b60d1a5e1c37def9911cbf32204c08e619520130c14a243c9e84b2f144303e"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h60-fold3-neural_tree.jls",
+      "bytes": 9501604,
+      "sha256": "73f8e67ccfb1939d29abbec09f4a6311c905acaaa7443a3746704aa798812fd2"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h60-fold3-residual_mlp.jls",
+      "bytes": 6722186,
+      "sha256": "4dbddb58cacfab9449bf24c44770142ae0799e894901831bcfa8f51a491e0c71"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h60-fold3-tabm_ensemble.jls",
+      "bytes": 7644389,
+      "sha256": "f085ddca117d30cc406dd9370ab5534bfd6ff9a8ac2775a5ad2bcf9d9b5f1769"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h60-fold4-neural_tree.jls",
+      "bytes": 11009980,
+      "sha256": "f990062d9fec17c63c8d183c71105a6f46f7c6771d94d1a47e399b085831e3c2"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h60-fold4-residual_mlp.jls",
+      "bytes": 7773794,
+      "sha256": "3d7097b9dff557f2360881e275471a4f194ed48a610cb67dc66ed5248a2c02b3"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h60-fold4-tabm_ensemble.jls",
+      "bytes": 8848253,
+      "sha256": "f018f0833457cdd10960d53e2711f9df26738fba03343a26e0066a70c60a7151"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h600-fold2-neural_tree.jls",
+      "bytes": 9523501,
+      "sha256": "0ecc3e6eead8aeb55640dced1756f4b8b74ba857cd8aee91805546e8703d30bd"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h600-fold2-residual_mlp.jls",
+      "bytes": 6733427,
+      "sha256": "480f01395b983422a3797edc6ae450944aa2d93356da2e8c3b602db2957333f4"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h600-fold2-tabm_ensemble.jls",
+      "bytes": 7659182,
+      "sha256": "8fb186f0a5d9ae6a99cdaf045e2eca45d16f555784e0b03912029717a039c79b"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h600-fold3-neural_tree.jls",
+      "bytes": 10023295,
+      "sha256": "69e91cfbd666282a8de027d67ae46605b99ec70fb8443d430dd738462044183a"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h600-fold3-residual_mlp.jls",
+      "bytes": 7084133,
+      "sha256": "9442951b9c996786f32130e9f80da526349130e24587e803a0639cf54fe15140"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h600-fold3-tabm_ensemble.jls",
+      "bytes": 8059584,
+      "sha256": "7c638d2b8fe18a36ad7722af8751325c8c65088d16b1e4ab8411ea118696e9c7"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h600-fold4-neural_tree.jls",
+      "bytes": 11536309,
+      "sha256": "449a9a71dceca7d60531d667b440fd1b8bcfd3b4323f78d30b526e6a1ff62390"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h600-fold4-residual_mlp.jls",
+      "bytes": 8138747,
+      "sha256": "d1b95f2e037669d8364f64c8e39914d999c2c0fdd7be4a34e8c7d0fd99ee9c0c"
+    },
+    {
+      "path": "joint-models-v3/core-resume/uncommitted-serial-states/mid-price-change-h600-fold4-tabm_ensemble.jls",
+      "bytes": 9266998,
+      "sha256": "1a23a723b2a15d7ff82c437f449d5a26065d7770d9b904087b85ced5725451a8"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h120-fold2-evotrees_depth3.jls",
+      "bytes": 1508576,
+      "sha256": "e30e72a0b818e3c6c5a0ccefd378af6d4ed3e83a0582375e004faf4fbeab935f"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h120-fold2-evotrees_depth5.jls",
+      "bytes": 1576740,
+      "sha256": "37acd9a6e022b309e0d738d37209ca3c5f3a2d842472c660af08e7852aa86fee"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h120-fold2-neural_tree.jls",
+      "bytes": 2459476,
+      "sha256": "386c1930c44e96e433f61f78181a378a9f0b4ca6b22addea91fd4f246609d99f"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h120-fold2-preprocessing.jls",
+      "bytes": 634733,
+      "sha256": "dae689c038460ca9c454fba0157a9e9b02998e03e6270329d35e49122e6e90a6"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h120-fold2-residual_mlp.jls",
+      "bytes": 1736570,
+      "sha256": "a84ba6c1358a7761c7761499910e9e4a255044d67baa9a0a96185be7d4563cfe"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h120-fold2-tabm_ensemble.jls",
+      "bytes": 1973269,
+      "sha256": "4055422d86764dc8d9f1303747eecc34df671bf17fa129a0fb7610ac4ffde29d"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h120-fold3-evotrees_depth3.jls",
+      "bytes": 1581844,
+      "sha256": "a2077eaff903463371cf2e67f9eb22f12fb8d2ac6d5a24b2a4c1300bc2509117"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h120-fold3-evotrees_depth5.jls",
+      "bytes": 1650034,
+      "sha256": "7f5e49d206f98962f455f27445803c8a4135a37a022769656ff62ef5369e695f"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h120-fold3-neural_tree.jls",
+      "bytes": 2574606,
+      "sha256": "10bffd39569e5db42ee28cd4b89bae4fbd8533291ef13c61877d5672b6689818"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h120-fold3-preprocessing.jls",
+      "bytes": 710975,
+      "sha256": "db8ec3e4f9d5ce4504f8fcded3fd996d41229b0fec9075ab881ea7cabd16c35b"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h120-fold3-residual_mlp.jls",
+      "bytes": 1816756,
+      "sha256": "7d5989668146cf920b9554ad815aff8b259ef67f358dcfd9d1a66430386a61f7"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h120-fold3-tabm_ensemble.jls",
+      "bytes": 2065103,
+      "sha256": "28f44a71723e6689d315f38c4e4668c7fe4dc1d0c1bac3b8ef4467e072a1b2e6"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h120-fold4-evotrees_depth3.jls",
+      "bytes": 1811155,
+      "sha256": "8dbaf3865f2d8bb7e3acf36e3f606e468d846d7db98aaaa6ed1c47e8d706bf55"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h120-fold4-evotrees_depth5.jls",
+      "bytes": 1879187,
+      "sha256": "d56a3b175d938ac32b2c00c93b6768306c45760e0e841ebf7f31290da5065223"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h120-fold4-neural_tree.jls",
+      "bytes": 2938979,
+      "sha256": "18d60d980374c1b15e875e1b5622554b5e7eb24481118a111fb075f0c0cf08da"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h120-fold4-preprocessing.jls",
+      "bytes": 819636,
+      "sha256": "0d8bf614398b5f673442759d9ab0b8062177a937038e1c88e1ae0d107caead56"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h120-fold4-residual_mlp.jls",
+      "bytes": 2067465,
+      "sha256": "9f985ece3f369c56b2a3d036ea25779711e56b90f8620df41c37cce05ce7353b"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h120-fold4-tabm_ensemble.jls",
+      "bytes": 2353700,
+      "sha256": "cce0dc372e8fa1a62c72ddc18f4b1e4bc797179c61ab318147f6ec7520a16df8"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h300-fold2-evotrees_depth3.jls",
+      "bytes": 1508576,
+      "sha256": "d0313e192bc555e0d9b6083f0cfd75657763656a3e808d31fbb6646bb5ce5260"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h300-fold2-evotrees_depth5.jls",
+      "bytes": 1576660,
+      "sha256": "19cf2953c02432f1048ffd40cabcae615557d514773af47944a171ac0d522d8c"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h300-fold2-neural_tree.jls",
+      "bytes": 2459476,
+      "sha256": "b7335334f4e855d22bf798a5a73ff523aa653f9dd3dbd0c3174a189db250ca42"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h300-fold2-preprocessing.jls",
+      "bytes": 634701,
+      "sha256": "12c5692275e45fe87c53c611a5eded48cdaa51ab1852a26e82d4e65e0bfbcc11"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h300-fold2-residual_mlp.jls",
+      "bytes": 1736570,
+      "sha256": "00b3c4b758abf44086d5170c9fc49d16b160826e36b48bbd7c88ddfc94b8c563"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h300-fold2-tabm_ensemble.jls",
+      "bytes": 1973269,
+      "sha256": "53c2fa9a80ce1e6f3c90be08fa0e2576ff4e4c58039451313eb89da75bbd68bb"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h300-fold3-evotrees_depth3.jls",
+      "bytes": 1578448,
+      "sha256": "f9a8473712726d29ac90168da760725612cc38bec2ca505565d70885698afdbb"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h300-fold3-evotrees_depth5.jls",
+      "bytes": 1646546,
+      "sha256": "ab3350d9c2de029adc04cc3af997c075e4c6b58b38df3be110e34872b99f0913"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h300-fold3-neural_tree.jls",
+      "bytes": 2569014,
+      "sha256": "014e701178f1f220507a1f1564fed3d5332548673e088f90f3da1f5f40664825"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h300-fold3-preprocessing.jls",
+      "bytes": 709539,
+      "sha256": "3475d1bf26fd93d52e79076c2b8d823a142b8ca1a1c9c4b79429bcba5220043d"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h300-fold3-residual_mlp.jls",
+      "bytes": 1812892,
+      "sha256": "98da7c6b5a0036394ee96881f19469661918cf974d9e2d70493a3d516428c24b"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h300-fold3-tabm_ensemble.jls",
+      "bytes": 2060663,
+      "sha256": "8bb015b0d332b32c552e2616332d07f958286fd39579abfc0bca2b71149c3c4a"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h300-fold4-evotrees_depth3.jls",
+      "bytes": 1810953,
+      "sha256": "a711f09d14736c2842a6a064ad150627989aa0fa6d508690aa45f8a627c6daeb"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h300-fold4-evotrees_depth5.jls",
+      "bytes": 1878889,
+      "sha256": "15c2c2c30ff8e0a6b60802ebe441e38a1958ad5b77a827e5cf21faa23dd002d1"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h300-fold4-neural_tree.jls",
+      "bytes": 2938655,
+      "sha256": "f0bd20eb76d7bb3cc3f1e94d64a358a6b0ef3918fc44538ebec608e3bce74214"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h300-fold4-preprocessing.jls",
+      "bytes": 819294,
+      "sha256": "e26881183b39d4138d6af09c8124a7af7f6c01d90aa99e78e3495b5320680e24"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h300-fold4-residual_mlp.jls",
+      "bytes": 2067237,
+      "sha256": "94f3a1f348bbafb81cc800003451b5d79b8b4a2d95b9c62da3a974edd9a37348"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h300-fold4-tabm_ensemble.jls",
+      "bytes": 2353440,
+      "sha256": "0602216bcc5e7ac9f963c81e5d41c8ce1bb124f8d0e99c14219c60ca4034be5a"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h600-fold2-evotrees_depth3.jls",
+      "bytes": 1508576,
+      "sha256": "4ab668030aa803a859d3ed8a8619b019bab17751066338a7a4db9ad13c8f88d6"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h600-fold2-evotrees_depth5.jls",
+      "bytes": 1576494,
+      "sha256": "2570d14abf12ef409f81217815d36df7bfe2e6ce34a0b1a3b96223da98c0c955"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h600-fold2-neural_tree.jls",
+      "bytes": 2459476,
+      "sha256": "d5f42e306a3bffcc895bceb544dbb95969dd1aa3e37780ddd36aff50b1c7ce4f"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h600-fold2-preprocessing.jls",
+      "bytes": 634605,
+      "sha256": "098e7fe3d167469909d4f7cb24f48c71aac107e73c0466761c75a2576bbf0f7e"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h600-fold2-residual_mlp.jls",
+      "bytes": 1736570,
+      "sha256": "427edca71122656b0bd14c48dd0df4c63b7f6986b7126490bfa410c51a632111"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h600-fold2-tabm_ensemble.jls",
+      "bytes": 1973269,
+      "sha256": "ebc6e03f38a24db29d5d3f6ae18289b3b9614b719af0039c72b21a57c6a9b65f"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h600-fold3-evotrees_depth3.jls",
+      "bytes": 1578246,
+      "sha256": "05100b2dcc9ef24146b4775b47da382b943fce90ffaa5b17705c7fc8e87cae4b"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h600-fold3-evotrees_depth5.jls",
+      "bytes": 1646474,
+      "sha256": "300db36322abcc8e3a418a3ab94225c7317d22c1bf1da2f8a4b74b9313e44280"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h600-fold3-neural_tree.jls",
+      "bytes": 2568690,
+      "sha256": "87ad1bae9413de143013e5f706a03e2ad3c62c601676d93c65be2550c55c5f27"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h600-fold3-preprocessing.jls",
+      "bytes": 709357,
+      "sha256": "84b39652dc7d76713cba53354bcac39446be73d9f627f0630a6f7e9121da97f7"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h600-fold3-residual_mlp.jls",
+      "bytes": 1812664,
+      "sha256": "3fbc89396650480b61db5cdb04d3d026db6e3ca7eee780293905a3b7a827774b"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h600-fold3-tabm_ensemble.jls",
+      "bytes": 2060403,
+      "sha256": "aa7ea3d26e87d8e0c579f01b0d62563425820d567c09fc4ec5412459bc537f44"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h600-fold4-evotrees_depth3.jls",
+      "bytes": 1810953,
+      "sha256": "4408019f6394abecb80a495aa5be70086f91e6129af96806050eaa7b21f8d2c5"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h600-fold4-evotrees_depth5.jls",
+      "bytes": 1879093,
+      "sha256": "ecdf7622e7faca556ef6a2b027a54f54594cf155bcb5b4fe74d28b7787453367"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h600-fold4-neural_tree.jls",
+      "bytes": 2938655,
+      "sha256": "8b37c78b73bd00dda7c87751a33800135e9e5a460dd6a92f76b4d1ab57274d00"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h600-fold4-preprocessing.jls",
+      "bytes": 818942,
+      "sha256": "3c7af192f32869987f1a1b11205b6beb4c1d2bec49bcd0df8660e330bb702a6a"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h600-fold4-residual_mlp.jls",
+      "bytes": 2067237,
+      "sha256": "74a7a2d95fbef10d0f1994b027545c384a98ec42f0f26a084b9fad4905246423"
+    },
+    {
+      "path": "joint-models-v3/first-observed-family-within-h-h600-fold4-tabm_ensemble.jls",
+      "bytes": 2353440,
+      "sha256": "2f96087c920e9940b03b69a1d1b2114c3ab7736bfa21fe6e516d8035bd788b2b"
+    },
+    {
+      "path": "joint-models-v3/frozen_for_99_plane_audit.json",
+      "bytes": 3463,
+      "sha256": "89d940364b36b1cc5930b84bcbcd76171875d991f3a29bd4a7bb023370e57e34"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h1-fold2-evotrees_depth3.jls",
+      "bytes": 5920022,
+      "sha256": "e81c12c8f6939dadff1f8bfc7f55d796b110b849ec4f851f0e79912762fc049b"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h1-fold2-evotrees_depth5.jls",
+      "bytes": 5988128,
+      "sha256": "0108a68903b9418021bdea1a9aa812ddf9e199c41f6e3a77114946c354e35425"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h1-fold2-evotrees_mae.jls",
+      "bytes": 5919954,
+      "sha256": "d42e11ee824b54fe6bc72acfa78f7b7c094d848ce7f69de8e5c5da7647535d64"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h1-fold2-evotrees_q10.jls",
+      "bytes": 5919959,
+      "sha256": "3ece4b8e1061dc202485ef5a2951ecd288866a452bc1833ae805a209e58b442b"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h1-fold2-evotrees_q90.jls",
+      "bytes": 5919959,
+      "sha256": "12d974ccb8bb928621fc192afa880894222814422dc2e2e158507dbcb7f5f77a"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h1-fold2-neural_tree.jls",
+      "bytes": 9617812,
+      "sha256": "45a9fd38c65bdae22a8683a7b8e7bb05295d6de7f7e67a95d80c29193b2697cd"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h1-fold2-preprocessing.jls",
+      "bytes": 2549562,
+      "sha256": "f81be027a0fabbad69f53e629cb3b32190cce798c7ad50e28439587963c45193"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h1-fold2-residual_mlp.jls",
+      "bytes": 6799898,
+      "sha256": "e65fc2ca531502179dd1d809d8e50b0f380bfe04f70a3811f2265534be862405"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h1-fold2-tabm_ensemble.jls",
+      "bytes": 7734933,
+      "sha256": "b934c1123512dda6b3cc9e0c671e0fa3b20523721651c7ed05afd77236d72774"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h1-fold3-evotrees_depth3.jls",
+      "bytes": 6215867,
+      "sha256": "0c42018117e8429fb69ad4ab189ce6058f051f8d05baeb4d7cbedc69f8912833"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h1-fold3-evotrees_depth5.jls",
+      "bytes": 6284017,
+      "sha256": "16664f831bbc55a99f610185dc7262abc02363685d88eee1aba2c6584f45452c"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h1-fold3-evotrees_mae.jls",
+      "bytes": 6215823,
+      "sha256": "8ed804d2cf711277efb983aeaeeb750dd43f3a2121d2d95d2c93f606f5c6bbe0"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h1-fold3-evotrees_q10.jls",
+      "bytes": 6215830,
+      "sha256": "0d7913fa06aad2df76544777026a1acdefc8174f93c17fc09b0324b0cf2c9419"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h1-fold3-evotrees_q90.jls",
+      "bytes": 6215828,
+      "sha256": "96bb5e0328d70d6fea6c072da888c675a86303f6741f1a0b02476780269f1309"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h1-fold3-neural_tree.jls",
+      "bytes": 10080320,
+      "sha256": "5fd3f1e089a735009aa1805f60e1edbf1ed9419dda05cf93df12c37b71b01412"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h1-fold3-preprocessing.jls",
+      "bytes": 2700598,
+      "sha256": "83c65148bc113743de7347735f2f60095f332eefa86d696f8a213014c97215e6"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h1-fold3-residual_mlp.jls",
+      "bytes": 7124070,
+      "sha256": "3506a4759525145fef9297455d6f27ca684a794ae81ed5ab35cc89b3dcd9481b"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h1-fold3-tabm_ensemble.jls",
+      "bytes": 8105217,
+      "sha256": "5104e4129010e4ccb5cac02e5e980ed4a70e57a9490389043071b8d6d8b2fd72"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h1-fold4-evotrees_depth3.jls",
+      "bytes": 7154636,
+      "sha256": "fbafb9876b19f54d045e6048bbac583678c06e3f6f7ee711e3adba21c182cfa2"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h1-fold4-evotrees_depth5.jls",
+      "bytes": 7222632,
+      "sha256": "e268f2592cdfb2f7cf349b801f8e54b92fe1455b248f8675e57939cb6e52251b"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h1-fold4-evotrees_mae.jls",
+      "bytes": 7154636,
+      "sha256": "60fa57a435b1d9d06776da7e38acac3250d6a89a5f960837a3e60764054e433b"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h1-fold4-evotrees_q10.jls",
+      "bytes": 7154641,
+      "sha256": "f089c144138660f4b005327be69f37435318f52997ea48d3f46c1b84fefa366b"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h1-fold4-evotrees_q90.jls",
+      "bytes": 7154641,
+      "sha256": "8f693e14ae6bf98aa4e45c187dbbb688faa0fae30c51b2d125a29d7e51043da4"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h1-fold4-neural_tree.jls",
+      "bytes": 11556853,
+      "sha256": "8fdea96a09048bdb7eb693c18c4b1b02d48e2576772bc730d898fb389db3b9a5"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h1-fold4-preprocessing.jls",
+      "bytes": 3077131,
+      "sha256": "2eeec2f7f8c2dd853ceddf8e29e5c35e1ed5555b4a422c553b25fc21adec696b"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h1-fold4-residual_mlp.jls",
+      "bytes": 8153243,
+      "sha256": "25bc0df0da1f2c410ef17210f7ad86137ac7da679791e4371d59b27399dfb7f1"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h1-fold4-tabm_ensemble.jls",
+      "bytes": 9283510,
+      "sha256": "474b551b8aef78705d85f9dc1642fe7b2689708a8a13fc55dfc410e34398279e"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h20-fold2-evotrees_depth3.jls",
+      "bytes": 5857430,
+      "sha256": "40be05eaa24a7586804ac7ab979718b5df724164649da6ba53a2e3fd9fd537b6"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h20-fold2-evotrees_depth5.jls",
+      "bytes": 5925518,
+      "sha256": "63c795ef416772c1024edd3214cd0c8556158c45bfc16fcc60dfb93d9dbfc45d"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h20-fold2-evotrees_mae.jls",
+      "bytes": 5857332,
+      "sha256": "dbb52db20f1a36d5466868f9a86bf624bd6dc87ebb4c14380911f864a3fe609f"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h20-fold2-evotrees_q10.jls",
+      "bytes": 5857355,
+      "sha256": "c2992e708527ca105894f5c02eb037a65066136d52711f64196c37568e85a8e0"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h20-fold2-evotrees_q90.jls",
+      "bytes": 5857337,
+      "sha256": "0f184e95c9df463c8ca4c94b8a2dcd08d1039d70f51585ec13bb7fadb8c91ba6"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h20-fold2-neural_tree.jls",
+      "bytes": 9519021,
+      "sha256": "39fa584f5c13f33860b7fcdecfe762b66fde6a70291553f5414c6bbc81627be9"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h20-fold2-preprocessing.jls",
+      "bytes": 2521763,
+      "sha256": "46799e3a7637ce17b187897faf0d30e7b82629610d0df556746567ee022ac429"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h20-fold2-residual_mlp.jls",
+      "bytes": 6730387,
+      "sha256": "a3d882e3a93c9a522a41ceea1b0ae9559da863d20350fdab86486d038f8eff97"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h20-fold2-tabm_ensemble.jls",
+      "bytes": 7655662,
+      "sha256": "790bed44d716964eb2a0742daa3e552f7a05da8de5d33ec86c2f5f429528b372"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h20-fold3-evotrees_depth3.jls",
+      "bytes": 6193798,
+      "sha256": "018e2bd5ec21e905fa281281f0a7a91dc6b666e1d844d9b3afb5e82366c9f24b"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h20-fold3-evotrees_depth5.jls",
+      "bytes": 6261830,
+      "sha256": "3c907e8c08d423576e4d657bb2b57652b75560e349d598e048db5961a88b1edc"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h20-fold3-evotrees_mae.jls",
+      "bytes": 6193778,
+      "sha256": "a8bd8a3adaa7553ee3e3c24c7e322c7f3ec1819872fffd2e1b421b0bfa32699b"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h20-fold3-evotrees_q10.jls",
+      "bytes": 6193783,
+      "sha256": "c55cde45fe1aba0e6304eb6596cbb8519cbe543224d3c6f9b5e302f017e9436f"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h20-fold3-evotrees_q90.jls",
+      "bytes": 6193787,
+      "sha256": "f76bb3da708ff445f0a57d5070bc914e21a1fa20585e663093829e012efd8a6a"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h20-fold3-neural_tree.jls",
+      "bytes": 10045830,
+      "sha256": "2be4b65f8afbe4a7358ba8a30c40e398f96f2d272c13d581dd11a18e6b4cff27"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h20-fold3-preprocessing.jls",
+      "bytes": 2688764,
+      "sha256": "2ace7180de44e0414e4bffeb059e5b43feee384edfbd4c65afe4c3452e818214"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h20-fold3-residual_mlp.jls",
+      "bytes": 7099756,
+      "sha256": "163b1c5d0f2228a4c32f3d4b2389cc7e0e410c114dd1d15d5d3209fef0ae4471"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h20-fold3-tabm_ensemble.jls",
+      "bytes": 8077511,
+      "sha256": "01c57ff3712ee1cf8ebd2ac49b84c0a7aa5e29eeba2b89b0022eee61f6b1e8f7"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h20-fold4-evotrees_depth3.jls",
+      "bytes": 7145534,
+      "sha256": "c352295816b54d8e68d0f54dc835c3f9271bdf60102218b53c0a48b0dbbc54e7"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h20-fold4-evotrees_depth5.jls",
+      "bytes": 7213506,
+      "sha256": "a245d51fe4ab15e12f67b780bf3d04e1e8908d577e38bf342d1c0ee427b25c84"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h20-fold4-evotrees_mae.jls",
+      "bytes": 7145534,
+      "sha256": "6609e1a013d16ce459630ca10c3a6dbc0cbac5c590407fc02607da99e7b3d04b"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h20-fold4-evotrees_q10.jls",
+      "bytes": 7145539,
+      "sha256": "9d14eb1600ade9920ec6488b775c025f67a95f3a14074dccc8db82da2912bf15"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h20-fold4-evotrees_q90.jls",
+      "bytes": 7145539,
+      "sha256": "16ff51062add0765cc7496484e0295243246c1d27bd747624281c3c16fb571cf"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h20-fold4-neural_tree.jls",
+      "bytes": 11542766,
+      "sha256": "495208c9e173548e6f1b2aa33c08c05c6716fb938df5bd100fac543b3ea50643"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h20-fold4-preprocessing.jls",
+      "bytes": 3070260,
+      "sha256": "1e521b16a750fe99245bd9357cd610067b86ea6f695ff5c76004be8185bec2da"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h20-fold4-residual_mlp.jls",
+      "bytes": 8143284,
+      "sha256": "9bae64daf721020dde8030b691f42b8983e110b6c8e475357604939d668ae181"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h20-fold4-tabm_ensemble.jls",
+      "bytes": 9272175,
+      "sha256": "ab5b42a81b37b5356be27eda6079bef2242464f8024b67c72dbde6e7d131d290"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h5-fold2-evotrees_depth3.jls",
+      "bytes": 5899545,
+      "sha256": "14d92642d95499ac48f34877811672db0fd56863f03ae997019a2e74208e9df5"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h5-fold2-evotrees_depth5.jls",
+      "bytes": 5967647,
+      "sha256": "c31d13afde0a5a3ecfb8f135248973e9cb318e0f699aae85f11831821b707ff7"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h5-fold2-evotrees_mae.jls",
+      "bytes": 5899451,
+      "sha256": "ce546ba574d43bca0b3ab385ca59fe8579434951131068d5bf155c1712b8f956"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h5-fold2-evotrees_q10.jls",
+      "bytes": 5899460,
+      "sha256": "709319667956f1e0935c9997620d1845de9e5c9fb26650f98eb7d8f3bf0308d8"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h5-fold2-evotrees_q90.jls",
+      "bytes": 5899462,
+      "sha256": "4da213874e0c5ff1cfb51701572fb41eb45fadf24454fee35ec4243ab451c42b"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h5-fold2-neural_tree.jls",
+      "bytes": 9586472,
+      "sha256": "a8eca9766e62ee6b7c8f3228fe400f54a850148f9e49b9e124464c0e7ae015ba"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h5-fold2-preprocessing.jls",
+      "bytes": 2540350,
+      "sha256": "e5ebce606e11843c356840466c9d1b0f516dd0037026ca2c2ee72a3dca095fc1"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h5-fold2-residual_mlp.jls",
+      "bytes": 6777678,
+      "sha256": "ebaff8eba483ef06fedf10596a7f32f9bf4f0cf66f25994bd966e2563d114ff4"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h5-fold2-tabm_ensemble.jls",
+      "bytes": 7709673,
+      "sha256": "f950f4e14fc9cf3698a99d8704b1a021171c3dd450a75b565e737752110979a2"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h5-fold3-evotrees_depth3.jls",
+      "bytes": 6205800,
+      "sha256": "f3dfb99880083c5a2c1ae4bf49364464fa294aee202bea5a8e76f01acd3bff07"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h5-fold3-evotrees_depth5.jls",
+      "bytes": 6273964,
+      "sha256": "9879a0304f805a78afc3e134319ca92fd532f65fc67d184daac0b1a6ed15007c"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h5-fold3-evotrees_mae.jls",
+      "bytes": 6205784,
+      "sha256": "4eb1ada42553d6fa5561a7174fc69fc2f3000bef45d2e8f7dc7510e67aa12a68"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h5-fold3-evotrees_q10.jls",
+      "bytes": 6205793,
+      "sha256": "c4f3a1118e2dd3143783020eb49a97fd90f421e30bb1c36b199a4499f4a3b80b"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h5-fold3-evotrees_q90.jls",
+      "bytes": 6205789,
+      "sha256": "1ade49bbc6bf9859a070ef9ad60bc7bf82d339148e65e5fe394d646bc7685f8f"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h5-fold3-neural_tree.jls",
+      "bytes": 10064800,
+      "sha256": "f421e933fa009cdeb5439ec9a9977c91c55fc01a93c3d51f2e89e92bca3194fe"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h5-fold3-preprocessing.jls",
+      "bytes": 2694838,
+      "sha256": "b21e1580253a5fa0b5fbc7e186e81f962f274b57fe19664560cd1a22193337da"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h5-fold3-residual_mlp.jls",
+      "bytes": 7112966,
+      "sha256": "fa1ffd7c1200ede12ea54de30f9dac390ac80ea324db2cfdf38aa1be54e3396b"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h5-fold3-tabm_ensemble.jls",
+      "bytes": 8092641,
+      "sha256": "a80cc0e40d2696c5cfa95601dd4dc947b00baeab3c180b4324a9239a6de87779"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h5-fold4-evotrees_depth3.jls",
+      "bytes": 7150784,
+      "sha256": "80ad648c6ab6f601712312357ca8b9cd94ad7ff2c6e8d95bd1a0b88336b7c07c"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h5-fold4-evotrees_depth5.jls",
+      "bytes": 7218746,
+      "sha256": "cc259d679c09ad2d52124b57e3a89ef3323cfff31aaec2f7aa143c4825e58263"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h5-fold4-evotrees_mae.jls",
+      "bytes": 7150784,
+      "sha256": "be3a6271b077d43391d8a324518c642ddb43ef47663adf6d6f79d0e4b31de999"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h5-fold4-evotrees_q10.jls",
+      "bytes": 7150789,
+      "sha256": "ee9a0f64aa5262a97ae76dc3523792c580abce01c360d4a3d0716126a1a03f7c"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h5-fold4-evotrees_q90.jls",
+      "bytes": 7150789,
+      "sha256": "6ab784145561f6ef07d1be327b8baa6ba9ac6c424bd87a94b7e346402ad7c6f1"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h5-fold4-neural_tree.jls",
+      "bytes": 11550851,
+      "sha256": "86cb367042e11f827899cc2ccb3d7729aa2550831d88c0b9c7a93ac551ef22d1"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h5-fold4-preprocessing.jls",
+      "bytes": 3073881,
+      "sha256": "5528f9275f1c8237cf6deaa4f34b90cfb4c135340fd0d6cdf703cfc5ce62e73e"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h5-fold4-residual_mlp.jls",
+      "bytes": 8148969,
+      "sha256": "1e0cfe6ba2ab637b31fb0b4c8e032730d65ef00db87f01ead0004592a3edc91c"
+    },
+    {
+      "path": "joint-models-v3/mid-price-change-h5-fold4-tabm_ensemble.jls",
+      "bytes": 9278660,
+      "sha256": "9484c71fd23176809a6895c36e7bd34cc5d6e6631e5b5b74725e8311b0488205"
+    },
+    {
+      "path": "joint-models-v3/model-tests.log",
+      "bytes": 90,
+      "sha256": "828c2555ee12cb3a644e90259d60829fe01f5bb34cd464a4170712315c656149"
+    },
+    {
+      "path": "joint-models-v3/model_comparison_summary.csv",
+      "bytes": 37605,
+      "sha256": "a81b660b793a04558460dc76d1d096ff69d6915d6fc091341a85dca0f7afb41c"
+    },
+    {
+      "path": "joint-models-v3/model_metrics.csv",
+      "bytes": 103615,
+      "sha256": "5d4f916740b68fa459b5dbe1b8f5d05b5fd7cfc687fed578fe733d472fbf987f"
+    },
+    {
+      "path": "joint-models-v3/model_predictions.csv",
+      "bytes": 51368649,
+      "sha256": "cddfe67e7aed1a9706a443a189ff61291f8509d140dd3a0f58cfe50f3caeda54"
+    },
+    {
+      "path": "joint-models-v3/models.log",
+      "bytes": 93550,
+      "sha256": "fb1058cd734d4d38a00878101938ee34de5c8d5a38cd02366b9c59105cfde417"
+    },
+    {
+      "path": "joint-models-v3/neural.log",
+      "bytes": 49736,
+      "sha256": "411d36f6f31e42830ef94dcf22101e16d8d05194a4f65a01ecd386e4f157daad"
+    },
+    {
+      "path": "joint-models-v3/neural_metrics.csv",
+      "bytes": 42256,
+      "sha256": "5dae27529753b7a34e8aa8e8d7af7cc4af3579c2929e4a0505a165246bdbe9f9"
+    },
+    {
+      "path": "joint-models-v3/neural_predictions.csv",
+      "bytes": 21520517,
+      "sha256": "b8f7e5938d53dda512a1aaf8f3e1f30218b02e7d5dd602ab4017c6f6b6fc65dc"
+    },
+    {
+      "path": "joint-models-v3/neural_run_receipt.json",
+      "bytes": 496,
+      "sha256": "270968aa1ac56a05e4f2a6ff0cdc5caafcfad72d7fa5f3fb8a7f38bae7d6ad76"
+    },
+    {
+      "path": "joint-models-v3/parallel-resume.log",
+      "bytes": 995,
+      "sha256": "576da593760bafe48c65b547011d5fede3beaf75b163a92340a57dd214de062a"
+    },
+    {
+      "path": "joint-models-v3/rerun_plan.json",
+      "bytes": 2367,
+      "sha256": "152e9e4cecfa7c1505a156a907ecae14064d23428680351c6d0976c3aad35e6e"
+    },
+    {
+      "path": "joint-models-v3/scripts/analyze_joint_interactions.jl",
+      "bytes": 7117,
+      "sha256": "9f4e1c740b82a5831d8d37d2777a64ece607919a229726b5555b7198caf74dff"
+    },
+    {
+      "path": "joint-models-v3/scripts/analyze_observed_price_paths.jl",
+      "bytes": 4274,
+      "sha256": "12a31c75061f0271694b29274f1b4242f2028c6e53df1bc43094730c8a1865dc"
+    },
+    {
+      "path": "joint-models-v3/scripts/descriptive_math.jl",
+      "bytes": 785,
+      "sha256": "6126bd02bda3ca70738d0ba8842f651d55a19cdd9ce6914b134b548e28698d91"
+    },
+    {
+      "path": "joint-models-v3/scripts/model_rules.jl",
+      "bytes": 2871,
+      "sha256": "ed57115cdea48aeb78bcfb09fd6d17a011649a42c762963da4a616e8aa88951b"
+    },
+    {
+      "path": "joint-models-v3/scripts/review_saved_layers.jl",
+      "bytes": 7203,
+      "sha256": "8abb7a3074a5a4a7b7cfb1af9c55ae8efacc470bf2b465f54451f7601bcbef1d"
+    },
+    {
+      "path": "joint-models-v3/scripts/run_joint_models.jl",
+      "bytes": 10667,
+      "sha256": "6ce0128a94ab5affd969235eee7eb22b99a584ed57df047e843aa27caeb9e979"
+    },
+    {
+      "path": "joint-models-v3/scripts/run_neural_models.jl",
+      "bytes": 6853,
+      "sha256": "262704b220d33e2abf3e94b069861dd04b19c84a39f4665200db1e6b6197fc1d"
+    },
+    {
+      "path": "joint-models-v3/scripts/summarize_joint_models.jl",
+      "bytes": 9571,
+      "sha256": "66786503a9d6db1612af9a28abccc1877177569ddc499258419ae57ebf6b337e"
+    },
+    {
+      "path": "joint-models-v3/scripts/test_model_rules.jl",
+      "bytes": 1299,
+      "sha256": "ed860ca5f46c1863b5630cc5281c1a55e9406a9101a7e048e0f6291f19472676"
+    },
+    {
+      "path": "joint-models-v3/summary.log",
+      "bytes": 784,
+      "sha256": "0f0ee9b6d8b980581f6b3be69efbde684534386f7ce5420a68873a0978b6092b"
+    },
+    {
+      "path": "joint-models-v3/training_median_metrics.csv",
+      "bytes": 2003,
+      "sha256": "7f8fabc923befd603b6359f0ea21d595abaa4634038d479720004a0de501cafd"
+    }
+  ],
+  "all_models_complete": false,
+  "symlinks_not_copied": {
+    "joint-models-v3/model_sample_master.csv": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_sample_master.csv",
+    "joint-models-v3/model_input_receipt.json": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_input_receipt.json",
+    "joint-models-v3/model_outcomes.csv": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_outcomes.csv",
+    "joint-models-v3/excluded_predictor_metadata.csv": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/excluded_predictor_metadata.csv",
+    "joint-models-v3/model_matrix.jls": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_matrix.jls",
+    "joint-models-v3/model_feature_registry.csv": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_feature_registry.csv",
+    "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold4/model_outcomes.csv": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_outcomes.csv",
+    "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold4/model_matrix.jls": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_matrix.jls",
+    "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold2/model_outcomes.csv": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_outcomes.csv",
+    "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold2/model_matrix.jls": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_matrix.jls",
+    "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold2/model_outcomes.csv": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_outcomes.csv",
+    "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold2/model_matrix.jls": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_matrix.jls",
+    "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold4/model_outcomes.csv": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_outcomes.csv",
+    "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold4/model_matrix.jls": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_matrix.jls",
+    "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h20-fold2/model_outcomes.csv": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_outcomes.csv",
+    "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h20-fold2/model_matrix.jls": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_matrix.jls",
+    "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h300-fold4/model_outcomes.csv": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_outcomes.csv",
+    "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h300-fold4/model_matrix.jls": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_matrix.jls",
+    "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold4/model_outcomes.csv": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_outcomes.csv",
+    "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold4/model_matrix.jls": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_matrix.jls",
+    "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold3/model_outcomes.csv": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_outcomes.csv",
+    "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1-fold3/model_matrix.jls": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_matrix.jls",
+    "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h20-fold4/model_outcomes.csv": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_outcomes.csv",
+    "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h20-fold4/model_matrix.jls": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_matrix.jls",
+    "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h300-fold3/model_outcomes.csv": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_outcomes.csv",
+    "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h300-fold3/model_matrix.jls": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_matrix.jls",
+    "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h300-fold2/model_outcomes.csv": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_outcomes.csv",
+    "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h300-fold2/model_matrix.jls": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_matrix.jls",
+    "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h20-fold3/model_outcomes.csv": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_outcomes.csv",
+    "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h20-fold3/model_matrix.jls": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_matrix.jls",
+    "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold2/model_outcomes.csv": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_outcomes.csv",
+    "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold2/model_matrix.jls": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_matrix.jls",
+    "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h3600-fold2/model_outcomes.csv": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_outcomes.csv",
+    "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h3600-fold2/model_matrix.jls": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_matrix.jls",
+    "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold3/model_outcomes.csv": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_outcomes.csv",
+    "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h1800-fold3/model_matrix.jls": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_matrix.jls",
+    "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold3/model_outcomes.csv": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_outcomes.csv",
+    "joint-models-v3/core-resume/jobs/absolute-mid-price-change-h120-fold3/model_matrix.jls": "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/model_matrix.jls"
+  },
+  "input_matrix_archive": "family-full-depth-inputs-v3-2d4f2553.tar.gz",
+  "disposition": "All finished/interrupted/uncommitted states retained with original paths; no interrupted task is promoted as a completed fit."
+}

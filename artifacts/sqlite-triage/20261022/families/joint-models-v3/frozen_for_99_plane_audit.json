@@ -1,0 +1,87 @@
+{
+  "reason": "User requires full 99-plane input coverage before rerunning every model. Current v3 is a partial-coverage benchmark; no additional v3 fits requested.",
+  "interrupted_owned_processes": [
+    {
+      "pid": 12399,
+      "args": [
+        "python3",
+        "/opt/frankie-box/work/family-research-20261022/joint-inputs-v3/scripts/resume_core_parallel.py"
+      ]
+    },
+    {
+      "pid": 12404,
+      "args": [
+        "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/bin/julia",
+        "--startup-file=no",
+        "--project=/opt/frankie-box/work/family-research-20261022/julia-model-env",
+        "/opt/frankie-box/work/family-research-20261022/joint-models-v3/core-resume/run_core_task.jl"
+      ]
+    },
+    {
+      "pid": 12411,
+      "args": [
+        "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/bin/julia",
+        "--startup-file=no",
+        "--project=/opt/frankie-box/work/family-research-20261022/julia-model-env",
+        "/opt/frankie-box/work/family-research-20261022/joint-models-v3/core-resume/run_core_task.jl"
+      ]
+    },
+    {
+      "pid": 12734,
+      "args": [
+        "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/bin/julia",
+        "--startup-file=no",
+        "--project=/opt/frankie-box/work/family-research-20261022/julia-model-env",
+        "/opt/frankie-box/work/family-research-20261022/joint-models-v3/core-resume/run_core_task.jl"
+      ]
+    },
+    {
+      "pid": 12817,
+      "args": [
+        "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/bin/julia",
+        "--startup-file=no",
+        "--project=/opt/frankie-box/work/family-research-20261022/julia-model-env",
+        "/opt/frankie-box/work/family-research-20261022/joint-models-v3/core-resume/run_core_task.jl"
+      ]
+    },
+    {
+      "pid": 12856,
+      "args": [
+        "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/bin/julia",
+        "--startup-file=no",
+        "--project=/opt/frankie-box/work/family-research-20261022/julia-model-env",
+        "/opt/frankie-box/work/family-research-20261022/joint-models-v3/core-resume/run_core_task.jl"
+      ]
+    },
+    {
+      "pid": 12941,
+      "args": [
+        "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/bin/julia",
+        "--startup-file=no",
+        "--project=/opt/frankie-box/work/family-research-20261022/julia-model-env",
+        "/opt/frankie-box/work/family-research-20261022/joint-models-v3/core-resume/run_core_task.jl"
+      ]
+    },
+    {
+      "pid": 12975,
+      "args": [
+        "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/bin/julia",
+        "--startup-file=no",
+        "--project=/opt/frankie-box/work/family-research-20261022/julia-model-env",
+        "/opt/frankie-box/work/family-research-20261022/joint-models-v3/core-resume/run_core_task.jl"
+      ]
+    },
+    {
+      "pid": 13012,
+      "args": [
+        "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/bin/julia",
+        "--startup-file=no",
+        "--project=/opt/frankie-box/work/family-research-20261022/julia-model-env",
+        "/opt/frankie-box/work/family-research-20261022/joint-models-v3/core-resume/run_core_task.jl"
+      ]
+    }
+  ],
+  "completed_states_and_outputs_retained": true,
+  "no_sources_deleted": true,
+  "resume_command": "5d0fec90-4476-4d45-b290-abb6ce434fe5"
+}

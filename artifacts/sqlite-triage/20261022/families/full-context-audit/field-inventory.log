@@ -1,0 +1,25 @@
+native.member 1000 6265
+native.member 2000 6265
+native.member 3000 6265
+native.member 4000 6265
+native.member 5000 6265
+native.member 6000 6265
+root.frames 1000 6265
+root.frames 2000 6265
+root.frames 3000 6265
+root.frames 4000 6265
+root.frames 5000 6265
+root.frames 6000 6265
+root.structures 1000 6265
+root.structures 2000 6265
+root.structures 3000 6265
+root.structures 4000 6265
+root.structures 5000 6265
+root.structures 6000 6265
+second_set 1000 6265
+second_set 2000 6265
+second_set 3000 6265
+second_set 4000 6265
+second_set 5000 6265
+second_set 6000 6265
+{"schema": "FULL_CONTEXT_FIELD_INVENTORY_V1", "status": "complete", "coverage_gate": "NOT_PASSED", "scope": "All complete payload fields at the existing 10486 selected contexts, all cached linked lifecycle rows, and every retained external row; not a whole-raw-ledger schema census.", "source_records": {"native.member": 6265, "root.frames": 6265, "root.structures": 6265, "second_set": 6265, "lifecycle.recurrence": 6265, "lifecycle.mirror": 6265, "lifecycle.ladder": 12530, "lifecycle.absorption": 6265, "lifecycle.flow_substrate": 8088, "lifecycle.replenishment": 30687, "lifecycle.queue": 7893, "lifecycle.candidate": 42, "lifecycle.episode": 88, "lifecycle.response": 266, "external.calendar.sessions_since_prompt_expiry": 1, "external.cot.023391": 302, "external.cot.023392": 302, "external.cot.0233AG": 298, "external.cot.0233AH": 302, "external.cot.023651": 302, "external.curve.definitions": 1997, "external.curve.settled_shape": 15, "external.curve.statistics": 40407, "external.curve.traded_shape": 31152, "external.curve.trades": 205631, "external.eia930.hourly": 17464, "external.eia930.us48": 213, "external.mos.disagreement_by_cycle": 6, "external.mos.gw_by_cycle": 81, "external.mos.raw": 9648, "external.storage.estimate": 11, "external.storage.weekly": 419, "external.weather.gw_daily": 18, "external.weather.obs_hourly": 21089}, "field_paths": 78000, "selected_contexts": 10486, "unique_native_ordinals": 6265, "source_bytes_read": {"native.member": 2066573626, "root.frames": 5263099758, "root.structures": 12043762, "second_set": 1374663130}, "pins": {"native.lifecycle": {"name": "native.lifecycle", "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/bedrock/recovery-6f84a8a86f454010b61346b401e3eb5f/ledgers/exact_lifecycle_rows.jsonl", "sha256": "85cd443bb5348b987d643878d43532aca7db8f61e932c68073425f1939dfb74e", "bytes": 7560352552, "offset_index": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/bedrock/recovery-6f84a8a86f454010b61346b401e3eb5f/ledgers/.frankie-row-index/2c2f8fc9d3feacb3df6d82a6748c56aad597b0960bb8f56f2825f9a9e45de88c.offsets"}, "native.member": {"name": "native.member", "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/bedrock/recovery-6f84a8a86f454010b61346b401e3eb5f/ledgers/exact_member_rows.jsonl", "sha256": "5c1acca32856b08f2d2188951ae9e6c3932410f43d62e6e3e69858c370606d4c", "bytes": 193743650444, "offset_index": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/bedrock/recovery-6f84a8a86f454010b61346b401e3eb5f/ledgers/.frankie-row-index/f0682d7b2f7875519b55ed584cff0b9b485b80c1486a7b40b4138f10aa9874fe.offsets"}, "root.frames": {"name": "root.frames", "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/frames.jsonl", "sha256": "be7655b2663841df1b3662a057f86122750364b1b0678fcfd46c92798b0c1495", "bytes": 496743568399, "offset_index": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/.frankie-row-index/258e17212864363897277afbdf67c30d0c8776c93a830cc2dc06c2a050662f4a.offsets"}, "root.prices": {"name": "root.prices", "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/prices.jsonl", "sha256": "f42c17908509e9b944615521d25631ef19231da3c037252d83d03f780c74ab58", "bytes": 17393149, "offset_index": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/.frankie-row-index/c213e6ad94585ff5144ced95a42d4c62d8a9e427367b2da63f20790c55598c8b.offsets"}, "root.structures": {"name": "root.structures", "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/structures.jsonl", "sha256": "37c7642ec92dc350e8d91f29a8428a94f1967bf682df57b794ded4897b9e8b8d", "bytes": 1063001944, "offset_index": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/.frankie-row-index/3bc308ff7244fd22aa3374fa7876f43e6f72da54204ba401a6d07d72f0716d60.offsets"}}, "remaining": ["Map every inventoried field to a semantic consumer, provenance role or documented unavailable/excluded state.", "Apply actual knowledge definitions/claims with source-bound scientific checks.", "Complete numerical and structured extraction, then verify runtime coverage before v4 fits."]}

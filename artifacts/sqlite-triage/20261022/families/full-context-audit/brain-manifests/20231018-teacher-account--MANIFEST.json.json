@@ -1,0 +1,37 @@
+{
+  "cycle": "teacher-account",
+  "day": "20231018",
+  "entries": [
+    {
+      "bytes": 112202,
+      "include": true,
+      "kind": "immediate teacher-account knowledge",
+      "name": "stage-knowledge.json",
+      "sha256": "12e2eea4e6b27c484fdcee3ecc7062b846d553b8122367f7f8f6d3aa1f700ea3",
+      "source": "/opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-account.json; /opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-account.md; /opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-findings.json; /opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-reconciliation-differences.jsonl"
+    }
+  ],
+  "entry_kind": "stage_knowledge",
+  "knowledge_status": "available_immediately",
+  "note": "stage knowledge committed before the workflow advances; exact large sources remain at the digest-bound paths",
+  "schema": "FRANKIE_BOX_BRAIN_ENTRY_V1",
+  "source_witness": [
+    {
+      "basis": "read whole",
+      "path": "/opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-account.json"
+    },
+    {
+      "basis": "read whole once, no claim written: no work/file-claims.jsonl above the source",
+      "path": "/opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-account.md"
+    },
+    {
+      "basis": "read whole",
+      "path": "/opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-findings.json"
+    },
+    {
+      "basis": "read whole",
+      "path": "/opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-reconciliation-differences.jsonl"
+    }
+  ],
+  "unavailable": []
+}
