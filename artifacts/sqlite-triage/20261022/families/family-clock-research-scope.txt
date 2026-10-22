@@ -1,0 +1,35 @@
+Family market-clock research: scope and current state (2026-10-22)
+
+The immediate job is to reconstruct and observe the market timeline around families.
+No predictive model, target variable, two-minute post-start outcome, or feature-ranking rule is selected.
+
+Required combined inputs:
+- All 13 historical data points (represented by 20 underlying source tables).
+- All 99 plane identities with their actual values, roles and dispositions. A plane that is thin, absent, disabled or completed-only is recorded as such, never invented as a live numerical feature.
+- The explicitly confirmed Bedrock/teacher second set.
+- The price curve and individual trades, with original event, receive and availability clocks.
+
+Begin observation two minutes before each family's first observed start. Preserve the subsequent retained sequence and price path. Do not impose a two-minute post-start cutoff.
+Prebirth is one research question alongside direction, continuation, reversal, momentum, exhaustion, and possible trading signals. Analyze these after the combined clock is reconstructed. Any apparent signal remains a candidate requiring separate validation.
+
+Preserve source order and exact integer nanoseconds. Event time, receive time, publication/availability time, and source cursor have different meanings and remain separate.
+Use trade provenance to recover original journal clocks. Do not convert floating-point export seconds into purported exact nanoseconds.
+A retrospective display may show a trade at its original event time, but an as-known market picture may only include it when it was actually available.
+
+Keep every family, every price row, and every required source identity. Missing observations stay explicit. Gaps do not reject a family or an entire run.
+Do not backfill future observations into pre-start records or quietly turn missing values into observed zeros.
+
+Established facts:
+- 749 distinct referenced structural family IDs were found in the retained source.
+- 583,127 occurrences match those IDs within 583,688 retained groups. Recurrences remain available.
+- All 749 first-observed family anchors were read from native member, ROOT frame and second set, joined by exact input cursor; corrected checks found no anchor identity or clock differences.
+- "Start" currently means first observed structural-family instance in retained data. It is not proof of original order birth.
+- All 99 registry entries and all 13 conceptual points are pinned; 329,658 external rows are retained.
+- All 30,739 price rows are retained, but the first working table did not decode their timestamp fields. Price-clock recovery from the original journal is now a separate prerequisite, and the family rerun is held until verified.
+- Two pre-start context snapshots per family have been extracted. They are not a full chronological replay. Eighteen second-set lookups initially returned no row; direct source checks found records for two of them, so these are unresolved lookup results rather than established source gaps.
+- Interval native member and ROOT frame values remain in pinned source files with offset references; anchor snapshots contain actual records. No claim is made that every source byte has been analyzed.
+
+Run status:
+The family rerun is HOLD_FOR_PRICE_TIMESTAMPS.
+The active price task only recovers and verifies clocks; it does not perform the family rerun or train a model.
+After clock verification, run with 13 + 99 + confirmed second set + timestamped price curve together. No subset replaces this combined run.
