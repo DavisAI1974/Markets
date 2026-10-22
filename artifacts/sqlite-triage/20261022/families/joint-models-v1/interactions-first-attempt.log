@@ -1,0 +1,26 @@
+ERROR: LoadError: MethodError: no method matching !(::BitVector)
+The function `!` exists, but no method is defined for this combination of argument types.
+
+Closest candidates are:
+  !(!Matched::Bool)
+   @ Base bool.jl:37
+  !(!Matched::Tables.NotExpr)
+   @ Tables /opt/frankie-box/work/family-research-20261022/julia-depot/packages/Tables/qGyu7/src/scan.jl:258
+  !(!Matched::Tables.IsNull)
+   @ Tables /opt/frankie-box/work/family-research-20261022/julia-depot/packages/Tables/qGyu7/src/scan.jl:259
+  ...
+
+Stacktrace:
+ [1] (::var"#observed#analyze##6"{Dict{String, Int64}, Matrix{Float64}})(feature::String, indices::Vector{Int64})
+   @ Main /opt/frankie-box/work/family-research-20261022/joint-models-v1/scripts/analyze_joint_interactions.jl:15
+ [2] analyze()
+   @ Main /opt/frankie-box/work/family-research-20261022/joint-models-v1/scripts/analyze_joint_interactions.jl:52
+ [3] top-level scope
+   @ /opt/frankie-box/work/family-research-20261022/joint-models-v1/scripts/analyze_joint_interactions.jl:92
+ [4] include(mod::Module, _path::String)
+   @ Base ./Base.jl:309
+ [5] exec_options(opts::Base.JLOptions)
+   @ Base ./client.jl:344
+ [6] _start()
+   @ Base ./client.jl:577
+in expression starting at /opt/frankie-box/work/family-research-20261022/joint-models-v1/scripts/analyze_joint_interactions.jl:92

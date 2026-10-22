@@ -2,7 +2,7 @@ using CSV,DataFrames,JSON3,SQLite,DBInterface,Serialization,Statistics
 include("model_rules.jl")
 const BASE=get(ENV,"FAMILY_RESEARCH_DIR","/opt/frankie-box/work/family-research-20261022")
 const INPUT=joinpath(BASE,"enriched-v2")
-const OUT=joinpath(BASE,"joint-models-v1")
+const OUT=get(ENV,"JOINT_INPUT_OUT",joinpath(BASE,"joint-inputs-v2"))
 mkpath(OUT)
 @assert isfile(joinpath(INPUT,"completed_analysis_receipt.json"))
 function build()

@@ -1,0 +1,30 @@
+{
+  "archives": [
+    {
+      "path": "/opt/frankie-box/work/family-research-20261022/family-joint-results-checkpoint.tar.gz",
+      "bytes": 42809652,
+      "sha256": "7309cc08c05d47266e7ce78f3728b865606d41d2bb3141b578835465cb9272be",
+      "s3_bucket": "bento-568968024170-us-east-2-an",
+      "s3_region": "us-east-2",
+      "s3_key": "frankie/family-prebirth/20261022/family-joint-results-7309cc08.tar.gz",
+      "upload_status": 200
+    },
+    {
+      "path": "/opt/frankie-box/work/family-research-20261022/family-joint-states-checkpoint.tar.gz",
+      "bytes": 318795650,
+      "sha256": "66c0966bf46b663188f5fc48608e4702a5e895a7d0903fcfd201436ad52f7876",
+      "s3_bucket": "bento-568968024170-us-east-2-an",
+      "s3_region": "us-east-2",
+      "s3_key": "frankie/family-prebirth/20261022/family-joint-states-66c0966b.tar.gz",
+      "upload_status": 200
+    }
+  ],
+  "result_files": 71,
+  "state_files": 544,
+  "local_verification": {
+    "results_saved_and_decompressed_files": 71,
+    "fitted_matrix_states": 544,
+    "archive_hashes_verified": true,
+    "all_individual_hashes_verified": true
+  }
+}

@@ -11,3 +11,7 @@ Use forward chronological folds with horizon purging and ten-minute context emba
 Measure joint performance and source-group drop-column comparisons, temporal stability, interactions, error tails, regime changes, and observed spread-crossing outcome diagnostics. Keep every model/configuration/comparison, including failures and negative results. Spread diagnostics are hypothetical quote outcomes, without guaranteed fills, fees or contract-dollar conversion. No live orders. One retained day cannot establish multi-day tradability or causal influence.
 
 Primary API references: https://evovest.github.io/EvoTrees.jl/dev/tutorials/examples-API ; https://evovest.github.io/NeuroTreeModels.jl/v1.1.1/API ; https://juliastats.org/MultivariateStats.jl/stable/pca/ ; https://juliastats.org/Clustering.jl/stable/kmeans.html . Save installed Project/Manifest separately from the completed descriptive environment.
+
+## Checkpoint correction
+
+Completed v1 fits use 1,886 current fields / 7,544 columns. The absolute-clock suffix screen accidentally excluded ten valid elapsed-duration identities. Corrected joint-inputs-v2 is now built and verified with 1,896 current fields / 7,584 columns, unchanged existing values/samples/outcomes; no v2 fits. Nine new current fields have finite observations; session-open receive duration remains unavailable in the source. Next chat reviews saved layer combinations before further fitting. Preserve v1 and adapt runners to v2 input plus a new output directory.

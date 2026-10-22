@@ -1,0 +1,9 @@
+Loaded model input features
+Loaded model input group_measurements
+Loaded model input external_last_observed_measurements
+Loaded model input complete_context_measurements
+Loaded model input pullback_measurements
+Loaded model input enriched_context_measurements
+Loaded model input extended_second_set
+Loaded model input extended_group_measurements
+{"outcome_rows":49434,"family_count":749,"sampling_limitation":"Contexts were selected around first-observed families and nearby periods. Family-occurrence probabilities are conditional on this selected cohort, not prospective population hazards.","source_inputs":"/opt/frankie-box/work/family-research-20261022/enriched-v2","total_columns_with_causal_changes":7584,"contemporaneous_features":1896,"missing_policy":"Raw model matrix is unimputed. Each model fits preprocessing only on its training fold. Family-occurrence models use contemporaneous columns only, because pre120 contexts lack the same extended history sampling design.","samples":3745,"source_disposition_policy":"Every original source and master row retained. Absolute clocks, source-publication ages, IDs, labels and teacher knowledge remain provenance; observed queue ages and measured elapsed durations remain legitimate measurements.","price_outcome_definition":"Future observed midquote minus contemporaneous pre-start/control midquote. Actual first-start forecast endpoints are T0+h, one nanosecond beyond strict-before-start cutoff+h. Current and future quote ages <=5s; no post-session extrapolation.","history_seconds":[120,300,600]}

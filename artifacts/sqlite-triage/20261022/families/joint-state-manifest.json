@@ -1,0 +1,2724 @@
+{
+  "files": [
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h300-fold4-preprocessing.jls",
+      "bytes": 686823,
+      "sha256": "ab97b0b3b9b5ae5a5cef9fe8d60f1ac08b9e1a12b19f97f27f3727d84631bfb7"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1800-fold4-evotrees_q10.jls",
+      "bytes": 1430800,
+      "sha256": "0cef304d4af3a79cc0f46a40ea316b60c4b95d7d8eee7ee3b6472feab4422af2"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h20-fold2-neural_tree.jls",
+      "bytes": 2032881,
+      "sha256": "3f105a6365fc5105bfb176bfd8bcdb1b914e1f8305f44234e5bd90778038aba3"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1-fold4-neural_tree.jls",
+      "bytes": 2279477,
+      "sha256": "8d5c74a4eaf2dfbf6e8bf0c22a11447b92898d1cce421d8d14f10059e0aed052"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h120-fold3-evotrees_depth3.jls",
+      "bytes": 406847,
+      "sha256": "e1f81fd60c0ffeb0d601b30cc596642b19b334bf999e824319dee93cda20eb7c"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h5-fold4-residual_mlp.jls",
+      "bytes": 1636401,
+      "sha256": "6098fee3a24beaca41fc1fe46d50f868385bb0c8ee158a98ca762a2500c17401"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1800-fold2-evotrees_q90.jls",
+      "bytes": 1287471,
+      "sha256": "ecd8faae1cef52aaed06b8015c11e936225f727d35dcb939f3896ab4a1e95048"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1-fold2-residual_mlp.jls",
+      "bytes": 1494530,
+      "sha256": "2188ce2660265dccb26d881fe3df3ad6e599b566f2199f956c40385095ede655"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1800-fold3-evotrees_q90.jls",
+      "bytes": 1362465,
+      "sha256": "785efc32ca146f3bb83d16563597eb694e062dda8a44fc2c6026e302b91b5b78"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1-fold4-evotrees_q10.jls",
+      "bytes": 1431974,
+      "sha256": "f1debcdb1f552c4bb1b5c2e03bcfc5bde98443929da52034032e42ce4f8b0e38"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h20-fold3-neural_tree.jls",
+      "bytes": 2172788,
+      "sha256": "49d1ce319d976ddcd851decd11d9a788046437f98e2eb16dec886f86953911dc"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h600-fold2-neural_tree.jls",
+      "bytes": 2019438,
+      "sha256": "65a9d1475b8d710fbb6a700706775da8a9680ff7c8e8e839d67bbf46a91c73c7"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h3600-fold4-evotrees_mae.jls",
+      "bytes": 1424578,
+      "sha256": "7ce14120c4fcd03d3ea905560ce4099d5f3673d347bba17864e7afb71ac6c2f9"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h120-fold4-evotrees_q90.jls",
+      "bytes": 1381178,
+      "sha256": "9f0a6fd31c26e1261043e6cdc07e62b5836efc4cae83bef631bd265d9d3d14df"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h120-fold4-neural_tree.jls",
+      "bytes": 2203485,
+      "sha256": "7e62e89893e86e5ae1f36b11371a4ad14981bfb1b13869ca1ba536babea0e943"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1-fold4-evotrees_q90.jls",
+      "bytes": 1431974,
+      "sha256": "fb4434c86fdf971124c7380034a042ebc58a3ef17bb66ea3929d480747377cca"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1800-fold4-neural_tree.jls",
+      "bytes": 2277597,
+      "sha256": "efe644f296da9920fa3838133bfcd29c0a2d3d8d94259ab480b123cb01c47ac7"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h60-fold3-neural_tree.jls",
+      "bytes": 2120249,
+      "sha256": "c350ebbe3cf5d9f71e779aced208655a64818bbc91bbcec87e6850411bde28eb"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h120-fold3-tabm_ensemble.jls",
+      "bytes": 1704097,
+      "sha256": "fc10ee1c1338b8feebc33902706e3dbcf148a7501e567276899eb3859e41f816"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h60-fold3-residual_mlp.jls",
+      "bytes": 1526655,
+      "sha256": "d67947dc9d7de717c0bd2b9c89e3617e0e0d33be1ee278977a6e3eb652229bb9"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1800-fold2-neural_tree.jls",
+      "bytes": 2056556,
+      "sha256": "0696ba2cf2bea396fe02fc34c20d078908ad6745f84881763b439fff2a371207"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h600-fold3-evotrees_depth3.jls",
+      "bytes": 1359387,
+      "sha256": "840de09a9440d08d48cc562ff5a7cc20196b6b2151312960ae0408f673a690ba"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h60-fold4-evotrees_q90.jls",
+      "bytes": 1400415,
+      "sha256": "f99b089ef6c51ad2aa0f02fc3b2a31eeea1783f05b04b8913529069413d170c3"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h20-fold2-evotrees_q90.jls",
+      "bytes": 1271878,
+      "sha256": "42b9e481cd09624411f88307880fac3f5445cc5c27268d8de62d07a259893ee3"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1-fold4-evotrees_depth5.jls",
+      "bytes": 1499971,
+      "sha256": "8cd247405f2851a633c6504fb018bfd0f68154cab99ac55d8adc50cd3c645deb"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h300-fold4-evotrees_depth3.jls",
+      "bytes": 412783,
+      "sha256": "bbf88371306ef32317fdf6c161d67d3b0b7faeb1a76e4aecd83423f9ea8605db"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h600-fold3-tabm_ensemble.jls",
+      "bytes": 520534,
+      "sha256": "ebfd53de2799e18260d063a65e9a55de397a7061ffaef630ffa4581c34a7a543"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h300-fold4-neural_tree.jls",
+      "bytes": 2241471,
+      "sha256": "dc88abc0f6895ba75c6fa5a0f6409fccd78f3aae0aa2d92ab3736c318ae76bde"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h3600-fold2-evotrees_q90.jls",
+      "bytes": 1251014,
+      "sha256": "94f42a77c1ea97b7d1978bb04bc79c4b7f3afe28921e24856b6c95a7f189ebbb"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h120-fold3-tabm_ensemble.jls",
+      "bytes": 1704097,
+      "sha256": "8c796e479396b5ab110f286749358c0f80d5e0fc0c888ffc3dafdaf6400ab9c1"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h20-fold4-neural_tree.jls",
+      "bytes": 2271800,
+      "sha256": "c3b8ace1d1e011709067d606550c5184045174c3502d50de13e67da36b139323"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1800-fold2-preprocessing.jls",
+      "bytes": 583438,
+      "sha256": "6b9b528cd0f360bb09cd54a03e2fd265de1987c0929d63ad4d259880246c15ce"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1800-fold4-evotrees_q10.jls",
+      "bytes": 1430800,
+      "sha256": "cf5afec8ac537f52b73e61e03ebf3296f6d070a6daf8b855da30cefd330d058e"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h3600-fold2-evotrees_mae.jls",
+      "bytes": 1251009,
+      "sha256": "9030db2d6d4a1403ba1cbd042cade9f776fa9de851d90d41c09404965d17a15d"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h20-fold4-tabm_ensemble.jls",
+      "bytes": 1842361,
+      "sha256": "53fe68ecdb8de664988603999ad2a5a99a7ab19552a2f451e45f3fae58aec8ad"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h5-fold4-evotrees_q90.jls",
+      "bytes": 1429134,
+      "sha256": "95307df18509fee9d761c1284a71d923e0286a607a8fc7381e5a3191f452c8d9"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h5-fold4-evotrees_mae.jls",
+      "bytes": 1429129,
+      "sha256": "7d77be5863bf2e712efa46c14df921ae03565179b91fc0fc978ab5041f75bae4"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h600-fold3-residual_mlp.jls",
+      "bytes": 1559702,
+      "sha256": "8d3d56bade26f4415f18a1070233bd8673e39890bf2cdce9c12d5a1e5c3cbeb5"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h3600-fold3-residual_mlp.jls",
+      "bytes": 1557259,
+      "sha256": "c2bfb0eb4ad49b1aa966aa975dcf8787dc98a8b34cbc8df97dfc84ba737d6f65"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h60-fold4-evotrees_q10.jls",
+      "bytes": 1400415,
+      "sha256": "41c984148b4a06e720edbee0746211112f83d9091ee6c7c42117fcbf0843ab89"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h600-fold4-evotrees_q90.jls",
+      "bytes": 1420203,
+      "sha256": "0ac2bfcab1ab266bdad4ff6d4d9ae762f710227d3909e4593727bebb7e479a68"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h300-fold2-evotrees_depth3.jls",
+      "bytes": 1243310,
+      "sha256": "cc700ab8ed3451d76fc1d41d6d98a08b27c8125bca0f206b4e4bbeba1cf7be38"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h600-fold2-evotrees_depth3.jls",
+      "bytes": 1263210,
+      "sha256": "ab9b502b552e0bdd391f870f6f3d888015f17d87712335a2c84f2ec28717d856"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h5-fold4-tabm_ensemble.jls",
+      "bytes": 1845036,
+      "sha256": "9b235d3ef276ae4da1c25cdd6df7b2141eb7a7bb527260e90d00b212b923df17"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h600-fold3-evotrees_depth5.jls",
+      "bytes": 1427535,
+      "sha256": "a6ccff3e372b8f062f3836dc21e9c3721230877e264a02d6337ed6898f94b385"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1800-fold2-evotrees_q90.jls",
+      "bytes": 1287445,
+      "sha256": "d02e10d28cda7063da39218d25e8ee160b738ebccbbdfe53eeed7b62b822772a"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h300-fold2-residual_mlp.jls",
+      "bytes": 1433911,
+      "sha256": "090c84b679ae04431adc64465d63b4e09bedc4a306f57e2f10184355b280caa2"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h120-fold3-evotrees_depth3.jls",
+      "bytes": 1314935,
+      "sha256": "23023caac72cbfba636cd4391267002482430c304dca563ecbd72654be75658d"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1-fold2-preprocessing.jls",
+      "bytes": 591524,
+      "sha256": "4aa689c375bef0f0e05100c2de00d8df534c602884685fbb090380d94dc201d2"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1800-fold4-preprocessing.jls",
+      "bytes": 695599,
+      "sha256": "c90ae8d48e42ccb5e228ebca6dcba5ee7c68d3b6aeda2dd622ba1a67c30b2d46"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h20-fold3-preprocessing.jls",
+      "bytes": 651420,
+      "sha256": "d21423409a89d124aaf5bb57e1423270b9f2aa0c51130d27cfc89acd2e047ad1"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h600-fold3-preprocessing.jls",
+      "bytes": 649872,
+      "sha256": "83c370a4a643142491f8b3a6e6d4e31cb5765da70d7bbcf85b741fb774197c41"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h60-fold4-evotrees_mae.jls",
+      "bytes": 1400410,
+      "sha256": "9b176a8c8f4fe35b86cb529b2a58c0235b091229a5cba5f33cdcbbb81810e007"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h5-fold3-evotrees_depth3.jls",
+      "bytes": 1367582,
+      "sha256": "15e5d0fcbb09c2713ccf0737607b61a4b6922bd3f858c6541c8cd3bb500791aa"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h60-fold2-evotrees_mae.jls",
+      "bytes": 1228542,
+      "sha256": "cf9bc257e6d9f31d3ffcf21353e80e9eb28c4670cbebce3f5dfa7460a67e910e"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h120-fold2-evotrees_depth5.jls",
+      "bytes": 1284827,
+      "sha256": "3f795fb1bbe178b73206988ba6fefc678be4db36016cf825071e6395898b8ffc"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1800-fold2-evotrees_q10.jls",
+      "bytes": 1287431,
+      "sha256": "8efeb3dfb0c980df9345a4e4b156a4f92cb3d0fd7ca39d7c765b4a4a1697f2a1"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h120-fold3-residual_mlp.jls",
+      "bytes": 469439,
+      "sha256": "938b63efcaccb682ee4754a11b487b29bae86adc4f3ef380078d99aaba581e60"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h3600-fold2-evotrees_depth3.jls",
+      "bytes": 1251015,
+      "sha256": "c3a307ee4db7837b897bf2d87da5c5224f81c9d06ff96f2a539fb02cc3917342"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1-fold2-evotrees_depth3.jls",
+      "bytes": 1300009,
+      "sha256": "360736df69b401687607271aa49712880d1137e7d1da73c44bec9ad364514f35"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1800-fold2-evotrees_depth3.jls",
+      "bytes": 1287412,
+      "sha256": "ce7af41c44bea5cd87465d50b913acc11f41d5a2db435ae799b16e715ba798c5"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1-fold2-evotrees_mae.jls",
+      "bytes": 1299927,
+      "sha256": "608005a429b63e5ccec1dcc6124bbf68c54a21b8d28fdd60383f9e12513858ef"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1800-fold4-evotrees_mae.jls",
+      "bytes": 1430795,
+      "sha256": "9f899b6cc4aa2d7932656c8fb2d4f41047e9672c260b4d020f5032f161f86765"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h600-fold3-residual_mlp.jls",
+      "bytes": 469211,
+      "sha256": "b8c0b2defaad73977a7ee952bcbfc141b32fee726c41c65d59c58a4d1a9868c0"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h60-fold3-evotrees_q10.jls",
+      "bytes": 1328276,
+      "sha256": "9cbeeb5e0c2316f2f3533165ae92646c963897779ba3c2a54a98bf6609375335"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h60-fold3-evotrees_q10.jls",
+      "bytes": 1328276,
+      "sha256": "58637061c3745e1b4b5b1e1b3bbd9ae6c11ecb56a160aec9579b8a1140e56d43"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h120-fold4-evotrees_mae.jls",
+      "bytes": 1381173,
+      "sha256": "cc59e00ca14b743c3894cddab9caea36efa7c413f9118abf133c8c90cf307e2e"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h5-fold2-evotrees_q10.jls",
+      "bytes": 1282589,
+      "sha256": "8e230624e30e783f0e58629e581dfe928dd1e9a80ae9a58ce9bf81af5efb1501"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h60-fold2-evotrees_depth3.jls",
+      "bytes": 1228608,
+      "sha256": "f8ec6ef027560115b43558ba562c4b31a4fc2454c04fa173718d5470031cb16c"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h60-fold2-evotrees_depth3.jls",
+      "bytes": 1228666,
+      "sha256": "42733ebc36048f51332f514e82cd4252f70955f677385fb04e69f43a7ebf3d71"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h300-fold3-neural_tree.jls",
+      "bytes": 2139639,
+      "sha256": "21b102160ff9e522d34bdb6f44cb89aacbab3aea93265b63664e4d13ac337d9b"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h600-fold3-preprocessing.jls",
+      "bytes": 649872,
+      "sha256": "977da7957acb0aa7535bf3e848dd67b9b8da59b03ef37f3caae70d943b764a0c"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h5-fold3-evotrees_depth5.jls",
+      "bytes": 1435724,
+      "sha256": "ce227d69f46a1842e8c2cbe98d1f57a173d448ac792a6321aa074fb4eb53be13"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h3600-fold3-tabm_ensemble.jls",
+      "bytes": 1755142,
+      "sha256": "77a767d1c4471e2f70089d001d4ad4e154e85c49b8e8682d567d1c1286792c8f"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h600-fold4-neural_tree.jls",
+      "bytes": 2261621,
+      "sha256": "666e096844c214f2bec60414f629c66162cb935e31a22f87041c402e8795d34e"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1-fold4-neural_tree.jls",
+      "bytes": 2279477,
+      "sha256": "c4c9e88c85e9c440f967aab19c6bbec6d475fc6795b166d89c1ecea092616c9f"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h120-fold4-evotrees_depth5.jls",
+      "bytes": 481137,
+      "sha256": "79641d43d08d7bbfa2ae8cc4aaf6f4ec7bd11fe23cd8454b6fc543a52e90d331"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h5-fold2-evotrees_q90.jls",
+      "bytes": 1282593,
+      "sha256": "f9b24a67c0fd1450126cfe1357d5802bf52a6bf71922d939c514f14cd9317fbc"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h600-fold3-evotrees_depth5.jls",
+      "bytes": 1427531,
+      "sha256": "97c827135d4628709a8df7b9debf06625abfdd4491bcede43c39247ce1278c03"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h300-fold2-evotrees_q90.jls",
+      "bytes": 1243305,
+      "sha256": "587877055256ce3fa898108dc0a8d3ad52706bc1198c7c0f8235b80c78a5da6a"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1-fold3-evotrees_depth5.jls",
+      "bytes": 1443735,
+      "sha256": "2ef302d503219d36605d2d1f718d82ffa4075114506eb18800ebdabc97ea509d"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h120-fold2-preprocessing.jls",
+      "bytes": 180654,
+      "sha256": "760b60424d55b60ecdc8ed889619384610b3037f03c597c01d028fb203403723"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h120-fold3-evotrees_mae.jls",
+      "bytes": 1314889,
+      "sha256": "6c137f51e3dd92814e5a33f84b568fc865a9a1601478567a5dbc94b65f97fd31"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h5-fold2-evotrees_q10.jls",
+      "bytes": 1282589,
+      "sha256": "b8f4a1e6e975ed0729e4056f151095d87665763f7f71774b29478106e3375a03"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1800-fold3-evotrees_depth3.jls",
+      "bytes": 1362478,
+      "sha256": "793627c38c78be25f6437f75888762f5f298d4952def6cfeef113bafb9c39ace"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h120-fold4-preprocessing.jls",
+      "bytes": 678371,
+      "sha256": "6c47a465e7945cfcdde89ad79ece971b155046df4c6e9f4d19f47d08d4f97d92"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h3600-fold2-evotrees_mae.jls",
+      "bytes": 1251009,
+      "sha256": "5841cffa0d8901cfaa83ca6157a37a22ec71abd58da38596c6addd30f625f4cf"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h3600-fold2-residual_mlp.jls",
+      "bytes": 1440696,
+      "sha256": "c8d7b02441048eafd9cec858f0c793447c1489ed6cf73fb3ee4e0b48a6457393"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h600-fold2-evotrees_q10.jls",
+      "bytes": 1263109,
+      "sha256": "657a6a0b9617da8d99a0d2af9011d82a5365121af9f94da553fa000ecbc69963"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h300-fold4-residual_mlp.jls",
+      "bytes": 476007,
+      "sha256": "bcfc7c78f76c613950f746a34ed12ed9df6872e3b15d0107c71cfb07815d9352"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h5-fold3-preprocessing.jls",
+      "bytes": 654523,
+      "sha256": "37cd35845842e3765b622d83b8a710859c308c00033717420c60e2ba3e869f2b"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h60-fold2-neural_tree.jls",
+      "bytes": 1968328,
+      "sha256": "2c46faf4360edbdd1b977c71c5d6da907b32c65345acab62cb933fea758f62fd"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h20-fold3-evotrees_depth3.jls",
+      "bytes": 1363435,
+      "sha256": "8f3d6843005405ebf213b8ad6682ade0297ad510f8c4b8453d57889796f4d701"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h120-fold2-evotrees_depth3.jls",
+      "bytes": 1216749,
+      "sha256": "79a1bffd868f85bb941727c2e429a7544124ee4231a2fac66bc1f4df186f1c59"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h5-fold3-tabm_ensemble.jls",
+      "bytes": 1767738,
+      "sha256": "d313ff2be3c0626cbd67d700c425c7f6849ef17623dee29a17636dba7f52f1bd"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h3600-fold4-tabm_ensemble.jls",
+      "bytes": 1839348,
+      "sha256": "32e97550438b102c0aba658e3eadd00d22f8da64471ef3f64b5a103dee241e36"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h3600-fold3-evotrees_depth5.jls",
+      "bytes": 1425624,
+      "sha256": "cb8d27a0054388463158dd4feb8496a0d1ad74f2318f2c879c9dc43103b8ff7a"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h600-fold3-neural_tree.jls",
+      "bytes": 2166832,
+      "sha256": "9f787814764f4e9326aeb36d42b81573e4d7279a1b14e4be604613f22182c21f"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h3600-fold2-tabm_ensemble.jls",
+      "bytes": 1622835,
+      "sha256": "35e27a0e0477c92ee249deb5971a16ef70de05a9420f3cae543b8fd9c5d1e185"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h120-fold4-tabm_ensemble.jls",
+      "bytes": 1787614,
+      "sha256": "fcdb4e9c4ccd9c4faf41fc6b188c2df217d8ac4d377b1a3d097c68684e794299"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h300-fold3-tabm_ensemble.jls",
+      "bytes": 520794,
+      "sha256": "b3c3e1a5067c8f4eb68b023475ad24e6b4c426b7994ae079d34357a67054f6eb"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h120-fold2-evotrees_depth3.jls",
+      "bytes": 1216747,
+      "sha256": "a0ea2958657e0848237a767439ea56854be2883cb352401bc28598bedfd95c9e"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h300-fold2-tabm_ensemble.jls",
+      "bytes": 496070,
+      "sha256": "048feac94a40869354a57f1277131bb838462124fdbe45caf5b750222c6b039b"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h300-fold3-evotrees_depth5.jls",
+      "bytes": 1409129,
+      "sha256": "7708b2ea08e675a899b2cbdaa77965c891a897d7fa2340babfc4e266ff0f8f44"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h60-fold4-evotrees_q90.jls",
+      "bytes": 1400415,
+      "sha256": "bc2451cdecf6df1785284ba71707001eff8b8de30f2e18c70388677430004e46"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h600-fold4-tabm_ensemble.jls",
+      "bytes": 1834230,
+      "sha256": "87edbe77c4997624d931fc8886100cdb61ac55e690a9ca1f3368a9bc4a00c3d5"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h300-fold3-evotrees_q10.jls",
+      "bytes": 1341034,
+      "sha256": "2a9499530d6d1412df192c78b3d7364977255957086f7cf9d9cf15a9883e7624"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h120-fold3-evotrees_q90.jls",
+      "bytes": 1314896,
+      "sha256": "432eac05b500cb48615657d10d622b9aae42ded7a88133f19b70201d13aa209c"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h120-fold3-evotrees_mae.jls",
+      "bytes": 1314889,
+      "sha256": "89a4029ff067c01e4c7fdcd2e5bcceb2ff502d4798bbe01b4081a29a0a55133a"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1800-fold2-evotrees_q10.jls",
+      "bytes": 1287423,
+      "sha256": "65fd2f98376b561b527c26c1db2a363173b3d4555c5acd8db7040041f7fd071d"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h5-fold2-evotrees_depth3.jls",
+      "bytes": 1282694,
+      "sha256": "e37b3f028df8a4d12c6907780c949aaee98627a9492f89841d1662300853a3d0"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1-fold4-residual_mlp.jls",
+      "bytes": 1639515,
+      "sha256": "2adfe9f8ea5e3d45b47a8fdcaabadf9206183a6c2488c5c479d6135abee7f67f"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h60-fold2-evotrees_q90.jls",
+      "bytes": 1228535,
+      "sha256": "51cb7a407c8ac8cdfeb33f479a812075197315d4b362f95296277ed39fc1f371"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h5-fold2-evotrees_depth3.jls",
+      "bytes": 1282698,
+      "sha256": "8363523e63ebdeff7cbf42212655056eb089be0748b8e696ede114a77dab1a07"
+    },
+    {
+      "path": "joint-models-v1/pca-kmeans-3.jls",
+      "bytes": 1235104,
+      "sha256": "45be77de55e3a9c6fa6c9caa07d09bebe91bb7467b97aeb895e9d44b5a82c068"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h60-fold2-evotrees_q10.jls",
+      "bytes": 1228541,
+      "sha256": "7a32bf8110fab5b602a59c0b6cb19ce82b23c4267757cc5d0bd9a944aeb1899d"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h20-fold4-evotrees_mae.jls",
+      "bytes": 1426954,
+      "sha256": "0e57b4accbb58e55b6ca17ebf9b629302242d20fae9dca1ce431e70c9fc0c024"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h300-fold3-tabm_ensemble.jls",
+      "bytes": 1735800,
+      "sha256": "56a8890ab73b35a2965d2f7c09fa5422db8e8b1376d402e5611384bb202b6441"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h300-fold4-preprocessing.jls",
+      "bytes": 686823,
+      "sha256": "d2a4f80d507019d54535a0b45303ba5e1c19bd795797f5f02809c7fb5390150d"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h600-fold4-residual_mlp.jls",
+      "bytes": 476007,
+      "sha256": "0fc966dcac8e89e502a0514cd4442d9f5e7c8d73b26562c4abde7dbca10d1a0c"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h120-fold4-evotrees_depth3.jls",
+      "bytes": 412985,
+      "sha256": "e2b79b049a332ee4a234afab564c68321f5367cdd0627336b4527de0fd3324e6"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h3600-fold2-residual_mlp.jls",
+      "bytes": 1440696,
+      "sha256": "b894e3d25c35d8a5be1978a5436d50972ef2be7cb456b8253ef32e6b6128225d"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1800-fold2-evotrees_depth3.jls",
+      "bytes": 1287462,
+      "sha256": "21260d482f18b290f23e55b6d7e7b3e3d59201e31a046dcab405bb40931a48a3"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h120-fold3-preprocessing.jls",
+      "bytes": 631762,
+      "sha256": "5f6b546bfe6ea5ae2eb0bb0d0b09f784b8f80a06809f3399c4edc0612eca50bf"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h120-fold4-evotrees_depth3.jls",
+      "bytes": 1381173,
+      "sha256": "54b0cba629ee199f1687aaaabd10a9f700573f885ce8f5ecc5e0f499de4f3b8e"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h60-fold4-evotrees_q10.jls",
+      "bytes": 1400415,
+      "sha256": "da24b17ec6ceaf088a44f7092571e094dafd07e77eab9d6ecb5951923bce039c"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h3600-fold4-evotrees_q10.jls",
+      "bytes": 1424583,
+      "sha256": "0da49e96a24de952a0ef9b0b0d3997d91b02c79e1e0ba6696c110b41d9be4919"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h600-fold4-evotrees_q10.jls",
+      "bytes": 1420203,
+      "sha256": "48a4c4abdaf0e1adec42f2cf4f4957bc736a9ca81be7f19876545f431bcd5eb1"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h300-fold3-neural_tree.jls",
+      "bytes": 636313,
+      "sha256": "2efcd630f92837c768e85298c478bde3b024ffe1144577d459b5e45ecd9a0ad1"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h300-fold3-preprocessing.jls",
+      "bytes": 641061,
+      "sha256": "6e809c58d70abcc358472864d8bfad9dc5ea565c92e62e804e7247a36088904e"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h300-fold2-tabm_ensemble.jls",
+      "bytes": 1615186,
+      "sha256": "fec79c48ddbbe21091b69495755a5641d9937326675a1a9b2fdfb784a4a47dd9"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h20-fold3-tabm_ensemble.jls",
+      "bytes": 1762485,
+      "sha256": "28969300b2cb3a46dfc0de0f1858ab09ad0dbc512e0de3e23030c03fae2c1708"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h300-fold4-evotrees_depth5.jls",
+      "bytes": 480819,
+      "sha256": "ebe680bd945f0cf5084c984cbfc45fee4d4873d47cc8920e3cca19b30d08ab20"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h20-fold3-evotrees_depth5.jls",
+      "bytes": 1431583,
+      "sha256": "85c0900c0813cf152b94968fdc126c8325eece08834968917e8c5c6f8657b287"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h5-fold4-evotrees_q10.jls",
+      "bytes": 1429134,
+      "sha256": "28f5969a0e8914ec0ba937419f94ea2cf1c0e6eef4b0b8f7d300cbcf09abe71c"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h5-fold2-residual_mlp.jls",
+      "bytes": 1475796,
+      "sha256": "1223b9775e9ad498aee497e9d4a012818908adb211cd220c606e3dbb7796ad9b"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h600-fold2-tabm_ensemble.jls",
+      "bytes": 1638575,
+      "sha256": "9730a99a84d05be03060473a4700607f9b7714d73c11e20a4bc4632ef5fa9bdc"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h300-fold2-preprocessing.jls",
+      "bytes": 564853,
+      "sha256": "f975234cb742f13557331bc9ecbb6070bd328c8c7d72b14c9d1c287cc824eb25"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1-fold4-evotrees_q90.jls",
+      "bytes": 1431974,
+      "sha256": "4cd8d841a69055160a25e2970b46e461d2905dfcf66a355c25e5ee0f061da1ce"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h120-fold4-evotrees_q90.jls",
+      "bytes": 1381178,
+      "sha256": "a9d81321d48f55c25ad65b80b84933f283f39c62ed42ba64d34e23f4ec05c5f2"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h600-fold4-residual_mlp.jls",
+      "bytes": 1626939,
+      "sha256": "f031774c6a8f395a2ece567bd6a3fa766223ff18d3ba94150cc803d51011a4fb"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h120-fold2-neural_tree.jls",
+      "bytes": 605957,
+      "sha256": "4fe81da10e7c27cc5f0979d791e521261fb20e66810c70a874a2cce6cee9bed2"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h60-fold3-neural_tree.jls",
+      "bytes": 2120249,
+      "sha256": "1eab7ea3b0c270d8d957d7e9f5ab5a63c1235c87d84f78f9874e8f1329a83fac"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1-fold2-evotrees_mae.jls",
+      "bytes": 1299927,
+      "sha256": "a7ffdcf42533049cbed630d9fd8a691bc9c276d998edd235e50a23021ccd6177"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h5-fold3-evotrees_depth3.jls",
+      "bytes": 1367594,
+      "sha256": "d80c04ccad2f3e6bc85d840211e527e8ca1454357722f9e01cc95863835a11af"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1800-fold3-evotrees_depth5.jls",
+      "bytes": 1430630,
+      "sha256": "3879bc00ff93573ef77eadb19fb9195458a0a484f8b84918e5f98f33a566cac0"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1-fold3-tabm_ensemble.jls",
+      "bytes": 1777654,
+      "sha256": "85a962a88fa2034f16734c3fe88cfba842cbb06000c12fbda847c1f34ce1bdfd"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h300-fold3-evotrees_depth3.jls",
+      "bytes": 1341061,
+      "sha256": "69086a58a007ef584bca12ba1d39f5a78dabdf158d3bc51338afd5044b71c44a"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h120-fold4-tabm_ensemble.jls",
+      "bytes": 1787614,
+      "sha256": "e7e380de3ffcfb9606387961045cba2a7d3af3cdbd15a9ca45bb44cf92cca9d3"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h600-fold2-evotrees_mae.jls",
+      "bytes": 1263104,
+      "sha256": "c68a901eb48e8dfb3e090758d0053b885f4fcb974633eded0e9d24504953b8f9"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h60-fold3-residual_mlp.jls",
+      "bytes": 1526655,
+      "sha256": "5a1db6982ac82298fddcaf5fc456afc839483df567d793c9434b014db665b159"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h20-fold4-evotrees_mae.jls",
+      "bytes": 1426954,
+      "sha256": "5b62aa203353045992fd7efa159939258b2cc37932a3d0a2acbc09665c9806c8"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h300-fold2-neural_tree.jls",
+      "bytes": 1990545,
+      "sha256": "2521ff7ce471fb72f731ee01833181b57f0babfa90444f56fd529986c81d01c9"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h60-fold2-tabm_ensemble.jls",
+      "bytes": 1597257,
+      "sha256": "a34c8730f6b7cfddfb787c5dc53ba359b53cd994fda071b7e27cc182c5b0f243"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h300-fold2-preprocessing.jls",
+      "bytes": 564853,
+      "sha256": "12c8dca0e9fe7b8c5675269419d0dc8e291aa325c17bce77a36dd50b181bd8bb"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h3600-fold2-evotrees_q90.jls",
+      "bytes": 1251014,
+      "sha256": "4e9760781253fe17113021d688d20f127846ac8acb0551222d7a44be994e09d0"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1-fold2-evotrees_q90.jls",
+      "bytes": 1299934,
+      "sha256": "185d50053950994ae61de0cbd016e58605030c2c8c31dc1dc4b95b66f53068aa"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h120-fold3-preprocessing.jls",
+      "bytes": 237810,
+      "sha256": "52a250f099c593bc99a8640de4cdf69d4065f0d395fdda02b9640db0b7102867"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h20-fold2-evotrees_mae.jls",
+      "bytes": 1271897,
+      "sha256": "d48ab74069c158c2eb47a257e719841fff9796708d5a806031c277cf25841674"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h600-fold2-evotrees_q90.jls",
+      "bytes": 1263113,
+      "sha256": "f2c95a26b69c8ea16c2f7aa72fbbd87bee553bff99a05ccb0f6e4e39c5c927f8"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h3600-fold3-evotrees_q10.jls",
+      "bytes": 1357653,
+      "sha256": "0c70309792d2877ac572b7302a07fa76edff49d80efb73f4f4ae1a3f7680fde7"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h120-fold2-tabm_ensemble.jls",
+      "bytes": 1582758,
+      "sha256": "7c3d0c070d87de77611972ad6079c75328ba1d8cc71a1c79f413dd79f894a575"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h20-fold2-evotrees_q90.jls",
+      "bytes": 1271896,
+      "sha256": "8723ee054074f75f3f5587ec2ec8e9ab48975a49bbec2544903aa27dc8a9f338"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1-fold2-tabm_ensemble.jls",
+      "bytes": 1684061,
+      "sha256": "c78cd2879bb55b0223a939dff1a4cdf35b32cfefc95e3724bfb036f1d1398407"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h60-fold4-evotrees_depth3.jls",
+      "bytes": 1400410,
+      "sha256": "4ccc1921651a72a0d4384597d34b553a9c38bfacd72102dadc0ad17c08e4dccb"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h20-fold3-tabm_ensemble.jls",
+      "bytes": 1762485,
+      "sha256": "6fb0c13753fb97b5dbb7d3ab10db50fd7e953cad1ca27c95b9d0ad9a6d232879"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h300-fold2-evotrees_mae.jls",
+      "bytes": 1243294,
+      "sha256": "8a2aa8addf3a4b670d75ad60309e8aba84054900b2426387033b4866394d9782"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h120-fold4-evotrees_mae.jls",
+      "bytes": 1381173,
+      "sha256": "8b9df83b99089633744244e0ad00fb53f01cfb1b2c6737c44f4fd2d89415b90d"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h5-fold4-evotrees_depth3.jls",
+      "bytes": 1429129,
+      "sha256": "f4677aeb7536415b003d75591538083ac30221c948f618f822a9506f9e0c5bca"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h600-fold2-evotrees_depth5.jls",
+      "bytes": 454844,
+      "sha256": "dda1376609de46f04ebd9e363d24f34b0f69202862696226138db5314e24a38c"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1-fold4-preprocessing.jls",
+      "bytes": 702657,
+      "sha256": "eece3248aeaa7a997a1cabade92bca5df79c729c3b52a4aa462c2163bae25679"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h3600-fold3-evotrees_mae.jls",
+      "bytes": 1357648,
+      "sha256": "280cc5c945954d913e607159365dc5b7c9d9bf1a6c0b3b00a7b800b43fe8cfb7"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h300-fold2-tabm_ensemble.jls",
+      "bytes": 1615186,
+      "sha256": "ec1ad7b7c38525026d24dbd760443d50b91466e110030485d7e87c69885a8453"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h5-fold3-neural_tree.jls",
+      "bytes": 2179385,
+      "sha256": "89c28b056b8b027c6ed6443b1c136d11815706a6c768c8ab6c854c011c231f95"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h3600-fold2-preprocessing.jls",
+      "bytes": 568188,
+      "sha256": "d586cbe2fcf3b428db8a094e3c57f21f870e1cf8bb162c1ab3c9618d6bc93d9d"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h20-fold4-preprocessing.jls",
+      "bytes": 697350,
+      "sha256": "a658ff0a145b5cf45119522f28e74c569373c0f62eb34b8b8ad6023095440057"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h300-fold4-evotrees_mae.jls",
+      "bytes": 1406398,
+      "sha256": "f6cfa30ea0d884957a745b80c25f791ac45a614ccb8ab9914ba222ec5918656d"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1800-fold2-evotrees_mae.jls",
+      "bytes": 1287412,
+      "sha256": "3354b44a109c12d1cb70d344dc37db98905092e0cf6c2850d1d9d7679ea1b584"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h5-fold4-neural_tree.jls",
+      "bytes": 2275115,
+      "sha256": "aecec85dc9de8f30ca9f2a7080be6cb22ab2d55a71f6760cb5936b1de03767ff"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h600-fold3-evotrees_q90.jls",
+      "bytes": 1359338,
+      "sha256": "79dc699235289eda65651a79b4b361604a8bbf6a7fb059bb7c8c3696b5180cdf"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h600-fold2-evotrees_q90.jls",
+      "bytes": 1263117,
+      "sha256": "b01fb9af8c55f52b4f3ad24da1ca4de0fa952608b60ecae6997de3b8e6093cfa"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h120-fold2-evotrees_depth5.jls",
+      "bytes": 454892,
+      "sha256": "2e2a100d535c24f043d789e95b7182a65fcdfe43c4b976943bda9c83966ab93a"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h20-fold2-evotrees_depth3.jls",
+      "bytes": 1272005,
+      "sha256": "7dfc4d10f0ed2598df30d7463ade50ae748ca284a5fdf3c02c8bc2ce1c00c411"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h120-fold4-preprocessing.jls",
+      "bytes": 266568,
+      "sha256": "428f4590d6a64d05d0c4e67f169e3cf9ef9d05f1f14d1a525bc1db934fb93fc1"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h600-fold2-tabm_ensemble.jls",
+      "bytes": 496070,
+      "sha256": "651b6a75d5742b908eae1c8df0cb88b6f125560e40bda3efe7de4a54ec52e17f"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1-fold2-residual_mlp.jls",
+      "bytes": 1494530,
+      "sha256": "cb0dd080e87f8abc0aa52ac9c6698dc8749ffc2ac2a65d76f84861844f2a8ace"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h300-fold2-evotrees_depth3.jls",
+      "bytes": 1243300,
+      "sha256": "1166dbdb4c09b8539eb01cb5f7b80803ee402721ed272fc4e6f9b4acb9284765"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1-fold4-preprocessing.jls",
+      "bytes": 702657,
+      "sha256": "ab2ad4b33c1f266c41e2cb44628f777d7461be0ab1b6e19116a88573bfacba83"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h300-fold4-evotrees_mae.jls",
+      "bytes": 1406398,
+      "sha256": "6e2525e8ee77dc97058282c24ffc4eedd1d3c7658370b2a5455ee08576f4b878"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h20-fold2-residual_mlp.jls",
+      "bytes": 1463959,
+      "sha256": "5a9015e1ad911a86b895c1430077a1aae4c8083e50bfeea6225d783e223fc284"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1-fold3-residual_mlp.jls",
+      "bytes": 1577083,
+      "sha256": "05abb4c5fef9f023d66258168d0ef14d3e44ce989e3055e54b8c44071e291d24"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h600-fold4-evotrees_depth5.jls",
+      "bytes": 1488036,
+      "sha256": "7f3df84811792d6423799c0c4f13e18d914ff89588058a4fe6c7fcd2c6b5cd92"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h60-fold3-evotrees_q90.jls",
+      "bytes": 1328276,
+      "sha256": "7cf3046970dc68d4eef39133077ca103dff29366d8ecf3ec27f0026121290c76"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h300-fold2-evotrees_mae.jls",
+      "bytes": 1243294,
+      "sha256": "2c0b4f73641aa2dbdaed6c83e9cdfdc76772f8cd0b4a8e57e9cb76c421dc0a41"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h600-fold2-tabm_ensemble.jls",
+      "bytes": 1638575,
+      "sha256": "f4cb15d92cb77f237f6bf53cb4d7a2b3dedacb2223e4ed3eeb19d4ee577e2841"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h120-fold2-tabm_ensemble.jls",
+      "bytes": 496070,
+      "sha256": "3e11764654f1c45ec637e6f48e1285c0cbaf575125f3e348f2a7acc838d509fe"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h3600-fold2-evotrees_depth5.jls",
+      "bytes": 1319011,
+      "sha256": "c253b525b009575ac8a9b7b20ce7da03e5b7f73dcc35ccb3ac8ea5f37f07e707"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h120-fold2-preprocessing.jls",
+      "bytes": 555201,
+      "sha256": "a650cf59350558ddcebba2aa05ea83ae2e73c5e49cd028d07e1ca096f4089d1d"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h3600-fold2-evotrees_depth3.jls",
+      "bytes": 1251023,
+      "sha256": "2d87f601b4468852b6a7174b29aac1fa2dd738252dcbf24eb7170318a7b3fc10"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h300-fold4-neural_tree.jls",
+      "bytes": 2241471,
+      "sha256": "95cdcd52a51b5830ec33712e039de1ff187c8b927fb5686671d6f86a034c71de"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h3600-fold4-evotrees_mae.jls",
+      "bytes": 1424578,
+      "sha256": "fe4139d51b2b11e1692fe9c16b42ff398b13b55d43b1bbb09104d48b7f45d2e4"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h3600-fold3-evotrees_mae.jls",
+      "bytes": 1357648,
+      "sha256": "6679c42cc50738af7f847df53daf7ba1802d7beb46e29b5c99f5d46886388323"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h120-fold2-evotrees_q10.jls",
+      "bytes": 1216694,
+      "sha256": "3ec21853a2d417032df12524e0b9f5dfff7162709b9d4cb5b2cfdb72bab3d757"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h600-fold4-residual_mlp.jls",
+      "bytes": 1626939,
+      "sha256": "db792a27006404d46590a63142c1ef2b876e546d9bb2a5fb2e58ee3d49eef261"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1800-fold4-evotrees_depth5.jls",
+      "bytes": 1498535,
+      "sha256": "53088ffd0744c4885967e8ebc8992dda4ff84d75d1db433e7778b461aa4c6f35"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h600-fold2-evotrees_depth5.jls",
+      "bytes": 1331336,
+      "sha256": "b0aa3bf0d76b8e841e3bf7e39d98fa884ef29af42b33507220fb0ca3c2a087e7"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1800-fold4-evotrees_mae.jls",
+      "bytes": 1430795,
+      "sha256": "1adc9f32db3f4ab013b123250d143f29d358a4c2ea452eb04e821eaf21c7710c"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h3600-fold4-neural_tree.jls",
+      "bytes": 2268083,
+      "sha256": "ef564f8023f06d64852f3c58b9744e62240662eaf0067bbd0f291e0c2a49acac"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h300-fold3-tabm_ensemble.jls",
+      "bytes": 1735800,
+      "sha256": "9417a6bfb18ce5063bde84bc96e064bca6c062545d3123174de71309aebd8e87"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h600-fold4-tabm_ensemble.jls",
+      "bytes": 528258,
+      "sha256": "e8c6148a1b6c058b747f4d444cf324086792aa77fc8f150f7b3d7774cad729e9"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h300-fold4-neural_tree.jls",
+      "bytes": 645569,
+      "sha256": "fe245aff9202f2e9f05f059d4d3e007e1f09ee99fa933b38153b6b5af55e1c13"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1-fold2-evotrees_depth5.jls",
+      "bytes": 1368139,
+      "sha256": "890a0c63c5ecc4f69650cb892999f9ce4ddba3dec6d53b1e8be776bf98a841fb"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1-fold3-evotrees_q90.jls",
+      "bytes": 1375572,
+      "sha256": "923728cb51e2620c352c1de2cbae6b503da88c62a59e36b72fdcd97d17f42683"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h5-fold3-neural_tree.jls",
+      "bytes": 2179385,
+      "sha256": "9bfed905b96abd7fcf86b0994b8e44b9c5d4785d019b91d36005c8b9e68ffe62"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h60-fold4-evotrees_depth5.jls",
+      "bytes": 1468336,
+      "sha256": "125f62004375917fdf94efe3113b347111a9809de4c7c87ddfbedd6f7d45f833"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h3600-fold4-neural_tree.jls",
+      "bytes": 2268083,
+      "sha256": "f9e38a5e21681d6271f4fe46b0d58134ad064ca80150584091489b229c1d89b1"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1800-fold2-residual_mlp.jls",
+      "bytes": 1480818,
+      "sha256": "89e5467ecbc3d9e23178c009af8125aaf5831e5cea94c5fbe964aed6915292b6"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h5-fold2-tabm_ensemble.jls",
+      "bytes": 1662767,
+      "sha256": "420f8c2259861b21e9f3435f9255ea0fd7e5d3b8669f1b73cc737b682c672fe5"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h300-fold4-evotrees_q90.jls",
+      "bytes": 1406403,
+      "sha256": "bc0ad8ec932f92792a398dc2a74015662acd6f45b74f110bfdea116fe6e0dc7b"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1-fold4-tabm_ensemble.jls",
+      "bytes": 1848566,
+      "sha256": "c4567e7c2e7824062753c0291b505b7fa5656633027f61daad65695e1dc1d668"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h300-fold3-evotrees_q90.jls",
+      "bytes": 1341034,
+      "sha256": "49b6d77b98d64a6255ec9c2adb3977037552d564bb4575014d42c847eb349b88"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h120-fold2-residual_mlp.jls",
+      "bytes": 1405707,
+      "sha256": "d454dbc0d55ce4884011fd08fb4d7530486d593840ee2a0150691ecfcdf79386"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1-fold4-evotrees_mae.jls",
+      "bytes": 1431969,
+      "sha256": "282152a6bd0bdb517fb5cc8cc3b5efd6b57e39e883c5242a880658b3b4c52f55"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h60-fold4-evotrees_depth3.jls",
+      "bytes": 1400410,
+      "sha256": "d2e4a4f027d08ca630881ce1ede1b6bd4ceb34021102107c9137e3971b8f68aa"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h120-fold4-neural_tree.jls",
+      "bytes": 2203485,
+      "sha256": "d1af574e7c37fa4a1ba05fa33fd30d9b9aa648a8acc3df98cfb944ac61a2067e"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h600-fold2-evotrees_depth5.jls",
+      "bytes": 1331290,
+      "sha256": "235023895da1a4d42c293e25a93dded95eb5e82194acd8184640318e35840336"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h300-fold2-evotrees_depth5.jls",
+      "bytes": 1311448,
+      "sha256": "9d42ac2291f319554d79a7d49b7dbd70320871bac97173e6fdf1e627727a27c4"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1-fold4-tabm_ensemble.jls",
+      "bytes": 1848566,
+      "sha256": "63b141da5502912712816c176d227514447bd7949c897cfebfc05c7274b712a8"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h60-fold3-evotrees_depth3.jls",
+      "bytes": 1328303,
+      "sha256": "0cd78160274c0f49607a4d98a5374013671047091b743d661fc3e2072a43920f"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1-fold3-preprocessing.jls",
+      "bytes": 659455,
+      "sha256": "e71512121eae1ccb6828c5c7c1f585711d3ef21e8901cee552d2760af2c50872"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h600-fold2-preprocessing.jls",
+      "bytes": 180526,
+      "sha256": "5fbf3847d9976e21f945bb78c0db66708ee4ec5ed74500fe86f473c830b748d8"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h120-fold3-evotrees_q90.jls",
+      "bytes": 1314904,
+      "sha256": "8f31aa5953fe83bf42b90e114a13b6c8ea3b36c545c99906736ce9cb976769b0"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1-fold2-neural_tree.jls",
+      "bytes": 2075932,
+      "sha256": "25acbf6cc4575dac40277a0a287c011f1713bdd5fb0f8d7abb6465700aaefa1f"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h120-fold3-neural_tree.jls",
+      "bytes": 2099872,
+      "sha256": "413f8e01bbc24a54b03171555c497868818a2122b341103b6024ec5166ac3573"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h5-fold3-evotrees_depth5.jls",
+      "bytes": 1435710,
+      "sha256": "8ad7d1c4bae2184d1746c0525ec7948e29da610fac376aa58cb5890fdd9c0936"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h60-fold4-tabm_ensemble.jls",
+      "bytes": 1810730,
+      "sha256": "7ee1dcc41327d3a317c9f4afb7620abb5b3267363e6ec9ca1f266b00ebfdea2c"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h20-fold3-evotrees_q90.jls",
+      "bytes": 1363430,
+      "sha256": "82a44dc3fa77d6b0d3897753a4508e935f0369f74034791dc46a81bbe283912b"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h20-fold3-evotrees_q90.jls",
+      "bytes": 1363434,
+      "sha256": "2dcecfc1a6629b1a1f7ad21217c9bc62b62c73930600b70bb0beb9e342ea8cbe"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h20-fold3-evotrees_depth5.jls",
+      "bytes": 1431623,
+      "sha256": "00f46aaafda9f4b00e4ae8dbf683c9536668aebee18123a53d26d3e7f1d28b0b"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h120-fold2-evotrees_mae.jls",
+      "bytes": 1216703,
+      "sha256": "38e8b7859d354705d781e53090d8f4a0105aad3ec2a2d1f7f31eae531af38913"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1800-fold2-preprocessing.jls",
+      "bytes": 583438,
+      "sha256": "ce6f9e08c256f456b503ba9c1a720a9f84a7fb20714c1b54a559011807fb02ac"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h60-fold4-residual_mlp.jls",
+      "bytes": 1606255,
+      "sha256": "c8681c0debba1f19e121944a1e1071361f61cd76ae2908a7f46c0c1673aa6e47"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1800-fold3-evotrees_q10.jls",
+      "bytes": 1362465,
+      "sha256": "bb5aaa597389aa8541a153e335985d157249a2536362fac09260ac7711d6dd83"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h600-fold2-neural_tree.jls",
+      "bytes": 605957,
+      "sha256": "5bb3e349159b5a846014aa1962211085c442d8423d96f21a6bc5ed07173aa150"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h600-fold4-evotrees_depth5.jls",
+      "bytes": 1487994,
+      "sha256": "6f69cf7bc9f857db6b3323aabf7d62273dc272a01b8144aac1ea34d240665938"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h600-fold2-evotrees_q10.jls",
+      "bytes": 1263119,
+      "sha256": "83c130baa1787bd4333b11b9f73bbcc696db5e40992a6ab45549a3980594f907"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h5-fold2-evotrees_mae.jls",
+      "bytes": 1282584,
+      "sha256": "731bcc26e99b60270ccd6667dae6bb6f8e07c82834cf651dcced41e7de9c4a50"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1800-fold4-evotrees_q90.jls",
+      "bytes": 1430800,
+      "sha256": "4fb60aac3718d434973ee3e1debc3d89f182e7852097816d39ca0cc8fd9d86f0"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h300-fold3-evotrees_mae.jls",
+      "bytes": 1341029,
+      "sha256": "4dcdfb49a12e1ce1ce8d69fb42c42f60dd2b7e5353fcd57d71a43d987fff0882"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1-fold4-evotrees_mae.jls",
+      "bytes": 1431969,
+      "sha256": "e4cb92bf6cc154690e912c19de3fc5cdaa0ec25a74930eb1613f2d6fe5f0c151"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1800-fold2-evotrees_depth5.jls",
+      "bytes": 1355538,
+      "sha256": "8851119ac8c44c0d063eef534443608cc271805d04cf0575e1e8b93c7d7c205f"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h60-fold4-neural_tree.jls",
+      "bytes": 2232489,
+      "sha256": "7ea840344372dd6d8f75a4bf29a8416754bda95bebd1ffbffd9732dd1fc8a581"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h300-fold3-preprocessing.jls",
+      "bytes": 641061,
+      "sha256": "da0a58d6b58b0d7df5275f3d7fb1cb7572dba29392a5626297af7696c840799a"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h120-fold4-tabm_ensemble.jls",
+      "bytes": 528518,
+      "sha256": "a6b1f91888b380cf2650203b846603aed86fef698bfd4329533b527a84a014c1"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h5-fold4-preprocessing.jls",
+      "bytes": 699821,
+      "sha256": "d4ddc04bc24470131314c96a291cc624fe7551f143685b2050c1c7911181efaf"
+    },
+    {
+      "path": "joint-models-v1/pca-kmeans-5.jls",
+      "bytes": 1235296,
+      "sha256": "88cf66280ed005b914a6cc7e5472ac80e2eff9122bc83a7d8aa5c0eb17e32f36"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h120-fold3-evotrees_depth5.jls",
+      "bytes": 1383071,
+      "sha256": "764d3c66f19fdb49b696fa3a99c11407878e2a19fd8f97f6b85338dd059b2f29"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h20-fold2-residual_mlp.jls",
+      "bytes": 1463959,
+      "sha256": "fe9d9738c8400bc7746a043fb7dcbd36c6901f2a5049d6321dbb5218d85bc8ec"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1-fold3-neural_tree.jls",
+      "bytes": 2191605,
+      "sha256": "134adf4c53563a86b2f3d12b45cd4257f06d87eb56578ca5e74f46adcb5e2305"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h60-fold3-evotrees_mae.jls",
+      "bytes": 1328271,
+      "sha256": "11bc0c01557c1ec1bb7186a48baea7ab7653ea8989dce470ed79c2f87dfd3cc1"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h60-fold4-preprocessing.jls",
+      "bytes": 685767,
+      "sha256": "4137c9c6c7a157b4e5892462ea6b7b0dd17ee25edb37bc48a8b2c794a8d23102"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h120-fold3-evotrees_depth5.jls",
+      "bytes": 1383065,
+      "sha256": "6502805963bfafc71ea5acd083d9d31cdc6d9c98c8b1285f2892608d108083dc"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h600-fold3-evotrees_mae.jls",
+      "bytes": 1359333,
+      "sha256": "d79c81eb54e98d50771009837bcf4d7a522f7bc390d691c87869740ba38d73d6"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h3600-fold3-residual_mlp.jls",
+      "bytes": 1557259,
+      "sha256": "e16bc5d746bad091f7e625ee28c35424f15962d1347837c2a76dff996693ef09"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h120-fold2-evotrees_depth3.jls",
+      "bytes": 386922,
+      "sha256": "d73f170a86542a82ac1fc415db23c6feada5c0bfd7b4098dce2fe077ff41d6e8"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h60-fold2-evotrees_q10.jls",
+      "bytes": 1228535,
+      "sha256": "5984ae48f4556a8b36b659ec8dcac7e9525f72016e291f184b82580262e4f9db"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h3600-fold4-evotrees_depth5.jls",
+      "bytes": 1492356,
+      "sha256": "9d7edce8f23dafb9db4c368802d89aac5ae447d706bb848daa640e21986dc4f7"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h300-fold3-residual_mlp.jls",
+      "bytes": 469439,
+      "sha256": "16401dff8b44c2e67c9993e184cdfd9d7167d2cebfe9dc47e13f5f9834d0310e"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h300-fold3-evotrees_depth5.jls",
+      "bytes": 1409105,
+      "sha256": "50e61c2c7c8818895025803191a6542ed83af2a16f65fd7ea681c7f0a27da5e3"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h20-fold4-evotrees_depth3.jls",
+      "bytes": 1426954,
+      "sha256": "465c1ea4ea76b20a14a9a1523e4eda3f0425500912ac0c398e6d87a66809088f"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h60-fold2-evotrees_depth5.jls",
+      "bytes": 1296806,
+      "sha256": "e79013c8e428af72b9468b170430dbb2aafa50a74426fc87dc24be358dd31220"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h3600-fold4-evotrees_q90.jls",
+      "bytes": 1424583,
+      "sha256": "add83889a355f3ff6c53f84dea8d83d2ef02b091e1dee015a7586f51fff902d1"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1800-fold4-residual_mlp.jls",
+      "bytes": 1638115,
+      "sha256": "b4301a39a0592279bf1e5a6166f80fbb1496725fd4a9a13f5b626b4fc34b786b"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h3600-fold3-evotrees_depth3.jls",
+      "bytes": 1357648,
+      "sha256": "228352541689a39dc0d89699949e71a9f702413b47bc2395989ae0834a478cc8"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h5-fold2-preprocessing.jls",
+      "bytes": 583478,
+      "sha256": "224e485dc7c4ff3d6599c903400c3f1d34a0e68d1a24db47529f1802602e56c0"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1800-fold3-preprocessing.jls",
+      "bytes": 650223,
+      "sha256": "9fc99171b03517fd76c93e8579c4035c65b15f44f4f9bf064c3ff3202c8e938f"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h120-fold3-evotrees_q10.jls",
+      "bytes": 1314894,
+      "sha256": "260e7f0349444ebb461b270135c4079ec5029e84ab01b3ba8e802a0ba03a08c9"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1800-fold4-evotrees_q90.jls",
+      "bytes": 1430800,
+      "sha256": "8b2188e5a458847c66f7b372e41ef34c3ebe8044308c4e195f8a8dd99338d0ce"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h60-fold2-tabm_ensemble.jls",
+      "bytes": 1597257,
+      "sha256": "18a6137a4a6a4921233deec50ea3f3e8588019d2357e42d16623cc7aef7f59bd"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h3600-fold4-preprocessing.jls",
+      "bytes": 689499,
+      "sha256": "afa5b1d8d7d5b60bd925ddc0f0bfa3cb2d06b1b1e445c198b7f59490be5dc92a"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h20-fold3-residual_mlp.jls",
+      "bytes": 1563738,
+      "sha256": "95ac898ca9f5933efad2c93da9d462d6cc28b12ee0d4a65295e62fc248f614d8"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h3600-fold2-evotrees_q10.jls",
+      "bytes": 1251026,
+      "sha256": "2bc5cef7b1443ef279470760cf21a4326d71a3e16f4da805cd73a5e96ce7f0a6"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h120-fold2-evotrees_q90.jls",
+      "bytes": 1216682,
+      "sha256": "93303d8c96c4f8969305b90fadcf55c6444308f9bb6d540abe8ad198ab798a2a"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1800-fold4-evotrees_depth5.jls",
+      "bytes": 1498561,
+      "sha256": "68fe40160ef291bafcc36febe7d87637464e20a8a42df24de247168b862813cc"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h5-fold3-evotrees_mae.jls",
+      "bytes": 1367556,
+      "sha256": "9fb5d25289cb68e51816e3b7020540aa359c76815b7977ff68d27b0b008815ec"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h20-fold4-preprocessing.jls",
+      "bytes": 697350,
+      "sha256": "243020f4b1c38d951a0dccc05fb33a5ebc6a88e27c346df8d18a1b4c45130405"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h120-fold2-residual_mlp.jls",
+      "bytes": 447531,
+      "sha256": "76c74b8f2cad917cc1264d90460a518de410bb4876623e6ac0b27cfdcd5d5c68"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h120-fold2-neural_tree.jls",
+      "bytes": 1949669,
+      "sha256": "46ce70398a3bb4981596d43033b8dfb6a65635f589c225340eca2389bb94081a"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h60-fold3-tabm_ensemble.jls",
+      "bytes": 1720250,
+      "sha256": "df413c0de8f9a0c07e6da7b590581ea7fff143e2c312ef2969d4c9cdafac16b2"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h20-fold2-evotrees_depth5.jls",
+      "bytes": 1340123,
+      "sha256": "3b2ae8f728d8c87d9ed3a3666b81e303f7da43544d35643958e2aaa0c980cfc5"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h60-fold3-evotrees_depth5.jls",
+      "bytes": 1396371,
+      "sha256": "50197c8f6fd9eb01ff55a824cebd4321907f536c4ff92d321a7cbe916c50bc11"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h300-fold2-evotrees_q10.jls",
+      "bytes": 1243299,
+      "sha256": "8b2fd39c923c3e4b6282a25b9f6401ee5489ecf9249a5d0f1d0db2ce8549e186"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1-fold2-evotrees_q10.jls",
+      "bytes": 1299932,
+      "sha256": "3fcbb3a8af7384eb721e4a20a00c6d42a6b51d9e497f48edad70a554860e2c4f"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1800-fold4-neural_tree.jls",
+      "bytes": 2277597,
+      "sha256": "29787876c6ebce01c67a963a76a14ba217906814005bf9c1d5f8c812ed9256e6"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h300-fold4-residual_mlp.jls",
+      "bytes": 1612453,
+      "sha256": "4edf43ad856c7e313a551ec7e8c214c84fd2d78e32b2397fbb0ffea8b1a30b2c"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h3600-fold4-preprocessing.jls",
+      "bytes": 689499,
+      "sha256": "fde662bda48186817d687a616eae6adeeb05e286e679de4d3c21949c31358037"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h20-fold4-evotrees_q90.jls",
+      "bytes": 1426959,
+      "sha256": "1a11ab4d9910040f15531eaad6369307ad1e333439f0064f2014ec1fc70318f8"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h60-fold2-neural_tree.jls",
+      "bytes": 1968328,
+      "sha256": "6359d94bc374d81203bbfd6c6fe1e20b441abba4c01379d8905336716375c2b6"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h600-fold2-residual_mlp.jls",
+      "bytes": 1454548,
+      "sha256": "884a7b251d636932152248c8e77bcee17efe7cc1772eb9aef1d569a6282f6dff"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h120-fold3-evotrees_depth5.jls",
+      "bytes": 474811,
+      "sha256": "58fdf37771d0149e30d2c488494677ec36f9b8b59778d17768cddfe052dca397"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h20-fold3-neural_tree.jls",
+      "bytes": 2172788,
+      "sha256": "8500fd543ad2564c6d3046ce1ada5fb8f886ef6548dfd6394e3228f2aee935af"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h5-fold4-preprocessing.jls",
+      "bytes": 699821,
+      "sha256": "d4cbe490303584881675fc85dbf0e2ee61eb3642b2b181e06321484caea21952"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h600-fold3-neural_tree.jls",
+      "bytes": 635989,
+      "sha256": "9f88c00dcaa1b2ad04accc96419312b0959f3055b6d7adc0aa1ef399756a7359"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h3600-fold3-neural_tree.jls",
+      "bytes": 2163717,
+      "sha256": "aa1b55efbee3fa6303aea9bccf22632202ed13b1fb89d9bdb2a34d8784104811"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h300-fold2-residual_mlp.jls",
+      "bytes": 1433911,
+      "sha256": "a30809ba16357228b673ea511a4dc100df2a588f709f6bfc5cb7c16e104897aa"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h5-fold4-evotrees_depth3.jls",
+      "bytes": 1429129,
+      "sha256": "a5ef51d1445a51660d72d71773d1b3ac88b9e72aa7f46b0784a984766fcb193d"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h300-fold3-residual_mlp.jls",
+      "bytes": 1540285,
+      "sha256": "076d7c413c28705f7db510013bb3c294b90011438e74efdb379f30de58dfe6cc"
+    },
+    {
+      "path": "joint-models-v1/model_matrix.jls",
+      "bytes": 227070823,
+      "sha256": "45295fbd4d69d7cabc41673ce8490833cfd337bcdea3c638dd18b291251ef243"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h20-fold2-evotrees_depth3.jls",
+      "bytes": 1271937,
+      "sha256": "b0755bd4a0afeede8a4345cd5ba682539c0d626ca854215e2b91148459124268"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h5-fold2-evotrees_depth5.jls",
+      "bytes": 1350796,
+      "sha256": "1049747b55f9873dc08a11b8e23f7c513652d23bdaee32ba936e7b54a51b2a72"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h20-fold3-evotrees_mae.jls",
+      "bytes": 1363425,
+      "sha256": "9d779e3c98c63752eb83a41f3e895ec2943ab8c63a762986f18bcb651aee64aa"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h3600-fold2-evotrees_depth5.jls",
+      "bytes": 1319027,
+      "sha256": "5ba778b6f5b1067933c057e875294bfd185b881ea621774c064d9085988a990e"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h20-fold4-evotrees_depth5.jls",
+      "bytes": 1494930,
+      "sha256": "2294bdb8ae060dac1e5d7255e9c0ca2e7b92428283d8c44807da8dd0d7b5a90b"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h3600-fold2-tabm_ensemble.jls",
+      "bytes": 1622835,
+      "sha256": "209c789e45a8467fe18996409cf4a1aab59691a913cb6b6dd726eda675db14b8"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h5-fold2-evotrees_depth5.jls",
+      "bytes": 1350806,
+      "sha256": "1f38805a71f7b87f4b337c602a1f10117f4a98810a1935c3b4909133d54f3ac9"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1800-fold3-neural_tree.jls",
+      "bytes": 2171091,
+      "sha256": "d07fa35460d1db87c238f00ad148586c95c6741deba65646872d5e57f814f013"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h20-fold4-residual_mlp.jls",
+      "bytes": 1634046,
+      "sha256": "1c67d9f1b3b7daea06f3f57a8441c5f65a7bc2164cfc5bba2b9dbe29a884b484"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1-fold3-evotrees_q10.jls",
+      "bytes": 1375566,
+      "sha256": "a089094614836ffe5516c0150d77ab70ed6fd40704c1163cf0d8ddedf9dfc692"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h20-fold4-evotrees_q10.jls",
+      "bytes": 1426959,
+      "sha256": "1e42cdbe9ab31795da19113d26559d1b7138679c05a1791c03968928e456cbf1"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h20-fold2-evotrees_q10.jls",
+      "bytes": 1271896,
+      "sha256": "c84f2902397bf4ef4f14cb9ad8507cb3183e4f631ac1ea062d35fd56b7f5bb12"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h600-fold3-evotrees_q10.jls",
+      "bytes": 1359338,
+      "sha256": "6fed31afc2f43dd878179a009179c5db8ef8da4b4dda03309e3c15aac928277d"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1800-fold3-evotrees_mae.jls",
+      "bytes": 1362460,
+      "sha256": "75fdd37e6155e1681c3018986bd81838a5e7dd31db8169efd778a6fb8a717535"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h600-fold3-preprocessing.jls",
+      "bytes": 237500,
+      "sha256": "1cb3e09b6b5779010f74015afa39a5cfb8d33e9a24d3a2e4fc8365941cb31b8a"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h20-fold2-tabm_ensemble.jls",
+      "bytes": 1649330,
+      "sha256": "824f7d7562aef539d6882e24c0a744e387ea2f4d5d2fc654b33bcdfda3e4d164"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h5-fold2-evotrees_q90.jls",
+      "bytes": 1282589,
+      "sha256": "f80448fc8a826d0797fae5bfd03811bd588c6c08dd6b65e7ffff20335918a757"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h120-fold4-evotrees_q10.jls",
+      "bytes": 1381178,
+      "sha256": "e6cf1dbc887d8e285cf78ff3d8a0ecf53187e76fb443af51a564abddba9f7d86"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h300-fold2-evotrees_q10.jls",
+      "bytes": 1243319,
+      "sha256": "8cff89bc2fff02033a22e3d8493472eed40e79f9617fe56f0ca48c9840e1e945"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h300-fold4-evotrees_depth3.jls",
+      "bytes": 1406398,
+      "sha256": "aaef477e6a29b5f668afab5a16bf3ed08579dfe04a1e809fdb43bc9fe665a94f"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h60-fold2-evotrees_mae.jls",
+      "bytes": 1228530,
+      "sha256": "cb8250fefeca7ca73ad6789e7d57453fa84f906748d473d74960a6beebf3b9e0"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1800-fold2-neural_tree.jls",
+      "bytes": 2056556,
+      "sha256": "12004426063b649dc58dd5828e5b1592681fb758b858b2b58f1724c6f27ecb48"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h20-fold3-evotrees_q10.jls",
+      "bytes": 1363430,
+      "sha256": "97804b37fe0abc05bcf92109018ff7c3fd1db40681b8bedac4d47bea014302bc"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1-fold4-evotrees_q10.jls",
+      "bytes": 1431974,
+      "sha256": "319a98709bcd137cb079d534d361d683a48f22aac1a5a224f566b808540dfeba"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h600-fold4-evotrees_depth3.jls",
+      "bytes": 1420198,
+      "sha256": "0242b6c055f39c5ba9a412d4138b38f177661ccd5b84966e7eac197744258ecb"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h300-fold4-tabm_ensemble.jls",
+      "bytes": 1817856,
+      "sha256": "08c3be7d60c6b907fa23fca1376fe5fb84474afcc540dc168728c556256ba645"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h3600-fold4-residual_mlp.jls",
+      "bytes": 1631385,
+      "sha256": "83a8f58ff0bb414d51c3dec249025696a6ce4971a7a0e112dec16e7ab476bfa8"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h300-fold2-residual_mlp.jls",
+      "bytes": 447531,
+      "sha256": "5440f1187d242440c2c4575079d6abe1c155ef14e9538760c6428eced1729dc9"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1800-fold3-neural_tree.jls",
+      "bytes": 2171091,
+      "sha256": "70903ae411d07c9995c0fadaa5b84314a8d07b098072e224b7cb91c90a891a57"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h60-fold2-residual_mlp.jls",
+      "bytes": 1418126,
+      "sha256": "ba7cf0782a204be8d91261fa45ea45f18cd3669cfcd1853039322789b2f9f2fb"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h60-fold4-neural_tree.jls",
+      "bytes": 2232489,
+      "sha256": "650cff5a1b91659d00095dee319a98495677e1e70f26761b5754ba9c495120f2"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h600-fold3-evotrees_mae.jls",
+      "bytes": 1359333,
+      "sha256": "3a7ac7288ee033d892b9251729186f864297b50fd14c575ab4fcc1526b183cf1"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h60-fold3-preprocessing.jls",
+      "bytes": 636559,
+      "sha256": "030eb96d33d1fa7553614d993e2cf962d2df7fc68cc41c20e1d99e5bcc69cc11"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h60-fold3-evotrees_q90.jls",
+      "bytes": 1328276,
+      "sha256": "8e1d19d5090901c01a8358caf969ee114c367a3e2990712b74e313cf58390d40"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h300-fold4-evotrees_depth5.jls",
+      "bytes": 1474160,
+      "sha256": "93fd8c955a1d361ec2b90e2cf8686cd766b7c0366ca968b5f61ee1e52469c5b6"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h3600-fold2-evotrees_q10.jls",
+      "bytes": 1251020,
+      "sha256": "125e6a3c5ceaf9727ea965f8ff7037aef0cb625a64209c7ab20cff09b7584914"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h5-fold4-evotrees_depth5.jls",
+      "bytes": 1497117,
+      "sha256": "8ac529007e8a2dda1c556d70cf2705e8b83a85b1be6aae4a686f69df8cfe34bd"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1-fold4-evotrees_depth5.jls",
+      "bytes": 1499993,
+      "sha256": "9bd881d729b41314605995882d470cc3954d77193543350e2aed438032bbb01b"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h3600-fold2-neural_tree.jls",
+      "bytes": 1999922,
+      "sha256": "399a3f275b10714d1bd0de522ce7b9c0c90618d51008444ec03d2d3f6a67867a"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h20-fold4-evotrees_q10.jls",
+      "bytes": 1426959,
+      "sha256": "dd1730ad7693479c55f701be64ffd5a0b3fd709fd4af5b2d93a2bd2215a2c3de"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h5-fold3-tabm_ensemble.jls",
+      "bytes": 1767738,
+      "sha256": "ab20e984ce3313a3bc8c658585ee1a758a940f592a8eaad4a85627ed4a61b97a"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h600-fold2-residual_mlp.jls",
+      "bytes": 1454548,
+      "sha256": "43992347cafc0a226baaf4127328b26eeac5321ce1147ae95e12246b0d9798f5"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h120-fold2-residual_mlp.jls",
+      "bytes": 1405707,
+      "sha256": "2af8d9093fdb40a369b5088af20a5467f96cfe31cfad2947eea15573b4eeb3e3"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1800-fold4-evotrees_depth3.jls",
+      "bytes": 1430795,
+      "sha256": "8d0ec02bf93feee1cc15276c065f16fcaa766e7747a13996d81727065a65db31"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h300-fold2-neural_tree.jls",
+      "bytes": 1990545,
+      "sha256": "b0d481aef8d8bb9edeb86fe6d53feebef8433886cf3fd856196122d3103927a2"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h60-fold3-evotrees_depth5.jls",
+      "bytes": 1396455,
+      "sha256": "3aea71a0be3f23a963d45467dd4f221c8922927ef2b07f660f25883e9295be63"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h3600-fold4-residual_mlp.jls",
+      "bytes": 1631385,
+      "sha256": "79fcececd7cf66b8dd9e5d8a6b9cbd104acd0debc85f9545920b3bce4c6d0d4e"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1800-fold2-evotrees_mae.jls",
+      "bytes": 1287412,
+      "sha256": "b194518b6db4ac61163f5462b523a72156aeb2a0748090c24856d7006f8aa2a2"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h3600-fold4-evotrees_q10.jls",
+      "bytes": 1424583,
+      "sha256": "ff4d5c70869c31c7aea44ccc5534049947e4070bfaf4ffcacc9b20ec24e049a0"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h20-fold4-residual_mlp.jls",
+      "bytes": 1634046,
+      "sha256": "be5f08fb360fe7bb355eea07ca1f96770c0570c912ed883a59ddf37d7e56420d"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h600-fold2-preprocessing.jls",
+      "bytes": 573310,
+      "sha256": "6aeea4183c7568a633b7356c5e9cda5449591f7433a70f286f52cd47ec52db36"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1-fold3-tabm_ensemble.jls",
+      "bytes": 1777654,
+      "sha256": "90265854a5f7995ac17563216dca4bfb04722384362eba6c385a4798c3d45c24"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h3600-fold3-evotrees_q10.jls",
+      "bytes": 1357653,
+      "sha256": "e6ed629f9139b3547a30b011f7f869720d2b92a0aa1bf8ea444b5db807388add"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h300-fold2-evotrees_depth5.jls",
+      "bytes": 1311434,
+      "sha256": "3212d63f22a0d3a0391a798249ed27e9a86424aea2d7e01579a07ccb945da19e"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h5-fold4-evotrees_mae.jls",
+      "bytes": 1429129,
+      "sha256": "b513510ab43b14dbc3b9601a1cf7e565e9bbbb7a9bcdd67923c57b4b8c19c13f"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h5-fold2-tabm_ensemble.jls",
+      "bytes": 1662767,
+      "sha256": "beffe7c30f60ebfc089612ece1831497416c8669b8142c891bcea16a0e6a429f"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1-fold2-neural_tree.jls",
+      "bytes": 2075932,
+      "sha256": "dc8122a0f941127bfb7e029743eba1b7b146b2cb18b4789e581edeab1408650f"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h600-fold3-evotrees_depth3.jls",
+      "bytes": 406645,
+      "sha256": "fa1d2fbb6c30d6ffcbc767231277c1c02501d29c4902a88c8e9744b16b5c2039"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h60-fold2-preprocessing.jls",
+      "bytes": 558614,
+      "sha256": "a7745e32685148ebb9f00043d39379e5ecee416cc759a5f3236490731ea7dd47"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h20-fold3-evotrees_q10.jls",
+      "bytes": 1363430,
+      "sha256": "f3a0b7fdb7a6edb7a0a1f495b0d2394bf87c2fcd4dafcb8da212b6f9e9dd8083"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h20-fold2-evotrees_mae.jls",
+      "bytes": 1271871,
+      "sha256": "18f3e9c06a9d9e33ce112278499aa2ab8e02e3d72eba732f5d865fd7e6d5ce03"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h600-fold4-evotrees_depth3.jls",
+      "bytes": 412783,
+      "sha256": "1028f95de438f0a1b2ae3d2e610cb73abc5ac5f0f283b83c05c01292673fc856"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h20-fold4-evotrees_q90.jls",
+      "bytes": 1426959,
+      "sha256": "98298112890ec752b64f98e445f615f9ef59d18010a8a1aa31ab50dccdb4071d"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1-fold2-evotrees_depth5.jls",
+      "bytes": 1368147,
+      "sha256": "ad388b255e839ae15f6fb23c0b873c0f3636a7a523685cc1e4afb6ff6471a126"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h300-fold4-residual_mlp.jls",
+      "bytes": 1612453,
+      "sha256": "03fceec9648b5fba62eb8955064c4c68e66521130b1914e14dc39aa58a8b2fb4"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h3600-fold3-evotrees_q90.jls",
+      "bytes": 1357653,
+      "sha256": "5d92fe70ca9efcff6a00caad892ff5d1f983e4b7c39e549f9a4e291c7d1862a6"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h120-fold4-evotrees_depth3.jls",
+      "bytes": 1381173,
+      "sha256": "7ca8996d3f0429bd3487c500e3033ad8d2e75f273760a0e4031dd0a98ea91528"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h600-fold2-evotrees_depth3.jls",
+      "bytes": 1263196,
+      "sha256": "0532d00d8f9c7336b75c0cd802640dd33e2312a9d0d0cfe48211d358c4fb091b"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h600-fold2-neural_tree.jls",
+      "bytes": 2019438,
+      "sha256": "027dc3340c5b4f055a3663cac261bd31a091129b82d24ff37820db41a1ff0496"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h300-fold4-tabm_ensemble.jls",
+      "bytes": 1817856,
+      "sha256": "ccd51321570d89a97efd40f8411e994393ed8f787e492b59c05bde8886598990"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h600-fold3-evotrees_q90.jls",
+      "bytes": 1359340,
+      "sha256": "5788885bded1c5846036450e8c1333a3102f2a59f4f87323428adc1f0fd3c7c5"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h120-fold4-neural_tree.jls",
+      "bytes": 645893,
+      "sha256": "58c0331756ad35f8fc67b404395e2189f505a5ac5af20162dae945fe4ce2f79e"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h3600-fold4-evotrees_depth5.jls",
+      "bytes": 1492372,
+      "sha256": "17cc0de9b01c0079f2b0cc74fa45f7285f15a356dea964e648e81fea42cd4999"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h300-fold3-evotrees_depth3.jls",
+      "bytes": 406847,
+      "sha256": "17e2d0b509fedfac41007240575dfc737720ebe4ef0f0f62dd5a3ca52363d182"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1800-fold2-evotrees_depth5.jls",
+      "bytes": 1355590,
+      "sha256": "ed4350e908e5d644f658f85701afa17c397841fb2fc1e54034a8d54bf57e902c"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1800-fold2-residual_mlp.jls",
+      "bytes": 1480818,
+      "sha256": "5a2680305439b5d3c311a8eacb049a301691315fe6936a7448bdd2e1caadb515"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h5-fold4-evotrees_q10.jls",
+      "bytes": 1429134,
+      "sha256": "d42a54c51850273d2663c256a28cffe60ccd86142181a57d84d5151565d8fdd9"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h120-fold4-residual_mlp.jls",
+      "bytes": 1586083,
+      "sha256": "35c5dae4d7d4a14ec14d047e357628a84d09701e33f255714c2a44a61289bbe3"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h3600-fold3-evotrees_q90.jls",
+      "bytes": 1357653,
+      "sha256": "5751768ab84e966d900fd889d4f94b0370758d147a2a5b336f2a1a10499b4636"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h20-fold2-preprocessing.jls",
+      "bytes": 577205,
+      "sha256": "6007cab7bcef584065557194da0148d6c3d6ae4b90d43fc92039be842bb04a43"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h5-fold3-evotrees_q10.jls",
+      "bytes": 1367561,
+      "sha256": "04eb22cfe00c046f815383c2a503440207b81dc35d52929bf09464bd979b83f4"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1800-fold3-evotrees_mae.jls",
+      "bytes": 1362460,
+      "sha256": "0f841aaab173b27547406a5d55ec06a1c4aee8dd512caae7bccb11f169a45b7e"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1800-fold3-evotrees_depth3.jls",
+      "bytes": 1362462,
+      "sha256": "0f203e2924e30583a678679925fd01a80324a46b4bbab8a44c367930c853c6fe"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1800-fold3-evotrees_q90.jls",
+      "bytes": 1362471,
+      "sha256": "d8c75ed95cc7598281f7d3db8f2c0353ab22d5de2ad2f640cb87d2f1f5b7babd"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h120-fold3-preprocessing.jls",
+      "bytes": 631762,
+      "sha256": "a2b4ad44b0a1ea465b60435d5d9b78c9edfb03af8ad3113c102208c5a7047734"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h300-fold2-evotrees_depth3.jls",
+      "bytes": 386922,
+      "sha256": "65eec7af3c27748f566d532527ee7cc0fca3904f6250745db87ddc7886ef7150"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h300-fold3-evotrees_depth3.jls",
+      "bytes": 1341037,
+      "sha256": "a11720a886d36ac1b5794eefaa1967d82b842516e0827717da898ea82a38dacc"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1800-fold3-residual_mlp.jls",
+      "bytes": 1562617,
+      "sha256": "2d0c64b849da2730dc4257d91c34cc8d1907c13759fbe725f6d6709122056a85"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h20-fold3-residual_mlp.jls",
+      "bytes": 1563738,
+      "sha256": "7341d749d7108a281024c8c7a43896e01f49ac0974b637c9b50276a9949f6373"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h120-fold2-evotrees_q10.jls",
+      "bytes": 1216670,
+      "sha256": "1190a526b49d8608aaa23737a09f8344b1d55ded00e49e67c87a3b6c7976a8b7"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h5-fold4-neural_tree.jls",
+      "bytes": 2275115,
+      "sha256": "6f4a563f47c62deeafe4b31dab33b88d25ef179f3ac82e8c9ea78e66101dc967"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1-fold3-evotrees_mae.jls",
+      "bytes": 1375561,
+      "sha256": "3cbba19481bf52fc61fd4d6e1b390bf58630c1276fb31471c31c3af0fbe7e3ee"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h20-fold2-neural_tree.jls",
+      "bytes": 2032881,
+      "sha256": "2274136308e066864858e867ba80c8af9092f4ebeeb18d1a69e8bf8adad34cd1"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h120-fold4-residual_mlp.jls",
+      "bytes": 476235,
+      "sha256": "fc9f0e54393d71b5c858a455e7286b33857addbed10fd43c1ea5a99716a9078a"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h60-fold4-evotrees_depth5.jls",
+      "bytes": 1468426,
+      "sha256": "5e058caea570d8ccce62bb9b4bb2d62dc3eb5be60f44adc4ae86673371ecb2dc"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h300-fold4-evotrees_q10.jls",
+      "bytes": 1406403,
+      "sha256": "a931e15aee836f7fb47310f71cf5f528ca6e0d92daab6650bbebc900fd566c70"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h5-fold3-residual_mlp.jls",
+      "bytes": 1568319,
+      "sha256": "ed47c50721d5637f0bee556608c3cc7312d58de90ba1537115505de59a0eeed4"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h600-fold2-evotrees_depth3.jls",
+      "bytes": 386922,
+      "sha256": "883f4c39bcc634ae3758476efc60b98b8fc97e06575516464860f8bc0b16a2b4"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h600-fold4-evotrees_mae.jls",
+      "bytes": 1420198,
+      "sha256": "ff26dd0a823ad070f06c46414297b95db8957eb44256ad00f99d2517772a2956"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h60-fold2-preprocessing.jls",
+      "bytes": 558614,
+      "sha256": "8289878ffb13b3b6d8f7a460e051cd118e0b3180600ca8af2c367ecf2b0d3de9"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h120-fold2-preprocessing.jls",
+      "bytes": 555201,
+      "sha256": "3ae3a6be66444cf56691b9fa59dffe7cbf5ad66c6d7068bea8c43d5bcb378af6"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h120-fold2-evotrees_depth5.jls",
+      "bytes": 1284871,
+      "sha256": "6e0e8b0a40403db1d23c7a067422b688b02ee5819801c01d67d0090635fc287c"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h600-fold3-evotrees_q10.jls",
+      "bytes": 1359338,
+      "sha256": "c32dbe6c6715c4f10a30880e0ec5e101d0f8bab6f503529e865a4f5931f29e9e"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h5-fold3-evotrees_q90.jls",
+      "bytes": 1367561,
+      "sha256": "f71442531e4c23e32174825b3b895732ca176d878b5cac2ce61163e443424a76"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1-fold2-evotrees_q90.jls",
+      "bytes": 1299932,
+      "sha256": "1ff3506ae19de9a8fba1973638662233fa5c5f17ebb12e9c5334af62ab9f9b0d"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h60-fold2-residual_mlp.jls",
+      "bytes": 1418126,
+      "sha256": "b4765ddd54c88733b6346302f8834a92c779e8eb88b65ef38f368941082cfd53"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1800-fold3-tabm_ensemble.jls",
+      "bytes": 1761172,
+      "sha256": "0dd6512848847b3fe09e5c7fcceae4495ef96d2535081591867909e6f90d5d6d"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h300-fold3-neural_tree.jls",
+      "bytes": 2139639,
+      "sha256": "682b4bb24291ca8963455cfa90e01cba6aee30cabb990703230b3d388bf6760c"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h5-fold4-evotrees_q90.jls",
+      "bytes": 1429134,
+      "sha256": "605881635c6f9d0a3a23c645e50f41a727c59b5c16656024b9392bc1a8f371a2"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h300-fold3-evotrees_q10.jls",
+      "bytes": 1341034,
+      "sha256": "86bca3de5d798b41043be0d30ae136888e888877b45615f6e8b0815823c91a91"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1-fold3-evotrees_depth5.jls",
+      "bytes": 1443795,
+      "sha256": "6cc77d532d82d808478dd8b2d09314eeb4aad459bf8fdf88ba91fce5b76683d3"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h5-fold3-preprocessing.jls",
+      "bytes": 654523,
+      "sha256": "baa7a7ff7f356259b96f0a735950bd857580e645559e4f10751759e7941dfe13"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h120-fold3-tabm_ensemble.jls",
+      "bytes": 520794,
+      "sha256": "29c65258a7bbcdf01a10d31c2a991a7eeb107cddd05634e5b24eebc7df4e108e"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h120-fold4-evotrees_depth5.jls",
+      "bytes": 1449131,
+      "sha256": "77afbff6e47588f32ba8e1244965652243ef20abf335dc17a4d58317d526b3f0"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h120-fold3-neural_tree.jls",
+      "bytes": 2099872,
+      "sha256": "04a7e4a762ec8d5e77d6c513123e580993b812b419043f9cbcd46f19d972c532"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1800-fold4-preprocessing.jls",
+      "bytes": 695599,
+      "sha256": "06abeb2048434f9b6ab6be3bee76ec3449a620ceaf6b65e2382c1fa7fd2dd8fa"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h20-fold2-evotrees_depth5.jls",
+      "bytes": 1340043,
+      "sha256": "00031ddabf7f6c4ce1f3ee32011459f33f2ae63e555ca77960e5a720d28b1110"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1-fold4-evotrees_depth3.jls",
+      "bytes": 1431969,
+      "sha256": "697c02c4b600c4988b27ca2f6e35373aa999202c871b226d726bdc5c2c87e6e4"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h3600-fold3-preprocessing.jls",
+      "bytes": 648199,
+      "sha256": "3eb623233f2b12001ebcbde81e424e0163685035d2a6d0226e1196a3ee4c1f82"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h3600-fold4-tabm_ensemble.jls",
+      "bytes": 1839348,
+      "sha256": "c2a22b238485c73d5e4f1b114782ba195e26b1d1762bbf6ad8812d7121f1d55a"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h20-fold3-preprocessing.jls",
+      "bytes": 651420,
+      "sha256": "affca3cb6c069abf5d64209c7b607af75b6ee6814e2432f56764fa3f21bc11fc"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1-fold4-evotrees_depth3.jls",
+      "bytes": 1431969,
+      "sha256": "c52b99b6be82f5efafdf03e06815eb5a60a40221aaeaf6d4c517157770284d48"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1-fold2-tabm_ensemble.jls",
+      "bytes": 1684061,
+      "sha256": "8213e26d60fd4ae92113b0cb38c1ce082eb5f5d991dc9ebb8144f1e2b8252ace"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h300-fold2-evotrees_depth5.jls",
+      "bytes": 455084,
+      "sha256": "63189c1bd87a05e2e911a4049072330b0275763cff73a93187d9f833a31344a1"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h300-fold4-evotrees_depth3.jls",
+      "bytes": 1406398,
+      "sha256": "8a952d8f17cdb976f195f837a532659a7213b0adfb5b1d0a027bf3fa2d488f5b"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h600-fold4-preprocessing.jls",
+      "bytes": 694051,
+      "sha256": "c7796ab12f5a018ca248aae7a3e58a4282ead5c5bfc0c6c66dcb86e1c02a37b9"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h600-fold4-evotrees_depth5.jls",
+      "bytes": 480889,
+      "sha256": "412ec66bffa340aec73ec01dd1cc31bdcbf24cd1d3ef5d5ecbe5fba71d70a810"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h120-fold2-evotrees_mae.jls",
+      "bytes": 1216683,
+      "sha256": "5b2ee3c33ae08ea58f2e5fb817ed0443ce4696f4202de83ec5c1e742bed0dbb7"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h5-fold3-evotrees_q90.jls",
+      "bytes": 1367561,
+      "sha256": "8fec6b221693392b402fa4e4cd0a1473ae351ff9b67828011cb3858daeb5b9d5"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h5-fold3-evotrees_q10.jls",
+      "bytes": 1367561,
+      "sha256": "0915a4d7857a039d89efddea7662e7e4d5da81f9aefa55d62261be6c29ce7be0"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h3600-fold3-evotrees_depth5.jls",
+      "bytes": 1425652,
+      "sha256": "ba91cc1f497d097b5cd5091487b39339f79ab671c058bfe626ec35a614542df7"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h300-fold3-evotrees_mae.jls",
+      "bytes": 1341029,
+      "sha256": "c9d642a76c42d5e643a21e406e9051f74c7e62bcd84d60861574f70d4ba082c7"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h120-fold4-evotrees_depth5.jls",
+      "bytes": 1449031,
+      "sha256": "486d7fb126d9ee30ee21c49a74fd3fedad6b49eebeceb28464913f7f164b2264"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h600-fold4-evotrees_q90.jls",
+      "bytes": 1420203,
+      "sha256": "7dd6cdfeb867f7a9d328d3a4e46bec6f2feb0ef21a7394a7abdecd76b0870e87"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h5-fold2-residual_mlp.jls",
+      "bytes": 1475796,
+      "sha256": "b34289c095f615f83eb40e35d2dbee0f6cce88c0682c6b725293eac5fc6e2bce"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h3600-fold4-evotrees_q90.jls",
+      "bytes": 1424583,
+      "sha256": "7fc0cb5f8f5d704e5a281fe841754dce3e0ff8edbdf17d406e0fca83974ff122"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1800-fold4-tabm_ensemble.jls",
+      "bytes": 1847006,
+      "sha256": "af8645019ddbb45d9a3665658d9f5ebe60521ed0b7da961c6dbd1da34149e71b"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h120-fold3-neural_tree.jls",
+      "bytes": 636313,
+      "sha256": "77f7de0c2c7df1f3ff4d81bd89c0abbbeba985543a88de2fcd3613a54b7683f7"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h5-fold2-neural_tree.jls",
+      "bytes": 2049518,
+      "sha256": "f190580913455ab07efe34477e1c9981c241eac62bf727de732af2403afad69b"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h5-fold3-evotrees_mae.jls",
+      "bytes": 1367556,
+      "sha256": "eb5447e2e49580a2e7731637259fc7993132bdb2606e349a41f6b6fd2e4b94a4"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h300-fold4-tabm_ensemble.jls",
+      "bytes": 528258,
+      "sha256": "e2452aba4cdfc36b0ca9ab6286d1e44baf1cddd0caaddf17660dc24cd8c816da"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h600-fold2-residual_mlp.jls",
+      "bytes": 447531,
+      "sha256": "74a27a2830eb22edf876f8ae53c8328dcd69a84fa9b4de579d0f7fd823e55c75"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h5-fold4-residual_mlp.jls",
+      "bytes": 1636401,
+      "sha256": "6d6011ab058f936419bc9fa205741f294055c66b230bfebc0ce0af82dfb9521a"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h600-fold3-tabm_ensemble.jls",
+      "bytes": 1757809,
+      "sha256": "6543cebf6092fcbd10ddd89748ef6cac397899f1c1e7d52a3837168e5aef3f7b"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h5-fold2-neural_tree.jls",
+      "bytes": 2049518,
+      "sha256": "96da8b7b72ab9c9bb868fc017b798fa0ccef3b86624bf7b547b313dcac05e96f"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1-fold3-evotrees_mae.jls",
+      "bytes": 1375561,
+      "sha256": "ccef6498c50122d50868722cb0cc9ce638ef93d28b820d2baf997a8130f86187"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h300-fold2-neural_tree.jls",
+      "bytes": 605957,
+      "sha256": "7369b930c98056b1421d153b0e3a363741c7ba41deb2dc3fc6eb86af25ba32d5"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1-fold3-neural_tree.jls",
+      "bytes": 2191605,
+      "sha256": "addb12578813d045f83657c5ff02f2a67c58df0fc9358049768180f6ca233086"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h120-fold3-residual_mlp.jls",
+      "bytes": 1512614,
+      "sha256": "98ab89b2c29502b4b6fcdcdf55ece82ca1f83be669febdd5f625f0f0244f3960"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h3600-fold3-neural_tree.jls",
+      "bytes": 2163717,
+      "sha256": "ae9a6aed4242661afc56227c903fa6d286e3017900034c6c6e5286d4b13e61ca"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h20-fold3-evotrees_mae.jls",
+      "bytes": 1363425,
+      "sha256": "94ab269ac80e6aed9f24535b40fb1ce7157e6e7ecc767198152f91b167925b82"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1800-fold3-residual_mlp.jls",
+      "bytes": 1562617,
+      "sha256": "d943cab5ef440ce19efb4b11b0c9fd7c59e6f70ae039f9024cd49425056ea640"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h60-fold4-preprocessing.jls",
+      "bytes": 685767,
+      "sha256": "6083e816725fc1ed1138550d02217171e02b491d7892b42e89e430071378b5b7"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h120-fold4-evotrees_q10.jls",
+      "bytes": 1381178,
+      "sha256": "3caca6938d7d4d51919eba4532d64af905ef72b41acf13c0439672636e279c2c"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1-fold3-evotrees_q90.jls",
+      "bytes": 1375566,
+      "sha256": "cae6b776d284ee1ffa8123a516151be3dd85ddfcbb16e62770cb6e552b96ab6a"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h5-fold4-evotrees_depth5.jls",
+      "bytes": 1497141,
+      "sha256": "12ccbf2ff88c0f67ab1653a79b947243267a77c4fb18fe25c56bb3ca7c8a1e35"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h600-fold4-neural_tree.jls",
+      "bytes": 2261621,
+      "sha256": "b87c8fbc393cbe2c74a31ccff025a68801c2428aeb0da95d241a01fe6b561633"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1800-fold4-residual_mlp.jls",
+      "bytes": 1638115,
+      "sha256": "fad516ecb5abc001073acf78769093c24f7d51fb969317cf5272d683424294cc"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h600-fold4-tabm_ensemble.jls",
+      "bytes": 1834230,
+      "sha256": "3cd093628211789fdfd3a52c056c711d4575e0c45b36ae3d57fbae4aec5716fd"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h60-fold3-evotrees_mae.jls",
+      "bytes": 1328271,
+      "sha256": "3c75def82f4c6ef3fb5d12d3daeb9bd8127b75b8a215bf3bd842c3c9c2976d4b"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h600-fold2-evotrees_mae.jls",
+      "bytes": 1263106,
+      "sha256": "611ac54521b31d5b4bac4f199b5fe7cfb25ede51c01b051a4aa6a7b319f0ccdc"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h600-fold3-evotrees_depth3.jls",
+      "bytes": 1359361,
+      "sha256": "c1e5ff2dcf924b8f1d7f97894c047deb5f24c228cbdbf782d8350475cfe1d108"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1-fold3-evotrees_depth3.jls",
+      "bytes": 1375591,
+      "sha256": "7d5e14e8a0bd2414c5d3efbe23cb89cb28ec44cabf85df9c86e3728422921366"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h3600-fold3-evotrees_depth3.jls",
+      "bytes": 1357648,
+      "sha256": "dd4368e998700b0ed47a32073a0fd104f60d71261a86cc4e86b4c6fc6441e134"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h300-fold2-evotrees_q90.jls",
+      "bytes": 1243299,
+      "sha256": "5998784fe258a66a76d818b33426b437b4793b0ffb09e3b2450f7cf42df08dae"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1-fold3-residual_mlp.jls",
+      "bytes": 1577083,
+      "sha256": "1dabac9cf6436a3387f9efdea3d5c52a1b0d7c44ebd36460528959aa3c3d3e8d"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h600-fold3-tabm_ensemble.jls",
+      "bytes": 1757809,
+      "sha256": "cc59c46631357d8cd228e7ada593ef7def8efc198235fd4c7970cf0045640a96"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h300-fold4-preprocessing.jls",
+      "bytes": 266226,
+      "sha256": "15656c08b808c8081db444378267acfab4da82506ebf0e05d57fe02315c509df"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h600-fold3-residual_mlp.jls",
+      "bytes": 1559702,
+      "sha256": "fee02a9f3cc38ed18a072d260859006dfe3ac2973c7ac1cc5ccf12e5ae49f443"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1800-fold2-tabm_ensemble.jls",
+      "bytes": 1668461,
+      "sha256": "e8ae526e43962fd35450eaeddb1cbb30b98d3fa8b3857a2858250ae3875cb789"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h5-fold3-residual_mlp.jls",
+      "bytes": 1568319,
+      "sha256": "df76db53a7bea5180c9e6e16bedde572c5660d0e2a9d56553effc819a02dfa2e"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h600-fold2-preprocessing.jls",
+      "bytes": 573310,
+      "sha256": "db15b9b97b56988e4a6c0003efcbea61bfc7c66e24e93202cc8702708f8b5044"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h600-fold4-neural_tree.jls",
+      "bytes": 645569,
+      "sha256": "f44a2627a50f584e0bebe4f33ac9c5d566d7afbda5b50293d7b1ff31bca7ca6c"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h3600-fold4-evotrees_depth3.jls",
+      "bytes": 1424578,
+      "sha256": "21954022c103df5da15e5a35ef860729de4f3b4b2deebedf691349754b89baa6"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h300-fold3-evotrees_depth5.jls",
+      "bytes": 474891,
+      "sha256": "4546520de07bd808cc43674441da9c8ec788c287539acda747e1cc5cbe9cbfe2"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h300-fold4-evotrees_q90.jls",
+      "bytes": 1406403,
+      "sha256": "e8ef15de2e3cae3396c372fc9d7e82ac2bad78137133ca44a1c87770021846f0"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h60-fold3-evotrees_depth3.jls",
+      "bytes": 1328283,
+      "sha256": "f8bc0681aa6a7f92ff16804978e54b896f1f79dd8012121831112f167787ee2b"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h60-fold2-evotrees_q90.jls",
+      "bytes": 1228621,
+      "sha256": "4dbf5b6fe4d54454ffa49ca52bfceaa0533d7c58fa98445efa9b88c28a65f8b8"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h60-fold4-evotrees_mae.jls",
+      "bytes": 1400410,
+      "sha256": "d324ece58590cdbe2e9f6f3b668be5afdd70874e123e05b70fc02673608db361"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h120-fold3-evotrees_q10.jls",
+      "bytes": 1314894,
+      "sha256": "773a7a5e548f3558caa39fe409233563e17d4f02070bded05717709061edc68f"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h3600-fold3-tabm_ensemble.jls",
+      "bytes": 1755142,
+      "sha256": "6139515436a43ee34a8c52ed7f94bb1c765ec0364e3276aee0c11b4d15492f7b"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h60-fold4-residual_mlp.jls",
+      "bytes": 1606255,
+      "sha256": "026d9524d37161366801d889a37450a9a6eeaf7626b2c6e9bfc3d323363d5294"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h20-fold4-evotrees_depth5.jls",
+      "bytes": 1494918,
+      "sha256": "70cefbf7edb59282cf49fa463957c15f8e00f186d91d3b13de86490c31468195"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1-fold2-evotrees_depth3.jls",
+      "bytes": 1299995,
+      "sha256": "c4602d24ecf3a044ae22c7e6cd9c1b366897f6b53aa311cb1f5831adf7004fa0"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h600-fold3-evotrees_depth5.jls",
+      "bytes": 474893,
+      "sha256": "882e6d8eedc348303647eb365cbf1e5b942d575a7ad2d51c1de364401ff97d66"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1800-fold3-evotrees_depth5.jls",
+      "bytes": 1430550,
+      "sha256": "6316350a330d6983a35d2695a2aac3c20b47dd8adb8441c976d43420ac96a101"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h20-fold2-preprocessing.jls",
+      "bytes": 577205,
+      "sha256": "c32a66c5e1bae02798992845c9831bf5bbd0bacc12ca2bbc1dd11d712a72da33"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1800-fold3-preprocessing.jls",
+      "bytes": 650223,
+      "sha256": "8396251b6829e94d3705ff59e2910156e03584d53d238b4614d6b76327544e82"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h3600-fold2-preprocessing.jls",
+      "bytes": 568188,
+      "sha256": "256141432c82c1447ef7832dedc0601cf741c9b7ac4822680e38d70366899059"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h60-fold3-preprocessing.jls",
+      "bytes": 636559,
+      "sha256": "f7854edf599b0a2471b502503ad039028a106e3ee48ebae1243096726ce03358"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h120-fold3-residual_mlp.jls",
+      "bytes": 1512614,
+      "sha256": "411a319b5ad3ebbc667673b79f49315107ed7d0857431d0927e934b1f6bfe55a"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h300-fold4-evotrees_q10.jls",
+      "bytes": 1406403,
+      "sha256": "c18dcead6bb87929823a4b553e662e679205800ca52e38abeafa79a797cbefee"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h5-fold2-preprocessing.jls",
+      "bytes": 583478,
+      "sha256": "bd710d2664cccc27fa93c485f23396b9f76006532af8d51053a0e75e96bb79b2"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h120-fold2-tabm_ensemble.jls",
+      "bytes": 1582758,
+      "sha256": "bcc05eeb396152fcc4cba79916aec56a1fe24753bcaccd54ba51e74ce11d267b"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h300-fold3-preprocessing.jls",
+      "bytes": 237682,
+      "sha256": "487310c5f435a8ca6b7cbd9b1f99386e106fa420dd183072ad037410beae939d"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h5-fold4-tabm_ensemble.jls",
+      "bytes": 1845036,
+      "sha256": "2827bb8d3465488cfd1f7f7a2086299e23ced68775f5d89fb63eca853ca05184"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1800-fold2-tabm_ensemble.jls",
+      "bytes": 1668461,
+      "sha256": "be3bb47886f9099e20c0e6a0a794a9aed1428cbfaf127d47bb23027dc9ff14a6"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1800-fold4-tabm_ensemble.jls",
+      "bytes": 1847006,
+      "sha256": "8fe74397442b0e57d0523d2cb353bc523ec59603b8512e004ba002e85233ece3"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1-fold2-evotrees_q10.jls",
+      "bytes": 1299936,
+      "sha256": "8e771d956d482907cff90576dd030c1348cbc8cd40e21ddfcb07b7cbfce9fb8d"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h3600-fold3-preprocessing.jls",
+      "bytes": 648199,
+      "sha256": "57b0397031a7c0a4ac17676358508a49dc4b89553f90f07776a967f352e17696"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h20-fold2-tabm_ensemble.jls",
+      "bytes": 1649330,
+      "sha256": "66d7b8cf48f4992008a3b02e2a70029f3a26e088ba675d00cde61402a3f1d080"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h60-fold3-tabm_ensemble.jls",
+      "bytes": 1720250,
+      "sha256": "095fab708c16102a248e6f291311c06ba764b39280af9356c103cde0fd0ca807"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h20-fold2-evotrees_q10.jls",
+      "bytes": 1271876,
+      "sha256": "abdc837ac7b5fb137e59d7b39fcfaf10a1c6d03249a09db7c10bc50d5efbf388"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h60-fold2-evotrees_depth5.jls",
+      "bytes": 1296736,
+      "sha256": "8d4f8001888eb7977a9330b7b1e9f45d8ad63f3546063984d5bfac9601fec01d"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h600-fold3-neural_tree.jls",
+      "bytes": 2166832,
+      "sha256": "a73b37167aa6ca5471f517307f07c36a771e63876ff71e264be775c36fd5f7df"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h300-fold3-residual_mlp.jls",
+      "bytes": 1540285,
+      "sha256": "1d1bc43ec0be9e7c63916d5eb2248a9e0329307401a83511347dba11e59858db"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h300-fold3-evotrees_q90.jls",
+      "bytes": 1341036,
+      "sha256": "8403a687ca41a5961540900828f015df5a1f0228d72922f1b485d0cbed7da21d"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1-fold3-evotrees_depth3.jls",
+      "bytes": 1375601,
+      "sha256": "fb61d31a9cb6eb775c6b99b1fefb855cc00da133b48f50c2ddfa06e715492902"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h3600-fold4-evotrees_depth3.jls",
+      "bytes": 1424578,
+      "sha256": "4b99c13562dced145a7c856e71549ec084a3d56fce0416c75319e8be20a17741"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h120-fold4-residual_mlp.jls",
+      "bytes": 1586083,
+      "sha256": "74e9ba30c27ad1b7c55aa0d0a7eefe4da6b94f6c9fabf249dd5aa4e3ce7a4358"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h600-fold4-evotrees_depth3.jls",
+      "bytes": 1420198,
+      "sha256": "5aff1daef2423c9b3c1a3c8b8caddeafcd877c7e04f4c74a9834f4bceecb325b"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h20-fold3-evotrees_depth3.jls",
+      "bytes": 1363457,
+      "sha256": "62682b653504b645a4d3b8fab73c0628beb36fd24c2fab460a75638d9e09a0fc"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h60-fold4-tabm_ensemble.jls",
+      "bytes": 1810730,
+      "sha256": "febe692c427098815734269a62d2fae4cb3a7006e13b9f88ce8f4f952ce62eac"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h120-fold2-evotrees_q90.jls",
+      "bytes": 1216676,
+      "sha256": "a54518c7bbda9a09b4831c17647380467663587d40bb9786cee7678fc0b5045c"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h120-fold3-evotrees_depth3.jls",
+      "bytes": 1314903,
+      "sha256": "3c5eae2bd92bfe262961afe5c7bed48c597553711ac1cc9f213774f89edde131"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h20-fold4-evotrees_depth3.jls",
+      "bytes": 1426954,
+      "sha256": "00f1697828398541bb902dbfc4b3b5e513a087bd13b8f96d6abc333c23cd21a9"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1-fold2-preprocessing.jls",
+      "bytes": 591524,
+      "sha256": "2117679772be361746a0e9c089c4435051abf81854f0f6c3ce02d4450195d362"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h600-fold4-evotrees_q10.jls",
+      "bytes": 1420203,
+      "sha256": "c79dbb9a3e384046425a0b97dd8d6994c9e3d2807ffcd6691330317707e26dfc"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h300-fold2-preprocessing.jls",
+      "bytes": 180622,
+      "sha256": "4db51da3c785ef6ef250e7a0b45a73def479eea3c3e8e4372718a041ef31af31"
+    },
+    {
+      "path": "joint-models-v1/first-observed-family-within-h-h600-fold4-preprocessing.jls",
+      "bytes": 265874,
+      "sha256": "988b0fb584bdaf2df0ced72953acb50ad86ee96cd9350c9c1abb39ab7773477d"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1-fold3-evotrees_q10.jls",
+      "bytes": 1375566,
+      "sha256": "8ebb70e11bbdd465544ad15326b4a153cf4319a748014196384f438103b67489"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h600-fold4-evotrees_mae.jls",
+      "bytes": 1420198,
+      "sha256": "a117c220df8aba916983f2f3fbe8583e77608e231eafbe5440e8089191e861e8"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h1800-fold3-tabm_ensemble.jls",
+      "bytes": 1761172,
+      "sha256": "f35d57b6f63789d9fba575343552522acdbfbd44927c78aa134dbbaba1fecfcf"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h120-fold4-preprocessing.jls",
+      "bytes": 678371,
+      "sha256": "d9bbc523c5dcb1050cefb88a56be6764810245f5b54bda84dda01fb4b171cabd"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1800-fold4-evotrees_depth3.jls",
+      "bytes": 1430795,
+      "sha256": "ffc54ea7e7dd2e2bbac97aab759499b164d67d5205f6cb7d8c20426a5a5ad1cb"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h20-fold4-neural_tree.jls",
+      "bytes": 2271800,
+      "sha256": "5370af04ad6f51b1b6edee4ccc553343428bd1b0ee8df69f3b9a7ba11edcfe87"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h120-fold2-neural_tree.jls",
+      "bytes": 1949669,
+      "sha256": "d6d093ca4035a5e2b05d301f6338ea245248c0042d244d0438ead7602e383f27"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h20-fold4-tabm_ensemble.jls",
+      "bytes": 1842361,
+      "sha256": "d44fe1d3a59acd18ef2228a070614ca8f50f0aa912fd1afe1c559598f5d5c30b"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h3600-fold2-neural_tree.jls",
+      "bytes": 1999922,
+      "sha256": "d950907c3625b6e5498630083dd11a109ceaf69c8f108761652cb65d73ee7430"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1800-fold3-evotrees_q10.jls",
+      "bytes": 1362477,
+      "sha256": "768f2ffcc06347448ab5952d38270f9bd90b3b31e643a8dd663a6af69e93602d"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h5-fold2-evotrees_mae.jls",
+      "bytes": 1282584,
+      "sha256": "a7b07ef9e04ae235afa2d791506023712ed99fc2a54c7ed55669b342e9a71d69"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h300-fold4-evotrees_depth5.jls",
+      "bytes": 1474316,
+      "sha256": "4878296920d15731c50e3023acff28729dad962e90438299c40b313441f78228"
+    },
+    {
+      "path": "joint-models-v1/absolute-mid-price-change-h600-fold4-preprocessing.jls",
+      "bytes": 694051,
+      "sha256": "7f2f067fe13bbd6d780d16d3ccac113a1eb0a74e32c67f47f53e2141984159b5"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1-fold3-preprocessing.jls",
+      "bytes": 659455,
+      "sha256": "9342fd84602e7accdb8da81ed16398168813bafc8651d3ee13ca76be6e861afd"
+    },
+    {
+      "path": "joint-models-v1/mid-price-change-h1-fold4-residual_mlp.jls",
+      "bytes": 1639515,
+      "sha256": "6356b797d3cd1ad665247e90d94a7125c1f6fd21679b96054e03899c42242136"
+    },
+    {
+      "path": "joint-inputs-v2/model_matrix.jls",
+      "bytes": 228271753,
+      "sha256": "0285ae57eb43e531fa23c3cd28620c9812719bdbf3a935fdd98adad3ac129627"
+    }
+  ]
+}

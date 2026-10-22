@@ -1,7 +1,8 @@
 using Statistics
+numeric_missing_mask(values)=Float64.(.!isfinite.(values))
 function safe_feature(name)
     occursin(r"(^|\.)(order_id|family_id|instrument_id|channel_id|publisher_id|input_cursor|source_ordinal|sequence|group_index|ts_recv_ns|ts_event_ns|timestamp|target|label|outcome|recognition)(\.|$)",name) && return false
-    occursin(r"(start|end|birth|terminal|opened|closed|available|published|known|recv|event)_ns$",name) && !occursin("latency",name) && return false
+    occursin(r"(start|end|birth|terminal|opened|closed|available|published|known|recv|event)_ns$",name) && !occursin("latency",name) && !occursin(r"^native\.activity_since\.(last_book_reset|last_f_last_same_side|last_touch_change|last_trade|session_open)\.elapsed_(event|recv)_ns$",name) && return false
     !occursin(r"lifecycle\.(candidate|episode|response)\.",name)
 end
 struct Prep

@@ -1,0 +1,88 @@
+FAMILY JOINT ANALYSIS HANDOFF - 2026-10-22
+
+READ THIS COMPLETE FILE FIRST. This supersedes status in family-analysis-handoff.txt and family-input-completion-handoff.txt. Read those older files for exact indexed source paths/offsets, original table/view definitions, provenance and reconstruction receipts. Their statements that no models ran are historical.
+
+LATEST USER DIRECTION
+Create a durable handoff and print a drop-in for a new chat because this chat is slow. Examine layer combinations in the next chat. Additionally, add the ten wrongly screened duration fields before ending this session. That addition and validation are COMPLETE. No additional model fits were launched. No subagents, monitors, automations, new chats, messages to other chats or live orders authorized.
+
+REPO / SAVE
+DavisAI1974/Markets; remote branch claude/kalshi-s79-kickoff-ij8t9o. The commit containing this file is the checkpoint; use the immutable URL printed in the drop-in. Previous enriched descriptive checkpoint 6e3e8e3d395f51b56952103aa00f2239e1a3bb0b is pushed.
+Clean checkout C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo, local branch codex/family-research-handoff-20261022. E:/Markets unrelated workspace changes preserved.
+All artifact paths below are relative to artifacts/sqlite-triage/20261022/families/ unless absolute. Planning/inventory: tasks/family-research-20261022/.
+
+AWS / RUNTIME: RESTORATION COMPLETE; DO NOT REPEAT SETUP
+EC2 i-035994afa8bdf66a5, us-east-1, r7i.16xlarge, running. Use AWS plugin run_script with SSM only, no AWS CLI. Leave lifecycle unchanged.
+BASE=/opt/frankie-box/work/family-research-20261022
+DB=BASE/alignment.sqlite; bytes6542319616, previously verified SHA256 e16f8d6bb6a95b6eceff86be81b6942ef755a91b9e4b6ae36f88e49a080f0429.
+Julia=BASE/julia-runtime/julia-1.13.2/bin/julia
+JULIA_DEPOT_PATH=BASE/julia-depot; use --startup-file=no --project=<environment>.
+Descriptive project BASE/julia-env; boosted/PCA/clustering BASE/julia-model-env; neural BASE/julia-neural-env. Project/Manifest files saved for all; latter two included in this checkpoint.
+EvoTrees0.18.8, Clustering0.15.8, MultivariateStats0.10.5; NeuroTabModels0.5.0 official main pinned by Manifest tree, Zygote0.7.14. Neural runs CPU/Zygote. NeuroTabModels is the newer CPU-capable package used instead of older CUDA-dependent NeuroTreeModels. No GPU provisioning necessary for these completed fits.
+Do not download/install Julia, restore/download/reverify the DB, enumerate huge recovery directories or rescan hundreds of GB. Full sources remain pinned/indexed, exact paths/offsets in original handoff and receipts. The old /tmp research directory was lost in an earlier reboot; use persistent paths.
+
+DATA AND ALIGNMENT
+749 first-observed structural family starts, not proven original order births; 583688 retained groups and 583127 family-referenced occurrences; 771787 confirmed Bedrock/teacher second-set rows; 329658 external rows in20 tables representing13 concepts; all99 registry identities/dispositions;30739 timestamped trades. Clock/price/size/instrument checks zero discrepancies; all18 former lookup misses corrected. Combined-clock walk1132933 records.
+Keep FAMILIES + ALL13 HISTORICAL POINTS + ALL99 IDENTITIES/DISPOSITIONS + CONFIRMED SECOND SET + TIMESTAMPED PRICES pinned together. 99 identities include withheld/retired/metadata roles, not99 independent numeric features. No source/master family excluded for missingness. Documented fit subsets differ from retained master data. Selected numeric contexts do not mean every raw full-MBO field or byte has already been modeled.
+One retained day Oct17-18,2023. Intraday forward splits are not independent-day validation. No stable trade signal or causal market force established.
+Exact nanosecond/cursor as-of; no future publications, future backfill, interpolation, global tick forward fill or invented post-session flat prices. Keep instrument/station/model/horizon/scopes separate. Absolute clocks, IDs, labels and teacher knowledge remain provenance, not predictors. Measured queue ages/elapsed durations/latencies are valid measurements. V1 input receipt's broad phrase 'no age ... input' is inaccurate wording: legitimate measured queue ages WERE included. Preserve executed receipt; this paragraph clarifies it.
+Prebirth begins T-120, also300/600-second histories. Preserve full retained sequence after starts; no imposed two-minute outcome. Direction/momentum/exhaustion/continuation/reversal remain descriptive evidence until stronger validation.
+
+COMPLETED ENRICHMENT / DESCRIPTIVE ANALYSIS
+BASE/descriptive-v1 baseline and BASE/enriched-v2 frozen enriched data/results. descriptive-findings.md and enriched-v2/descriptive-findings.png/svg explain actual results. Final descriptive run completed only after all agreed available additions were batched.
+10486 selected contexts,6265 unique indexed offsets;7615124 final added measurement rows;78389 original lifecycle rows in10 sections and163873 causal links;1021088 source-quality/categorical rows;1468040 external as-of rows;4215372 external numeric rows;20223 quote windows;252600 price/spread raw/1e9 checks;20972 action/side reconciliations with zero mismatches;64926 observed-zero counters recovered from complete structural strings while unknown rolling keys remain unavailable. Source clocks, provenance, observation/publication ages retained.
+The old all_additions_ready.features=969 metadata count predates final scope refinement; final registries are authoritative. Unverified raw ladder price scale3 versus book3.061 excluded numerically, raw retained. Candidate/episode/response and future terminal labels retained as provenance, not predictors.
+Temperature historical publications available for all18 stations x749 strict-prestart pairs=13482; original latest-report M values remain M. Both ages preserved.
+Queue-age valid495733/771787 second-set EVENT rows. Other276054:188099 NOT_F_LAST +51976 NO_FLOW +35979 SIDE_UNDEFINED. Completed-group denominator583688 gives about85% valid. NO_FLOW means preceding64 same-instrument GROUPS have zero buy+sell traded size, not64seconds or missing source files. SIDE_UNDEFINED includes imbalance<=5%. Native both-side front/queue ages exist at749/749 starts.
+Ongoing pullback available617/749;132 undefined (97no flow,35balanced). Last-completed48/749, previous-completed6; do not fill absent completed steps using future prices. Calendar lacks prior publication659/749; specified forecast model/horizon/day series has first99 gaps. Missing prior trades26 atT-120,8strictbefore,7onset. Genuine missing/stale/censored/process-undefined values remain explicit in enriched-v2/remaining_gaps.csv and prior reports. Source-null and no valid duration anchor are not missing files.
+Earlier SQLite inventory86617 rows/177canonical paths: same retained-day catalogs/search outputs, not independent days or independent signal confirmation. No need to rescan these DBs.
+425340 descriptive associations include unavailable/constant/inconclusive results. Marginal Pearson diagnostics are not sufficient to explain joint nonlinear interactions. Short trade-price reversal is70-75%smaller using matched midquotes, consistent with bounce, not proof. Direction reverses with horizons; some pooled signs change across quarters. Overlap:688/749 another start within+/-120s,740 within+/-600s, all within+/-1800/3600s. Multiple comparisons dependent and uncorrected.
+
+COMPLETED JOINT NONLINEAR FITS: V1
+BASE/joint-models-v1 includes all model results and states; .csv.gz in repo means actual compressed outputs. Full .jls matrices/fitted/preprocessing states in persistent EC2 and durable state archive, not in Git.
+3745 selected samples across5 phases,1886 contemporaneous fields +120/300/600-second causal changes=7544 matrix columns;49434 outcome rows retaining unavailable labels/dispositions. Missing numerical values remain NaN in raw matrix; original detailed reasons stay in frozen context/source tables.
+Signed and absolute endpoint midprice changes at1/5/20/60/120/300/600/1800/3600seconds. Quote endpoint ages<=5s, session bounds enforced. Strict-before-start quote cutoffT0-1ns, future endpointsT0+h (one ns beyond cutoff+h), documented. Absolute endpoint change is magnitude proxy, not full-path volatility.
+Family-within120/300/600 occurrence on selected contexts, not prospective population hazard. These fits use current columns only to avoid unavailable lag sampling identifying case phases.
+3 forward elapsed-time folds2/3/4, label-end purge and600-second embargo, test family IDs excluded from training grouping but never predictors. No random train/test split. Training-only median internal imputation/missingness flags/scaling/clamp+/-20; unobserved/constant fields skipped per fit but not master deletion.
+EvoTrees depth3/80rounds, depth5/120, MAE, q10/q90 plus source-group and history drop-column refits. Zero/training-mean/frequency/ridge benchmarks and final training-median benchmark. PCA12+kmeans3/5 fit first quarter and project later.
+NeuroTabModels neural_tree(depth3,8trees), residualMLP(2blocks,width32,dropout.1), TabM(k8,2blocks,width32,.1); fixed25epochs,lr.003,wd.001,batch128,CPUZygote. No test early stopping or inference attention across future rows. Fixed initial comparisons, not exhaustive architecture/hyperparameter optimization.
+Core1572 metrics/981831 predictions/errors0; neural189 metrics/118203 predictions/errors0. Total1100034 prediction records reuse observations across fits; NOT independent samples.
+Final summary1815 fold metrics including54 median baselines,612 model summaries;63 heldout-cohort alignment checks ALL pass;6588 phase/direction diagnostics;1422 market-state diagnostics;475272 training feature dispositions;54 interval-coverage rows. Disposition table combines unobserved/constant; consult raw availability for distinction.
+Observed trade-path supplement33705 windows,actual30739 trades: range/quadratic variation/absolute path/efficiency/up-down excursions, no interpolation. These are diagnostics, NOT fitted targets or executable quote MAE/MFE. No observed trade update does not establish flat executable market.
+
+TEN DURATION FIELDS: NOW ADDED AND VERIFIED
+Old absolute-clock suffix screen wrongly excluded native.activity_since.{last_book_reset,last_f_last_same_side,last_touch_change,last_trade,session_open}.elapsed_{event,recv}_ns. Ten already existed in sources and descriptive data. This was a model-screen bug, not missing source data.
+Corrected model_rules.jl explicitly permits those relative-duration names while retaining absolute event/receive/publication clocks, IDs and future labels blocked. Julia regression tests26/26 passed. Full corrected INPUT build (no fit) is BASE/joint-inputs-v2 with corrected scripts. All1886 previous current fields remain identical by name/value includingNaN; samples unchanged and outcomes byte-identical.
+Verified1896 contemporaneous features/7584 total columns:10 additional current +30 additional historical-change columns. added_duration_availability.csv records finite/missing counts for each new column; correction_audit.json is authoritative. Broader duration/age/latency category contains86 current identities (including rank and documented second/second_group aliases):76 included inV1,10 omitted,11.6%. Specific five-anchor event/receive elapsed block was10/10 omitted. Counts before lag copies, exclude absolute clocks and publication-age provenance.
+Availability across3745 selected contexts: book-reset event/receive3468each; last same-side F_LAST3737each; touch-change3745each; last-trade3671each; session-open EVENT3745, session-open RECEIVE0. Thus9of10current additions have finite observations; the session-open receive-duration identity is included but all3745values remain unavailable in the saved source. No values manufactured. Histories have additional documented missingness.
+NO MODEL HAS BEEN FIT WITH V2. Do not relabel old results as containing those ten. Existing run_joint_models.jl/run_neural_models.jl hardcode joint-models-v1 input/output; next fit must adapt these to v2 INPUT and a fresh output directory with corrected rules alongside scripts. Do not overwriteV1 or mix fitted states with different column order. Full builder defaults to joint-inputs-v2, supports JOINT_INPUT_OUT override.
+
+WHAT V1 SHOWED
+No stable tradable signal established. Continuous comparisons below use same heldout cohorts versus TRAINING-MEDIAN MAE; positive%means improvement. All unfavorable/flat results saved.
+Signed price change: main nonlinear configurations lost overall at1s,20s,120s,600s. Positive aggregate points: neural_tree1800s+1.83%,neural_tree3600s+2.28%,TabM3600s+7.64%; each wins2/3 folds. One-hour heldout1696 overlapping observations, one day.
+Magnitude more promising: at120s shallow+3.90%,MAE+4.61%,neural_tree+3.34% (neural wins3/3folds); at600s shallow+13.94%,deep+8.19%,MAE+9.48%,neural_tree+6.77%, generally2/3folds. This is not a directional edge.
+Ablations conditional on correlated blocks: price120 removingweather worsens shallow MAE3.46%all3folds, but fullshallow still worse than median. Magnitude600 removingflow1.49%worse and book/depth/queue1.40%worse, only2/3folds. Price3600 removingwind or flow improvesallfolds. Zero ablation is not proof of zero physical influence; no universally helpful block.
+Occurrence Brier:120sshallow.144906 vsfrequency.156431 (~7.37%better);300sshallow/deepworse;600sTabM.010691 vs.011771 (~9.17%better). Selected case-aligned contexts and high frequencies preclude population hazard interpretation.
+Quote crossing rule abs(predicted move)>initial spread, observed endbid/ask: most shorter horizons negative. One-hourTabM pooledmean+.00527948 priceunits,n1628 active; foldmeans-.00424793,+.00579179,+.00657851. No fees/slippage/fill/queueimpact model; not full trading backtest, no deployable-edge claim.
+Nominal80%quantile coverage poor:120s47.06/30.27/66.32%byfold;3600s5.79/11.79/53.01%. Do not use as reliable uncertainty intervals.
+PCA/kmeans: all later periods land in one projected state for bothk3/k5; failed meaningful later-regime separation.
+
+LAYER COMBINATIONS: SAVED; EXAMINE NEXT CHAT
+fitted_split_features.csv21362rows; fitted_conditional_split_pairs.csv63807; heldout_joint_response_cells.csv5634; heldout_joint_response_contrasts.csv626; source_group_ablation_comparisons.csv1104. Larger tables compressed .gz in Git.
+Top5pairs perfit selected on TRAINING split gain; heldout3x3 bins use trainq25/q75. Four-corner contrast only if>=10percorner:101/626eligible,53 price-response contrasts. Conditional tree paths do not prove synergy/causality/independent tradability. EvoTrees heap child semantics verified against installed source. No synthetic future values/global backfilled permutations.
+Not yet scientifically validated as findings. Next chat inspect coverage/units/source scopes, aliases, missingness bins, action-counter anchor continuity/resets, quarter/fold sign stability, competing pairs and matched market contexts. Weather/station/time can proxy one intraday path. Do not promote a cherry-picked pair from these initial tables.
+First interaction postprocessing failed on vector !; numeric_missing_mask fixed/regression tested, rerun succeeded. Failed log retained. No fit was retrained for this postprocessing fix. Defer expensive new fitting until saved combinations reviewed; use correctedV2if fitting.
+
+RECEIPTS / TESTS
+Baseline descriptive82d4a56a-6a84-4562-afc2-f6536da583f5; final all-additions d7e9eeaf-97cb-4f37-9d9e-6bee508715f3.
+V1input471e53d7-b50e-4cad-9e35-cc1e0b8d3970; corec584cc40-0ac8-4203-9b47-234e6e680eca; neuralc559f446-afa9-40a4-9d26-56bb839062d1.
+Summaryaf8ba406-ccf7-418e-be56-78ac128b975d; interactionse64b2d74-2c23-4fa5-9afa-01aabb55ece4; paths4904ae44-a580-4f0a-839b-bee7753d0820.
+Duration correction/build/audit/archive f5b74590-4f06-419f-a5c7-f1bfef83a366 succeeded. Earlier5509c95b-c3c2-4f58-8d01-45c51fcc005b failed immediately on incorrect BASE/scripts path; no data/model changes. Corrected path joint-inputs-v2/scripts.
+Actual descriptive Julia math9/9; Python source rules3tests; latest model rules26/26 including10allow and4clock/outcome-block checks. Whole-input correction audit passed. drafts/test_family_analysis_math.py.draft remains UNIMPLEMENTED, never passing functionality.
+
+DURABLE ARCHIVES
+Bucket bento-568968024170-us-east-2-an,regionus-east-2,prefixfrankie/family-prebirth/20261022/.
+Original input family-input-completeness.tar.gz,75926238bytes,SHA3600071f33d6198c108e7e07ff7b1d08f804f1661732e2970c27203afdefba77.
+Enriched family-enriched-descriptive-v2-4012d169.tar.gz,245482113bytes,SHA4012d169f19f9e0c865efd937b883bffae4f16967e45be55e6f2f47a6b22e87b;73actualfilesanddecompressedhashesverified,pushed6e3e8e3d. Large .gz.part001/.part002 concatenate in order before gunzip.
+Joint archive exact keys/hashes/sizes/upload and transport receipts in joint-checkpoint-archive-receipt.json. Result archive71files; state archive544full .jls model/matrix/preprocessing states (includesbothV1andcorrectedV2 matrices). joint-checkpoint-manifest.json hashes saved and original decompressed outputs; joint-state-manifest.json hashes every state. BothProject/Manifest environments saved. Existing persistent copies remain preferred; do not downloadDB/Julia.
+
+No analysis fit remains active. EC2 stays running. Continue from saved outputs. Explain flat/contradictory/inconclusive evidence as clearly as promising associations. Never claimV2hasbeenfitted.

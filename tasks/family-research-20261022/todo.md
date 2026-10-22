@@ -9,9 +9,12 @@
 - [x] Save and verify the actual baseline/enriched outputs in a durable archive; generate descriptive charts/report.
 - [x] Build joint model inputs from all safe available contemporaneous fields and causal 120/300/600-second changes.
 - [x] Start the subsequently authorized nonlinear boosted-tree and neural architecture comparisons with forward evaluation and whole-source-group refits.
-- [ ] Finish and inspect every model/configuration, including failures and negative results.
-- [ ] Analyze joint contributions, interactions, chronology/regimes, tails and observed spread-crossing diagnostics.
-- [ ] Save all model results, fitted-state receipts, runtime manifests and final charts/report to the requested branch.
-- [ ] Update the final handoff and verify the branch save.
+- [x] Complete core/neural configurations and heldout alignment audits; retain negative results.
+- [x] Compute joint contribution, interaction, chronology/regime, quantile and spread-crossing diagnostics.
+- [ ] Examine saved layer combinations scientifically in the next chat (user deferred).
+- [x] Save actual model outputs, all fitted/matrix states, manifests and complete findings handoff (descriptive chart already saved).
+- [x] Update final handoff; verify immutable branch checkpoint at end of this session.
 
 Genuinely unavailable publications, undefined process states, censored prices and additional independent market days are explicitly documented in enriched-v2/remaining_gaps.csv. They are not manufactured or grounds for removing a master row. Model comparisons were newly authorized after the descriptive batch; their output definitions are plural and do not narrow the research to one question.
+
+- [x] Correct duration screen and validate joint-inputs-v2: 10 additional current / 30 history columns; all old values/samples/outcomes unchanged. No v2 fits.
