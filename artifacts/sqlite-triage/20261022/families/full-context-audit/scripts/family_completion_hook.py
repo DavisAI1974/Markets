@@ -98,14 +98,19 @@ def verify_shards(s3, config, plan, owners):
             from multibox_support import prepared_cache_index
             from resume_multibox_candidate import expected_models
             owned = [tuple(r['cohort']) for r in plan['cohorts'] if r['owner'] == owner]
+            if plan.get('reuse_enabled'):
+                from family_reuse_support import cohorts_for_worker,task_owner,validate_preparation
+                owned = cohorts_for_worker(None,plan,owner)
             caches = prepared_cache_index(root,owned)
             require({tuple(r['cohort']) for r in caches} == set(owned), 'missing training preparation')
             expected = set()
             for row in caches:
                 t = tuple(row['cohort'])
                 info = read_json(pathlib.Path(row['cache'])/'ready.json')
+                if plan.get('reuse_enabled'):validate_preparation(plan,t,info)
                 for kind,models in zip(('core','neural'),expected_models(t,info['groups'])):
-                    expected.update((kind,t,m) for m in models)
+                    expected.update((kind,t,m) for m in models if not plan.get('reuse_enabled') or
+                                    task_owner(plan,(kind,t,m))==owner)
             require(task_set(state['required_jobs']) == expected, 'training-derived mandatory tasks mismatch')
         else:
             # A already validated and imported these artifacts in its sole finalizer.
@@ -184,6 +189,8 @@ def run(config, shutdown=None):
                      verified_utc=time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime()),
                      shutdown='systemctl poweroff; EC2 instance-initiated behavior stop; retain EBS')
         def stop():
+            from family_reuse_support import wait_before_stop
+            wait_before_stop(s3,config)
             # Fresh quiescence/identity check immediately before OS shutdown.
             ensure_idle(config['base'])
             require(imds_instance() == config['instance'], 'instance changed before stop')

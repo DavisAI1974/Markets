@@ -41,6 +41,10 @@ def main():
                  'test_family_save_stop.py','test_family_completion.py','install_family_completion_hook.py'):
         shutil.copy2(install/name,sources/name)
         hashes[name] = hashlib.sha256((install/name).read_bytes()).hexdigest()
+    reuse_source=install/'family_reuse_support.py'
+    if reuse_source.is_file():
+        shutil.copy2(reuse_source,sources/reuse_source.name)
+        hashes[reuse_source.name]=hashlib.sha256(reuse_source.read_bytes()).hexdigest()
     attestation = dict(status='installed_tested_ready_to_arm',config=config,source_sha256=hashes,
                        numerical_source_sha256=numerical_hashes,shutdown_mocked_in_tests=True)
     body = durable_json(run/'save-stop-installation.json',attestation)

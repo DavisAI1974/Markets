@@ -21,15 +21,20 @@ def validate_final(config, plan, state, transfers):
     cohorts = [tuple(r['cohort']) for r in plan['cohorts']]
     require(len(cohorts) == len(set(cohorts)) == 63, 'global cohort coverage mismatch')
     owned = [tuple(r['cohort']) for r in plan['cohorts'] if r['owner'] == 'A']
+    if plan.get('reuse_enabled'):
+        from family_reuse_support import cohorts_for_worker,task_owner,validate_preparation
+        owned = cohorts_for_worker(cohorts,plan,'A')
     caches = prepared_cache_index(root,owned)
     require({tuple(r['cohort']) for r in caches} == set(owned), 'missing training preparation')
     required, locations, remote_roots = set(), {}, {}
     for row in caches:
         t = tuple(row['cohort'])
         info = json.loads((pathlib.Path(row['cache'])/'ready.json').read_text())
+        if plan.get('reuse_enabled'):validate_preparation(plan,t,info)
         for kind, models in zip(('core','neural'),expected_models(t,info['groups'])):
             for model in models:
                 key = kind,t,model
+                if plan.get('reuse_enabled') and task_owner(plan,key)!='A':continue
                 folder = root/'jobs'/job_id(t,kind,model)
                 serial = False
                 if not committed(folder,kind,t,model):
@@ -54,6 +59,8 @@ def validate_final(config, plan, state, transfers):
     require({t for k,t,m in required} == set(cohorts) and
             state['committed_jobs'] == published['recovered_committed_jobs'] == len(required),
             'mandatory global union mismatch')
+    if plan.get('mandatory_jobs'):
+        require(required==task_set(plan['mandatory_jobs']),'frozen mandatory task universe mismatch')
     counts, prediction_proofs = {}, {}
     for kind,prefix in [('core','model'),('neural','neural')]:
         expected = {t+(m,) for k,t,m in required if k == kind}

@@ -36,6 +36,9 @@ def validate_shard(config, plan, state, receipt):
     owner = config['owner']
     require(plan['instances'][owner] == config['instance'], 'instance ownership mismatch')
     cohorts = [tuple(r['cohort']) for r in plan['cohorts'] if r['owner'] == owner]
+    if plan.get('reuse_enabled'):
+        from family_reuse_support import cohorts_for_worker
+        cohorts = cohorts_for_worker(None,plan,owner)
     require(len(set(cohorts)) == len(cohorts) and bool(cohorts), 'invalid owned cohorts')
     require(state['status'] == 'shard_fits_complete', 'mandatory fits incomplete')
     require(state['coverage_gate'] == receipt['coverage_gate'] == GATE, 'semantic gate changed')
@@ -47,6 +50,9 @@ def validate_shard(config, plan, state, receipt):
     require(required == task_set(state['committed_jobs']) == task_set(receipt['required_jobs']) ==
             task_set([r['task'] for r in receipt['locations']]), 'mandatory key mismatch')
     require({t for k, t, m in required} == set(cohorts), 'mandatory cohort mismatch')
+    if plan.get('reuse_enabled'):
+        from family_reuse_support import task_owner
+        require(all(task_owner(plan,k)==owner for k in required),'receipt includes unowned delegated task')
     for row in receipt['locations']:
         p = pathlib.PurePosixPath(row['folder'])
         require(p.parent == pathlib.PurePosixPath('jobs') and '..' not in p.parts,
