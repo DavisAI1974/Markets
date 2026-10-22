@@ -1,0 +1,21 @@
+{
+  "utc": "2026-10-22T17:29:44.390844+00:00",
+  "pid": 3174,
+  "command": [
+    "python3",
+    "/opt/frankie-box/work/family-research-20261022/full-context-audit/scripts/resume_memory_candidate.py",
+    "--execute",
+    "--max-workers",
+    "63"
+  ],
+  "source_sha256": {
+    "resume_memory_candidate.py": "e52abcab2cde1f8af1965be8b88653093e3f6cf84a1ac034cc40a1c6489c497f",
+    "test_resume_memory_candidate.py": "777d3f43c1ba265b9db38bdc52d357b7cb7b5145d8950cf392fd308059e21f2e"
+  },
+  "memory": {
+    "MemTotal": "1560349684 kB",
+    "MemAvailable": "1551413812 kB"
+  },
+  "affinity_cpus": 192,
+  "coverage_gate": "NOT_PASSED"
+}

@@ -1,0 +1,126 @@
+FAMILY CANDIDATE MEMORY RECOVERY -- 2026-10-22
+
+Read the original full handoff at dd9c797a first, then this continuation.
+This file supersedes its active PID, instance type and execution state only.
+V3 remains frozen; full semantic coverage remains NOT_PASSED.
+All declared tasks are mandatory. No permanent task skip is allowed.
+
+Incident and authorization
+- The one initial progress check at 17:07:32 UTC found 73 successful core
+  receipts, 7 successful parallel neural receipts, 8 retained serial neural
+  results, and 25 signal-9 failures (20 core, 5 neural). 63 workers remained.
+- MemAvailable was 4,580,632 KiB, no swap. Shared inputs did not bound each
+  learner's private allocations. Kernel logs confirm global OOM and a killed
+  Julia process (15970) with about 14 GiB anonymous RSS. The 25 failures were
+  not individually matched to kernel records; retain that distinction.
+- Only the coordinator dispatch PID 15370 was SIGSTOP'd while existing fits
+  continued. No working fit was manually killed for recovery.
+- The user then explicitly ordered the instance stopped. StopInstances
+  succeeded, stopped state was confirmed, and all three EBS volumes remained
+  attached. Stop interrupted additional fits; those attempts remain evidence.
+- The user authorized RAM repair, approved proceeding with a larger instance,
+  and explicitly authorized restarting. No second instance was created.
+- x2iedn.16xlarge (2 TiB, 64 vCPUs) was first selected at $13.338/h, but startup
+  failed with VcpuLimitExceeded: the account's X-family quota was zero.
+- Existing standard on-demand vCPU quota is 512. The permitted fallback,
+  r7i.48xlarge, started successfully: 1.5 TiB nominal RAM, 192 vCPUs,
+  $12.7008/h Linux shared on-demand in us-east-1. Prices read from AWS Pricing;
+  exclude EBS and account-specific discounts. No quota change was requested.
+- Actual Linux MemTotal: 1,560,349,684 KiB (about 1.45 TiB).
+- No subagents, monitors, automations, new chats, cross-chat messages or orders
+  were created. The executor's scheduling loop belongs to numerical execution.
+
+Current execution (ALREADY RUNNING; do not duplicate)
+Instance i-035994afa8bdf66a5, us-east-1, now r7i.48xlarge.
+B=/opt/frankie-box/work/family-research-20261022
+O=B/joint-models-v4-candidate-20261022
+R=O/parallel-63
+Coordinator PID: 3174
+Command:
+python3 B/full-context-audit/scripts/resume_memory_candidate.py --execute --max-workers 63
+Coordinator log: O/parallel-memory-resume.log
+Recovery run:
+R/memory-recovery-20261022T172944Z-2411d41b
+Recovery state: that directory/recovery-plan.json
+Launch receipt: R/memory-resume-launch-receipt.json
+Runtime receipt: R/memory-recovery-runtime-verification-20261022.json
+
+The deployment source hashes are normalized UTF-8 source text:
+resume_memory_candidate.py:
+e52abcab2cde1f8af1965be8b88653093e3f6cf84a1ac034cc40a1c6489c497f
+test_resume_memory_candidate.py:
+777d3f43c1ba265b9db38bdc52d357b7cb7b5145d8950cf392fd308059e21f2e
+Source files are committed under full-context-audit/scripts.
+SSM deployment: 7528c11c-8340-404b-a5b1-114140e72b90.
+Successful runtime verification: 119162a5-b27a-4541-a4c7-7644882d9c3d.
+The preceding metadata snapshot reader had a None/string comparison error;
+this was in the read-only snapshot command, not the numerical executor.
+
+Runtime verification at 17:31:48 UTC
+- 35 live Julia fits, across 2 cohorts; 63-slot global pool.
+- All sampled/live Julia worker scopes had finite memory.max enforcement.
+- 92 coherent prior results retained, including eligible serial results.
+- 748 task keys currently registered across 22 prepared cohorts.
+  Another 41 cohorts have not registered their training-derived group lists:
+  748 is NOT the final suite size.
+- No new recovery job receipts yet; no claim that a new full fit has finished.
+- No new recovery failures recorded; host oom_kill counter since reboot = 0.
+- MemAvailable: 1,076,143,164 KiB (about 1.00 TiB).
+This is one completed runtime verification, not a monitor. Do not add audits.
+
+Repair behavior
+- No raw input/matrix rebuild, database scan, restoration, Julia download,
+  completed-fit rerun, target change, split change or hyperparameter change.
+- All source as-of clocks, ages, missingness, provenance, scopes, censoring and
+  contrary/unfavorable/inconclusive evidence remain under the original handoff.
+- Reconciles metric/prediction key and count consistency, finite predictions,
+  unique sample IDs, error files and required fitted-state presence.
+  Coherent orphan artifacts can be retained with original process returncode
+  unknown explicitly recorded, rather than rerunning a finished fit.
+- Moves failed/incomplete job directories to R/attempts before another attempt.
+  All failure logs, receipts and partial states are preserved.
+- Uses shared immutable raw data and existing prepared matrices. It regenerates
+  ONLY a missing/released reproducible fold cache, using the same numerical
+  preparation and training membership; existing prep/state links remain.
+- Generated Julia adapters are copied to the recovery run. The only Julia
+  source modification removes the old cache admission call; this executor
+  owns cache admission. Algorithm code, seeds, epochs and one-thread BLAS stay.
+- Global queue overlaps cohorts and fits; up to two preparations can overlap
+  fits when storage/RAM admission allows. No per-cohort fitting barrier.
+- Admission reserves 64 GiB host headroom plus shared raw storage residency.
+  Core reservations start at at least 32 GiB, neural at least 64 GiB and scale
+  with matrix dimensions; 24 GiB was only an earlier provisional proposal.
+  Each numerical task runs in a systemd memory-bounded scope. A scope's memory
+  events/peak/limit and its child return code are retained in job output.
+- Memory-limited fits are deferred until the regular queue finishes, then
+  retried in parallel where RAM allows, with increasing allowances. Large
+  reservations naturally occupy more of the pool.
+- No task is permanently skipped. Reaching safe host capacity produces an
+  explicit incomplete/larger-host requirement, never successful completion.
+  Non-memory errors likewise retain pending work and prevent publication.
+- Reproducible dense a.bin/b.bin caches can be released after their current
+  assigned attempts finish, including deferred attempts. Deferred cohorts
+  regenerate these caches later; metadata/fitted states/evidence are retained.
+- Required task-key coverage must match all retained successful locations
+  before merging. PCA and the original postprocessors follow the fits.
+  Root metrics files are not a live progress total before publication.
+- The semantic gate remains NOT_PASSED even if numerical execution completes.
+  No new independent market day or established tradable signal is claimed.
+
+Verification and limits
+14 compact Python regression checks passed for memory admission, mandatory
+larger-memory retry behavior, failed-attempt preservation, orphan recovery,
+missing weights, duplicate/partial/nonfinite predictions, and task identity.
+A runtime probe confirmed actual cgroup memory.max before numerical dispatch.
+Runtime evidence above confirms active parallel jobs with enforced limits.
+This does not establish final fit success or final prediction coverage.
+No second verification campaign or broad audit is authorized.
+
+Continuation
+Do not run redeploy_parallel_candidate.py, run_suite.sh, or a second recovery
+executor while this one is active. It would duplicate/interfere with work.
+Use AWS plugin run_script/SSM only, never AWS CLI. Work in the existing clean
+checkout, not E:\Markets. Do not rehash/download large inputs.
+After completion, check final receipts/unique prediction coverage once, retain
+all contrary evidence and archive final states as appropriate. The active
+recovery outputs are on AWS EBS; they are not yet in a new portable archive.

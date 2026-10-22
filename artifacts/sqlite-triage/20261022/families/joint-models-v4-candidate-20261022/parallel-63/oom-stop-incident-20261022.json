@@ -1,0 +1,91 @@
+{
+  "source_ssm_command_id": "d8521f34-d2f1-4fbb-ac9b-9f0df363ec37",
+  "diagnostic_ssm_command_id": "254ffa2a-279d-4f12-b1ec-63fcd1fa1a3b",
+  "dispatch_containment": {
+    "action": "paused coordinator dispatch only; existing numerical workers left running",
+    "pid": 15370
+  },
+  "progress_snapshot": {
+    "utc": "2026-10-22T17:07:32.747537+00:00",
+    "plan": {
+      "status": "running",
+      "workers": 63,
+      "preparation_workers": 4,
+      "fit_workers_during_preparation": 59,
+      "fit_workers_after_preparation": 63,
+      "cpu_affinity": 64,
+      "single_cpu_threads_per_worker": true,
+      "shared_raw_matrix": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/shared/raw.bin",
+      "prepared_folds": "memory-mapped once per cohort; no per-worker full matrix deserialization",
+      "original_source_sha256": {
+        "core": "babf51739e0264ac3ce57d6b5b63c44bbbc50d688abae9da3c282bb25ac38c4b",
+        "neural": "339cdadbf09de9c7e342f28f798e210a41db598db12dfe5945a24124b3ebbb22"
+      },
+      "completed_serial_core": 0,
+      "completed_serial_neural": 8,
+      "cohorts": 63,
+      "coverage_gate": "NOT_PASSED",
+      "changes": "Scheduler, read-only memory maps, allocation-saving views, BLAS threads 8 to 1. Thread reduction may change floating-point last bits; algorithms/hyperparameters/splits/targets unchanged."
+    },
+    "cpu_busy_pct": 92.62960649594004,
+    "memory": {
+      "MemTotal": "519850060 kB",
+      "MemAvailable": "4580632 kB",
+      "SwapFree": "0 kB"
+    },
+    "disk_free_bytes": 111506833408,
+    "coordinator": [
+      {
+        "pid": 15370,
+        "cmd": "python3 /opt/frankie-box/work/family-research-20261022/full-context-audit/scripts/redeploy_parallel_candidate.py "
+      }
+    ],
+    "worker_count": 63,
+    "worker_stages": {
+      "prepare": 4,
+      "fit": 59
+    },
+    "receipt_counts": {
+      "core_failed": 20,
+      "core_success": 73,
+      "neural_failed": 5,
+      "neural_success": 7
+    },
+    "cache_ready": 22,
+    "cache_dense_count": 20,
+    "cache_dense_bytes": 157052544696,
+    "pending_preparations": [
+      {
+        "cohort": "absolute-mid-price-change-h60-fold4",
+        "ready": false,
+        "dense_bytes": 0,
+        "prepare_tail": []
+      },
+      {
+        "cohort": "absolute-mid-price-change-h60-fold3",
+        "ready": false,
+        "dense_bytes": 0,
+        "prepare_tail": []
+      },
+      {
+        "cohort": "absolute-mid-price-change-h600-fold2",
+        "ready": false,
+        "dense_bytes": 0,
+        "prepare_tail": []
+      },
+      {
+        "cohort": "absolute-mid-price-change-h600-fold3",
+        "ready": false,
+        "dense_bytes": 0,
+        "prepare_tail": []
+      }
+    ]
+  },
+  "kernel_oom_evidence": [
+    "[Thu Oct 22 17:07:58 2026] oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),cpuset=/,mems_allowed=0,global_oom,task_memcg=/system.slice/snap.amazon-ssm-agent.amazon-ssm-agent.service,task=julia,pid=15970,uid=0",
+    "[Thu Oct 22 17:07:58 2026] Out of memory: Killed process 15970 (julia) total-vm:63222400kB, anon-rss:14822832kB, file-rss:2452kB, shmem-rss:0kB, UID:0 pgtables:30332kB oom_score_adj:0"
+  ],
+  "repair_deployed": false,
+  "instance_stop_requested_by_user": true,
+  "coverage_gate": "NOT_PASSED"
+}
