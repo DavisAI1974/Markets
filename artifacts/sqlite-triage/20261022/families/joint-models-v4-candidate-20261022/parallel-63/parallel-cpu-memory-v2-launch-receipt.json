@@ -1,0 +1,23 @@
+{
+  "utc": "2026-10-22T18:08:06Z",
+  "new_coordinator_pid": 3777,
+  "command": [
+    "python3",
+    "/opt/frankie-box/work/family-research-20261022/full-context-audit/scripts/resume_memory_candidate_v2.py",
+    "--execute",
+    "--max-workers",
+    "96",
+    "--adopt-manifest",
+    "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/parallel-cpu-memory-v2-adoption-manifest.json"
+  ],
+  "source_sha256": {
+    "resume_memory_candidate_v2.py": "2e05c04b61ef43d1dc44f81cd9619abfff20c4d38c97504125d43b020421c776",
+    "test_resume_memory_candidate_v2.py": "841acf7a9e640c1575a2b4f7b970696cbe9656c6b65d9a530d2ec180dabcc97c"
+  },
+  "per_job_memory_caps": "unlimited",
+  "physical_worker_slots": 96,
+  "adoption_manifest": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/parallel-cpu-memory-v2-adoption-manifest.json",
+  "numerical_fits_restarted": false,
+  "instance_restarted": false,
+  "coverage_gate": "NOT_PASSED"
+}

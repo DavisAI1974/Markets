@@ -1,0 +1,38 @@
+{
+  "utc": "2026-10-22T18:09:15Z",
+  "coordinator_pids": [
+    3777
+  ],
+  "expected_coordinator_pid": 3777,
+  "state": "running",
+  "run": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T180806Z-d272d242",
+  "worker_slots": 96,
+  "numerical_workers": 59,
+  "active_cohorts": 4,
+  "duplicate_tasks": [],
+  "single_cpu_per_worker": true,
+  "duplicate_cpu_assignments": [],
+  "all_memory_caps_removed": true,
+  "cpu_busy_pct": 30.740650717038786,
+  "iowait_pct": 0,
+  "memory": [
+    "MemAvailable:   778204996 kB"
+  ],
+  "committed_results": 140,
+  "oom_counter": [
+    "oom_kill 0"
+  ],
+  "log_tail": [
+    "",
+    "Corrected launcher identification guard; existing numerical fits remain running.",
+    "{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"1\", \"4\"], \"model\": \"drop_history\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}",
+    "{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"120\", \"3\"], \"model\": \"dropgroup:lifecycle.recurrence\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}",
+    "{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"120\", \"3\"], \"model\": \"dropgroup:lifecycle.replenishment\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}",
+    "{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"120\", \"3\"], \"model\": \"dropgroup:native_timing_measurements\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}",
+    "{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"1800\", \"2\"], \"model\": \"evotrees_depth3\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}",
+    "{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"120\", \"3\"], \"model\": \"dropgroup:root_native_book_depth_queue\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}",
+    "{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"120\", \"4\"], \"model\": \"zero_change\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}",
+    "{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"120\", \"4\"], \"model\": \"training_mean\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}"
+  ],
+  "coverage_gate": "NOT_PASSED"
+}

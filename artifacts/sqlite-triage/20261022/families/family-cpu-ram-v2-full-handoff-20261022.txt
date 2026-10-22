@@ -1,0 +1,806 @@
+FAMILY-MARKET RESEARCH -- COMPLETE CPU/RAM V2 ACTIVE-RUN HANDOFF
+Date: 2026-10-22
+
+READ THIS ENTIRE FILE. Section A below is the current authoritative execution
+state. Sections B and C preserve earlier handoffs completely for scientific
+context. Their old PIDs, instance sizes and execution-state commands are
+historical; DO NOT revert to those launchers.
+
+A. CURRENT HUMAN INTENT AND AUTHORIZATION
+
+Continue family-market research and fix performance while preserving running
+and completed fits. The user explicitly authorized:
+- diagnosing duplicate processes/reads and correcting the bottleneck;
+- deploying fixes ASAP while existing fits continue;
+- pinning workers/processes to CPUs;
+- removing fixed per-job memory limits;
+- making a handoff and providing a drop-in for another chat, after getting the
+  run going. Do not create or message a chat yourself.
+
+Every declared task is mandatory. No task may be permanently skipped for RAM,
+runtime or unfavorable results. An unfinished task remains explicitly pending.
+V3 remains frozen. Full semantic coverage is NOT_PASSED.
+Leave the OLD SEARCH WORKFLOW/PROCESS UNCHANGED. A possible future replacement
+was discussed, but the user explicitly deferred changes to the old process.
+
+No subagents, monitors, automations, live orders, or messages to other chats
+are authorized. Parallel numerical workers are authorized. No second instance
+was created. The instance resize/restart described in section B was explicitly
+authorized and completed. No further lifecycle change is implied here.
+
+BASIC IDENTITIES
+Repo: DavisAI1974/Markets
+Remote branch: claude/kalshi-s79-kickoff-ij8t9o
+Clean local checkout:
+C:\Users\A\Documents\Codex\2026-10-22\family-research-handoff-repo
+Local branch: codex/family-research-handoff-20261022
+DO NOT work in the dirty E:\Markets checkout.
+V2 implementation commit: b6f8632bd5c7e18229e7cd5d6b60b72611bd97c4
+Prior memory recovery checkpoint: 2209b925fe443e41d0efc4f5a225685f7ca7132e
+
+AWS instance: i-035994afa8bdf66a5, us-east-1, us-east-1d
+Current type: r7i.48xlarge, nominal 1.5 TiB RAM, 192 logical CPUs.
+Linux MemTotal: 1,560,349,684 KiB (about 1.45 TiB).
+96 physical cores were identified by package/core topology.
+Price read from AWS Pricing: $12.7008/h Linux shared on-demand compute;
+EBS and any account discounts are separate.
+B=/opt/frankie-box/work/family-research-20261022
+O=B/joint-models-v4-candidate-20261022
+R=O/parallel-63  (historical directory name; active worker ceiling is now 96)
+
+USE AWS PLUGIN run_script/SSM ONLY, NO AWS CLI.
+Do not restore/download Julia, databases, raw inputs or the matrix.
+Do not scan huge recovery directories or hash the database.
+Existing Julia runtime, projects, depot and all scientific inputs remain in B.
+
+WHAT WAS SLOW, ACTUAL MEASUREMENT
+At 17:54:02 UTC there was exactly ONE coordinator, 35 numerical workers,
+35 legitimate launcher wrappers, and ZERO duplicate active task keys.
+CPU busy: 17.72% of 192 logical CPUs; numerical workers consumed about
+34 CPU cores. Physical read bytes/s and I/O wait were zero during the sample.
+This excludes a disk-read bottleneck during that sample; it does not prove
+there is no repeated in-memory work or no I/O in other stages.
+35 scopes reserved about 1.36 TiB while currently using about 515 GiB.
+MemAvailable was 1,009,966,564 KiB (about 963 GiB).
+Most completed shallow fits peaked around 8-15 GiB; one depth-5 result peaked
+around 26 GiB. The fixed admission estimates were too conservative and were
+leaving the enlarged machine underused. This was the clearest bottleneck.
+
+The shared raw/prepared matrices remain memory mapped. Different declared
+models/ablations legitimately read the same cohort inputs; those are not
+duplicate job identities and may not be removed merely to shorten runtime.
+The current fixes do not claim to eliminate repeated imports, metadata
+deserialization, Float32 conversion or per-learner binning. Any further
+optimization must preserve model definitions, rounding, as-of membership and
+all declared tasks, and should be grounded in the installed/official API.
+
+LIVE FIXES APPLIED
+At 18:00:24 UTC fixed per-job memory.max and memory.high were removed from
+34 live numerical scopes, memory.swap.max was also set to max, and all live
+numerical threads were pinned to distinct physical cores. No fit restarted.
+
+New source:
+B/full-context-audit/scripts/resume_memory_candidate_v2.py
+B/full-context-audit/scripts/test_resume_memory_candidate_v2.py
+Normalized UTF-8 source hashes:
+resume_memory_candidate_v2.py:
+2e05c04b61ef43d1dc44f81cd9619abfff20c4d38c97504125d43b020421c776
+test_resume_memory_candidate_v2.py:
+841acf7a9e640c1575a2b4f7b970696cbe9656c6b65d9a530d2ec180dabcc97c
+
+The old V1 source was deliberately not overwritten: already running launcher
+wrappers still use its --child-report entry point. Do not delete/modify it.
+Numerical Julia adapters and algorithms are unchanged apart from the existing
+cache-admission bypass described in section B.
+
+CURRENT RUN -- ALREADY GOING, DO NOT DUPLICATE
+Active coordinator PID: 3777
+Command:
+python3 B/full-context-audit/scripts/resume_memory_candidate_v2.py --execute --max-workers 96 --adopt-manifest R/parallel-cpu-memory-v2-adoption-manifest.json
+Active coordinator log: O/parallel-memory-resume-v2.log
+Active recovery directory:
+R/memory-recovery-20261022T180806Z-d272d242
+Active state: that directory/recovery-plan.json
+
+Receipts on AWS and compact copies in Git:
+R/parallel-cpu-memory-v2-launch-receipt.json
+R/parallel-cpu-memory-v2-runtime-verification.json
+R/performance-bottleneck-snapshot-20261022.json
+Additional AWS evidence:
+R/live-memory-unlimit-and-affinity-20261022.json
+R/parallel-cpu-memory-v2-adoption-manifest.json
+R/parallel-cpu-memory-v2-launch-first-attempt.json
+
+Handoff procedure preserved in-flight work:
+- Old V1 coordinator 3174 was paused at dispatch only.
+- 35 existing numerical launcher jobs were captured by exact process command,
+  PID/start token, cohort/model/output/cache paths, completion report and CPU.
+- The old coordinator alone was terminated after saving the manifest.
+- Existing numerical jobs and launcher wrappers were left running.
+- V2 waits for their original completion reports and commits their results.
+- New tasks use free physical cores, sockets interleaved, via taskset.
+- No numerical fit or instance was restarted during this V1-to-V2 handoff.
+
+A first V2 coordinator attempt PID 3728 refused startup because its guard
+mistook wrapper commands containing a Julia path for numerical Julia processes.
+No numerical job was interrupted. That attempt/source/log are preserved.
+The guard was corrected to check the executable is actually Julia, and a
+regression test was added. Corrected coordinator PID 3777 is the active one.
+The log therefore contains a HISTORICAL traceback before the correction marker;
+do not misread that old traceback as a current coordinator failure.
+
+Nineteen compact regression checks passed after the guard correction, covering
+RAM admission, no permanent skip, attempt preservation, result recovery,
+model-specific demand estimates, CPU leases, adoption completion reports and
+wrapper-versus-Julia identification. No broad audit suite was added.
+
+ACTUAL SUCCESSFUL POST-DEPLOYMENT VERIFICATION
+Snapshot: 2026-10-22T18:09:15Z (2:09:15 p.m. Eastern).
+SSM command: 80f846cd-3d5f-4734-8046-4a2968f1a0b8
+- Exactly ONE coordinator: PID 3777.
+- State running, 96 physical-worker slots.
+- 59 numerical workers across 4 cohorts.
+- Zero duplicate active task keys.
+- Every worker had a single-CPU affinity, with no duplicate CPU assignment.
+- Every checked scope had memory.max=max and memory.high=max.
+- CPU busy 30.74% of 192 logical CPUs, versus 17.72% before.
+- I/O wait zero.
+- MemAvailable 778,204,996 KiB (about 742 GiB).
+- 140 coherent committed results, including preserved prior results.
+- Host oom_kill counter since reboot remained ZERO.
+- New and adopted fits have actual successful committed receipts.
+- Coverage gate remains NOT_PASSED.
+
+This verifies deployment and increased parallel occupancy, not a final
+end-to-end speedup or completed suite. The 59-worker snapshot was taken
+during dispatch/warm-up. Do not turn CPU percentage or worker count into a
+guaranteed runtime reduction.
+
+RAM POLICY -- IMPORTANT
+Per-job hard caps are removed by explicit user instruction. A large fit may
+use more than its initial estimate. There is still host-level admission
+headroom (64 GiB plus shared-input residency) to avoid repeating global OOM.
+New admission estimates distinguish baseline, shallow, depth-5 and neural
+models, instead of charging every core fit the old 32-43 GiB reservation.
+Adopted job estimates include their measured peaks plus margin.
+This is a scheduling forecast, not a cgroup memory ceiling.
+The worker ceiling is one per physical core (96), not both SMT siblings.
+All tasks remain mandatory, including any future failures or resource deferrals.
+
+RUNTIME ESTIMATES
+The prior 2-6-hour estimate was too optimistic for the complete expanded suite.
+A later provisional 18-30-hour estimate described the underused V1 scheduler
+and triggered the user's performance-fix request. It is not a measured ETA
+for V2. Do not repeat either as an established current estimate.
+Use completed substantive batches and remaining heavy tasks for any new ETA.
+About 748 task keys were registered from the first 22 prepared cohorts in
+the earlier snapshot; 41 cohorts still needed their training-derived groups.
+748 is NOT the final suite size. Baselines/constant-target branches are cheap;
+do not extrapolate all fits from their completion rate. PCA/postprocessing and
+mandatory large-memory/error recovery also remain in the completion scope.
+
+SCIENTIFIC/OPERATING CONSTRAINTS
+All original as-of alignment, missingness, ages, exact integer clocks/cursors,
+provenance, scopes, censoring and contradictory/unfavorable/inconclusive evidence
+remain required. No source groups, ablations, horizons or outcomes were dropped.
+Input matrix, target definitions, training-only preprocessing, chronological
+splits, family purge, seed values, epochs and numerical model code are unchanged.
+No established tradable signal or independent extra market day is claimed.
+V3 stays frozen; 99-plane semantic coverage is NOT_PASSED.
+
+Do not launch any old run_suite.sh, redeploy_parallel_candidate.py, V1 executor,
+or another V2 executor while PID 3777/current workers are active.
+Do not reuse the adoption manifest as a new live-process inventory after a
+future failure: it records the 18:04 handoff, not all later V2 workers. Any
+necessary recovery must capture current exact identities and preserve results.
+Do not kill active fits merely to make scheduling/source files look uniform.
+Do not restart completed fits. Current work stays on existing AWS EBS.
+Final portable archives of active results have NOT yet been made.
+
+NEXT CONTINUATION
+1. Read this entire file, including retained foundations below.
+2. Preserve the already running V2 executor.
+3. A single compact on-demand check is enough if progress is needed; no monitor.
+4. Continue from actual receipts. Fix only specific failures or measured
+   bottlenecks; preserve running fits, successful results and failed attempts.
+5. After all declared tasks/PCA/postprocessing complete, check unique
+   task/model/prediction coverage once and save final evidence/states.
+6. Keep the semantic gate and scientific limits explicit.
+7. Leave the old Search workflow unchanged.
+
+============================================================
+B. RETAINED V1 MEMORY RECOVERY HANDOFF (HISTORICAL EXECUTION)
+============================================================
+
+
+FAMILY CANDIDATE MEMORY RECOVERY -- 2026-10-22
+
+Read the original full handoff at dd9c797a first, then this continuation.
+This file supersedes its active PID, instance type and execution state only.
+V3 remains frozen; full semantic coverage remains NOT_PASSED.
+All declared tasks are mandatory. No permanent task skip is allowed.
+
+Incident and authorization
+- The one initial progress check at 17:07:32 UTC found 73 successful core
+  receipts, 7 successful parallel neural receipts, 8 retained serial neural
+  results, and 25 signal-9 failures (20 core, 5 neural). 63 workers remained.
+- MemAvailable was 4,580,632 KiB, no swap. Shared inputs did not bound each
+  learner's private allocations. Kernel logs confirm global OOM and a killed
+  Julia process (15970) with about 14 GiB anonymous RSS. The 25 failures were
+  not individually matched to kernel records; retain that distinction.
+- Only the coordinator dispatch PID 15370 was SIGSTOP'd while existing fits
+  continued. No working fit was manually killed for recovery.
+- The user then explicitly ordered the instance stopped. StopInstances
+  succeeded, stopped state was confirmed, and all three EBS volumes remained
+  attached. Stop interrupted additional fits; those attempts remain evidence.
+- The user authorized RAM repair, approved proceeding with a larger instance,
+  and explicitly authorized restarting. No second instance was created.
+- x2iedn.16xlarge (2 TiB, 64 vCPUs) was first selected at $13.338/h, but startup
+  failed with VcpuLimitExceeded: the account's X-family quota was zero.
+- Existing standard on-demand vCPU quota is 512. The permitted fallback,
+  r7i.48xlarge, started successfully: 1.5 TiB nominal RAM, 192 vCPUs,
+  $12.7008/h Linux shared on-demand in us-east-1. Prices read from AWS Pricing;
+  exclude EBS and account-specific discounts. No quota change was requested.
+- Actual Linux MemTotal: 1,560,349,684 KiB (about 1.45 TiB).
+- No subagents, monitors, automations, new chats, cross-chat messages or orders
+  were created. The executor's scheduling loop belongs to numerical execution.
+
+Current execution (ALREADY RUNNING; do not duplicate)
+Instance i-035994afa8bdf66a5, us-east-1, now r7i.48xlarge.
+B=/opt/frankie-box/work/family-research-20261022
+O=B/joint-models-v4-candidate-20261022
+R=O/parallel-63
+Coordinator PID: 3174
+Command:
+python3 B/full-context-audit/scripts/resume_memory_candidate.py --execute --max-workers 63
+Coordinator log: O/parallel-memory-resume.log
+Recovery run:
+R/memory-recovery-20261022T172944Z-2411d41b
+Recovery state: that directory/recovery-plan.json
+Launch receipt: R/memory-resume-launch-receipt.json
+Runtime receipt: R/memory-recovery-runtime-verification-20261022.json
+
+The deployment source hashes are normalized UTF-8 source text:
+resume_memory_candidate.py:
+e52abcab2cde1f8af1965be8b88653093e3f6cf84a1ac034cc40a1c6489c497f
+test_resume_memory_candidate.py:
+777d3f43c1ba265b9db38bdc52d357b7cb7b5145d8950cf392fd308059e21f2e
+Source files are committed under full-context-audit/scripts.
+SSM deployment: 7528c11c-8340-404b-a5b1-114140e72b90.
+Successful runtime verification: 119162a5-b27a-4541-a4c7-7644882d9c3d.
+The preceding metadata snapshot reader had a None/string comparison error;
+this was in the read-only snapshot command, not the numerical executor.
+
+Runtime verification at 17:31:48 UTC
+- 35 live Julia fits, across 2 cohorts; 63-slot global pool.
+- All sampled/live Julia worker scopes had finite memory.max enforcement.
+- 92 coherent prior results retained, including eligible serial results.
+- 748 task keys currently registered across 22 prepared cohorts.
+  Another 41 cohorts have not registered their training-derived group lists:
+  748 is NOT the final suite size.
+- No new recovery job receipts yet; no claim that a new full fit has finished.
+- No new recovery failures recorded; host oom_kill counter since reboot = 0.
+- MemAvailable: 1,076,143,164 KiB (about 1.00 TiB).
+This is one completed runtime verification, not a monitor. Do not add audits.
+
+Repair behavior
+- No raw input/matrix rebuild, database scan, restoration, Julia download,
+  completed-fit rerun, target change, split change or hyperparameter change.
+- All source as-of clocks, ages, missingness, provenance, scopes, censoring and
+  contrary/unfavorable/inconclusive evidence remain under the original handoff.
+- Reconciles metric/prediction key and count consistency, finite predictions,
+  unique sample IDs, error files and required fitted-state presence.
+  Coherent orphan artifacts can be retained with original process returncode
+  unknown explicitly recorded, rather than rerunning a finished fit.
+- Moves failed/incomplete job directories to R/attempts before another attempt.
+  All failure logs, receipts and partial states are preserved.
+- Uses shared immutable raw data and existing prepared matrices. It regenerates
+  ONLY a missing/released reproducible fold cache, using the same numerical
+  preparation and training membership; existing prep/state links remain.
+- Generated Julia adapters are copied to the recovery run. The only Julia
+  source modification removes the old cache admission call; this executor
+  owns cache admission. Algorithm code, seeds, epochs and one-thread BLAS stay.
+- Global queue overlaps cohorts and fits; up to two preparations can overlap
+  fits when storage/RAM admission allows. No per-cohort fitting barrier.
+- Admission reserves 64 GiB host headroom plus shared raw storage residency.
+  Core reservations start at at least 32 GiB, neural at least 64 GiB and scale
+  with matrix dimensions; 24 GiB was only an earlier provisional proposal.
+  Each numerical task runs in a systemd memory-bounded scope. A scope's memory
+  events/peak/limit and its child return code are retained in job output.
+- Memory-limited fits are deferred until the regular queue finishes, then
+  retried in parallel where RAM allows, with increasing allowances. Large
+  reservations naturally occupy more of the pool.
+- No task is permanently skipped. Reaching safe host capacity produces an
+  explicit incomplete/larger-host requirement, never successful completion.
+  Non-memory errors likewise retain pending work and prevent publication.
+- Reproducible dense a.bin/b.bin caches can be released after their current
+  assigned attempts finish, including deferred attempts. Deferred cohorts
+  regenerate these caches later; metadata/fitted states/evidence are retained.
+- Required task-key coverage must match all retained successful locations
+  before merging. PCA and the original postprocessors follow the fits.
+  Root metrics files are not a live progress total before publication.
+- The semantic gate remains NOT_PASSED even if numerical execution completes.
+  No new independent market day or established tradable signal is claimed.
+
+Verification and limits
+14 compact Python regression checks passed for memory admission, mandatory
+larger-memory retry behavior, failed-attempt preservation, orphan recovery,
+missing weights, duplicate/partial/nonfinite predictions, and task identity.
+A runtime probe confirmed actual cgroup memory.max before numerical dispatch.
+Runtime evidence above confirms active parallel jobs with enforced limits.
+This does not establish final fit success or final prediction coverage.
+No second verification campaign or broad audit is authorized.
+
+Continuation
+Do not run redeploy_parallel_candidate.py, run_suite.sh, or a second recovery
+executor while this one is active. It would duplicate/interfere with work.
+Use AWS plugin run_script/SSM only, never AWS CLI. Work in the existing clean
+checkout, not E:\Markets. Do not rehash/download large inputs.
+After completion, check final receipts/unique prediction coverage once, retain
+all contrary evidence and archive final states as appropriate. The active
+recovery outputs are on AWS EBS; they are not yet in a new portable archive.
+
+
+============================================================
+C. RETAINED COMPLETE ORIGINAL PARALLEL HANDOFF (HISTORICAL EXECUTION)
+============================================================
+
+FAMILY-MARKET RESEARCH: COMPLETE ACTIVE PARALLEL-RUN HANDOFF
+Date: 2026-10-22. Read this ENTIRE file before taking action.
+
+1. CURRENT HUMAN INTENT AND AUTHORIZATION
+
+Continue family-market research for DavisAI1974/Markets. The user wants full use
+and scientific accounting of the 99 registry planes, 13 historical concepts,
+complete second set, Frankie's knowledge, ordered FIFO, dipoles, and timestamped
+bid/ask context. Keep contradictory, unfavorable and inconclusive evidence.
+
+Latest user steering overrides the old execution state:
+- "Don't go overboard with the verifications. I pass and that's it. We should
+  be up and running it 10 minutes" was interpreted as ONE verification pass.
+- User then required all 64 CPUs/63 workers and said "Redeploy fixed code asap".
+- User now asks: "I mean runtime. While it's running cleanly, create handoff
+  and print drop in to start new chat".
+
+The expanded CANDIDATE suite IS RUNNING. Do not restart it or repeat the build.
+The old handoff's "NO V4 FIT HAS STARTED" is superseded. Full semantic coverage
+is still NOT_PASSED; do not relabel this candidate as a fully certified V4 result.
+V3 stays frozen. User explicitly prioritized one pass and prompt execution over
+further rounds of audit. Do not add broad verification or unrequested audits.
+
+No subagents, monitors, new chats, messages to other chats, live orders, or
+instance lifecycle changes are authorized. Parallel numerical worker processes
+on the existing instance ARE authorized; they are not AI subagents. No monitors
+or automations were created. Do not create a new chat; provide a drop-in prompt.
+
+2. REPOSITORY, CHECKOUT, AWS AND NO-REPEAT RULES
+
+Repo: DavisAI1974/Markets
+Remote branch: claude/kalshi-s79-kickoff-ij8t9o
+Last implementation checkpoint before this handoff: ac54bd71
+  research: deploy 63-slot AWS shared-memory model executor
+Earlier continuation commits:
+  00c187f7: all 441 external classroom claims reproduced
+  5a36d4bb: expanded history/ROOT/lifecycle evidence and candidate build
+  3d2d9434: candidate launcher/archive transport receipt
+
+DO NOT work in dirty E:\Markets. Use the clean work checkout:
+C:\Users\A\Documents\Codex\2026-10-22\family-research-handoff-repo
+Local branch: codex/family-research-handoff-20261022
+core.longpaths=true. Changes were pushed to the remote branch above.
+
+AWS instance: i-035994afa8bdf66a5
+Region: us-east-1
+Persistent base B: /opt/frankie-box/work/family-research-20261022
+64 CPUs available in process affinity; approximately 496 GiB usable RAM.
+ALL calculations and RAM usage are on this AWS machine. The user's PC only
+orchestrates commands and stores compact outputs/source plus some archives.
+
+Use the AWS plugin run_script with SSM. NO AWS CLI. Discover its tool through
+ALL_TOOLS if necessary. Required pattern:
+  r=await call_boto3(service_name='ssm',operation_name='SendCommand',
+    region_name='us-east-1',params={
+      'InstanceIds':['i-035994afa8bdf66a5'],
+      'DocumentName':'AWS-RunShellScript',
+      'Parameters':{'commands':[shell_script]},'Comment':'concise purpose'})
+  result={'command_id':r['Command']['CommandId']}
+  result
+Then GetCommandInvocation. Check api_calls and real outputs; do not infer success
+from dispatch. Do not expose presigned URLs. SSM output is bounded (~24 KB).
+
+Existing Julia (DO NOT reinstall/download):
+  B/julia-runtime/julia-1.13.2/bin/julia
+  JULIA_DEPOT_PATH=B/julia-depot
+  --project=B/julia-model-env (core/PCA)
+  --project=B/julia-neural-env (NeuroTabModels)
+  B/julia-env also exists.
+Python3 stdlib is available on the instance. numpy and rg are not installed.
+Use bounded Python source reads where needed. Do not install tools just for this.
+
+DO NOT repeat restoration, download Julia or alignment.sqlite, rehash the whole
+database, or scan huge recovery directories. alignment.sqlite is the already
+verified 6,542,319,616-byte database. Exact indexed offsets and saved projections
+are the intended inputs. Retain integer nanosecond clocks and cursor ordering.
+
+Historical foundation handoff, already read completely in the prior chat:
+https://github.com/DavisAI1974/Markets/blob/9064cdf69bc6fa23fd37380b68dbe1538cd26025/artifacts/sqlite-triage/20261022/families/family-full-context-analysis-handoff.txt
+This file supersedes its execution-state claims. Keep its source identities and
+scientific constraints. Do not repeat the restoration procedures described there.
+
+3. LIVE EXECUTION: WHAT IS ACTUALLY RUNNING
+
+Inputs: B/joint-inputs-v4-candidate-20261022
+Outputs: B/joint-models-v4-candidate-20261022
+Parallel root R: B/joint-models-v4-candidate-20261022/parallel-63
+Coordinator PID at handoff: 15370
+Command: python3 B/full-context-audit/scripts/redeploy_parallel_candidate.py
+Coordinator log: B/joint-models-v4-candidate-20261022/parallel-redeploy.log
+
+Current work uses 63 compute slots:
+  during preparation: 4 prepared-fold jobs + up to 59 fit jobs
+  after preparation: up to 63 fit jobs
+JULIA_NUM_THREADS=1, OPENBLAS_NUM_THREADS=1, OMP_NUM_THREADS=1,
+MKL_NUM_THREADS=1; BLAS.set_num_threads(1) in adapted model scripts.
+No instance resize/start/stop was done. No package/runtime download was done.
+
+The first two-process suite was unnecessarily serial inside each process. It was
+replaced by this executor. Old launcher PID 15137 and fit PIDs 15275/15276 were
+verified by exact command, stopped after output preservation, and are no longer
+the active execution. Do NOT restart run_suite.sh or use its PIDs as live status.
+
+Shared input (read-only memory map, one physical/page-cache copy):
+  R/shared/raw.bin = 34,601,642,880 bytes, Float64 column-major
+  R/shared/meta.jls = names, samples, dimensions
+  dimensions: 3,745 x 1,154,928
+Prepared folds: R/cache/<outcome-horizon-fold>/
+  a.bin, b.bin are mapped shared Float64 transformed train/test matrices
+  prep.jls, ready.json, and cohort preprocessing state preserve metadata
+Isolated jobs: R/jobs/<cohort>--<core|neural>--<model-hash>/
+  run.log, metrics/prediction CSVs, fitted .jls states, job_receipt.json
+  model hash identifies a job only; it is never a numeric predictor.
+
+63 workers do NOT each deserialize a private 35 GB input matrix. Preparation
+uses views of the immutable mapped matrix and runs training-only fitprep once
+per cohort. Models in that cohort share its prepared inputs. Core AA/BB slices
+use views. Algorithms, target definitions, sample membership, seed values,
+hyperparameters, and epochs are unchanged. Changing BLAS thread counts can
+change floating-point last bits; no bit-identical fitted-result claim is made.
+
+Completed serial outputs are retained under R/serial-prefix. Eight committed
+neural metrics/prediction results are skipped in the new queue. The core prefix
+had zero fully committed metric tasks; partial model states/logs were preserved
+without promoting them to completed results. Do not delete unfavorable partials.
+
+Executor stages:
+  export shared matrix (DONE)
+  prepare 63 declared outcome/horizon/fold cohorts (in progress)
+  independent core models/ablations and three neural architectures (RUNNING)
+  merge unique task/model predictions and metrics with preserved serial prefix
+  publish model-state links and chronological splits
+  PCA-12 + k-means 3/5 once
+  summarize_joint_models.jl
+  analyze_joint_interactions.jl
+  analyze_observed_price_paths.jl
+  R/parallel_plan.json status becomes complete_candidate only after success.
+Additional historical layer-review tools are NOT automatically queued by this
+executor; do not assume all old review scripts were adapted to candidate paths.
+
+Core models include frequency/mean/zero, ridge100, EvoTrees depth3/depth5,
+MAE/q10/q90, all source-group refits, and drop_history where applicable. Neural
+models are neural_tree, residual_mlp and tabm_ensemble, fixed 25 epochs.
+There are 63 outcome/horizon/fold cohorts; original neural schedule is 189
+configurations, including constant-target branches that fit no neural weights.
+Model-group counts can vary with training-only feature availability.
+
+Do not treat the root model_metrics.csv or neural_metrics.csv as current total
+progress until the parallel merge completes: they can still be serial-prefix
+files. Use isolated job receipts and coordinator log for active progress.
+
+4. LAST CLEAN-RUN SNAPSHOT AND RUNTIME ESTIMATE
+
+Snapshot: 2026-10-22T16:42:39.276864+00:00 (12:42:39 Eastern)
+  63 Julia workers
+  92.1% machine CPU busy
+  20 completed parallel jobs: 15 core + 5 neural
+  zero recorded job errors
+  8 additional committed serial neural results retained separately
+  first parallel completion 16:33:01 UTC; latest 16:42:38 UTC
+  22 prepared cohorts, 22 retained dense fold caches at this snapshot
+  MemAvailable 65,539,552 KiB (about 62.5 GiB)
+  free disk 103.2 GiB
+Snapshot source: SSM 59c26e37-e8c7-44a2-8ac5-ff59411de163
+Saved: joint-models-v4-candidate-20261022/parallel-handoff-runtime-snapshot.json
+Earlier deployment pass observed 95.7% CPU, 63 workers, 13 successes/0 errors.
+
+Runtime estimate given to user: PROVISIONALLY 2-6 hours with 63 workers.
+This replaces the 12-24h estimate for the two-process run. It is not a measured
+completion guarantee; current progress is still early and model sizes differ.
+Do not just divide elapsed time by successful cheap baseline jobs. Re-estimate
+from completed full parallel batches/remaining heavy fits when useful.
+
+Storage admission was patched into generated scripts while existing fits kept
+running. R/cache_and_publication_update.json records generated-file hashes.
+pool_cache_guard.py bounds future dense-cache admission to six active cohorts
+and requires at least 100 GiB free disk. Some already-started preparations
+predate this guard, hence 22 retained caches at the snapshot. New preparation
+should wait until old completed-cohort caches are released. The guard only
+unlinks reproducible a.bin/b.bin/admission files AFTER every assigned model job
+has a final receipt. Source inputs, fitted states, prep metadata, failures and
+provenance are not deleted. It is part of preparation, not a new monitor.
+
+If execution stalls, first inspect coordinator/job logs, active workers and cache
+admission. Current disk headroom is close to the admission floor. Do not trigger
+restoration, instance lifecycle actions, or broad recovery scans. Do not rerun
+redeploy_parallel_candidate.py in place: its root creation intentionally refuses
+an existing run. Any recovery must retain completed receipts/states and resume
+only missing/failed work; do not discard the successful parallel prefix.
+
+Live generated adapters were patched without interrupting active fits. Initial
+in-flight jobs can use the prior storage/publication adapter version, while
+later jobs use shared preprocessing state and cache admission. These changes
+affect storage/scheduling, not numerical model definitions. The Python
+coordinator already loaded in memory predates those storage patches; current
+generated Julia files and helper files implement them. Do not restart it merely
+to make its source-file bytes match the loaded coordinator.
+
+5. FROZEN MATRIX AND SINGLE-PASS STATUS
+
+Candidate build finished 16:17:39 UTC; 26/26 causal model preparation tests
+passed once at 16:17:40. Initial fits started 16:17:41 UTC.
+
+Matrix: 1,154,928 columns, 3,745 samples, 749 families.
+  frozen V3 columns retained: 28,100
+  new native/ROOT current numeric + category indicators: 80,839
+  dynamic historical/age current columns: 200,868
+  new current plus delta120/delta300/delta600 expansions are appended.
+  source-proven constant histories remain in the structured timeline/registry;
+  they are omitted numerically only where invariant throughout the input window.
+  remaining feature selection/imputation/scaling/masks are training-only.
+
+All V3 values and missingness are unchanged. Outcomes/samples are copied from
+the frozen V3 inputs. Outcome SHA256:
+6a0613a357675ba60c7d4e946592b2aa69ea0e09dd488cd0ecfa4d54ba445608
+As-of native rows must satisfy exact receive/known-by <= cutoff and cursor cap;
+history timelines are consumed at exact context cutoffs. Absolute clocks stay
+provenance. Relative ages subtract Int64 clocks before conversion to seconds.
+
+Candidate fit means NOT_PASSED semantic gate remains explicit. No claim that all
+99 semantic consumers and units have now been certified. No extra independent
+market day exists. Only one aligned October17-18, 2023 market day is retained.
+Families are first-observed structural families, not proved order/family births.
+Preserve reset/continuity scope, source ages, explicit missingness and censoring.
+
+6. RESEARCH WORK COMPLETED SINCE THE ORIGINAL HANDOFF
+
+Primary retained context:
+  749 first-observed families; 583,688 complete groups; 583,127 occurrences
+  771,787 confirmed second-set EVENT rows; 30,739 timestamped trades
+  329,658 primary external rows over 20 tables/13 historical concepts
+  10,486 selected sample/lag contexts, 6,265 unique native offsets
+  canonical registry 99 roles; all 72 source files recovered (2,777,529 bytes).
+  Source recovery is not the same as full scientific consumption.
+
+A. Original external classroom reproduced COMPLETELY
+  Exact 48 external series, 211,055 known values, all 771,787 native rows.
+  All 2,040 original pairs checked: 663 opposite, 632 same, 745 unresolved.
+  All 441 filed claims reproduce endpoint relations and five step counts.
+  10,419 summaries, 88,071 exact alignment segments and original pair counts.
+  Native Float32 and external Float64 retained; raw native precision is a named
+  sensitivity, not silently substituted. Pearson reduction is not asserted
+  bit-identical to old OpenBLAS-32 arithmetic.
+  1,128 overlapping research flags retained: 441 endpoint/path, 226 chronology,
+  353 missing-group sensitivity, 46 raw precision, 62 endpoint support.
+  Prior saved native classroom 69 claims also reproduced, not discarded.
+  Output B/external-classroom-audit-v1 and committed repo artifacts.
+
+B. New Oct17 source version recovered and scoped history normalized
+  Named S3 day_external/20231017/day-external.json only, If-Match guarded.
+  38,223,416 bytes; ETag 3e4b06be7d420227f6c4eb597167f0d1
+  SHA256 8c9bf49fda3adf984c191ed06c13ee7c04117777a9535b485c9cbe15400e2c71
+  B/full-context-audit/historical-source-additions/
+  Original history catalog remains immutable.
+
+  B/external-history-v4/scoped_history.sqlite (8,941,207,552 bytes)
+  19 sources, 7,679,916 provenance records, 5,801,334 normalized variants,
+  38,677 dimensional scopes, 270 canonical field-role dispositions.
+  Union includes 21 tables; storage capture provenance is not a 14th concept.
+  MOS model/runtime/target/valid coordinates, EIA route/respondent/fuel/units,
+  COT contract/report/store-vs-wrapper stamps, curve instrument/stat type,
+  weather station/valid time and storage vintage are separated.
+  Old publication-only rows have explicit saved-reader event/14:00 ET placement,
+  with original source stamps and clock shape retained. These are reconstructed
+  source-defined availability claims, not proof of live first-observed vintages.
+  Source M, null, nonfinite, real zero, deleted stats, INT64_MAX undefined quantity
+  and UINT64_MAX undefined timestamp remain distinct.
+
+  B/external-history-v4/occurrence_links.sqlite retains all 7,679,916 source rows.
+  343,700 additional coincident stream messages kept. Do not use content variants
+  or coarse observation IDs as event counts. Occurrence coordinate includes scope,
+  exact source publication/event ns and within-stamp source position. No exchange
+  sequence is fabricated. File-version ordering conflicts remain explicit.
+
+C. As-of version resolution and full scoped historical consumption
+  B/external-asof-v4/resolved_observation_events.sqlite (10,600,017,920 bytes)
+  5,275,928 resolved observations; 45,220 unranked numeric conflict cells;
+  389,931 primary unavailable cells retained. Filter availability BEFORE primary
+  precedence. A known primary null/deletion/M does not get an alternative fill.
+  Unranked disagreement yields unknown plus explicit finite/state alternatives.
+
+  B/external-scope-history-v4/scope_feature_timeline.jsonl.gz
+  5,275,928 observations consumed, 20,380,668 numeric emissions and 6,349,614
+  categorical emissions. 187,766 timeline rows; 1,652,923 registered feature/
+  clock roles; all 38,677 scopes consumed.
+  Latest/previous vintage, historical present/unavailable/absent counts,
+  min/max/mean/std, separate last-present, alternative ranges and categorical
+  frequencies retained. Late arrivals for old vintages cannot replace newer
+  vintages. Coincident curve messages use known primary source order only when
+  every tied occurrence has it; otherwise ambiguous ordering is retained.
+  History builder requires one resolved event per observation (true here); it
+  refuses future revised-event datasets until subtraction/update math is added.
+  Historical observations are NOT new independently aligned market days.
+
+D. Complete ROOT/FIFO state extraction and native feature identity
+  B/joint-inputs-v4/root_full_context_values.jsonl.gz
+  116,893,886 bytes; SHA256
+  a6f0edfd04ec532b9407b549c668d2cf09452c280a13e3b374e409ad4288a3ba
+  5,034 numeric and 5,252 categorical ROOT fields; 6,265 contexts.
+  2,786,032 full-depth ROOT/native level aliases;
+  6,993,462 identity-linked FIFO order observations; zero future update clocks;
+  20,418 ordered raw-message aliases and 6,265 fill-signature aliases.
+  Order IDs link last-update ages to actual queue positions; IDs are provenance,
+  not numerical predictors. Repeated order observations are not unique orders.
+  Snapshots do not prove unobserved continuous order survival or true order birth.
+
+  Native/second original full extraction stays unchanged:
+  29,497,352 numeric source cells, 47,792 numeric identities, 19,119 categorical
+  fields and 20,572 levels over 6,265 selected records.
+  Stricter name/path/unit collision guard checked 66,911 total identities,
+  29,497,352 numeric cells and 858,166 category cells: zero collisions, exact
+  match to saved extraction. No need to rewrite/re-extract the large payload.
+  ROOT run used the prior Measurements module; original code hash/backup and
+  root_full_code_provenance.json preserve that distinction.
+
+E. Complete episode/path, clock and phase evidence
+  B/episode-path-audit-v1/lifecycle_asof.sqlite (464,343,040 bytes)
+  1,726 episode rows represent 863 candidates, not 1,726 independent events.
+  862 complete paths, one NO_PREDECESSOR path withheld, 54,042 stages.
+  Source arithmetic checks passed for flow/direction, normalized imbalance,
+  zero-skipping sign reversal, octave stage bins, coupling, recognition leads,
+  lineage duration and two detector partitions.
+  Full-row emission/cursor availability is kept for all 10,486 contexts.
+  STREAM_END and SEGMENT_CLOSE facts are never backfilled earlier.
+
+  B/dipole-book-clock-audit-v1:
+  At 21,437 exact indexed native coordinates (1,246 cached, 5,792,655,571 new
+  indexed bytes), ALL 54,042 stored stage-book vectors match the canonical caller
+  hypothesis. Every assigned book arrived after its stage-bin label.
+  Against the last lawful past book: 45,879 book-state differences, 8,925 midpoint
+  differences, and changed midpoint coupling on 671 of 862 paths.
+  Stage zero is stamped at candidate birth but uses opening-emission book;
+  later completed-second stages use the first group in a later receive second.
+  Both producer-assigned and strictly past views, exact coordinates, hashes and
+  discrepancies are retained. This does NOT say the full row was emitted before
+  its inputs; the actual full-row emission remains the availability boundary.
+  Midpoint coupling is not executable return or causal/tradable evidence.
+
+  B/dipole-event-phase-audit-v1:
+  Explicit canonical-rule reconstruction: BIRTH 1,319; PERSISTENCE 51,861;
+  REVERSAL 862 stages. All 862 complete paths terminate in reversal.
+  Stage index/octave, event phase, session phase and orientation are separate.
+  Labels are RECONSTRUCTED (not stored in DipoleStage), tied to actual row
+  availability. Persistence default three opposite seconds remains a canonical
+  source assumption; execution-checkout byte identity is not proved.
+
+  Canonical native definition references (10 files) are recovered at commit
+  2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134 and Git blob hashes are saved. Keep
+  this separate from db96f24f3260bf0d70c763b297c2ba9b84f571a6 execution checkout.
+  Do not claim canonical reference bytes equal executed checkout bytes.
+
+F. Timestamped bid/ask for every retained model context
+  B/timestamped-model-context-v4/aligned_context_bid_ask.csv.gz
+  All 10,486 contexts, 749 families, 6,265 unique snapshots.
+  12,530 full-depth conservation and 12,530 touch-price checks passed.
+  All selected snapshots were two-sided. Exact event/receive/known-by/cutoff/
+  cursor clocks and book_age_ns remain separate. No synthetic fills/quotes.
+  Existing B/timestamped-mbo-window-v1 remains separately scoped: one predeclared
+  median family window, 22,194 consecutive quote books and 10.267M level rows.
+  It does not establish consecutive-book coverage for all families.
+
+7. KNOWLEDGE/99-PLANE WORK STILL OPEN (DO NOT MISREPRESENT)
+
+All 72 canonical source files are recovered. No known input file remains to
+download. Full source/field semantic consumer certification is incomplete.
+The bottleneck is meaning/mapping, not loading more database/runtime files.
+
+See knowledge-semantic-review-working-notes.md and the saved source registries.
+Core trigger/read/call/prerequisite/scope/status/falsifier/caveat fields of all
+90 ng_brain plays were read, as were six mechanisms, ruled-out-by-target and 33
+frontier entries. This does not claim full reading/testing of every nested
+instance/corpus/health/provenance/audit object. The 22 doctrine bodies, 82 memory
+source entries, remaining memory findings and 72-source semantic ledger remain
+partially reviewed. Do not manufacture a fully reviewed file count.
+
+Knowledge mostly records 2025-26 posthoc research relative to the 2023 retained
+market day. Treat it as hypothesis/provenance/prerequisite evidence. Do not turn
+statuses, confidence, filenames, hashes, IDs, self forecasts or realized targets
+into exogenous numeric predictors. Multi-day, Friday/weekend/Monday, Thursday
+print, seasonal, prior-full-session and chain-age prerequisites often cannot be
+established from this single Wednesday aligned day. Do not invent proxy equality.
+
+Preserve the actual contradictions: nowcast versus next-day flow evidence;
+unfavorable book/imbalance results; realized-price absorption tautology;
+refuted weather.burn_conversion_gate and narrowed successor; struck gap sigma
+bands; unblinded class curves/refine records; gas-only-regulator/hydro claims
+and their residual-generation/confounding/data-gap caveats. B/(B+S) is not
+B/(B+S+N). MOS model/cycle/target/horizon, daily burn versus hourly Bcf/day rate,
+and prior full-session tape versus current partial counters are distinct.
+
+Remaining numerical/interpretation gaps include exact units for generic fields,
+aliases/value-unit reconciliation, full per-plane semantic dispositions and
+matching all knowledge prerequisites. New v4-prefixed feature names can fall
+through old layergroup rules; ablation names are not a certified 99-plane map.
+Last-present clocks/other raw ages remain in structured timelines; not every
+provenance clock is a separate numeric matrix age. Keep the gate NOT_PASSED.
+
+Do NOT stop or restart cleanly running fits solely to expand these audits. The
+user explicitly asked for one pass and prompt execution. Finish/interpret the
+candidate honestly, retaining remaining limits. No established tradable signal.
+
+8. DURABLE SAVES AND WHAT IS NOT YET ARCHIVED
+
+Bucket: bento-568968024170-us-east-2-an; region us-east-2
+Common key prefix: frankie/family-prebirth/20261022/
+
+Verified old frozen input/model-state archives are catalogued in the original
+handoff. Do not restore them again. New completed component archives:
+
+external-classroom-audit-v1-99fb865d.tar.gz
+  11,654,997 bytes
+  SHA256 99fb865d41874f949c90090872fc6e5d1b27e219310777416c36d813b6ce8579
+  HTTP200 upload, local download, all18 member hashes checked.
+full-context-continuation-v1-eb2b860d.tar.gz
+  181,035,517 bytes
+  SHA256 eb2b860d452d1a462ef609e44a8c6aad4b89d71f28d9de049b15b3b6c585e4e1
+  HTTP200 upload, local download, all14 member hashes checked.
+external-history-v4-normalized-v1-2e6808cf.tar.gz
+  3,788,033,203 bytes
+  SHA256 2e6808cf2e1ca07e89ae3260d237d81327418dd28a1710c81ba7f0b733b656b0
+  HTTP200 upload, local download, all13 member hashes checked.
+dipole-book-clock-audit-v1-b3be15d9.tar.gz
+  3,898,548 bytes
+  SHA256 b3be15d9d60f9e2d9a6465ef68c3ad731d871324474e1d0b5e5fad8c315ce471
+  HTTP200 upload, local download, all8 member hashes checked.
+asof-quotes-phases-v1-258d1951.tar.gz
+  1,833,955,983 bytes
+  SHA256 258d1951e16029d3b42222da7e6145ae3e6f807f24f654b3c24f7b925cea696b
+  11 member files. HTTP200 upload; not downloaded locally.
+
+Persistent archives are under B/continuation-archives-v1. Local large archives
+are OUTSIDE Git, in C:\Users\A\Documents\Codex\2026-10-22\family-continuation-archives.
+Compact receipts, scripts, registries and scientific comparisons are committed.
+
+The latest scope timeline, candidate .jls matrix, shared raw export and active
+parallel fit states currently live on persistent AWS storage. Do not claim they
+are already in a new portable verified archive. Archive final states/outputs
+after fitting when appropriate, without saturating the active run or repeating
+old database verification. Save failures and partials too.
+
+9. NEXT CHAT'S FIRST ACTIONS
+
+Read this whole handoff. Keep the running executor intact. A compact read of
+R/parallel_plan.json, latest isolated job receipts, parallel-redeploy.log and
+actual worker state is sufficient to see progress; do not rerun tests/builds.
+The user prohibited monitors, so use an on-demand snapshot, not an automation.
+
+If clean, let the queued calculations proceed. If a job fails, preserve its
+attempt/log/states and repair the specific cause; resume missing/failed jobs
+without rerunning completed ones. Do not conflate a dispatch with success.
+
+After all fits/PCA/postprocessing, check actual complete receipts and unique
+task/model/prediction coverage once, save all final outputs and contradictory/
+unfavorable/inconclusive findings, and report the candidate coverage limit.
+Do not call the 99-plane gate passed unless its semantic work is actually done.
+
+The drop-in prompt should point to this handoff at the newly pushed immutable
+commit, retain the branch/instance/base/no-repeat restrictions, and say continue
+the ALREADY RUNNING 63-worker candidate. Do not create/message a chat yourself.

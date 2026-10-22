@@ -1,0 +1,199 @@
+{
+  "utc": "2026-10-22T17:54:02Z",
+  "coordinators": [
+    {
+      "pid": 3174,
+      "command": "python3 /opt/frankie-box/work/family-research-20261022/full-context-audit/scripts/resume_memory_candidate.py --execute --max-workers 63 "
+    }
+  ],
+  "wrapper_count": 35,
+  "numerical_worker_count": 35,
+  "duplicate_active_task_keys": [],
+  "cpu_busy_pct": 17.7201784691238,
+  "cpu_iowait_pct": 0,
+  "sum_worker_cpu_cores": 34.08522798600072,
+  "physical_read_Bps": 0,
+  "logical_read_Bps": 0,
+  "sum_reserved_bytes": 1490074730496,
+  "sum_scope_current_bytes": 552833052672,
+  "sum_scope_peak_bytes": 552894394368,
+  "sum_anon_bytes": 544715759616,
+  "sum_file_bytes": 1263796224,
+  "memory": [
+    "MemTotal:       1560349684 kB",
+    "MemAvailable:   1009966564 kB"
+  ],
+  "pressure": {
+    "cpu": "some avg10=0.00 avg60=0.00 avg300=0.00 total=201749\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+    "memory": "some avg10=2.00 avg60=2.00 avg300=1.87 total=21020818\nfull avg10=2.00 avg60=2.00 avg300=1.87 total=21016903",
+    "io": "some avg10=0.00 avg60=0.00 avg300=0.00 total=10016768\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=10006466"
+  },
+  "cache_cohort_worker_counts": {
+    "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/cache/absolute-mid-price-change-h1-fold4": 24,
+    "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/cache/absolute-mid-price-change-h1-fold3": 1,
+    "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/cache/absolute-mid-price-change-h120-fold3": 10
+  },
+  "completed_peak_samples": {
+    "core": [
+      {
+        "model": "dropgroup:external.calendar",
+        "reserved": 34359738368,
+        "peak": 8209367040,
+        "returncode": 0
+      },
+      {
+        "model": "evotrees_depth5",
+        "reserved": 34359738368,
+        "peak": 28246949888,
+        "returncode": 0
+      },
+      {
+        "model": "dropgroup:external.storage.weekly",
+        "reserved": 34359738368,
+        "peak": 8680591360,
+        "returncode": 0
+      },
+      {
+        "model": "dropgroup:external.curve",
+        "reserved": 44906579264,
+        "peak": 12278620160,
+        "returncode": 0
+      },
+      {
+        "model": "dropgroup:external.wind_mwh",
+        "reserved": 34359738368,
+        "peak": 8681304064,
+        "returncode": 0
+      },
+      {
+        "model": "dropgroup:lifecycle.ladder",
+        "reserved": 34359738368,
+        "peak": 8665989120,
+        "returncode": 0
+      },
+      {
+        "model": "dropgroup:causal_pullback_geometry",
+        "reserved": 34359738368,
+        "peak": 8002256896,
+        "returncode": 0
+      },
+      {
+        "model": "dropgroup:external.mos.disagreement_by_cycle",
+        "reserved": 34359738368,
+        "peak": 7997190144,
+        "returncode": 0
+      },
+      {
+        "model": "dropgroup:second_set_scientific_components",
+        "reserved": 34359738368,
+        "peak": 8661495808,
+        "returncode": 0
+      },
+      {
+        "model": "dropgroup:lifecycle.absorption",
+        "reserved": 34359738368,
+        "peak": 8608915456,
+        "returncode": 0
+      },
+      {
+        "model": "evotrees_mae",
+        "reserved": 34359738368,
+        "peak": 8064020480,
+        "returncode": 0
+      },
+      {
+        "model": "dropgroup:external.storage.estimate",
+        "reserved": 34359738368,
+        "peak": 8662691840,
+        "returncode": 0
+      },
+      {
+        "model": "dropgroup:external.est_gas_burn",
+        "reserved": 34359738368,
+        "peak": 7999184896,
+        "returncode": 0
+      },
+      {
+        "model": "evotrees_q10",
+        "reserved": 34359738368,
+        "peak": 8068857856,
+        "returncode": 0
+      },
+      {
+        "model": "evotrees_q90",
+        "reserved": 34359738368,
+        "peak": 8064065536,
+        "returncode": 0
+      },
+      {
+        "model": "dropgroup:lifecycle.queue",
+        "reserved": 34359738368,
+        "peak": 8679907328,
+        "returncode": 0
+      },
+      {
+        "model": "evotrees_mae",
+        "reserved": 34359738368,
+        "peak": 9894424576,
+        "returncode": 0
+      },
+      {
+        "model": "evotrees_depth3",
+        "reserved": 34359738368,
+        "peak": 13902434304,
+        "returncode": 0
+      },
+      {
+        "model": "dropgroup:external.cot.023391",
+        "reserved": 34359738368,
+        "peak": 8060801024,
+        "returncode": 0
+      },
+      {
+        "model": "dropgroup:external.mos.disagreement_by_cycle",
+        "reserved": 34359738368,
+        "peak": 8663932928,
+        "returncode": 0
+      },
+      {
+        "model": "ridge100",
+        "reserved": 44906579264,
+        "peak": 11064377344,
+        "returncode": 0
+      },
+      {
+        "model": "dropgroup:root_native_flow_structure",
+        "reserved": 34359738368,
+        "peak": 8604184576,
+        "returncode": 0
+      },
+      {
+        "model": "evotrees_q90",
+        "reserved": 34359738368,
+        "peak": 8733196288,
+        "returncode": 0
+      },
+      {
+        "model": "evotrees_q10",
+        "reserved": 34359738368,
+        "peak": 8739790848,
+        "returncode": 0
+      }
+    ],
+    "neural": [
+      {
+        "model": "neural_tree",
+        "reserved": 68719476736,
+        "peak": 27228581888,
+        "returncode": 0
+      }
+    ]
+  },
+  "plan": {
+    "status": "running",
+    "phase": 0,
+    "queued_jobs": 594,
+    "queued_preparations": 43,
+    "active_jobs": 35
+  }
+}
