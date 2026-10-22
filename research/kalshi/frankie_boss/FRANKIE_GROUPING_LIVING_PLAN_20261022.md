@@ -550,28 +550,47 @@ Using the 18 calculation areas as a starting reference, the expected bucket dist
   figure). Requires the SQLite.
 - Whether catalog entries added after the historical checkpoint are included in the task plan.
 
-### Next step when a box becomes accessible
+### Schema and triage status — October 22 2026
 
-Run the queries in DROP_IN_CODEX_SQLITE_TRIAGE_20261022.md. Skip the set-aside fields
-entirely in the query — order IDs, storage positions, infrastructure, integrity, instrument
-scope, calendar labels are already classified and querying them wastes box time.
+**Schema confirmed.** The triage Python script ran on the main box on October 22 2026.
+Results are saved in `/tmp/codex-sqlite-triage-20261022.json` on i-035994afa8bdf66a5.
+The box is now stopped. When it is next available, retrieve that file per the drop-in.
 
-What we are actually after is the conjunctions. A group with two or more surviving conditions
-is a conjunctive hypothesis: "find observations where condition A AND condition B are both
-true simultaneously." The 18 calculation areas tell us what each field means. They do not
-tell us which fields were combined together into a single group definition. That only exists
-in the SQLite. Those combinations represent the actual hypotheses the experiment search was
-testing, and some of them will cross calculation area boundaries in ways that may or may not
-make sense. Seeing which conjunctions dominate is the informative output — not the raw count.
+**Critical schema finding:** The tasks table stores only `(ordinal, body, pin)`. No join table
+exists. Each body is a pickle of `(ordinal, (selection_id, None))`. SQL JOINs against the
+tasks table cannot produce conjunctions. The Python approach is the only correct method. The
+original drop-in SQL queries were architecturally wrong; the drop-in has been corrected.
 
-Query sequence:
-1. Schema inspection only — paste output, confirm table structure before writing any query
-2. Field names that survive the filter (Query A) — short list, fast
-3. Surviving group count and first 20 examples showing all conditions per group (Query B)
+**Two calendar exclusions added:** `trading_day` and `trading_weekday` were correctly identified
+by Codex and added to the exclusion set. They are now in the drop-in's set-aside calendar class.
 
-If the schema shows conditions are not in a standard join table, stop and report back.
-Do not attempt a Python loop over 1.5M rows without confirming that approach first.
-Do not attempt to run any query through the NFS mount while main is stopped.
+**Partial results seen before output was cut off:**
+Top surviving fields by distinct_selections (from the interrupted paste):
+- `native.lifecycle.queue[0].level_event_key_at_exit`: 262,119 distinct selections
+- `native.lifecycle.replenishment[N].level_event_key` fields: high counts across multiple N values
+- `native.lifecycle.absorption[0].family_id`, `native.member.row.family_id`,
+  `structures.candidate_family_id`: 763 distinct selections each
+The output was cut before the complete field list was captured.
+
+**Interpretation note from triage script (verbatim):** "Task rows reference unique observation
+masks; labels on one selection are aliases, not proof of an explicit AND hypothesis."
+
+**What this means for the conjunctions question:** The dominant surviving fields are
+level_event_key fields (positional queue identities) and family_id fields (structural family
+references). Both are in the categories withheld from automatic set-aside pending inspection
+(categories 14 and 11 in the living plan). The question of whether these are behavioral content
+or identity-like references is not settled by the field counts alone.
+
+**Next step when the box is available:**
+1. Retrieve and paste the full `/tmp/codex-sqlite-triage-20261022.json` output (section 3 of
+   the corrected drop-in). This gives the complete surviving field list, task count, and first 20
+   surviving tasks with all their conditions.
+2. If the file is gone (instance terminated, not stopped), re-run section 4 of the drop-in.
+3. After retrieving the output, record here: total surviving tasks, total surviving selections,
+   complete field list, and the conjunction patterns from the first 20 tasks.
+
+Do not attempt SQL queries against the tasks table. Do not run any query through the NFS
+mount while main is stopped.
 
 ---
 

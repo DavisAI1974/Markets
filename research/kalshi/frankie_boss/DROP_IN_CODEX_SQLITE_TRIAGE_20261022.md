@@ -1,11 +1,11 @@
-# Codex drop-in: SQLite schema + triage queries — October 22 2026
+# Codex drop-in: SQLite triage — October 22 2026 (SCHEMA CONFIRMED, TRIAGE RAN)
 
 **Author of this drop-in:** Claude (S115 session, October 22 2026)  
 **Work belongs to:** Greg Davis, DavisAI Markets
 
-**What this asks you to do:** Start the main box (read-only), inspect the two SQLite schemas,
-run two queries that skip all the already-classified noise, paste the output. Nothing else.
-No compute, no catalog edits, no service start.
+**STATUS AS OF OCTOBER 22 2026:** Schema confirmed. Triage script ran on the main box.
+Full results are in `/tmp/codex-sqlite-triage-20261022.json` on i-035994afa8bdf66a5.
+The box is now stopped. When the box is next available, start the retrieval section below.
 
 **What we are actually after — the conjunctions.** A group with two or more surviving
 conditions is a conjunctive hypothesis: "find observations where condition A AND condition B
@@ -45,7 +45,26 @@ hash, sha256, digest (and any field ending in _hash or _sha256)
 instrument_id, symbol, raw_symbol
 
 **Calendar labels (day-of-week, date, session labels — context only, not market behavior):**
-source_day, source_role, source_dbn_object
+source_day, source_role, source_dbn_object, trading_day, trading_weekday
+
+---
+
+## CONFIRMED SCHEMA (do not re-run .schema — already verified)
+
+**cells.sqlite** — 33,792,499,712 bytes (~31 GB)
+- `labels (original PK, key BLOB UNIQUE, selection INT, whole INT, column_name TEXT, value_text TEXT, body BLOB, pin BLOB)`
+- `selections (id PK, digest BLOB UNIQUE, size INT, body BLOB, pin BLOB)`
+- `metadata (key TEXT PK, value TEXT)`, `ordering (ordinal PK, original UNIQUE)`
+- Indexes: `labels_order ON labels(whole,column_name,value_text)`, `labels_selection ON labels(selection)`
+
+**group-tasks-finite-2-6.sqlite** — 110,800,896 bytes (~106 MB)
+- `tasks (ordinal PK, body BLOB, pin BLOB)`, `metadata (key TEXT PK, value TEXT)`
+- NO join table. NO selection_id column. Conditions are NOT queryable by SQL JOIN.
+
+**Critical discovery:** Each task row is a SHA-256-pinned pickle of `(ordinal, (selection_id, None))`.
+The "group" is a single observation mask (selection_id). Its conjunction is all field/value labels
+for that selection in cells.sqlite. The original drop-in's SQL JOIN approach was architecturally wrong
+and cannot work. Use the Python approach below.
 
 ---
 
@@ -70,125 +89,120 @@ Do NOT start i-0d17573dbce871520 (helper) or i-031eeb577ad72b064 (calculation).
 
 ---
 
-## 3. Schema first — stop here and paste output before running queries
+## 3. Retrieve the triage results (primary action)
+
+The triage script already ran. Results are in `/tmp/codex-sqlite-triage-20261022.json`.
+/tmp survives across sessions on this box as long as the instance has not been terminated.
+Start with the retrieval. If the file is gone (instance was terminated, not stopped), go to
+section 4 to re-run.
 
 ```bash
-CELLS='/opt/frankie-box/work/experiment-search/20231018/cycle-00/discovery.partial/recovery/indexed-v1/cells.sqlite'
-TASKS='/opt/frankie-box/work/experiment-search/20231018/cycle-00/discovery.partial/recovery/factored-v2/group-tasks-finite-2-6.sqlite'
+# Verify the file is still there
+ls -lh /tmp/codex-sqlite-triage-20261022.json
 
-sqlite3 -readonly "$CELLS" ".schema"
-echo "--- TASKS ---"
-sqlite3 -readonly "$TASKS" ".schema"
+# Print the summary (excludes the large arrays)
+python3 -c "
+import json
+with open('/tmp/codex-sqlite-triage-20261022.json') as f:
+    r = json.load(f)
+skip = {'field_counts','first_20_tasks','excluded','normalized_label_counts'}
+print(json.dumps({k:v for k,v in r.items() if k not in skip}, indent=2))
+"
+
+# Print the top 30 surviving fields by distinct_selections
+python3 -c "
+import json
+with open('/tmp/codex-sqlite-triage-20261022.json') as f:
+    r = json.load(f)
+for row in r['field_counts'][:30]:
+    print(f\"{row['distinct_selections']:>8}  {row['field']}\")
+"
+
+# Print the full normalized label counts (leaf field names after stripping array indices)
+python3 -c "
+import json
+with open('/tmp/codex-sqlite-triage-20261022.json') as f:
+    r = json.load(f)
+for name, count in r['normalized_label_counts']:
+    print(f'{count:>10}  {name}')
+"
+
+# Print the first 20 surviving tasks in full
+python3 -c "
+import json
+with open('/tmp/codex-sqlite-triage-20261022.json') as f:
+    r = json.load(f)
+print(json.dumps(r['first_20_tasks'], indent=2))
+"
 ```
 
-**Paste the full output here. Do not proceed to the queries until the schema is confirmed.**
-The table names, column names and join structure below are placeholders.
-Fill them in from the actual schema before running anything.
+Paste all four outputs. Then stop the box.
 
 ---
 
-## 4. Query A — What field names survive the filter?
+## 4. Re-run triage if /tmp was cleared
 
-Purpose: see what is actually left once the known noise is excluded. Returns one row per
-surviving field name and how many distinct selections it has. Should be a short list.
+Only run this if the JSON file from section 3 is missing.
+This script is the exact approach Codex already validated. Runtime: ~2-5 minutes.
 
-```sql
--- Run against cells.sqlite
--- Replace <selections_table> and <field_name_col> with real names from .schema
-
-SELECT   <field_name_col>        AS field_name,
-         COUNT(*)                AS selection_count
-FROM     <selections_table>
-WHERE    <field_name_col> NOT IN (
-    'order_id','order_ids','causing_order_ids','filled_order_ids',
-    'cancelled_fill_order_ids','modified_fill_order_ids',
-    'same_id_cancel_modify_order_ids','unresolved_fill_order_ids',
-    'fill_order_ids','matched_order_ids','unresolved_order_ids',
-    'member_id','candidate_id','structure_id','runway_id',
-    'attributed_to_episode_ids','node_id','parent_id',
-    'cursor','input_cursor','input_index','input_record_indices',
-    'input_ordinal','ordinal','group_ordinal','group_index',
-    'source_member_index','legacy_row_ordinal',
-    'publisher_id','channel_id','session_id','run_id','request_id',
-    'hash','sha256','digest',
-    'instrument_id','symbol','raw_symbol',
-    'source_day','source_role','source_dbn_object'
-)
-GROUP BY <field_name_col>
-ORDER BY selection_count DESC;
+```python
+# Save as /tmp/triage_rerun.py and run: python3 -I /tmp/triage_rerun.py
+import sqlite3,json,hashlib,pickle,io,re,time,collections,functools
+base='/opt/frankie-box/work/experiment-search/20231018/cycle-00/discovery.partial/recovery/'
+c=sqlite3.connect('file:'+base+'indexed-v1/cells.sqlite?mode=ro',uri=True)
+c.execute('pragma query_only=on')
+excluded=set('order_id order_ids causing_order_ids filled_order_ids cancelled_fill_order_ids modified_fill_order_ids same_id_cancel_modify_order_ids unresolved_fill_order_ids fill_order_ids matched_order_ids unresolved_order_ids member_id candidate_id structure_id runway_id attributed_to_episode_ids node_id parent_id cursor input_cursor input_index input_record_indices input_ordinal ordinal group_ordinal group_index source_member_index legacy_row_ordinal publisher_id channel_id session_id run_id request_id hash sha256 digest instrument_id symbol raw_symbol source_day source_role source_dbn_object trading_day trading_weekday whole-day'.split())
+@functools.lru_cache(None)
+def leaf(col): return re.sub(r'\[[^]]*\]','',col.rsplit('.',1)[-1])
+@functools.lru_cache(None)
+def keep(col):
+    f=leaf(col)
+    return f not in excluded and not f.endswith(('_hash','_sha256'))
+c.create_function('keep_field',1,keep,deterministic=True)
+start=time.monotonic()
+fields=list(c.execute('select column_name,count(distinct selection),count(*) from labels where keep_field(column_name) group by column_name order by 2 desc,1'))
+surviving=set()
+normalized=collections.Counter()
+for sid,col in c.execute('select selection,column_name from labels where keep_field(column_name)'):
+    surviving.add(sid)
+    normalized[leaf(col)]+=1
+t=sqlite3.connect('file:'+base+'factored-v2/group-tasks-finite-2-6.sqlite?mode=ro',uri=True)
+t.execute('pragma query_only=on')
+class Primitive(pickle.Unpickler):
+    def find_class(self,module,name): raise ValueError('nonprimitive pickle')
+hist=collections.Counter();first=[];n=0
+for ordinal,body,pin in t.execute('select ordinal,body,pin from tasks order by ordinal'):
+    if hashlib.sha256(body).digest()!=pin: raise ValueError('task pin mismatch')
+    saved,value=Primitive(io.BytesIO(body)).load()
+    if saved!=ordinal or not isinstance(value,tuple) or len(value)!=2 or value[1] is not None: raise ValueError('unexpected task format')
+    sid=value[0]
+    n+=1
+    if sid in surviving:
+        hist['surviving_tasks']+=1
+        if len(first)<20:
+            labels=[dict(field=col,value=val,survives=bool(keep(col))) for col,val in c.execute('select column_name,value_text from labels where selection=? order by column_name,value_text',(sid,))]
+            first.append(dict(task_ordinal=ordinal,selection_id=sid,labels=labels))
+report=dict(task_count=n,surviving_tasks=hist['surviving_tasks'],surviving_catalog_selections=len(surviving),surviving_full_field_names=len(fields),field_counts=[dict(field=f,distinct_selections=s,label_count=l) for f,s,l in fields],normalized_label_counts=normalized.most_common(),first_20_tasks=first,seconds=round(time.monotonic()-start,2),interpretation='Task rows reference unique observation masks; labels on one selection are aliases, not proof of an explicit AND hypothesis.',extra_calendar_exclusions=['trading_day','trading_weekday'],excluded=sorted(excluded))
+path='/tmp/codex-sqlite-triage-20261022.json'
+with open(path,'w') as f: json.dump(report,f,indent=2)
+print('DONE',path,'task_count',n,'surviving',hist['surviving_tasks'])
 ```
+
+Note: `trading_day` and `trading_weekday` are added to the exclusion list vs. the original run.
+If re-running to compare with the original output, remove them from the excluded set for that run.
 
 ---
 
-## 5. Query B — How many groups survive, and show the first 20
+## 5. What the schema discovery changed
 
-Purpose: count the groups that have at least one condition outside the set-aside list,
-then show the first 20 in full so Greg can read them.
+The original drop-in (sections 3-6 below this note) assumed a SQL join table linking tasks to
+selections. That assumption was wrong. The actual tasks table stores only:
+  `ordinal INTEGER PRIMARY KEY, body BLOB NOT NULL, pin BLOB NOT NULL`
 
-```sql
--- Run against group-tasks-finite-2-6.sqlite joined to cells.sqlite
--- ATTACH cells.sqlite first:
---   ATTACH DATABASE '/path/to/cells.sqlite' AS catalog;
--- Then replace placeholder names from .schema
-
--- Count of surviving groups
-SELECT COUNT(DISTINCT gc.<group_id_col>) AS surviving_groups
-FROM   <group_conditions_table>  gc
-JOIN   catalog.<selections_table> s  ON gc.<selection_id_col> = s.<selection_id_col>
-WHERE  s.<field_name_col> NOT IN (
-    'order_id','order_ids','causing_order_ids','filled_order_ids',
-    'cancelled_fill_order_ids','modified_fill_order_ids',
-    'same_id_cancel_modify_order_ids','unresolved_fill_order_ids',
-    'fill_order_ids','matched_order_ids','unresolved_order_ids',
-    'member_id','candidate_id','structure_id','runway_id',
-    'attributed_to_episode_ids','node_id','parent_id',
-    'cursor','input_cursor','input_index','input_record_indices',
-    'input_ordinal','ordinal','group_ordinal','group_index',
-    'source_member_index','legacy_row_ordinal',
-    'publisher_id','channel_id','session_id','run_id','request_id',
-    'hash','sha256','digest',
-    'instrument_id','symbol','raw_symbol',
-    'source_day','source_role','source_dbn_object'
-);
-
--- First 20 surviving groups — all their conditions shown
-SELECT   gc.<group_id_col>,
-         s.<field_name_col>   AS field,
-         s.<field_value_col>  AS value
-FROM     <group_conditions_table>  gc
-JOIN     catalog.<selections_table> s ON gc.<selection_id_col> = s.<selection_id_col>
-WHERE    gc.<group_id_col> IN (
-    SELECT DISTINCT gc2.<group_id_col>
-    FROM   <group_conditions_table>   gc2
-    JOIN   catalog.<selections_table> s2 ON gc2.<selection_id_col> = s2.<selection_id_col>
-    WHERE  s2.<field_name_col> NOT IN (
-        'order_id','order_ids','causing_order_ids','filled_order_ids',
-        'cancelled_fill_order_ids','modified_fill_order_ids',
-        'same_id_cancel_modify_order_ids','unresolved_fill_order_ids',
-        'fill_order_ids','matched_order_ids','unresolved_order_ids',
-        'member_id','candidate_id','structure_id','runway_id',
-        'attributed_to_episode_ids','node_id','parent_id',
-        'cursor','input_cursor','input_index','input_record_indices',
-        'input_ordinal','ordinal','group_ordinal','group_index',
-        'source_member_index','legacy_row_ordinal',
-        'publisher_id','channel_id','session_id','run_id','request_id',
-        'hash','sha256','digest',
-        'instrument_id','symbol','raw_symbol',
-        'source_day','source_role','source_dbn_object'
-    )
-    LIMIT 20
-)
-ORDER BY gc.<group_id_col>, s.<field_name_col>;
-```
-
----
-
-## 6. If conditions are not in a standard join table
-
-If `.schema` shows conditions stored as a JSON column or binary blob (not a normal join table),
-stop and paste the schema. Do not attempt to write a Python loop over 1.5M rows without
-confirming that approach first. A JSON-column query using SQLite's `json_each()` function
-may still be fast; a raw Python deserialization loop may not be.
+Each body is a SHA-256-pinned pickle of `(ordinal, (selection_id, None))`. There is no
+group_id column, no selection_id column, no join table. The correct approach is Python
+deserialization, which is what the triage script already does. Do not attempt SQL queries
+against tasks to find conjunctions — they will find nothing.
 
 ---
 
