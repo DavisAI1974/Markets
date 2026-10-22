@@ -73,7 +73,9 @@ for (rank,f) in enumerate(eachrow(families))
         cutoff=t+delta*NS-(phase=="before_start" ? 1 : 0)
         cap=phase=="before_start" ? fc-1 : phase=="onset" ? fc : typemax(Int64)
         sid=string(rank,":",phase);p=price_at(inst,cutoff,cap)
-        pre=change_at(inst,cutoff-120NS,cutoff,typemax(Int64),cap)
+        pre_end=phase=="onset" ? cutoff-1 : cutoff
+        pre_cap=phase=="onset" ? cap-1 : cap
+        pre=change_at(inst,cutoff-120NS,pre_end,typemax(Int64),pre_cap)
         direction=ismissing(pre.change) ? "missing" : pre.change>1e-12 ? "up" : pre.change< -1e-12 ? "down" : "flat"
         push!(samples,(sample_id=sid,family_id=f.family_id,phase=phase,instrument_id=inst,cutoff_ns=cutoff,cursor_cap=cap,chronological_quarter=quarter,price=p.price,price_age_s=p.age_s,price_source_ordinal=p.ordinal,pre120_change=pre.change,pre_direction=direction))
         # Same-instrument, two-clock eligibility; exact native cursor limits apply at onset.
@@ -101,7 +103,7 @@ for (rank,f) in enumerate(eachrow(families))
         if phase in ["onset","near_before","near_after"]
             for h in [1,5,20,60,120,300,600,1800,3600]
                 d=change_at(inst,cutoff,cutoff+h*NS,cap)
-                prior=change_at(inst,cutoff-h*NS,cutoff,typemax(Int64),cap)
+                prior=change_at(inst,cutoff-h*NS,pre_end,typemax(Int64),pre_cap)
                 earlier=change_at(inst,cutoff-2h*NS,cutoff-h*NS)
                 push!(windows,merge((sample_id=sid,family_id=f.family_id,phase=phase,instrument_id=inst,horizon_s=h,chronological_quarter=quarter,pre_direction=direction,pre120_change=pre.change,prior_equal_h_change=prior.change,earlier_equal_h_change=earlier.change),d))
             end

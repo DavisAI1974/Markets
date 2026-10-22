@@ -7,6 +7,15 @@ save(name,rows)=CSV.write(joinpath(OUT,name*".csv"),rows isa DataFrame ? rows : 
 db=SQLite.DB(joinpath(BASE,"alignment.sqlite"));DBInterface.execute(db,"PRAGMA query_only=ON")
 q(sql,args=())=DataFrame(DBInterface.execute(db,sql,args))
 samples=load("samples");features=load("features");w=load("elapsed_windows")
+append!(features,load("group_measurements");promote=true)
+weather=load("external_last_observed_measurements")
+append!(features,DataFrame(sample_id=weather.sample_id,feature=weather.feature,value=weather.value,state=fill(missing,nrow(weather)),reason=weather.disposition,age_s=weather.publication_age_s,source=fill("published_station_measurement_history",nrow(weather)),source_ref=weather.source_ordinal);promote=true)
+geometry=load("pullback_measurements");geometry=geometry[geometry.lag_s.==0,:]
+append!(features,DataFrame(sample_id=geometry.sample_id,feature=geometry.feature,value=geometry.value,state=geometry.state,reason=geometry.reason,age_s=geometry.age_s,source=fill("stored_causal_pullback_geometry",nrow(geometry)),source_ref=geometry.source_ref);promote=true)
+complete=load("complete_context_measurements")
+basecomplete=complete[complete.lag_s.==0,:]
+features=features[.!startswith.(features.feature,"root."),:]
+append!(features,DataFrame(sample_id=basecomplete.sample_id,feature=basecomplete.feature,value=basecomplete.value,state=fill(missing,nrow(basecomplete)),reason=fill("",nrow(basecomplete)),age_s=basecomplete.age_s,source=fill("indexed_root_native_group_context",nrow(basecomplete)),source_ref=basecomplete.source_ordinal);promote=true)
 const NS=Int64(1_000_000_000)
 println("Extending pre-start and nearby second-set comparisons to 5/10 minutes");flush(stdout)
 extra=NamedTuple[];native=NamedTuple[];checks=Ref(0)
@@ -44,21 +53,22 @@ for s in eachrow(samples)
     end
 end
 save("extended_second_set",extra);save("native_measurements",native)
-ex=DataFrame(extra);nat=DataFrame(native)
+ex=DataFrame(extra);append!(ex,load("extended_group_measurements");promote=true);nat=DataFrame(native)
 println("Computing exploratory associations with explicit constant/missing results");flush(stdout)
 # Reuse eligibility and publication links. Numerical association is descriptive only.
 assoc_features=select(features,:sample_id,:feature,:value,:age_s)
-append!(assoc_features,DataFrame(sample_id=nat.sample_id,feature=nat.feature,value=nat.value,age_s=fill(missing,nrow(nat)));promote=true)
+# Complete indexed measurements already contain the native flow measurements above.
 joined=leftjoin(assoc_features,samples;on=:sample_id,makeunique=true)
+phasecounts=Dict(String(p)=>count(==(p),samples.phase) for p in unique(samples.phase))
+quartercounts=Dict((String(g.phase[1]),Int(g.chronological_quarter[1]))=>nrow(g) for g in groupby(samples,[:phase,:chronological_quarter]))
 windowmap=Dict((r.sample_id,r.horizon_s)=>r for r in eachrow(w))
 associations=NamedTuple[]
 for g in groupby(joined,[:feature,:phase])
     phase=g.phase[1]
     for horizon in [1,5,20,60,120,300,600,1800,3600], quarter in [0,1,2,3,4]
-        xx=Float64[];yy=Float64[];ages=Float64[];total=0;staleprice=0
+        xx=Float64[];yy=Float64[];ages=Float64[];total=quarter==0 ? phasecounts[phase] : get(quartercounts,(phase,quarter),0);staleprice=0
         for r in eachrow(g)
             quarter!=0 && r.chronological_quarter!=quarter && continue
-            total+=1
             phase_for_outcome=phase in ["pre120","before_start"] ? "onset" : phase
             sid=first(split(r.sample_id,":"))*":"*phase_for_outcome
             v=get(windowmap,(sid,horizon),nothing)
@@ -80,7 +90,7 @@ end
 save("exploratory_associations",associations)
 # Same feature change over pre120, pre300, pre600 at the event and nearby controls.
 deltas=NamedTuple[]
-current=Dict((r.sample_id,r.feature)=>r for r in eachrow(features) if startswith(r.feature,"second."))
+current=Dict((r.sample_id,r.feature)=>r for r in eachrow(features) if startswith(r.feature,"second.") || startswith(r.feature,"second_group."))
 samplemap=Dict(r.sample_id=>r for r in eachrow(samples))
 for r in eachrow(ex)
     s=samplemap[r.sample_id]
