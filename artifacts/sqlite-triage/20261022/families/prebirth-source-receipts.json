@@ -1,0 +1,1163 @@
+{
+  "bucket": "bento-568968024170-us-east-2-an",
+  "receipts": [
+    {
+      "key": "frankie/ingest/20231018/gh-36571235912-1/ingestion-receipt.json",
+      "data": {
+        "block": "20231018",
+        "boxes": 14436,
+        "bucket": "bento-568968024170-us-east-2-an",
+        "checkpoint_sha256": "50ff95b109ca643f6dfc0e156fec29f6ecf1f65905d852d9752dae6fea2a724f",
+        "checkpoint_state_hash": "48085f356235fbc3ed542bad8682b5deb22a55ba0231a45bee45b203a0136b09",
+        "completion_digest": "9564940c65e38ce57897d05c505b006be010bdf9f42ff9ab0078f34cac4afd8c",
+        "conformance": "inline",
+        "conformance_seconds": 4661.841,
+        "extraction_hash": "d4b0b14f648ec94b804b87d4abf30e350ab1106a1e3a69782e8c297cf2cd512f",
+        "extraction_pin": {
+          "dbn_version": 3,
+          "runtime_hash": "74f4b8c96409dd75bf2d3a6b8b0c9442916250185f7324027c6e0c7f7cf64c64"
+        },
+        "group_count": 583688,
+        "halt_utc_hour": 21,
+        "ingest_cpu_seconds": 2032.555,
+        "ingest_seconds": 5314.482,
+        "ingested_unix": 1790696504,
+        "journal_bytes": 8824270848,
+        "journal_count": 1543574,
+        "journal_file": "journal.compact.sqlite",
+        "journal_hash": "33a9d2e19674dd447f07daf32ca3cb9fe3065e0c7c7bd3973a6d309abe0b2cd4",
+        "journal_sha256": "46ca9fa0f046c3c22c958c66f4a3bfdfc3876a4d7bc2c010b9f163003f6c0319",
+        "manifest_hash": "f7bf0845d544e50cffffa7d5d4eec8772006c5c64109fcd1fbf946f493911fef",
+        "member_keys": [
+          "glbx-mdp3-20231017.mbo.dbn.zst",
+          "glbx-mdp3-20231018.mbo.dbn.zst"
+        ],
+        "mode": "sequential",
+        "model_calls": 0,
+        "ms_per_record": 6.886,
+        "observation_mode": "full",
+        "opening_book": {
+          "file": {
+            "adapter_state_hash": "93900345f34629aa6eb714c33f5cc31b8606b41da63b4545708ca12df40ec99b",
+            "bytes": 780185,
+            "file": "opening-book.c15.json",
+            "sha256": "f85cdfa5bbf42d5f9d1712175e3498e97db41d59973c586b3a948578bea00aba"
+          },
+          "first_record_flags": 40,
+          "instruments": 1,
+          "member_key": "glbx-mdp3-20231017.mbo.dbn.zst",
+          "records_applied_to_book": 841601,
+          "resting_orders": 790,
+          "rule": "the prior trading day's records of this partition applied to the book only (not journaled, not counted), from its first record to the halt",
+          "seconds": 201.179,
+          "snapshot_records": 738,
+          "starts_with_snapshot": true,
+          "status": "warmed_from_partition"
+        },
+        "opening_book_file": {
+          "adapter_state_hash": "93900345f34629aa6eb714c33f5cc31b8606b41da63b4545708ca12df40ec99b",
+          "bytes": 780185,
+          "file": "opening-book.c15.json",
+          "sha256": "f85cdfa5bbf42d5f9d1712175e3498e97db41d59973c586b3a948578bea00aba"
+        },
+        "packing": {
+          "block_bytes": 16777216,
+          "block_rows": 256,
+          "standard": "box_standard.TARGET_BOXES 1189: rows per box = partition_entries_for(2 x declared records), bytes per box = the format ceiling"
+        },
+        "partial_members": [
+          {
+            "member_key": "glbx-mdp3-20231018.mbo.dbn.zst",
+            "partition_mbo_records": 760803,
+            "reason": "records before the 21:00Z halt belong to this trading day; the rest are the next day",
+            "take": 754412
+          }
+        ],
+        "partial_members_ingested": [
+          {
+            "boundary": "trading_day",
+            "declared_partition_mbo_records": 760803,
+            "member_key": "glbx-mdp3-20231018.mbo.dbn.zst",
+            "next_session_id": "20231019",
+            "take": 754412
+          }
+        ],
+        "prefix": "nymex/ng_mbo_5y_v0/native",
+        "python": "3.13.15",
+        "record_count": 771787,
+        "records_per_second": 145.22,
+        "schema": "BOSS_BLOCK_INGESTION_RECEIPT_V1",
+        "scope": "block",
+        "scope_hash": "b660e7d46ea2212708a3bfc09f560e18e7050fa9ff425aa0f8182c137522f905",
+        "scope_kind": "RESULT_BEARING",
+        "session_policy": "cme_trading_day",
+        "sessions": [
+          {
+            "first_cursor": 0,
+            "member_index": 0,
+            "session_id": "20231018"
+          }
+        ],
+        "source_object_naming": "member_key",
+        "source_prefix_hash": "959db4081523ee18b98a6740fe97f81934015ded4cf8266d938334074b529213",
+        "tail_members": [
+          {
+            "member_key": "glbx-mdp3-20231017.mbo.dbn.zst",
+            "partition_mbo_records": 858976,
+            "reason": "records at or after the 21:00Z halt open this trading day; the records before it are the prior trading day (skipped, never counted); the book opens from the prior day's sealed ingest",
+            "skip": 841601,
+            "take": 17375
+          }
+        ],
+        "tail_members_ingested": [
+          {
+            "boundary": "trading_day",
+            "declared_partition_mbo_records": 858976,
+            "first_session_id": "20231018",
+            "last_skipped_session_id": "20231017",
+            "member_key": "glbx-mdp3-20231017.mbo.dbn.zst",
+            "skip": 841601,
+            "take": 17375
+          }
+        ],
+        "total_mbo_records": 771787,
+        "trading_day": "20231018",
+        "training_updates": 0,
+        "verify": "inline",
+        "writer": "compact"
+      }
+    },
+    {
+      "key": "frankie/day_external/20231018/day-external-receipt.json",
+      "data": {
+        "built_seconds": 19.5,
+        "bytes": 35132604,
+        "code_sha256": {
+          "deploy/aws/box/frankie_box_day_external.py": "9e3b580f319d14cc9075c468fc6b0d92b8f2a365e172e1b167449242677773b2",
+          "research/kalshi/frankie_boss/operations/fetch_day_history.py": "343ff1085a23e27ea3d0aa08647ea336615d68a236413151cce061db5b51785d",
+          "research/kalshi/frankie_boss/operations/frankie_day_external.py": "713990d53101afdbb16c8705fb2742fba557e0addd70f042a6d91997afcbaca0"
+        },
+        "curve_verification": [
+          {
+            "key": "nymex/ng_fut_parent_v0/definition/native/glbx-mdp3-20231017.definition.dbn.zst",
+            "sha256": "4da60b5e1cb530312570c3299b48c82ce057143c76b65c916643a9acb49500eb",
+            "status": "verified"
+          },
+          {
+            "key": "nymex/ng_fut_parent_v0/definition/native/glbx-mdp3-20231018.definition.dbn.zst",
+            "sha256": "8210b9c36fc7bff383db6e173a62900d619eaaedd3c7b80f8350f84ee5e70bb7",
+            "status": "verified"
+          },
+          {
+            "key": "nymex/ng_fut_parent_v0/mbo/native/glbx-mdp3-20231017.mbo.dbn.zst",
+            "sha256": "80c21040c7d4914ccdd1b3e158afe241105c726ca8c1b79c808229968bfd7efe",
+            "status": "verified"
+          },
+          {
+            "key": "nymex/ng_fut_parent_v0/mbo/native/glbx-mdp3-20231018.mbo.dbn.zst",
+            "sha256": "25119bdc0ad49b5068e8bb4dd83e8caac802382d464b6951ef5304ff35fa6827",
+            "status": "verified"
+          },
+          {
+            "key": "nymex/ng_fut_parent_v0/statistics/native/glbx-mdp3-20231017.statistics.dbn.zst",
+            "sha256": "e9bf74a1b95e926b8d3dc287ec7ea24857d167dd9cbea56c285d86d118b8ecda",
+            "status": "verified"
+          },
+          {
+            "key": "nymex/ng_fut_parent_v0/statistics/native/glbx-mdp3-20231018.statistics.dbn.zst",
+            "sha256": "b0f9f99bb3c684a6bb6b64298766a1de1cb3291a4f8be9a2e38bd9ca86fc50d2",
+            "status": "verified"
+          }
+        ],
+        "eia930_history_prefix": "frankie/day_history/36576414768",
+        "family_history_prefixes": {
+          "as_printed": "frankie/day_history/asprinted20261007d",
+          "calendar": "frankie/day_history/36576414768",
+          "cot": "frankie/day_history/36576414768",
+          "eia930": "frankie/day_history/36576414768",
+          "mos": "frankie/day_history/36576414768",
+          "storage": "frankie/day_history/36576414768",
+          "weather_obs": "frankie/day_history/36576414768"
+        },
+        "file": "day-external.json",
+        "guard": "time only: every row has published_ns < halt_ns (checked before writing)",
+        "history_prefix": "frankie/day_history/36576414768",
+        "inputs": [
+          {
+            "bytes": 3673,
+            "key": "frankie/day_history/36576414768/calendar/sessions_since_prompt_expiry.json",
+            "manifest_checked": true,
+            "sha256": "e8006e0b56b196becb8809458967eb6a4283a5f2891c96a2bf16f13da6edf287"
+          },
+          {
+            "bytes": 279102,
+            "key": "frankie/day_history/36576414768/cot/store/ng_cot_023391.json",
+            "manifest_checked": true,
+            "sha256": "e2adcc3be357132f31d03a6b964fe3c1cc25fc51e498a86fa2df7548b5755a4c"
+          },
+          {
+            "bytes": 275829,
+            "key": "frankie/day_history/36576414768/cot/store/ng_cot_023392.json",
+            "manifest_checked": true,
+            "sha256": "74b18c05491d94339344878e3d85e46ca3fff2501b5f6fed0085a538476c552f"
+          },
+          {
+            "bytes": 272233,
+            "key": "frankie/day_history/36576414768/cot/store/ng_cot_0233AG.json",
+            "manifest_checked": true,
+            "sha256": "d9c7ce8d080ff557f46964672c41a4c717e7abe73730f8c16f178b7b9094e5bc"
+          },
+          {
+            "bytes": 276501,
+            "key": "frankie/day_history/36576414768/cot/store/ng_cot_0233AH.json",
+            "manifest_checked": true,
+            "sha256": "f335bb4e6f41fc186e8afffededdb4c782042eb0d74a4a2424870ebb57604c06"
+          },
+          {
+            "bytes": 276424,
+            "key": "frankie/day_history/36576414768/cot/store/ng_cot_023651.json",
+            "manifest_checked": true,
+            "sha256": "5c87ed9d5d60fdc5ff8c934e66a1a49bfa0955be945636ae25b5bd8c8238bc02"
+          },
+          {
+            "bytes": 206280,
+            "key": "frankie/day_history/36576414768/storage/lower48_weekly_levels.json",
+            "manifest_checked": true,
+            "sha256": "6775926ddacd8c5e033df81a49c5c4c772d6dab9592f08d615bf295eef340ce7"
+          },
+          {
+            "bytes": 16172,
+            "key": "frankie/day_history/asprinted20261007d/as_printed/storage_as_printed.json",
+            "manifest_checked": true,
+            "sha256": "0eb419ab370ead2cb0f039a0c388571d4d0f9568ec8aaaf60d7901f5ee6b9889"
+          },
+          {
+            "bytes": 494764,
+            "key": "frankie/day_history/36576414768/weather_obs/NYC_202310.json",
+            "manifest_checked": true,
+            "sha256": "28c1269a7eb14add0206a0512903b9958c481d9807fa7e4b13fc028c623571e2"
+          },
+          {
+            "bytes": 4835149,
+            "key": "frankie/day_history/36576414768/weather_obs/BOS_202310.json",
+            "manifest_checked": true,
+            "sha256": "39f37de7a12448f08d40b91b5b1b8535b3f8c0404e9b4ce8d02c112c24be9f53"
+          },
+          {
+            "bytes": 4842263,
+            "key": "frankie/day_history/36576414768/weather_obs/PHL_202310.json",
+            "manifest_checked": true,
+            "sha256": "397fc24cc434c3034cb40b026c43984be724592e4b8134991643c1a15767a811"
+          },
+          {
+            "bytes": 4788120,
+            "key": "frankie/day_history/36576414768/weather_obs/DCA_202310.json",
+            "manifest_checked": true,
+            "sha256": "9d546e24be4b4232ea256df1e38c44511930b930b169b61aa152205a1e2258a7"
+          },
+          {
+            "bytes": 4867501,
+            "key": "frankie/day_history/36576414768/weather_obs/ORD_202310.json",
+            "manifest_checked": true,
+            "sha256": "596af8f004f8188b38363e849676336f655fee7344e1e441808259abdb12ee05"
+          },
+          {
+            "bytes": 4893784,
+            "key": "frankie/day_history/36576414768/weather_obs/DTW_202310.json",
+            "manifest_checked": true,
+            "sha256": "44af61b1d780714893654e46427766a7dc76dc0e7af31ddb7565b73de628b875"
+          },
+          {
+            "bytes": 4873868,
+            "key": "frankie/day_history/36576414768/weather_obs/MSP_202310.json",
+            "manifest_checked": true,
+            "sha256": "d8907a472d79a55eb50dc2f586e6c907c89f7983ed31012db07da0ddead06f10"
+          },
+          {
+            "bytes": 4837435,
+            "key": "frankie/day_history/36576414768/weather_obs/STL_202310.json",
+            "manifest_checked": true,
+            "sha256": "e27b9df2b20ef7ac43ee97e7560ed72da534bb560ffee4a5d54ac3551d3b9fae"
+          },
+          {
+            "bytes": 4806317,
+            "key": "frankie/day_history/36576414768/weather_obs/IAH_202310.json",
+            "manifest_checked": true,
+            "sha256": "73e2bd50357c16aa67b7fa95303088a08409d0a21938943a72e117fd294867b1"
+          },
+          {
+            "bytes": 4845141,
+            "key": "frankie/day_history/36576414768/weather_obs/DFW_202310.json",
+            "manifest_checked": true,
+            "sha256": "13851930b29461ea819f6009e8517d2075e713da84d34b4ef65a35cd0c6beb03"
+          },
+          {
+            "bytes": 4784040,
+            "key": "frankie/day_history/36576414768/weather_obs/ATL_202310.json",
+            "manifest_checked": true,
+            "sha256": "34a367e11f53c278d028e239c922f974ff50672522242674d6d176a65d1faa54"
+          },
+          {
+            "bytes": 4815918,
+            "key": "frankie/day_history/36576414768/weather_obs/DEN_202310.json",
+            "manifest_checked": true,
+            "sha256": "b376a4bef0183559f0bbe30e621a2223bcda765f2c27b5e65f017bcd811d0537"
+          },
+          {
+            "bytes": 4742098,
+            "key": "frankie/day_history/36576414768/weather_obs/PHX_202310.json",
+            "manifest_checked": true,
+            "sha256": "b8db27da2c7bbf88a6bc9b29b5530311ebedb506e783145bfea54fd4fe421b47"
+          },
+          {
+            "bytes": 4787552,
+            "key": "frankie/day_history/36576414768/weather_obs/LAX_202310.json",
+            "manifest_checked": true,
+            "sha256": "ef833914aa9131dc6f0651a7af748e6d8ca5c8161d80b4b7e60656068d984ca1"
+          },
+          {
+            "bytes": 4777856,
+            "key": "frankie/day_history/36576414768/weather_obs/SFO_202310.json",
+            "manifest_checked": true,
+            "sha256": "0a37a1a0cb1efacab957cc171765d5828279838f756bc22edccf456b29b6827d"
+          },
+          {
+            "bytes": 4751736,
+            "key": "frankie/day_history/36576414768/weather_obs/SEA_202310.json",
+            "manifest_checked": true,
+            "sha256": "bafcc3d7fddefb400f5b8990bc123e5aadd6ef0b952ecb9b65b33268567280a5"
+          },
+          {
+            "bytes": 4842458,
+            "key": "frankie/day_history/36576414768/weather_obs/AUS_202310.json",
+            "manifest_checked": true,
+            "sha256": "a9c418cae79af58d9c2fb19969be90a9f374e170cce07610805c5b9871fb6960"
+          },
+          {
+            "bytes": 4876434,
+            "key": "frankie/day_history/36576414768/weather_obs/SAT_202310.json",
+            "manifest_checked": true,
+            "sha256": "2ce5ee8d31fcb941ad8a73b33e60ade7ec39f9139648fdcd93dac9b17381ea8b"
+          },
+          {
+            "bytes": 190512,
+            "key": "frankie/day_history/36576414768/mos/raw/ATL_GFS_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "48a2f096ba9b7df52a8face06aea03d65157fed5a1c39312b37ce2b121932aaf"
+          },
+          {
+            "bytes": 68040,
+            "key": "frankie/day_history/36576414768/mos/raw/ATL_MEX_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "9c17b61f60b8089b21ec51c8dbddf99a9d693eb134526afcd0ca64a44e373a2a"
+          },
+          {
+            "bytes": 95256,
+            "key": "frankie/day_history/36576414768/mos/raw/ATL_NAM_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "323b5ca83aede6b44e12df000b4a0b05ee85f4977e036d0a974c1c93d9a57275"
+          },
+          {
+            "bytes": 190512,
+            "key": "frankie/day_history/36576414768/mos/raw/BOS_GFS_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "3e6ed355e9e64bea1f60c84cfc458aab95da1e0ac5ed722f8ff446031ec2e3fd"
+          },
+          {
+            "bytes": 68040,
+            "key": "frankie/day_history/36576414768/mos/raw/BOS_MEX_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "7bdf652ef549c9fbd3d86772a49b0a65954324338e4410d7bbadf34aeb2fc587"
+          },
+          {
+            "bytes": 95256,
+            "key": "frankie/day_history/36576414768/mos/raw/BOS_NAM_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "dd2a559e82a8f967c606ba1666a1fa17839544d6f4db93cb4f38eea6dd05be99"
+          },
+          {
+            "bytes": 190512,
+            "key": "frankie/day_history/36576414768/mos/raw/DCA_GFS_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "1f981d4855b59d09a447f73b0260bae9805a45718eed57fbefaf0a479315d09f"
+          },
+          {
+            "bytes": 68040,
+            "key": "frankie/day_history/36576414768/mos/raw/DCA_MEX_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "7e73b69d1baa905e6a7175c25a030df1cf838fd2e9c90560c340b8090155df04"
+          },
+          {
+            "bytes": 95256,
+            "key": "frankie/day_history/36576414768/mos/raw/DCA_NAM_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "586c285bb8d339534cade8e94261726ea6fff8e7a31f2af4ed4b287ac0c36820"
+          },
+          {
+            "bytes": 190512,
+            "key": "frankie/day_history/36576414768/mos/raw/DEN_GFS_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "7fd4d999cc375ff49d068ea8c2344d3bb2b0e0f7a97c39b47e0b228239bba8d4"
+          },
+          {
+            "bytes": 68040,
+            "key": "frankie/day_history/36576414768/mos/raw/DEN_MEX_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "632c15cbb8b1aa40563c9cb4c2dea2b9a8d520020016f43e5d897197b3bc9834"
+          },
+          {
+            "bytes": 95256,
+            "key": "frankie/day_history/36576414768/mos/raw/DEN_NAM_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "3d54021a3c4a45dbf5992cfffdd99d862b0e0229217bb11a427b0c7580e82fb8"
+          },
+          {
+            "bytes": 190512,
+            "key": "frankie/day_history/36576414768/mos/raw/DFW_GFS_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "6e0ed388693067fa6246bd7b9304156137a150f11863afd34a346ba21ef2b37f"
+          },
+          {
+            "bytes": 68040,
+            "key": "frankie/day_history/36576414768/mos/raw/DFW_MEX_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "5795ef185ee60afac6b2b971325e182d9b93215dd51ff767261394c5ab20506d"
+          },
+          {
+            "bytes": 95256,
+            "key": "frankie/day_history/36576414768/mos/raw/DFW_NAM_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "623e0990b750f7bc88c68ef9503d3b39c405781fec59d46438a261dbf71f65de"
+          },
+          {
+            "bytes": 190512,
+            "key": "frankie/day_history/36576414768/mos/raw/DTW_GFS_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "4618d76b52e2db5d1b78e2ca86f5017b19f1cc981c0acd6d31527d7f64dc29c0"
+          },
+          {
+            "bytes": 68040,
+            "key": "frankie/day_history/36576414768/mos/raw/DTW_MEX_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "7fd25da2e030b2f06f9178ea94a16d4c3f094bda199434d83549de3a03682505"
+          },
+          {
+            "bytes": 95256,
+            "key": "frankie/day_history/36576414768/mos/raw/DTW_NAM_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "248a6f6f3230bed476466f830ad0966219128cb3a37d451ca237a20522178850"
+          },
+          {
+            "bytes": 190512,
+            "key": "frankie/day_history/36576414768/mos/raw/IAH_GFS_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "18235827bb606c8899b97f3a42769b42970644f5989d471aabb187f1b32b74cc"
+          },
+          {
+            "bytes": 68040,
+            "key": "frankie/day_history/36576414768/mos/raw/IAH_MEX_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "e364d322371dfa6cea99be6a151f8fd62547096e4372428bef4a7aafe22fe1f0"
+          },
+          {
+            "bytes": 95256,
+            "key": "frankie/day_history/36576414768/mos/raw/IAH_NAM_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "a52a6bdf354d543064dde060eafa8e27051f6331d1f927e23d00d349cfa2a0ae"
+          },
+          {
+            "bytes": 190512,
+            "key": "frankie/day_history/36576414768/mos/raw/LAX_GFS_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "32f7611bce8b2dced1a61145d027663e1fc7f50f342fcce6082ab65ed145fe49"
+          },
+          {
+            "bytes": 68040,
+            "key": "frankie/day_history/36576414768/mos/raw/LAX_MEX_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "e1cec24e88c5a0929d9881977da600c0ef00240f5a37a110ff0524b82f072a2d"
+          },
+          {
+            "bytes": 95256,
+            "key": "frankie/day_history/36576414768/mos/raw/LAX_NAM_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "f4bf7fb694e045dcb7df6cc56b7fb1395afda4f06fbfcce13d005e2c728aa4e4"
+          },
+          {
+            "bytes": 190512,
+            "key": "frankie/day_history/36576414768/mos/raw/MSP_GFS_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "a53ee8d35b007f1ac6adbcbc37a7637359eaf8f6e8277eb6b5f4b9376cd485ca"
+          },
+          {
+            "bytes": 68040,
+            "key": "frankie/day_history/36576414768/mos/raw/MSP_MEX_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "bacc82e9b9b786609d8c62e44fc220e8c2fef5b487d5ecf68f30d698f77841c2"
+          },
+          {
+            "bytes": 95256,
+            "key": "frankie/day_history/36576414768/mos/raw/MSP_NAM_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "e84934de980ed82403b89257c9b254ea1f858395b597207fd1db4a422124267b"
+          },
+          {
+            "bytes": 190512,
+            "key": "frankie/day_history/36576414768/mos/raw/NYC_GFS_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "1f1f8064bd554d3aca98cde7c2f6a06e929d7121197a6a5aafd89f8fab2f1f4d"
+          },
+          {
+            "bytes": 68040,
+            "key": "frankie/day_history/36576414768/mos/raw/NYC_MEX_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "c67083229681d4c869682bd291d15b5d500cfcfe5acf219a61c8ae68f4a43527"
+          },
+          {
+            "bytes": 95256,
+            "key": "frankie/day_history/36576414768/mos/raw/NYC_NAM_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "119bba60f4855b896cb66413fc16fee10e25453d1c973efd9f64c4a4a7489be5"
+          },
+          {
+            "bytes": 190512,
+            "key": "frankie/day_history/36576414768/mos/raw/ORD_GFS_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "6172696769bcc538e72428aaa84eb5ddb5b3acaf0c2423a8f2ba53245ccef920"
+          },
+          {
+            "bytes": 68040,
+            "key": "frankie/day_history/36576414768/mos/raw/ORD_MEX_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "7b478ea6f1c992176c48e301e010127b60dc9b963d0ea5c8a01ede9dd682d480"
+          },
+          {
+            "bytes": 95256,
+            "key": "frankie/day_history/36576414768/mos/raw/ORD_NAM_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "654dea64a3b721343d3c8642e4d5bdb1667b897e09b5d1d6fb7fca805c3f5d01"
+          },
+          {
+            "bytes": 190512,
+            "key": "frankie/day_history/36576414768/mos/raw/PHL_GFS_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "e9a0cec7f8f624b5445cac2bdf697b3a5e85c7659cddcebb20872a7d6adc428c"
+          },
+          {
+            "bytes": 68040,
+            "key": "frankie/day_history/36576414768/mos/raw/PHL_MEX_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "44af4eae9ae57178b7ba4fbe85a867f1493a98f1f96b1deb919dffd630120394"
+          },
+          {
+            "bytes": 95256,
+            "key": "frankie/day_history/36576414768/mos/raw/PHL_NAM_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "d4e7c46ca74755a76963f18dab09f77054ca628093c96f7a0519481ebb264a91"
+          },
+          {
+            "bytes": 190542,
+            "key": "frankie/day_history/36576414768/mos/raw/PHX_GFS_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "057a5d901a53f5f40b7ed041520e08a0e88b22b52d88fe1d344fac812dc89920"
+          },
+          {
+            "bytes": 68043,
+            "key": "frankie/day_history/36576414768/mos/raw/PHX_MEX_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "e81a087b06215e731b67bce35a82f100b133886b50e7d65442272ca6b2e77901"
+          },
+          {
+            "bytes": 95281,
+            "key": "frankie/day_history/36576414768/mos/raw/PHX_NAM_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "0f9b46bd6a66bb6cfda0a5b911c58eb21c0295446ec21fef4eba6ca1ef203cbf"
+          },
+          {
+            "bytes": 190512,
+            "key": "frankie/day_history/36576414768/mos/raw/SEA_GFS_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "19d11bc2017e5790895aacdc1674eff2ddb92174fdd98d031137fef1074c85cf"
+          },
+          {
+            "bytes": 68040,
+            "key": "frankie/day_history/36576414768/mos/raw/SEA_MEX_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "975c712a968356c570e1f4ca8978c884a6b35f8211b15a2f2914404ac56352e4"
+          },
+          {
+            "bytes": 95256,
+            "key": "frankie/day_history/36576414768/mos/raw/SEA_NAM_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "69c03b9cda00ca4a69b62de3246ba91f8762edfc332584707ceddcbd4e6f5cd0"
+          },
+          {
+            "bytes": 190512,
+            "key": "frankie/day_history/36576414768/mos/raw/SFO_GFS_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "c1d16e5e723d0d9c8be9a98110f0a1b45f4de602d89c1930ba2c8c9c2ae58f37"
+          },
+          {
+            "bytes": 68040,
+            "key": "frankie/day_history/36576414768/mos/raw/SFO_MEX_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "fcb0219c4cc81d494493a3c75d335175fabcc857063aa6eea5fb49fca585e1c4"
+          },
+          {
+            "bytes": 95256,
+            "key": "frankie/day_history/36576414768/mos/raw/SFO_NAM_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "674452cda3e073a76e43cca85ac0b0c479019f0c71a25a496e83047ef1485adb"
+          },
+          {
+            "bytes": 190512,
+            "key": "frankie/day_history/36576414768/mos/raw/STL_GFS_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "e64bf9939b9465ff190f45752ccf69b62d4bb41742d734a318e3ce6dc582c57e"
+          },
+          {
+            "bytes": 68040,
+            "key": "frankie/day_history/36576414768/mos/raw/STL_MEX_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "7a25074d52b3af895a58d51ac93fd7022399b050e9a8bc3fb51ebf6b2d8a5685"
+          },
+          {
+            "bytes": 95256,
+            "key": "frankie/day_history/36576414768/mos/raw/STL_NAM_2023-09-30_2023-10-27.json",
+            "manifest_checked": true,
+            "sha256": "805171d9a339e9eb2327083293ce664d0d67306b1b6d71f8322b5cc311bb876d"
+          },
+          {
+            "bytes": 349839,
+            "key": "frankie/day_history/36576414768/eia930/2023-10-18/fuel-type-data_CISO.json",
+            "manifest_checked": true,
+            "sha256": "2998c4899621261bd5485bf428f818a52a8dc9446bf3e88c59c83fb6588d74ce"
+          },
+          {
+            "bytes": 313217,
+            "key": "frankie/day_history/36576414768/eia930/2023-10-18/fuel-type-data_ERCO.json",
+            "manifest_checked": true,
+            "sha256": "80e40eceb0842409c34f1375f99fac3e64506350d1d96c8f6ec3b4a6e281f79a"
+          },
+          {
+            "bytes": 318365,
+            "key": "frankie/day_history/36576414768/eia930/2023-10-18/fuel-type-data_MISO.json",
+            "manifest_checked": true,
+            "sha256": "446bfb37282933e230630a0c2f9830b4222d2319599c33756d36b552289784f9"
+          },
+          {
+            "bytes": 324768,
+            "key": "frankie/day_history/36576414768/eia930/2023-10-18/fuel-type-data_PJM.json",
+            "manifest_checked": true,
+            "sha256": "8bd78f0450a0cd34ca7a0ac503b344aabe94c8b63550f1efe41fb5e560225719"
+          },
+          {
+            "bytes": 350915,
+            "key": "frankie/day_history/36576414768/eia930/2023-10-18/fuel-type-data_SOCO.json",
+            "manifest_checked": true,
+            "sha256": "eb09157551ab5665120d7d586d930c9d203bebf55dc94473d3d72ecde216da49"
+          },
+          {
+            "bytes": 318517,
+            "key": "frankie/day_history/36576414768/eia930/2023-10-18/fuel-type-data_SWPP.json",
+            "manifest_checked": true,
+            "sha256": "f84b0dc3ebaf1f0390cbdd0208953f3633732e6144c30647809ded1abde64247"
+          },
+          {
+            "bytes": 324505,
+            "key": "frankie/day_history/36576414768/eia930/2023-10-18/fuel-type-data_US48.json",
+            "manifest_checked": true,
+            "sha256": "02869d93f2efd8e10e85172fd6bf6c5bad7ac5eca9acc201bda250e98673e6cf"
+          },
+          {
+            "bytes": 179857,
+            "key": "frankie/day_history/36576414768/eia930/2023-10-18/region-data_CISO.json",
+            "manifest_checked": true,
+            "sha256": "b8928625be3bd7e76f65baad1299c90af10da5cd34bf607c90a1a70781c56996"
+          },
+          {
+            "bytes": 183162,
+            "key": "frankie/day_history/36576414768/eia930/2023-10-18/region-data_ERCO.json",
+            "manifest_checked": true,
+            "sha256": "4eb02aed88c667d64b3b0918963be738b35b224dea8e4c262e4c03957af2c85e"
+          },
+          {
+            "bytes": 186798,
+            "key": "frankie/day_history/36576414768/eia930/2023-10-18/region-data_MISO.json",
+            "manifest_checked": true,
+            "sha256": "3818df9d5243a0c66cf031458984f967c58c72e28b7d822550b7dd6d32467ea5"
+          },
+          {
+            "bytes": 166730,
+            "key": "frankie/day_history/36576414768/eia930/2023-10-18/region-data_PJM.json",
+            "manifest_checked": true,
+            "sha256": "c08c5615b5e71e5296161970497bf67e6a14f39f85e975772c7ba2f81d6d3f94"
+          },
+          {
+            "bytes": 180458,
+            "key": "frankie/day_history/36576414768/eia930/2023-10-18/region-data_SOCO.json",
+            "manifest_checked": true,
+            "sha256": "b8a79f85f6745a5d2e06d7475235c56f38cc3d4f2675d1431b14ab8585632808"
+          },
+          {
+            "bytes": 164039,
+            "key": "frankie/day_history/36576414768/eia930/2023-10-18/region-data_SWPP.json",
+            "manifest_checked": true,
+            "sha256": "933a6590e495e0874d035abaac28295dd1b97b2a38d1dc4d59ebd1a40af695fc"
+          },
+          {
+            "bytes": 166446,
+            "key": "frankie/day_history/36576414768/eia930/2023-10-18/region-data_US48.json",
+            "manifest_checked": true,
+            "sha256": "f465f64737ee42b4b412b8cecd31dfa2f8fe9febe7b484eebc08838aa977366f"
+          },
+          {
+            "bytes": 346,
+            "key": "frankie/day_history/36576414768/calendar/receipt.json",
+            "manifest_checked": true,
+            "sha256": "809c065ec0fae6c73b5219c601e04bf4a999fa32eed0a36fb6643fcc82b9ec7f"
+          },
+          {
+            "bytes": 3173,
+            "key": "frankie/day_history/36576414768/cot/receipt.json",
+            "manifest_checked": true,
+            "sha256": "eb4f9d07002d792d974cc53d5bae2501b09907f682c3abd767945253c8801366"
+          },
+          {
+            "bytes": 416,
+            "key": "frankie/day_history/36576414768/storage/receipt.json",
+            "manifest_checked": true,
+            "sha256": "f4f94881a08cb4470b7c3f75f438a9c7e1f00f036bc7f88d5addcbe093bee4ef"
+          },
+          {
+            "bytes": 31167,
+            "key": "frankie/day_history/36576414768/weather_obs/receipt.json",
+            "manifest_checked": true,
+            "sha256": "fa2930d1440b19e8e26c384b318e9f7cdee37f1061c1162238df6c255ac7cd99"
+          },
+          {
+            "bytes": 61226,
+            "key": "frankie/day_history/36576414768/mos/receipt.json",
+            "manifest_checked": true,
+            "sha256": "6580285e4dabed7552bdc3cc13e20a182a92ce181bb55e3ecf7b82610c3f33b4"
+          },
+          {
+            "bytes": 130249,
+            "key": "frankie/day_history/36576414768/eia930/receipt.json",
+            "manifest_checked": true,
+            "sha256": "3b179076f0a1d42ba2f055d7a96b7d7da6469ba216265bb8aeef35ca43c19b70"
+          },
+          {
+            "bytes": 35012,
+            "key": "frankie/day_history/asprinted20261007d/as_printed/receipt.json",
+            "manifest_checked": true,
+            "sha256": "09822c47435c3f37f2558e3d9d275a28d6128aea75796c697b52febd9922a6a8"
+          },
+          {
+            "bytes": 115483,
+            "key": "nymex/ng_fut_parent_v0/definition/native/glbx-mdp3-20231017.definition.dbn.zst",
+            "manifest_checked": false,
+            "other_records": 0,
+            "sha256": "4da60b5e1cb530312570c3299b48c82ce057143c76b65c916643a9acb49500eb"
+          },
+          {
+            "bytes": 115254,
+            "key": "nymex/ng_fut_parent_v0/definition/native/glbx-mdp3-20231018.definition.dbn.zst",
+            "manifest_checked": false,
+            "other_records": 0,
+            "sha256": "8210b9c36fc7bff383db6e173a62900d619eaaedd3c7b80f8350f84ee5e70bb7"
+          },
+          {
+            "bytes": 446986,
+            "key": "nymex/ng_fut_parent_v0/statistics/native/glbx-mdp3-20231017.statistics.dbn.zst",
+            "manifest_checked": false,
+            "other_records": 0,
+            "sha256": "e9bf74a1b95e926b8d3dc287ec7ea24857d167dd9cbea56c285d86d118b8ecda"
+          },
+          {
+            "bytes": 184073620,
+            "key": "nymex/ng_fut_parent_v0/mbo/native/glbx-mdp3-20231017.mbo.dbn.zst",
+            "manifest_checked": false,
+            "other_records": 0,
+            "sha256": "80c21040c7d4914ccdd1b3e158afe241105c726ca8c1b79c808229968bfd7efe"
+          },
+          {
+            "bytes": 426154,
+            "key": "nymex/ng_fut_parent_v0/statistics/native/glbx-mdp3-20231018.statistics.dbn.zst",
+            "manifest_checked": false,
+            "other_records": 0,
+            "sha256": "b0f9f99bb3c684a6bb6b64298766a1de1cb3291a4f8be9a2e38bd9ca86fc50d2"
+          },
+          {
+            "bytes": 168632344,
+            "key": "nymex/ng_fut_parent_v0/mbo/native/glbx-mdp3-20231018.mbo.dbn.zst",
+            "manifest_checked": false,
+            "other_records": 0,
+            "sha256": "25119bdc0ad49b5068e8bb4dd83e8caac802382d464b6951ef5304ff35fa6827"
+          }
+        ],
+        "markets_sha": "425656cca2694d9b7087c49d211f1772c8ecc101",
+        "missing": [],
+        "point_mappings": {
+          "calendar.sessions_since_prompt_expiry": {
+            "event_time_basis": "default_1400",
+            "mapping": "closest",
+            "registry_entries": [
+              "contract_session_roll_state"
+            ],
+            "rows": 1
+          },
+          "cot.023391": {
+            "event_time_basis": "intrinsic",
+            "mapping": "closest",
+            "registry_entries": [
+              "aggressor_and_native_signed_flow"
+            ],
+            "rows": 302
+          },
+          "cot.023392": {
+            "event_time_basis": "intrinsic",
+            "mapping": "closest",
+            "registry_entries": [
+              "aggressor_and_native_signed_flow"
+            ],
+            "rows": 302
+          },
+          "cot.0233AG": {
+            "event_time_basis": "intrinsic",
+            "mapping": "closest",
+            "registry_entries": [
+              "aggressor_and_native_signed_flow"
+            ],
+            "rows": 298
+          },
+          "cot.0233AH": {
+            "event_time_basis": "intrinsic",
+            "mapping": "closest",
+            "registry_entries": [
+              "aggressor_and_native_signed_flow"
+            ],
+            "rows": 302
+          },
+          "cot.023651": {
+            "event_time_basis": "intrinsic",
+            "mapping": "closest",
+            "registry_entries": [
+              "aggressor_and_native_signed_flow"
+            ],
+            "rows": 302
+          },
+          "curve.definitions": {
+            "event_time_basis": "intrinsic",
+            "mapping": "closest",
+            "registry_entries": [
+              "price_and_book_path",
+              "contract_session_roll_state"
+            ],
+            "rows": 1997
+          },
+          "curve.settled_shape": {
+            "event_time_basis": "intrinsic",
+            "mapping": "closest",
+            "registry_entries": [
+              "price_and_book_path",
+              "contract_session_roll_state"
+            ],
+            "rows": 15
+          },
+          "curve.statistics": {
+            "event_time_basis": "intrinsic",
+            "mapping": "closest",
+            "registry_entries": [
+              "price_and_book_path",
+              "contract_session_roll_state"
+            ],
+            "rows": 40407
+          },
+          "curve.traded_shape": {
+            "event_time_basis": "intrinsic",
+            "mapping": "closest",
+            "registry_entries": [
+              "price_and_book_path",
+              "contract_session_roll_state"
+            ],
+            "rows": 31152
+          },
+          "curve.trades": {
+            "event_time_basis": "intrinsic",
+            "mapping": "closest",
+            "registry_entries": [
+              "price_and_book_path",
+              "contract_session_roll_state"
+            ],
+            "rows": 205631
+          },
+          "eia930.hourly": {
+            "event_time_basis": "intrinsic",
+            "mapping": "closest",
+            "registry_entries": [
+              "depletion_and_replenishment"
+            ],
+            "rows": 17464
+          },
+          "eia930.us48": {
+            "event_time_basis": "intrinsic",
+            "mapping": "closest",
+            "registry_entries": [
+              "depletion_and_replenishment"
+            ],
+            "rows": 213
+          },
+          "mos.disagreement_by_cycle": {
+            "event_time_basis": "intrinsic",
+            "mapping": "closest",
+            "registry_entries": [
+              "clock_feature_availability"
+            ],
+            "rows": 6
+          },
+          "mos.gw_by_cycle": {
+            "event_time_basis": "intrinsic",
+            "mapping": "closest",
+            "registry_entries": [
+              "clock_feature_availability"
+            ],
+            "rows": 81
+          },
+          "mos.raw": {
+            "event_time_basis": "intrinsic",
+            "mapping": "closest",
+            "registry_entries": [
+              "clock_feature_availability"
+            ],
+            "rows": 9648
+          },
+          "storage.estimate": {
+            "event_time_basis": "intrinsic",
+            "mapping": "closest",
+            "registry_entries": [
+              "depletion_and_replenishment"
+            ],
+            "rows": 11
+          },
+          "storage.weekly": {
+            "event_time_basis": "intrinsic",
+            "mapping": "closest",
+            "registry_entries": [
+              "depletion_and_replenishment"
+            ],
+            "rows": 419
+          },
+          "weather.gw_daily": {
+            "event_time_basis": "intrinsic",
+            "mapping": "closest",
+            "registry_entries": [
+              "clock_event_known_by"
+            ],
+            "rows": 18
+          },
+          "weather.obs_hourly": {
+            "event_time_basis": "intrinsic",
+            "mapping": "closest",
+            "registry_entries": [
+              "clock_event_known_by"
+            ],
+            "rows": 21089
+          }
+        },
+        "point_registry_map": {
+          "calendar.sessions_since_prompt_expiry": {
+            "event_time_basis": "default_1400",
+            "event_time_note": "this is not a time-specific event",
+            "points": [
+              6
+            ],
+            "registry_entries": [
+              "contract_session_roll_state"
+            ],
+            "registry_mapping": "closest",
+            "registry_mapping_reason": "sessions since the prompt contract expired is a contract/roll calendar state"
+          },
+          "cot.": {
+            "event_time_basis": "intrinsic",
+            "points": [
+              8
+            ],
+            "registry_entries": [
+              "aggressor_and_native_signed_flow"
+            ],
+            "registry_mapping": "closest",
+            "registry_mapping_reason": "other ICE Henry Hub codes beside LD1 (context for point 8), as cot.023651"
+          },
+          "cot.023391": {
+            "event_time_basis": "intrinsic",
+            "points": [
+              8
+            ],
+            "registry_entries": [
+              "aggressor_and_native_signed_flow"
+            ],
+            "registry_mapping": "closest",
+            "registry_mapping_reason": "ICE Henry Hub LD1 managed-money net positioning, as cot.023651"
+          },
+          "cot.023651": {
+            "event_time_basis": "intrinsic",
+            "points": [
+              1,
+              3,
+              4
+            ],
+            "registry_entries": [
+              "aggressor_and_native_signed_flow"
+            ],
+            "registry_mapping": "closest",
+            "registry_mapping_reason": "managed-money net positioning (its 1y/3y percentiles and week-on-week change) is the signed directional flow of one trader class; no 99 entry is external positioning"
+          },
+          "curve.": {
+            "event_time_basis": "intrinsic",
+            "points": [
+              13
+            ],
+            "registry_entries": [
+              "price_and_book_path",
+              "contract_session_roll_state"
+            ],
+            "registry_mapping": "closest",
+            "registry_mapping_reason": "the futures curve across months (prices, settlements, shape) and its front/next contract pair"
+          },
+          "eia930.hourly": {
+            "event_time_basis": "intrinsic",
+            "points": [
+              5,
+              7
+            ],
+            "registry_entries": [
+              "depletion_and_replenishment"
+            ],
+            "registry_mapping": "closest",
+            "registry_mapping_reason": "hourly generation by fuel and balancing-area demand: wind displaces gas burn and gas burn draws on the gas balance"
+          },
+          "eia930.us48": {
+            "event_time_basis": "intrinsic",
+            "points": [
+              5,
+              7
+            ],
+            "registry_entries": [
+              "depletion_and_replenishment"
+            ],
+            "registry_mapping": "closest",
+            "registry_mapping_reason": "US48 wind and the gas-burn estimate are supply/demand balance terms"
+          },
+          "mos.disagreement_by_cycle": {
+            "event_time_basis": "intrinsic",
+            "points": [
+              9
+            ],
+            "registry_entries": [
+              "clock_feature_availability"
+            ],
+            "registry_mapping": "closest",
+            "registry_mapping_reason": "GFS-minus-NAM spread per shared model cycle, available at cycle time + dissemination"
+          },
+          "mos.gw_by_cycle": {
+            "event_time_basis": "intrinsic",
+            "points": [
+              2
+            ],
+            "registry_entries": [
+              "clock_feature_availability"
+            ],
+            "registry_mapping": "closest",
+            "registry_mapping_reason": "forecast gas-weighted HDD per model cycle, available at cycle time + dissemination; no 99 entry is weather"
+          },
+          "mos.raw": {
+            "event_time_basis": "intrinsic",
+            "points": [
+              2
+            ],
+            "registry_entries": [
+              "clock_feature_availability"
+            ],
+            "registry_mapping": "closest",
+            "registry_mapping_reason": "every MOS model-cycle row, available at cycle time + dissemination; no 99 entry is weather"
+          },
+          "storage.estimate": {
+            "event_time_basis": "intrinsic",
+            "points": [
+              12
+            ],
+            "registry_entries": [
+              "depletion_and_replenishment"
+            ],
+            "registry_mapping": "closest",
+            "registry_mapping_reason": "the street estimate of the injection against the printed actual"
+          },
+          "storage.weekly": {
+            "event_time_basis": "intrinsic",
+            "points": [
+              11
+            ],
+            "registry_entries": [
+              "depletion_and_replenishment"
+            ],
+            "registry_mapping": "closest",
+            "registry_mapping_reason": "weekly working-gas level and injection are the gas balance itself"
+          },
+          "weather.gw_daily": {
+            "event_time_basis": "intrinsic",
+            "points": [
+              10
+            ],
+            "registry_entries": [
+              "clock_event_known_by"
+            ],
+            "registry_mapping": "closest",
+            "registry_mapping_reason": "an observed gas-day index, known once the gas day ends (+10 min)"
+          },
+          "weather.obs_hourly": {
+            "event_time_basis": "intrinsic",
+            "points": [
+              10
+            ],
+            "registry_entries": [
+              "clock_event_known_by"
+            ],
+            "registry_mapping": "closest",
+            "registry_mapping_reason": "every ASOS observation, known minutes after its time"
+          }
+        },
+        "points": {
+          "calendar.sessions_since_prompt_expiry": 1,
+          "cot.023391": 302,
+          "cot.023392": 302,
+          "cot.0233AG": 298,
+          "cot.0233AH": 302,
+          "cot.023651": 302,
+          "curve.definitions": 1997,
+          "curve.settled_shape": 15,
+          "curve.statistics": 40407,
+          "curve.traded_shape": 31152,
+          "curve.trades": 205631,
+          "eia930.hourly": 17464,
+          "eia930.us48": 213,
+          "mos.disagreement_by_cycle": 6,
+          "mos.gw_by_cycle": 81,
+          "mos.raw": 9648,
+          "storage.estimate": 11,
+          "storage.weekly": 419,
+          "weather.gw_daily": 18,
+          "weather.obs_hourly": 21089
+        },
+        "reader": "research/kalshi/frankie_boss/operations/frankie_day_external.py AsOfReader",
+        "reader_stamp_rule": "published_ns = max(event_time_ns, publication); a row with no event time of its own sits at 14:00 ET of the trading day (this is not a time-specific event) unless published later",
+        "run": "local-20261007",
+        "s3_key": "frankie/day_external/20231018/day-external.json",
+        "s3_receipt_key": "frankie/day_external/20231018/day-external-receipt.json",
+        "schema": "FRANKIE_DAY_EXTERNAL_RECEIPT_V1",
+        "sha256": "d006252d605432994909a52e75fcbfe7cec3e42990a98c02e91e1f65212f0bc7",
+        "trading_day": "20231018"
+      }
+    }
+  ]
+}
