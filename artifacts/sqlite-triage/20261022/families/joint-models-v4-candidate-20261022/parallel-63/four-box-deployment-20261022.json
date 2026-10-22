@@ -1,0 +1,456 @@
+{
+  "authorization": "User explicitly requested starting both existing large stopped instances: get them going too",
+  "utc": "2026-10-22T20:47:19Z",
+  "assignment": {
+    "utc": "2026-10-22T20:43:55Z",
+    "assignment": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/four-box-ownership-20261022.json",
+    "assignment_sha256": "e08cabcf166ec07c1df712c714d11cda44e67cf5d94e02ca544a1ee9b69f0f6f",
+    "cohorts_by_owner": {
+      "A": 34,
+      "B": 19,
+      "C": 5,
+      "D": 5
+    },
+    "pinned_existing_cohorts": 30,
+    "source_numerical_workers": {
+      "A": 96,
+      "B": 96
+    },
+    "source_committed": {
+      "A": 554,
+      "B": 136
+    },
+    "all_active_and_registered_cohorts_preserved": true,
+    "coverage_gate": "NOT_PASSED"
+  },
+  "instances": [
+    {
+      "owner": "A",
+      "instance": "i-035994afa8bdf66a5",
+      "coordinator_pid": 7072,
+      "state": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T204459Z-4b147afc/recovery-plan.json",
+      "slot_ceiling": 96
+    },
+    {
+      "owner": "B",
+      "instance": "i-087f8d3247ae847a9",
+      "coordinator_pid": 5246,
+      "state": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T204529Z-d93fe1d4/recovery-plan.json",
+      "slot_ceiling": 96
+    },
+    {
+      "owner": "C",
+      "instance": "i-031eeb577ad72b064",
+      "coordinator_pid": 3102,
+      "state": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T204558Z-48385f29/recovery-plan.json",
+      "slot_ceiling": 32
+    },
+    {
+      "owner": "D",
+      "instance": "i-0d17573dbce871520",
+      "coordinator_pid": 2164,
+      "state": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T204558Z-1b4a9c1a/recovery-plan.json",
+      "slot_ceiling": 32
+    }
+  ],
+  "staging": [
+    {
+      "instance": "i-031eeb577ad72b064",
+      "status": "Success",
+      "receipts": [
+        {
+          "utc": "2026-10-22T20:39:36Z",
+          "instance": "i-031eeb577ad72b064",
+          "data_volume": "vol-07930910b3266da92",
+          "source_snapshot": "snap-0d3e867c1240b6528",
+          "mount": "/mnt/family-source",
+          "source_base": "/mnt/family-source/opt/frankie-box/work/family-research-20261022",
+          "family_base": "/opt/frankie-box/work/family-research-20261022",
+          "julia": "julia version 1.13.2",
+          "raw_bytes": 34601642880,
+          "free_gib": 606.073429107666,
+          "source_code_sha256": {
+            "run_core_task.jl": "80085208679a3acf8e608abcb70c3e643acaf9645996020fbc1e6f54a0721e82",
+            "run_neural_task.jl": "870292d360273b094a6536ee42bc1223974dd7e2bf8ecaf618d794b2082f0b09",
+            "model_rules.jl": "ed57115cdea48aeb78bcfb09fd6d17a011649a42c762963da4a616e8aa88951b",
+            "shared.jl": "6380bc51e0dc670f3ddb986aa5dc2bf4694c4339ffdeb858fc523cc453ba61c2",
+            "parallel_artifact_helpers.jl": "ff23a2967dcdb53649fe8d6a0631b9790b4c44fa7527dbdfdb497478b09db39d"
+          },
+          "owned_cohorts": "pending_fresh_assignment",
+          "fresh_jobs": true,
+          "no_input_rebuild": true,
+          "no_runtime_download": true,
+          "old_output_preserved": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022-snapshot-source-184835",
+          "assignment": "pending_fresh_assignment",
+          "coverage_gate": "NOT_PASSED"
+        },
+        {
+          "bytes": 798260298,
+          "files": 165,
+          "elapsed_s": 25.126733858000023,
+          "only_frozen_runtime_files": true
+        }
+      ]
+    },
+    {
+      "instance": "i-0d17573dbce871520",
+      "status": "Success",
+      "receipts": [
+        {
+          "utc": "2026-10-22T20:39:36Z",
+          "instance": "i-0d17573dbce871520",
+          "data_volume": "vol-0e28c104e4ea65b43",
+          "source_snapshot": "snap-0d3e867c1240b6528",
+          "mount": "/mnt/family-source",
+          "source_base": "/mnt/family-source/opt/frankie-box/work/family-research-20261022",
+          "family_base": "/opt/frankie-box/work/family-research-20261022",
+          "julia": "julia version 1.13.2",
+          "raw_bytes": 34601642880,
+          "free_gib": 606.073429107666,
+          "source_code_sha256": {
+            "run_core_task.jl": "80085208679a3acf8e608abcb70c3e643acaf9645996020fbc1e6f54a0721e82",
+            "run_neural_task.jl": "870292d360273b094a6536ee42bc1223974dd7e2bf8ecaf618d794b2082f0b09",
+            "model_rules.jl": "ed57115cdea48aeb78bcfb09fd6d17a011649a42c762963da4a616e8aa88951b",
+            "shared.jl": "6380bc51e0dc670f3ddb986aa5dc2bf4694c4339ffdeb858fc523cc453ba61c2",
+            "parallel_artifact_helpers.jl": "ff23a2967dcdb53649fe8d6a0631b9790b4c44fa7527dbdfdb497478b09db39d"
+          },
+          "owned_cohorts": "pending_fresh_assignment",
+          "fresh_jobs": true,
+          "no_input_rebuild": true,
+          "no_runtime_download": true,
+          "old_output_preserved": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022-snapshot-source-184835",
+          "assignment": "pending_fresh_assignment",
+          "coverage_gate": "NOT_PASSED"
+        },
+        {
+          "bytes": 798260298,
+          "files": 165,
+          "elapsed_s": 25.162059648000024,
+          "only_frozen_runtime_files": true
+        }
+      ]
+    }
+  ],
+  "volumes": [
+    {
+      "worker": "C",
+      "instance": "i-031eeb577ad72b064",
+      "root_volume": "vol-0bd554e8b87e60c6f",
+      "data_volume": "vol-07930910b3266da92",
+      "root_state": "creating",
+      "data_state": "creating",
+      "old_root": "vol-0b671bc7ea219a4ee"
+    },
+    {
+      "worker": "D",
+      "instance": "i-0d17573dbce871520",
+      "root_volume": "vol-02b56f5fe96ed46ae",
+      "data_volume": "vol-0e28c104e4ea65b43",
+      "root_state": "creating",
+      "data_state": "creating",
+      "old_root": "vol-0c0ed346040147cfd"
+    }
+  ],
+  "capacity_attempt": {
+    "status": "success",
+    "stdout": "",
+    "return_value": {
+      "before": [
+        {
+          "id": "i-031eeb577ad72b064",
+          "state": "stopped"
+        },
+        {
+          "id": "i-0d17573dbce871520",
+          "state": "stopped"
+        }
+      ],
+      "alternative": [
+        {
+          "type": "r6i.16xlarge",
+          "cores": 32,
+          "vcpus": 64,
+          "memory_mib": 524288
+        }
+      ],
+      "offering": [
+        {
+          "InstanceType": "r6i.16xlarge",
+          "LocationType": "availability-zone",
+          "Location": "us-east-1d"
+        }
+      ],
+      "starts": [
+        {
+          "instance": "i-031eeb577ad72b064",
+          "result": {
+            "StartingInstances": [
+              {
+                "InstanceId": "i-031eeb577ad72b064",
+                "CurrentState": {
+                  "Code": 0,
+                  "Name": "pending"
+                },
+                "PreviousState": {
+                  "Code": 80,
+                  "Name": "stopped"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "instance": "i-0d17573dbce871520",
+          "result": {
+            "StartingInstances": [
+              {
+                "InstanceId": "i-0d17573dbce871520",
+                "CurrentState": {
+                  "Code": 0,
+                  "Name": "pending"
+                },
+                "PreviousState": {
+                  "Code": 80,
+                  "Name": "stopped"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "api_calls": [
+      {
+        "service": "ec2",
+        "operation": "DescribeInstances",
+        "status": "success",
+        "n_items": {
+          "Reservations": 2
+        }
+      },
+      {
+        "service": "ec2",
+        "operation": "DescribeInstanceTypes",
+        "status": "success",
+        "n_items": {
+          "InstanceTypes": 1
+        }
+      },
+      {
+        "service": "ec2",
+        "operation": "DescribeInstanceTypeOfferings",
+        "status": "success",
+        "n_items": {
+          "InstanceTypeOfferings": 1
+        }
+      },
+      {
+        "service": "ec2",
+        "operation": "StartInstances",
+        "status": "success",
+        "n_items": {
+          "StartingInstances": 1
+        }
+      },
+      {
+        "service": "ec2",
+        "operation": "StartInstances",
+        "status": "success",
+        "n_items": {
+          "StartingInstances": 1
+        }
+      }
+    ]
+  },
+  "first_verification": [
+    {
+      "utc": "2026-10-22T20:47:19Z",
+      "instance": "i-035994afa8bdf66a5",
+      "owner": "A",
+      "coordinator_pids": [
+        7072
+      ],
+      "state": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T204459Z-4b147afc/recovery-plan.json",
+      "status": "running",
+      "slot_ceiling": 96,
+      "numerical_workers": 96,
+      "fit_workers": 96,
+      "preparation_workers": 0,
+      "committed": 579,
+      "registered_tasks": 748,
+      "unregistered_cohorts": 12,
+      "all_active_owned": true,
+      "duplicate_tasks": [],
+      "single_cpu": true,
+      "distinct_cpu_assignments": true,
+      "all_caps_unlimited": true,
+      "oom": [
+        "oom_kill 0"
+      ],
+      "memory": [
+        "MemTotal:       1560349684 kB",
+        "MemAvailable:   284274776 kB"
+      ],
+      "active_cohorts": {
+        "absolute_mid_price_change|120|4": 1,
+        "absolute_mid_price_change|1800|4": 1,
+        "absolute_mid_price_change|20|4": 2,
+        "absolute_mid_price_change|300|4": 27,
+        "absolute_mid_price_change|3600|3": 1,
+        "absolute_mid_price_change|3600|4": 31,
+        "absolute_mid_price_change|5|2": 8,
+        "absolute_mid_price_change|5|3": 25
+      },
+      "adoption": {
+        "captured": 96,
+        "still_live": 71,
+        "successful": 25,
+        "unresolved": [],
+        "prior_committed": 554
+      },
+      "log_tail": "code\": 0}\n{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"5\", \"2\"], \"model\": \"dropgroup:lifecycle.queue\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"5\", \"2\"], \"model\": \"dropgroup:lifecycle.ladder\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"5\", \"2\"], \"model\": \"dropgroup:external.storage.estimate\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"5\", \"2\"], \"model\": \"dropgroup:external.storage.weekly\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"5\", \"2\"], \"model\": \"dropgroup:external.wind_mwh\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"20\", \"4\"], \"model\": \"evotrees_mae\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"5\", \"2\"], \"model\": \"dropgroup:lifecycle.recurrence\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n",
+      "coverage_gate": "NOT_PASSED"
+    },
+    {
+      "utc": "2026-10-22T20:47:19Z",
+      "instance": "i-087f8d3247ae847a9",
+      "owner": "B",
+      "coordinator_pids": [
+        5246
+      ],
+      "state": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T204529Z-d93fe1d4/recovery-plan.json",
+      "status": "running",
+      "slot_ceiling": 96,
+      "numerical_workers": 94,
+      "fit_workers": 94,
+      "preparation_workers": 0,
+      "committed": 153,
+      "registered_tasks": 247,
+      "unregistered_cohorts": 11,
+      "all_active_owned": true,
+      "duplicate_tasks": [],
+      "single_cpu": true,
+      "distinct_cpu_assignments": true,
+      "all_caps_unlimited": true,
+      "oom": [
+        "oom_kill 0"
+      ],
+      "memory": [
+        "MemTotal:       1560349640 kB",
+        "MemAvailable:   438502676 kB"
+      ],
+      "active_cohorts": {
+        "first_observed_family_within_h|120|4": 2,
+        "first_observed_family_within_h|300|4": 2,
+        "absolute_mid_price_change|60|4": 27,
+        "absolute_mid_price_change|600|4": 30,
+        "first_observed_family_within_h|600|3": 5,
+        "first_observed_family_within_h|600|4": 28
+      },
+      "adoption": {
+        "captured": 96,
+        "still_live": 79,
+        "successful": 17,
+        "unresolved": [],
+        "prior_committed": 136
+      },
+      "log_tail": "00\", \"3\"], \"model\": \"dropgroup:external.mos.gw_by_cycle\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"first_observed_family_within_h\", \"600\", \"3\"], \"model\": \"dropgroup:external.storage.estimate\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"first_observed_family_within_h\", \"600\", \"3\"], \"model\": \"dropgroup:external.storage.weekly\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"first_observed_family_within_h\", \"600\", \"3\"], \"model\": \"dropgroup:lifecycle.queue\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"first_observed_family_within_h\", \"600\", \"3\"], \"model\": \"dropgroup:lifecycle.flow_substrate\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"first_observed_family_within_h\", \"600\", \"3\"], \"model\": \"dropgroup:external.wind_mwh\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"first_observed_family_within_h\", \"600\", \"3\"], \"model\": \"dropgroup:lifecycle.ladder\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n",
+      "coverage_gate": "NOT_PASSED"
+    },
+    {
+      "utc": "2026-10-22T20:47:19Z",
+      "instance": "i-031eeb577ad72b064",
+      "owner": "C",
+      "coordinator_pids": [
+        3102
+      ],
+      "state": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T204558Z-48385f29/recovery-plan.json",
+      "status": "running",
+      "slot_ceiling": 32,
+      "numerical_workers": 4,
+      "fit_workers": 0,
+      "preparation_workers": 4,
+      "committed": 0,
+      "registered_tasks": 0,
+      "unregistered_cohorts": 5,
+      "all_active_owned": true,
+      "duplicate_tasks": [],
+      "single_cpu": true,
+      "distinct_cpu_assignments": true,
+      "all_caps_unlimited": true,
+      "oom": [
+        "oom_kill 0"
+      ],
+      "memory": [
+        "MemTotal:       519850096 kB",
+        "MemAvailable:   511578188 kB"
+      ],
+      "active_cohorts": {
+        "mid_price_change|1800|3": 1,
+        "first_observed_family_within_h|600|2": 1,
+        "mid_price_change|1|4": 1,
+        "mid_price_change|20|4": 1
+      },
+      "adoption": null,
+      "log_tail": "",
+      "coverage_gate": "NOT_PASSED"
+    },
+    {
+      "utc": "2026-10-22T20:47:19Z",
+      "instance": "i-0d17573dbce871520",
+      "owner": "D",
+      "coordinator_pids": [
+        2164
+      ],
+      "state": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T204558Z-1b4a9c1a/recovery-plan.json",
+      "status": "running",
+      "slot_ceiling": 32,
+      "numerical_workers": 4,
+      "fit_workers": 0,
+      "preparation_workers": 4,
+      "committed": 0,
+      "registered_tasks": 0,
+      "unregistered_cohorts": 5,
+      "all_active_owned": true,
+      "duplicate_tasks": [],
+      "single_cpu": true,
+      "distinct_cpu_assignments": true,
+      "all_caps_unlimited": true,
+      "oom": [
+        "oom_kill 0"
+      ],
+      "memory": [
+        "MemTotal:       519850124 kB",
+        "MemAvailable:   511717228 kB"
+      ],
+      "active_cohorts": {
+        "mid_price_change|1|2": 1,
+        "mid_price_change|300|4": 1,
+        "mid_price_change|20|3": 1,
+        "mid_price_change|120|4": 1
+      },
+      "adoption": null,
+      "log_tail": "",
+      "coverage_gate": "NOT_PASSED"
+    }
+  ],
+  "tests": {
+    "linux": 26,
+    "passed": 26,
+    "skipped": 0,
+    "ssm_command": "9a816cbd-c90f-4794-b7b6-b8325459a843"
+  },
+  "no_original_instance_or_numerical_fit_restart": true,
+  "original_search_roots_preserved_without_writes": true,
+  "combined_start_failed_capacity_then_individual_starts_succeeded": true,
+  "instance_types_unchanged": true,
+  "physical_core_slot_capacity": 256,
+  "actual_first_snapshot": {
+    "fit_workers": 190,
+    "preparation_workers": 8,
+    "numerical_workers": 198
+  },
+  "semantic_coverage": "NOT_PASSED",
+  "V3": "frozen",
+  "finalization": "A receives disjoint B/C/D archives and runs original PCA/postprocessing once after all required fits complete"
+}

@@ -1,0 +1,1360 @@
+{
+  "deployment_started_utc": "2026-10-22T19:26:08Z",
+  "latest_runtime_snapshots": [
+    {
+      "utc": "2026-10-22T20:24:32Z",
+      "instance": "i-035994afa8bdf66a5",
+      "owner": "A",
+      "coordinator_pids": [
+        5454
+      ],
+      "state": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T190800Z-7cf0ea3a/recovery-plan.json",
+      "status": "running",
+      "worker_slots": 96,
+      "numerical_workers": 96,
+      "fit_workers": 96,
+      "preparation_workers": 0,
+      "committed": 504,
+      "registered_tasks": 748,
+      "all_active_owned": true,
+      "duplicate_tasks": [],
+      "single_cpu": true,
+      "distinct_cpu_assignments": true,
+      "all_caps_unlimited": true,
+      "oom": [
+        "oom_kill 0"
+      ],
+      "memory": [
+        "MemAvailable:   219494976 kB"
+      ],
+      "active_cohorts": {
+        "absolute_mid_price_change|120|4": 1,
+        "absolute_mid_price_change|1800|4": 2,
+        "absolute_mid_price_change|20|4": 23,
+        "absolute_mid_price_change|300|4": 28,
+        "absolute_mid_price_change|3600|2": 1,
+        "absolute_mid_price_change|3600|3": 27,
+        "absolute_mid_price_change|3600|4": 14
+      },
+      "log_tail": "model\": \"dropgroup:external.other\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"3600\", \"3\"], \"model\": \"dropgroup:external.curve\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"neural\", \"cohort\": [\"absolute_mid_price_change\", \"3600\", \"3\"], \"model\": \"residual_mlp\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"3600\", \"2\"], \"model\": \"dropgroup:root_native_book_depth_queue\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"3600\", \"2\"], \"model\": \"dropgroup:second_set_scientific_components\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"3600\", \"2\"], \"model\": \"dropgroup:root_native_flow_structure\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"neural\", \"cohort\": [\"absolute_mid_price_change\", \"3600\", \"3\"], \"model\": \"neural_tree\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"3600\", \"3\"], \"model\": \"drop_history\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"20\", \"4\"], \"model\": \"dropgroup:native_timing_measurements\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"neural\", \"cohort\": [\"absolute_mid_price_change\", \"120\", \"4\"], \"model\": \"tabm_ensemble\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"neural\", \"cohort\": [\"absolute_mid_price_change\", \"3600\", \"2\"], \"model\": \"tabm_ensemble\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n",
+      "coverage_gate": "NOT_PASSED",
+      "committed_sample": [
+        [
+          "core",
+          [
+            "absolute_mid_price_change",
+            "1",
+            "2"
+          ],
+          "drop_history"
+        ],
+        [
+          "core",
+          [
+            "absolute_mid_price_change",
+            "1",
+            "2"
+          ],
+          "dropgroup:causal_pullback_geometry"
+        ]
+      ],
+      "required_sample": [
+        [
+          "core",
+          [
+            "absolute_mid_price_change",
+            "1",
+            "2"
+          ],
+          "drop_history"
+        ],
+        [
+          "core",
+          [
+            "absolute_mid_price_change",
+            "1",
+            "2"
+          ],
+          "dropgroup:causal_pullback_geometry"
+        ]
+      ],
+      "state_keys": [
+        "status",
+        "coverage_gate",
+        "memory",
+        "required_jobs",
+        "committed_jobs",
+        "unregistered_cohorts",
+        "all_declared_tasks_mandatory",
+        "per_job_memory_caps",
+        "admission_policy",
+        "cpu_placement",
+        "phase",
+        "active_jobs",
+        "queued_jobs",
+        "queued_preparations",
+        "deferred_memory_jobs"
+      ]
+    },
+    {
+      "utc": "2026-10-22T20:24:31Z",
+      "instance": "i-087f8d3247ae847a9",
+      "owner": "B",
+      "coordinator_pids": [
+        3861
+      ],
+      "state": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T194644Z-f4082e1d/recovery-plan.json",
+      "status": "running",
+      "worker_slots": 96,
+      "numerical_workers": 96,
+      "fit_workers": 96,
+      "preparation_workers": 0,
+      "committed": 84,
+      "registered_tasks": 247,
+      "all_active_owned": true,
+      "duplicate_tasks": [],
+      "single_cpu": true,
+      "distinct_cpu_assignments": true,
+      "all_caps_unlimited": true,
+      "oom": [
+        "oom_kill 0"
+      ],
+      "memory": [
+        "MemAvailable:   492821680 kB"
+      ],
+      "active_cohorts": {
+        "first_observed_family_within_h|120|4": 22,
+        "first_observed_family_within_h|300|4": 22,
+        "absolute_mid_price_change|60|4": 29,
+        "absolute_mid_price_change|600|4": 23
+      },
+      "log_tail": "ort\": [\"absolute_mid_price_change\", \"600\", \"2\"], \"model\": \"tabm_ensemble\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"neural\", \"cohort\": [\"absolute_mid_price_change\", \"60\", \"4\"], \"model\": \"residual_mlp\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"first_observed_family_within_h\", \"120\", \"4\"], \"model\": \"dropgroup:native_timing_measurements\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"600\", \"2\"], \"model\": \"evotrees_depth5\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"first_observed_family_within_h\", \"300\", \"4\"], \"model\": \"dropgroup:external.other\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"first_observed_family_within_h\", \"120\", \"4\"], \"model\": \"ridge100\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"first_observed_family_within_h\", \"300\", \"4\"], \"model\": \"dropgroup:native_timing_measurements\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"60\", \"4\"], \"model\": \"ridge100\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"neural\", \"cohort\": [\"absolute_mid_price_change\", \"60\", \"4\"], \"model\": \"neural_tree\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"first_observed_family_within_h\", \"120\", \"4\"], \"model\": \"dropgroup:external.other\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"first_observed_family_within_h\", \"300\", \"4\"], \"model\": \"ridge100\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n",
+      "coverage_gate": "NOT_PASSED",
+      "committed_sample": [
+        [
+          "core",
+          [
+            "absolute_mid_price_change",
+            "60",
+            "4"
+          ],
+          "ridge100"
+        ],
+        [
+          "core",
+          [
+            "absolute_mid_price_change",
+            "60",
+            "4"
+          ],
+          "training_mean"
+        ]
+      ],
+      "required_sample": [
+        [
+          "core",
+          [
+            "absolute_mid_price_change",
+            "60",
+            "4"
+          ],
+          "drop_history"
+        ],
+        [
+          "core",
+          [
+            "absolute_mid_price_change",
+            "60",
+            "4"
+          ],
+          "dropgroup:causal_pullback_geometry"
+        ]
+      ],
+      "state_keys": [
+        "status",
+        "coverage_gate",
+        "memory",
+        "required_jobs",
+        "committed_jobs",
+        "unregistered_cohorts",
+        "all_declared_tasks_mandatory",
+        "per_job_memory_caps",
+        "admission_policy",
+        "cpu_placement",
+        "phase",
+        "active_jobs",
+        "queued_jobs",
+        "queued_preparations",
+        "deferred_memory_jobs"
+      ]
+    }
+  ],
+  "serial_original_reconciliation": {
+    "utc": "2026-10-22T20:13:07Z",
+    "restored_original_keys": [
+      [
+        "neural",
+        [
+          "first_observed_family_within_h",
+          "120",
+          "4"
+        ],
+        "neural_tree"
+      ],
+      [
+        "neural",
+        [
+          "first_observed_family_within_h",
+          "120",
+          "4"
+        ],
+        "residual_mlp"
+      ]
+    ],
+    "comparisons": [
+      {
+        "model": "neural_tree",
+        "original_disposition": "fixed_25_epochs;chronological_selected_cohort",
+        "rerun_disposition": "fixed_25_epochs;chronological_selected_cohort",
+        "prediction_max_abs_diff": 0.000002682209014892578,
+        "metrics_differences": {
+          "mae": {
+            "original": "0.3429519177617131",
+            "rerun": "0.3429511265295439"
+          },
+          "rmse": {
+            "original": "0.3971521868560965",
+            "rerun": "0.39715204030130596"
+          },
+          "brier": {
+            "original": "0.1577298595245798",
+            "rerun": "0.15772974311549018"
+          },
+          "logloss": {
+            "original": "0.4966861051845078",
+            "rerun": "0.49668579116719175"
+          }
+        }
+      },
+      {
+        "model": "residual_mlp",
+        "original_disposition": "fixed_25_epochs;chronological_selected_cohort",
+        "rerun_disposition": "fixed_25_epochs;chronological_selected_cohort",
+        "prediction_max_abs_diff": 0.4313412606716156,
+        "metrics_differences": {
+          "mae": {
+            "original": "0.7100280792929684",
+            "rerun": "0.7881083069258457"
+          },
+          "rmse": {
+            "original": "0.7611575234835642",
+            "rerun": "0.8704809255398475"
+          },
+          "brier": {
+            "original": "0.5793607755556326",
+            "rerun": "0.7577370417287094"
+          },
+          "logloss": {
+            "original": "1.5684192762348583",
+            "rerun": "2.915890359438005"
+          }
+        }
+      }
+    ],
+    "extra_rerun_attempts_retained": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/attempts/serial-original-reconciliation-20261022T201307Z",
+    "no_numerical_job_stopped": true,
+    "canonical_policy": "prior completed serial results are authoritative; both original and repeated evidence retained",
+    "coverage_gate": "NOT_PASSED"
+  },
+  "latest_runtime_estimate": {
+    "utc": "2026-10-22T20:24:32Z",
+    "range_remaining_hours": [
+      6,
+      10
+    ],
+    "rough_finish_eastern": "2026-10-22 22:30 through 2026-10-23 02:30",
+    "provisional": true,
+    "fit_workers": 192,
+    "committed": 588,
+    "previous_committed": 460,
+    "interval_minutes": 25.75,
+    "interval_commits": 128,
+    "observed_commits_per_hour": 298.252427184466,
+    "includes": [
+      "mandatory remaining core/neural/source-group fits",
+      "uneven shard completion and slow fits",
+      "B artifact transfer and A join",
+      "original PCA and postprocessing"
+    ],
+    "limitations": [
+      "Current throughput is a changing mixture of models and folds, not a constant rate.",
+      "Training-derived source groups determine mandatory counts; 2097 is only a 22-group scenario.",
+      "Both shards must finish; no new rebalancing or duplicate work authorized."
+    ],
+    "coverage_gate": "NOT_PASSED"
+  },
+  "verified_full_pair": {
+    "utc": "2026-10-22T19:58:46Z",
+    "verification_command_id": "ce30ec23-0de5-424e-b09b-88233f177347",
+    "A": {
+      "instance": "i-035994afa8bdf66a5",
+      "coordinator": 5454,
+      "fit_workers": 96,
+      "committed": 417,
+      "registered_tasks": 748,
+      "available_memory_kib": 223359756
+    },
+    "B": {
+      "instance": "i-087f8d3247ae847a9",
+      "coordinator": 3861,
+      "fit_workers": 96,
+      "committed": 43,
+      "registered_tasks": 189,
+      "available_memory_kib": 814649284
+    },
+    "total_fit_workers": 192,
+    "total_committed_in_coordinator_snapshots": 460,
+    "all_active_tasks_owned": true,
+    "duplicate_active_tasks": [],
+    "all_pinned_one_cpu": true,
+    "no_duplicate_cpu_assignments": true,
+    "all_scope_memory_caps_unlimited": true,
+    "host_oom_kills_A": 0,
+    "host_oom_kills_B": 0,
+    "coverage_gate": "NOT_PASSED"
+  },
+  "authorization": "User: 'Do it. We can't have it go that long' after the second runtime estimate",
+  "instances": {
+    "A": {
+      "instance_id": "i-035994afa8bdf66a5",
+      "coordinator_pid": 5454,
+      "source": "resume_dual_box_candidate.py",
+      "owned_cohorts": 40,
+      "state": "memory-recovery-20261022T190800Z-7cf0ea3a/recovery-plan.json",
+      "last_verified_workers": 96,
+      "last_verified_utc": "2026-10-22T19:14:04Z",
+      "committed_at_last_verification": 336
+    },
+    "B": {
+      "utc": "2026-10-22T19:24:06Z",
+      "instance": "i-087f8d3247ae847a9",
+      "coordinator_pid": 3671,
+      "script": "/opt/frankie-box/work/family-research-20261022/full-context-audit/scripts/resume_dual_box_candidate_b.py",
+      "assignment": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/dual-box-ownership-20261022T190758Z.json",
+      "owned_cohorts": 23,
+      "worker_slots": 96,
+      "cold_dispatch_interval_s": 3,
+      "log": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-dual-B.log",
+      "coverage_gate": "NOT_PASSED"
+    }
+  },
+  "instance_type": "r7i.48xlarge",
+  "physical_core_slots_per_box": 96,
+  "compute_hourly_usd_per_box": 12.7008,
+  "combined_compute_hourly_usd": 25.4016,
+  "pricing_excludes_storage_snapshots_discounts": true,
+  "snapshot": {
+    "id": "snap-0d3e867c1240b6528",
+    "source_volume": "vol-0d36715924f03b86c",
+    "size_gib": 2048,
+    "state": "completed",
+    "source_instance_never_stopped_or_rebooted": true
+  },
+  "B_data_volume": {
+    "VolumeId": "vol-099fc416322bd1726",
+    "State": "creating",
+    "Size": 2560,
+    "VolumeType": "gp3",
+    "Iops": 5000,
+    "Throughput": 1250,
+    "Encrypted": true,
+    "SnapshotId": "snap-0d3e867c1240b6528"
+  },
+  "B_staging": {
+    "utc": "2026-10-22T19:23:06Z",
+    "instance": "i-087f8d3247ae847a9",
+    "data_volume": "vol-099fc416322bd1726",
+    "source_snapshot": "snap-0d3e867c1240b6528",
+    "mount": "/mnt/family-source",
+    "source_base": "/mnt/family-source/opt/frankie-box/work/family-research-20261022",
+    "family_base": "/opt/frankie-box/work/family-research-20261022",
+    "julia": "julia version 1.13.2",
+    "raw_bytes": 34601642880,
+    "free_gib": 606.0733680725098,
+    "source_code_sha256": {
+      "run_core_task.jl": "80085208679a3acf8e608abcb70c3e643acaf9645996020fbc1e6f54a0721e82",
+      "run_neural_task.jl": "870292d360273b094a6536ee42bc1223974dd7e2bf8ecaf618d794b2082f0b09",
+      "model_rules.jl": "ed57115cdea48aeb78bcfb09fd6d17a011649a42c762963da4a616e8aa88951b",
+      "shared.jl": "6380bc51e0dc670f3ddb986aa5dc2bf4694c4339ffdeb858fc523cc453ba61c2",
+      "parallel_artifact_helpers.jl": "ff23a2967dcdb53649fe8d6a0631b9790b4c44fa7527dbdfdb497478b09db39d"
+    },
+    "owned_cohorts": 23,
+    "fresh_jobs": true,
+    "no_input_rebuild": true,
+    "no_runtime_download": true,
+    "old_output_preserved": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022-snapshot-source-184835",
+    "assignment": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/dual-box-ownership-20261022T190758Z.json",
+    "coverage_gate": "NOT_PASSED"
+  },
+  "A_handoff": {
+    "receipt_path": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/dual-box-A-handoff-20261022T190758Z.json",
+    "ownership": {
+      "version": 1,
+      "instances": {
+        "A": "i-035994afa8bdf66a5",
+        "B": "i-087f8d3247ae847a9"
+      },
+      "coverage_gate": "NOT_PASSED",
+      "run_id": "b8e2504f96f340b69e1183d7de47e1ab",
+      "forecast_load": {
+        "A": 433.73999999999995,
+        "B": 439.6599999999999
+      },
+      "balancing_forecasts_do_not_limit_admission": true,
+      "cohorts": [
+        {
+          "cohort": [
+            "absolute_mid_price_change",
+            "1",
+            "2"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "absolute_mid_price_change",
+            "1",
+            "3"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "absolute_mid_price_change",
+            "1",
+            "4"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "absolute_mid_price_change",
+            "120",
+            "2"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "absolute_mid_price_change",
+            "120",
+            "3"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "absolute_mid_price_change",
+            "120",
+            "4"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "absolute_mid_price_change",
+            "1800",
+            "2"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "absolute_mid_price_change",
+            "1800",
+            "3"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "absolute_mid_price_change",
+            "1800",
+            "4"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "absolute_mid_price_change",
+            "20",
+            "2"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "absolute_mid_price_change",
+            "20",
+            "3"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "absolute_mid_price_change",
+            "20",
+            "4"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "absolute_mid_price_change",
+            "300",
+            "2"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "absolute_mid_price_change",
+            "300",
+            "3"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "absolute_mid_price_change",
+            "300",
+            "4"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "absolute_mid_price_change",
+            "3600",
+            "2"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "absolute_mid_price_change",
+            "3600",
+            "3"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "absolute_mid_price_change",
+            "3600",
+            "4"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "absolute_mid_price_change",
+            "5",
+            "2"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "absolute_mid_price_change",
+            "5",
+            "3"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "absolute_mid_price_change",
+            "5",
+            "4"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "absolute_mid_price_change",
+            "60",
+            "2"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "absolute_mid_price_change",
+            "60",
+            "3"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "absolute_mid_price_change",
+            "60",
+            "4"
+          ],
+          "owner": "B"
+        },
+        {
+          "cohort": [
+            "absolute_mid_price_change",
+            "600",
+            "2"
+          ],
+          "owner": "B"
+        },
+        {
+          "cohort": [
+            "absolute_mid_price_change",
+            "600",
+            "3"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "absolute_mid_price_change",
+            "600",
+            "4"
+          ],
+          "owner": "B"
+        },
+        {
+          "cohort": [
+            "first_observed_family_within_h",
+            "120",
+            "2"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "first_observed_family_within_h",
+            "120",
+            "3"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "first_observed_family_within_h",
+            "120",
+            "4"
+          ],
+          "owner": "B"
+        },
+        {
+          "cohort": [
+            "first_observed_family_within_h",
+            "300",
+            "2"
+          ],
+          "owner": "B"
+        },
+        {
+          "cohort": [
+            "first_observed_family_within_h",
+            "300",
+            "3"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "first_observed_family_within_h",
+            "300",
+            "4"
+          ],
+          "owner": "B"
+        },
+        {
+          "cohort": [
+            "first_observed_family_within_h",
+            "600",
+            "2"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "first_observed_family_within_h",
+            "600",
+            "3"
+          ],
+          "owner": "B"
+        },
+        {
+          "cohort": [
+            "first_observed_family_within_h",
+            "600",
+            "4"
+          ],
+          "owner": "B"
+        },
+        {
+          "cohort": [
+            "mid_price_change",
+            "1",
+            "2"
+          ],
+          "owner": "B"
+        },
+        {
+          "cohort": [
+            "mid_price_change",
+            "1",
+            "3"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "mid_price_change",
+            "1",
+            "4"
+          ],
+          "owner": "B"
+        },
+        {
+          "cohort": [
+            "mid_price_change",
+            "120",
+            "2"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "mid_price_change",
+            "120",
+            "3"
+          ],
+          "owner": "B"
+        },
+        {
+          "cohort": [
+            "mid_price_change",
+            "120",
+            "4"
+          ],
+          "owner": "B"
+        },
+        {
+          "cohort": [
+            "mid_price_change",
+            "1800",
+            "2"
+          ],
+          "owner": "B"
+        },
+        {
+          "cohort": [
+            "mid_price_change",
+            "1800",
+            "3"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "mid_price_change",
+            "1800",
+            "4"
+          ],
+          "owner": "B"
+        },
+        {
+          "cohort": [
+            "mid_price_change",
+            "20",
+            "2"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "mid_price_change",
+            "20",
+            "3"
+          ],
+          "owner": "B"
+        },
+        {
+          "cohort": [
+            "mid_price_change",
+            "20",
+            "4"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "mid_price_change",
+            "300",
+            "2"
+          ],
+          "owner": "B"
+        },
+        {
+          "cohort": [
+            "mid_price_change",
+            "300",
+            "3"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "mid_price_change",
+            "300",
+            "4"
+          ],
+          "owner": "B"
+        },
+        {
+          "cohort": [
+            "mid_price_change",
+            "3600",
+            "2"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "mid_price_change",
+            "3600",
+            "3"
+          ],
+          "owner": "B"
+        },
+        {
+          "cohort": [
+            "mid_price_change",
+            "3600",
+            "4"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "mid_price_change",
+            "5",
+            "2"
+          ],
+          "owner": "B"
+        },
+        {
+          "cohort": [
+            "mid_price_change",
+            "5",
+            "3"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "mid_price_change",
+            "5",
+            "4"
+          ],
+          "owner": "B"
+        },
+        {
+          "cohort": [
+            "mid_price_change",
+            "60",
+            "2"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "mid_price_change",
+            "60",
+            "3"
+          ],
+          "owner": "B"
+        },
+        {
+          "cohort": [
+            "mid_price_change",
+            "60",
+            "4"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "mid_price_change",
+            "600",
+            "2"
+          ],
+          "owner": "B"
+        },
+        {
+          "cohort": [
+            "mid_price_change",
+            "600",
+            "3"
+          ],
+          "owner": "A"
+        },
+        {
+          "cohort": [
+            "mid_price_change",
+            "600",
+            "4"
+          ],
+          "owner": "B"
+        }
+      ],
+      "created_utc": "2026-10-22T19:07:58Z",
+      "outcome_sha256": "6a0613a357675ba60c7d4e946592b2aa69ea0e09dd488cd0ecfa4d54ba445608",
+      "numerical_source_sha256": {
+        "run_core_task.jl": "80085208679a3acf8e608abcb70c3e643acaf9645996020fbc1e6f54a0721e82",
+        "run_neural_task.jl": "870292d360273b094a6536ee42bc1223974dd7e2bf8ecaf618d794b2082f0b09",
+        "model_rules.jl": "ed57115cdea48aeb78bcfb09fd6d17a011649a42c762963da4a616e8aa88951b",
+        "shared.jl": "6380bc51e0dc670f3ddb986aa5dc2bf4694c4339ffdeb858fc523cc453ba61c2",
+        "parallel_artifact_helpers.jl": "ff23a2967dcdb53649fe8d6a0631b9790b4c44fa7527dbdfdb497478b09db39d"
+      }
+    },
+    "utc": "2026-10-22T19:07:59Z",
+    "new_coordinator_pid": 5454,
+    "old_coordinator_pid": 4409,
+    "manifest": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/dual-box-A-adoption-20261022T190758Z.json",
+    "old_committed": 311,
+    "adopted_jobs": 96,
+    "numerical_workers_before": 96,
+    "source_sha256": "4755e5ad5f3653ab2759e353fc168d80c3483826df4de2602dddb5d35c7b5ff9",
+    "log": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-dual-A.log",
+    "admission_policy": "no per-job estimates; actual MemAvailable > 64 GiB; ceiling 96",
+    "no_numerical_fit_restarted": true,
+    "coverage_gate": "NOT_PASSED",
+    "assignment_path": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/dual-box-ownership-20261022T190758Z.json",
+    "assignment_sha256": "1ff29d49200435fb536638751def689e7f687fa3152a6b243036af820650d131",
+    "cohorts_by_owner": {
+      "A": 40,
+      "B": 23
+    }
+  },
+  "B_first_verification": {
+    "utc": "2026-10-22T19:26:08Z",
+    "coordinator_pids": [
+      3671
+    ],
+    "state_path": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T192409Z-95b448a5/recovery-plan.json",
+    "status": "running",
+    "active_jobs": 2,
+    "queued_preparations": 21,
+    "committed": 0,
+    "registered_tasks": 0,
+    "workers": [
+      {
+        "pid": 3676,
+        "cohort": "absolute_mid_price_change|60|4",
+        "model": "",
+        "prepare": true,
+        "cpu": [
+          0
+        ]
+      },
+      {
+        "pid": 3677,
+        "cohort": "absolute_mid_price_change|600|2",
+        "model": "",
+        "prepare": true,
+        "cpu": [
+          48
+        ]
+      }
+    ],
+    "all_B_owned": true,
+    "duplicate_tasks": [],
+    "single_cpu": true,
+    "distinct_cpus": true,
+    "all_caps_unlimited": true,
+    "oom": [
+      "oom_kill 0"
+    ],
+    "memory": [
+      "MemAvailable:   1551214892 kB"
+    ],
+    "log_tail": "",
+    "preparation_logs": {
+      "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T192409Z-95b448a5/rebuilt-cache-0/absolute-mid-price-change-h60-fold4/prepare-20261022T192409Z-95b448a5.log": "",
+      "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T192409Z-95b448a5/rebuilt-cache-0/absolute-mid-price-change-h600-fold2/prepare-20261022T192409Z-95b448a5.log": ""
+    },
+    "upload_owner_guard_supported": true,
+    "coverage_gate": "NOT_PASSED"
+  },
+  "shard_transfer": {
+    "bucket": "frankie-granite42-568968024170-us-east-1",
+    "prefix": "host-deliveries/family-research-20261022/dual-box/1ff29d49200435fb536638751def689e7f687fa3152a6b243036af820650d131/",
+    "uses_existing_role_permissions": true,
+    "IAM_changes": false,
+    "B_upload_after_all_owned_fits": true,
+    "A_joins_and_finalizes_once_after_both_partitions": true,
+    "large_result_archive_not_yet_completed": true
+  },
+  "scientific_constraints": {
+    "V3": "frozen",
+    "semantic_coverage": "NOT_PASSED",
+    "all_declared_tasks_mandatory": true,
+    "old_search_workflow": "unchanged",
+    "no_agents_monitors_chats_messages_or_live_orders": true
+  },
+  "deployment_attempts_preserved": {
+    "optional_clone_uuid_change_failure": "e01d889c-9c1d-427f-9dbd-e97a150e8cf1",
+    "staging_quote_syntax_failure_no_actions_executed": "8d02a9e5-edc7-4e1f-9190-6ee829d00a9b",
+    "successful_staging": "067f3793-fdfe-47c0-acd2-4d1551cb469d",
+    "A_handoff": "fef6ef33-833e-432a-865f-cee46bbc91df",
+    "A_handoff_verification": "9fa894ff-cbfc-410a-a56a-95b40e7ab1f1",
+    "B_launch": "7c6ad4ce-0bc5-4772-91dc-5520e3a5d070",
+    "B_first_verification": "afe28fc5-0079-4d52-ab1a-1b695cc80b0f",
+    "B_dispatch_stop_state_race_resumed_original_coordinator": "4b183a79-44a1-48d1-a303-ee8193d6ff0a",
+    "B_safe_io_handoff": "cf97befe-e7ae-4f1f-b640-4ea80ea4d95c"
+  },
+  "B_current_handoff": {
+    "receipt_path": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/B-cold-io-handoff-20261022T194643Z.json",
+    "utc": "2026-10-22T19:46:43Z",
+    "new_coordinator_pid": 3861,
+    "old_coordinator_pid": 3671,
+    "manifest": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/B-cold-io-adoption-20261022T194643Z.json",
+    "old_committed": 0,
+    "adopted_jobs": 2,
+    "numerical_workers_before": 2,
+    "source_sha256": "b510ea1a7f4f1098c2f1388754482daf4876f36bcd7f2f8852c8e4ebbf4a5666",
+    "log": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-dual-B-io.log",
+    "admission_policy": "no per-job estimates; actual MemAvailable > 64 GiB; ceiling 96",
+    "no_numerical_fit_restarted": true,
+    "coverage_gate": "NOT_PASSED",
+    "preparation_concurrency": 4
+  },
+  "B_runtime_prefetch": {
+    "utc": "2026-10-22T19:34:37Z",
+    "purpose": "one-time prefetch of already-mapped Julia runtime/depot files after measured cold snapshot page faults",
+    "files": {
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/artifacts/09b351e89a85e07e957194a647765403d4ee1bcb/lib/libopenspecfun.so.2.1": 182216,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/artifacts/32a70768bc7028e4079c6a4e04fcdcc721f12526/lib/libRmath-julia.so": 258272,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/artifacts/b51742627dd8d57a2e536c28c517b0c651229217/lib/libearcut.so": 712360,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/artifacts/fe56f62d30a5f4c8effc9aac1f65c55e839242e1/lib/libarpack.so.2.0.0": 373016,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/AbstractTrees/tEX7J_XvCNH.so": 551952,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/Accessors/XelUh_XvCNH.so": 1373464,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/AliasTables/C6bK3_kjXB8.so": 151504,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/Arpack/X5VZL_XvCNH.so": 272592,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/Arpack_jll/m4kdm_MnUYF.so": 126856,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/BSON/3tVCZ_XvCNH.so": 303056,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/Base64/D7K0n_kjXB8.so": 154200,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/CSV/HHBkp_YqbZI.so": 12558800,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/CategoricalArrays/RHXoP_XvCNH.so": 1017872,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/CategoricalArraysRecipesBaseExt/T9CRF_XvCNH.so": 31424,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/CategoricalArraysSentinelArraysExt/SvBBl_XvCNH.so": 29280,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/CategoricalArraysStatsBaseExt/roesB_XvCNH.so": 24816,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/CategoricalArraysStructTypesExt/gjBFx_XvCNH.so": 40112,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/Clustering/Ovl2Q_XvCNH.so": 863408,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/CodecZlib/1TI30_kjXB8.so": 188880,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/CommonSolve/zEcGf_ewjra.so": 65392,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/Compat/GSFWK_kjXB8.so": 91488,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/CompatLinearAlgebraExt/ljs2z_kjXB8.so": 27632,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/CompilerSupportLibraries_jll/iCwSB_kjXB8.so": 66592,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/CompositionsBase/KqDTx_XvCNH.so": 38704,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/CompositionsBaseInverseFunctionsExt/bsSCg_XvCNH.so": 26720,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/ConstructionBase/sBbW6_XvCNH.so": 130480,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/ConstructionBaseLinearAlgebraExt/lPSIx_XvCNH.so": 35968,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/ConstructionBaseStaticArraysExt/6YWO6_XvCNH.so": 40400,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/Crayons/TXPcU_kjXB8.so": 737688,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/DataAPI/3a8mN_kjXB8.so": 172640,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/DataFrames/AR9oZ_Pgsnf.so": 39556776,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/DataStructures/xKiwJ_kjXB8.so": 2746264,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/DataValueInterfaces/9Lpkp_kjXB8.so": 29760,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/Dates/p8See_kjXB8.so": 2016264,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/Distances/yuMjt_XvCNH.so": 534952,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/DistancesSparseArraysExt/rECTh_XvCNH.so": 39280,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/Distributions/xILW0_XvCNH.so": 6703280,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/DocStringExtensions/KRdZs_kjXB8.so": 1059544,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/EarCut_jll/SRVPx_davfk.so": 123424,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/EvoTrees/InsE8_XvCNH.so": 1686416,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/FilePathsBase/Efv1v_kjXB8.so": 760120,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/FilePathsBaseMmapExt/FmKus_kjXB8.so": 26064,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/FillArrays/2Dg1l_XvCNH.so": 1292112,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/FillArraysPDMatsExt/lY7hA_XvCNH.so": 29456,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/FillArraysSparseArraysExt/v0n6k_XvCNH.so": 77760,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/FillArraysStaticArraysExt/oCU1z_XvCNH.so": 27376,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/FillArraysStatisticsExt/Vlq93_XvCNH.so": 61936,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/Future/Ebope_kjXB8.so": 35248,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/Gamma/BKjT1_XvCNH.so": 464832,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/GeometryBasics/lB452_XvCNH.so": 5675600,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/HypergeometricFunctions/tHlAh_XvCNH.so": 992112,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/InlineStrings/prmY3_kjXB8.so": 384432,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/InteractiveUtils/0TrXF_kjXB8.so": 831520,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/InverseFunctions/PkVmn_XvCNH.so": 164680,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/InverseFunctionsDatesExt/QOkBI_XvCNH.so": 30080,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/InvertedIndices/0P8C6_kjXB8.so": 116432,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/IrrationalConstants/ukdUG_kjXB8.so": 856896,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/IterTools/hhnii_XvCNH.so": 399696,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/IteratorInterfaceExtensions/N0h8q_kjXB8.so": 30000,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/JLLWrappers/7Zgw7_6DzYD.so": 151616,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/JSON3/1p699_bfqYZ.so": 5652200,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/JuliaSyntaxHighlighting/8OCEv_kjXB8.so": 860296,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/LaTeXStrings/H4HGh_kjXB8.so": 77280,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/LinearAlgebraExt/a6ngK_XvCNH.so": 27728,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/LogExpFunctions/cmCYR_kjXB8.so": 234768,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/LogExpFunctionsInverseFunctionsExt/iGShH_XvCNH.so": 39456,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/Logging/PWFjL_kjXB8.so": 31984,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/MLJModelInterface/cOFkZ_XvCNH.so": 530560,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/MacroTools/38lnR_XvCNH.so": 1335584,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/Markdown/AREjX_kjXB8.so": 3250488,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/Missings/wLfgT_kjXB8.so": 173872,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/Mmap/GDYy0_kjXB8.so": 194096,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/MultivariateStats/l7I74_XvCNH.so": 1019408,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/NearestNeighbors/Yj1kF_XvCNH.so": 3749856,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/NetworkLayout/XKrIU_XvCNH.so": 401072,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/OpenLibm_jll/ToVO1_XvCNH.so": 42776,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/OpenSpecFun_jll/TDl1L_tuG3z.so": 184472,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/OrderedCollections/LtT3J_kjXB8.so": 398224,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/PDMats/wuzEE_XvCNH.so": 554592,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/Parsers/833b9_fG9i5.so": 7382432,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/ParsersExt/QKJik_kjXB8.so": 32656,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/PooledArrays/vi11X_kjXB8.so": 251728,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/PrecompileTools/AQ9Mk_SAZqy.so": 67648,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/Preferences/pWSk8_kjXB8.so": 245672,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/PrettyTables/kRdcL_THiIW.so": 18137408,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/Printf/3FQLY_kjXB8.so": 197888,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/PtrArrays/y1ds7_kjXB8.so": 64096,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/QuadGK/hq5Ol_XvCNH.so": 544064,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/REPL/u0gqU_kjXB8.so": 25105848,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/RecipesBase/8e2Mm_esZPx.so": 731752,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/Reexport/bTpYr_kjXB8.so": 45840,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/Rmath/0iTqX_XvCNH.so": 561184,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/Rmath_jll/JC1Xk_zsV5x.so": 123320,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/Roots/o0Xsi_XvCNH.so": 2247992,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/ScientificTypesBase/iLKcU_XvCNH.so": 133632,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/SentinelArrays/uMYVe_kjXB8.so": 1077400,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/Serialization/zGad9_kjXB8.so": 320256,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/SortingAlgorithms/6dCmw_kjXB8.so": 179840,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/SparseArrays/P9ieR_kjXB8.so": 6079800,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/SparseArraysExt/nRgoS_kjXB8.so": 47136,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/SpecialFunctions/78gOt_XvCNH.so": 1722064,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/StaticArrays/yY9vm_WX89p.so": 8944168,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/StaticArraysCore/Tzw28_XvCNH.so": 158848,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/StaticArraysExt/aUSSE_XvCNH.so": 38528,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/StaticArraysStatisticsExt/pasZK_XvCNH.so": 51792,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/StatisticalTraits/Jtq0e_XvCNH.so": 153568,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/Statistics/ERcPL_kjXB8.so": 429344,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/StatsAPI/Rf3YC_kjXB8.so": 176560,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/StatsBase/EZjIG_kjXB8.so": 2637768,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/StatsBaseExt/QzL0k_XvCNH.so": 36160,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/StatsFuns/530lR_XvCNH.so": 675672,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/StatsFunsInverseFunctionsExt/dLpB4_XvCNH.so": 31232,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/StringManipulation/4nJQd_1j2hp.so": 2196640,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/StructArrays/jRMFC_XvCNH.so": 686112,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/StructArraysExt/wsq1l_XvCNH.so": 30864,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/StructArraysLinearAlgebraExt/Thcyn_XvCNH.so": 30192,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/StructArraysSparseArraysExt/6AdY6_XvCNH.so": 25952,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/StructArraysStaticArraysExt/BhpqW_XvCNH.so": 74832,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/StructTypes/yjnue_kjXB8.so": 600768,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/StyledStrings/UcVoM_kjXB8.so": 5845056,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/SuiteSparse/X9Gex_XvCNH.so": 24032,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/SuiteSparse_jll/ME9At_kjXB8.so": 95384,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/TOML/mjrwE_kjXB8.so": 877304,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/TableTraits/I6SaN_kjXB8.so": 33152,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/Tables/Z804B_kjXB8.so": 1086048,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/TranscodingStreams/eJQ7D_kjXB8.so": 356400,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/UUIDs/SIw1t_kjXB8.so": 59760,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/Unicode/E4Hzs_kjXB8.so": 94896,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/WeakRefStrings/muGbw_kjXB8.so": 300832,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/WorkerUtilities/8EFUg_kjXB8.so": 115312,
+      "/opt/frankie-box/work/family-research-20261022/julia-depot/compiled/v1.13/Zlib_jll/xjq3Q_kjXB8.so": 42688,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/bin/julia": 23328,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/libLLVM.so.20.1jl": 124908888,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/libamd.so.3.3.3": 39625,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/libatomic.so.1.2.0": 169568,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/libblastrampoline.so.5": 3583905,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/libbtf.so.2.3.2": 13184,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/libcamd.so.3.3.3": 44407,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/libccolamd.so.3.3.4": 47722,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/libcholmod.so.5.3.1": 2156274,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/libcolamd.so.3.3.4": 31421,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/libgcc_s.so.1": 904760,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/libgfortran.so.5.0.0": 11342552,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/libgmp.so.10.5.0": 724672,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/libgomp.so.1.0.0": 1588992,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/libjulia-codegen.so.1.13.2": 87914649,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/libjulia-internal.so.1.13.2": 15506073,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/libklu.so.2.3.5": 214410,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/libldl.so.3.3.2": 13285,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/libmpfr.so.6.2.2": 2522440,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/libopenblas64_.0.3.30.so": 35867112,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/libopenlibm.so.4.0": 254064,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/libpcre2-8.so.0.14.0": 734024,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/libquadmath.so.0.0.0": 988264,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/librbio.so.4.3.4": 66362,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/libspqr.so.4.3.4": 435322,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/libssp.so.0.0.0": 36784,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/libstdc++.so.6.0.34": 21645816,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/libsuitesparseconfig.so.7.10.1": 15264,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/libumfpack.so.6.3.5": 824556,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/libunwind.so.8.2.0": 539232,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/libz.so.1.3.2": 123390,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/libzstd.so.1.5.7": 1015473,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/julia/sys.so": 286170984,
+      "/opt/frankie-box/work/family-research-20261022/julia-runtime/julia-1.13.2/lib/libjulia.so.1.13.2": 273552
+    },
+    "bytes_read": 798260298,
+    "elapsed_s": 72.8914535089998,
+    "mib_s": 10.444027486918,
+    "no_matrix_or_database_read": true,
+    "no_file_modifications": true
+  },
+  "B_latest_verification": {
+    "utc": "2026-10-22T19:50:05Z",
+    "coordinator_pids": [
+      3861
+    ],
+    "state_path": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T194644Z-f4082e1d/recovery-plan.json",
+    "status": "running",
+    "active_jobs": 49,
+    "queued_preparations": 17,
+    "committed": 2,
+    "registered_tasks": 87,
+    "all_B_owned": true,
+    "duplicate_tasks": [],
+    "single_cpu": true,
+    "distinct_cpus": true,
+    "all_caps_unlimited": true,
+    "oom": [
+      "oom_kill 0"
+    ],
+    "memory": [
+      "MemAvailable:   1315978408 kB"
+    ],
+    "log_tail": "{\"kind\": \"core\", \"cohort\": [\"first_observed_family_within_h\", \"120\", \"4\"], \"model\": \"training_frequency\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"first_observed_family_within_h\", \"300\", \"2\"], \"model\": \"training_frequency\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n",
+    "preparation_logs": {
+      "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T194644Z-f4082e1d/rebuilt-cache-0/first-observed-family-within-h-h300-fold4/prepare-20261022T194644Z-f4082e1d.log": "",
+      "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T194644Z-f4082e1d/rebuilt-cache-0/absolute-mid-price-change-h600-fold4/prepare-20261022T194644Z-f4082e1d.log": "",
+      "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T194644Z-f4082e1d/rebuilt-cache-0/first-observed-family-within-h-h120-fold4/prepare-20261022T194644Z-f4082e1d.log": "",
+      "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T194644Z-f4082e1d/rebuilt-cache-0/first-observed-family-within-h-h300-fold2/prepare-20261022T194644Z-f4082e1d.log": ""
+    },
+    "upload_owner_guard_supported": true,
+    "coverage_gate": "NOT_PASSED",
+    "activity": [
+      {
+        "pid": 3676,
+        "state": "D",
+        "cpu_ticks": 2872,
+        "rss_kib": 22507616,
+        "wchan": "folio_wait_bit_common"
+      },
+      {
+        "pid": 3677,
+        "state": "D",
+        "cpu_ticks": 1976,
+        "rss_kib": 22363008,
+        "wchan": "folio_wait_bit_common"
+      }
+    ],
+    "worker_count": 49,
+    "active_cohorts": {
+      "absolute_mid_price_change|60|4": 1,
+      "absolute_mid_price_change|600|2": 1,
+      "absolute_mid_price_change|600|4": 1,
+      "first_observed_family_within_h|120|4": 28,
+      "first_observed_family_within_h|300|2": 18
+    },
+    "preparation_workers": 3,
+    "fit_workers": 46,
+    "worker_sample": [
+      {
+        "pid": 3676,
+        "cohort": "absolute_mid_price_change|60|4",
+        "model": "",
+        "prepare": true,
+        "cpu": [
+          0
+        ]
+      },
+      {
+        "pid": 3677,
+        "cohort": "absolute_mid_price_change|600|2",
+        "model": "",
+        "prepare": true,
+        "cpu": [
+          48
+        ]
+      },
+      {
+        "pid": 3868,
+        "cohort": "absolute_mid_price_change|600|4",
+        "model": "",
+        "prepare": true,
+        "cpu": [
+          1
+        ]
+      },
+      {
+        "pid": 3884,
+        "cohort": "first_observed_family_within_h|120|4",
+        "model": "ridge100",
+        "prepare": false,
+        "cpu": [
+          50
+        ]
+      },
+      {
+        "pid": 3888,
+        "cohort": "first_observed_family_within_h|120|4",
+        "model": "evotrees_depth3",
+        "prepare": false,
+        "cpu": [
+          3
+        ]
+      },
+      {
+        "pid": 3892,
+        "cohort": "first_observed_family_within_h|120|4",
+        "model": "evotrees_depth5",
+        "prepare": false,
+        "cpu": [
+          51
+        ]
+      }
+    ]
+  },
+  "B_cold_io_fix": {
+    "measured_before": {
+      "wait_state": "folio_wait_bit_common",
+      "cpu_cores": 0,
+      "read_mib_s": [
+        1.8502604166666667,
+        1.6692708333333333
+      ]
+    },
+    "runtime_only_prefetch_bytes": 798260298,
+    "runtime_prefetch_elapsed_s": 72.8914535089998,
+    "clone_read_ahead_kib": {
+      "before": 128,
+      "after": 32768
+    },
+    "preparation_concurrency": 4,
+    "old_numerical_preparations_preserved": [
+      3676,
+      3677
+    ],
+    "no_matrix_or_database_helper_scan": true,
+    "no_new_permission_changes": true
+  },
+  "runtime_scenario_count_correction": {
+    "prior_historical_scenario": 2106,
+    "correct_if_all_groups_equal_22": 2097,
+    "reason": "The binary schedule has 4 base core + 22 source groups + 3 neural =29 keys, not30. Actual required jobs are always enumerated from training-derived groups; no task count is enforced from this scenario. The 10-16h range before provisioning is unchanged."
+  }
+}

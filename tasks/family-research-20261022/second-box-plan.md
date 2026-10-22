@@ -1,14 +1,28 @@
-# Second-box plan (planning only; 2026-10-22)
+# Second-box execution plan (authorized and running; 2026-10-22)
 
-Keep i-035994afa8bdf66a5 and its 96 numerical workers running. The user requires
-another runtime estimate before any new machine, snapshots or redistribution.
-No second instance, monitor, agent, chat, message or live order is authorized
-by this plan. Leave the old Search workflow unchanged.
+The user approved the second box after the second runtime estimate: "Do it. We can't have it go that long".
+A: i-035994afa8bdf66a5, coordinator5454, 40 owned cohorts.
+B: i-087f8d3247ae847a9, coordinator3861, 23 owned cohorts.
+Both have 96 physical-core slots. A's 96 numerical jobs were preserved through
+coordinator-only adoption. B's two first preparations were also preserved through
+its cold-I/O dispatch handoff. No instance restart or numerical fit restart occurred.
+No monitor, agent, chat, message or live order was created. Old Search unchanged.
+
+At19:50:05 UTC, B had49 workers (46fits/3preparations), two committed results,
+no duplicate tasks/CPU leases, unlimited scopes and zero host OOM kills.
+Ownership SHA256: 1ff29d49200435fb536638751def689e7f687fa3152a6b243036af820650d131.
+See the dual-box deployment receipt and current continuation note for exact paths.
+The original plan below is retained as design history; provisioning tasks1-5 are done,
+while all numerical tasks and global finalization remain mandatory until complete.
 
 ## Decision and proposed machine
 
 Take the next estimate after 15 minutes from the first verified 96-worker snapshot
 at 18:29:26 UTC. The earlier 10-18-hour full-suite estimate mixed admission policies.
+The second sample (18:29:26-18:44:32 UTC) completed 46 substantive fits, 212 to
+258, at about 183/hour with 96 workers at both endpoints. Updated remaining
+full-suite estimate: 10-16 hours, provisional; 41 cohorts remain unregistered.
+Those statements were true at the second-estimate checkpoint; the subsequent explicit user approval authorized this deployment.
 Compare remaining parallel work with staging time, spend and the serial finalization tail.
 
 A matching r7i.48xlarge adds 96 physical cores / 192 vCPUs and nominal 1.5 TiB RAM.
@@ -19,7 +33,7 @@ plus EBS/snapshots and less any account discounts. No near-2x guarantee is made.
 The Standard regional quota was read as 512 vCPUs; these two boxes need 384.
 Other usage and available capacity still need a narrow launch-time check.
 Current placement is us-east-1d, subnet-0910ec79d4e5d6017, SSM profile Ssm,
-IMDSv2 required. No capacity has been reserved.
+IMDSv2 required. The second instance was allocated successfully; no separate capacity reservation was created.
 
 ## Storage and startup
 
@@ -71,3 +85,4 @@ Ordered acceptance criteria and dependencies are in second-box-todo.md.
 Open facts: refreshed ETA, precise clone volume/layout and storage costs,
 available capacity/quota headroom, task weights and measured staging overhead.
 
+B cold-start follow-up: mapped runtime files prefetched once; cloned volume read-ahead32768KiB; four mandatory preparations overlap with the first two preserved. At19:50:05 UTC B had49 workers and2 committed results. No input helper scan/rebuild or fit restart.

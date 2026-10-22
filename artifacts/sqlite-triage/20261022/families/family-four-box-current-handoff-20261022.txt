@@ -1,0 +1,132 @@
+FAMILY RESEARCH -- CURRENT FOUR-BOX HANDOFF -- 2026-10-22
+
+Read the ENTIRE immutable scientific foundations first:
+https://github.com/DavisAI1974/Markets/blob/496dc9c1b42345e86c95fef84a7d2a07b2d36b06/artifacts/sqlite-triage/20261022/families/family-cpu-ram-v2-full-handoff-20261022.txt
+Then read family-dual-box-current-handoff-20261022.txt for the preserved
+single/two-box history and unresolved repeated residual_mlp evidence.
+This file supersedes active instance/coordinator/ownership details only.
+
+AUTHORIZATION AND LIMITS
+User requested two-box runtime estimate, then asked about idle inventory and said
+"get them going too" for the two stopped r7i.16xlarge machines. They are now C/D.
+No AI subagents, monitors, automations, chats, cross-chat messages or live orders.
+No further lifecycle changes implied. Old Search code/disks/workflow preserved.
+Use AWS plugin run_script/SSM only, never AWS CLI. Dirty E:\Markets is not used.
+Clean checkout C:\Users\A\Documents\Codex\2026-10-22\family-research-handoff-repo;
+remote branch claude/kalshi-s79-kickoff-ij8t9o.
+
+COMMON
+B=/opt/frankie-box/work/family-research-20261022
+O=B/joint-models-v4-candidate-20261022
+R=O/parallel-63
+Coordinator source B/full-context-audit/scripts/resume_multibox_candidate.py
+Helper multibox_support.py. Do not edit live source or launch any older executor.
+All workers pinned one per physical core, SMT siblings excluded; one numerical
+thread. Admission uses live MemAvailable >64GiB, never per-job/summed RAM forecasts.
+Per-job memory.max/high/swap caps unlimited. Placement weights only assign work.
+
+IMMUTABLE OWNERSHIP
+R/four-box-ownership-20261022.json
+SHA256 e08cabcf166ec07c1df712c714d11cda44e67cf5d94e02ca544a1ee9b69f0f6f
+A34 + B19 + C5 + D5 =63 disjoint whole cohorts. All registered, completed,
+preparing and active A/B cohorts stayed on their existing boxes. Thirty cohorts
+were pinned; only untouched work moved. Exact model/group lists still come
+from each training preparation; every declared task remains mandatory.
+
+CURRENT EXECUTORS (us-east-1d)
+A i-035994afa8bdf66a5 r7i.48xlarge /96 physical slots, coordinator7072.
+  State R/memory-recovery-20261022T204459Z-4b147afc/recovery-plan.json
+  Log O/parallel-four-A.log
+  Adopt R/four-box-A-capture-20261022.json; --worker-id A --max-workers 96.
+B i-087f8d3247ae847a9 r7i.48xlarge /96 physical slots, coordinator5246.
+  State R/memory-recovery-20261022T204529Z-d93fe1d4/recovery-plan.json
+  Log O/parallel-four-B.log
+  Adopt R/four-box-B-capture-20261022.json; --worker-id B --max-workers 96.
+C i-031eeb577ad72b064 r7i.16xlarge /32 physical slots, coordinator3102.
+  State R/memory-recovery-20261022T204558Z-48385f29/recovery-plan.json
+  Log O/parallel-four-C.log; --worker-id C --max-workers 32.
+D i-0d17573dbce871520 r7i.16xlarge /32 physical slots, coordinator2164.
+  State R/memory-recovery-20261022T204558Z-1b4a9c1a/recovery-plan.json
+  Log O/parallel-four-D.log; --worker-id D --max-workers 32.
+All use --execute --assignment R/four-box-ownership-20261022.json.
+A/B current numerical workers were adopted from paused dispatch snapshots;
+no Julia process stopped/restarted. Previous dispatch PIDs5454/3861 are retired.
+At capture A554+B136=690 committed fits and96 live fits each were preserved.
+At20:47:19 UTC: A96fits/579committed, B94fits/153committed, C/D4preparations
+each. Capacity256 slots is not yet proof of256 simultaneous fits. All active tasks
+owned, no duplicate task/CPU leases, unlimited caps, host oom_kill0 on all four.
+All192 adopted jobs accounted: A71live+25coherent successes, B79live+17successes.
+Preparations may overlap four on B/C/D, two on A, within slots/actual RAM.
+New non-A fit dispatch is paced3s to let actual-RAM admission observe allocation.
+Completed preparation metadata was retained, including caches without live wrappers.
+Later verification20:51:34 UTC: all four coordinators running; A95/B88/C32/D25
+active FIT workers (240total), no preparations,760 committed fits. C/D have
+completed their initial preparations and are fitting; D is still filling slots.
+No duplicate active task/CPU leases, all active tasks owned, zero host OOM kills.
+This is actual occupancy at that instant; configured physical-core capacity256.
+All192 adopted jobs still accounted for (A63live+33success, B73live+23success).
+See four-box-activation-verification-20261022T205134Z.json for exact evidence.
+
+SEARCH PRESERVATION / C-D STORAGE
+Original Search roots remain detached, unmodified and retained:
+C vol-0b671bc7ea219a4ee; D vol-0c0ed346040147cfd.
+Their original user data, profile, metadata options and tags are saved in
+four-box-boot-preservation-20261022.json. No old Search services booted.
+These same two existing instances now boot clean Ubuntu AMI roots:
+C vol-0bd554e8b87e60c6f; D vol-02b56f5fe96ed46ae (32GiB encrypted each).
+Clean root volume identity was verified before mounting data.
+C data vol-07930910b3266da92; D data vol-0e28c104e4ea65b43.
+Each is one encrypted2560GiB gp3 clone of existing frozen
+snap-0d3e867c1240b6528, 5000IOPS/1250MiB/s. No new source snapshot was made;
+the frozen snapshot was cloned once per added box.
+Mounted /mnt/family-source and B bind-mounted; stable volume-by-id fstab entries
+avoid duplicate image labels/UUIDs. Data partition GPT UUIDs randomized;
+filesystem label changed, no whole-filesystem scan/UUID rewrite.
+Copied outputs retained outside fresh O as
+B/joint-models-v4-candidate-20261022-snapshot-source-184835.
+Fresh R/jobs/cache/attempts/serial-prefix; no serial configuration assigned to C/D.
+Raw matrix remains34601642880bytes, all five numerical source hashes match.
+Julia1.13.2/depot/projects reused without runtime download or input rebuild.
+Only already-known runtime/depot files prefetched once (~798MB/165files per
+new box, ~25s), no raw-matrix/database helper scan. Read-ahead32768KiB.
+Initial combined start failed capacity; individual starts succeeded unchanged.
+C/D Linux AWS SDK installed once for artifact transfer. Existing Ssm role used.
+Regional usage is512vCPU, the existing Standard quota. The Ohio8vCPU box untouched.
+
+TRANSFER AND FINALIZATION
+Expansion capture/ownership metadata:
+s3://frankie-granite42-568968024170-us-east-1/
+host-deliveries/family-research-20261022/four-box-expansion-20261022/
+Final B/C/D result archives/receipts use the existing transfer implementation:
+host-deliveries/family-research-20261022/dual-box/<NEW ownership-SHA256>/
+Each non-A shard uploads its own verified required-job set/states/predictions/
+preprocessing links/recovery metadata/attempts once after all its fits complete.
+Only A imports B, C and D into separate namespaces, checks archive hashes/path
+safety/coherent artifacts/exact disjoint mandatory union/all63 cohorts, then runs
+original PCA12/k-means3/5 and original postprocessing once. No separate finalizer
+or monitor. Required failure remains incomplete; no task can silently disappear.
+Root handoff/staging/reproducibility receipts are copied into current recovery
+metadata so shard archives retain them. Active large artifacts remain on EBS.
+
+SCIENCE AND ESTIMATES
+V3 frozen; semantic coverage NOT_PASSED. Preserve exact as-of/cursors/Int64
+clocks, missingness/ages/provenance/scopes/censoring, unfavorable/contrary and
+inconclusive evidence, targets/seeds/epochs/training-only transforms. One retained
+market day; no established tradable signal or new independent retained day.
+The two already-completed serial configurations accidentally repeated on B were
+restored to prior original authority on20:13:07 UTC. Both attempts remain saved.
+Residual_mlp maximum prediction difference0.4313412606716156 and worse repeat
+logloss are unresolved reproducibility evidence, not established rounding.
+See serial-original-reconciliation-20261022.json and preceding two-box handoff.
+Prior authority follows completion, regardless of which metrics look better.
+Two-box working estimate6-10h was made20:24 UTC before C/D. It is historical,
+not a measured four-box ETA. Do not simply scale it or a cheap-branch rate.
+The2097-task count is only a22-source-group scenario; actual training-derived
+mandatory keys determine total scope.
+
+NEXT
+Continue the already-running four executors, preserve all fits/failures, no old
+launcher, no input restore/rebuild, no duplicate executor. Verify current progress
+compactly; complete one final global reconciliation and save final artifacts
+after all mandatory fits/PCA/postprocessing finish. Do not promote NOT_PASSED.
+

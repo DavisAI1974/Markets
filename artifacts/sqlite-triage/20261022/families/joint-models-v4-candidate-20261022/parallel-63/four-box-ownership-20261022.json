@@ -1,0 +1,692 @@
+{
+  "version": 2,
+  "instances": {
+    "A": "i-035994afa8bdf66a5",
+    "B": "i-087f8d3247ae847a9",
+    "C": "i-031eeb577ad72b064",
+    "D": "i-0d17573dbce871520"
+  },
+  "slots": {
+    "A": 96,
+    "B": 96,
+    "C": 32,
+    "D": 32
+  },
+  "coverage_gate": "NOT_PASSED",
+  "run_id": "a19c3c7a72554d1f90a22a84c2b5e65c",
+  "forecast_load": {
+    "A": 248.45000000000007,
+    "B": 247.7800000000001,
+    "C": 86.77,
+    "D": 87.71999999999998
+  },
+  "balancing_forecasts_do_not_limit_admission": true,
+  "prior_assignment_sha256": "1ff29d49200435fb536638751def689e7f687fa3152a6b243036af820650d131",
+  "pinned_existing_cohorts": [
+    [
+      "absolute_mid_price_change",
+      "1",
+      "2"
+    ],
+    [
+      "absolute_mid_price_change",
+      "1",
+      "3"
+    ],
+    [
+      "absolute_mid_price_change",
+      "1",
+      "4"
+    ],
+    [
+      "absolute_mid_price_change",
+      "120",
+      "2"
+    ],
+    [
+      "absolute_mid_price_change",
+      "120",
+      "3"
+    ],
+    [
+      "absolute_mid_price_change",
+      "120",
+      "4"
+    ],
+    [
+      "absolute_mid_price_change",
+      "1800",
+      "2"
+    ],
+    [
+      "absolute_mid_price_change",
+      "1800",
+      "3"
+    ],
+    [
+      "absolute_mid_price_change",
+      "1800",
+      "4"
+    ],
+    [
+      "absolute_mid_price_change",
+      "20",
+      "2"
+    ],
+    [
+      "absolute_mid_price_change",
+      "20",
+      "3"
+    ],
+    [
+      "absolute_mid_price_change",
+      "20",
+      "4"
+    ],
+    [
+      "absolute_mid_price_change",
+      "300",
+      "2"
+    ],
+    [
+      "absolute_mid_price_change",
+      "300",
+      "3"
+    ],
+    [
+      "absolute_mid_price_change",
+      "300",
+      "4"
+    ],
+    [
+      "absolute_mid_price_change",
+      "3600",
+      "2"
+    ],
+    [
+      "absolute_mid_price_change",
+      "3600",
+      "3"
+    ],
+    [
+      "absolute_mid_price_change",
+      "3600",
+      "4"
+    ],
+    [
+      "absolute_mid_price_change",
+      "5",
+      "2"
+    ],
+    [
+      "absolute_mid_price_change",
+      "5",
+      "3"
+    ],
+    [
+      "absolute_mid_price_change",
+      "5",
+      "4"
+    ],
+    [
+      "absolute_mid_price_change",
+      "60",
+      "2"
+    ],
+    [
+      "absolute_mid_price_change",
+      "60",
+      "4"
+    ],
+    [
+      "absolute_mid_price_change",
+      "600",
+      "2"
+    ],
+    [
+      "absolute_mid_price_change",
+      "600",
+      "4"
+    ],
+    [
+      "first_observed_family_within_h",
+      "120",
+      "4"
+    ],
+    [
+      "first_observed_family_within_h",
+      "300",
+      "2"
+    ],
+    [
+      "first_observed_family_within_h",
+      "300",
+      "4"
+    ],
+    [
+      "first_observed_family_within_h",
+      "600",
+      "3"
+    ],
+    [
+      "first_observed_family_within_h",
+      "600",
+      "4"
+    ]
+  ],
+  "cohorts": [
+    {
+      "cohort": [
+        "absolute_mid_price_change",
+        "1",
+        "2"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "absolute_mid_price_change",
+        "1",
+        "3"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "absolute_mid_price_change",
+        "1",
+        "4"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "absolute_mid_price_change",
+        "120",
+        "2"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "absolute_mid_price_change",
+        "120",
+        "3"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "absolute_mid_price_change",
+        "120",
+        "4"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "absolute_mid_price_change",
+        "1800",
+        "2"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "absolute_mid_price_change",
+        "1800",
+        "3"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "absolute_mid_price_change",
+        "1800",
+        "4"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "absolute_mid_price_change",
+        "20",
+        "2"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "absolute_mid_price_change",
+        "20",
+        "3"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "absolute_mid_price_change",
+        "20",
+        "4"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "absolute_mid_price_change",
+        "300",
+        "2"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "absolute_mid_price_change",
+        "300",
+        "3"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "absolute_mid_price_change",
+        "300",
+        "4"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "absolute_mid_price_change",
+        "3600",
+        "2"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "absolute_mid_price_change",
+        "3600",
+        "3"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "absolute_mid_price_change",
+        "3600",
+        "4"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "absolute_mid_price_change",
+        "5",
+        "2"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "absolute_mid_price_change",
+        "5",
+        "3"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "absolute_mid_price_change",
+        "5",
+        "4"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "absolute_mid_price_change",
+        "60",
+        "2"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "absolute_mid_price_change",
+        "60",
+        "3"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "absolute_mid_price_change",
+        "60",
+        "4"
+      ],
+      "owner": "B"
+    },
+    {
+      "cohort": [
+        "absolute_mid_price_change",
+        "600",
+        "2"
+      ],
+      "owner": "B"
+    },
+    {
+      "cohort": [
+        "absolute_mid_price_change",
+        "600",
+        "3"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "absolute_mid_price_change",
+        "600",
+        "4"
+      ],
+      "owner": "B"
+    },
+    {
+      "cohort": [
+        "first_observed_family_within_h",
+        "120",
+        "2"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "first_observed_family_within_h",
+        "120",
+        "3"
+      ],
+      "owner": "B"
+    },
+    {
+      "cohort": [
+        "first_observed_family_within_h",
+        "120",
+        "4"
+      ],
+      "owner": "B"
+    },
+    {
+      "cohort": [
+        "first_observed_family_within_h",
+        "300",
+        "2"
+      ],
+      "owner": "B"
+    },
+    {
+      "cohort": [
+        "first_observed_family_within_h",
+        "300",
+        "3"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "first_observed_family_within_h",
+        "300",
+        "4"
+      ],
+      "owner": "B"
+    },
+    {
+      "cohort": [
+        "first_observed_family_within_h",
+        "600",
+        "2"
+      ],
+      "owner": "C"
+    },
+    {
+      "cohort": [
+        "first_observed_family_within_h",
+        "600",
+        "3"
+      ],
+      "owner": "B"
+    },
+    {
+      "cohort": [
+        "first_observed_family_within_h",
+        "600",
+        "4"
+      ],
+      "owner": "B"
+    },
+    {
+      "cohort": [
+        "mid_price_change",
+        "1",
+        "2"
+      ],
+      "owner": "D"
+    },
+    {
+      "cohort": [
+        "mid_price_change",
+        "1",
+        "3"
+      ],
+      "owner": "B"
+    },
+    {
+      "cohort": [
+        "mid_price_change",
+        "1",
+        "4"
+      ],
+      "owner": "C"
+    },
+    {
+      "cohort": [
+        "mid_price_change",
+        "120",
+        "2"
+      ],
+      "owner": "B"
+    },
+    {
+      "cohort": [
+        "mid_price_change",
+        "120",
+        "3"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "mid_price_change",
+        "120",
+        "4"
+      ],
+      "owner": "D"
+    },
+    {
+      "cohort": [
+        "mid_price_change",
+        "1800",
+        "2"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "mid_price_change",
+        "1800",
+        "3"
+      ],
+      "owner": "C"
+    },
+    {
+      "cohort": [
+        "mid_price_change",
+        "1800",
+        "4"
+      ],
+      "owner": "B"
+    },
+    {
+      "cohort": [
+        "mid_price_change",
+        "20",
+        "2"
+      ],
+      "owner": "B"
+    },
+    {
+      "cohort": [
+        "mid_price_change",
+        "20",
+        "3"
+      ],
+      "owner": "D"
+    },
+    {
+      "cohort": [
+        "mid_price_change",
+        "20",
+        "4"
+      ],
+      "owner": "C"
+    },
+    {
+      "cohort": [
+        "mid_price_change",
+        "300",
+        "2"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "mid_price_change",
+        "300",
+        "3"
+      ],
+      "owner": "B"
+    },
+    {
+      "cohort": [
+        "mid_price_change",
+        "300",
+        "4"
+      ],
+      "owner": "D"
+    },
+    {
+      "cohort": [
+        "mid_price_change",
+        "3600",
+        "2"
+      ],
+      "owner": "C"
+    },
+    {
+      "cohort": [
+        "mid_price_change",
+        "3600",
+        "3"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "mid_price_change",
+        "3600",
+        "4"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "mid_price_change",
+        "5",
+        "2"
+      ],
+      "owner": "B"
+    },
+    {
+      "cohort": [
+        "mid_price_change",
+        "5",
+        "3"
+      ],
+      "owner": "B"
+    },
+    {
+      "cohort": [
+        "mid_price_change",
+        "5",
+        "4"
+      ],
+      "owner": "B"
+    },
+    {
+      "cohort": [
+        "mid_price_change",
+        "60",
+        "2"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "mid_price_change",
+        "60",
+        "3"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "mid_price_change",
+        "60",
+        "4"
+      ],
+      "owner": "A"
+    },
+    {
+      "cohort": [
+        "mid_price_change",
+        "600",
+        "2"
+      ],
+      "owner": "D"
+    },
+    {
+      "cohort": [
+        "mid_price_change",
+        "600",
+        "3"
+      ],
+      "owner": "B"
+    },
+    {
+      "cohort": [
+        "mid_price_change",
+        "600",
+        "4"
+      ],
+      "owner": "B"
+    }
+  ],
+  "created_utc": "2026-10-22T20:43:55Z",
+  "numerical_source_sha256": {
+    "run_core_task.jl": "80085208679a3acf8e608abcb70c3e643acaf9645996020fbc1e6f54a0721e82",
+    "run_neural_task.jl": "870292d360273b094a6536ee42bc1223974dd7e2bf8ecaf618d794b2082f0b09",
+    "model_rules.jl": "ed57115cdea48aeb78bcfb09fd6d17a011649a42c762963da4a616e8aa88951b",
+    "shared.jl": "6380bc51e0dc670f3ddb986aa5dc2bf4694c4339ffdeb858fc523cc453ba61c2",
+    "parallel_artifact_helpers.jl": "ff23a2967dcdb53649fe8d6a0631b9790b4c44fa7527dbdfdb497478b09db39d"
+  },
+  "outcome_sha256": "6a0613a357675ba60c7d4e946592b2aa69ea0e09dd488cd0ecfa4d54ba445608"
+}

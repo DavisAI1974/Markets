@@ -1,0 +1,185 @@
+{
+  "authorization": "User: get them going too",
+  "preflight": {
+    "instances": [
+      {
+        "id": "i-031eeb577ad72b064",
+        "state": "stopped",
+        "type": "r7i.16xlarge",
+        "az": "us-east-1d",
+        "root_name": "/dev/sda1",
+        "devices": [
+          {
+            "DeviceName": "/dev/sda1",
+            "Ebs": {
+              "AttachTime": "2026-10-21T08:40:40+00:00",
+              "DeleteOnTermination": false,
+              "Status": "attached",
+              "VolumeId": "vol-0b671bc7ea219a4ee",
+              "EbsCardIndex": 0
+            }
+          }
+        ],
+        "profile": {
+          "Arn": "arn:aws:iam::568968024170:instance-profile/Ssm",
+          "Id": "AIPAYI6JDCBVBKT5JS7GQ"
+        },
+        "metadata": {
+          "State": "applied",
+          "HttpTokens": "required",
+          "HttpPutResponseHopLimit": 2,
+          "HttpEndpoint": "enabled",
+          "HttpProtocolIpv6": "disabled",
+          "InstanceMetadataTags": "disabled"
+        },
+        "tags": [
+          {
+            "Key": "KeepRunning",
+            "Value": "false"
+          },
+          {
+            "Key": "Name",
+            "Value": "frankie-search-calculations-20231018"
+          },
+          {
+            "Key": "FrankieHelperOwner",
+            "Value": "e2e-20231018-a2-20231018-a1"
+          },
+          {
+            "Key": "KeepRunningReason",
+            "Value": "Greg explicitly requested all Frankie boxes stopped on 2026-10-21. Do not restart without his authorization."
+          },
+          {
+            "Key": "Purpose",
+            "Value": "Early native Search calculations from sealed groups; session65"
+          },
+          {
+            "Key": "Project",
+            "Value": "frankie"
+          }
+        ]
+      },
+      {
+        "id": "i-0d17573dbce871520",
+        "state": "stopped",
+        "type": "r7i.16xlarge",
+        "az": "us-east-1d",
+        "root_name": "/dev/sda1",
+        "devices": [
+          {
+            "DeviceName": "/dev/sda1",
+            "Ebs": {
+              "AttachTime": "2026-10-15T01:07:07+00:00",
+              "DeleteOnTermination": false,
+              "Status": "attached",
+              "VolumeId": "vol-0c0ed346040147cfd",
+              "EbsCardIndex": 0
+            }
+          }
+        ],
+        "profile": {
+          "Arn": "arn:aws:iam::568968024170:instance-profile/Ssm",
+          "Id": "AIPAYI6JDCBVBKT5JS7GQ"
+        },
+        "metadata": {
+          "State": "applied",
+          "HttpTokens": "required",
+          "HttpPutResponseHopLimit": 2,
+          "HttpEndpoint": "enabled",
+          "HttpProtocolIpv6": "disabled",
+          "InstanceMetadataTags": "disabled"
+        },
+        "tags": [
+          {
+            "Key": "FrankieHelperOwner",
+            "Value": "e2e-20231018-a2-20231018-a1"
+          },
+          {
+            "Key": "Project",
+            "Value": "frankie"
+          },
+          {
+            "Key": "KeepRunningPolicy",
+            "Value": "true only while a run holds the box; the run sets it at lane claim and clears it at finish (Greg 2026-10-07)"
+          },
+          {
+            "Key": "Name",
+            "Value": "frankie-search-helper-20231018"
+          },
+          {
+            "Key": "Purpose",
+            "Value": "frankie-linux-worker, replaces Windows i-0e90ee6110ef609aa (Greg 2026-09-29)"
+          },
+          {
+            "Key": "KeepRunning",
+            "Value": "false"
+          },
+          {
+            "Key": "Owner",
+            "Value": "frankie-boss"
+          },
+          {
+            "Key": "KeepRunningReason",
+            "Value": "Greg explicitly requested all Frankie boxes stopped on 2026-10-21. Do not restart without his authorization."
+          },
+          {
+            "Key": "FrankieHelperFor",
+            "Value": "i-035994afa8bdf66a5"
+          }
+        ]
+      }
+    ],
+    "userdata": [
+      {
+        "InstanceId": "i-031eeb577ad72b064",
+        "UserData": {
+          "Value": "IyEvYmluL2Jhc2gKc2V0IC1lCmV4cG9ydCBERUJJQU5fRlJPTlRFTkQ9bm9uaW50ZXJhY3RpdmUKYXB0LWdldCB1cGRhdGUgLXFxCmFwdC1nZXQgaW5zdGFsbCAteSAtcXEgbmZzLWNvbW1vbgpta2RpciAtcCAvb3B0L2ZyYW5raWUtYXNzZW1ibHkgL29wdC9mcmFua2llLWJveC9jb2RlIC9vcHQvZnJhbmtpZS1ib3gvdmVudiAvb3B0L2hvc3RlZHRvb2xjYWNoZQo="
+        }
+      },
+      {
+        "InstanceId": "i-0d17573dbce871520",
+        "UserData": {}
+      }
+    ],
+    "image_devices": [
+      {
+        "Ebs": {
+          "DeleteOnTermination": true,
+          "SnapshotId": "snap-061b4b6a8efb44d83",
+          "VolumeSize": 8,
+          "VolumeType": "gp3",
+          "Encrypted": false
+        },
+        "DeviceName": "/dev/sda1"
+      },
+      {
+        "DeviceName": "/dev/sdb",
+        "VirtualName": "ephemeral0"
+      },
+      {
+        "DeviceName": "/dev/sdc",
+        "VirtualName": "ephemeral1"
+      }
+    ],
+    "quota": 512
+  },
+  "new_volumes": [
+    {
+      "worker": "C",
+      "instance": "i-031eeb577ad72b064",
+      "root_volume": "vol-0bd554e8b87e60c6f",
+      "data_volume": "vol-07930910b3266da92",
+      "root_state": "creating",
+      "data_state": "creating"
+    },
+    {
+      "worker": "D",
+      "instance": "i-0d17573dbce871520",
+      "root_volume": "vol-02b56f5fe96ed46ae",
+      "data_volume": "vol-0e28c104e4ea65b43",
+      "root_state": "creating",
+      "data_state": "creating"
+    }
+  ],
+  "plan": "Preserve detached original Search roots byte-for-byte; boot existing instances on clean Ubuntu roots; frozen input clone once per added box; no Search services boot from copied disks"
+}

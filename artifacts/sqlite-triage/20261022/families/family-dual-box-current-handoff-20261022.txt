@@ -1,0 +1,149 @@
+FAMILY RESEARCH -- CURRENT TWO-BOX EXECUTION HANDOFF -- 2026-10-22
+SUPERSEDED ACTIVE EXECUTION: user added the two existing32-core boxes. Read
+family-four-box-current-handoff-20261022.txt for current A/B/C/D executors.
+This file retains the two-box history and unfavorable reproducibility evidence.
+
+Read the complete scientific foundations at immutable checkpoint:
+https://github.com/DavisAI1974/Markets/blob/496dc9c1b42345e86c95fef84a7d2a07b2d36b06/artifacts/sqlite-triage/20261022/families/family-cpu-ram-v2-full-handoff-20261022.txt
+This file supersedes that handoff's active executor/instance details only.
+
+USER AUTHORIZATION
+After two runtime estimates, user said "Do it. We can't have it go that long".
+A second matching box was provisioned. Existing fits remain running. No AI
+subagents, monitors, automations, chats, cross-chat messages or live orders.
+Leave old Search unchanged. No further instance lifecycle change is implied.
+
+LOCAL / REMOTE
+Repo DavisAI1974/Markets; remote branch claude/kalshi-s79-kickoff-ij8t9o.
+Use clean C:\Users\A\Documents\Codex\2026-10-22\family-research-handoff-repo.
+Local branch codex/family-research-handoff-20261022.
+Do not work in dirty E:\Markets. Use AWS plugin run_script/SSM, no AWS CLI.
+
+COMMON PATHS
+B=/opt/frankie-box/work/family-research-20261022
+O=B/joint-models-v4-candidate-20261022
+R=O/parallel-63
+Both boxes have 96 physical-core slots, one numerical thread per pinned worker.
+Per-job memory caps remain unlimited. Admission uses actual MemAvailable >64GiB,
+never summed or per-job RAM forecasts. Balancing forecasts never limit admission.
+
+BOX A (ORIGINAL)
+Instance i-035994afa8bdf66a5, us-east-1 / us-east-1d, r7i.48xlarge.
+Coordinator PID5454:
+B/full-context-audit/scripts/resume_dual_box_candidate.py
+--execute --max-workers 96
+--adopt-manifest R/dual-box-A-adoption-20261022T190758Z.json
+--assignment R/dual-box-ownership-20261022T190758Z.json --worker-id A
+State R/memory-recovery-20261022T190800Z-7cf0ea3a/recovery-plan.json
+Log O/parallel-dual-A.log
+40 owned cohorts. All then-running96 numerical jobs and311 committed results
+were preserved in its coordinator-only handoff. Verification19:14:04 UTC:
+96 workers,336 committed; all A-owned; zero duplicates/OOM; all96 adopted jobs
+accounted for (72live +24 successful reports). No instance/fit restart.
+
+BOX B (NEW)
+Instance i-087f8d3247ae847a9, us-east-1 / us-east-1d, r7i.48xlarge.
+Current coordinator PID3861:
+B/full-context-audit/scripts/resume_dual_box_candidate_b_io.py
+--execute --max-workers 96
+--adopt-manifest R/B-cold-io-adoption-20261022T194643Z.json
+--assignment R/dual-box-ownership-20261022T190758Z.json --worker-id B
+State R/memory-recovery-20261022T194644Z-f4082e1d/recovery-plan.json
+Log O/parallel-dual-B-io.log
+23 owned cohorts. Initial coordinator3671 is retired. Its original two Julia
+preparations3676/3677 remained alive through the handoff. Four preparations may
+overlap; fit dispatch is paced3s during cold startup, ceiling96 unchanged.
+
+At19:50:05 UTC B had49 numerical workers (46fits/3preparations),2 committed
+training-frequency results,87 registered keys; all active tasks B-owned;
+zero duplicate task/CPU leases, all scopes unlimited, host oom_kill0.
+This is a startup/ramp snapshot, not proof of192 simultaneous fit workers or
+a measured end-to-end speedup. Consult the later verification receipts if present.
+
+OWNERSHIP / INPUTS
+Ownership SHA256:
+1ff29d49200435fb536638751def689e7f687fa3152a6b243036af820650d131
+40+23=63, disjoint whole cohorts. Registered and active A cohorts stayed A-owned.
+Each box derives exact model/source-group tasks from its training preparation.
+Never launch any old launcher, single-box executor, or another coordinator.
+
+A's original volumes were not detached, resized, stopped or rebooted.
+Only its root volume vol-0d36715924f03b86c contained this workload's inputs/runtime.
+Snapshot snap-0d3e867c1240b6528 completed and was cloned once to B data volume
+vol-099fc416322bd1726 (2560GiB encrypted gp3,5000IOPS/1250MiB/s).
+B boots clean Ubuntu; the clone is data, so copied Search/services do not start.
+Data mounted /mnt/family-source; source B directory bind-mounted at normal B.
+Old copied outputs retained as B/joint-models-v4-candidate-20261022-snapshot-source-184835.
+B uses fresh job/cache/output directories. Frozen raw matrix remains34601642880bytes.
+Julia1.13.2/projects/depot reused; five numerical Julia source hashes match A.
+No database restoration/scan/hash, raw extraction, frozen matrix rebuild or Julia download.
+
+Measured cold snapshot reads initially blocked B preparations at~1.7-1.9MiB/s.
+A one-time prefetch read only already-mapped runtime/depot files (~798MB);
+no matrix/database helper scan. B clone read-ahead changed128->32768KiB.
+Four mandatory preparations overlap; existing numerical jobs were not restarted.
+A safe-stop race guard initially resumed the old B coordinator, then a verified
+stop completed the handoff. All attempts/receipts are retained.
+
+FINAL JOIN IS PART OF NUMERICAL EXECUTION
+B completes its owned fits, checks required/committed keys, creates an archive
+of its job states/predictions/metrics/preprocessing links/recovery provenance and
+failed attempts, then uploads once using existing Ssm-role permissions:
+s3://frankie-granite42-568968024170-us-east-1/
+host-deliveries/family-research-20261022/dual-box/<ownership-SHA256>/
+No IAM change. B-status.json appears only after success or explicit failure.
+
+After A's owned fits complete, its same coordinator waits for that numerical
+dependency, checks archive hash/path safety, imports into a namespaced directory,
+verifies disjoint required-key union/all63 cohorts/coherent imported artifacts,
+merges once, then runs original PCA-12/k-means3/5 and original postprocessors once.
+This dependency wait is not a separate monitor. Failure keeps work incomplete;
+no required task is silently skipped. Do not start a second finalizer or PCA.
+
+SCIENTIFIC / ESTIMATE LIMITS
+V3 frozen. Semantic coverage NOT_PASSED. Preserve exact as-of/cursors/Int64 clocks,
+missingness, ages, provenance, scopes, censoring, contrary/unfavorable/inconclusive
+evidence, targets, seeds, epochs and training-only transforms. One retained
+market day; no established tradable signal or new independent day.
+
+The second pre-provisioning estimate was10-16h remaining on one box, provisional.
+At20:24:32 UTC the working two-box estimate is6-10h remaining, approximately
+22:30 October22 to02:30 October23 Eastern, including heavier fits, uneven shard
+completion, transfer/join and original PCA/postprocessing. This is provisional.
+Both boxes have96 active fit workers (192total), zero preparations; A504 and B84
+committed (588total), up128 in25.75min since19:58:46 UTC. Both coordinators remain
+running, all active tasks owned, no duplicate task/CPU leases, unlimited job caps,
+host oom_kill0 on each. Actual RAM available: A219494976KiB, B492821680KiB.
+Cheap/constant branches and heavier folds differ; do not extrapolate a fixed rate.
+Historical2106-task scenario was9 too high: with22 groups, regression34 and
+binary29 imply2097 total. This remains only a scenario; actual model-group lists
+determine every mandatory key and are never replaced by an estimate.
+
+Compute price read AWS: $12.7008/h per box, $25.4016/h combined, excluding EBS,
+snapshots and account discounts. No automatic instance lifecycle change added.
+Active large states remain on persistent EBS; B's final archive is not yet complete.
+
+PRESERVATION CORRECTION AND UNFAVORABLE REPRODUCIBILITY EVIDENCE
+The initial fresh B staging omitted the retained serial-prefix index. Two already
+completed first_observed_family_within_h/120/fold4 neural configurations were
+unnecessarily repeated: neural_tree and residual_mlp. At20:13:07 UTC their prior
+completed original outputs were restored as canonical; repeated job directories
+were retained under R/attempts/serial-original-reconciliation-20261022T201307Z/.
+No running numerical job stopped. Authority follows prior completion regardless
+of metric favorability; both sets of predictions/states/metrics are preserved.
+The two attempts agree on schema, rows, targets and fitted columns. Predictions
+differ: neural_tree maximum absolute difference0.000002682209014892578;
+residual_mlp0.4313412606716156, with logloss1.5684192762348583 originally versus
+2.915890359438005 on repeat. Cause unresolved; do not dismiss this as rounding.
+The receipt is saved in Git and B current recovery metadata for its final archive.
+A focused retained-result partition regression test now pins serial cohorts to A
+for future planning. Current immutable ownership and live helpers stay unchanged.
+Historical adoption manifests describe earlier handoffs, not current inventories.
+Capture fresh PID/start tokens/task/output/cache/report/CPU leases for any recovery.
+
+NEXT
+Continue the already-running pair from actual receipts. No reinstallation,
+restoration, input rebuild, duplicate task dispatch, broad semantic audit, monitor
+or new chat. All fits/PCA/postprocessing remain mandatory. Check complete global
+task/model/sample coverage once after finalization and save final scientific
+results/states/failures. Keep NOT_PASSED explicit.

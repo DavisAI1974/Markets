@@ -41,3 +41,17 @@ instance or snapshots created. See tasks/family-research-20261022/second-box-pla
 Use AWS plugin run_script/SSM, no AWS CLI. No monitors/subagents/chats/messages.
 Old Search unchanged. Active large results are on AWS EBS, not newly archived.
 
+SECOND REQUESTED ESTIMATE, BEFORE SECOND-BOX CHANGE:
+18:29:26 to18:44:32 UTC: 212 to258 committed (+46), baseline count unchanged44;
+96 workers at both endpoints. 15m06s, about183 substantive tasks/hour. Current
+sole coordinator4409, available251740336 KiB (~240GiB), zero host OOM kills,
+no duplicate tasks/CPUs, all67 adopted tasks accounted (37live,30success).
+Three complete registered cohorts. Updated full-suite estimate10-16h remaining,
+provisional. Future41 cohorts' group lists and serial PCA duration remain unknown.
+Second box still planning only; no snapshots, instance or redistribution created.
+
+SUPERSEDED EXECUTION STATE: user subsequently authorized the second box after
+the second estimate. Read family-dual-box-current-handoff-20261022.txt for
+current A5454/B3861 coordinators and disjoint40/23 cohort ownership.
+Historical2106-task planning scenario was9 high;22 groups imply2097, still
+a scenario only. Actual training-derived required keys always control scope.

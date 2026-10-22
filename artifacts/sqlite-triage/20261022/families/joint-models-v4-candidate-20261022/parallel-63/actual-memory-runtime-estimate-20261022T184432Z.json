@@ -1,0 +1,754 @@
+{
+  "utc": "2026-10-22T18:44:32Z",
+  "remaining_hours_range": [
+    10,
+    16
+  ],
+  "confidence": "Provisional; remaining groups and serial PCA/postprocessing duration still unknown",
+  "scope": "All mandatory fits/preparations, final merge, PCA-12 and k-means 3/5, original postprocessors",
+  "observation": {
+    "start_utc": "2026-10-22T18:29:26Z",
+    "end_utc": "2026-10-22T18:44:32Z",
+    "elapsed_minutes": 15.1,
+    "committed_start": 212,
+    "committed_end": 258,
+    "new_substantive_commits": 46,
+    "commits_per_hour": 182.7814569536424,
+    "baseline_count_start": 44,
+    "baseline_count_end": 44,
+    "worker_count_start": 96,
+    "worker_count_end": 96,
+    "admission_policy": "actual free RAM only, above 64 GiB floor; no per-job estimates"
+  },
+  "planning_scenario": {
+    "registered_tasks": 748,
+    "committed": 258,
+    "registered_remaining": 490,
+    "unregistered_cohorts": 41,
+    "unregistered_by_outcome": {
+      "absolute_mid_price_change": 5,
+      "first_observed_family_within_h": 9,
+      "mid_price_change": 27
+    },
+    "conditional_total_tasks_if_future_groups_equal_observed_22": 2106,
+    "conditional_remaining": 1848,
+    "conditional_fit_hours_at_observed_rate": 10.110434782608696,
+    "scenario_is_not_final_task_count": true
+  },
+  "reasoning": "46 substantive completions in 15m06s implies about 183/hour. Under the explicitly conditional 2,106-task scenario, remaining fits take about 10.1 hours at that rate. The 10-16h full-suite judgment range allows changing task mix, heavy-fit censoring, preparation/storage, cheaper branches, and unmeasured serial PCA/postprocessing. It is not a statistical interval or a guarantee. No task is skipped to meet the forecast.",
+  "completion_progress": "One additional full registered cohort completed in this sample (absolute_mid_price_change/1800/fold2); three registered cohorts now complete. Heavy fold4 fits still limit certainty.",
+  "running_state": {
+    "utc": "2026-10-22T18:44:32Z",
+    "state_mtime_utc": "2026-10-22T18:43:53Z",
+    "coordinator_pids": [
+      4409
+    ],
+    "status": "running",
+    "state_extra": {
+      "status": "running",
+      "coverage_gate": "NOT_PASSED",
+      "all_declared_tasks_mandatory": true,
+      "per_job_memory_caps": "unlimited",
+      "admission_policy": "actual MemAvailable above host floor; no job estimates",
+      "cpu_placement": "one worker per physical core, sockets interleaved",
+      "phase": 0,
+      "active_jobs": 96,
+      "queued_jobs": 392,
+      "queued_preparations": 43,
+      "deferred_memory_jobs": []
+    },
+    "registered_cohorts": 22,
+    "unregistered_cohorts": 41,
+    "required": 748,
+    "committed": 258,
+    "required_by_class": {
+      "shallow_or_ablation": 594,
+      "depth5": 22,
+      "ridge": 22,
+      "baseline": 44,
+      "neural:neural_tree": 22,
+      "neural:residual_mlp": 22,
+      "neural:tabm_ensemble": 22
+    },
+    "committed_by_class": {
+      "shallow_or_ablation": 180,
+      "ridge": 9,
+      "baseline": 44,
+      "depth5": 3,
+      "neural:neural_tree": 8,
+      "neural:residual_mlp": 8,
+      "neural:tabm_ensemble": 6
+    },
+    "remaining_registered_by_class": {
+      "depth5": 19,
+      "shallow_or_ablation": 414,
+      "ridge": 13,
+      "neural:tabm_ensemble": 16,
+      "neural:neural_tree": 14,
+      "neural:residual_mlp": 14
+    },
+    "complete_registered_cohorts": [
+      [
+        "absolute_mid_price_change",
+        "1",
+        "3"
+      ],
+      [
+        "absolute_mid_price_change",
+        "120",
+        "3"
+      ],
+      [
+        "absolute_mid_price_change",
+        "1800",
+        "2"
+      ]
+    ],
+    "worker_count": 96,
+    "duplicate_task_keys": [],
+    "memory_kib": {
+      "MemTotal": 1560349684,
+      "MemAvailable": 251740336
+    },
+    "disk_free_gib": 111.19,
+    "oom_kill": [
+      "oom_kill 0"
+    ],
+    "log_bytes": 10330,
+    "log_tail": [
+      "{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"1800\", \"3\"], \"model\": \"dropgroup:external.mos.disagreement_by_cycle\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}",
+      "{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"1800\", \"3\"], \"model\": \"dropgroup:lifecycle.recurrence\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}",
+      "{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"1800\", \"3\"], \"model\": \"dropgroup:root_native_flow_structure\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}",
+      "{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"1800\", \"3\"], \"model\": \"dropgroup:lifecycle.absorption\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}",
+      "{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"1800\", \"3\"], \"model\": \"dropgroup:lifecycle.ladder\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}",
+      "{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"1800\", \"3\"], \"model\": \"dropgroup:external.cot.023391\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}",
+      "{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"1800\", \"3\"], \"model\": \"dropgroup:external.calendar\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}",
+      "{\"kind\": \"core\", \"cohort\": [\"absolute_mid_price_change\", \"1800\", \"3\"], \"model\": \"dropgroup:external.storage.estimate\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}"
+    ],
+    "state_path": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T182638Z-b253c45d/recovery-plan.json",
+    "adopted_live": 37,
+    "adopted_finished": [
+      {
+        "pid": 3196,
+        "returncode": 0
+      },
+      {
+        "pid": 3199,
+        "returncode": 0
+      },
+      {
+        "pid": 3200,
+        "returncode": 0
+      },
+      {
+        "pid": 3201,
+        "returncode": 0
+      },
+      {
+        "pid": 3203,
+        "returncode": 0
+      },
+      {
+        "pid": 3210,
+        "returncode": 0
+      },
+      {
+        "pid": 3211,
+        "returncode": 0
+      },
+      {
+        "pid": 3369,
+        "returncode": 0
+      },
+      {
+        "pid": 3508,
+        "returncode": 0
+      },
+      {
+        "pid": 3796,
+        "returncode": 0
+      },
+      {
+        "pid": 4077,
+        "returncode": 0
+      },
+      {
+        "pid": 4173,
+        "returncode": 0
+      },
+      {
+        "pid": 4243,
+        "returncode": 0
+      },
+      {
+        "pid": 4244,
+        "returncode": 0
+      },
+      {
+        "pid": 4253,
+        "returncode": 0
+      },
+      {
+        "pid": 4295,
+        "returncode": 0
+      },
+      {
+        "pid": 4321,
+        "returncode": 0
+      },
+      {
+        "pid": 4325,
+        "returncode": 0
+      },
+      {
+        "pid": 4329,
+        "returncode": 0
+      },
+      {
+        "pid": 4337,
+        "returncode": 0
+      },
+      {
+        "pid": 4338,
+        "returncode": 0
+      },
+      {
+        "pid": 4347,
+        "returncode": 0
+      },
+      {
+        "pid": 4351,
+        "returncode": 0
+      },
+      {
+        "pid": 4355,
+        "returncode": 0
+      },
+      {
+        "pid": 4359,
+        "returncode": 0
+      },
+      {
+        "pid": 4360,
+        "returncode": 0
+      },
+      {
+        "pid": 4367,
+        "returncode": 0
+      },
+      {
+        "pid": 4371,
+        "returncode": 0
+      },
+      {
+        "pid": 4376,
+        "returncode": 0
+      },
+      {
+        "pid": 4381,
+        "returncode": 0
+      }
+    ],
+    "adopted_unresolved": [],
+    "all_caps_unlimited": true,
+    "all_single_cpu": true,
+    "duplicate_cpu_assignments": [],
+    "worker_groups": {
+      "depth5": 5,
+      "shallow_or_ablation": 85,
+      "neural:tabm_ensemble": 3,
+      "ridge": 1,
+      "neural:neural_tree": 1,
+      "neural:residual_mlp": 1
+    },
+    "active_cohorts": {
+      "absolute_mid_price_change|1|4": 10,
+      "absolute_mid_price_change|120|4": 27,
+      "absolute_mid_price_change|1800|3": 4,
+      "absolute_mid_price_change|1800|4": 32,
+      "absolute_mid_price_change|20|2": 23
+    },
+    "evidence_path": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/actual-memory-runtime-eta-20261022T1844.json"
+  },
+  "timing_summary": {
+    "evidence_path": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/runtime-estimate-fit-evidence-20261022T184432Z.json",
+    "record_count": 246,
+    "timing_summary": [
+      {
+        "fold": "2",
+        "category": "baseline",
+        "n": 16,
+        "min_s": 24.21,
+        "median_s": 28.99,
+        "mean_s": 30.380625,
+        "p90_s": 37.83,
+        "max_s": 38.5
+      },
+      {
+        "fold": "2",
+        "category": "depth5",
+        "n": 1,
+        "min_s": 982.5,
+        "median_s": 982.5,
+        "mean_s": 982.5,
+        "p90_s": 982.5,
+        "max_s": 982.5
+      },
+      {
+        "fold": "2",
+        "category": "neural:neural_tree",
+        "n": 3,
+        "min_s": 186.58,
+        "median_s": 220.46,
+        "mean_s": 217.08,
+        "p90_s": 244.2,
+        "max_s": 244.2
+      },
+      {
+        "fold": "2",
+        "category": "neural:residual_mlp",
+        "n": 3,
+        "min_s": 127.11,
+        "median_s": 161.92,
+        "mean_s": 153.08333333333331,
+        "p90_s": 170.22,
+        "max_s": 170.22
+      },
+      {
+        "fold": "2",
+        "category": "neural:tabm_ensemble",
+        "n": 3,
+        "min_s": 614.97,
+        "median_s": 718.8,
+        "mean_s": 688.1766666666666,
+        "p90_s": 730.76,
+        "max_s": 730.76
+      },
+      {
+        "fold": "2",
+        "category": "ridge",
+        "n": 4,
+        "min_s": 34.81,
+        "median_s": 56.620000000000005,
+        "mean_s": 53.685,
+        "p90_s": 66.69,
+        "max_s": 66.69
+      },
+      {
+        "fold": "2",
+        "category": "shallow_or_ablation",
+        "n": 81,
+        "min_s": 160.91,
+        "median_s": 666.91,
+        "mean_s": 661.9816049382716,
+        "p90_s": 904.03,
+        "max_s": 1040.87
+      },
+      {
+        "fold": "3",
+        "category": "baseline",
+        "n": 14,
+        "min_s": 27.14,
+        "median_s": 29.305,
+        "mean_s": 41.38214285714286,
+        "p90_s": 88.23,
+        "max_s": 98.33
+      },
+      {
+        "fold": "3",
+        "category": "depth5",
+        "n": 2,
+        "min_s": 1140.21,
+        "median_s": 1268.005,
+        "mean_s": 1268.005,
+        "p90_s": 1395.8,
+        "max_s": 1395.8
+      },
+      {
+        "fold": "3",
+        "category": "neural:neural_tree",
+        "n": 3,
+        "min_s": 158.83,
+        "median_s": 201.65,
+        "mean_s": 197.65333333333334,
+        "p90_s": 232.48,
+        "max_s": 232.48
+      },
+      {
+        "fold": "3",
+        "category": "neural:residual_mlp",
+        "n": 3,
+        "min_s": 122.22,
+        "median_s": 163.97,
+        "mean_s": 171.70666666666668,
+        "p90_s": 228.93,
+        "max_s": 228.93
+      },
+      {
+        "fold": "3",
+        "category": "neural:tabm_ensemble",
+        "n": 3,
+        "min_s": 558.05,
+        "median_s": 878.79,
+        "mean_s": 1098.4966666666667,
+        "p90_s": 1858.65,
+        "max_s": 1858.65
+      },
+      {
+        "fold": "3",
+        "category": "ridge",
+        "n": 3,
+        "min_s": 76.06,
+        "median_s": 156.89,
+        "mean_s": 161.37333333333333,
+        "p90_s": 251.17,
+        "max_s": 251.17
+      },
+      {
+        "fold": "3",
+        "category": "shallow_or_ablation",
+        "n": 66,
+        "min_s": 108.36,
+        "median_s": 685.51,
+        "mean_s": 729.2954545454545,
+        "p90_s": 1018.96,
+        "max_s": 1680.38
+      },
+      {
+        "fold": "4",
+        "category": "baseline",
+        "n": 14,
+        "min_s": 27.52,
+        "median_s": 28.884999999999998,
+        "mean_s": 30.205,
+        "p90_s": 30.69,
+        "max_s": 47.54
+      },
+      {
+        "fold": "4",
+        "category": "neural:neural_tree",
+        "n": 2,
+        "min_s": 847.4,
+        "median_s": 849.49,
+        "mean_s": 849.49,
+        "p90_s": 851.58,
+        "max_s": 851.58
+      },
+      {
+        "fold": "4",
+        "category": "neural:residual_mlp",
+        "n": 2,
+        "min_s": 387.78,
+        "median_s": 394.98,
+        "mean_s": 394.98,
+        "p90_s": 402.18,
+        "max_s": 402.18
+      },
+      {
+        "fold": "4",
+        "category": "ridge",
+        "n": 2,
+        "min_s": 902.45,
+        "median_s": 954.705,
+        "mean_s": 954.705,
+        "p90_s": 1006.96,
+        "max_s": 1006.96
+      },
+      {
+        "fold": "4",
+        "category": "shallow_or_ablation",
+        "n": 21,
+        "min_s": 453.92,
+        "median_s": 3354.89,
+        "mean_s": 2925.6109523809523,
+        "p90_s": 3469.32,
+        "max_s": 4315.61
+      }
+    ],
+    "cohorts": [
+      {
+        "cohort": [
+          "absolute_mid_price_change",
+          "1",
+          "2"
+        ],
+        "required": 34,
+        "committed": 33,
+        "train_n": "164",
+        "columns": "195425",
+        "substantive_cpu_h": 6.628358333333334
+      },
+      {
+        "cohort": [
+          "absolute_mid_price_change",
+          "1",
+          "3"
+        ],
+        "required": 34,
+        "committed": 34,
+        "train_n": "315",
+        "columns": "217172",
+        "substantive_cpu_h": 4.6125388888888885
+      },
+      {
+        "cohort": [
+          "absolute_mid_price_change",
+          "1",
+          "4"
+        ],
+        "required": 34,
+        "committed": 24,
+        "train_n": "1376",
+        "columns": "250447",
+        "substantive_cpu_h": 16.931941666666667
+      },
+      {
+        "cohort": [
+          "absolute_mid_price_change",
+          "120",
+          "2"
+        ],
+        "required": 34,
+        "committed": 33,
+        "train_n": "110",
+        "columns": "188464",
+        "substantive_cpu_h": 5.135425
+      },
+      {
+        "cohort": [
+          "absolute_mid_price_change",
+          "120",
+          "3"
+        ],
+        "required": 34,
+        "committed": 34,
+        "train_n": "228",
+        "columns": "211945",
+        "substantive_cpu_h": 4.275347222222222
+      },
+      {
+        "cohort": [
+          "absolute_mid_price_change",
+          "120",
+          "4"
+        ],
+        "required": 34,
+        "committed": 7,
+        "train_n": "1260",
+        "columns": "246520",
+        "substantive_cpu_h": 1.355886111111111
+      },
+      {
+        "cohort": [
+          "absolute_mid_price_change",
+          "1800",
+          "2"
+        ],
+        "required": 34,
+        "committed": 34,
+        "train_n": "129",
+        "columns": "193180",
+        "substantive_cpu_h": 4.326794444444444
+      },
+      {
+        "cohort": [
+          "absolute_mid_price_change",
+          "1800",
+          "3"
+        ],
+        "required": 34,
+        "committed": 30,
+        "train_n": "217",
+        "columns": "213423",
+        "substantive_cpu_h": 6.544669444444445
+      },
+      {
+        "cohort": [
+          "absolute_mid_price_change",
+          "1800",
+          "4"
+        ],
+        "required": 34,
+        "committed": 2,
+        "train_n": "1219",
+        "columns": "887267",
+        "substantive_cpu_h": 0
+      },
+      {
+        "cohort": [
+          "absolute_mid_price_change",
+          "20",
+          "2"
+        ],
+        "required": 34,
+        "committed": 3,
+        "train_n": "131",
+        "columns": "720759",
+        "substantive_cpu_h": 0.018525
+      },
+      {
+        "cohort": [
+          "absolute_mid_price_change",
+          "20",
+          "3"
+        ],
+        "required": 34,
+        "committed": 2,
+        "train_n": "245",
+        "columns": "776508",
+        "substantive_cpu_h": 0
+      },
+      {
+        "cohort": [
+          "absolute_mid_price_change",
+          "20",
+          "4"
+        ],
+        "required": 34,
+        "committed": 2,
+        "train_n": "1289",
+        "columns": "892822",
+        "substantive_cpu_h": 0
+      },
+      {
+        "cohort": [
+          "absolute_mid_price_change",
+          "300",
+          "2"
+        ],
+        "required": 34,
+        "committed": 2,
+        "train_n": "128",
+        "columns": "717532",
+        "substantive_cpu_h": 0
+      },
+      {
+        "cohort": [
+          "absolute_mid_price_change",
+          "300",
+          "3"
+        ],
+        "required": 34,
+        "committed": 2,
+        "train_n": "227",
+        "columns": "772135",
+        "substantive_cpu_h": 0
+      },
+      {
+        "cohort": [
+          "absolute_mid_price_change",
+          "300",
+          "4"
+        ],
+        "required": 34,
+        "committed": 2,
+        "train_n": "1248",
+        "columns": "884513",
+        "substantive_cpu_h": 0
+      },
+      {
+        "cohort": [
+          "absolute_mid_price_change",
+          "3600",
+          "2"
+        ],
+        "required": 34,
+        "committed": 2,
+        "train_n": "126",
+        "columns": "724460",
+        "substantive_cpu_h": 0
+      },
+      {
+        "cohort": [
+          "absolute_mid_price_change",
+          "3600",
+          "3"
+        ],
+        "required": 34,
+        "committed": 2,
+        "train_n": "228",
+        "columns": "774454",
+        "substantive_cpu_h": 0
+      },
+      {
+        "cohort": [
+          "absolute_mid_price_change",
+          "3600",
+          "4"
+        ],
+        "required": 34,
+        "committed": 2,
+        "train_n": "1145",
+        "columns": "884212",
+        "substantive_cpu_h": 0
+      },
+      {
+        "cohort": [
+          "absolute_mid_price_change",
+          "5",
+          "2"
+        ],
+        "required": 34,
+        "committed": 2,
+        "train_n": "150",
+        "columns": "732617",
+        "substantive_cpu_h": 0
+      },
+      {
+        "cohort": [
+          "absolute_mid_price_change",
+          "5",
+          "3"
+        ],
+        "required": 34,
+        "committed": 2,
+        "train_n": "293",
+        "columns": "787684",
+        "substantive_cpu_h": 0
+      },
+      {
+        "cohort": [
+          "absolute_mid_price_change",
+          "5",
+          "4"
+        ],
+        "required": 34,
+        "committed": 2,
+        "train_n": "1337",
+        "columns": "897179",
+        "substantive_cpu_h": 0
+      },
+      {
+        "cohort": [
+          "absolute_mid_price_change",
+          "60",
+          "2"
+        ],
+        "required": 34,
+        "committed": 2,
+        "train_n": "122",
+        "columns": "714256",
+        "substantive_cpu_h": 0
+      }
+    ],
+    "unregistered_outcomes": {
+      "absolute_mid_price_change": 5,
+      "first_observed_family_within_h": 9,
+      "mid_price_change": 27
+    }
+  },
+  "first_estimate_range_hours": [
+    10,
+    18
+  ],
+  "second_box_status": "Planning only. User required this estimate before any second instance/snapshot/redistribution. None created.",
+  "scientific_constraints": [
+    "V3 frozen",
+    "semantic coverage NOT_PASSED",
+    "all declared tasks mandatory",
+    "exact as-of clocks/cursors, missingness, ages, provenance, scopes and censoring retained",
+    "contrary/unfavorable/inconclusive evidence preserved",
+    "one retained market day; no established tradable signal"
+  ],
+  "evidence_ssm_command_id": "2be4da7c-b50d-4577-ba30-9d8706eb3150"
+}

@@ -1,0 +1,78 @@
+{
+  "utc": "2026-10-22T20:13:07Z",
+  "restored_original_keys": [
+    [
+      "neural",
+      [
+        "first_observed_family_within_h",
+        "120",
+        "4"
+      ],
+      "neural_tree"
+    ],
+    [
+      "neural",
+      [
+        "first_observed_family_within_h",
+        "120",
+        "4"
+      ],
+      "residual_mlp"
+    ]
+  ],
+  "comparisons": [
+    {
+      "model": "neural_tree",
+      "original_disposition": "fixed_25_epochs;chronological_selected_cohort",
+      "rerun_disposition": "fixed_25_epochs;chronological_selected_cohort",
+      "prediction_max_abs_diff": 0.000002682209014892578,
+      "metrics_differences": {
+        "mae": {
+          "original": "0.3429519177617131",
+          "rerun": "0.3429511265295439"
+        },
+        "rmse": {
+          "original": "0.3971521868560965",
+          "rerun": "0.39715204030130596"
+        },
+        "brier": {
+          "original": "0.1577298595245798",
+          "rerun": "0.15772974311549018"
+        },
+        "logloss": {
+          "original": "0.4966861051845078",
+          "rerun": "0.49668579116719175"
+        }
+      }
+    },
+    {
+      "model": "residual_mlp",
+      "original_disposition": "fixed_25_epochs;chronological_selected_cohort",
+      "rerun_disposition": "fixed_25_epochs;chronological_selected_cohort",
+      "prediction_max_abs_diff": 0.4313412606716156,
+      "metrics_differences": {
+        "mae": {
+          "original": "0.7100280792929684",
+          "rerun": "0.7881083069258457"
+        },
+        "rmse": {
+          "original": "0.7611575234835642",
+          "rerun": "0.8704809255398475"
+        },
+        "brier": {
+          "original": "0.5793607755556326",
+          "rerun": "0.7577370417287094"
+        },
+        "logloss": {
+          "original": "1.5684192762348583",
+          "rerun": "2.915890359438005"
+        }
+      }
+    }
+  ],
+  "extra_rerun_attempts_retained": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/attempts/serial-original-reconciliation-20261022T201307Z",
+  "no_numerical_job_stopped": true,
+  "canonical_policy": "prior completed serial results are authoritative; both original and repeated evidence retained; authority follows prior completion regardless of metric favorability",
+  "coverage_gate": "NOT_PASSED",
+  "reproducibility_cause": "unresolved; the residual_mlp difference is substantial and must not be attributed to last-bit rounding without evidence"
+}

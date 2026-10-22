@@ -1,0 +1,27 @@
+{
+  "utc": "2026-10-22T20:24:32Z",
+  "range_remaining_hours": [
+    6,
+    10
+  ],
+  "rough_finish_eastern": "2026-10-22 22:30 through 2026-10-23 02:30",
+  "provisional": true,
+  "fit_workers": 192,
+  "committed": 588,
+  "previous_committed": 460,
+  "interval_minutes": 25.75,
+  "interval_commits": 128,
+  "observed_commits_per_hour": 298.252427184466,
+  "includes": [
+    "mandatory remaining core/neural/source-group fits",
+    "uneven shard completion and slow fits",
+    "B artifact transfer and A join",
+    "original PCA and postprocessing"
+  ],
+  "limitations": [
+    "Current throughput is a changing mixture of models and folds, not a constant rate.",
+    "Training-derived source groups determine mandatory counts; 2097 is only a 22-group scenario.",
+    "Both shards must finish; no new rebalancing or duplicate work authorized."
+  ],
+  "coverage_gate": "NOT_PASSED"
+}
