@@ -1,4 +1,4 @@
-"""Recover A after a global OOM while adopting every surviving fit unchanged."""
+"""Recover an assigned shard after failure while adopting surviving fits unchanged."""
 import argparse
 import hashlib
 import json
@@ -21,6 +21,26 @@ def guarded_source(source):
         require(source.count(old)==1,'unexpected coordinator source; refuse patch')
         source=source.replace(old,new)
     return source
+
+
+def recovery_scope(config,plan):
+    owner=config['owner']
+    require(owner in ('A','B','C','D') and plan['instances'].get(owner)==config['instance'],
+            'wrong recovery owner/instance')
+    slots=plan['slots'][owner]
+    require(isinstance(slots,int) and 0<slots<=96,'invalid physical-worker slots')
+    owned={tuple(row['cohort']) for row in plan['cohorts'] if row['owner']==owner}
+    require(bool(owned),'empty owned cohort set')
+    return owner,slots,owned
+
+
+def has_dispatch_failure(tail):
+    for line in tail.splitlines():
+        try:row=json.loads(line)
+        except ValueError:continue
+        if isinstance(row,dict) and row.get('committed') is False and row.get('returncode',0)!=0 and not row.get('memory_deferred'):
+            return True
+    return False
 
 
 def validate_capture(jobs,owned,numerical):
@@ -91,23 +111,23 @@ def main():
     sys.path.insert(0,str(base/'full-context-audit/scripts'))
     from multibox_support import client,assignment_digest,prepared_cache_index
     from family_completion_hook import imds_instance
-    require(config['owner']=='A' and imds_instance()==config['instance'],'wrong instance')
+    require(imds_instance()==config['instance'],'wrong instance')
     require(assignment_digest(config['assignment'])==config['digest'],'assignment changed')
     plan=json.loads(pathlib.Path(config['assignment']).read_text())
-    owned={tuple(r['cohort']) for r in plan['cohorts'] if r['owner']=='A'}
+    owner,slots,owned=recovery_scope(config,plan)
     target=base/'full-context-audit/scripts/resume_multibox_candidate.py'
     original=target.read_text();source=guarded_source(original)
     _,oldcmd,st=identity(config['pid'])
     require(st[19]==config['token'] and str(target).encode() in oldcmd and b'--execute' in oldcmd,
             'unexpected original coordinator identity')
     if not args.execute:
-        print(json.dumps(dict(status='plan_only',max_workers=96,host_floor_gib=192,dispatch_interval_s=3)))
+        print(json.dumps(dict(status='plan_only',owner=owner,max_workers=slots,host_floor_gib=192,dispatch_interval_s=3)))
         return
-    oldlog=pathlib.Path(config['out'])/'parallel-four-A.log'
+    oldlog=pathlib.Path(config['out'])/('parallel-four-'+owner+'.log')
     failure_tail=subprocess.check_output(['tail','-n','12',str(oldlog)],text=True)
-    require('"returncode": 125' in failure_tail,'expected failure-drain evidence missing')
+    require(has_dispatch_failure(failure_tail),'expected failure-drain evidence missing')
     stamp=time.strftime('%Y%m%dT%H%M%SZ',time.gmtime())
-    variant=base/('guarded-recovery-A-'+stamp);variant.mkdir()
+    variant=base/('guarded-recovery-'+owner+'-'+stamp);variant.mkdir()
     (variant/'resume_multibox_candidate.py').write_text(source)
     (variant/'multibox_support.py').write_bytes((target.parent/'multibox_support.py').read_bytes())
     subprocess.run(['systemctl','stop','family-save-stop.service'],check=True)
@@ -120,21 +140,21 @@ def main():
         require(identity(config['pid'])[2][0]=='T','coordinator did not pause')
         jobs,numerical=capture_workers(base,root,owned,oldcmd)
         state=json.loads(pathlib.Path(config['state']).read_text())
-        value=dict(utc=stamp,owner='A',instance=config['instance'],old_coordinator_pid=config['pid'],
+        value=dict(utc=stamp,owner=owner,instance=config['instance'],old_coordinator_pid=config['pid'],
             old_coordinator_token=config['token'],jobs=jobs,numerical_before=numerical,
             previous_state=state,previous_run=config['run'],prepared_caches=prepared_cache_index(root,owned),
-            reason='global OOM 2026-10-22T21:12:49Z; original coordinator draining after missing wrapper report125',
+            reason='original coordinator draining after mandatory task failure; see retained log/kernel evidence',
             original_source_sha256=hashlib.sha256(original.encode()).hexdigest(),
             guarded_source_sha256=hashlib.sha256(source.encode()).hexdigest(),
-            max_workers=96,dispatch_interval_s=3,host_floor_gib=192,per_job_memory_caps='unlimited')
+            max_workers=slots,dispatch_interval_s=3,host_floor_gib=192,per_job_memory_caps='unlimited')
         value['failure_log_tail']=failure_tail
         kernel=subprocess.run(['journalctl','-k','--since','2026-10-22 21:00:00 UTC','--no-pager','-o','short-iso'],
                               capture_output=True,text=True)
         value['kernel_oom_evidence']=[line for line in kernel.stdout.splitlines()
             if any(text in line.lower() for text in ('out of memory','killed process','oom-kill'))][-6:]
-        manifest=root/('guarded-A-capture-'+stamp+'.json')
+        manifest=root/('guarded-'+owner+'-capture-'+stamp+'.json')
         body=durable_json(manifest,value)
-        s3=client();key=config['prefix']+'A-recovery-capture-'+stamp+'.json'
+        s3=client();key=config['prefix']+owner+'-recovery-capture-'+stamp+'.json'
         s3.put_object(Bucket=BUCKET,Key=key,Body=body,ServerSideEncryption='AES256',ExpectedBucketOwner=ACCOUNT)
         require(get_bytes(s3,key)==body,'capture read-back mismatch')
         durable_json(pathlib.Path(config['run'])/'hook-status.json',
@@ -148,19 +168,19 @@ def main():
         with (root/'recovery-executor.lock').open('a') as lock:
             fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
             fcntl.flock(lock,fcntl.LOCK_UN)
-        log=pathlib.Path(config['out'])/('parallel-A-guarded-'+stamp+'.log')
-        command=['python3',str(variant/'resume_multibox_candidate.py'),'--execute','--max-workers','96',
-                 '--assignment',config['assignment'],'--worker-id','A','--adopt-manifest',str(manifest)]
+        log=pathlib.Path(config['out'])/('parallel-'+owner+'-guarded-'+stamp+'.log')
+        command=['python3',str(variant/'resume_multibox_candidate.py'),'--execute','--max-workers',str(slots),
+                 '--assignment',config['assignment'],'--worker-id',owner,'--adopt-manifest',str(manifest)]
         with log.open('a') as f:
             child=subprocess.Popen(command,env=dict(os.environ,FAMILY_BOX_INSTANCE_ID=config['instance'],
                 FAMILY_COORDINATOR_LOG=str(log)),stdout=f,stderr=subprocess.STDOUT,start_new_session=True)
         token=identity(child.pid)[2][19]
-        receipt=dict(status='replacement_started',new_pid=child.pid,new_token=token,old_pid=config['pid'],
+        receipt=dict(status='replacement_started',owner=owner,new_pid=child.pid,new_token=token,old_pid=config['pid'],
                      source=str(variant/'resume_multibox_candidate.py'),log=str(log),manifest=str(manifest),
-                     live_wrappers_captured=len(jobs),live_julia_captured=len(numerical),max_workers=96,
+                     live_wrappers_captured=len(jobs),live_julia_captured=len(numerical),max_workers=slots,
                      dispatch_interval_s=3,host_floor_gib=192,per_job_memory_caps='unlimited',
                      original_source_unchanged=target.read_text()==original)
-        durable_json(root/('guarded-A-launch-'+stamp+'.json'),receipt)
+        durable_json(root/('guarded-'+owner+'-launch-'+stamp+'.json'),receipt)
         print(json.dumps(receipt),flush=True)
     except BaseException:
         if paused and not retired:

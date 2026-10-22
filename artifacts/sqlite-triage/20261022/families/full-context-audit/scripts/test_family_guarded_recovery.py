@@ -1,10 +1,21 @@
 import pathlib
 import unittest
-from family_guarded_recovery import guarded_source, validate_capture
+from family_guarded_recovery import guarded_source, validate_capture, recovery_scope, has_dispatch_failure
 from family_completion_hook import coordinator_source
 
 
 class GuardedRecoveryTests(unittest.TestCase):
+    def test_scope_preserves_small_shard_owner_and_32_physical_slots(self):
+        plan=dict(instances={'C':'i-c'},slots={'C':32},cohorts=[dict(owner='C',cohort=['o','1','2'])])
+        self.assertEqual(recovery_scope(dict(owner='C',instance='i-c'),plan),('C',32,{('o','1','2')}))
+        with self.assertRaises(ValueError):recovery_scope(dict(owner='C',instance='i-wrong'),plan)
+
+    def test_failed_sigterm_requires_recovery_but_normal_oom_deferral_does_not(self):
+        self.assertTrue(has_dispatch_failure('{"committed":false,"returncode":-15,"memory_deferred":false}'))
+        self.assertTrue(has_dispatch_failure('{"committed":false,"returncode":125,"memory_deferred":false}'))
+        self.assertFalse(has_dispatch_failure('{"committed":false,"returncode":137,"memory_deferred":true}'))
+        self.assertFalse(has_dispatch_failure('{"committed":true,"returncode":0}'))
+
     def test_completion_hook_pins_the_isolated_recovery_source(self):
         self.assertEqual(coordinator_source(dict(base='/base',coordinator_source='/guarded/resume_multibox_candidate.py')),
                          pathlib.Path('/guarded/resume_multibox_candidate.py'))
