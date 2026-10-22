@@ -1,0 +1,105 @@
+FAMILY RESEARCH -- D PRE-SWAP FAILURE RECONCILIATION -- 2026-10-22 22:37 UTC
+
+Read this first, then family-CD-guarded-recovery-20261022.txt,
+family-A-guarded-recovery-20261022.txt, family-save-stop-armed-20261022.txt and
+their full scientific foundations. Only D's coordinator/run/hook changed here.
+Clean checkout C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo.
+AWS plugin run_script/SSM only; no AWS CLI, subagents/chats/messages/live orders,
+new resources, IAM broadening, termination or deletion. Existing user's
+unattended save-stop and restart/recovery authorization remains in force.
+
+TIMING / FAILURE EVIDENCE
+At22:31 check A/B/C progressed, with oom_kill1/0/1. D's counter was2, its
+coordinator3409 was draining after a missing-wrapper-report125 failure for
+core mid_price_change/300/fold4 evotrees_depth5.
+Kernel timestamp22:24:17 UTC: global OOM killed Julia2897, anon-rss35,123,296KiB.
+Kernel explicitly records Free swap=0KiB, Total swap=0KiB at that instant.
+D's128GiB swap was successfully activated22:24:28 UTC,11seconds LATER.
+Thus this is another failure BEFORE the buffer became active, not evidence
+that active swap was bypassed. Sampled live scopes have memory.swap.max=max,
+swap_current0; vm.swappiness60. Do not claim swap guarantees no future OOM.
+Preserve task-wrapper125 and kernel-PID evidence separately; no unsupported
+individual attribution of every failed attempt to the kernel victim.
+
+RECOVERY
+The helper now validates the CURRENT config's exact source path/SHA256 and
+coordinator PID/start token, so repeat recovery does not assume an original
+coordinator. It still generates the next copy from the unchanged original source,
+with the SAME3 guarded scheduling substitutions. No further numerical scheduling
+or model change was introduced. Owner D/32physical slots/192GiB actual-RAM floor/
+3second fit dispatch/unlimited per-fit memory remain unchanged.
+37/37 focused Linux checks passed before mutation, including rejection of stale
+tokens, changed source hashes and a wrong coordinator source.
+
+D waiting completion hook alone was stopped; draining coordinator3409 alone was
+paused. Fresh exact leases captured28live wrappers/28Julia, owned tasks, caches,
+outputs, reports, command/start identities and unique CPUs; no live orphan.
+Capture fsynced locally, uploaded and read back identically BEFORE3409alone was
+retired. All surviving fits continued unchanged; no fit was manually killed or
+restarted. Coherent completed artifacts and all previous attempts remain retained.
+
+BASE=/opt/frankie-box/work/family-research-20261022
+OUT=BASE/joint-models-v4-candidate-20261022; ROOT=OUT/parallel-63
+Instance i-0d17573dbce871520, same instance/boot.
+Capture ROOT/guarded-D-capture-20261022T223504Z.json
+Launch ROOT/guarded-D-launch-20261022T223504Z.json
+New coordinator3743/start727836.
+Source BASE/guarded-recovery-D-20261022T223504Z/resume_multibox_candidate.py
+SHA256 a2ea33f5de3c5a12a95abf51ca6c4bad51d8300af811f115f69f76d7369eb4b3
+Run ROOT/memory-recovery-20261022T223506Z-d4e7d41d
+Log OUT/parallel-D-guarded-20261022T223504Z.log
+Hook3811: family-save-stop.service active/running, pidfd target3743/start727836
+verified. Config BASE/save-stop-20261022/config.json pins this source/run/identity.
+Current command --execute --worker-id D --max-workers32, unchanged immutable
+ROOT/four-box-ownership-20261022.json, SHA256
+e08cabcf166ec07c1df712c714d11cda44e67cf5d94e02ca544a1ee9b69f0f6f.
+
+VERIFIED22:37:14 UTC
+D running,108committed,26live wrappers/26Julia,36queued mandatory jobs.
+All28captured fits accounted:26same-token live +2coherent completed, zero missing.
+Exactly one coordinator, unique owned task/CPU leases, no live orphan, original
+source/helper hashes unchanged, replacement source hash matches pinned config.
+oom_kill2, no additional event after the22:24:17 pre-swap failure at this snapshot.
+128GiB swap active,0used at verification; retained file on existing encrypted EBS.
+No instance stopped/rebooted and no storage/model/failure data deleted.
+All4callbacks checked active/waiting with correct actual pidfd targets:
+A7959/start1591203/hook8098,877committed/65active,oom1;
+B5246/start699379/hook6059,497committed/85active,oom0;
+C4605/start644500/hook4678,134committed/26active,oom1;
+D3743/start727836/hook3811,108committed/26active,oom2.
+These are snapshots, not final completion or runtime guarantees.
+
+DURABLE EVIDENCE
+Bucket frankie-granite42-568968024170-us-east-1/account568968024170.
+Lifecycle prefix host-deliveries/family-research-20261022/save-stop/<assignment-sha>/
+D-recovery-capture-20261022T223504Z.json uploaded/read back identically before
+retirement; D-installation.json refreshed/read back identically after rearm.
+New run retains fresh-worker-capture.json, guarded-recovery-launch.json, FULL
+previous-coordinator.log, emergency-swap-D-20261022.json, recovery helper/tests,
+source/adapters and guarded-recovery-verification.json. Prior recovery runs,
+their original logs/attempts/captures remain retained and will be included by
+the existing shard archive packer. Do not reuse historical capture inventories.
+See family-D-preswap-recovery-verification-20261022.json for exact evidence/config.
+Diagnostic SSMb42a55b0-372f-4baa-bbf7-9c15cb439413.
+Tests895081ce-76fe-4d9e-bf01-168d95cbed32.
+Launch73b4eb77-e561-4200-85dd-32923142193e.
+Rearm485f6aec-af8c-4563-8e78-050980a37ac3.
+All4 verification41e20bf0-9711-4fd7-8ce6-33b1bdac13f7.
+Code commit dd899164.
+
+CONTINUE
+No edits to live numerical source, duplicate executors/finalizers, rerunning
+completed fits, raw restores or database hashes. Keep healthy fits running.
+Any future recovery requires FRESH exact inventory and current pinned source/PID.
+The helper now supports current config identities, but still refuses healthy
+dispatch or changed source; do not bypass those checks.
+Temporary C/D swap remains active until shutdown, file retained, no boot/fstab
+change. Never swapoff/remove under pressure. It is not part of model archives.
+Save-stop mandatory completion/archive integrity/proof-read-back gates remain
+unchanged. A must finish the sole finalization/PCA/postprocessors and final
+coverage/archive. Keep all EBS, frozen snapshot, failures and Search disks.
+Heartbeat remains active until final backups and all possible stops verified,
+then remove/deactivate through automation_update. No terminate/delete.
+V3 frozen; semantic coverage NOT_PASSED, one aligned retained market day,
+no established tradable signal. Preserve all contrary/unfavorable/inconclusive
+evidence and unresolved residual_mlp repeated-result differences.

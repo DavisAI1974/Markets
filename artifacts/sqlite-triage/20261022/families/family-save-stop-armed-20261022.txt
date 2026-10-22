@@ -1,4 +1,7 @@
 FAMILY RESEARCH -- VERIFIED UNATTENDED SAVE AND STOP -- 2026-10-22
+CURRENT UPDATE22:37UTC: Read family-D-preswap-recovery-20261022.txt FIRST.
+D now3743/start727836/hook3811 after reconciling another OOM that occurred11s
+BEFORE swap activated. All28fresh captured fits accounted; A/B/C unchanged.
 CURRENT UPDATE22:24UTC: Read family-CD-guarded-recovery-20261022.txt FIRST.
 C now4605/start644500/hook4678; D3409/start644319/hook3552; guarded192GiB
 headroom and temporary128GiB swap each on existing EBS. A/B unchanged from below.
