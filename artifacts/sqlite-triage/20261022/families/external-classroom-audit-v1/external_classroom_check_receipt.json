@@ -1,0 +1,34 @@
+{
+    "precision_rule": "Original external values Float64 plus native classroom Float32. Separate raw-native Float64 sensitivity.",
+    "original_relationships": 2040,
+    "source_rows": 771787,
+    "claims_reproduced": 441,
+    "claims_not_fully_reproduced": 0,
+    "known_values": 211055,
+    "pearson_available": 1333,
+    "pearson_unavailable_reasons": {
+        "FEWER_THAN_8_OVERLAPPING_PRESENT_VALUES": 16,
+        "ZERO_VARIANCE": 691
+    },
+    "endpoint_relation_counts": {
+        "UNRESOLVED": 745,
+        "OPPOSITE_DIRECTION": 663,
+        "SAME_DIRECTION": 632
+    },
+    "julia_threads": 8,
+    "alignment_segments": 88071,
+    "pair_summary_rows": 10419,
+    "external_series": 48,
+    "pearson_rule": "Julia centered Pearson; minimum 8 and exact constant-vector guard; not asserted bit-identical to original OpenBLAS-32 reduction.",
+    "period_rule": "Quarter sensitivity uses elapsed receive time, matching original external alignment clock.",
+    "claims_checked": 441,
+    "status": "complete",
+    "schema": "EXTERNAL_CLASSROOM_CHECKS_V1",
+    "coverage_gate": "NOT_PASSED",
+    "limitations": [
+        "Reproduction checks stored step counts and endpoint relations; a reproduced hypothesis is not prospective evidence.",
+        "Strict adjacency does not prove reset-free continuity; complete compact source lacks continuity segments.",
+        "All 2040 original pairs checked; additional precision/quarter/adjacency sensitivities restricted to the 441 filed claim pairs.",
+        "No expanded history, full v4 matrix or fitted model is asserted by this component."
+    ]
+}

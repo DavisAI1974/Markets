@@ -1,0 +1,21 @@
+{
+  "schema": "ORIGINAL_EXTERNAL_CLASSROOM_RECONSTRUCTION_V1",
+  "status": "complete",
+  "coverage_gate": "NOT_PASSED",
+  "cutoff_ns": 1697662799696377528,
+  "primary_day_file_sha256": "d006252d605432994909a52e75fcbfe7cec3e42990a98c02e91e1f65212f0bc7",
+  "series": 48,
+  "values_known": 211055,
+  "claims": 441,
+  "reader_source_path": "/opt/frankie-box/work/source-indexed-consumers-20261021/research/kalshi/frankie_boss/operations/frankie_day_external.py",
+  "reader_source_sha256": "713990d53101afdbb16c8705fb2742fba557e0addd70f042a6d91997afcbaca0",
+  "input_bytes": 87709714,
+  "input_sha256": "f13e3bc6b2bb42bc2754450e2796665c056315045d18f0d64eec8e6b6229a0f1",
+  "source": "existing primary external_row; original stable source order and source-file-relative SEARCH_SERIES",
+  "rule": "published_ns <= cutoff; per Dipole row published_ns <= receive_ns; equal stamps retain last original source row",
+  "limitations": [
+    "No expanded external history is substituted into original classroom reproduction.",
+    "Source publication stamps are historical declarations, not proof of live capture.",
+    "These reconstructed inputs have not been fitted."
+  ]
+}

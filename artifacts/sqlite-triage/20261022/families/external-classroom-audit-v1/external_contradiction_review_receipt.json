@@ -1,0 +1,21 @@
+{
+  "schema": "EXTERNAL_CLASSROOM_CONTRADICTION_REVIEW_V1",
+  "status": "complete",
+  "coverage_gate": "NOT_PASSED",
+  "claims_checked": 441,
+  "claims_reproduced": 441,
+  "open_flags": 1128,
+  "flag_counts": {
+    "endpoint_vs_step_direction": 441,
+    "native_float32_vs_raw_step_counts": 46,
+    "chronological_step_direction_reversal": 226,
+    "missing_group_bridge_sensitivity": 353,
+    "individual_vs_matched_endpoint_support": 62
+  },
+  "interpretation": "Counts overlap. Reproduction preserves the hypotheses; it does not establish causal, prospective or tradable effects.",
+  "limitations": [
+    "Pearson floating reduction is not claimed bit-identical to the original OpenBLAS-32 kernel.",
+    "Additional quarter/precision/adjacency checks cover the 441 filed pairs; original definitions cover all 2040 external pairs.",
+    "Expanded historical source alignment, knowledge review, structured checks and v4 inputs remain separate outstanding work."
+  ]
+}

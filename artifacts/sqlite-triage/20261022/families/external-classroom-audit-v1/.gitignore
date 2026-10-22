@@ -1,0 +1,2 @@
+# Complete reconstructed source rows are hashed and retained in the S3 archive.
+original_series_known_values.json

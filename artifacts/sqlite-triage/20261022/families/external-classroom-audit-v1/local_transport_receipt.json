@@ -1,0 +1,8 @@
+{
+  "status": "verified",
+  "archive_bytes": 11654997,
+  "archive_sha256": "99fb865d41874f949c90090872fc6e5d1b27e219310777416c36d813b6ce8579",
+  "files_verified": 18,
+  "coverage_gate": "NOT_PASSED",
+  "s3_key": "frankie/family-prebirth/20261022/external-classroom-audit-v1-99fb865d.tar.gz"
+}
