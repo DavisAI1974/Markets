@@ -1,0 +1,156 @@
+FAMILY RESEARCH -- C/D OOM RECOVERY -- 2026-10-22 22:24 UTC
+
+Read this FIRST, then family-A-guarded-recovery-20261022.txt,
+family-save-stop-armed-20261022.txt and their full scientific/current handoffs.
+This supersedes only C/D coordinator/run/source/hook and memory-support details.
+A remains7959/start1591203/hook8098 with its prior guarded source/run.
+B remains5246/start699379/hook6059 on the original source/run.
+Work only in C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo.
+Use AWS plugin run_script/SSM only, never AWS CLI. No subagents, chats, cross-chat
+messages, live orders, new instances/volumes, IAM changes, termination or deletion.
+The user's existing unattended preservation/recovery/save-stop authorization applies.
+
+INCIDENT
+At22:16 heartbeat A/B were progressing. C/D each had a new vmstat oom_kill=1,
+mandatory failed fit logs and live coordinators waiting in failure-drain do_wait.
+C kernel22:16:22 UTC: global OOM killed Julia3933, anon-rss36,353,232KiB.
+D kernel22:11:55 UTC: global OOM killed Julia2841, anon-rss39,192,692KiB.
+C log failed core mid_price_change/1/fold4 evotrees_depth5 with returncode-15.
+D log failed neural mid_price_change/120/fold4 tabm_ensemble with returncode-15.
+Retain both kernel and wrapper evidence; do not individually attribute every
+failed attempt to a kernel victim without task/PID matching.
+Initial diagnosis: C31live Julia/wrappers, no orphans, ~23GiB RAM available;
+D19live Julia/wrappers, no orphans, ~193GiB RAM available after some jobs finished.
+The original coordinators stopped dispatch on failure and let survivors continue.
+
+SAFE RECOVERY
+The tested helper now reads owner, exact instance, cohort set and physical slots
+from the unchanged assignment; it never assumes A or96slots for smaller boxes.
+It requires explicit nondeferred mandatory failure evidence and exact current
+coordinator PID/start token/source before mutation.
+C/D waiting lifecycle callbacks alone were stopped; old coordinators alone paused.
+Fresh wrapper/Julia identities, tokens, tasks, commands, caches, output/report paths,
+CPU leases and saved prep metadata were captured. Unique tasks/CPUs, owned cohorts
+and no live Julia orphan were enforced. Captures were fsynced locally, uploaded to
+S3 and read back identically before old coordinators alone were retired.
+No surviving fit was manually killed or restarted; completed artifacts were
+reconciled and only missing mandatory work scheduled. All failed attempts remain.
+
+BASE=/opt/frankie-box/work/family-research-20261022
+OUT=BASE/joint-models-v4-candidate-20261022; ROOT=OUT/parallel-63
+Assignment ROOT/four-box-ownership-20261022.json
+SHA256 e08cabcf166ec07c1df712c714d11cda44e67cf5d94e02ca544a1ee9b69f0f6f
+Same63disjoint whole cohorts A34/B19/C5/D5, no reassignment.
+C instance i-031eeb577ad72b064:
+  captured30live wrappers/30Julia, old coordinator3102 retired;
+  ROOT/guarded-C-capture-20261022T222109Z.json
+  ROOT/guarded-C-launch-20261022T222109Z.json
+D instance i-0d17573dbce871520:
+  captured12live wrappers/12Julia, old coordinator2164 retired;
+  ROOT/guarded-D-capture-20261022T222109Z.json
+  ROOT/guarded-D-launch-20261022T222109Z.json
+These captures are historical after handoff. Never reuse them as a current
+inventory for another recovery; capture fresh exact leases.
+
+CURRENT EXECUTION
+C coordinator4605/start644500:
+  source BASE/guarded-recovery-C-20261022T222109Z/resume_multibox_candidate.py
+  run ROOT/memory-recovery-20261022T222111Z-124af3dd
+  log OUT/parallel-C-guarded-20261022T222109Z.log
+  hook4678 waits via verified pidfd for4605/start644500.
+D coordinator3409/start644319:
+  source BASE/guarded-recovery-D-20261022T222109Z/resume_multibox_candidate.py
+  run ROOT/memory-recovery-20261022T222111Z-7b73037a
+  log OUT/parallel-D-guarded-20261022T222109Z.log
+  hook3552 waits via verified pidfd for3409/start644319.
+Both isolated sources SHA256:
+a2ea33f5de3c5a12a95abf51ca6c4bad51d8300af811f115f69f76d7369eb4b3
+Same guarded source as A; their worker-id remains C/D and maximum32physical slots.
+Existing3second dispatch pacing remains; actual host MemAvailable floor now192GiB.
+Per-fit memory/swap remain unlimited, no per-job forecasts/caps. Algorithms,
+targets, training transforms, seeds, epochs and Julia model code are unchanged.
+Original full-context-audit/scripts/resume_multibox_candidate.py and helper files
+on all machines remain unchanged. Only isolated coordinator copies were created.
+
+VERIFIED22:23:22-23 UTC
+C running,131/165committed,29live Julia/wrappers,5queued. All30captured jobs
+accounted:29same-token live +1coherent completed, zero missing.
+D running,103/170committed,32live Julia/wrappers,35queued. All12captured jobs
+accounted:9same-token live +3coherent completed, zero missing.
+Exactly one coordinator per host, no duplicate task/CPU lease or live orphan,
+new source hashes and unchanged original hashes checked. Both oom_kill stayed1.
+Both family-save-stop.service active/running and hook-status waiting_for_exit;
+actual kernel pidfd targets match new coordinator PID/start tokens.
+Both callbacks pin explicit new source path/hash. Their backup/completion gates
+remain unchanged. A/B were left running and no instance was stopped/rebooted.
+These are snapshots, not completion or guaranteed-runtime/OOM-immunity claims.
+
+TEMPORARY SWAP ON EXISTING ENCRYPTED EBS
+C still had low physical RAM with surviving fits, so at22:20:09 a128GiB swap file
+was created/activated on its existing encrypted data filesystem. At verification,
+no swap pages were used; physical MemAvailable had risen to ~60GiB as a fit ended.
+D fell to ~40GiB MemAvailable after delayed allocations despite the higher floor,
+so at22:24:28 the same128GiB buffer was created/activated there too.
+Files BASE/emergency-memory-swap-C-20261022 and
+BASE/emergency-memory-swap-D-20261022, root0600,137438953472bytes each.
+Before creation: exact owner/instance checked, no existing target overwritten,
+data filesystem total>1TiB and free>200GiB checked; fallocate/mkswap/swapon succeeded.
+Actual /proc/swaps entries verified. No extra volume or provisioned storage size
+was added. No fstab/boot configuration was changed. Swap remains active until OS
+shutdown; file remains on retained EBS and is not automatically activated on reboot.
+Do not remove or swapoff under memory pressure. Do not archive the swap contents:
+they are transient process pages, not final learned-state artifacts.
+Save all final model states through normal completion before shutdown.
+ROOT/emergency-swap-C/D-20261022.json and copies in their new runs record details.
+Swap can be slower and is a safety buffer, not a guarantee against future OOM.
+
+DURABLE FAILURE/RECOVERY EVIDENCE
+Bucket frankie-granite42-568968024170-us-east-1/account568968024170.
+Lifecycle prefix host-deliveries/family-research-20261022/save-stop/<assignment-sha>/
+C-recovery-capture-20261022T222109Z.json and D-recovery-capture-...json:
+uploaded/read back identically before coordinator retirement.
+C/D-installation.json refreshed/read back identically on callback rearm.
+New runs also retain fresh-worker-capture.json, guarded-recovery-launch.json,
+previous-coordinator.log (FULL original failed coordinator log), recovery helper/
+tests, swap receipt, original source/adapters and all prior recovery/attempt data.
+These new-run files are included by the existing shard packer when fits finish.
+guarded-recovery-verification.json retains actual service/pidfd/model accounting.
+Old runs ROOT/memory-recovery-20261022T204558Z-48385f29(C) and
+...-1b4a9c1a(D) remain, their hooks explicitly disarmed_for_guarded_recovery.
+Same final B/C/D transfer prefix/archives and stop-proof paths as prior handoff.
+Never overwrite failed attempts or delete raw inputs, learned states or backups.
+
+TESTS / CHANGES
+Commit ef43637f generalizes guarded recovery to the assigned owner/slot count
+and recognizes explicit SIGTERM failures separately from normal OOM deferrals.
+36/36 focused tests passed on EACH C/D Linux before coordinator mutation.
+Includes owner/32slot checks, failure-vs-deferral tests, exact3source-substitution
+equivalence, adopted completion/attempt preservation, and full save-stop suite
+with mocked shutdown. No market/model test or broad raw audit rerun.
+See family-CD-guarded-recovery-verification-20261022.json for exact configs,
+kernel evidence, SSM commands, launch/rearm proofs, preserved-job counts and swaps.
+Diagnostics84e0bf34-9005-4e17-9a61-e3beab9e281b.
+Tests a0ffd329-607b-4b1e-82ea-d10b4b512fc1.
+Launch8837c5c2-0eea-4d0e-ab5f-7dad3dea733d.
+Rearmcaf96cc9-24b3-4b7f-b1bb-23288fbf1036.
+Verify1b2eb965-95be-4d50-bf0c-eaf3d69d6a16.
+SwapC ad0c60d3-5042-4901-9ccf-17b28b2284e3;
+swapD d6ad0ce7-9eae-44bf-a2f2-ef0febd537ad.
+
+CONTINUE
+Do not duplicate numerical coordinators/finalizers or interrupt healthy fits.
+Watch compact actual state/log tails/oom counts and callback receipts; no raw
+restores, database hashes, broad scans or repeated input checks.
+Recovery helper intentionally requires the original source and current failure
+evidence. Do not rerun it blindly against a replacement guarded coordinator.
+If another recovery is needed, capture FRESH exact live inventory first.
+Callbacks are static/not boot-enabled; reconcile before rearm after any reboot.
+Keep all EBS and frozen snap-0d3e867c1240b6528; stop only after mandatory complete
+work plus full archive SHA256/length verification and durable proof read-back.
+No terminate/delete; Search workflow/disks remain preserved.
+Heartbeat family-research-save-and-stop remains ACTIVE every15minutes. Stay quiet
+for healthy/non-actionable states; delete/deactivate after final backup/all possible
+stops are confirmed. Computer/app needed for desktop recovery follow-up.
+V3 frozen; semantic coverage NOT_PASSED. One aligned retained day, no tradable
+signal established. Preserve exact clocks/as-of/provenance/scopes/censoring and
+all contrary/unfavorable/inconclusive evidence, including residual_mlp repeats.

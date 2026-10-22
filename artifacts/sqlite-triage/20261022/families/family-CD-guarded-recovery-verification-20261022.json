@@ -1,0 +1,352 @@
+{
+  "diagnostics": [
+    {
+      "instance": "i-031eeb577ad72b064",
+      "diagnostic": {
+        "owner": "C",
+        "coordinator_alive": true,
+        "coordinator_wchan": "do_wait",
+        "live_julia": 31,
+        "live_wrappers": 31,
+        "unparented_julia": [],
+        "states": {
+          "R": 31
+        },
+        "mem_available": "23357096 kB",
+        "oom_evidence": [
+          "2026-10-22T22:16:22+00:00 ip-172-31-47-237 kernel: julia invoked oom-killer: gfp_mask=0x440dc0(GFP_KERNEL_ACCOUNT|__GFP_ZERO|__GFP_COMP), order=0, oom_score_adj=0",
+          "2026-10-22T22:16:22+00:00 ip-172-31-47-237 kernel: oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),cpuset=/,mems_allowed=0,global_oom,task_memcg=/system.slice/family-recovery-7f4d47a3d78e4d7e8ed759c4434484b2.scope,task=julia,pid=3933,uid=0",
+          "2026-10-22T22:16:22+00:00 ip-172-31-47-237 kernel: Out of memory: Killed process 3933 (julia) total-vm:84687060kB, anon-rss:36353232kB, file-rss:2428kB, shmem-rss:0kB, UID:0 pgtables:76344kB oom_score_adj:0"
+        ],
+        "log_tail": "{\"kind\": \"core\", \"cohort\": [\"mid_price_change\", \"20\", \"4\"], \"model\": \"dropgroup:lifecycle.absorption\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"mid_price_change\", \"20\", \"4\"], \"model\": \"dropgroup:external.storage.weekly\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"mid_price_change\", \"20\", \"4\"], \"model\": \"dropgroup:lifecycle.queue\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"mid_price_change\", \"20\", \"4\"], \"model\": \"dropgroup:external.wind_mwh\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"mid_price_change\", \"1\", \"4\"], \"model\": \"evotrees_depth5\", \"committed\": false, \"memory_deferred\": false, \"returncode\": -15}\n"
+      }
+    },
+    {
+      "instance": "i-0d17573dbce871520",
+      "diagnostic": {
+        "owner": "D",
+        "coordinator_alive": true,
+        "coordinator_wchan": "do_wait",
+        "live_julia": 19,
+        "live_wrappers": 19,
+        "unparented_julia": [],
+        "states": {
+          "R": 19
+        },
+        "mem_available": "202250860 kB",
+        "oom_evidence": [
+          "2026-10-22T22:11:55+00:00 ip-172-31-46-110 kernel: julia invoked oom-killer: gfp_mask=0x140dca(GFP_HIGHUSER_MOVABLE|__GFP_ZERO|__GFP_COMP), order=0, oom_score_adj=0",
+          "2026-10-22T22:11:55+00:00 ip-172-31-46-110 kernel: oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),cpuset=/,mems_allowed=0,global_oom,task_memcg=/system.slice/family-recovery-ef72e75d85c1473089ebcc410a832dad.scope,task=julia,pid=2841,uid=0",
+          "2026-10-22T22:11:55+00:00 ip-172-31-46-110 kernel: Out of memory: Killed process 2841 (julia) total-vm:77225640kB, anon-rss:39192692kB, file-rss:2416kB, shmem-rss:0kB, UID:0 pgtables:78596kB oom_score_adj:0"
+        ],
+        "log_tail": "{\"kind\": \"core\", \"cohort\": [\"mid_price_change\", \"300\", \"4\"], \"model\": \"ridge100\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"mid_price_change\", \"120\", \"4\"], \"model\": \"dropgroup:external.other\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"mid_price_change\", \"120\", \"4\"], \"model\": \"dropgroup:native_timing_measurements\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"core\", \"cohort\": [\"mid_price_change\", \"120\", \"4\"], \"model\": \"evotrees_depth3\", \"committed\": true, \"memory_deferred\": false, \"returncode\": 0}\n{\"kind\": \"neural\", \"cohort\": [\"mid_price_change\", \"120\", \"4\"], \"model\": \"tabm_ensemble\", \"committed\": false, \"memory_deferred\": false, \"returncode\": -15}\n"
+      }
+    }
+  ],
+  "tests": {
+    "count_per_host": 36,
+    "passed_per_host": 36,
+    "hosts": [
+      "C",
+      "D"
+    ],
+    "ssm_command": "a0ffd329-607b-4b1e-82ea-d10b4b512fc1",
+    "shutdown": "mocked"
+  },
+  "launch": {
+    "ssm_command": "8837c5c2-0eea-4d0e-ab5f-7dad3dea733d",
+    "receipts": [
+      {
+        "status": "replacement_started",
+        "owner": "C",
+        "new_pid": 4605,
+        "new_token": "644500",
+        "old_pid": 3102,
+        "source": "/opt/frankie-box/work/family-research-20261022/guarded-recovery-C-20261022T222109Z/resume_multibox_candidate.py",
+        "log": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-C-guarded-20261022T222109Z.log",
+        "manifest": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/guarded-C-capture-20261022T222109Z.json",
+        "live_wrappers_captured": 30,
+        "live_julia_captured": 30,
+        "max_workers": 32,
+        "dispatch_interval_s": 3,
+        "host_floor_gib": 192,
+        "per_job_memory_caps": "unlimited",
+        "original_source_unchanged": true
+      },
+      {
+        "status": "replacement_started",
+        "owner": "D",
+        "new_pid": 3409,
+        "new_token": "644319",
+        "old_pid": 2164,
+        "source": "/opt/frankie-box/work/family-research-20261022/guarded-recovery-D-20261022T222109Z/resume_multibox_candidate.py",
+        "log": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-D-guarded-20261022T222109Z.log",
+        "manifest": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/guarded-D-capture-20261022T222109Z.json",
+        "live_wrappers_captured": 12,
+        "live_julia_captured": 12,
+        "max_workers": 32,
+        "dispatch_interval_s": 3,
+        "host_floor_gib": 192,
+        "per_job_memory_caps": "unlimited",
+        "original_source_unchanged": true
+      }
+    ]
+  },
+  "rearm": {
+    "ssm_command": "caf96cc9-24b3-4b7f-b1bb-23288fbf1036",
+    "receipts": [
+      {
+        "instance": "i-031eeb577ad72b064",
+        "records": [
+          {
+            "owner": "C",
+            "run": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T222111Z-124af3dd",
+            "state": "reconciled",
+            "committed": 130,
+            "active": null,
+            "queued": null,
+            "reserve": 206158430208
+          },
+          {
+            "status": "installed_tested_ready_to_arm",
+            "config": {
+              "assignment": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/four-box-ownership-20261022.json",
+              "base": "/opt/frankie-box/work/family-research-20261022",
+              "coverage_gate": "NOT_PASSED",
+              "digest": "e08cabcf166ec07c1df712c714d11cda44e67cf5d94e02ca544a1ee9b69f0f6f",
+              "frozen_input_snapshot": "snap-0d3e867c1240b6528",
+              "instance": "i-031eeb577ad72b064",
+              "numerical_helper_sha256": {
+                "resume_multibox_candidate.py": "e26c3348d7a545ec48deeb24574c5991217029c34d3f1a8f25972b294d340682",
+                "multibox_support.py": "b2f05e9dd227374a4fbcad91d180f1355c64a530f6b54cc02b545b45d7615f3c"
+              },
+              "out": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022",
+              "owner": "C",
+              "pid": 4605,
+              "prefix": "host-deliveries/family-research-20261022/save-stop/e08cabcf166ec07c1df712c714d11cda44e67cf5d94e02ca544a1ee9b69f0f6f/",
+              "receipt_key": "host-deliveries/family-research-20261022/save-stop/e08cabcf166ec07c1df712c714d11cda44e67cf5d94e02ca544a1ee9b69f0f6f/C-stop-proof.json",
+              "run": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T222111Z-124af3dd",
+              "shutdown_behavior_verified": "stop",
+              "state": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T222111Z-124af3dd/recovery-plan.json",
+              "token": "644500",
+              "coordinator_source": "/opt/frankie-box/work/family-research-20261022/guarded-recovery-C-20261022T222109Z/resume_multibox_candidate.py",
+              "coordinator_source_sha256": "a2ea33f5de3c5a12a95abf51ca6c4bad51d8300af811f115f69f76d7369eb4b3",
+              "coordinator_log": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-C-guarded-20261022T222109Z.log"
+            },
+            "source_sha256": {
+              "family_save_stop.py": "8a143066b1f918a1ef5f30eb38034a2f7108b0ab130e102897ffc18d1898225a",
+              "family_completion_hook.py": "4b13ded2d2da5c44157b53557b783619af3b686f6cda8f457189a3e0a5384b43",
+              "family_final_backup.py": "e5dda922f7867caf1da7debfff1b30a9b82ff36fb62b30cd700e46c2127a14b8",
+              "test_family_save_stop.py": "864b70a93aca3469aab6fe9a28a9a2932569d82e66c574941f0d7da59c8e4b41",
+              "test_family_completion.py": "d0dffd78ba078a4e5bceeab4d01782cc97f8df86acdcb478008da36da9d04422",
+              "install_family_completion_hook.py": "28c6c724e7d3f24678b3fc3029f637a3703bd489dafb3d0c24d36aa0cfeb2ee4"
+            },
+            "numerical_source_sha256": {
+              "resume_multibox_candidate.py": "e26c3348d7a545ec48deeb24574c5991217029c34d3f1a8f25972b294d340682",
+              "multibox_support.py": "b2f05e9dd227374a4fbcad91d180f1355c64a530f6b54cc02b545b45d7615f3c"
+            },
+            "shutdown_mocked_in_tests": true
+          }
+        ]
+      },
+      {
+        "instance": "i-0d17573dbce871520",
+        "records": [
+          {
+            "owner": "D",
+            "run": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T222111Z-7b73037a",
+            "state": "running",
+            "committed": 101,
+            "active": 31,
+            "queued": 38,
+            "reserve": 206158430208
+          },
+          {
+            "status": "installed_tested_ready_to_arm",
+            "config": {
+              "assignment": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/four-box-ownership-20261022.json",
+              "base": "/opt/frankie-box/work/family-research-20261022",
+              "coverage_gate": "NOT_PASSED",
+              "digest": "e08cabcf166ec07c1df712c714d11cda44e67cf5d94e02ca544a1ee9b69f0f6f",
+              "frozen_input_snapshot": "snap-0d3e867c1240b6528",
+              "instance": "i-0d17573dbce871520",
+              "numerical_helper_sha256": {
+                "resume_multibox_candidate.py": "e26c3348d7a545ec48deeb24574c5991217029c34d3f1a8f25972b294d340682",
+                "multibox_support.py": "b2f05e9dd227374a4fbcad91d180f1355c64a530f6b54cc02b545b45d7615f3c"
+              },
+              "out": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022",
+              "owner": "D",
+              "pid": 3409,
+              "prefix": "host-deliveries/family-research-20261022/save-stop/e08cabcf166ec07c1df712c714d11cda44e67cf5d94e02ca544a1ee9b69f0f6f/",
+              "receipt_key": "host-deliveries/family-research-20261022/save-stop/e08cabcf166ec07c1df712c714d11cda44e67cf5d94e02ca544a1ee9b69f0f6f/D-stop-proof.json",
+              "run": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T222111Z-7b73037a",
+              "shutdown_behavior_verified": "stop",
+              "state": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T222111Z-7b73037a/recovery-plan.json",
+              "token": "644319",
+              "coordinator_source": "/opt/frankie-box/work/family-research-20261022/guarded-recovery-D-20261022T222109Z/resume_multibox_candidate.py",
+              "coordinator_source_sha256": "a2ea33f5de3c5a12a95abf51ca6c4bad51d8300af811f115f69f76d7369eb4b3",
+              "coordinator_log": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-D-guarded-20261022T222109Z.log"
+            },
+            "source_sha256": {
+              "family_save_stop.py": "8a143066b1f918a1ef5f30eb38034a2f7108b0ab130e102897ffc18d1898225a",
+              "family_completion_hook.py": "4b13ded2d2da5c44157b53557b783619af3b686f6cda8f457189a3e0a5384b43",
+              "family_final_backup.py": "e5dda922f7867caf1da7debfff1b30a9b82ff36fb62b30cd700e46c2127a14b8",
+              "test_family_save_stop.py": "864b70a93aca3469aab6fe9a28a9a2932569d82e66c574941f0d7da59c8e4b41",
+              "test_family_completion.py": "d0dffd78ba078a4e5bceeab4d01782cc97f8df86acdcb478008da36da9d04422",
+              "install_family_completion_hook.py": "28c6c724e7d3f24678b3fc3029f637a3703bd489dafb3d0c24d36aa0cfeb2ee4"
+            },
+            "numerical_source_sha256": {
+              "resume_multibox_candidate.py": "e26c3348d7a545ec48deeb24574c5991217029c34d3f1a8f25972b294d340682",
+              "multibox_support.py": "b2f05e9dd227374a4fbcad91d180f1355c64a530f6b54cc02b545b45d7615f3c"
+            },
+            "shutdown_mocked_in_tests": true
+          }
+        ]
+      }
+    ]
+  },
+  "verification": {
+    "ssm_command": "1b2eb965-95be-4d50-bf0c-eaf3d69d6a16",
+    "hosts": [
+      {
+        "instance": "i-031eeb577ad72b064",
+        "status": "Success",
+        "response_code": 0,
+        "proof": {
+          "utc": "2026-10-22T22:23:22.934447+00:00",
+          "owner": "C",
+          "instance": "i-031eeb577ad72b064",
+          "coordinator_pid": 4605,
+          "token": "644500",
+          "run": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T222111Z-124af3dd",
+          "service": {
+            "MainPID": "4678",
+            "ExecMainStatus": "0",
+            "ActiveState": "active",
+            "SubState": "running"
+          },
+          "hook": {
+            "owner": "C",
+            "pid": 4605,
+            "status": "waiting_for_exit",
+            "token": "644500"
+          },
+          "pidfd": [
+            "pos:\t0\nflags:\t02000002\nmnt_id:\t5\nino:\t147512\nPid:\t4605\nNSpid:\t4605\n"
+          ],
+          "state": "running",
+          "committed": 131,
+          "required": 165,
+          "checkpoint_active": 29,
+          "queued": 5,
+          "memory_reserve": 206158430208,
+          "live_wrappers": 29,
+          "live_julia": 29,
+          "captured_total": 30,
+          "original_live": 29,
+          "original_completed": 1,
+          "original_missing": [],
+          "oom_kill": 1,
+          "mem_available": "63375940 kB",
+          "swap_total": "134217724 kB",
+          "swap_free": "134217724 kB",
+          "coordinators": [
+            4605
+          ],
+          "source": "/opt/frankie-box/work/family-research-20261022/guarded-recovery-C-20261022T222109Z/resume_multibox_candidate.py",
+          "source_sha256": "a2ea33f5de3c5a12a95abf51ca6c4bad51d8300af811f115f69f76d7369eb4b3"
+        }
+      },
+      {
+        "instance": "i-0d17573dbce871520",
+        "status": "Success",
+        "response_code": 0,
+        "proof": {
+          "utc": "2026-10-22T22:23:23.131332+00:00",
+          "owner": "D",
+          "instance": "i-0d17573dbce871520",
+          "coordinator_pid": 3409,
+          "token": "644319",
+          "run": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T222111Z-7b73037a",
+          "service": {
+            "MainPID": "3552",
+            "ExecMainStatus": "0",
+            "ActiveState": "active",
+            "SubState": "running"
+          },
+          "hook": {
+            "owner": "D",
+            "pid": 3409,
+            "status": "waiting_for_exit",
+            "token": "644319"
+          },
+          "pidfd": [
+            "pos:\t0\nflags:\t02000002\nmnt_id:\t5\nino:\t200803\nPid:\t3409\nNSpid:\t3409\n"
+          ],
+          "state": "running",
+          "committed": 103,
+          "required": 170,
+          "checkpoint_active": 32,
+          "queued": 35,
+          "memory_reserve": 206158430208,
+          "live_wrappers": 32,
+          "live_julia": 32,
+          "captured_total": 12,
+          "original_live": 9,
+          "original_completed": 3,
+          "original_missing": [],
+          "oom_kill": 1,
+          "mem_available": "42229324 kB",
+          "swap_total": "0 kB",
+          "swap_free": "0 kB",
+          "coordinators": [
+            3409
+          ],
+          "source": "/opt/frankie-box/work/family-research-20261022/guarded-recovery-D-20261022T222109Z/resume_multibox_candidate.py",
+          "source_sha256": "a2ea33f5de3c5a12a95abf51ca6c4bad51d8300af811f115f69f76d7369eb4b3"
+        }
+      }
+    ]
+  },
+  "temporary_swap": {
+    "C": {
+      "ssm_command": "ad0c60d3-5042-4901-9ccf-17b28b2284e3",
+      "receipt": {
+        "utc": "2026-10-22T22:20:09.787522+00:00",
+        "owner": "C",
+        "file": "/opt/frankie-box/work/family-research-20261022/emergency-memory-swap-C-20261022",
+        "bytes": 137438953472,
+        "mount": "/dev/nvme1n1p1[/opt/frankie-box/work/family-research-20261022] /opt/frankie-box/work/family-research-20261022",
+        "before": "Filename\t\t\t\tType\t\tSize\t\tUsed\t\tPriority\n",
+        "after": "Filename\t\t\t\tType\t\tSize\t\tUsed\t\tPriority\n/opt/frankie-box/work/family-research-20261022/emergency-memory-swap-C-20261022 file\t\t134217724\t0\t\t-1\n",
+        "persistent_boot_configuration": false,
+        "reason": "Preserve running fits under current memory pressure; existing encrypted EBS only; no per-fit memory cap"
+      }
+    },
+    "D": {
+      "ssm_command": "d6ad0ce7-9eae-44bf-a2f2-ef0febd537ad",
+      "receipt": {
+        "utc": "2026-10-22T22:24:28.746834+00:00",
+        "owner": "D",
+        "file": "/opt/frankie-box/work/family-research-20261022/emergency-memory-swap-D-20261022",
+        "bytes": 137438953472,
+        "mount": "/dev/nvme0n1p1[/opt/frankie-box/work/family-research-20261022] /opt/frankie-box/work/family-research-20261022",
+        "before": "Filename\t\t\t\tType\t\tSize\t\tUsed\t\tPriority\n",
+        "after": "Filename\t\t\t\tType\t\tSize\t\tUsed\t\tPriority\n/opt/frankie-box/work/family-research-20261022/emergency-memory-swap-D-20261022 file\t\t134217724\t0\t\t-1\n",
+        "persistent_boot_configuration": false,
+        "reason": "Surviving fits plus delayed allocations reduced actual RAM below host floor; buffer existing work without per-fit caps or termination"
+      }
+    }
+  },
+  "constraints": {
+    "configured_max_workers": 32,
+    "host_ram_admission_floor_gib": 192,
+    "dispatch_interval_seconds": 3,
+    "per_fit_memory": "unlimited",
+    "original_numerical_source_files": "unchanged",
+    "algorithms_targets_seeds_epochs": "unchanged",
+    "instances": "no stop/reboot/termination",
+    "storage": "existing encrypted EBS; no new volume; all data and snapshot retained",
+    "semantic_gate": "NOT_PASSED"
+  }
+}
