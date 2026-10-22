@@ -1,0 +1,147 @@
+FAMILY RESEARCH -- REUSE FINISHED BOXES BEFORE STOP -- 2026-10-22
+
+USER AUTHORIZATION / CURRENT POLICY
+User: "whyen a is done use that box to help other ones. as each box is done it
+dhould be used tyo help iotgherws". This supersedes independent shard shutdown
+while other mandatory fitting remains. It authorizes dispatcher-only handoffs for
+pending-task redistribution. Preserve every healthy live/completed numerical fit.
+No new chats, subagents, cross-chat messages, resources, IAM changes, live orders,
+termination, storage deletion, old Search changes, raw restores or repeated raw/DB
+hashing. Only the existing four named us-east-1 boxes. Keep snap-0d3e867c1240b6528
+and all EBS/attempts. Existing scientific/current handoffs remain mandatory.
+V3 frozen; semantic coverage NOT_PASSED; unfavorable residual_mlp evidence retained.
+Use only clean family-research-handoff-repo checkout, never E:/Markets.
+AWS plugin run_script/SSM only; no AWS CLI. Human authorized unattended recovery.
+
+DEPLOYED AND VERIFIED
+BASE=/opt/frankie-box/work/family-research-20261022
+OUT=BASE/joint-models-v4-candidate-20261022; ROOT=OUT/parallel-63
+INSTALL=BASE/save-stop-20261022
+Original immutable baseline ownership remains unchanged:
+ROOT/four-box-ownership-20261022.json
+e08cabcf166ec07c1df712c714d11cda44e67cf5d94e02ca544a1ee9b69f0f6f
+Current immutable pending-task epoch on all four:
+ROOT/reuse-ownership-20261022T231800Z.json
+cce6f548f09f50f00caaca396a213e9f2d42d5a7ff85c0644be311eb83e708f4
+Bootstrap freezes the full 2097 mandatory keys; zero task transfers yet. Baseline
+63 cohort owners retained; later task_delegations may move ONLY pending keys.
+Current isolated source SHA256:
+6d3bc3e8bad3ce862cb62be71f5bc7ad2d400b800b5b42eb66d66feb60afe0a4
+Source BASE/reuse-epoch-20261022T231800Z-<OWNER>/resume_multibox_candidate.py
+Original numerical sources/Julia algorithms/seeds/epochs unchanged. Python adds
+task ownership filtering, helper cohorts, identical prep group/dimension checks,
+192GiB host headroom/3-second pacing and all-shards-before-any-import barrier.
+
+A i-035994afa8bdf66a5 coordinator10366/start2080700 hook10433
+  ROOT/memory-recovery-20261022T231527Z-818512fa
+B i-087f8d3247ae847a9 coordinator7888/start1604184 hook7956
+  ROOT/memory-recovery-20261022T231617Z-d4d970bc
+C i-031eeb577ad72b064 coordinator5077/start980718 hook5143
+  ROOT/memory-recovery-20261022T231713Z-d553e9f9
+D i-0d17573dbce871520 coordinator4111/start980520 hook4248
+  ROOT/memory-recovery-20261022T231713Z-2e91e892
+Authoritative current configs always INSTALL/config.json; later epochs replace
+these identities. Exact current PID/start/source/config must be reread each time.
+Each callback pidfd verified pinned to its replacement, service active/static.
+All captured workers accounted: A83/B58/C17/D20; Julia/wrappers were not restarted.
+Fresh verification: A1088/1146, B562/616, C163/165, D136/170 =1949/2097 fits
+(92.94%); live58/54/2/32, queued0/0/0/2. This is a historical instant, not an ETA.
+One coordinator per box, disjoint live keys/CPU leases and zero orphan Julia.
+48 focused tests passed on EACH Linux box; shutdown mocked in tests.
+Final compact update: A1089/B563/C163/D142 =1957/2097 (93.32%), all four running,
+all callbacks waiting_for_exit, zero queued tasks. All remaining140 fits already
+running (57/53/2/28). No task has moved yet: do not restart running fits to create
+helper work. Reuse applies if safely pending mandatory work later becomes available.
+Existing heartbeat updated ACTIVE every5minutes in this same chat, with full
+pending-only capture/commit/activate/rearm procedure and original restrictions.
+Runtime implementation commit dfc3fbf8; final test receipt in
+tasks/family-research-20261022/reuse-final-tests-20261022.json.
+Evidence tasks/family-research-20261022/reuse-armed-verification-20261022.json,
+reuse-captures-20261022T231800Z.json and reuse-commit-20261022T231800Z.json.
+Each run contains reuse-adoption-verification.json, reuse-armed-verification.json,
+all new helper source, prior coordinator log, exact capture and launch receipts.
+
+SAVE / REUSE / FINALIZATION
+B/C/D still fully archive and independently verify full S3 SHA256/byte length,
+durable stop-proof and identical S3 read-back. Callback then writes
+hook-status.json status=backup_verified_ready_for_reuse and waits, rather than
+powering off. Never interrupt archive/verification. A, when its own fits finish,
+waits in status=waiting_for_all_shards BEFORE importing ANY shard, so A can help.
+Only A does original PCA/clustering and final postprocessors, after all mandatory
+keys are complete and disjoint. It verifies final global models/samples/artifacts
+and full final archive before stop. Epoch-scoped all-fits-complete.json releases
+B/C/D callbacks to fresh quiescence/IMDS/sync/poweroff. No need for desktop for
+eventual original mandatory fitting/finalization/archive/stops; reassignment
+decisions need this heartbeat. Never restart a complete verified stopped box.
+Callbacks are deliberately not boot-enabled. Rearm exact replacement after any
+authorized safe recovery. Preserve C/D128GiB temporary swap and OOM history.
+
+S3 BUCKET frankie-granite42-568968024170-us-east-1
+Epoch transfer archives and receipts:
+host-deliveries/family-research-20261022/dual-box/<CURRENT_DIGEST>/
+Stop proofs/installations/failures/final A archive:
+host-deliveries/family-research-20261022/save-stop/<CURRENT_DIGEST>/
+Reuse readiness/global completion:
+host-deliveries/family-research-20261022/reuse/<CURRENT_DIGEST>/
+All prior epoch archives/receipts remain. Storage charges continue after stop.
+
+FUTURE HEARTBEAT PROCEDURE -- FIVE MINUTES, QUIET IF NO ACTION
+1. One scoped compact EC2/SSM check: current config, recovery-plan, hook-status,
+   service, exact PID/start identity; only inspect more on actionable change.
+   A is eligible at waiting_for_all_shards with no workers and own tasks complete.
+   B/C/D eligible ONLY at backup_verified_ready_for_reuse after full verification.
+   A donor must have actual queued/unstarted mandatory tasks. If remaining tasks
+   are all already running, do not disrupt them or manufacture duplicate work.
+   No useful move => no handoff, keep healthy work running, stay quiet.
+2. A must not have ANY ROOT/box-*-import-receipt.json, nor finalization underway.
+   Never interrupt active archive/verification. No global-fit release marker may
+   already exist. Stop/recover on any repeated OOM/failed coordinator as previously
+   authorized; exact fresh wrappers/CPU/start-token/outputs/reports first.
+3. Choose a fresh UTC EPOCH identifier. On ALL FOUR through SSM:
+   python3 INSTALL/family_reuse_rollout.py capture --epoch EPOCH
+   This stops only lifecycle callback, SIGSTOPs only exact dispatcher, preserves
+   all numerical workers, captures fresh complete ownership, reconciles coherent
+   artifacts and uploads exact capture. It refuses unregistered keys, duplicate
+   task/CPU/orphans, wrong tokens, active archive and prior imports. Save each
+   returned sha256/path/owner; compressed snapshot is a small planning view.
+   A capture failure automatically resumes that dispatcher/restarts callback.
+   BEFORE commit, any failure/no safe transfer => invoke on captured owners:
+   python3 INSTALL/family_reuse_rollout.py resume --capture ROOT/reuse-capture-EPOCH-OWNER.json
+   Never leave healthy dispatchers paused across heartbeat turns.
+4. On A write a JSON file {"A":"capture SHA",..."D":"capture SHA"} in INSTALL.
+   python3 INSTALL/family_reuse_rollout.py commit --epoch EPOCH --captures-json FILE
+   No --bootstrap on subsequent epochs. It reads all exact captures from S3,
+   verifies original PID-key serialization hashes, full 2097-key universe, unique
+   current owners, pinned completed/live keys and identical preparation metadata.
+   Only pending keys move; large helper <=96, small helper <=16, <=2 foreign
+   cohorts, baseline donor retains a key per cohort. Multiple helpers disjoint.
+   No move => fails before commit; resume captured dispatchers/callbacks above.
+   It publishes assignment and all-four durable commit with identical read-back.
+   AFTER COMMIT never resume stale ownership; recover missing activation against
+   committed authority while preserving live/completed tasks, not duplicate fits.
+5. On all four: python3 INSTALL/family_reuse_rollout.py stage --epoch EPOCH
+   Writes ROOT/reuse-ownership-EPOCH.json and verifies committed digest.
+   Then launch A, verify its ready/run, launch B, verify ready/run, launch C/D:
+   python3 INSTALL/family_reuse_rollout.py launch --capture ROOT/reuse-capture-EPOCH-OWNER.json --assignment ROOT/reuse-ownership-EPOCH.json
+   Source copies isolated; only fenced old dispatcher is retired. Live Julia
+   wrappers adopted by exact PID/start/report/cache/output/CPU. All outbound
+   partial pending folders preserved under attempts/reuse-EPOCH before transfer.
+6. Once each replacement run/checkpoint exists:
+   python3 INSTALL/family_reuse_rollout.py arm --launch ROOT/reuse-launch-EPOCH-OWNER.json
+   It proves every captured wrapper is same live identity OR coherent completed
+   output, preserves full previous coordinator log/capture, installs new config
+   and tested callback against exact replacement. A short already-exited shard
+   is accepted only with its exact new-epoch shard-completion receipt; lifecycle
+   validation still verifies all artifacts and archive before its reuse hold.
+   Never rerun successful fits just to obtain a live PID. Preserve all failures.
+7. Verify one coordinator each, all current mandatory key owners, every captured
+   fit accounted, original numerical hashes, unchanged task universe, exact
+   pidfd callback identities, service state and new epoch. Linux focused tests:
+   cd INSTALL; PYTHONPATH=BASE/full-context-audit/scripts python3 -m unittest
+   test_family_reuse test_family_save_stop test_family_completion
+   test_family_guarded_recovery test_resume_multibox_candidate -q
+   Record fresh handoff/evidence and push clean checkout branch. Notify only
+   meaningful reuse/completion/failure/recovery. No broad scans/raw input hashes.
+8. All mandatory outputs + final A backup durably verified and all possible
+   scoped stops confirmed => deactivate existing heartbeat automation_update;
+   report saved locations and continuing retained EBS/snapshot/S3 storage charges.

@@ -1,0 +1,50 @@
+[
+  {
+    "owner": "A",
+    "status": "running",
+    "required": 1146,
+    "committed": 1089,
+    "active": 57,
+    "queued": 0,
+    "hook": "waiting_for_exit",
+    "tests": 48,
+    "test_status": "Success",
+    "response_code": 0
+  },
+  {
+    "owner": "B",
+    "status": "running",
+    "required": 616,
+    "committed": 563,
+    "active": 53,
+    "queued": 0,
+    "hook": "waiting_for_exit",
+    "tests": 48,
+    "test_status": "Success",
+    "response_code": 0
+  },
+  {
+    "owner": "C",
+    "status": "running",
+    "required": 165,
+    "committed": 163,
+    "active": 2,
+    "queued": 0,
+    "hook": "waiting_for_exit",
+    "tests": 48,
+    "test_status": "Success",
+    "response_code": 0
+  },
+  {
+    "owner": "D",
+    "status": "running",
+    "required": 170,
+    "committed": 142,
+    "active": 28,
+    "queued": 0,
+    "hook": "waiting_for_exit",
+    "tests": 48,
+    "test_status": "Success",
+    "response_code": 0
+  }
+]

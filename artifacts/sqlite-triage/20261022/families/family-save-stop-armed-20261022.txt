@@ -1,4 +1,8 @@
 FAMILY RESEARCH -- VERIFIED UNATTENDED SAVE AND STOP -- 2026-10-22
+CURRENT USER POLICY: Read family-reuse-current-handoff-20261022.txt FIRST.
+Finished boxes now help pending work before stopping. All four replacement
+dispatchers and reuse-aware callbacks verified; current epoch digest begins
+cce6f548. Baseline immutable cohort ownership remains retained history below.
 CURRENT UPDATE22:37UTC: Read family-D-preswap-recovery-20261022.txt FIRST.
 D now3743/start727836/hook3811 after reconciling another OOM that occurred11s
 BEFORE swap activated. All28fresh captured fits accounted; A/B/C unchanged.
