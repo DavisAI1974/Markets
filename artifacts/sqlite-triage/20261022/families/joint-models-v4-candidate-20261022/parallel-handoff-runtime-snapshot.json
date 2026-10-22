@@ -1,0 +1,24 @@
+{
+  "schema": "PARALLEL_HANDOFF_RUNTIME_SNAPSHOT_V1",
+  "observed_utc": "2026-10-22T16:42:39.276864+00:00",
+  "cpu_busy_percent": 92.1,
+  "julia_workers": 63,
+  "completed_jobs": 20,
+  "completed_by_kind": {
+    "core": 15,
+    "neural": 5
+  },
+  "job_errors": [],
+  "first_completed_job_utc": "2026-10-22T16:33:01.637657+00:00",
+  "last_completed_job_utc": "2026-10-22T16:42:38.970506+00:00",
+  "prepared_cohorts": 22,
+  "retained_dense_cohorts": 22,
+  "free_disk_gib": 103.2,
+  "memory": [
+    "MemTotal:       519850060 kB",
+    "MemAvailable:   65539552 kB"
+  ],
+  "parallel_plan_modified_utc": "2026-10-22T16:32:04.382076+00:00",
+  "coordinator_process": "    PID    PPID STAT     ELAPSED %CPU   RSS COMMAND\n  15370       1 Sl         11:03  0.1 18508 python3 /opt/frankie-box/work/family-research-20261022/full-context-audit/scripts/redeploy_parallel_candidate.py\n",
+  "coverage_gate": "NOT_PASSED"
+}
