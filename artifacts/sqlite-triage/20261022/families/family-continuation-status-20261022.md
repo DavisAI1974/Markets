@@ -81,8 +81,8 @@ Bucket `bento-568968024170-us-east-2-an`, region `us-east-2`, common key prefix
 | `asof-quotes-phases-v1-258d1951.tar.gz` | 1833955983 | `258d1951e16029d3b42222da7e6145ae3e6f807f24f654b3c24f7b925cea696b` |
 
 The first three archives have HTTP-200 uploads, local downloads and all 35 member
-hashes verified in one transport pass. The as-of/quotes/phases archive has been
-created and its upload dispatched; transport completion is recorded separately.
+hashes verified in one transport pass. The as-of/quotes/phases archive has an
+HTTP-200 upload; its receipt is saved separately. It has not been downloaded locally.
 Large archives remain outside Git; compact receipts, registries, code and
 scientific comparisons are saved in the repository.
 
