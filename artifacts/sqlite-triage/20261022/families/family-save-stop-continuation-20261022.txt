@@ -1,0 +1,217 @@
+UNATTENDED SAVE-AND-STOP CONTINUATION -- 2026-10-22 21:15 UTC
+USER REQUESTED A NEW CHAT OR COMPACTION. Continue the already authorized work,
+not a new research executor. Parent turn stops after handing this off.
+
+URGENT STATUS
+All four numerical coordinators continue running on AWS. The unattended backup/
+stop callbacks are NOT installed yet. No heartbeat/automation has been created.
+Do not claim they are armed. Complete installation/testing/verification next.
+No AWS mutations happened during the save-stop turn; only read checks and local
+red tests/plan were written. Existing numerical jobs must continue undisturbed.
+
+LATEST USER AUTHORIZATION (verbatim)
+"i'm going to be away for a while. if this finishes before i get back get data
+saved and stored and stop as many boxes as possible so i'm not beong charged fpr
+idle time while not losing any data. and youi are welciome to restart any of them
+if they have to stop for any issues"
+Then: "proceed"
+Then: "either srtart new chat or compact context"
+
+This supersedes previous lifecycle prohibition for these four research boxes and
+permits a narrowly scoped unattended completion/failure follow-up. No AI subagents,
+live orders, unrelated boxes, or cross-chat messages. This new continuation chat is
+explicitly authorized; no need to ask again. Preserve old Search code/disks/workflow.
+Use AWS plugin run_script/SSM, never AWS CLI. No new machine/volume needed.
+
+REQUIRED READING AND CHECKOUT
+Use clean existing checkout ONLY:
+C:\Users\A\Documents\Codex\2026-10-22\family-research-handoff-repo
+Do not work in dirty E:\Markets even if that is the new task's initial cwd.
+Remote repo DavisAI1974/Markets, branch claude/kalshi-s79-kickoff-ij8t9o.
+Local branch codex/family-research-handoff-20261022.
+Last pushed commit c4a9fc99f08eb475901f293dc3d282e89986001e.
+Read the ENTIRE original immutable full handoff:
+https://github.com/DavisAI1974/Markets/blob/496dc9c1b42345e86c95fef84a7d2a07b2d36b06/artifacts/sqlite-triage/20261022/families/family-cpu-ram-v2-full-handoff-20261022.txt
+It exists locally in Git; git show the exact checkpoint if necessary. Then read:
+artifacts/sqlite-triage/20261022/families/family-four-box-current-handoff-20261022.txt
+and family-dual-box-current-handoff-20261022.txt for preserved history/unfavorable
+reproducibility evidence. Scientific restrictions remain in force.
+
+CURRENT AWS EXECUTION
+Region us-east-1, AZ us-east-1d.
+BASE=/opt/frankie-box/work/family-research-20261022
+OUT=BASE/joint-models-v4-candidate-20261022
+ROOT=OUT/parallel-63
+Source BASE/full-context-audit/scripts/resume_multibox_candidate.py
+Helper multibox_support.py
+DO NOT MODIFY THESE LIVE FILES or launch another numerical executor.
+Ownership ROOT/four-box-ownership-20261022.json
+SHA256 e08cabcf166ec07c1df712c714d11cda44e67cf5d94e02ca544a1ee9b69f0f6f
+63 disjoint whole cohorts: A34/B19/C5/D5.
+A i-035994afa8bdf66a5, r7i.48xlarge,96 physical slots, coordinator7072.
+  ROOT/memory-recovery-20261022T204459Z-4b147afc/recovery-plan.json
+  OUT/parallel-four-A.log
+B i-087f8d3247ae847a9, r7i.48xlarge,96 physical slots, coordinator5246.
+  ROOT/memory-recovery-20261022T204529Z-d93fe1d4/recovery-plan.json
+  OUT/parallel-four-B.log
+C i-031eeb577ad72b064, r7i.16xlarge,32 physical slots, coordinator3102.
+  ROOT/memory-recovery-20261022T204558Z-48385f29/recovery-plan.json
+  OUT/parallel-four-C.log
+D i-0d17573dbce871520, r7i.16xlarge,32 physical slots, coordinator2164.
+  ROOT/memory-recovery-20261022T204558Z-1b4a9c1a/recovery-plan.json
+  OUT/parallel-four-D.log
+All four use --execute --assignment ROOT/four-box-ownership-20261022.json,
+their respective --worker-id, and max-workers96/96/32/32.
+A/B adoption manifests ROOT/four-box-A/B-capture-20261022.json are HISTORICAL;
+never reuse as current worker inventory for a future recovery. Capture fresh
+wrapper PID/start token/task/cache/output/report/CPU leases before any handoff.
+One coordinator/box; all current numerical work and completed fits preserved.
+
+MOST RECENT COMPACT STATUS (~21:10 UTC)
+SSM command48e68702-7ce3-4a80-8072-dfc273a39fa1 succeeded all4:
+A running,96 fits,618 committed;
+B running,94 fits,182 committed;
+C running,32 fits,76 committed;
+D running,32 fits,51 committed.
+Total254 active fits,927 committed. Both new boxes have finished startup.
+No duplicate active work/OOM in earlier verification. Do one compact refresh as
+needed; no repeated raw data restores/downloads/large scans/expanded audits.
+
+COMPLETION PIPELINE ALREADY RUNNING
+B/C/D each finish all owned required tasks, pack fitted job states/predictions/
+metrics/preprocessing links/recovery metadata/attempts, upload own archive once,
+write local ROOT/box-X-transfer-receipt.json and run/shard-completion.json.
+Their recovery-plan status remains shard_fits_complete with full required_jobs
+and committed_jobs lists and assignment digest.
+S3 bucket frankie-granite42-568968024170-us-east-1, account568968024170.
+Existing result prefix:
+host-deliveries/family-research-20261022/dual-box/
+e08cabcf166ec07c1df712c714d11cda44e67cf5d94e02ca544a1ee9b69f0f6f/
+X-results.tar.gz and X-status.json (X=B/C/D).
+Receipt includes worker, assignment_sha256, archive_sha256, archive_bytes,
+artifact_bytes, cohorts, required_jobs, locations.
+A waits for B,C,D numerical dependencies, streams and validates archive SHA256/
+path safety, imports each into namespaced storage, checks coherent artifacts,
+unique required-key union and all63 cohorts, then merges once and executes
+original PCA12/k-means3/5 and original three postprocessors once.
+A's final recovery-plan status complete_candidate overwrites required_jobs list
+with committed_jobs integer; ROOT/parallel_plan.json also complete_candidate.
+Final model_metrics.csv / neural_metrics.csv and model_predictions.csv /
+neural_predictions.csv are at OUT. Read finalize() in source to understand exact
+final outputs. Final postprocess state/outputs and all own model states must be
+archived before A stops. Do NOT start a second finalizer/PCA.
+
+STORAGE / NO DATA LOSS
+Keep EBS volumes and existing snapshot; STOP, never terminate/delete.
+Original Search roots C vol-0b671bc7ea219a4ee / D vol-0c0ed346040147cfd remain
+detached and unmodified. C/D boot clean 32GiB encrypted roots.
+All frozen raw matrix/runtime/depot/targets are retained on EBS plus existing
+frozen snapshot snap-0d3e867c1240b6528. Exact frozen raw bytes34601642880.
+Do not scan/hash raw inputs/databases or rebuild inputs just to save results.
+Final backup should reference this immutable input snapshot/provenance and
+retain every fitted model, failure/attempt, metrics/predictions/preprocessing,
+scopes/censoring, contrary/unfavorable/inconclusive evidence and final outputs.
+ROOT/shared raw.bin, reproducible a.bin/b.bin, and OUT/model_matrix.jls are
+frozen inputs/dense caches, not learned states. Preserve learned .jls files.
+Existing multibox_support.pack_results skips dense inputs and handles relative
+preprocessing symlinks within a shard. It expects fresh jobs and cannot directly
+pack A's serial-prefix/imported jobs. A needs its own complete backup collection:
+local real job dirs, original serial-prefix, attempts, recovery metadata, retained
+preprocessing and final OUT outputs. Remote imported job dirs are symlinks and
+already have B/C/D S3 archives; reference verified archives rather than duplicating.
+Never silently omit an unknown learned-state link outside the archive root;
+fail safe and retain EBS.
+
+READ-ONLY LIFECYCLE VERIFICATIONS ALREADY DONE
+DescribeInstanceAttribute instanceInitiatedShutdownBehavior on all four returns
+"stop". Normal root systemctl poweroff therefore stops EC2 and preserves EBS.
+SSM role Ssm has existing S3 permissions but IAM simulation says implicitDeny for
+ec2:StopInstances, StartInstances and DescribeInstanceAttribute.
+Do NOT broaden IAM permissions. Root OS shutdown through a verified completion
+hook can use existing configured stop behavior; AWS plugin identity can stop/start
+instances for the follow-up. IAM read findings require no more audit.
+No instance was stopped/restarted in this save-stop turn.
+
+LOCAL PENDING FILES / RED TESTS
+Untracked and present in the clean checkout:
+tasks/family-research-20261022/save-stop-todo.md
+artifacts/sqlite-triage/20261022/families/full-context-audit/scripts/test_family_save_stop.py
+family_save_stop.py implementation DOES NOT EXIST YET.
+Red test: python -m unittest test_family_save_stop from scripts dir fails
+ModuleNotFoundError family_save_stop, intentionally before implementation.
+Tests specify:
+- validate_shard(config,plan,state,receipt): reject wrong owner/digest/duplicate/
+  missing mandatory keys; exact committed/required/location key agreement.
+- verify_remote(s3,key,sha256,expected_bytes): stream S3 archive and compare full
+  SHA256 and length, not merely trust successful upload.
+- validate_predictions(csvpath,expected_counts): count per-key rows, enforce
+  contiguous model blocks/unique sample_id, finite prediction/observed, exact
+  keys and counts. Return rows count; keep memory bounded to one model's IDs.
+- record_and_stop(s3,config,proof,stop_fn): only after backup_verified, durable
+  local receipt, S3 put and identical read-back; stop_fn called last. Corrupt
+  read-back must never stop.
+
+PROPOSED SIMPLE IMPLEMENTATION (NOT INSTALLED)
+One new completion callback/service per owner, separate from numerical source.
+Use Linux pidfd_open plus poll/select on exact current coordinator PID/start token
+to await exit without polling or changing/restarting current fits.
+Validate config instance identity via IMDSv2 and immutable assignment digest.
+Before stopping ensure no other live family Julia/coordinator remains.
+B/C/D: require exact successful shard completion, valid local/remote receipt and
+full remote archive SHA256/length verification. Save/read back stop-proof to S3,
+sync local disks, systemctl poweroff only then.
+A: require actual complete_candidate after all original postprocessors, validate
+global task/model/sample coverage, save own outputs/states/attempts/provenance,
+and manifest referencing all three verified remote archives. Upload and verify A
+archive, save final receipt/manifest, sync and stop.
+If validation/backup fails, never shut down or delete anything; emit retained
+local/S3 failure evidence for follow-up. Callback is a finite coordinator-exit
+handler; no numerical duplicate executor and no live source edit.
+Test with mocked shutdown locally and on actual Linux before arming. Verify
+armed service MainPID/config/PID token/status on all four while fits still run.
+Recovery callbacks may be re-armed after a safe future executor recovery.
+
+CREATE ONE SCOPED TASK FOLLOW-UP
+The latest user explicitly asks for unattended completion/restart as necessary.
+Use Codex automation_update heartbeat on the continuation task (default for
+follow-ups), e.g. every15min, not a new task per run. No automation exists yet.
+Keep prompt bounded: these four instances only; inspect compact current state;
+never restart complete verified/stopped boxes; resume only missing work with fresh
+adoption/coherent result reconciliation; never duplicate active jobs; stop boxes
+after verified saves; de-activate itself when final artifacts and all possible stops
+confirmed. No API IAM changes or new instance creation, no unrelated Search changes,
+no messages/subagents/live orders. Call automation_update rather than raw directives.
+Completion hooks should stop promptly even if desktop follow-up cannot run.
+
+SCIENCE / MATERIAL NEGATIVE EVIDENCE
+V3 frozen. Semantic coverage NOT_PASSED, including after numerical completion.
+One retained aligned market day; no established tradable signal.
+Preserve exact as-of/Int64 clocks/cursors/missingness/ages/provenance/scopes/
+censoring/targets/seeds/epochs/training-only transforms and contrary evidence.
+Two prior serial configs accidentally repeated on B were restored to prior-original
+authority at20:13:07, both attempts retained. residual_mlp maximum prediction
+difference0.4313412606716156, logloss1.5684192762 original vs2.9158903594 repeat;
+cause unresolved, not established rounding. Both archived evidence sets must stay.
+See serial-original-reconciliation-20261022.json and two-box handoff.
+
+TOOLS / ENGINEERING / COMMUNICATION
+AWS plugin name available by discovery:
+mcp__codex_apps__aws_aws___run_script, call_boto3 PascalCase operations.
+Use SendCommand + GetCommandInvocation, verify Status and ResponseCode;
+Comment <=100chars; SSM stdout capped24KB. Do not print huge scripts/data.
+run_script required result={...}; result final expression.
+No AWS CLI. Use existing instance profile/S3 prefix, no credential printing.
+Local PowerShell, Python C:\Python313\python.exe. Long command limit~32KB:
+write large content with apply_patch or compressed payload through SSM.
+For JS string replace that may contain $' or $&, use replacement callbacks.
+Functions stores from parent do NOT transfer; do not depend on them.
+Skills previously used: using-agent-skills, AWS compute/provisioning/SSM,
+TDD, incremental implementation, git, security and code review.
+26/26 Linux tests passed for the already-live four-box code; 71 local regression
+tests pass with4 POSIX-only skips. Do not rerun broad tests without changes.
+Current work requires new focused lifecycle tests, failure-path review, Linux
+mocked-shutdown verification, actual armed-service checks, commit/push and a
+self-contained concise final response stating exactly what is configured.
+Mention retained storage charges remain; compute charges stop when boxes stop.
+User hates repeat confirmation; authorization is explicit. Continue autonomously.
+
