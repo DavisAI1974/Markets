@@ -43,6 +43,14 @@ def has_dispatch_failure(tail):
     return False
 
 
+def validate_coordinator(config,command,token,source_sha256):
+    from family_completion_hook import coordinator_source
+    require(token==config['token'] and str(coordinator_source(config)).encode() in command
+            and b'--execute' in command,'unexpected current coordinator identity')
+    require(config.get('coordinator_source_sha256',source_sha256)==source_sha256,
+            'current coordinator source changed')
+
+
 def validate_capture(jobs,owned,numerical):
     keys=[(j['kind'],tuple(j['cohort']),j['model']) for j in jobs]
     require(len(set(keys))==len(keys),'duplicate captured task')
@@ -110,7 +118,7 @@ def main():
     base=pathlib.Path(config['base']);root=pathlib.Path(config['out'])/'parallel-63'
     sys.path.insert(0,str(base/'full-context-audit/scripts'))
     from multibox_support import client,assignment_digest,prepared_cache_index
-    from family_completion_hook import imds_instance
+    from family_completion_hook import imds_instance,coordinator_source
     require(imds_instance()==config['instance'],'wrong instance')
     require(assignment_digest(config['assignment'])==config['digest'],'assignment changed')
     plan=json.loads(pathlib.Path(config['assignment']).read_text())
@@ -118,12 +126,12 @@ def main():
     target=base/'full-context-audit/scripts/resume_multibox_candidate.py'
     original=target.read_text();source=guarded_source(original)
     _,oldcmd,st=identity(config['pid'])
-    require(st[19]==config['token'] and str(target).encode() in oldcmd and b'--execute' in oldcmd,
-            'unexpected original coordinator identity')
+    validate_coordinator(config,oldcmd,st[19],hashlib.sha256(coordinator_source(config).read_bytes()).hexdigest())
     if not args.execute:
         print(json.dumps(dict(status='plan_only',owner=owner,max_workers=slots,host_floor_gib=192,dispatch_interval_s=3)))
         return
-    oldlog=pathlib.Path(config['out'])/('parallel-four-'+owner+'.log')
+    oldlog=pathlib.Path(config.get('coordinator_log',
+        str(pathlib.Path(config['out'])/('parallel-four-'+owner+'.log'))))
     failure_tail=subprocess.check_output(['tail','-n','12',str(oldlog)],text=True)
     require(has_dispatch_failure(failure_tail),'expected failure-drain evidence missing')
     stamp=time.strftime('%Y%m%dT%H%M%SZ',time.gmtime())

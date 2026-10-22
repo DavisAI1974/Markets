@@ -1,10 +1,19 @@
 import pathlib
 import unittest
-from family_guarded_recovery import guarded_source, validate_capture, recovery_scope, has_dispatch_failure
+from family_guarded_recovery import guarded_source, validate_capture, recovery_scope, has_dispatch_failure, validate_coordinator
 from family_completion_hook import coordinator_source
 
 
 class GuardedRecoveryTests(unittest.TestCase):
+    def test_second_recovery_uses_current_pinned_source_and_start_token(self):
+        cfg=dict(base='/base',pid=9,token='start',coordinator_source='/guarded/resume_multibox_candidate.py',
+                 coordinator_source_sha256='good')
+        cmd=[b'python3',str(pathlib.Path(cfg['coordinator_source'])).encode(),b'--execute']
+        validate_coordinator(cfg,cmd,'start','good')
+        with self.assertRaises(ValueError):validate_coordinator(cfg,cmd,'stale','good')
+        with self.assertRaises(ValueError):validate_coordinator(cfg,cmd,'start','changed')
+        with self.assertRaises(ValueError):validate_coordinator(cfg,[b'python3',b'/old/resume_multibox_candidate.py',b'--execute'],'start','good')
+
     def test_scope_preserves_small_shard_owner_and_32_physical_slots(self):
         plan=dict(instances={'C':'i-c'},slots={'C':32},cohorts=[dict(owner='C',cohort=['o','1','2'])])
         self.assertEqual(recovery_scope(dict(owner='C',instance='i-c'),plan),('C',32,{('o','1','2')}))
