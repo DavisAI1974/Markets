@@ -766,20 +766,40 @@ contain market information.
 
 ---
 
-#### New set-aside candidates — pending Greg's ruling
+#### Grouping handle principle — Greg, October 22 2026
 
-The following fields survive the current filter but are NOT market conditions. They require a
-ruling before they can be added to any set-aside class.
+**A grouping label is a convenience handle for a cluster of associated conditions. The label
+itself is not the finding; the conditions that cluster under it are. Keep the label; inspect
+the conditions.**
 
-| Field | Observed values | Why it is not a market condition |
-|-------|----------------|----------------------------------|
-| `legacy_rows` | `"[]"` (empty list) | Completeness metadata. Indicates no legacy rows were carried. A structural property of a stored record, not an observation of market behavior. |
-| `source_missing_fields` | `"[]"` (empty list) | Source data quality metadata. Indicates no fields were missing at ingestion. Not a market condition. |
-| `source_null_fields` | `"[]"` (empty list) | Source data quality metadata. Indicates no fields were null at ingestion. Not a market condition. |
-| `continuity_segment` | `"19648"` (fixed integer, same across all 19 tasks 2-20) | A recurrence run identifier. Identifies one specific execution of the recurrence computation, not a varying market observation. If groups are conditioned on this value, they are conditioned on "was computed in run 19648," not on any market state. |
+Greg's formulation: in energy trading, Saturday is not itself a market condition. But Saturday
+is a very convenient way to group the conditions that tend to behave a certain way on those days
+— different volume, liquidity, responsiveness. The day of the week is the handle; the underlying
+market behavior on those days is the content. You keep Saturday as a grouping mechanism precisely
+because it efficiently retrieves a cluster of conditions. What you never do is report "it was
+Saturday" as the finding.
 
-These four fields should be considered for addition to the "Source and process metadata" set-aside
-class or a new "Structural completeness metadata" class. No action taken pending Greg's ruling.
+This principle governs how every grouping label in the SQLite is treated:
+- A `level_event_key` value is a handle for the conditions associated with that level event.
+- A `continuity_segment` value is a handle for the observations from that recurrence run.
+- A `trading_day` or `trading_weekday` value is a handle for the conditions on that session date.
+- An empty `legacy_rows=[]` or `source_missing_fields=[]` is a handle for observations sharing
+  that structural property.
+
+In each case: keep the label, follow it to the underlying conditions, examine those conditions.
+The label is the address; the conditions at that address are what you study.
+
+**Ruling on structural metadata fields (Greg, October 22 2026):** The same principle applies to
+`legacy_rows`, `source_missing_fields`, `source_null_fields`, and `continuity_segment`. These
+are kept. They are not set aside. When tasks survive because of these conditions, follow them to
+the observations they group and examine what those observations share in terms of market behavior.
+
+| Field | Observed values | Status |
+|-------|----------------|--------|
+| `legacy_rows` | `"[]"` (empty list) | KEPT. Groups observations with no legacy rows. Inspect what those observations share. |
+| `source_missing_fields` | `"[]"` (empty list) | KEPT. Groups observations with complete source data. Inspect underlying conditions. |
+| `source_null_fields` | `"[]"` (empty list) | KEPT. Groups observations with no null source fields. Inspect underlying conditions. |
+| `continuity_segment` | `"19648"` (fixed integer across tasks 2-20) | KEPT. Groups all observations from one recurrence execution run. The run is the handle; what those observations share in terms of market conditions is the content. |
 
 ---
 
@@ -838,17 +858,16 @@ begin to answer.
 
 The triage output is fully retrieved and recorded above. The box can remain stopped.
 
-The remaining open items are:
-1. **Ruling on category 14** (level_event_key, level_event_key_at_exit): Greg's decision on
-   whether these are identity-like references or behavioral content. This determines whether
-   the dominant surviving field counts indicate real market condition groups or a second identity
-   class that needs set-aside.
-2. **Ruling on new set-aside candidates** (legacy_rows, source_missing_fields, source_null_fields,
-   continuity_segment): Greg's decision on whether to add these to a set-aside class.
-3. **Ruling on book level side tautologies**: Whether `frames.book.ask_levels_full[N].side="A"`
-   and `frames.book.bid_levels_full[N].side="B"` should be excluded as structurally constant.
-4. **Four-count reconciliation** (1,594,763 vs 1,594,767): Requires the SQLite when the box
+Remaining open items:
+1. **Book level side tautologies**: Whether `frames.book.ask_levels_full[N].side="A"` and
+   `frames.book.bid_levels_full[N].side="B"` should be excluded as structurally constant
+   (always true by definition of the book representation), or kept as handles and followed
+   to underlying ask/bid level conditions. Pending Greg's ruling.
+2. **Four-count reconciliation** (1,594,763 vs 1,594,767): Requires the SQLite when the box
    is available.
+
+Category 14 and structural metadata fields are resolved. The grouping handle principle applies
+across all labels.
 
 Do not attempt SQL queries against the tasks table. Do not restart any box without Greg's
 authorization.
