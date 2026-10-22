@@ -147,5 +147,6 @@
     "neural:residual_mlp": 1,
     "ridge": 1
   },
-  "evidence_path": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/actual-memory-runtime-verification-20261022T1827.json"
+  "evidence_path": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/actual-memory-runtime-verification-20261022T1827.json",
+  "coordinator_detection_note": "This snapshot filter only matched the former resume_memory_candidate filename; its empty coordinator_pids field is a reader limitation. Separate exact /proc/4409/cmdline check confirmed the new actual-memory coordinator; next requested ETA snapshot corrects the filter."
 }

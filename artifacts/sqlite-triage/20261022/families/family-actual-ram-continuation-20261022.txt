@@ -1,0 +1,43 @@
+ACTUAL-RAM CONTINUATION -- 2026-10-22
+
+Supersedes execution details only in the complete handoff at 496dc9c1.
+Read its full foundations. Scientific candidate definitions unchanged; V3 frozen;
+semantic coverage NOT_PASSED. All declared tasks remain mandatory.
+
+Current coordinator PID 4409 on i-035994afa8bdf66a5, us-east-1.
+B=/opt/frankie-box/work/family-research-20261022
+Source B/full-context-audit/scripts/resume_actual_memory_candidate.py
+State B/joint-models-v4-candidate-20261022/parallel-63/
+memory-recovery-20261022T182638Z-b253c45d/recovery-plan.json
+Log B/joint-models-v4-candidate-20261022/parallel-actual-memory-resume.log
+
+User ordered reservation estimates removed. Admission now uses actual
+MemAvailable >64 GiB and a 96 physical-core ceiling. No estimated job size
+controls admission; new estimates are zero. Job scopes remain unlimited.
+
+PID 3777 was paused at dispatch, all 67 running wrappers captured by exact
+PID/start token, task, output/cache/report and CPU, then only that coordinator
+was terminated. PID 4409 adopted those fits. No numerical fit/completed result
+or instance restarted. Old V1/V2 sources remain because their wrappers use them.
+
+At 18:34:07 UTC: sole coordinator 4409, 96 workers, 220 committed results;
+zero task/CPU duplicates; single-CPU affinity; unlimited scopes; 337319116 KiB
+available; host oom_kill 0. All 67 adopted jobs accounted for (51 live,16 success).
+18 focused recovery/admission checks passed. No extra broad audit.
+
+First requested 15-minute interval: 182 to 220 commits, baseline count stayed44.
+Only half the interval used actual-RAM admission. Provisional full-suite remaining
+estimate 10-18h; 22 cohorts/748 tasks is not final. 41 cohorts still unregistered.
+The 2106-task scenario assumes the observed22 groups, not a final declaration.
+
+Unfavorable evidence is retained. Absolute-mid-change/fold3 at1s: depth3 MAE
+0.00077559 versus zero-change0.00077041; at120s tabm MAE0.01464066 versus
+training-mean0.00276270. Partial exploratory results, no selected winner or
+established tradable signal. All masks/ages/scopes/as-of/provenance/censoring stay.
+
+Latest steering: keep current fits going; PLAN a second box; obtain another
+runtime estimate before any launch, snapshot or redistribution. No second
+instance or snapshots created. See tasks/family-research-20261022/second-box-plan.md.
+Use AWS plugin run_script/SSM, no AWS CLI. No monitors/subagents/chats/messages.
+Old Search unchanged. Active large results are on AWS EBS, not newly archived.
+

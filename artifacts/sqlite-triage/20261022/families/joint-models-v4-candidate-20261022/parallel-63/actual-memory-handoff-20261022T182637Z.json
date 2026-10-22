@@ -11,5 +11,7 @@
   "log": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-actual-memory-resume.log",
   "admission_policy": "no per-job estimates; actual MemAvailable > 64 GiB; ceiling 96",
   "no_numerical_fit_restarted": true,
-  "coverage_gate": "NOT_PASSED"
+  "coverage_gate": "NOT_PASSED",
+  "local_normalized_source_sha256": "ee6df11fac6122981d417ee0a99a52ebcfa6daa3a5e6e5f428684e9537b0160e",
+  "source_transport_note": "AWS source_sha256 includes one extra trailing newline added by Get-Content output transport; executable source is otherwise identical to the committed local source."
 }
