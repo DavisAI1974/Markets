@@ -1,0 +1,58 @@
+{
+  "checkpoint": "58549723e6d39cc2782666167726c1a6d82bf49c",
+  "input_version": "joint-inputs-v3",
+  "model_output_version": "joint-models-v3",
+  "persistent_base": "/opt/frankie-box/work/family-research-20261022",
+  "instance_id": "i-035994afa8bdf66a5",
+  "region": "us-east-1",
+  "verified_input_build": {
+    "families": 749,
+    "samples": 3745,
+    "historical_concepts": 13,
+    "registry_identities_and_dispositions": 99,
+    "prior_current_fields_including_ten_corrected_durations": 1896,
+    "added_current_fields": 5129,
+    "current_fields": 7025,
+    "total_columns": 28100,
+    "max_bid_rank": 281,
+    "max_ask_rank": 247,
+    "unique_native_source_records": 6265,
+    "exact_selected_contexts": 10486,
+    "additional_finite_matrix_cells": 44439180,
+    "v2_values_and_nan_unchanged": true,
+    "samples_and_outcomes_byte_identical": true,
+    "outcomes_sha256": "6a0613a357675ba60c7d4e946592b2aa69ea0e09dd488cd0ecfa4d54ba445608"
+  },
+  "source_extraction_command": "10045140-f007-4967-9000-c28f1dd7ef22",
+  "input_build_command": "3053cbe9-f04f-4fb4-8c4a-af80c70dd443",
+  "full_suite_command": "315bbaa5-c06c-4682-bb4a-7aeb730a8921",
+  "input_archive_command": "299175f8-a7fb-4d63-8b01-0b1828f07183",
+  "last_observed_fit_progress": {
+    "completed_core_configurations": 52,
+    "completed_neural_configurations": 15,
+    "execution_errors_observed": 0,
+    "model_preparation_tests_passed": 26,
+    "completion_verified": false
+  },
+  "access_status": "AWS plugin returned expired session token; user asked to reconnect. This does not establish that the already submitted SSM run stopped.",
+  "v1_review": {
+    "original_counts_and_contrasts_reproduced": 626,
+    "eligible_contrasts": 101,
+    "ineligible_contrasts": 525,
+    "pairs_with_raw_missing_values": 193,
+    "exact_pairs_eligible_in_multiple_folds": 0,
+    "phase_matched_sign_reversal_strata": 22,
+    "direction_matched_sign_reversal_strata": 20,
+    "half_hour_matched_sign_reversal_strata": 21,
+    "phase_direction_half_hour_strata_with_ten_per_corner": 0
+  },
+  "contradiction_registry": "Local tested generator ready; remote upload failed before SendCommand because session expired. Do not claim remote registry has been generated.",
+  "pending": [
+    "After AWS reconnection inspect full_suite_command; never blindly relaunch or overwrite v3.",
+    "Upload flag_research_contradictions.py and test_research_contradictions.py through SSM.",
+    "After full suite completes run summarize_layer_review.py, flag_research_contradictions.py for v1 and v3, and compare_full_depth_models.py.",
+    "Collect and save actual v3 outputs, input/source receipts, research flags, comparison tables and fitted states with verified durable archive receipts.",
+    "Report favorable, unfavorable, contradictory and inconclusive results together. No established tradable signal."
+  ],
+  "prohibited_actions": "No subagents, monitors, new chats, other-chat messages, lifecycle changes, live orders, repeated runtime/DB restoration, or huge recovery scans."
+}

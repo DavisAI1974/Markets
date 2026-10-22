@@ -1,0 +1,29 @@
+# Full-depth input completion and current output status
+
+The corrected duration block and the hundreds of native book levels are now in a separately verified numerical input snapshot, `joint-inputs-v3`. The complete model suite was submitted against that snapshot as `joint-models-v3`. Completion and final performance have not yet been verified: the AWS plugin session expired during the run. See `full-depth-rerun-status.json` for command IDs and the last observed evidence. Do not restart the fits without checking those commands.
+
+## What was recovered
+
+The old numerical inputs stopped at ten levels on each side. Exact reads of the 6,265 already indexed native records recovered all observed full-depth levels, reaching bid rank 281 and ask rank 247 across the retained contexts. The same 10,486 selected contexts and their original clocks, cursors, instruments and source ages are retained.
+
+There are 5,129 additional current field identities: deeper levels' eight validated scalar measurements, per-level FIFO size concentration and size-weighted priority age, full-side price span, the recorded ingress latency delta, and observed within-group receive-gap summaries. Full queue sizes/counts and cumulative volume ahead were reconciled; price units were checked against `price_raw/1e9`; overlapping top-ten scalar values agreed. Order IDs, absolute priority clocks and sequences remain provenance. Individual FIFO payloads remain pinned in the original indexed records; the new model fields summarize them rather than treating order identifiers as measurements.
+
+V3 contains **7,025 current fields / 28,100 total columns**, including the ten duration identities corrected in v2 and 120/300/600-second causal changes. It adds 44,439,180 finite matrix cells. Every v2 column, value and NaN is unchanged; samples and outcomes are byte-identical. All 749 families / 3,745 samples, the 13 external concepts, 99 registry roles/dispositions, confirmed second set and timestamped prices remain pinned together. Input outcome SHA256 is `6a0613a357675ba60c7d4e946592b2aa69ea0e09dd488cd0ecfa4d54ba445608`.
+
+All available ranks are in the raw matrix. Per-fit preprocessing still excludes fields that are wholly unobserved or constant in its training fold; that does not remove them from the master data or permit using future-fold variation to fit them. Training-only imputation/scaling and missingness indicators remain unchanged. The selected-phase history design is unchanged: occurrence models use current fields to prevent deliberately unmaterialized pre120 histories from identifying case phases. V3 does not invent those historical samples.
+
+## What remains unavailable
+
+The source's session-open receive anchor is null at all 6,265 indexed records: it is an exchange-calendar event anchor, not an observed receive anchor. The identity stays in the model registry, with unavailable numerical values. Other unavailable duration anchors remain unknown-since-resume. No anchor is manufactured.
+
+Undefined far-side flow, absent completed pullback steps, no prior publications/numerical weather observations, unknown rolling dictionary keys, stale quotes, retained-session edges and nonexistent book levels remain explicit. Latest-report weather M values are unchanged; already recovered same-station published history remains separately named with ages. Rounded `book_regime`/unverified ladder price fields are excluded numerically; the exact native book prices are available. No additional independent market day was found. Sparse heldout joint-response cells do not identify missing source records and cannot be filled with synthetic observations.
+
+## Contradictions and scientific follow-up
+
+The saved v1 review reproduced all 626 original corner-count/contrast rows. Only 101 meet ten observations per corner; 525 are inconclusive by that rule. No exact feature pair has eligible contrasts in more than one fold. At the same minimum support, 22 phase-matched strata, 20 prior-direction strata and 21 half-hour strata reverse their corresponding pooled contrast signs. These counts overlap and are not independent discoveries. No phase + prior-direction + half-hour stratum supports all four corners with ten observations each.
+
+The anchor audit recorded 33,705 anchor comparisons: 20,091 change anchors, and 470 cross continuity segments (counts repeat contexts across five anchors). Reset counts are 28/6,741 for last-book-reset, 6,718/6,741 for last-same-side-F_LAST, 6,678/6,741 for last-touch-change, 6,573/6,741 for last-trade and 94/6,741 for session-open. Differences of source-state counters remain valid measurements, but changes across anchors are not cumulative interval flow or rates. Anchor identities and source dispositions stay linked as provenance.
+
+At the user's direction, the contradiction registry records both answers, target/horizon/model/context, sample/corner support, evidence files and an open scientific question. It covers pooled-versus-matched sign reversals, supported exact-pair fold reversals, source blocks that help and hurt across folds, model performance that beats and loses to the benchmark across folds, and models predicting opposite mean directions on the same cohort. Stable research IDs preserve subsequent review status. Opposite sides or distinct horizons are different questions and are not automatically logical contradictions. The registry generator is locally tested; its remote deployment remains pending AWS reconnection.
+
+The rerun keeps all prior architectures and targets, source-group/history refits, chronological purge and ten-minute embargo, seeds and fixed hyperparameters. No conflict has been used to tune against the test data. All findings remain exploratory: one retained day and overlapping selected contexts do not establish causality, population occurrence hazard or a tradable edge.
