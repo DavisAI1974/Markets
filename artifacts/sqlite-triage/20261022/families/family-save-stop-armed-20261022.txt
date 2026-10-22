@@ -1,0 +1,167 @@
+FAMILY RESEARCH -- VERIFIED UNATTENDED SAVE AND STOP -- 2026-10-22
+Verified at 21:30:58-21:30:59 UTC (5:30 p.m. Eastern).
+
+AUTHORITATIVE READING / AUTHORIZATION
+Read family-save-stop-continuation-20261022.txt for the user's verbatim save/stop/
+restart authorization. Read the ENTIRE scientific foundations at Git checkpoint
+496dc9c1b42345e86c95fef84a7d2a07b2d36b06:
+artifacts/sqlite-triage/20261022/families/family-cpu-ram-v2-full-handoff-20261022.txt
+Then family-four-box-current-handoff-20261022.txt and
+family-dual-box-current-handoff-20261022.txt (unfavorable reproducibility history).
+This file supersedes only the older "callbacks/heartbeat not installed" status.
+User authorizes unattended save and stop, recovery/restart when needed, and this
+one follow-up. No new chats, subagents, cross-chat messages or live orders.
+
+CHECKOUT
+C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo
+Use only this clean checkout, never dirty E:/Markets.
+Repo DavisAI1974/Markets; remote branch claude/kalshi-s79-kickoff-ij8t9o.
+Implementation commits 1b1930b1 and 6b5c2d9d.
+Use AWS plugin run_script/SSM only. No AWS CLI or IAM broadening.
+
+LIVE NUMERICAL EXECUTION IS UNCHANGED
+Region us-east-1. BASE=/opt/frankie-box/work/family-research-20261022
+OUT=BASE/joint-models-v4-candidate-20261022
+ROOT=OUT/parallel-63
+Assignment ROOT/four-box-ownership-20261022.json:
+e08cabcf166ec07c1df712c714d11cda44e67cf5d94e02ca544a1ee9b69f0f6f
+63 disjoint cohorts A34/B19/C5/D5.
+DO NOT modify live resume_multibox_candidate.py/multibox_support.py, restart
+healthy fits, rerun completed fits, or start a duplicate finalizer/executor.
+Source hashes remain unchanged:
+resume_multibox_candidate.py e26c3348d7a545ec48deeb24574c5991217029c34d3f1a8f25972b294d340682
+multibox_support.py b2f05e9dd227374a4fbcad91d180f1355c64a530f6b54cc02b545b45d7615f3c
+The callback pins these hashes at startup. It never launches numerical work.
+
+VERIFIED SERVICE/COORDINATOR IDENTITIES
+family-save-stop.service on each host: active/running; static (not boot-enabled).
+A i-035994afa8bdf66a5 coordinator7072/start1177954; hook7732.
+  ROOT/memory-recovery-20261022T204459Z-4b147afc
+B i-087f8d3247ae847a9 coordinator5246/start699379; hook6059.
+  ROOT/memory-recovery-20261022T204529Z-d93fe1d4
+C i-031eeb577ad72b064 coordinator3102/start73146; hook4078.
+  ROOT/memory-recovery-20261022T204558Z-48385f29
+D i-0d17573dbce871520 coordinator2164/start72946; hook3046.
+  ROOT/memory-recovery-20261022T204558Z-1b4a9c1a
+Actual pidfd fdinfo on each hook points to that exact coordinator; /proc start
+tokens match. All four hook-status.json say waiting_for_exit.
+At verification: A623/B247/C105/D76 committed (1051 total);
+active-job checkpoint counts94/96/32/32. All coordinator states running.
+These are compact coordinator counts at that instant, not a fresh duplication/OOM
+audit or completion claim. No instance has been stopped by this setup.
+
+INSTALLED ISOLATED CALLBACK
+Directory BASE/save-stop-20261022:
+family_save_stop.py, family_completion_hook.py, family_final_backup.py,
+install_family_completion_hook.py, both focused test files, config.json/configs.json.
+Systemd unit /etc/systemd/system/family-save-stop.service:
+root, Type=simple, Restart=no, Nice10, idle I/O priority.
+ExecStart /usr/bin/python3 BASE/save-stop-20261022/family_completion_hook.py
+  --config BASE/save-stop-20261022/config.json
+No recurring process polling: the hook blocks in the kernel on pidfd exit.
+Process loss/reuse does not imply completion; all data proofs remain mandatory.
+A lock prevents concurrent callbacks; fresh process/quiescence and IMDS checks
+precede shutdown. Instance-initiated shutdown behavior was freshly read as stop
+on all4. The existing role has no EC2 lifecycle privileges; no IAM change made.
+Stop is /usr/bin/systemctl poweroff after local fsync/S3 read-back/disk sync.
+Every local run retains save-stop-config.json, save-stop-source/,
+save-stop-installation.json and save-stop-armed-verification.json.
+
+MANDATORY SAVE BEFORE STOP
+B/C/D: require shard_fits_complete, exact owner/digest/cohorts, no unregistered/
+deferred tasks, independently enumerated training-derived required model lists,
+exact required/committed/location key agreement, matching local transfer/shard
+completion and S3 receipts, full streamed S3 archive SHA256 and byte length.
+Only then save local and remote stop-proof, identical read-back, sync and stop.
+They do not wait for A's later global PCA/postprocessing; A reads their S3 archives.
+
+A: require its recovery-plan and parallel_plan complete_candidate after the sole
+original PCA12/k-means3/5 and all three original postprocessors; zero deferred jobs.
+Reconstruct own mandatory model lists from retained training prep and combine
+disjoint B/C/D required sets. Revalidate coherent model artifacts, unique exact
+global metric keys, finite/unique sample predictions, exact per-model counts and
+63-cohort coverage. Verify all3 remote archive hashes/lengths/import receipts.
+Collect all local OUT artifacts, own jobs, serial-prefix, attempts, preprocessing,
+all recovery runs, scripts, logs, final outputs and provenance. Exact five frozen
+metadata links are materialized (outcomes, sample master, feature registry, input
+receipt, excluded-predictor metadata). Known frozen dense matrix/raw/a.bin/b.bin
+are excluded with explicit snapshot reference; learned .jls files are retained.
+Remote imported state/preprocessing links map explicitly to the verified owner
+archive/member in the final manifest. Unknown external links refuse backup/stop.
+Final A tar.gz is outside OUT on whichever existing eligible disk has more free
+space. No local attempts/archives are deleted. Require complete archive space.
+Upload with existing role, stream back full SHA256/length, then save final manifest/
+stop-proof locally and remotely with identical read-back and fsync/sync before stop.
+
+DURABLE LOCATIONS
+Bucket frankie-granite42-568968024170-us-east-1 (account568968024170).
+All object operations require ExpectedBucketOwner and AES256 on writes.
+Existing B/C/D shard archives and statuses:
+host-deliveries/family-research-20261022/dual-box/<assignment-digest>/
+B-results.tar.gz/B-status.json (likewise C,D).
+Lifecycle/final archive prefix:
+host-deliveries/family-research-20261022/save-stop/<assignment-digest>/
+X-installation.json already uploaded and read back identically on all4.
+X-stop-proof.json appears ONLY after successful full verification.
+X-failure.json records callback validation/save failures; EBS remains intact.
+A-final-<time_ns>.tar.gz appears after final completion; its exact key/hash/bytes,
+coverage and collection/external-link manifest are in A-stop-proof.json.
+Local current run save-stop-proof.json and hook-status.json retain state.
+Local A archive storage candidates:
+BASE/save-stop-archives-20261022
+/opt/frankie-box/archive/family-save-stop-20261022 (if existing parent is mounted).
+Preserve frozen snap-0d3e867c1240b6528, all EBS, including detached original
+Search roots C vol-0b671bc7ea219a4ee / D vol-0c0ed346040147cfd.
+Never terminate instances or delete volumes/snapshots/artifacts. Storage charges
+remain after compute stops. No new instance/volume/snapshot was created here.
+
+VERIFICATION EVIDENCE
+family-save-stop-armed-verification-20261022.json includes full configs, source
+hashes, original numerical hashes, all4 systemd/pidfd/token proofs, fresh shutdown
+attribute reads and deployment evidence.
+SSM deployment b2cb3ada-edb4-4cdb-87f3-1118b2743e78:
+all4 Success/ResponseCode0, final13/13 focused tests passed on each Linux host;
+shutdown mocked, corruption/missing key/sample/link/identity refusal cases tested.
+SSM successful armed verification68f8d6aa-0d76-4ca3-b851-cfd04928876e.
+An earlier READ-ONLY verification reader mistakenly called len on active_jobs,
+which is an integer; that reader failed and was corrected. No executor/callback
+failure or restart occurred. An intermediate reader string escape was corrected
+before the successful pidfd assertion. No broad numerical audit was rerun.
+
+ONE SCOPED FOLLOW-UP NOW EXISTS
+Automation id family-research-save-and-stop; heartbeat ACTIVE every15minutes.
+Attached to THIS continuation thread01a16579-dca8-7380-a7ec-adfd5616ce09.
+Saved prompt includes only these four boxes and authorized completion/recovery;
+quiet while healthy/non-actionable, notify meaningful completion/failure/recovery.
+The desktop heartbeat needs this PC/app available. AWS completion callbacks do not.
+Callbacks deliberately are not boot-enabled: after a crash/restart, reconcile
+work and rearm against the exact replacement coordinator identity.
+Never restart already-complete verified/stopped boxes.
+After final artifacts and all possible scoped stops are verified, deactivate
+this heartbeat using automation_update. Keep this task's configuration/handoff
+updated on meaningful recovery or completion.
+
+FOLLOW-UP FIRST ACTION
+One compact EC2 state/SSM receipt/service/current coordinator check is enough.
+Do not interrupt healthy work or an active archive upload/verification.
+For callback failure preserve failure evidence; repair separate lifecycle source,
+test focused failure, then rearm without disturbing numerical work.
+For coordinator/instance failure, user explicitly authorizes restart as needed.
+Capture FRESH exact current wrapper PID/start tokens/task/output/cache/report/CPU
+leases and reconcile coherent results before one replacement executor; never
+reuse historical adoption manifests as live inventory, never duplicate a fit.
+A partially imported shard must be explicitly reconciled, never blindly overwritten.
+If all fits are done but finalization failed, preserve merged outputs and resume
+only missing mandatory final steps; do not rerun completed PCA unnecessarily.
+A stopped box with valid complete backup must stay stopped. A verified completed
+box whose OS shutdown failed may be stopped through the AWS plugin after fresh
+proof/quiescence checks; retain EBS and all archives.
+
+SCIENTIFIC LIMITS STAY IN FORCE
+V3 frozen; semantic coverage NOT_PASSED even after numerical completion.
+One aligned retained market day; no established tradable signal.
+Preserve exact as-of/Int64 clocks/cursors, missingness/ages/provenance/scopes/
+censoring/targets/seeds/epochs/training-only transforms and all contrary/
+unfavorable/inconclusive evidence. Both prior-original and repeated residual_mlp
+and neural_tree attempts remain evidence. residual_mlp max difference0.4313412606716156
+and worse repeated logloss are unresolved, not established rounding.

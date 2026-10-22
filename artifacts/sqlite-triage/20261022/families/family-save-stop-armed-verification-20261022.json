@@ -1,0 +1,329 @@
+{
+  "deployment_ssm_command": "b2cb3ada-edb4-4cdb-87f3-1118b2743e78",
+  "verification_ssm_command": "68f8d6aa-0d76-4ca3-b851-cfd04928876e",
+  "linux_tests": "13/13 passed on each of A,B,C,D; mocked OS shutdown; no numerical dispatch",
+  "shutdown_attributes": [
+    {
+      "id": "i-035994afa8bdf66a5",
+      "attribute": {
+        "InstanceId": "i-035994afa8bdf66a5",
+        "InstanceInitiatedShutdownBehavior": {
+          "Value": "stop"
+        }
+      }
+    },
+    {
+      "id": "i-087f8d3247ae847a9",
+      "attribute": {
+        "InstanceId": "i-087f8d3247ae847a9",
+        "InstanceInitiatedShutdownBehavior": {
+          "Value": "stop"
+        }
+      }
+    },
+    {
+      "id": "i-031eeb577ad72b064",
+      "attribute": {
+        "InstanceId": "i-031eeb577ad72b064",
+        "InstanceInitiatedShutdownBehavior": {
+          "Value": "stop"
+        }
+      }
+    },
+    {
+      "id": "i-0d17573dbce871520",
+      "attribute": {
+        "InstanceId": "i-0d17573dbce871520",
+        "InstanceInitiatedShutdownBehavior": {
+          "Value": "stop"
+        }
+      }
+    }
+  ],
+  "source_sha256": {
+    "family_save_stop.py": "8a143066b1f918a1ef5f30eb38034a2f7108b0ab130e102897ffc18d1898225a",
+    "family_completion_hook.py": "7a0988826b8ccb2950e6ec83d8afd187d3acfe9f12dbb089edcec27334ff5917",
+    "family_final_backup.py": "e5dda922f7867caf1da7debfff1b30a9b82ff36fb62b30cd700e46c2127a14b8",
+    "test_family_save_stop.py": "864b70a93aca3469aab6fe9a28a9a2932569d82e66c574941f0d7da59c8e4b41",
+    "test_family_completion.py": "d0dffd78ba078a4e5bceeab4d01782cc97f8df86acdcb478008da36da9d04422",
+    "install_family_completion_hook.py": "28c6c724e7d3f24678b3fc3029f637a3703bd489dafb3d0c24d36aa0cfeb2ee4"
+  },
+  "verification": [
+    {
+      "utc": "2026-10-22T21:30:58.321403+00:00",
+      "owner": "A",
+      "instance": "i-035994afa8bdf66a5",
+      "service": {
+        "MainPID": "7732",
+        "ExecMainStatus": "0",
+        "ActiveState": "active",
+        "SubState": "running",
+        "UnitFileState": "static"
+      },
+      "pidfd": [
+        "pos:\t0\nflags:\t02000002\nmnt_id:\t5\nino:\t327736\nPid:\t7072\nNSpid:\t7072\n"
+      ],
+      "coordinator_pid": 7072,
+      "expected_token": "1177954",
+      "actual_token": "1177954",
+      "hook": {
+        "owner": "A",
+        "pid": 7072,
+        "status": "waiting_for_exit",
+        "token": "1177954"
+      },
+      "numerical_source_unchanged": true,
+      "state": "running",
+      "committed": 623,
+      "active_jobs": 94
+    },
+    {
+      "utc": "2026-10-22T21:30:58.413318+00:00",
+      "owner": "B",
+      "instance": "i-087f8d3247ae847a9",
+      "service": {
+        "MainPID": "6059",
+        "ExecMainStatus": "0",
+        "ActiveState": "active",
+        "SubState": "running",
+        "UnitFileState": "static"
+      },
+      "pidfd": [
+        "pos:\t0\nflags:\t02000002\nmnt_id:\t5\nino:\t684039\nPid:\t5246\nNSpid:\t5246\n"
+      ],
+      "coordinator_pid": 5246,
+      "expected_token": "699379",
+      "actual_token": "699379",
+      "hook": {
+        "owner": "B",
+        "pid": 5246,
+        "status": "waiting_for_exit",
+        "token": "699379"
+      },
+      "numerical_source_unchanged": true,
+      "state": "running",
+      "committed": 247,
+      "active_jobs": 96
+    },
+    {
+      "utc": "2026-10-22T21:30:59.787386+00:00",
+      "owner": "C",
+      "instance": "i-031eeb577ad72b064",
+      "service": {
+        "MainPID": "4078",
+        "ExecMainStatus": "0",
+        "ActiveState": "active",
+        "SubState": "running",
+        "UnitFileState": "static"
+      },
+      "pidfd": [
+        "pos:\t0\nflags:\t02000002\nmnt_id:\t5\nino:\t16479\nPid:\t3102\nNSpid:\t3102\n"
+      ],
+      "coordinator_pid": 3102,
+      "expected_token": "73146",
+      "actual_token": "73146",
+      "hook": {
+        "owner": "C",
+        "pid": 3102,
+        "status": "waiting_for_exit",
+        "token": "73146"
+      },
+      "numerical_source_unchanged": true,
+      "state": "running",
+      "committed": 105,
+      "active_jobs": 32
+    },
+    {
+      "utc": "2026-10-22T21:30:58.383592+00:00",
+      "owner": "D",
+      "instance": "i-0d17573dbce871520",
+      "service": {
+        "MainPID": "3046",
+        "ExecMainStatus": "0",
+        "ActiveState": "active",
+        "SubState": "running",
+        "UnitFileState": "static"
+      },
+      "pidfd": [
+        "pos:\t0\nflags:\t02000002\nmnt_id:\t5\nino:\t233480\nPid:\t2164\nNSpid:\t2164\n"
+      ],
+      "coordinator_pid": 2164,
+      "expected_token": "72946",
+      "actual_token": "72946",
+      "hook": {
+        "owner": "D",
+        "pid": 2164,
+        "status": "waiting_for_exit",
+        "token": "72946"
+      },
+      "numerical_source_unchanged": true,
+      "state": "running",
+      "committed": 76,
+      "active_jobs": 32
+    }
+  ],
+  "installation": [
+    {
+      "status": "installed_tested_ready_to_arm",
+      "config": {
+        "owner": "A",
+        "instance": "i-035994afa8bdf66a5",
+        "pid": 7072,
+        "token": "1177954",
+        "state": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T204459Z-4b147afc/recovery-plan.json",
+        "run": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T204459Z-4b147afc",
+        "base": "/opt/frankie-box/work/family-research-20261022",
+        "out": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022",
+        "assignment": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/four-box-ownership-20261022.json",
+        "digest": "e08cabcf166ec07c1df712c714d11cda44e67cf5d94e02ca544a1ee9b69f0f6f",
+        "prefix": "host-deliveries/family-research-20261022/save-stop/e08cabcf166ec07c1df712c714d11cda44e67cf5d94e02ca544a1ee9b69f0f6f/",
+        "receipt_key": "host-deliveries/family-research-20261022/save-stop/e08cabcf166ec07c1df712c714d11cda44e67cf5d94e02ca544a1ee9b69f0f6f/A-stop-proof.json",
+        "shutdown_behavior_verified": "stop",
+        "frozen_input_snapshot": "snap-0d3e867c1240b6528",
+        "coverage_gate": "NOT_PASSED",
+        "numerical_helper_sha256": {
+          "resume_multibox_candidate.py": "e26c3348d7a545ec48deeb24574c5991217029c34d3f1a8f25972b294d340682",
+          "multibox_support.py": "b2f05e9dd227374a4fbcad91d180f1355c64a530f6b54cc02b545b45d7615f3c"
+        }
+      },
+      "source_sha256": {
+        "family_save_stop.py": "8a143066b1f918a1ef5f30eb38034a2f7108b0ab130e102897ffc18d1898225a",
+        "family_completion_hook.py": "7a0988826b8ccb2950e6ec83d8afd187d3acfe9f12dbb089edcec27334ff5917",
+        "family_final_backup.py": "e5dda922f7867caf1da7debfff1b30a9b82ff36fb62b30cd700e46c2127a14b8",
+        "test_family_save_stop.py": "864b70a93aca3469aab6fe9a28a9a2932569d82e66c574941f0d7da59c8e4b41",
+        "test_family_completion.py": "d0dffd78ba078a4e5bceeab4d01782cc97f8df86acdcb478008da36da9d04422",
+        "install_family_completion_hook.py": "28c6c724e7d3f24678b3fc3029f637a3703bd489dafb3d0c24d36aa0cfeb2ee4"
+      },
+      "numerical_source_sha256": {
+        "resume_multibox_candidate.py": "e26c3348d7a545ec48deeb24574c5991217029c34d3f1a8f25972b294d340682",
+        "multibox_support.py": "b2f05e9dd227374a4fbcad91d180f1355c64a530f6b54cc02b545b45d7615f3c"
+      },
+      "shutdown_mocked_in_tests": true
+    },
+    {
+      "status": "installed_tested_ready_to_arm",
+      "config": {
+        "owner": "B",
+        "instance": "i-087f8d3247ae847a9",
+        "pid": 5246,
+        "token": "699379",
+        "state": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T204529Z-d93fe1d4/recovery-plan.json",
+        "run": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T204529Z-d93fe1d4",
+        "base": "/opt/frankie-box/work/family-research-20261022",
+        "out": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022",
+        "assignment": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/four-box-ownership-20261022.json",
+        "digest": "e08cabcf166ec07c1df712c714d11cda44e67cf5d94e02ca544a1ee9b69f0f6f",
+        "prefix": "host-deliveries/family-research-20261022/save-stop/e08cabcf166ec07c1df712c714d11cda44e67cf5d94e02ca544a1ee9b69f0f6f/",
+        "receipt_key": "host-deliveries/family-research-20261022/save-stop/e08cabcf166ec07c1df712c714d11cda44e67cf5d94e02ca544a1ee9b69f0f6f/B-stop-proof.json",
+        "shutdown_behavior_verified": "stop",
+        "frozen_input_snapshot": "snap-0d3e867c1240b6528",
+        "coverage_gate": "NOT_PASSED",
+        "numerical_helper_sha256": {
+          "resume_multibox_candidate.py": "e26c3348d7a545ec48deeb24574c5991217029c34d3f1a8f25972b294d340682",
+          "multibox_support.py": "b2f05e9dd227374a4fbcad91d180f1355c64a530f6b54cc02b545b45d7615f3c"
+        }
+      },
+      "source_sha256": {
+        "family_save_stop.py": "8a143066b1f918a1ef5f30eb38034a2f7108b0ab130e102897ffc18d1898225a",
+        "family_completion_hook.py": "7a0988826b8ccb2950e6ec83d8afd187d3acfe9f12dbb089edcec27334ff5917",
+        "family_final_backup.py": "e5dda922f7867caf1da7debfff1b30a9b82ff36fb62b30cd700e46c2127a14b8",
+        "test_family_save_stop.py": "864b70a93aca3469aab6fe9a28a9a2932569d82e66c574941f0d7da59c8e4b41",
+        "test_family_completion.py": "d0dffd78ba078a4e5bceeab4d01782cc97f8df86acdcb478008da36da9d04422",
+        "install_family_completion_hook.py": "28c6c724e7d3f24678b3fc3029f637a3703bd489dafb3d0c24d36aa0cfeb2ee4"
+      },
+      "numerical_source_sha256": {
+        "resume_multibox_candidate.py": "e26c3348d7a545ec48deeb24574c5991217029c34d3f1a8f25972b294d340682",
+        "multibox_support.py": "b2f05e9dd227374a4fbcad91d180f1355c64a530f6b54cc02b545b45d7615f3c"
+      },
+      "shutdown_mocked_in_tests": true
+    },
+    {
+      "status": "installed_tested_ready_to_arm",
+      "config": {
+        "owner": "C",
+        "instance": "i-031eeb577ad72b064",
+        "pid": 3102,
+        "token": "73146",
+        "state": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T204558Z-48385f29/recovery-plan.json",
+        "run": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T204558Z-48385f29",
+        "base": "/opt/frankie-box/work/family-research-20261022",
+        "out": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022",
+        "assignment": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/four-box-ownership-20261022.json",
+        "digest": "e08cabcf166ec07c1df712c714d11cda44e67cf5d94e02ca544a1ee9b69f0f6f",
+        "prefix": "host-deliveries/family-research-20261022/save-stop/e08cabcf166ec07c1df712c714d11cda44e67cf5d94e02ca544a1ee9b69f0f6f/",
+        "receipt_key": "host-deliveries/family-research-20261022/save-stop/e08cabcf166ec07c1df712c714d11cda44e67cf5d94e02ca544a1ee9b69f0f6f/C-stop-proof.json",
+        "shutdown_behavior_verified": "stop",
+        "frozen_input_snapshot": "snap-0d3e867c1240b6528",
+        "coverage_gate": "NOT_PASSED",
+        "numerical_helper_sha256": {
+          "resume_multibox_candidate.py": "e26c3348d7a545ec48deeb24574c5991217029c34d3f1a8f25972b294d340682",
+          "multibox_support.py": "b2f05e9dd227374a4fbcad91d180f1355c64a530f6b54cc02b545b45d7615f3c"
+        }
+      },
+      "source_sha256": {
+        "family_save_stop.py": "8a143066b1f918a1ef5f30eb38034a2f7108b0ab130e102897ffc18d1898225a",
+        "family_completion_hook.py": "7a0988826b8ccb2950e6ec83d8afd187d3acfe9f12dbb089edcec27334ff5917",
+        "family_final_backup.py": "e5dda922f7867caf1da7debfff1b30a9b82ff36fb62b30cd700e46c2127a14b8",
+        "test_family_save_stop.py": "864b70a93aca3469aab6fe9a28a9a2932569d82e66c574941f0d7da59c8e4b41",
+        "test_family_completion.py": "d0dffd78ba078a4e5bceeab4d01782cc97f8df86acdcb478008da36da9d04422",
+        "install_family_completion_hook.py": "28c6c724e7d3f24678b3fc3029f637a3703bd489dafb3d0c24d36aa0cfeb2ee4"
+      },
+      "numerical_source_sha256": {
+        "resume_multibox_candidate.py": "e26c3348d7a545ec48deeb24574c5991217029c34d3f1a8f25972b294d340682",
+        "multibox_support.py": "b2f05e9dd227374a4fbcad91d180f1355c64a530f6b54cc02b545b45d7615f3c"
+      },
+      "shutdown_mocked_in_tests": true
+    },
+    {
+      "status": "installed_tested_ready_to_arm",
+      "config": {
+        "owner": "D",
+        "instance": "i-0d17573dbce871520",
+        "pid": 2164,
+        "token": "72946",
+        "state": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T204558Z-1b4a9c1a/recovery-plan.json",
+        "run": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/memory-recovery-20261022T204558Z-1b4a9c1a",
+        "base": "/opt/frankie-box/work/family-research-20261022",
+        "out": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022",
+        "assignment": "/opt/frankie-box/work/family-research-20261022/joint-models-v4-candidate-20261022/parallel-63/four-box-ownership-20261022.json",
+        "digest": "e08cabcf166ec07c1df712c714d11cda44e67cf5d94e02ca544a1ee9b69f0f6f",
+        "prefix": "host-deliveries/family-research-20261022/save-stop/e08cabcf166ec07c1df712c714d11cda44e67cf5d94e02ca544a1ee9b69f0f6f/",
+        "receipt_key": "host-deliveries/family-research-20261022/save-stop/e08cabcf166ec07c1df712c714d11cda44e67cf5d94e02ca544a1ee9b69f0f6f/D-stop-proof.json",
+        "shutdown_behavior_verified": "stop",
+        "frozen_input_snapshot": "snap-0d3e867c1240b6528",
+        "coverage_gate": "NOT_PASSED",
+        "numerical_helper_sha256": {
+          "resume_multibox_candidate.py": "e26c3348d7a545ec48deeb24574c5991217029c34d3f1a8f25972b294d340682",
+          "multibox_support.py": "b2f05e9dd227374a4fbcad91d180f1355c64a530f6b54cc02b545b45d7615f3c"
+        }
+      },
+      "source_sha256": {
+        "family_save_stop.py": "8a143066b1f918a1ef5f30eb38034a2f7108b0ab130e102897ffc18d1898225a",
+        "family_completion_hook.py": "7a0988826b8ccb2950e6ec83d8afd187d3acfe9f12dbb089edcec27334ff5917",
+        "family_final_backup.py": "e5dda922f7867caf1da7debfff1b30a9b82ff36fb62b30cd700e46c2127a14b8",
+        "test_family_save_stop.py": "864b70a93aca3469aab6fe9a28a9a2932569d82e66c574941f0d7da59c8e4b41",
+        "test_family_completion.py": "d0dffd78ba078a4e5bceeab4d01782cc97f8df86acdcb478008da36da9d04422",
+        "install_family_completion_hook.py": "28c6c724e7d3f24678b3fc3029f637a3703bd489dafb3d0c24d36aa0cfeb2ee4"
+      },
+      "numerical_source_sha256": {
+        "resume_multibox_candidate.py": "e26c3348d7a545ec48deeb24574c5991217029c34d3f1a8f25972b294d340682",
+        "multibox_support.py": "b2f05e9dd227374a4fbcad91d180f1355c64a530f6b54cc02b545b45d7615f3c"
+      },
+      "shutdown_mocked_in_tests": true
+    }
+  ],
+  "heartbeat": {
+    "id": "family-research-save-and-stop",
+    "kind": "heartbeat",
+    "interval_minutes": 15,
+    "status": "ACTIVE"
+  },
+  "limitations": [
+    "Callbacks run on AWS independently of desktop; desktop heartbeat requires local app/computer availability.",
+    "No actual shutdown yet: all four numerical coordinators are still running.",
+    "Services are static/not boot-enabled; recovery must rearm against a replacement coordinator identity.",
+    "Any missing task, corrupt backup, unknown external artifact link, live numerical process or failed read-back retains the box for recovery.",
+    "EBS/S3/snapshots retained; storage charges remain.",
+    "V3 frozen and semantic coverage NOT_PASSED; one retained aligned market day; unresolved unfavorable residual_mlp reproducibility evidence retained."
+  ]
+}
