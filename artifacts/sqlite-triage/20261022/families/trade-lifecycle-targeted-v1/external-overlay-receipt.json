@@ -1,0 +1,20 @@
+{
+  "status": "ALL_TRADES_LINKED_TO_ALL_48_ORIGINAL_EXTERNAL_SERIES",
+  "trades": 30739,
+  "dropped_trades": 0,
+  "original_series": 48,
+  "original_known_rows": 211055,
+  "original_source": "../external-classroom-audit-v1/original_series_known_values.json",
+  "original_13_binding": "all-13-input-bindings.json",
+  "original_nested_rows_untouched": true,
+  "all_later_rows_retained": true,
+  "selected_sequence_series_with_declared_updates": 25,
+  "terminal_three_second_series_with_declared_updates": 0,
+  "frankie_claims_retained": 510,
+  "aws_calls": 0,
+  "fits": 0,
+  "source_rehash": false,
+  "semantic_coverage": "NOT_PASSED; linking original evidence does not certify consumers or a trade signal",
+  "original_binding_points": 13,
+  "all_bound_series_accounted_for": true
+}

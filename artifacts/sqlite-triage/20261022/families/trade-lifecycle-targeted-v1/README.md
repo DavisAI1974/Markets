@@ -8,6 +8,8 @@ Dipole retains directional flow, its persistence/opposition, full-book depth/ord
 
 The first combined example is the original trade sequence **118–149** (zero-based source ordinals), including trades **122–143** overlapping `dip-19648-1697581775`. It is an exploratory example from this conversation, not a signal selected and validated out of sample. All original prints, the full nested dipole, compact second-set views, source references and surrounding lifecycle records are in [trade-dipole-overlay-example.json](trade-dipole-overlay-example.json).
 
+![Individual trade prints, stored dipole readings and the two distinct GFS horizon updates](trade-dipole-overlay.png)
+
 | Added evidence | Observable finding | Gap it fills; remaining limit |
 |---|---|---|
 | Individual tape prints | The overlapping prints run from 3.061 to 3.067, reaching 3.068 in between. | The flow path accompanied a rise with a one-tick giveback; the phase label alone does not describe that price path. |
@@ -22,6 +24,21 @@ The first combined example is the original trade sequence **118–149** (zero-ba
 The path's candidate event second is `1697581775`, available second `1697581825` (50 seconds later). Its completed source row is known by `1697582167857645502`, cursor `5689`. Stage-zero book timing remains an open audit flag. These clocks describe sequencing and original measurement meaning; **all later evidence remains allowed** in current retrospective explanation.
 
 ## Other newly checked trade mechanics
+
+### External context now joined to every trade
+
+`every-trade-original-external-links.jsonl.gz` attaches **all 48 original series covering all 13 run bindings** to every one of the 30,739 trades. Each series points into the unchanged nested `../external-classroom-audit-v1/original_series_known_values.json` (211,055 original known rows). Receive-time and group-close views retain last-published and first-later pointers; the whole history remains available. Publication clocks organize views without excluding later evidence, and no missing/invalid state is replaced with an older valid value.
+
+For the same trade sequence, [trade-dipole-external-overlay.json](trade-dipole-external-overlay.json) supplies original source rows and contradictory context:
+
+- GFS at declared publication `1697581800000000000`, between trades 122 and 123, changes October 18 HDD **5.126 → 4.941** while October 19 HDD changes **3.756 → 4.087**. The target dates match within each comparison. These opposite changes remain separate; their publication during the sequence does not establish which, if either, caused a trade move.
+- Twenty-five constituent series declare updates somewhere in trades 118–149; **none** declares a fresh publication during the three terminal dipole seconds. This narrows a fresh-release explanation at that instant while preserving background and later information.
+- Several city-temperature rows are explicitly INVALID. ATL's original `tmpf` is the string `M`, not a measured zero or an actual new temperature observation.
+- At trade 143, several traded-curve fields share original source ordinal **16023** and publication/receive `1697582150669638037`. Multiple fields of that same underlying row cannot serve as independent confirmation of the trade.
+
+The declared publication timestamps are not proof of live delivery. Original full rows, states, reasons and later observations remain accessible. No new AWS read or model fit was needed for this addition. See `external-overlay-receipt.json` and `external-overlay-verification.json`.
+
+### Execution and removal identities
 
 Trades 32 and 33 share one native emission, cursor 1141: two units at 3.058 and one at 3.059. The original queue records show three filled ask orders (IDs `788699907318`, `788699907316`, `788699906908`). Their `C` cleanup messages must not be counted as three new maker cancellations. In another direct example at cursor 374919, one removed unit belongs to a FILLED order and six to a CANCELLED order. Treating all seven as makers pulling would change the explanation incorrectly. Original records are retained in [new-trade-order-evidence.json](new-trade-order-evidence.json).
 
@@ -41,6 +58,7 @@ The saved absorption calculator also needs its source units: its reference adapt
 | `second-set-source/` | Full original bytes of four compact source members (771,787 rows), preserved in gzip chunks below GitHub's per-file size limit. |
 | `every-trade-original-second-set.jsonl.gz` | All trades matched exactly to input and emission clocks; full named 19-number compact views with states at trade input, previous input, prior completed group and emission close. |
 | `all-99-source-role-coverage.csv`, `all-13-input-bindings.json`, `all-510-frankie-knowledge-claims.json` | Exact run roles/bindings and saved claims remain in scope. An inventory or claim is not proof its semantics have all been consumed or established. |
+| `every-trade-original-external-links.jsonl.gz` | All 48 constituent external series at every trade, linked into the complete unchanged original nested history; all later rows retained. |
 | `every-trade-observed-lifecycle-windows.csv.gz` | Supplementary per-trade navigation at 1/5/20/60/120/300/600 seconds, including endpoint ages and edge censoring. Never a replacement for the individual path or a strategy return. |
 
 Original model forecasts stay at their original contexts in `../final-model-analysis-20261023/source/`. No prediction has been invented for an unmatched trade. Complementary model disagreements remain available without ranking, voting or averaging.
@@ -63,4 +81,4 @@ The next combined analyses should keep trades as the entry point and ask which a
 
 ## Reproduction of this checkpoint
 
-The ordered helper scripts are in `tasks/family-research-20261022/`: `targeted_trade_lifecycle_pass.py`, `read_bounded_second_set.py`, `finalize_trade_evidence.py`, `attach_trade_root_and_order_evidence.py`, `audit_trade_dipole_overlay.py`. The bounded-read helper accepts a temporary URL through stdin and never saves it; **no network repeat is required to use this checkpoint**, because original compact chunks are already saved. The finalizer removes only redundant scalar intermediates made by this pass and keeps nested originals. `checkpoint-verification.json` records the final preservation checks.
+The ordered helper scripts are in `tasks/family-research-20261022/`: `targeted_trade_lifecycle_pass.py`, `read_bounded_second_set.py`, `finalize_trade_evidence.py`, `attach_trade_root_and_order_evidence.py`, `audit_trade_dipole_overlay.py`, `attach_trade_external_evidence.py`. The bounded-read helper accepts a temporary URL through stdin and never saves it; **no network repeat is required to use this checkpoint**, because original compact chunks are already saved. The finalizer removes only redundant scalar intermediates made by this pass and keeps nested originals. `checkpoint-verification.json` and `external-overlay-verification.json` record preservation checks. `plot_trade_overlay.py` draws the individual observed points in `trade-dipole-overlay.png`; it does not interpolate a continuous market path.

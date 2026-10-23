@@ -10,6 +10,8 @@ Dipole supplies supporting flow context. The first combined overlay of trades 11
 
 Existing exhaustion work belongs in the workflow and can be appended later by exact instrument/time/cursor/order/path references. Do not start a duplicate exhaustion project or treat an unvalidated phase label as a proven exhaustion signal. All later knowledge/data may inform retrospective explanation. Semantic coverage remains NOT_PASSED; original MLP reproducibility, invalid magnitude and calibration evidence remain unresolved.
 
+The checkpoint also links every trade to all 48 original external series behind the 13 run bindings, preserving the 211,055 nested original history rows by exact references. The combined example retains opposite GFS horizon changes, invalid city temperatures, shared-source curve fields and the entire price tail. `external-overlay-verification.json` checks all 30,739 trade identities/clocks and 2,950,944 source views. No additional AWS read was needed for this local extension.
+
 The user subsequently allowed reusing the four boxes if a targeted gap fill needs them. None has been restarted in this continuation. A bounded AWS-plugin read of one existing S3 archive added four compact second-set members to the local Git evidence; no AWS CLI, resources, fits, orders, subagents, automations or cross-chat messages were used. No setup repeat, full raw restore or frozen-input/database rehash is needed. Later explicit user direction takes precedence over historical operating instructions below.
 
 ## Latest user direction: use the run list and start with every trade

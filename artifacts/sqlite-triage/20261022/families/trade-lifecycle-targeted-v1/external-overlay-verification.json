@@ -1,0 +1,12 @@
+{
+  "status": "PASSED_ALL_TRADE_EXTERNAL_POINTER_CHECKS",
+  "trades": 30739,
+  "dropped_trades": 0,
+  "original_series": 48,
+  "exact_trade_clocks_checked": true,
+  "source_views_checked": 2950944,
+  "original_nested_history_unchanged": true,
+  "all_later_history_still_referenced": true,
+  "scope": "Publication pointers checked; source claims are not certified live arrivals or causal effects",
+  "semantic_coverage": "NOT_PASSED"
+}
