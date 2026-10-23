@@ -1,0 +1,125 @@
+{
+  "status": "PUSH_VERIFIED_REDUNDANT_LOOSE_ORIGINALS_REMOVED",
+  "verified_at_utc": "2026-10-23T06:17:43.479916+00:00",
+  "remote_preservation_checkpoint": "c7f0a2278fae9e4c0550310700010193f849a854",
+  "deleted_files": [
+    {
+      "path": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/__pycache__/build_family_alignment.cpython-313.pyc",
+      "bytes": 17316,
+      "manifest": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/00-build_family_alignment.cpython-313.pyc.manifest.json"
+    },
+    {
+      "path": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/__pycache__/extract_prebirth_context.cpython-313.pyc",
+      "bytes": 7734,
+      "manifest": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/01-extract_prebirth_context.cpython-313.pyc.manifest.json"
+    },
+    {
+      "path": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/__pycache__/family_clock_sources.cpython-313.pyc",
+      "bytes": 3531,
+      "manifest": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/02-family_clock_sources.cpython-313.pyc.manifest.json"
+    },
+    {
+      "path": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/__pycache__/run_family_clock.cpython-313.pyc",
+      "bytes": 18712,
+      "manifest": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/03-run_family_clock.cpython-313.pyc.manifest.json"
+    },
+    {
+      "path": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/__pycache__/test_family_analysis_math.cpython-313.pyc",
+      "bytes": 2540,
+      "manifest": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/04-test_family_analysis_math.cpython-313.pyc.manifest.json"
+    },
+    {
+      "path": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/__pycache__/test_family_clock_sources.cpython-313.pyc",
+      "bytes": 3870,
+      "manifest": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/05-test_family_clock_sources.cpython-313.pyc.manifest.json"
+    },
+    {
+      "path": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/__pycache__/verify_price_clocks.cpython-313.pyc",
+      "bytes": 12580,
+      "manifest": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/06-verify_price_clocks.cpython-313.pyc.manifest.json"
+    },
+    {
+      "path": "artifacts/recovered-c-drive/20261022/canonical-knowledge-sources.tar.gz",
+      "bytes": 776573,
+      "manifest": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/07-canonical-knowledge-sources.tar.gz.manifest.json"
+    },
+    {
+      "path": "artifacts/recovered-c-drive/20261022/family-continuation-archives/continuation-review-package-v1.tar.gz",
+      "bytes": 257176,
+      "manifest": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/08-continuation-review-package-v1.tar.gz.manifest.json"
+    },
+    {
+      "path": "artifacts/recovered-c-drive/20261022/family-continuation-archives/continuation-source-20261022.tar.gz",
+      "bytes": 315464,
+      "manifest": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/09-continuation-source-20261022.tar.gz.manifest.json"
+    },
+    {
+      "path": "artifacts/recovered-c-drive/20261022/family-continuation-archives/dipole-book-clock-audit-v1.tar.gz",
+      "bytes": 3898548,
+      "manifest": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/10-dipole-book-clock-audit-v1.tar.gz.manifest.json"
+    },
+    {
+      "path": "artifacts/recovered-c-drive/20261022/family-continuation-archives/external-history-v4-normalized-v1.tar.gz",
+      "bytes": 3788033203,
+      "manifest": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.manifest.json"
+    },
+    {
+      "path": "artifacts/recovered-c-drive/20261022/family-continuation-archives/full-context-continuation-v1.tar.gz",
+      "bytes": 181035517,
+      "manifest": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/12-full-context-continuation-v1.tar.gz.manifest.json"
+    },
+    {
+      "path": "artifacts/recovered-c-drive/20261022/family-enriched-descriptive-v2-4012d169.tar.gz",
+      "bytes": 245482113,
+      "manifest": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/13-family-enriched-descriptive-v2-4012d169.tar.gz.manifest.json"
+    },
+    {
+      "path": "artifacts/recovered-c-drive/20261022/family-full-context-handoff-outputs-v2-b5a047bb.tar.gz",
+      "bytes": 3790533,
+      "manifest": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/14-family-full-context-handoff-outputs-v2-b5a047bb.tar.gz.manifest.json"
+    },
+    {
+      "path": "artifacts/recovered-c-drive/20261022/family-input-completeness-3600071f.tar.gz",
+      "bytes": 75926238,
+      "manifest": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/15-family-input-completeness-3600071f.tar.gz.manifest.json"
+    },
+    {
+      "path": "artifacts/recovered-c-drive/20261022/family-joint-results-7309cc08.tar.gz",
+      "bytes": 42809652,
+      "manifest": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/16-family-joint-results-7309cc08.tar.gz.manifest.json"
+    },
+    {
+      "path": "artifacts/recovered-c-drive/20261022/family-joint-states-66c0966b.tar.gz",
+      "bytes": 318795650,
+      "manifest": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/17-family-joint-states-66c0966b.tar.gz.manifest.json"
+    },
+    {
+      "path": "artifacts/recovered-c-drive/20261022/family-research-progress-38c37046.tar.gz",
+      "bytes": 260143208,
+      "manifest": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/18-family-research-progress-38c37046.tar.gz.manifest.json"
+    },
+    {
+      "path": "artifacts/recovered-c-drive/20261022/full-context-audit-snapshot-1-633f7259.tar.gz",
+      "bytes": 1386330,
+      "manifest": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/19-full-context-audit-snapshot-1-633f7259.tar.gz.manifest.json"
+    }
+  ],
+  "deleted_file_count": 20,
+  "deleted_redundant_bytes": 4922716488,
+  "all_original_bytes_retained_in_git_parts": true,
+  "original_C_paths_checked": 344,
+  "recorded_original_C_files_remaining": [],
+  "prior_document_destinations_already_tracked": 324,
+  "original_trades_retained": 30739,
+  "original_supporting_data_discarded": false,
+  "new_artifacts_outside_handoff_checkout": false,
+  "aws_operations": 0,
+  "model_fits": 0,
+  "new_resources": 0,
+  "original_S3_EBS_attempts_swap_snapshot_untouched": true,
+  "semantic_coverage": "NOT_PASSED",
+  "mlp_reproducibility": "UNRESOLVED",
+  "verification": "All 89 new parts checked by SHA256, remote-reachable Git blob identity, and ordered byte equality before deleting the exact 20 redundant files. No recursive deletion.",
+  "cleanup_execution": "Combined command rejected before execution; explicit literal-path nonrecursive PowerShell file removals succeeded.",
+  "C_scope": "Only the 344 original C paths in the prior relocation receipt were checked; no broad computer scan."
+}

@@ -71,7 +71,9 @@ def verify_pushed():
     assert relative(OUT / 'index.json') in tracked
     for file in [relative(OUT / 'index.json')] + [r['manifest'] for r in index['files']]:
         assert file in tracked
-        local_blob = subprocess.check_output(['git', 'hash-object', '--no-filters', str(ROOT / file)], cwd=ROOT, text=True).strip()
+        # Manifests are Git text; honor the checkout's declared CRLF/LF filter.
+        # Binary parts below must instead match without any filter.
+        local_blob = subprocess.check_output(['git', 'hash-object', '--path=' + file, str(ROOT / file)], cwd=ROOT, text=True).strip()
         remote_blob = subprocess.check_output(['git', 'rev-parse', remote_sha + ':' + file], cwd=ROOT, text=True).strip()
         assert local_blob == remote_blob
     candidates = []
