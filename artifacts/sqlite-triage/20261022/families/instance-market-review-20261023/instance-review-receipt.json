@@ -1,0 +1,47 @@
+{
+  "status": "individual_event_review_saved",
+  "instances": 749,
+  "pre_clock_checks": 749,
+  "instances_with_heldout_forecasts": 662,
+  "recorded_pre_event_forecasts": 426845,
+  "per_instance_main_and_quantile_rows": 109674,
+  "measurement_rows": 101115,
+  "candidate_screen": {
+    "formed_during_review_of": 375,
+    "matched_instances": 50,
+    "next_chronological_match": 391,
+    "use": "Case-finding only, not independently validated or selected on future returns",
+    "definition": "60s buy>sell;5s sell>buy;1s sell>buy;full bid size>full ask size"
+  },
+  "case": {
+    "instance": 375,
+    "family_id": "ow-a76c2c9727ecf53400a6",
+    "start_receive_ns": 1697634552081390598,
+    "start_utc": "2023-10-18T13:09:12.081390598+00:00",
+    "sample_id": "375:before_start",
+    "decision_cutoff_ns": 1697634552081390597,
+    "cursor_cap": 303655,
+    "strict_pre_source_ordinal": 233425,
+    "strict_pre_known_by_ns": 1697634552081085486,
+    "strict_pre_age_s": 0.000305111,
+    "observed_book_rows": 22194,
+    "level_rows_streamed": 10267320,
+    "checkpoint_level_rows": 8320,
+    "checkpoint_ladders": 18,
+    "matched_forecast_horizons": 7,
+    "recorded_family_occurrences": 4,
+    "neighboring_first_events": 32,
+    "external_rows": 62,
+    "same_instrument_future_endpoints": "Matched saved signed outcomes within1e-12 at1,5,20,60,120,300,600s"
+  },
+  "selection": "Original chronological middle family, chosen before outcomes. All749instance index in chronological order; no outcome filtering.",
+  "limits": [
+    "First-observed structural family, not a filled trade or proven cause.",
+    "Only instance375 has a dedicated local consecutive book window; nearby instances can overlap that window with partial coverage.",
+    "Checkpoint ladders summarize observed queue fields; they do not identify individual FIFO order survival.",
+    "depth_n matches top10level sums at all18checked checkpoint ladders; producer name retained elsewhere.",
+    "Rolling activity windows overlap. Their counts are not independent evidence.",
+    "One day, semantic coverage NOT_PASSED, neural repeatability/domain caveats unchanged."
+  ],
+  "operations": "Read local saved projections only. No AWS call, EC2 start, raw/database rehash, new fit, trade, ensemble or production change."
+}

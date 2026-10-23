@@ -2,9 +2,11 @@
 
 Completed expanded-depth family research · October 23, 2026 UTC / October 22 Eastern
 
+**Current research unit:** the user clarified that averages inform investigation but do not supply a trade signal. The [instance-by-instance records](../instance-market-review-20261023/instance-by-instance.md) now preserve all 749 events separately. Begin with the [exact instance 375 replay and next matching instance](../instance-market-review-20261023/instance-375-review.md). The aggregates below remain supporting context.
+
 The useful result is a layered description of this market day: **how active the selected family contexts are, how much price moves, how it travels, which book and historical conditions accompany those moves, and where direction and uncertainty remain unresolved.** Each model contributes to that description. Their disagreement is part of the evidence.
 
-For a concrete example, the ten-minute held-out quote outcomes have mean absolute movement of **0.007900** but mean signed movement of only **−0.000537**. Substantial movements in opposite directions can cancel in the average. The separate trade-path view then shows movement inside the window that endpoint forecasts alone cannot describe. A fuller account needs both kinds of information.
+For a concrete example, the ten-minute held-out quote outcomes have mean absolute movement of **0.007900** but mean signed i see your averagwesa movement of only **−0.000537**. Substantial movements in opposite directions can cancel in the average. The separate trade-path view then shows movement inside the window that endpoint forecasts alone cannot describe. A fuller account needs both kinds of information.
 
 The expanded book is substantively present: **125 of 126 shallow/deeper tree fits used fields beyond book level 10**, with a fitted split reaching rank 265. Queue ages, queue concentration, sizes, timing, curve information and their histories appear in conditional relationships. Those relationships change with the question and horizon. This is more informative than a universal claim that one model or data block is best.
 

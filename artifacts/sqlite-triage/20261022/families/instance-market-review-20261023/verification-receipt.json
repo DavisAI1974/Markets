@@ -1,0 +1,13 @@
+{
+  "status": "passed",
+  "exact_integer_clocks_in_all_749_json_records": true,
+  "all_749_pre_sources_observable_before_decision": true,
+  "strict_before_csv_clock_preserved_without_float_rounding": true,
+  "instance391_endpoints_matched_to_same_saved_book_window": 6,
+  "chronological_case_screen_matches": 50,
+  "screen_uses_only_pre_event_fields": true,
+  "document_links_verified": 16,
+  "no_causal_or_trading_signal_validation_claim": true,
+  "readable_individual_cards": 749,
+  "all_instance_navigation_links_verified": 6010
+}

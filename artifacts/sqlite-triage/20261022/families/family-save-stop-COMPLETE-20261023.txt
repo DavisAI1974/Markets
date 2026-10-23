@@ -1,5 +1,14 @@
 FAMILY RESEARCH -- VERIFIED COMPLETE, ALL FOUR STOPPED -- 2026-10-23
 
+LATEST SCIENTIFIC DIRECTION: averages inform research but are not a trade signal.
+User requires individual market instances, observable decision-time conditions,
+book/flow/queue sequence, each frozen model forecast and later price response.
+Read instance-market-review-20261023/instance-375-review.md first. All749separate
+readable records in instance-market-review-20261023/instance-by-instance.md.
+375 has exact consecutive book replay;391 is next chronological matching context
+and overlaps the same episode. 50matching contexts are case-finding, not validation.
+No AWS calls, box starts, new fits, live orders or production changes performed.
+
 SCIENTIFIC ANALYSIS COMPLETE: final-model-analysis-20261023/full-model-perspectives.md
 combines complementary views rather than ranking architectures. Includes every
 point-model horizon, all717pooled profiles/all2151fold metrics, all480block/history
