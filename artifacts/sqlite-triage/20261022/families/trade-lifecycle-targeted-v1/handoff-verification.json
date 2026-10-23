@@ -1,0 +1,26 @@
+{
+  "status": "PASSED_FINAL_TRADE_HANDOFF_CHECKS",
+  "original_day_trades": 30739,
+  "every_original_trade_field_checked": true,
+  "dropped_trades": 0,
+  "exact_new_trade_contexts": 32,
+  "original_new_records": 17663,
+  "exact_integer_trade_and_group_clocks_checked": true,
+  "quantity_and_side_ambiguities_preserved": true,
+  "full_nested_source_chunks_retained": true,
+  "excluded_topics_absent_from_requested_docs": true,
+  "document_links_checked": true,
+  "all_four_boxes_stopped_verified": true,
+  "temporary_transfers_removed": true,
+  "helper_syntax_checked": [
+    "export_bounded_quote_order_sources.py",
+    "receive_quote_order_sources.py",
+    "analyze_quote_order_gapfill.py",
+    "finalize_quote_order_interpretation.py",
+    "plot_exact_quote_order_path.py",
+    "verify_trade_handoff.py"
+  ],
+  "repeated_frozen_source_hash": false,
+  "semantic_coverage": "NOT_PASSED",
+  "mlp_reproducibility": "Original unresolved evidence retained"
+}

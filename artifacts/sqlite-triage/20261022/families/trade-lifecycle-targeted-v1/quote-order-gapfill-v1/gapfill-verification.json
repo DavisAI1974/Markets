@@ -1,0 +1,23 @@
+{
+  "status": "PASSED_EXACT_SOURCE_TRANSPORT_AND_TRADE_CHECKS",
+  "every_original_row_digest_checked": true,
+  "original_row_counts": {
+    "native.member": 1667,
+    "root.frames": 1667,
+    "second_set": 1667,
+    "native.lifecycle": 12662
+  },
+  "total_original_rows": 17663,
+  "continuous_group_records": 1667,
+  "exact_trade_actions_matched": 32,
+  "exact_pre_and_after_trade_books": 32,
+  "original_root_clocks_match_native": true,
+  "all_30739_trades_retained": true,
+  "dropped_trades": 0,
+  "averaged_prices_or_model_votes": false,
+  "original_nested_sources_untouched": true,
+  "frozen_source_database_rehash": false,
+  "quote_transitions": 81,
+  "semantic_coverage": "NOT_PASSED",
+  "mlp_reproducibility": "Unresolved original evidence unchanged"
+}

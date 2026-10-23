@@ -51,11 +51,12 @@
       "state": "stopped"
     }
   ],
-  "s3_temporary_transport": "Remove only the fresh transport object after Git push; original archives remain untouched.",
+  "s3_temporary_transport": "Deleted only this task's fresh temporary transport object after Git source checkpoint 5fe7a1a0 was pushed. Original S3 archives unchanged.",
   "output_location": "E:/Markets-family-research-handoff/artifacts/sqlite-triage/20261022/families/trade-lifecycle-targeted-v1/quote-order-gapfill-v1",
   "c_drive_outputs": 0,
   "subagents": 0,
   "automations": 0,
   "messages_to_other_chats": 0,
-  "orders": 0
+  "orders": 0,
+  "s3_temporary_transport_deleted": true
 }

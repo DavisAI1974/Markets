@@ -1,0 +1,11 @@
+Continue our completed-run trade lifecycle analysis. Read FIRST:
+E:/Markets-family-research-handoff/artifacts/sqlite-triage/20261022/families/trade-lifecycle-targeted-v1/trade-lifecycle-handoff-20261023.md
+Then its README and saved verification receipts.
+
+Work only in E:/Markets-family-research-handoff. Never dirty E:/Markets or save new artifacts on C:. Commit and push all new data, analysis, helpers and documents to the existing Markets branch.
+
+Trades are primary. Keep every one of the 30,739 market prints and all original supporting data. No averaging, flattening, model voting or discarded contradictory/flat/invalid evidence. Use the exact completed-run list: all 99 roles, full depth, MBO/FIFO/order identities, ROOT, Bedrock lifecycle, rich second set, 13 historical bindings, Frankie knowledge and original forecasts. All later knowledge/data is allowed in retrospective explanation. Preserve exact integer clocks, cursors and source meanings.
+
+Exact quote/order gaps for trades 118–149 are now filled with 1,667 consecutive original groups and 17,663 full original records in quote-order-gapfill-v1. Start with the checked lifecycle findings and per-trade exact analysis. Reconcile the remaining quantity/side ambiguities identified in the handoff, then continue lifecycle coverage across the day: prebirth, direction, momentum, duration, exhaustion, flips and tails. Existing exhaustion workflow results can be added later; do not duplicate that workflow.
+
+All four AWS boxes are verified stopped again. No setup repeat, broad scans, fits, new resources, orders, subagents, automations or messages to other chats. AWS plugin tools only for a specific necessary bounded archived-source read; never AWS CLI. Use the data already saved locally first. Keep semantic coverage NOT_PASSED and unresolved MLP reproducibility/calibration evidence explicit.
