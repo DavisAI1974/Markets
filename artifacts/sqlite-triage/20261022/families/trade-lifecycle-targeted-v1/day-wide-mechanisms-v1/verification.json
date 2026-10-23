@@ -1,0 +1,14 @@
+{
+  "status": "PASSED_DERIVATIVE_PRESERVATION_CHECKS",
+  "original_trades_and_integer_clocks": 30739,
+  "unchanged_nested_flow_records": 8088,
+  "fresh_flow_trade_counts_match_tape": 8088,
+  "individual_original_quote_views_verified": 64757,
+  "quote_coordinates_verified": 35147,
+  "external_publication_observation_refs_verified": 96515,
+  "all_external_states_values_and_shared_clocks_retained": true,
+  "all_consecutive_quote_runs_verified": 12615,
+  "original_master_unchanged": true,
+  "semantic_coverage": "NOT_PASSED",
+  "mlp_reproducibility": "UNRESOLVED"
+}

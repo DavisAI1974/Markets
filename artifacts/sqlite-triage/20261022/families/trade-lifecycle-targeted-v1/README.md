@@ -1,5 +1,9 @@
 # Trade lifecycle evidence and first combined interpretation
 
+## Broader whole-day explanations: fresh flow, rolling state and quote response
+
+Read [day-wide-mechanisms-v1/README.md](day-wide-mechanisms-v1/README.md), its [receipt](day-wide-mechanisms-v1/analysis-receipt.json) and [verification](day-wide-mechanisms-v1/verification.json). This continuation retains all 30,739 original trades and combines saved quote sources into 2,715 exact prior/close comparisons. It finds 343 changed prints with unchanged group quotes, 22 opposed print/midpoint changes, 2,605 saved seconds with nonzero rolling flow but no new tape trade, and 112 with opposing fresh net/rolling signs. Eight continuous unchanged-group-quote runs contain both rising/falling prints; all eight lie within the saved 375/391 window, not independent full-day replications. All 48 external series and the complete original history remain linked; shared traded-curve fields are not independent news. Original states, contradictions and unmatched trades remain explicit. No AWS operation or refit occurred; semantic coverage stays **NOT_PASSED**, MLP repeatability **UNRESOLVED**.
+
 ## Completed-run knowledge and the broader SQLite comparison
 
 The run-session screenshots identify the completed expanded family-model run at **682b69b3**. Its newly pushed [deep-market inventory](../deep-market-data-inventory-20261023.md) is now incorporated alongside an explicit [completed-run evidence index and SQLite findings](completed-run-connections-v1/README.md). The exact [original master list](../completed-run-source-list.json) still controls scope. The new index connects all 30,739 unchanged trades to the original 749 model-context timeline, all earlier/later contexts, saved order evidence and Frankie knowledge, without inventing per-trade predictions or claiming every retained claim has been scientifically consumed.
