@@ -1,5 +1,10 @@
 FAMILY RESEARCH -- VERIFIED COMPLETE, ALL FOUR STOPPED -- 2026-10-23
 
+NEW CHAT START HERE: family-instance-analysis-handoff-20261022.md.
+First task: detailed375versus391 queues/replenishment/price sequence and exact
+real-time observability; then ongoing instance-level analysis of this run.
+Deeper comparison is pending, not a completed absorption/exhaustion finding.
+
 LATEST SCIENTIFIC DIRECTION: averages inform research but are not a trade signal.
 User requires individual market instances, observable decision-time conditions,
 book/flow/queue sequence, each frozen model forecast and later price response.

@@ -1,0 +1,10 @@
+Continue our completed family-market research. Read this handoff FIRST:
+C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/family-instance-analysis-handoff-20261022.md
+
+Work only in that clean checkout; never dirty E:/Markets. All four AWS boxes are verified saved and stopped: do not restart them or rerun fits. Begin with existing local saved data.
+
+FIRST TASK: dig into instances 375 and 391. Compare their queues, replenishment, aggressor flow and price action before the moves. Establish exactly what differed, when each distinction became observable, and whether we could have seen it in real time before the relevant move rather than only afterward. Their saved book coverage overlaps, so these are related parts of an episode, not independent confirmations. Preserve exact integer event/receive/known-by clocks and cursor caps. Do not infer executions, cancellations, FIFO survival or absorption from net snapshot changes alone.
+
+Most of this chat should then be analysis of this completed run, one instance/market episode at a time. The 749 readable individual records, all original model forecasts and a preliminary 375 replay are saved. Use the different models as complementary perspectives, not a winner/loser contest. Averages are informative context and checks, but are not trade signals. Preserve conflicting, flat and unfavorable evidence; do not invent an entry rule or select cases on outcomes. Full semantic coverage remains NOT_PASSED and the MLP reproducibility caveat remains unresolved.
+
+The handoff has exact identities, paths, checked findings, source schemas, saved/stopped receipts and the pending analysis plan. Do not repeat setup or broad scans. Use AWS plugin tools only if a specific missing archived source later requires a bounded read; never AWS CLI. No new cloud resources, production changes, live orders, subagents, automations or messages to other chats.
