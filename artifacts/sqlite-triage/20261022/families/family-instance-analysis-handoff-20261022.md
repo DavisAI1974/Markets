@@ -2,6 +2,12 @@
 
 Prepared October 22, 2026 Eastern. **First work in the new chat: compare instances 375 and 391 in detail.** Most subsequent work should remain analysis of this completed run, one instance/market episode at a time.
 
+## October 22 continuation correction: analyze trading episodes first
+
+The user clarified that recorded trades and market behavior before, during and after a move are the primary analysis unit. Family events are explanatory annotations, alongside queues, aggressor flow, external context and frozen model perspectives. Instances 375 and 391 locate two related portions of a connected episode; their family appearances must not define the causal beginning, an entry, an execution, or independent confirmations. Distinguish market executions, quote changes and any actually recorded strategy fills. Price endpoints alone are not trades.
+
+C: cleanup was performed first. This same linked Markets checkout was relocated to `E:/Markets-family-research-handoff`; its prior C: source and the adjacent October 22 family research files now contain no remaining files on C:. All recovered documents are committed or have byte-identical existing Git copies. Existing bulk transport archives are preserved off C: inside the checkout and remain outside Git; see `artifacts/recovered-c-drive/20261022/relocation-receipt.json`. No AWS action was performed. E:/Markets has pre-existing changes in two granite files; they were left untouched.
+
 ## The user objective
 
 Latest user request: “dig into 375 and 391 and show what was different in the queues, replenishment and price action before the moves. could we have seen the difference in real time? create handoff and print drop in for new chat. have those 2 instances be the first thing we do but we will be spending most our time doing analysis of this run.”
@@ -23,7 +29,7 @@ The broader project keeps families, the confirmed second set, all 13 historical 
 Use only this existing clean checkout:
 
 ```text
-C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo
+E:/Markets-family-research-handoff
 ```
 
 Set every shell command's working directory explicitly to that checkout. **Never dirty E:/Markets.** Local branch `codex/family-research-handoff-20261022`; remote `https://github.com/DavisAI1974/Markets.git`, destination branch `claude/kalshi-s79-kickoff-ij8t9o`. The completed individual-record/replay checkpoint is **817064e7**; this handoff is an additional saved checkpoint. No fresh clone or setup reconstruction is needed.

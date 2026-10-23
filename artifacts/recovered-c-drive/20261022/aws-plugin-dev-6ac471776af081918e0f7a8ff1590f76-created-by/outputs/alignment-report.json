@@ -1,0 +1,29 @@
+{
+  "schema": "FAMILY_PREBIRTH_ALIGNMENT_REPORT_V1",
+  "counts": {
+    "family_start": 749,
+    "group_event": 583688,
+    "plane_registry": 99,
+    "external_point": 20,
+    "external_row": 329658,
+    "price_row": 30739,
+    "anchor_context": 749
+  },
+  "families_with_listed_differences": 0,
+  "external_13_count": 13,
+  "second_set_confirmed": true,
+  "lookback_seconds": 120,
+  "start_basis": "first observed structural family, recurring instances retained separately",
+  "signals_tested": false,
+  "notes": [
+    "All source plane identities and dispositions retained, including missing/thin/non-market roles.",
+    "SQL views retain original timestamps, cursors and native values. Raw receive-clock views are exploratory; availability clocks in second-set records remain distinct.",
+    "Full interval frame/member values remain in pinned source files through ordinal offset references; anchor_context contains all three actual anchor records. No claim that every source byte in every window has been statistically analyzed."
+  ],
+  "sqlite_quick_check": "ok",
+  "second_set_anchor_records_read": 749,
+  "root_frame_anchor_records_read": 749,
+  "native_member_anchor_records_read": 749,
+  "clock_representation_differences": 0,
+  "join_basis": "exact input cursor plus family identity; frame cursor is a top-level field"
+}

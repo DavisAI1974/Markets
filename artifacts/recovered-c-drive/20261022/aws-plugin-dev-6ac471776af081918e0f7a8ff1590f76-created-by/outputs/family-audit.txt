@@ -1,0 +1,44 @@
+Family-only audit — saved exports, 2026-10-22
+
+Scope
+Reviewed the level_event_key handle group's complete saved export. No database queries, box restarts, market-data joins, or prebirth signal searches were performed.
+
+Verified inventory
+family_id: 748 distinct values, 11,955 label occurrences.
+birth_family_id: 85 distinct values, 139 label occurrences.
+exit_family_id: 442 distinct values, 4,445 label occurrences.
+candidate_family_id: 441 distinct values, 1,321 label occurrences.
+Union across these four roles: 749 IDs.
+One ID appears only through exit_family_id: ow-c672a1b8872980089bff.
+All 85 birth IDs and all 441 candidate IDs occur in the primary family_id list.
+
+Primary family frequency distribution
+351 IDs have 1–9 occurrences; 365 have 10–49; 32 have 50 or more.
+These are label occurrence frequencies, not event counts, lifetimes, importance, or signal strength.
+The five highest counts are 326, 267, 204, 159, 103.
+The first three and fifth of these have no birth/exit/candidate references in this handle group's export. The fourth has one birth reference. This describes export coverage only; it does not prove those events never occurred.
+
+Critical interpretation
+The triage code explicitly states:
+"Task rows reference unique observation masks; labels on one selection are aliases, not proof of an explicit AND hypothesis."
+Therefore the prior handoff's treatment of selections as individual observation rows and of co-occurrences as joint event conditions is not established.
+The conjunction script also collapses full paths to leaf field names and removes array indexes. Its output does not retain the record-level links needed to associate an individual family with a birth, requeue, terminal state, timestamp, or instrument.
+Observed family-bearing paths include native.member.row.family_id, native.lifecycle.absorption[0].family_id, native.lifecycle.replenishment[n].family_id, native.lifecycle.queue[n].exit_family_id, and structure candidate_family_id paths.
+The saved conjunction export is uncapped: 3,084 exported pairs match its 3,084 counted pairs for this handle. The research/ handoff's script is an older capped version; the artifacts/sources uncapped script matches this export.
+
+Family questions still requiring original records or a dedicated export
+1. What exact record and identity rule create an ow- ID?
+2. Does a requeue retain or change that ID, and what links consecutive windows?
+3. What are the actual birth, event, exit and availability timestamps for each ID?
+4. Which terminal states belong to each ID, including censored or left-truncated histories?
+5. Can each label be traced through its observation mask to the underlying records without treating aliases as simultaneous facts?
+
+Next family-only extraction
+Preserve all 749 referenced IDs, their roles, full paths, indexes, mask/selection references and underlying source-record references. Trace the mask construction before interpreting links. Obtain family lifecycle rows with original timestamps and identity/requeue rules, retaining all missing values and censored states explicitly. No top-N family restriction or result cap. Market alignment and prebirth analysis follow this work.
+
+Sources
+https://github.com/DavisAI1974/Markets/blob/cb3534bf/artifacts/sqlite-triage/20261022/queries/conjunction-uncapped-results.json
+https://github.com/DavisAI1974/Markets/blob/cb3534bf/artifacts/sqlite-triage/20261022/sources/conjunction_query_uncapped_20261022.py
+https://github.com/DavisAI1974/Markets/blob/cb3534bf/artifacts/sqlite-triage/20261022/exports/triage_full_sqlite.py
+https://github.com/DavisAI1974/Markets/blob/cb3534bf/artifacts/sqlite-triage/20261022/exports/triage-fresh-results.json
+

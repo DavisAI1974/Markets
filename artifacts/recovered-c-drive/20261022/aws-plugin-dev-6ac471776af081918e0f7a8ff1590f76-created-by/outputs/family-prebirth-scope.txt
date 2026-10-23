@@ -1,0 +1,29 @@
+Family prebirth inspection — extraction scope
+Window: [recorded family start - 120 seconds, recorded family start).
+Keep the family-start event separately as t=0. Each recorded start remains provisional until its source is verified.
+For all 749 referenced family IDs, locate original lifecycle records first; retain unresolved IDs explicitly. No top-N restriction.
+Preserve instrument, source-record identity, full path/index, event time, receive time, availability time, start basis and requeue lineage where present.
+Inspect each applicable plane's native records through this interval. Retain the last known state at the window opening with its actual timestamp and age; keep all subsequent updates. Do not make slow data appear newly published in this interval. No resampling, averaging or smoothing.
+A row can support a prebirth observation only when its availability time is strictly before the recorded start. Record missing history, insufficient lookback, uncertain availability and segment boundaries explicitly.
+Compare and interpret only after actual values are aligned; no prebirth signal has yet been established.
+
+Verified source discovery
+Bucket: bento-568968024170-us-east-2-an
+Historical 13-point data: frankie/day_external/20231018/day-external.json
+Receipt: frankie/day_external/20231018/day-external-receipt.json
+Data SHA256 from receipt: d006252d605432994909a52e75fcbfe7cec3e42990a98c02e91e1f65212f0bc7
+13-point implementation: research/kalshi/frankie_boss/operations/frankie_day_external.py at 425656cca2694d9b7087c49d211f1772c8ecc101.
+It defines the 13 points explicitly and provides event_time_ns and published_ns. The registry associations are marked closest, not exact.
+13 points: NYMEX managed-money net 1y percentile; forecast gas-weighted HDD; managed-money net week-on-week change; managed-money net 3y percentile; US48 wind generation; sessions since prompt expiry; estimated gas burn; ICE LD1 managed-money net 1y percentile; forecast model disagreement; observed gas-weighted HDD/weather; weekly storage; storage estimate versus actual; futures curve.
+This identifies the 13-point input definition. It does not establish family-level alignment or complete coverage of the 99 planes.
+
+Candidate underlying journal: frankie/ingest/20231018/gh-36571235912-1/journal.compact.sqlite (8,824,270,848 bytes).
+Its receipt identifies trading day 20231018, using portions of the October 17 and October 18 MBO partitions, with an opening book warmed from preceding records. This is source-discovery evidence; it has NOT been bound to the 749 family IDs.
+Original family catalog named by the triage handoff:
+/opt/frankie-box/work/experiment-search/20231018/cycle-00/discovery.partial/recovery/indexed-v1/cells.sqlite
+
+Current execution boundary
+Main i-035994afa8bdf66a5, helper i-0d17573dbce871520, calculation i-031eeb577ad72b064 were read back as stopped in us-east-1.
+No restart, database change, market recomputation or prebirth signal search was performed.
+To inspect the original catalog on its existing host, the main box must be started with the user's explicit go under the prior handoff constraint. Use SQLite mode=ro and pragma query_only=on; preserve identity and timestamp fields that earlier filters excluded. Resolve mask aliases before interpreting family-to-record relationships. No BuildMap or new catalog.
+

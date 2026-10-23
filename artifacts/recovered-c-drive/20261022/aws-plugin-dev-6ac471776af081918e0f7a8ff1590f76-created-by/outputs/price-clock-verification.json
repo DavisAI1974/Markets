@@ -1,0 +1,24 @@
+{
+  "schema": "FAMILY_PRICE_CLOCK_VERIFICATION_V1",
+  "price_rows": 30739,
+  "exact_trade_event_and_receive_rows": 30739,
+  "group_close_availability_rows": 30739,
+  "rows_with_issues": 0,
+  "journal_path": "/opt/frankie-box/work/ingest-20231018-gh-36571235912-1/journal.compact.sqlite",
+  "journal_seal": [
+    [
+      "C15_EXACT_ORDER_BLOCK_GZIP_V1",
+      1543574,
+      "33a9d2e19674dd447f07daf32ca3cb9fe3065e0c7c7bd3973a6d309abe0b2cd4"
+    ]
+  ],
+  "journal_blocks_read": 11835,
+  "source_blocks_digest_verified": true,
+  "timestamp_basis": "original journal integer nanoseconds, never rounded float seconds",
+  "source_joins": "price provenance input_index -> individually verified original INPUT ordinal/cursor; group_close_input_index plus instrument -> exact group availability",
+  "missing_policy": "retain every price row and family; list source discrepancies",
+  "scope": "price timestamp recovery and source verification only; no family rerun, model, target or signal analysis",
+  "rerun_ready_price_clocks": true,
+  "seconds": 118.32,
+  "sqlite_quick_check": "ok"
+}

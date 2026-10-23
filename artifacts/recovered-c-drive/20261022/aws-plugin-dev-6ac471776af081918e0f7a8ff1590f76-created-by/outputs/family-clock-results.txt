@@ -1,0 +1,35 @@
+The combined family clock reconstruction is complete (2026-10-22).
+
+What is connected:
+- 749 first-observed structural family starts, with recurring group occurrences retained.
+- 583,688 retained market/family groups.
+- 771,787 confirmed second-set records, all decoded, indexed and hashed.
+- All 99 plane identities and their actual dispositions. Some are references to native/ROOT source payloads; some are thin, disabled or completed-only. They are not 99 fabricated live feature columns.
+- All 13 historical points, represented by 20 underlying tables and 329,658 original rows.
+- 30,739 trade prices, each with original event and receive nanoseconds, original trade cursor, emission cursor and verified availability.
+
+What passed:
+Every family, group and trade found its second-set match. The checked family/group/trade clocks had zero differences. Every source trade matched price, size and instrument. The 18 earlier pre-start lookup misses were corrected from the complete index; no missing observations were invented. SQLite integrity checks passed.
+
+What "run the clock" did:
+The reconstruction walked 1,132,933 timestamped records across the second set, external publications, trades and family starts. It preserved original input order and distinct event, receive and availability clocks. Family lookbacks begin two minutes before the first observation; the retained chronology continues afterward without a two-minute outcome cutoff.
+
+The price/family plot uses original receive times on one axis. Every original trade print and all 749 family starts are represented. The earliest shaded interval has no trade prints in this export; prices were not invented there. Quote/book evidence remains separately pinned in the native/ROOT source files.
+
+What is still analysis, rather than an established result:
+No predictive model has been fitted, no target selected, no prebirth signal established, and no tradable advantage demonstrated. Direction, momentum, exhaustion, continuation/reversal and possible trade conditions are research questions to examine next. Julia/EvoTrees and lagged models belong to that later stage; they were not part of this clock reconstruction.
+
+The family start is the first observed structural-family instance in retained data, not a proven original order birth. This distinction remains in the exported timestamps.
+
+Where the values live:
+The working SQLite database contains exact clocks, trades, external rows, actual anchor/pre-start records, all second-set raw component values, registry dispositions, and byte references/hashes for full second-set records. Full native/ROOT payloads remain in their original pinned indexed source files. This reconstruction does not claim to have reread every native/ROOT byte or statistically analyzed every field.
+
+Saved artifacts:
+- family-start-timestamps.csv: all 749 family anchors in original nanoseconds.
+- price-curve-timestamps.csv: all 30,739 timestamped trades and source verification fields.
+- combined-clock-report.json: counts, checks, source partitions and run receipt.
+- all-input-binding.json: 13, 99, second-set and original-source identities.
+- combined-clock-archive.json: durable S3 archive location and exact hashes.
+- family-price-timeline.png / .svg: price prints and family starts on the same receive clock.
+
+The 6,542,319,616-byte SQLite database is preserved as family-alignment.sqlite.gz in the private bucket bento-568968024170-us-east-2-an under frankie/family-prebirth/20261022/. The compressed archive is 674,723,676 bytes. Decompression reproduced the original database SHA-256 exactly. Full source payload references require access to their pinned original source files.

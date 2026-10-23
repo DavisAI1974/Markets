@@ -1,0 +1,15 @@
+{
+  "schema": "FAMILY_PREBIRTH_CONTEXT_REPORT_V1",
+  "family_count": 749,
+  "contexts": 1498,
+  "contexts_with_listed_gaps": 0,
+  "lookback_seconds": 120,
+  "all99_entries": 99,
+  "external_13_points": 13,
+  "second_set_included": true,
+  "seconds": 121.35,
+  "signals_tested": false,
+  "scope": "actual full native member, full ROOT frame and second-set rows at window opening and strictly before family first observation; all interval group/price/external rows remain queryable; no claim that two snapshots exhaust all dynamic patterns",
+  "lookup_errors_repaired": 18,
+  "note": "Original binary-search lookup misses corrected from complete second-set byte/cursor index; no source rows fabricated."
+}

@@ -1,0 +1,2075 @@
+{
+  "checkout": "E:/Markets-family-research-handoff",
+  "original_checkout_head": "682b69b3b992ab1dddfb2165d9d84e5e2b93c237",
+  "checkout_copy_verified_files": 2252,
+  "checkout_copy_verified_bytes": 1444284497,
+  "verification": "relative-path and byte-size inventory; duplicate recovered files compared byte-for-byte before removal; frozen inputs not rehashed",
+  "C_20261022_remaining_files": [],
+  "recovered_adjacent_inventory_bytes": 5397921632,
+  "files": [
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/outputs/alignment-report.json",
+      "bytes": 1329,
+      "destination": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/outputs/alignment-report.json",
+      "disposition": "recovered_document_to_commit"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/outputs/all-input-binding.json",
+      "bytes": 83119,
+      "destination": "artifacts/sqlite-triage/20261022/families/all-input-binding.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/outputs/combined-clock-archive.json",
+      "bytes": 486,
+      "destination": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/outputs/combined-clock-archive.json",
+      "disposition": "recovered_document_to_commit"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/outputs/combined-clock-report.json",
+      "bytes": 10181,
+      "destination": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/outputs/combined-clock-report.json",
+      "disposition": "recovered_document_to_commit"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/outputs/family-analysis-handoff.txt",
+      "bytes": 14062,
+      "destination": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/outputs/family-analysis-handoff.txt",
+      "disposition": "recovered_document_to_commit"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/outputs/family-audit.txt",
+      "bytes": 3705,
+      "destination": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/outputs/family-audit.txt",
+      "disposition": "recovered_document_to_commit"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/outputs/family-clock-research-scope.txt",
+      "bytes": 3682,
+      "destination": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/outputs/family-clock-research-scope.txt",
+      "disposition": "recovered_document_to_commit"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/outputs/family-clock-results.txt",
+      "bytes": 3683,
+      "destination": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/outputs/family-clock-results.txt",
+      "disposition": "recovered_document_to_commit"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/outputs/family-prebirth-scope.txt",
+      "bytes": 3348,
+      "destination": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/outputs/family-prebirth-scope.txt",
+      "disposition": "recovered_document_to_commit"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/outputs/family-price-timeline.png",
+      "bytes": 162930,
+      "destination": "artifacts/sqlite-triage/20261022/families/family-price-timeline.png",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/outputs/family-price-timeline.svg",
+      "bytes": 311532,
+      "destination": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/outputs/family-price-timeline.svg",
+      "disposition": "recovered_document_to_commit"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/outputs/family-role-inventory.csv",
+      "bytes": 24706,
+      "destination": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/outputs/family-role-inventory.csv",
+      "disposition": "recovered_document_to_commit"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/outputs/family-start-candidates.json",
+      "bytes": 782485,
+      "destination": "artifacts/sqlite-triage/20261022/families/family-start-candidates.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/outputs/family-start-timestamps.csv",
+      "bytes": 193167,
+      "destination": "artifacts/sqlite-triage/20261022/families/family-start-timestamps.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/outputs/prebirth-context-report.json",
+      "bytes": 703,
+      "destination": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/outputs/prebirth-context-report.json",
+      "disposition": "recovered_document_to_commit"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/outputs/prebirth-source-receipts.json",
+      "bytes": 48386,
+      "destination": "artifacts/sqlite-triage/20261022/families/prebirth-source-receipts.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/outputs/price-clock-verification.json",
+      "bytes": 1079,
+      "destination": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/outputs/price-clock-verification.json",
+      "disposition": "recovered_document_to_commit"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/outputs/price-curve-timestamps.csv",
+      "bytes": 10084456,
+      "destination": "artifacts/sqlite-triage/20261022/families/price-curve-timestamps.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/outputs/second-set-clock-partitions.json",
+      "bytes": 6682,
+      "destination": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/outputs/second-set-clock-partitions.json",
+      "disposition": "recovered_document_to_commit"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/__pycache__/build_family_alignment.cpython-313.pyc",
+      "bytes": 17316,
+      "destination": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/__pycache__/build_family_alignment.cpython-313.pyc",
+      "disposition": "existing_bytecode_off_C"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/__pycache__/extract_prebirth_context.cpython-313.pyc",
+      "bytes": 7734,
+      "destination": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/__pycache__/extract_prebirth_context.cpython-313.pyc",
+      "disposition": "existing_bytecode_off_C"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/__pycache__/family_clock_sources.cpython-313.pyc",
+      "bytes": 3531,
+      "destination": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/__pycache__/family_clock_sources.cpython-313.pyc",
+      "disposition": "existing_bytecode_off_C"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/__pycache__/run_family_clock.cpython-313.pyc",
+      "bytes": 18712,
+      "destination": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/__pycache__/run_family_clock.cpython-313.pyc",
+      "disposition": "existing_bytecode_off_C"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/__pycache__/test_family_analysis_math.cpython-313.pyc",
+      "bytes": 2540,
+      "destination": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/__pycache__/test_family_analysis_math.cpython-313.pyc",
+      "disposition": "existing_bytecode_off_C"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/__pycache__/test_family_clock_sources.cpython-313.pyc",
+      "bytes": 3870,
+      "destination": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/__pycache__/test_family_clock_sources.cpython-313.pyc",
+      "disposition": "existing_bytecode_off_C"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/__pycache__/verify_price_clocks.cpython-313.pyc",
+      "bytes": 12580,
+      "destination": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/__pycache__/verify_price_clocks.cpython-313.pyc",
+      "disposition": "existing_bytecode_off_C"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/build_family_alignment.py",
+      "bytes": 11317,
+      "destination": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/build_family_alignment.py",
+      "disposition": "recovered_document_to_commit"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/extract_prebirth_context.py",
+      "bytes": 4515,
+      "destination": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/extract_prebirth_context.py",
+      "disposition": "recovered_document_to_commit"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/family_clock_sources.py",
+      "bytes": 2387,
+      "destination": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/family_clock_sources.py",
+      "disposition": "recovered_document_to_commit"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/plot_family_clock.py",
+      "bytes": 2541,
+      "destination": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/plot_family_clock.py",
+      "disposition": "recovered_document_to_commit"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/run_family_clock.py",
+      "bytes": 12232,
+      "destination": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/run_family_clock.py",
+      "disposition": "recovered_document_to_commit"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/test_family_analysis_math.py",
+      "bytes": 1132,
+      "destination": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/test_family_analysis_math.py",
+      "disposition": "recovered_document_to_commit"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/test_family_clock_sources.py",
+      "bytes": 1927,
+      "destination": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/test_family_clock_sources.py",
+      "disposition": "recovered_document_to_commit"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/verify_price_clocks.py",
+      "bytes": 8860,
+      "destination": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/verify_price_clocks.py",
+      "disposition": "recovered_document_to_commit"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/canonical-knowledge-sources.tar.gz",
+      "bytes": 776573,
+      "destination": "artifacts/recovered-c-drive/20261022/canonical-knowledge-sources.tar.gz",
+      "disposition": "preserved_existing_bulk_archive_off_C_not_new_document"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-continuation-archives/continuation-review-package-v1.tar.gz",
+      "bytes": 257176,
+      "destination": "artifacts/recovered-c-drive/20261022/family-continuation-archives/continuation-review-package-v1.tar.gz",
+      "disposition": "preserved_existing_bulk_archive_off_C_not_new_document"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-continuation-archives/continuation-source-20261022.tar.gz",
+      "bytes": 315464,
+      "destination": "artifacts/recovered-c-drive/20261022/family-continuation-archives/continuation-source-20261022.tar.gz",
+      "disposition": "preserved_existing_bulk_archive_off_C_not_new_document"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-continuation-archives/dipole-book-clock-audit-v1.tar.gz",
+      "bytes": 3898548,
+      "destination": "artifacts/recovered-c-drive/20261022/family-continuation-archives/dipole-book-clock-audit-v1.tar.gz",
+      "disposition": "preserved_existing_bulk_archive_off_C_not_new_document"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-continuation-archives/external-history-v4-normalized-v1.tar.gz",
+      "bytes": 3788033203,
+      "destination": "artifacts/recovered-c-drive/20261022/family-continuation-archives/external-history-v4-normalized-v1.tar.gz",
+      "disposition": "preserved_existing_bulk_archive_off_C_not_new_document"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-continuation-archives/full-context-continuation-v1.tar.gz",
+      "bytes": 181035517,
+      "destination": "artifacts/recovered-c-drive/20261022/family-continuation-archives/full-context-continuation-v1.tar.gz",
+      "disposition": "preserved_existing_bulk_archive_off_C_not_new_document"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-enriched-descriptive-v2-4012d169.tar.gz",
+      "bytes": 245482113,
+      "destination": "artifacts/recovered-c-drive/20261022/family-enriched-descriptive-v2-4012d169.tar.gz",
+      "disposition": "preserved_existing_bulk_archive_off_C_not_new_document"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-full-context-handoff-outputs-v2-b5a047bb.tar.gz",
+      "bytes": 3790533,
+      "destination": "artifacts/recovered-c-drive/20261022/family-full-context-handoff-outputs-v2-b5a047bb.tar.gz",
+      "disposition": "preserved_existing_bulk_archive_off_C_not_new_document"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-input-completeness-3600071f.tar.gz",
+      "bytes": 75926238,
+      "destination": "artifacts/recovered-c-drive/20261022/family-input-completeness-3600071f.tar.gz",
+      "disposition": "preserved_existing_bulk_archive_off_C_not_new_document"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-joint-results-7309cc08.tar.gz",
+      "bytes": 42809652,
+      "destination": "artifacts/recovered-c-drive/20261022/family-joint-results-7309cc08.tar.gz",
+      "disposition": "preserved_existing_bulk_archive_off_C_not_new_document"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-joint-states-66c0966b.tar.gz",
+      "bytes": 318795650,
+      "destination": "artifacts/recovered-c-drive/20261022/family-joint-states-66c0966b.tar.gz",
+      "disposition": "preserved_existing_bulk_archive_off_C_not_new_document"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/all_second_set_component_dispositions.csv",
+      "bytes": 3307,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/all_second_set_component_dispositions.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/analysis_receipt.json",
+      "bytes": 915,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/analysis_receipt.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/artifact_manifest.json",
+      "bytes": 14404,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/artifact_manifest.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/association_stability.csv.gz",
+      "bytes": 2294197,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/association_stability.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/augment-external.log",
+      "bytes": 282,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/augment-external.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/complete-context.log",
+      "bytes": 800,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/complete-context.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/complete-pullback.log",
+      "bytes": 1223,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/complete-pullback.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/complete_context_measurements.csv.gz",
+      "bytes": 40397255,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/complete_context_measurements.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/direction_freshness_sensitivity.csv",
+      "bytes": 22684,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/direction_freshness_sensitivity.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/direction_summary.csv",
+      "bytes": 151671,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/direction_summary.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/elapsed_windows.csv.gz",
+      "bytes": 588785,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/elapsed_windows.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/exploratory_associations.csv.gz",
+      "bytes": 5650376,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/exploratory_associations.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/extended_group_measurements.csv.gz",
+      "bytes": 1097096,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/extended_group_measurements.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/external_asof.csv.gz",
+      "bytes": 2444973,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/external_asof.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/external_last_observed_measurements.csv.gz",
+      "bytes": 11341336,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/external_last_observed_measurements.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/external_point_provenance.csv",
+      "bytes": 24468,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/external_point_provenance.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/external_pre120_changes.csv.gz",
+      "bytes": 740971,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/external_pre120_changes.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/extract-geometry.log",
+      "bytes": 150,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/extract-geometry.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/family_context_linkage.csv.gz",
+      "bytes": 402676,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/family_context_linkage.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/family_master.csv",
+      "bytes": 104700,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/family_master.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/feature_availability.csv",
+      "bytes": 32986,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/feature_availability.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/feature_phase_availability.csv",
+      "bytes": 599090,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/feature_phase_availability.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/features.csv.gz",
+      "bytes": 5249012,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/features.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/geometry_contexts.csv.gz",
+      "bytes": 2924378,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/geometry_contexts.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/group-enrichment.log",
+      "bytes": 307,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/group-enrichment.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/group_context_receipts.csv.gz",
+      "bytes": 324821,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/group_context_receipts.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/group_measurements.csv.gz",
+      "bytes": 624619,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/group_measurements.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/indexed_context_source_receipts.csv.gz",
+      "bytes": 392126,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/indexed_context_source_receipts.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/input-audit.log",
+      "bytes": 24379,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/input-audit.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/input_completeness_receipt.json",
+      "bytes": 1122,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/input_completeness_receipt.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/input_external_missingness.csv",
+      "bytes": 111402,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/input_external_missingness.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/input_external_series_availability.csv",
+      "bytes": 25999,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/input_external_series_availability.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/input_last_observed_weather_availability.csv",
+      "bytes": 102778,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/input_last_observed_weather_availability.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/input_plane_role_inventory.csv",
+      "bytes": 23373,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/input_plane_role_inventory.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/input_price_window_coverage.csv",
+      "bytes": 665,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/input_price_window_coverage.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/input_pullback_availability.csv",
+      "bytes": 2737,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/input_pullback_availability.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/input_pullback_completion_receipt.json",
+      "bytes": 413,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/input_pullback_completion_receipt.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/input_pullback_dispositions.csv",
+      "bytes": 9932,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/input_pullback_dispositions.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/input_root_native_missingness.csv",
+      "bytes": 795680,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/input_root_native_missingness.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/input_second_set_availability.csv",
+      "bytes": 15450,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/input_second_set_availability.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/input_second_set_dispositions.csv",
+      "bytes": 34615,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/input_second_set_dispositions.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/input_snapshot_price_availability.csv",
+      "bytes": 173,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/input_snapshot_price_availability.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/Manifest.toml",
+      "bytes": 14375,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/Manifest.toml",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/math-tests.log",
+      "bytes": 96,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/math-tests.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/nearby_price_pairs.csv.gz",
+      "bytes": 338071,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/nearby_price_pairs.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/nearby_price_summary.csv",
+      "bytes": 1043,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/nearby_price_summary.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/overlap_counts.csv",
+      "bytes": 116980,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/overlap_counts.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/overlap_summary.csv",
+      "bytes": 217,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/overlap_summary.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/plane_disposition_summary.csv",
+      "bytes": 196,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/plane_disposition_summary.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/plane_registry.csv",
+      "bytes": 51913,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/plane_registry.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/prestart_feature_changes.csv.gz",
+      "bytes": 2515632,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/prestart_feature_changes.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/prestart_nearby_feature_pairs.csv.gz",
+      "bytes": 2249375,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/prestart_nearby_feature_pairs.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/prestart_nearby_feature_summary.csv",
+      "bytes": 106081,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/prestart_nearby_feature_summary.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/prior_price_diagnostics.csv",
+      "bytes": 214005,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/prior_price_diagnostics.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/Project.toml",
+      "bytes": 303,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/Project.toml",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/pullback_measurements.csv.gz",
+      "bytes": 272306,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/pullback_measurements.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/retained_group_sequence.csv.gz",
+      "bytes": 16050586,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/retained_group_sequence.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/revised-changes.log",
+      "bytes": 291,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/revised-changes.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/revised-report.log",
+      "bytes": 19167,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/revised-report.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/revised-run.log",
+      "bytes": 1389,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/revised-run.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/revised-summary.log",
+      "bytes": 6602,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/revised-summary.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/root_native_nearby_change_summary.csv.gz",
+      "bytes": 316433,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/root_native_nearby_change_summary.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/root_native_prestart_change_summary.csv.gz",
+      "bytes": 449425,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/root_native_prestart_change_summary.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/root_native_prestart_changes.csv.gz",
+      "bytes": 37700563,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/root_native_prestart_changes.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/run_receipt.json",
+      "bytes": 948,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/run_receipt.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/samples.csv",
+      "bytes": 510001,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/samples.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/second_set_context_receipts.csv.gz",
+      "bytes": 117202,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/second_set_context_receipts.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/source_registry.csv",
+      "bytes": 2079,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/source_registry.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/descriptive-v1/view_definitions.csv",
+      "bytes": 3109,
+      "destination": "artifacts/sqlite-triage/20261022/families/descriptive-v1/view_definitions.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/all_additions_ready.json",
+      "bytes": 2118,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/all_additions_ready.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/all_second_set_component_dispositions.csv",
+      "bytes": 3307,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/all_second_set_component_dispositions.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/analysis.log",
+      "bytes": 28311,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/analysis.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/analysis_receipt.json",
+      "bytes": 915,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/analysis_receipt.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/association_stability.csv.gz",
+      "bytes": 3021380,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/association_stability.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/collect-inputs.log",
+      "bytes": 997,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/collect-inputs.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/completed_analysis_receipt.json",
+      "bytes": 2207,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/completed_analysis_receipt.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/direction_freshness_sensitivity.csv",
+      "bytes": 22684,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/direction_freshness_sensitivity.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/enriched_context_measurements.csv.gz",
+      "bytes": 56664166,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/enriched_context_measurements.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/enrichment_receipt.json",
+      "bytes": 4177,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/enrichment_receipt.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/exploratory_associations.csv.gz",
+      "bytes": 7970330,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/exploratory_associations.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/extended_second_set.csv.gz",
+      "bytes": 1420248,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/extended_second_set.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/external_extended_asof.jsonl.gz",
+      "bytes": 12989963,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/external_extended_asof.jsonl.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/external_extended_availability.csv",
+      "bytes": 8021,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/external_extended_availability.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/external_pre120_changes.csv.gz",
+      "bytes": 740971,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/external_pre120_changes.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/feature_phase_availability.csv",
+      "bytes": 975133,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/feature_phase_availability.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/gate.log",
+      "bytes": 1208,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/gate.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/lifecycle_complete_quality.csv.gz",
+      "bytes": 4006305,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/lifecycle_complete_quality.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/lifecycle_context_links.csv.gz",
+      "bytes": 8837147,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/lifecycle_context_links.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/lifecycle_field_inventory.csv",
+      "bytes": 17483,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/lifecycle_field_inventory.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/lifecycle_original_rows.jsonl.gz",
+      "bytes": 10563726,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/lifecycle_original_rows.jsonl.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/lifecycle_quality_dispositions.csv.gz",
+      "bytes": 3048463,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/lifecycle_quality_dispositions.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/Manifest.toml",
+      "bytes": 14375,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/Manifest.toml",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/math-tests.log",
+      "bytes": 96,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/math-tests.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/native_measurements.csv.gz",
+      "bytes": 749744,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/native_measurements.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/native_quality_contexts.jsonl.gz",
+      "bytes": 1071553,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/native_quality_contexts.jsonl.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/nearby_price_summary.csv",
+      "bytes": 1043,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/nearby_price_summary.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/overlap_counts.csv",
+      "bytes": 116980,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/overlap_counts.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/overlap_summary.csv",
+      "bytes": 217,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/overlap_summary.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/plane_disposition_summary.csv",
+      "bytes": 196,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/plane_disposition_summary.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/prepare.log",
+      "bytes": 795,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/prepare.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/prestart_feature_changes.csv.gz",
+      "bytes": 2515632,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/prestart_feature_changes.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/prestart_nearby_feature_pairs.csv.gz",
+      "bytes": 2249375,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/prestart_nearby_feature_pairs.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/prestart_nearby_feature_summary.csv",
+      "bytes": 106081,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/prestart_nearby_feature_summary.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/prior_price_diagnostics.csv",
+      "bytes": 214005,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/prior_price_diagnostics.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/Project.toml",
+      "bytes": 303,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/Project.toml",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/quote_endpoint_receipts.jsonl.gz",
+      "bytes": 1508130,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/quote_endpoint_receipts.jsonl.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/quote_trade_pairs.csv.gz",
+      "bytes": 921314,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/quote_trade_pairs.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/quote_trade_summary.csv",
+      "bytes": 214443,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/quote_trade_summary.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/quote_windows.csv.gz",
+      "bytes": 638112,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/quote_windows.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/remaining_gaps.csv",
+      "bytes": 1804,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/remaining_gaps.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/result_manifest.json",
+      "bytes": 34323,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/result_manifest.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/root_native_nearby_change_summary.csv.gz",
+      "bytes": 581459,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/root_native_nearby_change_summary.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/root_native_prestart_change_summary.csv.gz",
+      "bytes": 1091494,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/root_native_prestart_change_summary.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/root_native_prestart_changes.csv.gz.part001",
+      "bytes": 80000000,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/root_native_prestart_changes.csv.gz.part001",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/root_native_prestart_changes.csv.gz.part002",
+      "bytes": 16876271,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/root_native_prestart_changes.csv.gz.part002",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/enriched-v2/second_set_clock_flow_receipts.jsonl.gz",
+      "bytes": 1764297,
+      "destination": "artifacts/sqlite-triage/20261022/families/enriched-v2/second_set_clock_flow_receipts.jsonl.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-inputs-v2/added_duration_availability.csv",
+      "bytes": 2843,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-inputs-v2/added_duration_availability.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-inputs-v2/build.log",
+      "bytes": 1556,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-inputs-v2/build.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-inputs-v2/correction-tests.log",
+      "bytes": 619,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-inputs-v2/correction-tests.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-inputs-v2/correction_audit.json",
+      "bytes": 618,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-inputs-v2/correction_audit.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-inputs-v2/excluded_predictor_metadata.csv",
+      "bytes": 15,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-inputs-v2/excluded_predictor_metadata.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-inputs-v2/model-tests.log",
+      "bytes": 90,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-inputs-v2/model-tests.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-inputs-v2/model_feature_registry.csv",
+      "bytes": 772137,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-inputs-v2/model_feature_registry.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-inputs-v2/model_input_receipt.json",
+      "bytes": 1209,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-inputs-v2/model_input_receipt.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-inputs-v2/model_outcomes.csv.gz",
+      "bytes": 617387,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-inputs-v2/model_outcomes.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-inputs-v2/model_sample_master.csv",
+      "bytes": 510001,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-inputs-v2/model_sample_master.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-inputs-v2/scripts/archive_joint_checkpoint.py",
+      "bytes": 2462,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-inputs-v2/scripts/archive_joint_checkpoint.py",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-inputs-v2/scripts/build_joint_model_inputs.jl",
+      "bytes": 7924,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-inputs-v2/scripts/build_joint_model_inputs.jl",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-inputs-v2/scripts/model_rules.jl",
+      "bytes": 2871,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-inputs-v2/scripts/model_rules.jl",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-inputs-v2/scripts/test_model_rules.jl",
+      "bytes": 1299,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-inputs-v2/scripts/test_model_rules.jl",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-inputs-v2/scripts/verify_duration_inputs.jl",
+      "bytes": 1834,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-inputs-v2/scripts/verify_duration_inputs.jl",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/all_model_fold_metrics.csv",
+      "bytes": 419598,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/all_model_fold_metrics.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/build.log",
+      "bytes": 1438,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/build.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/chronological_splits.csv",
+      "bytes": 5921,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/chronological_splits.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/excluded_predictor_metadata.csv",
+      "bytes": 1200,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/excluded_predictor_metadata.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/fitted_conditional_split_pairs.csv.gz",
+      "bytes": 1546257,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/fitted_conditional_split_pairs.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/fitted_split_features.csv.gz",
+      "bytes": 778502,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/fitted_split_features.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/heldout_alignment_audit.csv",
+      "bytes": 2346,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/heldout_alignment_audit.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/heldout_joint_response_cells.csv.gz",
+      "bytes": 108208,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/heldout_joint_response_cells.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/heldout_joint_response_contrasts.csv",
+      "bytes": 128266,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/heldout_joint_response_contrasts.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/interaction_analysis_receipt.json",
+      "bytes": 481,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/interaction_analysis_receipt.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/interactions-first-attempt.log",
+      "bytes": 1305,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/interactions-first-attempt.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/interactions.log",
+      "bytes": 482,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/interactions.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/market_state_assignments.csv",
+      "bytes": 665983,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/market_state_assignments.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/market_state_model_diagnostics.csv",
+      "bytes": 204299,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/market_state_model_diagnostics.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/model-tests.log",
+      "bytes": 90,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/model-tests.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/model_baseline_comparisons.csv",
+      "bytes": 151679,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/model_baseline_comparisons.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/model_comparison_summary.csv",
+      "bytes": 109674,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/model_comparison_summary.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/model_feature_registry.csv",
+      "bytes": 768197,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/model_feature_registry.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/model_input_receipt.json",
+      "bytes": 1091,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/model_input_receipt.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/model_metrics.csv",
+      "bytes": 367308,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/model_metrics.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/model_outcomes.csv.gz",
+      "bytes": 617387,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/model_outcomes.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/model_predictions.csv.gz",
+      "bytes": 29398612,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/model_predictions.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/model_run_receipt.json",
+      "bytes": 603,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/model_run_receipt.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/model_sample_master.csv",
+      "bytes": 510001,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/model_sample_master.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/model_summary_receipt.json",
+      "bytes": 511,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/model_summary_receipt.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/neural.log",
+      "bytes": 49722,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/neural.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/neural_metrics.csv",
+      "bytes": 42336,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/neural_metrics.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/neural_predictions.csv.gz",
+      "bytes": 3944319,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/neural_predictions.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/neural_run_receipt.json",
+      "bytes": 496,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/neural_run_receipt.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/observed_price_path_summary.csv",
+      "bytes": 18830,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/observed_price_path_summary.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/observed_price_paths.csv.gz",
+      "bytes": 1026759,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/observed_price_paths.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/pca_loadings.csv.gz",
+      "bytes": 649105,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/pca_loadings.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/pca_scores.csv.gz",
+      "bytes": 492576,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/pca_scores.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/pca_variances.csv",
+      "bytes": 267,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/pca_variances.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/phase_direction_model_diagnostics.csv.gz",
+      "bytes": 274169,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/phase_direction_model_diagnostics.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/price-paths.log",
+      "bytes": 583,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/price-paths.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/price_path_receipt.json",
+      "bytes": 582,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/price_path_receipt.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/quantile_interval_coverage.csv",
+      "bytes": 4715,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/quantile_interval_coverage.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/scripts/analyze_joint_interactions.jl",
+      "bytes": 7050,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/scripts/analyze_joint_interactions.jl",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/scripts/analyze_observed_price_paths.jl",
+      "bytes": 4251,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/scripts/analyze_observed_price_paths.jl",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/scripts/build_joint_model_inputs.jl",
+      "bytes": 7680,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/scripts/build_joint_model_inputs.jl",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/scripts/descriptive_math.jl",
+      "bytes": 785,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/scripts/descriptive_math.jl",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/scripts/model_rules.jl",
+      "bytes": 2654,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/scripts/model_rules.jl",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/scripts/run_joint_models.jl",
+      "bytes": 10600,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/scripts/run_joint_models.jl",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/scripts/run_neural_models.jl",
+      "bytes": 6786,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/scripts/run_neural_models.jl",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/scripts/summarize_joint_models.jl",
+      "bytes": 9612,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/scripts/summarize_joint_models.jl",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/scripts/test_model_rules.jl",
+      "bytes": 790,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/scripts/test_model_rules.jl",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/source_group_ablation_comparisons.csv",
+      "bytes": 224841,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/source_group_ablation_comparisons.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/summary.log",
+      "bytes": 512,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/summary.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/training_feature_dispositions.csv.gz",
+      "bytes": 3113892,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/training_feature_dispositions.csv.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/joint-models-v1/training_median_metrics.csv",
+      "bytes": 10462,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v1/training_median_metrics.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/julia-model-env/Manifest.toml",
+      "bytes": 30164,
+      "destination": "artifacts/sqlite-triage/20261022/families/julia-model-env/Manifest.toml",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/julia-model-env/Project.toml",
+      "bytes": 464,
+      "destination": "artifacts/sqlite-triage/20261022/families/julia-model-env/Project.toml",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/julia-neural-env/Manifest.toml",
+      "bytes": 55257,
+      "destination": "artifacts/sqlite-triage/20261022/families/julia-neural-env/Manifest.toml",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/julia-neural-env/Project.toml",
+      "bytes": 665,
+      "destination": "artifacts/sqlite-triage/20261022/families/julia-neural-env/Project.toml",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/layer-review-v1/model_conflict_research_receipt.json",
+      "bytes": 799,
+      "destination": "artifacts/sqlite-triage/20261022/families/layer-review-v1/model_conflict_research_receipt.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-handoff-repo/artifacts/sqlite-triage/20261022/families/layer-review-v1/model_conflict_research_registry.csv",
+      "bytes": 158342,
+      "destination": "artifacts/sqlite-triage/20261022/families/layer-review-v1/model_conflict_research_registry.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-progress-38c37046.tar.gz",
+      "bytes": 260143208,
+      "destination": "artifacts/recovered-c-drive/20261022/family-research-progress-38c37046.tar.gz",
+      "disposition": "preserved_existing_bulk_archive_off_C_not_new_document"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-audit-snapshot-1-633f7259.tar.gz",
+      "bytes": 1386330,
+      "destination": "artifacts/recovered-c-drive/20261022/full-context-audit-snapshot-1-633f7259.tar.gz",
+      "disposition": "preserved_existing_bulk_archive_off_C_not_new_document"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/dipole-audit-v1/classroom_claim_review_receipt.json",
+      "bytes": 706,
+      "destination": "artifacts/sqlite-triage/20261022/families/dipole-audit-v1/classroom_claim_review_receipt.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/dipole-audit-v1/complete_component_input_receipt.json",
+      "bytes": 11868,
+      "destination": "artifacts/sqlite-triage/20261022/families/dipole-audit-v1/complete_component_input_receipt.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/dipole-audit-v1/complete_pair_checks.csv",
+      "bytes": 844542,
+      "destination": "artifacts/sqlite-triage/20261022/families/dipole-audit-v1/complete_pair_checks.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/dipole-audit-v1/complete_pair_checks_receipt.json",
+      "bytes": 1277,
+      "destination": "artifacts/sqlite-triage/20261022/families/dipole-audit-v1/complete_pair_checks_receipt.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/dipole-audit-v1/complete_pair_state_counts.csv",
+      "bytes": 953097,
+      "destination": "artifacts/sqlite-triage/20261022/families/dipole-audit-v1/complete_pair_state_counts.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/dipole-audit-v1/dipole_contradiction_research_registry.csv",
+      "bytes": 726736,
+      "destination": "artifacts/sqlite-triage/20261022/families/dipole-audit-v1/dipole_contradiction_research_registry.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/dipole-audit-v1/external_classroom_claim_dispositions.csv",
+      "bytes": 142107,
+      "destination": "artifacts/sqlite-triage/20261022/families/dipole-audit-v1/external_classroom_claim_dispositions.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/dipole-audit-v1/native_classroom_claim_checks.csv",
+      "bytes": 48107,
+      "destination": "artifacts/sqlite-triage/20261022/families/dipole-audit-v1/native_classroom_claim_checks.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/brain-manifests/20211004-cycle-00--MANIFEST.json.json",
+      "bytes": 3208,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/brain-manifests/20211004-cycle-00--MANIFEST.json.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/brain-manifests/20211005-external--MANIFEST.json.json",
+      "bytes": 958,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/brain-manifests/20211005-external--MANIFEST.json.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/brain-manifests/20211006-external--MANIFEST.json.json",
+      "bytes": 957,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/brain-manifests/20211006-external--MANIFEST.json.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/brain-manifests/20211012-external--MANIFEST.json.json",
+      "bytes": 958,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/brain-manifests/20211012-external--MANIFEST.json.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/brain-manifests/20211013-external--MANIFEST.json.json",
+      "bytes": 957,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/brain-manifests/20211013-external--MANIFEST.json.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/brain-manifests/20211020-external--MANIFEST.json.json",
+      "bytes": 958,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/brain-manifests/20211020-external--MANIFEST.json.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/brain-manifests/20221004-external--MANIFEST.json.json",
+      "bytes": 957,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/brain-manifests/20221004-external--MANIFEST.json.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/brain-manifests/20221005-external--MANIFEST.json.json",
+      "bytes": 957,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/brain-manifests/20221005-external--MANIFEST.json.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/brain-manifests/20221011-external--MANIFEST.json.json",
+      "bytes": 957,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/brain-manifests/20221011-external--MANIFEST.json.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/brain-manifests/20221012-external--MANIFEST.json.json",
+      "bytes": 957,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/brain-manifests/20221012-external--MANIFEST.json.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/brain-manifests/20221018-external--MANIFEST.json.json",
+      "bytes": 957,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/brain-manifests/20221018-external--MANIFEST.json.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/brain-manifests/20221019-external--MANIFEST.json.json",
+      "bytes": 957,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/brain-manifests/20221019-external--MANIFEST.json.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/brain-manifests/20231003-external--MANIFEST.json.json",
+      "bytes": 956,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/brain-manifests/20231003-external--MANIFEST.json.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/brain-manifests/20231004-external--MANIFEST.json.json",
+      "bytes": 956,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/brain-manifests/20231004-external--MANIFEST.json.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/brain-manifests/20231010-external--MANIFEST.json.json",
+      "bytes": 957,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/brain-manifests/20231010-external--MANIFEST.json.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/brain-manifests/20231011-external--MANIFEST.json.json",
+      "bytes": 957,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/brain-manifests/20231011-external--MANIFEST.json.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/brain-manifests/20231017-external--MANIFEST.json.json",
+      "bytes": 957,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/brain-manifests/20231017-external--MANIFEST.json.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/brain-manifests/20231018-cycle-00--MANIFEST.json.json",
+      "bytes": 12113,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/brain-manifests/20231018-cycle-00--MANIFEST.json.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/brain-manifests/20231018-cycle-00--MANIFEST.json.retained-169c964163cff22fe800016034836a4d3a24ec8f0bb91ce6d8fc296e5e55592f.json",
+      "bytes": 10868,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/brain-manifests/20231018-cycle-00--MANIFEST.json.retained-169c964163cff22fe800016034836a4d3a24ec8f0bb91ce6d8fc296e5e55592f.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/brain-manifests/20231018-cycle-00--MANIFEST.json.retained-32b1ea1fe4f2587912a6e2a2dbc079c2dffd58e617d85ef459d7b5c06816e71f.json",
+      "bytes": 9677,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/brain-manifests/20231018-cycle-00--MANIFEST.json.retained-32b1ea1fe4f2587912a6e2a2dbc079c2dffd58e617d85ef459d7b5c06816e71f.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/brain-manifests/20231018-day-file--MANIFEST.json.json",
+      "bytes": 732,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/brain-manifests/20231018-day-file--MANIFEST.json.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/brain-manifests/20231018-day-file.superseded-20261007T195337Z--MANIFEST.json.json",
+      "bytes": 732,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/brain-manifests/20231018-day-file.superseded-20261007T195337Z--MANIFEST.json.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/brain-manifests/20231018-external--MANIFEST.json.json",
+      "bytes": 957,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/brain-manifests/20231018-external--MANIFEST.json.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/brain-manifests/20231018-ingest--MANIFEST.json.json",
+      "bytes": 650,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/brain-manifests/20231018-ingest--MANIFEST.json.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/brain-manifests/20231018-root--MANIFEST.json.json",
+      "bytes": 842,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/brain-manifests/20231018-root--MANIFEST.json.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/brain-manifests/20231018-teacher--MANIFEST.json.json",
+      "bytes": 1281,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/brain-manifests/20231018-teacher--MANIFEST.json.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/brain-manifests/20231018-teacher-account--MANIFEST.json.json",
+      "bytes": 1566,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/brain-manifests/20231018-teacher-account--MANIFEST.json.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/brain-manifests/20231018-teacher-second-set--MANIFEST.json.json",
+      "bytes": 3155,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/brain-manifests/20231018-teacher-second-set--MANIFEST.json.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/brain-manifests/cycle-00--MANIFEST.json.json",
+      "bytes": 1931,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/brain-manifests/cycle-00--MANIFEST.json.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/brain_manifest_inventory.json",
+      "bytes": 34207,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/brain_manifest_inventory.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/canonical-99-registry.json",
+      "bytes": 37242,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/canonical-99-registry.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/canonical-source-recovery.json",
+      "bytes": 50465,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/canonical-source-recovery.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/complete-dipole-checks.log",
+      "bytes": 1547,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/complete-dipole-checks.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/complete-dipole-inputs.log",
+      "bytes": 1298,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/complete-dipole-inputs.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/complete_field_inventory.csv",
+      "bytes": 22420031,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/complete_field_inventory.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/external-history-collection.log",
+      "bytes": 66610,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/external-history-collection.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/external_history_recovery.json",
+      "bytes": 97146,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/external_history_recovery.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/field-inventory.log",
+      "bytes": 4895,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/field-inventory.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/field_inventory_receipt.json",
+      "bytes": 4741,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/field_inventory_receipt.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/full-native-second-extraction.log",
+      "bytes": 1356,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/full-native-second-extraction.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/indexed_source_receipts.jsonl.gz",
+      "bytes": 1607448,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/indexed_source_receipts.jsonl.gz",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/native_entries.json",
+      "bytes": 12291,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/native_entries.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/runtime-knowledge/20211004-cycle-00/8c259af3768c0ab133f5272b4b982ec365ab95afc85e5dc98b775b6dc7c78d28--derive.md",
+      "bytes": 74687,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/runtime-knowledge/20211004-cycle-00/8c259af3768c0ab133f5272b4b982ec365ab95afc85e5dc98b775b6dc7c78d28--derive.md",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/runtime-knowledge/20211004-cycle-00/d7fa46334570a804d9540a52c89625519dd44fc3c1d1d0cfafe0ab47f44a7399--derived-files.md",
+      "bytes": 5553,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/runtime-knowledge/20211004-cycle-00/d7fa46334570a804d9540a52c89625519dd44fc3c1d1d0cfafe0ab47f44a7399--derived-files.md",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/runtime-knowledge/20231018-cycle-00/0e096c03eefd9cf914b40d6268cd0cb023185ef4d05f994ed89049794f445ec0--experiment-directive.json",
+      "bytes": 12055,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/runtime-knowledge/20231018-cycle-00/0e096c03eefd9cf914b40d6268cd0cb023185ef4d05f994ed89049794f445ec0--experiment-directive.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/runtime-knowledge/20231018-cycle-00/534bcff18d8c9622c69a56c5b492e637ae41b1e820bac9c3831d81f74f92e126--derive.md",
+      "bytes": 80922,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/runtime-knowledge/20231018-cycle-00/534bcff18d8c9622c69a56c5b492e637ae41b1e820bac9c3831d81f74f92e126--derive.md",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/runtime-knowledge/20231018-cycle-00/9df5db9b427e5c8da32a6c90019c5e4afb2fb55bffa41776f689face8ee43d9f--classroom-findings.json",
+      "bytes": 91716,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/runtime-knowledge/20231018-cycle-00/9df5db9b427e5c8da32a6c90019c5e4afb2fb55bffa41776f689face8ee43d9f--classroom-findings.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/runtime-knowledge/20231018-cycle-00/a41c1a48c05f271145d0d1c6b567a55e67626071ffec88ffc46d00c294165c20--derived-files.md",
+      "bytes": 5679,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/runtime-knowledge/20231018-cycle-00/a41c1a48c05f271145d0d1c6b567a55e67626071ffec88ffc46d00c294165c20--derived-files.md",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/runtime-knowledge/20231018-cycle-00/d5d668dbceb2598a085e38c8480fbda985941363e4df5a27c826525a62f657c0--classroom-external-findings.json",
+      "bytes": 405138,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/runtime-knowledge/20231018-cycle-00/d5d668dbceb2598a085e38c8480fbda985941363e4df5a27c826525a62f657c0--classroom-external-findings.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/runtime-knowledge/20231018-cycle-00/f6a87d7ee240fbda08684b6263c05b6627cb135428269ea709768d1a066a3aee--classroom-external.md",
+      "bytes": 1626302,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/runtime-knowledge/20231018-cycle-00/f6a87d7ee240fbda08684b6263c05b6627cb135428269ea709768d1a066a3aee--classroom-external.md",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/runtime-knowledge/20231018-day-file/74865fabc288189d7c7b172685151ad3af8c2f4847f3506f7637ab3d7d8038e1--stage-knowledge.json",
+      "bytes": 37910,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/runtime-knowledge/20231018-day-file/74865fabc288189d7c7b172685151ad3af8c2f4847f3506f7637ab3d7d8038e1--stage-knowledge.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/runtime-knowledge/20231018-day-file.superseded-20261007T195337Z/c6f3e15ea864211aa5df2da45e9fb84070bf5ecf0aae42529bc42fda8d877f64--stage-knowledge.json",
+      "bytes": 38345,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/runtime-knowledge/20231018-day-file.superseded-20261007T195337Z/c6f3e15ea864211aa5df2da45e9fb84070bf5ecf0aae42529bc42fda8d877f64--stage-knowledge.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/runtime-knowledge/20231018-ingest/a199603bcfb190311ed612f1e9fc97e46a526704345ee3bfa5ca673175453653--stage-knowledge.json",
+      "bytes": 5283,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/runtime-knowledge/20231018-ingest/a199603bcfb190311ed612f1e9fc97e46a526704345ee3bfa5ca673175453653--stage-knowledge.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/runtime-knowledge/20231018-root/d5227b76664e862115de08a9f61fd639c622309b3c38252d3597ab1505c13259--stage-knowledge.json",
+      "bytes": 191047,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/runtime-knowledge/20231018-root/d5227b76664e862115de08a9f61fd639c622309b3c38252d3597ab1505c13259--stage-knowledge.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/runtime-knowledge/20231018-teacher/7d26bf2bd66e754d8e842f4109abadcdcd165109d3ed695afaaa094aea74c8ec--stage-knowledge.json",
+      "bytes": 245785,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/runtime-knowledge/20231018-teacher/7d26bf2bd66e754d8e842f4109abadcdcd165109d3ed695afaaa094aea74c8ec--stage-knowledge.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/runtime-knowledge/20231018-teacher-account/12e2eea4e6b27c484fdcee3ecc7062b846d553b8122367f7f8f6d3aa1f700ea3--stage-knowledge.json",
+      "bytes": 112202,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/runtime-knowledge/20231018-teacher-account/12e2eea4e6b27c484fdcee3ecc7062b846d553b8122367f7f8f6d3aa1f700ea3--stage-knowledge.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/runtime-knowledge/20231018-teacher-second-set/2c1c59d9fd0363d206ab6560dc43fe8bfa4f7266937bbadf8f06a65a58f79708--stage-knowledge.json",
+      "bytes": 36926,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/runtime-knowledge/20231018-teacher-second-set/2c1c59d9fd0363d206ab6560dc43fe8bfa4f7266937bbadf8f06a65a58f79708--stage-knowledge.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/runtime-knowledge/cycle-00/1c50dfde02e75ab3f519ba22e9c16fc9c3326ab7be4ee355273f1c830d787121--accounting-and-ledgers.md",
+      "bytes": 103515,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/runtime-knowledge/cycle-00/1c50dfde02e75ab3f519ba22e9c16fc9c3326ab7be4ee355273f1c830d787121--accounting-and-ledgers.md",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/runtime-knowledge/cycle-00/1dbb75a08c3dd1740ff430842c813298454067ba633266dd49637eb0bd783004--derivation-digest-full.md",
+      "bytes": 145236,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/runtime-knowledge/cycle-00/1dbb75a08c3dd1740ff430842c813298454067ba633266dd49637eb0bd783004--derivation-digest-full.md",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/runtime-knowledge/cycle-00/5fc9ad9e8659a512520ae8e3636c269f7ad2e1cc3a020ff99d582419ff64c9dc--derived-files.md",
+      "bytes": 698,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/runtime-knowledge/cycle-00/5fc9ad9e8659a512520ae8e3636c269f7ad2e1cc3a020ff99d582419ff64c9dc--derived-files.md",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/runtime-knowledge/cycle-00/82c562feb4c4b76c677427e7e816a177bcd7becc469d1a0380091721ba0fea74--analysis.md",
+      "bytes": 27568,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/runtime-knowledge/cycle-00/82c562feb4c4b76c677427e7e816a177bcd7becc469d1a0380091721ba0fea74--analysis.md",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/runtime-knowledge/cycle-00/864ba0b039d57294f0531db25133fa584cb1093d3fe523bb8029b85eb9e059b3--derive.md",
+      "bytes": 3613,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/runtime-knowledge/cycle-00/864ba0b039d57294f0531db25133fa584cb1093d3fe523bb8029b85eb9e059b3--derive.md",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/runtime-knowledge/external_classroom_claims.json",
+      "bytes": 425126,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/runtime-knowledge/external_classroom_claims.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/runtime-knowledge/native_classroom_claims.json",
+      "bytes": 94891,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/runtime-knowledge/native_classroom_claims.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/runtime-knowledge-collection.log",
+      "bytes": 160,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/runtime-knowledge-collection.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/runtime_knowledge_recovery.json",
+      "bytes": 32386,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/runtime_knowledge_recovery.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/scripts/archive_full_context_handoff.py",
+      "bytes": 3596,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/scripts/archive_full_context_handoff.py",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/scripts/audit_full_context_sources.py",
+      "bytes": 8407,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/scripts/audit_full_context_sources.py",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/scripts/collect_manifested_external_history.py",
+      "bytes": 7150,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/scripts/collect_manifested_external_history.py",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/scripts/collect_runtime_knowledge.py",
+      "bytes": 3356,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/scripts/collect_runtime_knowledge.py",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/scripts/collect_supplemental_lifecycle_planes.py",
+      "bytes": 4236,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/scripts/collect_supplemental_lifecycle_planes.py",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/scripts/dipole_pair_math.jl",
+      "bytes": 2770,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/scripts/dipole_pair_math.jl",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/scripts/extract_full_native_second_contexts.py",
+      "bytes": 4537,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/scripts/extract_full_native_second_contexts.py",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/scripts/family_clock_sources.py",
+      "bytes": 2389,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/scripts/family_clock_sources.py",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/scripts/full_context_measurements.py",
+      "bytes": 10803,
+      "destination": "artifacts/recovered-c-drive/20261022/full-context-handoff-output-v2/full-context-audit/scripts/full_context_measurements.py",
+      "disposition": "recovered_document_to_commit"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/scripts/prepare_complete_dipole_checks.py",
+      "bytes": 4865,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/scripts/prepare_complete_dipole_checks.py",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/scripts/review_complete_dipole_claims.py",
+      "bytes": 6134,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/scripts/review_complete_dipole_claims.py",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/scripts/run_complete_dipole_checks.jl",
+      "bytes": 3621,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/scripts/run_complete_dipole_checks.jl",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/scripts/source_reference/c15_dstate.py",
+      "bytes": 15221,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/scripts/source_reference/c15_dstate.py",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/scripts/source_reference/dipole_classroom.py",
+      "bytes": 48253,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/scripts/source_reference/dipole_classroom.py",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/scripts/source_reference/dipole_classroom_external.py",
+      "bytes": 84034,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/scripts/source_reference/dipole_classroom_external.py",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/scripts/source_reference/dipole_target.py",
+      "bytes": 15465,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/scripts/source_reference/dipole_target.py",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/scripts/source_reference/frankie_box_brain.py",
+      "bytes": 106556,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/scripts/source_reference/frankie_box_brain.py",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/scripts/source_reference/teacher_book_read.py",
+      "bytes": 31879,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/scripts/source_reference/teacher_book_read.py",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/scripts/test_complete_dipole_checks.py",
+      "bytes": 1053,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/scripts/test_complete_dipole_checks.py",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/scripts/test_dipole_pair_math.jl",
+      "bytes": 1382,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/scripts/test_dipole_pair_math.jl",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/scripts/test_full_context_measurements.py",
+      "bytes": 2126,
+      "destination": "artifacts/recovered-c-drive/20261022/full-context-handoff-output-v2/full-context-audit/scripts/test_full_context_measurements.py",
+      "disposition": "recovered_document_to_commit"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/scripts/test_full_context_sources.py",
+      "bytes": 1357,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/scripts/test_full_context_sources.py",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/scripts/test_manifested_external_history.py",
+      "bytes": 1129,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/scripts/test_manifested_external_history.py",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/source_definition_references.json",
+      "bytes": 2765,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/source_definition_references.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/supplemental-lifecycle-collection.log",
+      "bytes": 2001,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/supplemental-lifecycle-collection.log",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/supplemental_lifecycle_field_inventory.csv",
+      "bytes": 30941,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/supplemental_lifecycle_field_inventory.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-audit/supplemental_lifecycle_recovery.json",
+      "bytes": 2017,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-audit/supplemental_lifecycle_recovery.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-frozen-v3-state-manifest.json",
+      "bytes": 107595,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-frozen-v3-state-manifest.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-handoff-archive-receipt.json",
+      "bytes": 931,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-handoff-archive-receipt.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-handoff-output-manifest-v2.json",
+      "bytes": 22893,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-handoff-output-manifest-v2.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/full-context-incomplete-input-manifest.json",
+      "bytes": 3205,
+      "destination": "artifacts/sqlite-triage/20261022/families/full-context-incomplete-input-manifest.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/joint-inputs-v4/native_second_category_vocabulary.json",
+      "bytes": 2158152,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-inputs-v4/native_second_category_vocabulary.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/joint-inputs-v4/native_second_full_extraction_receipt.json",
+      "bytes": 1320,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-inputs-v4/native_second_full_extraction_receipt.json",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/joint-inputs-v4/native_second_full_feature_registry.csv",
+      "bytes": 23281040,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-inputs-v4/native_second_full_feature_registry.csv",
+      "disposition": "identical_existing_git_file"
+    },
+    {
+      "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-handoff-output-v2/joint-models-v3/frozen_for_99_plane_audit.json",
+      "bytes": 3463,
+      "destination": "artifacts/sqlite-triage/20261022/families/joint-models-v3/frozen_for_99_plane_audit.json",
+      "disposition": "identical_existing_git_file"
+    }
+  ]
+}
