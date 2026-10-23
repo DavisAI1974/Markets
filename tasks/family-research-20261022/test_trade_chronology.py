@@ -2,10 +2,21 @@
 import unittest
 import json
 
-from continue_trade_chronology import PARENT, price_stretches, sequence_diagnostics
+from continue_trade_chronology import PARENT, price_stretches, sequence_diagnostics, print_legs
 
 
 class ChronologyTests(unittest.TestCase):
+    def test_print_legs_overlap_at_turning_stretch_without_losing_trades(self):
+        stretches, _ = price_stretches([100, 100, 102, 102, 101, 100, 100, 103])
+        legs, membership = print_legs(stretches)
+        self.assertEqual([(v['first_stretch_ordinal'], v['last_stretch_ordinal'], v['step_sign'])
+                          for v in legs], [(0, 1, 1), (1, 3, -1), (3, 4, 1)])
+        self.assertEqual(membership, [[0], [0, 1], [1], [1, 2], [2]])
+
+    def test_flat_day_has_no_directional_leg(self):
+        stretches, _ = price_stretches([100, 100])
+        self.assertEqual(print_legs(stretches), ([], [[]]))
+
     def test_equal_price_trades_remain_individual_at_turn(self):
         stretches, membership = price_stretches([100, 100, 102, 102, 101, 100, 100])
         self.assertEqual([(s['first_trade_ordinal'], s['last_trade_ordinal'])

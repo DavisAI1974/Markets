@@ -1,5 +1,11 @@
 # Trade lifecycle analysis handoff
 
+## New saved continuation
+
+Role reconciliation is committed at `688fa3ac`: read `quote-order-gapfill-v1/role-reconciliation-v1/README.md` and its verification. The original records and checked findings below remain intact. N-side trade aggressors stay unspecified even where the exact resting ask ID is resolved; trades 123/128 have explicit execution/resting price differences; trades 119/134 retain unresolved displayed quantity allocation. The canonical continuity definition is a literal increment-by-one test per action row, so duplicate action sequences also make it false. Channel completeness remains unresolved.
+
+Read `chronological-lifecycle-v1/README.md`, `chronology-receipt.json` and `verification.json` for the new every-trade observed path. All 30,739 individual trades now have exact chronology through 9,109 equal-price stretches and 5,120 overlapping print legs, complete earlier/later tape pointers and original layer links. These are descriptive print paths, not finished quote/order or causal explanations. Earlier trades 0–117 and later trades 150 onward still need mechanisms interpreted; the bounded exact mechanism work covers 118–149. Semantic coverage stays **NOT_PASSED**, MLP reproducibility **UNRESOLVED**. Continue from saved materialized data without repeating setup, raw scans or fits.
+
 Prepared October 23, 2026, Eastern. Continue analysis of the completed run. Read `README.md` in this directory first, then this handoff. Start from the saved results; no setup repeat, broad raw scan, refit or frozen-source/database rehash.
 
 ## User objective and rules

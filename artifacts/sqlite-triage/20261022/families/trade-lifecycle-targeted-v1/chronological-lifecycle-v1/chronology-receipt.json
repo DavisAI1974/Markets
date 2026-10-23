@@ -1,0 +1,24 @@
+{
+  "status": "ALL_TRADES_ANNOTATED_WITH_EXACT_OBSERVED_CHRONOLOGY",
+  "counts": {
+    "trades": 30739,
+    "with_same_emission_removal_links": 1487,
+    "without_supporting_dipole_overlap": 16040,
+    "with_exact_quote_order_role_context": 32
+  },
+  "equal_price_stretches": 9109,
+  "overlapping_same_sign_print_legs": 5120,
+  "print_direction_turn_stretches": 5119,
+  "source_trades": 30739,
+  "dropped_trades": 0,
+  "original_trade_fields_unchanged": true,
+  "exact_integer_clocks": true,
+  "averaging": false,
+  "raw_source_scan": false,
+  "source_retrieval": false,
+  "fits": 0,
+  "aws_operations": 0,
+  "new_resources": 0,
+  "semantic_coverage": "NOT_PASSED",
+  "mlp_reproducibility": "UNRESOLVED"
+}

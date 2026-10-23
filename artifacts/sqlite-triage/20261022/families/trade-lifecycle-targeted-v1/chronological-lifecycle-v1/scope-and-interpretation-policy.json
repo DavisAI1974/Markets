@@ -1,0 +1,22 @@
+{
+  "exact_original_full_run_scope": "../../completed-run-source-list.json",
+  "source_roles": 99,
+  "all_original_knowledge_claims": "../all-510-frankie-knowledge-claims.json",
+  "knowledge_claims": 510,
+  "original_bindings": "../all-13-input-bindings.json",
+  "original_external_history": "../../external-classroom-audit-v1/original_series_known_values.json",
+  "all_original_forecasts": "../../final-model-analysis-20261023/source/",
+  "frankie_method_reference": "../../full-context-audit/canonical-sources/research/kalshi/agents/frankie_native_raw_mbo_knowledge/A_CLEAN_POSITIVE_KNOWLEDGE_20260828.md",
+  "method_clauses_applied": [
+    "separate exact event/receive/group-availability clocks",
+    "families do not define eligibility",
+    "do not replace first available evidence with later favorable evidence",
+    "retain negative, unresolved, unmatched and censored evidence"
+  ],
+  "retrospective_later_evidence": "All complete external histories, later original source rows and later knowledge remain eligible. No time cutoff limits retrospective evidence.",
+  "historical_forecast_rule": "Original forecasts retain their actual contexts; no per-trade forecast invented or future information assigned to a historical forecast.",
+  "coverage_limit": "References preserve the entire exact source scope. They do not certify semantic consumption of every role or knowledge claim.",
+  "print_path_limit": "Print steps can reflect bid/ask alternation. They are not inferred aggressor flow, quote reversals, causal precursors, strategy inventory or exhaustion signals.",
+  "semantic_coverage": "NOT_PASSED",
+  "mlp_reproducibility": "UNRESOLVED; original evidence unchanged"
+}

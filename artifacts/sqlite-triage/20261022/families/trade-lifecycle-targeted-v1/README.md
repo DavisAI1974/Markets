@@ -1,5 +1,11 @@
 # Trade lifecycle evidence and first combined interpretation
 
+## October 23 continuation: source roles and whole-day chronology
+
+The [saved role reconciliation](quote-order-gapfill-v1/role-reconciliation-v1/README.md) adds exact resting-order identities for the ambiguous T/F cases and explains the literal producer continuity flag. Resting ask sides are resolved for trades 126/133; their reported aggressors remain N. Trades 123/128 retain different execution/resting prices for same-ID T/F records. Quantity allocation for trades 119/134 and channel completeness remain open. This adds evidence beside the earlier checked findings without overwriting them.
+
+The [whole-day chronology](chronological-lifecycle-v1/README.md) annotates every individual trade through all 9,109 equal-price stretches and 5,120 overlapping print-step legs, retains the complete earlier/later tape and all original evidence-layer links, and explicitly marks unfinished mechanisms. This extends observed lifecycle coverage across the entire population; it does not make print turns into quote reversals or pass semantic coverage. All 30,739 original trades remain unchanged, including 16,040 without a saved overlapping dipole. Semantic coverage stays **NOT_PASSED** and MLP reproducibility stays **UNRESOLVED**.
+
 All **30,739 recorded market trades** remain the primary population. No trade is dropped, no trade prices are averaged, no model predictions are voted or blended, and no nested source payload is replaced by a scalar summary. Families and dipoles supply supporting context. This checkpoint adds inspectable evidence and bounded interpretation; it does not claim a finished explanation of every trade.
 
 ## Latest checkpoint: exact quote and order gaps filled

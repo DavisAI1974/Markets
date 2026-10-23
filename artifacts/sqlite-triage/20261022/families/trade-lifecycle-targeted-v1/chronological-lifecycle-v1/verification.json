@@ -1,0 +1,16 @@
+{
+  "status": "PASSED_ALL_30739_ORIGINAL_TRADE_AND_PATH_CHECKS",
+  "counts": {
+    "trades": 30739,
+    "with_exact_quote_order_context": 32
+  },
+  "all_original_fields_compared": true,
+  "every_plateau_member_and_leg_step_checked": true,
+  "shared_turning_stretches_preserved": true,
+  "print_direction_turn_stretches": 5119,
+  "exact_integer_clocks_checked": true,
+  "complete_later_tail_references": true,
+  "frozen_sources_rehashed": false,
+  "semantic_coverage": "NOT_PASSED",
+  "mlp_reproducibility": "UNRESOLVED"
+}
