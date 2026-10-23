@@ -1,0 +1,36 @@
+FAMILY RESEARCH -- AWS CONNECTOR REAUTHENTICATION REQUIRED -- 2026-10-23
+
+At the00:33UTC heartbeat, the first compact scoped EC2/SSM status call failed
+before any AWS API ran. Exact connector response:
+"This app connection requires reauthentication before other actions on this app
+can succeed." error_codeUNAUTHORIZED; actionTRIGGER_REAUTHENTICATION;
+reasonoauth_token_endpoint_unauthorized.
+
+No scoped instance was changed, no SSM command was dispatched, and no live fit,
+archive or callback was interrupted. Do not infer current runtime health or
+completion from earlier results. Last successful compact check about00:29UTC
+SSM b0087a70-9cde-4ab4-af12-b0759f7ee47d:
+A1144/1146,2active0queued;10366/start2080700;hook10433waiting_for_exit.
+B616/616,shard_fits_complete and packaging;7888/start1604184;hook7956waiting.
+C/D completed with verified backups, callbacks5143/4248 waiting ready for reuse.
+Same current epoch cce6f548f09f50f00caaca396a213e9f2d42d5a7ff85c0644be311eb83e708f4.
+Read family-BCD-fitting-CD-saved-20261023.txt for exact durable archive proofs.
+
+The already-installed instance-side callbacks/coordinators do not depend on the
+desktop connector to finish the original fitting, finalization, archives and OS
+stops. This authentication failure blocks fresh observations and desktop recovery/
+redistribution actions; it does not itself indicate a numerical or AWS failure.
+Do not weaken any save, coverage, ownership or stop validation to work around it.
+
+Plugin-management capability discovery exposed no reauthentication action; its
+AWS search returned only an unrelated AWS Data Analytics plugin. That plugin was
+not suggested/installed. Do not replace the existing AWS integration, use AWS CLI,
+search disk for credentials, broaden IAM or change permissions.
+
+User notified once: reconnect/reauthenticate existing AWS connection in Codex.
+Heartbeat remains useful and ACTIVE5minutes. On future wakeups try the one compact
+AWS check; if same authentication block persists, stay quiet (already notified),
+do not repeat plugin searches or emit duplicate alerts. When restored resume the
+original scoped lifecycle/receipts checks immediately and handle any completion
+or failure against fresh exact identities. Do not restart verified stopped boxes.
+Do not claim all results saved/stopped or deactivate heartbeat until proven.

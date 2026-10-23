@@ -1,4 +1,7 @@
 FAMILY RESEARCH -- REUSE FINISHED BOXES BEFORE STOP -- 2026-10-22
+CURRENT UPDATE00:33UTC23Oct: Read family-AWS-reauth-required-20261023.txt first.
+AWS connector requires reauthentication; user alerted once. No fresh AWS read or
+change succeeded this turn. Existing instance-side work/callbacks independent.
 CURRENT UPDATE00:24UTC23Oct: Read family-BCD-fitting-CD-saved-20261023.txt first.
 B/C/D fits complete; C/D verified saved and awaiting reuse/global-fit release.
 A has2fits already running,0queued; B packaging. No stop or redistribution.
