@@ -1,0 +1,20 @@
+[
+  {
+    "reference_commit": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "original_path": "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py",
+    "local_file": "ng_exhaustion_mbo_v4_state_adapter_20260820.py",
+    "bytes": 41368,
+    "sha256": "4a80e3e4b83867046d318ba97d350c2d7aca22e9d182d98399d01eeacc72d3ce",
+    "git_blob_sha": "1f07a786cab890b955fb1c631d10900fd5a09e06",
+    "status": "CANONICAL_REFERENCE; exact runtime db96f24f identity remains unproved"
+  },
+  {
+    "reference_commit": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "original_path": "research/kalshi/frankie_raw_mbo_benchmark/native_clocks.py",
+    "local_file": "native_clocks.py",
+    "bytes": 32462,
+    "sha256": "f333efc43345eaecef375ed3b2cb8e19c5f8d4414a47b24e93bfef58b6e99f05",
+    "git_blob_sha": "e2f216248ca76b170275597e4fb9d669b491f268",
+    "status": "CANONICAL_REFERENCE; exact runtime db96f24f identity remains unproved"
+  }
+]

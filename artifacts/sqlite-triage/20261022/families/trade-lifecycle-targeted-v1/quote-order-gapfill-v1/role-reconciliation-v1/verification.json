@@ -1,0 +1,29 @@
+{
+  "status": "PASSED_SAVED_ROLE_AND_LITERAL_SEQUENCE_CHECKS",
+  "exact_trade_contexts": 32,
+  "sequence_group_counts": {
+    "groups": 1667,
+    "literal_false": 110,
+    "duplicate_sequence_groups": 31,
+    "forward_jump_groups": 97,
+    "regression_groups": 0
+  },
+  "original_sources_overwritten": false,
+  "network_source_reads": 0,
+  "aws_operations": 0,
+  "semantic_coverage": "NOT_PASSED",
+  "mlp_reproducibility": "UNRESOLVED",
+  "remaining_quantity_trade_ordinals": [
+    119,
+    134
+  ],
+  "source_unspecified_aggressor_trade_ordinals": [
+    126,
+    133
+  ],
+  "same_side_fill_role_trade_ordinals": [
+    123,
+    128
+  ],
+  "channel_continuity": "UNRESOLVED; instrument-scoped jumps are not a channel packet-loss audit"
+}
