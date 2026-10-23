@@ -1,0 +1,36 @@
+FAMILY RESEARCH -- B/C/D FITTING COMPLETE, C/D BACKUPS VERIFIED -- 2026-10-23
+
+Compact scoped check about00:24UTC: EC2 all4running, SSM all4Online.
+SSM command202807d9-95ed-4ec7-bbb6-0923355275d8 succeeded all4/rc0.
+Same config/epoch/source/identities as family-reuse-current-handoff-20261022.txt.
+A1144/1146,2active0queued;10366/start2080700;hook10433waiting_for_exit.
+B616/616,shard_fits_complete;7888/start1604184alive/R packaging;hook7956waiting.
+C165/165 and D170/170, coordinators exited; hooks5143/4248 active in
+backup_verified_ready_for_reuse. No missing/deferred/unregistered task observed.
+2095/2097 mandatory fits complete; remaining2 already running on A. No safely
+pending work to assign to B/C/D. Do not interrupt B's archive or A's numerical work.
+
+C/D full-archive SHA256/length verification has completed in the tested callbacks.
+Fresh SSM command800a464a-e5e5-4ba2-87c0-cda21de8c100 succeeded both/rc0:
+local save-stop-proof.json owner/instance/digest/backup_verified validated, and
+S3 stop proof bytes identical on fresh read-back. No archive rehash was repeated.
+C proof verified_utc2026-10-23T00:12:40Z:
+2474372646bytes sha256a509f22ab2b71f6c4de80109d2e757425d85defe9db57446bf79d2f9efe299c7
+D proof verified_utc2026-10-23T00:14:03Z:
+2844410905bytes sha256354cfe2d4dd5204f2ae3af001cd667d565e965c630347e019be9b39f2156646b
+Bucket frankie-granite42-568968024170-us-east-1;
+archive prefix host-deliveries/family-research-20261022/dual-box/
+cce6f548f09f50f00caaca396a213e9f2d42d5a7ff85c0644be311eb83e708f4/
+C-results.tar.gz and D-results.tar.gz.
+Durable proofs under host-deliveries/family-research-20261022/save-stop/
+<same-digest>/C-stop-proof.json and D-stop-proof.json.
+Full compact evidence tasks/family-research-20261022/save-reuse-status-20261023T0023Z.json.
+
+No box stopped/restarted, no ownership/source changed, no healthy fit interrupted.
+C/D await either safe pending-only reuse or epoch all-fitting completion release.
+A still alone must finish mandatory fits, import allshards once, PCA/clustering/
+postprocessing, global coverage and full final verified backup. Heartbeat remains
+ACTIVE5min. Keep all storage/snapshot/attempts/swap/scientific restrictions.
+User-requested interim scientific readout was saved/pushed in commit6eef8343 at
+candidate-scientific-readout-20261023.md. Its2094-key snapshot is intentionally
+historical, not final completion; do not substitute it for final coverage checks.

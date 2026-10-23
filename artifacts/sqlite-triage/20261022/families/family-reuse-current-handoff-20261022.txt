@@ -1,4 +1,7 @@
 FAMILY RESEARCH -- REUSE FINISHED BOXES BEFORE STOP -- 2026-10-22
+CURRENT UPDATE00:24UTC23Oct: Read family-BCD-fitting-CD-saved-20261023.txt first.
+B/C/D fits complete; C/D verified saved and awaiting reuse/global-fit release.
+A has2fits already running,0queued; B packaging. No stop or redistribution.
 CURRENT UPDATE00:12UTC23Oct: Read family-CD-fitting-complete-20261023.txt first.
 C/D fits complete; C callback verifying2.47GB shard, D packaging. A/B have3 fits
 still running,0queued. Preserve active backups and existing reuse/stop gates.

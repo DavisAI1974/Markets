@@ -1,0 +1,148 @@
+{
+  "status_command": "202807d9-95ed-4ec7-bbb6-0923355275d8",
+  "proof_command": "800a464a-e5e5-4ba2-87c0-cda21de8c100",
+  "status": [
+    {
+      "owner": "A",
+      "digest": "cce6f548f09f50f00caaca396a213e9f2d42d5a7ff85c0644be311eb83e708f4",
+      "pid": 10366,
+      "expected_token": "2080700",
+      "live_token": "2080700",
+      "process_state": "S",
+      "command_matches": true,
+      "status": "running",
+      "required": 1146,
+      "committed": 1144,
+      "active": 2,
+      "queued": 0,
+      "deferred": [],
+      "unregistered": [],
+      "hook": {
+        "owner": "A",
+        "pid": 10366,
+        "status": "waiting_for_exit",
+        "token": "2080700"
+      },
+      "service": "MainPID=10433\nResult=success\nActiveState=active\nSubState=running"
+    },
+    {
+      "owner": "B",
+      "digest": "cce6f548f09f50f00caaca396a213e9f2d42d5a7ff85c0644be311eb83e708f4",
+      "pid": 7888,
+      "expected_token": "1604184",
+      "live_token": "1604184",
+      "process_state": "R",
+      "command_matches": true,
+      "status": "shard_fits_complete",
+      "required": 616,
+      "committed": 616,
+      "active": null,
+      "queued": null,
+      "deferred": null,
+      "unregistered": [],
+      "hook": {
+        "owner": "B",
+        "pid": 7888,
+        "status": "waiting_for_exit",
+        "token": "1604184"
+      },
+      "service": "MainPID=7956\nResult=success\nActiveState=active\nSubState=running"
+    },
+    {
+      "owner": "C",
+      "digest": "cce6f548f09f50f00caaca396a213e9f2d42d5a7ff85c0644be311eb83e708f4",
+      "pid": 5077,
+      "expected_token": "980718",
+      "live_token": null,
+      "process_state": null,
+      "command_matches": false,
+      "status": "shard_fits_complete",
+      "required": 165,
+      "committed": 165,
+      "active": null,
+      "queued": null,
+      "deferred": null,
+      "unregistered": [],
+      "hook": {
+        "assignment_sha256": "cce6f548f09f50f00caaca396a213e9f2d42d5a7ff85c0644be311eb83e708f4",
+        "coverage_gate": "NOT_PASSED",
+        "owner": "C",
+        "receipt_key": "host-deliveries/family-research-20261022/save-stop/cce6f548f09f50f00caaca396a213e9f2d42d5a7ff85c0644be311eb83e708f4/C-stop-proof.json",
+        "status": "backup_verified_ready_for_reuse"
+      },
+      "service": "MainPID=5143\nResult=success\nActiveState=active\nSubState=running",
+      "shard-completion.json": {
+        "status": "fits_complete",
+        "worker": "C",
+        "assignment_sha256": "cce6f548f09f50f00caaca396a213e9f2d42d5a7ff85c0644be311eb83e708f4",
+        "archive_sha256": "a509f22ab2b71f6c4de80109d2e757425d85defe9db57446bf79d2f9efe299c7",
+        "archive_bytes": 2474372646
+      }
+    },
+    {
+      "owner": "D",
+      "digest": "cce6f548f09f50f00caaca396a213e9f2d42d5a7ff85c0644be311eb83e708f4",
+      "pid": 4111,
+      "expected_token": "980520",
+      "live_token": null,
+      "process_state": null,
+      "command_matches": false,
+      "status": "shard_fits_complete",
+      "required": 170,
+      "committed": 170,
+      "active": null,
+      "queued": null,
+      "deferred": null,
+      "unregistered": [],
+      "hook": {
+        "assignment_sha256": "cce6f548f09f50f00caaca396a213e9f2d42d5a7ff85c0644be311eb83e708f4",
+        "coverage_gate": "NOT_PASSED",
+        "owner": "D",
+        "receipt_key": "host-deliveries/family-research-20261022/save-stop/cce6f548f09f50f00caaca396a213e9f2d42d5a7ff85c0644be311eb83e708f4/D-stop-proof.json",
+        "status": "backup_verified_ready_for_reuse"
+      },
+      "service": "MainPID=4248\nResult=success\nActiveState=active\nSubState=running",
+      "shard-completion.json": {
+        "status": "fits_complete",
+        "worker": "D",
+        "assignment_sha256": "cce6f548f09f50f00caaca396a213e9f2d42d5a7ff85c0644be311eb83e708f4",
+        "archive_sha256": "354cfe2d4dd5204f2ae3af001cd667d565e965c630347e019be9b39f2156646b",
+        "archive_bytes": 2844410905
+      }
+    }
+  ],
+  "proofs": [
+    {
+      "owner": "C",
+      "backup_verified": true,
+      "identical_stop_proof_readback": true,
+      "verified_utc": "2026-10-23T00:12:40Z",
+      "archives": [
+        {
+          "bytes": 2474372646,
+          "key": "host-deliveries/family-research-20261022/dual-box/cce6f548f09f50f00caaca396a213e9f2d42d5a7ff85c0644be311eb83e708f4/C-results.tar.gz",
+          "sha256": "a509f22ab2b71f6c4de80109d2e757425d85defe9db57446bf79d2f9efe299c7",
+          "verified": true
+        }
+      ],
+      "receipt_key": "host-deliveries/family-research-20261022/save-stop/cce6f548f09f50f00caaca396a213e9f2d42d5a7ff85c0644be311eb83e708f4/C-stop-proof.json",
+      "hook": "backup_verified_ready_for_reuse"
+    },
+    {
+      "owner": "D",
+      "backup_verified": true,
+      "identical_stop_proof_readback": true,
+      "verified_utc": "2026-10-23T00:14:03Z",
+      "archives": [
+        {
+          "bytes": 2844410905,
+          "key": "host-deliveries/family-research-20261022/dual-box/cce6f548f09f50f00caaca396a213e9f2d42d5a7ff85c0644be311eb83e708f4/D-results.tar.gz",
+          "sha256": "354cfe2d4dd5204f2ae3af001cd667d565e965c630347e019be9b39f2156646b",
+          "verified": true
+        }
+      ],
+      "receipt_key": "host-deliveries/family-research-20261022/save-stop/cce6f548f09f50f00caaca396a213e9f2d42d5a7ff85c0644be311eb83e708f4/D-stop-proof.json",
+      "hook": "backup_verified_ready_for_reuse"
+    }
+  ]
+}
