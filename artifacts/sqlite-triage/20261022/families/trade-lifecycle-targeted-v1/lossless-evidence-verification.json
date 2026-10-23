@@ -1,0 +1,50 @@
+{
+  "status": "LOSSLESS_TRADE_EVIDENCE_PRESERVED",
+  "trade_records": 30739,
+  "dropped_trades": 0,
+  "every_original_trade_field_checked": true,
+  "equal_timestamps_preserve_distinct_cursors": true,
+  "nested_lifecycle_records_preserved": {
+    "absorption": 6265,
+    "candidate": 42,
+    "detector_coverage": 2,
+    "episode": 1726,
+    "flow_substrate": 8088,
+    "ladder": 12530,
+    "lineage": 308611,
+    "mirror": 6265,
+    "queue": 7893,
+    "recurrence": 6265,
+    "replenishment": 30687,
+    "response": 266
+  },
+  "original_ladder_scope_counts": {
+    "GROUP_LOCAL_DELTA": 2,
+    "FULL_BOOK_TRANSITION": 12528
+  },
+  "reconstructed_path_annotations": 862,
+  "event_unit_reconciliations": 832,
+  "source_units_equal_to_unique_tape_size": 13,
+  "no_averaged_trade_prices_or_model_votes": true,
+  "no_original_nested_fields_removed": true,
+  "removed_redundant_flat_views": [
+    "absorption-scalar-evidence.csv.gz",
+    "candidate-scalar-evidence.csv.gz",
+    "detector_coverage-scalar-evidence.csv.gz",
+    "episode-scalar-evidence.csv.gz",
+    "flow_substrate-scalar-evidence.csv.gz",
+    "ladder-scalar-evidence.csv.gz",
+    "lineage-scalar-evidence.csv.gz",
+    "mirror-scalar-evidence.csv.gz",
+    "queue-scalar-evidence.csv.gz",
+    "recurrence-scalar-evidence.csv.gz",
+    "replenishment-scalar-evidence.csv.gz",
+    "response-scalar-evidence.csv.gz",
+    "fifo-order-episodes.csv.gz",
+    "supporting-dipole-stage-evidence.csv.gz",
+    "all-native-trade-bursts.csv.gz"
+  ],
+  "observational_window_indices": "Per-trade path pointers and derived observations remain supplementary, not replacements for original trade sequence",
+  "knowledge": "All 510 saved claims and exact 99/13 run binding lists retained; no claim they are all proven physical mechanisms",
+  "scientific_gate": "NOT_PASSED; original MLP reproducibility and calibration issues unchanged"
+}

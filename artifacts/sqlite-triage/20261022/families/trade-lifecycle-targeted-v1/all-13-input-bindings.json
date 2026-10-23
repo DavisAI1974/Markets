@@ -1,0 +1,811 @@
+{
+  "counts": {
+    "used": 13
+  },
+  "cutoff_ns": 1697662799696377528,
+  "external_key_hash": "6532b9d6f1a5e35748b55492fc570547b7af1dfb94ad52f099e2de79e16336b2",
+  "points": [
+    {
+      "missing": [],
+      "name": "cot.managed_money_net_pctile_1y",
+      "point_id": 1,
+      "reason": "771787 Dipole row(s) took a PRESENT value of its series (aligned at or before each row's own time) in the external section",
+      "rows_used": 771787,
+      "series": [
+        {
+          "present_rows": 771787,
+          "series": "cot.managed_money_net_pctile_1y",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 0,
+            "MISSING": 0,
+            "PRESENT": 771787
+          }
+        }
+      ],
+      "tables": [
+        {
+          "absent": null,
+          "not_yet_known": 0,
+          "reason": null,
+          "rows_known": 302,
+          "table": "cot.023651"
+        }
+      ],
+      "use": "used"
+    },
+    {
+      "missing": [],
+      "name": "weather_forecast.forecast_gw_hdd",
+      "point_id": 2,
+      "reason": "3087148 Dipole row(s) took a PRESENT value of its series (aligned at or before each row's own time) in the external section",
+      "rows_used": 3087148,
+      "series": [
+        {
+          "present_rows": 771787,
+          "series": "mos.GFS.gw_hdd_D",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 0,
+            "MISSING": 0,
+            "PRESENT": 771787
+          }
+        },
+        {
+          "present_rows": 771787,
+          "series": "mos.NAM.gw_hdd_D",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 0,
+            "MISSING": 0,
+            "PRESENT": 771787
+          }
+        },
+        {
+          "present_rows": 771787,
+          "series": "mos.GFS.gw_hdd_D1",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 0,
+            "MISSING": 0,
+            "PRESENT": 771787
+          }
+        },
+        {
+          "present_rows": 771787,
+          "series": "mos.MEX.gw_hdd_D3",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 0,
+            "MISSING": 0,
+            "PRESENT": 771787
+          }
+        }
+      ],
+      "tables": [
+        {
+          "absent": null,
+          "not_yet_known": 0,
+          "reason": null,
+          "rows_known": 81,
+          "table": "mos.gw_by_cycle"
+        },
+        {
+          "absent": null,
+          "not_yet_known": 0,
+          "reason": null,
+          "rows_known": 9648,
+          "table": "mos.raw"
+        }
+      ],
+      "use": "used"
+    },
+    {
+      "missing": [],
+      "name": "cot.managed_money_net_chg_wow",
+      "point_id": 3,
+      "reason": "771787 Dipole row(s) took a PRESENT value of its series (aligned at or before each row's own time) in the external section",
+      "rows_used": 771787,
+      "series": [
+        {
+          "present_rows": 771787,
+          "series": "cot.managed_money_net_chg_wow",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 0,
+            "MISSING": 0,
+            "PRESENT": 771787
+          }
+        }
+      ],
+      "tables": [
+        {
+          "absent": null,
+          "not_yet_known": 0,
+          "reason": null,
+          "rows_known": 302,
+          "table": "cot.023651"
+        }
+      ],
+      "use": "used"
+    },
+    {
+      "missing": [],
+      "name": "cot.managed_money_net_pctile_3y",
+      "point_id": 4,
+      "reason": "771787 Dipole row(s) took a PRESENT value of its series (aligned at or before each row's own time) in the external section",
+      "rows_used": 771787,
+      "series": [
+        {
+          "present_rows": 771787,
+          "series": "cot.managed_money_net_pctile_3y",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 0,
+            "MISSING": 0,
+            "PRESENT": 771787
+          }
+        }
+      ],
+      "tables": [
+        {
+          "absent": null,
+          "not_yet_known": 0,
+          "reason": null,
+          "rows_known": 302,
+          "table": "cot.023651"
+        }
+      ],
+      "use": "used"
+    },
+    {
+      "missing": [],
+      "name": "grid_stack.bas.US48.wind_mwh",
+      "point_id": 5,
+      "reason": "771787 Dipole row(s) took a PRESENT value of its series (aligned at or before each row's own time) in the external section",
+      "rows_used": 771787,
+      "series": [
+        {
+          "present_rows": 771787,
+          "series": "eia930.US48.wind_mwh",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 0,
+            "MISSING": 0,
+            "PRESENT": 771787
+          }
+        }
+      ],
+      "tables": [
+        {
+          "absent": null,
+          "not_yet_known": 0,
+          "reason": null,
+          "rows_known": 213,
+          "table": "eia930.us48"
+        },
+        {
+          "absent": null,
+          "not_yet_known": 0,
+          "reason": null,
+          "rows_known": 17464,
+          "table": "eia930.hourly"
+        }
+      ],
+      "use": "used"
+    },
+    {
+      "missing": [],
+      "name": "squeeze_watch.sessions_since_prompt_expiry",
+      "point_id": 6,
+      "reason": "121440 Dipole row(s) took a PRESENT value of its series (aligned at or before each row's own time) in the external section",
+      "rows_used": 121440,
+      "series": [
+        {
+          "present_rows": 121440,
+          "series": "calendar.sessions_since_prompt_expiry",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 0,
+            "MISSING": 650347,
+            "PRESENT": 121440
+          }
+        }
+      ],
+      "tables": [
+        {
+          "absent": null,
+          "not_yet_known": 0,
+          "reason": null,
+          "rows_known": 1,
+          "table": "calendar.sessions_since_prompt_expiry"
+        }
+      ],
+      "use": "used"
+    },
+    {
+      "missing": [],
+      "name": "grid_stack.bas.US48.est_gas_burn_bcfd",
+      "point_id": 7,
+      "reason": "771787 Dipole row(s) took a PRESENT value of its series (aligned at or before each row's own time) in the external section",
+      "rows_used": 771787,
+      "series": [
+        {
+          "present_rows": 771787,
+          "series": "eia930.US48.est_gas_burn_bcfd_rate",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 0,
+            "MISSING": 0,
+            "PRESENT": 771787
+          }
+        }
+      ],
+      "tables": [
+        {
+          "absent": null,
+          "not_yet_known": 0,
+          "reason": null,
+          "rows_known": 213,
+          "table": "eia930.us48"
+        },
+        {
+          "absent": null,
+          "not_yet_known": 0,
+          "reason": null,
+          "rows_known": 17464,
+          "table": "eia930.hourly"
+        }
+      ],
+      "use": "used"
+    },
+    {
+      "missing": [],
+      "name": "cot.ice.ld1.managed_money_net_pctile_1y",
+      "point_id": 8,
+      "reason": "771787 Dipole row(s) took a PRESENT value of its series (aligned at or before each row's own time) in the external section",
+      "rows_used": 771787,
+      "series": [
+        {
+          "present_rows": 771787,
+          "series": "cot.ice.ld1.managed_money_net_pctile_1y",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 0,
+            "MISSING": 0,
+            "PRESENT": 771787
+          }
+        }
+      ],
+      "tables": [
+        {
+          "absent": null,
+          "not_yet_known": 0,
+          "reason": null,
+          "rows_known": 302,
+          "table": "cot.023391"
+        }
+      ],
+      "use": "used"
+    },
+    {
+      "missing": [],
+      "name": "model_disagreement.summary.max_abs_spread_gw_hdd",
+      "point_id": 9,
+      "reason": "771787 Dipole row(s) took a PRESENT value of its series (aligned at or before each row's own time) in the external section",
+      "rows_used": 771787,
+      "series": [
+        {
+          "present_rows": 771787,
+          "series": "mos.max_abs_spread_gw_hdd",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 0,
+            "MISSING": 0,
+            "PRESENT": 771787
+          }
+        }
+      ],
+      "tables": [
+        {
+          "absent": null,
+          "not_yet_known": 0,
+          "reason": null,
+          "rows_known": 6,
+          "table": "mos.disagreement_by_cycle"
+        }
+      ],
+      "use": "used"
+    },
+    {
+      "missing": [],
+      "name": "weather.gw_hdd (observed)",
+      "point_id": 10,
+      "reason": "2220978 Dipole row(s) took a PRESENT value of its series (aligned at or before each row's own time) in the external section",
+      "rows_used": 2220978,
+      "series": [
+        {
+          "present_rows": 771787,
+          "series": "weather.gw_hdd",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 0,
+            "MISSING": 0,
+            "PRESENT": 771787
+          }
+        },
+        {
+          "present_rows": 44630,
+          "series": "weather.tmpf.ATL",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 727157,
+            "MISSING": 0,
+            "PRESENT": 44630
+          }
+        },
+        {
+          "present_rows": 31816,
+          "series": "weather.tmpf.AUS",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 739971,
+            "MISSING": 0,
+            "PRESENT": 31816
+          }
+        },
+        {
+          "present_rows": 12004,
+          "series": "weather.tmpf.BOS",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 759783,
+            "MISSING": 0,
+            "PRESENT": 12004
+          }
+        },
+        {
+          "present_rows": 44630,
+          "series": "weather.tmpf.DCA",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 727157,
+            "MISSING": 0,
+            "PRESENT": 44630
+          }
+        },
+        {
+          "present_rows": 31816,
+          "series": "weather.tmpf.DEN",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 739971,
+            "MISSING": 0,
+            "PRESENT": 31816
+          }
+        },
+        {
+          "present_rows": 31816,
+          "series": "weather.tmpf.DFW",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 739971,
+            "MISSING": 0,
+            "PRESENT": 31816
+          }
+        },
+        {
+          "present_rows": 31816,
+          "series": "weather.tmpf.DTW",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 739971,
+            "MISSING": 0,
+            "PRESENT": 31816
+          }
+        },
+        {
+          "present_rows": 31816,
+          "series": "weather.tmpf.IAH",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 739971,
+            "MISSING": 0,
+            "PRESENT": 31816
+          }
+        },
+        {
+          "present_rows": 59559,
+          "series": "weather.tmpf.LAX",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 712228,
+            "MISSING": 0,
+            "PRESENT": 59559
+          }
+        },
+        {
+          "present_rows": 31816,
+          "series": "weather.tmpf.MSP",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 739971,
+            "MISSING": 0,
+            "PRESENT": 31816
+          }
+        },
+        {
+          "present_rows": 771787,
+          "series": "weather.tmpf.NYC",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 0,
+            "MISSING": 0,
+            "PRESENT": 771787
+          }
+        },
+        {
+          "present_rows": 57661,
+          "series": "weather.tmpf.ORD",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 714126,
+            "MISSING": 0,
+            "PRESENT": 57661
+          }
+        },
+        {
+          "present_rows": 12004,
+          "series": "weather.tmpf.PHL",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 759783,
+            "MISSING": 0,
+            "PRESENT": 12004
+          }
+        },
+        {
+          "present_rows": 57661,
+          "series": "weather.tmpf.PHX",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 714126,
+            "MISSING": 0,
+            "PRESENT": 57661
+          }
+        },
+        {
+          "present_rows": 57661,
+          "series": "weather.tmpf.SAT",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 714126,
+            "MISSING": 0,
+            "PRESENT": 57661
+          }
+        },
+        {
+          "present_rows": 31816,
+          "series": "weather.tmpf.SEA",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 739971,
+            "MISSING": 0,
+            "PRESENT": 31816
+          }
+        },
+        {
+          "present_rows": 51221,
+          "series": "weather.tmpf.SFO",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 720566,
+            "MISSING": 0,
+            "PRESENT": 51221
+          }
+        },
+        {
+          "present_rows": 57661,
+          "series": "weather.tmpf.STL",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 714126,
+            "MISSING": 0,
+            "PRESENT": 57661
+          }
+        }
+      ],
+      "tables": [
+        {
+          "absent": null,
+          "not_yet_known": 0,
+          "reason": null,
+          "rows_known": 18,
+          "table": "weather.gw_daily"
+        },
+        {
+          "absent": null,
+          "not_yet_known": 0,
+          "reason": null,
+          "rows_known": 21089,
+          "table": "weather.obs_hourly"
+        }
+      ],
+      "use": "used"
+    },
+    {
+      "missing": [],
+      "name": "EIA weekly storage (level, weekly change, vs 5-year)",
+      "point_id": 11,
+      "reason": "2315361 Dipole row(s) took a PRESENT value of its series (aligned at or before each row's own time) in the external section",
+      "rows_used": 2315361,
+      "series": [
+        {
+          "present_rows": 771787,
+          "series": "storage.level_bcf",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 0,
+            "MISSING": 0,
+            "PRESENT": 771787
+          }
+        },
+        {
+          "present_rows": 771787,
+          "series": "storage.weekly_chg_bcf",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 0,
+            "MISSING": 0,
+            "PRESENT": 771787
+          }
+        },
+        {
+          "present_rows": 771787,
+          "series": "storage.vs_5yr_bcf",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 0,
+            "MISSING": 0,
+            "PRESENT": 771787
+          }
+        }
+      ],
+      "tables": [
+        {
+          "absent": null,
+          "not_yet_known": 0,
+          "reason": null,
+          "rows_known": 419,
+          "table": "storage.weekly"
+        }
+      ],
+      "use": "used"
+    },
+    {
+      "missing": [],
+      "name": "storage estimate vs actual",
+      "point_id": 12,
+      "reason": "2315361 Dipole row(s) took a PRESENT value of its series (aligned at or before each row's own time) in the external section",
+      "rows_used": 2315361,
+      "series": [
+        {
+          "present_rows": 771787,
+          "series": "storage.estimate_bcf",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 0,
+            "MISSING": 0,
+            "PRESENT": 771787
+          }
+        },
+        {
+          "present_rows": 771787,
+          "series": "storage.actual_bcf",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 0,
+            "MISSING": 0,
+            "PRESENT": 771787
+          }
+        },
+        {
+          "present_rows": 771787,
+          "series": "storage.surprise_bcf",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 0,
+            "MISSING": 0,
+            "PRESENT": 771787
+          }
+        }
+      ],
+      "tables": [
+        {
+          "absent": null,
+          "not_yet_known": 0,
+          "reason": null,
+          "rows_known": 11,
+          "table": "storage.estimate"
+        },
+        {
+          "absent": true,
+          "not_yet_known": null,
+          "reason": "not in the day file (see missing)",
+          "rows_known": null,
+          "table": "storage.estimate_captures"
+        },
+        {
+          "absent": null,
+          "not_yet_known": 0,
+          "reason": null,
+          "rows_known": 419,
+          "table": "storage.weekly"
+        }
+      ],
+      "use": "used"
+    },
+    {
+      "missing": [],
+      "name": "the futures curve shape",
+      "point_id": 13,
+      "reason": "8489657 Dipole row(s) took a PRESENT value of its series (aligned at or before each row's own time) in the external section",
+      "rows_used": 8489657,
+      "series": [
+        {
+          "present_rows": 771787,
+          "series": "curve.settled.front",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 0,
+            "MISSING": 0,
+            "PRESENT": 771787
+          }
+        },
+        {
+          "present_rows": 771787,
+          "series": "curve.settled.slope_1",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 0,
+            "MISSING": 0,
+            "PRESENT": 771787
+          }
+        },
+        {
+          "present_rows": 771787,
+          "series": "curve.settled.slope_back",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 0,
+            "MISSING": 0,
+            "PRESENT": 771787
+          }
+        },
+        {
+          "present_rows": 771787,
+          "series": "curve.settled.curvature",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 0,
+            "MISSING": 0,
+            "PRESENT": 771787
+          }
+        },
+        {
+          "present_rows": 771787,
+          "series": "curve.settled.front_next_spread",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 0,
+            "MISSING": 0,
+            "PRESENT": 771787
+          }
+        },
+        {
+          "present_rows": 771787,
+          "series": "curve.traded.front",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 0,
+            "MISSING": 0,
+            "PRESENT": 771787
+          }
+        },
+        {
+          "present_rows": 771787,
+          "series": "curve.traded.c1",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 0,
+            "MISSING": 0,
+            "PRESENT": 771787
+          }
+        },
+        {
+          "present_rows": 771787,
+          "series": "curve.traded.slope_1",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 0,
+            "MISSING": 0,
+            "PRESENT": 771787
+          }
+        },
+        {
+          "present_rows": 771787,
+          "series": "curve.traded.slope_back",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 0,
+            "MISSING": 0,
+            "PRESENT": 771787
+          }
+        },
+        {
+          "present_rows": 771787,
+          "series": "curve.traded.curvature",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 0,
+            "MISSING": 0,
+            "PRESENT": 771787
+          }
+        },
+        {
+          "present_rows": 771787,
+          "series": "curve.traded.front_next_spread",
+          "state_counts": {
+            "ABLATED": 0,
+            "INVALID": 0,
+            "MISSING": 0,
+            "PRESENT": 771787
+          }
+        }
+      ],
+      "tables": [
+        {
+          "absent": null,
+          "not_yet_known": 0,
+          "reason": null,
+          "rows_known": 1997,
+          "table": "curve.definitions"
+        },
+        {
+          "absent": null,
+          "not_yet_known": 0,
+          "reason": null,
+          "rows_known": 40407,
+          "table": "curve.statistics"
+        },
+        {
+          "absent": null,
+          "not_yet_known": 0,
+          "reason": null,
+          "rows_known": 205631,
+          "table": "curve.trades"
+        },
+        {
+          "absent": null,
+          "not_yet_known": 0,
+          "reason": null,
+          "rows_known": 15,
+          "table": "curve.settled_shape"
+        },
+        {
+          "absent": null,
+          "not_yet_known": 0,
+          "reason": null,
+          "rows_known": 31152,
+          "table": "curve.traded_shape"
+        }
+      ],
+      "use": "used"
+    }
+  ],
+  "reason": null,
+  "rows": 771787,
+  "rule": "per point as the external section key records it: used = a PRESENT value of its series reached a Dipole row; missing = none did (or the section does not read the point's table), with the reason; never a zero filled in",
+  "schema": "FRANKIE_TEACHER_EXTERNAL_POINTS_V1",
+  "status": "built"
+}

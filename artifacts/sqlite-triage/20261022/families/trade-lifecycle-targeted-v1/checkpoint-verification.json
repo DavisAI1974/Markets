@@ -1,0 +1,22 @@
+{
+  "status": "PASSED_NEW_CHECKPOINT_PRESERVATION_CHECKS",
+  "original_trades": 30739,
+  "original_fields_checked_on_every_trade": true,
+  "dropped_trades": 0,
+  "second_set_source_views_checked": 122956,
+  "original_compact_rows": 771787,
+  "compact_values_states_clocks_match_saved_original_bytes": true,
+  "native_groups": 29797,
+  "all_root_link_trade_ordinals_checked": true,
+  "helper_syntax_checked": [
+    "targeted_trade_lifecycle_pass.py",
+    "read_bounded_second_set.py",
+    "finalize_trade_evidence.py",
+    "attach_trade_root_and_order_evidence.py",
+    "audit_trade_dipole_overlay.py",
+    "verify_trade_checkpoint.py"
+  ],
+  "files_at_or_above_100MB": [],
+  "frozen_input_database_or_archive_rehash": false,
+  "scientific_semantic_gate": "NOT_PASSED; this preservation check does not certify mechanisms or models"
+}

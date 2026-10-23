@@ -1,0 +1,72 @@
+{
+  "status": "COMPLETED_LOCAL_TARGETED_POSTPROCESSING_NOT_A_NEW_MODEL_FIT",
+  "elapsed_seconds": 55.831,
+  "trade_prints": 30739,
+  "native_trade_bursts": 29797,
+  "trade_window_records": 215173,
+  "session_first_available_ns": 1697580003382463363,
+  "session_last_available_ns": 1697662799109084431,
+  "total_print_size": 66385,
+  "trade_price_low_raw": 3037000000,
+  "trade_price_high_raw": 3158000000,
+  "archived_lifecycle_section_counts": {
+    "absorption": 6265,
+    "candidate": 42,
+    "detector_coverage": 2,
+    "episode": 1726,
+    "flow_substrate": 8088,
+    "ladder": 12530,
+    "lineage": 308611,
+    "mirror": 6265,
+    "queue": 7893,
+    "recurrence": 6265,
+    "replenishment": 30687,
+    "response": 266
+  },
+  "complete_dipole_paths": 862,
+  "stage_records": 54042,
+  "phase_counts": {
+    "BIRTH": 1319,
+    "PERSISTENCE": 51861,
+    "REVERSAL": 862
+  },
+  "fifo_order_episode_rows": 11976,
+  "trades_with_temporal_path_overlap": 14699,
+  "trades_without_temporal_path_overlap": 16040,
+  "trade_path_memberships": 17845,
+  "exact_emission_evidence_counts": {
+    "absorption": 1543,
+    "candidate": 15,
+    "detector_coverage": 0,
+    "episode": 193,
+    "flow_substrate": 430,
+    "ladder": 1543,
+    "lineage": 0,
+    "mirror": 1543,
+    "queue": 1487,
+    "recurrence": 1543,
+    "replenishment": 1534,
+    "response": 45
+  },
+  "all_99_roles_retained": true,
+  "all_13_bindings_retained": true,
+  "all_510_saved_knowledge_claims_retained": true,
+  "still_open": [
+    "Complete 99-plane/knowledge consumer and unit certification NOT_PASSED",
+    "Stage-zero source instant for 862 completed paths remains flagged; source-rule phase is not a true trade birth",
+    "Full depth/FIFO/lifecycle records are not a continuous full-book/order replay at every trade in these saved projections",
+    "Existing exhaustion workflow is retained; append later results by exact trade/cursor/path identity. No trained exhaustion target or duplicate workflow is asserted here",
+    "Original MLP repeatability, negative magnitude outputs, poor tail calibration and one-day validation limits unchanged"
+  ],
+  "exact_member_read": {
+    "archive": "artifacts\\recovered-c-drive\\20261022\\family-continuation-archives\\full-context-continuation-v1.tar.gz",
+    "member": "episode-path-audit-v1/lifecycle_asof.sqlite",
+    "bytes": 464343040,
+    "method": "SQLite in-memory deserialize; no database saved on C; frozen inputs not rehashed"
+  },
+  "aws_calls": 0,
+  "new_fits": 0,
+  "new_orders": 0,
+  "old_case_work": false,
+  "scope_note": "This receipt describes the initial local-only phase. The later bounded S3 transport is recorded separately in bounded-second-set-read-receipt.json; the full continuation did use the AWS plugin."
+}

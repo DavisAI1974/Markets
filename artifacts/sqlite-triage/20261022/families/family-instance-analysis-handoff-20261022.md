@@ -1,6 +1,16 @@
 # Family research handoff for individual instance analysis
 
-Prepared October 22, 2026 Eastern. **First work in the new chat: compare instances 375 and 391 in detail.** Most subsequent work should remain analysis of this completed run, one instance/market episode at a time.
+Prepared October 22, 2026 Eastern; continued October 23. **Current work: every recorded market trade and its lifecycle.** Earlier case instructions below are historical and superseded by the user's trade-only direction.
+
+## Current checkpoint: trade work only; full evidence preserved
+
+The user explicitly stopped all work on the two earlier examples. Do not revisit them. Continue from `trade-lifecycle-targeted-v1/README.md` and its receipts, using all 30,739 market trades as the population. The user requires no dropped trades, no averaging or flattening, and the exact completed-run source list. Original nested evidence, individual prints, all compact second-set values/states, ROOT/native rows, all 99 roles, 13 bindings and 510 saved knowledge claims are retained or exactly referenced. Missing local payload links are explicit; an inventory is not a claim every source has been interpreted.
+
+Dipole supplies supporting flow context. The first combined overlay of trades 118–149 shows why tape, order identity, replenishment and price response must be added: three opposed dipole readings can repeat a rolling 20-second window with no fresh trade in those seconds. The next print can be higher, while a later pullback still occurs. Preserve the full tail and contrary evidence. SAME/FLIP orientation, terminal flow REVERSAL, price reversal and exhaustion are different observations.
+
+Existing exhaustion work belongs in the workflow and can be appended later by exact instrument/time/cursor/order/path references. Do not start a duplicate exhaustion project or treat an unvalidated phase label as a proven exhaustion signal. All later knowledge/data may inform retrospective explanation. Semantic coverage remains NOT_PASSED; original MLP reproducibility, invalid magnitude and calibration evidence remain unresolved.
+
+The user subsequently allowed reusing the four boxes if a targeted gap fill needs them. None has been restarted in this continuation. A bounded AWS-plugin read of one existing S3 archive added four compact second-set members to the local Git evidence; no AWS CLI, resources, fits, orders, subagents, automations or cross-chat messages were used. No setup repeat, full raw restore or frozen-input/database rehash is needed. Later explicit user direction takes precedence over historical operating instructions below.
 
 ## Latest user direction: use the run list and start with every trade
 

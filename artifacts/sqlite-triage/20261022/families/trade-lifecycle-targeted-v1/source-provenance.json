@@ -1,0 +1,51 @@
+{
+  "schema": "TARGETED_TRADE_SOURCE_PROVENANCE_V1",
+  "github_definition_references": [
+    {
+      "name": "native_absorption.py",
+      "ref": "2ebb8ce8",
+      "git_blob_sha": "3e7a2e552dade4800ece19f17b71a369d1abc816",
+      "url": "https://github.com/DavisAI1974/Markets/blob/2ebb8ce8/research/kalshi/frankie_raw_mbo_benchmark/native_absorption.py",
+      "role": "Read-only source definition; not a production change or executed source"
+    },
+    {
+      "name": "native_candidate_adapter.py",
+      "ref": "2ebb8ce8",
+      "git_blob_sha": "c9aa120688cbdefbd150d717caf0a7cb3b1857cd",
+      "url": "https://github.com/DavisAI1974/Markets/blob/2ebb8ce8/research/kalshi/frankie_raw_mbo_benchmark/native_candidate_adapter.py",
+      "role": "Read-only source definition; not a production change or executed source"
+    },
+    {
+      "name": "native_group_adapters.py",
+      "ref": "2ebb8ce8",
+      "git_blob_sha": "60d523e29a006686e69821e36e24b2c0dfd6ac02",
+      "url": "https://github.com/DavisAI1974/Markets/blob/2ebb8ce8/research/kalshi/frankie_raw_mbo_benchmark/native_group_adapters.py",
+      "role": "Read-only source definition; not a production change or executed source"
+    },
+    {
+      "name": "native_calculation_runner.py",
+      "ref": "2ebb8ce8",
+      "git_blob_sha": "385ebe36964450de3663ae3cf814b9187f5f155a",
+      "url": "https://github.com/DavisAI1974/Markets/blob/2ebb8ce8/research/kalshi/frankie_raw_mbo_benchmark/native_calculation_runner.py",
+      "role": "Read-only source definition; not a production change or executed source"
+    }
+  ],
+  "definition_identity_limit": "GitHub blob identities are reference definitions at 2ebb8ce8, not proof these bytes were the runtime producer for every saved row.",
+  "aws_skill": {
+    "name": "querying-aws-s3",
+    "retrieval": "AWS plugin agent-skill discovery and retrieval during this continuation",
+    "application": "Single known archived S3 object: direct bounded read; no new query service or resources",
+    "tool": "AWS get_presigned_url; never AWS CLI",
+    "receipt": "bounded-second-set-read-receipt.json"
+  },
+  "source_policy": "Exact original completed-run inventory at ../completed-run-source-list.json remains authoritative. Compact 19-number retrieval adds local availability, not a new timestamp alignment of the original run.",
+  "operations": {
+    "ec2_starts": 0,
+    "new_resources": 0,
+    "fits": 0,
+    "live_orders": 0,
+    "subagents": 0,
+    "cross_chat_messages": 0
+  },
+  "secret_handling": "Temporary presigned GET URL was not saved in repository artifacts."
+}

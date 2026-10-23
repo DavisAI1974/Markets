@@ -1,0 +1,23 @@
+{
+  "status": "LOCAL_SOURCE_OVERLAY_CHECKED",
+  "case": "dip-19648-1697581775",
+  "original_case_trades": 32,
+  "day_trades_retained": 30739,
+  "dropped_day_trades": 0,
+  "fresh_trades_in_three_opposed_stage_seconds": 0,
+  "original_compact_trade_views": 32,
+  "original_evidence_bundles": 32,
+  "original_root_link_records": 32,
+  "nearby_source_record_counts": {
+    "flow_substrate": 2,
+    "queue": 0,
+    "replenishment": 2,
+    "ladder": 2,
+    "absorption": 1,
+    "response": 0
+  },
+  "no_averaging": true,
+  "no_snapshot_execution_inference": true,
+  "exhaustion_result": "OPEN_EXISTING_WORKFLOW_APPEND_LATER",
+  "semantic_coverage": "NOT_PASSED"
+}

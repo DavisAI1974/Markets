@@ -1,0 +1,18 @@
+{
+  "status": "ORIGINAL_MEASUREMENT_AND_ORDER_IDENTITIES_ATTACHED",
+  "trade_records": 30739,
+  "dropped_trades": 0,
+  "original_root_native_measurement_rows": 1872499,
+  "source_ordinals_with_saved_measurements": 2053,
+  "exact_emission_measurement_coverage": 1543,
+  "exact_pre_group_measurement_coverage": 2070,
+  "removal_records_preserved": 7910,
+  "removal_evidence_states": {
+    "SOURCE_LINKED_CANCELLED_ORDER": 2213,
+    "SOURCE_LINKED_FILLED_ORDER_REMOVAL; DO_NOT_COUNT_AS_NEW_MAKER_CANCELLATION": 5680,
+    "UNRESOLVED_WITHOUT_SAME_EMISSION_TERMINAL_ORDER_RECORD": 17
+  },
+  "no_source_values_overwritten": true,
+  "no_average_or_model_vote": true,
+  "scope": "Original selected-context ROOT/native measurement export plus archived MBO lifecycle records; not a new continuous full-payload export for every trade prefix"
+}
