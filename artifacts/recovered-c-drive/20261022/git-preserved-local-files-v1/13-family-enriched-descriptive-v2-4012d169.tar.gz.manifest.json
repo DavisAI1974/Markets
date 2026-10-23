@@ -1,0 +1,33 @@
+{
+  "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-enriched-descriptive-v2-4012d169.tar.gz",
+  "prior_loose_path": "artifacts/recovered-c-drive/20261022/family-enriched-descriptive-v2-4012d169.tar.gz",
+  "bytes": 245482113,
+  "prior_loose_mtime_ns": 1792666468000000000,
+  "parts": [
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/13-family-enriched-descriptive-v2-4012d169.tar.gz.part0000.bin",
+      "offset": 0,
+      "bytes": 67108864,
+      "sha256": "d74b758cbf8d8a93d874ebb5d51432d55a502444c897086692acd935b39ea751"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/13-family-enriched-descriptive-v2-4012d169.tar.gz.part0001.bin",
+      "offset": 67108864,
+      "bytes": 67108864,
+      "sha256": "c4fd2e7c401b25bd18500defbd29280d4d4aca3eaf673e536ae70bdf100f077e"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/13-family-enriched-descriptive-v2-4012d169.tar.gz.part0002.bin",
+      "offset": 134217728,
+      "bytes": 67108864,
+      "sha256": "364423617f62917f2383f5e25dab54fcaa76c88e2e6c1cce3c61365fc13d330f"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/13-family-enriched-descriptive-v2-4012d169.tar.gz.part0003.bin",
+      "offset": 201326592,
+      "bytes": 44155521,
+      "sha256": "e242f8326ec37c308f2a286fc982a7c3281a768dbbd69c8c5a55d496b80782bc"
+    }
+  ],
+  "preservation": "Concatenate parts in listed order for identical original compressed/file bytes; no extraction or recompression"
+}

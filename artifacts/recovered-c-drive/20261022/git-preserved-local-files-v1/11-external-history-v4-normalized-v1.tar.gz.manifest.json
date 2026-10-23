@@ -1,0 +1,351 @@
+{
+  "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-continuation-archives/external-history-v4-normalized-v1.tar.gz",
+  "prior_loose_path": "artifacts/recovered-c-drive/20261022/family-continuation-archives/external-history-v4-normalized-v1.tar.gz",
+  "bytes": 3788033203,
+  "prior_loose_mtime_ns": 1792683770000000000,
+  "parts": [
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0000.bin",
+      "offset": 0,
+      "bytes": 67108864,
+      "sha256": "d076a47d575f68c6e0f89004d902fba6444cdccb9336e7bebfaedbebd8f798a0"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0001.bin",
+      "offset": 67108864,
+      "bytes": 67108864,
+      "sha256": "c843f72f96e4b6dcc01d4649ef57cae99d5482c589cc3fa1450cc348030731d5"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0002.bin",
+      "offset": 134217728,
+      "bytes": 67108864,
+      "sha256": "e2c9fef399174bbd495cd7eb27a816ef67e225caf8b7d9ba644907f9ff9aad4d"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0003.bin",
+      "offset": 201326592,
+      "bytes": 67108864,
+      "sha256": "654bdec7f6030447e046f3baf3b34cd0cd15cf7978a8923bedd7488080cf3382"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0004.bin",
+      "offset": 268435456,
+      "bytes": 67108864,
+      "sha256": "23292a98692f03aeab8a0032817ccd1fc69e55db8f029f9451f303a524938f6a"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0005.bin",
+      "offset": 335544320,
+      "bytes": 67108864,
+      "sha256": "11ccc12764ac3e49ea29da0925c32ddb640f1e12e6ed2eab58a37f0e003202bf"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0006.bin",
+      "offset": 402653184,
+      "bytes": 67108864,
+      "sha256": "06f00a26f27e5ca8e759386fd7475b2fa2897c07ae048513781088668b95b92c"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0007.bin",
+      "offset": 469762048,
+      "bytes": 67108864,
+      "sha256": "3c804d56d4ab31335dafcb94ff5606439d40f398c5baf311637f2218babb4882"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0008.bin",
+      "offset": 536870912,
+      "bytes": 67108864,
+      "sha256": "33082c88d041bab8071f72df93aec57e364e9dc91a6f34a4aca2a9d8dc469cfa"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0009.bin",
+      "offset": 603979776,
+      "bytes": 67108864,
+      "sha256": "affcd8d0fac0303b7117b2ca25d9799512b39381156a7d31744a5d0ba16470cc"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0010.bin",
+      "offset": 671088640,
+      "bytes": 67108864,
+      "sha256": "97a64ebeeeaef862ddc2a97737196a732eeb0e78ee77981c077d301ec65ee77f"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0011.bin",
+      "offset": 738197504,
+      "bytes": 67108864,
+      "sha256": "2e82338bad04f09828fb9f4142ce642451508e0257d852889f5c1ae3797b12fd"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0012.bin",
+      "offset": 805306368,
+      "bytes": 67108864,
+      "sha256": "296c26b8cdfb9feae262bbced885598068d787263a5f2384f42a5a9d5d56796c"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0013.bin",
+      "offset": 872415232,
+      "bytes": 67108864,
+      "sha256": "fb33ce9c625ae4f4a8f49b391a6cc9118fe68947eaa02f0a042a3c3d00d628fa"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0014.bin",
+      "offset": 939524096,
+      "bytes": 67108864,
+      "sha256": "08af8246a0d670eb84aa0b46021d202524d27a4c1ecaa85227d7e2c3714addfd"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0015.bin",
+      "offset": 1006632960,
+      "bytes": 67108864,
+      "sha256": "11f670b8439bac5d2a378cc492d59754aacdf460f6210429b2e16bf1af5e342d"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0016.bin",
+      "offset": 1073741824,
+      "bytes": 67108864,
+      "sha256": "03ff4a41b48338174aff2f284347e1187147e8e97d2b4b91d1d41d50da91a8b3"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0017.bin",
+      "offset": 1140850688,
+      "bytes": 67108864,
+      "sha256": "6a0951e2495f718852a57dce6ddd72e08ef12193ae2dfb1e82132b45d6ce9c7f"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0018.bin",
+      "offset": 1207959552,
+      "bytes": 67108864,
+      "sha256": "c58c412c29bc08f0ec33a46b642987d1532b186a6330ef78aa77c36f5d7e3716"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0019.bin",
+      "offset": 1275068416,
+      "bytes": 67108864,
+      "sha256": "02043086d021f7abda4f63d73944fb9c4a4cd4c89f6182428111ba7872220acf"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0020.bin",
+      "offset": 1342177280,
+      "bytes": 67108864,
+      "sha256": "f98a2f6a3dd9cc3ab80aaf31c42214c3fa16a4f93ef4c021c2404711c5136a98"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0021.bin",
+      "offset": 1409286144,
+      "bytes": 67108864,
+      "sha256": "e4e49074eab3eabd53ca349e071cf2780b9611440b81611a2a6c0c0215f433a6"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0022.bin",
+      "offset": 1476395008,
+      "bytes": 67108864,
+      "sha256": "a7d0eb8c308a472154564216b2f84330b3d1d06a3af60cc68217413e2dc65529"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0023.bin",
+      "offset": 1543503872,
+      "bytes": 67108864,
+      "sha256": "3693966f7519756bdf262a8dd0c21fd03bd01efb53649895a3e77eb657221964"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0024.bin",
+      "offset": 1610612736,
+      "bytes": 67108864,
+      "sha256": "953199803a588cac45e98818c22723d8a4e11e2f49cc3042ddb010f8a73428f9"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0025.bin",
+      "offset": 1677721600,
+      "bytes": 67108864,
+      "sha256": "5e832e9e8617ad1cf2afa5668b3ba2914a7ef5f3a4f0615c3b1c33fbd8935eae"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0026.bin",
+      "offset": 1744830464,
+      "bytes": 67108864,
+      "sha256": "725d3c3b55980cc6c9561049ac533e0587d92378738ad4f29e760d5f6e54ae8a"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0027.bin",
+      "offset": 1811939328,
+      "bytes": 67108864,
+      "sha256": "a8fdd11619400063cbd3e84ed878db6b9352d4b31d3de3fca6d2be2f4ec6592a"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0028.bin",
+      "offset": 1879048192,
+      "bytes": 67108864,
+      "sha256": "2e197573dfefdd3a8224f2c580b427f1e3f14efaac9ac70d469fa04782cd923a"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0029.bin",
+      "offset": 1946157056,
+      "bytes": 67108864,
+      "sha256": "257702edbc37109926ba56dfe93cc760c26d694c8fc194f5ac59abe59d777401"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0030.bin",
+      "offset": 2013265920,
+      "bytes": 67108864,
+      "sha256": "0f745726f69e696741b4c9c03c8a739d5facfd7c8fdd9b8ec9f0984fd01606e5"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0031.bin",
+      "offset": 2080374784,
+      "bytes": 67108864,
+      "sha256": "4b4bcfb7f4e13addec67f91d7e7106e248f1dcc69bf6525fb553819ae4ca16f0"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0032.bin",
+      "offset": 2147483648,
+      "bytes": 67108864,
+      "sha256": "bbb290f0f16911a4d7707bceddb76147dcfd0f75f925bbc38e6b406765e429e2"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0033.bin",
+      "offset": 2214592512,
+      "bytes": 67108864,
+      "sha256": "c78b0a40ed8fa588fef28a0416e34c2fa8b0c71ec65b7a23f35e45a0c48344aa"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0034.bin",
+      "offset": 2281701376,
+      "bytes": 67108864,
+      "sha256": "99e3e11a4c40b98c248463e8635c167cef8fa32b73f3b271fac545c7f15114d1"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0035.bin",
+      "offset": 2348810240,
+      "bytes": 67108864,
+      "sha256": "dc95aa281ecaf3877538316d11d07625afcbee8ca80007d410eb7485f1272809"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0036.bin",
+      "offset": 2415919104,
+      "bytes": 67108864,
+      "sha256": "5f81339432cb1aff7e94f04c83c7386b74a173ebd95d5026b9123bb890e03726"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0037.bin",
+      "offset": 2483027968,
+      "bytes": 67108864,
+      "sha256": "374df0813f0f6861606e3cfea4cfe31e92fd1482fd173ac70dcfb73e42345785"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0038.bin",
+      "offset": 2550136832,
+      "bytes": 67108864,
+      "sha256": "7449192dafe0fff9e141bdd432491b89735b7a4e37c131d62da618a61b832a2e"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0039.bin",
+      "offset": 2617245696,
+      "bytes": 67108864,
+      "sha256": "874ef4ed2bb31fa4b07be839cd9f90635a51ae19197cb9366e4571d48f69ac27"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0040.bin",
+      "offset": 2684354560,
+      "bytes": 67108864,
+      "sha256": "fb5a14c849495fd772a62eae3a716f013753b51364ce11c5e0fcad934451fc0d"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0041.bin",
+      "offset": 2751463424,
+      "bytes": 67108864,
+      "sha256": "ccc197aa4641d8aa033f157e7cb4727f0b287ac28bf783459ad5b33bb15bdfde"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0042.bin",
+      "offset": 2818572288,
+      "bytes": 67108864,
+      "sha256": "f6ed1e5e5aa2ae534372894352e754b716a940daa90d9fe987f30c3cb12781f8"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0043.bin",
+      "offset": 2885681152,
+      "bytes": 67108864,
+      "sha256": "131b8d788f8aa5f99c38a9ad2ec2a9079614adee309c04edd1b2943bc225156a"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0044.bin",
+      "offset": 2952790016,
+      "bytes": 67108864,
+      "sha256": "df7f2b961085b0f83c95556b29bc0fe6509b3fd43dfb68e1340a49916cfefeab"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0045.bin",
+      "offset": 3019898880,
+      "bytes": 67108864,
+      "sha256": "ff6db6deb618ca03e249ae6a4571bb0b8891e6962c2c869493c0c51d6358a6d3"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0046.bin",
+      "offset": 3087007744,
+      "bytes": 67108864,
+      "sha256": "2fa90498b72723d06dcb521d3dde247aaa2e9106d84b1d0720df6f72a9d76718"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0047.bin",
+      "offset": 3154116608,
+      "bytes": 67108864,
+      "sha256": "31f6cb83a4eaa02e44df1881ee0c65f64ecb89d89f1d88a8f67ae0807d7c74fd"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0048.bin",
+      "offset": 3221225472,
+      "bytes": 67108864,
+      "sha256": "8f102e1f2b1a974253c7c57973c5bde4184c0e1f5753e3f6000859717fad6202"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0049.bin",
+      "offset": 3288334336,
+      "bytes": 67108864,
+      "sha256": "d8fa2b3c46748ffa4d2a265e6552f9be8430186eec7a85ddf837458bd97361f6"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0050.bin",
+      "offset": 3355443200,
+      "bytes": 67108864,
+      "sha256": "0dfe91494b285da1f253c3c359fec6a2de33975986ba89fd74e1e41cdf4368bf"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0051.bin",
+      "offset": 3422552064,
+      "bytes": 67108864,
+      "sha256": "32b743d54a30b391742e9f40b3ede39bfd2dbf8051294a9583b94350675120d8"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0052.bin",
+      "offset": 3489660928,
+      "bytes": 67108864,
+      "sha256": "cf7bf9ace119f3255054f19620a69568812be06a9be7b525db92dcffb5d1ca18"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0053.bin",
+      "offset": 3556769792,
+      "bytes": 67108864,
+      "sha256": "8fe6a9096e1ed1f065b624ddb12e94f7d7337898824e3803b04065aa5f799d70"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0054.bin",
+      "offset": 3623878656,
+      "bytes": 67108864,
+      "sha256": "8692944df79ccaf5510ef673899b4a5044ea7f0344c8bdf22ff3ea3c623b4e02"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0055.bin",
+      "offset": 3690987520,
+      "bytes": 67108864,
+      "sha256": "613b0c32e091506fcfe02bdb90c36bf993d7d1390ac906d39a2516aa88bdf7b7"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/11-external-history-v4-normalized-v1.tar.gz.part0056.bin",
+      "offset": 3758096384,
+      "bytes": 29936819,
+      "sha256": "0fe784a37d0d81b6bc837be432fad482b2bd210c94844e4673c32499e183d073"
+    }
+  ],
+  "preservation": "Concatenate parts in listed order for identical original compressed/file bytes; no extraction or recompression"
+}

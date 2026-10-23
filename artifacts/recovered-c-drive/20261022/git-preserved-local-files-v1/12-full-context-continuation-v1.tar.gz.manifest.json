@@ -1,0 +1,27 @@
+{
+  "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-continuation-archives/full-context-continuation-v1.tar.gz",
+  "prior_loose_path": "artifacts/recovered-c-drive/20261022/family-continuation-archives/full-context-continuation-v1.tar.gz",
+  "bytes": 181035517,
+  "prior_loose_mtime_ns": 1792683654000000000,
+  "parts": [
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/12-full-context-continuation-v1.tar.gz.part0000.bin",
+      "offset": 0,
+      "bytes": 67108864,
+      "sha256": "77149cbe4ffd92bc901504a142ac2457a99c98ea5f12ae7f597a55165caf8870"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/12-full-context-continuation-v1.tar.gz.part0001.bin",
+      "offset": 67108864,
+      "bytes": 67108864,
+      "sha256": "a6a771246500670854f7b36fdd07f59a47d9e1e2b2e7b40a49ada409d33af512"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/12-full-context-continuation-v1.tar.gz.part0002.bin",
+      "offset": 134217728,
+      "bytes": 46817789,
+      "sha256": "79c21253f5057b06a77456a7132ff5e6d1906d5e9d11aa97b220bcc3b995421f"
+    }
+  ],
+  "preservation": "Concatenate parts in listed order for identical original compressed/file bytes; no extraction or recompression"
+}

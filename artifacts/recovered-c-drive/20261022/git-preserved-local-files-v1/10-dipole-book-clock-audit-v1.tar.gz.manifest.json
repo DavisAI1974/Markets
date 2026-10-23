@@ -1,0 +1,15 @@
+{
+  "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-continuation-archives/dipole-book-clock-audit-v1.tar.gz",
+  "prior_loose_path": "artifacts/recovered-c-drive/20261022/family-continuation-archives/dipole-book-clock-audit-v1.tar.gz",
+  "bytes": 3898548,
+  "prior_loose_mtime_ns": 1792684038000000000,
+  "parts": [
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/10-dipole-book-clock-audit-v1.tar.gz.part0000.bin",
+      "offset": 0,
+      "bytes": 3898548,
+      "sha256": "b3be15d9d60f9e2d9a6465ef68c3ad731d871324474e1d0b5e5fad8c315ce471"
+    }
+  ],
+  "preservation": "Concatenate parts in listed order for identical original compressed/file bytes; no extraction or recompression"
+}

@@ -1,0 +1,33 @@
+{
+  "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-research-progress-38c37046.tar.gz",
+  "prior_loose_path": "artifacts/recovered-c-drive/20261022/family-research-progress-38c37046.tar.gz",
+  "bytes": 260143208,
+  "prior_loose_mtime_ns": 1792674330000000000,
+  "parts": [
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/18-family-research-progress-38c37046.tar.gz.part0000.bin",
+      "offset": 0,
+      "bytes": 67108864,
+      "sha256": "d83c2564745c9238945c7ac15210f0b372861c676fa36e5c57445c39177daf79"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/18-family-research-progress-38c37046.tar.gz.part0001.bin",
+      "offset": 67108864,
+      "bytes": 67108864,
+      "sha256": "dfeaa170bb44f2e818e2a68f5efc7fe9e70172f79f3c77818499a30d127e9793"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/18-family-research-progress-38c37046.tar.gz.part0002.bin",
+      "offset": 134217728,
+      "bytes": 67108864,
+      "sha256": "5c1e16233228eaa494d07581f82837d8f6a3b5c8522afd1be6636a733bc7c53e"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/18-family-research-progress-38c37046.tar.gz.part0003.bin",
+      "offset": 201326592,
+      "bytes": 58816616,
+      "sha256": "da994bf9f9f253faa5f084fa2eed7fce09c2bd2f85b8abd5f125529ac5635108"
+    }
+  ],
+  "preservation": "Concatenate parts in listed order for identical original compressed/file bytes; no extraction or recompression"
+}

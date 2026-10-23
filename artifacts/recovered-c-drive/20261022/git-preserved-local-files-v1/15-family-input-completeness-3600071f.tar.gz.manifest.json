@@ -1,0 +1,21 @@
+{
+  "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-input-completeness-3600071f.tar.gz",
+  "prior_loose_path": "artifacts/recovered-c-drive/20261022/family-input-completeness-3600071f.tar.gz",
+  "bytes": 75926238,
+  "prior_loose_mtime_ns": 1792663644000000000,
+  "parts": [
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/15-family-input-completeness-3600071f.tar.gz.part0000.bin",
+      "offset": 0,
+      "bytes": 67108864,
+      "sha256": "7eebde5f4dde509347f93a672f1c47c6867022c876638c2ab1506b25b342a108"
+    },
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/15-family-input-completeness-3600071f.tar.gz.part0001.bin",
+      "offset": 67108864,
+      "bytes": 8817374,
+      "sha256": "73230feb9c9c770b0236e6e894ab9c9e83cf46917f97042fbc76fcec7e43d329"
+    }
+  ],
+  "preservation": "Concatenate parts in listed order for identical original compressed/file bytes; no extraction or recompression"
+}

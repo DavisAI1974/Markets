@@ -1,0 +1,15 @@
+{
+  "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/__pycache__/verify_price_clocks.cpython-313.pyc",
+  "prior_loose_path": "artifacts/recovered-c-drive/20261022/aws-plugin-dev-6ac471776af081918e0f7a8ff1590f76-created-by/work/__pycache__/verify_price_clocks.cpython-313.pyc",
+  "bytes": 12580,
+  "prior_loose_mtime_ns": 1792659696000000000,
+  "parts": [
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/06-verify_price_clocks.cpython-313.pyc.part0000.bin",
+      "offset": 0,
+      "bytes": 12580,
+      "sha256": "0e87e70357b8d21e83c498d860de3cee6adc3a488aeac45327769d8e7c296ad1"
+    }
+  ],
+  "preservation": "Concatenate parts in listed order for identical original compressed/file bytes; no extraction or recompression"
+}

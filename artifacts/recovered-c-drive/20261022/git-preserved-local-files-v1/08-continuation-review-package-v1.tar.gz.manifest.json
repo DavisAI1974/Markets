@@ -1,0 +1,15 @@
+{
+  "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/family-continuation-archives/continuation-review-package-v1.tar.gz",
+  "prior_loose_path": "artifacts/recovered-c-drive/20261022/family-continuation-archives/continuation-review-package-v1.tar.gz",
+  "bytes": 257176,
+  "prior_loose_mtime_ns": 1792683876000000000,
+  "parts": [
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/08-continuation-review-package-v1.tar.gz.part0000.bin",
+      "offset": 0,
+      "bytes": 257176,
+      "sha256": "0c49533d39c97c8698e73bc1fa775534282c24e167ee35612141b07909c16d7f"
+    }
+  ],
+  "preservation": "Concatenate parts in listed order for identical original compressed/file bytes; no extraction or recompression"
+}

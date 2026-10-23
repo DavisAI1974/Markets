@@ -1,0 +1,15 @@
+{
+  "original_C_path": "C:/Users/A/Documents/Codex/2026-10-22/full-context-audit-snapshot-1-633f7259.tar.gz",
+  "prior_loose_path": "artifacts/recovered-c-drive/20261022/full-context-audit-snapshot-1-633f7259.tar.gz",
+  "bytes": 1386330,
+  "prior_loose_mtime_ns": 1792675918000000000,
+  "parts": [
+    {
+      "file": "artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/19-full-context-audit-snapshot-1-633f7259.tar.gz.part0000.bin",
+      "offset": 0,
+      "bytes": 1386330,
+      "sha256": "633f725914fb7d94f9b79cf9adfaf2d6360344a5803a69d6e30098fd22d31bcb"
+    }
+  ],
+  "preservation": "Concatenate parts in listed order for identical original compressed/file bytes; no extraction or recompression"
+}
