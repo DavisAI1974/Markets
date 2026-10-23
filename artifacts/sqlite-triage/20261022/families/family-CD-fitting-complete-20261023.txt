@@ -1,0 +1,25 @@
+FAMILY RESEARCH -- C/D FITTING COMPLETE, BACKUP IN PROGRESS -- 2026-10-23
+
+Compact scoped check at about00:12UTC, SSM command
+e95d16d5-6670-4918-a641-09bc3bf67d8a. All four invocation statuses Success/rc0.
+All four EC2 running and SSM Online. Same deployed reuse epoch and identities as
+family-reuse-current-handoff-20261022.txt; no task redistribution or source change.
+
+A1144/1146,2active,0queued; coordinator10366/start2080700, callback10433 waiting.
+B615/616,1active,0queued; coordinator7888/start1604184, callback7956 waiting.
+C165/165,shard_fits_complete; coordinator5077 exited, callback5143 active and
+hook-status validating_and_backing_up. Exact current-epoch shard-completion:
+archive SHA256 a509f22ab2b71f6c4de80109d2e757425d85defe9db57446bf79d2f9efe299c7
+archive bytes2474372646; statusfits_complete,workerC,currentdigestcce6f548...
+D170/170,shard_fits_complete; coordinator4111/start980520 alive/R packaging;
+callback4248 waiting_for_exit. No shard-completion receipt at check time yet.
+
+2094/2097 mandatory fits complete. Remaining3 already running onA/B. No pending
+mandatory work to give C/D. Do not interrupt D archive or C archive verification.
+These are fitting-completion observations, NOT a full verified-backup/stop claim.
+Do not rehash archives externally while a callback is actively verifying them.
+Wait for backup_verified_ready_for_reuse and identical durable stop proof before
+claiming verified save; their callbacks hold until all-fitting completion release.
+Only A does final imports/PCA/clustering/postprocessors, full global coverage and
+complete verified final backup. All original scientific/storage/scope rules hold.
+No instance was stopped or restarted in this check; no numerical fit interrupted.
