@@ -1,0 +1,18 @@
+{
+  "status": "PASSED_ORIGINAL_SELECTED_QUOTE_ROWS_AND_ALL_TRADE_COMPARISONS",
+  "original_quote_records_field_equal": 6634,
+  "exact_trade_clocks_checked": 30739,
+  "flag_trade_counts": {
+    "all_trades": 30739,
+    "PRINT_STEP_OPPOSED_PAIRED_MIDPOINT_CHANGE": 13,
+    "PRINT_CHANGED_WITH_UNCHANGED_PAIRED_QUOTES": 149
+  },
+  "flag_unique_emission_groups": {
+    "PRINT_STEP_OPPOSED_PAIRED_MIDPOINT_CHANGE": 11,
+    "PRINT_CHANGED_WITH_UNCHANGED_PAIRED_QUOTES": 146
+  },
+  "shared_group_contexts_are_not_independent": true,
+  "frozen_source_hashes_repeated": false,
+  "semantic_coverage": "NOT_PASSED",
+  "mlp_reproducibility": "UNRESOLVED"
+}

@@ -1,0 +1,41 @@
+{
+  "status": "ALL_TRADES_RETAINED_WITH_SAVED_SELECTED_QUOTE_COMPARISONS",
+  "trades": 30739,
+  "original_quote_measurement_records_retained": 6634,
+  "source_ordinals_with_saved_quote_rows": 2053,
+  "counts": {
+    "AT_PRIOR_BID": 740,
+    "paired_uncrossed_quotes": 1447,
+    "AT_PRIOR_ASK": 698,
+    "PRINT_STEP_OPPOSED_PAIRED_MIDPOINT_CHANGE": 13,
+    "PRINT_CHANGED_WITH_UNCHANGED_PAIRED_QUOTES": 149,
+    "MISSING_PRIOR_QUOTE": 28669,
+    "ABOVE_PRIOR_ASK": 251,
+    "BELOW_PRIOR_BID": 330,
+    "INSIDE_PRIOR_SPREAD": 51
+  },
+  "example_trade_ordinals": {
+    "PRINT_STEP_OPPOSED_PAIRED_MIDPOINT_CHANGE": [
+      2,
+      1255,
+      1256,
+      9128,
+      9131
+    ],
+    "PRINT_CHANGED_WITH_UNCHANGED_PAIRED_QUOTES": [
+      3,
+      12,
+      17,
+      24,
+      25
+    ]
+  },
+  "original_quote_rows_retained_individually": true,
+  "scalar_values_never_averaged_or_rounded": true,
+  "source_scope": "Existing selected-context export only; no raw ledger/database/archive scan",
+  "aws_operations": 0,
+  "source_retrieval": false,
+  "model_fits": 0,
+  "semantic_coverage": "NOT_PASSED",
+  "mlp_reproducibility": "UNRESOLVED"
+}

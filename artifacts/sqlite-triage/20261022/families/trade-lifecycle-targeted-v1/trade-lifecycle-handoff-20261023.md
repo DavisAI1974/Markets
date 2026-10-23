@@ -6,6 +6,8 @@ Role reconciliation is committed at `688fa3ac`: read `quote-order-gapfill-v1/rol
 
 Read `chronological-lifecycle-v1/README.md`, `chronology-receipt.json` and `verification.json` for the new every-trade observed path. All 30,739 individual trades now have exact chronology through 9,109 equal-price stretches and 5,120 overlapping print legs, complete earlier/later tape pointers and original layer links. These are descriptive print paths, not finished quote/order or causal explanations. Earlier trades 0–117 and later trades 150 onward still need mechanisms interpreted; the bounded exact mechanism work covers 118–149. Semantic coverage stays **NOT_PASSED**, MLP reproducibility **UNRESOLVED**. Continue from saved materialized data without repeating setup, raw scans or fits.
 
+`chronological-lifecycle-v1/saved-quote-comparison-receipt.json` and `saved-quote-verification.json` add the saved day-wide selected quote view: all 6,634 original bid/ask records, every trade retained, 1,447 paired prior/close quote comparisons, 149 print changes with unchanged quotes across 146 emission groups and 13 opposed print/midpoint changes across 11 groups. Read the source-scope limits and exact early/daytime examples in its README. These comparisons do not infer aggressor side or order causes and do not resolve the remaining full-day mechanisms.
+
 Prepared October 23, 2026, Eastern. Continue analysis of the completed run. Read `README.md` in this directory first, then this handoff. Start from the saved results; no setup repeat, broad raw scan, refit or frozen-source/database rehash.
 
 ## User objective and rules
@@ -19,6 +21,8 @@ Use the exact completed-run list in `../completed-run-source-list.json`: all 99 
 Existing exhaustion work can be attached later by instrument, exact clocks/cursors and order/path identity. Do not launch a duplicate exhaustion workflow or wait for it before doing other analysis. Loss of quote progress, opposing flow, a real quote retreat and a validated exhaustion signal are different observations.
 
 ## Workspace and Git
+
+The remaining prior ignored local archives/bytecode were preserved in Git in this continuation: **20 files, 4,922,716,488 original bytes, 89 ordered binary parts** under `artifacts/recovered-c-drive/20261022/git-preserved-local-files-v1/`. Every part was compared with the original and its remote-reachable Git blob before the redundant loose copies were deleted. All 344 original C paths in the earlier relocation receipt were absent. Read that directory's `index.json`, `verified-deletion-candidates.json` and `local-cleanup-receipt.json`. Some old helper constants still name the former loose archive paths; current analysis uses the materialized Git sources, so do not recreate archives or repeat setup to resume. Original AWS S3 archives, EBS, attempts, swap and snapshot remain untouched.
 
 Use only `E:/Markets-family-research-handoff`. Never dirty `E:/Markets`; it has unrelated pre-existing edits. No new artifacts on C:. All newly recovered source chunks, helpers and documents are saved in Git. Local branch: `codex/family-research-handoff-20261022`; push `origin HEAD:claude/kalshi-s79-kickoff-ij8t9o`, repository `DavisAI1974/Markets`.
 

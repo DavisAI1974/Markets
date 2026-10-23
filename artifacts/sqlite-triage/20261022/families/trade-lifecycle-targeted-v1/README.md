@@ -6,6 +6,8 @@ The [saved role reconciliation](quote-order-gapfill-v1/role-reconciliation-v1/RE
 
 The [whole-day chronology](chronological-lifecycle-v1/README.md) annotates every individual trade through all 9,109 equal-price stretches and 5,120 overlapping print-step legs, retains the complete earlier/later tape and all original evidence-layer links, and explicitly marks unfinished mechanisms. This extends observed lifecycle coverage across the entire population; it does not make print turns into quote reversals or pass semantic coverage. All 30,739 original trades remain unchanged, including 16,040 without a saved overlapping dipole. Semantic coverage stays **NOT_PASSED** and MLP reproducibility stays **UNRESOLVED**.
 
+The same continuation now separately retains all 6,634 original selected bid/ask measurement records and compares them to every trade, leaving missing coverage explicit. Among 1,447 trades with usable paired prior/close quotes, 149 print changes accompany unchanged quotes and 13 oppose the group midpoint change. They span 146 and 11 emission groups respectively; shared groups are not independent observations. These are source-limited descriptive comparisons, not inferred order mechanisms or a predictive rule. Read the individual examples and exact clocks in the chronology README.
+
 All **30,739 recorded market trades** remain the primary population. No trade is dropped, no trade prices are averaged, no model predictions are voted or blended, and no nested source payload is replaced by a scalar summary. Families and dipoles supply supporting context. This checkpoint adds inspectable evidence and bounded interpretation; it does not claim a finished explanation of every trade.
 
 ## Latest checkpoint: exact quote and order gaps filled
