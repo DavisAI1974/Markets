@@ -1,0 +1,54 @@
+FAMILY RESEARCH -- VERIFIED COMPLETE, ALL FOUR STOPPED -- 2026-10-23
+
+AWS reconnection restored. Fresh scoped API reads confirmed all four instances
+stopped with Client.InstanceInitiatedShutdown. Never restart these completed boxes.
+No terminate/delete operation was performed. All attached EBS and frozen snapshot
+snap-0d3e867c1240b6528 remain. Existing old Search workflow unchanged.
+
+All2097 mandatory fits complete:1908core,189neural; exact immutable task universe
+matches all-shard global completion and A's final proof. No duplicate task keys.
+Final coverage:1181946core prediction rows,118203neural prediction rows. A's final
+validation follows original sole PCA/clustering/all3postprocessors and checks
+model/sample coverage and coherent learned states. Coverage gate stays NOT_PASSED,
+V3 frozen; one retained market day and residualMLP reproducibility caveat remain.
+
+All four durable stop proofs read from S3, correct owner/instance/epoch/gate,
+backup_verified true. Full archive SHA256/length verification was completed by
+callbacks BEFORE stop; archive current lengths and encryption reconfirmed by
+HeadObject. No repeated full archive hashing or frozen raw/database hashing.
+AES256 server-side encryption on all four current archives. All four bucket public
+access blocking controls true. No bucket policy exists. No security/IAM mutation.
+
+Bucket frankie-granite42-568968024170-us-east-1
+Digest cce6f548f09f50f00caaca396a213e9f2d42d5a7ff85c0644be311eb83e708f4
+Final A archive:
+host-deliveries/family-research-20261022/save-stop/<DIGEST>/A-final-1792717045761634343.tar.gz
+20696923225bytes sha256fa195668b0d9ca489639efb60b0c07596c55865dab82d449ba04663a027b6d5d
+A verified2026-10-23T01:13:02Z (October22,9:13p.m.Eastern).
+Shard archives under host-deliveries/family-research-20261022/dual-box/<DIGEST>/:
+B-results.tar.gz8501429125bytes sha25603d928675014cc1321bc41938a87ff288210dfe99f55d9b57600f1280a0f30f8
+C-results.tar.gz2474372646bytes sha256a509f22ab2b71f6c4de80109d2e757425d85defe9db57446bf79d2f9efe299c7
+D-results.tar.gz2844410905bytes sha256354cfe2d4dd5204f2ae3af001cd667d565e965c630347e019be9b39f2156646b
+Stop proofs: save-stop/<DIGEST>/<OWNER>-stop-proof.json.
+Global fitting receipt: reuse/<DIGEST>/all-fits-complete.json.
+All prefixes above under host-deliveries/family-research-20261022/.
+Archive manifest:10216files,94100147420artifactbytes,1191external links; restore A
+at OUT, extract B/C/D separately and recreate owner/member external links from
+A's collection manifest. Frozen reproducible inputs reference retained snapshot.
+Full exact keys/hashes/owner proofs/volume inventory stored in
+tasks/family-research-20261022/verified-save-stop-completion-20261023.json.
+
+Compute usage stopped; retained storage charges continue for EBS provisioned size,
+IOPS/throughput, snapshots and all saved S3 objects/attempts. Nine attached volumes
+total13920GiB; this is not a whole-account bill and excludes detached old roots.
+Snapshot completed/encrypted2048GiB. Eight attached volumes encrypted; legacy
+vol-0fbf7bc0991bc8e39 is unencrypted,2048GiB,gp3,64000IOPS,1250MiB/s. It is retained
+unchanged under the no-old-Search/no-provision/no-delete constraints. Saved result
+archives and the frozen snapshot are encrypted; do not claim every legacy disk is.
+No attempt to reduce retained IOPS/throughput or change/delete volumes authorized.
+
+Existing heartbeat family-research-save-and-stop DELETED after verified completion
+at01:22UTC. No further save-stop polling needed. User has requested FULL scientific
+comparison of the different models; continue from saved artifacts without starting
+any EC2 instance or rerunning fits. Interim2094-key scientific readout remains
+historical, to be superseded by final2097-key analysis when final tables retrieved.

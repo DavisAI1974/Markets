@@ -1,0 +1,319 @@
+{
+  "verified_after_reconnect_utc": "2026-10-23T01:22:17Z",
+  "automation": "family-research-save-and-stop deleted after completion",
+  "complete": true,
+  "mandatory_jobs": 2097,
+  "coverage": {
+    "metrics": {
+      "core": 1908,
+      "neural": 189
+    },
+    "predictions": {
+      "core": {
+        "models": 1908,
+        "rows": 1181946
+      },
+      "neural": {
+        "models": 189,
+        "rows": 118203
+      }
+    }
+  },
+  "proofs": [
+    {
+      "owner": "A",
+      "key": "host-deliveries/family-research-20261022/save-stop/cce6f548f09f50f00caaca396a213e9f2d42d5a7ff85c0644be311eb83e708f4/A-stop-proof.json",
+      "verified_utc": "2026-10-23T01:13:02Z",
+      "backup_verified": true
+    },
+    {
+      "owner": "B",
+      "key": "host-deliveries/family-research-20261022/save-stop/cce6f548f09f50f00caaca396a213e9f2d42d5a7ff85c0644be311eb83e708f4/B-stop-proof.json",
+      "verified_utc": "2026-10-23T00:31:02Z",
+      "backup_verified": true
+    },
+    {
+      "owner": "C",
+      "key": "host-deliveries/family-research-20261022/save-stop/cce6f548f09f50f00caaca396a213e9f2d42d5a7ff85c0644be311eb83e708f4/C-stop-proof.json",
+      "verified_utc": "2026-10-23T00:12:40Z",
+      "backup_verified": true
+    },
+    {
+      "owner": "D",
+      "key": "host-deliveries/family-research-20261022/save-stop/cce6f548f09f50f00caaca396a213e9f2d42d5a7ff85c0644be311eb83e708f4/D-stop-proof.json",
+      "verified_utc": "2026-10-23T00:14:03Z",
+      "backup_verified": true
+    }
+  ],
+  "archives": [
+    {
+      "key": "host-deliveries/family-research-20261022/dual-box/cce6f548f09f50f00caaca396a213e9f2d42d5a7ff85c0644be311eb83e708f4/B-results.tar.gz",
+      "bytes": 8501429125,
+      "sha256": "03d928675014cc1321bc41938a87ff288210dfe99f55d9b57600f1280a0f30f8",
+      "full_hash_verified_by_callback": true,
+      "live_content_length_matches": true,
+      "encryption": "AES256"
+    },
+    {
+      "key": "host-deliveries/family-research-20261022/dual-box/cce6f548f09f50f00caaca396a213e9f2d42d5a7ff85c0644be311eb83e708f4/C-results.tar.gz",
+      "bytes": 2474372646,
+      "sha256": "a509f22ab2b71f6c4de80109d2e757425d85defe9db57446bf79d2f9efe299c7",
+      "full_hash_verified_by_callback": true,
+      "live_content_length_matches": true,
+      "encryption": "AES256"
+    },
+    {
+      "key": "host-deliveries/family-research-20261022/dual-box/cce6f548f09f50f00caaca396a213e9f2d42d5a7ff85c0644be311eb83e708f4/D-results.tar.gz",
+      "bytes": 2844410905,
+      "sha256": "354cfe2d4dd5204f2ae3af001cd667d565e965c630347e019be9b39f2156646b",
+      "full_hash_verified_by_callback": true,
+      "live_content_length_matches": true,
+      "encryption": "AES256"
+    },
+    {
+      "key": "host-deliveries/family-research-20261022/save-stop/cce6f548f09f50f00caaca396a213e9f2d42d5a7ff85c0644be311eb83e708f4/A-final-1792717045761634343.tar.gz",
+      "bytes": 20696923225,
+      "sha256": "fa195668b0d9ca489639efb60b0c07596c55865dab82d449ba04663a027b6d5d",
+      "full_hash_verified_by_callback": true,
+      "live_content_length_matches": true,
+      "encryption": "AES256"
+    }
+  ],
+  "final_collection": {
+    "artifact_bytes": 94100147420,
+    "files": 10216,
+    "frozen_input_snapshot": "snap-0d3e867c1240b6528",
+    "restoration": "Extract A at OUT; extract each verified shard separately; recreate external_links from owner/member."
+  },
+  "external_links_count": 1191,
+  "instances": [
+    {
+      "id": "i-031eeb577ad72b064",
+      "state": "stopped",
+      "state_reason": {
+        "Code": "Client.InstanceInitiatedShutdown",
+        "Message": "Client.InstanceInitiatedShutdown: Instance initiated shutdown"
+      },
+      "block_devices": [
+        {
+          "DeviceName": "/dev/sda1",
+          "Ebs": {
+            "AttachTime": "2026-10-22T20:31:25+00:00",
+            "DeleteOnTermination": false,
+            "Status": "attached",
+            "VolumeId": "vol-0bd554e8b87e60c6f",
+            "EbsCardIndex": 0
+          }
+        },
+        {
+          "DeviceName": "/dev/sdf",
+          "Ebs": {
+            "AttachTime": "2026-10-22T20:31:26.859000+00:00",
+            "DeleteOnTermination": false,
+            "Status": "attached",
+            "VolumeId": "vol-07930910b3266da92",
+            "EbsCardIndex": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "i-035994afa8bdf66a5",
+      "state": "stopped",
+      "state_reason": {
+        "Code": "Client.InstanceInitiatedShutdown",
+        "Message": "Client.InstanceInitiatedShutdown: Instance initiated shutdown"
+      },
+      "block_devices": [
+        {
+          "DeviceName": "/dev/sda1",
+          "Ebs": {
+            "AttachTime": "2026-10-14T06:06:30+00:00",
+            "DeleteOnTermination": true,
+            "Status": "attached",
+            "VolumeId": "vol-0d36715924f03b86c",
+            "EbsCardIndex": 0
+          }
+        },
+        {
+          "DeviceName": "/dev/sdf",
+          "Ebs": {
+            "AttachTime": "2026-10-14T06:06:31.296000+00:00",
+            "DeleteOnTermination": false,
+            "Status": "attached",
+            "VolumeId": "vol-004b68c077be09cc9",
+            "EbsCardIndex": 0
+          }
+        },
+        {
+          "DeviceName": "/dev/sdg",
+          "Ebs": {
+            "AttachTime": "2026-10-14T06:10:34.483000+00:00",
+            "DeleteOnTermination": false,
+            "Status": "attached",
+            "VolumeId": "vol-0fbf7bc0991bc8e39",
+            "EbsCardIndex": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "i-0d17573dbce871520",
+      "state": "stopped",
+      "state_reason": {
+        "Code": "Client.InstanceInitiatedShutdown",
+        "Message": "Client.InstanceInitiatedShutdown: Instance initiated shutdown"
+      },
+      "block_devices": [
+        {
+          "DeviceName": "/dev/sda1",
+          "Ebs": {
+            "AttachTime": "2026-10-22T20:31:27+00:00",
+            "DeleteOnTermination": false,
+            "Status": "attached",
+            "VolumeId": "vol-02b56f5fe96ed46ae",
+            "EbsCardIndex": 0
+          }
+        },
+        {
+          "DeviceName": "/dev/sdf",
+          "Ebs": {
+            "AttachTime": "2026-10-22T20:31:28.578000+00:00",
+            "DeleteOnTermination": false,
+            "Status": "attached",
+            "VolumeId": "vol-0e28c104e4ea65b43",
+            "EbsCardIndex": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "i-087f8d3247ae847a9",
+      "state": "stopped",
+      "state_reason": {
+        "Code": "Client.InstanceInitiatedShutdown",
+        "Message": "Client.InstanceInitiatedShutdown: Instance initiated shutdown"
+      },
+      "block_devices": [
+        {
+          "DeviceName": "/dev/sda1",
+          "Ebs": {
+            "AttachTime": "2026-10-22T18:48:46+00:00",
+            "DeleteOnTermination": true,
+            "Status": "attached",
+            "VolumeId": "vol-0f7eec946a75a5553",
+            "EbsCardIndex": 0
+          }
+        },
+        {
+          "DeviceName": "/dev/sdf",
+          "Ebs": {
+            "AttachTime": "2026-10-22T19:16:26.058000+00:00",
+            "DeleteOnTermination": false,
+            "Status": "attached",
+            "VolumeId": "vol-099fc416322bd1726",
+            "EbsCardIndex": 0
+          }
+        }
+      ]
+    }
+  ],
+  "volumes": [
+    {
+      "id": "vol-0d36715924f03b86c",
+      "gib": 2048,
+      "type": "gp3",
+      "encrypted": true,
+      "iops": 5000,
+      "throughput": 1250,
+      "state": "in-use"
+    },
+    {
+      "id": "vol-004b68c077be09cc9",
+      "gib": 2048,
+      "type": "gp3",
+      "encrypted": true,
+      "iops": 5000,
+      "throughput": 1250,
+      "state": "in-use"
+    },
+    {
+      "id": "vol-099fc416322bd1726",
+      "gib": 2560,
+      "type": "gp3",
+      "encrypted": true,
+      "iops": 5000,
+      "throughput": 1250,
+      "state": "in-use"
+    },
+    {
+      "id": "vol-02b56f5fe96ed46ae",
+      "gib": 32,
+      "type": "gp3",
+      "encrypted": true,
+      "iops": 3000,
+      "throughput": 125,
+      "state": "in-use"
+    },
+    {
+      "id": "vol-0fbf7bc0991bc8e39",
+      "gib": 2048,
+      "type": "gp3",
+      "encrypted": false,
+      "iops": 64000,
+      "throughput": 1250,
+      "state": "in-use"
+    },
+    {
+      "id": "vol-0e28c104e4ea65b43",
+      "gib": 2560,
+      "type": "gp3",
+      "encrypted": true,
+      "iops": 5000,
+      "throughput": 1250,
+      "state": "in-use"
+    },
+    {
+      "id": "vol-0f7eec946a75a5553",
+      "gib": 32,
+      "type": "gp3",
+      "encrypted": true,
+      "iops": 3000,
+      "throughput": 125,
+      "state": "in-use"
+    },
+    {
+      "id": "vol-07930910b3266da92",
+      "gib": 2560,
+      "type": "gp3",
+      "encrypted": true,
+      "iops": 5000,
+      "throughput": 1250,
+      "state": "in-use"
+    },
+    {
+      "id": "vol-0bd554e8b87e60c6f",
+      "gib": 32,
+      "type": "gp3",
+      "encrypted": true,
+      "iops": 3000,
+      "throughput": 125,
+      "state": "in-use"
+    }
+  ],
+  "snapshot": [
+    {
+      "id": "snap-0d3e867c1240b6528",
+      "state": "completed",
+      "encrypted": true,
+      "gib": 2048
+    }
+  ],
+  "bucket_public_access_block": {
+    "BlockPublicAcls": true,
+    "IgnorePublicAcls": true,
+    "BlockPublicPolicy": true,
+    "RestrictPublicBuckets": true
+  },
+  "bucket_policy": "No bucket policy exists, confirmed by prior targeted read"
+}

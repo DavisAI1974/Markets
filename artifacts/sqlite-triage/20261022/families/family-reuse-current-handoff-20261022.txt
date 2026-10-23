@@ -1,4 +1,7 @@
 FAMILY RESEARCH -- REUSE FINISHED BOXES BEFORE STOP -- 2026-10-22
+COMPLETE: Read family-save-stop-COMPLETE-20261023.txt FIRST.
+All2097fits/final processing/verified archives complete; all4instances STOPPED.
+AWS reconnected. Heartbeat deleted. Never restart these verified completed boxes.
 CURRENT UPDATE00:33UTC23Oct: Read family-AWS-reauth-required-20261023.txt first.
 AWS connector requires reauthentication; user alerted once. No fresh AWS read or
 change succeeded this turn. Existing instance-side work/callbacks independent.
