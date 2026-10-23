@@ -1,0 +1,61 @@
+{
+  "schema": "BOUNDED_QUOTE_ORDER_GAPFILL_OPERATIONS_V1",
+  "host_instance": "i-035994afa8bdf66a5",
+  "region": "us-east-1",
+  "authorization": "User authorized reusing the existing boxes if useful, then requested the exact quote/order gaps be filled.",
+  "ec2_starts": 1,
+  "new_instances": 0,
+  "new_services": 0,
+  "fits": 0,
+  "aws_cli_used": false,
+  "commands": {
+    "preflight": "e795a317-c715-4cd6-9bd3-24e27f419a98",
+    "schema_read_with_list_correction": "b7075bc8-6c6f-4801-a1de-aa8e0d8126e0",
+    "source_export": "12501daf-faa3-423d-9c96-c9457a4d6546",
+    "transfer_retry": "e13ddb96-754e-4e41-9091-81048a015b79",
+    "temporary_remote_cleanup": "0d4d12d1-fc6b-4f42-bb1e-d8ce98460d5e"
+  },
+  "source_read": {
+    "status": "EXPORTED_AND_TRANSPORTED",
+    "counts": {
+      "native.member": 1667,
+      "second_set": 1667,
+      "root.frames": 1667,
+      "native.lifecycle": 12662
+    },
+    "source_bytes_read": 1716521069,
+    "archive_bytes": 199925760,
+    "archive_sha256": "e5c0ef06bde58bb18c8df763098d5f65ea03f63d57828dae557ffe5b3e7eb99c",
+    "local_transport_dir": "/opt/frankie-box/work/family-research-20261022/trade-gap-transport-9fe9050b448b4954b7d201f6b54cc4b4",
+    "elapsed_source_seconds": 45.413
+  },
+  "transport_note": "Initial PUT returned HTTP 501 because urllib streamed without Content-Length. Retried the already-created archive with explicit length. No source extraction or frozen-source hash repeated for that retry.",
+  "temporary_remote_directory_removed": true,
+  "original_ledgers_volumes_snapshots_preserved": true,
+  "all_four_stopped_verified_at_utc": "2026-10-23T05:25:08.652840+00:00",
+  "instances": [
+    {
+      "id": "i-031eeb577ad72b064",
+      "state": "stopped"
+    },
+    {
+      "id": "i-035994afa8bdf66a5",
+      "state": "stopped"
+    },
+    {
+      "id": "i-0d17573dbce871520",
+      "state": "stopped"
+    },
+    {
+      "id": "i-087f8d3247ae847a9",
+      "state": "stopped"
+    }
+  ],
+  "s3_temporary_transport": "Remove only the fresh transport object after Git push; original archives remain untouched.",
+  "output_location": "E:/Markets-family-research-handoff/artifacts/sqlite-triage/20261022/families/trade-lifecycle-targeted-v1/quote-order-gapfill-v1",
+  "c_drive_outputs": 0,
+  "subagents": 0,
+  "automations": 0,
+  "messages_to_other_chats": 0,
+  "orders": 0
+}

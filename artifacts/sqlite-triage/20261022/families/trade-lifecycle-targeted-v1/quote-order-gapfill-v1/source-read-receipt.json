@@ -1,0 +1,274 @@
+{
+  "status": "BOUNDED_EPISODE_SOURCES_EXPORTED_BYTE_FOR_BYTE",
+  "first_group": 3046,
+  "last_group": 4712,
+  "instrument_id": 150611,
+  "primary_trade_ordinals": [
+    118,
+    149
+  ],
+  "group_records": 1667,
+  "original_source_pins": {
+    "native.member": {
+      "name": "native.member",
+      "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/bedrock/recovery-6f84a8a86f454010b61346b401e3eb5f/ledgers/exact_member_rows.jsonl",
+      "sha256": "5c1acca32856b08f2d2188951ae9e6c3932410f43d62e6e3e69858c370606d4c",
+      "bytes": 193743650444,
+      "offset_index": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/bedrock/recovery-6f84a8a86f454010b61346b401e3eb5f/ledgers/.frankie-row-index/f0682d7b2f7875519b55ed584cff0b9b485b80c1486a7b40b4138f10aa9874fe.offsets"
+    },
+    "root.frames": {
+      "name": "root.frames",
+      "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/frames.jsonl",
+      "sha256": "be7655b2663841df1b3662a057f86122750364b1b0678fcfd46c92798b0c1495",
+      "bytes": 496743568399,
+      "offset_index": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/.frankie-row-index/258e17212864363897277afbdf67c30d0c8776c93a830cc2dc06c2a050662f4a.offsets"
+    },
+    "native.lifecycle": {
+      "name": "native.lifecycle",
+      "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/bedrock/recovery-6f84a8a86f454010b61346b401e3eb5f/ledgers/exact_lifecycle_rows.jsonl",
+      "sha256": "85cd443bb5348b987d643878d43532aca7db8f61e932c68073425f1939dfb74e",
+      "bytes": 7560352552,
+      "offset_index": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/bedrock/recovery-6f84a8a86f454010b61346b401e3eb5f/ledgers/.frankie-row-index/2c2f8fc9d3feacb3df6d82a6748c56aad597b0960bb8f56f2825f9a9e45de88c.offsets"
+    }
+  },
+  "original_index_headers": {
+    "native.member": {
+      "byteorder": "little",
+      "identity": {
+        "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/bedrock/recovery-6f84a8a86f454010b61346b401e3eb5f/ledgers/exact_member_rows.jsonl",
+        "pinned_bytes": 193743650444,
+        "sha256": "5c1acca32856b08f2d2188951ae9e6c3932410f43d62e6e3e69858c370606d4c",
+        "stat": {
+          "bytes": 193743650444,
+          "ctime_ns": 1791963232891314103,
+          "device": 66306,
+          "inode": 8691177,
+          "mtime_ns": 1791418009755894716
+        }
+      },
+      "rows": 583688,
+      "sha256": "342cdcaed0dbd225043e2059e78eb1cda87742f0d274ef20b69362292fa01d40"
+    },
+    "root.frames": {
+      "byteorder": "little",
+      "identity": {
+        "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/frames.jsonl",
+        "pinned_bytes": 496743568399,
+        "sha256": "be7655b2663841df1b3662a057f86122750364b1b0678fcfd46c92798b0c1495",
+        "stat": {
+          "bytes": 496743568399,
+          "ctime_ns": 1791963232892101595,
+          "device": 66306,
+          "inode": 8686381,
+          "mtime_ns": 1791416093322646034
+        }
+      },
+      "rows": 583688,
+      "sha256": "376dccc0cdf77bb48f0ccc75b5f1c2dc0463fc74ba8062149e7da9657c8bfe20"
+    },
+    "native.lifecycle": {
+      "byteorder": "little",
+      "identity": {
+        "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/bedrock/recovery-6f84a8a86f454010b61346b401e3eb5f/ledgers/exact_lifecycle_rows.jsonl",
+        "pinned_bytes": 7560352552,
+        "sha256": "85cd443bb5348b987d643878d43532aca7db8f61e932c68073425f1939dfb74e",
+        "stat": {
+          "bytes": 7560352552,
+          "ctime_ns": 1791963232891314103,
+          "device": 66306,
+          "inode": 8691187,
+          "mtime_ns": 1791418203973395059
+        }
+      },
+      "rows": 5141045,
+      "sha256": "aeb2673562fa370d589a7a01b9bdd80c31196413b502edc447514eb4f951d168"
+    }
+  },
+  "second_set_source": "/opt/frankie-box/work/experiment-teacher-rows/20231018/host-dipole-classroom-source.c15.rows.jsonl",
+  "original_record_counts": {
+    "native.member": 1667,
+    "second_set": 1667,
+    "root.frames": 1667,
+    "native.lifecycle": 12662
+  },
+  "source_bytes_read": 1716521069,
+  "source_byte_cap": 3221225472,
+  "chunk_uncompressed_cap": 67108864,
+  "elapsed_seconds": 45.413,
+  "chunks": [
+    {
+      "name": "root.frames.chunk001.jsonl.gz",
+      "uncompressed_bytes": 66680610,
+      "rows": 105,
+      "bytes": 6709034
+    },
+    {
+      "name": "root.frames.chunk002.jsonl.gz",
+      "uncompressed_bytes": 66623118,
+      "rows": 105,
+      "bytes": 6705774
+    },
+    {
+      "name": "native.member.chunk001.jsonl.gz",
+      "uncompressed_bytes": 67087229,
+      "rows": 267,
+      "bytes": 9559288
+    },
+    {
+      "name": "root.frames.chunk003.jsonl.gz",
+      "uncompressed_bytes": 66894591,
+      "rows": 105,
+      "bytes": 6743148
+    },
+    {
+      "name": "root.frames.chunk004.jsonl.gz",
+      "uncompressed_bytes": 66899153,
+      "rows": 105,
+      "bytes": 6742473
+    },
+    {
+      "name": "root.frames.chunk005.jsonl.gz",
+      "uncompressed_bytes": 66915241,
+      "rows": 105,
+      "bytes": 6739532
+    },
+    {
+      "name": "second_set.chunk001.jsonl.gz",
+      "uncompressed_bytes": 67016183,
+      "rows": 530,
+      "bytes": 9072612
+    },
+    {
+      "name": "native.member.chunk002.jsonl.gz",
+      "uncompressed_bytes": 67060866,
+      "rows": 266,
+      "bytes": 9577708
+    },
+    {
+      "name": "root.frames.chunk006.jsonl.gz",
+      "uncompressed_bytes": 66957214,
+      "rows": 105,
+      "bytes": 6751967
+    },
+    {
+      "name": "root.frames.chunk007.jsonl.gz",
+      "uncompressed_bytes": 66898924,
+      "rows": 105,
+      "bytes": 6747931
+    },
+    {
+      "name": "native.member.chunk003.jsonl.gz",
+      "uncompressed_bytes": 66857639,
+      "rows": 265,
+      "bytes": 9520642
+    },
+    {
+      "name": "root.frames.chunk008.jsonl.gz",
+      "uncompressed_bytes": 66765622,
+      "rows": 105,
+      "bytes": 6725981
+    },
+    {
+      "name": "root.frames.chunk009.jsonl.gz",
+      "uncompressed_bytes": 66798102,
+      "rows": 105,
+      "bytes": 6724493
+    },
+    {
+      "name": "root.frames.chunk010.jsonl.gz",
+      "uncompressed_bytes": 67051672,
+      "rows": 105,
+      "bytes": 6759202
+    },
+    {
+      "name": "second_set.chunk002.jsonl.gz",
+      "uncompressed_bytes": 67099564,
+      "rows": 531,
+      "bytes": 9100525
+    },
+    {
+      "name": "native.member.chunk004.jsonl.gz",
+      "uncompressed_bytes": 67058115,
+      "rows": 265,
+      "bytes": 9530610
+    },
+    {
+      "name": "root.frames.chunk011.jsonl.gz",
+      "uncompressed_bytes": 67076319,
+      "rows": 105,
+      "bytes": 6770183
+    },
+    {
+      "name": "root.frames.chunk012.jsonl.gz",
+      "uncompressed_bytes": 66990602,
+      "rows": 105,
+      "bytes": 6766874
+    },
+    {
+      "name": "native.member.chunk005.jsonl.gz",
+      "uncompressed_bytes": 66938088,
+      "rows": 265,
+      "bytes": 9524834
+    },
+    {
+      "name": "root.frames.chunk013.jsonl.gz",
+      "uncompressed_bytes": 66829630,
+      "rows": 105,
+      "bytes": 6741570
+    },
+    {
+      "name": "root.frames.chunk014.jsonl.gz",
+      "uncompressed_bytes": 66970208,
+      "rows": 105,
+      "bytes": 6764163
+    },
+    {
+      "name": "second_set.chunk003.jsonl.gz",
+      "uncompressed_bytes": 67015487,
+      "rows": 467,
+      "bytes": 8841730
+    },
+    {
+      "name": "root.frames.chunk015.jsonl.gz",
+      "uncompressed_bytes": 67086043,
+      "rows": 105,
+      "bytes": 6782396
+    },
+    {
+      "name": "native.member.chunk006.jsonl.gz",
+      "uncompressed_bytes": 66904318,
+      "rows": 265,
+      "bytes": 9522542
+    },
+    {
+      "name": "native.member.chunk007.jsonl.gz",
+      "uncompressed_bytes": 18678144,
+      "rows": 74,
+      "bytes": 2663708
+    },
+    {
+      "name": "second_set.chunk004.jsonl.gz",
+      "uncompressed_bytes": 19689604,
+      "rows": 139,
+      "bytes": 2609174
+    },
+    {
+      "name": "root.frames.chunk016.jsonl.gz",
+      "uncompressed_bytes": 58742117,
+      "rows": 92,
+      "bytes": 5937275
+    },
+    {
+      "name": "native.lifecycle.chunk001.jsonl.gz",
+      "uncompressed_bytes": 12936666,
+      "rows": 12662,
+      "bytes": 809450
+    }
+  ],
+  "source_policy": "Read-only exact indexed records; no full ledger/database/archive rehash; new row/transport hashes only",
+  "no_averaging": true,
+  "no_nested_field_filter": true,
+  "no_trades_removed": true,
+  "fits": 0,
+  "semantic_coverage": "NOT_PASSED"
+}

@@ -1,0 +1,141 @@
+{
+  "status": "NEW_QUOTE_ORDER_TRANSPORT_VERIFIED",
+  "bytes": 199925760,
+  "sha256": "e5c0ef06bde58bb18c8df763098d5f65ea03f63d57828dae557ffe5b3e7eb99c",
+  "original_archive_sha256": "e5c0ef06bde58bb18c8df763098d5f65ea03f63d57828dae557ffe5b3e7eb99c",
+  "members": [
+    {
+      "name": "native.lifecycle.chunk001.jsonl.gz",
+      "bytes": 809450
+    },
+    {
+      "name": "native.member.chunk001.jsonl.gz",
+      "bytes": 9559288
+    },
+    {
+      "name": "native.member.chunk002.jsonl.gz",
+      "bytes": 9577708
+    },
+    {
+      "name": "native.member.chunk003.jsonl.gz",
+      "bytes": 9520642
+    },
+    {
+      "name": "native.member.chunk004.jsonl.gz",
+      "bytes": 9530610
+    },
+    {
+      "name": "native.member.chunk005.jsonl.gz",
+      "bytes": 9524834
+    },
+    {
+      "name": "native.member.chunk006.jsonl.gz",
+      "bytes": 9522542
+    },
+    {
+      "name": "native.member.chunk007.jsonl.gz",
+      "bytes": 2663708
+    },
+    {
+      "name": "original-group-metadata.json",
+      "bytes": 296727
+    },
+    {
+      "name": "original-record-index.jsonl.gz",
+      "bytes": 1036364
+    },
+    {
+      "name": "original-source-references.json",
+      "bytes": 1079989
+    },
+    {
+      "name": "root.frames.chunk001.jsonl.gz",
+      "bytes": 6709034
+    },
+    {
+      "name": "root.frames.chunk002.jsonl.gz",
+      "bytes": 6705774
+    },
+    {
+      "name": "root.frames.chunk003.jsonl.gz",
+      "bytes": 6743148
+    },
+    {
+      "name": "root.frames.chunk004.jsonl.gz",
+      "bytes": 6742473
+    },
+    {
+      "name": "root.frames.chunk005.jsonl.gz",
+      "bytes": 6739532
+    },
+    {
+      "name": "root.frames.chunk006.jsonl.gz",
+      "bytes": 6751967
+    },
+    {
+      "name": "root.frames.chunk007.jsonl.gz",
+      "bytes": 6747931
+    },
+    {
+      "name": "root.frames.chunk008.jsonl.gz",
+      "bytes": 6725981
+    },
+    {
+      "name": "root.frames.chunk009.jsonl.gz",
+      "bytes": 6724493
+    },
+    {
+      "name": "root.frames.chunk010.jsonl.gz",
+      "bytes": 6759202
+    },
+    {
+      "name": "root.frames.chunk011.jsonl.gz",
+      "bytes": 6770183
+    },
+    {
+      "name": "root.frames.chunk012.jsonl.gz",
+      "bytes": 6766874
+    },
+    {
+      "name": "root.frames.chunk013.jsonl.gz",
+      "bytes": 6741570
+    },
+    {
+      "name": "root.frames.chunk014.jsonl.gz",
+      "bytes": 6764163
+    },
+    {
+      "name": "root.frames.chunk015.jsonl.gz",
+      "bytes": 6782396
+    },
+    {
+      "name": "root.frames.chunk016.jsonl.gz",
+      "bytes": 5937275
+    },
+    {
+      "name": "second_set.chunk001.jsonl.gz",
+      "bytes": 9072612
+    },
+    {
+      "name": "second_set.chunk002.jsonl.gz",
+      "bytes": 9100525
+    },
+    {
+      "name": "second_set.chunk003.jsonl.gz",
+      "bytes": 8841730
+    },
+    {
+      "name": "second_set.chunk004.jsonl.gz",
+      "bytes": 2609174
+    },
+    {
+      "name": "source-read-receipt.json",
+      "bytes": 8591
+    }
+  ],
+  "no_C_drive_artifacts": true,
+  "no_source_rehash": true,
+  "temporary_remote_key": "host-deliveries/family-research-20261022/temporary-trade-gap-transfer/20261023-c21c678b3bf54d02bb2e12b2998b192e/transport.tar",
+  "remote_source_directory": "/opt/frankie-box/work/family-research-20261022/trade-gap-transport-9fe9050b448b4954b7d201f6b54cc4b4",
+  "original_trade_inventory": "All 30739 original trades remain unchanged in parent evidence bundles"
+}
