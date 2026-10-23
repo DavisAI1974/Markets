@@ -1,0 +1,16 @@
+{
+  "status": "PASSED_SUPPLEMENTARY_POINTER_AND_PRESERVATION_CHECKS",
+  "all_original_trades_and_exact_integer_clocks_verified": 30739,
+  "all_original_model_contexts_verified": 749,
+  "nested_original_forecast_rows": 109674,
+  "all_original_absorption_refs_and_individual_tape_members_verified": 6265,
+  "all_queried_order_identities_retained": 7939,
+  "matched_original_lineage_associations_verified": 4,
+  "all_temporal_context_ranges_verified": true,
+  "no_new_per_trade_predictions": true,
+  "evidence_paths_verified": 29,
+  "local_document_links_verified": 29,
+  "quantity_gaps_119_134": "UNRESOLVED",
+  "semantic_coverage": "NOT_PASSED",
+  "mlp_reproducibility": "UNRESOLVED"
+}

@@ -1,0 +1,60 @@
+{
+  "schema": "COMPLETED_RUN_RESEARCH_EVIDENCE_CONNECTIONS_V1",
+  "controlling_master": "../../completed-run-source-list.json",
+  "master_unchanged": true,
+  "research_population": "All 30739 original market trades; no family or model-forecast eligibility filter",
+  "identified_run": {
+    "screenshot_chat_title": "Save family research and stop idle boxes",
+    "repository": "DavisAI1974/Markets",
+    "branch": "claude/kalshi-s79-kickoff-ij8t9o",
+    "screenshot_checkpoint": "682b69b3b992ab1dddfb2165d9d84e5e2b93c237",
+    "run_handoff": "../../family-instance-analysis-handoff-20261022.md",
+    "completion_receipt": "../../../../../../tasks/family-research-20261022/verified-save-stop-completion-20261023.json",
+    "mandatory_fits": 2097,
+    "janus_hipporag_attribution": "UNVERIFIED; these receipts establish the completed expanded family-model run. Screenshot labels alone do not establish a separate Janus + HippoRAG execution."
+  },
+  "evidence": [
+    {
+      "role": "Original deep market inputs and exact source locations",
+      "paths": ["../../deep-market-data-inventory-20261023.md", "../../deep-market-data-source-files-20261023.csv", "../../deep-market-data-external-tables-20261023.csv"],
+      "status": "Receipt-based inventory committed at 5470b27b5a9219cfe701c1f11375e6e8d301f1a0; original master controls source scope. Inventory is not proof every listed input was consumed by each model."
+    },
+    {
+      "role": "Original completed-run learned results, including contrary outcomes",
+      "paths": ["../../final-model-analysis-20261023/full-model-perspectives.md", "../../final-model-analysis-20261023/model-by-model-details.md", "../../final-model-analysis-20261023/analysis-receipt.json", "../../final-model-analysis-20261023/verification-receipt.json"],
+      "status": "Read for this connection. Retained conditional results guide questions about history, local liquidity and price response; they are not proven mechanisms for an arbitrary trade."
+    },
+    {
+      "role": "All original per-context forecasts and separate case records",
+      "paths": ["../../instance-market-review-20261023/individual-instance-records.jsonl.gz", "../../instance-market-review-20261023/all-pre-event-forecasts.csv.gz", "../../instance-market-review-20261023/chronological-instance-index.csv", "all-749-original-model-context-links.jsonl.gz"],
+      "status": "All 749 cases and 109674 nested original main/quantile rows are addressable; the larger pre-event CSV also retains removal/refit forecasts. Missing forecasts remain missing. Navigation does not move a prediction to a different trade."
+    },
+    {
+      "role": "Frankie knowledge, runtime recovery and incomplete semantic review",
+      "paths": ["../all-510-frankie-knowledge-claims.json", "../../full-context-audit/runtime_knowledge_recovery.json", "../../full-context-audit/canonical-source-recovery.json", "../../knowledge-semantic-review-working-notes.md"],
+      "status": "69 native and 441 external claims retained. Knowledge is partially reviewed and source-bound; there is no claim that all claims were systematically tested against all trades. Large pinned but unread payloads remain explicit in recovery receipts."
+    },
+    {
+      "role": "Unchanged whole-day trade, quote, external and second-set evidence",
+      "paths": ["../every-trade-evidence-bundle.jsonl.gz", "../every-trade-original-external-links.jsonl.gz", "../every-trade-original-second-set.jsonl.gz", "../chronological-lifecycle-v1/every-trade-chronological-lifecycle.jsonl.gz", "../chronological-lifecycle-v1/every-trade-saved-quote-comparison.jsonl.gz"],
+      "status": "All 30739 trades retained. Selected-context quote coverage is incomplete; missing links do not imply absent original market activity."
+    },
+    {
+      "role": "Saved SQLite lifecycle originals and order-role checks",
+      "paths": ["../source-lineage.jsonl.gz", "../source-absorption.jsonl.gz", "../source-queue.jsonl.gz", "../each-removal-with-original-order-evidence.jsonl.gz", "../per-event-unit-reconciliation.jsonl.gz", "../quote-order-gapfill-v1/role-reconciliation-v1/all-32-trade-role-reconciliation.json"],
+      "status": "Original SQLite queried read-only in memory. All original nested source records remain unchanged; new indexes are supplementary pointers."
+    }
+  ],
+  "retrospective_knowledge_policy": "All earlier and later observations, original run results and later knowledge remain eligible. Actual event/receive/known-by clocks and cursors are preserved. Later knowledge is not backdated into original model inputs or historical decisions.",
+  "use_audit": {
+    "previous_lifecycle_use": "Frankie method/claims and original model source references were retained; selected case forecasts had been reviewed. A systematic use ledger for every claim, completed-run finding and trade had not been established.",
+    "this_pass": "Reads completed-run findings and semantic notes; explicitly connects all trades to the original case timeline and original order evidence; checks quantity definitions and lineage associations using the saved SQLite member.",
+    "not_established": "Full knowledge consumption, per-trade model feature attribution, causal lifecycle completion, Janus + HippoRAG execution, and a validated exhaustion signal."
+  },
+  "scientific_status": {
+    "semantic_coverage": "NOT_PASSED",
+    "mlp_reproducibility": "UNRESOLVED",
+    "mlp_original_repeat_evidence": {"horizon_s": 120, "fold": 4, "max_prediction_difference": 0.4313412606716156, "original_logloss": 1.5684192762348583, "repeat_logloss": 2.915890359438005},
+    "contrary_results": "Invalid negative magnitude predictions, poorly calibrated intervals, sparse/nonreplicated interactions, overlapping contexts and single-day validation remain in the original result tables. No ranking, voting, averaging, refit or clipping."
+  }
+}

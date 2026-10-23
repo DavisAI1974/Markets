@@ -1,5 +1,13 @@
 # Trade lifecycle analysis handoff
 
+## Current direction: broader mechanisms and original completed-run knowledge
+
+The user clarified that broader explanations should precede serial one-or-two-trade reviews. The run-session screenshots identify checkpoint **682b69b3** and the completed 2,097-fit family-model run. Read [completed-run-connections-v1/README.md](completed-run-connections-v1/README.md), its [evidence index](completed-run-connections-v1/run-evidence-index.json), [SQLite receipt](completed-run-connections-v1/sqlite-query-receipt.json) and [verification](completed-run-connections-v1/verification.json). The newly pushed deep-market inventory at **5470b27b** is incorporated. Keep the original master list unchanged as the controlling source scope.
+
+Saved SQLite was queried read-only in memory: 819 of 832 absorption records with original tape prints have a source traded-quantity counter different from unique tape quantity. This is a measurement-definition issue, not 819 proven missing-fill cases. All 30,739 trades now link to the entire earlier/later original 749-context forecast timeline and original order evidence. The saved lineage projection matches only four of 7,939 queried order identities and does not repair trade 119/134 quantities. All original nested records, missing matches and counterevidence remain retained. Later knowledge is eligible for retrospective reasoning with exact provenance. A separate Janus + HippoRAG execution remains unverified; do not infer it from the screenshots or general component names.
+
+The new README sets out broader local-liquidity/history, flow-versus-price-response and measurement-role questions grounded in the completed-run findings. These are not finished whole-day causal explanations. Semantic coverage remains **NOT_PASSED**, MLP reproducibility **UNRESOLVED**. No AWS operation, raw journal read, refit, database restoration or C: write was needed.
+
 ## New saved continuation
 
 Role reconciliation is committed at `688fa3ac`: read `quote-order-gapfill-v1/role-reconciliation-v1/README.md` and its verification. The original records and checked findings below remain intact. N-side trade aggressors stay unspecified even where the exact resting ask ID is resolved; trades 123/128 have explicit execution/resting price differences; trades 119/134 retain unresolved displayed quantity allocation. The canonical continuity definition is a literal increment-by-one test per action row, so duplicate action sequences also make it false. Channel completeness remains unresolved.

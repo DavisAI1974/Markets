@@ -1,0 +1,53 @@
+{
+  "status": "SAVED_SQLITE_AND_COMPLETED_RUN_CONNECTED_WITH_ORIGINALS_RETAINED",
+  "source_master": "../../completed-run-source-list.json",
+  "original_source_master_unchanged": true,
+  "screenshot_run_checkpoint": "682b69b3b992ab1dddfb2165d9d84e5e2b93c237",
+  "new_deep_inventory_checkpoint": "5470b27b5a9219cfe701c1f11375e6e8d301f1a0",
+  "original_sqlite_member": "episode-path-audit-v1/lifecycle_asof.sqlite",
+  "original_sqlite_bytes": 464343040,
+  "database_loaded_in_memory": true,
+  "database_query_only": true,
+  "sqlite_temp_store": "MEMORY",
+  "original_record_sections": {
+    "absorption": 6265,
+    "candidate": 42,
+    "detector_coverage": 2,
+    "episode": 1726,
+    "flow_substrate": 8088,
+    "ladder": 12530,
+    "lineage": 308611,
+    "mirror": 6265,
+    "queue": 7893,
+    "recurrence": 6265,
+    "replenishment": 30687,
+    "response": 266
+  },
+  "counts": {
+    "trades": 30739,
+    "trades_with_same_emission_removals": 1487,
+    "trades_with_order_lineage_associations": 2,
+    "trades_with_later_known_lineage_associations": 0,
+    "trades_sharing_original_model_pre_group": 59
+  },
+  "quantity_definition_checks": {
+    "absorption_records": 6265,
+    "with_original_tape_prints": 832,
+    "source_traded_quantity_differs_from_unique_tape_sum": 819
+  },
+  "original_model_contexts": 749,
+  "original_case_forecast_rows": 109674,
+  "order_ids_indexed": 7939,
+  "order_ids_with_lineage_associations": 4,
+  "lineage_associations": 4,
+  "lineage_node_and_parent_roles_kept_separate": true,
+  "original_trade_fields_unchanged": true,
+  "discarded_trades": 0,
+  "raw_source_reads": 0,
+  "source_retrievals": 0,
+  "aws_operations": 0,
+  "fits": 0,
+  "janus_hipporag_execution_attribution": "UNVERIFIED; screenshot identifies completed family-model run, not a separate execution receipt",
+  "semantic_coverage": "NOT_PASSED",
+  "mlp_reproducibility": "UNRESOLVED"
+}

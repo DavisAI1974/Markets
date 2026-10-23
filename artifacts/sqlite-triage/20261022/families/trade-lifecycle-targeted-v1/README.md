@@ -1,5 +1,11 @@
 # Trade lifecycle evidence and first combined interpretation
 
+## Completed-run knowledge and the broader SQLite comparison
+
+The run-session screenshots identify the completed expanded family-model run at **682b69b3**. Its newly pushed [deep-market inventory](../deep-market-data-inventory-20261023.md) is now incorporated alongside an explicit [completed-run evidence index and SQLite findings](completed-run-connections-v1/README.md). The exact [original master list](../completed-run-source-list.json) still controls scope. The new index connects all 30,739 unchanged trades to the original 749 model-context timeline, all earlier/later contexts, saved order evidence and Frankie knowledge, without inventing per-trade predictions or claiming every retained claim has been scientifically consumed.
+
+The saved SQLite comparison finds **819 of 832** absorption records linked to tape have a source traded-quantity counter different from the individual tape total. The adapter's T-plus-F counter definition is a broad explanation for that comparison; it does not fill missing quantities. Saved lineage matches only four of 7,939 queried order identities, so trade 119/134 quantity gaps remain unresolved. Read the [receipt](completed-run-connections-v1/sqlite-query-receipt.json), [verification](completed-run-connections-v1/verification.json) and broader mechanism questions in the new README before continuing serial case reviews. The screenshots establish this completed run's identity; attribution to a separate Janus + HippoRAG execution remains unverified. Semantic coverage stays **NOT_PASSED** and MLP reproducibility **UNRESOLVED**. No AWS operation or refit occurred.
+
 ## October 23 continuation: source roles and whole-day chronology
 
 The [saved role reconciliation](quote-order-gapfill-v1/role-reconciliation-v1/README.md) adds exact resting-order identities for the ambiguous T/F cases and explains the literal producer continuity flag. Resting ask sides are resolved for trades 126/133; their reported aggressors remain N. Trades 123/128 retain different execution/resting prices for same-ID T/F records. Quantity allocation for trades 119/134 and channel completeness remain open. This adds evidence beside the earlier checked findings without overwriting them.
