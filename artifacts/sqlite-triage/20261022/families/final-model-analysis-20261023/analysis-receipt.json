@@ -1,0 +1,114 @@
+{
+  "status": "completed_candidate_perspective_analysis",
+  "metrics": 2151,
+  "mandatory_fits": 2097,
+  "main_profiles": 717,
+  "prediction_cohort_checks": 63,
+  "features": 29997,
+  "deep_rank_max": 265,
+  "deep_feature_rows": 16032,
+  "tree_fits_using_deep": 125,
+  "interaction_contrasts": 629,
+  "supported_interactions": 43,
+  "unsupported_interactions": 586,
+  "pairs_supported_in_multiple_folds": 0,
+  "all_flat_ablation_contexts": 341,
+  "same_direction_removal_increases": 20,
+  "same_direction_removal_decreases": 19,
+  "negative_magnitude_predictions": [
+    {
+      "model": "evotrees_depth3",
+      "n": 15752,
+      "negative_forecast_n": 0
+    },
+    {
+      "model": "evotrees_depth5",
+      "n": 15752,
+      "negative_forecast_n": 1
+    },
+    {
+      "model": "evotrees_mae",
+      "n": 15752,
+      "negative_forecast_n": 0
+    },
+    {
+      "model": "neural_tree",
+      "n": 15752,
+      "negative_forecast_n": 0
+    },
+    {
+      "model": "residual_mlp",
+      "n": 15752,
+      "negative_forecast_n": 437
+    },
+    {
+      "model": "ridge100",
+      "n": 15752,
+      "negative_forecast_n": 1824
+    },
+    {
+      "model": "tabm_ensemble",
+      "n": 15752,
+      "negative_forecast_n": 5420
+    }
+  ],
+  "tail_coverage": [
+    {
+      "outcome": "absolute_mid_price_change",
+      "min_fold_coverage": 0.1652892562,
+      "max_fold_coverage": 0.6927083333,
+      "crossed_n": 1
+    },
+    {
+      "outcome": "mid_price_change",
+      "min_fold_coverage": 0.1009433962,
+      "max_fold_coverage": 0.8648648649,
+      "crossed_n": 0
+    }
+  ],
+  "cluster_sizes": [
+    {
+      "model": "pca_kmeans_3",
+      "cluster": 1,
+      "size": 190
+    },
+    {
+      "model": "pca_kmeans_3",
+      "cluster": 2,
+      "size": 40
+    },
+    {
+      "model": "pca_kmeans_3",
+      "cluster": 3,
+      "size": 3515
+    },
+    {
+      "model": "pca_kmeans_5",
+      "cluster": 1,
+      "size": 637
+    },
+    {
+      "model": "pca_kmeans_5",
+      "cluster": 2,
+      "size": 36
+    },
+    {
+      "model": "pca_kmeans_5",
+      "cluster": 3,
+      "size": 70
+    },
+    {
+      "model": "pca_kmeans_5",
+      "cluster": 4,
+      "size": 2816
+    },
+    {
+      "model": "pca_kmeans_5",
+      "cluster": 5,
+      "size": 186
+    }
+  ],
+  "source_scope": "expanded candidate only, not V1/V3 model rankings",
+  "coverage_gate": "NOT_PASSED",
+  "model_policy": "Complementary perspectives; no selected winner, ensemble fitting, trading rule or causal conclusion."
+}

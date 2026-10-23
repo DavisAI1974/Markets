@@ -1,0 +1,1375 @@
+{
+  "selected": [
+    {
+      "name": "all_model_fold_metrics.csv",
+      "bytes": 504115,
+      "sha256": "ba1926f43bc142cad7a373ebb305bd8e8903b86df284761eee0b9279c24096fe"
+    },
+    {
+      "name": "build.log",
+      "bytes": 1113,
+      "sha256": "8cdbdf9342b76df4961352ccdc2847754724ae424984be295eb4cd97f5160806"
+    },
+    {
+      "name": "chronological_splits.csv",
+      "bytes": 5921,
+      "sha256": "392ebd05f1244fef2f7ed9a1b6e98622d6b99ecfaf33613aaa7dd4e613a71e51"
+    },
+    {
+      "name": "excluded_predictor_metadata.csv",
+      "bytes": 15,
+      "sha256": "911e7eb943c0f2ec2fbf9469b5481809a6f26a993bf831d1c580a71c9beb4c73"
+    },
+    {
+      "name": "fit-pids.txt",
+      "bytes": 32,
+      "sha256": "f2919711366c2a9051b0aed7facd5be46ebfb313aeb97eaca57fa0ec478d5bc7"
+    },
+    {
+      "name": "fitted_conditional_split_pairs.csv",
+      "bytes": 16862332,
+      "sha256": "13c6c859ec4b5dab7a1ac87928dee9c7e6f7193793485f402cc4be847ad59977"
+    },
+    {
+      "name": "fitted_split_features.csv",
+      "bytes": 5550819,
+      "sha256": "e00fd0747b457843c140ca03bf52a65bfd60efc52fb44b7f8d15c4f011b878a8"
+    },
+    {
+      "name": "heldout_alignment_audit.csv",
+      "bytes": 2346,
+      "sha256": "a5d05630fd74eb58712ed4775ab3cd2b02534901bbb7decdeea674360c94f8f9"
+    },
+    {
+      "name": "heldout_joint_response_cells.csv",
+      "bytes": 1820996,
+      "sha256": "edde3fe636187b437900220e6517d1d977e6a138ec1ff4cae5146810e24b0bca"
+    },
+    {
+      "name": "heldout_joint_response_contrasts.csv",
+      "bytes": 171511,
+      "sha256": "3f701430eef6459a183b5f74c951ec2ab68ebe798bc7e302952cb970f3f8aa9d"
+    },
+    {
+      "name": "interaction_analysis_receipt.json",
+      "bytes": 481,
+      "sha256": "3d5b9d0c336924c000ba3145861db4b8283df94e2f15b9ca5914af6a6ddb2469"
+    },
+    {
+      "name": "market_state_assignments.csv",
+      "bytes": 676561,
+      "sha256": "f1d451af4254b5e68e200428494e0c3ec24243f3b01aefdd6cf9cbaca1107656"
+    },
+    {
+      "name": "market_state_model_diagnostics.csv",
+      "bytes": 405393,
+      "sha256": "df9290947d2c2cc1eed5a9c340a62b265cf4538c5ad4153de3299cbda6c732e5"
+    },
+    {
+      "name": "memory-report-20261022T231527Z-818512fa.json",
+      "bytes": 378,
+      "sha256": "8e89ba99804433a236a4f333087727d6a646b759dfcd195190af3c906ba58bf5"
+    },
+    {
+      "name": "model_baseline_comparisons.csv",
+      "bytes": 179472,
+      "sha256": "ba64a228f15fb4bcf691ce164c63fb7d9ab2d1d10a4f09420433e380f5bc6a24"
+    },
+    {
+      "name": "model_comparison_summary.csv",
+      "bytes": 129968,
+      "sha256": "de150b1bb2e2a12473bf5fb53467623c2e6c2edff89cfc18604fe16f68a48bb8"
+    },
+    {
+      "name": "model_feature_registry.csv",
+      "bytes": 172677550,
+      "sha256": "3501675fa2894586a10f77bbacfb511105ef535e025235fd7e5e9ad1490fb7e0"
+    },
+    {
+      "name": "model_input_receipt.json",
+      "bytes": 678,
+      "sha256": "d19350f492ce0de6e50eebadfe747dfdec939f6c1c3112380b2a72d8f7449c59"
+    },
+    {
+      "name": "model_metrics.csv",
+      "bytes": 453546,
+      "sha256": "ee737e73933f1c39870ef5cc1e9c70a247216f7151283c24c41bae9011e20b81"
+    },
+    {
+      "name": "model_outcomes.csv",
+      "bytes": 8069832,
+      "sha256": "6a0613a357675ba60c7d4e946592b2aa69ea0e09dd488cd0ecfa4d54ba445608"
+    },
+    {
+      "name": "model_predictions.csv",
+      "bytes": 235471367,
+      "sha256": "53e27c05d550378a20c91e2e8ac8d13e0b77ec136648fd5a864c50770cb35243"
+    },
+    {
+      "name": "model_run_receipt.json",
+      "bytes": 604,
+      "sha256": "8468fdede92e5b08f983783cf43d6294dd514ab130651ea18d029bf3595f21e9"
+    },
+    {
+      "name": "model_sample_master.csv",
+      "bytes": 510001,
+      "sha256": "b680c9bc5fa63304f950e0849848717631df2484b6d1ed5610cf1011ce9efce8"
+    },
+    {
+      "name": "model_summary_receipt.json",
+      "bytes": 513,
+      "sha256": "cd7aa8c5cccafd6876e72127df5cff8d5d6037807e344a85d7c7ef6e044febb4"
+    },
+    {
+      "name": "models.log",
+      "bytes": 7639,
+      "sha256": "8f95a76b228c5523499900cd1746f0776f5147ce2c2741de61285bde9c9b0891"
+    },
+    {
+      "name": "neural.log",
+      "bytes": 11141,
+      "sha256": "2fde00febe557940911d16ed4fd52616ca8c25aa1bb4e149493c0e2c4c7e988a"
+    },
+    {
+      "name": "neural_metrics.csv",
+      "bytes": 42714,
+      "sha256": "141261b3ff0c4e82cade3d4dbfd78286d1f6704051e182a6b29407ad161039a7"
+    },
+    {
+      "name": "neural_predictions.csv",
+      "bytes": 21640163,
+      "sha256": "57fc7f3ebd1f1bd2860687f4e7db4fd450f21e001747dc59e7a87467ac6c4e27"
+    },
+    {
+      "name": "neural_run_receipt.json",
+      "bytes": 368,
+      "sha256": "0e7dfa2d4d62e11990df64abef2c9eced109bb9d75dbf6b0eafb0074e1579a35"
+    },
+    {
+      "name": "observed_price_path_summary.csv",
+      "bytes": 18830,
+      "sha256": "293e06b7f2cb239b93e4c66924561f87f3e62a5d08bfb2eae7eddfe895bb4399"
+    },
+    {
+      "name": "observed_price_paths.csv",
+      "bytes": 6532936,
+      "sha256": "dfdac1f1d3046df8f0523d618a928134477d98b4b75f9bf25db8e9f6d9bf8604"
+    },
+    {
+      "name": "one-pass-tests.log",
+      "bytes": 90,
+      "sha256": "828c2555ee12cb3a644e90259d60829fe01f5bb34cd464a4170712315c656149"
+    }
+  ],
+  "skipped": [
+    {
+      "name": "absolute-mid-price-change-h1-fold2-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1-fold2-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1-fold2-evotrees_mae.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1-fold2-evotrees_q10.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1-fold2-evotrees_q90.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1-fold2-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1-fold2-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1-fold2-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1-fold2-tabm_ensemble.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1-fold3-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1-fold3-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1-fold3-evotrees_mae.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1-fold3-evotrees_q10.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1-fold3-evotrees_q90.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1-fold3-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1-fold3-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1-fold3-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1-fold3-tabm_ensemble.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1-fold4-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1-fold4-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1-fold4-evotrees_mae.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1-fold4-evotrees_q10.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1-fold4-evotrees_q90.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1-fold4-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1-fold4-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1-fold4-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1-fold4-tabm_ensemble.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h120-fold2-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h120-fold2-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h120-fold2-evotrees_mae.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h120-fold2-evotrees_q10.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h120-fold2-evotrees_q90.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h120-fold2-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h120-fold2-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h120-fold2-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h120-fold2-tabm_ensemble.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h120-fold3-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h120-fold3-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h120-fold3-evotrees_mae.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h120-fold3-evotrees_q10.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h120-fold3-evotrees_q90.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h120-fold3-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h120-fold3-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h120-fold3-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h120-fold3-tabm_ensemble.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h120-fold4-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h120-fold4-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h120-fold4-evotrees_mae.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h120-fold4-evotrees_q10.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h120-fold4-evotrees_q90.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h120-fold4-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h120-fold4-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h120-fold4-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h120-fold4-tabm_ensemble.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1800-fold2-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1800-fold2-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1800-fold2-evotrees_mae.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1800-fold2-evotrees_q10.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1800-fold2-evotrees_q90.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1800-fold2-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1800-fold2-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1800-fold2-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1800-fold2-tabm_ensemble.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1800-fold3-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1800-fold3-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1800-fold3-evotrees_mae.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1800-fold3-evotrees_q10.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1800-fold3-evotrees_q90.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1800-fold3-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1800-fold3-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1800-fold3-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1800-fold3-tabm_ensemble.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1800-fold4-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1800-fold4-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1800-fold4-evotrees_mae.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1800-fold4-evotrees_q10.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1800-fold4-evotrees_q90.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1800-fold4-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1800-fold4-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1800-fold4-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h1800-fold4-tabm_ensemble.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h20-fold2-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h20-fold2-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h20-fold2-evotrees_mae.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h20-fold2-evotrees_q10.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h20-fold2-evotrees_q90.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h20-fold2-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h20-fold2-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h20-fold2-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h20-fold2-tabm_ensemble.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h20-fold3-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h20-fold3-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h20-fold3-evotrees_mae.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h20-fold3-evotrees_q10.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h20-fold3-evotrees_q90.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h20-fold3-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h20-fold3-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h20-fold3-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h20-fold3-tabm_ensemble.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h20-fold4-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h20-fold4-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h20-fold4-evotrees_mae.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h20-fold4-evotrees_q10.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h20-fold4-evotrees_q90.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h20-fold4-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h20-fold4-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h20-fold4-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h20-fold4-tabm_ensemble.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h300-fold2-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h300-fold2-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h300-fold2-evotrees_mae.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h300-fold2-evotrees_q10.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h300-fold2-evotrees_q90.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h300-fold2-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h300-fold2-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h300-fold2-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h300-fold2-tabm_ensemble.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h300-fold3-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h300-fold3-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h300-fold3-evotrees_mae.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h300-fold3-evotrees_q10.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h300-fold3-evotrees_q90.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h300-fold3-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h300-fold3-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h300-fold3-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h300-fold3-tabm_ensemble.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h300-fold4-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h300-fold4-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h300-fold4-evotrees_mae.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h300-fold4-evotrees_q10.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h300-fold4-evotrees_q90.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h300-fold4-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h300-fold4-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h300-fold4-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h300-fold4-tabm_ensemble.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h3600-fold2-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h3600-fold2-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h3600-fold2-evotrees_mae.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h3600-fold2-evotrees_q10.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h3600-fold2-evotrees_q90.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h3600-fold2-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h3600-fold2-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h3600-fold2-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h3600-fold2-tabm_ensemble.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h3600-fold3-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h3600-fold3-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h3600-fold3-evotrees_mae.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h3600-fold3-evotrees_q10.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h3600-fold3-evotrees_q90.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h3600-fold3-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h3600-fold3-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h3600-fold3-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h3600-fold3-tabm_ensemble.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h3600-fold4-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h3600-fold4-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h3600-fold4-evotrees_mae.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h3600-fold4-evotrees_q10.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h3600-fold4-evotrees_q90.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h3600-fold4-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h3600-fold4-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h3600-fold4-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h3600-fold4-tabm_ensemble.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h5-fold2-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h5-fold2-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h5-fold2-evotrees_mae.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h5-fold2-evotrees_q10.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h5-fold2-evotrees_q90.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h5-fold2-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h5-fold2-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h5-fold2-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h5-fold2-tabm_ensemble.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h5-fold3-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h5-fold3-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h5-fold3-evotrees_mae.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h5-fold3-evotrees_q10.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h5-fold3-evotrees_q90.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h5-fold3-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h5-fold3-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h5-fold3-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h5-fold3-tabm_ensemble.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h5-fold4-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h5-fold4-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h5-fold4-evotrees_mae.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h5-fold4-evotrees_q10.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h5-fold4-evotrees_q90.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h5-fold4-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h5-fold4-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h5-fold4-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h5-fold4-tabm_ensemble.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h60-fold2-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h60-fold2-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h60-fold2-evotrees_mae.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h60-fold2-evotrees_q10.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h60-fold2-evotrees_q90.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h60-fold2-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h60-fold2-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h60-fold2-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h60-fold2-tabm_ensemble.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h60-fold3-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h60-fold3-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h60-fold3-evotrees_mae.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h60-fold3-evotrees_q10.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h60-fold3-evotrees_q90.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h60-fold3-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h60-fold3-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h60-fold3-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h60-fold3-tabm_ensemble.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h600-fold3-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h600-fold3-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h600-fold3-evotrees_mae.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h600-fold3-evotrees_q10.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h600-fold3-evotrees_q90.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h600-fold3-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h600-fold3-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h600-fold3-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "absolute-mid-price-change-h600-fold3-tabm_ensemble.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "first-observed-family-within-h-h120-fold2-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "first-observed-family-within-h-h120-fold2-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "first-observed-family-within-h-h120-fold2-neural_tree.jls",
+      "size": 85382300,
+      "reason": "non_analysis_extension"
+    },
+    {
+      "name": "first-observed-family-within-h-h120-fold2-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "first-observed-family-within-h-h120-fold2-residual_mlp.jls",
+      "size": 64603170,
+      "reason": "non_analysis_extension"
+    },
+    {
+      "name": "first-observed-family-within-h-h120-fold2-tabm_ensemble.jls",
+      "size": 71525277,
+      "reason": "non_analysis_extension"
+    },
+    {
+      "name": "first-observed-family-within-h-h300-fold3-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "first-observed-family-within-h-h300-fold3-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "first-observed-family-within-h-h300-fold3-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "first-observed-family-within-h-h300-fold3-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "first-observed-family-within-h-h300-fold3-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "first-observed-family-within-h-h300-fold3-tabm_ensemble.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h120-fold3-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h120-fold3-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h120-fold3-evotrees_mae.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h120-fold3-evotrees_q10.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h120-fold3-evotrees_q90.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h120-fold3-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h120-fold3-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h120-fold3-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h120-fold3-tabm_ensemble.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h1800-fold2-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h1800-fold2-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h1800-fold2-evotrees_mae.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h1800-fold2-evotrees_q10.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h1800-fold2-evotrees_q90.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h1800-fold2-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h1800-fold2-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h1800-fold2-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h1800-fold2-tabm_ensemble.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h300-fold2-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h300-fold2-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h300-fold2-evotrees_mae.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h300-fold2-evotrees_q10.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h300-fold2-evotrees_q90.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h300-fold2-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h300-fold2-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h300-fold2-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h300-fold2-tabm_ensemble.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h3600-fold3-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h3600-fold3-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h3600-fold3-evotrees_mae.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h3600-fold3-evotrees_q10.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h3600-fold3-evotrees_q90.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h3600-fold3-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h3600-fold3-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h3600-fold3-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h3600-fold3-tabm_ensemble.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h3600-fold4-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h3600-fold4-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h3600-fold4-evotrees_mae.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h3600-fold4-evotrees_q10.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h3600-fold4-evotrees_q90.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h3600-fold4-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h3600-fold4-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h3600-fold4-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h3600-fold4-tabm_ensemble.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h60-fold2-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h60-fold2-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h60-fold2-evotrees_mae.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h60-fold2-evotrees_q10.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h60-fold2-evotrees_q90.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h60-fold2-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h60-fold2-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h60-fold2-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h60-fold2-tabm_ensemble.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h60-fold3-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h60-fold3-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h60-fold3-evotrees_mae.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h60-fold3-evotrees_q10.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h60-fold3-evotrees_q90.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h60-fold3-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h60-fold3-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h60-fold3-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h60-fold3-tabm_ensemble.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h60-fold4-evotrees_depth3.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h60-fold4-evotrees_depth5.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h60-fold4-evotrees_mae.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h60-fold4-evotrees_q10.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h60-fold4-evotrees_q90.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h60-fold4-neural_tree.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h60-fold4-preprocessing.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h60-fold4-residual_mlp.jls",
+      "reason": "not_regular"
+    },
+    {
+      "name": "mid-price-change-h60-fold4-tabm_ensemble.jls",
+      "reason": "not_regular"
+    }
+  ],
+  "status": "scientific_prefix_read_owned_local_downloader_stopped_before_weights",
+  "source_archive_key": "host-deliveries/family-research-20261022/save-stop/cce6f548f09f50f00caaca396a213e9f2d42d5a7ff85c0644be311eb83e708f4/A-final-1792717045761634343.tar.gz",
+  "source_archive_sha256_verified_by_callback": "fa195668b0d9ca489639efb60b0c07596c55865dab82d449ba04663a027b6d5d",
+  "full_archive_rehashed": false,
+  "retained_analysis_bytes": 471749425,
+  "method": "AWS plugin presigned HTTPS streaming read, regular root tables only; no instances started"
+}

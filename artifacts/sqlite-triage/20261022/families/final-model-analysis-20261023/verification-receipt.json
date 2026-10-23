@@ -1,0 +1,24 @@
+{
+  "all_717_pooled_mae_and_rmse_match_fold_metrics": true,
+  "all_144_prediction_mae_and_sample_counts_match_saved_metrics": true,
+  "nearby_start_counts": {
+    "120": 688,
+    "600": 740
+  },
+  "43_minimum_support_interactions_and_no_cross_fold_replication": true,
+  "cluster_membership_complete": true,
+  "local_document_links_verified": 36,
+  "figures": {
+    "model-response-perspectives.png": [
+      1760,
+      1920
+    ],
+    "tail-coverage-perspectives.png": [
+      1920,
+      720
+    ]
+  },
+  "source_files_retained": 32,
+  "report_words": 3578,
+  "scope": "Local recorded outputs only; no new fits, instances, finalizers or ensemble."
+}

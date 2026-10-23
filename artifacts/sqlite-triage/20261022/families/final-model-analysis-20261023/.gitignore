@@ -1,0 +1,14 @@
+source/*
+!source/all_model_fold_metrics.csv
+!source/chronological_splits.csv
+!source/heldout_alignment_audit.csv
+!source/interaction_analysis_receipt.json
+!source/market_state_model_diagnostics.csv
+!source/model_baseline_comparisons.csv
+!source/model_comparison_summary.csv
+!source/model_input_receipt.json
+!source/model_run_receipt.json
+!source/model_summary_receipt.json
+!source/neural_run_receipt.json
+!source/observed_price_path_summary.csv
+!source/transport-prefix.json

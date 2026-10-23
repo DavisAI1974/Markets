@@ -1,0 +1,1 @@
+{"metric_rows":189,"epochs":25,"limitation":"Candidate benchmark; one retained aligned market day; no established tradable signal.","status":"completed","architectures":["neural_tree","residual_mlp","tabm_ensemble"],"error_rows":0,"coverage_gate":"NOT_PASSED","prediction_rows":118203,"execution":"63-slot shared-input parallel scheduler with preserved serial prefix"}

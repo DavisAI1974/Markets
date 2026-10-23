@@ -1,5 +1,13 @@
 FAMILY RESEARCH -- VERIFIED COMPLETE, ALL FOUR STOPPED -- 2026-10-23
 
+SCIENTIFIC ANALYSIS COMPLETE: final-model-analysis-20261023/full-model-perspectives.md
+combines complementary views rather than ranking architectures. Includes every
+point-model horizon, all717pooled profiles/all2151fold metrics, all480block/history
+contexts,43support-qualified interaction contrasts and54tail-coverage checks.
+Original2097fits and all artifacts remain canonical. No fits/PCA/EC2 restarted.
+verification-receipt.json checks pooled metrics, prediction alignment, support,
+cluster coverage and document links. Semantic gate/reproducibility limits remain.
+
 AWS reconnection restored. Fresh scoped API reads confirmed all four instances
 stopped with Client.InstanceInitiatedShutdown. Never restart these completed boxes.
 No terminate/delete operation was performed. All attached EBS and frozen snapshot
@@ -48,7 +56,7 @@ archives and the frozen snapshot are encrypted; do not claim every legacy disk i
 No attempt to reduce retained IOPS/throughput or change/delete volumes authorized.
 
 Existing heartbeat family-research-save-and-stop DELETED after verified completion
-at01:22UTC. No further save-stop polling needed. User has requested FULL scientific
-comparison of the different models; continue from saved artifacts without starting
-any EC2 instance or rerunning fits. Interim2094-key scientific readout remains
-historical, to be superseded by final2097-key analysis when final tables retrieved.
+at01:22UTC. No further save-stop polling needed. User requested FULL scientific
+analysis of complementary model perspectives. That completed2097-key synthesis
+is linked above; interim2094-key scientific readout remains historical. Any future
+analysis should use saved artifacts without starting EC2 or rerunning fits.
