@@ -1,0 +1,189 @@
+{
+  "controlling_master": "../../completed-run-source-list.json",
+  "all_original_claims": "../all-510-frankie-knowledge-claims.json",
+  "original_brain_file": "../../full-context-audit/canonical-sources/research/kalshi/knowledge/ng_brain.json",
+  "original_book_play_array_ordinal": 1,
+  "original_book_play_with_contrary_audit": {
+    "id": "direction.book_contrarian",
+    "target": "direction",
+    "trigger": "at entry, when flow (dip_imb_level) is flat/ambiguous",
+    "read": "imb_R (resting-book imbalance at entry)",
+    "call": "fade the heavy resting side - ask-heavy book -> price runs UP through it (wall = fuel, not floor)",
+    "requires": "needs_intraday_reveal",
+    "scope": "leg side (tie-breaker only, when flow is flat)",
+    "caveats": "Weaker than flow; use only as a tie-breaker when flow is flat. Unchanged s95.2.",
+    "confidence": 0.5,
+    "status": "PROVISIONAL",
+    "status_note": "",
+    "status_original": "PROVISIONAL",
+    "falsifier": "Re-run the imb_R split PER CELL (side x velocity-class x season) off the S3 MBP-10 corpus, restricted to legs where dip_imb_level is flat, on blocks the play was not derived from. The play dies if the ask-heavy/bid-heavy up-rate gap fails to survive within cells or inverts on any non-warm-season cell. That test has never been attempted. A cheaper interim: serve imb_R (or an L1 depth-imbalance-at-entry surrogate) in the decision state so the play can at least be evaluated - it currently cannot be, in either direction.",
+    "support": "UNCLEAR",
+    "conditions": [],
+    "conditions_state": "no_numeric_condition",
+    "instances": [
+      {
+        "date": "20260701",
+        "group": "g22",
+        "source_file": "research/kalshi/forecasts/g22_perday/grp22_C_20260701.json, research/kalshi/renders/ng_refine_s95/g22_actual.json",
+        "what_the_state_said": "STAND-DOWN, not a fire. C: 'direction.book_contrarian and the MBO book layer generally - no book_trustworthy verdict is served (no execution_authority / conviction floor / book_complete fields)'. C notes quote_bid_share 0.509 on 0630 leans marginally bid and says explicitly 'I have NOT let it fade the sell tape'",
+        "what_the_day_did": "day_move -500. The play emitted nothing; C's guessed_net was -380",
+        "supports_or_contradicts": "ambiguous",
+        "added_by": "audit_S112",
+        "action": "dont",
+        "verdict": "DATA_ABSENT",
+        "reason_class": "DATA_ABSENT",
+        "counterfactual": "NOT DETERMINABLE. With imb_R unserved there is no reading on which the play could have fired. The nearest proxy (quote_bid_share 0.509, marginally bid) would have faded UP into a -500 day, i.e. wrong - but that is a different instrument and I will not score the play on it."
+      },
+      {
+        "date": "20260707",
+        "group": "g23",
+        "source_file": "research/kalshi/forecasts/g23_perday/grp23_C_20260707.json, research/kalshi/renders/ng_refine_s95/g23_actual.json",
+        "what_the_state_said": "STAND-DOWN, grouped with flow_nowcast / grind_vs_spike / magnitude_staircase / recruitment_reversal as 'needs_intraday_reveal - blind'",
+        "what_the_day_did": "day_move +160. The play emitted nothing",
+        "supports_or_contradicts": "ambiguous",
+        "added_by": "audit_S112",
+        "action": "do"
+      },
+      {
+        "date": "20260427-20260717",
+        "group": "g18-g23",
+        "source_file": "research/kalshi/renders/ng_refine_s95/grp{18,19,20,21,22,23}_state.json, research/kalshi/renders/ng_refine_s95/g{18,19,20,21,22,23}_actual.json",
+        "what_the_state_said": "PROXY MEASUREMENT I RAN, declared as a proxy. imb_R is served in ZERO decision states (grep for imb_R / imb_level / dip_imb returns nothing in grp18/grp20/grp23_state.json). The nearest served instrument is tape_conditions.l1_book.quote_bid_share, described in-state as 'resting-liquidity lean (distinct from aggressor flow)', served on 52 of 60 days, range 0.462-0.530, clearing 0.50 on 25 of 52",
+        "what_the_day_did": "Fading the resting lean at DAY grain hits 25 of 52 = 48%, a coin flip; restricted to the play's own declared scope (|session_signed_flow| < 1000, i.e. flow is flat) it hits 6 of 14 = 43%. This is a day-grain proxy against a leg-grain play and does NOT refute it - it says the nearest available instrument shows nothing where the play claims to work",
+        "supports_or_contradicts": "ambiguous",
+        "added_by": "audit_S112",
+        "action": "do"
+      }
+    ],
+    "corpus": {
+      "d24_state": "found",
+      "searched_on": "S112",
+      "searched_scope": "committed corpus: forecasts/ + renders/ng_refine_s95/ (g6-g23 posteriors, actuals, mbo_evidence)",
+      "n_found": 3
+    },
+    "forward": [
+      {
+        "tag": "forward_evidence",
+        "text": "NONE. Derived on the warm-season set; never re-tested on any later block. Zero forward evidence."
+      }
+    ],
+    "provenance": {
+      "merged_session": null,
+      "brain_version": null,
+      "from_proposal": null,
+      "proposed_by": null
+    },
+    "health": {
+      "degenerate_block_share": null,
+      "can_change_state": "THE PLAY'S OWN READ VARIABLE IS NOT SERVED AT ALL, so the question cannot be answered as asked. imb_R exists only in event_move_baseline.depth_features and month_characterize.depth_pieces, both of which need MBP-10 depth at leg entry, and that corpus lives on S3, not in the repo. The nearest served proxy (quote_bid_share) DOES change state - 0.462 to 0.530, clearing 0.50 on 25 of 52 served days - so a resting-book instrument is not degenerate in principle. Zero FIRES exist anywhere in forecasts/: the play appears in 7 files and every appearance is a stand-down or a decision-trace record.",
+      "last_checked": null
+    },
+    "legacy_notes": {
+      "evidence": {
+        "ask_heavy_up": 0.61,
+        "n_ask": 158,
+        "bid_heavy_up": 0.42,
+        "n_bid": 121,
+        "flow_beats_book_when_disagree": "262/293 = 0.89"
+      },
+      "exemplars": [],
+      "forward_evidence": "NONE. Derived on the warm-season set; never re-tested on any later block. Zero forward evidence.",
+      "conditions_note": "NO NUMERIC BAR AND THE QUANTITY IS UNSERVED. The read is imb_R, resting-book imbalance measured AT LEG ENTRY off MBP-10 depth; the call is 'fade the heavy resting side', a qualitative heavy/light descriptor with no threshold anywhere in the record. imb_R resolves in zero committed states - the depth corpus is on S3, not in decision_state. tape_conditions.l1_book.quote_bid_share is the nearest-looking served field and is deliberately NOT used: it is a whole-session L1 quote-time share, not depth-at-entry, and the play's own S112 instance ran it as an explicitly declared proxy (48 percent at day grain, 43 percent inside the play's flat-flow scope) while stating 'that is a different instrument and I will not score the play on it'."
+    },
+    "audit": {
+      "session": "S112",
+      "support_class": "UNCLEAR",
+      "argument": "Claim: when aggressor flow is flat, fade the heavy resting side - an ask-heavy book means price runs UP through it, 'wall = fuel, not floor'. The entire support is one cross-sectional split in legacy_notes.evidence: ask-heavy legs go up 0.61 (n=158), bid-heavy 0.42 (n=121). That number is a real measurement and it is NOT the outcome the play was written to explain, so this is not OUTCOME_CREDITED. It is also not ASSERTED - there is a number and there is a stated mechanism. But it is a single POOLED read over 279 legs from the 12 warm-season days of S92, in direct violation of this desk's standing 'per-cell always, never pool' rule, with no per-cell breakdown, no null, no monotone-in-strength check (which the sibling direction.flow_nowcast does carry), and no replication. The play's own forward field reads 'NONE. Derived on the warm-season set; never re-tested on any later block. Zero forward evidence.' And the same evidence block records 'flow_beats_book_when_disagree 262/293 = 0.89', which scopes the play to the residual 11% of disagreement cases. I cannot classify it higher without a per-cell re-run and I cannot classify it lower without discarding a real measurement, so it is UNCLEAR and I say below exactly what would settle it.",
+      "could_evidence_have_come_out_otherwise": "YES for the original split - 0.61/0.42 could have come back 0.50/0.50 and did not. NO for anything since: in the entire g17-g23 corpus the play has never been evaluated on a single day, so no test capable of refuting it has been run in five years of walk. The causal story ('wall = fuel') is layered on top of the correlation and was never tested against the obvious alternative (the heavy resting side is where informed capital sits and price is drawn toward it). This project's own OD history is the reason to be careful with exactly this evidence shape: CLAUDE.md records that apparent directional lifts from pooled flow reads 'were trend/base-rate artifacts (Simpson's on a trending window) and died under window/forward sweep + temporal OOS'.",
+      "recommendation": "scope_narrower",
+      "confidence": "med",
+      "source": "BRAIN_AUDIT_S112.json"
+    }
+  },
+  "original_step_endpoint_claims": [
+    {
+      "original_array_ordinal": 0,
+      "original_claim": {
+        "source": "native_classroom_claims.json",
+        "original_finding": {
+          "evidence_refs": [
+            {
+              "claimed_relation": "HYPOTHESIS",
+              "kind": "DIPOLE_RELATIONSHIP",
+              "left": "far_front_age_log",
+              "reasoning": "Dipole relation OPPOSITE_DIRECTION; co-movement steps {\"left_moved_only\": 390509, \"neither_moved\": 29990, \"opposite_direction\": 3993, \"right_moved_only\": 191, \"same_direction\": 71049}.",
+              "right": "far_queue_age_p90_log"
+            }
+          ],
+          "finding_hash": "2744c4ce0939486f953184af05ac495796fef09476599452280054aa958760d8",
+          "finding_id": "steps-vs-endpoints:far_front_age_log:far_queue_age_p90_log",
+          "future_outcome_claimed": false,
+          "premise": "HYPOTHESIS: far_front_age_log and far_queue_age_p90_log end this window OPPOSITE_DIRECTION first-to-last, while their consecutive both-PRESENT steps moved the same way 71049 times and the opposite way 3993 times.",
+          "schema": "FRANKIE_DIPOLE_NOVEL_FINDING_V1",
+          "teacher_message_hash": "552b35f4397ce6b6b782a780a2cf0476c1382d19261840d4e4625202829a87e0",
+          "why_novel": "Computed by Frankie's code from the pair's co-movement counts; the classroom key grades the first-to-last relation only, so a step-by-step pattern running the other way is not in the curriculum. The scientific work needs a double-check; once it holds, this finding receives the same treatment regardless of occurrence count (rule R06)."
+        },
+        "interpretation": "hypothesis retained; not a proven trade-lifecycle mechanism"
+      }
+    },
+    {
+      "original_array_ordinal": 2,
+      "original_claim": {
+        "source": "native_classroom_claims.json",
+        "original_finding": {
+          "evidence_refs": [
+            {
+              "claimed_relation": "HYPOTHESIS",
+              "kind": "DIPOLE_RELATIONSHIP",
+              "left": "far_front_age_log",
+              "reasoning": "Dipole relation SAME_DIRECTION; co-movement steps {\"left_moved_only\": 253472, \"neither_moved\": 20794, \"opposite_direction\": 118255, \"right_moved_only\": 9387, \"same_direction\": 93824}.",
+              "right": "far_replenish_log1p_1024"
+            }
+          ],
+          "finding_hash": "0430feaff4c0906cf22e4aa747ef8b96e250f1656be2fb685df558d4d12e2b02",
+          "finding_id": "steps-vs-endpoints:far_front_age_log:far_replenish_log1p_1024",
+          "future_outcome_claimed": false,
+          "premise": "HYPOTHESIS: far_front_age_log and far_replenish_log1p_1024 end this window SAME_DIRECTION first-to-last, while their consecutive both-PRESENT steps moved the same way 93824 times and the opposite way 118255 times.",
+          "schema": "FRANKIE_DIPOLE_NOVEL_FINDING_V1",
+          "teacher_message_hash": "552b35f4397ce6b6b782a780a2cf0476c1382d19261840d4e4625202829a87e0",
+          "why_novel": "Computed by Frankie's code from the pair's co-movement counts; the classroom key grades the first-to-last relation only, so a step-by-step pattern running the other way is not in the curriculum. The scientific work needs a double-check; once it holds, this finding receives the same treatment regardless of occurrence count (rule R06)."
+        },
+        "interpretation": "hypothesis retained; not a proven trade-lifecycle mechanism"
+      }
+    },
+    {
+      "original_array_ordinal": 8,
+      "original_claim": {
+        "source": "native_classroom_claims.json",
+        "original_finding": {
+          "evidence_refs": [
+            {
+              "claimed_relation": "HYPOTHESIS",
+              "kind": "DIPOLE_RELATIONSHIP",
+              "left": "far_queue_age_p90_log",
+              "reasoning": "Dipole relation SAME_DIRECTION; co-movement steps {\"left_moved_only\": 37773, \"neither_moved\": 236582, \"opposite_direction\": 19919, \"right_moved_only\": 183917, \"same_direction\": 17541}.",
+              "right": "far_size_hhi"
+            }
+          ],
+          "finding_hash": "81bfb3947d637b310b5277e09d6e89f59cece4511d8ca1ce6bfb7498968b4776",
+          "finding_id": "steps-vs-endpoints:far_queue_age_p90_log:far_size_hhi",
+          "future_outcome_claimed": false,
+          "premise": "HYPOTHESIS: far_queue_age_p90_log and far_size_hhi end this window SAME_DIRECTION first-to-last, while their consecutive both-PRESENT steps moved the same way 17541 times and the opposite way 19919 times.",
+          "schema": "FRANKIE_DIPOLE_NOVEL_FINDING_V1",
+          "teacher_message_hash": "552b35f4397ce6b6b782a780a2cf0476c1382d19261840d4e4625202829a87e0",
+          "why_novel": "Computed by Frankie's code from the pair's co-movement counts; the classroom key grades the first-to-last relation only, so a step-by-step pattern running the other way is not in the curriculum. The scientific work needs a double-check; once it holds, this finding receives the same treatment regardless of occurrence count (rule R06)."
+        },
+        "interpretation": "hypothesis retained; not a proven trade-lifecycle mechanism"
+      }
+    }
+  ],
+  "application": [
+    "Keep resting-book size distinct from aggressor flow; retain the PROVISIONAL/UNCLEAR audit and narrow original trigger.",
+    "Inspect fixed-price step sequences as well as endpoints; do not turn far-book co-movement into touch-order identity.",
+    "Compare touch, first ten and full depth separately; preserve both confirming and opposing observations.",
+    "No claim to have tested the original book-contrarian rule, its flat-flow trigger, or its leg population."
+  ],
+  "all_later_knowledge_eligible": true,
+  "semantic_coverage": "NOT_PASSED",
+  "mlp_reproducibility": "UNRESOLVED"
+}

@@ -1,0 +1,61 @@
+{
+  "source_master": "../../completed-run-source-list.json",
+  "original_source_roles": 99,
+  "original_master_unchanged": true,
+  "trades": 30739,
+  "dropped_trades": 0,
+  "original_level_rows_streamed": 10267320,
+  "original_near_level_rows_saved": 443880,
+  "complete_window_books": 22194,
+  "consecutive_window_transitions": 22193,
+  "window_counts": {
+    "FULL_BOOK_SIZE_SKEW_OPPOSES_TOUCH_SIZE_SKEW": 11348,
+    "B_UNCHANGED_QUOTE_WITH_TOUCH_SIZE_CHANGE": 4737,
+    "A_UNCHANGED_QUOTE_WITH_TOUCH_SIZE_CHANGE": 4590,
+    "B_QUOTE_CHANGED": 696,
+    "B_NEW_BEST_EQUALS_PRIOR_SECOND_LEVEL": 341,
+    "PRIOR_FULL_SIZE_SKEW_OPPOSES_MIDPOINT_STEP": 693,
+    "QUOTE_CHANGE_IN_GROUP_WITH_NO_RECORDED_T": 863,
+    "FULL_BOOK_SIZE_SKEW_OPPOSES_FIRST_TEN_SIZE_SKEW": 16261,
+    "A_QUOTE_CHANGED": 718,
+    "A_NEW_BEST_EQUALS_PRIOR_SECOND_LEVEL": 357
+  },
+  "selected_depth_source_ordinals": 2053,
+  "selected_original_measurements": 13268,
+  "trade_counts": {
+    "with_selected_prior_full_sizes": 2070,
+    "with_continuous_window_transition": 1288,
+    "PRIOR_FULL_SIZE_SKEW_OPPOSES_SOURCE_DEPTH_N_SKEW": 986,
+    "PRIOR_FULL_SIZE_SKEW_OPPOSES_GROUP_MIDPOINT_CHANGE": 638
+  },
+  "new_causal_resolutions": 0,
+  "original_actions_and_contradictions_retained": true,
+  "raw_market_journal_reads": 0,
+  "frozen_source_hash_repeats": 0,
+  "aws_operations": 0,
+  "refits": 0,
+  "averaging": false,
+  "semantic_coverage": "NOT_PASSED",
+  "mlp_reproducibility": "UNRESOLVED",
+  "constant_quote_size_path_counts": {
+    "runs": 1374,
+    "runs_with_multiple_books": 1153,
+    "B_BOTH_SIZE_INCREASES_AND_DECREASES": 488,
+    "B_EQUAL_ENDPOINTS_WITH_INTERMEDIATE_CHANGES": 126,
+    "A_BOTH_SIZE_INCREASES_AND_DECREASES": 445,
+    "A_EQUAL_ENDPOINTS_WITH_INTERMEDIATE_CHANGES": 141
+  },
+  "all_size_one_touch_outcomes": {
+    "B_SIZE_1_TOUCH_NEXT_BEST_UNCHANGED": 1865,
+    "B_SIZE_1_TOUCH_NEXT_BEST_LOWER": 222,
+    "A_SIZE_1_TOUCH_NEXT_BEST_UNCHANGED": 1451,
+    "A_SIZE_1_TOUCH_NEXT_BEST_HIGHER": 239,
+    "A_SIZE_1_TOUCH_NEXT_BEST_LOWER": 3
+  },
+  "rank_window_membership_counts": {
+    "B_WORSE_QUOTE_WITH_FIRST_TEN_SIZE_INCREASE": 340,
+    "B_INCREASE_WITH_NONPOSITIVE_SHARED_PRICE_CHANGE": 338,
+    "A_WORSE_QUOTE_WITH_FIRST_TEN_SIZE_INCREASE": 351,
+    "A_INCREASE_WITH_NONPOSITIVE_SHARED_PRICE_CHANGE": 350
+  }
+}

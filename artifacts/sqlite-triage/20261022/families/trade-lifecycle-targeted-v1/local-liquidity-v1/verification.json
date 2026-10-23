@@ -1,0 +1,18 @@
+{
+  "status": "PASSED_DERIVATIVE_AND_SOURCE_POINTER_CHECKS",
+  "original_trades_and_exact_integer_clocks": 30739,
+  "unchanged_selected_original_measurements": 13268,
+  "original_quote_book_rows": 22194,
+  "original_near_level_rows_structurally_checked": 443880,
+  "original_full_level_rows_conserved_in_producer_pass": 10267320,
+  "independent_saved_checkpoint_level_comparisons": 360,
+  "consecutive_transitions_verified": 22193,
+  "exact_first_ten_membership_decompositions_verified": 44386,
+  "complete_constant_quote_paths": 1374,
+  "original_frankie_play_audit_and_claims_preserved": true,
+  "no_source_rehash_or_second_full_level_stream": true,
+  "whole_day_causal_completion": "UNFINISHED",
+  "quantity_gaps_119_134": "UNRESOLVED",
+  "semantic_coverage": "NOT_PASSED",
+  "mlp_reproducibility": "UNRESOLVED"
+}
