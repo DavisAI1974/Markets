@@ -1,0 +1,3974 @@
+{
+  "basis": "exact saved lists from this completed run; no manually reconstructed substitute",
+  "research_unit": "every recorded trade in the retained session; families are supporting information",
+  "trade_inventory": {
+    "path": "price-curve-timestamps.csv",
+    "records": 30739,
+    "instrument": "150611",
+    "strategy_position_answer": "accidental and explicitly withdrawn"
+  },
+  "interpretation_policy": "Use all available data and Frankie knowledge, including evidence learned later that day or on later days. Do not suppress contradictions, missingness or unfavorable evidence. Exact timestamps locate lifecycle sequences; they do not exclude later knowledge from retrospective reasoning.",
+  "lifecycle_questions": [
+    "prebirth",
+    "direction",
+    "momentum",
+    "duration",
+    "flips",
+    "exhaustion",
+    "end",
+    "tail",
+    "other behavior established by the data"
+  ],
+  "original_99_plane_records": [
+    {
+      "ordinal": 0,
+      "entry_id": "controlling_rt_mission",
+      "original_run_record": {
+        "class": "not_this_piece",
+        "consumer": null,
+        "disposition": "not_read_by_this_piece",
+        "entry": "controlling_rt_mission",
+        "group": "binding_common_controls",
+        "piece_disposition": "not_read_by_this_piece",
+        "reason": "the experiment directive is witnessed in the receipt (experiment_directive), not an input to the equation",
+        "role": "control"
+      }
+    },
+    {
+      "ordinal": 1,
+      "entry_id": "native_calculation_contract",
+      "original_run_record": {
+        "class": "not_this_piece",
+        "consumer": null,
+        "disposition": "not_read_by_this_piece",
+        "entry": "native_calculation_contract",
+        "group": "binding_common_controls",
+        "piece_disposition": "not_read_by_this_piece",
+        "reason": "not an input of the teacher-only step: a control input read by its consuming piece; only raw/ROOT market evidence enters this reader",
+        "role": "control"
+      }
+    },
+    {
+      "ordinal": 2,
+      "entry_id": "anchored_knowledge_manifest",
+      "original_run_record": {
+        "class": "not_this_piece",
+        "consumer": null,
+        "disposition": "not_read_by_this_piece",
+        "entry": "anchored_knowledge_manifest",
+        "group": "binding_common_controls",
+        "piece_disposition": "not_read_by_this_piece",
+        "reason": "not an input of the teacher-only step: a control input read by its consuming piece; only raw/ROOT market evidence enters this reader",
+        "role": "control"
+      }
+    },
+    {
+      "ordinal": 3,
+      "entry_id": "selected_same_arm_profile",
+      "original_run_record": {
+        "class": "not_this_piece",
+        "consumer": null,
+        "disposition": "control",
+        "entry": "selected_same_arm_profile",
+        "group": "binding_common_controls",
+        "piece_disposition": "control",
+        "reason": "a delivered binding control applied by the orchestrator's plan; not market evidence of this reader",
+        "role": "control"
+      }
+    },
+    {
+      "ordinal": 4,
+      "entry_id": "a_clean_promoted_positive_capsule",
+      "original_run_record": {
+        "class": "not_this_piece",
+        "consumer": null,
+        "disposition": "not_applicable",
+        "entry": "a_clean_promoted_positive_capsule",
+        "group": "a_clean_overlay",
+        "piece_disposition": "not_applicable",
+        "reason": "NOT_APPLICABLE in the crosswalk (the A-clean overlay; not Memory A)",
+        "role": "arm"
+      }
+    },
+    {
+      "ordinal": 5,
+      "entry_id": "a_memory_promoted_positive_capsule",
+      "original_run_record": {
+        "class": "retired",
+        "consumer": null,
+        "disposition": "retired",
+        "entry": "a_memory_promoted_positive_capsule",
+        "group": "a_memory_overlay",
+        "piece_disposition": "retired",
+        "reason": "Memory A retired (Greg, 2026-09-27); H06-H08 historical / not_bound",
+        "role": "arm"
+      }
+    },
+    {
+      "ordinal": 6,
+      "entry_id": "a_memory_prior_lessons_package",
+      "original_run_record": {
+        "class": "retired",
+        "consumer": null,
+        "disposition": "retired",
+        "entry": "a_memory_prior_lessons_package",
+        "group": "a_memory_overlay",
+        "piece_disposition": "retired",
+        "reason": "Memory A retired (Greg, 2026-09-27); H06-H08 historical / not_bound",
+        "role": "arm"
+      }
+    },
+    {
+      "ordinal": 7,
+      "entry_id": "a_memory_prior_package_proof",
+      "original_run_record": {
+        "class": "retired",
+        "consumer": null,
+        "disposition": "retired",
+        "entry": "a_memory_prior_package_proof",
+        "group": "a_memory_overlay",
+        "piece_disposition": "retired",
+        "reason": "Memory A retired (Greg, 2026-09-27); H06-H08 historical / not_bound",
+        "role": "arm"
+      }
+    },
+    {
+      "ordinal": 8,
+      "entry_id": "authoritative_s135_construction",
+      "original_run_record": {
+        "class": "not_this_piece",
+        "consumer": null,
+        "disposition": "not_read_by_this_piece",
+        "entry": "authoritative_s135_construction",
+        "group": "current_brain_runtime",
+        "piece_disposition": "not_read_by_this_piece",
+        "reason": "not an input of the teacher-only step: a knowledge input read by its consuming piece; only raw/ROOT market evidence enters this reader",
+        "role": "knowledge"
+      }
+    },
+    {
+      "ordinal": 9,
+      "entry_id": "complete_s105_9_brain",
+      "original_run_record": {
+        "class": "not_this_piece",
+        "consumer": null,
+        "disposition": "not_read_by_this_piece",
+        "entry": "complete_s105_9_brain",
+        "group": "current_brain_runtime",
+        "piece_disposition": "not_read_by_this_piece",
+        "reason": "not an input of the teacher-only step: a knowledge input read by its consuming piece; only raw/ROOT market evidence enters this reader",
+        "role": "knowledge"
+      }
+    },
+    {
+      "ordinal": 10,
+      "entry_id": "doctrine_reasoning_play_index_evidence",
+      "original_run_record": {
+        "class": "not_this_piece",
+        "consumer": null,
+        "disposition": "not_read_by_this_piece",
+        "entry": "doctrine_reasoning_play_index_evidence",
+        "group": "current_brain_runtime",
+        "piece_disposition": "not_read_by_this_piece",
+        "reason": "not an input of the teacher-only step: a knowledge input read by its consuming piece; only raw/ROOT market evidence enters this reader",
+        "role": "knowledge"
+      }
+    },
+    {
+      "ordinal": 11,
+      "entry_id": "lawful_prior_session_carry",
+      "original_run_record": {
+        "class": "not_this_piece",
+        "consumer": null,
+        "disposition": "not_read_by_this_piece",
+        "entry": "lawful_prior_session_carry",
+        "group": "current_brain_runtime",
+        "piece_disposition": "not_read_by_this_piece",
+        "reason": "not an input of the teacher-only step: a knowledge input read by its consuming piece; only raw/ROOT market evidence enters this reader",
+        "role": "knowledge"
+      }
+    },
+    {
+      "ordinal": 12,
+      "entry_id": "october_outcome_wall_enforcement",
+      "original_run_record": {
+        "class": "not_this_piece",
+        "consumer": null,
+        "disposition": "not_read_by_this_piece",
+        "entry": "october_outcome_wall_enforcement",
+        "group": "current_brain_runtime",
+        "piece_disposition": "not_read_by_this_piece",
+        "reason": "not an input of the teacher-only step: a knowledge input read by its consuming piece; only raw/ROOT market evidence enters this reader",
+        "role": "knowledge"
+      }
+    },
+    {
+      "ordinal": 13,
+      "entry_id": "learned_d_structures_and_families",
+      "original_run_record": {
+        "class": "not_this_piece",
+        "consumer": null,
+        "disposition": "not_read_by_this_piece",
+        "entry": "learned_d_structures_and_families",
+        "group": "frozen_learned_structure",
+        "piece_disposition": "not_read_by_this_piece",
+        "reason": "not an input of the teacher-only step: a knowledge input read by its consuming piece; only raw/ROOT market evidence enters this reader",
+        "role": "knowledge"
+      }
+    },
+    {
+      "ordinal": 14,
+      "entry_id": "learned_dipoles_and_geometry",
+      "original_run_record": {
+        "class": "not_this_piece",
+        "consumer": null,
+        "disposition": "not_read_by_this_piece",
+        "entry": "learned_dipoles_and_geometry",
+        "group": "frozen_learned_structure",
+        "piece_disposition": "not_read_by_this_piece",
+        "reason": "not an input of the teacher-only step: a knowledge input read by its consuming piece; only raw/ROOT market evidence enters this reader",
+        "role": "knowledge"
+      }
+    },
+    {
+      "ordinal": 15,
+      "entry_id": "learned_pair_triplet_recurrence",
+      "original_run_record": {
+        "class": "not_this_piece",
+        "consumer": null,
+        "disposition": "not_read_by_this_piece",
+        "entry": "learned_pair_triplet_recurrence",
+        "group": "frozen_learned_structure",
+        "piece_disposition": "not_read_by_this_piece",
+        "reason": "not an input of the teacher-only step: a knowledge input read by its consuming piece; only raw/ROOT market evidence enters this reader",
+        "role": "knowledge"
+      }
+    },
+    {
+      "ordinal": 16,
+      "entry_id": "learned_chains_extensions_reappearances_ancestry",
+      "original_run_record": {
+        "class": "not_this_piece",
+        "consumer": null,
+        "disposition": "not_read_by_this_piece",
+        "entry": "learned_chains_extensions_reappearances_ancestry",
+        "group": "frozen_learned_structure",
+        "piece_disposition": "not_read_by_this_piece",
+        "reason": "not an input of the teacher-only step: a knowledge input read by its consuming piece; only raw/ROOT market evidence enters this reader",
+        "role": "knowledge"
+      }
+    },
+    {
+      "ordinal": 17,
+      "entry_id": "phase1_discoveries_structural_falsifiers",
+      "original_run_record": {
+        "class": "not_this_piece",
+        "consumer": null,
+        "disposition": "not_read_by_this_piece",
+        "entry": "phase1_discoveries_structural_falsifiers",
+        "group": "frozen_learned_structure",
+        "piece_disposition": "not_read_by_this_piece",
+        "reason": "not an input of the teacher-only step: a knowledge input read by its consuming piece; only raw/ROOT market evidence enters this reader",
+        "role": "knowledge"
+      }
+    },
+    {
+      "ordinal": 18,
+      "entry_id": "phase2_findings_modules_timing_pox_negatives",
+      "original_run_record": {
+        "class": "not_this_piece",
+        "consumer": null,
+        "disposition": "not_read_by_this_piece",
+        "entry": "phase2_findings_modules_timing_pox_negatives",
+        "group": "frozen_learned_structure",
+        "piece_disposition": "not_read_by_this_piece",
+        "reason": "not an input of the teacher-only step: a knowledge input read by its consuming piece; only raw/ROOT market evidence enters this reader",
+        "role": "knowledge"
+      }
+    },
+    {
+      "ordinal": 19,
+      "entry_id": "predecessor_ancestry_unresolved_chain_state",
+      "original_run_record": {
+        "class": "not_this_piece",
+        "consumer": null,
+        "disposition": "not_read_by_this_piece",
+        "entry": "predecessor_ancestry_unresolved_chain_state",
+        "group": "frozen_learned_structure",
+        "piece_disposition": "not_read_by_this_piece",
+        "reason": "not an input of the teacher-only step: a knowledge input read by its consuming piece; only raw/ROOT market evidence enters this reader",
+        "role": "knowledge"
+      }
+    },
+    {
+      "ordinal": 20,
+      "entry_id": "historical_timing_lifespan_context",
+      "original_run_record": {
+        "class": "not_this_piece",
+        "consumer": null,
+        "disposition": "not_read_by_this_piece",
+        "entry": "historical_timing_lifespan_context",
+        "group": "frozen_learned_structure",
+        "piece_disposition": "not_read_by_this_piece",
+        "reason": "not an input of the teacher-only step: a knowledge input read by its consuming piece; only raw/ROOT market evidence enters this reader",
+        "role": "knowledge"
+      }
+    },
+    {
+      "ordinal": 21,
+      "entry_id": "learned_structure_proposal_index_material",
+      "original_run_record": {
+        "class": "not_this_piece",
+        "consumer": null,
+        "disposition": "not_read_by_this_piece",
+        "entry": "learned_structure_proposal_index_material",
+        "group": "frozen_learned_structure",
+        "piece_disposition": "not_read_by_this_piece",
+        "reason": "not an input of the teacher-only step: a knowledge input read by its consuming piece; only raw/ROOT market evidence enters this reader",
+        "role": "knowledge"
+      }
+    },
+    {
+      "ordinal": 22,
+      "entry_id": "extra_agent_corrected_information_and_gap_diagnoses",
+      "original_run_record": {
+        "class": "not_this_piece",
+        "consumer": null,
+        "disposition": "not_read_by_this_piece",
+        "entry": "extra_agent_corrected_information_and_gap_diagnoses",
+        "group": "corrected_extra_agent_carryforward",
+        "piece_disposition": "not_read_by_this_piece",
+        "reason": "not an input of the teacher-only step: a knowledge input read by its consuming piece; only raw/ROOT market evidence enters this reader",
+        "role": "knowledge"
+      }
+    },
+    {
+      "ordinal": 23,
+      "entry_id": "canonical_sep_nov_2021_dbn_mbo_objects",
+      "original_run_record": {
+        "class": "arrived",
+        "consumer": "JournalTeacherR3 row pass (pinned R3 equation, teacher_changes)",
+        "disposition": "arrived",
+        "entry": "canonical_sep_nov_2021_dbn_mbo_objects",
+        "group": "canonical_raw_dbn_mbo",
+        "piece_disposition": "operand",
+        "reason": "original APPLIED payloads of the contiguous adapter-cursor prefix entered the pinned equation (771787 rows through adapter cursor 771786); 0 instant(s) listed without that operand in shared_market_arithmetic",
+        "role": "raw"
+      }
+    },
+    {
+      "ordinal": 24,
+      "entry_id": "october_first_source_window",
+      "original_run_record": {
+        "class": "arrived",
+        "consumer": "JournalTeacherR3 row pass (pinned R3 equation, teacher_changes)",
+        "disposition": "arrived",
+        "entry": "october_first_source_window",
+        "group": "canonical_raw_dbn_mbo",
+        "piece_disposition": "operand",
+        "reason": "original APPLIED payloads of the contiguous adapter-cursor prefix entered the pinned equation (771787 rows through adapter cursor 771786); 0 instant(s) listed without that operand in shared_market_arithmetic",
+        "role": "raw"
+      }
+    },
+    {
+      "ordinal": 25,
+      "entry_id": "canonical_predecessor_bootstrap_objects",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "canonical_predecessor_bootstrap_objects",
+        "group": "canonical_raw_dbn_mbo",
+        "piece_disposition": "exposed_not_used",
+        "reason": "opening adapter state warmed_from_partition (derive.json opening_book); exposed in the picture, not an operand of the pinned equation",
+        "role": "raw"
+      }
+    },
+    {
+      "ordinal": 26,
+      "entry_id": "native_acmrtfn_messages",
+      "original_run_record": {
+        "class": "arrived",
+        "consumer": "JournalTeacherR3 row pass (pinned R3 equation, teacher_changes)",
+        "disposition": "arrived",
+        "entry": "native_acmrtfn_messages",
+        "group": "canonical_raw_dbn_mbo",
+        "piece_disposition": "operand",
+        "reason": "original APPLIED payloads of the contiguous adapter-cursor prefix entered the pinned equation (771787 rows through adapter cursor 771786); 0 instant(s) listed without that operand in shared_market_arithmetic",
+        "role": "raw"
+      }
+    },
+    {
+      "ordinal": 27,
+      "entry_id": "snapshot_bootstrap_reset_messages",
+      "original_run_record": {
+        "class": "arrived",
+        "consumer": "JournalTeacherR3 row pass (pinned R3 equation, teacher_changes)",
+        "disposition": "arrived",
+        "entry": "snapshot_bootstrap_reset_messages",
+        "group": "canonical_raw_dbn_mbo",
+        "piece_disposition": "operand",
+        "reason": "original APPLIED payloads of the contiguous adapter-cursor prefix entered the pinned equation (771787 rows through adapter cursor 771786); 0 instant(s) listed without that operand in shared_market_arithmetic",
+        "role": "raw"
+      }
+    },
+    {
+      "ordinal": 28,
+      "entry_id": "raw_source_identity_provenance_clocks_integrity",
+      "original_run_record": {
+        "class": "arrived",
+        "consumer": "JournalTeacherR3 row pass (pinned R3 equation, teacher_changes)",
+        "disposition": "arrived",
+        "entry": "raw_source_identity_provenance_clocks_integrity",
+        "group": "canonical_raw_dbn_mbo",
+        "piece_disposition": "operand",
+        "reason": "original APPLIED payloads of the contiguous adapter-cursor prefix entered the pinned equation (771787 rows through adapter cursor 771786); 0 instant(s) listed without that operand in shared_market_arithmetic",
+        "role": "raw"
+      }
+    },
+    {
+      "ordinal": 29,
+      "entry_id": "order_lifecycle_adds",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "order_lifecycle_adds",
+        "group": "order_lifecycle",
+        "piece_disposition": "exposed_not_used",
+        "reason": "583688 update(s) of root.frames carrying this entry yielded over the exhausted source; exposed in the picture, not an operand of the pinned equation",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 30,
+      "entry_id": "order_lifecycle_cancels",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "order_lifecycle_cancels",
+        "group": "order_lifecycle",
+        "piece_disposition": "exposed_not_used",
+        "reason": "583688 update(s) of root.frames carrying this entry yielded over the exhausted source; exposed in the picture, not an operand of the pinned equation",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 31,
+      "entry_id": "order_lifecycle_modifies",
+      "original_run_record": {
+        "class": "thin",
+        "consumer": "the teacher rows file (host-dipole-classroom-source.c15.json)",
+        "disposition": "thin",
+        "entry": "order_lifecycle_modifies",
+        "group": "order_lifecycle",
+        "piece_disposition": "computed_here",
+        "reason": "the teacher form: far_priority_loss_rate_64/1024; the registry layer itself through the shared reader: arrived",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 32,
+      "entry_id": "order_lifecycle_replaces",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "order_lifecycle_replaces",
+        "group": "order_lifecycle",
+        "piece_disposition": "exposed_not_used",
+        "reason": "583688 update(s) of root.frames carrying this entry yielded over the exhausted source; exposed in the picture, not an operand of the pinned equation",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 33,
+      "entry_id": "order_lifecycle_trades",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "order_lifecycle_trades",
+        "group": "order_lifecycle",
+        "piece_disposition": "exposed_not_used",
+        "reason": "30739 update(s) of root.prices carrying this entry yielded over the exhausted source; exposed in the picture, not an operand of the pinned equation",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 34,
+      "entry_id": "order_lifecycle_fills",
+      "original_run_record": {
+        "class": "thin",
+        "consumer": "the teacher rows file (host-dipole-classroom-source.c15.json)",
+        "disposition": "thin",
+        "entry": "order_lifecycle_fills",
+        "group": "order_lifecycle",
+        "piece_disposition": "computed_here",
+        "reason": "the teacher form: far_absorption_share_64/1024; the registry layer itself through the shared reader: arrived",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 35,
+      "entry_id": "order_lifecycle_clears",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "order_lifecycle_clears",
+        "group": "order_lifecycle",
+        "piece_disposition": "exposed_not_used",
+        "reason": "583688 update(s) of native.member carrying this entry yielded over the exhausted source; carriers member ['capture_observations', 'integrity_delta', 'raw_actions[].book_effect'], sections [] (projection plan crosswalk (capture_observations.book_clear / book_clear_orders_removed / book_clear_qty_removed; integrity_delta)); derive.json layers[order_lifecycle_clears]: status derived, 583688 rows; exposed in the picture, not an operand of the pinned equation",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 36,
+      "entry_id": "order_identity_transitions",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "order_identity_transitions",
+        "group": "order_lifecycle",
+        "piece_disposition": "exposed_not_used",
+        "reason": "583688 update(s) of root.structures carrying this entry yielded over the exhausted source; exposed in the picture, not an operand of the pinned equation",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 37,
+      "entry_id": "contract_session_roll_state",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "contract_session_roll_state",
+        "group": "order_lifecycle",
+        "piece_disposition": "exposed_not_used",
+        "reason": "583688 update(s) of native.member carrying this entry yielded over the exhausted source; carriers member ['session_phase', 'continuity_segment', 'raw_symbol', 'instrument_id'], sections [] (projection plan crosswalk (session_phase, continuity_segment (ExchangeSessionRule via member_clock_row); raw_symbol, instrument_id)); derive.json layers[contract_session_roll_state]: status derived, 583688 rows; day-file point(s) ['calendar.sessions_since_prompt_expiry', 'curve.definitions', 'curve.settled_shape', 'curve.statistics', 'curve.traded_shape', 'curve.trades'] declare this entry: 279203 publication(s) presented at/after their publication clock; exposed in the picture, not an operand of the pinned equation",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 38,
+      "entry_id": "full_bid_ask_depth",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "full_bid_ask_depth",
+        "group": "full_book_fifo_queue",
+        "piece_disposition": "exposed_not_used",
+        "reason": "583688 update(s) of root.frames carrying this entry yielded over the exhausted source; exposed in the picture, not an operand of the pinned equation",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 39,
+      "entry_id": "price_level_and_order_counts",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "price_level_and_order_counts",
+        "group": "full_book_fifo_queue",
+        "piece_disposition": "exposed_not_used",
+        "reason": "583688 update(s) of root.frames carrying this entry yielded over the exhausted source; exposed in the picture, not an operand of the pinned equation",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 40,
+      "entry_id": "fifo_queues",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "fifo_queues",
+        "group": "full_book_fifo_queue",
+        "piece_disposition": "exposed_not_used",
+        "reason": "583688 update(s) of root.frames carrying this entry yielded over the exhausted source; exposed in the picture, not an operand of the pinned equation",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 41,
+      "entry_id": "queue_age_and_survival",
+      "original_run_record": {
+        "class": "thin",
+        "consumer": "the teacher rows file (host-dipole-classroom-source.c15.json)",
+        "disposition": "thin",
+        "entry": "queue_age_and_survival",
+        "group": "full_book_fifo_queue",
+        "piece_disposition": "computed_here",
+        "reason": "the teacher form: far_identity_survival_64/1024 (the survival columns); the registry layer itself through the shared reader: arrived",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 42,
+      "entry_id": "queue_concentration",
+      "original_run_record": {
+        "class": "thin",
+        "consumer": "the teacher rows file (host-dipole-classroom-source.c15.json)",
+        "disposition": "thin",
+        "entry": "queue_concentration",
+        "group": "full_book_fifo_queue",
+        "piece_disposition": "computed_here",
+        "reason": "the teacher form: far_size_hhi; the registry layer itself through the shared reader: arrived",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 43,
+      "entry_id": "orders_and_volume_ahead",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "orders_and_volume_ahead",
+        "group": "full_book_fifo_queue",
+        "piece_disposition": "exposed_not_used",
+        "reason": "583688 update(s) of root.frames carrying this entry yielded over the exhausted source; exposed in the picture, not an operand of the pinned equation",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 44,
+      "entry_id": "spread_and_depth_imbalance",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "spread_and_depth_imbalance",
+        "group": "full_book_fifo_queue",
+        "piece_disposition": "exposed_not_used",
+        "reason": "583688 update(s) of root.frames carrying this entry yielded over the exhausted source; exposed in the picture, not an operand of the pinned equation",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 45,
+      "entry_id": "complete_state_reset_bootstrap_receipts",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "complete_state_reset_bootstrap_receipts",
+        "group": "full_book_fifo_queue",
+        "piece_disposition": "exposed_not_used",
+        "reason": "583688 update(s) of native.member carrying this entry yielded over the exhausted source; carriers member ['integrity_delta', 'capture_observations', 'snapshot_bootstrap_only'], sections [] (projection plan crosswalk (integrity_delta (per group), capture_observations (cumulative), snapshot_bootstrap_only)); derive.json layers[complete_state_reset_bootstrap_receipts]: status derived, 583688 rows; exposed in the picture, not an operand of the pinned equation",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 46,
+      "entry_id": "mechanics_actions_by_side_and_level",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "mechanics_actions_by_side_and_level",
+        "group": "microstructure_mechanics",
+        "piece_disposition": "exposed_not_used",
+        "reason": "583688 update(s) of root.frames carrying this entry yielded over the exhausted source; exposed in the picture, not an operand of the pinned equation",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 47,
+      "entry_id": "aggressor_and_native_signed_flow",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "aggressor_and_native_signed_flow",
+        "group": "microstructure_mechanics",
+        "piece_disposition": "exposed_not_used",
+        "reason": "583688 update(s) of root.frames carrying this entry yielded over the exhausted source; day-file point(s) ['cot.023391', 'cot.023392', 'cot.0233AG', 'cot.0233AH', 'cot.023651'] declare this entry: 1506 publication(s) presented at/after their publication clock; exposed in the picture, not an operand of the pinned equation",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 48,
+      "entry_id": "depletion_and_replenishment",
+      "original_run_record": {
+        "class": "thin",
+        "consumer": "the teacher rows file (host-dipole-classroom-source.c15.json)",
+        "disposition": "thin",
+        "entry": "depletion_and_replenishment",
+        "group": "microstructure_mechanics",
+        "piece_disposition": "computed_here",
+        "reason": "the teacher form: far_replenish_log1p_64/1024, far_absorption_share_64/1024; the registry layer itself through the shared reader: arrived",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 49,
+      "entry_id": "resilience_and_recovery",
+      "original_run_record": {
+        "class": "thin",
+        "consumer": "the teacher rows file (host-dipole-classroom-source.c15.json)",
+        "disposition": "thin",
+        "entry": "resilience_and_recovery",
+        "group": "microstructure_mechanics",
+        "piece_disposition": "computed_here",
+        "reason": "the teacher form: far_identity_survival_64/1024, far_size_retention_64/1024; the registry layer itself through the shared reader: arrived",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 50,
+      "entry_id": "churn_and_queue_turnover",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "churn_and_queue_turnover",
+        "group": "microstructure_mechanics",
+        "piece_disposition": "exposed_not_used",
+        "reason": "583688 update(s) of root.frames carrying this entry yielded over the exhausted source; exposed in the picture, not an operand of the pinned equation",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 51,
+      "entry_id": "price_and_book_path",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "price_and_book_path",
+        "group": "microstructure_mechanics",
+        "piece_disposition": "exposed_not_used",
+        "reason": "1751064 update(s) of native.member carrying this entry yielded over the exhausted source; carriers member ['book_full.best_bid', 'book_full.best_ask', 'book_full.mid', 'book_regime.best_bid', 'book_regime.total_depth', 'structure.price_raw_span'], sections ['ladder'] (projection plan crosswalk (book_full.best_bid / best_ask / mid; book_regime.* (4.2 per group); structure.price_raw_min / price_raw_max / price_raw_span; lifecycle `ladder` rows (4.9))); derive.json layers[price_and_book_path]: status derived, 1751064 rows; day-file point(s) ['curve.definitions', 'curve.settled_shape', 'curve.statistics', 'curve.traded_shape', 'curve.trades'] declare this entry: 279202 publication(s) presented at/after their publication clock; exposed in the picture, not an operand of the pinned equation",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 52,
+      "entry_id": "missingness_and_integrity_flags",
+      "original_run_record": {
+        "class": "thin",
+        "consumer": "the teacher rows file (host-dipole-classroom-source.c15.json)",
+        "disposition": "thin",
+        "entry": "missingness_and_integrity_flags",
+        "group": "microstructure_mechanics",
+        "piece_disposition": "computed_here",
+        "reason": "the teacher form: every Dipole column's state and reason (PRESENT / MISSING / INVALID / ABLATED); the registry layer itself through the shared reader: arrived",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 53,
+      "entry_id": "legacy_price",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "legacy_price",
+        "group": "legacy_observable_crosswalk",
+        "piece_disposition": "exposed_not_used",
+        "reason": "30739 update(s) of root.prices carrying this entry yielded over the exhausted source; exposed in the picture, not an operand of the pinned equation",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 54,
+      "entry_id": "legacy_native_signed_flow",
+      "original_run_record": {
+        "class": "completed_only",
+        "consumer": "report.completed_sources",
+        "disposition": "completed_only",
+        "entry": "legacy_native_signed_flow",
+        "group": "legacy_observable_crosswalk",
+        "piece_disposition": "completed_only",
+        "reason": "post-stream aggregate without exact contributing-cursor availability under reversing clocks: completed-only until correct provenance exists (blocked on provenance, not on the reader); its values are never yielded into a live picture and never backfilled",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 55,
+      "entry_id": "legacy_per_second_roll20",
+      "original_run_record": {
+        "class": "completed_only",
+        "consumer": "report.completed_sources",
+        "disposition": "completed_only",
+        "entry": "legacy_per_second_roll20",
+        "group": "legacy_observable_crosswalk",
+        "piece_disposition": "completed_only",
+        "reason": "post-stream aggregate without exact contributing-cursor availability under reversing clocks: completed-only until correct provenance exists (blocked on provenance, not on the reader); its values are never yielded into a live picture and never backfilled",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 56,
+      "entry_id": "legacy_book_imbalance",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "legacy_book_imbalance",
+        "group": "legacy_observable_crosswalk",
+        "piece_disposition": "exposed_not_used",
+        "reason": "30739 update(s) of root.prices carrying this entry yielded over the exhausted source; exposed in the picture, not an operand of the pinned equation",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 57,
+      "entry_id": "legacy_structure_observables",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "legacy_structure_observables",
+        "group": "legacy_observable_crosswalk",
+        "piece_disposition": "exposed_not_used",
+        "reason": "583688 update(s) of root.structures carrying this entry yielded over the exhausted source; exposed in the picture, not an operand of the pinned equation",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 58,
+      "entry_id": "derived_roll20_and_dipole_state",
+      "original_run_record": {
+        "class": "thin",
+        "consumer": "the teacher rows file (host-dipole-classroom-source.c15.json)",
+        "disposition": "thin",
+        "entry": "derived_roll20_and_dipole_state",
+        "group": "derived_geometry",
+        "piece_disposition": "computed_here",
+        "reason": "the teacher form: the Dipole component states and values of every row (roll20 itself stays completed-only); the registry layer itself through the shared reader: not_read_by_this_piece",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 59,
+      "entry_id": "derived_d_family_geometry",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "derived_d_family_geometry",
+        "group": "derived_geometry",
+        "piece_disposition": "exposed_not_used",
+        "reason": "583688 update(s) of root.structures carrying this entry yielded over the exhausted source; exposed in the picture, not an operand of the pinned equation",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 60,
+      "entry_id": "derived_open_world_predecessor_state",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "derived_open_world_predecessor_state",
+        "group": "derived_geometry",
+        "piece_disposition": "exposed_not_used",
+        "reason": "583688 update(s) of root.structures carrying this entry yielded over the exhausted source; exposed in the picture, not an operand of the pinned equation",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 61,
+      "entry_id": "derived_ancestry_gaps",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "derived_ancestry_gaps",
+        "group": "derived_geometry",
+        "piece_disposition": "exposed_not_used",
+        "reason": "584172 update(s) of native.lifecycle carrying this entry yielded over the exhausted source; carriers member [], sections ['lineage', 'recurrence'] (projection plan crosswalk (lifecycle `lineage` rows (4.13, ORDER_ID_LINEAGE_V1) and `recurrence` rows (4.14 gaps))); derive.json layers[derived_ancestry_gaps]: status derived, 892299 rows; exposed in the picture, not an operand of the pinned equation",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 62,
+      "entry_id": "derived_unresolved_age_chain_trajectory",
+      "original_run_record": {
+        "class": "thin",
+        "consumer": "the teacher rows file (host-dipole-classroom-source.c15.json)",
+        "disposition": "thin",
+        "entry": "derived_unresolved_age_chain_trajectory",
+        "group": "derived_geometry",
+        "piece_disposition": "computed_here",
+        "reason": "the teacher form: the six chain columns (4.10 exhaustion in its teacher form); the registry layer itself through the shared reader: arrived",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 63,
+      "entry_id": "derived_price_flow_book_paths",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "derived_price_flow_book_paths",
+        "group": "derived_geometry",
+        "piece_disposition": "exposed_not_used",
+        "reason": "1837463 update(s) of native.member carrying this entry yielded over the exhausted source; carriers member ['book_regime.best_bid', 'book_regime.total_depth', 'book_regime.order_count', 'book_full.mid'], sections ['flow_substrate', 'ladder'] (projection plan crosswalk (book_regime.* per group; book_full.best_bid / mid; lifecycle `flow_substrate` and `ladder` rows)); derive.json layers[derived_price_flow_book_paths]: status derived, 1837464 rows; exposed in the picture, not an operand of the pinned equation",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 64,
+      "entry_id": "derived_v4_mechanics_fifo_features",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "derived_v4_mechanics_fifo_features",
+        "group": "derived_geometry",
+        "piece_disposition": "exposed_not_used",
+        "reason": "865201 update(s) of native.member carrying this entry yielded over the exhausted source; carriers member ['activity_since.*.top_level_qty_by_action', 'activity_since.*.action_side_count', 'book_full.bid_levels_full[].fifo_queue[]', 'capture_observations'], sections ['queue'] (projection plan crosswalk (activity_full.<window>.* ; book_full.bid_levels_full[].fifo_queue[]; capture_observations; lifecycle `queue` rows (4.6))); derive.json layers[derived_v4_mechanics_fifo_features]: status derived, 865609 rows; exposed in the picture, not an operand of the pinned equation",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 65,
+      "entry_id": "derived_feature_availability_timestamps",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "derived_feature_availability_timestamps",
+        "group": "derived_geometry",
+        "piece_disposition": "exposed_not_used",
+        "reason": "6029405 update(s) of availability carrying this entry yielded over the exhausted source; exposed in the picture, not an operand of the pinned equation",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 66,
+      "entry_id": "prebirth_predecessor_at_risk_state",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "prebirth_predecessor_at_risk_state",
+        "group": "prebirth_opportunity",
+        "piece_disposition": "exposed_not_used",
+        "reason": "2589 update(s) of native.lifecycle carrying this entry yielded over the exhausted source; carriers member [], sections ['episode', 'candidate'] (projection plan crosswalk (lifecycle `episode` rows (4.10 exhaustion state, 4.12 dipole runway) opened at a candidate's available_second)); derive.json layers[prebirth_predecessor_at_risk_state]: status derived, 2589 rows; exposed in the picture, not an operand of the pinned equation",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 67,
+      "entry_id": "prebirth_unresolved_chain_extension_state",
+      "original_run_record": {
+        "class": "thin",
+        "consumer": "the teacher rows file (host-dipole-classroom-source.c15.json)",
+        "disposition": "thin",
+        "entry": "prebirth_unresolved_chain_extension_state",
+        "group": "prebirth_opportunity",
+        "piece_disposition": "computed_here",
+        "reason": "the teacher form: extension_count_log, step_ratio_log, pullback_ticks_*; the registry layer itself through the shared reader: arrived",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 68,
+      "entry_id": "prebirth_ancestry_successor_opportunity",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "prebirth_ancestry_successor_opportunity",
+        "group": "prebirth_opportunity",
+        "piece_disposition": "exposed_not_used",
+        "reason": "484 update(s) of native.lifecycle carrying this entry yielded over the exhausted source; carriers member [], sections ['lineage'] (projection plan crosswalk (lifecycle `lineage` rows: a group's initiating order id parents the ids it touched first)); derive.json layers[prebirth_ancestry_successor_opportunity]: status derived, 308611 rows; exposed in the picture, not an operand of the pinned equation",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 69,
+      "entry_id": "prebirth_stopped_chain_false_context_controls",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "prebirth_stopped_chain_false_context_controls",
+        "group": "prebirth_opportunity",
+        "piece_disposition": "exposed_not_used",
+        "reason": "1727 update(s) of native.lifecycle carrying this entry yielded over the exhausted source; carriers member [], sections ['detector_coverage', 'episode'] (projection plan crosswalk (lifecycle `episode` rows carrying 4.11 failed_states; `detector_coverage` rows (4.0b rejections))); derive.json layers[prebirth_stopped_chain_false_context_controls]: status derived, 1728 rows; exposed in the picture, not an operand of the pinned equation",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 70,
+      "entry_id": "prebirth_negative_opportunity_cases",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "prebirth_negative_opportunity_cases",
+        "group": "prebirth_opportunity",
+        "piece_disposition": "exposed_not_used",
+        "reason": "1727 update(s) of native.lifecycle carrying this entry yielded over the exhausted source; carriers member [], sections ['detector_coverage', 'episode'] (projection plan crosswalk (lifecycle `episode` rows with MISSED / CENSORED outcomes (4.11) and `detector_coverage` rows)); derive.json layers[prebirth_negative_opportunity_cases]: status derived, 1728 rows; exposed in the picture, not an operand of the pinned equation",
+        "role": "calculation"
+      }
+    },
+    {
+      "ordinal": 71,
+      "entry_id": "clock_event_time",
+      "original_run_record": {
+        "class": "arrived",
+        "consumer": "JournalTeacherR3 row pass (pinned R3 equation, teacher_changes)",
+        "disposition": "arrived",
+        "entry": "clock_event_time",
+        "group": "causal_clocks",
+        "piece_disposition": "operand",
+        "reason": "original APPLIED payloads of the contiguous adapter-cursor prefix entered the pinned equation (771787 rows through adapter cursor 771786); 0 instant(s) listed without that operand in shared_market_arithmetic",
+        "role": "clock"
+      }
+    },
+    {
+      "ordinal": 72,
+      "entry_id": "clock_receive_time",
+      "original_run_record": {
+        "class": "arrived",
+        "consumer": "JournalTeacherR3 row pass (pinned R3 equation, teacher_changes)",
+        "disposition": "arrived",
+        "entry": "clock_receive_time",
+        "group": "causal_clocks",
+        "piece_disposition": "operand",
+        "reason": "original APPLIED payloads of the contiguous adapter-cursor prefix entered the pinned equation (771787 rows through adapter cursor 771786); 0 instant(s) listed without that operand in shared_market_arithmetic",
+        "role": "clock"
+      }
+    },
+    {
+      "ordinal": 73,
+      "entry_id": "clock_event_known_by",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "clock_event_known_by",
+        "group": "causal_clocks",
+        "piece_disposition": "exposed_not_used",
+        "reason": "771787 update(s) of clock carrying this entry yielded over the exhausted source; day-file point(s) ['weather.gw_daily', 'weather.obs_hourly'] declare this entry: 21107 publication(s) presented at/after their publication clock; exposed in the picture, not an operand of the pinned equation",
+        "role": "clock"
+      }
+    },
+    {
+      "ordinal": 74,
+      "entry_id": "clock_feature_availability",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "clock_feature_availability",
+        "group": "causal_clocks",
+        "piece_disposition": "exposed_not_used",
+        "reason": "6029405 update(s) of availability carrying this entry yielded over the exhausted source; day-file point(s) ['mos.disagreement_by_cycle', 'mos.gw_by_cycle', 'mos.raw'] declare this entry: 9735 publication(s) presented at/after their publication clock; exposed in the picture, not an operand of the pinned equation",
+        "role": "clock"
+      }
+    },
+    {
+      "ordinal": 75,
+      "entry_id": "clock_prospective_discovery_confirmation",
+      "original_run_record": {
+        "class": "exposed",
+        "consumer": "teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only",
+        "disposition": "exposed",
+        "entry": "clock_prospective_discovery_confirmation",
+        "group": "causal_clocks",
+        "piece_disposition": "exposed_not_used",
+        "reason": "2589 update(s) of native.lifecycle carrying this entry yielded over the exhausted source; carriers member [], sections ['episode', 'candidate'] (projection plan crosswalk (lifecycle `episode` rows: recognized_recv_ns (first lawful call) and precursor_recv_ns; `candidate` rows: available_second. NOT on the member row the receipt names for this group)); derive.json layers[clock_prospective_discovery_confirmation]: status derived, 2589 rows; exposed in the picture, not an operand of the pinned equation",
+        "role": "clock"
+      }
+    },
+    {
+      "ordinal": 76,
+      "entry_id": "clock_model_evaluation",
+      "original_run_record": {
+        "class": "not_this_piece",
+        "consumer": null,
+        "disposition": "not_read_by_this_piece",
+        "entry": "clock_model_evaluation",
+        "group": "causal_clocks",
+        "piece_disposition": "not_read_by_this_piece",
+        "reason": "not an input of the teacher-only step: the model-evaluation clock records of the day (frankie_box_model_clock: <run>/days/<day>/model-clock.jsonl, one record per real meeting/Jev call); the native member field clocks.decision_ts_recv_ns stays the declared null (no model call inside the traversal)",
+        "role": "clock"
+      }
+    },
+    {
+      "ordinal": 77,
+      "entry_id": "clock_lock_time",
+      "original_run_record": {
+        "class": "arrived",
+        "consumer": "the teacher attachment snapshot (as_of / through_cursor)",
+        "disposition": "arrived",
+        "entry": "clock_lock_time",
+        "group": "causal_clocks",
+        "piece_disposition": "stamped",
+        "reason": "as_of 1697662799696377528, through_cursor 771786 (the whole sealed day)",
+        "role": "clock"
+      }
+    },
+    {
+      "ordinal": 78,
+      "entry_id": "later_outcome_reveal",
+      "original_run_record": {
+        "class": "withheld",
+        "consumer": null,
+        "disposition": "withheld_by_role",
+        "entry": "later_outcome_reveal",
+        "group": "sealed_target_timing",
+        "piece_disposition": "withheld_by_role",
+        "reason": "a sealed answer/target; never an element of the market picture",
+        "role": "sealed_answer"
+      }
+    },
+    {
+      "ordinal": 79,
+      "entry_id": "target_ground_truth_onset_time",
+      "original_run_record": {
+        "class": "withheld",
+        "consumer": null,
+        "disposition": "withheld_by_role",
+        "entry": "target_ground_truth_onset_time",
+        "group": "sealed_target_timing",
+        "piece_disposition": "withheld_by_role",
+        "reason": "a sealed answer/target; never an element of the market picture",
+        "role": "sealed_answer"
+      }
+    },
+    {
+      "ordinal": 80,
+      "entry_id": "s137_cognitive_shadow_runtime",
+      "original_run_record": {
+        "class": "disabled",
+        "consumer": null,
+        "disposition": "disabled",
+        "entry": "s137_cognitive_shadow_runtime",
+        "group": "provisional_shadow",
+        "piece_disposition": "disabled",
+        "reason": "a provisional shadow disabled by the existing policy; never activated here",
+        "role": "shadow"
+      }
+    },
+    {
+      "ordinal": 81,
+      "entry_id": "hipporag_associative_retrieval",
+      "original_run_record": {
+        "class": "disabled",
+        "consumer": null,
+        "disposition": "disabled",
+        "entry": "hipporag_associative_retrieval",
+        "group": "provisional_shadow",
+        "piece_disposition": "disabled",
+        "reason": "a provisional shadow disabled by the existing policy; never activated here",
+        "role": "shadow"
+      }
+    },
+    {
+      "ordinal": 82,
+      "entry_id": "step1_existing_october_seconds",
+      "original_run_record": {
+        "class": "withheld",
+        "consumer": null,
+        "disposition": "withheld_by_role",
+        "entry": "step1_existing_october_seconds",
+        "group": "sealed_step1_answer",
+        "piece_disposition": "withheld_by_role",
+        "reason": "a sealed answer/target; never an element of the market picture",
+        "role": "sealed_answer"
+      }
+    },
+    {
+      "ordinal": 83,
+      "entry_id": "step1_populations",
+      "original_run_record": {
+        "class": "withheld",
+        "consumer": null,
+        "disposition": "withheld_by_role",
+        "entry": "step1_populations",
+        "group": "sealed_step1_answer",
+        "piece_disposition": "withheld_by_role",
+        "reason": "a sealed answer/target; never an element of the market picture",
+        "role": "sealed_answer"
+      }
+    },
+    {
+      "ordinal": 84,
+      "entry_id": "step1_crosswalks",
+      "original_run_record": {
+        "class": "withheld",
+        "consumer": null,
+        "disposition": "withheld_by_role",
+        "entry": "step1_crosswalks",
+        "group": "sealed_step1_answer",
+        "piece_disposition": "withheld_by_role",
+        "reason": "a sealed answer/target; never an element of the market picture",
+        "role": "sealed_answer"
+      }
+    },
+    {
+      "ordinal": 85,
+      "entry_id": "step1_target_membership_receipts",
+      "original_run_record": {
+        "class": "withheld",
+        "consumer": null,
+        "disposition": "withheld_by_role",
+        "entry": "step1_target_membership_receipts",
+        "group": "sealed_step1_answer",
+        "piece_disposition": "withheld_by_role",
+        "reason": "a sealed answer/target; never an element of the market picture",
+        "role": "sealed_answer"
+      }
+    },
+    {
+      "ordinal": 86,
+      "entry_id": "step1_labels_and_classifications",
+      "original_run_record": {
+        "class": "withheld",
+        "consumer": null,
+        "disposition": "withheld_by_role",
+        "entry": "step1_labels_and_classifications",
+        "group": "sealed_step1_answer",
+        "piece_disposition": "withheld_by_role",
+        "reason": "a sealed answer/target; never an element of the market picture",
+        "role": "sealed_answer"
+      }
+    },
+    {
+      "ordinal": 87,
+      "entry_id": "step1_result_prefixes",
+      "original_run_record": {
+        "class": "withheld",
+        "consumer": null,
+        "disposition": "withheld_by_role",
+        "entry": "step1_result_prefixes",
+        "group": "sealed_step1_answer",
+        "piece_disposition": "withheld_by_role",
+        "reason": "a sealed answer/target; never an element of the market picture",
+        "role": "sealed_answer"
+      }
+    },
+    {
+      "ordinal": 88,
+      "entry_id": "step1_reconciliation_outputs",
+      "original_run_record": {
+        "class": "withheld",
+        "consumer": null,
+        "disposition": "withheld_by_role",
+        "entry": "step1_reconciliation_outputs",
+        "group": "sealed_step1_answer",
+        "piece_disposition": "withheld_by_role",
+        "reason": "a sealed answer/target; never an element of the market picture",
+        "role": "sealed_answer"
+      }
+    },
+    {
+      "ordinal": 89,
+      "entry_id": "output_state_and_state_delta_movie",
+      "original_run_record": {
+        "class": "output",
+        "consumer": null,
+        "disposition": "output_not_written_here",
+        "entry": "output_state_and_state_delta_movie",
+        "group": "append_only_outputs",
+        "piece_disposition": "output_not_produced_here",
+        "reason": "an append-only output of a later stage; this reader writes no output",
+        "role": "output"
+      }
+    },
+    {
+      "ordinal": 90,
+      "entry_id": "output_frankie_reasoning_movie",
+      "original_run_record": {
+        "class": "output",
+        "consumer": null,
+        "disposition": "output_not_written_here",
+        "entry": "output_frankie_reasoning_movie",
+        "group": "append_only_outputs",
+        "piece_disposition": "output_not_produced_here",
+        "reason": "an append-only output of a later stage; this reader writes no output",
+        "role": "output"
+      }
+    },
+    {
+      "ordinal": 91,
+      "entry_id": "output_probability_movie",
+      "original_run_record": {
+        "class": "output",
+        "consumer": null,
+        "disposition": "output_not_written_here",
+        "entry": "output_probability_movie",
+        "group": "append_only_outputs",
+        "piece_disposition": "output_not_produced_here",
+        "reason": "an append-only output of a later stage; this reader writes no output",
+        "role": "output"
+      }
+    },
+    {
+      "ordinal": 92,
+      "entry_id": "output_candidate_discoveries",
+      "original_run_record": {
+        "class": "output",
+        "consumer": null,
+        "disposition": "output_not_written_here",
+        "entry": "output_candidate_discoveries",
+        "group": "append_only_outputs",
+        "piece_disposition": "output_not_produced_here",
+        "reason": "an append-only output of a later stage; this reader writes no output",
+        "role": "output"
+      }
+    },
+    {
+      "ordinal": 93,
+      "entry_id": "output_first_locks_and_no_locks",
+      "original_run_record": {
+        "class": "output",
+        "consumer": null,
+        "disposition": "output_not_written_here",
+        "entry": "output_first_locks_and_no_locks",
+        "group": "append_only_outputs",
+        "piece_disposition": "output_not_produced_here",
+        "reason": "an append-only output of a later stage; this reader writes no output",
+        "role": "output"
+      }
+    },
+    {
+      "ordinal": 94,
+      "entry_id": "output_negative_sparse_inconclusive_ledger",
+      "original_run_record": {
+        "class": "output",
+        "consumer": null,
+        "disposition": "output_not_written_here",
+        "entry": "output_negative_sparse_inconclusive_ledger",
+        "group": "append_only_outputs",
+        "piece_disposition": "output_not_produced_here",
+        "reason": "an append-only output of a later stage; this reader writes no output",
+        "role": "output"
+      }
+    },
+    {
+      "ordinal": 95,
+      "entry_id": "output_knowledge_retrieval_receipts",
+      "original_run_record": {
+        "class": "output",
+        "consumer": null,
+        "disposition": "output_not_written_here",
+        "entry": "output_knowledge_retrieval_receipts",
+        "group": "append_only_outputs",
+        "piece_disposition": "output_not_produced_here",
+        "reason": "an append-only output of a later stage; this reader writes no output",
+        "role": "output"
+      }
+    },
+    {
+      "ordinal": 96,
+      "entry_id": "output_provider_invocation_response_receipts",
+      "original_run_record": {
+        "class": "output",
+        "consumer": null,
+        "disposition": "output_not_written_here",
+        "entry": "output_provider_invocation_response_receipts",
+        "group": "append_only_outputs",
+        "piece_disposition": "output_not_produced_here",
+        "reason": "an append-only output of a later stage; this reader writes no output",
+        "role": "output"
+      }
+    },
+    {
+      "ordinal": 97,
+      "entry_id": "output_answer_wall_access_receipts",
+      "original_run_record": {
+        "class": "output",
+        "consumer": null,
+        "disposition": "output_not_written_here",
+        "entry": "output_answer_wall_access_receipts",
+        "group": "append_only_outputs",
+        "piece_disposition": "output_not_produced_here",
+        "reason": "an append-only output of a later stage; this reader writes no output",
+        "role": "output"
+      }
+    },
+    {
+      "ordinal": 98,
+      "entry_id": "output_source_state_manifest_code_model_run_hashes",
+      "original_run_record": {
+        "class": "output",
+        "consumer": "receipt.json",
+        "disposition": "produced",
+        "entry": "output_source_state_manifest_code_model_run_hashes",
+        "group": "append_only_outputs",
+        "piece_disposition": "output_analogue",
+        "reason": "the receipt pins the ingestion receipt, the rows file and the attachment (sha256)",
+        "role": "output"
+      }
+    }
+  ],
+  "canonical_99_registry": {
+    "schema": "FRANKIE_NATIVE_RAW_MBO_INGESTION_LAYER_REGISTRY_V1",
+    "version": "a-arms-20260828-v1",
+    "hard_minimum_concrete_layer_count": 90,
+    "source_authority": "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md",
+    "permitted_v3_source_paths": [
+      "research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.json",
+      "research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.md",
+      "research/NG_EXHAUSTION_V3_NONAUTHORITATIVE_RESULTS_EXTRA_AGENT_V4_CARRYFORWARD_20260820.md",
+      "research/NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_ADDENDUM_20260820.md",
+      "research/NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_FINAL_ADDENDUM_20260820.md"
+    ],
+    "groups": [
+      {
+        "group_id": "binding_common_controls",
+        "policy": "STATIC_REQUIRED_INPUT",
+        "activation_stage": "PRE_CALL",
+        "authority": "BINDING_CURRENT",
+        "arms": [
+          "A_CLEAN",
+          "A_MEMORY"
+        ],
+        "principal_route": "DIRECT",
+        "proof_mode": "CONTENT_SHA256",
+        "entries": [
+          {
+            "layer_id": "controlling_rt_mission",
+            "description": "Concise controlling native RT mission",
+            "source_paths": [
+              "research/kalshi/agents/frankie_native_raw_mbo_oct45_realtime_mission_20260828.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "native_calculation_contract",
+            "description": "Member-first open-world native calculation contract",
+            "source_paths": [
+              "research/kalshi/agents/frankie_native_raw_mbo_calculation_contract_20260828.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "anchored_knowledge_manifest",
+            "description": "Content-addressed same-arm knowledge manifest",
+            "source_paths": [
+              "research/kalshi/agents/frankie_native_raw_mbo_knowledge/KNOWLEDGE_MANIFEST_20260828.json"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "selected_same_arm_profile",
+            "description": "Exact selected arm and role knowledge profile",
+            "source_paths": [
+              "research/kalshi/agents/frankie_native_raw_mbo_knowledge/KNOWLEDGE_SOURCES_20260828.json"
+            ],
+            "v3_derived": false
+          }
+        ]
+      },
+      {
+        "group_id": "a_clean_overlay",
+        "policy": "ARM_REQUIRED_INPUT",
+        "activation_stage": "PRE_CALL",
+        "authority": "PROMOTED_POSITIVE_NATIVE_KNOWLEDGE",
+        "arms": [
+          "A_CLEAN"
+        ],
+        "principal_route": "DIRECT",
+        "proof_mode": "CONTENT_SHA256",
+        "entries": [
+          {
+            "layer_id": "a_clean_promoted_positive_capsule",
+            "description": "Pared-down A-clean promoted positive knowledge",
+            "source_paths": [
+              "research/kalshi/agents/frankie_native_raw_mbo_knowledge/A_CLEAN_POSITIVE_KNOWLEDGE_20260828.md"
+            ],
+            "v3_derived": false
+          }
+        ]
+      },
+      {
+        "group_id": "a_memory_overlay",
+        "policy": "ARM_REQUIRED_INPUT",
+        "activation_stage": "PRE_CALL",
+        "authority": "PROMOTED_POSITIVE_NATIVE_KNOWLEDGE",
+        "arms": [
+          "A_MEMORY"
+        ],
+        "principal_route": "DIRECT",
+        "proof_mode": "CONTENT_OR_EXTERNAL_BINDING_SHA256",
+        "entries": [
+          {
+            "layer_id": "a_memory_promoted_positive_capsule",
+            "description": "Pared-down A-memory promoted positive knowledge",
+            "source_paths": [
+              "research/kalshi/agents/frankie_native_raw_mbo_knowledge/A_MEMORY_POSITIVE_KNOWLEDGE_20260828.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "a_memory_prior_lessons_package",
+            "description": "A-memory seed memory: every committed output of the past runs, provenance-labelled, UNVERIFIED (D86, D88); from day two his own prior-day frozen outputs plus the seed",
+            "source_paths": [
+              "research/kalshi/frankie_raw_mbo_benchmark/A_MEMORY_SEED_20260902.json"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "a_memory_prior_package_proof",
+            "description": "Proof of the A-memory seed: its per-entry sha256 and byte list and seed_hash, bound as the seed file's own bytes (no external binding)",
+            "source_paths": [
+              "research/kalshi/frankie_raw_mbo_benchmark/A_MEMORY_SEED_20260902.json"
+            ],
+            "v3_derived": false
+          }
+        ]
+      },
+      {
+        "group_id": "current_brain_runtime",
+        "policy": "STATIC_REQUIRED_INPUT",
+        "activation_stage": "PRE_CALL",
+        "authority": "CURRENT_BRAIN",
+        "arms": [
+          "A_CLEAN",
+          "A_MEMORY"
+        ],
+        "principal_route": "DIRECT",
+        "proof_mode": "CONTENT_SHA256",
+        "entries": [
+          {
+            "layer_id": "authoritative_s135_construction",
+            "description": "S135 with retained S120, S126, S128, S132, and S133 improvements",
+            "source_paths": [
+              "research/kalshi/knowledge/ng_brain.json"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "complete_s105_9_brain",
+            "description": "Complete s105.9 NG brain with all 90 play bodies",
+            "source_paths": [
+              "research/kalshi/knowledge/ng_brain.json"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "doctrine_reasoning_play_index_evidence",
+            "description": "Doctrine, reasoning, play index, falsifiers, negatives, and contradictions",
+            "source_paths": [
+              "research/kalshi/knowledge/ng_brain.json"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "lawful_prior_session_carry",
+            "description": "Prior-session carry allowed by current runtime contracts",
+            "source_paths": [
+              "research/kalshi/knowledge/ng_brain.json"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "october_outcome_wall_enforcement",
+            "description": "Outcome-wall policy for the October target period",
+            "source_paths": [
+              "research/kalshi/knowledge/ng_brain.json",
+              "research/NG_EXHAUSTION_V4_CONTINUOUS_ADAPTIVE_WALKFORWARD_CONTRACT_20260820.md",
+              "research/NG_EXHAUSTION_V4_CLEAN_SOURCE_PRELAUNCH_GATES_20260820.md",
+              "research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.md",
+              "research/NG_EXHAUSTION_V4_BRAIN_TRADE_PROPOSAL_CLEAN_SOURCE_CURRENT_20260820.md"
+            ],
+            "v3_derived": false
+          }
+        ]
+      },
+      {
+        "group_id": "frozen_learned_structure",
+        "policy": "STATIC_REQUIRED_INPUT",
+        "activation_stage": "PRE_CALL",
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "arms": [
+          "A_CLEAN",
+          "A_MEMORY"
+        ],
+        "principal_route": "DIRECT",
+        "proof_mode": "CONTENT_SHA256",
+        "entries": [
+          {
+            "layer_id": "learned_d_structures_and_families",
+            "description": "Frozen D structures and D families",
+            "source_paths": [
+              "research/NG_EXHAUSTION_CHAIN_STUDY_CONTRACT_20260817.json",
+              "research/NG_EXHAUSTION_CHAIN_PHASE2_FINAL_FREEZE_20260818.md",
+              "research/NG_EXHAUSTION_CHAIN_PHASE2_ALL_AGENT_FINDINGS_20260818.md",
+              "research/NG_EXHAUSTION_CHAIN_PHASE2_FINDINGS_20260817.md",
+              "research/NG_EXHAUSTION_CHAIN_PHASE2_TIMING_CONTEXT_FINDINGS_20260818.md",
+              "research/ng_exhaustion_chain_canonical_table_20260817.py",
+              "research/ng_exhaustion_week_chain_state_roster_20260817.py",
+              "research/ng_exhaustion_week_continuous_roster_20260817.py",
+              "research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.md",
+              "research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.json"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "learned_dipoles_and_geometry",
+            "description": "Frozen dipoles and geometry",
+            "source_paths": [
+              "research/ng_exhaustion_chain_canonical_table_20260817.py",
+              "research/NG_EXHAUSTION_V4_BRAIN_TRADE_PROPOSAL_CLEAN_SOURCE_CURRENT_20260820.md",
+              "research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.md",
+              "research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.json",
+              "research/NG_EXHAUSTION_EVENT_MARK_CLOCK_OPEN_BOUNDARY_20260819.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "learned_pair_triplet_recurrence",
+            "description": "Pair and triplet recurrence structures",
+            "source_paths": [
+              "research/NG_EXHAUSTION_CHAIN_PHASE2_FINAL_FREEZE_20260818.md",
+              "research/NG_EXHAUSTION_CHAIN_PHASE2_ALL_AGENT_FINDINGS_20260818.md",
+              "research/NG_EXHAUSTION_CHAIN_PHASE2_TIMING_CONTEXT_FINDINGS_20260818.md",
+              "research/NG_EXHAUSTION_CHAIN_PHASE2_POSTEXIT_RECURRENCE_FINDINGS_20260818.md",
+              "research/NG_EXHAUSTION_CHAIN_PHASE2_PARALLEL_RECURRENCE_RECONCILIATION_20260818.md",
+              "research/ng_exhaustion_chain_phase2_parallel_agents_20260818.py",
+              "research/NG_EXHAUSTION_BRAIN_PROPOSAL_INDEX_20260818.md",
+              "research/kalshi/knowledge/ng_brain_exhaustion_chain_phase2_proposal_20260818.json"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "learned_chains_extensions_reappearances_ancestry",
+            "description": "Chains, extensions, reappearances, and successor ancestry",
+            "source_paths": [
+              "research/NG_EXHAUSTION_CHAIN_STUDY_CONTRACT_20260817.json",
+              "research/NG_EXHAUSTION_CHAIN_PHASE2_FINAL_FREEZE_20260818.md",
+              "research/NG_EXHAUSTION_CHAIN_PHASE2_ALL_AGENT_FINDINGS_20260818.md",
+              "research/NG_EXHAUSTION_CHAIN_PHASE2_POSTEXIT_RECURRENCE_FINDINGS_20260818.md",
+              "research/NG_EXHAUSTION_CHAIN_PHASE2_POX_SAME_POSTEXIT_REEXPRESSION_20260818.md",
+              "research/NG_EXHAUSTION_CHAIN_PHASE2_REAPPEARANCE_WATCH_MAP_20260818.json",
+              "research/ng_exhaustion_chain_phase1_lineage_54w_20260817.py",
+              "research/ng_exhaustion_chain_phase1_continuity_54w_20260817.py",
+              "research/ng_exhaustion_chain_state_enrich_20260817.py",
+              "research/ng_exhaustion_week_chain_state_roster_20260817.py",
+              "research/NG_EXHAUSTION_BRAIN_PROPOSAL_INDEX_20260818.md",
+              "research/kalshi/knowledge/ng_brain_exhaustion_chain_phase2_proposal_20260818.json",
+              "research/kalshi/knowledge/ng_brain_exhaustion_chain_birth_v2_proposal_20260819.json"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "phase1_discoveries_structural_falsifiers",
+            "description": "Phase-1 discoveries plus structural and falsifier results",
+            "source_paths": [
+              "research/NG_EXHAUSTION_CHAIN_STUDY_CONTRACT_20260817.json",
+              "research/NG_EXHAUSTION_CHAIN_PHASE1_54W_BASE_FREEZE_20260817.json",
+              "research/NG_EXHAUSTION_CHAIN_PHASE1_54W_EXECUTION_PROTOCOL_20260817.json",
+              "research/NG_EXHAUSTION_CHAIN_PHASE1_CAUSAL_PROTOCOL_20260817.json",
+              "research/NG_EXHAUSTION_CHAIN_PHASE1_DISCOVERY_PROTOCOL_20260817.json",
+              "research/NG_EXHAUSTION_CHAIN_PHASE1_MECHANISM_ADDENDUM_20260817.json",
+              "research/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILE_LAUNCH_20260817.json",
+              "research/NG_EXHAUSTION_CHAIN_STEP1_ORIGINAL_FILE_MAP_20260820.md",
+              "research/ng_exhaustion_chain_canonical_54w_merge_20260817.py",
+              "research/ng_exhaustion_chain_canonical_54w_shard_20260817.py",
+              "research/ng_exhaustion_chain_phase1_discovery_20260817.py",
+              "research/ng_exhaustion_chain_phase1_causal_54w_20260817.py",
+              "research/ng_exhaustion_chain_phase1_continuity_54w_20260817.py",
+              "research/ng_exhaustion_chain_phase1_falsifier_54w_20260817.py",
+              "research/ng_exhaustion_chain_phase1_lineage_54w_20260817.py",
+              "research/ng_exhaustion_chain_phase1_structural_54w_20260817.py",
+              "research/ng_exhaustion_chain_phase1_reconcile_55w_20260817.py"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "phase2_findings_modules_timing_pox_negatives",
+            "description": "Phase-2 findings, timing, POX branches, and negative or stopped chains",
+            "source_paths": [
+              "research/NG_EXHAUSTION_CHAIN_PHASE2_FINAL_FREEZE_20260818.md",
+              "research/NG_EXHAUSTION_CHAIN_PHASE2_ALL_AGENT_FINDINGS_20260818.md",
+              "research/NG_EXHAUSTION_CHAIN_PHASE2_FINDINGS_20260817.md",
+              "research/NG_EXHAUSTION_CHAIN_PHASE2_TIMING_CONTEXT_FINDINGS_20260818.md",
+              "research/NG_EXHAUSTION_CHAIN_PHASE2_MODULE_NOVELTY_FINDINGS_20260818.md",
+              "research/NG_EXHAUSTION_CHAIN_PHASE2_POSTEXIT_RECURRENCE_FINDINGS_20260818.md",
+              "research/NG_EXHAUSTION_CHAIN_PHASE2_PARALLEL_RECURRENCE_RECONCILIATION_20260818.md",
+              "research/NG_EXHAUSTION_CHAIN_PHASE2_FINDINGS_ADDENDUM_POX_20260818.md",
+              "research/NG_EXHAUSTION_CHAIN_PHASE2_POX_BRANCH_RECONCILIATION_V2_20260818.md",
+              "research/NG_EXHAUSTION_CHAIN_PHASE2_POX_SAME_POSTEXIT_REEXPRESSION_20260818.md",
+              "research/NG_EXHAUSTION_CHAIN_PHASE2_REAPPEARANCE_WATCH_MAP_20260818.json",
+              "research/NG_EXHAUSTION_CHAIN_PHASE2_FINALIZATION_CHECKLIST_20260818.json",
+              "research/ng_exhaustion_chain_phase2_characterize_20260817.py",
+              "research/ng_exhaustion_chain_phase2_parallel_agents_20260818.py",
+              "research/kalshi/knowledge/ng_brain_exhaustion_chain_phase2_proposal_20260818.json",
+              "research/kalshi/knowledge/ng_brain_exhaustion_pox_focused_proposal_20260819.json",
+              "research/kalshi/knowledge/ng_brain_exhaustion_entry_timing_extension_20260818.json"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "predecessor_ancestry_unresolved_chain_state",
+            "description": "Predecessor, ancestry, and unresolved-chain state",
+            "source_paths": [
+              "research/NG_EXHAUSTION_CHAIN_PHASE1_CAUSAL_PROTOCOL_20260817.json",
+              "research/NG_EXHAUSTION_CHAIN_STEP1_5Y_V4_NATIVE_CENSUS_PROTOCOL_20260820.md",
+              "research/NG_EXHAUSTION_CHAIN_STEP1_5Y_V4_NATIVE_CENSUS_PROTOCOL_20260820.json",
+              "research/NG_EXHAUSTION_V4_BRAIN_TRADE_PROPOSAL_CLEAN_SOURCE_CURRENT_20260820.md",
+              "research/NG_EXHAUSTION_V4_CLEAN_SOURCE_PRELAUNCH_GATES_20260820.md",
+              "research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.md",
+              "research/NG_EXHAUSTION_PRIOR_MODEL_PRICE_CORRECTION_20260819.md",
+              "research/NG_EXHAUSTION_FULL_CAUSAL_INFORMATION_CORRECTION_20260819.md",
+              "research/NG_EXHAUSTION_CHAIN_PHASE2_FINDINGS_20260817.md",
+              "research/ng_exhaustion_chain_phase2_characterize_20260817.py",
+              "research/kalshi/knowledge/ng_brain_exhaustion_chain_birth_v2_proposal_20260819.json"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "historical_timing_lifespan_context",
+            "description": "Historical timing and lifespan as context, never target clock",
+            "source_paths": [
+              "research/NG_EXHAUSTION_CHAIN_PHASE2_TIMING_CONTEXT_FINDINGS_20260818.md",
+              "research/NG_EXHAUSTION_CONTINUOUS_INSTANCE_TIMING_CORRECTION_20260820.md",
+              "research/NG_EXHAUSTION_V4_CONTINUOUS_ADAPTIVE_WALKFORWARD_CONTRACT_20260820.md",
+              "research/NG_EXHAUSTION_EVENT_MARK_CLOCK_OPEN_BOUNDARY_20260819.md",
+              "research/NG_EXHAUSTION_FULL_CAUSAL_INFORMATION_CORRECTION_20260819.md",
+              "research/NG_EXHAUSTION_V4_BRAIN_TRADE_PROPOSAL_CLEAN_SOURCE_CURRENT_20260820.md",
+              "research/NG_EXHAUSTION_PRIOR_MODEL_PRICE_CORRECTION_20260819.md",
+              "research/ng_exhaustion_chain_phase2_characterize_20260817.py",
+              "research/kalshi/knowledge/ng_brain_exhaustion_chain_birth_v2_proposal_20260819.json",
+              "research/kalshi/knowledge/ng_brain_exhaustion_entry_timing_extension_20260818.json",
+              "research/kalshi/knowledge/ng_brain_exhaustion_chain_phase2_proposal_20260818.json"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "learned_structure_proposal_index_material",
+            "description": "Proposal and index material required to interpret learned structures",
+            "source_paths": [
+              "research/NG_EXHAUSTION_BRAIN_PROPOSAL_INDEX_20260818.md",
+              "research/NG_EXHAUSTION_BRAIN_PROPOSAL_INDEX_ADDENDUM_20260820.md",
+              "research/NG_EXHAUSTION_V4_BRAIN_TRADE_PROPOSAL_CLEAN_SOURCE_CURRENT_20260820.md",
+              "research/NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_ADDENDUM_20260820.md",
+              "research/NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_FINAL_ADDENDUM_20260820.md",
+              "research/kalshi/knowledge/ng_brain_exhaustion_chain_phase2_proposal_20260818.json",
+              "research/kalshi/knowledge/ng_brain_exhaustion_chain_birth_v2_proposal_20260819.json",
+              "research/kalshi/knowledge/ng_brain_exhaustion_entry_timing_extension_20260818.json",
+              "research/kalshi/knowledge/ng_brain_exhaustion_pox_focused_proposal_20260819.json",
+              "research/NG_EXHAUSTION_V4_INTERPRETATION_CORRECTION_20260820.md",
+              "research/NG_EXHAUSTION_V4_CONTINUOUS_ADAPTIVE_WALKFORWARD_CONTRACT_20260820.md",
+              "research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.md",
+              "research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.json",
+              "research/NG_EXHAUSTION_EVENT_MARK_CLOCK_OPEN_BOUNDARY_20260819.md",
+              "research/NG_EXHAUSTION_V4_CLEAN_SOURCE_PRELAUNCH_GATES_20260820.md",
+              "research/NG_EXHAUSTION_CONTINUOUS_INSTANCE_TIMING_CORRECTION_20260820.md",
+              "research/NG_EXHAUSTION_CONTINUOUS_LIVE_INFORMATION_CORRECTION_20260819.md",
+              "research/NG_EXHAUSTION_FULL_CAUSAL_INFORMATION_CORRECTION_20260819.md",
+              "research/NG_EXHAUSTION_PRIOR_MODEL_PRICE_CORRECTION_20260819.md",
+              "research/NG_EXHAUSTION_POLARITY_NOT_PRIMARY_TARGET_CORRECTION_20260819.md",
+              "research/NG_EXHAUSTION_CHAIN_STEP1_ORIGINAL_FILE_MAP_20260820.md",
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md",
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_SOURCE_FILE_INVENTORY_20260824.md"
+            ],
+            "v3_derived": true
+          }
+        ]
+      },
+      {
+        "group_id": "corrected_extra_agent_carryforward",
+        "policy": "STATIC_REQUIRED_INPUT",
+        "activation_stage": "PRE_CALL",
+        "authority": "EXTRA_AGENT_CARRYFORWARD",
+        "arms": [
+          "A_CLEAN",
+          "A_MEMORY"
+        ],
+        "principal_route": "DIRECT",
+        "proof_mode": "CONTENT_SHA256_AND_ALLOWLIST",
+        "entries": [
+          {
+            "layer_id": "extra_agent_corrected_information_and_gap_diagnoses",
+            "description": "Correction-approved extra-agent information and gap diagnoses",
+            "source_paths": [
+              "research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.json",
+              "research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.md",
+              "research/NG_EXHAUSTION_V3_NONAUTHORITATIVE_RESULTS_EXTRA_AGENT_V4_CARRYFORWARD_20260820.md"
+            ],
+            "v3_derived": true
+          }
+        ]
+      },
+      {
+        "group_id": "canonical_raw_dbn_mbo",
+        "policy": "CAUSAL_STREAM_REQUIRED",
+        "activation_stage": "EACH_F_LAST_CUTOFF",
+        "authority": "BINDING_CURRENT",
+        "arms": [
+          "A_CLEAN",
+          "A_MEMORY"
+        ],
+        "principal_route": "CAUSAL_GROUP_STREAM",
+        "proof_mode": "SOURCE_READY_AND_PER_GROUP_RECEIPT",
+        "entries": [
+          {
+            "layer_id": "canonical_sep_nov_2021_dbn_mbo_objects",
+            "description": "Canonical September-November 2021 DBN MBO objects",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "october_first_source_window",
+            "description": "October-first source window boundaries",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "canonical_predecessor_bootstrap_objects",
+            "description": "Canonical predecessor objects needed for continuous bootstrap",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "native_acmrtfn_messages",
+            "description": "All relevant native A C M R T F N messages",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "snapshot_bootstrap_reset_messages",
+            "description": "Snapshot messages limited to book bootstrap and reset",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "raw_source_identity_provenance_clocks_integrity",
+            "description": "Source identity, hashes, clocks, provenance, and integrity",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          }
+        ]
+      },
+      {
+        "group_id": "order_lifecycle",
+        "policy": "CAUSAL_STREAM_REQUIRED",
+        "activation_stage": "EACH_F_LAST_CUTOFF",
+        "authority": "BINDING_CURRENT",
+        "arms": [
+          "A_CLEAN",
+          "A_MEMORY"
+        ],
+        "principal_route": "CAUSAL_GROUP_STREAM",
+        "proof_mode": "SOURCE_READY_AND_PER_GROUP_RECEIPT",
+        "entries": [
+          {
+            "layer_id": "order_lifecycle_adds",
+            "description": "Order adds",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "order_lifecycle_cancels",
+            "description": "Order cancels",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "order_lifecycle_modifies",
+            "description": "Order modifies",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "order_lifecycle_replaces",
+            "description": "Order replaces",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "order_lifecycle_trades",
+            "description": "Trades",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "order_lifecycle_fills",
+            "description": "Fills",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "order_lifecycle_clears",
+            "description": "Clears",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "order_identity_transitions",
+            "description": "Order identity and lifecycle transitions",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "contract_session_roll_state",
+            "description": "Contract, session, and roll state",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          }
+        ]
+      },
+      {
+        "group_id": "full_book_fifo_queue",
+        "policy": "CAUSAL_STREAM_REQUIRED",
+        "activation_stage": "EACH_F_LAST_CUTOFF",
+        "authority": "BINDING_CURRENT",
+        "arms": [
+          "A_CLEAN",
+          "A_MEMORY"
+        ],
+        "principal_route": "CAUSAL_GROUP_STREAM",
+        "proof_mode": "SOURCE_READY_AND_PER_GROUP_RECEIPT",
+        "entries": [
+          {
+            "layer_id": "full_bid_ask_depth",
+            "description": "Full bid and ask depth",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "price_level_and_order_counts",
+            "description": "Price-level and order counts",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "fifo_queues",
+            "description": "Full price-level FIFO queues",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "queue_age_and_survival",
+            "description": "Queue age and survival",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "queue_concentration",
+            "description": "Queue concentration",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "orders_and_volume_ahead",
+            "description": "Orders and volume ahead",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "spread_and_depth_imbalance",
+            "description": "Spread and full-depth imbalance",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "complete_state_reset_bootstrap_receipts",
+            "description": "Complete state reset and bootstrap receipts",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          }
+        ]
+      },
+      {
+        "group_id": "microstructure_mechanics",
+        "policy": "CAUSAL_STREAM_REQUIRED",
+        "activation_stage": "EACH_F_LAST_CUTOFF",
+        "authority": "BINDING_CURRENT",
+        "arms": [
+          "A_CLEAN",
+          "A_MEMORY"
+        ],
+        "principal_route": "CAUSAL_GROUP_STREAM",
+        "proof_mode": "SOURCE_READY_AND_PER_GROUP_RECEIPT",
+        "entries": [
+          {
+            "layer_id": "mechanics_actions_by_side_and_level",
+            "description": "Actions by side and level",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "aggressor_and_native_signed_flow",
+            "description": "Aggressor and native signed flow",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "depletion_and_replenishment",
+            "description": "Depletion and replenishment",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "resilience_and_recovery",
+            "description": "Resilience and recovery",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "churn_and_queue_turnover",
+            "description": "Churn and queue turnover",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "price_and_book_path",
+            "description": "Price path and book path",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "missingness_and_integrity_flags",
+            "description": "Missingness and integrity flags",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          }
+        ]
+      },
+      {
+        "group_id": "legacy_observable_crosswalk",
+        "policy": "CAUSAL_STREAM_REQUIRED",
+        "activation_stage": "EACH_F_LAST_CUTOFF",
+        "authority": "BINDING_CURRENT",
+        "arms": [
+          "A_CLEAN",
+          "A_MEMORY"
+        ],
+        "principal_route": "CAUSAL_GROUP_STREAM",
+        "proof_mode": "SOURCE_READY_AND_PER_GROUP_RECEIPT",
+        "entries": [
+          {
+            "layer_id": "legacy_price",
+            "description": "Legacy price with native crosswalk",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "legacy_native_signed_flow",
+            "description": "Legacy-compatible native signed flow",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "legacy_per_second_roll20",
+            "description": "Legacy-compatible per-second roll20",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "legacy_book_imbalance",
+            "description": "Legacy-compatible book imbalance",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "legacy_structure_observables",
+            "description": "D, dipole, family, chain, and predecessor observables",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          }
+        ]
+      },
+      {
+        "group_id": "derived_geometry",
+        "policy": "CAUSAL_STREAM_REQUIRED",
+        "activation_stage": "EACH_F_LAST_CUTOFF",
+        "authority": "BINDING_CURRENT",
+        "arms": [
+          "A_CLEAN",
+          "A_MEMORY"
+        ],
+        "principal_route": "CAUSAL_GROUP_STREAM",
+        "proof_mode": "SOURCE_READY_AND_PER_GROUP_RECEIPT",
+        "entries": [
+          {
+            "layer_id": "derived_roll20_and_dipole_state",
+            "description": "roll20 and dipole state",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "derived_d_family_geometry",
+            "description": "D-family geometry",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "derived_open_world_predecessor_state",
+            "description": "P O S X seed and open-world predecessor state",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "derived_ancestry_gaps",
+            "description": "Ancestry gaps",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "derived_unresolved_age_chain_trajectory",
+            "description": "Unresolved age and chain or extension trajectory",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "derived_price_flow_book_paths",
+            "description": "Price, signed-flow, and book paths",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "derived_v4_mechanics_fifo_features",
+            "description": "V4 mechanics and FIFO features",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "derived_feature_availability_timestamps",
+            "description": "Feature-availability timestamps",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          }
+        ]
+      },
+      {
+        "group_id": "prebirth_opportunity",
+        "policy": "CAUSAL_STREAM_REQUIRED",
+        "activation_stage": "EACH_F_LAST_CUTOFF",
+        "authority": "BINDING_CURRENT",
+        "arms": [
+          "A_CLEAN",
+          "A_MEMORY"
+        ],
+        "principal_route": "CAUSAL_GROUP_STREAM",
+        "proof_mode": "SOURCE_READY_AND_PER_GROUP_RECEIPT",
+        "entries": [
+          {
+            "layer_id": "prebirth_predecessor_at_risk_state",
+            "description": "Predecessor-defined at-risk state",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "prebirth_unresolved_chain_extension_state",
+            "description": "Unresolved chain and extension state",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "prebirth_ancestry_successor_opportunity",
+            "description": "Ancestry and successor opportunity",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "prebirth_stopped_chain_false_context_controls",
+            "description": "Stopped-chain and false-context controls",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "prebirth_negative_opportunity_cases",
+            "description": "Negative opportunity cases",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          }
+        ]
+      },
+      {
+        "group_id": "causal_clocks",
+        "policy": "CAUSAL_STREAM_REQUIRED",
+        "activation_stage": "EACH_F_LAST_CUTOFF",
+        "authority": "BINDING_CURRENT",
+        "arms": [
+          "A_CLEAN",
+          "A_MEMORY"
+        ],
+        "principal_route": "CAUSAL_GROUP_STREAM",
+        "proof_mode": "SOURCE_READY_AND_PER_GROUP_RECEIPT",
+        "entries": [
+          {
+            "layer_id": "clock_event_time",
+            "description": "Event-time clock",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "clock_receive_time",
+            "description": "Receive-time clock",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "clock_event_known_by",
+            "description": "Event-known-by clock",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "clock_feature_availability",
+            "description": "Feature-availability clock",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "clock_prospective_discovery_confirmation",
+            "description": "Prospective discovery and confirmation clock",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "clock_model_evaluation",
+            "description": "Model-evaluation clock",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "clock_lock_time",
+            "description": "Lock-time clock",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          }
+        ]
+      },
+      {
+        "group_id": "sealed_target_timing",
+        "policy": "SEALED_FOR_A_SCOPE",
+        "activation_stage": "OUTSIDE_CURRENT_A_SCOPE",
+        "authority": "SEALED_TARGET_ANSWER",
+        "arms": [
+          "A_CLEAN",
+          "A_MEMORY"
+        ],
+        "principal_route": "SEALED",
+        "proof_mode": "SEALED_ABSENCE_RECEIPT",
+        "entries": [
+          {
+            "layer_id": "later_outcome_reveal",
+            "description": "Later realized outcome reveal",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "target_ground_truth_onset_time",
+            "description": "Answer-derived ground-truth onset time, distinct from causal candidate onset",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          }
+        ]
+      },
+      {
+        "group_id": "provisional_shadow",
+        "policy": "PROVISIONAL_SHADOW",
+        "activation_stage": "EXPLICIT_IDENTICAL_ARM_OPT_IN_ONLY",
+        "authority": "PROVISIONAL_SHADOW",
+        "arms": [
+          "A_CLEAN",
+          "A_MEMORY"
+        ],
+        "principal_route": "SHADOW_ONLY",
+        "proof_mode": "SHADOW_CONFIG_AND_PAIRED_RECEIPT",
+        "entries": [
+          {
+            "layer_id": "s137_cognitive_shadow_runtime",
+            "description": "S137 cognitive shadow runtime",
+            "source_paths": [
+              "research/kalshi/frankie_s137_cognitive_runtime.py"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "hipporag_associative_retrieval",
+            "description": "HippoRAG associative-retrieval shadow component",
+            "source_paths": [
+              "research/kalshi/frankie_hipporag_p0_retrieval.py"
+            ],
+            "v3_derived": false
+          }
+        ]
+      },
+      {
+        "group_id": "sealed_step1_answer",
+        "policy": "SEALED_FOR_A_SCOPE",
+        "activation_stage": "OUTSIDE_CURRENT_A_SCOPE",
+        "authority": "SEALED_TARGET_ANSWER",
+        "arms": [
+          "A_CLEAN",
+          "A_MEMORY"
+        ],
+        "principal_route": "SEALED",
+        "proof_mode": "SEALED_ABSENCE_RECEIPT",
+        "entries": [
+          {
+            "layer_id": "step1_existing_october_seconds",
+            "description": "Existing October Step-1 seconds",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "step1_populations",
+            "description": "Step-1 populations",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "step1_crosswalks",
+            "description": "Step-1 crosswalks",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "step1_target_membership_receipts",
+            "description": "Receipts revealing target membership",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "step1_labels_and_classifications",
+            "description": "Step-1 labels and classifications",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "step1_result_prefixes",
+            "description": "Step-1 result prefixes",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "step1_reconciliation_outputs",
+            "description": "Step-1 reconciliation outputs",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          }
+        ]
+      },
+      {
+        "group_id": "append_only_outputs",
+        "policy": "APPEND_ONLY_OUTPUT",
+        "activation_stage": "SEQUENTIAL_AS_PRODUCED",
+        "authority": "IMMUTABLE_EXPERIMENT_OUTPUT",
+        "arms": [
+          "A_CLEAN",
+          "A_MEMORY"
+        ],
+        "principal_route": "NOT_INPUT_AT_PRE_CALL",
+        "proof_mode": "APPEND_ONLY_HASH_CHAIN",
+        "entries": [
+          {
+            "layer_id": "output_state_and_state_delta_movie",
+            "description": "State movie and state-delta movie",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "output_frankie_reasoning_movie",
+            "description": "Frankie reasoning movie",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "output_probability_movie",
+            "description": "Probability movie",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "output_candidate_discoveries",
+            "description": "Candidate discoveries",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "output_first_locks_and_no_locks",
+            "description": "First locks and no-locks",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "output_negative_sparse_inconclusive_ledger",
+            "description": "Abstentions, weak findings, negatives, sparse and inconclusive cases",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "output_knowledge_retrieval_receipts",
+            "description": "Knowledge retrieval receipts",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "output_provider_invocation_response_receipts",
+            "description": "Provider invocation and response receipts",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "output_answer_wall_access_receipts",
+            "description": "Answer-wall no-access receipts for current A scope",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          },
+          {
+            "layer_id": "output_source_state_manifest_code_model_run_hashes",
+            "description": "Source, state, manifest, code, model, and run hashes",
+            "source_paths": [
+              "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+            ],
+            "v3_derived": false
+          }
+        ]
+      }
+    ],
+    "registry_sha256": "239a14808850d9cc9ba589165e4263c0e3f11a0c574052f39bfaa133adf296b1"
+  },
+  "original_13_point_binding": {
+    "counts": {
+      "used": 13
+    },
+    "cutoff_ns": 1697662799696377528,
+    "external_key_hash": "6532b9d6f1a5e35748b55492fc570547b7af1dfb94ad52f099e2de79e16336b2",
+    "points": [
+      {
+        "missing": [],
+        "name": "cot.managed_money_net_pctile_1y",
+        "point_id": 1,
+        "reason": "771787 Dipole row(s) took a PRESENT value of its series (aligned at or before each row's own time) in the external section",
+        "rows_used": 771787,
+        "series": [
+          {
+            "present_rows": 771787,
+            "series": "cot.managed_money_net_pctile_1y",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 0,
+              "MISSING": 0,
+              "PRESENT": 771787
+            }
+          }
+        ],
+        "tables": [
+          {
+            "absent": null,
+            "not_yet_known": 0,
+            "reason": null,
+            "rows_known": 302,
+            "table": "cot.023651"
+          }
+        ],
+        "use": "used"
+      },
+      {
+        "missing": [],
+        "name": "weather_forecast.forecast_gw_hdd",
+        "point_id": 2,
+        "reason": "3087148 Dipole row(s) took a PRESENT value of its series (aligned at or before each row's own time) in the external section",
+        "rows_used": 3087148,
+        "series": [
+          {
+            "present_rows": 771787,
+            "series": "mos.GFS.gw_hdd_D",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 0,
+              "MISSING": 0,
+              "PRESENT": 771787
+            }
+          },
+          {
+            "present_rows": 771787,
+            "series": "mos.NAM.gw_hdd_D",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 0,
+              "MISSING": 0,
+              "PRESENT": 771787
+            }
+          },
+          {
+            "present_rows": 771787,
+            "series": "mos.GFS.gw_hdd_D1",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 0,
+              "MISSING": 0,
+              "PRESENT": 771787
+            }
+          },
+          {
+            "present_rows": 771787,
+            "series": "mos.MEX.gw_hdd_D3",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 0,
+              "MISSING": 0,
+              "PRESENT": 771787
+            }
+          }
+        ],
+        "tables": [
+          {
+            "absent": null,
+            "not_yet_known": 0,
+            "reason": null,
+            "rows_known": 81,
+            "table": "mos.gw_by_cycle"
+          },
+          {
+            "absent": null,
+            "not_yet_known": 0,
+            "reason": null,
+            "rows_known": 9648,
+            "table": "mos.raw"
+          }
+        ],
+        "use": "used"
+      },
+      {
+        "missing": [],
+        "name": "cot.managed_money_net_chg_wow",
+        "point_id": 3,
+        "reason": "771787 Dipole row(s) took a PRESENT value of its series (aligned at or before each row's own time) in the external section",
+        "rows_used": 771787,
+        "series": [
+          {
+            "present_rows": 771787,
+            "series": "cot.managed_money_net_chg_wow",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 0,
+              "MISSING": 0,
+              "PRESENT": 771787
+            }
+          }
+        ],
+        "tables": [
+          {
+            "absent": null,
+            "not_yet_known": 0,
+            "reason": null,
+            "rows_known": 302,
+            "table": "cot.023651"
+          }
+        ],
+        "use": "used"
+      },
+      {
+        "missing": [],
+        "name": "cot.managed_money_net_pctile_3y",
+        "point_id": 4,
+        "reason": "771787 Dipole row(s) took a PRESENT value of its series (aligned at or before each row's own time) in the external section",
+        "rows_used": 771787,
+        "series": [
+          {
+            "present_rows": 771787,
+            "series": "cot.managed_money_net_pctile_3y",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 0,
+              "MISSING": 0,
+              "PRESENT": 771787
+            }
+          }
+        ],
+        "tables": [
+          {
+            "absent": null,
+            "not_yet_known": 0,
+            "reason": null,
+            "rows_known": 302,
+            "table": "cot.023651"
+          }
+        ],
+        "use": "used"
+      },
+      {
+        "missing": [],
+        "name": "grid_stack.bas.US48.wind_mwh",
+        "point_id": 5,
+        "reason": "771787 Dipole row(s) took a PRESENT value of its series (aligned at or before each row's own time) in the external section",
+        "rows_used": 771787,
+        "series": [
+          {
+            "present_rows": 771787,
+            "series": "eia930.US48.wind_mwh",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 0,
+              "MISSING": 0,
+              "PRESENT": 771787
+            }
+          }
+        ],
+        "tables": [
+          {
+            "absent": null,
+            "not_yet_known": 0,
+            "reason": null,
+            "rows_known": 213,
+            "table": "eia930.us48"
+          },
+          {
+            "absent": null,
+            "not_yet_known": 0,
+            "reason": null,
+            "rows_known": 17464,
+            "table": "eia930.hourly"
+          }
+        ],
+        "use": "used"
+      },
+      {
+        "missing": [],
+        "name": "squeeze_watch.sessions_since_prompt_expiry",
+        "point_id": 6,
+        "reason": "121440 Dipole row(s) took a PRESENT value of its series (aligned at or before each row's own time) in the external section",
+        "rows_used": 121440,
+        "series": [
+          {
+            "present_rows": 121440,
+            "series": "calendar.sessions_since_prompt_expiry",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 0,
+              "MISSING": 650347,
+              "PRESENT": 121440
+            }
+          }
+        ],
+        "tables": [
+          {
+            "absent": null,
+            "not_yet_known": 0,
+            "reason": null,
+            "rows_known": 1,
+            "table": "calendar.sessions_since_prompt_expiry"
+          }
+        ],
+        "use": "used"
+      },
+      {
+        "missing": [],
+        "name": "grid_stack.bas.US48.est_gas_burn_bcfd",
+        "point_id": 7,
+        "reason": "771787 Dipole row(s) took a PRESENT value of its series (aligned at or before each row's own time) in the external section",
+        "rows_used": 771787,
+        "series": [
+          {
+            "present_rows": 771787,
+            "series": "eia930.US48.est_gas_burn_bcfd_rate",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 0,
+              "MISSING": 0,
+              "PRESENT": 771787
+            }
+          }
+        ],
+        "tables": [
+          {
+            "absent": null,
+            "not_yet_known": 0,
+            "reason": null,
+            "rows_known": 213,
+            "table": "eia930.us48"
+          },
+          {
+            "absent": null,
+            "not_yet_known": 0,
+            "reason": null,
+            "rows_known": 17464,
+            "table": "eia930.hourly"
+          }
+        ],
+        "use": "used"
+      },
+      {
+        "missing": [],
+        "name": "cot.ice.ld1.managed_money_net_pctile_1y",
+        "point_id": 8,
+        "reason": "771787 Dipole row(s) took a PRESENT value of its series (aligned at or before each row's own time) in the external section",
+        "rows_used": 771787,
+        "series": [
+          {
+            "present_rows": 771787,
+            "series": "cot.ice.ld1.managed_money_net_pctile_1y",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 0,
+              "MISSING": 0,
+              "PRESENT": 771787
+            }
+          }
+        ],
+        "tables": [
+          {
+            "absent": null,
+            "not_yet_known": 0,
+            "reason": null,
+            "rows_known": 302,
+            "table": "cot.023391"
+          }
+        ],
+        "use": "used"
+      },
+      {
+        "missing": [],
+        "name": "model_disagreement.summary.max_abs_spread_gw_hdd",
+        "point_id": 9,
+        "reason": "771787 Dipole row(s) took a PRESENT value of its series (aligned at or before each row's own time) in the external section",
+        "rows_used": 771787,
+        "series": [
+          {
+            "present_rows": 771787,
+            "series": "mos.max_abs_spread_gw_hdd",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 0,
+              "MISSING": 0,
+              "PRESENT": 771787
+            }
+          }
+        ],
+        "tables": [
+          {
+            "absent": null,
+            "not_yet_known": 0,
+            "reason": null,
+            "rows_known": 6,
+            "table": "mos.disagreement_by_cycle"
+          }
+        ],
+        "use": "used"
+      },
+      {
+        "missing": [],
+        "name": "weather.gw_hdd (observed)",
+        "point_id": 10,
+        "reason": "2220978 Dipole row(s) took a PRESENT value of its series (aligned at or before each row's own time) in the external section",
+        "rows_used": 2220978,
+        "series": [
+          {
+            "present_rows": 771787,
+            "series": "weather.gw_hdd",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 0,
+              "MISSING": 0,
+              "PRESENT": 771787
+            }
+          },
+          {
+            "present_rows": 44630,
+            "series": "weather.tmpf.ATL",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 727157,
+              "MISSING": 0,
+              "PRESENT": 44630
+            }
+          },
+          {
+            "present_rows": 31816,
+            "series": "weather.tmpf.AUS",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 739971,
+              "MISSING": 0,
+              "PRESENT": 31816
+            }
+          },
+          {
+            "present_rows": 12004,
+            "series": "weather.tmpf.BOS",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 759783,
+              "MISSING": 0,
+              "PRESENT": 12004
+            }
+          },
+          {
+            "present_rows": 44630,
+            "series": "weather.tmpf.DCA",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 727157,
+              "MISSING": 0,
+              "PRESENT": 44630
+            }
+          },
+          {
+            "present_rows": 31816,
+            "series": "weather.tmpf.DEN",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 739971,
+              "MISSING": 0,
+              "PRESENT": 31816
+            }
+          },
+          {
+            "present_rows": 31816,
+            "series": "weather.tmpf.DFW",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 739971,
+              "MISSING": 0,
+              "PRESENT": 31816
+            }
+          },
+          {
+            "present_rows": 31816,
+            "series": "weather.tmpf.DTW",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 739971,
+              "MISSING": 0,
+              "PRESENT": 31816
+            }
+          },
+          {
+            "present_rows": 31816,
+            "series": "weather.tmpf.IAH",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 739971,
+              "MISSING": 0,
+              "PRESENT": 31816
+            }
+          },
+          {
+            "present_rows": 59559,
+            "series": "weather.tmpf.LAX",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 712228,
+              "MISSING": 0,
+              "PRESENT": 59559
+            }
+          },
+          {
+            "present_rows": 31816,
+            "series": "weather.tmpf.MSP",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 739971,
+              "MISSING": 0,
+              "PRESENT": 31816
+            }
+          },
+          {
+            "present_rows": 771787,
+            "series": "weather.tmpf.NYC",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 0,
+              "MISSING": 0,
+              "PRESENT": 771787
+            }
+          },
+          {
+            "present_rows": 57661,
+            "series": "weather.tmpf.ORD",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 714126,
+              "MISSING": 0,
+              "PRESENT": 57661
+            }
+          },
+          {
+            "present_rows": 12004,
+            "series": "weather.tmpf.PHL",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 759783,
+              "MISSING": 0,
+              "PRESENT": 12004
+            }
+          },
+          {
+            "present_rows": 57661,
+            "series": "weather.tmpf.PHX",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 714126,
+              "MISSING": 0,
+              "PRESENT": 57661
+            }
+          },
+          {
+            "present_rows": 57661,
+            "series": "weather.tmpf.SAT",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 714126,
+              "MISSING": 0,
+              "PRESENT": 57661
+            }
+          },
+          {
+            "present_rows": 31816,
+            "series": "weather.tmpf.SEA",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 739971,
+              "MISSING": 0,
+              "PRESENT": 31816
+            }
+          },
+          {
+            "present_rows": 51221,
+            "series": "weather.tmpf.SFO",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 720566,
+              "MISSING": 0,
+              "PRESENT": 51221
+            }
+          },
+          {
+            "present_rows": 57661,
+            "series": "weather.tmpf.STL",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 714126,
+              "MISSING": 0,
+              "PRESENT": 57661
+            }
+          }
+        ],
+        "tables": [
+          {
+            "absent": null,
+            "not_yet_known": 0,
+            "reason": null,
+            "rows_known": 18,
+            "table": "weather.gw_daily"
+          },
+          {
+            "absent": null,
+            "not_yet_known": 0,
+            "reason": null,
+            "rows_known": 21089,
+            "table": "weather.obs_hourly"
+          }
+        ],
+        "use": "used"
+      },
+      {
+        "missing": [],
+        "name": "EIA weekly storage (level, weekly change, vs 5-year)",
+        "point_id": 11,
+        "reason": "2315361 Dipole row(s) took a PRESENT value of its series (aligned at or before each row's own time) in the external section",
+        "rows_used": 2315361,
+        "series": [
+          {
+            "present_rows": 771787,
+            "series": "storage.level_bcf",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 0,
+              "MISSING": 0,
+              "PRESENT": 771787
+            }
+          },
+          {
+            "present_rows": 771787,
+            "series": "storage.weekly_chg_bcf",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 0,
+              "MISSING": 0,
+              "PRESENT": 771787
+            }
+          },
+          {
+            "present_rows": 771787,
+            "series": "storage.vs_5yr_bcf",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 0,
+              "MISSING": 0,
+              "PRESENT": 771787
+            }
+          }
+        ],
+        "tables": [
+          {
+            "absent": null,
+            "not_yet_known": 0,
+            "reason": null,
+            "rows_known": 419,
+            "table": "storage.weekly"
+          }
+        ],
+        "use": "used"
+      },
+      {
+        "missing": [],
+        "name": "storage estimate vs actual",
+        "point_id": 12,
+        "reason": "2315361 Dipole row(s) took a PRESENT value of its series (aligned at or before each row's own time) in the external section",
+        "rows_used": 2315361,
+        "series": [
+          {
+            "present_rows": 771787,
+            "series": "storage.estimate_bcf",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 0,
+              "MISSING": 0,
+              "PRESENT": 771787
+            }
+          },
+          {
+            "present_rows": 771787,
+            "series": "storage.actual_bcf",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 0,
+              "MISSING": 0,
+              "PRESENT": 771787
+            }
+          },
+          {
+            "present_rows": 771787,
+            "series": "storage.surprise_bcf",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 0,
+              "MISSING": 0,
+              "PRESENT": 771787
+            }
+          }
+        ],
+        "tables": [
+          {
+            "absent": null,
+            "not_yet_known": 0,
+            "reason": null,
+            "rows_known": 11,
+            "table": "storage.estimate"
+          },
+          {
+            "absent": true,
+            "not_yet_known": null,
+            "reason": "not in the day file (see missing)",
+            "rows_known": null,
+            "table": "storage.estimate_captures"
+          },
+          {
+            "absent": null,
+            "not_yet_known": 0,
+            "reason": null,
+            "rows_known": 419,
+            "table": "storage.weekly"
+          }
+        ],
+        "use": "used"
+      },
+      {
+        "missing": [],
+        "name": "the futures curve shape",
+        "point_id": 13,
+        "reason": "8489657 Dipole row(s) took a PRESENT value of its series (aligned at or before each row's own time) in the external section",
+        "rows_used": 8489657,
+        "series": [
+          {
+            "present_rows": 771787,
+            "series": "curve.settled.front",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 0,
+              "MISSING": 0,
+              "PRESENT": 771787
+            }
+          },
+          {
+            "present_rows": 771787,
+            "series": "curve.settled.slope_1",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 0,
+              "MISSING": 0,
+              "PRESENT": 771787
+            }
+          },
+          {
+            "present_rows": 771787,
+            "series": "curve.settled.slope_back",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 0,
+              "MISSING": 0,
+              "PRESENT": 771787
+            }
+          },
+          {
+            "present_rows": 771787,
+            "series": "curve.settled.curvature",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 0,
+              "MISSING": 0,
+              "PRESENT": 771787
+            }
+          },
+          {
+            "present_rows": 771787,
+            "series": "curve.settled.front_next_spread",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 0,
+              "MISSING": 0,
+              "PRESENT": 771787
+            }
+          },
+          {
+            "present_rows": 771787,
+            "series": "curve.traded.front",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 0,
+              "MISSING": 0,
+              "PRESENT": 771787
+            }
+          },
+          {
+            "present_rows": 771787,
+            "series": "curve.traded.c1",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 0,
+              "MISSING": 0,
+              "PRESENT": 771787
+            }
+          },
+          {
+            "present_rows": 771787,
+            "series": "curve.traded.slope_1",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 0,
+              "MISSING": 0,
+              "PRESENT": 771787
+            }
+          },
+          {
+            "present_rows": 771787,
+            "series": "curve.traded.slope_back",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 0,
+              "MISSING": 0,
+              "PRESENT": 771787
+            }
+          },
+          {
+            "present_rows": 771787,
+            "series": "curve.traded.curvature",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 0,
+              "MISSING": 0,
+              "PRESENT": 771787
+            }
+          },
+          {
+            "present_rows": 771787,
+            "series": "curve.traded.front_next_spread",
+            "state_counts": {
+              "ABLATED": 0,
+              "INVALID": 0,
+              "MISSING": 0,
+              "PRESENT": 771787
+            }
+          }
+        ],
+        "tables": [
+          {
+            "absent": null,
+            "not_yet_known": 0,
+            "reason": null,
+            "rows_known": 1997,
+            "table": "curve.definitions"
+          },
+          {
+            "absent": null,
+            "not_yet_known": 0,
+            "reason": null,
+            "rows_known": 40407,
+            "table": "curve.statistics"
+          },
+          {
+            "absent": null,
+            "not_yet_known": 0,
+            "reason": null,
+            "rows_known": 205631,
+            "table": "curve.trades"
+          },
+          {
+            "absent": null,
+            "not_yet_known": 0,
+            "reason": null,
+            "rows_known": 15,
+            "table": "curve.settled_shape"
+          },
+          {
+            "absent": null,
+            "not_yet_known": 0,
+            "reason": null,
+            "rows_known": 31152,
+            "table": "curve.traded_shape"
+          }
+        ],
+        "use": "used"
+      }
+    ],
+    "reason": null,
+    "rows": 771787,
+    "rule": "per point as the external section key records it: used = a PRESENT value of its series reached a Dipole row; missing = none did (or the section does not read the point's table), with the reason; never a zero filled in",
+    "schema": "FRANKIE_TEACHER_EXTERNAL_POINTS_V1",
+    "status": "built"
+  },
+  "original_external_file": {
+    "bytes": 35132604,
+    "missing": 0,
+    "path": "/opt/frankie-box/work/ingest-20231018-gh-36571235912-1/day-external.json",
+    "receipt": "/opt/frankie-box/work/ingest-20231018-gh-36571235912-1/day-external-receipt.json",
+    "receipt_sha256": "7e7b800ac1ac68f214f4b1492cf4467e9d44e7f23feea77b3c7e67da56ca870c",
+    "s3_key": "frankie/day_external/20231018/day-external.json",
+    "sha256": "d006252d605432994909a52e75fcbfe7cec3e42990a98c02e91e1f65212f0bc7",
+    "status": "attached"
+  },
+  "original_source_registry": [
+    {
+      "name": "native.lifecycle",
+      "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/bedrock/recovery-6f84a8a86f454010b61346b401e3eb5f/ledgers/exact_lifecycle_rows.jsonl",
+      "sha256": "85cd443bb5348b987d643878d43532aca7db8f61e932c68073425f1939dfb74e",
+      "bytes": "7560352552",
+      "offset_index": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/bedrock/recovery-6f84a8a86f454010b61346b401e3eb5f/ledgers/.frankie-row-index/2c2f8fc9d3feacb3df6d82a6748c56aad597b0960bb8f56f2825f9a9e45de88c.offsets"
+    },
+    {
+      "name": "native.member",
+      "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/bedrock/recovery-6f84a8a86f454010b61346b401e3eb5f/ledgers/exact_member_rows.jsonl",
+      "sha256": "5c1acca32856b08f2d2188951ae9e6c3932410f43d62e6e3e69858c370606d4c",
+      "bytes": "193743650444",
+      "offset_index": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/bedrock/recovery-6f84a8a86f454010b61346b401e3eb5f/ledgers/.frankie-row-index/f0682d7b2f7875519b55ed584cff0b9b485b80c1486a7b40b4138f10aa9874fe.offsets"
+    },
+    {
+      "name": "root.frames",
+      "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/frames.jsonl",
+      "sha256": "be7655b2663841df1b3662a057f86122750364b1b0678fcfd46c92798b0c1495",
+      "bytes": "496743568399",
+      "offset_index": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/.frankie-row-index/258e17212864363897277afbdf67c30d0c8776c93a830cc2dc06c2a050662f4a.offsets"
+    },
+    {
+      "name": "root.prices",
+      "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/prices.jsonl",
+      "sha256": "f42c17908509e9b944615521d25631ef19231da3c037252d83d03f780c74ab58",
+      "bytes": "17393149",
+      "offset_index": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/.frankie-row-index/c213e6ad94585ff5144ced95a42d4c62d8a9e427367b2da63f20790c55598c8b.offsets"
+    },
+    {
+      "name": "root.structures",
+      "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/structures.jsonl",
+      "sha256": "37c7642ec92dc350e8d91f29a8428a94f1967bf682df57b794ded4897b9e8b8d",
+      "bytes": "1063001944",
+      "offset_index": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/.frankie-row-index/3bc308ff7244fd22aa3374fa7876f43e6f72da54204ba401a6d07d72f0716d60.offsets"
+    }
+  ],
+  "original_second_set_binding": {
+    "book_read": {
+      "format": 1,
+      "groups": 583688,
+      "groups_read_at_publication": 329995,
+      "groups_read_in_walk": 253693,
+      "rows_read_at_publication": 432473,
+      "rule": "beside the pinned functions on the same full rows (teacher_book_read); the rows before a resume whose save held no book read are read at publication from the same reader with the same functions",
+      "schema": "FRANKIE_TEACHER_BOOK_READ_V1",
+      "whole_day": true,
+      "windows": 495733
+    },
+    "clock_fields": [
+      "clock_event_time",
+      "clock_receive_time",
+      "clock_event_known_by",
+      "clock_feature_availability",
+      "clock_prospective_discovery_confirmation",
+      "clock_model_evaluation",
+      "clock_lock_time"
+    ],
+    "clock_lock_time": {
+      "basis": "the teacher's as_of (the latest receive clock of its rows), stamped once: not a picture element and never Frankie's lock",
+      "label": "teacher_as_of (lock time does not exist before Frankie reads)",
+      "teacher_as_of": 1697662799696377528
+    },
+    "clocks_compared": 771787,
+    "entries_not_carried": [
+      "controlling_rt_mission",
+      "native_calculation_contract",
+      "anchored_knowledge_manifest",
+      "selected_same_arm_profile",
+      "a_clean_promoted_positive_capsule",
+      "a_memory_promoted_positive_capsule",
+      "a_memory_prior_lessons_package",
+      "a_memory_prior_package_proof",
+      "authoritative_s135_construction",
+      "complete_s105_9_brain",
+      "doctrine_reasoning_play_index_evidence",
+      "lawful_prior_session_carry",
+      "october_outcome_wall_enforcement",
+      "learned_d_structures_and_families",
+      "learned_dipoles_and_geometry",
+      "learned_pair_triplet_recurrence",
+      "learned_chains_extensions_reappearances_ancestry",
+      "phase1_discoveries_structural_falsifiers",
+      "phase2_findings_modules_timing_pox_negatives",
+      "predecessor_ancestry_unresolved_chain_state",
+      "historical_timing_lifespan_context",
+      "learned_structure_proposal_index_material",
+      "extra_agent_corrected_information_and_gap_diagnoses",
+      "derived_roll20_and_dipole_state",
+      "clock_model_evaluation",
+      "clock_lock_time",
+      "later_outcome_reveal",
+      "target_ground_truth_onset_time",
+      "s137_cognitive_shadow_runtime",
+      "hipporag_associative_retrieval",
+      "step1_existing_october_seconds",
+      "step1_populations",
+      "step1_crosswalks",
+      "step1_target_membership_receipts",
+      "step1_labels_and_classifications",
+      "step1_result_prefixes",
+      "step1_reconciliation_outputs",
+      "output_state_and_state_delta_movie",
+      "output_frankie_reasoning_movie",
+      "output_probability_movie",
+      "output_candidate_discoveries",
+      "output_first_locks_and_no_locks",
+      "output_negative_sparse_inconclusive_ledger",
+      "output_knowledge_retrieval_receipts",
+      "output_provider_invocation_response_receipts",
+      "output_answer_wall_access_receipts",
+      "output_source_state_manifest_code_model_run_hashes"
+    ],
+    "file": "teacher-second-set.pkl",
+    "file_format": "64 hex digits of the sha256 of the bytes after them, then the pickle of the header with `records` (parallel_teacher._load_raw_state reads it)",
+    "format": 3,
+    "joined_in_walk": 0,
+    "key_fields": [
+      "adapter_cursor",
+      "input_cursor",
+      "input_journal_ordinal",
+      "source_input_index",
+      "source_member_index",
+      "session_id",
+      "instrument_id",
+      "terminal_prefix_hash"
+    ],
+    "key_rule": "record i is teacher row i: key.adapter_cursor == the row cursor, its picture the one the walk read that row with (picture.original_applied is the row's payload)",
+    "merged_at_publication": 771787,
+    "mismatches": {
+      "count": 0,
+      "file": "teacher-second-set-mismatches.jsonl",
+      "format": "one JSON value per line",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "mismatches_file": {
+      "count": 0,
+      "file": "teacher-second-set-mismatches.jsonl",
+      "format": "one JSON value per line",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "plane_reference": [
+      "source",
+      "source_ordinal",
+      "input_cursor",
+      "instrument_id",
+      "known_at_ns",
+      "entries"
+    ],
+    "plane_values": "by reference: (source, source_ordinal) names the row of that stream's pinned file the picture handed over; the values are the ROOT's receipted rows, not copied",
+    "restored_from_save": 0,
+    "rows_matched": 771787,
+    "rows_mismatched": 0,
+    "rows_total": 771787,
+    "schema": "FRANKIE_TEACHER_SECOND_SET_V1",
+    "sha256": "75cc6dcdba06b3d2073425cffdc69cce214d76b1037777a8517cba7bc492d499",
+    "state_reference": [
+      "source",
+      "source_ordinal"
+    ],
+    "state_split": {
+      "day": {
+        "all_sum_back": {
+          "A": true,
+          "B": true
+        },
+        "buckets": {
+          "A": 9636,
+          "B": 9636
+        },
+        "fields": 71,
+        "groups": 583688,
+        "unknown_groups": {
+          "A": {
+            "native.lifecycle:candidate|availability_note": 582826,
+            "native.lifecycle:candidate|candidate_id": 582826,
+            "native.lifecycle:candidate|direction_note": 582826,
+            "native.lifecycle:candidate|selection_rule": 582826,
+            "native.lifecycle:candidate|threshold_rule": 582826,
+            "native.lifecycle:candidate|window_truncated": 582826,
+            "native.lifecycle:episode|candidate_id": 582179,
+            "native.lifecycle:episode|dipole_path_withheld": 582991,
+            "native.lifecycle:episode|orientation": 582179,
+            "native.lifecycle:episode|recognition_outcome": 582826,
+            "native.lifecycle:episode|recognized_recv_ns_basis": 582826,
+            "native.lifecycle:episode|terminal_phase": 582991,
+            "native.lifecycle:flow_substrate|classification": 546391,
+            "native.lifecycle:flow_substrate|no_direction_reason": 546392,
+            "native.lifecycle:flow_substrate|polarity": 546392,
+            "native.lifecycle:flow_substrate|roll20_defined": 546392,
+            "native.lifecycle:flow_substrate|status": 546391,
+            "native.lifecycle:flow_substrate|window_direction": 546392,
+            "native.lifecycle:lineage|depth_label": 583687,
+            "native.lifecycle:lineage|node_id": 583687,
+            "native.lifecycle:lineage|parent_id": 583687,
+            "native.lifecycle:lineage|role": 583687,
+            "native.lifecycle:lineage|side_orientation": 583687,
+            "native.lifecycle:lineage|status": 583687,
+            "native.lifecycle:lineage|transition_type": 583687,
+            "native.lifecycle:queue|birth_family_id": 321490,
+            "native.lifecycle:queue|birth_session_phase": 321490,
+            "native.lifecycle:queue|censored": 321490,
+            "native.lifecycle:queue|exit_family_id": 321490,
+            "native.lifecycle:queue|exit_session_phase": 321490,
+            "native.lifecycle:queue|exit_stratum_available": 321490,
+            "native.lifecycle:queue|queue_scope": 321491,
+            "native.lifecycle:queue|resolved": 321490,
+            "native.lifecycle:queue|stratum_basis": 321490,
+            "native.lifecycle:queue|terminal_basis": 321491,
+            "native.lifecycle:queue|terminal_status": 321490,
+            "native.lifecycle:replenishment|action": 2101,
+            "native.lifecycle:replenishment|liquidity_kind": 2101,
+            "native.lifecycle:replenishment|liquidity_kind_basis": 2101,
+            "native.lifecycle:replenishment|observation": 2101,
+            "native.lifecycle:replenishment|price_is_sentinel": 2101,
+            "native.lifecycle:replenishment|unattributed_reason": 573347,
+            "native.lifecycle:response|structure_id": 581403
+          },
+          "B": {
+            "native.lifecycle:candidate|availability_note": 582826,
+            "native.lifecycle:candidate|candidate_id": 582826,
+            "native.lifecycle:candidate|direction_note": 582826,
+            "native.lifecycle:candidate|selection_rule": 582826,
+            "native.lifecycle:candidate|threshold_rule": 582826,
+            "native.lifecycle:candidate|window_truncated": 582826,
+            "native.lifecycle:episode|candidate_id": 582179,
+            "native.lifecycle:episode|dipole_path_withheld": 582991,
+            "native.lifecycle:episode|orientation": 582179,
+            "native.lifecycle:episode|recognition_outcome": 582826,
+            "native.lifecycle:episode|recognized_recv_ns_basis": 582826,
+            "native.lifecycle:episode|terminal_phase": 582991,
+            "native.lifecycle:flow_substrate|classification": 546391,
+            "native.lifecycle:flow_substrate|no_direction_reason": 546392,
+            "native.lifecycle:flow_substrate|polarity": 546392,
+            "native.lifecycle:flow_substrate|roll20_defined": 546392,
+            "native.lifecycle:flow_substrate|status": 546391,
+            "native.lifecycle:flow_substrate|window_direction": 546392,
+            "native.lifecycle:lineage|depth_label": 583687,
+            "native.lifecycle:lineage|node_id": 583687,
+            "native.lifecycle:lineage|parent_id": 583687,
+            "native.lifecycle:lineage|role": 583687,
+            "native.lifecycle:lineage|side_orientation": 583687,
+            "native.lifecycle:lineage|status": 583687,
+            "native.lifecycle:lineage|transition_type": 583687,
+            "native.lifecycle:queue|birth_family_id": 321490,
+            "native.lifecycle:queue|birth_session_phase": 321490,
+            "native.lifecycle:queue|censored": 321490,
+            "native.lifecycle:queue|exit_family_id": 321490,
+            "native.lifecycle:queue|exit_session_phase": 321490,
+            "native.lifecycle:queue|exit_stratum_available": 321490,
+            "native.lifecycle:queue|queue_scope": 321491,
+            "native.lifecycle:queue|resolved": 321490,
+            "native.lifecycle:queue|stratum_basis": 321490,
+            "native.lifecycle:queue|terminal_basis": 321491,
+            "native.lifecycle:queue|terminal_status": 321490,
+            "native.lifecycle:replenishment|action": 2101,
+            "native.lifecycle:replenishment|liquidity_kind": 2101,
+            "native.lifecycle:replenishment|liquidity_kind_basis": 2101,
+            "native.lifecycle:replenishment|observation": 2101,
+            "native.lifecycle:replenishment|price_is_sentinel": 2101,
+            "native.lifecycle:replenishment|unattributed_reason": 573347,
+            "native.lifecycle:response|structure_id": 581403
+          }
+        }
+      },
+      "day_file": "teacher-state-split.json",
+      "day_file_sha256": "8384fbf3cce44b0c59b940e9d1d12d69e47543d788f58b1320a3280ebb1a20b4",
+      "dipole": "teacher.dstate|... : the teacher row's own DState (status, state.anchor_dir, state.armed, state.broken); derived_roll20_and_dipole_state is the teacher's Dipole state rows, not a picture plane",
+      "format": 1,
+      "generic_rule": "a lifecycle section not in label_fields: every top-level text or true/false field except ['member_id', 'runway_id', 'mirror_pair_key', 'level_event_key_at_exit', 'action_string', 'side_string', 'schema', 'clock', 'binning_clock', 'emitted_on', 'emitting_section']",
+      "label_fields": {
+        "native.lifecycle:absorption": [
+          "price_moved"
+        ],
+        "native.lifecycle:detector_coverage": [],
+        "native.lifecycle:flow_substrate": [
+          "classification",
+          "window_direction",
+          "status",
+          "no_direction_reason",
+          "roll20_defined",
+          "polarity"
+        ],
+        "native.lifecycle:ladder": [
+          "ladder_scope",
+          "side",
+          "touch_state",
+          "best_price_moved"
+        ],
+        "native.lifecycle:mirror": [
+          "disposition",
+          "orientation"
+        ],
+        "native.lifecycle:queue": [
+          "terminal_status",
+          "birth_session_phase",
+          "exit_session_phase",
+          "queue_scope",
+          "stratum_basis",
+          "terminal_basis",
+          "resolved",
+          "censored",
+          "exit_stratum_available",
+          "birth_family_id",
+          "exit_family_id"
+        ],
+        "native.lifecycle:recurrence": [],
+        "native.lifecycle:replenishment": [
+          "action",
+          "liquidity_kind",
+          "liquidity_kind_basis",
+          "observation",
+          "unattributed_reason",
+          "price_is_sentinel"
+        ],
+        "native.member": [
+          "session_phase",
+          "side_orientation",
+          "family_id",
+          "decision_basis",
+          "continuity_segment",
+          "snapshot_bootstrap_only",
+          "event_group_complete_f_last",
+          "sequence_contiguous",
+          "fifo_priority_reconstructed"
+        ],
+        "root.structures": [
+          "discovery_status",
+          "candidate_family_id",
+          "carried_native_family",
+          "matches_carried_native_family",
+          "fill_disposition.class",
+          "mirror.orientation",
+          "terminal_action",
+          "terminal_side"
+        ]
+      },
+      "per_row": "each R3 short window (64 groups) on its side: every label field's buckets with the event and book parts, sums_back per field, pinned_check against the row's pinned columns",
+      "rows_all_sum_back": 495733,
+      "rows_pinned_equal": 495733,
+      "rows_pinned_not_equal": [],
+      "unknown_bucket": "__state_unknown__"
+    },
+    "streams": {
+      "native.lifecycle": {
+        "bytes": 7560352552,
+        "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/bedrock/recovery-6f84a8a86f454010b61346b401e3eb5f/ledgers/exact_lifecycle_rows.jsonl",
+        "sha256": "85cd443bb5348b987d643878d43532aca7db8f61e932c68073425f1939dfb74e"
+      },
+      "native.member": {
+        "bytes": 193743650444,
+        "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/bedrock/recovery-6f84a8a86f454010b61346b401e3eb5f/ledgers/exact_member_rows.jsonl",
+        "sha256": "5c1acca32856b08f2d2188951ae9e6c3932410f43d62e6e3e69858c370606d4c"
+      },
+      "root.frames": {
+        "bytes": 496743568399,
+        "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/frames.jsonl",
+        "sha256": "be7655b2663841df1b3662a057f86122750364b1b0678fcfd46c92798b0c1495"
+      },
+      "root.prices": {
+        "bytes": 17393149,
+        "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/prices.jsonl",
+        "sha256": "f42c17908509e9b944615521d25631ef19231da3c037252d83d03f780c74ab58"
+      },
+      "root.structures": {
+        "bytes": 1063001944,
+        "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/structures.jsonl",
+        "sha256": "37c7642ec92dc350e8d91f29a8428a94f1967bf682df57b794ded4897b9e8b8d"
+      }
+    }
+  },
+  "original_source_identity": {
+    "absent_layers": [],
+    "calculations": {
+      "bytes": 27734,
+      "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/calculations-receipt.json",
+      "sha256": "7cc58c91ff47f7dba1876cd48b8792923c28fc8d4a447a51ba609a59a509ca79"
+    },
+    "completed_sources": [
+      {
+        "bytes": 5301145,
+        "disposition": "post_stream_only: aggregate has no exact contributor cursor provenance",
+        "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/legacy_native_signed_flow.json",
+        "producer": "research/kalshi/frankie_raw_mbo_benchmark/native_roll20.py SecondBinner (clock ts_recv)",
+        "reason": null,
+        "role": "legacy_native_signed_flow",
+        "sha256": "c20f4f68a35d71422108627de0424cbb9e38218d6d29b241244f4ec93c0c1bdf",
+        "status": "derived"
+      },
+      {
+        "bytes": 1042750,
+        "disposition": "post_stream_only: aggregate has no exact contributor cursor provenance",
+        "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/legacy_per_second_roll20.json",
+        "producer": "research/kalshi/frankie_raw_mbo_benchmark/native_roll20.py roll20 (window 20, clock ts_recv)",
+        "reason": null,
+        "role": "legacy_per_second_roll20",
+        "sha256": "2aacf458d7b0aaf9675b91bb3b4e51e0c926ab847f6c08a3f5d2f785ddd715fc",
+        "status": "derived"
+      }
+    ],
+    "day": "20231018",
+    "external": {
+      "bytes": 35132604,
+      "missing": 0,
+      "path": "/opt/frankie-box/work/ingest-20231018-gh-36571235912-1/day-external.json",
+      "receipt": "/opt/frankie-box/work/ingest-20231018-gh-36571235912-1/day-external-receipt.json",
+      "receipt_sha256": "7e7b800ac1ac68f214f4b1492cf4467e9d44e7f23feea77b3c7e67da56ca870c",
+      "s3_key": "frankie/day_external/20231018/day-external.json",
+      "sha256": "d006252d605432994909a52e75fcbfe7cec3e42990a98c02e91e1f65212f0bc7",
+      "status": "attached"
+    },
+    "journal": {
+      "bytes": 8824270848,
+      "count": 1543574,
+      "head": "33a9d2e19674dd447f07daf32ca3cb9fe3065e0c7c7bd3973a6d309abe0b2cd4",
+      "path": "/opt/frankie-box/work/ingest-20231018-gh-36571235912-1/journal.compact.sqlite",
+      "sha256": "46ca9fa0f046c3c22c958c66f4a3bfdfc3876a4d7bc2c010b9f163003f6c0319"
+    },
+    "schema": "FRANKIE_SHARED_MARKET_TIMELINE_V1",
+    "source_binding": {
+      "bytes": 7631,
+      "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/source-binding.json",
+      "sha256": "0fcdb6530359e0fd894415c7003746ce3f4d777299b86ecec37d8bc54672907d"
+    },
+    "sources": {
+      "native.lifecycle": {
+        "bytes": 7560352552,
+        "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/bedrock/recovery-6f84a8a86f454010b61346b401e3eb5f/ledgers/exact_lifecycle_rows.jsonl",
+        "sha256": "85cd443bb5348b987d643878d43532aca7db8f61e932c68073425f1939dfb74e"
+      },
+      "native.member": {
+        "bytes": 193743650444,
+        "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/bedrock/recovery-6f84a8a86f454010b61346b401e3eb5f/ledgers/exact_member_rows.jsonl",
+        "sha256": "5c1acca32856b08f2d2188951ae9e6c3932410f43d62e6e3e69858c370606d4c"
+      },
+      "root.frames": {
+        "bytes": 496743568399,
+        "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/frames.jsonl",
+        "sha256": "be7655b2663841df1b3662a057f86122750364b1b0678fcfd46c92798b0c1495"
+      },
+      "root.prices": {
+        "bytes": 17393149,
+        "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/prices.jsonl",
+        "sha256": "f42c17908509e9b944615521d25631ef19231da3c037252d83d03f780c74ab58"
+      },
+      "root.structures": {
+        "bytes": 1063001944,
+        "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/structures.jsonl",
+        "sha256": "37c7642ec92dc350e8d91f29a8428a94f1967bf682df57b794ded4897b9e8b8d"
+      }
+    }
+  },
+  "original_source_indexes": {
+    "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/bedrock/recovery-6f84a8a86f454010b61346b401e3eb5f/ledgers/exact_lifecycle_rows.jsonl": {
+      "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/bedrock/recovery-6f84a8a86f454010b61346b401e3eb5f/ledgers/.frankie-row-index/2c2f8fc9d3feacb3df6d82a6748c56aad597b0960bb8f56f2825f9a9e45de88c.offsets",
+      "rows": 5141045,
+      "source_pin": {
+        "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/bedrock/recovery-6f84a8a86f454010b61346b401e3eb5f/ledgers/exact_lifecycle_rows.jsonl",
+        "pinned_bytes": 7560352552,
+        "sha256": "85cd443bb5348b987d643878d43532aca7db8f61e932c68073425f1939dfb74e",
+        "stat": {
+          "bytes": 7560352552,
+          "ctime_ns": 1791963232891314103,
+          "device": 66306,
+          "inode": 8691187,
+          "mtime_ns": 1791418203973395059
+        }
+      },
+      "offsets_sha256": "aeb2673562fa370d589a7a01b9bdd80c31196413b502edc447514eb4f951d168",
+      "transport_note": "device/ctime can change across host restart or hardlink creation; source inode, bytes, mtime and pinned sha identity retained; selected records checked against cursor/time"
+    },
+    "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/bedrock/recovery-6f84a8a86f454010b61346b401e3eb5f/ledgers/exact_member_rows.jsonl": {
+      "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/bedrock/recovery-6f84a8a86f454010b61346b401e3eb5f/ledgers/.frankie-row-index/f0682d7b2f7875519b55ed584cff0b9b485b80c1486a7b40b4138f10aa9874fe.offsets",
+      "rows": 583688,
+      "source_pin": {
+        "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/bedrock/recovery-6f84a8a86f454010b61346b401e3eb5f/ledgers/exact_member_rows.jsonl",
+        "pinned_bytes": 193743650444,
+        "sha256": "5c1acca32856b08f2d2188951ae9e6c3932410f43d62e6e3e69858c370606d4c",
+        "stat": {
+          "bytes": 193743650444,
+          "ctime_ns": 1791963232891314103,
+          "device": 66306,
+          "inode": 8691177,
+          "mtime_ns": 1791418009755894716
+        }
+      },
+      "offsets_sha256": "342cdcaed0dbd225043e2059e78eb1cda87742f0d274ef20b69362292fa01d40",
+      "transport_note": "device/ctime can change across host restart or hardlink creation; source inode, bytes, mtime and pinned sha identity retained; selected records checked against cursor/time"
+    },
+    "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/structures.jsonl": {
+      "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/.frankie-row-index/3bc308ff7244fd22aa3374fa7876f43e6f72da54204ba401a6d07d72f0716d60.offsets",
+      "rows": 583688,
+      "source_pin": {
+        "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/structures.jsonl",
+        "pinned_bytes": 1063001944,
+        "sha256": "37c7642ec92dc350e8d91f29a8428a94f1967bf682df57b794ded4897b9e8b8d",
+        "stat": {
+          "bytes": 1063001944,
+          "ctime_ns": 1791963232892179131,
+          "device": 66306,
+          "inode": 8686382,
+          "mtime_ns": 1791416506316554220
+        }
+      },
+      "offsets_sha256": "f391059b820471aa5469889f24ab759d4aafed9f1834b8500a1079cd72e5df7b",
+      "transport_note": "device/ctime can change across host restart or hardlink creation; source inode, bytes, mtime and pinned sha identity retained; selected records checked against cursor/time"
+    },
+    "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/prices.jsonl": {
+      "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/.frankie-row-index/c213e6ad94585ff5144ced95a42d4c62d8a9e427367b2da63f20790c55598c8b.offsets",
+      "rows": 30739,
+      "source_pin": {
+        "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/prices.jsonl",
+        "pinned_bytes": 17393149,
+        "sha256": "f42c17908509e9b944615521d25631ef19231da3c037252d83d03f780c74ab58",
+        "stat": {
+          "bytes": 17393149,
+          "ctime_ns": 1791963232892161320,
+          "device": 66306,
+          "inode": 8686380,
+          "mtime_ns": 1791416093390645865
+        }
+      },
+      "offsets_sha256": "45ed5f6d9171c45b207d354968e37b7911699359b7f712e5feb942a02cf83927",
+      "transport_note": "device/ctime can change across host restart or hardlink creation; source inode, bytes, mtime and pinned sha identity retained; selected records checked against cursor/time"
+    },
+    "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/frames.jsonl": {
+      "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/.frankie-row-index/258e17212864363897277afbdf67c30d0c8776c93a830cc2dc06c2a050662f4a.offsets",
+      "rows": 583688,
+      "source_pin": {
+        "path": "/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/frames.jsonl",
+        "pinned_bytes": 496743568399,
+        "sha256": "be7655b2663841df1b3662a057f86122750364b1b0678fcfd46c92798b0c1495",
+        "stat": {
+          "bytes": 496743568399,
+          "ctime_ns": 1791963232892101595,
+          "device": 66306,
+          "inode": 8686381,
+          "mtime_ns": 1791416093322646034
+        }
+      },
+      "offsets_sha256": "376dccc0cdf77bb48f0ccc75b5f1c2dc0463fc74ba8062149e7da9657c8bfe20",
+      "transport_note": "device/ctime can change across host restart or hardlink creation; source inode, bytes, mtime and pinned sha identity retained; selected records checked against cursor/time"
+    }
+  },
+  "original_second_set_reading_path": "/opt/frankie-box/work/experiment-teacher-rows/20231018/teacher-second-set-read.boss.json",
+  "original_source_manifest": "/opt/frankie-box/work/experiment-data/20231018/cycle-00/MANIFEST.json",
+  "completed_candidate_input_receipt": {
+    "user_priority": "one verification pass, start Julia promptly; unresolved semantic coverage explicitly retained",
+    "expanded_native_root_current": 80839,
+    "outcome_sha256": "6a0613a357675ba60c7d4e946592b2aa69ea0e09dd488cd0ecfa4d54ba445608",
+    "remaining": [
+      "Complete knowledge/99-plane semantic consumer ledger and unit mappings; candidate is not a fully certified v4 result.",
+      "Posthoc knowledge and complete episode outcomes are research evidence, not backdated predictors."
+    ],
+    "columns": 1154928,
+    "all_v3_values_and_missingness_unchanged": true,
+    "history_current": 200868,
+    "history_timeline_rows": 187766,
+    "samples": 3745,
+    "status": "completed_candidate",
+    "families": 749,
+    "coverage_gate": "NOT_PASSED"
+  },
+  "knowledge_evidence_paths": [
+    "full-context-audit/canonical-sources",
+    "full-context-audit/runtime-knowledge",
+    "full-context-audit/brain-manifests",
+    "full-context-audit/runtime_knowledge_recovery.json",
+    "full-context-audit/canonical-source-recovery.json"
+  ],
+  "status": "source scope preserved; not a claim that every source has already been interpreted for every trade",
+  "semantic_coverage": "NOT_PASSED",
+  "mlp_reproducibility": "unresolved; original saved completed attempt remains canonical"
+}

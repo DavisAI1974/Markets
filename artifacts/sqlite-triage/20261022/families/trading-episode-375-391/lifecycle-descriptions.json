@@ -1,0 +1,114 @@
+[
+  {
+    "case_reference": 375,
+    "baseline": 3.153,
+    "definition": "descriptive observed quote lifecycle; 5s local-low window and 300s follow-up chosen for this comparison, not validated trade segmentation",
+    "first5s_low": {
+      "source_ordinal": 234029,
+      "input_cursor": 304529,
+      "event_ns": 1697634553697541945,
+      "receive_ns": 1697634553701645509,
+      "known_by_ns": 1697634553701645509,
+      "relative_ns": 1620254911,
+      "mid": 3.1445
+    },
+    "first5s_downward_excursion": -0.008500000000000174,
+    "300s_min": {
+      "source_ordinal": 244969,
+      "input_cursor": 319290,
+      "event_ns": 1697634840877720575,
+      "receive_ns": 1697634840890784997,
+      "known_by_ns": 1697634840890784997,
+      "relative_ns": 288809394399,
+      "mid": 3.1355
+    },
+    "300s_max": {
+      "source_ordinal": 235710,
+      "input_cursor": 306771,
+      "event_ns": 1697634584256422095,
+      "receive_ns": 1697634584272262221,
+      "known_by_ns": 1697634584272262221,
+      "relative_ns": 32190871623,
+      "mid": 3.1535
+    },
+    "half_recovery_after_low": {
+      "source_ordinal": 235148,
+      "input_cursor": 305992,
+      "event_ns": 1697634566575801165,
+      "receive_ns": 1697634566581296525,
+      "known_by_ns": 1697634566581296525,
+      "relative_ns": 14499905927,
+      "mid": 3.149
+    },
+    "baseline_recovery_after_low": {
+      "source_ordinal": 235704,
+      "input_cursor": 306763,
+      "event_ns": 1697634584256057751,
+      "receive_ns": 1697634584270021538,
+      "known_by_ns": 1697634584270021538,
+      "relative_ns": 32188630940,
+      "mid": 3.153
+    },
+    "above_baseline_by001": null
+  },
+  {
+    "case_reference": 391,
+    "baseline": 3.1395,
+    "definition": "descriptive observed quote lifecycle; 5s local-low window and 300s follow-up chosen for this comparison, not validated trade segmentation",
+    "first5s_low": {
+      "source_ordinal": 244969,
+      "input_cursor": 319290,
+      "event_ns": 1697634840877720575,
+      "receive_ns": 1697634840890784997,
+      "known_by_ns": 1697634840890784997,
+      "relative_ns": 12171856,
+      "mid": 3.1355
+    },
+    "first5s_downward_excursion": -0.0040000000000000036,
+    "300s_min": {
+      "source_ordinal": 244969,
+      "input_cursor": 319290,
+      "event_ns": 1697634840877720575,
+      "receive_ns": 1697634840890784997,
+      "known_by_ns": 1697634840890784997,
+      "relative_ns": 12171856,
+      "mid": 3.1355
+    },
+    "300s_max": {
+      "source_ordinal": 249058,
+      "input_cursor": 324883,
+      "event_ns": 1697635024043079381,
+      "receive_ns": 1697635024047234164,
+      "known_by_ns": 1697635024047234164,
+      "relative_ns": 183168621023,
+      "mid": 3.1495
+    },
+    "half_recovery_after_low": {
+      "source_ordinal": 245220,
+      "input_cursor": 319631,
+      "event_ns": 1697634841053555063,
+      "receive_ns": 1697634841083348514,
+      "known_by_ns": 1697634841083348514,
+      "relative_ns": 204735373,
+      "mid": 3.1375
+    },
+    "baseline_recovery_after_low": {
+      "source_ordinal": 245460,
+      "input_cursor": 319984,
+      "event_ns": 1697634842949154537,
+      "receive_ns": 1697634842951080513,
+      "known_by_ns": 1697634842951080513,
+      "relative_ns": 2072467372,
+      "mid": 3.1395
+    },
+    "above_baseline_by001": {
+      "source_ordinal": 245641,
+      "input_cursor": 320220,
+      "event_ns": 1697634847221693075,
+      "receive_ns": 1697634847223653630,
+      "known_by_ns": 1697634847223653630,
+      "relative_ns": 6345040489,
+      "mid": 3.1405000000000003
+    }
+  }
+]

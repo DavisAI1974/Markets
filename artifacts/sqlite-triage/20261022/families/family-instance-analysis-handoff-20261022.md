@@ -2,6 +2,14 @@
 
 Prepared October 22, 2026 Eastern. **First work in the new chat: compare instances 375 and 391 in detail.** Most subsequent work should remain analysis of this completed run, one instance/market episode at a time.
 
+## Latest user direction: use the run list and start with every trade
+
+The user withdrew an accidental strategy-position answer. The primary population is the timestamped trade record, all 30,739 recorded trades in `price-curve-timestamps.csv`, not the 749 family records. Start with trades and build supporting evidence around them. Use the exact completed-run source list in `completed-run-source-list.json`, including original 99-plane entries, the 13 historical point bindings, confirmed second-set numbers, Bedrock/native/lifecycle tables, ROOT/full depth/FIFO/MBO, families/dipoles, external inputs and Frankie knowledge. Do not replace that run list with a narrower invented checklist.
+
+The user explicitly directed unrestricted retrospective interpretation: include everything available, even information learned later that day or on later days. Do not hide or discard contrary/unfavorable evidence. Keep exact clocks to describe sequence and lifecycle; do not exclude later knowledge from current reasoning. Earlier strict-as-of restrictions remain descriptions of original forecasts and supplementary timing diagnostics, not a prohibition on considering later knowledge. Distinguish retrospective explanation from any historical-forecast claim when making one. Explore prebirth, direction, momentum, duration, flips, exhaustion, end/tail and other behavior supported by the record.
+
+The 375/391 quote/queue projections in `trading-episode-375-391/` are supporting work, not the full trade-first or whole-day review. Complete run-source interpretation for every trade remains pending. Keep semantic coverage NOT_PASSED and unresolved MLP reproducibility explicit. All operating restrictions and saved/stopped state remain in force.
+
 ## October 22 continuation correction: analyze trading episodes first
 
 The user clarified that recorded trades and market behavior before, during and after a move are the primary analysis unit. Family events are explanatory annotations, alongside queues, aggressor flow, external context and frozen model perspectives. Instances 375 and 391 locate two related portions of a connected episode; their family appearances must not define the causal beginning, an entry, an execution, or independent confirmations. Distinguish market executions, quote changes and any actually recorded strategy fills. Price endpoints alone are not trades.

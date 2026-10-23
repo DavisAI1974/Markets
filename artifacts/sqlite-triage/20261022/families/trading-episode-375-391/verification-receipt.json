@@ -1,0 +1,39 @@
+{
+  "quote_rows": 22194,
+  "source_level_rows_streamed_once": 10267320,
+  "selected_level_rows": 90878,
+  "full_ladders_checked": 48,
+  "fixed_price_timeline_rows": 32034,
+  "exact_clock_columns": [
+    "source_ordinal",
+    "input_cursor",
+    "event_ns",
+    "receive_ns",
+    "known_by_ns"
+  ],
+  "strict_pre_caps": {
+    "375": {
+      "cutoff_ns": 1697634552081390597,
+      "cursor_cap": 303655
+    },
+    "391": {
+      "cutoff_ns": 1697634840878613140,
+      "cursor_cap": 319232
+    }
+  },
+  "ladder_checks": "touch, full-size conservation, top10 conservation, unique side/absolute price",
+  "missing_375_minus120_predecessor": "explicitly blank; not interpolated",
+  "coverage_391_600s": false,
+  "one_related_episode_not_independent_confirmations": true,
+  "execution_tape_and_order_identity_reconstruction": false,
+  "continuous_aggressor_first_detection_time": "not available in quote/level exports; only saved context samples",
+  "semantic_coverage": "NOT_PASSED",
+  "mlp_reproducibility": "unresolved occurrence 120s fold4 max prediction difference 0.4313412606716156; original attempt canonical",
+  "no_new_fit_aws_call_or_live_execution": true,
+  "saved_csv_clock_strings_match_integer_source": true,
+  "original_case_forecasts_unchanged": true,
+  "matched_quote_label_endpoints": 13,
+  "external_publication_cutoffs_checked": 620,
+  "lifecycle_definitions": "5s local low and 300s followup are retrospective descriptions, not trade entries/exits",
+  "richer_source_coverage": "15899 native/root context rows plus complete selected descriptive and second-group projections; not full 1.15million-column semantic certification"
+}
