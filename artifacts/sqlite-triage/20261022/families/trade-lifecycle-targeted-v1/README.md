@@ -1,5 +1,7 @@
 # Trade lifecycle evidence and first combined interpretation
 
+For replication, see the [readiness inventory for the other 30 trading sessions](other-30-day-local-liquidity-readiness-20261107.md), with saved input evidence and the minimum export required for a standalone local-liquidity pass.
+
 ## Local liquidity: fixed prices and moving depth windows
 
 [local-liquidity-v1/README.md](local-liquidity-v1/README.md), its [receipt](local-liquidity-v1/analysis-receipt.json) and [verification](local-liquidity-v1/verification.json) add all 22,194 saved full-depth window books and 22,193 transitions, plus selected full-day depth evidence for 2,070 trades. All 30,739 original trades remain unchanged. Full-depth skew often opposes touch/near-depth skew; stable closing quotes conceal changing displayed sizes; and first-ten depth can rise when a thin touch disappears because the rank window changes. Exact fixed-price decompositions retain all entering/leaving prices, intermediate changes, contrary thin-touch outcomes and unallocated causes. Frankie’s provisional book rule and unfavorable audit are retained without promoting them into a tested directional signal. The detailed continuous window remains scoped to 375/391; full-day causal coverage is unfinished. No AWS operation occurred. Semantic coverage **NOT_PASSED**, MLP reproducibility **UNRESOLVED**.
