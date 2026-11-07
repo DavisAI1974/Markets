@@ -23,6 +23,8 @@ Evidence and exceptions:
 
 ## Narrow repeatable workflow
 
+October 17 preparation is recorded in the [export handoff](oct17-liquidity-export-preparation.md). The source is pinned and the exporter fixture-tested; the real S3 read and export are pending access.
+
 **Start with 2023-10-17**, the adjacent session with a [full-observation, inline-conformed compact journal pointer](https://github.com/DavisAI1974/Markets/blob/c28a4de13263b6354662cd376fecc7733b47a991/ingest_pointers/20231017-gh-36571235912-1.json) and a [recovered day-file variant](../full-context-audit/historical-source-additions/20231017-source-recovery.json) whose publication semantics still need review. Then use a different year such as **2022-10-19** before drawing cross-session conclusions. Neither needs a fresh ingest if the pinned archive checks out. Use the pilot as a known-result control for the exporter.
 
 1. Reuse the sealed input. Check session bounds, instrument continuity, opening state, feed gaps, conformance and source pins. Preserve exact event, receive and known-by nanoseconds, cursor and group boundaries, along with every trade and contradictory record.
