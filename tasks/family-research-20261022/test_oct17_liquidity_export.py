@@ -15,7 +15,7 @@ def book(bids, asks):
     return result
 
 
-def fixture():
+def fixture(day=DAY):
     rows = []
     clock = 1697522400000000001
     for cursor, (action, group, cursors, observation) in enumerate([
@@ -24,7 +24,7 @@ def fixture():
         ('C', 1, [2], book([(3001, 9)], [(3003, 10)])),
     ]):
         raw = dict(action=action, source_value=b'\x01')
-        source = dict(session_id=DAY, source_member_index=0, cursor=cursor)
+        source = dict(session_id=day, source_member_index=0, cursor=cursor)
         receipt = None if group is None else dict(global_group_ordinal=group, instrument_id=7,
             record_cursors=cursors, terminal_ts_recv_ns=clock + cursor)
         rows.append(('INPUT', dict(source, record=raw)))
@@ -42,11 +42,11 @@ class Oct17ExportTests(unittest.TestCase):
         cls.codec, pack = load_codec()
         cls.pack = staticmethod(pack)
 
-    def compact_reader(self):
+    def compact_reader(self, day=DAY):
         codec = self.codec
         rows = []
         head = codec.GENESIS_HASH
-        for i, (kind, payload) in enumerate(fixture()):
+        for i, (kind, payload) in enumerate(fixture(day)):
             envelope = dict(schema=codec.SCHEMA, ordinal=i, previous_hash=head, kind=kind, payload=payload)
             body = codec.canonical_tagged_bytes(self.pack(envelope))
             head = hashlib.sha256(codec.DIGEST_PREFIX + body).hexdigest()
@@ -80,6 +80,16 @@ class Oct17ExportTests(unittest.TestCase):
         self.assertEqual(new['sides']['B']['prior_best_size_in_current_full_book'], 0)
         self.assertEqual(new['sides']['B']['current_best_size_in_prior_full_book'], 9)
         self.assertEqual(new['sides']['B']['first_ten'], [[3001, 9, 1]])
+
+    def test_october_3_requires_its_own_source_session(self):
+        with self.compact_reader('20231003') as reader:
+            rows = list(project(verified_entries(reader, self.codec), self.pack,
+                                expected_day='20231003', expected_records=3, expected_groups=2))
+        self.assertEqual([row['session_id'] for row in rows], ['20231003', '20231003'])
+        with self.compact_reader() as reader:
+            with self.assertRaisesRegex(ValueError, 'source session or cursor'):
+                list(project(verified_entries(reader, self.codec), self.pack,
+                             expected_day='20231003', expected_records=3, expected_groups=2))
 
     def test_bad_block_and_unfinished_session_cannot_complete(self):
         with self.compact_reader() as reader:

@@ -1,4 +1,4 @@
-"""Project a verified 2023-10-17 compact ingest; no network or cloud operations."""
+"""Project a pinned compact ingest from a verified local journal."""
 import argparse
 import collections
 import gzip
@@ -11,11 +11,12 @@ import types
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = ROOT / 'artifacts/sqlite-triage/20261022/families'
-OUTPUT = BASE / 'trade-lifecycle-targeted-v1/oct17-liquidity-export-v1'
+EXPORTS = BASE / 'trade-lifecycle-targeted-v1'
 PIN_REF = 'c28a4de13263b6354662cd376fecc7733b47a991'
-PIN_PATH = 'ingest_pointers/20231017-gh-36571235912-1.json'
+RUN_ID = '36571235912'
 SOURCE_REF = 'af36937d1e478831d4c7bc612c98d969e9a0848b'
 DAY = '20231017'
+SESSIONS = ('20231003', DAY)
 
 
 def git_blob(ref, path):
@@ -79,13 +80,13 @@ def view_sides(book, prior):
     return result
 
 
-def project(entries, pack, *, expected_records, expected_groups):
+def project(entries, pack, *, expected_records, expected_groups, expected_day=DAY):
     pending, previous, input_row = {}, {}, None
     records = groups = 0
     for entry, digest in entries:
         kind, payload, ordinal = entry['kind'], entry['payload'], entry['ordinal']
         if kind == 'INPUT' and input_row is None:
-            if payload['session_id'] != DAY or payload['cursor'] != records:
+            if payload['session_id'] != expected_day or payload['cursor'] != records:
                 raise ValueError('source session or cursor disagrees with the pinned ingest')
             input_row = (payload, ordinal, digest)
             continue
@@ -94,7 +95,7 @@ def project(entries, pack, *, expected_records, expected_groups):
         original, input_ordinal, input_hash = input_row
         input_row = None
         if (payload['input_ordinal'], payload['cursor'], payload['session_id'], payload['source_member_index']) != (
-                input_ordinal, records, DAY, original['source_member_index']) or pack(payload['raw_record']) != pack(original['record']):
+                input_ordinal, records, expected_day, original['source_member_index']) or pack(payload['raw_record']) != pack(original['record']):
             raise ValueError('INPUT and APPLIED bindings differ')
         normalized = payload['normalized']
         iid, event_ns, receive_ns = (normalized[k] for k in ('instrument_id', 'ts_event_ns', 'ts_recv_ns'))
@@ -118,7 +119,7 @@ def project(entries, pack, *, expected_records, expected_groups):
             raise ValueError('group receipt coordinate disagreement')
         levels = price_sizes(book)
         prior = previous.get(iid)
-        row = dict(session_id=DAY, instrument_id=iid, group_ordinal=groups, input_cursor=ref[0],
+        row = dict(session_id=expected_day, instrument_id=iid, group_ordinal=groups, input_cursor=ref[0],
             event_ns=event_ns, receive_ns=receive_ns, known_by_ns=receipt['terminal_ts_recv_ns'],
             prior_observed_group_ordinal=None if prior is None else prior[0], source_group_receipt=receipt,
             group_close_applied_sha256=digest, source_observation_integrity=book['integrity'],
@@ -148,26 +149,33 @@ def verified_entries(reader, codec):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('verified_local_sqlite', type=Path, help='Existing authorized read-only journal; never downloaded by this program')
+    parser.add_argument('--session', choices=SESSIONS, default=DAY, help='Pinned trading session (default: %(default)s)')
     args = parser.parse_args()
     source = args.verified_local_sqlite.resolve(strict=True)
-    pin = json.loads(git_blob(PIN_REF, PIN_PATH))
+    day = args.session
+    output = EXPORTS / f'oct{day[-2:]}-liquidity-export-v1'
+    pin_path = f'ingest_pointers/{day}-gh-{RUN_ID}-1.json'
+    pin = json.loads(git_blob(PIN_REF, pin_path))
     receipt = pin['receipt']
     witness, = [f for f in pin['files'] if f['path'] == 'journal.compact.sqlite']
-    if pin['day'] != DAY or pin['status'] != 'sealed' or receipt['conformance'] != 'inline' or receipt['observation_mode'] != 'full':
+    if (pin['day'], pin['block'], pin['status'], pin['runner']['commit']) != (day, day, 'sealed', SOURCE_REF):
         raise ValueError('unexpected ingest provenance')
+    if (receipt['trading_day'], receipt['conformance'], receipt['observation_mode']) != (day, 'inline', 'full'):
+        raise ValueError('unexpected ingest receipt')
     if any(Path(str(source) + suffix).exists() for suffix in ('-wal', '-shm', '-journal')):
         raise ValueError('closed journal without sidecars required')
-    if source.stat().st_size != witness['bytes'] or OUTPUT.exists():
+    if source.stat().st_size != witness['bytes'] or output.exists():
         raise ValueError('source size differs or output already exists')
     with source.open('rb') as f:
         if hashlib.file_digest(f, 'sha256').hexdigest() != witness['sha256']:
             raise ValueError('source SHA-256 differs from the independently committed pointer')
     codec, pack = load_codec()
     counts = collections.Counter()
-    OUTPUT.mkdir()
+    output.mkdir()
     parts = []
     with codec.CompactReader(source, expected_count=receipt['journal_count'], expected_head_hash=receipt['journal_hash']) as reader:
-        stream = project(verified_entries(reader, codec), pack, expected_records=receipt['record_count'], expected_groups=receipt['group_count'])
+        stream = project(verified_entries(reader, codec), pack, expected_day=day,
+                         expected_records=receipt['record_count'], expected_groups=receipt['group_count'])
         part, size = None, 0
         try:
             for row in stream:
@@ -178,7 +186,7 @@ def main():
                     if part is not None:
                         part.close()
                     name = f'groups-{len(parts):04d}.jsonl.gz'
-                    part = gzip.GzipFile(OUTPUT / name, mode='wb', mtime=0)
+                    part = gzip.GzipFile(output / name, mode='wb', mtime=0)
                     parts.append(name)
                     size = 0
                 part.write(data)
@@ -189,8 +197,8 @@ def main():
         finally:
             if part is not None:
                 part.close()
-    (OUTPUT / 'COMPLETE.json').write_text(json.dumps(dict(
-        status='COMPLETE', source_pointer_commit=PIN_REF, source_pointer_path=PIN_PATH, source=pin,
+    (output / 'COMPLETE.json').write_text(json.dumps(dict(
+        status='COMPLETE', source_pointer_commit=PIN_REF, source_pointer_path=pin_path, source=pin,
         decoder_commit=SOURCE_REF, parts=parts, counts=dict(counts),
         master='../../completed-run-source-list.json', frankie='../local-liquidity-v1/frankie-local-liquidity-use.json',
         scope='Consecutive source groups, no invented opening transition; source cursor and raw integer clocks retained.',
