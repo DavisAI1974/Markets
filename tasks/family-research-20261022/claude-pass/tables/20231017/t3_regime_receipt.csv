@@ -1,0 +1,4 @@
+date,regime,rows,features_used,outcomes_used,pairs,pairs_undefined,pairs_defined,undefined_conditions,dropped_constant,null95_line,min_shift_rows,chunks,grid_rows,closed_market_rows_left_out,settle_rows_left_out,locked_crossed_left_out,rows_all_regimes
+20231017,1,13374,156,17,2652,0,2652,,spr,0.11883061919752486,1337,12,28380,1401,0,0,26979
+20231017,2,13050,156,17,2652,0,2652,,spr,0.17650845490170713,1305,12,28380,1401,0,0,26979
+20231017,3+,555,157,17,2669,170,2499,imb_1;refill_b_1;cxshare_b_1;refill_a_1;cxshare_a_1;imb_2;imb_5;refill_b_5;refill_a_5;cxshare_a_5,,0.38416762661916504,100,12,28380,1401,0,0,26979

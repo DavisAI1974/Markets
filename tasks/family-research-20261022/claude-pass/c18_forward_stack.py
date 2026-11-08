@@ -3,11 +3,15 @@ Candidates: as-of conditions with >=90% coverage.  Transform: percentile rank in
 Score: pooled out-of-fold Pearson correlation between prediction and outcome, chronological expanding folds (6 contiguous blocks; fit on earlier blocks, rows purged if their 60 s outcome window crosses the test start).
 At each step add the candidate with the best score gain.  Outcome kept in its units (ticks / lots), clipped to +-clip for fitting only.
 ts/rec coordinates stay out of the math."""
+import sys; sys.path.insert(0, '.')   # cwd is this code directory, not a data directory
+from odcfg import *
+DATE = date_arg(); LEGACY = len(sys.argv) > 2 and sys.argv[2] == 'legacy'; SUF = '_legacy' if LEGACY else ''
 import numpy as np, pandas as pd, warnings; warnings.filterwarnings('ignore')
 from scipy.stats import rankdata
-df = pd.read_parquet('tables/t2_grid.parquet').sort_values('cut_ns').reset_index(drop=True); N = len(df)
+df = pd.read_parquet(big(DATE, 'grid' + SUF)).sort_values('cut_ns').reset_index(drop=True)
+df = df[~df.closed].reset_index(drop=True); N = len(df)
 df['F_supdiff_5'] = df.F_sup_b_5 - df.F_sup_a_5
-OUT = ('dm_', 'am_', 'dbid_', 'dask_', 'dspr_', 'F_'); SKIP = {'cut_ns', 'rec_idx', 'block', 'utc_hour', 'settle_tag', 'mid'}
+OUT = ('dm_', 'am_', 'dbid_', 'dask_', 'dspr_', 'F_'); SKIP = {'cut_ns', 'rec_idx', 'block', 'utc_hour', 'settle_tag', 'mid', 'closed'} | ({'age_s', 'qage_s'} if LEGACY else set())
 cand = [c for c in df.columns if c not in SKIP and not c.startswith(OUT) and df[c].notna().mean() >= .9]
 act = df.ntr_60.rank(pct=True) + df.qchg_60.rank(pct=True) + df.ntr_20.rank(pct=True); q = pd.qcut(act.rank(method='first'), 5, labels=False).to_numpy()
 def sp(a):
@@ -32,4 +36,4 @@ for yc, clip in (('dm_5', 5), ('dm_20', 8), ('dm_60', 15), ('dspr_5', 5), ('F_su
         c, s = max(scores.items(), key=lambda kv: kv[1])
         if s - best < 0.002 and step > 1: break
         chosen.append(c); rows.append(dict(outcome=yc, step=step, added=c, oof_corr=s, gain=s - best)); best = s
-R = pd.DataFrame(rows); R.to_csv('tables/t2_forward_stack.csv', index=False); pd.set_option('display.width', 160); print(R.round(4).to_string(index=False))
+R = pd.DataFrame(rows); R.to_csv(tab(DATE + SUF, 't2_forward_stack.csv'), index=False); pd.set_option('display.width', 160); print(R.round(4).to_string(index=False))

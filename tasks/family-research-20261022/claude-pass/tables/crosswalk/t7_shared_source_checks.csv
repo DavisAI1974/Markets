@@ -1,0 +1,29 @@
+check,series_a,series_b,rho,n
+same eia930.us48 table: wind_mwh vs est_gas_burn_bcfd_rate,eia930.us48|:est_gas_burn_bcfd_rate,eia930.us48|:wind_mwh,-0.0210236992900314,749
+same eia930.us48 table: wind_mwh vs est_gas_burn_bcfd_rate,eia930.us48|:wind_mwh,eia930.us48|:est_gas_burn_bcfd_rate,-0.0210236992900314,749
+forecast gw_hdd vs disagreement summary derived from the same model runs,mos.gw_by_cycle|model=GFS|horizon_days=0|target_day=2023-10-18:gw_hdd,mos.disagreement_by_cycle|:max_abs_spread_gw_hdd,-0.25893073206701506,749
+forecast gw_hdd vs disagreement summary derived from the same model runs,mos.gw_by_cycle|model=GFS|horizon_days=1|target_day=2023-10-19:gw_hdd,mos.disagreement_by_cycle|:max_abs_spread_gw_hdd,-0.8815715843965328,749
+forecast gw_hdd vs disagreement summary derived from the same model runs,mos.gw_by_cycle|model=GFS|horizon_days=2|target_day=2023-10-20:gw_hdd,mos.disagreement_by_cycle|:max_abs_spread_gw_hdd,-0.8636521719355001,650
+forecast gw_hdd vs disagreement summary derived from the same model runs,mos.gw_by_cycle|model=MEX|horizon_days=1|target_day=2023-10-19:gw_hdd,mos.disagreement_by_cycle|:max_abs_spread_gw_hdd,-0.9243538461538462,749
+forecast gw_hdd vs disagreement summary derived from the same model runs,mos.gw_by_cycle|model=MEX|horizon_days=2|target_day=2023-10-20:gw_hdd,mos.disagreement_by_cycle|:max_abs_spread_gw_hdd,-0.0033467741935483872,749
+forecast gw_hdd vs disagreement summary derived from the same model runs,mos.gw_by_cycle|model=MEX|horizon_days=3|target_day=2023-10-21:gw_hdd,mos.disagreement_by_cycle|:max_abs_spread_gw_hdd,-0.0033467741935483872,749
+forecast gw_hdd vs disagreement summary derived from the same model runs,mos.gw_by_cycle|model=MEX|horizon_days=4|target_day=2023-10-22:gw_hdd,mos.disagreement_by_cycle|:max_abs_spread_gw_hdd,-1.0,749
+forecast gw_hdd vs disagreement summary derived from the same model runs,mos.gw_by_cycle|model=MEX|horizon_days=5|target_day=2023-10-23:gw_hdd,mos.disagreement_by_cycle|:max_abs_spread_gw_hdd,-0.9243538461538462,749
+forecast gw_hdd vs disagreement summary derived from the same model runs,mos.gw_by_cycle|model=MEX|horizon_days=6|target_day=2023-10-24:gw_hdd,mos.disagreement_by_cycle|:max_abs_spread_gw_hdd,-0.0033467741935483872,749
+forecast gw_hdd vs disagreement summary derived from the same model runs,mos.gw_by_cycle|model=MEX|horizon_days=7|target_day=2023-10-25:gw_hdd,mos.disagreement_by_cycle|:max_abs_spread_gw_hdd,-1.0,650
+forecast gw_hdd vs disagreement summary derived from the same model runs,mos.gw_by_cycle|model=NAM|horizon_days=0|target_day=2023-10-18:gw_hdd,mos.disagreement_by_cycle|:max_abs_spread_gw_hdd,0.7059225261338711,749
+forecast gw_hdd vs disagreement summary derived from the same model runs,mos.gw_by_cycle|model=NAM|horizon_days=1|target_day=2023-10-19:gw_hdd,mos.disagreement_by_cycle|:max_abs_spread_gw_hdd,-0.0033467741935483872,749
+forecast gw_hdd vs disagreement summary derived from the same model runs,mos.gw_by_cycle|model=NAM|horizon_days=2|target_day=2023-10-20:gw_hdd,mos.disagreement_by_cycle|:max_abs_spread_gw_hdd,-1.0,650
+"forecast vs observed gw_hdd (same quantity, two measurements)",mos.gw_by_cycle|model=GFS|horizon_days=0|target_day=2023-10-18:gw_hdd,weather.gw_daily|:gw_hdd,-0.2279214776027375,749
+"forecast vs observed gw_hdd (same quantity, two measurements)",mos.gw_by_cycle|model=GFS|horizon_days=1|target_day=2023-10-19:gw_hdd,weather.gw_daily|:gw_hdd,-0.4736404815920828,749
+"forecast vs observed gw_hdd (same quantity, two measurements)",mos.gw_by_cycle|model=GFS|horizon_days=2|target_day=2023-10-20:gw_hdd,weather.gw_daily|:gw_hdd,,650
+"forecast vs observed gw_hdd (same quantity, two measurements)",mos.gw_by_cycle|model=MEX|horizon_days=1|target_day=2023-10-19:gw_hdd,weather.gw_daily|:gw_hdd,-0.38228419876788095,749
+"forecast vs observed gw_hdd (same quantity, two measurements)",mos.gw_by_cycle|model=MEX|horizon_days=2|target_day=2023-10-20:gw_hdd,weather.gw_daily|:gw_hdd,0.7059225261338711,749
+"forecast vs observed gw_hdd (same quantity, two measurements)",mos.gw_by_cycle|model=MEX|horizon_days=3|target_day=2023-10-21:gw_hdd,weather.gw_daily|:gw_hdd,0.7059225261338711,749
+"forecast vs observed gw_hdd (same quantity, two measurements)",mos.gw_by_cycle|model=MEX|horizon_days=4|target_day=2023-10-22:gw_hdd,weather.gw_daily|:gw_hdd,-0.7059225261338711,749
+"forecast vs observed gw_hdd (same quantity, two measurements)",mos.gw_by_cycle|model=MEX|horizon_days=5|target_day=2023-10-23:gw_hdd,weather.gw_daily|:gw_hdd,-0.38228419876788095,749
+"forecast vs observed gw_hdd (same quantity, two measurements)",mos.gw_by_cycle|model=MEX|horizon_days=6|target_day=2023-10-24:gw_hdd,weather.gw_daily|:gw_hdd,0.7059225261338711,749
+"forecast vs observed gw_hdd (same quantity, two measurements)",mos.gw_by_cycle|model=MEX|horizon_days=7|target_day=2023-10-25:gw_hdd,weather.gw_daily|:gw_hdd,,650
+"forecast vs observed gw_hdd (same quantity, two measurements)",mos.gw_by_cycle|model=NAM|horizon_days=0|target_day=2023-10-18:gw_hdd,weather.gw_daily|:gw_hdd,1.0,749
+"forecast vs observed gw_hdd (same quantity, two measurements)",mos.gw_by_cycle|model=NAM|horizon_days=1|target_day=2023-10-19:gw_hdd,weather.gw_daily|:gw_hdd,0.7059225261338711,749
+"forecast vs observed gw_hdd (same quantity, two measurements)",mos.gw_by_cycle|model=NAM|horizon_days=2|target_day=2023-10-20:gw_hdd,weather.gw_daily|:gw_hdd,,650

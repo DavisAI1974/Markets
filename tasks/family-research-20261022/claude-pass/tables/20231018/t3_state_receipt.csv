@@ -1,0 +1,4 @@
+date,regime,valid_seconds_in_regime,usable_seconds,in_cells_at_or_above_floor,in_cells_below_floor,cells_floor
+20231018,1,40689,36135,35832,303,100
+20231018,2,39417,33252,32806,446,100
+20231018,3+,1494,1112,1040,72,100

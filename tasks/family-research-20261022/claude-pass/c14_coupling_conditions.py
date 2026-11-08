@@ -5,11 +5,15 @@ NOT in X or Y: order/trade IDs, cursors, record indices, timestamps, UTC hour, w
 Normalisation by a market condition: rows are put in ACTIVITY QUINTILES (composite of trade count and quote changes over 60 s, as of the cutoff) and every column is percentile-ranked inside its quintile.
 Time is used only for ordering: 24 contiguous chronological chunks (equal row counts) test whether a sign repeats; the shift-null moves Y cyclically by >=1200 rows against X.
 Neighbouring decisions overlap, so naive p-values are not used."""
+import sys; sys.path.insert(0, '.')   # cwd is this code directory, not a data directory
+from odcfg import *
+DATE = date_arg(); LEGACY = len(sys.argv) > 2 and sys.argv[2] == 'legacy'; SUF = '_legacy' if LEGACY else ''
 import numpy as np, pandas as pd, warnings; warnings.filterwarnings('ignore')
 from scipy.stats import rankdata
-df = pd.read_parquet('tables/t2_grid.parquet').sort_values('cut_ns').reset_index(drop=True)
+df = pd.read_parquet(big(DATE, 'grid' + SUF)).sort_values('cut_ns').reset_index(drop=True)
+df = df[~df.closed].reset_index(drop=True)      # closed-market rows are excluded (none flagged in legacy mode)
 OUT = ('dm_', 'am_', 'dbid_', 'dask_', 'dspr_', 'F_')
-NOT_CONDITIONS = {'cut_ns', 'rec_idx', 'block', 'utc_hour', 'settle_tag', 'mid'}
+NOT_CONDITIONS = {'cut_ns', 'rec_idx', 'block', 'utc_hour', 'settle_tag', 'mid', 'closed'} | ({'age_s', 'qage_s'} if LEGACY else set())   # legacy reproduces the original column set
 Xcols = [c for c in df.columns if c not in NOT_CONDITIONS and not c.startswith(OUT)]
 Ycols = ['dm_1', 'dm_5', 'dm_20', 'dm_60', 'am_5', 'am_20', 'dbid_5', 'dask_5', 'dspr_5', 'F_net_5', 'F_net_20', 'F_sup_b_5', 'F_sup_a_5', 'F_cx_b_5', 'F_cx_a_5', 'F_add_b_5', 'F_add_a_5']
 assert not any(k in c for c in Xcols for k in ('cut_ns', 'rec_idx', 'hour', 'block', 'order_id', 'cursor')), 'identity or clock column in X'
@@ -37,7 +41,7 @@ for _ in range(300):
     sh = int(rng.integers(1200, N - 1200)); Cn = (ZX.T @ np.roll(ZY, sh, axis=0)) / nv[:, None]; mx.append(np.abs(Cn).max())
 thr = np.quantile(mx, .95); print('rows', N, 'features', len(Xcols), 'outcomes', len(Ycols), '| family-wise null max|rho| 95%%: %.4f' % thr)
 rows = [dict(x=Xcols[i], y=Ycols[j], rho=C[i, j], n=int(nv[i]), chunks=int(tot[i, j]), same_sign_chunks=int(same[i, j]), exceeds_null95=abs(C[i, j]) > thr) for i in range(len(Xcols)) for j in range(len(Ycols))]
-M = pd.DataFrame(rows); M['abs'] = M.rho.abs(); M = M.sort_values('abs', ascending=False); M.to_csv('tables/t2_coupling_conditions.csv', index=False)
+M = pd.DataFrame(rows); M['abs'] = M.rho.abs(); M = M.sort_values('abs', ascending=False); M.to_csv(tab(DATE + SUF, 't2_coupling_conditions.csv'), index=False)
 print('pairs', len(M), 'exceeding null', int(M.exceeds_null95.sum()))
 pd.set_option('display.width', 200)
 for fam, ys in (('SIGNED MOVE', ['dm_1', 'dm_5', 'dm_20', 'dm_60']), ('QUOTE RESPONSE', ['dbid_5', 'dask_5', 'dspr_5']), ('FLOW PERSISTENCE', ['F_net_5', 'F_net_20']), ('BOOK RESPONSE', ['F_sup_b_5', 'F_sup_a_5', 'F_cx_b_5', 'F_cx_a_5', 'F_add_b_5', 'F_add_a_5']), ('MAGNITUDE', ['am_5', 'am_20'])):

@@ -1,0 +1,6 @@
+my_class,availability_or_provenance,control_runtime_or_unresolved_context,derived_transform_or_lifecycle_context,market_mechanism_or_state,outcome_or_selection_boundary
+availability_or_provenance,7,0,0,0,0
+control_runtime_or_unresolved_context,1,24,9,0,1
+derived_transform_or_lifecycle_context,1,0,17,0,0
+market_mechanism_or_state,3,4,0,23,0
+outcome_or_selection_boundary,0,5,0,0,4

@@ -2,8 +2,11 @@
 Terciles of touch imbalance are taken INSIDE activity quintiles (trailing-60 s trade lots), so the cut is a market condition.  Flat = exactly zero change.
 Outcomes: next second (t+1) and next five seconds (mid(t+5) - mid(t)).  net = (up - down) / (up + down + flat).  Stability = sign of net in 24 contiguous chronological chunks.
 Null = outcome vector cyclically shifted >= 600 s, 300 shifts; cell z from that null.  ts/cursor coordinates are carried for exemplars only."""
+import sys; sys.path.insert(0, '.')   # cwd is this code directory, not a data directory
+from odcfg import *
+DATE = date_arg(); LEGACY = len(sys.argv) > 2 and sys.argv[2] == 'legacy'; SUF = '_legacy' if LEGACY else ''
 import numpy as np, pandas as pd, warnings; warnings.filterwarnings('ignore')
-d = pd.read_parquet('tables/t2_seconds.parquet'); T = len(d)
+d = pd.read_parquet(big(DATE, 'seconds' + SUF)); T = len(d)
 d['act_q'] = pd.qcut(d.live60.rank(method='first'), 5, labels=False)
 d['timb_t'] = np.nan
 for k in range(5):
@@ -34,7 +37,7 @@ for key in sorted(keys.unique()):
             if mk.sum() >= 15: u, dd, f, t, nt = cell_stats(y, mk); sg.append(np.sign(u - dd))
         same = int((np.array(sg) == np.sign(up - dn)).sum()) if sg else 0
         rows.append(dict(cell=key, horizon=h, support=int(m.sum()), up=int(up), flat=int(fl), down=int(dn), net_share=net, null_mean=nulls.mean(), z=z, chunks=len(sg), same_sign_chunks=same, median_ticks=float(np.median(y[m]))))
-C = pd.DataFrame(rows); C.to_csv('tables/t2_state_cells.csv', index=False)
+C = pd.DataFrame(rows); C.to_csv(tab(DATE + SUF, 't2_state_cells.csv'), index=False)
 pd.set_option('display.width', 200)
 for h in ('next1s', 'next5s'):
     s = C[C.horizon == h].reindex(C[C.horizon == h].z.abs().sort_values(ascending=False).index)
@@ -44,4 +47,4 @@ print('\nMARGINALS (next5s)')
 for col in ('move_c', 'timb_c', 'flow_c'):
     for lv, m in D.groupby(col).groups.items():
         mm = D.index.isin(m); up, dn, fl, tot, net = cell_stats(y5, mm); print(f'{col}={lv:9s} support {tot:6d} up {up:5d} flat {fl:5d} down {dn:5d} net {net:+.3f}')
-D.to_parquet('tables/t2_seconds_states.parquet')
+D.to_parquet(big(DATE, 'seconds_states' + SUF))

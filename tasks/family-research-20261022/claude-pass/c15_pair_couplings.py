@@ -2,9 +2,13 @@
  interaction partial rho = corr(y, z1*z2 | z1, z2)  ; also sign of the z1 effect in the low-z2 vs high-z2 thirds (does z2 flip z1?).
  Stability: sign of the interaction partial across 24 contiguous chronological chunks.  Null: cyclic shift of y (>=1200 rows), 200 shifts, max |interaction| over all pairs and outcomes.
  Provenance columns (cut_ns, rec_idx) are carried in the output of exemplars, never used here."""
+import sys; sys.path.insert(0, '.')   # cwd is this code directory, not a data directory
+from odcfg import *
+DATE = date_arg(); LEGACY = len(sys.argv) > 2 and sys.argv[2] == 'legacy'; SUF = '_legacy' if LEGACY else ''
 import numpy as np, pandas as pd, warnings; warnings.filterwarnings('ignore')
 from scipy.stats import rankdata
-df = pd.read_parquet('tables/t2_grid.parquet').sort_values('cut_ns').reset_index(drop=True); N = len(df)
+df = pd.read_parquet(big(DATE, 'grid' + SUF)).sort_values('cut_ns').reset_index(drop=True)
+df = df[~df.closed].reset_index(drop=True); N = len(df)
 df['F_supdiff_5'] = df.F_sup_b_5 - df.F_sup_a_5
 X = ['imb_1', 'imb_5', 'imb_20', 'imb_60', 'net_5', 'net_20', 'tch_imb', 'tchn_imb', 'spr', 'bsz', 'asz', 'bn', 'an', 'bsz_per_ord', 'asz_per_ord', 'near5_imb', 'near10_imb',
      'supdiff_5', 'supdiff_20', 'sup_b_5', 'sup_a_5', 'refill_b_5', 'refill_a_5', 'refill_b_20', 'refill_a_20', 'cxshare_b_20', 'cxshare_a_20', 'modT_b_20', 'modT_a_20', 'addT_b_5', 'addT_a_5',
@@ -57,5 +61,5 @@ for _, r in M.head(60).iterrows():
     lo = m0 & (z2 <= np.nanquantile(z2[m0], 1 / 3)); hi = m0 & (z2 >= np.nanquantile(z2[m0], 2 / 3))
     c_lo = np.corrcoef(z1[lo], y[lo])[0, 1]; c_hi = np.corrcoef(z1[hi], y[hi])[0, 1]
     out.append(dict(x1=r.x1, x2=r.x2, y=r.y, int_rho=r.int_rho, n=r.n, chunks=len(ch), same_sign=same, x1_effect_when_x2_low=c_lo, x1_effect_when_x2_high=c_hi, flips=bool(np.sign(c_lo) != np.sign(c_hi)), exceeds=abs(r.int_rho) > thr))
-O = pd.DataFrame(out); O.to_csv('tables/t2_pair_couplings_top60.csv', index=False); M.head(400).to_csv('tables/t2_pair_couplings_top400.csv', index=False)
+O = pd.DataFrame(out); O.to_csv(tab(DATE + SUF, 't2_pair_couplings_top60.csv'), index=False); M.head(400).to_csv(tab(DATE + SUF, 't2_pair_couplings_top400.csv'), index=False)
 pd.set_option('display.width', 230); print(O.round(3).to_string(index=False))

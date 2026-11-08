@@ -9,12 +9,14 @@ Series per second s (records assigned by receive second; seconds are an ordering
  timb   = touch size imbalance at the end of the second
 Each series is percentile-ranked inside ACTIVITY QUINTILES (trade lots over the trailing 60 s) so quiet and busy stretches are comparable.
 cross-correlation at lags -15..+15 s : corr(A[t], B[t+lag]); lag>0 means A leads B.  Null: cyclic shift of B by >=600 s, 300 shifts -> 99.9% band of |rho|."""
-import sys; sys.path.insert(0, '.')
+import sys; sys.path.insert(0, '.')   # cwd is this code directory, not a data directory
+from odcfg import *
+DATE = date_arg(); LEGACY = len(sys.argv) > 2 and sys.argv[2] == 'legacy'; SUF = '_legacy' if LEGACY else ''
 import numpy as np, pandas as pd
 from scipy.stats import rankdata
 from c04_order_features import enrich
-R0 = pd.read_parquet('/home/claude/work/recon_20231018.parquet'); R, C = enrich(R0)
-G = np.load('/home/claude/work/groups.npz'); recv = G['recv_ns']; mid = (G['bid_px'] + G['ask_px']) / 2e9; spr = (G['ask_px'] - G['bid_px']) / 1e9
+R0 = pd.read_parquet(recon(DATE)); R, C = enrich(R0)
+G = np.load(f'{WORK}/groups_retained_20231018.npz' if LEGACY else groups(DATE)); recv = G['recv_ns']; mid = (G['bid_px'] + G['ask_px']) / 2e9; spr = (G['ask_px'] - G['bid_px']) / 1e9
 S = 10**9; t0 = int(R.ts.iloc[0]); sec = ((R.ts.to_numpy() - t0) // S).astype(int); T = int(sec.max()) + 1
 def bc(w): return np.bincount(sec, weights=w, minlength=T)
 flow = bc((C.trade_buyagg - C.trade_sellagg).to_numpy(float))
@@ -27,6 +29,7 @@ m_end = mid[gi]; s_end = spr[gi]; dmid = np.diff(m_end, prepend=m_end[0]) / 0.00
 bsz = G['bid_sz'][gi].astype(float); asz = G['ask_sz'][gi].astype(float); timb = (bsz - asz) / (bsz + asz)
 live = np.convolve(tot, np.ones(60), 'full')[:T]           # trailing 60 s trade lots (market condition)
 valid = np.arange(T) >= 600
+valid &= ~closed_mask(recv, t0 + (np.arange(T) + 1) * S, R.ts.to_numpy()[(R.action == 'T').to_numpy()]) if not LEGACY else valid      # closed-market seconds are not conditions
 q = pd.qcut(pd.Series(live).rank(method='first'), 5, labels=False).to_numpy()
 def sp(a):
     out = np.zeros(T)
@@ -49,10 +52,10 @@ for a in names:
     for b in names:
         cc = np.array([xc(series[a], series[b], l) for l in lags]); k = int(np.argmax(np.abs(cc)))
         rows.append(dict(A=a, B=b, peak_lag_s=lags[k], peak_rho=cc[k], rho_lag0=cc[lags.index(0)], rho_lag1=cc[lags.index(1)], rho_lag_m1=cc[lags.index(-1)], rho_lag5=cc[lags.index(5)], exceeds=abs(cc[k]) > band))
-L = pd.DataFrame(rows); L.to_csv('tables/t2_leadlag_matrix.csv', index=False)
+L = pd.DataFrame(rows); L.to_csv(tab(DATE + SUF, 't2_leadlag_matrix.csv'), index=False)
 pd.set_option('display.width', 200); print(L[(L.A != L.B)].sort_values('peak_rho', key=abs, ascending=False).head(30).round(3).to_string(index=False))
 # --- persist the per-second series; ts_ns and rec_idx are provenance coordinates only (never used in the math)
 sec_end_idx = np.searchsorted(R.ts.to_numpy(), ends, side='right') - 1
 pd.DataFrame(dict(sec=np.arange(T), end_ns=ends, last_rec_idx=sec_end_idx, flow=flow, supB=supB, supA=supA, churn=churn, tot=tot, dmid=dmid, dspr=dspr, spread_ticks=s_end / 0.001,
-                  bsz=bsz, asz=asz, timb=timb, live60=live, mid=m_end, valid=valid)).to_parquet('tables/t2_seconds.parquet')
+                  bsz=bsz, asz=asz, timb=timb, live60=live, mid=m_end, valid=valid)).to_parquet(big(DATE, 'seconds' + SUF))
 a = series['dmid']; print('autocorr of activity-normalised dmid at lag1: %.3f' % xc(a, a, 1))

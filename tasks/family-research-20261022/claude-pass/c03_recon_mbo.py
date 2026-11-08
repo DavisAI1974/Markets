@@ -7,15 +7,16 @@ No fee, slippage or execution assumption.  Usage: c03_recon_mbo.py <parquet> <ou
 import sys, numpy as np, pandas as pd
 TICK = 1_000_000          # 0.001 in raw 1e-9 units
 BASE = 0                  # price index = raw / 1e6 (0.001 ticks); far-off orders exist (0.100 .. 9.000)
-NPX = 10001
+NPX = 10001               # touch scan ceiling and the 'no ask' sentinel (unchanged)
+CAP = 200001              # storage per side: orders priced above 10.000 (one far ask on each of Oct 2, 3, 17) are tracked but never become the touch
 UNDEF = 9223372036854775807
 
 class Book:
     def __init__(self, track_queue=False):
         self.reset(); self.track_queue = track_queue
     def reset(self):
-        self.sz = [[0]*NPX, [0]*NPX]      # side 0 = bid, 1 = ask ; size by price index
-        self.cn = [[0]*NPX, [0]*NPX]      # order count by price index
+        self.sz = [[0]*CAP, [0]*CAP]      # side 0 = bid, 1 = ask ; size by price index
+        self.cn = [[0]*CAP, [0]*CAP]      # order count by price index
         self.orders = {}                   # oid -> [side, pidx, size]
         self.q = [dict(), dict()] if getattr(self, 'track_queue', False) else None
         self.best = [-1, NPX]              # best bid idx, best ask idx

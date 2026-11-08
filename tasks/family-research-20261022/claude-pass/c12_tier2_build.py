@@ -2,15 +2,20 @@
 Every feature is as of the decision cutoff c (records in groups closed by c).  Outcomes use only records/groups after c.
 Series: flow (known wire side lots), book behaviour by side (adds at touch / near / far, fill-linked removals, unlinked cancels, fills, touch modifies),
 touch state, near depth, prior displacement, quote changes.  No cost assumption.  Output: tables/t2_grid.parquet"""
-import sys; sys.path.insert(0, '.')
-import numpy as np, pandas as pd
+import sys; sys.path.insert(0, '.')   # cwd is this code directory, not a data directory
+from odcfg import *
+DATE = date_arg(); LEGACY = len(sys.argv) > 2 and sys.argv[2] == 'legacy'; SUF = '_legacy' if LEGACY else ''
+import os, numpy as np, pandas as pd
 from c04_order_features import enrich, Windows
 STEP = 3; S = 10**9
-R0 = pd.read_parquet('/home/claude/work/recon_20231018.parquet'); R, C = enrich(R0); W = Windows(R, C)
-G = np.load('/home/claude/work/groups.npz'); recv = G['recv_ns']; mid = (G['bid_px'] + G['ask_px']) / 2e9
+R0 = pd.read_parquet(recon(DATE)); R, C = enrich(R0); W = Windows(R, C)
+G = np.load(f'{WORK}/groups_retained_20231018.npz' if LEGACY else groups(DATE)); recv = G['recv_ns']; mid = (G['bid_px'] + G['ask_px']) / 2e9
 bidp = G['bid_px'] / 1e9; askp = G['ask_px'] / 1e9
 t0 = int(R.ts.iloc[0]) + 600 * S; t1 = int(R.ts.iloc[-1]) - 660 * S
-cut = np.arange(t0, t1, STEP * S, dtype=np.int64); n = len(cut); print('decisions', n)
+cut = np.arange(t0, t1, STEP * S, dtype=np.int64)
+CUTS = os.environ.get('OD_CUTS')                       # optional: a .npy of explicit as-of cutoffs (ns); same feature code, different decision times
+if CUTS: cut = np.load(CUTS).astype(np.int64)
+n = len(cut); print('decisions', n)
 e = np.searchsorted(W.last_ts, cut, side='right') - 1; E = W.last_idx[e]            # last record index of a group closed by cut
 cols = W.cols; cum = W.cum; ci = {c: i for i, c in enumerate(cols)}
 def win(w):                                                                      # (cut-w, cut] sums for every cut, vectorised
@@ -68,8 +73,12 @@ for h in (5, 20):
     D[f'F_sup_a_{h}'] = f['add_touch_a'] + f['add_near_a'] - f['rm_fill_a'] - f['rm_cx_touch_a'] - f['rm_cx_near_a']
     D[f'F_cx_b_{h}'] = f['rm_cx_touch_b'] + f['rm_cx_near_b']; D[f'F_cx_a_{h}'] = f['rm_cx_touch_a'] + f['rm_cx_near_a']
     D[f'F_add_b_{h}'] = f['add_touch_b'] + f['add_near_b']; D[f'F_add_a_{h}'] = f['add_touch_a'] + f['add_near_a']
+D['age_s'] = (cut - recv[gi]) / S                                                   # seconds since the last completed group close (age of the book snapshot)
+_ci = np.where(qchg > 0)[0]; _j = np.searchsorted(_ci, gi, side='right') - 1
+D['qage_s'] = np.where(_j >= 0, (cut - recv[_ci[np.maximum(_j, 0)]]) / S, np.nan)    # seconds since the touch price last changed
+D['closed'] = np.zeros(n, dtype=bool) if LEGACY else closed_mask(recv, cut, R.ts.to_numpy()[(R.action == 'T').to_numpy()])                  # closed-market stretch (data-defined gap) + 600 s re-open warm-up
 df = pd.DataFrame(D)
 df['utc_hour'] = pd.to_datetime(df.cut_ns, unit='ns', utc=True).dt.hour; df['block'] = df.utc_hour
 df['settle_tag'] = (pd.to_datetime(df.cut_ns, unit='ns', utc=True).dt.hour * 60 + pd.to_datetime(df.cut_ns, unit='ns', utc=True).dt.minute).between(18 * 60 + 25, 18 * 60 + 35)
-df.to_parquet('tables/t2_grid.parquet'); print(df.shape)
+df.to_parquet(os.environ['OD_OUT'] if CUTS else big(DATE, 'grid' + SUF)); print(DATE, SUF, df.shape, 'closed rows', int(df.closed.sum()))
 print(df[['dm_5', 'am_5', 'imb_5', 'spr', 'sup_b_5', 'F_net_5']].describe().round(2).T)
