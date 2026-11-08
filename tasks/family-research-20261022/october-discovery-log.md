@@ -11,8 +11,8 @@ misses and unavailable inputs. Keep original group and cursor coordinates.
 The full-session standalone input export covers 583,688 completed groups and
 30,739 prints. The candidate counts below come from the previously studied
 22,194 consecutive book closes, groups 229201–251394. These counts describe
-the window that produced the hypotheses. Full-session decision evaluation and
-the separate coverage and formula admission are pending.
+the window that produced the hypotheses. The full-session touch and print decision pass is below. The remaining
+variants and separate scoring admission are pending.
 
 | Candidate family | Ask / long | Bid / short |
 | --- | ---: | ---: |
@@ -43,6 +43,40 @@ separate historical spread-crossing diagnostic, 846 of 1,012 size-one onset
 scenarios were negative at one second before fees. Keep the research status
 of these candidates at `NOT_ENOUGH_INFO`.
 [Historical diagnostics and source cases](../../artifacts/sqlite-triage/20261022/families/trade-lifecycle-targeted-v1/historical-paper-replay-v1/README.md)
+
+## October 18 full-session touch and print decisions
+
+The decision pass read all 583,688 group rows and 30,739 prints from the
+existing export. It evaluated 583,595 eligible group closes. It excluded
+92 halt groups from signal state and reset state at the one snapshot/reset
+boundary. The three-close falling-touch definition uses the three actual
+observations. The print rule uses the immediately preceding eligible quote.
+The stack uses any print in the same group and takes direction from the
+falling-touch rule.
+
+| Versioned candidate | Ask / long | Bid / short |
+| --- | ---: | ---: |
+| `falling-touch.v1` | 31,399 | 32,680 |
+| `prior-touch-print.v1` | 14,001 | 13,828 |
+| `falling-touch+print.v1` | 4,175 | 3,947 |
+
+The ledger has 101,998 rows, including 1,968 ambiguous prior-touch print
+decisions. Across all three rules, 83,286 distinct groups had at least one
+candidate. Both directions fired in 1,189 of those groups. At G229205,
+the falling-touch rule fired on both sides and the prior-touch print called
+ask/long. Keep both observations. These are rule calls and ambiguity
+dispositions. Returns, entropy-dependent variants, and simulator fills are
+separate work.
+
+The saved-window comparison reproduced 2,850 falling-touch calls and all
+1,240 print decisions, with exact group, cursor, known-by time and direction.
+The print comparison also matched original print ordinals and ambiguity.
+Those counts come from the comparison input. The full run reads to the end
+of its available session.
+
+[Full-session decision ledger](october18-touch-print-decisions.jsonl.gz)
+· [Decision runner](../../research/kalshi/adaptive_wavepacket_20261108/markets_bridge/discovery_touch_print.py)
+· [Standalone inputs](../../research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/october18-standalone-inputs/groups.jsonl.gz)
 
 ## Paper-test queue
 
