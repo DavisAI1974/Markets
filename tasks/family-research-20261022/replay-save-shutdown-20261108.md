@@ -134,3 +134,10 @@ The previous 3–5-hour computation estimate measured that defective placement
 and should not be used after this recovery.
 
 [Before/after worker maps, retained ranges and throughput observations](runpod/projection-lane-recovery-20261108.json)
+
+At 20:50 UTC, the first October 2 Git push had exhausted four attempts
+because the shared branch moved during each transfer. Its eight hashed
+parts were retained in the local publisher and reused for a push to
+`codex/replay-archive-20231002`. The updated publisher stages each date
+under its own ref, then adds the verified archive tree to the latest
+shared branch. The final shared publication remains required for shutdown.

@@ -20,9 +20,14 @@ def git(repo, *args, env=None, data=None):
     return subprocess.check_output(["git", "-C", str(repo), *args], env=env, input=data)
 
 
-def fetch_head(repo):
-    git(repo, "fetch", "--quiet", "--depth=1", "--filter=blob:none", "--no-tags", "origin", BRANCH)
+def fetch_head(repo, ref):
+    git(repo, "fetch", "--quiet", "--depth=1", "--filter=blob:none", "--no-tags", "origin", ref)
     return git(repo, "rev-parse", "FETCH_HEAD").decode().strip()
+
+
+def staging_parent(repo, ref):
+    lookup = git(repo, "ls-remote", "origin", ref)
+    return fetch_head(repo, ref if lookup else BRANCH)
 
 
 def tree(repo, revision, folder):
@@ -31,10 +36,10 @@ def tree(repo, revision, folder):
             (line.split("\t", 1) for line in listing.splitlines())}
 
 
-def publish(repo, folder, files, index, message):
+def publish(repo, ref, folder, files, index, message):
     env = dict(os.environ, GIT_INDEX_FILE=str(index), GIT_NO_REPLACE_OBJECTS="1")
     for _ in range(4):
-        parent = fetch_head(repo)
+        parent = staging_parent(repo, ref)
         previous = tree(repo, parent, folder)
         changed = {path: oid for path, oid in files.items() if previous.get(path) != oid}
         if any(path in previous for path in changed):
@@ -46,19 +51,19 @@ def publish(repo, folder, files, index, message):
         git(repo, "update-index", "--add", "--index-info", env=env, data=entries.encode())
         root = git(repo, "write-tree", "--missing-ok", env=env).decode().strip()
         commit = git(repo, "commit-tree", root, "-p", parent, "-m", message).decode().strip()
-        result = subprocess.run(["git", "-C", str(repo), "push", "--porcelain", "origin", f"{commit}:{BRANCH}"],
+        result = subprocess.run(["git", "-C", str(repo), "push", "--porcelain", "origin", f"{commit}:{ref}"],
                                 text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         if result.returncode:
             if any(word in result.stdout for word in ("fetch first", "non-fast-forward", "cannot lock ref")):
                 continue
             raise RuntimeError(result.stdout)
-        remote = fetch_head(repo)
+        remote = fetch_head(repo, ref)
         published = tree(repo, remote, folder)
         if any(published.get(path) != oid for path, oid in files.items()):
             raise RuntimeError(f"published tree differs at {remote}")
         print(f"{remote} published {len(changed)} archive files", flush=True)
         return remote
-    raise RuntimeError("the shared branch advanced during each of four push attempts")
+    raise RuntimeError(f"{ref} advanced during each of four push attempts")
 
 
 def archive_ssh(day):
@@ -91,6 +96,7 @@ def main():
     ssh = archive_ssh(day)
     remote = f"/opt/frankie-box/work/git-publication/{day}/root-frames"
     folder = f"{DESTINATION}/{day}/root-frames"
+    staging = f"refs/heads/codex/replay-archive-{day}"
     sums = subprocess.check_output([*ssh, "cat", "--", f"{remote}/SHA256SUMS"])
     source = subprocess.check_output([*ssh, "cat", "--", f"{remote}/source.json"])
     parts = [PART.fullmatch(line) for line in sums.decode().splitlines()]
@@ -102,12 +108,15 @@ def main():
     with tempfile.TemporaryDirectory(prefix=f"publish-{day}-", dir=repo.parent) as work:
         temporary = Path(work)
         index = temporary / "index"
-        current = tree(repo, fetch_head(repo), folder)
+        current = tree(repo, staging_parent(repo, staging), folder)
         if f"{folder}/SHA256SUMS" in current and f"{folder}/source.json" in current:
             same = (git(repo, "cat-file", "blob", current[f"{folder}/SHA256SUMS"]) == sums and
                     git(repo, "cat-file", "blob", current[f"{folder}/source.json"]) == source)
             if same and all(f"{folder}/{name}" in current for _, name in inventory):
-                print(f"{day} archive already published with matching manifest", flush=True)
+                remote_commit = publish(
+                    repo, BRANCH, folder, current, index, f"data: publish the sealed {day} ROOT frame archive [skip ci]",
+                )
+                print(f"COMPLETE {day} {len(inventory)} parts {remote_commit}", flush=True)
                 return
             raise ValueError("existing final manifest differs from the sealed archive")
         verified = {}
@@ -116,11 +125,14 @@ def main():
             for digest, name in inventory[first:first+BATCH_PARTS]:
                 path = f"{folder}/{name}"
                 batch[path] = part_blob(repo, ssh, f"{remote}/{name}", temporary / "part", digest, current.get(path))
-            publish(repo, folder, batch, index, f"data: save {day} ROOT frame archive parts {first:06d} onward [skip ci]")
+            publish(repo, staging, folder, batch, index, f"data: save {day} ROOT frame archive parts {first:06d} onward [skip ci]")
             verified.update(batch)
         for name, payload in (("SHA256SUMS", sums), ("source.json", source)):
             verified[f"{folder}/{name}"] = git(repo, "hash-object", "-w", "--stdin", data=payload).decode().strip()
-        remote_commit = publish(repo, folder, verified, index, f"data: seal the {day} ROOT frame archive in Git [skip ci]")
+        publish(repo, staging, folder, verified, index, f"data: seal the {day} ROOT frame archive in Git [skip ci]")
+        remote_commit = publish(
+            repo, BRANCH, folder, verified, index, f"data: publish the sealed {day} ROOT frame archive [skip ci]",
+        )
         print(f"COMPLETE {day} {len(inventory)} parts {remote_commit}", flush=True)
 
 
