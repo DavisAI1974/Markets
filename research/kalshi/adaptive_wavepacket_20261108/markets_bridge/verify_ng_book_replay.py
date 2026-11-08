@@ -1,7 +1,7 @@
 """Replay the two pinned NG sessions using the original native book adapter.
 
-Run as a module from the repository root with the trading day (20231003 or
-20231018). Emits a coverage receipt and no scores or market-data exports.
+Run as a module from the repository root with a discovery trade date.
+Emits a coverage receipt for the available span without scoring.
 """
 import argparse
 from concurrent.futures import ThreadPoolExecutor
@@ -177,7 +177,73 @@ def run(day):
     }
 
 
+def run_partial(day):
+    """Replay the available midnight-to-halt portion of an earlier trade date."""
+    following_day, groups, trades = {
+        "20231002": ("20231003", 600291, 37670),
+        "20231017": ("20231018", 635170, 33451),
+    }[day]
+    began = time.perf_counter()
+    scope = json.loads(git_blob(
+        SESSION_PIN, f"research/kalshi/frankie_boss/blocks/BLOCK_{following_day}_SOURCE_MANIFEST.json"
+    ))
+    next_opening = json.loads(git_blob(
+        JOURNAL_PIN, f"ingest_pointers/{following_day}-gh-36571235912-1.json"
+    ))["receipt"]["opening_book"]
+    file_name = f"NG_v0_mbo_{day}.dbn.zst"
+    spec = next(item for item in json.loads(tape_blob("MANIFEST.json"))["files"] if item["file"] == file_name)
+    limit = scope["tail_members"][0]["skip"]
+    adapter = load_adapter()
+    first = last = None
+    snapshots = trade_count = 0
+    for index, record in enumerate(read_member(spec)):
+        if index == limit:
+            expect(record.ts_recv // 3_600_000_000_000 % 24, 21, "first halt record UTC hour")
+            break
+        if index == 0:
+            first = record.ts_recv
+            expect(first % 86_400_000_000_000, 0, "UTC midnight snapshot clock")
+            expect(bool(record.flags & 32), True, "opening UTC snapshot flag")
+        expect(record.instrument_id, 150611, "tape instrument")
+        if last is not None and record.ts_recv < last:
+            raise ValueError("Nonmonotonic receive clock")
+        last = record.ts_recv
+        snapshots += bool(record.flags & 32)
+        trade_count += record.action.value == "T"
+        adapter.apply(record, "NGX3")
+        if (index + 1) % 200_000 == 0:
+            print(f"{day} replayed {index + 1:,} available records", file=sys.stderr, flush=True)
+    else:
+        raise ValueError("Missing pinned halt boundary record")
+    adapter.assert_groups_closed()
+    expect(adapter.record_count, limit, "available trade-date records")
+    expect(adapter.completed_event_group_count, groups, "available trade-date group count")
+    expect(snapshots, next_opening["snapshot_records"], "available snapshot records")
+    expect(trade_count, trades, "available trades")
+    orders = sum(len(book.orders) for book in adapter.books.values())
+    expect(orders, next_opening["resting_orders"], "resting orders at halt")
+    return {
+        "session": day,
+        "scope": "PARTIAL_TRADE_DATE",
+        "tape_git_commit": TAPE_PIN,
+        "adapter_git_commit": ADAPTER_PIN,
+        "boundary_manifest_commit": SESSION_PIN,
+        "databento_version": db.__version__,
+        "first_ts_recv_ns": first,
+        "last_ts_recv_ns": last,
+        "records": limit,
+        "completed_groups": groups,
+        "trades": trades,
+        "opening_snapshot_records": snapshots,
+        "resting_orders_at_halt": orders,
+        "archived_books_compared": 0,
+        "integrity": {str(key): dict(book.integrity) for key, book in adapter.books.items()},
+        "wall_seconds": round(time.perf_counter() - began, 2),
+    }
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("day", choices=("20231003", "20231018"))
-    print(json.dumps(run(parser.parse_args().day), indent=2), flush=True)
+    parser.add_argument("day", choices=("20231002", "20231003", "20231017", "20231018"))
+    day = parser.parse_args().day
+    replay = run_partial if day in {"20231002", "20231017"} else run
+    print(json.dumps(replay(day), indent=2), flush=True)

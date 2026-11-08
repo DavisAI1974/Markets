@@ -1,0 +1,20 @@
+{
+  "session": "20231017",
+  "scope": "PARTIAL_TRADE_DATE",
+  "tape_git_commit": "1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202",
+  "adapter_git_commit": "af36937d1e478831d4c7bc612c98d969e9a0848b",
+  "boundary_manifest_commit": "93895487c199b1e486d5407f9e103a0964903d2d",
+  "databento_version": "0.81.0",
+  "first_ts_recv_ns": 1697500800000000000,
+  "last_ts_recv_ns": 1697576399806587111,
+  "records": 841601,
+  "completed_groups": 635170,
+  "trades": 33451,
+  "opening_snapshot_records": 738,
+  "resting_orders_at_halt": 790,
+  "archived_books_compared": 0,
+  "integrity": {
+    "150611": {}
+  },
+  "wall_seconds": 329.0
+}
