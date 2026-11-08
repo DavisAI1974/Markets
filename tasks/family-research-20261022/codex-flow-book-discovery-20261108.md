@@ -641,3 +641,167 @@ turnover, same-price replenishment, deeper depth and independently timed externa
 inputs remain additional precursor hypotheses. A useful result must supply lead
 time and false-alarm/missed-birth rates, then separately explain later movement;
 finding the retrospective birth is not itself a profitable trade signal.
+
+## Primer application and continued dipole dive — November 8
+
+The user's 11-page Claude primer was read in full and preserved byte-for-byte in
+[sources](research-atlas-v2/sources/primer-source.json). Its application and the
+user's standing corrections are now in [durable project memory](codex-research-memory.md).
+The following adds to the initial findings rather than replacing their evidence.
+
+### Event-time response, fixed-time response and spread
+
+The primer's distinction between the next midpoint move and a fixed future time
+changes what the quote imbalance answers. Among the 980 aggression-to-rest events,
+978 start at a one-tick spread. Of 515 ask-heavy one-tick events, the next changed
+midpoint is down in 376 (73.0%); of 447 bid-heavy events, it is up in 328 (73.4%).
+Median waits are 8.118 and 9.666 milliseconds respectively. These are conditional
+descriptions of a selected order-path population, not a new fitted entry rule.
+
+At one second the same populations contain 177 flat outcomes each. The ask-heavy
+group has 245 down and 93 up; the bid-heavy group has 197 up and 73 down. Event-time
+and fixed-time results therefore answer different questions. Only two events have
+a wider spread, so this population cannot establish a reliable spread-regime
+comparison. Keep denominators and flats instead of treating them as failures or
+discarding them from one target without saying so.
+
+Native completed-group observations are retained at 1/5/25/100/250/500 ms and
+1/5/20 seconds, plus the next change. This is a response-measurement grid, not the
+recovered NG predictive lead. Family-start comparisons use the strict prebirth
+quote with a birth-minus-one-nanosecond cutoff. For 517 of the 749 selected family
+starts the first midpoint change is the birth group itself; the apparent
+one-nanosecond wait is an alignment artifact and cannot be credited to an action
+after recognition. Three family next-change outcomes remain unavailable.
+
+[Per-case outcomes](research-atlas-v2/primer-spread-event-outcomes.csv.gz),
+[summary](research-atlas-v2/primer-spread-event-summary.csv),
+[method](research-atlas-v2/primer-application-method.json).
+
+### Quote age and reused-control sensitivity
+
+The original family prebirth activity difference of +0.2275 lots at a one-second
+lead uses 488 matched cases and 276 unique controls. Giving each reused control
+equal total weight reduces it to +0.1561. Requiring both quotes to be at most one
+second old leaves 168 pairs and 88 controls: the ordinary mean is +0.2262 but the
+equal-control-weighted mean becomes **−0.1779**. The one-second family activity
+candidate is sensitive to the comparison population; the earlier positive
+quarter signs do not settle it.
+
+At twenty seconds the family contrast stays positive under this diagnostic:
+536 pairs/282 controls, +0.4291 ordinary and +0.3875 equal-control-weighted;
+the fresh-quote subset is 191/91, +0.6754 and +0.5758 respectively.
+
+The dipole displayed-depth candidate at a one-second lead also remains positive:
+487 pairs/220 controls, +0.5708 lots ordinary and +1.1899 equal-control-weighted;
+the fresh-quote subset is 101/66, +0.6238 and +1.1543. At twenty seconds its full
+comparison is negative while its much smaller fresh-quote subset is slightly
+positive. Quote persistence and sample selection matter. These are sensitivity
+checks, not optimized filters or independent confirmations.
+
+[Every sensitivity result](research-atlas-v2/primer-prebirth-sensitivity.csv).
+
+### Actual dipole operator application
+
+The existing portable `odcore/info_dipole.py:signed_flow_features` operator is now
+applied unchanged to all **863 dipoles**, at 60/20/5/1 seconds before birth and at
+actual recognition: **4,315 retained observations**. The source bytes and hash
+are saved. This applies the inherited toolkit; it does not reopen its NG
+applicability. No crypto deployment threshold or per-cell map is imported.
+
+The five operator outputs are signed imbalance, entropy asymmetry, signed
+entropy/coupling ratio, mutual-information change, and imbalance change. The
+20-second input is divided into two ten-second halves. A zero-volume half is
+explicitly marked: the original operator's numerical zero for that half must not
+be interpreted as balanced trading. Its EPS-regularized coupling ratio is not a
+probability or a calibrated confidence measure.
+
+The companion flow uses print price against the preceding valid completed-group
+midpoint, assigned to the containing group's close second. This makes completed
+bin inputs available by the specified decision cutoff. Unknown lots remain in
+the per-second table. The saved original detector reconstruction instead uses
+action-time quotes. Recognition buy/sell operands agree for **842/863** candidates
+and differ for **21/863**. Both definitions and the comparison are retained.
+The companion lens is not silently substituted for the original detector.
+
+At recognition, both halves contain classified volume for 248 candidates;
+125 have an empty early half, 145 an empty late half, and 345 both halves empty.
+At a one-second prebirth lead those counts are 221, 129, 217 and 296. Sparse flow
+is therefore part of the evidence, not a reason to manufacture a ratio or drop
+the case. Future feature interpretation must retain these activity states.
+
+### What made the dipole weaken?
+
+Between birth and actual recognition, 511 of 863 candidates have at least one
+defined step toward balance in the companion flow. **327 contain an expiry-only
+weakening step**, with no fresh classified volume that second. Across selected
+paths there are 2,410 weakening case-second rows: 1,434 fresh-only, 756 expiry-only,
+and 220 with both fresh and expiring lots. Deduplicating shared seconds gives
+1,420, 754 and 218 respectively. No candidate's entire weakening path is
+expiry-only; those steps coexist with fresh-involved steps elsewhere in its path.
+
+Another **589 candidates** contain at least one transition from defined imbalance
+to undefined because all classified volume has expired: 663 case-second rows,
+631 unique seconds. This is loss of observed recent flow, not proof that
+aggressors switched sides. Recognition lag from retrospective birth has median
+51.673 seconds and spans 7.060 to 137.368 seconds, so birth state and actual
+recognition state must remain distinct.
+
+This strengthens a general measurement rule: **a weakening rolling dipole can
+mean fresh opposition, expiry of earlier support, or a combination**. Follow the
+operands and subsequent replenishment before interpreting it psychologically.
+The mechanism classification records additions/removals in the rolling window;
+it does not by itself establish traders' intent or a future reversal.
+
+The later price response stays separate from exhaustion state. At +20 seconds,
+the 327 mixed-path cases have 111 moves with birth polarity, 110 against and 106
+flat. Fresh-involved paths without an expiry-only weakening step have 54/61/69
+among 184 cases. The remaining 352 cases have 95/74/182 and one unavailable
+endpoint. These outcomes do not redefine exhaustion as a direction label.
+
+![Dipole weakening mechanisms](research-atlas-v2/figures/dipole-weakening-mechanisms.png)
+
+[Operator observations](research-atlas-v2/dipole-operator-observations.csv.gz),
+[all weakening path rows](research-atlas-v2/dipole-weakening-path.csv.gz),
+[candidate mechanisms](research-atlas-v2/dipole-weakening-events.csv),
+[post-recognition outcomes](research-atlas-v2/dipole-weakening-outcomes.csv.gz),
+[application method](research-atlas-v2/dipole-application-method.json),
+[code](research_atlas_dipole.py).
+
+### Recovered NG math and source precedence
+
+The completed exhaustion runway clock was recovered at
+`637778d6f460940379ac0feaf8223be47971c11f`. Its frozen A-fast-collapse totals are
+358/993/1802/4386 seconds at 3t/5t/8t/13t; A-persistent totals are
+700/1802/3455/6836. Remaining runway is exactly
+`max(0, frozen_total - elapsed_since_t0)`. The original 61-dimensional classifier
+is available at +60 seconds and must retain its exact checksum and input identity.
+Microstructure changes qualitative confidence only, never state or runway seconds.
+
+The later August 20 correction makes timing a per-instance output from a causal
+stream; PRIOR/T0/H are reporting coordinates applied afterward. It supersedes
+the older fixed H grid. I am applying that distinction: the descriptive prebirth
+samples and outcome grids above are not asserted to be the earliest possible
+prediction time. The 863 reconstructed October candidates have not been assigned
+original frozen Family A labels without their lineage mapping.
+
+[Exact source copies and hashes](research-atlas-v2/sources/ng-timing-source-manifest.json)
+preserve this math and its interpretation. The separate historical S90/S94
+subsecond reversal/exhaustion lineage is located, but the user's exact later
+NG-specific look-ahead calculation is not yet uniquely recovered. The runway
+clock, crypto's approximate one second, and the native outcome grid must not be
+passed off as that calculation. Source recovery remains open; applicability is
+settled and is not being re-tested.
+
+Claude's concurrent primer appendix at `c89d77ea4` further distinguishes the
+roughly 300-second S92 flow nowcast, the S36 exhaustion filter and this archived
+candidate detector. A result on one does not adjudicate the others. Its 2.407 s
+recognition delay is nominal-emission-second to actual recognition; the 51.673 s
+reported above is retrospective-birth to recognition. Preserve both origins.
+The appendix's 7–20 s sub-minute lag example is WTI, so it cannot supply the
+missing NG-specific look-ahead calculation.
+
+Fifteen focused tests pass, including strict availability, empty-half handling,
+expiry accounting, all-case retention and existing order-path checks. Apply the
+same primer and dipole lenses to the other dates from their final saved outputs,
+then compare mechanisms and continuous precursor timing across dates. No producer
+or teacher rerun was used for this extension.

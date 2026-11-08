@@ -1,0 +1,27 @@
+{
+  "source_revision": "b5f28bd57de5ed4ff889335edb9a33216b67eb6a",
+  "operator": "odcore/info_dipole.py:signed_flow_features",
+  "operator_sha256": "0fb1f3d868973fcf0ee25be30d7ffe1f7b388a9235a19d893f8495012c0df23b",
+  "populations": {
+    "dipoles": 863,
+    "observation_rows": 4315
+  },
+  "window_seconds": 20,
+  "prebirth_leads_s": [
+    1,
+    5,
+    20,
+    60
+  ],
+  "application": "Existing portable information-dipole operator applied unchanged; no revalidation of NG applicability.",
+  "flow_definition": "Print price compared with the preceding valid completed-group midpoint; classified volume assigned to containing group close second. Unknown volume is retained separately. Companion observation lens, not the saved action-quote detector substrate.",
+  "clocks": "Prebirth bins end by the strict decision cutoff; recognition uses the last closed bin in the saved candidate. Bin availability is an accounting boundary, not an upstream emission timestamp.",
+  "limits": [
+    "No crypto per-cell deployment thresholds imported.",
+    "Empty halves are explicitly flagged; C_signed uses original EPS regularization and is not a probability.",
+    "Birth-aligned paths are retrospective explanations; later birth polarity is outcome annotation only.",
+    "Overlapping dipoles can share weakening seconds. Report both event counts and unique seconds.",
+    "No A/B/C lineage mapping is asserted for these 863 reconstructed candidates; frozen runway classifier requires its original event contract.",
+    "Prebirth lead samples are descriptive comparisons, not a replacement for continuous NG timing."
+  ]
+}

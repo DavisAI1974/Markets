@@ -1,0 +1,14 @@
+{
+  "reference": "User PDF SHA256 3a59306ef16814a525b85f08550a2f73cff63602cbbf6422693011c335f7e4dc",
+  "scope": "October 18 retained evidence; all other dates remain discovery and await comparable final tables.",
+  "next_change": "First different completed-group midpoint within same valid segment. Family decision is birth minus one nanosecond with the saved strict-pre quote; the birth group may be the next change. Remainder reference is initial completed-group close.",
+  "spread": "Existing NG tick convention: raw 1000000 = 0.001; one tick versus wider, with other states retained separately.",
+  "sensitivity": "Reweight each reused control equally, and separately require both case/control quote ages at most one second. Fixed diagnostic, not optimized threshold.",
+  "limitations": [
+    "Selected populations, overlapping outcomes and variable event waits; no fitted predictor or out-of-sample claim.",
+    "Family prebirth selection is retrospective; a birth-group move cannot be credited to a trade after family recognition.",
+    "Comparison changes both target and denominator; available and flat counts retained.",
+    "Quote-age and reuse checks do not remove all matching/selection confounding."
+  ],
+  "native_response_grid": "Retain response horizons 1/5/25/100/250/500 ms and 1/5/20 s at native completed groups. This is descriptive response measurement, not a substitute for the established NG look-ahead calculation or a transfer revalidation."
+}

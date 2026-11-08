@@ -8,9 +8,17 @@ import pandas as pd
 
 from research_atlas import OUT, RestingOrder, rolling_flow, mechanism_inventory
 from research_atlas_prebirth import strict_before
+from research_atlas_primer import next_changes
 
 
 class ResearchMechanics(unittest.TestCase):
+    def test_next_midpoint_change_does_not_cross_boundary(self):
+        a=np.zeros((5,9),dtype=np.int64)
+        a[:,2]=[100,100,102,102,104]
+        a[:,7]=1
+        a[:,8]=[0,0,0,1,1]
+        self.assertEqual(next_changes(a).tolist(),[2,2,-1,4,-1])
+
     def test_prebirth_excludes_a_group_at_the_exact_cutoff(self):
         clocks = np.array([100,200,300],dtype=np.int64)
         self.assertEqual(strict_before(clocks,200),0)

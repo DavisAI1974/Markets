@@ -1,6 +1,8 @@
 # NG discovery project context
 
-Read [Reading trade charts and testing market behavior](reading-trade-charts-and-signals.md) before interpreting signals, designing replay comparisons, or drafting paper-test rules for this workstream. Use the [October discovery log](october-discovery-log.md) as the single Markdown repository for findings, counterexamples, open hypotheses, paper outcomes, and the per-date table index. Use its independent-review handoff for Codex and Claude.
+Read [Reading trade charts and testing market behavior](reading-trade-charts-and-signals.md) before interpreting signals, designing replay comparisons, or drafting paper-test rules for this workstream. The user now requires independent reviewer Markdown files, with findings merged at the end. Codex writes [its own findings](codex-flow-book-discovery-20261108.md); preserve Claude's separate work. Keep the [October discovery log](october-discovery-log.md) as shared historical context and per-date index.
+
+Read [Codex research memory](codex-research-memory.md) for the user's standing scope, supplied primer, recovered NG timing sources and their precedence, and the ongoing dipole dive. NG applicability is settled; apply the established math without reopening transfer validation. Keep exact-source recovery distinct from new hypothesis testing.
 
 - Define patterns by observable market behavior and conditions. Keep exact prices for movement measurement and contract-specific context. Preserve ratio operands and source observations.
 - Use timestamps for ordering, availability, elapsed time and grouping. Keep clock buckets and weekdays separate from observed market events.

@@ -1,0 +1,26 @@
+[
+  {
+    "revision": "637778d6f460940379ac0feaf8223be47971c11f",
+    "path": "research/NG_EXHAUSTION_RUNWAY_CLOCK_V0_20260817.md",
+    "retained_copy": "ng-frozen-runway-clock.md",
+    "sha256": "b08b155d96c7be797c82d466533754edc1231e8e0e8ffcf7c1a5e16c9cc245c0"
+  },
+  {
+    "revision": "637778d6f460940379ac0feaf8223be47971c11f",
+    "path": "research/ng_exhaustion_runway_clock.py",
+    "retained_copy": "ng-frozen-runway-clock.py",
+    "sha256": "d73a9a04eee3aa2f65c6c64ee57faa37a5d71000939bdd54da7f94931edea1eb"
+  },
+  {
+    "revision": "76741d03f7ebd08ea6595af7c7cf140e5a3c22a1",
+    "path": "artifacts/sqlite-triage/20261022/families/full-context-audit/canonical-sources/research/NG_EXHAUSTION_CONTINUOUS_INSTANCE_TIMING_CORRECTION_20260820.md",
+    "retained_copy": "ng-continuous-timing-correction.md",
+    "sha256": "553c119d0809f5f36f98752ec601adef75eb04b1c80515885487c9a6a460ca24"
+  },
+  {
+    "revision": "76741d03f7ebd08ea6595af7c7cf140e5a3c22a1",
+    "path": "artifacts/sqlite-triage/20261022/families/full-context-audit/canonical-sources/research/NG_EXHAUSTION_V4_INTERPRETATION_CORRECTION_20260820.md",
+    "retained_copy": "ng-v4-interpretation-correction.md",
+    "sha256": "e8e74ffd603faf6e9e75c9659a6e434e7a8da982bee7224ef4fabdd867f10b8f"
+  }
+]
