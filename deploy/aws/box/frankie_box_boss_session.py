@@ -3870,7 +3870,6 @@ class Session:
                     os.sched_setaffinity(0, set(affinity) - set(idle))
                     with CompactConformanceReader(rows_path, expected_count=count, expected_head_hash=head,
                             workers=self._data_workers()) as reader:
-                        os.sched_setaffinity(0, {consumer})
                         probe.reader_workers = dict(requested=self._data_workers(),
                                                     effective=len(reader.worker_cpus), worker_cpus=list(reader.worker_cpus),
                                                     consumer_cpu=consumer, consumer_core_idle_siblings=idle,
@@ -3881,8 +3880,13 @@ class Session:
                         # not read again; at most the one block holding the cursor is verified a second time.
                         resume_at = reader.resume_point(consumed)
                         seen = resume_at[0]
-                        for entry in probe.track(reader.entries(resume=resume_at), count, 'source-journal-records',
-                                                 done=seen):
+                        entries = probe.track(reader.entries(resume=resume_at), count, 'source-journal-records',
+                                              done=seen)
+                        for index, entry in enumerate(entries):
+                            if index == 0:
+                                # The pool has spawned on the wider lane. Pin the
+                                # coordinator after the workers can import in parallel.
+                                os.sched_setaffinity(0, {consumer})
                             take_next(entry['kind'], entry['payload'])
                 finally:
                     os.sched_setaffinity(0, set(affinity))
