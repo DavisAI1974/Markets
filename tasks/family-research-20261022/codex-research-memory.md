@@ -148,3 +148,28 @@ snapshot, then record CCODE's final source revision before extending the other
 dates. Source coverage and job completion are separate requirements. Latest
 monitor snapshot in that file says three Native passes advancing, standalone
 queued; do not mistake this dated statement for live status.
+
+## Continuous precursor and retention continuation
+
+Continuation from `8f4c15083` is on
+`codex/ng-prebirth-paper-continuation-20261108`; code/data checkpoint `35c873b00`.
+`research_atlas_continuous.py` scans saved October 18 completed seconds before
+joining birth labels: 82,800 retained, 82,758 with usable history/quote segments,
+ten predicates, 10,383 unique onset seconds. Every active second, unmatched birth,
+non-birth onset and outcome remains in `research-atlas-v2/continuous-prebirth-v1/`.
+The 60-second birth join is retrospective reporting, not a predictive horizon;
+one-second sampling is not the earliest available native-group signal. Subset
+predicates can turn on later, so onset cohorts are not matched ablation cohorts.
+Frozen Family A identity and the unresolved exact later NG look-ahead remain
+unchanged. Exact operator bytes are read from Git to preserve their checksum.
+
+`research_paper_retention.py` preserves 146 register entries and 730 date-queue
+rows, including all 11 stack arms and all 88 prior prebirth contrasts. Some entries
+index broader collections, not fully specified trading rules. Everything remains
+eligible for paper study over more days; no strength/performance admission filter.
+Execution fields remain unconfigured, and no paper orders ran. The independent
+Codex findings now include population counts, contrary cases and source coordinates.
+Twenty-seven focused tests pass. CCODE still owns missing-data repair; record its
+final source revision and coverage before extending the other days. The remote
+head checked during this pass was `f9438e4a2` (archive staging, not completed input
+repair). This is a dated source check, not a live producer status claim.

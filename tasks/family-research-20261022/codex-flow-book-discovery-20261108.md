@@ -968,3 +968,161 @@ established by that analysis; it must not be read as denying that candidate a
 paper trial. Keep the original measurements and contrary cases, give each
 candidate the planned opportunity over further days, and record its outcomes.
 Missing source/input coverage is recorded separately from signal performance.
+
+## Continuous precursor observations and paper retention — continuation from 8f4c15083
+
+Research/data checkpoint: `35c873b00`, on
+`codex/ng-prebirth-paper-continuation-20261108`. This continuation branches from
+the requested `8f4c15083392233c28ad5c450d44fdc34a466a67`. At the remote check,
+the shared branch's next commit was `f9438e4a2`, an archive-staging change, not
+a completed comparable-input repair. CCODE retains ownership of those repairs.
+No raw-tape replay, producer, teacher, detector, box, or simulator was launched.
+
+### What was measured before attaching birth labels
+
+The new pass scans all **82,800 completed seconds** in the retained October 18
+session (October 17 22:00 through October 18 21:00 UTC, half-open input range).
+It retains 82,758 observations with consecutive flow history and a valid quote
+segment; all 42 unavailable observations remain in the table. Comparing adjacent
+roll-20 states requires 21 seconds of history. Missing history and reset crossings
+are not scored as zero flow. This is saved-output analysis, not data repair.
+
+Ten fixed, untuned predicates describe two kinds of weakening, fresh opposition,
+expiry, disappearance/resumption of classified flow, and combinations with touch
+depth and prior price response. One-step weakening compares adjacent completed
+roll-20 ratios; half-window weakening compares the two ten-second halves, with
+both denominators positive. These answer different questions. Zero-volume flow
+is undefined, while two-sided balance has a defined zero ratio.
+
+Every active second is preserved. An onset is the first observed true bin after
+false/unavailable/gap, separately for each predicate. Additional book or fresh-flow
+conditions can switch on during an already active weakening state. Their onsets
+are therefore **not a matched subset of weakening onsets**. This prevents an
+incremental-value or causal interpretation of the raw conditional rates.
+The code flags left-censored onsets; none occur in this sample. The ten predicates
+share **10,383 unique onset seconds**, so their counts cannot be added as
+independent evidence.
+
+The existing `signed_flow_features` operator is applied unchanged at these unique
+onset seconds. Its exact source SHA256 remains
+`0fb1f3d868973fcf0ee25be30d7ffe1f7b388a9235a19d893f8495012c0df23b`.
+Bytes are read from Git to avoid Windows line-ending conversion changing the
+recorded source identity. Flow remains the previous-completed-group companion
+classification. The action-time Native operands are preserved separately.
+
+### Prebirth coverage includes onsets with no subsequent recorded birth
+
+Only after causal event construction are all 863 archived births joined to
+onsets in **[birth − 60 seconds, birth)**. The 60 seconds is a descriptive report
+window inherited from the existing prebirth range, not an entry horizon,
+recovered NG look-ahead, or limit on earlier information. Same-boundary births
+are separately counted and receive no prebirth credit. Every birth is retained
+for every predicate: 8,630 rows, including zero-match rows.
+
+| Observation | Active seconds | Onsets | Births preceded, /863 | Onsets with no birth in next 60 s | Median last lead among matched births |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Step weakening | 6,841 | 5,425 | 553 | 2,745 | 13 s |
+| Expiry-only step weakening | 2,574 | 2,327 | 447 | 1,095 | 13 s |
+| Fresh-opposed step weakening | 3,294 | 2,932 | 502 | 1,564 | 19 s |
+| Flow becomes undefined | 816 | 816 | 481 | 302 | 31 s |
+| Flow resumes | 817 | 817 | 425 | 316 | 25 s |
+| Half-window weakening | 12,540 | 2,349 | 463 | 1,229 | 19 s |
+| Half weakening + aligned book | 5,808 | 1,916 | 375 | 1,079 | 23 s |
+| Half weakening + opposed book | 5,256 | 1,792 | 360 | 997 | 22.5 s |
+| Half weakening + opposed prior price | 2,158 | 724 | 196 | 420 | 28 s |
+| Half weakening + fresh and book opposed | 1,609 | 741 | 198 | 439 | 24 s |
+
+The earlier birth-aligned evidence alone could hide how often these observations
+occur elsewhere. The new denominator exposes that. A non-birth onset is not a
+failed trade or a false-positive exhaustion: Native birth is a separate selected
+target. These counts establish neither matched-background enrichment nor
+tradeability. Related births and overlapping windows reuse observations.
+
+### Combinations retain both following and opposing outcomes
+
+At +20 seconds, half-window weakening with aligned touch has **797 following,
+689 opposing and 429 flat** midpoint outcomes, plus one unavailable endpoint
+among 1,916 onsets. With opposed touch: **623 following, 744 opposing, 424 flat**,
+plus one unavailable among 1,792. Signs are relative to the current observed
+roll-20 flow, never later birth polarity. The respective outcomes form only
+656 and 651 overlapping-interval clusters, not independent days.
+
+Adding the fresh-five-second opposition condition to opposed book gives 741
+onsets: **266 following, 309 opposing, 166 flat**, no missing +20-second endpoints.
+Of 712 cases with both initial and later flow defined, 280 weaken further,
+427 strengthen and 5 keep the same strength. Another 29 have undefined later
+flow. A weakening state does not guarantee continued weakening or a reversal.
+
+Expiry-only weakening gives 787 following, 766 opposing, 572 flat, and 202
+nonflat price changes with balanced current flow at +20 seconds. Fresh-opposed
+weakening gives 1,010 following, 1,027 opposing, 694 flat, 197 balanced-current-flow
+nonflat cases, and four unavailable endpoints. Balanced and undefined direction
+remain explicit rather than disappearing from the denominator.
+
+For flow becoming undefined, 455 of 816 +20-second outcomes are flat; 181 go up
+and 180 down. All 816 lack a current flow direction. This supports keeping loss
+of recent observations distinct from fresh opposing pressure; it does not define
+exhaustion truth by the price outcome. Quote age also differs: its median is
+2.984 seconds for flow disappearance versus 0.196 seconds for fresh-opposed
+weakening. Activity/quote-age matching remains a useful next comparison.
+
+### Source-linked example and counterexample
+
+The first three-layer onset is `1697584190000000000` ns, using G8424 / cursor
+10264, whose quote was known at `1697584189620488019`. Early flow is 3 buy / 0
+sell; late flow is 1 / 1; full flow is +0.6. The fresh five seconds contain
+0 / 1, touch imbalance is −0.2, spread is two ticks, and prior twenty-second
+midpoint displacement is zero. Price stays flat at +5 s and falls half a tick
+at +20/+60 s. Later flow is undefined at both longer endpoints, not opposite.
+
+The first contrary three-layer case is `1697587344000000000` ns, G15593 /
+cursor 19233. Early flow is 3 / 0, late flow 6 / 2, fresh flow 1 / 2, full
+flow +0.6364, and touch −0.5. Despite the same qualitative opposition story,
+the +20-second midpoint rises half a tick (endpoint G15758). Both remain in
+the paper queue. Chronological examples avoid choosing only favorable cases.
+
+### Paper retention and continuation contract
+
+The [register](research-atlas-v2/continuous-prebirth-v1/paper-hypotheses.json)
+contains **146 entries**: 11 existing stack arms, 88 population/lead/feature
+prebirth contrasts, 17 prior table hypotheses/principles, five named findings,
+15 broader retained research collections, and ten new predicates. Collection
+entries preserve their individual variants and cases in the original sources;
+146 is not a count of fully specified trading rules. The original research tree
+is preserved at the base revision, including every weak, negative, undefined,
+contrary and currently worse-than-baseline result. No performance filter exists.
+
+The [date queue](research-atlas-v2/continuous-prebirth-v1/paper-date-queue.csv)
+has 730 entries: each hypothesis across October 2, 3, 17, 18 and additional days.
+October 2/17 remain partial. Comparable repaired inputs for October 2/3/17
+await CCODE's final revision/coverage verification; historical partial evidence
+is retained. Future dates are queued, not fabricated or reported as tested.
+
+Each prospective instance must keep known-by time, decision, recognition,
+execution and outcome clocks separate, with source revision/group/cursor,
+conditions, missing inputs, orchestrator decision reason and fills/misses.
+Trigger, side, order type, size, exit and simulator environment remain explicit
+unconfigured fields until specified. Retention is guaranteed; it does not imply
+that a simulator ticket or paper execution occurred during this pass.
+
+Apply the August 20 per-instance timing correction. This completed-second scan
+has a one-second observation floor and cannot recover the earliest native-group
+signal. Do not delay earlier valid information to this grid. The exact later
+NG-specific look-ahead calculation remains unresolved in the source recovery;
+the observed lead medians above are not substitutes. The original frozen Family A
+classifier still requires its exact lineage and +60-second availability, with
+unchanged runway totals. Nothing here assigns that identity to these candidates.
+
+[All observations](research-atlas-v2/continuous-prebirth-v1/observations.csv.gz) ·
+[Every active predicate](research-atlas-v2/continuous-prebirth-v1/active-events.csv.gz) ·
+[Causal onsets and operator outputs](research-atlas-v2/continuous-prebirth-v1/onsets.csv.gz) ·
+[Every birth join](research-atlas-v2/continuous-prebirth-v1/birth-links.csv.gz) ·
+[Outcomes](research-atlas-v2/continuous-prebirth-v1/outcomes.csv.gz) ·
+[Full summary](research-atlas-v2/continuous-prebirth-v1/outcome-summary.csv) ·
+[Method and pins](research-atlas-v2/continuous-prebirth-v1/method.json).
+
+Reproduce with `python tasks/family-research-20261022/research_atlas_continuous.py`
+then `python tasks/family-research-20261022/research_paper_retention.py` from this
+checkout. The focused atlas/dipole/stack/continuous suite passes **27 tests**,
+including future-prefix invariance, strict quote/birth boundaries, reset history,
+all-case retention, operator consistency, outcome accounting and all-arm retention.
