@@ -2,6 +2,14 @@
 
 The first replay treats two October 18 liquidity findings as working premises. It asks what would have happened if we had acted on each premise at a quote observable after the signal. The same October 18 window motivated both premises, so this is an in-sample diagnostic. Each signal is a separate hypothetical one-unit scenario. Signals can overlap or point in opposite directions. The ledger preserves all of them and supplies no portfolio return or actual fill claim.
 
+## Research status and simulator tests
+
+Keep the **test result** and **research status** separate. Preserve the exact outcome, test conditions, market and instrument, timing assumptions, original source references, and positive, negative, flat, missing and censored cases. A rule that falls short in a tested setting, has mixed evidence, or cannot be scored remains **`NOT_ENOUGH_INFO`** for broader use. The measured result still stands for that test. Retain the original rule and its full evidence when a later variant is tested.
+
+The size-one onset, continuation after a retreat to the previous second level, and earlier falling-size rules all remain **`NOT_ENOUGH_INFO`** for broader use. Their October 18 results, including adverse spread-crossing outcomes, are preserved below and in the original receipts. Missing source data leaves the October 3 comparison open under the same research status, with no scored result.
+
+Marginal ideas may be tested in a separately labeled forward simulator experiment. Before each test, record the environment and instrument, trigger, size, order type, exit, and what would help distinguish a signal issue from an execution or data issue. Retain simulator fills, partial fills, missed fills and outcomes under those conditions. Link each experiment back to its historical evidence so later work can revisit it.
+
 ## Included evidence and decision boundaries
 
 The [source projection](../local-liquidity-v1/README.md) preserves all 30,739 original market trades and identifies every known missing view. The replay population is the 22,194 consecutive observed books for instrument 150611, native groups 229201–251394. It also reads the matching transitions, first-ten source references and all original trade links. The rest of the tape, sparse quotes, and the separate exact-action window for trades 118–149 remain evidence for research. Their gaps prevent them from supplying entries or exits for this replay. The first observed book cannot establish a newly thin episode at the left boundary.

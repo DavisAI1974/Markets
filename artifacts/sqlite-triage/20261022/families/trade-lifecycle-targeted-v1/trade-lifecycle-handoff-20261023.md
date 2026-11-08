@@ -1,5 +1,9 @@
 # Trade lifecycle analysis handoff
 
+## Paper-trading research status
+
+Carry forward the [research status policy and paper replay](historical-paper-replay-v1/README.md#research-status-and-simulator-tests). Keep observed test outcomes and research status separate. Retain every tested rule and all of its evidence. Rules with weak, mixed, adverse, or unavailable evidence stay **`NOT_ENOUGH_INFO`** for broader use. Marginal rules remain eligible for separately labeled simulator experiments in the relevant market environment. Before a new calculation or table, explain the population, available inputs, scoring and handling of gaps and contradictions.
+
 ## Latest local-liquidity explanation
 
 Read [local-liquidity-v1/README.md](local-liquidity-v1/README.md), [analysis receipt](local-liquidity-v1/analysis-receipt.json), [Frankie use ledger](local-liquidity-v1/frankie-local-liquidity-use.json) and [verification](local-liquidity-v1/verification.json). The existing full-depth ladder was streamed once: all 10,267,320 rows, 22,194 complete books, 22,193 consecutive transitions and 443,880 preserved first-ten rows. First-ten growth can reflect moving rank-window membership rather than increased size at shared prices: 340 bid retreats / 351 ask increases have larger first-ten size, with nonpositive shared-price changes in 338 / 350. Full-book skew opposes touch skew in 11,348 snapshots; stable quotes conceal thousands of touch-size changes. All intermediate paths and counterexamples remain saved; net size changes do not identify fills/cancels or order survival.
