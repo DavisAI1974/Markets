@@ -6,6 +6,25 @@ the UTC midnight snapshots. October 3 and 18 have full-session tape coverage.
 Each date gets its own observed signals, including opposing calls, flats,
 misses and unavailable inputs. Keep original group and cursor coordinates.
 
+## What to watch across all four dates
+
+Describe the ordered behavior at the touch and link the observations that
+show it. Record the prior state, the sequence of changes, what was visible
+at the decision close, and what happened afterward. Keep exact prices,
+sizes, and ratios with their source coordinates. Use them to reconstruct
+the sequence. Any numerical condition in a candidate belongs to that
+versioned rule and needs its own evidence before reuse across setups.
+
+- For a thinning touch, track whether the price held as displayed size fell,
+  then record recovery at that price, replenishment, or retreat separately.
+- For prints, record where they occurred relative to the immediately prior
+  quote and how the book changed around them. Attribute depletion to a fill
+  or cancel only where the original actions support that link.
+- For absorption and entropy, keep the underlying updates and their order.
+  Trace fill and display changes by order and price for absorption. For
+  entropy, inspect the touch-size observations in both blocks that produced
+  the change. Keep similar sequences with different outcomes side by side.
+
 ## October 18 observations
 
 The full-session standalone input export covers 583,688 completed groups and
