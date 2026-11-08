@@ -1,0 +1,1128 @@
+{
+  "initial": [
+    {
+      "day": "20231002",
+      "at": 1794170790.5631347,
+      "recovery": {
+        "before": "projection-lane-before-4402.json",
+        "resumed_at": 1794170697.0151217,
+        "progress": {
+          "at": 1794170696.8835337,
+          "completed": 0,
+          "failed": 0,
+          "in_flight": 0,
+          "percent": 0.0,
+          "phase": "deriving",
+          "pid": 5825,
+          "process_token": "65c77249-f30c-4536-8a0f-f16282164d1f:146765316",
+          "request_sha256": "1cf6c248e34978db95f972ab9bcacdd345e540f3733f3c1bc42caccdb3967ad5",
+          "schema": "FRANKIE_WORK_PROBE_V1",
+          "stage": "root-projection-member",
+          "state": "running",
+          "total": 200620970437
+        },
+        "workers": {
+          "affinity_readback_verified": true,
+          "coordinator_cpu": 1,
+          "helpers": [
+            {
+              "cpu": 2,
+              "pid": 5862
+            },
+            {
+              "cpu": 8,
+              "pid": 5858
+            },
+            {
+              "cpu": 9,
+              "pid": 5861
+            },
+            {
+              "cpu": 24,
+              "pid": 5863
+            },
+            {
+              "cpu": 27,
+              "pid": 5864
+            },
+            {
+              "cpu": 30,
+              "pid": 5866
+            },
+            {
+              "cpu": 36,
+              "pid": 5865
+            },
+            {
+              "cpu": 40,
+              "pid": 5871
+            },
+            {
+              "cpu": 42,
+              "pid": 5874
+            },
+            {
+              "cpu": 47,
+              "pid": 5873
+            },
+            {
+              "cpu": 49,
+              "pid": 5876
+            },
+            {
+              "cpu": 50,
+              "pid": 5879
+            },
+            {
+              "cpu": 51,
+              "pid": 5880
+            },
+            {
+              "cpu": 54,
+              "pid": 5881
+            },
+            {
+              "cpu": 62,
+              "pid": 5870
+            },
+            {
+              "cpu": 65,
+              "pid": 5885
+            },
+            {
+              "cpu": 66,
+              "pid": 5886
+            },
+            {
+              "cpu": 72,
+              "pid": 5888
+            },
+            {
+              "cpu": 73,
+              "pid": 5884
+            },
+            {
+              "cpu": 88,
+              "pid": 5890
+            },
+            {
+              "cpu": 91,
+              "pid": 5889
+            },
+            {
+              "cpu": 94,
+              "pid": 5882
+            },
+            {
+              "cpu": 100,
+              "pid": 5877
+            },
+            {
+              "cpu": 104,
+              "pid": 5868
+            },
+            {
+              "cpu": 106,
+              "pid": 5883
+            },
+            {
+              "cpu": 111,
+              "pid": 5869
+            },
+            {
+              "cpu": 113,
+              "pid": 5878
+            },
+            {
+              "cpu": 114,
+              "pid": 5887
+            },
+            {
+              "cpu": 115,
+              "pid": 5872
+            },
+            {
+              "cpu": 118,
+              "pid": 5875
+            },
+            {
+              "cpu": 126,
+              "pid": 5867
+            }
+          ],
+          "lane": [
+            1,
+            2,
+            8,
+            9,
+            24,
+            27,
+            30,
+            36,
+            40,
+            42,
+            47,
+            49,
+            50,
+            51,
+            54,
+            62,
+            65,
+            66,
+            72,
+            73,
+            88,
+            91,
+            94,
+            100,
+            104,
+            106,
+            111,
+            113,
+            114,
+            115,
+            118,
+            126
+          ],
+          "maximum_pending": 62,
+          "placement_basis": "physical-core spread: one hardware thread per core first, then the siblings (16 cores, 32 CPUs)",
+          "reserved_cpu": null
+        },
+        "native_stage_reused_unchanged": true,
+        "bootstrap_revision": "8ff32c2f5"
+      },
+      "before": {
+        "observed_at": 1794170659.755902,
+        "progress": {
+          "at": 1794170648.0579066,
+          "completed": 48184430418,
+          "failed": 0,
+          "in_flight": 0,
+          "percent": 24.02,
+          "phase": "deriving",
+          "pid": 4402,
+          "process_token": "65c77249-f30c-4536-8a0f-f16282164d1f:145838637",
+          "request_sha256": "1cf6c248e34978db95f972ab9bcacdd345e540f3733f3c1bc42caccdb3967ad5",
+          "schema": "FRANKIE_WORK_PROBE_V1",
+          "stage": "root-projection-member",
+          "state": "running",
+          "total": 200620970437
+        },
+        "workers": {
+          "affinity_readback_verified": true,
+          "coordinator_cpu": 2,
+          "helpers": [
+            {
+              "cpu": 2,
+              "pid": 5131
+            }
+          ],
+          "lane": [
+            2
+          ],
+          "maximum_pending": 2,
+          "placement_basis": "a single-CPU lane: the helper shares the coordinator CPU",
+          "reserved_cpu": null
+        },
+        "completed_ranges": 721,
+        "native_stage_mtime_ns": 1794168037455963935
+      },
+      "progress": {
+        "at": 1794170790.4476333,
+        "completed": 80329505370,
+        "failed": 0,
+        "in_flight": 0,
+        "percent": 40.04,
+        "phase": "deriving",
+        "pid": 5825,
+        "process_token": "65c77249-f30c-4536-8a0f-f16282164d1f:146765316",
+        "request_sha256": "1cf6c248e34978db95f972ab9bcacdd345e540f3733f3c1bc42caccdb3967ad5",
+        "schema": "FRANKIE_WORK_PROBE_V1",
+        "stage": "root-projection-member",
+        "state": "running",
+        "total": 200620970437
+      },
+      "actual_affinity": {
+        "5862": [
+          2
+        ],
+        "5858": [
+          8
+        ],
+        "5861": [
+          9
+        ],
+        "5863": [
+          24
+        ],
+        "5864": [
+          27
+        ],
+        "5866": [
+          30
+        ],
+        "5865": [
+          36
+        ],
+        "5871": [
+          40
+        ],
+        "5874": [
+          42
+        ],
+        "5873": [
+          47
+        ],
+        "5876": [
+          49
+        ],
+        "5879": [
+          50
+        ],
+        "5880": [
+          51
+        ],
+        "5881": [
+          54
+        ],
+        "5870": [
+          62
+        ],
+        "5885": [
+          65
+        ],
+        "5886": [
+          66
+        ],
+        "5888": [
+          72
+        ],
+        "5884": [
+          73
+        ],
+        "5890": [
+          88
+        ],
+        "5889": [
+          91
+        ],
+        "5882": [
+          94
+        ],
+        "5877": [
+          100
+        ],
+        "5868": [
+          104
+        ],
+        "5883": [
+          106
+        ],
+        "5869": [
+          111
+        ],
+        "5878": [
+          113
+        ],
+        "5887": [
+          114
+        ],
+        "5872": [
+          115
+        ],
+        "5875": [
+          118
+        ],
+        "5867": [
+          126
+        ]
+      },
+      "standalone_status": "2026-11-08T20:31:28Z waiting-for-producers"
+    },
+    {
+      "day": "20231003",
+      "at": 1794170790.6213675,
+      "recovery": {
+        "before": "projection-lane-before-2151.json",
+        "resumed_at": 1794170772.460853,
+        "progress": {
+          "at": 1794170772.3331168,
+          "completed": 0,
+          "failed": 0,
+          "in_flight": 0,
+          "percent": 0.0,
+          "phase": "deriving",
+          "pid": 2768,
+          "process_token": "a6f324c7-aa41-4421-aa7a-9ce404449db9:146773861",
+          "request_sha256": "f5dc47e0096c8785435db7d03bd813d8261c47e33811efc0fd24023bc3ccac39",
+          "schema": "FRANKIE_WORK_PROBE_V1",
+          "stage": "root-projection-member",
+          "state": "running",
+          "total": 221898546572
+        },
+        "workers": {
+          "affinity_readback_verified": true,
+          "coordinator_cpu": 9,
+          "helpers": [
+            {
+              "cpu": 11,
+              "pid": 2793
+            },
+            {
+              "cpu": 12,
+              "pid": 2789
+            },
+            {
+              "cpu": 19,
+              "pid": 2795
+            },
+            {
+              "cpu": 26,
+              "pid": 2796
+            },
+            {
+              "cpu": 27,
+              "pid": 2794
+            },
+            {
+              "cpu": 29,
+              "pid": 2802
+            },
+            {
+              "cpu": 30,
+              "pid": 2799
+            },
+            {
+              "cpu": 31,
+              "pid": 2801
+            },
+            {
+              "cpu": 32,
+              "pid": 2797
+            },
+            {
+              "cpu": 37,
+              "pid": 2808
+            },
+            {
+              "cpu": 42,
+              "pid": 2798
+            },
+            {
+              "cpu": 46,
+              "pid": 2812
+            },
+            {
+              "cpu": 50,
+              "pid": 2805
+            },
+            {
+              "cpu": 53,
+              "pid": 2814
+            },
+            {
+              "cpu": 58,
+              "pid": 2804
+            },
+            {
+              "cpu": 73,
+              "pid": 2817
+            },
+            {
+              "cpu": 75,
+              "pid": 2807
+            },
+            {
+              "cpu": 76,
+              "pid": 2792
+            },
+            {
+              "cpu": 83,
+              "pid": 2816
+            },
+            {
+              "cpu": 90,
+              "pid": 2810
+            },
+            {
+              "cpu": 91,
+              "pid": 2806
+            },
+            {
+              "cpu": 93,
+              "pid": 2820
+            },
+            {
+              "cpu": 94,
+              "pid": 2818
+            },
+            {
+              "cpu": 95,
+              "pid": 2821
+            },
+            {
+              "cpu": 96,
+              "pid": 2819
+            },
+            {
+              "cpu": 101,
+              "pid": 2813
+            },
+            {
+              "cpu": 106,
+              "pid": 2800
+            },
+            {
+              "cpu": 110,
+              "pid": 2803
+            },
+            {
+              "cpu": 114,
+              "pid": 2811
+            },
+            {
+              "cpu": 117,
+              "pid": 2815
+            },
+            {
+              "cpu": 122,
+              "pid": 2809
+            }
+          ],
+          "lane": [
+            9,
+            11,
+            12,
+            19,
+            26,
+            27,
+            29,
+            30,
+            31,
+            32,
+            37,
+            42,
+            46,
+            50,
+            53,
+            58,
+            73,
+            75,
+            76,
+            83,
+            90,
+            91,
+            93,
+            94,
+            95,
+            96,
+            101,
+            106,
+            110,
+            114,
+            117,
+            122
+          ],
+          "maximum_pending": 62,
+          "placement_basis": "physical-core spread: one hardware thread per core first, then the siblings (16 cores, 32 CPUs)",
+          "reserved_cpu": null
+        },
+        "native_stage_reused_unchanged": true,
+        "bootstrap_revision": "8ff32c2f5"
+      },
+      "before": {
+        "observed_at": 1794170731.9092863,
+        "progress": {
+          "at": 1794170727.2662187,
+          "completed": 7784695276,
+          "failed": 0,
+          "in_flight": 0,
+          "percent": 3.51,
+          "phase": "deriving",
+          "pid": 2151,
+          "process_token": "a6f324c7-aa41-4421-aa7a-9ce404449db9:145965200",
+          "request_sha256": "f5dc47e0096c8785435db7d03bd813d8261c47e33811efc0fd24023bc3ccac39",
+          "schema": "FRANKIE_WORK_PROBE_V1",
+          "stage": "root-projection-member",
+          "state": "running",
+          "total": 221898546572
+        },
+        "workers": {
+          "affinity_readback_verified": true,
+          "coordinator_cpu": 11,
+          "helpers": [
+            {
+              "cpu": 11,
+              "pid": 2695
+            }
+          ],
+          "lane": [
+            11
+          ],
+          "maximum_pending": 2,
+          "placement_basis": "a single-CPU lane: the helper shares the coordinator CPU",
+          "reserved_cpu": null
+        },
+        "completed_ranges": 117,
+        "native_stage_mtime_ns": 1794170300819631568
+      },
+      "progress": {
+        "at": 1794170789.8310847,
+        "completed": 12079629736,
+        "failed": 0,
+        "in_flight": 0,
+        "percent": 5.44,
+        "phase": "deriving",
+        "pid": 2768,
+        "process_token": "a6f324c7-aa41-4421-aa7a-9ce404449db9:146773861",
+        "request_sha256": "f5dc47e0096c8785435db7d03bd813d8261c47e33811efc0fd24023bc3ccac39",
+        "schema": "FRANKIE_WORK_PROBE_V1",
+        "stage": "root-projection-member",
+        "state": "running",
+        "total": 221898546572
+      },
+      "actual_affinity": {
+        "2793": [
+          11
+        ],
+        "2789": [
+          12
+        ],
+        "2795": [
+          19
+        ],
+        "2796": [
+          26
+        ],
+        "2794": [
+          27
+        ],
+        "2802": [
+          29
+        ],
+        "2799": [
+          30
+        ],
+        "2801": [
+          31
+        ],
+        "2797": [
+          32
+        ],
+        "2808": [
+          37
+        ],
+        "2798": [
+          42
+        ],
+        "2812": [
+          46
+        ],
+        "2805": [
+          50
+        ],
+        "2814": [
+          53
+        ],
+        "2804": [
+          58
+        ],
+        "2817": [
+          73
+        ],
+        "2807": [
+          75
+        ],
+        "2792": [
+          76
+        ],
+        "2816": [
+          83
+        ],
+        "2810": [
+          90
+        ],
+        "2806": [
+          91
+        ],
+        "2820": [
+          93
+        ],
+        "2818": [
+          94
+        ],
+        "2821": [
+          95
+        ],
+        "2819": [
+          96
+        ],
+        "2813": [
+          101
+        ],
+        "2800": [
+          106
+        ],
+        "2803": [
+          110
+        ],
+        "2811": [
+          114
+        ],
+        "2815": [
+          117
+        ],
+        "2809": [
+          122
+        ]
+      },
+      "standalone_status": "2026-11-08T20:31:29Z waiting-for-producers"
+    },
+    {
+      "day": "20231017",
+      "at": 1794170790.593506,
+      "recovery": {
+        "before": "projection-lane-before-1790.json",
+        "resumed_at": 1794170768.8874073,
+        "progress": {
+          "at": 1794170768.7482653,
+          "completed": 0,
+          "failed": 0,
+          "in_flight": 0,
+          "percent": 0.0,
+          "phase": "deriving",
+          "pid": 2473,
+          "process_token": "a6f324c7-aa41-4421-aa7a-9ce404449db9:146773851",
+          "request_sha256": "55264aeee23a72c4619fdd5283587c244dd47fa1dccbce1e362799155dd66dd9",
+          "schema": "FRANKIE_WORK_PROBE_V1",
+          "stage": "root-projection-member",
+          "state": "running",
+          "total": 224020642401
+        },
+        "workers": {
+          "affinity_readback_verified": true,
+          "coordinator_cpu": 0,
+          "helpers": [
+            {
+              "cpu": 1,
+              "pid": 2494
+            },
+            {
+              "cpu": 3,
+              "pid": 2493
+            },
+            {
+              "cpu": 13,
+              "pid": 2497
+            },
+            {
+              "cpu": 16,
+              "pid": 2496
+            },
+            {
+              "cpu": 17,
+              "pid": 2501
+            },
+            {
+              "cpu": 20,
+              "pid": 2498
+            },
+            {
+              "cpu": 25,
+              "pid": 2502
+            },
+            {
+              "cpu": 36,
+              "pid": 2503
+            },
+            {
+              "cpu": 38,
+              "pid": 2490
+            },
+            {
+              "cpu": 41,
+              "pid": 2500
+            },
+            {
+              "cpu": 47,
+              "pid": 2505
+            },
+            {
+              "cpu": 49,
+              "pid": 2508
+            },
+            {
+              "cpu": 57,
+              "pid": 2506
+            },
+            {
+              "cpu": 59,
+              "pid": 2507
+            },
+            {
+              "cpu": 61,
+              "pid": 2504
+            },
+            {
+              "cpu": 64,
+              "pid": 2515
+            },
+            {
+              "cpu": 65,
+              "pid": 2511
+            },
+            {
+              "cpu": 67,
+              "pid": 2499
+            },
+            {
+              "cpu": 77,
+              "pid": 2512
+            },
+            {
+              "cpu": 80,
+              "pid": 2513
+            },
+            {
+              "cpu": 81,
+              "pid": 2517
+            },
+            {
+              "cpu": 84,
+              "pid": 2510
+            },
+            {
+              "cpu": 89,
+              "pid": 2518
+            },
+            {
+              "cpu": 100,
+              "pid": 2519
+            },
+            {
+              "cpu": 102,
+              "pid": 2520
+            },
+            {
+              "cpu": 105,
+              "pid": 2514
+            },
+            {
+              "cpu": 111,
+              "pid": 2516
+            },
+            {
+              "cpu": 113,
+              "pid": 2509
+            },
+            {
+              "cpu": 121,
+              "pid": 2495
+            },
+            {
+              "cpu": 123,
+              "pid": 2522
+            },
+            {
+              "cpu": 125,
+              "pid": 2521
+            }
+          ],
+          "lane": [
+            0,
+            1,
+            3,
+            13,
+            16,
+            17,
+            20,
+            25,
+            36,
+            38,
+            41,
+            47,
+            49,
+            57,
+            59,
+            61,
+            64,
+            65,
+            67,
+            77,
+            80,
+            81,
+            84,
+            89,
+            100,
+            102,
+            105,
+            111,
+            113,
+            121,
+            123,
+            125
+          ],
+          "maximum_pending": 62,
+          "placement_basis": "physical-core spread: one hardware thread per core first, then the siblings (16 cores, 32 CPUs)",
+          "reserved_cpu": null
+        },
+        "native_stage_reused_unchanged": true,
+        "bootstrap_revision": "8ff32c2f5"
+      },
+      "before": {
+        "observed_at": 1794170731.9118054,
+        "progress": {
+          "at": 1794170728.1564584,
+          "completed": 24495047143,
+          "failed": 0,
+          "in_flight": 0,
+          "percent": 10.93,
+          "phase": "deriving",
+          "pid": 1790,
+          "process_token": "a6f324c7-aa41-4421-aa7a-9ce404449db9:145893268",
+          "request_sha256": "55264aeee23a72c4619fdd5283587c244dd47fa1dccbce1e362799155dd66dd9",
+          "schema": "FRANKIE_WORK_PROBE_V1",
+          "stage": "root-projection-member",
+          "state": "running",
+          "total": 224020642401
+        },
+        "workers": {
+          "affinity_readback_verified": true,
+          "coordinator_cpu": 1,
+          "helpers": [
+            {
+              "cpu": 1,
+              "pid": 2326
+            }
+          ],
+          "lane": [
+            1
+          ],
+          "maximum_pending": 2,
+          "placement_basis": "a single-CPU lane: the helper shares the coordinator CPU",
+          "reserved_cpu": null
+        },
+        "completed_ranges": 366,
+        "native_stage_mtime_ns": 1794169403880951632
+      },
+      "progress": {
+        "at": 1794170785.0491023,
+        "completed": 28856963390,
+        "failed": 0,
+        "in_flight": 0,
+        "percent": 12.88,
+        "phase": "deriving",
+        "pid": 2473,
+        "process_token": "a6f324c7-aa41-4421-aa7a-9ce404449db9:146773851",
+        "request_sha256": "55264aeee23a72c4619fdd5283587c244dd47fa1dccbce1e362799155dd66dd9",
+        "schema": "FRANKIE_WORK_PROBE_V1",
+        "stage": "root-projection-member",
+        "state": "running",
+        "total": 224020642401
+      },
+      "actual_affinity": {
+        "2494": [
+          1
+        ],
+        "2493": [
+          3
+        ],
+        "2497": [
+          13
+        ],
+        "2496": [
+          16
+        ],
+        "2501": [
+          17
+        ],
+        "2498": [
+          20
+        ],
+        "2502": [
+          25
+        ],
+        "2503": [
+          36
+        ],
+        "2490": [
+          38
+        ],
+        "2500": [
+          41
+        ],
+        "2505": [
+          47
+        ],
+        "2508": [
+          49
+        ],
+        "2506": [
+          57
+        ],
+        "2507": [
+          59
+        ],
+        "2504": [
+          61
+        ],
+        "2515": [
+          64
+        ],
+        "2511": [
+          65
+        ],
+        "2499": [
+          67
+        ],
+        "2512": [
+          77
+        ],
+        "2513": [
+          80
+        ],
+        "2517": [
+          81
+        ],
+        "2510": [
+          84
+        ],
+        "2518": [
+          89
+        ],
+        "2519": [
+          100
+        ],
+        "2520": [
+          102
+        ],
+        "2514": [
+          105
+        ],
+        "2516": [
+          111
+        ],
+        "2509": [
+          113
+        ],
+        "2495": [
+          121
+        ],
+        "2522": [
+          123
+        ],
+        "2521": [
+          125
+        ]
+      },
+      "standalone_status": "2026-11-08T20:31:32Z waiting-for-producers"
+    }
+  ],
+  "throughput": {
+    "20231002": {
+      "start": {
+        "at": 1794170790.4476333,
+        "completed": 80329505370,
+        "failed": 0,
+        "in_flight": 0,
+        "percent": 40.04,
+        "phase": "deriving",
+        "pid": 5825,
+        "process_token": "65c77249-f30c-4536-8a0f-f16282164d1f:146765316",
+        "request_sha256": "1cf6c248e34978db95f972ab9bcacdd345e540f3733f3c1bc42caccdb3967ad5",
+        "schema": "FRANKIE_WORK_PROBE_V1",
+        "stage": "root-projection-member",
+        "state": "running",
+        "total": 200620970437
+      },
+      "end": {
+        "at": 1794170821.1147428,
+        "completed": 91805183007,
+        "failed": 0,
+        "in_flight": 0,
+        "percent": 45.76,
+        "phase": "deriving",
+        "pid": 5825,
+        "process_token": "65c77249-f30c-4536-8a0f-f16282164d1f:146765316",
+        "request_sha256": "1cf6c248e34978db95f972ab9bcacdd345e540f3733f3c1bc42caccdb3967ad5",
+        "schema": "FRANKIE_WORK_PROBE_V1",
+        "stage": "root-projection-member",
+        "state": "running",
+        "total": 200620970437
+      },
+      "seconds": 30.667109489440918,
+      "megabytes_per_second": 374.2014760455733,
+      "member_remaining_minutes": 4.846577507742894
+    },
+    "20231003": {
+      "start": {
+        "at": 1794170789.8310847,
+        "completed": 12079629736,
+        "failed": 0,
+        "in_flight": 0,
+        "percent": 5.44,
+        "phase": "deriving",
+        "pid": 2768,
+        "process_token": "a6f324c7-aa41-4421-aa7a-9ce404449db9:146773861",
+        "request_sha256": "f5dc47e0096c8785435db7d03bd813d8261c47e33811efc0fd24023bc3ccac39",
+        "schema": "FRANKIE_WORK_PROBE_V1",
+        "stage": "root-projection-member",
+        "state": "running",
+        "total": 221898546572
+      },
+      "end": {
+        "at": 1794170821.0489697,
+        "completed": 22280214593,
+        "failed": 0,
+        "in_flight": 0,
+        "percent": 10.04,
+        "phase": "deriving",
+        "pid": 2768,
+        "process_token": "a6f324c7-aa41-4421-aa7a-9ce404449db9:146773861",
+        "request_sha256": "f5dc47e0096c8785435db7d03bd813d8261c47e33811efc0fd24023bc3ccac39",
+        "schema": "FRANKIE_WORK_PROBE_V1",
+        "stage": "root-projection-member",
+        "state": "running",
+        "total": 221898546572
+      },
+      "seconds": 31.21788501739502,
+      "megabytes_per_second": 326.75451432139295,
+      "member_remaining_minutes": 10.181870651609785
+    },
+    "20231017": {
+      "start": {
+        "at": 1794170785.0491023,
+        "completed": 28856963390,
+        "failed": 0,
+        "in_flight": 0,
+        "percent": 12.88,
+        "phase": "deriving",
+        "pid": 2473,
+        "process_token": "a6f324c7-aa41-4421-aa7a-9ce404449db9:146773851",
+        "request_sha256": "55264aeee23a72c4619fdd5283587c244dd47fa1dccbce1e362799155dd66dd9",
+        "schema": "FRANKIE_WORK_PROBE_V1",
+        "stage": "root-projection-member",
+        "state": "running",
+        "total": 224020642401
+      },
+      "end": {
+        "at": 1794170835.5536125,
+        "completed": 43755199554,
+        "failed": 0,
+        "in_flight": 0,
+        "percent": 19.53,
+        "phase": "deriving",
+        "pid": 2473,
+        "process_token": "a6f324c7-aa41-4421-aa7a-9ce404449db9:146773851",
+        "request_sha256": "55264aeee23a72c4619fdd5283587c244dd47fa1dccbce1e362799155dd66dd9",
+        "schema": "FRANKIE_WORK_PROBE_V1",
+        "stage": "root-projection-member",
+        "state": "running",
+        "total": 224020642401
+      },
+      "seconds": 50.504510164260864,
+      "megabytes_per_second": 294.98823205184993,
+      "member_remaining_minutes": 10.184894585631856
+    }
+  }
+}

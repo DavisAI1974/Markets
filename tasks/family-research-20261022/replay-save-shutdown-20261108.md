@@ -85,3 +85,52 @@ describe only the named stage. All three progress files reported zero
 failures, all three waiters remained queued, and none had actual decision
 output yet. No pod was stopped. The existing heartbeat remains the sole
 publication/shutdown owner. [Deployment and progress snapshot](runpod/touch-print-gate-deployment-20261108.json)
+
+## Projection CPU recovery — 20:44–20:46 UTC
+
+The user's timing comparison with October 18 exposed an actual placement bug.
+All three projection worker maps had a one-CPU lane and one helper sharing the
+coordinator's CPU. The pod shell held 32 CPUs over 16 physical cores, and the
+projection helper was CPU-bound. October 2 and 17 were reading their 200.62 GB
+and 224.02 GB member ledgers at about 18–19 MB/s. October 3 subsequently reached
+the same one-helper configuration for its 221.90 GB ledger. This was the Native
+projection stage; the standalone touch/print export had not started.
+
+The lane cache was first populated after the Native coordinator narrowed its
+own affinity. [Bootstrap fix `8ff32c2f5`](runpod/runpod_root_bootstrap.py) captures
+the full pod allocation before producer imports or execution. The pinned ROOT,
+Native calculators and projection source remain unchanged, so existing input
+identities, Native seals and projection range bindings remain valid. The
+regression test reproduces a narrowed one-CPU cache with the original bootstrap
+and passes with the fix, using the actual pinned lane module.
+
+The bootstrap is deployed at `/opt/frankie-box/replay-control/runpod_root_bootstrap.py`.
+Under each existing date lock and an additional short recovery lock, the
+[recovery script](runpod/runpod_resume_projection_lane.py) replaced only the
+undersized projection process tree. The nohup coordinator ignores SIGINT and
+defers SIGTERM until after projection, so the sole helper received SIGTERM;
+`BrokenProcessPool` then unwound ROOT and released its locks. That expected
+recovery exception is preserved in each `root.pre-lane-OLDPID.log`.
+No producer replacement was launched until the old root exited and its date
+lock was available. Waiters were suspended during that handoff and resumed.
+
+| Date | Old ROOT | New ROOT | Retained completed member ranges | New helpers |
+| --- | ---: | ---: | ---: | ---: |
+| October 2 | 4402 | 5825 | 721 | 31 |
+| October 3 | 2151 | 2768 | 117 | 31 |
+| October 17 | 1790 | 2473 | 366 | 31 |
+
+All three logs confirm completed Native results reused in place with no
+traversal or finalization replay. Their `native-stage.json` modification times
+are unchanged. Completed ranges are reused; any unreceipted interrupted range
+remains retained and receives a separate attempt file. Live affinity readback
+confirms every helper matches its assigned CPU. The standalone decision gate,
+archive publisher, shared volume and shutdown requirements are unchanged.
+
+For the comparison: October 18's saved standalone input receipt reports
+601 seconds (about ten minutes). That small export is a different stage from
+the hundreds-of-gigabytes Native projection that was stalled on one CPU here.
+The previous 3–5-hour computation estimate measured that defective placement
+and should not be used after this recovery.
+
+[Before/after worker maps, retained ranges and throughput observations](runpod/projection-lane-recovery-20261108.json)
