@@ -7,6 +7,11 @@ from types import SimpleNamespace
 
 entry = Path(sys.argv[1]).resolve()
 sys.path.insert(0, str(entry.parent))
+import frankie_box_lane_pin as lane_pin
+
+# Capture the pod's full CPU allocation before a coordinator narrows its affinity.
+# Projection sizes its pool from this cache after the serial Native traversal.
+lane_pin.lane_cpus()
 from frankie_box_bedrock import load_producers
 
 load_producers(Path("/opt/frankie-box/producers"))
