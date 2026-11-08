@@ -987,3 +987,112 @@ stack table; the full-session table differs by the 65 prefix events). The group 
 for October 17 have not landed; when they do, the four-arm, dipole post-recognition, size-one and sweep
 cohort passes run unchanged, and the exhaustion pass gains its archived-recognition comparison. October 2
 and 3 are ready to run from the tape now (`NG_DAY=20231002`, `20231003`), October 2 with its Sunday prefix.
+
+## 15. Four sessions through the tape chain: what holds on all four, what held on one
+
+October 2 (with its Sunday-evening prefix from the 2023-10-01 member) and October 3 ran through the same
+chain as 17 and 18 (`NG_DAY=20231002`, `20231003`; outputs `*-oct02-*`, `*-oct03-*`). No standalone export
+exists for 2, 3 or 17, so the archived-recognition match and the export-side passes (four arms, dipole
+post-recognition, size-one, sweep cohort) remain October 18 only. The cross-day cell diagnosis was rebuilt
+on all four days (`cell-flip-diagnosis-4day.json`, from the full-session tables).
+
+**The four sessions.** October 2 opened 2957 and closed 2841 (minus 116 ticks, 85,654 lots); October 3
+opened 2841 and closed 2943 (plus 102, 92,979 lots); October 17 minus 63 (74,624 lots); October 18 plus 13
+(64,462 lots). Two falling days, one rising, one flat, each with a 110 to 145 tick range. Prints 38,127 /
+41,410 / 33,703 / 30,739. Frozen-detector events 839 / 857 / 830 / 890; the threshold saturates at 1.0 on
+all four; runway medians 32 / 31 / 36 / 33 s; confirmation 34 / 33 / 38 / 35 s; 62 / 63 / 58 / 62 percent
+of events over before the archived adapter's t0+50 horizon. The three clocks of section 11 look the same
+on every day.
+
+### 15.1 Holds on all four days
+
+| claim | Oct 2 | Oct 3 | Oct 17 | Oct 18 |
+|---|---|---|---|---|
+| A classifier splits the day near half (fast / persistent) | 415 / 424 | 458 / 399 | 400 / 430 | 442 / 448 |
+| every seed-P event is persistent, every fast event a collapsed seed | yes (1 exception) | yes | yes | yes |
+| duration ordering persistent > fast, 4 scales, with polarity and either | 8 / 8 | 8 / 8 | 8 / 8 | 8 / 8 |
+| no price direction at +60 (first 3t with-polarity share, fast / persistent) | 0.54 / 0.47 | 0.52 / 0.52 | 0.45 / 0.46 | 0.49 / 0.48 |
+| persistent = quieter 600 s (volume AUC) | 0.30 | 0.27 | 0.30 | 0.27 |
+| persistent = slower first tick / longer hold (AUC) | 0.63 / 0.58 | 0.66 / 0.62 | 0.65 / 0.57 | 0.65 / 0.61 |
+| pre-300 s volume separates the states (AUC) | 0.30 | 0.25 | 0.29 | 0.28 |
+| pre-arc shape barely does (arc minimum AUC) | 0.56 | 0.57 | 0.56 | 0.57 |
+| pre-300 s volume vs time to 3 ticks (rho) | -0.49 | -0.56 | -0.55 | -0.52 |
+| pre-300 s path vs 600 s range (rho) | +0.54 | +0.60 | +0.62 | +0.63 |
+| pre-birth vs oriented 300 s change (rho) | -0.04 | +0.03 | -0.01 | 0.00 |
+| forward volume vs pre-volume (rho) | 0.81 | 0.82 | 0.82 | 0.84 |
+| pre-family A share | 0.96 | 0.94 | 0.93 | 0.93 |
+| next burst flips after persistent / fast | 0.40 / 0.57 | 0.34 / 0.57 | 0.37 / 0.56 | 0.33 / 0.56 |
+| next burst flips after P / O | 0.39 / 0.62 | 0.28 / 0.68 | 0.34 / 0.69 | 0.28 / 0.64 |
+| next-state forecast realised | 0.59 | 0.62 | 0.59 | 0.61 |
+| thinner toward-side depth / wider spread at persistent events (AUC) | 0.33 / 0.60 | 0.30 / 0.54 | 0.36 / 0.57 | 0.33 / 0.59 |
+| post-anchor depth change by state (AUC) | 0.52 | 0.54 | 0.51 | 0.57 |
+| median abs 600 s move, fast x high / persistent x low (ticks) | 6 / 2 | 4 / 1 | 5 / 2 | 6 / 2 |
+| next burst forecast right: price against it | 0.67 | 0.70 | 0.69 | 0.64 |
+| next burst forecast wrong: price with it | 0.68 | 0.73 | 0.65 | 0.57 |
+
+Every row of section 13.1, 13.2 and 14.5 holds on four sessions spanning two falling days, a rising day
+and a flat one. The state is an activity and persistence readout; the pre-birth activity predicts the
+clocks and nothing about direction; the flow sequence is forecastable one burst ahead; the expected burst
+is absorbed and the unexpected one moves price.
+
+### 15.2 The duration math across four days
+
+With-polarity Kaplan-Meier medians, seconds from t0 (frozen totals in the last row of each block):
+
+| fast-collapse | 3t | 5t | 8t | 13t |
+|---|---|---|---|---|
+| Oct 2 | 635 | 1265 | 3108 | 7408 |
+| Oct 3 | 781 | 1744 | 4035 | 10959 |
+| Oct 17 | 739 | 1651 | 2931 | 9371 |
+| Oct 18 | 450 | 1128 | 2798 | 6388 |
+| frozen | 358 | 993 | 1802 | 4386 |
+
+| persistent | 3t | 5t | 8t | 13t |
+|---|---|---|---|---|
+| Oct 2 | 844 | 2600 | 5231 | 10857 |
+| Oct 3 | 1047 | 3184 | 6250 | 11513 |
+| Oct 17 | 823 | 2057 | 4622 | 11587 |
+| Oct 18 | 579 | 1341 | 3536 | 6956 |
+| frozen | 700 | 1802 | 3455 | 6836 |
+
+The ordering is robust, 16 of 16 across the four days. The absolute totals are not: October 18 is the only
+session on which the persistent totals match the frozen values; the other three run 1.2x to 1.8x long,
+and the fast-collapse totals run 1.3x to 2.5x long on every day. The frozen reveal population was four
+other days; as a countdown the clock is honest about which state is slower and optimistic about how
+soon, by a factor that varies by day. The day-level correction to test is a speed scale measured in the
+session's first hours (either-direction 3-tick median: 106 / 142 / 111 / 85 s for the fast state on the
+four days, which orders the days the same way the totals do).
+
+### 15.3 Direction cells across four days
+
+Within each day there is structure: cells with 30 or more decided outcomes beyond 0.42 / 0.58 number 33 /
+59 / 63 / 46 against 21 to 24 expected by chance. Across days there is none: pairwise same-sign shares of
+(hit minus 0.5) over the 355 common cells are 0.41 to 0.53 and rank correlations minus 0.20 to plus 0.05;
+cells on the same side on all four days number 45 where 44 are expected under independence. The section
+13.3 watch-list cell (fast-collapse x mid activity, book and next-seed) is 0.47 / 0.40 on October 2 and
+0.54 / 0.46 on October 3: dead. The book-imbalance read in persistent cells is 0.51 / 0.49 / 0.50 / 0.56;
+the burst-polarity reversal of October 17's persistent state (0.36) is 0.49 / 0.48 / 0.50 elsewhere, so it
+was a property of that falling day. Within-day structure that does not cross days is the drift of section
+13.3 generalized: each session's direction cells inherit that session's path.
+
+Three cells are on the same side beyond 0.04 on all four days, and they are one thing: 300 s price
+momentum in quiet tape is followed by the opposite 300 s move more often than not (low activity tercile
+0.45 / 0.45 / 0.42 / 0.41; fast-collapse x low 0.40 / 0.42 / 0.46 / 0.40; persistent x mid at +600 0.43 /
+0.45 / 0.41 / 0.44), on both call sides on three of the days. It is weak (54 to 60 percent of decided
+outcomes, with a fifth of outcomes flat and the median called move 0), it is the size of bid-ask bounce in a
+thin overnight book, and three cells out of 355 beyond 0.04 on one side is what chance gives. Logged as a
+candidate for a microstructure explanation (quiet-tape mean reversion at one to two ticks), not a signal.
+
+### 15.4 Where this leaves the program after four sessions
+
+- The frozen exhaustion family, applied as frozen, is a four-day-consistent reader of tape activity,
+  flow persistence and flow sequence. It does not read price direction, on any day, from any anchor at
+  which its state is known.
+- The direction half of any stack must come from a different source than the same tape at the same
+  anchor. On the lag it is the observed NYMEX move itself; that test needs the Kalshi side for these
+  dates.
+- The one object the frozen chain plays could use now is the absorption regularity (section 14.5): a burst
+  from the forecast side does not move price, a burst from the other side does, four of four days. It is
+  contemporaneous with the burst and is a filter candidate, found on the days it is reported on.
+- Open on the export side: the standalone group exports for 2, 3 and 17, which unlock the archived
+  recognition match and the four-arm, dipole post-recognition, size-one and sweep-cohort passes per date.

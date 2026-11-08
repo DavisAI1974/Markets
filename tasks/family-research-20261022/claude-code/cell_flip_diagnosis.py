@@ -28,7 +28,7 @@ from scipy.stats import binom, spearmanr
 
 HERE = Path(__file__).resolve().parent
 CACHE_DIR = Path(os.environ.get("NG_REPLAY_CACHE_DIR", "/tmp/claude-0/-home-user-Markets/e6cffa19-4561-5119-b5f4-3474c12f9fe5/scratchpad"))
-DAYS = {"oct18": dict(day0=1697576400), "oct17": dict(day0=1697490000)}
+DAYS = {"oct02": dict(day0=1696194000), "oct03": dict(day0=1696280400), "oct17": dict(day0=1697490000), "oct18": dict(day0=1697576400)}
 TICK = 1_000_000
 SOURCES = ["pol", "next_state", "next_seed", "dip300", "dip300_strong", "book10", "touch", "recruit", "mom300"]
 TARGETS = ["net300", "net600", "first3"]
@@ -107,18 +107,17 @@ def main():
         cuts[tag] = (vols[len(vols) // 3], vols[2 * len(vols) // 3])
     out["tercile_cuts_by_day"] = cuts
     recut = {}
+    ref = cuts["oct18"]
     for tag, (rows, _) in data.items():
-        other = "oct17" if tag == "oct18" else "oct18"
-        c = cuts[other]
         for r in rows:
-            r["recut"] = "low" if r["pre300_volume"] <= c[0] else "mid" if r["pre300_volume"] <= c[1] else "high"
-        recut[f"{tag}_at_{other}_cuts"] = {}
+            r["recut"] = "low" if r["pre300_volume"] <= ref[0] else "mid" if r["pre300_volume"] <= ref[1] else "high"
+        recut[f"{tag}_at_oct18_cuts"] = {}
         for tc in ("low", "mid", "high"):
             for st in (None, "A-fast-collapse", "A-persistent"):
                 sub = [r for r in rows if r["recut"] == tc and (st is None or r["a_state"] == st)]
                 lab = f"{st or 'all'}|{tc}"
-                recut[f"{tag}_at_{other}_cuts"][lab] = {src: hit([r["sources"].get(src) for r in sub], [r["targets"]["net300"] for r in sub]) for src in ("book10", "dip300_strong", "mom300", "dip300")}
-                recut[f"{tag}_at_{other}_cuts"][lab]["n"] = len(sub)
+                recut[f"{tag}_at_oct18_cuts"][lab] = {src: hit([r["sources"].get(src) for r in sub], [r["targets"]["net300"] for r in sub]) for src in ("book10", "dip300_strong", "mom300", "dip300")}
+                recut[f"{tag}_at_oct18_cuts"][lab]["n"] = len(sub)
     out["recut"] = recut
     # 3: chance across all cells, and cross-day agreement
     cells = {}
@@ -143,15 +142,22 @@ def main():
         expected = sum(binom.cdf(math.floor((0.42) * (h["with_"] + h["against"])), h["with_"] + h["against"], 0.5) + binom.sf(math.ceil(0.58 * (h["with_"] + h["against"])) - 1, h["with_"] + h["against"], 0.5) for h in tab.values())
         extreme = sorted(tab.items(), key=lambda kv: -abs(kv[1]["hit"] - 0.5))[:12]
         chance[tag] = dict(cells_n30=n_cells, beyond_008=beyond, expected_beyond_008_if_no_information=round(expected, 1), most_extreme=[(k, v["hit"], v["with_"] + v["against"]) for k, v in extreme])
-    common = sorted(set(cells["oct18"]) & set(cells["oct17"]))
-    agree = sum(1 for k in common if (cells["oct18"][k]["hit"] - 0.5) * (cells["oct17"][k]["hit"] - 0.5) > 0)
-    rho = spearmanr([cells["oct18"][k]["hit"] for k in common], [cells["oct17"][k]["hit"] for k in common]) if len(common) > 5 else None
-    both_beyond = [(k, cells["oct18"][k]["hit"], cells["oct17"][k]["hit"]) for k in common if abs(cells["oct18"][k]["hit"] - 0.5) >= 0.06 and abs(cells["oct17"][k]["hit"] - 0.5) >= 0.06 and (cells["oct18"][k]["hit"] - 0.5) * (cells["oct17"][k]["hit"] - 0.5) > 0]
-    chance["cross_day"] = dict(common_cells=len(common), same_sign=agree, same_sign_share=round(agree / len(common), 3) if common else None,
-                               spearman_rho=None if rho is None else round(float(rho[0]), 3), spearman_p=None if rho is None else float(f"{rho[1]:.2g}"),
-                               cells_same_sign_and_beyond_006_both_days=both_beyond)
+    tags = sorted(cells)
+    common = sorted(set.intersection(*(set(cells[t]) for t in tags)))
+    import itertools
+    pair_agree = {}
+    for a_, b_ in itertools.combinations(tags, 2):
+        ag = sum(1 for k in common if (cells[a_][k]["hit"] - 0.5) * (cells[b_][k]["hit"] - 0.5) > 0)
+        rho = spearmanr([cells[a_][k]["hit"] for k in common], [cells[b_][k]["hit"] for k in common])
+        pair_agree[f"{a_}~{b_}"] = dict(same_sign_share=round(ag / len(common), 3), spearman_rho=round(float(rho[0]), 3))
+    all_same = [k for k in common if len({(cells[t][k]["hit"] - 0.5) > 0 for t in tags}) == 1 and all(cells[t][k]["hit"] != 0.5 for t in tags)]
+    beyond_all = [(k, [cells[t][k]["hit"] for t in tags]) for k in all_same if all(abs(cells[t][k]["hit"] - 0.5) >= 0.04 for t in tags)]
+    # expected count of all-same-sign cells under independence = common / 2^(n-1)
+    chance["cross_day"] = dict(days=tags, common_cells=len(common), pairwise=pair_agree, same_sign_all_days=len(all_same),
+                               expected_same_sign_all_days_if_independent=round(len(common) / 2 ** (len(tags) - 1), 1),
+                               cells_same_sign_all_days_and_beyond_004=beyond_all)
     out["chance"] = chance
-    (HERE / "cell-flip-diagnosis.json").write_text(json.dumps(out, indent=2, default=str) + "\n")
+    (HERE / "cell-flip-diagnosis-4day.json").write_text(json.dumps(out, indent=2, default=str) + "\n")
     print(json.dumps(out["day_facts"], indent=1))
     print("\n== key cells")
     for k, v in key.items():

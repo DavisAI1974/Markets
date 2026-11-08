@@ -1,0 +1,241 @@
+{
+  "a_state": {
+    "A-fast-collapse": {
+      "n": 458,
+      "plus60_first3t_with_share": [
+        458,
+        0.517
+      ],
+      "plus60_first5t_with_share": [
+        443,
+        0.533
+      ],
+      "plus60_first8t_with_share": [
+        422,
+        0.493
+      ],
+      "plus60_d60_oriented": {
+        "n": 458,
+        "median": 0.0,
+        "with_": 154,
+        "flat": 152,
+        "against": 152
+      },
+      "plus60_d300_oriented": {
+        "n": 456,
+        "median": 0.0,
+        "with_": 202,
+        "flat": 65,
+        "against": 189
+      },
+      "plus60_d600_oriented": {
+        "n": 453,
+        "median": 0,
+        "with_": 221,
+        "flat": 44,
+        "against": 188
+      },
+      "known_first3t_with_share": null,
+      "known_first5t_with_share": null,
+      "known_first8t_with_share": null
+    },
+    "A-persistent": {
+      "n": 399,
+      "plus60_first3t_with_share": [
+        399,
+        0.521
+      ],
+      "plus60_first5t_with_share": [
+        385,
+        0.501
+      ],
+      "plus60_first8t_with_share": [
+        379,
+        0.488
+      ],
+      "plus60_d60_oriented": {
+        "n": 399,
+        "median": 0,
+        "with_": 95,
+        "flat": 181,
+        "against": 123
+      },
+      "plus60_d300_oriented": {
+        "n": 398,
+        "median": 0.0,
+        "with_": 151,
+        "flat": 83,
+        "against": 164
+      },
+      "plus60_d600_oriented": {
+        "n": 396,
+        "median": 0.0,
+        "with_": 168,
+        "flat": 54,
+        "against": 174
+      },
+      "known_first3t_with_share": null,
+      "known_first5t_with_share": null,
+      "known_first8t_with_share": null
+    }
+  },
+  "seed": {
+    "O": {
+      "n": 246,
+      "plus60_first3t_with_share": [
+        246,
+        0.557
+      ],
+      "plus60_first5t_with_share": [
+        237,
+        0.57
+      ],
+      "plus60_first8t_with_share": [
+        228,
+        0.544
+      ],
+      "plus60_d60_oriented": {
+        "n": 246,
+        "median": 0.0,
+        "with_": 89,
+        "flat": 86,
+        "against": 71
+      },
+      "plus60_d300_oriented": {
+        "n": 243,
+        "median": 0,
+        "with_": 109,
+        "flat": 36,
+        "against": 98
+      },
+      "plus60_d600_oriented": {
+        "n": 243,
+        "median": 1,
+        "with_": 127,
+        "flat": 21,
+        "against": 95
+      },
+      "known_first3t_with_share": null,
+      "known_first5t_with_share": null,
+      "known_first8t_with_share": null
+    },
+    "P": {
+      "n": 242,
+      "plus60_first3t_with_share": [
+        242,
+        0.521
+      ],
+      "plus60_first5t_with_share": [
+        237,
+        0.489
+      ],
+      "plus60_first8t_with_share": [
+        235,
+        0.464
+      ],
+      "plus60_d60_oriented": {
+        "n": 242,
+        "median": 0.0,
+        "with_": 46,
+        "flat": 124,
+        "against": 72
+      },
+      "plus60_d300_oriented": {
+        "n": 242,
+        "median": 0.0,
+        "with_": 90,
+        "flat": 51,
+        "against": 101
+      },
+      "plus60_d600_oriented": {
+        "n": 241,
+        "median": 0,
+        "with_": 94,
+        "flat": 38,
+        "against": 109
+      },
+      "known_first3t_with_share": null,
+      "known_first5t_with_share": null,
+      "known_first8t_with_share": null
+    },
+    "S": {
+      "n": 197,
+      "plus60_first3t_with_share": [
+        197,
+        0.503
+      ],
+      "plus60_first5t_with_share": [
+        192,
+        0.479
+      ],
+      "plus60_first8t_with_share": [
+        182,
+        0.462
+      ],
+      "plus60_d60_oriented": {
+        "n": 197,
+        "median": 0,
+        "with_": 58,
+        "flat": 59,
+        "against": 80
+      },
+      "plus60_d300_oriented": {
+        "n": 197,
+        "median": 0,
+        "with_": 80,
+        "flat": 30,
+        "against": 87
+      },
+      "plus60_d600_oriented": {
+        "n": 195,
+        "median": 0,
+        "with_": 93,
+        "flat": 17,
+        "against": 85
+      },
+      "known_first3t_with_share": null,
+      "known_first5t_with_share": null,
+      "known_first8t_with_share": null
+    },
+    "X": {
+      "n": 172,
+      "plus60_first3t_with_share": [
+        172,
+        0.483
+      ],
+      "plus60_first5t_with_share": [
+        162,
+        0.531
+      ],
+      "plus60_first8t_with_share": [
+        156,
+        0.487
+      ],
+      "plus60_d60_oriented": {
+        "n": 172,
+        "median": 0.0,
+        "with_": 56,
+        "flat": 64,
+        "against": 52
+      },
+      "plus60_d300_oriented": {
+        "n": 172,
+        "median": 0.0,
+        "with_": 74,
+        "flat": 31,
+        "against": 67
+      },
+      "plus60_d600_oriented": {
+        "n": 170,
+        "median": 0.0,
+        "with_": 75,
+        "flat": 22,
+        "against": 73
+      },
+      "known_first3t_with_share": null,
+      "known_first5t_with_share": null,
+      "known_first8t_with_share": null
+    }
+  },
+  "note": "Anchors: plus60 = t0+60 (earliest the A state exists); known = max(t0+60, archived recognition second). with = move in the burst polarity direction (continuation); against = reversal. First-excursion shares are over events where the excursion occurred before session end. Oriented tick changes are polarity times the signed change from the anchor."
+}
