@@ -45,6 +45,14 @@ Keep three parts of each observation linked:
   separately when it is observed. The same underlying move can have
   different implications for two contracts.
 
+Use timestamps to locate events, establish their order and availability,
+and measure elapsed time. Time of day, session phase, and trading weekday
+can group comparable observations and show when behavior tends to recur.
+Treat recurrence within a time bucket as an association. If the pattern
+clusters around a session transition or scheduled release, record the
+observable event and compare it with similar cases. Keep the time label
+as context for that comparison.
+
 Treat a specific price level as a separate strike-concentration hypothesis
 when contemporaneously available options data show a concentration there.
 Bind the observation to the matching underlying and expiry, record how the
