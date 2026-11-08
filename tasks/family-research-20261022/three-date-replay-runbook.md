@@ -62,3 +62,17 @@ Repeat the reference check from the repository root with `python -B -m research.
 3. Stream complete available spans for October 2, 3 and 17 into their date-specific inputs. Admit the Julia suite only after each day's aligned inputs and exact runner environment pass the checks above. Retain incomplete stages as such. The current checkpoint is the completed bounded ROOT and SQLite path. Native, the rich second set, the date-specific matrices and Julia fitting are pending.
 
 The retained Python source, clock, context, external-scope and dipole checks passed in this checkout (44 tests). Those tests establish the retained helpers' behavior. They do not certify the missing three per-date inputs.
+
+## Current execution boundary
+
+The concurrent RunPod jobs are the producer pass for October 2, 3 and 17. Each treats its date as discovery, including the available partial spans. The jobs stop after the ROOT, Native and rich second-set handoff. Stages 3–6 above describe the historical repeat path and are outside these three jobs. The old Search table is never generated. October 18's historical ROOT and Native work is complete and its standalone input verification can proceed separately on a local CPU.
+
+The producer baseline is ROOT `db96f24f3260bf0d70c763b297c2ba9b84f571a6`, Native `2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134`, and tape `1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202`. Stage one sparse code checkout and one verified copy of each tape on shared scratch. Bind the three [reviewed date manifests](../../research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/discovery-block-manifests/README.md) as the only changes in the ROOT runtime commit. Record that commit and verify the bytes and size of each staged tape before launching. Keep the pinned Python environment on each pod's local disk; the network volume holds the code, tapes, work and receipts.
+
+| Stage | Runtime settings and handoff |
+| --- | --- |
+| Ingest | `ingest_block_sources` with `--session-policy cme_trading_day --writer compact --mode sequential --observation full --verify inline --workers 15`. One causal book pass, parallel encoding, one conformance check. October 3 can reuse a sealed October 2 opening receipt if available at launch; otherwise warm from the preceding tape. |
+| ROOT and Native | Feed the actual ingestion receipt SHA-256 to `frankie_box_experiment_root.py`, with `--day-role discovery --data-workers 31 --digest off --bedrock on --shared-market-policy FRANKIE_SHARED_MARKET_TIMELINE_V1`. Enable ROOT/Native overlap and frame shards and use reference layer spools. The 32-vCPU lane must have at least 16 distinct physical cores. |
+| Rich second set | Feed the same ingest receipt and sealed calculations to `frankie_box_experiment_teacher.py`, with the same market policy and `--workers 15`. Require `calculations_retained` and a `rows_published` teacher receipt with nonzero rows. Preserve external-missing dispositions; an external coverage hold is separate from a sealed market producer handoff. |
+
+Keep one lock, a status file and separate logs per date on persistent scratch. Reuse a sealed ingest or producer only after its receipt binds the same scope and code. Preserve failed or interrupted outputs and follow the producer's verified resume path. The pods and shared volume are billed resources; a sealed handoff does not by itself stop a pod.
