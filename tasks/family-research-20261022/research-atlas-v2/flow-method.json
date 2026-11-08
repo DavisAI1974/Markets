@@ -1,0 +1,23 @@
+{
+  "window_seconds": 20,
+  "warmup_excluded_first_seconds": 20,
+  "classified_oct18_prints": {
+    "sell_prints": 14667,
+    "buy_prints": 14713,
+    "at_mid_prints": 1359
+  },
+  "state_labels": {
+    "-1": "sell",
+    "0": "balanced",
+    "1": "buy",
+    "2": "undefined"
+  },
+  "source_oct18": "b5f28bd57de5ed4ff889335edb9a33216b67eb6a:research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/october18-standalone-inputs/groups.jsonl.gz",
+  "source_oct2_oct17": "f0bd88e1728668ae3fc9bdd5f62921f9d89fcd13 retained ROOT arrays",
+  "limitations": [
+    "Receive-second bins are descriptive, not the actual delayed emission clock.",
+    "The three date spans differ; seconds overlap in rolling windows and are not independent trials.",
+    "October 3 is pending; no fourth-date comparison is imputed.",
+    "Aging-only means no fresh classified lots; midpoint/unknown prints may still exist."
+  ]
+}

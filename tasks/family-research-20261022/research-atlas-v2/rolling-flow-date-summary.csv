@@ -1,0 +1,4 @@
+day,tape_scope,seconds,first_second,last_second,warm_seconds,defined_warm_seconds,ratio_changes,age_only_ratio_changes,direction_flips,age_only_direction_flips,one_lot_saturated_seconds,saturated_seconds,buy_lots,sell_lots
+20231002,partial,75597,1696204800,1696280396,75577,51205,14952,6137,1715,747,6752,14161,42463.0,42677.0
+20231017,partial,75579,1697500816,1697576394,75559,49578,14492,6001,1561,642,6689,13795,39146.0,35529.0
+20231018,full_session,82800,1697580000,1697662799,82780,54318,13603,5809,1613,705,7066,16689,33325.0,31137.0

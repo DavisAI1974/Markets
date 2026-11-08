@@ -353,3 +353,182 @@ opportunities; compare the other dates when their actual tables arrive; test
 queue and independent external additions with aligned clocks; and merge the
 independent reviewer notes while preserving disagreements. None of those pending
 steps is replaced by the descriptive correlations or this limited ridge probe.
+
+## Research atlas v2: mechanisms, observation time and replication
+
+This increment expands the two-case investigation into a session inventory and
+an explicit observation-time study. It is still discovery. The other three
+dates have not completed their required box workflow or this research process.
+The user clarified the sequence: finish ROOT/Native **and** the new standalone
+touch/print pass on each original box, publish its unique outputs and necessary
+code to Git, then shut it down. The reviewers do the research from those saved
+outputs afterward; research does not require keeping an idle box running.
+
+### A mechanism map with measured quantities
+
+```mermaid
+flowchart LR
+  P[Fresh classified trades] --> F[Rolling signed flow]
+  A[Older trades expire] --> F
+  F --> R[State at actual recognition]
+  B[Touch and deeper book] --> R
+  T[Trade then add: same order ID] --> S[Resting displayed quantity]
+  S --> O[State observed after 0 / 5 / 25 / 100 ms]
+  R --> Y[Later midpoint outcomes]
+  O --> Y
+  S --> E[Eventual fill-linked clear / unmatched clear / reprice]
+```
+
+The arrows describe the analysis and accounting relationships, not established
+causal effects. Eventual removal is kept on a separate branch because it is
+future information at recognition. Participant intent, hidden reserve quantity,
+execution quality and profitability are not observed by these measurements.
+
+### Case 391 is part of a broader, highly uneven population
+
+The new inventory scans 771,787 retained raw records against the pinned completed
+groups. It finds **980** events with a nonzero order ID and matching wire side on
+a trade summary followed by an add in the same group. There are 29,797 groups
+with trade summaries. These counts describe the selected mechanism, not every
+aggressive trade or every instance of absorption.
+
+| Eventual resting disposition | Events |
+| --- | ---: |
+| Fill-linked final clear | 613 |
+| Unmatched final clear | 324 |
+| Reprice | 41 |
+| Reset-censored | 1 |
+| Session-end-censored | 1 |
+
+Of these, 46 begin with trade summaries at multiple prices and 934 at one price.
+There are 463 offer-side and 517 bid-side events. Median initial display is two
+lots. Case 391's 150-lot remainder is the largest observed initial display, so its
+striking path should not stand in for a typical event. Median observed duration
+from initial completed-group recognition is 8.456486 ms across the inventory;
+the censored cases remain labeled in the data and are excluded from the plotted
+completed-duration distribution.
+
+Order `788701345922` again yields 150 passive lots filled, zero unmatched display
+reduction, and 204.026301 ms between initial and final completed-group recognition.
+The terminal cancel record is linked to a passive fill; calling it a voluntary
+withdrawal would misdescribe this path. Across the full inventory, ten events
+retain unmatched fill accounting at a group boundary. That uncertainty is
+explicit in `unmatched_fills_at_group_boundary`; it is not silently reconciled.
+An unmatched final clear likewise does not prove discretionary cancellation.
+
+Thirty-five of the original fifty families overlap at least one such event in
+the descriptive window from one second before to five seconds after the family
+anchor. That window includes future information and overlapping events. It is
+an investigation link, not an independent confirmation or an available predictor.
+
+[Event inventory](research-atlas-v2/aggression-to-rest-events.csv),
+[raw action coordinates](research-atlas-v2/aggression-to-rest-actions.csv.gz),
+[future outcomes](research-atlas-v2/aggression-to-rest-outcomes.csv.gz),
+[family links](research-atlas-v2/family-to-resting-events.csv),
+[method and source pins](research-atlas-v2/mechanism-method.json).
+
+![Case 391 order path](research-atlas-v2/figures/case-391-order-path.png)
+
+### Observing later changes which cases remain available
+
+The timer study starts at actual initial completed-group recognition. Features
+at each decision use only actions and quotes from completed groups available by
+that decision. Outcomes start from that decision's quote. Final disposition is
+not a feature.
+
+| Observation delay | Orders still in the tracked resting state |
+| --- | ---: |
+| 0 ms | 980 |
+| 5 ms | 585 |
+| 25 ms | 395 |
+| 100 ms | 349 |
+
+At initial recognition, the one-second outcome is continuation in the original
+aggressive direction for 186 events, reversal for 434, and flat for 360. At 25 ms,
+among the 96 surviving at-touch events with passive fills already observed, the
+next one-second outcome is continuation for 27, reversal for 10 and flat for 59.
+Among 235 surviving at-touch events without passive fills observed, those counts
+are 27, 46 and 162. These are different selected populations, with small subgroups
+and overlapping periods. They motivate a controlled follow-up; they do not show
+that waiting, or observing a fill, caused a better outcome.
+
+This addresses a concrete psychological alternative: an apparent defensive wall
+may actually be an aggressive order's remainder being consumed. The data can
+distinguish that order path from some competing mechanical explanations; they
+cannot identify confidence, fear, manipulation or an individual trader's plan.
+
+[Decision features](research-atlas-v2/resting-observation-decisions.csv.gz),
+[observation outcomes](research-atlas-v2/resting-observation-outcomes.csv.gz),
+[summaries](research-atlas-v2/resting-observation-summary.csv),
+[timing method](research-atlas-v2/observation-method.json).
+
+### The first cross-date comparison: aging of rolling flow
+
+Using existing per-second classified volume, a 20-second rolling direction can
+flip when old volume expires even if no new classified lots arrive in that bin.
+The first twenty seconds of each available span are excluded as warm-up.
+
+| Date and available coverage | Direction flips | Flips with no fresh classified lots | Share |
+| --- | ---: | ---: | ---: |
+| October 2, partial | 1,715 | 747 | 43.6% |
+| October 17, partial | 1,561 | 642 | 41.1% |
+| October 18, full | 1,613 | 705 | 43.7% |
+
+This is evidence for a recurring accounting mechanism. It is not yet a matched
+session comparison: October 2 and 17 have partial coverage, the windows overlap,
+and October 3 is absent from this retained-table snapshot. No fresh *classified*
+volume does not mean no trade: midpoint or unclassified prints can still exist.
+These second-bin clocks are not the delayed dipole recognition clocks.
+
+[Date summary](research-atlas-v2/rolling-flow-date-summary.csv),
+[all second bins](research-atlas-v2/rolling-flow-seconds.csv.gz),
+[state transitions](research-atlas-v2/rolling-flow-state-transitions.csv),
+[flow definition and provenance](research-atlas-v2/flow-method.json).
+
+### Visual evidence and repeatable analysis
+
+Five figures are retained as PNG and editable SVG in
+[the figures directory](research-atlas-v2/figures):
+
+- [Mechanism overview](research-atlas-v2/figures/mechanism-overview.png): rolling-flow aging, resting dispositions, survival and local touch contrasts.
+- [Case 391 path](research-atlas-v2/figures/case-391-order-path.png): display, passive fills and quoted prices on one clock.
+- [Resting-event landscape](research-atlas-v2/figures/resting-event-landscape.png): the size/duration distribution and the exceptional case.
+- [Four-arm stability](research-atlas-v2/figures/four-arm-stability.png): per-fold MAE changes against the same baseline, including deterioration.
+- [Relationship context](research-atlas-v2/figures/relationship-context-map.png): selected correlations with explicit counts and changing cohorts.
+
+The conversation explorer uses [twenty complete chart states](research-atlas-v2/interactive-configs.json):
+dipole recognition pathways, aggression-to-rest pathways and flow/touch scatter
+views at 1, 5, 20, 60 and 300 seconds. The family view can switch between all 437
+eligible opportunities and the exact original fifty. Pathway widths conserve
+their full 863- or 980-event populations, including flat and unavailable outcomes.
+
+Code: [inventory and cross-date flow](research_atlas.py),
+[observation timing](research_atlas_timing.py),
+[figure and chart generation](research_atlas_figures.py).
+Eight [focused tests](test_research_atlas.py) pass, covering fill/mutation
+accounting, repricing, a synthetic expiry-induced reversal, exact case accounting,
+feature availability by decision, final-group closure and population conservation in all chart states.
+Static validation passes for all twenty interactive configurations. The overview
+and case-path images were visually inspected; browser interaction was not tested.
+
+### Applying the same research to the other three days
+
+Once each date's box outputs are saved, preserve its own source revisions,
+instrument, available span and group/cursor clocks. Rebuild the same opportunity,
+mechanism and observation tables with those date-specific inputs. The current
+raw inventory reader is pinned to October 18 and its two UTC source members;
+changing a date label is not a valid port. Map each date's source offsets and
+completed groups first, then retain the same definitions and outcome horizons.
+
+Compare both the available spans and common session hours, keeping partial
+coverage explicit. Preserve nulls and boundary-censored observations. Carry
+forward the four-arm baseline/flow/book/both comparison with purged chronological
+splits and the same fixed preprocessing rules. Retain each day's results before
+pooling, so one large or unusually active date cannot hide disagreement.
+
+Follow-up comparisons should include ordinary aggression without a resting
+remainder, similar prior touch depth and activity, both directions, and selected
+families versus the rest of the session. Queue changes and external instruments
+need their own availability alignment. This increment does not settle those
+questions or provide scoring/simulator admission. Independent Claude findings
+remain separate until the final evidence comparison, including disagreements.
