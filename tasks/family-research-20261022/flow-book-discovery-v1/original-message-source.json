@@ -1,0 +1,19 @@
+{
+  "revision": "1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202",
+  "path": "data/nymex_mbo/ng_v0_oct2023/NG_v0_mbo_20231018.dbn.zst",
+  "utc_member_to_session_cursor_offset": 17375,
+  "rows": 2819,
+  "spans": [
+    {
+      "instance": "375",
+      "start_receive_ns": 1697634551081390598,
+      "end_receive_ns": 1697634557081390598
+    },
+    {
+      "instance": "391",
+      "start_receive_ns": 1697634839878613141,
+      "end_receive_ns": 1697634845878613141
+    }
+  ],
+  "scope": "Original messages only; no producer replay. T summaries and F passive fills are distinct and must not be added as separate executed volume."
+}

@@ -1,0 +1,92 @@
+{
+  "version": "NG-FLOW-BOOK-v1",
+  "source_revision": "b5f28bd57de5ed4ff889335edb9a33216b67eb6a",
+  "groups_source": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/october18-standalone-inputs/groups.jsonl.gz",
+  "opportunity_source": "artifacts/sqlite-triage/20261022/families/instance-market-review-20261023/chronological-instance-index.csv",
+  "n_groups": 583688,
+  "n_opportunities": 749,
+  "cohort_counts": {
+    "other": 387,
+    "missing": 312,
+    "original": 50
+  },
+  "n_common_inputs": 437,
+  "arms": {
+    "baseline": [
+      "spread",
+      "activity1",
+      "activity60",
+      "prior_mid1",
+      "prior_mid5"
+    ],
+    "flow": [
+      "spread",
+      "activity1",
+      "activity60",
+      "prior_mid1",
+      "prior_mid5",
+      "flow1",
+      "flow5",
+      "flow60"
+    ],
+    "book": [
+      "spread",
+      "activity1",
+      "activity60",
+      "prior_mid1",
+      "prior_mid5",
+      "touch_imbalance",
+      "touch_size_log",
+      "touch_delta1",
+      "touch_delta5",
+      "root.depth_imbalance_n",
+      "root.depth_imbalance_full",
+      "bid_same_price1",
+      "ask_same_price1",
+      "bid_display_change1",
+      "ask_display_change1",
+      "bid_same_price5",
+      "ask_same_price5",
+      "bid_display_change5",
+      "ask_display_change5"
+    ],
+    "both": [
+      "spread",
+      "activity1",
+      "activity60",
+      "prior_mid1",
+      "prior_mid5",
+      "flow1",
+      "flow5",
+      "flow60",
+      "touch_imbalance",
+      "touch_size_log",
+      "touch_delta1",
+      "touch_delta5",
+      "root.depth_imbalance_n",
+      "root.depth_imbalance_full",
+      "bid_same_price1",
+      "ask_same_price1",
+      "bid_display_change1",
+      "ask_display_change1",
+      "bid_same_price5",
+      "ask_same_price5",
+      "bid_display_change5",
+      "ask_display_change5"
+    ]
+  },
+  "baseline_note": "Includes unsigned classified activity and prior price response; flow arm adds signed ratios.",
+  "book_note": "Displayed changes at unchanged touch prices; zero encoded on price moves with explicit same-price flags. No fill/cancel attribution.",
+  "fit": "Ridge alpha 10; train-only scale/intercept; expanding 40/60/80% splits; horizon purge plus stated embargo; same eligible rows and targets in all arms; no hyperparameter search.",
+  "embargo_seconds": 600,
+  "endpoint": "Last eligible group at or before anchor+h; integer clocks; target beyond session or crossing a reset/halt censored; staleness retained.",
+  "limitations": [
+    "Family-selected opportunities, not all market opportunities.",
+    "All four dates are discovery; this comparison contains October 18 only.",
+    "Ratios with zero classified volume are missing; common-input cohort excludes them.",
+    "Adjacent cases/outcome windows dependent; no independent significance claim.",
+    "Negative absolute predictions retained; ridge is an explanatory probe, not an admitted scoring model.",
+    "Matching uses replacement, activity distance has no caliper; inspect balance.",
+    "No simulator entries, costs or fills."
+  ]
+}

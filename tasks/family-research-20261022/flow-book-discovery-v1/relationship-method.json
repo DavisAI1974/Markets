@@ -1,0 +1,15 @@
+{
+  "source_revision": "b5f28bd57de5ed4ff889335edb9a33216b67eb6a",
+  "numeric_features": 224,
+  "attempted_comparisons": 14784,
+  "n_planes": 99,
+  "n_points": 13,
+  "scope": "Selected family starts; descriptive ranks only. No p-values or significance selection. No new model admission.",
+  "restrictions": [
+    "Missing/invalid states excluded pairwise, denominators retained.",
+    "External rows use declared publication cutoff; some curve updates occur after the frozen prior completed book close. The flag is retained; these are not admitted to four-arm prediction.",
+    "Shared source and derived transform correlations are not independent corroboration.",
+    "External context can follow session drift; pooled or quarter correlations do not establish a release effect.",
+    "Exact inverse stack has zero support because all 749 full books are bid-heavy."
+  ]
+}

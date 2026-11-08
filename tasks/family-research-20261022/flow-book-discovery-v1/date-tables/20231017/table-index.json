@@ -1,0 +1,46 @@
+{
+  "day": "20231017",
+  "observed_utc": "2026-11-08T18:03:03.538454+00:00",
+  "control_path": "/opt/frankie-box/replay-control/20231017",
+  "root_path": "/opt/frankie-box/work/experiment-roots/ng-replay-20231017",
+  "standalone_path": "/opt/frankie-box/work/standalone-inputs/20231017",
+  "job_status": "2026-11-08T16:10:18Z root-native",
+  "standalone_status": "2026-11-08T15:29:22Z waiting-for-producers",
+  "phase": "deriving",
+  "tables": [
+    {
+      "path": "/opt/frankie-box/work/experiment-roots/ng-replay-20231017/work/derived/legacy_price.json",
+      "bytes": 1592,
+      "status": "derived",
+      "producer": "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py (legacy control row projection)",
+      "count": 33451,
+      "local_filename": "legacy_price.json.gz"
+    },
+    {
+      "path": "/opt/frankie-box/work/experiment-roots/ng-replay-20231017/work/derived/legacy_native_signed_flow.json",
+      "bytes": 4839645,
+      "status": "derived",
+      "producer": "research/kalshi/frankie_raw_mbo_benchmark/native_roll20.py SecondBinner (clock ts_recv)",
+      "count": 75579,
+      "first_second": 1697500816,
+      "last_second": 1697576394,
+      "local_filename": "legacy_native_signed_flow.json.gz"
+    },
+    {
+      "path": "/opt/frankie-box/work/experiment-roots/ng-replay-20231017/work/derived/legacy_per_second_roll20.json",
+      "bytes": 977093,
+      "status": "derived",
+      "producer": "research/kalshi/frankie_raw_mbo_benchmark/native_roll20.py roll20 (window 20, clock ts_recv)",
+      "count": 75579,
+      "first_second": 1697500816,
+      "last_second": 1697576394,
+      "local_filename": "legacy_per_second_roll20.json.gz"
+    }
+  ],
+  "standalone_files": [],
+  "pod": "9m9fubscvdgow5",
+  "tape_scope": "partial",
+  "runtime_revision_from_handoff": "6f9178bbb97721c7a71e94bb602ac256db348c87",
+  "stage_disposition": "interim table availability; neither full ROOT/Native completion nor scoring admission",
+  "bulk_retention": "Spools remain at their exact remote paths; small referenced JSON files are preserved here."
+}

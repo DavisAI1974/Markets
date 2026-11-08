@@ -1,0 +1,25 @@
+Continue the October NG discovery work independently on DavisAI1974/Markets branch codex/ng-shadow-discovery-20261108. Start from handoff 5724f4096248dd8080aa381a34855097c685dc1c and read the latest branch state.
+
+Read tasks/family-research-20261022/AGENTS.md, october-discovery-log.md, reading-trade-charts-and-signals.md, and the standing handoff in three-date-replay-runbook.md.
+
+NEW USER INSTRUCTION: Write your independent findings in tasks/family-research-20261022/claude-october-discovery-20261108.md. Codex has its own findings file. We will merge the independent reviews at the end. This replaces the earlier instruction to write new findings directly into the shared log. Use the shared log as source context. Preserve disagreements and avoid reading Codex's conclusions until you have formed your own interpretation of the common pinned evidence.
+
+Preserve the working checkout and unrelated changes. Use an isolated worktree if necessary. Fetch before publishing and integrate concurrent branch updates without overwriting them.
+
+Start with the saved SQLite cases 375 and 391, their original 50-case comparison set, and the reconstructed October 18 dipoles. Reconstruction code and evidence were published in b5f28bd57de5ed4ff889335edb9a33216b67eb6a. Use the same pinned inputs Codex is studying, retained tables and exact source coordinates.
+
+Pair the broad behavior and cohort frequency with a concrete example: what was the dipole tracking, how and why did the path unfold, and what remains open? Start with persistence, fading, reversal, flow and book response. Include opposing, flat, weak, negative and conflicting observations. Narrow to particular prices, thresholds or order signatures when the evidence distinguishes them.
+
+Trace why similar initial conditions produced different paths. Distinguish observed mechanisms, associations, behavioral hypotheses and missing evidence. Follow adds, fills, cancellations, repricing, replenishment, queue behavior, spread, nearby liquidity and subsequent price response. Keep ratio operands, observation spans, order IDs, completed-group coordinates and exact clocks attached.
+
+Compare four arms on identical eligible opportunities and outcome windows: baseline; baseline plus flow; baseline plus book behavior; baseline plus both. Compare original and inverse setups and activity controls. Preserve missingness, censoring, support, chronological dependence and overlapping windows. Separate any experiment-specific model limitations from conclusions about whether the underlying phenomenon exists.
+
+Study positive and inverse relationships across the full 99-plane inventory and all 13 inputs. Classify controls, clocks, market evidence, derived transforms and outcomes in their proper roles. Identify shared sources rather than counting repeated measurements as independent corroboration. Investigate whether findings in one layer explain gaps in another. Keep psychology beside mechanical alternatives and say what observable evidence could distinguish them; private intent remains unknown without supporting evidence.
+
+Keep birth, actual recognition availability, later outcomes, scoring admission and executable simulator rules distinct. Never backdate recognition to its nominal bin or use a later lifecycle outcome as an earlier predictor. Family-selected opportunities are not automatically all eligible market opportunities.
+
+October 2, 3, 17 and 18 all remain discovery. October 2 and 17 are partial. As actual ROOT, Native and standalone outputs become available, index their locations, coverage, stage and revision in your notes and publish compact supporting artifacts. Reuse produced tables. Skip teacher runs, receipt audits, verification reruns, old Search, AWS and duplicate launches.
+
+The existing heartbeat owns monitoring and recovery of the three original RunPod jobs. The user has also instructed that each day's completed data and necessary code be saved to Git and publication confirmed before that idle pod is shut down, preserving the shared network volume. The heartbeat owns this save-and-shutdown sequence; do not launch competing monitoring or shut down pods prematurely.
+
+Commit your code, findings and supporting evidence to the same branch. Retain every hypothesis and contrary result with its scope. Leave prospective paper tickets and simulator execution separate until explicitly specified. Summarize what you learned, what is still uncertain, and the next comparison that would distinguish the explanations.

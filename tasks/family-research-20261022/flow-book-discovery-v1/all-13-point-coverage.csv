@@ -1,0 +1,14 @@
+point_id,name,bound_tables,asof_series,present_records,variable_series,relationship,admission
+1,cot.managed_money_net_pctile_1y,"[""cot.023651""]",1,749,0,shared_positioning_source,exploratory_declared_asof_only
+2,weather_forecast.forecast_gw_hdd,"[""mos.gw_by_cycle"", ""mos.raw""]",14,10189,13,shared_weather_source,exploratory_declared_asof_only
+3,cot.managed_money_net_chg_wow,"[""cot.023651""]",1,749,0,shared_positioning_source,exploratory_declared_asof_only
+4,cot.managed_money_net_pctile_3y,"[""cot.023651""]",1,749,0,shared_positioning_source,exploratory_declared_asof_only
+5,grid_stack.bas.US48.wind_mwh,"[""eia930.us48"", ""eia930.hourly""]",1,749,1,shared_power_source,exploratory_declared_asof_only
+6,squeeze_watch.sessions_since_prompt_expiry,"[""calendar.sessions_since_prompt_expiry""]",1,90,0,context_or_transmission,exploratory_declared_asof_only
+7,grid_stack.bas.US48.est_gas_burn_bcfd,"[""eia930.us48"", ""eia930.hourly""]",1,749,1,shared_power_source,exploratory_declared_asof_only
+8,cot.ice.ld1.managed_money_net_pctile_1y,"[""cot.023391""]",1,749,0,context_or_transmission,exploratory_declared_asof_only
+9,model_disagreement.summary.max_abs_spread_gw_hdd,"[""mos.disagreement_by_cycle""]",1,749,1,shared_weather_source,exploratory_declared_asof_only
+10,weather.gw_hdd (observed),"[""weather.gw_daily"", ""weather.obs_hourly""]",19,14231,19,context_or_transmission,exploratory_declared_asof_only
+11,"EIA weekly storage (level, weekly change, vs 5-year)","[""storage.weekly""]",1,749,0,context_or_transmission,exploratory_declared_asof_only
+12,storage estimate vs actual,"[""storage.estimate"", ""storage.estimate_captures"", ""storage.weekly""]",1,749,0,context_or_transmission,exploratory_declared_asof_only
+13,the futures curve shape,"[""curve.definitions"", ""curve.statistics"", ""curve.trades"", ""curve.settled_shape"", ""curve.traded_shape""]",22,16478,2,same_instrument_overlap_and_other_legs,exploratory_declared_asof_only

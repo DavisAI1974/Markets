@@ -1,0 +1,17 @@
+{
+  "day": "20231003",
+  "observed_utc": "2026-11-08T18:03:03.551641+00:00",
+  "control_path": "/opt/frankie-box/replay-control/20231003",
+  "root_path": "/opt/frankie-box/work/experiment-roots/ng-replay-20231003",
+  "standalone_path": "/opt/frankie-box/work/standalone-inputs/20231003",
+  "job_status": "2026-11-08T16:18:14Z root-native",
+  "standalone_status": "2026-11-08T15:29:21Z waiting-for-producers",
+  "phase": "deriving",
+  "tables": [],
+  "standalone_files": [],
+  "pod": "902unhjrkncf8c",
+  "tape_scope": "full_session",
+  "runtime_revision_from_handoff": "6f9178bbb97721c7a71e94bb602ac256db348c87",
+  "stage_disposition": "interim table availability; neither full ROOT/Native completion nor scoring admission",
+  "bulk_retention": "Spools remain at their exact remote paths; small referenced JSON files are preserved here."
+}

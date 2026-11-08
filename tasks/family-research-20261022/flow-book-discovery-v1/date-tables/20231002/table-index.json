@@ -1,0 +1,72 @@
+{
+  "day": "20231002",
+  "observed_utc": "2026-11-08T18:03:03.577407+00:00",
+  "control_path": "/opt/frankie-box/replay-control/20231002",
+  "root_path": "/opt/frankie-box/work/experiment-roots/ng-replay-20231002",
+  "standalone_path": "/opt/frankie-box/work/standalone-inputs/20231002",
+  "job_status": "2026-11-08T17:54:21Z failed root-native exit=1",
+  "standalone_status": "2026-11-08T17:54:23Z held failed root-native exit=1",
+  "phase": "deriving",
+  "tables": [
+    {
+      "path": "/opt/frankie-box/work/experiment-roots/ng-replay-20231002/work/derived/legacy_price.json",
+      "bytes": 1596,
+      "status": "derived",
+      "producer": "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py (legacy control row projection)",
+      "count": 37670,
+      "local_filename": "legacy_price.json.gz"
+    },
+    {
+      "path": "/opt/frankie-box/work/experiment-roots/ng-replay-20231002/work/derived/legacy_native_signed_flow.json",
+      "bytes": 4841051,
+      "status": "derived",
+      "producer": "research/kalshi/frankie_raw_mbo_benchmark/native_roll20.py SecondBinner (clock ts_recv)",
+      "count": 75597,
+      "first_second": 1696204800,
+      "last_second": 1696280396,
+      "local_filename": "legacy_native_signed_flow.json.gz"
+    },
+    {
+      "path": "/opt/frankie-box/work/experiment-roots/ng-replay-20231002/work/derived/legacy_per_second_roll20.json",
+      "bytes": 992911,
+      "status": "derived",
+      "producer": "research/kalshi/frankie_raw_mbo_benchmark/native_roll20.py roll20 (window 20, clock ts_recv)",
+      "count": 75597,
+      "first_second": 1696204800,
+      "last_second": 1696280396,
+      "local_filename": "legacy_per_second_roll20.json.gz"
+    },
+    {
+      "path": "/opt/frankie-box/work/experiment-roots/ng-replay-20231002/work/derived/legacy_book_imbalance.json",
+      "bytes": 7059,
+      "status": "derived",
+      "producer": "V4MboAdapter F_LAST book snapshot + a_memory_member_first_recalculation_20260828.book_values/book_transition",
+      "count": 600291,
+      "bulk_spool": {
+        "path": "/opt/frankie-box/work/experiment-roots/ng-replay-20231002/work/derived/.rows/frames.jsonl",
+        "count": 600291,
+        "bytes": 520064232895
+      },
+      "local_filename": "legacy_book_imbalance.json.gz"
+    },
+    {
+      "path": "/opt/frankie-box/work/experiment-roots/ng-replay-20231002/work/derived/legacy_structure_observables.json",
+      "bytes": 6548,
+      "status": "derived",
+      "producer": "a_memory_member_first_recalculation_20260828.describe_structure per F_LAST group (action string, side string, mirror, fill disposition, family candidate)",
+      "count": 600291,
+      "bulk_spool": {
+        "path": "/opt/frankie-box/work/experiment-roots/ng-replay-20231002/work/derived/.rows/structures.jsonl",
+        "count": 600291,
+        "bytes": 1094372028
+      },
+      "local_filename": "legacy_structure_observables.json.gz"
+    }
+  ],
+  "standalone_files": [],
+  "pod": "skqgzuaskb6d10",
+  "tape_scope": "partial",
+  "runtime_revision_from_handoff": "6f9178bbb97721c7a71e94bb602ac256db348c87",
+  "stage_disposition": "interim table availability; neither full ROOT/Native completion nor scoring admission",
+  "bulk_retention": "Spools remain at their exact remote paths; small referenced JSON files are preserved here."
+}
