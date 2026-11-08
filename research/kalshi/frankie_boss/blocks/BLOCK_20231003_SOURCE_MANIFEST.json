@@ -1,39 +1,32 @@
 {
-  "archive_prefix": "nymex/ng_mbo_5y_v0/native",
   "block": "20231003",
-  "bucket": "bento-568968024170-us-east-2-an",
+  "bucket": null,
   "canonical_source_rewritten": false,
   "causal_clock": "ts_recv_ns",
-  "derived_from": {
-    "block": "20231002_20231004",
-    "manifest_hash": "71aa5825d13379f5d37a1079b9938cbac0dbf69aa4e3d9fca2e0825f53de4d0c"
-  },
+  "completed_groups": 653912,
   "halt_boundaries_close_groups": true,
   "halt_utc_hour": 21,
-  "ingested": false,
-  "manifest_hash": "64bce8838bea4b26ce960f339524406f6969fe18850877c72d2a361676d4f6ae",
+  "manifest_hash": "a5a8d2dc83da92cf15d12edac840c73b30b43c1eca696f8582430fe105111753",
   "member_seams_close_groups": true,
-  "model_calls": 0,
+  "opening_scope": "PREVIOUS_UTC_TAIL",
   "partial_members": [
     {
-      "member_key": "glbx-mdp3-20231003.mbo.dbn.zst",
+      "member_key": "NG_v0_mbo_20231003.dbn.zst",
       "partition_mbo_records": 879077,
-      "reason": "records before the 21:00Z halt belong to this trading day; the rest are the next day",
+      "reason": "Keep the records before the 21:00 UTC halt boundary.",
       "take": 874941
     }
   ],
-  "prefix": "nymex/ng_mbo_5y_v0/native",
-  "prefixes_built": false,
-  "role": "HELD_OUT_BLIND_BLOCK",
+  "prefix": null,
+  "role": "DISCOVERY_DATA",
   "sampled": false,
-  "scheduled": false,
   "schema": "BOSS_BLOCK_SOURCE_MANIFEST_V1",
   "sessions": [
     {
       "after_halt": 4889,
-      "archive_key": "nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231002.mbo.dbn.zst",
       "before_halt": 808453,
       "day_utc": "20231002",
+      "f_last_before_halt": 600291,
       "f_last_groups": 603529,
       "first_ts_recv_ns": 1696204800000000000,
       "halt_boundary_f_last": true,
@@ -41,13 +34,13 @@
       "last_record_f_last": true,
       "last_ts_recv_ns": 1696291199817162842,
       "mbo_records": 813342,
-      "member_key": "glbx-mdp3-20231002.mbo.dbn.zst"
+      "member_key": "NG_v0_mbo_20231002.dbn.zst"
     },
     {
       "after_halt": 4136,
-      "archive_key": "nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231003.mbo.dbn.zst",
       "before_halt": 874941,
       "day_utc": "20231003",
+      "f_last_before_halt": 650674,
       "f_last_groups": 653409,
       "first_ts_recv_ns": 1696291200000000000,
       "halt_boundary_f_last": true,
@@ -55,7 +48,7 @@
       "last_record_f_last": true,
       "last_ts_recv_ns": 1696377599808026499,
       "mbo_records": 879077,
-      "member_key": "glbx-mdp3-20231003.mbo.dbn.zst"
+      "member_key": "NG_v0_mbo_20231003.dbn.zst"
     }
   ],
   "source_kind": "NATIVE_DBN_MBO",
@@ -63,29 +56,28 @@
     {
       "mbo_records": 4889,
       "member_index": 0,
-      "member_key": "glbx-mdp3-20231002.mbo.dbn.zst",
-      "sha256": "bff6f27b43b8b90f3b7d86d2248c423e0d5962968b3a612b46d8376141a15e8c",
-      "size_bytes": 13590194
+      "member_key": "NG_v0_mbo_20231002.dbn.zst",
+      "sha256": "4fd5fb8827e2ee560a9d938c54460f4a45d2569425157f910db06d4f55b7fe0d",
+      "size_bytes": 15818310
     },
     {
       "mbo_records": 874941,
       "member_index": 1,
-      "member_key": "glbx-mdp3-20231003.mbo.dbn.zst",
-      "sha256": "b1240d9ca4abe5189d6e066c610530c069fd3602b82590f9b520a512b4366313",
-      "size_bytes": 14701450
+      "member_key": "NG_v0_mbo_20231003.dbn.zst",
+      "sha256": "8db4b0042d9324b299f616c5de5c6c66ff3bfa1d2a1288eb69cc575e7653c600",
+      "size_bytes": 17118175
     }
   ],
-  "staged_by": "deploy/aws/box/frankie_box_day_facts.py (presigned GET of the archive keys, counts by stage_block_sources.count_records; no S3 copy)",
-  "staged_unix": 1790686262,
   "tail_members": [
     {
-      "member_key": "glbx-mdp3-20231002.mbo.dbn.zst",
+      "member_key": "NG_v0_mbo_20231002.dbn.zst",
       "partition_mbo_records": 813342,
-      "reason": "records at or after the 21:00Z halt open this trading day; the records before it are the prior trading day (skipped, never counted); the book opens from the prior day's sealed ingest",
+      "reason": "Include the previous UTC member's tail for this trading date.",
       "skip": 808453,
       "take": 4889
     }
   ],
+  "tape_git_commit": "1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202",
   "total_mbo_records": 879830,
   "trading_day": "20231003"
 }
