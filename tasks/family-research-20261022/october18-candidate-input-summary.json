@@ -1,0 +1,116 @@
+{
+  "birth_flow_and_prebirth_touch_size_vs_midpoint": {
+    "multiple_lots/aligned": {
+      "flat": 47,
+      "opposite": 71,
+      "same": 137
+    },
+    "multiple_lots/balanced": {
+      "flat": 9,
+      "opposite": 25,
+      "same": 24
+    },
+    "multiple_lots/opposed": {
+      "flat": 44,
+      "opposite": 85,
+      "same": 89
+    },
+    "one_lot/aligned": {
+      "flat": 45,
+      "opposite": 31,
+      "same": 85
+    },
+    "one_lot/balanced": {
+      "flat": 20,
+      "opposite": 14,
+      "same": 12
+    },
+    "one_lot/opposed": {
+      "flat": 38,
+      "opposite": 52,
+      "same": 35
+    }
+  },
+  "candidate_counts": {
+    "balanced_at_emission": 26,
+    "baseline_match": 863,
+    "birth_no_fresh_print": 548,
+    "birth_single_classified_lot_in_window": 332,
+    "direct_and_later_candidate_row": 42,
+    "direct_and_later_operands_match": 42,
+    "direct_candidate_row": 42,
+    "magnitude_and_polarity_match": 863,
+    "opposite_direction_at_emission": 217,
+    "retained_candidate_operands": 863,
+    "same_direction_at_emission": 275,
+    "threshold_and_history_match": 863,
+    "undefined_at_emission": 345
+  },
+  "evidence_revision": "d25fc3f7e59c2a1cb51ec943cd91ff34e176a72a",
+  "flow_and_midpoint_direction": {
+    "balanced_at_emission": {
+      "flat": 1,
+      "opposite": 13,
+      "same": 12
+    },
+    "opposite_direction_at_emission": {
+      "flat": 34,
+      "opposite": 127,
+      "same": 56
+    },
+    "same_direction_at_emission": {
+      "flat": 55,
+      "opposite": 65,
+      "same": 155
+    },
+    "undefined_at_emission": {
+      "flat": 113,
+      "opposite": 73,
+      "same": 159
+    }
+  },
+  "later_episode_rows": 863,
+  "overlap": {
+    "distinct_prints": {
+      "all": 14699,
+      "nominal_bin_before_print": 5426,
+      "record_emission_before_print": 5117,
+      "record_emission_by_prior_group": 5117,
+      "record_emission_in_trade_group": 102
+    },
+    "links": {
+      "all": 17845,
+      "nominal_bin_before_print": 6639,
+      "record_emission_before_print": 6304,
+      "record_emission_by_prior_group": 6304,
+      "record_emission_in_trade_group": 102
+    }
+  },
+  "print_classifier_comparison": {
+    "action_at_mid/prior_at_mid": 1052,
+    "action_at_mid/wire_buy": 479,
+    "action_at_mid/wire_sell": 573,
+    "action_buy/prior_buy": 14863,
+    "action_buy/wire_buy": 13397,
+    "action_buy/wire_sell": 115,
+    "action_buy/wire_unspecified": 1351,
+    "action_sell/prior_sell": 14824,
+    "action_sell/wire_buy": 59,
+    "action_sell/wire_sell": 13708,
+    "action_sell/wire_unspecified": 1057
+  },
+  "producer_reference_revision": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+  "raw_tape_revision": "1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202",
+  "recognition_delay_from_nominal_bin_ns": {
+    "maximum": 87367893996,
+    "median": 2406826153,
+    "minimum": 1000045727
+  },
+  "recognitions": 863,
+  "retained_flow_comparison": {
+    "fresh_operands_match": 4849,
+    "retained_active": 4849,
+    "roll20_match": 4849
+  },
+  "tape_prints": 30739
+}
