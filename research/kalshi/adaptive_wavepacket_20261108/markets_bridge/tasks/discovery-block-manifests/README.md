@@ -16,7 +16,9 @@ Stage the three named compressed members under `data/nymex_mbo/ng_v0_oct2023` at
 python -m research.kalshi.frankie_boss.operations.ingest_block_sources \
   --manifest <date-manifest> --sources-dir <local-dbn-directory> \
   --output-dir <date-ingest-directory> --session-policy cme_trading_day \
-  --writer compact --mode sequential --observation full
+  --writer compact --mode sequential --observation full --workers <encoder-workers>
 ```
+
+Set the encoder worker count from the booked CPU lane. The ordered replay applies the market records while the compact writer's workers encode independent blocks.
 
 October 3 can take October 2's verified closing book through `--opening-receipt` after the source and adapter state match. The default first-member warmup provides the same scope when a compatible receipt is unavailable. The partial dates start at the recorded midnight snapshot. Preserve the explicit partial scope on all downstream receipts.

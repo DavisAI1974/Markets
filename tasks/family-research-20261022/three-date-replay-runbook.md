@@ -14,6 +14,8 @@ Primary audit references are the [SQLite triage](../../artifacts/sqlite-triage/2
 
 Use a separate working and output identity for each trade date. Each stage writes a receipt with date, input/output hashes, source and code revisions, row counts, missing or invalid states, and the checks that passed. Resume from an existing receipt only if it covers the exact same inputs, dates, code and stage. Copying an October 18 result into another date fails this check.
 
+The [per-date execution audit](per-date-execution.md) records the parallel worker settings, the direct ROOT-to-SQLite family inventory that removes the Search dependency, and the GitHub Actions runner requirements.
+
 | Stage | Do once per applicable input | Completion evidence |
 | --- | --- | --- |
 | 1. Tape and market state | Verify the pinned DBN bytes and date bounds. Use the verified opening source or mark the available left edge as partial. Replay original ordered messages, preserve every print and complete group, and reconstruct full depth, FIFO and lineage. Carry halt and snapshot records in their original roles. | Book and trade counts; snapshot/continuity checks; original event, receive and known-by clocks and input/group cursors; readable references to every original record. |
