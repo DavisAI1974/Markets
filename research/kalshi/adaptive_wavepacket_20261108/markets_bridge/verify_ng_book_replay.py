@@ -8,6 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 import gzip
 import hashlib
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -31,10 +32,16 @@ ARCHIVE = Path(
 
 
 def git_blob(pin, path):
+    bundled = os.getenv("NG_REPLAY_PINNED_SOURCES")
+    if bundled:
+        return (Path(bundled) / pin / path).read_bytes()
     return subprocess.check_output(["git", "show", f"{pin}:{path}"])
 
 
 def tape_blob(name):
+    staged = os.getenv("NG_REPLAY_TAPE_DIR")
+    if staged:
+        return (Path(staged) / name).read_bytes()
     # Read only the named files at the verified Git revision.
     url = f"https://raw.githubusercontent.com/DavisAI1974/Markets/{TAPE_PIN}/{DATA_PATH}/{name}"
     with urlopen(url, timeout=60) as stream:
@@ -181,7 +188,7 @@ def run(day, *, observe_group=None):
     }
 
 
-def run_partial(day):
+def run_partial(day, *, observe_group=None):
     """Replay the available midnight-to-halt portion of an earlier trade date."""
     following_day, groups, trades = {
         "20231002": ("20231003", 600291, 37670),
@@ -214,7 +221,9 @@ def run_partial(day):
         last = record.ts_recv
         snapshots += bool(record.flags & 32)
         trade_count += record.action.value == "T"
-        adapter.apply(record, "NGX3")
+        frame, _ = adapter.apply(record, "NGX3")
+        if frame is not None and observe_group is not None:
+            observe_group(index, adapter.completed_event_group_count - 1, frame)
         if (index + 1) % 200_000 == 0:
             print(f"{day} replayed {index + 1:,} available records", file=sys.stderr, flush=True)
     else:

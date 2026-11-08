@@ -1,4 +1,4 @@
-"""Export and reconcile October 18 standalone touch and print inputs, without scoring."""
+"""Export and reconcile standalone touch and print inputs for a discovery date."""
 
 import argparse
 from collections import Counter
@@ -11,12 +11,13 @@ from pathlib import Path
 import tempfile
 
 from .export_trade_clocks import ARCHIVE, ARCHIVED_COMPARABLE, TAPE_COUNTS
-from .verify_ng_book_replay import expect, run
+from .verify_ng_book_replay import expect, run, run_partial
 
 
 DAY = "20231018"
 INSTRUMENT = 150611
 ARCHIVED_PRINTS_SHA256 = "fe842ad1cb670973abc8311273363cedb8e447b56ae9b30c0479828057fff3d5"
+TRADE_CLOCKS = Path(__file__).parent / "tasks" / "trade-clock-inputs"
 
 
 def group_row(cursor, ordinal, frame):
@@ -50,18 +51,26 @@ def digest(path):
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
-def export(output):
+def export(output, *, day=DAY):
     if output.exists():
         raise FileExistsError(output)
-    expect(digest(ARCHIVE), ARCHIVED_PRINTS_SHA256, "archived October 18 prints SHA-256")
+    if day == DAY:
+        archive_path, archive_sha, opener = ARCHIVE, ARCHIVED_PRINTS_SHA256, open
+        compare = ARCHIVED_COMPARABLE
+    else:
+        saved = next(r for r in json.loads((TRADE_CLOCKS / "receipt.json").read_bytes()) if r["trade_date"] == day)
+        archive_path, archive_sha, opener = TRADE_CLOCKS / saved["output"], saved["sha256"], gzip.open
+        compare = (*ARCHIVED_COMPARABLE, "group_ordinal")
+    expect(digest(archive_path), archive_sha, f"{day} print reference SHA-256")
+    replay = run_partial if day in {"20231002", "20231017"} else run
     output.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory(prefix=".october18-inputs-", dir=output.parent) as tmp:
+    with tempfile.TemporaryDirectory(prefix=f".{day}-inputs-", dir=output.parent) as tmp:
         pending = Path(tmp)
         path = pending / "groups.jsonl.gz"
         counts = Counter()
         next_cursor = 0
         last_recv = None
-        with (ARCHIVE.open(encoding="utf-8", newline="") as archive, path.open("xb") as raw,
+        with (opener(archive_path, "rt", encoding="utf-8", newline="") as archive, path.open("xb") as raw,
               gzip.GzipFile(filename="", mode="wb", fileobj=raw, mtime=0, compresslevel=3) as packed,
               io.TextIOWrapper(packed, encoding="utf-8", newline="\n") as groups):
             original = csv.DictReader(archive)
@@ -83,9 +92,11 @@ def export(output):
                     saved = next(original, None)
                     if saved is None:
                         raise ValueError(f"No archived print for {trade['source_ordinal']}")
-                    expect(tuple(trade[k] for k in ARCHIVED_COMPARABLE),
-                           tuple(int(saved[k]) for k in ARCHIVED_COMPARABLE),
+                    expect(tuple(trade[k] for k in compare),
+                           tuple(int(saved[k]) for k in compare),
                            f"archived print {trade['source_ordinal']}")
+                    if day != DAY:
+                        expect(trade["aggressor_side"], saved["aggressor_side"], "tape print aggressor side")
                     counts["prints"] += 1
                 counts["groups"] += 1
                 counts["no_print_groups"] += not prints
@@ -95,17 +106,17 @@ def export(output):
                 row["prints"] = prints
                 groups.write(json.dumps(row, separators=(",", ":")) + "\n")
 
-            receipt = run(DAY, observe_group=observe)
+            receipt = replay(day, observe_group=observe)
             expect(next(original, None), None, "unmatched archived prints")
-            expect((next_cursor, counts["groups"], counts["prints"]), TAPE_COUNTS[DAY],
-                   "full session coverage")
+            expect((next_cursor, counts["groups"], counts["prints"]), TAPE_COUNTS[day],
+                   "available session coverage")
 
-        expect(digest(ARCHIVE), ARCHIVED_PRINTS_SHA256, "archived prints unchanged during replay")
+        expect(digest(archive_path), archive_sha, "print reference unchanged during replay")
         receipt.update(
             coverage_scope="Pinned native group-close touch and trade print inputs",
             full_discovery_gate="NOT_PASSED",
             counts=dict(counts),
-            archived_prints_sha256=ARCHIVED_PRINTS_SHA256,
+            archived_prints_sha256=archive_sha,
             groups_file=dict(path=path.name, bytes=path.stat().st_size, sha256=digest(path)),
             format=dict(instrument_id=INSTRUMENT, cursor_base=0, group_base=0,
                         touch_fields=["price_raw", "size", "order_count"],
@@ -119,8 +130,10 @@ def export(output):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--day", choices=TAPE_COUNTS, default=DAY)
     parser.add_argument("--output-dir", required=True, type=Path)
-    print(json.dumps(export(parser.parse_args().output_dir), indent=2))
+    args = parser.parse_args()
+    print(json.dumps(export(args.output_dir, day=args.day), indent=2))
 
 
 if __name__ == "__main__":
