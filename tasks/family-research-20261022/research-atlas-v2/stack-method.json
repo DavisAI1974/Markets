@@ -1,0 +1,104 @@
+{
+  "source_revision": "b5f28bd57de5ed4ff889335edb9a33216b67eb6a",
+  "source_groups": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/october18-standalone-inputs/groups.jsonl.gz",
+  "layers": {
+    "context": [
+      "prior_ticks20",
+      "range_ticks20",
+      "spread_ticks"
+    ],
+    "dipole": [
+      "imb_level",
+      "imb_flow",
+      "ent_dipole",
+      "mi_flow",
+      "log_signed_C",
+      "strength_change",
+      "early_empty",
+      "late_empty"
+    ],
+    "fresh": [
+      "fresh_imb5",
+      "log_fresh_lots5",
+      "log_unknown_lots5"
+    ],
+    "book": [
+      "touch_imb",
+      "touch_count_imb",
+      "log_touch_lots",
+      "log_touch_orders"
+    ],
+    "display": [
+      "bid_add5",
+      "bid_remove5",
+      "ask_add5",
+      "ask_remove5",
+      "quote_price_changes5"
+    ]
+  },
+  "arms": {
+    "baseline": [],
+    "plus_dipole": [
+      "dipole"
+    ],
+    "plus_fresh": [
+      "fresh"
+    ],
+    "plus_book": [
+      "book"
+    ],
+    "plus_display": [
+      "display"
+    ],
+    "dipole_book": [
+      "dipole",
+      "book"
+    ],
+    "full": [
+      "dipole",
+      "fresh",
+      "book",
+      "display"
+    ],
+    "without_dipole": [
+      "fresh",
+      "book",
+      "display"
+    ],
+    "without_fresh": [
+      "dipole",
+      "book",
+      "display"
+    ],
+    "without_book": [
+      "dipole",
+      "fresh",
+      "display"
+    ],
+    "without_display": [
+      "dipole",
+      "fresh",
+      "book"
+    ]
+  },
+  "targets": [
+    "midpoint ticks and absolute ticks at 5/20/60 seconds",
+    "absolute flow-strength change at 20 seconds, both ratios defined"
+  ],
+  "trials": {
+    "arms": 11,
+    "target_horizon_pairs": 7,
+    "chronological_folds": 3
+  },
+  "fit": "Ridge alpha 10; train-only mean imputation, missingness flags and scaling. Expanding 40/60/80 percent cuts; label purge plus 600-second embargo. Same eligible rows in every arm within target/fold; no search for hyperparameters.",
+  "interpretation": "Compare added layers and full-stack ablations; complementary stories do not automatically imply additional predictive value.",
+  "limits": [
+    "One selected October 18 discovery cohort; other three days pending comparable final inputs.",
+    "Repeated/overlapping observations; interval clusters reported, no iid significance or calibrated probabilities.",
+    "Same-price displayed additions/removals are aggregate changes, not proven same-order replenishment or executed absorption.",
+    "Fresh and dipole features share trade observations; redundancy correlations and ablations retain this.",
+    "Flow-strength target excludes undefined endpoint/start ratios; report empty flow separately.",
+    "No future family, birth polarity, final duration, identity, timestamp or source cursor is a predictor.",
+    "Price response is a separate target; no universal law or execution rule is admitted."
+  ]
+}
