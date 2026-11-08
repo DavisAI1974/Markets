@@ -100,6 +100,32 @@ scenarios were negative at one second before fees. Keep the research status
 of these candidates at `NOT_ENOUGH_INFO`.
 [Historical diagnostics and source cases](../../artifacts/sqlite-triage/20261022/families/trade-lifecycle-targeted-v1/historical-paper-replay-v1/README.md)
 
+### Why the two one-contract bids diverged
+
+The original tape and reconstructed touch agree on both paths. Cursor
+ranges below are inclusive and use the standalone session coordinates.
+In the October 18 UTC member, subtract 17,375 to obtain the zero-based
+record position. Elapsed times use the receive clocks of completed groups.
+[Pinned October 18 tape](https://github.com/DavisAI1974/Markets/blob/1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202/data/nymex_mbo/ng_v0_oct2023/NG_v0_mbo_20231018.dbn.zst)
+· [Reconstructed touches and prints](../../research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/october18-standalone-inputs/groups.jsonl.gz)
+
+| Case | Visible by the onset close | What changed afterward |
+| --- | --- | --- |
+| G230690, recovered | Two contracts traded at the bid. One resting order was removed. The other, order 788701282962, had a one-lot fill followed by a modify that left one lot displayed. The bid went from two displayed contracts to one at 3.154. Cursors 299869–299874. | The surviving order took another one-lot fill and still displayed one. A separate one-lot bid joined at 3.154, restoring displayed size to two. Cursors 299885–299890. Recovery was visible 152.307 ms after onset. |
+| G232857, retreated | Order 788701291949 had already taken a one-lot fill and retained one displayed lot at the same price 2.889 ms before the onset close. At onset a three-lot fill removed the other bid order at 3.154, leaving one displayed contract. Cursors 302816–302828. | The final one-lot bid filled and its book update removed it. No replacement was present at 3.154 at the completed group. The bid moved to the already displayed 3.153 level and the ask stayed at 3.155. Cursors 302833–302836. The retreat was visible 14.686 ms after onset. |
+
+The recovery came from an observed same-order refresh followed by a
+distinct new bid. The retreat came from execution removing the final
+displayed bid. Both surviving orders had shown replenishment before the
+outcome, so a prior refresh alone leaves both paths possible. At the
+decision, compare the recent pace and sequence of fills, whether the
+surviving order was hit in the onset group, and whether other bids had
+already joined or withdrawn at the touch or next level. Evaluate those
+features on comparable cases across all four dates. The later refresh,
+new bid, and final fill explain the outcomes and belong on the outcome
+side of that test. The tape leaves remaining hidden quantity and trader
+motives unresolved.
+
 ## October 18 full-session touch and print decisions
 
 The decision pass read all 583,688 group rows and 30,739 prints from the
