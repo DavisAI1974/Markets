@@ -100,7 +100,7 @@ def check_book(cursor, group, frame, row):
                f"group {group} {name} price levels")
 
 
-def run(day):
+def run(day, *, observe_group=None):
     began = time.perf_counter()
     scope = json.loads(git_blob(
         SESSION_PIN, f"research/kalshi/frankie_boss/blocks/BLOCK_{day}_SOURCE_MANIFEST.json"
@@ -138,6 +138,8 @@ def run(day):
                 adapter.record_count = adapter.completed_event_group_count = 0
                 print(f"{day} opening book count matched", file=sys.stderr, flush=True)
             continue
+        if frame is not None and observe_group is not None:
+            observe_group(cursor, adapter.completed_event_group_count - 1, frame)
         cursor += 1
 
     expect(cursor, tail["take"], f"{day} prior UTC tail count")
@@ -151,6 +153,8 @@ def run(day):
             if group in archive:
                 check_book(cursor, group, frame, archive[group])
                 checks += 1
+            if observe_group is not None:
+                observe_group(cursor, group, frame)
         cursor += 1
         if cursor % 200_000 == 0:
             print(f"{day} replayed {cursor:,} session records", file=sys.stderr, flush=True)

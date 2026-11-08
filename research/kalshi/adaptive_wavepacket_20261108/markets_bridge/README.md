@@ -21,4 +21,15 @@ when no day is cached. Launch stays HOLD.
 Run from the Markets root:
 
     PYTHONPATH=.:research/kalshi/adaptive_wavepacket_20261108/working_tree:research/kalshi/adaptive_wavepacket_20261108/working_tree/tests \
-      python3 -m unittest discover -s research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tests -p 'test_*.py'
+      python3 -m pytest research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tests
+
+The October 18 standalone input checkpoint can run locally from the Markets root:
+
+    python -m research.kalshi.adaptive_wavepacket_20261108.markets_bridge.october18_inputs --output-dir <new-output-directory>
+
+The exporter warms the pinned native book, then writes one row per completed group
+across the full session. It checks the archived books and exact print coordinates,
+and retains group boundaries, empty sides and every print. The compressed file is
+a derived touch and print view; the pinned DBN remains the full-depth source.
+The receipt records the view's coverage and hash. Rule eligibility, external
+inputs, full flow and scoring require their own checks.
