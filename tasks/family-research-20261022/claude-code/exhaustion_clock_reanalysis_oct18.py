@@ -42,7 +42,24 @@ from audit_october18_touch_mechanisms import Book, F_LAST, INSTRUMENT, OCTOBER18
 
 NS = 1_000_000_000
 TICK = 1_000_000
-DAY0 = 1697576400  # 2023-10-17 21:00:00 UTC, the session open; the October 17 UTC member supplies 21:00-24:00
+import os
+
+# Trading day = 21:00 UTC the prior calendar day to 21:00 UTC. DAY0 is the session index origin. Members are
+# the Databento UTC-day files at the tape commit, with the cursor offset that aligns each member's record
+# index to the standalone export's cursor (only known for October 18; 0 elsewhere). The tape commit holds
+# only the October 2, 3, 17 and 18 UTC members, so the 22:00-24:00 UTC prefix of the prior calendar day is
+# available for October 18 (from the 17 member) and October 3 (from the 2 member) and ABSENT for October 2
+# and 17; those two sessions start at 00:00 UTC with the range-start snapshot book and no prints before it.
+DAYS = {
+    "20231018": dict(day0=1697576400, members=(("20231017", -841601), ("20231018", 17375)), archived="october18-candidate-inputs.jsonl.gz", tag="oct18"),
+    "20231017": dict(day0=1697490000, members=(("20231017", 0),), archived=None, tag="oct17"),
+    "20231003": dict(day0=1696280400, members=(("20231002", 0), ("20231003", 0)), archived=None, tag="oct03"),
+    "20231002": dict(day0=1696194000, members=(("20231002", 0),), archived=None, tag="oct02"),
+}
+NG_DAY = os.environ.get("NG_DAY", "20231018")
+CFG = DAYS[NG_DAY]
+DAY0 = CFG["day0"]
+TAG = CFG["tag"]
 ROLL, PEAK_Q, LOCAL_RADIUS, REFRACTORY, PERSIST, MATERIAL_TICKS = 20, 0.85, 5, 45, 3, 2.0
 PRE = POST = 60
 HORIZONS = (5, 10, 20, 30, 60, 120, 300)
@@ -69,10 +86,11 @@ def replay():
     last_px = [NAN] * n
     bsum, bn, blast = [0.0] * n, [0] * n, [NAN] * n
     mid_last = [NAN] * n
+    spread_last, bdepth_last, adepth_last, btouch_last, atouch_last = [NAN] * n, [NAN] * n, [NAN] * n, [NAN] * n, [NAN] * n
     book = Book()
     pending = Counter()
     counts = Counter()
-    members = ((TAPE_FILE.replace("20231018", "20231017"), -841601), (TAPE_FILE, OCTOBER18_UTC_OFFSET))
+    members = tuple((TAPE_FILE.replace("20231018", d), off) for d, off in CFG["members"])
     def records():
         for path, offset in members:
             for index, record in enumerate(db.DBNStore.from_bytes(git_blob(TAPE, path))):
@@ -110,6 +128,10 @@ def replay():
                     bsum[sec] += imb; bn[sec] += 1; blast[sec] = imb
                 if bids and asks:
                     mid_last[sec] = 0.5 * (bids[0] + asks[0])
+                    spread_last[sec] = (asks[0] - bids[0]) / TICK
+                    bdepth_last[sec], adepth_last[sec] = bs, as_
+                    btouch_last[sec] = sum(book.levels[("B", bids[0])].values())
+                    atouch_last[sec] = sum(book.levels[("A", asks[0])].values())
     # forward fills
     price, bookimb, mid = [NAN] * n, [NAN] * n, [NAN] * n
     lp = li = lm = NAN
@@ -126,6 +148,14 @@ def replay():
         if fin(mid_last[i]):
             lm = mid_last[i]
         mid[i] = lm
+    extra = {}
+    for name, raw in (("spread", spread_last), ("bid_depth", bdepth_last), ("ask_depth", adepth_last), ("bid_touch", btouch_last), ("ask_touch", atouch_last)):
+        ff, lv = [NAN] * n, NAN
+        for i in range(n):
+            if fin(raw[i]):
+                lv = raw[i]
+            ff[i] = lv
+        extra[name] = ff
     cb, cs = [0.0] * (n + 1), [0.0] * (n + 1)
     for i in range(n):
         cb[i + 1] = cb[i] + buy[i]; cs[i + 1] = cs[i] + sell[i]
@@ -136,7 +166,22 @@ def replay():
         if b + s > 0:
             roll[i] = (b - s) / (b + s)
     return dict(buy=buy, sell=sell, price=price, book=bookimb, mid=mid, roll=roll, cb=cb, cs=cs,
-                first_trade=first_trade, last_trade=last_trade, counts=counts)
+                first_trade=first_trade, last_trade=last_trade, counts=counts, **extra)
+
+
+CACHE_DIR = Path(os.environ.get("NG_REPLAY_CACHE_DIR", "/tmp/claude-0/-home-user-Markets/e6cffa19-4561-5119-b5f4-3474c12f9fe5/scratchpad"))
+
+
+def replay_cached():
+    """replay() with a per-day pickle cache in the scratchpad (never committed); v2 carries spread and depth."""
+    import pickle
+    cache = CACHE_DIR / f"{TAG}-replay-cache-v2.pkl"
+    if cache.exists():
+        return pickle.load(open(cache, "rb"))
+    s = replay()
+    cache.parent.mkdir(parents=True, exist_ok=True)
+    pickle.dump(s, open(cache, "wb"))
+    return s
 
 
 def detect(stream, mode):
@@ -253,12 +298,12 @@ def aftermath(price, end, pol, last_trade):
 
 
 def main():
-    stream = replay()
+    stream = replay_cached()
     flow, price, mid, bookimb, cb, cs = stream["roll"], stream["price"], stream["mid"], stream["book"], stream["cb"], stream["cs"]
-    SESSION_CLOSE = 86400  # 21:00 UTC October 18; prints after this belong to the next trading day
+    SESSION_CLOSE = 86400  # 21:00 UTC on the trading day; prints after this belong to the next trading day
     stream["last_trade"] = min(stream["last_trade"], SESSION_CLOSE - 1)
     last_trade = stream["last_trade"]
-    archived = [json.loads(l) for l in gzip.open(HERE.parent / "october18-candidate-inputs.jsonl.gz", "rt")]
+    archived = [json.loads(l) for l in gzip.open(HERE.parent / CFG["archived"], "rt")] if CFG["archived"] else []
     arch_by_birth = {c["birth_second"] - DAY0: c for c in archived}
     results = {}
     for mode in ("day", "trailing"):
@@ -423,7 +468,7 @@ def main():
         day_native=summarise(results["day"]["rows"], "frozen day-native 85th percentile (retrospective)"),
         trailing=summarise(results["trailing"]["rows"], "causal trailing 85th percentile (archived adapter)"),
     )
-    (HERE / "exhaustion-clock-oct18-summary.json").write_text(json.dumps(summary, indent=2, default=str) + "\n")
+    (HERE / f"exhaustion-clock-{TAG}-summary.json").write_text(json.dumps(summary, indent=2, default=str) + "\n")
     with gzip.open(HERE / "exhaustion-clock-oct18-events.jsonl.gz", "wt") as f:
         for mode in ("day", "trailing"):
             for r in results[mode]["rows"]:

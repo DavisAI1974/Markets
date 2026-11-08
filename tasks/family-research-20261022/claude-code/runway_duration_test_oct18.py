@@ -57,10 +57,10 @@ def km_median(values, censored_at):
 
 
 def main():
-    stream = X.replay()
+    stream = X.replay_cached()
     stream["last_trade"] = min(stream["last_trade"], 86399)
     last = stream["last_trade"]
-    rows = [json.loads(l) for l in gzip.open(HERE / "exhaustion-clock-oct18-events.jsonl.gz", "rt")]
+    rows = [json.loads(l) for l in gzip.open(HERE / f"exhaustion-clock-{X.TAG}-events.jsonl.gz", "rt")]
     rows = [r for r in rows if r["mode"] == "day"]
     out = {}
     per_event = []
@@ -99,8 +99,8 @@ def main():
                    results=out, km_median_by_seed_price_either=by_seed,
                    note="Times in seconds from t0 to the first forward-filled price at least k ticks from the t0 price; KM medians account for session-end censoring. "
                         "This is a proxy for the frozen Family A split, not the frozen classifier.")
-    (HERE / "runway-duration-oct18-summary.json").write_text(json.dumps(summary, indent=2, default=str) + "\n")
-    with gzip.open(HERE / "runway-duration-oct18-events.jsonl.gz", "wt") as f:
+    (HERE / f"runway-duration-{X.TAG}-summary.json").write_text(json.dumps(summary, indent=2, default=str) + "\n")
+    with gzip.open(HERE / f"runway-duration-{X.TAG}-events.jsonl.gz", "wt") as f:
         for e in per_event:
             f.write(json.dumps(e) + "\n")
     print(json.dumps(summary, indent=1, default=str))

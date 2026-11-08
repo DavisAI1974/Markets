@@ -38,11 +38,11 @@ def main():
     art = json.loads(raw)
     cents = [tuple(float(x) for x in c) for c in art["centroids_raw_cluster_order"]]
     labels = {0: "A-fast-collapse", 1: "A-persistent"}
-    stream = X.replay()
+    stream = X.replay_cached()
     stream["last_trade"] = min(stream["last_trade"], 86399)
     last = stream["last_trade"]
     flow = stream["roll"]
-    rows = [json.loads(l) for l in gzip.open(HERE / "exhaustion-clock-oct18-events.jsonl.gz", "rt")]
+    rows = [json.loads(l) for l in gzip.open(HERE / f"exhaustion-clock-{X.TAG}-events.jsonl.gz", "rt")]
     rows = [r for r in rows if r["mode"] == "day"]
     out = []
     for r in rows:
@@ -98,8 +98,8 @@ def main():
                    proxy_vs_a_state={f"{p}|{s}": n for (p, s), n in cross.items()},
                    frozen_reveal_counts=dict(fast=831, persistent=785), results=results, countdown_check=countdown,
                    note="A classifier applied to all detected events, not only frozen Family A; the pre-family A/B/C artifact is not in this repository. Times are seconds from t0 to the first forward-filled price k ticks away; KM medians handle session-end censoring.")
-    (HERE / "frozen-a-classifier-oct18-summary.json").write_text(json.dumps(summary, indent=2, default=str) + "\n")
-    with gzip.open(HERE / "frozen-a-classifier-oct18-events.jsonl.gz", "wt") as f:
+    (HERE / f"frozen-a-classifier-{X.TAG}-summary.json").write_text(json.dumps(summary, indent=2, default=str) + "\n")
+    with gzip.open(HERE / f"frozen-a-classifier-{X.TAG}-events.jsonl.gz", "wt") as f:
         for e in out:
             f.write(json.dumps(e) + "\n")
     print(json.dumps(dict(events=len(out), a_state_counts=states, proxy_vs_a_state=summary["proxy_vs_a_state"]), indent=1, default=str))

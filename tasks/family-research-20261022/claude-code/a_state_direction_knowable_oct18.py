@@ -43,11 +43,11 @@ def delta(series, a, h, last):
 
 
 def main():
-    stream = X.replay()
+    stream = X.replay_cached()
     last = min(stream["last_trade"], 86399)
     price = stream["price"]
-    cls = {r["t0"]: r for r in (json.loads(l) for l in gzip.open(HERE / "frozen-a-classifier-oct18-events.jsonl.gz", "rt"))}
-    ev = [json.loads(l) for l in gzip.open(HERE / "exhaustion-clock-oct18-events.jsonl.gz", "rt")]
+    cls = {r["t0"]: r for r in (json.loads(l) for l in gzip.open(HERE / f"frozen-a-classifier-{X.TAG}-events.jsonl.gz", "rt"))}
+    ev = [json.loads(l) for l in gzip.open(HERE / f"exhaustion-clock-{X.TAG}-events.jsonl.gz", "rt")]
     ev = [r for r in ev if r["mode"] == "day"]
     recs = []
     for r in ev:
@@ -88,8 +88,8 @@ def main():
     summary["note"] = ("Anchors: plus60 = t0+60 (earliest the A state exists); known = max(t0+60, archived recognition second). "
                        "with = move in the burst polarity direction (continuation); against = reversal. First-excursion shares are over events "
                        "where the excursion occurred before session end. Oriented tick changes are polarity times the signed change from the anchor.")
-    (HERE / "a-state-direction-knowable-oct18-summary.json").write_text(json.dumps(summary, indent=2))
-    with gzip.open(HERE / "a-state-direction-knowable-oct18-events.jsonl.gz", "wt") as f:
+    (HERE / f"a-state-direction-knowable-{X.TAG}-summary.json").write_text(json.dumps(summary, indent=2))
+    with gzip.open(HERE / f"a-state-direction-knowable-{X.TAG}-events.jsonl.gz", "wt") as f:
         for r in recs:
             f.write(json.dumps(r) + "\n")
     for gk in ("a_state", "seed"):
