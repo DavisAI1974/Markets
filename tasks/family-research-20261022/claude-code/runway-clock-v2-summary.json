@@ -1,0 +1,2088 @@
+{
+  "reference_tag": "oct18",
+  "full_day_either3_median_s": {
+    "oct02": 182,
+    "oct03": 224,
+    "oct17": 174,
+    "oct18": 131
+  },
+  "warmup_events": 30,
+  "frozen_totals": {
+    "A-fast-collapse": {
+      "3": 358,
+      "5": 993,
+      "8": 1802,
+      "13": 4386
+    },
+    "A-persistent": {
+      "3": 700,
+      "5": 1802,
+      "8": 3455,
+      "13": 6836
+    }
+  },
+  "clocks": {
+    "oct02": {
+      "v1_frozen": {
+        "A-fast-collapse": {
+          "3": {
+            "n": 363,
+            "realised_km_remaining": 723,
+            "predicted_median_remaining": 298,
+            "ratio_real_over_pred": 2.43,
+            "reached_within_prediction": 0.309,
+            "median_abs_log_ratio": 1.401
+          },
+          "5": {
+            "n": 399,
+            "realised_km_remaining": 1376,
+            "predicted_median_remaining": 933,
+            "ratio_real_over_pred": 1.47,
+            "reached_within_prediction": 0.426,
+            "median_abs_log_ratio": 1.222
+          },
+          "8": {
+            "n": 411,
+            "realised_km_remaining": 3246,
+            "predicted_median_remaining": 1742,
+            "ratio_real_over_pred": 1.86,
+            "reached_within_prediction": 0.382,
+            "median_abs_log_ratio": 1.1
+          },
+          "13": {
+            "n": 414,
+            "realised_km_remaining": 7348,
+            "predicted_median_remaining": 4326,
+            "ratio_real_over_pred": 1.7,
+            "reached_within_prediction": 0.406,
+            "median_abs_log_ratio": 1.094
+          }
+        },
+        "A-persistent": {
+          "3": {
+            "n": 385,
+            "realised_km_remaining": 1025,
+            "predicted_median_remaining": 640,
+            "ratio_real_over_pred": 1.6,
+            "reached_within_prediction": 0.413,
+            "median_abs_log_ratio": 1.518
+          },
+          "5": {
+            "n": 410,
+            "realised_km_remaining": 2762,
+            "predicted_median_remaining": 1742,
+            "ratio_real_over_pred": 1.59,
+            "reached_within_prediction": 0.437,
+            "median_abs_log_ratio": 1.471
+          },
+          "8": {
+            "n": 421,
+            "realised_km_remaining": 5208,
+            "predicted_median_remaining": 3395,
+            "ratio_real_over_pred": 1.53,
+            "reached_within_prediction": 0.387,
+            "median_abs_log_ratio": 1.367
+          },
+          "13": {
+            "n": 424,
+            "realised_km_remaining": 10797,
+            "predicted_median_remaining": 6776,
+            "ratio_real_over_pred": 1.59,
+            "reached_within_prediction": 0.351,
+            "median_abs_log_ratio": 1.137
+          }
+        }
+      },
+      "v2a_day_scale_ref_oct18": {
+        "A-fast-collapse": {
+          "3": {
+            "n": 363,
+            "realised_km_remaining": 723,
+            "predicted_median_remaining": 362,
+            "ratio_real_over_pred": 2.0,
+            "reached_within_prediction": 0.333,
+            "median_abs_log_ratio": 1.476
+          },
+          "5": {
+            "n": 399,
+            "realised_km_remaining": 1376,
+            "predicted_median_remaining": 1124,
+            "ratio_real_over_pred": 1.22,
+            "reached_within_prediction": 0.424,
+            "median_abs_log_ratio": 1.307
+          },
+          "8": {
+            "n": 411,
+            "realised_km_remaining": 3246,
+            "predicted_median_remaining": 2095,
+            "ratio_real_over_pred": 1.55,
+            "reached_within_prediction": 0.404,
+            "median_abs_log_ratio": 1.266
+          },
+          "13": {
+            "n": 414,
+            "realised_km_remaining": 7348,
+            "predicted_median_remaining": 5196,
+            "ratio_real_over_pred": 1.41,
+            "reached_within_prediction": 0.418,
+            "median_abs_log_ratio": 1.307
+          }
+        },
+        "A-persistent": {
+          "3": {
+            "n": 385,
+            "realised_km_remaining": 1025,
+            "predicted_median_remaining": 561,
+            "ratio_real_over_pred": 1.83,
+            "reached_within_prediction": 0.392,
+            "median_abs_log_ratio": 1.609
+          },
+          "5": {
+            "n": 410,
+            "realised_km_remaining": 2762,
+            "predicted_median_remaining": 1571,
+            "ratio_real_over_pred": 1.76,
+            "reached_within_prediction": 0.412,
+            "median_abs_log_ratio": 1.834
+          },
+          "8": {
+            "n": 421,
+            "realised_km_remaining": 5208,
+            "predicted_median_remaining": 3204,
+            "ratio_real_over_pred": 1.63,
+            "reached_within_prediction": 0.382,
+            "median_abs_log_ratio": 1.665
+          },
+          "13": {
+            "n": 424,
+            "realised_km_remaining": 10797,
+            "predicted_median_remaining": 6423,
+            "ratio_real_over_pred": 1.68,
+            "reached_within_prediction": 0.321,
+            "median_abs_log_ratio": 1.521
+          }
+        }
+      },
+      "v2b_day_scale_ref_loo": {
+        "A-fast-collapse": {
+          "3": {
+            "n": 363,
+            "realised_km_remaining": 723,
+            "predicted_median_remaining": 263,
+            "ratio_real_over_pred": 2.75,
+            "reached_within_prediction": 0.287,
+            "median_abs_log_ratio": 1.543
+          },
+          "5": {
+            "n": 399,
+            "realised_km_remaining": 1376,
+            "predicted_median_remaining": 835,
+            "ratio_real_over_pred": 1.65,
+            "reached_within_prediction": 0.393,
+            "median_abs_log_ratio": 1.328
+          },
+          "8": {
+            "n": 411,
+            "realised_km_remaining": 3246,
+            "predicted_median_remaining": 1561,
+            "ratio_real_over_pred": 2.08,
+            "reached_within_prediction": 0.35,
+            "median_abs_log_ratio": 1.172
+          },
+          "13": {
+            "n": 414,
+            "realised_km_remaining": 7348,
+            "predicted_median_remaining": 3884,
+            "ratio_real_over_pred": 1.89,
+            "reached_within_prediction": 0.382,
+            "median_abs_log_ratio": 1.136
+          }
+        },
+        "A-persistent": {
+          "3": {
+            "n": 385,
+            "realised_km_remaining": 1025,
+            "predicted_median_remaining": 530,
+            "ratio_real_over_pred": 1.93,
+            "reached_within_prediction": 0.361,
+            "median_abs_log_ratio": 1.612
+          },
+          "5": {
+            "n": 410,
+            "realised_km_remaining": 2762,
+            "predicted_median_remaining": 1475,
+            "ratio_real_over_pred": 1.87,
+            "reached_within_prediction": 0.395,
+            "median_abs_log_ratio": 1.754
+          },
+          "8": {
+            "n": 421,
+            "realised_km_remaining": 5208,
+            "predicted_median_remaining": 2910,
+            "ratio_real_over_pred": 1.79,
+            "reached_within_prediction": 0.352,
+            "median_abs_log_ratio": 1.618
+          },
+          "13": {
+            "n": 424,
+            "realised_km_remaining": 10797,
+            "predicted_median_remaining": 5816,
+            "ratio_real_over_pred": 1.86,
+            "reached_within_prediction": 0.316,
+            "median_abs_log_ratio": 1.525
+          }
+        }
+      },
+      "v2c_trailing60_ref_oct18": {
+        "A-fast-collapse": {
+          "3": {
+            "n": 363,
+            "realised_km_remaining": 723,
+            "predicted_median_remaining": 353,
+            "ratio_real_over_pred": 2.05,
+            "reached_within_prediction": 0.339,
+            "median_abs_log_ratio": 1.422
+          },
+          "5": {
+            "n": 399,
+            "realised_km_remaining": 1376,
+            "predicted_median_remaining": 1084,
+            "ratio_real_over_pred": 1.27,
+            "reached_within_prediction": 0.454,
+            "median_abs_log_ratio": 1.331
+          },
+          "8": {
+            "n": 411,
+            "realised_km_remaining": 3246,
+            "predicted_median_remaining": 2016,
+            "ratio_real_over_pred": 1.61,
+            "reached_within_prediction": 0.436,
+            "median_abs_log_ratio": 1.201
+          },
+          "13": {
+            "n": 414,
+            "realised_km_remaining": 7348,
+            "predicted_median_remaining": 4894,
+            "ratio_real_over_pred": 1.5,
+            "reached_within_prediction": 0.423,
+            "median_abs_log_ratio": 1.295
+          }
+        },
+        "A-persistent": {
+          "3": {
+            "n": 385,
+            "realised_km_remaining": 1025,
+            "predicted_median_remaining": 677,
+            "ratio_real_over_pred": 1.51,
+            "reached_within_prediction": 0.431,
+            "median_abs_log_ratio": 1.71
+          },
+          "5": {
+            "n": 410,
+            "realised_km_remaining": 2762,
+            "predicted_median_remaining": 1839,
+            "ratio_real_over_pred": 1.5,
+            "reached_within_prediction": 0.449,
+            "median_abs_log_ratio": 1.775
+          },
+          "8": {
+            "n": 421,
+            "realised_km_remaining": 5208,
+            "predicted_median_remaining": 3647,
+            "ratio_real_over_pred": 1.43,
+            "reached_within_prediction": 0.413,
+            "median_abs_log_ratio": 1.656
+          },
+          "13": {
+            "n": 424,
+            "realised_km_remaining": 10797,
+            "predicted_median_remaining": 7290,
+            "ratio_real_over_pred": 1.48,
+            "reached_within_prediction": 0.368,
+            "median_abs_log_ratio": 1.362
+          }
+        }
+      },
+      "v3_v2a_activity_loo": {
+        "A-fast-collapse": {
+          "3": {
+            "n": 363,
+            "realised_km_remaining": 723,
+            "predicted_median_remaining": 301,
+            "ratio_real_over_pred": 2.4,
+            "reached_within_prediction": 0.331,
+            "median_abs_log_ratio": 1.295
+          },
+          "5": {
+            "n": 399,
+            "realised_km_remaining": 1376,
+            "predicted_median_remaining": 909,
+            "ratio_real_over_pred": 1.51,
+            "reached_within_prediction": 0.429,
+            "median_abs_log_ratio": 1.248
+          },
+          "8": {
+            "n": 411,
+            "realised_km_remaining": 3246,
+            "predicted_median_remaining": 1654,
+            "ratio_real_over_pred": 1.96,
+            "reached_within_prediction": 0.406,
+            "median_abs_log_ratio": 1.121
+          },
+          "13": {
+            "n": 414,
+            "realised_km_remaining": 7348,
+            "predicted_median_remaining": 3996,
+            "ratio_real_over_pred": 1.84,
+            "reached_within_prediction": 0.406,
+            "median_abs_log_ratio": 0.972
+          }
+        },
+        "A-persistent": {
+          "3": {
+            "n": 385,
+            "realised_km_remaining": 1025,
+            "predicted_median_remaining": 630,
+            "ratio_real_over_pred": 1.63,
+            "reached_within_prediction": 0.371,
+            "median_abs_log_ratio": 1.637
+          },
+          "5": {
+            "n": 410,
+            "realised_km_remaining": 2762,
+            "predicted_median_remaining": 1590,
+            "ratio_real_over_pred": 1.74,
+            "reached_within_prediction": 0.41,
+            "median_abs_log_ratio": 1.567
+          },
+          "8": {
+            "n": 421,
+            "realised_km_remaining": 5208,
+            "predicted_median_remaining": 3086,
+            "ratio_real_over_pred": 1.69,
+            "reached_within_prediction": 0.359,
+            "median_abs_log_ratio": 1.277
+          },
+          "13": {
+            "n": 424,
+            "realised_km_remaining": 10797,
+            "predicted_median_remaining": 6165,
+            "ratio_real_over_pred": 1.75,
+            "reached_within_prediction": 0.337,
+            "median_abs_log_ratio": 0.985
+          }
+        }
+      },
+      "v3_multipliers_from_other_days": {
+        "A-fast-collapse": {
+          "low": 2.83,
+          "mid": 1.12,
+          "high": 0.58
+        },
+        "A-persistent": {
+          "low": 2.03,
+          "mid": 0.66,
+          "high": 0.19
+        }
+      },
+      "v3_cuts": [
+        34.0,
+        150.0
+      ],
+      "median_scale_at_anchor": {
+        "v2a": 1.09,
+        "v2b": 0.89
+      },
+      "v4_v2a_state_factor_loo": {
+        "A-fast-collapse": {
+          "3": {
+            "n": 363,
+            "realised_km_remaining": 723,
+            "predicted_median_remaining": 552,
+            "ratio_real_over_pred": 1.31,
+            "reached_within_prediction": 0.399,
+            "median_abs_log_ratio": 1.404
+          },
+          "5": {
+            "n": 399,
+            "realised_km_remaining": 1376,
+            "predicted_median_remaining": 1656,
+            "ratio_real_over_pred": 0.83,
+            "reached_within_prediction": 0.486,
+            "median_abs_log_ratio": 1.411
+          },
+          "8": {
+            "n": 411,
+            "realised_km_remaining": 3246,
+            "predicted_median_remaining": 3065,
+            "ratio_real_over_pred": 1.06,
+            "reached_within_prediction": 0.474,
+            "median_abs_log_ratio": 1.411
+          },
+          "13": {
+            "n": 414,
+            "realised_km_remaining": 7348,
+            "predicted_median_remaining": 7562,
+            "ratio_real_over_pred": 0.97,
+            "reached_within_prediction": 0.457,
+            "median_abs_log_ratio": 1.475
+          }
+        },
+        "A-persistent": {
+          "3": {
+            "n": 385,
+            "realised_km_remaining": 1025,
+            "predicted_median_remaining": 617,
+            "ratio_real_over_pred": 1.66,
+            "reached_within_prediction": 0.408,
+            "median_abs_log_ratio": 1.596
+          },
+          "5": {
+            "n": 410,
+            "realised_km_remaining": 2762,
+            "predicted_median_remaining": 1718,
+            "ratio_real_over_pred": 1.61,
+            "reached_within_prediction": 0.415,
+            "median_abs_log_ratio": 1.814
+          },
+          "8": {
+            "n": 421,
+            "realised_km_remaining": 5208,
+            "predicted_median_remaining": 3497,
+            "ratio_real_over_pred": 1.49,
+            "reached_within_prediction": 0.394,
+            "median_abs_log_ratio": 1.666
+          },
+          "13": {
+            "n": 424,
+            "realised_km_remaining": 10797,
+            "predicted_median_remaining": 7006,
+            "ratio_real_over_pred": 1.54,
+            "reached_within_prediction": 0.328,
+            "median_abs_log_ratio": 1.497
+          }
+        }
+      },
+      "v4_state_factors_from_other_days": {
+        "A-fast-collapse": 1.45,
+        "A-persistent": 1.09
+      },
+      "v4_band_from_other_days": {
+        "A-fast-collapse": {
+          "q25": 0.21,
+          "q75": 2.36,
+          "n": 4026
+        },
+        "A-persistent": {
+          "q25": 0.24,
+          "q75": 2.74,
+          "n": 4430
+        }
+      },
+      "v4_band_coverage_observed_events": {
+        "A-fast-collapse": {
+          "observed": 1301,
+          "inside_band_share": 0.454
+        },
+        "A-persistent": {
+          "observed": 1474,
+          "inside_band_share": 0.344
+        }
+      }
+    },
+    "oct03": {
+      "v1_frozen": {
+        "A-fast-collapse": {
+          "3": {
+            "n": 420,
+            "realised_km_remaining": 885,
+            "predicted_median_remaining": 298,
+            "ratio_real_over_pred": 2.97,
+            "reached_within_prediction": 0.281,
+            "median_abs_log_ratio": 1.255
+          },
+          "5": {
+            "n": 447,
+            "realised_km_remaining": 1818,
+            "predicted_median_remaining": 933,
+            "ratio_real_over_pred": 1.95,
+            "reached_within_prediction": 0.369,
+            "median_abs_log_ratio": 1.102
+          },
+          "8": {
+            "n": 456,
+            "realised_km_remaining": 4090,
+            "predicted_median_remaining": 1742,
+            "ratio_real_over_pred": 2.35,
+            "reached_within_prediction": 0.303,
+            "median_abs_log_ratio": 1.001
+          },
+          "13": {
+            "n": 458,
+            "realised_km_remaining": 10899,
+            "predicted_median_remaining": 4326,
+            "ratio_real_over_pred": 2.52,
+            "reached_within_prediction": 0.306,
+            "median_abs_log_ratio": 0.904
+          }
+        },
+        "A-persistent": {
+          "3": {
+            "n": 360,
+            "realised_km_remaining": 1237,
+            "predicted_median_remaining": 640,
+            "ratio_real_over_pred": 1.93,
+            "reached_within_prediction": 0.367,
+            "median_abs_log_ratio": 1.216
+          },
+          "5": {
+            "n": 388,
+            "realised_km_remaining": 3301,
+            "predicted_median_remaining": 1742,
+            "ratio_real_over_pred": 1.89,
+            "reached_within_prediction": 0.374,
+            "median_abs_log_ratio": 1.27
+          },
+          "8": {
+            "n": 395,
+            "realised_km_remaining": 6275,
+            "predicted_median_remaining": 3395,
+            "ratio_real_over_pred": 1.85,
+            "reached_within_prediction": 0.372,
+            "median_abs_log_ratio": 1.031
+          },
+          "13": {
+            "n": 398,
+            "realised_km_remaining": 11509,
+            "predicted_median_remaining": 6776,
+            "ratio_real_over_pred": 1.7,
+            "reached_within_prediction": 0.354,
+            "median_abs_log_ratio": 1.083
+          }
+        }
+      },
+      "v2a_day_scale_ref_oct18": {
+        "A-fast-collapse": {
+          "3": {
+            "n": 420,
+            "realised_km_remaining": 885,
+            "predicted_median_remaining": 560,
+            "ratio_real_over_pred": 1.58,
+            "reached_within_prediction": 0.402,
+            "median_abs_log_ratio": 1.172
+          },
+          "5": {
+            "n": 447,
+            "realised_km_remaining": 1818,
+            "predicted_median_remaining": 1665,
+            "ratio_real_over_pred": 1.09,
+            "reached_within_prediction": 0.461,
+            "median_abs_log_ratio": 1.142
+          },
+          "8": {
+            "n": 456,
+            "realised_km_remaining": 4090,
+            "predicted_median_remaining": 3070,
+            "ratio_real_over_pred": 1.33,
+            "reached_within_prediction": 0.419,
+            "median_abs_log_ratio": 1.084
+          },
+          "13": {
+            "n": 458,
+            "realised_km_remaining": 10899,
+            "predicted_median_remaining": 7558,
+            "ratio_real_over_pred": 1.44,
+            "reached_within_prediction": 0.419,
+            "median_abs_log_ratio": 1.069
+          }
+        },
+        "A-persistent": {
+          "3": {
+            "n": 360,
+            "realised_km_remaining": 1237,
+            "predicted_median_remaining": 1131,
+            "ratio_real_over_pred": 1.09,
+            "reached_within_prediction": 0.472,
+            "median_abs_log_ratio": 1.066
+          },
+          "5": {
+            "n": 388,
+            "realised_km_remaining": 3301,
+            "predicted_median_remaining": 3017,
+            "ratio_real_over_pred": 1.09,
+            "reached_within_prediction": 0.477,
+            "median_abs_log_ratio": 1.202
+          },
+          "8": {
+            "n": 395,
+            "realised_km_remaining": 6275,
+            "predicted_median_remaining": 5848,
+            "ratio_real_over_pred": 1.07,
+            "reached_within_prediction": 0.453,
+            "median_abs_log_ratio": 1.058
+          },
+          "13": {
+            "n": 398,
+            "realised_km_remaining": 11509,
+            "predicted_median_remaining": 11644,
+            "ratio_real_over_pred": 0.99,
+            "reached_within_prediction": 0.437,
+            "median_abs_log_ratio": 1.065
+          }
+        }
+      },
+      "v2b_day_scale_ref_loo": {
+        "A-fast-collapse": {
+          "3": {
+            "n": 420,
+            "realised_km_remaining": 885,
+            "predicted_median_remaining": 448,
+            "ratio_real_over_pred": 1.98,
+            "reached_within_prediction": 0.383,
+            "median_abs_log_ratio": 1.136
+          },
+          "5": {
+            "n": 447,
+            "realised_km_remaining": 1818,
+            "predicted_median_remaining": 1349,
+            "ratio_real_over_pred": 1.35,
+            "reached_within_prediction": 0.443,
+            "median_abs_log_ratio": 1.006
+          },
+          "8": {
+            "n": 456,
+            "realised_km_remaining": 4090,
+            "predicted_median_remaining": 2497,
+            "ratio_real_over_pred": 1.64,
+            "reached_within_prediction": 0.388,
+            "median_abs_log_ratio": 0.948
+          },
+          "13": {
+            "n": 458,
+            "realised_km_remaining": 10899,
+            "predicted_median_remaining": 6165,
+            "ratio_real_over_pred": 1.77,
+            "reached_within_prediction": 0.397,
+            "median_abs_log_ratio": 0.976
+          }
+        },
+        "A-persistent": {
+          "3": {
+            "n": 360,
+            "realised_km_remaining": 1237,
+            "predicted_median_remaining": 1051,
+            "ratio_real_over_pred": 1.18,
+            "reached_within_prediction": 0.472,
+            "median_abs_log_ratio": 1.002
+          },
+          "5": {
+            "n": 388,
+            "realised_km_remaining": 3301,
+            "predicted_median_remaining": 2796,
+            "ratio_real_over_pred": 1.18,
+            "reached_within_prediction": 0.482,
+            "median_abs_log_ratio": 1.126
+          },
+          "8": {
+            "n": 395,
+            "realised_km_remaining": 6275,
+            "predicted_median_remaining": 5406,
+            "ratio_real_over_pred": 1.16,
+            "reached_within_prediction": 0.461,
+            "median_abs_log_ratio": 1.058
+          },
+          "13": {
+            "n": 398,
+            "realised_km_remaining": 11509,
+            "predicted_median_remaining": 10753,
+            "ratio_real_over_pred": 1.07,
+            "reached_within_prediction": 0.447,
+            "median_abs_log_ratio": 1.002
+          }
+        }
+      },
+      "v2c_trailing60_ref_oct18": {
+        "A-fast-collapse": {
+          "3": {
+            "n": 420,
+            "realised_km_remaining": 885,
+            "predicted_median_remaining": 435,
+            "ratio_real_over_pred": 2.04,
+            "reached_within_prediction": 0.364,
+            "median_abs_log_ratio": 1.175
+          },
+          "5": {
+            "n": 447,
+            "realised_km_remaining": 1818,
+            "predicted_median_remaining": 1312,
+            "ratio_real_over_pred": 1.39,
+            "reached_within_prediction": 0.445,
+            "median_abs_log_ratio": 1.178
+          },
+          "8": {
+            "n": 456,
+            "realised_km_remaining": 4090,
+            "predicted_median_remaining": 2435,
+            "ratio_real_over_pred": 1.68,
+            "reached_within_prediction": 0.384,
+            "median_abs_log_ratio": 1.005
+          },
+          "13": {
+            "n": 458,
+            "realised_km_remaining": 10899,
+            "predicted_median_remaining": 6007,
+            "ratio_real_over_pred": 1.81,
+            "reached_within_prediction": 0.349,
+            "median_abs_log_ratio": 1.066
+          }
+        },
+        "A-persistent": {
+          "3": {
+            "n": 360,
+            "realised_km_remaining": 1237,
+            "predicted_median_remaining": 1066,
+            "ratio_real_over_pred": 1.16,
+            "reached_within_prediction": 0.506,
+            "median_abs_log_ratio": 1.089
+          },
+          "5": {
+            "n": 388,
+            "realised_km_remaining": 3301,
+            "predicted_median_remaining": 2853,
+            "ratio_real_over_pred": 1.16,
+            "reached_within_prediction": 0.503,
+            "median_abs_log_ratio": 1.225
+          },
+          "8": {
+            "n": 395,
+            "realised_km_remaining": 6275,
+            "predicted_median_remaining": 5479,
+            "ratio_real_over_pred": 1.15,
+            "reached_within_prediction": 0.441,
+            "median_abs_log_ratio": 0.954
+          },
+          "13": {
+            "n": 398,
+            "realised_km_remaining": 11509,
+            "predicted_median_remaining": 10889,
+            "ratio_real_over_pred": 1.06,
+            "reached_within_prediction": 0.44,
+            "median_abs_log_ratio": 1.086
+          }
+        }
+      },
+      "v3_v2a_activity_loo": {
+        "A-fast-collapse": {
+          "3": {
+            "n": 420,
+            "realised_km_remaining": 885,
+            "predicted_median_remaining": 533,
+            "ratio_real_over_pred": 1.66,
+            "reached_within_prediction": 0.374,
+            "median_abs_log_ratio": 1.101
+          },
+          "5": {
+            "n": 447,
+            "realised_km_remaining": 1818,
+            "predicted_median_remaining": 1522,
+            "ratio_real_over_pred": 1.19,
+            "reached_within_prediction": 0.45,
+            "median_abs_log_ratio": 0.949
+          },
+          "8": {
+            "n": 456,
+            "realised_km_remaining": 4090,
+            "predicted_median_remaining": 2784,
+            "ratio_real_over_pred": 1.47,
+            "reached_within_prediction": 0.384,
+            "median_abs_log_ratio": 0.799
+          },
+          "13": {
+            "n": 458,
+            "realised_km_remaining": 10899,
+            "predicted_median_remaining": 6815,
+            "ratio_real_over_pred": 1.6,
+            "reached_within_prediction": 0.384,
+            "median_abs_log_ratio": 0.7
+          }
+        },
+        "A-persistent": {
+          "3": {
+            "n": 360,
+            "realised_km_remaining": 1237,
+            "predicted_median_remaining": 907,
+            "ratio_real_over_pred": 1.36,
+            "reached_within_prediction": 0.481,
+            "median_abs_log_ratio": 1.001
+          },
+          "5": {
+            "n": 388,
+            "realised_km_remaining": 3301,
+            "predicted_median_remaining": 2262,
+            "ratio_real_over_pred": 1.46,
+            "reached_within_prediction": 0.49,
+            "median_abs_log_ratio": 1.125
+          },
+          "8": {
+            "n": 395,
+            "realised_km_remaining": 6275,
+            "predicted_median_remaining": 4366,
+            "ratio_real_over_pred": 1.44,
+            "reached_within_prediction": 0.489,
+            "median_abs_log_ratio": 0.842
+          },
+          "13": {
+            "n": 398,
+            "realised_km_remaining": 11509,
+            "predicted_median_remaining": 8690,
+            "ratio_real_over_pred": 1.32,
+            "reached_within_prediction": 0.452,
+            "median_abs_log_ratio": 0.839
+          }
+        }
+      },
+      "v3_multipliers_from_other_days": {
+        "A-fast-collapse": {
+          "low": 2.63,
+          "mid": 1.12,
+          "high": 0.52
+        },
+        "A-persistent": {
+          "low": 1.72,
+          "mid": 0.69,
+          "high": 0.3
+        }
+      },
+      "v3_cuts": [
+        31.0,
+        145.0
+      ],
+      "median_scale_at_anchor": {
+        "v2a": 1.73,
+        "v2b": 1.52
+      },
+      "v4_v2a_state_factor_loo": {
+        "A-fast-collapse": {
+          "3": {
+            "n": 420,
+            "realised_km_remaining": 885,
+            "predicted_median_remaining": 873,
+            "ratio_real_over_pred": 1.01,
+            "reached_within_prediction": 0.488,
+            "median_abs_log_ratio": 1.205
+          },
+          "5": {
+            "n": 447,
+            "realised_km_remaining": 1818,
+            "predicted_median_remaining": 2536,
+            "ratio_real_over_pred": 0.72,
+            "reached_within_prediction": 0.544,
+            "median_abs_log_ratio": 1.272
+          },
+          "8": {
+            "n": 456,
+            "realised_km_remaining": 4090,
+            "predicted_median_remaining": 4650,
+            "ratio_real_over_pred": 0.88,
+            "reached_within_prediction": 0.496,
+            "median_abs_log_ratio": 1.08
+          },
+          "13": {
+            "n": 458,
+            "realised_km_remaining": 10899,
+            "predicted_median_remaining": 11405,
+            "ratio_real_over_pred": 0.96,
+            "reached_within_prediction": 0.443,
+            "median_abs_log_ratio": 1.066
+          }
+        },
+        "A-persistent": {
+          "3": {
+            "n": 360,
+            "realised_km_remaining": 1237,
+            "predicted_median_remaining": 1405,
+            "ratio_real_over_pred": 0.88,
+            "reached_within_prediction": 0.519,
+            "median_abs_log_ratio": 1.108
+          },
+          "5": {
+            "n": 388,
+            "realised_km_remaining": 3301,
+            "predicted_median_remaining": 3724,
+            "ratio_real_over_pred": 0.89,
+            "reached_within_prediction": 0.534,
+            "median_abs_log_ratio": 1.267
+          },
+          "8": {
+            "n": 395,
+            "realised_km_remaining": 6275,
+            "predicted_median_remaining": 7207,
+            "ratio_real_over_pred": 0.87,
+            "reached_within_prediction": 0.504,
+            "median_abs_log_ratio": 1.035
+          },
+          "13": {
+            "n": 398,
+            "realised_km_remaining": 11509,
+            "predicted_median_remaining": 14336,
+            "ratio_real_over_pred": 0.8,
+            "reached_within_prediction": 0.482,
+            "median_abs_log_ratio": 1.068
+          }
+        }
+      },
+      "v4_state_factors_from_other_days": {
+        "A-fast-collapse": 1.5,
+        "A-persistent": 1.23
+      },
+      "v4_band_from_other_days": {
+        "A-fast-collapse": {
+          "q25": 0.23,
+          "q75": 3.02,
+          "n": 3997
+        },
+        "A-persistent": {
+          "q25": 0.25,
+          "q75": 4.05,
+          "n": 4550
+        }
+      },
+      "v4_band_coverage_observed_events": {
+        "A-fast-collapse": {
+          "observed": 1330,
+          "inside_band_share": 0.562
+        },
+        "A-persistent": {
+          "observed": 1354,
+          "inside_band_share": 0.625
+        }
+      }
+    },
+    "oct17": {
+      "v1_frozen": {
+        "A-fast-collapse": {
+          "3": {
+            "n": 351,
+            "realised_km_remaining": 868,
+            "predicted_median_remaining": 298,
+            "ratio_real_over_pred": 2.91,
+            "reached_within_prediction": 0.302,
+            "median_abs_log_ratio": 1.41
+          },
+          "5": {
+            "n": 381,
+            "realised_km_remaining": 1808,
+            "predicted_median_remaining": 933,
+            "ratio_real_over_pred": 1.94,
+            "reached_within_prediction": 0.36,
+            "median_abs_log_ratio": 1.205
+          },
+          "8": {
+            "n": 389,
+            "realised_km_remaining": 3196,
+            "predicted_median_remaining": 1742,
+            "ratio_real_over_pred": 1.83,
+            "reached_within_prediction": 0.339,
+            "median_abs_log_ratio": 1.144
+          },
+          "13": {
+            "n": 399,
+            "realised_km_remaining": 9311,
+            "predicted_median_remaining": 4326,
+            "ratio_real_over_pred": 2.15,
+            "reached_within_prediction": 0.383,
+            "median_abs_log_ratio": 1.024
+          }
+        },
+        "A-persistent": {
+          "3": {
+            "n": 384,
+            "realised_km_remaining": 966,
+            "predicted_median_remaining": 640,
+            "ratio_real_over_pred": 1.51,
+            "reached_within_prediction": 0.406,
+            "median_abs_log_ratio": 1.443
+          },
+          "5": {
+            "n": 413,
+            "realised_km_remaining": 2297,
+            "predicted_median_remaining": 1742,
+            "ratio_real_over_pred": 1.32,
+            "reached_within_prediction": 0.426,
+            "median_abs_log_ratio": 1.258
+          },
+          "8": {
+            "n": 428,
+            "realised_km_remaining": 4566,
+            "predicted_median_remaining": 3395,
+            "ratio_real_over_pred": 1.34,
+            "reached_within_prediction": 0.444,
+            "median_abs_log_ratio": 1.202
+          },
+          "13": {
+            "n": 430,
+            "realised_km_remaining": 11527,
+            "predicted_median_remaining": 6776,
+            "ratio_real_over_pred": 1.7,
+            "reached_within_prediction": 0.351,
+            "median_abs_log_ratio": 1.07
+          }
+        }
+      },
+      "v2a_day_scale_ref_oct18": {
+        "A-fast-collapse": {
+          "3": {
+            "n": 351,
+            "realised_km_remaining": 868,
+            "predicted_median_remaining": 416,
+            "ratio_real_over_pred": 2.09,
+            "reached_within_prediction": 0.345,
+            "median_abs_log_ratio": 1.336
+          },
+          "5": {
+            "n": 381,
+            "realised_km_remaining": 1808,
+            "predicted_median_remaining": 1260,
+            "ratio_real_over_pred": 1.44,
+            "reached_within_prediction": 0.396,
+            "median_abs_log_ratio": 1.306
+          },
+          "8": {
+            "n": 389,
+            "realised_km_remaining": 3196,
+            "predicted_median_remaining": 2345,
+            "ratio_real_over_pred": 1.36,
+            "reached_within_prediction": 0.409,
+            "median_abs_log_ratio": 1.219
+          },
+          "13": {
+            "n": 399,
+            "realised_km_remaining": 9311,
+            "predicted_median_remaining": 5810,
+            "ratio_real_over_pred": 1.6,
+            "reached_within_prediction": 0.393,
+            "median_abs_log_ratio": 1.098
+          }
+        },
+        "A-persistent": {
+          "3": {
+            "n": 384,
+            "realised_km_remaining": 966,
+            "predicted_median_remaining": 761,
+            "ratio_real_over_pred": 1.27,
+            "reached_within_prediction": 0.445,
+            "median_abs_log_ratio": 1.49
+          },
+          "5": {
+            "n": 413,
+            "realised_km_remaining": 2297,
+            "predicted_median_remaining": 2060,
+            "ratio_real_over_pred": 1.11,
+            "reached_within_prediction": 0.47,
+            "median_abs_log_ratio": 1.298
+          },
+          "8": {
+            "n": 428,
+            "realised_km_remaining": 4566,
+            "predicted_median_remaining": 4019,
+            "ratio_real_over_pred": 1.14,
+            "reached_within_prediction": 0.453,
+            "median_abs_log_ratio": 1.341
+          },
+          "13": {
+            "n": 430,
+            "realised_km_remaining": 11527,
+            "predicted_median_remaining": 8037,
+            "ratio_real_over_pred": 1.43,
+            "reached_within_prediction": 0.349,
+            "median_abs_log_ratio": 1.211
+          }
+        }
+      },
+      "v2b_day_scale_ref_loo": {
+        "A-fast-collapse": {
+          "3": {
+            "n": 351,
+            "realised_km_remaining": 868,
+            "predicted_median_remaining": 310,
+            "ratio_real_over_pred": 2.8,
+            "reached_within_prediction": 0.319,
+            "median_abs_log_ratio": 1.361
+          },
+          "5": {
+            "n": 381,
+            "realised_km_remaining": 1808,
+            "predicted_median_remaining": 970,
+            "ratio_real_over_pred": 1.86,
+            "reached_within_prediction": 0.37,
+            "median_abs_log_ratio": 1.229
+          },
+          "8": {
+            "n": 389,
+            "realised_km_remaining": 3196,
+            "predicted_median_remaining": 1814,
+            "ratio_real_over_pred": 1.76,
+            "reached_within_prediction": 0.36,
+            "median_abs_log_ratio": 1.165
+          },
+          "13": {
+            "n": 399,
+            "realised_km_remaining": 9311,
+            "predicted_median_remaining": 4507,
+            "ratio_real_over_pred": 2.07,
+            "reached_within_prediction": 0.381,
+            "median_abs_log_ratio": 1.059
+          }
+        },
+        "A-persistent": {
+          "3": {
+            "n": 384,
+            "realised_km_remaining": 966,
+            "predicted_median_remaining": 652,
+            "ratio_real_over_pred": 1.48,
+            "reached_within_prediction": 0.424,
+            "median_abs_log_ratio": 1.5
+          },
+          "5": {
+            "n": 413,
+            "realised_km_remaining": 2297,
+            "predicted_median_remaining": 1773,
+            "ratio_real_over_pred": 1.3,
+            "reached_within_prediction": 0.443,
+            "median_abs_log_ratio": 1.279
+          },
+          "8": {
+            "n": 428,
+            "realised_km_remaining": 4566,
+            "predicted_median_remaining": 3474,
+            "ratio_real_over_pred": 1.31,
+            "reached_within_prediction": 0.451,
+            "median_abs_log_ratio": 1.243
+          },
+          "13": {
+            "n": 430,
+            "realised_km_remaining": 11527,
+            "predicted_median_remaining": 6931,
+            "ratio_real_over_pred": 1.66,
+            "reached_within_prediction": 0.344,
+            "median_abs_log_ratio": 1.131
+          }
+        }
+      },
+      "v2c_trailing60_ref_oct18": {
+        "A-fast-collapse": {
+          "3": {
+            "n": 351,
+            "realised_km_remaining": 868,
+            "predicted_median_remaining": 339,
+            "ratio_real_over_pred": 2.56,
+            "reached_within_prediction": 0.348,
+            "median_abs_log_ratio": 1.405
+          },
+          "5": {
+            "n": 381,
+            "realised_km_remaining": 1808,
+            "predicted_median_remaining": 1036,
+            "ratio_real_over_pred": 1.75,
+            "reached_within_prediction": 0.399,
+            "median_abs_log_ratio": 1.265
+          },
+          "8": {
+            "n": 389,
+            "realised_km_remaining": 3196,
+            "predicted_median_remaining": 1915,
+            "ratio_real_over_pred": 1.67,
+            "reached_within_prediction": 0.401,
+            "median_abs_log_ratio": 1.211
+          },
+          "13": {
+            "n": 399,
+            "realised_km_remaining": 9311,
+            "predicted_median_remaining": 4747,
+            "ratio_real_over_pred": 1.96,
+            "reached_within_prediction": 0.366,
+            "median_abs_log_ratio": 1.13
+          }
+        },
+        "A-persistent": {
+          "3": {
+            "n": 384,
+            "realised_km_remaining": 966,
+            "predicted_median_remaining": 721,
+            "ratio_real_over_pred": 1.34,
+            "reached_within_prediction": 0.427,
+            "median_abs_log_ratio": 1.518
+          },
+          "5": {
+            "n": 413,
+            "realised_km_remaining": 2297,
+            "predicted_median_remaining": 1950,
+            "ratio_real_over_pred": 1.18,
+            "reached_within_prediction": 0.465,
+            "median_abs_log_ratio": 1.349
+          },
+          "8": {
+            "n": 428,
+            "realised_km_remaining": 4566,
+            "predicted_median_remaining": 3804,
+            "ratio_real_over_pred": 1.2,
+            "reached_within_prediction": 0.46,
+            "median_abs_log_ratio": 1.361
+          },
+          "13": {
+            "n": 430,
+            "realised_km_remaining": 11527,
+            "predicted_median_remaining": 7586,
+            "ratio_real_over_pred": 1.52,
+            "reached_within_prediction": 0.374,
+            "median_abs_log_ratio": 1.245
+          }
+        }
+      },
+      "v3_v2a_activity_loo": {
+        "A-fast-collapse": {
+          "3": {
+            "n": 351,
+            "realised_km_remaining": 868,
+            "predicted_median_remaining": 320,
+            "ratio_real_over_pred": 2.71,
+            "reached_within_prediction": 0.35,
+            "median_abs_log_ratio": 1.247
+          },
+          "5": {
+            "n": 381,
+            "realised_km_remaining": 1808,
+            "predicted_median_remaining": 986,
+            "ratio_real_over_pred": 1.83,
+            "reached_within_prediction": 0.423,
+            "median_abs_log_ratio": 1.161
+          },
+          "8": {
+            "n": 389,
+            "realised_km_remaining": 3196,
+            "predicted_median_remaining": 1831,
+            "ratio_real_over_pred": 1.75,
+            "reached_within_prediction": 0.398,
+            "median_abs_log_ratio": 1.182
+          },
+          "13": {
+            "n": 399,
+            "realised_km_remaining": 9311,
+            "predicted_median_remaining": 4477,
+            "ratio_real_over_pred": 2.08,
+            "reached_within_prediction": 0.419,
+            "median_abs_log_ratio": 1.07
+          }
+        },
+        "A-persistent": {
+          "3": {
+            "n": 384,
+            "realised_km_remaining": 966,
+            "predicted_median_remaining": 1235,
+            "ratio_real_over_pred": 0.78,
+            "reached_within_prediction": 0.471,
+            "median_abs_log_ratio": 1.384
+          },
+          "5": {
+            "n": 413,
+            "realised_km_remaining": 2297,
+            "predicted_median_remaining": 3237,
+            "ratio_real_over_pred": 0.71,
+            "reached_within_prediction": 0.455,
+            "median_abs_log_ratio": 1.43
+          },
+          "8": {
+            "n": 428,
+            "realised_km_remaining": 4566,
+            "predicted_median_remaining": 5206,
+            "ratio_real_over_pred": 0.88,
+            "reached_within_prediction": 0.46,
+            "median_abs_log_ratio": 1.379
+          },
+          "13": {
+            "n": 430,
+            "realised_km_remaining": 11527,
+            "predicted_median_remaining": 9812,
+            "ratio_real_over_pred": 1.17,
+            "reached_within_prediction": 0.433,
+            "median_abs_log_ratio": 0.965
+          }
+        }
+      },
+      "v3_multipliers_from_other_days": {
+        "A-fast-collapse": {
+          "low": 2.72,
+          "mid": 1.03,
+          "high": 0.61
+        },
+        "A-persistent": {
+          "low": 2.09,
+          "mid": 0.66,
+          "high": 0.25
+        }
+      },
+      "v3_cuts": [
+        34.0,
+        150.0
+      ],
+      "median_scale_at_anchor": {
+        "v2a": 1.31,
+        "v2b": 1.03
+      },
+      "v4_v2a_state_factor_loo": {
+        "A-fast-collapse": {
+          "3": {
+            "n": 351,
+            "realised_km_remaining": 868,
+            "predicted_median_remaining": 629,
+            "ratio_real_over_pred": 1.38,
+            "reached_within_prediction": 0.399,
+            "median_abs_log_ratio": 1.379
+          },
+          "5": {
+            "n": 381,
+            "realised_km_remaining": 1808,
+            "predicted_median_remaining": 1853,
+            "ratio_real_over_pred": 0.98,
+            "reached_within_prediction": 0.483,
+            "median_abs_log_ratio": 1.333
+          },
+          "8": {
+            "n": 389,
+            "realised_km_remaining": 3196,
+            "predicted_median_remaining": 3428,
+            "ratio_real_over_pred": 0.93,
+            "reached_within_prediction": 0.491,
+            "median_abs_log_ratio": 1.167
+          },
+          "13": {
+            "n": 399,
+            "realised_km_remaining": 9311,
+            "predicted_median_remaining": 8452,
+            "ratio_real_over_pred": 1.1,
+            "reached_within_prediction": 0.429,
+            "median_abs_log_ratio": 1.155
+          }
+        },
+        "A-persistent": {
+          "3": {
+            "n": 384,
+            "realised_km_remaining": 966,
+            "predicted_median_remaining": 834,
+            "ratio_real_over_pred": 1.16,
+            "reached_within_prediction": 0.466,
+            "median_abs_log_ratio": 1.525
+          },
+          "5": {
+            "n": 413,
+            "realised_km_remaining": 2297,
+            "predicted_median_remaining": 2251,
+            "ratio_real_over_pred": 1.02,
+            "reached_within_prediction": 0.492,
+            "median_abs_log_ratio": 1.331
+          },
+          "8": {
+            "n": 428,
+            "realised_km_remaining": 4566,
+            "predicted_median_remaining": 4386,
+            "ratio_real_over_pred": 1.04,
+            "reached_within_prediction": 0.47,
+            "median_abs_log_ratio": 1.337
+          },
+          "13": {
+            "n": 430,
+            "realised_km_remaining": 11527,
+            "predicted_median_remaining": 8766,
+            "ratio_real_over_pred": 1.32,
+            "reached_within_prediction": 0.37,
+            "median_abs_log_ratio": 1.216
+          }
+        }
+      },
+      "v4_state_factors_from_other_days": {
+        "A-fast-collapse": 1.45,
+        "A-persistent": 1.09
+      },
+      "v4_band_from_other_days": {
+        "A-fast-collapse": {
+          "q25": 0.21,
+          "q75": 2.49,
+          "n": 4060
+        },
+        "A-persistent": {
+          "q25": 0.23,
+          "q75": 3.28,
+          "n": 4415
+        }
+      },
+      "v4_band_coverage_observed_events": {
+        "A-fast-collapse": {
+          "observed": 1267,
+          "inside_band_share": 0.509
+        },
+        "A-persistent": {
+          "observed": 1489,
+          "inside_band_share": 0.508
+        }
+      }
+    },
+    "oct18": {
+      "v1_frozen": {
+        "A-fast-collapse": {
+          "3": {
+            "n": 380,
+            "realised_km_remaining": 620,
+            "predicted_median_remaining": 298,
+            "ratio_real_over_pred": 2.08,
+            "reached_within_prediction": 0.358,
+            "median_abs_log_ratio": 1.266
+          },
+          "5": {
+            "n": 422,
+            "realised_km_remaining": 1229,
+            "predicted_median_remaining": 933,
+            "ratio_real_over_pred": 1.32,
+            "reached_within_prediction": 0.448,
+            "median_abs_log_ratio": 1.321
+          },
+          "8": {
+            "n": 439,
+            "realised_km_remaining": 2903,
+            "predicted_median_remaining": 1742,
+            "ratio_real_over_pred": 1.67,
+            "reached_within_prediction": 0.408,
+            "median_abs_log_ratio": 1.247
+          },
+          "13": {
+            "n": 442,
+            "realised_km_remaining": 6328,
+            "predicted_median_remaining": 4326,
+            "ratio_real_over_pred": 1.46,
+            "reached_within_prediction": 0.403,
+            "median_abs_log_ratio": 1.265
+          }
+        },
+        "A-persistent": {
+          "3": {
+            "n": 394,
+            "realised_km_remaining": 759,
+            "predicted_median_remaining": 640,
+            "ratio_real_over_pred": 1.19,
+            "reached_within_prediction": 0.475,
+            "median_abs_log_ratio": 1.485
+          },
+          "5": {
+            "n": 430,
+            "realised_km_remaining": 1470,
+            "predicted_median_remaining": 1742,
+            "ratio_real_over_pred": 0.84,
+            "reached_within_prediction": 0.528,
+            "median_abs_log_ratio": 1.299
+          },
+          "8": {
+            "n": 445,
+            "realised_km_remaining": 3519,
+            "predicted_median_remaining": 3395,
+            "ratio_real_over_pred": 1.04,
+            "reached_within_prediction": 0.481,
+            "median_abs_log_ratio": 1.24
+          },
+          "13": {
+            "n": 448,
+            "realised_km_remaining": 6896,
+            "predicted_median_remaining": 6776,
+            "ratio_real_over_pred": 1.02,
+            "reached_within_prediction": 0.471,
+            "median_abs_log_ratio": 1.135
+          }
+        }
+      },
+      "v2a_day_scale_ref_oct18": {
+        "A-fast-collapse": {
+          "3": {
+            "n": 380,
+            "realised_km_remaining": 620,
+            "predicted_median_remaining": 298,
+            "ratio_real_over_pred": 2.08,
+            "reached_within_prediction": 0.358,
+            "median_abs_log_ratio": 1.266
+          },
+          "5": {
+            "n": 422,
+            "realised_km_remaining": 1229,
+            "predicted_median_remaining": 933,
+            "ratio_real_over_pred": 1.32,
+            "reached_within_prediction": 0.448,
+            "median_abs_log_ratio": 1.321
+          },
+          "8": {
+            "n": 439,
+            "realised_km_remaining": 2903,
+            "predicted_median_remaining": 1742,
+            "ratio_real_over_pred": 1.67,
+            "reached_within_prediction": 0.408,
+            "median_abs_log_ratio": 1.247
+          },
+          "13": {
+            "n": 442,
+            "realised_km_remaining": 6328,
+            "predicted_median_remaining": 4326,
+            "ratio_real_over_pred": 1.46,
+            "reached_within_prediction": 0.403,
+            "median_abs_log_ratio": 1.265
+          }
+        },
+        "A-persistent": {
+          "3": {
+            "n": 394,
+            "realised_km_remaining": 759,
+            "predicted_median_remaining": 640,
+            "ratio_real_over_pred": 1.19,
+            "reached_within_prediction": 0.475,
+            "median_abs_log_ratio": 1.485
+          },
+          "5": {
+            "n": 430,
+            "realised_km_remaining": 1470,
+            "predicted_median_remaining": 1742,
+            "ratio_real_over_pred": 0.84,
+            "reached_within_prediction": 0.528,
+            "median_abs_log_ratio": 1.299
+          },
+          "8": {
+            "n": 445,
+            "realised_km_remaining": 3519,
+            "predicted_median_remaining": 3395,
+            "ratio_real_over_pred": 1.04,
+            "reached_within_prediction": 0.481,
+            "median_abs_log_ratio": 1.24
+          },
+          "13": {
+            "n": 448,
+            "realised_km_remaining": 6896,
+            "predicted_median_remaining": 6776,
+            "ratio_real_over_pred": 1.02,
+            "reached_within_prediction": 0.471,
+            "median_abs_log_ratio": 1.135
+          }
+        }
+      },
+      "v2b_day_scale_ref_loo": {
+        "A-fast-collapse": {
+          "3": {
+            "n": 380,
+            "realised_km_remaining": 620,
+            "predicted_median_remaining": 205,
+            "ratio_real_over_pred": 3.02,
+            "reached_within_prediction": 0.287,
+            "median_abs_log_ratio": 1.264
+          },
+          "5": {
+            "n": 422,
+            "realised_km_remaining": 1229,
+            "predicted_median_remaining": 675,
+            "ratio_real_over_pred": 1.82,
+            "reached_within_prediction": 0.408,
+            "median_abs_log_ratio": 1.285
+          },
+          "8": {
+            "n": 439,
+            "realised_km_remaining": 2903,
+            "predicted_median_remaining": 1267,
+            "ratio_real_over_pred": 2.29,
+            "reached_within_prediction": 0.358,
+            "median_abs_log_ratio": 1.19
+          },
+          "13": {
+            "n": 442,
+            "realised_km_remaining": 6328,
+            "predicted_median_remaining": 3168,
+            "ratio_real_over_pred": 2.0,
+            "reached_within_prediction": 0.362,
+            "median_abs_log_ratio": 1.116
+          }
+        },
+        "A-persistent": {
+          "3": {
+            "n": 394,
+            "realised_km_remaining": 759,
+            "predicted_median_remaining": 581,
+            "ratio_real_over_pred": 1.31,
+            "reached_within_prediction": 0.459,
+            "median_abs_log_ratio": 1.416
+          },
+          "5": {
+            "n": 430,
+            "realised_km_remaining": 1470,
+            "predicted_median_remaining": 1560,
+            "ratio_real_over_pred": 0.94,
+            "reached_within_prediction": 0.528,
+            "median_abs_log_ratio": 1.262
+          },
+          "8": {
+            "n": 445,
+            "realised_km_remaining": 3519,
+            "predicted_median_remaining": 3030,
+            "ratio_real_over_pred": 1.16,
+            "reached_within_prediction": 0.481,
+            "median_abs_log_ratio": 1.157
+          },
+          "13": {
+            "n": 448,
+            "realised_km_remaining": 6896,
+            "predicted_median_remaining": 6050,
+            "ratio_real_over_pred": 1.14,
+            "reached_within_prediction": 0.453,
+            "median_abs_log_ratio": 1.131
+          }
+        }
+      },
+      "v2c_trailing60_ref_oct18": {
+        "A-fast-collapse": {
+          "3": {
+            "n": 380,
+            "realised_km_remaining": 620,
+            "predicted_median_remaining": 298,
+            "ratio_real_over_pred": 2.08,
+            "reached_within_prediction": 0.358,
+            "median_abs_log_ratio": 1.266
+          },
+          "5": {
+            "n": 422,
+            "realised_km_remaining": 1229,
+            "predicted_median_remaining": 933,
+            "ratio_real_over_pred": 1.32,
+            "reached_within_prediction": 0.448,
+            "median_abs_log_ratio": 1.321
+          },
+          "8": {
+            "n": 439,
+            "realised_km_remaining": 2903,
+            "predicted_median_remaining": 1742,
+            "ratio_real_over_pred": 1.67,
+            "reached_within_prediction": 0.408,
+            "median_abs_log_ratio": 1.247
+          },
+          "13": {
+            "n": 442,
+            "realised_km_remaining": 6328,
+            "predicted_median_remaining": 4326,
+            "ratio_real_over_pred": 1.46,
+            "reached_within_prediction": 0.403,
+            "median_abs_log_ratio": 1.265
+          }
+        },
+        "A-persistent": {
+          "3": {
+            "n": 394,
+            "realised_km_remaining": 759,
+            "predicted_median_remaining": 640,
+            "ratio_real_over_pred": 1.19,
+            "reached_within_prediction": 0.475,
+            "median_abs_log_ratio": 1.485
+          },
+          "5": {
+            "n": 430,
+            "realised_km_remaining": 1470,
+            "predicted_median_remaining": 1742,
+            "ratio_real_over_pred": 0.84,
+            "reached_within_prediction": 0.528,
+            "median_abs_log_ratio": 1.299
+          },
+          "8": {
+            "n": 445,
+            "realised_km_remaining": 3519,
+            "predicted_median_remaining": 3395,
+            "ratio_real_over_pred": 1.04,
+            "reached_within_prediction": 0.481,
+            "median_abs_log_ratio": 1.24
+          },
+          "13": {
+            "n": 448,
+            "realised_km_remaining": 6896,
+            "predicted_median_remaining": 6776,
+            "ratio_real_over_pred": 1.02,
+            "reached_within_prediction": 0.471,
+            "median_abs_log_ratio": 1.135
+          }
+        }
+      },
+      "v3_v2a_activity_loo": {
+        "A-fast-collapse": {
+          "3": {
+            "n": 380,
+            "realised_km_remaining": 620,
+            "predicted_median_remaining": 140,
+            "ratio_real_over_pred": 4.44,
+            "reached_within_prediction": 0.337,
+            "median_abs_log_ratio": 1.116
+          },
+          "5": {
+            "n": 422,
+            "realised_km_remaining": 1229,
+            "predicted_median_remaining": 494,
+            "ratio_real_over_pred": 2.49,
+            "reached_within_prediction": 0.441,
+            "median_abs_log_ratio": 1.148
+          },
+          "8": {
+            "n": 439,
+            "realised_km_remaining": 2903,
+            "predicted_median_remaining": 945,
+            "ratio_real_over_pred": 3.07,
+            "reached_within_prediction": 0.399,
+            "median_abs_log_ratio": 1.196
+          },
+          "13": {
+            "n": 442,
+            "realised_km_remaining": 6328,
+            "predicted_median_remaining": 2386,
+            "ratio_real_over_pred": 2.65,
+            "reached_within_prediction": 0.378,
+            "median_abs_log_ratio": 1.0
+          }
+        },
+        "A-persistent": {
+          "3": {
+            "n": 394,
+            "realised_km_remaining": 759,
+            "predicted_median_remaining": 528,
+            "ratio_real_over_pred": 1.44,
+            "reached_within_prediction": 0.477,
+            "median_abs_log_ratio": 1.316
+          },
+          "5": {
+            "n": 430,
+            "realised_km_remaining": 1470,
+            "predicted_median_remaining": 1455,
+            "ratio_real_over_pred": 1.01,
+            "reached_within_prediction": 0.526,
+            "median_abs_log_ratio": 1.214
+          },
+          "8": {
+            "n": 445,
+            "realised_km_remaining": 3519,
+            "predicted_median_remaining": 2845,
+            "ratio_real_over_pred": 1.24,
+            "reached_within_prediction": 0.546,
+            "median_abs_log_ratio": 1.199
+          },
+          "13": {
+            "n": 448,
+            "realised_km_remaining": 6896,
+            "predicted_median_remaining": 5687,
+            "ratio_real_over_pred": 1.21,
+            "reached_within_prediction": 0.471,
+            "median_abs_log_ratio": 0.955
+          }
+        }
+      },
+      "v3_multipliers_from_other_days": {
+        "A-fast-collapse": {
+          "low": 2.44,
+          "mid": 1.13,
+          "high": 0.56
+        },
+        "A-persistent": {
+          "low": 1.65,
+          "mid": 0.84,
+          "high": 0.27
+        }
+      },
+      "v3_cuts": [
+        31.0,
+        140.0
+      ],
+      "median_scale_at_anchor": {
+        "v2a": 1.0,
+        "v2b": 0.77
+      },
+      "v4_v2a_state_factor_loo": {
+        "A-fast-collapse": {
+          "3": {
+            "n": 380,
+            "realised_km_remaining": 620,
+            "predicted_median_remaining": 456,
+            "ratio_real_over_pred": 1.36,
+            "reached_within_prediction": 0.442,
+            "median_abs_log_ratio": 1.23
+          },
+          "5": {
+            "n": 422,
+            "realised_km_remaining": 1229,
+            "predicted_median_remaining": 1370,
+            "ratio_real_over_pred": 0.9,
+            "reached_within_prediction": 0.517,
+            "median_abs_log_ratio": 1.419
+          },
+          "8": {
+            "n": 439,
+            "realised_km_remaining": 2903,
+            "predicted_median_remaining": 2535,
+            "ratio_real_over_pred": 1.15,
+            "reached_within_prediction": 0.467,
+            "median_abs_log_ratio": 1.335
+          },
+          "13": {
+            "n": 442,
+            "realised_km_remaining": 6328,
+            "predicted_median_remaining": 6256,
+            "ratio_real_over_pred": 1.01,
+            "reached_within_prediction": 0.475,
+            "median_abs_log_ratio": 1.2
+          }
+        },
+        "A-persistent": {
+          "3": {
+            "n": 394,
+            "realised_km_remaining": 759,
+            "predicted_median_remaining": 784,
+            "ratio_real_over_pred": 0.97,
+            "reached_within_prediction": 0.508,
+            "median_abs_log_ratio": 1.488
+          },
+          "5": {
+            "n": 430,
+            "realised_km_remaining": 1470,
+            "predicted_median_remaining": 2111,
+            "ratio_real_over_pred": 0.7,
+            "reached_within_prediction": 0.558,
+            "median_abs_log_ratio": 1.369
+          },
+          "8": {
+            "n": 445,
+            "realised_km_remaining": 3519,
+            "predicted_median_remaining": 4103,
+            "ratio_real_over_pred": 0.86,
+            "reached_within_prediction": 0.544,
+            "median_abs_log_ratio": 1.271
+          },
+          "13": {
+            "n": 448,
+            "realised_km_remaining": 6896,
+            "predicted_median_remaining": 8177,
+            "ratio_real_over_pred": 0.84,
+            "reached_within_prediction": 0.527,
+            "median_abs_log_ratio": 1.09
+          }
+        }
+      },
+      "v4_state_factors_from_other_days": {
+        "A-fast-collapse": 1.44,
+        "A-persistent": 1.21
+      },
+      "v4_band_from_other_days": {
+        "A-fast-collapse": {
+          "q25": 0.21,
+          "q75": 2.41,
+          "n": 3898
+        },
+        "A-persistent": {
+          "q25": 0.26,
+          "q75": 3.76,
+          "n": 4317
+        }
+      },
+      "v4_band_coverage_observed_events": {
+        "A-fast-collapse": {
+          "observed": 1429,
+          "inside_band_share": 0.484
+        },
+        "A-persistent": {
+          "observed": 1587,
+          "inside_band_share": 0.523
+        }
+      }
+    }
+  },
+  "day_scale_trajectory": {
+    "oct02": {
+      "h2": {
+        "v2a": 0.34,
+        "v2b": 0.29
+      },
+      "h4": {
+        "v2a": 0.49,
+        "v2b": 0.38
+      },
+      "h6": {
+        "v2a": 0.55,
+        "v2b": 0.55
+      },
+      "h8": {
+        "v2a": 0.68,
+        "v2b": 0.68
+      },
+      "h12": {
+        "v2a": 1.11,
+        "v2b": 0.95
+      },
+      "h16": {
+        "v2a": 1.26,
+        "v2b": 0.91
+      },
+      "h20": {
+        "v2a": 1.27,
+        "v2b": 0.9
+      }
+    },
+    "oct03": {
+      "h2": {
+        "v2a": 1.18,
+        "v2b": 1.18
+      },
+      "h4": {
+        "v2a": 1.59,
+        "v2b": 1.59
+      },
+      "h6": {
+        "v2a": 1.85,
+        "v2b": 1.96
+      },
+      "h8": {
+        "v2a": 1.49,
+        "v2b": 1.65
+      },
+      "h12": {
+        "v2a": 1.76,
+        "v2b": 1.58
+      },
+      "h16": {
+        "v2a": 1.74,
+        "v2b": 1.38
+      },
+      "h20": {
+        "v2a": 1.75,
+        "v2b": 1.37
+      }
+    },
+    "oct17": {
+      "h2": {
+        "v2a": 1.44,
+        "v2b": 1.44
+      },
+      "h4": {
+        "v2a": 1.3,
+        "v2b": 1.3
+      },
+      "h6": {
+        "v2a": 0.94,
+        "v2b": 0.94
+      },
+      "h8": {
+        "v2a": 0.9,
+        "v2b": 0.9
+      },
+      "h12": {
+        "v2a": 1.17,
+        "v2b": 1.05
+      },
+      "h16": {
+        "v2a": 1.39,
+        "v2b": 1.1
+      },
+      "h20": {
+        "v2a": 1.41,
+        "v2b": 1.11
+      }
+    },
+    "oct18": {
+      "h2": {
+        "v2a": 1.0,
+        "v2b": 0.85
+      },
+      "h4": {
+        "v2a": 1.0,
+        "v2b": 0.77
+      },
+      "h6": {
+        "v2a": 1.0,
+        "v2b": 1.06
+      },
+      "h8": {
+        "v2a": 1.0,
+        "v2b": 1.11
+      },
+      "h12": {
+        "v2a": 1.0,
+        "v2b": 0.86
+      },
+      "h16": {
+        "v2a": 1.0,
+        "v2b": 0.72
+      },
+      "h20": {
+        "v2a": 1.0,
+        "v2b": 0.71
+      }
+    }
+  },
+  "aggregate": {
+    "v1_frozen": {
+      "cells": 32,
+      "median_ratio": 1.7,
+      "ratio_range": [
+        0.84,
+        2.97
+      ],
+      "median_hit_share": 0.383,
+      "cells_within_20pct": 4,
+      "median_abs_log_ratio": 1.231
+    },
+    "v2a_day_scale_ref_oct18": {
+      "cells": 32,
+      "median_ratio": 1.39,
+      "ratio_range": [
+        0.84,
+        2.09
+      ],
+      "median_hit_share": 0.418,
+      "cells_within_20pct": 12,
+      "median_abs_log_ratio": 1.266
+    },
+    "v2b_day_scale_ref_loo": {
+      "cells": 32,
+      "median_ratio": 1.77,
+      "ratio_range": [
+        0.94,
+        3.02
+      ],
+      "median_hit_share": 0.391,
+      "cells_within_20pct": 7,
+      "median_abs_log_ratio": 1.181
+    },
+    "v2c_trailing60_ref_oct18": {
+      "cells": 32,
+      "median_ratio": 1.47,
+      "ratio_range": [
+        0.84,
+        2.56
+      ],
+      "median_hit_share": 0.429,
+      "cells_within_20pct": 10,
+      "median_abs_log_ratio": 1.265
+    },
+    "v3_v2a_activity_loo": {
+      "cells": 32,
+      "median_ratio": 1.61,
+      "ratio_range": [
+        0.71,
+        4.44
+      ],
+      "median_hit_share": 0.421,
+      "cells_within_20pct": 6,
+      "median_abs_log_ratio": 1.136
+    },
+    "v4_v2a_state_factor_loo": {
+      "cells": 32,
+      "median_ratio": 0.99,
+      "ratio_range": [
+        0.7,
+        1.66
+      ],
+      "median_hit_share": 0.478,
+      "cells_within_20pct": 22,
+      "median_abs_log_ratio": 1.332
+    }
+  }
+}

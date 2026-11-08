@@ -1096,3 +1096,70 @@ candidate for a microstructure explanation (quiet-tape mean reversion at one to 
   contemporaneous with the burst and is a filter candidate, found on the days it is reported on.
 - Open on the export side: the standalone group exports for 2, 3 and 17, which unlock the archived
   recognition match and the four-arm, dipole post-recognition, size-one and sweep-cohort passes per date.
+
+## 16. The clock: frozen totals with a session-time-matched day scale and a band
+
+Greg asked for the clock while the exports are pending. `claude-code/ng_runway_clock_v2.py` builds it,
+scores six versions on the four sessions at the +60 anchor, and ends with `RunwayClock`, the live form.
+Outputs: `runway-clock-v2-summary.json`, `runway-clock-v2-{oct02,oct03,oct17,oct18}-events.jsonl.gz`.
+The frozen two-state totals are never changed; everything added is one multiplier at a time, and every
+multiplier that is estimated is estimated on the other three days.
+
+**The construction.** remaining_k = max(0, T[state][k] x s(t) x f[state] minus elapsed), with T the frozen
+totals, s(t) the day scale and f the state factor. The day scale is the session's running price-travel
+speed (Kaplan-Meier median of the either-direction 3-tick time over events born before now, censored at
+now) divided by a reference day's running speed at the same session second. The first build divided by a
+single full-day reference number and was wrong by 4 to 7x in the early hours on every day, the reference
+day included: the overnight tape travels that much slower than the US day, so an unmatched running ratio
+measures the hour, not the day. Matching by session second removes that and makes the reference day's
+scale 1.0 by construction. Warm-up of 30 events (about two hours), scale 1 before that.
+
+**What each version does, 32 cells (4 days x 2 states x 4 scales), realised Kaplan-Meier remaining over
+predicted median remaining:**
+
+| version | median ratio | range | cells within 20 pct | share reaching level within prediction (0.50 ideal) |
+|---|---|---|---|---|
+| v1 frozen, unscaled | 1.70 | 0.84 to 2.97 | 4 | 0.38 |
+| v2a day scale, reference October 18 | 1.39 | 0.84 to 2.09 | 12 | 0.42 |
+| v2b day scale, reference = median of other three days | 1.77 | 0.94 to 3.02 | 7 | 0.39 |
+| v2c trailing-60-event speed, reference October 18 | 1.47 | 0.84 to 2.56 | 10 | 0.43 |
+| v3 v2a x event-activity multiplier (other days) | 1.61 | 0.71 to 4.44 | 6 | 0.42 |
+| v4 v2a x state factor (other days) | 0.99 | 0.70 to 1.66 | 22 | 0.48 |
+
+Readings. (1) The day scale is real and the matched form is the right one: v2a halves the miss. (2) The
+reference matters: October 18 is the day the frozen persistent totals already fit, and using it as the
+clock's reference carries that fit to the other days (v2a); the no-privileged-day reference (v2b) does
+not, because the frozen totals are not calibrated to the average of these four days. The choice of
+October 18 is made after seeing it, and is stated. (3) A trailing window does not beat the cumulative
+speed. (4) Event-level activity multipliers (v3) widen the misses: within a day the busy events travel
+faster, but the frozen totals already encode that through the state and the hour, and a second activity
+term over-corrects. (5) The remaining bias is state-level: the frozen fast-collapse totals are short by
+about 1.45x and the persistent totals by 1.1 to 1.2x on every day that did not supply them. A leave-one-
+day-out state factor (v4) brings the median ratio to 0.99 with 22 of 32 cells within 20 percent and a
+reach-within-prediction share of 0.48. That is the clock. Its one systematic miss is October 2's
+persistent state (ratios 1.5 to 1.7), a session whose speed rose from 0.34x to 1.27x of the reference
+across the day, faster than a cumulative estimate follows.
+
+**The band.** The per-event scatter around any of these medians is a factor of about 3.5 either way
+(median absolute log ratio 1.2 to 1.3 for every version), because time-to-k-ticks is heavy-tailed. The
+delivered clock therefore emits q25 and q75 multipliers of realised over predicted, per state, from the
+other three days: about 0.21 to 0.26 on the low side and 2.4 to 4.0 on the high side. Leave-one-day-out
+coverage of that band on the held-out day's observed events: October 2 0.45 / 0.34 (fast / persistent),
+October 3 0.56 / 0.63, October 17 0.51 / 0.51, October 18 0.48 / 0.52, against a nominal 0.50. The band is
+honest and it is wide: the clock tells you the median wait and that half the waits fall between a fifth
+and three times it.
+
+**The live form.** `RunwayClock(reference_curve, state_factor, band)` takes the reference day's
+(session second, running median) curve and the two leave-one-day-out tables; `birth(t0)` and
+`resolved_either3(t0, seconds)` feed it as events are born and first travel 3 ticks either way;
+`remaining(state, t0, now)` returns the day scale and, per level, q25 / median / q75 seconds remaining.
+Nothing in it reads past `now`. Smoke-tested against the batch v4 on October 18: identical medians.
+
+**What this clock is and is not.** It is a countdown for how long the price will take to travel k ticks
+in the burst's direction after an exhaustion whose A state is known, calibrated to a median on four
+sessions with leave-one-day-out factors, with a stated reference day and a wide band. It says nothing
+about direction (sections 11 to 15). Its inputs are the frozen detector, the frozen A classifier, and the
+tape's print stream. Before any use: a fifth and sixth day to test the state factors and the band as
+fixed numbers rather than leave-one-day-out estimates; a faster-adapting day scale for sessions like
+October 2; and the Kalshi side, where the clock's job would be to say when the NYMEX move that Kalshi
+follows is due.
