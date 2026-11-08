@@ -116,6 +116,8 @@ The 99-entry inventory covers raw inputs, calculations, clocks, knowledge, contr
 
 ## Four equal discovery trade dates
 
+The [revised SQLite-to-Julia replay runbook](../../../../../tasks/family-research-20261022/three-date-replay-runbook.md) records the separate three-date prerequisite. Complete it for October 2, 3 and 17 before the new four-date standalone calculation.
+
 Use the available tape for October 2, 3, 17 and 18, 2023. Apply the same rule definitions, causal checks, calibration protocol, opportunity accounting and evidence retention to each trade date. Keep separate per-date ledgers and compare recurrence by rule version and side. All four dates inform discovery, including singletons and adverse, weak, contradictory, ambiguous and unscorable cases. The initial paper phase is prospective evaluation using the agreed frozen variant.
 
 The Globex trading window is 6 p.m. ET on the prior calendar day to 5 p.m. ET on the named trade date, or 22:00 to 21:00 UTC for these dates. The recovered Databento files are split at 00:00 UTC and start with snapshots. Decoding the four files confirmed book messages during the one-hour halt and zero trade prints in that interval. Retain that material with the appropriate phase and original cursor, and verify eligibility for each calculation. [CME contract hours](https://www.cmegroup.com/ja/markets/energy/natural-gas/natural-gas.contractSpecs.html) Â· [Databento MBO snapshots](https://databento.com/docs/conventions/mbo-snapshot) Â· [Git tape](https://github.com/DavisAI1974/Markets/tree/1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202/data/nymex_mbo/ng_v0_oct2023)
