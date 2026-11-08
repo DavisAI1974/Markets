@@ -1,0 +1,221 @@
+{
+  "books": 22194,
+  "calibration_blocks": 92,
+  "dispositions": [
+    [
+      "ENTROPY_ONLY",
+      "A",
+      "CALIBRATION_PERIOD",
+      92
+    ],
+    [
+      "ENTROPY_ONLY",
+      "A",
+      "NEEDS_TWO_POST_CALIBRATION_BLOCKS",
+      1
+    ],
+    [
+      "ENTROPY_ONLY",
+      "A",
+      "NO_ENTROPY_DECLINE",
+      116
+    ],
+    [
+      "ENTROPY_ONLY",
+      "A",
+      "REVIEW_REQUIRED",
+      28
+    ],
+    [
+      "ENTROPY_ONLY",
+      "A",
+      "TAKE",
+      132
+    ],
+    [
+      "ENTROPY_ONLY",
+      "B",
+      "CALIBRATION_PERIOD",
+      92
+    ],
+    [
+      "ENTROPY_ONLY",
+      "B",
+      "NEEDS_TWO_POST_CALIBRATION_BLOCKS",
+      1
+    ],
+    [
+      "ENTROPY_ONLY",
+      "B",
+      "NO_ENTROPY_DECLINE",
+      123
+    ],
+    [
+      "ENTROPY_ONLY",
+      "B",
+      "REVIEW_REQUIRED",
+      28
+    ],
+    [
+      "ENTROPY_ONLY",
+      "B",
+      "TAKE",
+      125
+    ],
+    [
+      "PRINT_ONLY",
+      "A",
+      "TAKE",
+      615
+    ],
+    [
+      "PRINT_ONLY",
+      "B",
+      "TAKE",
+      544
+    ],
+    [
+      "PRINT_ONLY",
+      "UNASSIGNED",
+      "AMBIGUOUS_VS_PRIOR_TOUCH",
+      81
+    ]
+  ],
+  "input_sha256": {
+    "artifacts\\sqlite-triage\\20261022\\families\\trade-lifecycle-targeted-v1\\local-liquidity-v1\\all-22194-window-local-liquidity-books.jsonl.gz": "e31c3fce963eff341396504ab3505ed9b971bcc2f64eabc0f811f148b97349a4",
+    "artifacts\\sqlite-triage\\20261022\\families\\trade-lifecycle-targeted-v1\\local-liquidity-v1\\every-trade-local-liquidity-links.jsonl.gz": "b796e6343448fc1df20453ef9c7906874664817fecea136b04bb377a7a751b66"
+  },
+  "outcomes": [
+    [
+      "ENTROPY_ONLY",
+      "A",
+      "1",
+      {
+        "AGREES": 43,
+        "FLAT": 49,
+        "OPPOSES": 40
+      }
+    ],
+    [
+      "ENTROPY_ONLY",
+      "A",
+      "30",
+      {
+        "AGREES": 45,
+        "EXIT_CENSORED": 6,
+        "FLAT": 13,
+        "OPPOSES": 68
+      }
+    ],
+    [
+      "ENTROPY_ONLY",
+      "A",
+      "5",
+      {
+        "AGREES": 54,
+        "EXIT_CENSORED": 1,
+        "FLAT": 28,
+        "OPPOSES": 49
+      }
+    ],
+    [
+      "ENTROPY_ONLY",
+      "B",
+      "1",
+      {
+        "AGREES": 29,
+        "FLAT": 57,
+        "OPPOSES": 39
+      }
+    ],
+    [
+      "ENTROPY_ONLY",
+      "B",
+      "30",
+      {
+        "AGREES": 60,
+        "EXIT_CENSORED": 5,
+        "FLAT": 13,
+        "OPPOSES": 47
+      }
+    ],
+    [
+      "ENTROPY_ONLY",
+      "B",
+      "5",
+      {
+        "AGREES": 45,
+        "EXIT_CENSORED": 1,
+        "FLAT": 28,
+        "OPPOSES": 51
+      }
+    ],
+    [
+      "PRINT_ONLY",
+      "A",
+      "1",
+      {
+        "AGREES": 229,
+        "FLAT": 191,
+        "OPPOSES": 195
+      }
+    ],
+    [
+      "PRINT_ONLY",
+      "A",
+      "30",
+      {
+        "AGREES": 229,
+        "EXIT_CENSORED": 18,
+        "FLAT": 51,
+        "OPPOSES": 317
+      }
+    ],
+    [
+      "PRINT_ONLY",
+      "A",
+      "5",
+      {
+        "AGREES": 256,
+        "EXIT_CENSORED": 2,
+        "FLAT": 85,
+        "OPPOSES": 272
+      }
+    ],
+    [
+      "PRINT_ONLY",
+      "B",
+      "1",
+      {
+        "AGREES": 198,
+        "EXIT_CENSORED": 2,
+        "FLAT": 167,
+        "OPPOSES": 177
+      }
+    ],
+    [
+      "PRINT_ONLY",
+      "B",
+      "30",
+      {
+        "AGREES": 278,
+        "EXIT_CENSORED": 12,
+        "FLAT": 39,
+        "OPPOSES": 215
+      }
+    ],
+    [
+      "PRINT_ONLY",
+      "B",
+      "5",
+      {
+        "AGREES": 240,
+        "EXIT_CENSORED": 3,
+        "FLAT": 79,
+        "OPPOSES": 222
+      }
+    ]
+  ],
+  "records": 1978,
+  "trailing_groups": 54
+}
