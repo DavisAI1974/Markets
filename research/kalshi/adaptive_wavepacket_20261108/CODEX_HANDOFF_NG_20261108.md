@@ -1,0 +1,134 @@
+# CODEX HANDOFF - ADAPTIVE LOCALITY ENGINE FOR HENRY HUB NG (pre paper-trading review)
+
+Date: 2026-11-08. Branch: `research/markets-adaptive-wavepacket-migration-20261108`. Everything below is
+committed on that branch; the frozen BuildMap snapshot is never edited.
+
+Purpose of this handoff: Greg wants an independent look, before paper trading starts, at whether running
+historical NG data through this engine strengthens or finds trade signals worth testing in the paper
+environment. This document says what is built and tested, what is not, how to run it on NG, how to read the
+output, and what would and would not count as a signal. It is an independent piece for now; a Frankie
+attachment is a later task.
+
+## 1. What is built and verified (today, on this branch)
+
+| Piece | Where | Verified by |
+| --- | --- | --- |
+| Adaptive Locality engine with every review fix applied | `working_tree/adaptive_locality/` | 87 original + 31 science-fix + engineering-fix tests, all green (`python3 -m unittest discover -s tests -p 'test_adaptive_locality*.py'` from `working_tree/`) |
+| Native BuildMap scanner/viewer with every review fix | `working_tree/src`, `public`, `.buildmap` | 183 Node tests (`node --test tests/*.test.js` from `working_tree/`) |
+| Estimator bridge: frozen-bin and Vasicek/KSG on the same frames, distinct identities, no mixing | `markets_bridge/estimators.py` | `markets_bridge/tests/test_markets_bridge.py` |
+| Leakage gate: imported fitters pass `odcore/leakage.py`; a planted leak is caught | `markets_bridge/leakage_gate.py` | same file |
+| NG workflow: tape -> per-second Lee-Ready buy/sell -> RawFrames -> frozen bins from history -> both estimators -> archive-first five-step, Level 2, static geometry, predictive controls, circular-shift null -> registries + `summary.json` | `markets_bridge/ng_runner.py` | CLI and arithmetic tests pass; the real-day end-to-end test is written and SKIPS until an NG day is cached (see 3) |
+| Findings, math, register, fix log | `CCODE_INDEPENDENT_REVIEW_20261108.md`, `working_tree/FIX_LOG_20261108.md`, `working_tree/docs/SCIENCE_CONTEXT_REGISTER_ADDENDUM_20261108.md` | read |
+
+## 2. What is NOT verified (say it before anyone reads a number)
+
+- No real NG data has been through the engine yet. AWS was not accessible from the session that built
+  this; no day is cached under `data/nymex_cont/`. The first real run is yours.
+- All eight scientific gates in the register remain UNVERIFIED (replication, causal controls, algebraic
+  novelty, rank/conditioning, parameter Fisher information, physical Neumann, raw external validation,
+  scientific equivalence), plus the review's additional holds.
+- The engine's "candidate" is a predictive association between ENTROPY changes of two channels. It is not a
+  price-direction call and it is not net of fee. Direction on NG is the S92 nowcast (`dip_imb_level`,
+  OOS 34/34 on strong flow); the realistic contribution of this engine is to the WHEN and the hold length,
+  not the WHICH side.
+- Kalshi KXNATGASD channel and the depth channels in the runner are coded but untested on data.
+- The synthetic controls that pass contain the fitted term by construction (review 4.6). They prove the
+  fitter, not the science.
+
+## 3. How to run it on NG (one day at a time, never pooled)
+
+Cache a day with the repo's own loader (needs working AWS credentials for the bucket in
+`event_move_baseline.py`; otherwise copy the `NG_YYYYMMDD.jsonl.gz` files from the box that holds them into
+`data/nymex_cont/`):
+
+```bash
+PYTHONPATH=research/kalshi python3 -c "import event_move_baseline as e; e._s3_fetch_cont_gz('NG','20260617')"
+```
+
+Run the probe (from the Markets root; output directory outside git):
+
+```bash
+PYTHONPATH=.:research/kalshi:research/kalshi/adaptive_wavepacket_20261108/working_tree \
+  python3 -m research.kalshi.adaptive_wavepacket_20261108.markets_bridge.ng_runner \
+  --day 20260617 --source local --out /tmp/ng-probe-20260617 --mark-utc 14:30
+```
+
+Then the real-day test, which asserts the registries verify and prints the one-screen summary:
+
+```bash
+NG_PROBE_DAY=20260617 PYTHONPATH=.:research/kalshi:research/kalshi/adaptive_wavepacket_20261108/working_tree \
+  python3 -m unittest research.kalshi.adaptive_wavepacket_20261108.markets_bridge.tests.test_ng_runner
+```
+
+Defaults and knobs: 60-second windows, stride 20 (a trading day gives on the order of a thousand frames);
+settle exclusion 21:00 UTC with a 1800 s guard (`SETTLE_UTC["KXNATGASD"]`); the EIA storage release 14:30 UTC
+is recorded as a mark, not a fit boundary; bins frozen from the first 30 percent of the day's frames (values
+outside them later in the day make the whole frame REVIEW_REQUIRED, which is retained and counted, not
+dropped); both estimators; circular-shift null with 20 shifts per direction; `--kalshi-bins` adds the Kalshi
+channels; `--depth` adds the MBP-10 depth channels.
+
+Cost: pure-Python fits; a full day at the defaults is minutes, not hours. Registries are SQLite files in the
+output directory; a day's archives are tens of megabytes.
+
+## 4. How to read `summary.json`
+
+Per estimator:
+- `review_required_frames`: frames the frozen bins could not admit (regime moved outside calibration). High
+  numbers after a release are expected and are themselves an observation.
+- `five_step.directions[*]`: for `ng_buy <- ng_sell` and the reverse: `status`, `improvement` (holdout gain of
+  the full library over the self-only model), `shifted_null_improvement` (the matched past-lag null),
+  `lag_profile` (the same at up to 12 lags), `dipole_balance` B with `balance_standard_error`,
+  `donor_lag1_autocorrelation`, and `reason` for any abstention.
+- `circular_shift_null[*].fraction_of_shifts_at_or_above_actual`: the Markets tautology-killer; small means the
+  association is not an artifact of the donor's own spectrum.
+- `level2`: candidate and held link counts across balance channels, with `segment_clocks` when one held window
+  forced a side-by-side segment fit.
+- `geometry[*].static`: the quadratic probe with its reparameterization null (`gain_over_algebraic_curve`) and
+  degeneracy flags; `geometry[*].predictive`: future-rate controls per chronological split.
+- `registry_cases` and `registry_verified`: every abstention, conflict, out-of-range frame and unverified
+  result is a case you can open with `ResearchHoldRegistry.get(case_id)`.
+
+## 5. What would count as something to carry into paper trading (and what would not)
+
+Carry forward only if ALL of these hold, per direction, with nothing pooled across days:
+1. `CANDIDATE_ASSOCIATION_REVIEW_ONLY` under BOTH estimators on the same day.
+2. `fraction_of_shifts_at_or_above_actual` at or below 0.05 under both estimators.
+3. The predictive geometry controls read `CONSISTENT_MULTISPLIT_ASSOCIATION_REVIEW_ONLY` or the direction's
+   `improvement` exceeds every entry in its `lag_profile` by the null margin.
+4. `|dipole_balance| / balance_standard_error` above 2 (otherwise B is noise, see review 4.3).
+5. The same reading on at least three separate days (replication without pooling; multiplicity is otherwise
+   uncontrolled: only two directed pairs are pre-registered here, do not add pairs after looking).
+6. Then, and only then, hand the day and direction to `lag_join.py` for net-of-fee at taker AND maker, per
+   event, as the existing rule requires. The engine output is an input to hold length and timing, layered on
+   the S92 direction nowcast; it is not a stand-alone entry rule.
+
+Does NOT count: a perfect static quadratic (algebra), a candidate under one estimator only, a candidate on
+one day, anything inside the settle guard, anything whose frames were REVIEW_REQUIRED, any result where the
+registry did not verify.
+
+## 6. Overlooked or worth bolstering (honest list, in priority order)
+
+1. Calibrate bins from a PRIOR day (`--calibrate-from-day`, not built) instead of the first 30 percent of the
+   same day, so the release regime does not flood REVIEW_REQUIRED. Easy to add in `ng_runner.py`.
+2. Pre-register the directed pairs for NG (ng_buy <- ng_sell, ng_sell <- ng_buy, and if Kalshi bins are
+   present kalshi_* <- ng_*) and keep the count fixed; the engine tests every permutation of whatever channels
+   you give it.
+3. Per-event runs around the EIA release (a window of minutes has too few frames for the five-step minimums;
+   use second-resolution windows of 8 to 16 seconds with stride 1 inside the release hour, which the runner
+   supports via `--window`, `--stride`, `--start-ts`, `--end-ts`).
+4. The Kalshi channel: verify `kalshi_coupling_adapter.load_kalshi_market` bar fields (`ts`, `buy_vol`,
+   `sell_vol`) match what `kalshi_channels` reads; untested here.
+5. The session-start hook still materializes the crypto bins (`realbins/`) every session; nothing here uses
+   them. Greg's call whether to turn that off.
+6. Frankie adapter and the fuller Frankie tree (review F-1) remain open; the RawFrame contract already carries
+   free-string family and direction fields for P/O/S/X and SAME/FLIP when that time comes.
+7. No signing anywhere (sha256 content pins only); the registries are local evidence, not attestations.
+8. The static-geometry chemistry coefficients in `odcore/dipole_predictor.py` have still not been put through
+   the reparameterization null; the engine can do it on any series with `geometric_dipole_probe`.
+
+## 7. Rules that bind every run
+
+Zero synthetic trading data. Leakage gate before any backtest (passed for these fitters; re-run if you change
+them). Settle window excluded. Each event individually, never averaged. Distributions and per-trade
+fingerprints, never means. Net-of-fee at taker and maker before anything is called a trade. Provisional until
+live. Launch is HOLD. Nothing scientific is dropped: every abstention is in the registry with its reason.

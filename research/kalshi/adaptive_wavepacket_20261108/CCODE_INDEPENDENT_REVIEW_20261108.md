@@ -607,6 +607,38 @@ Separately authorized later, not recommended now: anything that connects to AWS,
 
 ---
 
+## 11a. Fix status (2026-11-08, after the owner's "fix all of them")
+
+All fixes live in `working_tree/` (never in the snapshot) and are logged per finding id in
+`working_tree/FIX_LOG_20261108.md`. Suites: Python 87 original + 31 science-fix + engineering-fix tests, Node
+183, Markets bridge 6; all green at commit `f53c4ef`.
+
+| Finding | Status | Where |
+| --- | --- | --- |
+| PG-1 archive-first for five-step and Level 2 | FIXED | `standalone_review.archive_first_five_step_review`, `archive_first_level2_review` |
+| PG-2 abstention reasons | FIXED | `CouplingResult.reason`, `BalanceWindow.reason` |
+| PG-3 conflicting re-archive retained | FIXED | `ResearchHoldRegistry.archive` + `conflicts()` |
+| PG-4 lossless partitions | FIXED | `archive_partitioned` / `read_partitioned` |
+| PG-5 per-channel invalidation | ADDED side-by-side `segment_links`; strict result unchanged | `level2_coupling.py` |
+| M-1 conditioning | FIXED (spectrum, VIF, covariance, SE of B; nothing thresholded) | `coupling.Fit`, `_ratio` |
+| M-2 slow-donor tautology | FIXED (reparameterization null) | `geometry_probe.py` |
+| M-3 log-vs-raw B | FIXED (`balance_transform`, abstain on B<=0) | `level2_coupling.py` |
+| M-4 single lag | FIXED (lag profile + donor autocorrelation) | `coupling.py`, `geometry_validation.py` |
+| M-5 undocumented gap | FIXED (`chronological_partition` + test) | `coupling.py` |
+| M-6 four-science only | FIXED (N sources, four-science default) | `cross_domain_motif` |
+| T-1 generator-contains-term | ADDED misspecified and common-driver controls | tests |
+| T-2 periodic fixture | DOCUMENTED | register addendum |
+| N-1 post's mechanism | BUILT as research experiment with manufactured-solution test | `packing_boundary.py` |
+| R-1 upstream provenance | DOCUMENTED | `docs/SCIENCE_CONTEXT_REGISTER_ADDENDUM_20261108.md` |
+| R-2 Fisher wording | TESTED (closed form + sparse-tail artifact) | tests |
+| F-1 partial Frankie tree | OPEN (needs the fuller tree) | |
+| E-1..E-9, E-11..E-16 | FIXED | engineering modules; E-10 kept as documented limit |
+| BM-1..BM-11, BM-S1, BM-S2 | FIXED (BM-4 did not reproduce; characterization test added; BM-3 adds `crossWired`, `connected` semantics kept) | `src/`, `.buildmap/` |
+| Tests-remaining: leakage gate, estimator bridge | DONE | `../markets_bridge/` |
+| Tests-remaining: Frankie adapter, Markets data run | OPEN (independent piece first; Frankie later; launch HOLD) | |
+| Bolster: circular-shift null per directed pair | ADDED | `coupling.circular_shift_null` |
+| Bolster: derive hook so a Markets estimator rides the archive-first path | ADDED | `standalone_review.py`, `research_holds.py` |
+
 ## 12. Things this review did NOT do
 
 - Did not run the BuildMap scanner against the real Markets tree in any write mode.
