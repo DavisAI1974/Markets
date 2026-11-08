@@ -27,6 +27,19 @@ a defined scope. Record the comparison, controls, limits and reason, and
 keep the original history. Keep the agreed paper-ticket requirements in
 effect. See the [paper discovery register](october-discovery-log.md#paper-discovery-register).
 
+Keep the [October discovery log](october-discovery-log.md) as the shared
+findings record and four-date table index. Codex and Claude should start
+from the same pinned evidence and form independent interpretations.
+
+For each dipole or other lifecycle finding, pair the broad behavior and
+its frequency with a concrete case and source coordinates. State what
+the detector or book was tracking, how the case unfolded, which orders
+or conditions explain the observed result, and where the explanation
+remains open. Include opposing and flat cases and how the pattern might
+vary by setup. Start with mechanisms and narrow to exact thresholds or
+order signatures when the evidence separates them from alternatives.
+See the [dipole overview and example](october-discovery-log.md#what-the-dipole-tracked-at-a-high-level).
+
 ## What the earlier sessions established
 
 The relevant Work chats, including **Assembly fitting update** and **Planning Options Review**, record the audit of the approximately 1.59 million planned Search selections. Sampled groups included order IDs and arbitrary saved list positions. That number was a count of overlapping selections in an old work plan. Later discussions distinguished it from both pair-slot estimates and actual calculations. The family research used a separate SQLite-to-Julia route. The user left old Search unchanged.
