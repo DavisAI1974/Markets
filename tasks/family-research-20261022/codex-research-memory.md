@@ -5,6 +5,12 @@ current user instructions and the independent Codex findings document.
 
 ## Standing user decisions
 
+- Everything gets a chance in paper trades over more days. Do not screen out
+  candidates or combinations because their current signal is weak, negative,
+  inconclusive, or worse than baseline. This includes all 11 stack arms and the
+  full stack. Current findings describe the sample; they are not elimination
+  decisions. Carry every hypothesis and its contrary evidence into the paper
+  handoff, preserving causal clocks and recording missing inputs separately.
 - Continue the substantial NG research, including dipole dive, trade prebirth
   signals, flow/book mechanisms, and principles that recur beyond a single case.
 - NG applicability of the inherited dipole/timing work is settled by the user.

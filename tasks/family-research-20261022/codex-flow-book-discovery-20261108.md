@@ -952,3 +952,19 @@ Apply the same stack comparison after CCODE's source changes and final saved
 exports arrive, with explicit source revision and coverage changes. Do not rerun
 or repair producers in this research pass, or replace earlier partial evidence
 without preserving its provenance.
+
+## Standing paper-test correction — November 8
+
+The user clarified that **everything gets a chance in paper trades across more
+days**. Weak, negative, inconclusive, or currently worse-than-baseline findings
+do not eliminate a hypothesis or indicator combination. All 11 stack arms,
+including the full stack, remain in the paper-research handoff alongside the
+earlier flow/book, dipole, prebirth and order-path candidates.
+
+The error comparisons and conditional counts above describe this discovery
+sample. They are not paper-admission thresholds, final rankings or rejection
+decisions. Earlier wording such as "no rule admitted" means no rule has yet been
+established by that analysis; it must not be read as denying that candidate a
+paper trial. Keep the original measurements and contrary cases, give each
+candidate the planned opportunity over further days, and record its outcomes.
+Missing source/input coverage is recorded separately from signal performance.
