@@ -1,0 +1,53 @@
+{
+  "trade_date": "2023-10-02",
+  "instrument": "NGX3",
+  "instrument_id": 150611,
+  "source_tape": {
+    "day": "2023-10-02",
+    "symbol": "NG.v.0",
+    "stype_in": "continuous",
+    "schema": "mbo",
+    "dataset": "GLBX.MDP3",
+    "file": "NG_v0_mbo_20231002.dbn.zst",
+    "bytes": 15818310,
+    "sha256": "4fd5fb8827e2ee560a9d938c54460f4a45d2569425157f910db06d4f55b7fe0d",
+    "records": 813342,
+    "expected_records": 813342,
+    "cost_usd": 0.0764,
+    "ts_event_first": "2023-10-01 12:00:04.281532+00:00",
+    "ts_event_last": "2023-10-02 23:59:59.817062+00:00",
+    "mappings": [
+      "NG.v.0"
+    ],
+    "zstd_magic": "28b52ffd"
+  },
+  "source_tape_pin": "1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202",
+  "catalog_sha256": "74bc6de27a97f7f074957d36d64481d8bbe3e6ef6c0b9873cc42a1c015f6117a",
+  "archive_source_id": "manifest:1d4a6eebd6f7982b6978bfda412c041e23e8dce989971ea792ffd24733ab9104",
+  "available_span_ns": [
+    1696204800000000000,
+    1696280400000000000
+  ],
+  "comparison_fields": [
+    "receive_ns",
+    "event_ns",
+    "instrument_id",
+    "price_raw_1e9",
+    "size_contracts",
+    "aggressor_side"
+  ],
+  "archive_records": 37670,
+  "source_tape_records": 37670,
+  "matched_records": 37670,
+  "only_archive": 0,
+  "only_tape": 0,
+  "archive_rows_sha256": "de84ed9f895f90b32b08842d13ef3ab1a57ffd9459f7a486fac8147326f7e4a5",
+  "source_tape_rows_sha256": "de84ed9f895f90b32b08842d13ef3ab1a57ffd9459f7a486fac8147326f7e4a5",
+  "archive_scope": [
+    {
+      "instrument_id": 150611,
+      "raw_symbol": "NGX3"
+    }
+  ],
+  "status": "NGX3_TRADE_COMPONENT_ONLY"
+}

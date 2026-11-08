@@ -1,0 +1,264 @@
+{
+  "trade_date": "2023-10-02",
+  "available_market_start_ns": 1696204800000000000,
+  "halt_exclusive_ns": 1696280400000000000,
+  "coverage_gate": "NOT_PASSED",
+  "archive_sha256": "2e6808cf2e1ca07e89ae3260d237d81327418dd28a1710c81ba7f0b733b656b0",
+  "catalog_sha256": "74bc6de27a97f7f074957d36d64481d8bbe3e6ef6c0b9873cc42a1c015f6117a",
+  "candidate_file": "october02-normalized-evidence.jsonl.gz",
+  "candidate_file_sha256": "0e3227cb1df9d4d10ca26a246784f2c0acd95ff168e84344b511009e4de11c43",
+  "candidate_count": 146800,
+  "candidate_counts_by_table": {
+    "cot.023391": 600,
+    "cot.023392": 600,
+    "cot.0233AG": 592,
+    "cot.0233AH": 600,
+    "cot.023651": 600,
+    "curve.settled_shape": 11,
+    "curve.statistics": 8982,
+    "curve.traded_shape": 13725,
+    "curve.trades": 87330,
+    "eia930.hourly": 15498,
+    "eia930.us48": 189,
+    "mos.disagreement_by_cycle": 6,
+    "mos.gw_by_cycle": 79,
+    "mos.raw": 7152,
+    "storage.estimate": 9,
+    "storage.estimate_captures": 59,
+    "storage.weekly": 834,
+    "weather.gw_daily": 4,
+    "weather.obs_hourly": 9930
+  },
+  "source_occurrence_counts": {
+    "manifest:1d4a6eebd6f7982b6978bfda412c041e23e8dce989971ea792ffd24733ab9104": 144804,
+    "manifest:1ee038440136246133a5e0a4427b4fe9e34e8c8192008557173238660b80ffb2": 1611,
+    "manifest:2073697e3a3b9be12330a3d83b5c0c3e114ec2be6a5a0ec0db5ba96f72129409": 1915,
+    "manifest:30f044e1c65cf3d32fbd950d10e78e9b084bcb1fd213e3ee52cff404df35821a": 1616,
+    "manifest:3b169f86b0b433528381e407012aac496c407e7d0cbf3f5adb7c3b87bbeccaf0": 1915,
+    "manifest:45f14d5d8d1efa0e7480fed38318536383d3e0e922db0ac839a47df599e9de31": 1296,
+    "manifest:4b10ea92eb368e723768272f539304761c2cb5310b36b0855cd0a7b76c049639": 1605,
+    "manifest:75451caf9b525422f3f6f9dc6151cc0d68babcff8f620b8f4b1cb7659e818219": 1310,
+    "manifest:944376d372fb92f036287b40182c7d036425ecf9958afa0685a57c67e4dff369": 1915,
+    "manifest:9ce963a69b6883a44ffce9d8b2a6d58ae16ddee61b3c54e733480a24d4e3d57f": 1296,
+    "manifest:b5308e408ff0fdd8b558c6365b1553df55f2151f5d0672bf032cc704fc039870": 1616,
+    "manifest:d9d9a7bdfe8395f3b0da0a3b848b454088147941a37f98c3bdfa63791776fcf0": 1301,
+    "manifest:da894f0a26f2f6c29bf57fb210a16d0c8342c38cb0e56e79e9f2ffe7d5df173c": 3658,
+    "manifest:ea1743657277553846ca4ff5de3bbd17b7d353017b23420558fd99072b2066f9": 30225,
+    "manifest:f8d440319382a180a7c758c722eb09591a96ecb42c4f3a44cfdd6cd1c5bd7c0b": 1303,
+    "manifest:f8e729ac62c6b3838674e54299b2ca7d51d2ae4c3f16c7f8e79600234ea84b5a": 1611,
+    "manifest:fdc272b04238002251a48fe70c9f9483fb5b396b7dca5a24352dd17e4378a776": 1605,
+    "pinned-current-db": 1924,
+    "s3-sha256:8c9bf49fda3adf984c191ed06c13ee7c04117777a9535b485c9cbe15400e2c71": 1924
+  },
+  "cftc_independent_response_sha256": "f69db3a12ee75bcc40a44e24dfffcf359fcd9fa0e6eebf78d25700ee28ebf7db",
+  "cftc_original_prior_print": "https://www.cftc.gov/sites/default/files/files/dea/cotarchives/2023/futures/nat_gas_lf091923.htm",
+  "cftc_independent_values": {
+    "cot.023651": {
+      "managed_money_long": 182449,
+      "managed_money_short": 238657,
+      "open_interest": 1142377,
+      "managed_money_net": -56208,
+      "managed_money_net_chg_wow": -23471,
+      "managed_money_net_pctile_1y": 42.45,
+      "pctile_1y_n_obs": 53,
+      "managed_money_net_pctile_3y": 18.15,
+      "pctile_3y_n_obs": 157
+    },
+    "cot.023391": {
+      "managed_money_long": 240094,
+      "managed_money_short": 127537,
+      "open_interest": 6591753,
+      "managed_money_net": 112557,
+      "managed_money_net_chg_wow": -62560,
+      "managed_money_net_pctile_1y": 59.43,
+      "pctile_1y_n_obs": 53,
+      "managed_money_net_pctile_3y": 23.25,
+      "pctile_3y_n_obs": 157
+    }
+  },
+  "cftc_retained_variants_matched": {
+    "cot.023391": 2,
+    "cot.023651": 2
+  },
+  "curve_ng_x3_check": "october02-ngx3-curve-trades-crosscheck.json",
+  "mos_reconstruction": "october02-mos-reconstruction.json",
+  "cftc_percentile_vintage_limit": "Independent calculation from official historical report rows. The as-first-published vintage of every constituent report has not been separately checked.",
+  "points": [
+    {
+      "id": 1,
+      "original_tables": [
+        "cot.023651"
+      ],
+      "status": "RECOVERED_CFTC",
+      "available_reconstruction": {
+        "value": 42.45,
+        "units": "percentile_0_to_100",
+        "report_date": "2023-09-26",
+        "source": "https://www.cftc.gov/sites/default/files/files/dea/cotarchives/2023/futures/nat_gas_lf092623.htm",
+        "available_ns": 1696015800000000000
+      }
+    },
+    {
+      "id": 2,
+      "original_tables": [
+        "mos.gw_by_cycle",
+        "mos.raw"
+      ],
+      "status": "RECONSTRUCTED_HELD_MODELED_DISSEMINATION_CLOCK",
+      "available_reconstruction": null
+    },
+    {
+      "id": 3,
+      "original_tables": [
+        "cot.023651"
+      ],
+      "status": "RECOVERED_CFTC",
+      "available_reconstruction": {
+        "value": -23471,
+        "units": "contracts",
+        "report_date": "2023-09-26",
+        "source": "https://www.cftc.gov/sites/default/files/files/dea/cotarchives/2023/futures/nat_gas_lf092623.htm",
+        "available_ns": 1696015800000000000
+      }
+    },
+    {
+      "id": 4,
+      "original_tables": [
+        "cot.023651"
+      ],
+      "status": "RECOVERED_CFTC",
+      "available_reconstruction": {
+        "value": 18.15,
+        "units": "percentile_0_to_100",
+        "report_date": "2023-09-26",
+        "source": "https://www.cftc.gov/sites/default/files/files/dea/cotarchives/2023/futures/nat_gas_lf092623.htm",
+        "available_ns": 1696015800000000000
+      }
+    },
+    {
+      "id": 5,
+      "original_tables": [
+        "eia930.hourly",
+        "eia930.us48"
+      ],
+      "status": "HELD_FIRST_PUBLICATION_VINTAGE",
+      "available_reconstruction": null
+    },
+    {
+      "id": 6,
+      "original_tables": [
+        "calendar.sessions_since_prompt_expiry"
+      ],
+      "status": "RECOVERED_CONTROL",
+      "available_reconstruction": {
+        "value": 3,
+        "units": "CME_business_sessions",
+        "last_prompt": "NGV23",
+        "expiry": "2023-09-27",
+        "available_ns": 1696269600000000000,
+        "role": "calendar_control",
+        "source": "https://www.cmegroup.com/rulebook/NYMEX/2/220.pdf",
+        "definition_commit": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+        "calendar_definition_blob": "06fa0ad2c73695da5311102ecc057a91afb8db66",
+        "builder_definition_blob": "11e3d1436fb46bcd5a97cb433b73f8409a4c233d"
+      }
+    },
+    {
+      "id": 7,
+      "original_tables": [
+        "eia930.hourly",
+        "eia930.us48"
+      ],
+      "status": "HELD_FIRST_PUBLICATION_VINTAGE",
+      "available_reconstruction": null
+    },
+    {
+      "id": 8,
+      "original_tables": [
+        "cot.023391",
+        "cot.023392",
+        "cot.0233AG",
+        "cot.0233AH"
+      ],
+      "status": "RECOVERED_ICE_LD1",
+      "available_reconstruction": {
+        "value": 59.43,
+        "units": "percentile_0_to_100",
+        "report_date": "2023-09-26",
+        "source": "https://www.cftc.gov/sites/default/files/files/dea/cotarchives/2023/futures/nat_gas_lf092623.htm",
+        "available_ns": 1696015800000000000
+      }
+    },
+    {
+      "id": 9,
+      "original_tables": [
+        "mos.disagreement_by_cycle",
+        "mos.raw"
+      ],
+      "status": "RECONSTRUCTED_HELD_MODELED_DISSEMINATION_CLOCK",
+      "available_reconstruction": null
+    },
+    {
+      "id": 10,
+      "original_tables": [
+        "weather.gw_daily",
+        "weather.obs_hourly"
+      ],
+      "status": "HELD_ARCHIVE_PUBLICATION_CLOCK",
+      "available_reconstruction": null
+    },
+    {
+      "id": 11,
+      "original_tables": [
+        "storage.weekly"
+      ],
+      "status": "RECOVERED_EIA_AS_REPORTED",
+      "available_reconstruction": {
+        "week_ending": "2023-09-22",
+        "level_bcf": 3359,
+        "weekly_chg_bcf": 90,
+        "vs_5yr_bcf": 189,
+        "five_yr_avg_bcf": 3170,
+        "year_ago_bcf": 2962,
+        "source": "https://www.eia.gov/naturalgas/weekly/archivenew_ngwu/2023/09_28/",
+        "available_ns": 1695960000000000000,
+        "availability_basis": "Conservative end of the EIA update's dated release day in New York"
+      }
+    },
+    {
+      "id": 12,
+      "original_tables": [
+        "storage.estimate",
+        "storage.estimate_captures"
+      ],
+      "status": "RECOVERED_EIA_THE_DESK_VARIANT",
+      "available_reconstruction": {
+        "week_ending": "2023-09-22",
+        "print_date": "2023-09-28",
+        "estimate_bcf": 90,
+        "actual_bcf": 90,
+        "surprise_bcf": 0,
+        "estimate_range_bcf": [
+          84,
+          102
+        ],
+        "estimate_vintage": "The Desk median reported by EIA",
+        "source": "https://www.eia.gov/naturalgas/weekly/archivenew_ngwu/2023/09_28/",
+        "available_ns": 1695960000000000000,
+        "availability_basis": "Conservative end of the EIA update's dated release day in New York"
+      }
+    },
+    {
+      "id": 13,
+      "original_tables": [
+        "curve.definitions",
+        "curve.statistics",
+        "curve.trades",
+        "curve.settled_shape",
+        "curve.traded_shape"
+      ],
+      "status": "PARTIAL_NGX3_TRADES_VERIFIED_FULL_CURVE_HELD",
+      "available_reconstruction": null
+    }
+  ]
+}
