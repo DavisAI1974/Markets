@@ -1,0 +1,2821 @@
+{
+  "trade_date": "20231018",
+  "midnight_snapshot": {
+    "first_cursor": 17375,
+    "last_cursor": 18092,
+    "identical_orders": 717
+  },
+  "scope": "full trade date",
+  "checks": {
+    "source_records": 771787,
+    "completed_groups": 583688,
+    "wire_fill_qty_A": 29800,
+    "fill_qty_sided_by_resting_book_A": 2624,
+    "unresolved_fill_qty_A": 907,
+    "wire_fill_qty_B": 28313,
+    "fill_qty_sided_by_resting_book_B": 1936,
+    "unresolved_fill_qty_B": 1086,
+    "wire_fill_qty_N": 4560,
+    "fill_qty_sided_by_resting_book_N": 0,
+    "unresolved_fill_qty_N": 0,
+    "halt_groups": 92,
+    "active_groups": 583595,
+    "snapshot_groups": 1,
+    "flagged_archive_windows_compared": 1493,
+    "flagged_windows_with_independently_verified_numerator": 1441
+  },
+  "window_counts_by_side": {
+    "64": {
+      "A": {
+        "windows": 583532,
+        "ratio_defined": 580239,
+        "above_one": 848,
+        "fills_with_zero_reduction": 1
+      },
+      "B": {
+        "windows": 583532,
+        "ratio_defined": 582742,
+        "above_one": 792,
+        "fills_with_zero_reduction": 0
+      }
+    },
+    "1024": {
+      "A": {
+        "windows": 582572,
+        "ratio_defined": 582572,
+        "above_one": 0,
+        "fills_with_zero_reduction": 0
+      },
+      "B": {
+        "windows": 582572,
+        "ratio_defined": 582572,
+        "above_one": 0,
+        "fills_with_zero_reduction": 0
+      }
+    },
+    "span_to_date": {
+      "A": {
+        "windows": 583595,
+        "ratio_defined": 583581,
+        "above_one": 0,
+        "fills_with_zero_reduction": 0
+      },
+      "B": {
+        "windows": 583595,
+        "ratio_defined": 583578,
+        "above_one": 0,
+        "fills_with_zero_reduction": 0
+      }
+    }
+  },
+  "window_row_sha256": {
+    "64": "9069edc3f5b18135a936e7e9e86308c5c7767f83327189a800be4aacd5255dc6",
+    "1024": "89f441d1ce5784399da4831507b8c207f4afbdb92c14c02a42b2cf0da4da9ef6",
+    "span_to_date": "1de2f36f486ea45bb1538ad24e771296818e38af97b2621af2b7092b92e7d97d"
+  },
+  "archive_discrepancies": [],
+  "archive_windows_with_revised_fill_links": [
+    {
+      "cursor": 278488,
+      "receive_ns": 1697634213140788514,
+      "side": "A",
+      "original_linked_fill_qty": 77,
+      "verified_linked_fill_qty": 76,
+      "displayed_reduction_qty": 34,
+      "original_ratio": 2.264705882352941,
+      "verified_ratio": 2.235294117647059
+    },
+    {
+      "cursor": 278490,
+      "receive_ns": 1697634213140891080,
+      "side": "A",
+      "original_linked_fill_qty": 77,
+      "verified_linked_fill_qty": 76,
+      "displayed_reduction_qty": 34,
+      "original_ratio": 2.264705882352941,
+      "verified_ratio": 2.235294117647059
+    },
+    {
+      "cursor": 278491,
+      "receive_ns": 1697634213141055273,
+      "side": "A",
+      "original_linked_fill_qty": 77,
+      "verified_linked_fill_qty": 76,
+      "displayed_reduction_qty": 34,
+      "original_ratio": 2.264705882352941,
+      "verified_ratio": 2.235294117647059
+    },
+    {
+      "cursor": 278492,
+      "receive_ns": 1697634213141191880,
+      "side": "A",
+      "original_linked_fill_qty": 77,
+      "verified_linked_fill_qty": 76,
+      "displayed_reduction_qty": 34,
+      "original_ratio": 2.264705882352941,
+      "verified_ratio": 2.235294117647059
+    },
+    {
+      "cursor": 278493,
+      "receive_ns": 1697634213141575710,
+      "side": "A",
+      "original_linked_fill_qty": 77,
+      "verified_linked_fill_qty": 76,
+      "displayed_reduction_qty": 34,
+      "original_ratio": 2.264705882352941,
+      "verified_ratio": 2.235294117647059
+    },
+    {
+      "cursor": 278494,
+      "receive_ns": 1697634213142150601,
+      "side": "A",
+      "original_linked_fill_qty": 77,
+      "verified_linked_fill_qty": 76,
+      "displayed_reduction_qty": 34,
+      "original_ratio": 2.264705882352941,
+      "verified_ratio": 2.235294117647059
+    },
+    {
+      "cursor": 278495,
+      "receive_ns": 1697634213142270733,
+      "side": "A",
+      "original_linked_fill_qty": 77,
+      "verified_linked_fill_qty": 76,
+      "displayed_reduction_qty": 34,
+      "original_ratio": 2.264705882352941,
+      "verified_ratio": 2.235294117647059
+    },
+    {
+      "cursor": 278496,
+      "receive_ns": 1697634213142387272,
+      "side": "A",
+      "original_linked_fill_qty": 77,
+      "verified_linked_fill_qty": 76,
+      "displayed_reduction_qty": 34,
+      "original_ratio": 2.264705882352941,
+      "verified_ratio": 2.235294117647059
+    },
+    {
+      "cursor": 278497,
+      "receive_ns": 1697634213142502914,
+      "side": "A",
+      "original_linked_fill_qty": 77,
+      "verified_linked_fill_qty": 76,
+      "displayed_reduction_qty": 34,
+      "original_ratio": 2.264705882352941,
+      "verified_ratio": 2.235294117647059
+    },
+    {
+      "cursor": 278498,
+      "receive_ns": 1697634213142615550,
+      "side": "A",
+      "original_linked_fill_qty": 77,
+      "verified_linked_fill_qty": 76,
+      "displayed_reduction_qty": 34,
+      "original_ratio": 2.264705882352941,
+      "verified_ratio": 2.235294117647059
+    },
+    {
+      "cursor": 278499,
+      "receive_ns": 1697634213142728529,
+      "side": "A",
+      "original_linked_fill_qty": 77,
+      "verified_linked_fill_qty": 76,
+      "displayed_reduction_qty": 33,
+      "original_ratio": 2.3333333333333335,
+      "verified_ratio": 2.303030303030303
+    },
+    {
+      "cursor": 278500,
+      "receive_ns": 1697634213144580345,
+      "side": "A",
+      "original_linked_fill_qty": 75,
+      "verified_linked_fill_qty": 74,
+      "displayed_reduction_qty": 36,
+      "original_ratio": 2.0833333333333335,
+      "verified_ratio": 2.0555555555555554
+    },
+    {
+      "cursor": 278501,
+      "receive_ns": 1697634213146848251,
+      "side": "A",
+      "original_linked_fill_qty": 75,
+      "verified_linked_fill_qty": 74,
+      "displayed_reduction_qty": 36,
+      "original_ratio": 2.0833333333333335,
+      "verified_ratio": 2.0555555555555554
+    },
+    {
+      "cursor": 278502,
+      "receive_ns": 1697634213146995656,
+      "side": "A",
+      "original_linked_fill_qty": 75,
+      "verified_linked_fill_qty": 74,
+      "displayed_reduction_qty": 36,
+      "original_ratio": 2.0833333333333335,
+      "verified_ratio": 2.0555555555555554
+    },
+    {
+      "cursor": 278503,
+      "receive_ns": 1697634213147376993,
+      "side": "A",
+      "original_linked_fill_qty": 75,
+      "verified_linked_fill_qty": 74,
+      "displayed_reduction_qty": 36,
+      "original_ratio": 2.0833333333333335,
+      "verified_ratio": 2.0555555555555554
+    },
+    {
+      "cursor": 278504,
+      "receive_ns": 1697634213147649476,
+      "side": "A",
+      "original_linked_fill_qty": 75,
+      "verified_linked_fill_qty": 74,
+      "displayed_reduction_qty": 36,
+      "original_ratio": 2.0833333333333335,
+      "verified_ratio": 2.0555555555555554
+    },
+    {
+      "cursor": 278505,
+      "receive_ns": 1697634213147804684,
+      "side": "A",
+      "original_linked_fill_qty": 75,
+      "verified_linked_fill_qty": 74,
+      "displayed_reduction_qty": 36,
+      "original_ratio": 2.0833333333333335,
+      "verified_ratio": 2.0555555555555554
+    },
+    {
+      "cursor": 278506,
+      "receive_ns": 1697634213148398155,
+      "side": "A",
+      "original_linked_fill_qty": 75,
+      "verified_linked_fill_qty": 74,
+      "displayed_reduction_qty": 36,
+      "original_ratio": 2.0833333333333335,
+      "verified_ratio": 2.0555555555555554
+    },
+    {
+      "cursor": 278507,
+      "receive_ns": 1697634213148560142,
+      "side": "A",
+      "original_linked_fill_qty": 75,
+      "verified_linked_fill_qty": 74,
+      "displayed_reduction_qty": 36,
+      "original_ratio": 2.0833333333333335,
+      "verified_ratio": 2.0555555555555554
+    },
+    {
+      "cursor": 278508,
+      "receive_ns": 1697634213148706457,
+      "side": "A",
+      "original_linked_fill_qty": 75,
+      "verified_linked_fill_qty": 74,
+      "displayed_reduction_qty": 36,
+      "original_ratio": 2.0833333333333335,
+      "verified_ratio": 2.0555555555555554
+    },
+    {
+      "cursor": 278509,
+      "receive_ns": 1697634213149539527,
+      "side": "A",
+      "original_linked_fill_qty": 75,
+      "verified_linked_fill_qty": 74,
+      "displayed_reduction_qty": 36,
+      "original_ratio": 2.0833333333333335,
+      "verified_ratio": 2.0555555555555554
+    },
+    {
+      "cursor": 278510,
+      "receive_ns": 1697634213150227802,
+      "side": "A",
+      "original_linked_fill_qty": 75,
+      "verified_linked_fill_qty": 74,
+      "displayed_reduction_qty": 36,
+      "original_ratio": 2.0833333333333335,
+      "verified_ratio": 2.0555555555555554
+    },
+    {
+      "cursor": 278511,
+      "receive_ns": 1697634213150535157,
+      "side": "A",
+      "original_linked_fill_qty": 75,
+      "verified_linked_fill_qty": 74,
+      "displayed_reduction_qty": 36,
+      "original_ratio": 2.0833333333333335,
+      "verified_ratio": 2.0555555555555554
+    },
+    {
+      "cursor": 278512,
+      "receive_ns": 1697634213150656093,
+      "side": "A",
+      "original_linked_fill_qty": 75,
+      "verified_linked_fill_qty": 74,
+      "displayed_reduction_qty": 35,
+      "original_ratio": 2.142857142857143,
+      "verified_ratio": 2.1142857142857143
+    },
+    {
+      "cursor": 278513,
+      "receive_ns": 1697634213150816016,
+      "side": "A",
+      "original_linked_fill_qty": 75,
+      "verified_linked_fill_qty": 74,
+      "displayed_reduction_qty": 35,
+      "original_ratio": 2.142857142857143,
+      "verified_ratio": 2.1142857142857143
+    },
+    {
+      "cursor": 278514,
+      "receive_ns": 1697634213151032775,
+      "side": "A",
+      "original_linked_fill_qty": 75,
+      "verified_linked_fill_qty": 74,
+      "displayed_reduction_qty": 36,
+      "original_ratio": 2.0833333333333335,
+      "verified_ratio": 2.0555555555555554
+    },
+    {
+      "cursor": 278515,
+      "receive_ns": 1697634213152493533,
+      "side": "A",
+      "original_linked_fill_qty": 75,
+      "verified_linked_fill_qty": 74,
+      "displayed_reduction_qty": 37,
+      "original_ratio": 2.027027027027027,
+      "verified_ratio": 2.0
+    },
+    {
+      "cursor": 278516,
+      "receive_ns": 1697634213154874791,
+      "side": "A",
+      "original_linked_fill_qty": 75,
+      "verified_linked_fill_qty": 74,
+      "displayed_reduction_qty": 37,
+      "original_ratio": 2.027027027027027,
+      "verified_ratio": 2.0
+    },
+    {
+      "cursor": 278517,
+      "receive_ns": 1697634213155199686,
+      "side": "A",
+      "original_linked_fill_qty": 75,
+      "verified_linked_fill_qty": 74,
+      "displayed_reduction_qty": 37,
+      "original_ratio": 2.027027027027027,
+      "verified_ratio": 2.0
+    },
+    {
+      "cursor": 278518,
+      "receive_ns": 1697634213156498953,
+      "side": "A",
+      "original_linked_fill_qty": 75,
+      "verified_linked_fill_qty": 74,
+      "displayed_reduction_qty": 37,
+      "original_ratio": 2.027027027027027,
+      "verified_ratio": 2.0
+    },
+    {
+      "cursor": 278529,
+      "receive_ns": 1697634213158183059,
+      "side": "A",
+      "original_linked_fill_qty": 80,
+      "verified_linked_fill_qty": 79,
+      "displayed_reduction_qty": 42,
+      "original_ratio": 1.9047619047619047,
+      "verified_ratio": 1.880952380952381
+    },
+    {
+      "cursor": 278530,
+      "receive_ns": 1697634213158580236,
+      "side": "A",
+      "original_linked_fill_qty": 80,
+      "verified_linked_fill_qty": 79,
+      "displayed_reduction_qty": 42,
+      "original_ratio": 1.9047619047619047,
+      "verified_ratio": 1.880952380952381
+    },
+    {
+      "cursor": 278531,
+      "receive_ns": 1697634213159662023,
+      "side": "A",
+      "original_linked_fill_qty": 80,
+      "verified_linked_fill_qty": 79,
+      "displayed_reduction_qty": 42,
+      "original_ratio": 1.9047619047619047,
+      "verified_ratio": 1.880952380952381
+    },
+    {
+      "cursor": 278532,
+      "receive_ns": 1697634213159668884,
+      "side": "A",
+      "original_linked_fill_qty": 80,
+      "verified_linked_fill_qty": 79,
+      "displayed_reduction_qty": 42,
+      "original_ratio": 1.9047619047619047,
+      "verified_ratio": 1.880952380952381
+    },
+    {
+      "cursor": 278533,
+      "receive_ns": 1697634213159676000,
+      "side": "A",
+      "original_linked_fill_qty": 80,
+      "verified_linked_fill_qty": 79,
+      "displayed_reduction_qty": 42,
+      "original_ratio": 1.9047619047619047,
+      "verified_ratio": 1.880952380952381
+    },
+    {
+      "cursor": 278535,
+      "receive_ns": 1697634213159860939,
+      "side": "A",
+      "original_linked_fill_qty": 80,
+      "verified_linked_fill_qty": 79,
+      "displayed_reduction_qty": 41,
+      "original_ratio": 1.951219512195122,
+      "verified_ratio": 1.9268292682926829
+    },
+    {
+      "cursor": 278537,
+      "receive_ns": 1697634213160229951,
+      "side": "A",
+      "original_linked_fill_qty": 80,
+      "verified_linked_fill_qty": 79,
+      "displayed_reduction_qty": 41,
+      "original_ratio": 1.951219512195122,
+      "verified_ratio": 1.9268292682926829
+    },
+    {
+      "cursor": 278538,
+      "receive_ns": 1697634213160237462,
+      "side": "A",
+      "original_linked_fill_qty": 80,
+      "verified_linked_fill_qty": 79,
+      "displayed_reduction_qty": 41,
+      "original_ratio": 1.951219512195122,
+      "verified_ratio": 1.9268292682926829
+    },
+    {
+      "cursor": 278539,
+      "receive_ns": 1697634213160421822,
+      "side": "A",
+      "original_linked_fill_qty": 80,
+      "verified_linked_fill_qty": 79,
+      "displayed_reduction_qty": 41,
+      "original_ratio": 1.951219512195122,
+      "verified_ratio": 1.9268292682926829
+    },
+    {
+      "cursor": 278540,
+      "receive_ns": 1697634213160903221,
+      "side": "A",
+      "original_linked_fill_qty": 80,
+      "verified_linked_fill_qty": 79,
+      "displayed_reduction_qty": 41,
+      "original_ratio": 1.951219512195122,
+      "verified_ratio": 1.9268292682926829
+    },
+    {
+      "cursor": 278541,
+      "receive_ns": 1697634213161236620,
+      "side": "A",
+      "original_linked_fill_qty": 80,
+      "verified_linked_fill_qty": 79,
+      "displayed_reduction_qty": 41,
+      "original_ratio": 1.951219512195122,
+      "verified_ratio": 1.9268292682926829
+    },
+    {
+      "cursor": 278547,
+      "receive_ns": 1697634213161641323,
+      "side": "A",
+      "original_linked_fill_qty": 88,
+      "verified_linked_fill_qty": 87,
+      "displayed_reduction_qty": 49,
+      "original_ratio": 1.7959183673469388,
+      "verified_ratio": 1.7755102040816326
+    },
+    {
+      "cursor": 278549,
+      "receive_ns": 1697634213161741943,
+      "side": "A",
+      "original_linked_fill_qty": 88,
+      "verified_linked_fill_qty": 87,
+      "displayed_reduction_qty": 49,
+      "original_ratio": 1.7959183673469388,
+      "verified_ratio": 1.7755102040816326
+    },
+    {
+      "cursor": 278550,
+      "receive_ns": 1697634213162086703,
+      "side": "A",
+      "original_linked_fill_qty": 87,
+      "verified_linked_fill_qty": 86,
+      "displayed_reduction_qty": 48,
+      "original_ratio": 1.8125,
+      "verified_ratio": 1.7916666666666667
+    },
+    {
+      "cursor": 278551,
+      "receive_ns": 1697634213162093072,
+      "side": "A",
+      "original_linked_fill_qty": 87,
+      "verified_linked_fill_qty": 86,
+      "displayed_reduction_qty": 48,
+      "original_ratio": 1.8125,
+      "verified_ratio": 1.7916666666666667
+    },
+    {
+      "cursor": 278552,
+      "receive_ns": 1697634213162488995,
+      "side": "A",
+      "original_linked_fill_qty": 87,
+      "verified_linked_fill_qty": 86,
+      "displayed_reduction_qty": 48,
+      "original_ratio": 1.8125,
+      "verified_ratio": 1.7916666666666667
+    },
+    {
+      "cursor": 278553,
+      "receive_ns": 1697634213162778957,
+      "side": "A",
+      "original_linked_fill_qty": 87,
+      "verified_linked_fill_qty": 86,
+      "displayed_reduction_qty": 48,
+      "original_ratio": 1.8125,
+      "verified_ratio": 1.7916666666666667
+    },
+    {
+      "cursor": 278554,
+      "receive_ns": 1697634213162897369,
+      "side": "A",
+      "original_linked_fill_qty": 87,
+      "verified_linked_fill_qty": 86,
+      "displayed_reduction_qty": 48,
+      "original_ratio": 1.8125,
+      "verified_ratio": 1.7916666666666667
+    },
+    {
+      "cursor": 278555,
+      "receive_ns": 1697634213163380231,
+      "side": "A",
+      "original_linked_fill_qty": 87,
+      "verified_linked_fill_qty": 86,
+      "displayed_reduction_qty": 48,
+      "original_ratio": 1.8125,
+      "verified_ratio": 1.7916666666666667
+    },
+    {
+      "cursor": 636079,
+      "receive_ns": 1697650963647418836,
+      "side": "B",
+      "original_linked_fill_qty": 33,
+      "verified_linked_fill_qty": 29,
+      "displayed_reduction_qty": 26,
+      "original_ratio": 1.2692307692307692,
+      "verified_ratio": 1.1153846153846154
+    },
+    {
+      "cursor": 636080,
+      "receive_ns": 1697650963861873385,
+      "side": "B",
+      "original_linked_fill_qty": 33,
+      "verified_linked_fill_qty": 29,
+      "displayed_reduction_qty": 26,
+      "original_ratio": 1.2692307692307692,
+      "verified_ratio": 1.1153846153846154
+    },
+    {
+      "cursor": 636081,
+      "receive_ns": 1697650963861880860,
+      "side": "B",
+      "original_linked_fill_qty": 33,
+      "verified_linked_fill_qty": 29,
+      "displayed_reduction_qty": 19,
+      "original_ratio": 1.736842105263158,
+      "verified_ratio": 1.5263157894736843
+    }
+  ],
+  "largest_archived_ratio_tape_trace": {
+    "cursor": 185120,
+    "side": "B",
+    "fills": 53,
+    "reductions": 5,
+    "ratio": 10.6,
+    "known_buy": 0,
+    "known_sell": 53,
+    "independently_linked_fill": 53,
+    "same_price_unchanged_display_fill": 52,
+    "groups": [
+      [
+        184966,
+        [
+          {
+            "cursor": 184964,
+            "receive_ns": 1697630456227209442,
+            "event_ns": 1697630456226107277,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801623,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 184965,
+            "receive_ns": 1697630456227209442,
+            "event_ns": 1697630456226107277,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 184966,
+            "receive_ns": 1697630456227217276,
+            "event_ns": 1697630456226107277,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        184967,
+        [
+          {
+            "cursor": 184967,
+            "receive_ns": 1697630456227382109,
+            "event_ns": 1697630456226334171,
+            "action": "C",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3110000000,
+            "order_id": 788700801621,
+            "before_size": 1,
+            "after_size": null
+          }
+        ]
+      ],
+      [
+        184970,
+        [
+          {
+            "cursor": 184968,
+            "receive_ns": 1697630456227391867,
+            "event_ns": 1697630456226339081,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801625,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 184969,
+            "receive_ns": 1697630456227391867,
+            "event_ns": 1697630456226339081,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 184970,
+            "receive_ns": 1697630456227399578,
+            "event_ns": 1697630456226339081,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        184971,
+        [
+          {
+            "cursor": 184971,
+            "receive_ns": 1697630456228676957,
+            "event_ns": 1697630456227396577,
+            "action": "A",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3110000000,
+            "order_id": 788700801629,
+            "before_size": null,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        184974,
+        [
+          {
+            "cursor": 184972,
+            "receive_ns": 1697630456228686280,
+            "event_ns": 1697630456227417237,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801630,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 184973,
+            "receive_ns": 1697630456228686280,
+            "event_ns": 1697630456227417237,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 184974,
+            "receive_ns": 1697630456228693653,
+            "event_ns": 1697630456227417237,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        184975,
+        [
+          {
+            "cursor": 184975,
+            "receive_ns": 1697630456228811189,
+            "event_ns": 1697630456227461333,
+            "action": "A",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3108000000,
+            "order_id": 788700801631,
+            "before_size": null,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        184978,
+        [
+          {
+            "cursor": 184976,
+            "receive_ns": 1697630456229539605,
+            "event_ns": 1697630456228723737,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801634,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 184977,
+            "receive_ns": 1697630456229539605,
+            "event_ns": 1697630456228723737,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 184978,
+            "receive_ns": 1697630456229547290,
+            "event_ns": 1697630456228723737,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        184981,
+        [
+          {
+            "cursor": 184979,
+            "receive_ns": 1697630456229557627,
+            "event_ns": 1697630456228757751,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801635,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 184980,
+            "receive_ns": 1697630456229557627,
+            "event_ns": 1697630456228757751,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 184981,
+            "receive_ns": 1697630456229565696,
+            "event_ns": 1697630456228757751,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        184982,
+        [
+          {
+            "cursor": 184982,
+            "receive_ns": 1697630456229683805,
+            "event_ns": 1697630456228841653,
+            "action": "C",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3110000000,
+            "order_id": 788700801629,
+            "before_size": 1,
+            "after_size": null
+          }
+        ]
+      ],
+      [
+        184983,
+        [
+          {
+            "cursor": 184983,
+            "receive_ns": 1697630456230561448,
+            "event_ns": 1697630456229542677,
+            "action": "A",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3110000000,
+            "order_id": 788700801640,
+            "before_size": null,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        184986,
+        [
+          {
+            "cursor": 184984,
+            "receive_ns": 1697630456230571719,
+            "event_ns": 1697630456229552501,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801641,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 184985,
+            "receive_ns": 1697630456230571719,
+            "event_ns": 1697630456229552501,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 184986,
+            "receive_ns": 1697630456230579527,
+            "event_ns": 1697630456229552501,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        184989,
+        [
+          {
+            "cursor": 184987,
+            "receive_ns": 1697630456230996267,
+            "event_ns": 1697630456230584739,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801642,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 184988,
+            "receive_ns": 1697630456230996267,
+            "event_ns": 1697630456230584739,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 184989,
+            "receive_ns": 1697630456230996267,
+            "event_ns": 1697630456230584739,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        184992,
+        [
+          {
+            "cursor": 184990,
+            "receive_ns": 1697630456235301674,
+            "event_ns": 1697630456235085509,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801646,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 184991,
+            "receive_ns": 1697630456235301674,
+            "event_ns": 1697630456235085509,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 184992,
+            "receive_ns": 1697630456235309738,
+            "event_ns": 1697630456235085509,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        184993,
+        [
+          {
+            "cursor": 184993,
+            "receive_ns": 1697630456235640520,
+            "event_ns": 1697630456235444871,
+            "action": "C",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3108000000,
+            "order_id": 788700801631,
+            "before_size": 1,
+            "after_size": null
+          }
+        ]
+      ],
+      [
+        184996,
+        [
+          {
+            "cursor": 184994,
+            "receive_ns": 1697630456235869588,
+            "event_ns": 1697630456235668239,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801648,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 184995,
+            "receive_ns": 1697630456235869588,
+            "event_ns": 1697630456235668239,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 184996,
+            "receive_ns": 1697630456235878086,
+            "event_ns": 1697630456235668239,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        184998,
+        [
+          {
+            "cursor": 184997,
+            "receive_ns": 1697630456235878086,
+            "event_ns": 1697630456235677691,
+            "action": "C",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3110000000,
+            "order_id": 788700801640,
+            "before_size": 1,
+            "after_size": null
+          },
+          {
+            "cursor": 184998,
+            "receive_ns": 1697630456235977134,
+            "event_ns": 1697630456235677691,
+            "action": "N",
+            "side": "N",
+            "size": 0,
+            "price_raw": 9223372036854775807,
+            "order_id": 0,
+            "before_size": null,
+            "after_size": null
+          }
+        ]
+      ],
+      [
+        185000,
+        [
+          {
+            "cursor": 184999,
+            "receive_ns": 1697630456236668252,
+            "event_ns": 1697630456235894877,
+            "action": "A",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3110000000,
+            "order_id": 788700801652,
+            "before_size": null,
+            "after_size": 1
+          },
+          {
+            "cursor": 185000,
+            "receive_ns": 1697630456236770244,
+            "event_ns": 1697630456235894877,
+            "action": "N",
+            "side": "N",
+            "size": 0,
+            "price_raw": 9223372036854775807,
+            "order_id": 0,
+            "before_size": null,
+            "after_size": null
+          }
+        ]
+      ],
+      [
+        185003,
+        [
+          {
+            "cursor": 185001,
+            "receive_ns": 1697630456236919135,
+            "event_ns": 1697630456236681955,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801655,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185002,
+            "receive_ns": 1697630456236919135,
+            "event_ns": 1697630456236681955,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185003,
+            "receive_ns": 1697630456236926456,
+            "event_ns": 1697630456236681955,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185006,
+        [
+          {
+            "cursor": 185004,
+            "receive_ns": 1697630456236963728,
+            "event_ns": 1697630456236699029,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801657,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185005,
+            "receive_ns": 1697630456236963728,
+            "event_ns": 1697630456236699029,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185006,
+            "receive_ns": 1697630456236972053,
+            "event_ns": 1697630456236699029,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185009,
+        [
+          {
+            "cursor": 185007,
+            "receive_ns": 1697630456237116612,
+            "event_ns": 1697630456236923397,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801658,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185008,
+            "receive_ns": 1697630456237116612,
+            "event_ns": 1697630456236923397,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185009,
+            "receive_ns": 1697630456237132867,
+            "event_ns": 1697630456236923397,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185012,
+        [
+          {
+            "cursor": 185010,
+            "receive_ns": 1697630456237592644,
+            "event_ns": 1697630456236949917,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801661,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185011,
+            "receive_ns": 1697630456237592644,
+            "event_ns": 1697630456236949917,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185012,
+            "receive_ns": 1697630456237592644,
+            "event_ns": 1697630456236949917,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185015,
+        [
+          {
+            "cursor": 185013,
+            "receive_ns": 1697630456237602654,
+            "event_ns": 1697630456236950489,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801662,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185014,
+            "receive_ns": 1697630456237602654,
+            "event_ns": 1697630456236950489,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185015,
+            "receive_ns": 1697630456237602654,
+            "event_ns": 1697630456236950489,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185018,
+        [
+          {
+            "cursor": 185016,
+            "receive_ns": 1697630456237611214,
+            "event_ns": 1697630456236976439,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801663,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185017,
+            "receive_ns": 1697630456237611214,
+            "event_ns": 1697630456236976439,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185018,
+            "receive_ns": 1697630456237619426,
+            "event_ns": 1697630456236976439,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185021,
+        [
+          {
+            "cursor": 185019,
+            "receive_ns": 1697630456237627848,
+            "event_ns": 1697630456236992753,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801664,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185020,
+            "receive_ns": 1697630456237627848,
+            "event_ns": 1697630456236992753,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185021,
+            "receive_ns": 1697630456237636470,
+            "event_ns": 1697630456236992753,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185024,
+        [
+          {
+            "cursor": 185022,
+            "receive_ns": 1697630456237660533,
+            "event_ns": 1697630456237112745,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801665,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185023,
+            "receive_ns": 1697630456237660533,
+            "event_ns": 1697630456237112745,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185024,
+            "receive_ns": 1697630456237669370,
+            "event_ns": 1697630456237112745,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185027,
+        [
+          {
+            "cursor": 185025,
+            "receive_ns": 1697630456237695615,
+            "event_ns": 1697630456237327107,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801667,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185026,
+            "receive_ns": 1697630456237695615,
+            "event_ns": 1697630456237327107,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185027,
+            "receive_ns": 1697630456237703315,
+            "event_ns": 1697630456237327107,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185030,
+        [
+          {
+            "cursor": 185028,
+            "receive_ns": 1697630456237712500,
+            "event_ns": 1697630456237327799,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801668,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185029,
+            "receive_ns": 1697630456237712500,
+            "event_ns": 1697630456237327799,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185030,
+            "receive_ns": 1697630456237720640,
+            "event_ns": 1697630456237327799,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185033,
+        [
+          {
+            "cursor": 185031,
+            "receive_ns": 1697630456237730399,
+            "event_ns": 1697630456237330505,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801669,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185032,
+            "receive_ns": 1697630456237730399,
+            "event_ns": 1697630456237330505,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185033,
+            "receive_ns": 1697630456237737132,
+            "event_ns": 1697630456237330505,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185036,
+        [
+          {
+            "cursor": 185034,
+            "receive_ns": 1697630456238114448,
+            "event_ns": 1697630456237584677,
+            "action": "T",
+            "side": "A",
+            "size": 3,
+            "price_raw": 3109000000,
+            "order_id": 788700801672,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185035,
+            "receive_ns": 1697630456238114448,
+            "event_ns": 1697630456237584677,
+            "action": "F",
+            "side": "B",
+            "size": 3,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185036,
+            "receive_ns": 1697630456238126608,
+            "event_ns": 1697630456237584677,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185039,
+        [
+          {
+            "cursor": 185037,
+            "receive_ns": 1697630456238135675,
+            "event_ns": 1697630456237598157,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801673,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185038,
+            "receive_ns": 1697630456238135675,
+            "event_ns": 1697630456237598157,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185039,
+            "receive_ns": 1697630456238143483,
+            "event_ns": 1697630456237598157,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185042,
+        [
+          {
+            "cursor": 185040,
+            "receive_ns": 1697630456238361306,
+            "event_ns": 1697630456237673367,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801674,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185041,
+            "receive_ns": 1697630456238361306,
+            "event_ns": 1697630456237673367,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185042,
+            "receive_ns": 1697630456238367281,
+            "event_ns": 1697630456237673367,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185043,
+        [
+          {
+            "cursor": 185043,
+            "receive_ns": 1697630456238611881,
+            "event_ns": 1697630456237709085,
+            "action": "A",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3110000000,
+            "order_id": 788700801676,
+            "before_size": null,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185046,
+        [
+          {
+            "cursor": 185044,
+            "receive_ns": 1697630456238621896,
+            "event_ns": 1697630456237724515,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801677,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185045,
+            "receive_ns": 1697630456238621896,
+            "event_ns": 1697630456237724515,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185046,
+            "receive_ns": 1697630456238629852,
+            "event_ns": 1697630456237724515,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185049,
+        [
+          {
+            "cursor": 185047,
+            "receive_ns": 1697630456238637972,
+            "event_ns": 1697630456237734659,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801678,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185048,
+            "receive_ns": 1697630456238637972,
+            "event_ns": 1697630456237734659,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185049,
+            "receive_ns": 1697630456238645780,
+            "event_ns": 1697630456237734659,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185050,
+        [
+          {
+            "cursor": 185050,
+            "receive_ns": 1697630456238760112,
+            "event_ns": 1697630456237735351,
+            "action": "A",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3108000000,
+            "order_id": 788700801679,
+            "before_size": null,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185053,
+        [
+          {
+            "cursor": 185051,
+            "receive_ns": 1697630456238894840,
+            "event_ns": 1697630456237785807,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801680,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185052,
+            "receive_ns": 1697630456238894840,
+            "event_ns": 1697630456237785807,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185053,
+            "receive_ns": 1697630456238902218,
+            "event_ns": 1697630456237785807,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185056,
+        [
+          {
+            "cursor": 185054,
+            "receive_ns": 1697630456239435173,
+            "event_ns": 1697630456238147695,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801682,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185055,
+            "receive_ns": 1697630456239435173,
+            "event_ns": 1697630456238147695,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185056,
+            "receive_ns": 1697630456239435173,
+            "event_ns": 1697630456238147695,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185059,
+        [
+          {
+            "cursor": 185057,
+            "receive_ns": 1697630456239487252,
+            "event_ns": 1697630456238681983,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801683,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185058,
+            "receive_ns": 1697630456239487252,
+            "event_ns": 1697630456238681983,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185059,
+            "receive_ns": 1697630456239494696,
+            "event_ns": 1697630456238681983,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185060,
+        [
+          {
+            "cursor": 185060,
+            "receive_ns": 1697630456239631452,
+            "event_ns": 1697630456238788247,
+            "action": "C",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3110000000,
+            "order_id": 788700801652,
+            "before_size": 1,
+            "after_size": null
+          }
+        ]
+      ],
+      [
+        185061,
+        [
+          {
+            "cursor": 185061,
+            "receive_ns": 1697630456240444406,
+            "event_ns": 1697630456239156113,
+            "action": "A",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3108000000,
+            "order_id": 788700801686,
+            "before_size": null,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185062,
+        [
+          {
+            "cursor": 185062,
+            "receive_ns": 1697630456241791124,
+            "event_ns": 1697630456240482073,
+            "action": "A",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801691,
+            "before_size": null,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185068,
+        [
+          {
+            "cursor": 185063,
+            "receive_ns": 1697630456287770648,
+            "event_ns": 1697630456287482495,
+            "action": "T",
+            "side": "A",
+            "size": 5,
+            "price_raw": 3109000000,
+            "order_id": 788700801744,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185064,
+            "receive_ns": 1697630456287770648,
+            "event_ns": 1697630456287482495,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801691,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185065,
+            "receive_ns": 1697630456287770648,
+            "event_ns": 1697630456287482495,
+            "action": "F",
+            "side": "B",
+            "size": 4,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185066,
+            "receive_ns": 1697630456287853001,
+            "event_ns": 1697630456287482495,
+            "action": "C",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801691,
+            "before_size": 1,
+            "after_size": null
+          },
+          {
+            "cursor": 185067,
+            "receive_ns": 1697630456287853001,
+            "event_ns": 1697630456287482495,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185068,
+            "receive_ns": 1697630456287876608,
+            "event_ns": 1697630456287482495,
+            "action": "N",
+            "side": "N",
+            "size": 0,
+            "price_raw": 9223372036854775807,
+            "order_id": 0,
+            "before_size": null,
+            "after_size": null
+          }
+        ]
+      ],
+      [
+        185071,
+        [
+          {
+            "cursor": 185069,
+            "receive_ns": 1697630456288402196,
+            "event_ns": 1697630456287869067,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801746,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185070,
+            "receive_ns": 1697630456288402196,
+            "event_ns": 1697630456287869067,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185071,
+            "receive_ns": 1697630456288402196,
+            "event_ns": 1697630456287869067,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185074,
+        [
+          {
+            "cursor": 185072,
+            "receive_ns": 1697630456288412676,
+            "event_ns": 1697630456287870961,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801747,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185073,
+            "receive_ns": 1697630456288412676,
+            "event_ns": 1697630456287870961,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185074,
+            "receive_ns": 1697630456288412676,
+            "event_ns": 1697630456287870961,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185077,
+        [
+          {
+            "cursor": 185075,
+            "receive_ns": 1697630456288421600,
+            "event_ns": 1697630456287872849,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801748,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185076,
+            "receive_ns": 1697630456288421600,
+            "event_ns": 1697630456287872849,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185077,
+            "receive_ns": 1697630456288429464,
+            "event_ns": 1697630456287872849,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185078,
+        [
+          {
+            "cursor": 185078,
+            "receive_ns": 1697630456288540467,
+            "event_ns": 1697630456287915121,
+            "action": "C",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3108000000,
+            "order_id": 788700801686,
+            "before_size": 1,
+            "after_size": null
+          }
+        ]
+      ],
+      [
+        185081,
+        [
+          {
+            "cursor": 185079,
+            "receive_ns": 1697630456288551424,
+            "event_ns": 1697630456287932373,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801749,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185080,
+            "receive_ns": 1697630456288551424,
+            "event_ns": 1697630456287932373,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185081,
+            "receive_ns": 1697630456288557844,
+            "event_ns": 1697630456287932373,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185082,
+        [
+          {
+            "cursor": 185082,
+            "receive_ns": 1697630456289527608,
+            "event_ns": 1697630456288429945,
+            "action": "A",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3110000000,
+            "order_id": 788700801754,
+            "before_size": null,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185085,
+        [
+          {
+            "cursor": 185083,
+            "receive_ns": 1697630456289548646,
+            "event_ns": 1697630456288583325,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801755,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185084,
+            "receive_ns": 1697630456289548646,
+            "event_ns": 1697630456288583325,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185085,
+            "receive_ns": 1697630456289556628,
+            "event_ns": 1697630456288583325,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185088,
+        [
+          {
+            "cursor": 185086,
+            "receive_ns": 1697630456289565567,
+            "event_ns": 1697630456288585911,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801756,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185087,
+            "receive_ns": 1697630456289565567,
+            "event_ns": 1697630456288585911,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185088,
+            "receive_ns": 1697630456289573323,
+            "event_ns": 1697630456288585911,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185089,
+        [
+          {
+            "cursor": 185089,
+            "receive_ns": 1697630456289746359,
+            "event_ns": 1697630456289553759,
+            "action": "C",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3108000000,
+            "order_id": 788700801679,
+            "before_size": 1,
+            "after_size": null
+          }
+        ]
+      ],
+      [
+        185092,
+        [
+          {
+            "cursor": 185090,
+            "receive_ns": 1697630456289792335,
+            "event_ns": 1697630456289605669,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801757,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185091,
+            "receive_ns": 1697630456289792335,
+            "event_ns": 1697630456289605669,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185092,
+            "receive_ns": 1697630456289798909,
+            "event_ns": 1697630456289605669,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185093,
+        [
+          {
+            "cursor": 185093,
+            "receive_ns": 1697630456289967587,
+            "event_ns": 1697630456289767235,
+            "action": "C",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3110000000,
+            "order_id": 788700801754,
+            "before_size": 1,
+            "after_size": null
+          }
+        ]
+      ],
+      [
+        185096,
+        [
+          {
+            "cursor": 185094,
+            "receive_ns": 1697630456289996422,
+            "event_ns": 1697630456289774737,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801758,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185095,
+            "receive_ns": 1697630456289996422,
+            "event_ns": 1697630456289774737,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185096,
+            "receive_ns": 1697630456290004885,
+            "event_ns": 1697630456289774737,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185099,
+        [
+          {
+            "cursor": 185097,
+            "receive_ns": 1697630456290037822,
+            "event_ns": 1697630456289805289,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801759,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185098,
+            "receive_ns": 1697630456290037822,
+            "event_ns": 1697630456289805289,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185099,
+            "receive_ns": 1697630456290047252,
+            "event_ns": 1697630456289805289,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185100,
+        [
+          {
+            "cursor": 185100,
+            "receive_ns": 1697630456290552135,
+            "event_ns": 1697630456290001445,
+            "action": "A",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3108000000,
+            "order_id": 788700801761,
+            "before_size": null,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185103,
+        [
+          {
+            "cursor": 185101,
+            "receive_ns": 1697630456290560327,
+            "event_ns": 1697630456290027083,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801762,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185102,
+            "receive_ns": 1697630456290560327,
+            "event_ns": 1697630456290027083,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185103,
+            "receive_ns": 1697630456290567827,
+            "event_ns": 1697630456290027083,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185104,
+        [
+          {
+            "cursor": 185104,
+            "receive_ns": 1697630456291798601,
+            "event_ns": 1697630456291598139,
+            "action": "A",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3108000000,
+            "order_id": 788700801764,
+            "before_size": null,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185107,
+        [
+          {
+            "cursor": 185105,
+            "receive_ns": 1697630456292746980,
+            "event_ns": 1697630456292528573,
+            "action": "T",
+            "side": "A",
+            "size": 5,
+            "price_raw": 3109000000,
+            "order_id": 788700801765,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185106,
+            "receive_ns": 1697630456292746980,
+            "event_ns": 1697630456292528573,
+            "action": "F",
+            "side": "B",
+            "size": 5,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185107,
+            "receive_ns": 1697630456292755039,
+            "event_ns": 1697630456292528573,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185110,
+        [
+          {
+            "cursor": 185108,
+            "receive_ns": 1697630456325193852,
+            "event_ns": 1697630456324991745,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801784,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185109,
+            "receive_ns": 1697630456325193852,
+            "event_ns": 1697630456324991745,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185110,
+            "receive_ns": 1697630456325202110,
+            "event_ns": 1697630456324991745,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185112,
+        [
+          {
+            "cursor": 185111,
+            "receive_ns": 1697630456325432636,
+            "event_ns": 1697630456325207933,
+            "action": "A",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801785,
+            "before_size": null,
+            "after_size": 1
+          },
+          {
+            "cursor": 185112,
+            "receive_ns": 1697630456325443475,
+            "event_ns": 1697630456325207933,
+            "action": "N",
+            "side": "N",
+            "size": 0,
+            "price_raw": 9223372036854775807,
+            "order_id": 0,
+            "before_size": null,
+            "after_size": null
+          }
+        ]
+      ],
+      [
+        185114,
+        [
+          {
+            "cursor": 185113,
+            "receive_ns": 1697630456325551581,
+            "event_ns": 1697630456325236279,
+            "action": "C",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801785,
+            "before_size": 1,
+            "after_size": null
+          },
+          {
+            "cursor": 185114,
+            "receive_ns": 1697630456325567523,
+            "event_ns": 1697630456325236279,
+            "action": "N",
+            "side": "N",
+            "size": 0,
+            "price_raw": 9223372036854775807,
+            "order_id": 0,
+            "before_size": null,
+            "after_size": null
+          }
+        ]
+      ],
+      [
+        185117,
+        [
+          {
+            "cursor": 185115,
+            "receive_ns": 1697630456457360703,
+            "event_ns": 1697630456457103723,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801828,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185116,
+            "receive_ns": 1697630456457360703,
+            "event_ns": 1697630456457103723,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185117,
+            "receive_ns": 1697630456457370790,
+            "event_ns": 1697630456457103723,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ],
+      [
+        185120,
+        [
+          {
+            "cursor": 185118,
+            "receive_ns": 1697630456457783817,
+            "event_ns": 1697630456457392215,
+            "action": "T",
+            "side": "A",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700801831,
+            "before_size": null,
+            "after_size": null
+          },
+          {
+            "cursor": 185119,
+            "receive_ns": 1697630456457783817,
+            "event_ns": 1697630456457392215,
+            "action": "F",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          },
+          {
+            "cursor": 185120,
+            "receive_ns": 1697630456457796796,
+            "event_ns": 1697630456457392215,
+            "action": "M",
+            "side": "B",
+            "size": 1,
+            "price_raw": 3109000000,
+            "order_id": 788700798510,
+            "before_size": 1,
+            "after_size": 1
+          }
+        ]
+      ]
+    ]
+  },
+  "wall_seconds": 38.4,
+  "unusual_window_count": 1641,
+  "unusual_window_sha256": "a5564699287e1ff792c2eb767f6463d217b8cfef466275c2dfd3a4a0e278d393",
+  "tape_git_commit": "1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202",
+  "boundary_manifest_git_commit": "93895487c199b1e486d5407f9e103a0964903d2d"
+}

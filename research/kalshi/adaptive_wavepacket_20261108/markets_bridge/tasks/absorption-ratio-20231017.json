@@ -1,0 +1,76 @@
+{
+  "trade_date": "20231017",
+  "midnight_snapshot": null,
+  "scope": "available partial trade date",
+  "checks": {
+    "source_records": 841601,
+    "completed_groups": 635170,
+    "wire_fill_qty_A": 34965,
+    "fill_qty_sided_by_resting_book_A": 2799,
+    "unresolved_fill_qty_A": 1086,
+    "wire_fill_qty_B": 32026,
+    "fill_qty_sided_by_resting_book_B": 2573,
+    "unresolved_fill_qty_B": 985,
+    "wire_fill_qty_N": 5372,
+    "fill_qty_sided_by_resting_book_N": 0,
+    "unresolved_fill_qty_N": 0,
+    "snapshot_groups": 1,
+    "active_groups": 635169
+  },
+  "window_counts_by_side": {
+    "64": {
+      "A": {
+        "windows": 635106,
+        "ratio_defined": 626062,
+        "above_one": 525,
+        "fills_with_zero_reduction": 12
+      },
+      "B": {
+        "windows": 635106,
+        "ratio_defined": 634980,
+        "above_one": 665,
+        "fills_with_zero_reduction": 0
+      }
+    },
+    "1024": {
+      "A": {
+        "windows": 634146,
+        "ratio_defined": 634146,
+        "above_one": 0,
+        "fills_with_zero_reduction": 0
+      },
+      "B": {
+        "windows": 634146,
+        "ratio_defined": 634146,
+        "above_one": 0,
+        "fills_with_zero_reduction": 0
+      }
+    },
+    "span_to_date": {
+      "A": {
+        "windows": 635169,
+        "ratio_defined": 635153,
+        "above_one": 0,
+        "fills_with_zero_reduction": 0
+      },
+      "B": {
+        "windows": 635169,
+        "ratio_defined": 635152,
+        "above_one": 0,
+        "fills_with_zero_reduction": 0
+      }
+    }
+  },
+  "window_row_sha256": {
+    "64": "d77cf8779f1e5a9d595702b71f0f2193f6383a11313944162a3d75311923204c",
+    "1024": "f7b9c92bb240bfb1f9b00ba593a724c923c94507654f9d3fb4230d77f8f9728f",
+    "span_to_date": "c3ea2d13ea94bdc195eaf31e2c61e61808393a8cf667991b2277ea15bdeca7e4"
+  },
+  "archive_discrepancies": [],
+  "largest_archived_ratio_tape_trace": {},
+  "wall_seconds": 49.17,
+  "unusual_window_count": 1202,
+  "unusual_window_sha256": "05b044342b6b1596644b1106e0e92e54a697ab7014efe11f40be9f49a0779503",
+  "tape_git_commit": "1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202",
+  "boundary_manifest_git_commit": "93895487c199b1e486d5407f9e103a0964903d2d"
+}

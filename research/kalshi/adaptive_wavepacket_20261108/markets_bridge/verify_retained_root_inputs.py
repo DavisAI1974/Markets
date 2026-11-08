@@ -1,7 +1,8 @@
-"""Check retained ROOT message values and fixed-window totals directly from pinned DBN."""
+"""Check retained ROOT values and independently rebuild resting orders from pinned DBN."""
 
 from bisect import bisect_left
-from collections import Counter
+from collections import Counter, defaultdict
+from dataclasses import dataclass, replace
 import gzip
 import json
 from pathlib import Path
@@ -22,6 +23,101 @@ WINDOWS = (1, 5, 20, 60, 300)
 NS_PER_SECOND = 1_000_000_000
 COMMON = ("instrument_id", "publisher_id", "channel_id", "order_id", "size", "flags", "sequence", "action", "side")
 RENAMED = {"ts_event": "ts_event_ns", "ts_recv": "ts_recv_ns", "ts_in_delta": "ts_in_delta_ns", "price": "price_raw"}
+
+
+@dataclass(frozen=True, slots=True)
+class Order:
+    side: str
+    price: int
+    size: int
+    priority_recv: int
+    priority_sequence: int
+    last_update: int
+    priority_from_snapshot: bool
+    update_from_snapshot: bool
+
+
+class RestingBook:
+    """Independent order map in priority-insertion order for Databento MBO."""
+
+    def __init__(self):
+        self.orders = {}
+
+    def apply(self, record):
+        action = record.action.value
+        if action in {"T", "F", "N"}:
+            return
+        if action == "R":
+            self.orders.clear()
+            return
+
+        oid, side, price, size = record.order_id, record.side.value, record.price, record.size
+        if side not in {"A", "B"} or price == UNDEF_PRICE or size < 0 or record.flags & (16 | 64):
+            raise ValueError(f"Unsupported book-mutating message for order {oid}")
+        old = self.orders.get(oid)
+        if action == "C":
+            if old is None or (side, price) != (old.side, old.price) or size > old.size:
+                raise ValueError(f"Unreconciled cancel for order {oid}")
+            if size == old.size:
+                del self.orders[oid]
+            else:
+                self.orders[oid] = replace(old, size=old.size - size, last_update=record.ts_recv,
+                                           update_from_snapshot=False)
+            return
+
+        if action == "A" and old is not None:
+            raise ValueError(f"Duplicate active order {oid}")
+        if action not in {"A", "M"}:
+            raise ValueError(f"Unsupported book action {action!r}")
+        if old is not None and side != old.side:
+            raise ValueError(f"Unsupported side change for order {oid}")
+        if old is not None and price == old.price and 0 < size <= old.size:
+            self.orders[oid] = replace(old, size=size, last_update=record.ts_recv, update_from_snapshot=False)
+            return
+        if old is not None:
+            del self.orders[oid]
+        if size:
+            snapshot = bool(record.flags & 32)
+            self.orders[oid] = Order(side, price, size, record.ts_recv, record.sequence, record.ts_recv,
+                                     snapshot, snapshot)
+
+
+def check_book(frame, book, checked):
+    observation = frame["observation"]
+    rows = {row["order_id"]: row for row in observation["orders"]}
+    expect(len(rows), len(observation["orders"]), "unique observed orders")
+    expect(rows.keys(), book.orders.keys(), "resting identities")
+    cutoff = frame["ts_recv_ns"]
+    levels = defaultdict(list)
+    for oid, order in book.orders.items():
+        observed = rows[oid]
+        expected = (order.side, order.price, order.size, order.priority_recv, order.priority_sequence,
+                    order.last_update)
+        actual = tuple(observed[key] for key in (
+            "side", "price_raw", "size", "priority_recv_ns", "priority_sequence", "last_update_recv_ns"
+        ))
+        expect(actual, expected, f"resting order {oid} state and source clocks")
+        if not order.priority_recv <= order.last_update <= cutoff:
+            raise ValueError(f"Out-of-order clocks for resting order {oid}")
+        levels[order.side, order.price].append((oid, order.size))
+        checked["resting_orders"] += 1
+        checked["snapshot_priority_observations"] += order.priority_from_snapshot
+        checked["snapshot_last_update_observations"] += order.update_from_snapshot
+
+    for side, name in (("B", "bid"), ("A", "ask")):
+        prices = sorted((price for label, price in levels if label == side), reverse=side == "B")
+        full = frame["book"][f"{name}_levels_full"]
+        expect([level["price_raw"] for level in full], prices, f"{name} full depth prices")
+        for level, price in zip(full, prices, strict=True):
+            queue = levels[side, price]
+            expect(level["size"], sum(size for _, size in queue), f"{name} level size")
+            expect(level["order_count"], len(queue), f"{name} order count")
+            volume_ahead = 0
+            for row, (oid, size) in zip(level["fifo_queue"], queue, strict=True):
+                expect((row["order_id"], row["size"], row["volume_ahead"]), (oid, size, volume_ahead),
+                       f"{name} FIFO state at {price}")
+                volume_ahead += size
+            checked["full_depth_levels"] += 1
 
 
 def unpack(value):
@@ -63,13 +159,14 @@ def archived_frames():
                 expect(tag, "dict", "packed ROOT row")
                 row = dict(pairs)
                 frame = {key: unpack(row[key]) for key in (
-                    "input_cursor", "input_records", "input_record_indices", "ts_recv_ns", "ts_event_ns", "activity"
+                    "input_cursor", "input_records", "input_record_indices", "ts_recv_ns", "ts_event_ns", "activity",
+                    "book", "observation"
                 )}
                 frame["raw_actions"] = unpack(dict(row["native_frame"][1])["raw_actions"])
                 yield frame
 
 
-def tape_groups():
+def tape_groups(book):
     scope = json.loads(git_blob(SESSION_PIN, f"research/kalshi/frankie_boss/blocks/BLOCK_{DAY}_SOURCE_MANIFEST.json"))
     tail = scope["tail_members"][0]
     member_name = f"NG_v0_mbo_{tail['member_key'][10:18]}.dbn.zst"
@@ -79,6 +176,7 @@ def tape_groups():
     for index, record in enumerate(read_member(spec)):
         cursor = index - tail["skip"]
         expect(record.instrument_id, INSTRUMENT, "tape instrument")
+        book.apply(record)
         if not record.flags & 32:
             if clocks and record.ts_recv < clocks[-1]:
                 raise ValueError("Nonmonotonic receive times in activity history")
@@ -140,7 +238,8 @@ def activity_values(rows):
 def run():
     started = time.perf_counter()
     receipt = json.loads(git_blob(ROOT_PIN, (ROOT_PATH / "source-read-receipt.json").as_posix()))
-    groups = tape_groups()
+    book = RestingBook()
+    groups = tape_groups(book)
     checked = Counter()
     differences = Counter()
     first_difference = {}
@@ -150,6 +249,7 @@ def run():
             group, pending, clocks, activity = next(groups)
         expect(group, ordinal, "ROOT native group ordinal")
         check_raw(frame, pending)
+        check_book(frame, book, checked)
         checked["groups"] += 1
         checked["messages"] += len(pending)
         for seconds in WINDOWS:
@@ -169,7 +269,7 @@ def run():
     return dict(
         session=DAY, tape_git_commit=TAPE_PIN, archive_git_commit=ROOT_PIN,
         group_first=receipt["first_group"], group_last=receipt["last_group"],
-        checks=dict(checked), raw_message_mismatches=0, activity_mismatches=dict(differences),
+        checks=dict(checked), raw_message_mismatches=0, resting_state_mismatches=0, activity_mismatches=dict(differences),
         first_activity_difference=first_difference,
         activity_definition="Non-snapshot DBN messages in the inclusive receive window through this F_LAST cursor",
         exclusions=["Book-state-dependent activity", "Original extraction hash formula", "Full-session verification"],

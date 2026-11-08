@@ -5,12 +5,17 @@
   "group_first": 3046,
   "group_last": 4712,
   "checks": {
+    "resting_orders": 1279034,
+    "snapshot_priority_observations": 463426,
+    "snapshot_last_update_observations": 463426,
+    "full_depth_levels": 705870,
     "groups": 1667,
     "messages": 1858,
     "activity_cells": 66680,
     "windows_with_unspecified_trade_side": 1790
   },
   "raw_message_mismatches": 0,
+  "resting_state_mismatches": 0,
   "activity_mismatches": {},
   "first_activity_difference": {},
   "activity_definition": "Non-snapshot DBN messages in the inclusive receive window through this F_LAST cursor",
@@ -19,5 +24,5 @@
     "Original extraction hash formula",
     "Full-session verification"
   ],
-  "wall_seconds": 37.23
+  "wall_seconds": 72.04
 }
