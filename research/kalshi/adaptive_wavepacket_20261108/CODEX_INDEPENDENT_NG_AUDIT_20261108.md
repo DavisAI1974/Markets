@@ -48,3 +48,7 @@ Keep prior receipts and the frozen snapshot as historical evidence. If the remov
 ## Follow-up implementation: gross market observations
 
 The active lag exploit, level-hit, lag join and coach research paths now report gross market movement. Fee helpers, legacy execution inputs and the cost-dependent lag gate were removed from these paths. The lag join reports a missing qualifying extreme explicitly. Level-hit reports retain the individual observations by event rather than pooling across events. Gross output names distinguish the new schema from prior historical net reports. Execution costs can be modeled later in a separate execution stage. The old research receipts and frozen source are preserved. The edited modules compile, import and expose their normal CLI help. A real local Kalshi history cache was absent, so there is no new Kalshi market result from this change.
+
+## Runner guard follow-up
+
+The current audit branch rejects noncanonical dates and requires the calibration day to precede every probed day. The settle check covers the entire input span of a frame. The runner refuses a fit across a discontinuity in the retained frame clocks. Use separate contiguous windows when a settle guard splits a day. These guards do not reconstruct lost native trade identity or validate the source's known-by clock. Those remain prerequisites for the full flow experiment. The real-data book pilot reproduced its ledger and summary byte for byte after the guard changes. Bridge verification returned nine passes and one skip for the uncached real flow day.

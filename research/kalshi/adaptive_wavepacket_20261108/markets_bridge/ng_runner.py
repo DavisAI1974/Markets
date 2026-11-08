@@ -122,6 +122,26 @@ def in_window(ts: int, start: tuple[int, int], seconds: int) -> bool:
     return s0 - seconds <= sod < s0 + seconds
 
 
+def settle_intersects(first: int, last: int, settle: tuple[int, int], guard: int) -> bool:
+    """Check all included seconds against the recurring UTC settle guard."""
+    if guard == 0:
+        return False
+    seconds_per_day = 86400
+    settle_offset = settle[0] * 3600 + settle[1] * 60
+    first_day = (first - settle_offset - guard) // seconds_per_day + 1
+    first_settle = first_day * seconds_per_day + settle_offset
+    return first_settle - guard <= last
+
+
+def trading_day(value: str) -> _dt.date:
+    if len(value) != 8 or not value.isascii() or not value.isdecimal():
+        raise LocalityError(f"expected a YYYYMMDD trading day, got {value!r}")
+    try:
+        return _dt.datetime.strptime(value, "%Y%m%d").date()
+    except ValueError as exc:
+        raise LocalityError(f"invalid trading day {value!r}") from exc
+
+
 def frames_from_channels(ts: np.ndarray, channels: dict[str, np.ndarray], *, window: int,
                          stride: int, source_identity: str, provenance: str,
                          settle_utc: tuple[int, int] | None = NG_SETTLE_UTC,
@@ -129,6 +149,8 @@ def frames_from_channels(ts: np.ndarray, channels: dict[str, np.ndarray], *, win
     """Sliding windows become RawFrames; members are the window's seconds (no averaging)."""
     if type(window) is not int or window < 8 or type(stride) is not int or stride < 1:
         raise LocalityError("window >= 8 and stride >= 1 required")
+    if settle_guard_s < 0:
+        raise LocalityError("settle guard must be nonnegative")
     names = tuple(sorted(channels))
     if len(names) < 2:
         raise LocalityError("at least two channels required")
@@ -145,7 +167,8 @@ def frames_from_channels(ts: np.ndarray, channels: dict[str, np.ndarray], *, win
                 members.append(RawMember(f"{source_identity}:{clock}:{node}:{offset}", str(offset),
                                          node, float(value), provenance))
         frame = RawFrame(clock, source_identity, tuple(members))
-        if settle_utc is not None and in_window(clock, settle_utc, settle_guard_s):
+        if settle_utc is not None and settle_intersects(
+                int(ts[end - window + 1]), clock, settle_utc, settle_guard_s):
             excluded.append(frame)
         else:
             frames.append(frame)
@@ -233,6 +256,9 @@ def run_probe(ts: np.ndarray, channels: dict[str, np.ndarray], *, source_identit
     frames, excluded = frames_from_channels(ts, channels, window=window, stride=stride,
                                             source_identity=source_identity, provenance=provenance,
                                             settle_utc=settle_utc, settle_guard_s=settle_guard_s)
+    if any(second.clock - first.clock != stride for first, second in zip(frames, frames[1:])):
+        raise LocalityError("retained frames cross an excluded or missing interval; "
+                            "run each contiguous segment separately with --start-ts and --end-ts")
     if len(frames) < 64:
         raise LocalityError(f"only {len(frames)} frames after the settle exclusion; need >= 64")
     if bins is None:
@@ -477,9 +503,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     settle = None if args.no_settle_exclusion else NG_SETTLE_UTC
     prior_bins = None
+    probe_days = [trading_day(day) for day in args.day]
     if args.calibrate_from_day:
-        if args.calibrate_from_day in args.day:
-            raise LocalityError("the calibration day must not be one of the probed days")
+        if trading_day(args.calibrate_from_day) >= min(probe_days):
+            raise LocalityError("the calibration day must be strictly earlier than every probed day")
         prior_bins = bins_from_prior_day(args.calibrate_from_day, args.source, window=args.window,
                                          stride=args.stride, nbins=args.nbins, depth=args.depth,
                                          kalshi_bins=args.kalshi_bins, settle_utc=settle,
