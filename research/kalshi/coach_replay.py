@@ -2,9 +2,7 @@
 coach_replay.py — deterministic backtest of the ng_brain.json PLAYBOOK on the NG canary tape (S92 build).
 
 This is the RIGID, mechanical baseline of the coach's plays — the thing the future ADAPTIVE agent-coach must
-beat. It reads the plays out of knowledge/ng_brain.json and applies them per leg, GROSS (no trade cost), PER EVENT, with
-NO POOLING as the verdict (per-leg rows + a per-day roll-up that is a sum of individual trades, never a mean
-that hides the fingerprint).
+beat. It reads the plays out of knowledge/ng_brain.json and applies them per leg, per event. Each leg retains its own gross market outcome.
 
 PLAYS APPLIED (from ng_brain.json):
   - direction.flow_nowcast : ENTER a leg on sign(dip_imb_level) when |dip_imb_level| >= DIP_STRONG (0.15).
@@ -16,8 +14,8 @@ HONEST SCOPE / ASSUMPTIONS (explicit — refine next session with a real fill mo
     echo (fire on the lag) and the NYMEX-OPTIONS vehicle are the next layers (see FORECASTER_RUNBOOK_S93.md).
   - Coarse capture proxy off characterize_day OUTCOMES (peak_usd, retention, dir) — NOT a tick-by-tick fill
     sim. A right-direction trade captures ~ retention*peak_usd (rode the leg, kept the retention fraction);
-    a wrong-direction trade loses ~ peak_usd (long into the opposite move). No fee: FEE_RT is 0 (Greg 2026-11-08).
-    The number is INDICATIVE (sizes the edge), NOT a validated P&L. The real fill/slippage model is JOB for S93.
+    a wrong-direction trade loses ~ peak_usd (long into the opposite move).
+    The number is INDICATIVE (sizes the edge), NOT a validated P&L.
   - Only |dip|>=DIP_STRONG legs are traded (the play's own gate). 1 contract/leg.
 
 This is a SCAFFOLD, wired to the brain, ready to run + refine. `--selftest` for the mechanics; `--days` to replay.
@@ -32,7 +30,6 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import month_characterize as mc                                # the full-toolbox per-leg characterizer
 
 BRAIN = os.path.join(os.path.dirname(os.path.abspath(__file__)), "knowledge", "ng_brain.json")
-FEE_RT = 0.0            # RETIRED (Greg 2026-11-08): trade cost is not a market condition; replay is GROSS
 
 
 def _thresholds(brain: dict) -> dict:
@@ -47,8 +44,7 @@ def _thresholds(brain: dict) -> dict:
 
 
 def replay_day(day: str, brain: dict, source: str = "s3") -> dict:
-    """Apply the playbook to one NG day. Returns {day, trades:[per-leg rows], summary}. No pooling — the summary
-    is a SUM of individual trades + counts, never a mean-as-verdict."""
+    """Apply the playbook to one NG day and retain every qualifying leg."""
     t = _thresholds(brain)
     rows = mc.characterize_day("NG", day, source=source)
     trades = []
@@ -63,20 +59,18 @@ def replay_day(day: str, brain: dict, source: str = "s3") -> dict:
         ret = float(r.get("retention") or 0.0)
         # coarse capture proxy (INDICATIVE, not a fill sim):
         capture = (ret * peak) if correct else -peak
-        net = round(capture - FEE_RT, 1)
         trades.append({
             "entry_idx": r["entry_idx"], "tod": r.get("tod"), "dip": round(dip, 3),
             "pred_dir": "up" if pred_up else "down", "actual_dir": r["dir"], "correct": correct,
             "peak_usd": peak, "retention": ret, "would_ride_350": peak >= t["ride_usd"],
             "far_recruit": r.get("turn_far_thinning"), "reversal_risk": (r.get("turn_far_thinning") or 0) > 0,
-            "net_indicative": net,
+            "gross_indicative": round(capture, 1),
         })
     n = len(trades)
     correct = sum(1 for x in trades if x["correct"])
-    net_sum = round(sum(x["net_indicative"] for x in trades), 1)
     rode = sum(1 for x in trades if x["would_ride_350"])
     return {"day": day, "n_trades": n, "n_correct": correct, "n_rode_350": rode,
-            "net_indicative_sum": net_sum, "trades": trades}
+            "outcome_basis": "GROSS_MARKET_MOVE", "trades": trades}
 
 
 def selftest() -> int:
@@ -102,7 +96,7 @@ def selftest() -> int:
         mc.characterize_day = orig
     assert d["n_trades"] == 2, d                       # weak-flow leg skipped
     assert d["n_correct"] == 1, d                      # leg1 correct, leg2 wrong
-    assert d["trades"][0]["net_indicative"] == round(0.8 * 400 - FEE_RT, 1), d["trades"][0]
+    assert d["trades"][0]["gross_indicative"] == round(0.8 * 400, 1), d["trades"][0]
     assert d["trades"][0]["would_ride_350"] is True and d["trades"][1]["reversal_risk"] is True
     print("[coach_replay] selftest PASS — play gates, capture proxy, ride/reversal flags")
     return 0
@@ -120,15 +114,15 @@ def main() -> int:
     if not a.days:
         ap.error("need --days or --selftest")
     brain = json.load(open(a.brain))
-    print(f"[coach_replay] INDICATIVE canary-side replay (GROSS, no trade cost; NOT a validated fill P&L)")
+    print(f"[coach_replay] INDICATIVE canary-side replay (gross price move)")
     for day in a.days.split(","):
         d = replay_day(day, brain, source=a.source)
         print(f"\n=== NG {day}: {d['n_trades']} trades, {d['n_correct']} correct-dir, "
-              f"{d['n_rode_350']} rode>=$350, net(indicative)=${d['net_indicative_sum']} ===")
+              f"{d['n_rode_350']} rode>=$350 ===")
         for x in d["trades"]:
             print(f"  idx{x['entry_idx']:>6} {x['tod']:<8} dip{x['dip']:+.2f} pred={x['pred_dir']:<4} "
                   f"act={x['actual_dir']:<4} {'OK' if x['correct'] else 'XX'} peak${x['peak_usd']:>6.0f} "
-                  f"ret{x['retention']:+.2f} ride={x['would_ride_350']!s:<5} net${x['net_indicative']:>7.1f}")
+                  f"ret{x['retention']:+.2f} ride={x['would_ride_350']!s:<5} gross${x['gross_indicative']:>7.1f}")
     return 0
 
 

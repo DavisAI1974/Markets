@@ -4,8 +4,7 @@ Kalshi's contract books (the venue we trade), per contract.
 
 The question (Greg, S80): Kalshi's energy binaries are re-quoted off NYMEX/ICE by a handful of
 makers. Is there a measurable delay between a futures move and the Kalshi re-price — and how big?
-If futures LEAD by N bars, we can read the present faster than the venue re-prices it (entry-quality
-edge; the reprice alone can pay the spread+fee toll).
+If futures LEAD by N bars, we can read the present faster than the venue re-prices it and measure the timing of the subsequent reprice.
 
 Method: for each Kalshi contract (strike x day) with enough trades, build a 1-min last-trade
 probability series on the same minute grid as the futures 1-min closes; DIFF both (changes, not

@@ -1,11 +1,6 @@
 """
 lag_join.py — the FUTURES->KALSHI lag join (the realized echo move, GROSS), two modes.
 
-TRADE COST IS NOT A MARKET CONDITION (Greg, 2026-11-08). No fee, slippage, maker offset or any other
-execution assumption enters any calculation here. The echo is measured as the Kalshi price move itself,
-in cents per contract, entry at the stale mark, exit at the mark (or at the favorable extreme when the echo
-made a wave). The old fee/slippage terms were removed; cfg keys slip/maker_off are accepted and ignored.
-
 Thesis (Greg, S84/S87): NYMEX is the CANARY, Kalshi the DELAYED follower. The front-month future moves
 first; the Kalshi daily-settle market (KXWTI / KXNATGASD, "will the close be above $X") reprices seconds-
 to-minutes later. We WATCH the future, and the moment it makes a real move we lift the STALE Kalshi ATM
@@ -30,7 +25,7 @@ Trade model (Greg S87, both modes):
 
 Discipline (kalshi-backtest): leakage-safe by construction (entry = canary direction + stale Kalshi mark,
 both strictly <= entry; the trailing-stop exit is the forward outcome); settle-window bound; per-cell
-never pooled; DISTRIBUTIONS not means; no trade cost anywhere. Zero synthetic.
+never pooled; DISTRIBUTIONS not means. Zero synthetic.
 
 Usage:
     python research/kalshi/lag_join.py --selftest
@@ -82,18 +77,6 @@ SETTLE_UTC = {"KXWTI": (18, 30), "KXNATGASD": (21, 0)}    # daily settle (UTC); 
 
 def _iso_to_ts(s):
     return dt.datetime.fromisoformat(s.replace("Z", "+00:00")).timestamp()
-
-
-def fee_cents(price_cents: float) -> int:
-    """RETIRED (Greg, 2026-11-08): trade cost is not a market condition. Always 0; kept so old callers
-    and receipts that reference the name keep working without reintroducing a cost."""
-    return 0
-
-
-def _legacy_fee_cents(price_cents: float) -> int:
-    """The old Kalshi taker-fee formula, kept for the historical record only; never called."""
-    P = max(0.0, min(1.0, price_cents / 100.0))
-    return math.ceil(7.0 * P * (1.0 - P) - 1e-9)
 
 
 def price_at(ts: np.ndarray, yes: np.ndarray, t: float):
@@ -192,14 +175,13 @@ def scan_moves(fts, fp, trig_usd, confirm_s, cooldown_s, max_events=1000):
 # ---- the shared trade engine -----------------------------------------------------------------------
 def simulate_trade(root, fts, fp, kts, kyes, ei, s, cfg, settle_bound):
     """One echo trade: taker entry at the stale Kalshi mark, stand-back guard, NYMEX $-trailing-stop hold,
-    exit at the mark or at the favorable extreme, GROSS (no cost of any kind). Returns the trade core
-    dict or None. Keys pnl_taker / pnl_maker are kept for downstream readers: pnl_taker = exit at the
-    mark when the stop fires; pnl_maker = exit at the favorable extreme when the echo made a wave."""
+    exit at the mark or at the favorable extreme, GROSS. Returns the trade core
+    dict or None. Reports the stop mark and the qualifying favorable extreme."""
     t_entry = float(fts[ei])
     entry_mark = price_at(kts, kyes, t_entry)
     if entry_mark is None or entry_mark < 3 or entry_mark > 97:      # need a live, tradeable ATM
         return None
-    min_wave = cfg["min_wave"]                                       # slip / maker_off ignored (no cost)
+    min_wave = cfg["min_wave"]
     rev = cfg["reverse_usd"][root]
     # STAND-BACK: skip if Kalshi already moved in the NYMEX direction before entry (caught up on its own).
     kref = price_at(kts, kyes, t_entry - cfg["look_back"])
@@ -231,16 +213,18 @@ def simulate_trade(root, fts, fp, kts, kyes, ei, s, cfg, settle_bound):
     if exit_mark is None:
         return None
     wave = s * (ext - entry_mark)                                   # favorable Kalshi carry (c)
-    pnl_taker = s * (exit_mark - entry_px)                         # gross move to the stop-fire mark
+    gross_at_stop_cents = s * (exit_mark - entry_px)                         # gross move to the stop-fire mark
     if wave >= min_wave:
-        maker_filled = 1
-        pnl_maker = s * (ext - entry_px)                           # gross move to the favorable extreme
+        wave_qualified = 1
+        gross_at_extreme_cents = s * (ext - entry_px)                           # gross move to the favorable extreme
     else:
-        maker_filled = 0
-        pnl_maker = pnl_taker
+        wave_qualified = 0
+        gross_at_extreme_cents = None
     return {"t_entry": t_entry, "dir": "up" if s > 0 else "dn", "entry_px": round(entry_px, 2),
-            "ext": round(ext, 2), "wave": round(float(wave), 2), "maker_filled": maker_filled,
-            "pnl_taker": round(float(pnl_taker), 3), "pnl_maker": round(float(pnl_maker), 3),
+            "ext": round(ext, 2), "wave": round(float(wave), 2), "wave_qualified": wave_qualified,
+            "gross_at_stop_cents": round(float(gross_at_stop_cents), 3),
+            "gross_at_extreme_cents": (None if gross_at_extreme_cents is None
+                                       else round(float(gross_at_extreme_cents), 3)),
             "hold_used": round(t_dec - t_entry, 1)}
 
 
@@ -332,41 +316,29 @@ def run_intraday(day, event, root, cfg):
 
 
 # ---- reporting -------------------------------------------------------------------------------------
-def _q(a, ps):
-    return [round(float(np.percentile(a, p)), 2) for p in ps] if len(a) else [None] * len(ps)
-
-
 def report(rows, group_keys, title):
     print(f"\n=== {title} ===")
-    print(f"{'cell':<30} {'n':>3} {'taker: pos% med [p25,p75]':<28} {'maker: pos% med [p25,p75] fill%':<34}")
     groups = defaultdict(list)
-    for r in rows:
-        groups[tuple(r[k] for k in group_keys)].append(r)
-    for key, rs in sorted(groups.items()):
-        tk = np.array([r["pnl_taker"] for r in rs], float)
-        mk = np.array([r["pnl_maker"] for r in rs], float)
-        fill = 100.0 * np.mean([r["maker_filled"] for r in rs])
-        tq, mq = _q(tk, [25, 50, 75]), _q(mk, [25, 50, 75])
-        label = "|".join(str(k) for k in key)
-        print(f"{label:<30} {len(rs):>3} "
-              f"{100*np.mean(tk>0):>4.0f}% {tq[1]:>5}c [{tq[0]},{tq[2]}]".ljust(28) + "  "
-              f"{100*np.mean(mk>0):>4.0f}% {mq[1]:>5}c [{mq[0]},{mq[2]}] {fill:>3.0f}%")
+    for row in rows:
+        groups[tuple(row[key] for key in group_keys)].append(row)
+    for key, records in sorted(groups.items()):
+        label = "|".join(str(value) for value in key)
+        stop = [row["gross_at_stop_cents"] for row in records]
+        extreme = [row["gross_at_extreme_cents"] for row in records]
+        print(f"{label} n={len(records)} stop_cents={stop} extreme_cents={extreme}")
 
 
 def _cfg_from_args(args):
     return {"trigger_usd": {"CL": args.trigger_cl, "NG": args.trigger_ng},
             "reverse_usd": {"CL": args.reverse_cl, "NG": args.reverse_ng},
             "max_wait": args.max_wait, "confirm_s": args.confirm_s, "cooldown_s": args.cooldown_s,
-            "stale_cap": args.stale_cap, "look_back": args.look_back, "slip": args.slip,
-            "maker_off": args.maker_off, "min_wave": args.min_wave, "max_hold": args.max_hold,
+            "stale_cap": args.stale_cap, "look_back": args.look_back, "min_wave": args.min_wave, "max_hold": args.max_hold,
             "settle_buffer": args.settle_buffer}
 
 
 # ---- selftest (leakage closure; tiny constructed arrays, no synthetic trades) ----------------------
 def selftest():
     ok = True
-    assert fee_cents(50) == 0 and fee_cents(0) == 0
-    print("  ok  no trade cost: fee_cents is 0 everywhere")
     ts = np.arange(20, dtype=float)
     p = 100.0 + np.cumsum(np.ones(20))
     z = np.zeros(20)
@@ -410,9 +382,7 @@ def main():
     ap.add_argument("--cooldown-s", type=float, default=180.0, help="intraday: min gap between entries (s)")
     ap.add_argument("--stale-cap", type=float, default=12.0, help="stand back if Kalshi already moved this many c")
     ap.add_argument("--look-back", type=float, default=180.0, help="stand-back reference lookback (s)")
-    ap.add_argument("--slip", type=float, default=1.0, help="adverse taker slippage per fill (c)")
-    ap.add_argument("--maker-off", type=float, default=1.0, help="maker haircut off the exact extreme (c)")
-    ap.add_argument("--min-wave", type=float, default=1.0, help="min favorable echo (c) for a maker fill")
+    ap.add_argument("--min-wave", type=float, default=1.0, help="min favorable echo (c) to qualify the extreme")
     ap.add_argument("--max-hold", type=float, default=3600.0, help="max hold (s), bounded before settle")
     ap.add_argument("--settle-buffer", type=float, default=1800.0, help="stop this many s before settle")
     ap.add_argument("--trig-sweep", action="store_true", help="release: EV-vs-trigger curve, per contract")
@@ -433,20 +403,10 @@ def main():
         print(f"trigger ${cfg['trigger_usd'][args.root]:.2f} confirm {args.confirm_s:.0f}s "
               f"cooldown {args.cooldown_s:.0f}s reverse-stop ${cfg['reverse_usd'][args.root]:.2f} (hold the trend)")
         print(f"{n_moves} sustained NYMEX moves -> {len(trades)} tradeable echoes (rest: no live ATM / stood back)")
-        if trades:
-            tk = np.array([t["pnl_taker"] for t in trades]); mk = np.array([t["pnl_maker"] for t in trades])
-            fill = 100 * np.mean([t["maker_filled"] for t in trades])
-            for nm, a, extra in [("taker", tk, ""), ("maker", mk, f" fill {fill:.0f}%")]:
-                print(f"  {nm:6} n={len(a):>2}  pos {100*np.mean(a>0):>3.0f}%  med {np.median(a):+5.1f}c  "
-                      f"mean {np.mean(a):+5.1f}c  sum {np.sum(a):+6.0f}c  "
-                      f"[p25 {np.percentile(a,25):+.0f}, p75 {np.percentile(a,75):+.0f}]{extra}")
-            if args.verbose:
-                print(f"\n{'t_entry':>8} {'dir':>3} {'atm':>22} {'entry':>5} {'ext':>5} {'wave':>5} "
-                      f"{'pnlT':>5} {'pnlM':>5} {'hold':>5}")
-                for t in trades:
-                    hh = dt.datetime.fromtimestamp(t["t_entry"], dt.timezone.utc).strftime("%H:%M:%S")
-                    print(f"{hh:>8} {t['dir']:>3} {t['atm']:>22} {t['entry_px']:>5} {t['ext']:>5} "
-                          f"{t['wave']:>5} {t['pnl_taker']:>5} {t['pnl_maker']:>5} {t['hold_used']:>5.0f}")
+        report(trades, ["dir"], "observed moves by direction")
+        if args.verbose:
+            for trade in trades:
+                print(trade)
         return
 
     # RELEASE mode (default)
@@ -454,15 +414,10 @@ def main():
     print(f"\nLAG JOIN (release) — {len(rows)} echo trades  (trigger CL=${args.trigger_cl:.2f} "
           f"NG=${args.trigger_ng:.3f}, reverse-stop CL=${args.reverse_cl:.2f} NG=${args.reverse_ng:.3f}; "
           f"ENTRY+HOLD+EXIT all NYMEX-driven, $/c)")
-    print("GROSS CENTS/contract (no trade cost); pnl_taker = exit at stop-fire mark; pnl_maker = exit at favorable extreme when wave >= min_wave")
+    print("GROSS CENTS/contract; gross_at_stop_cents = exit at stop-fire mark; gross_at_extreme_cents = exit at favorable extreme when wave >= min_wave")
     report(rows, ["root"], "per contract")
     report(rows, ["root", "scell"], "per contract x surprise cell")
     report(rows, ["root", "coiled"], "per contract x coiled/primed gate")
-    tk = np.array([r["pnl_taker"] for r in rows], float); mk = np.array([r["pnl_maker"] for r in rows], float)
-    print(f"\n[pooled footnote] taker med {np.median(tk):+.2f}c pos {100*np.mean(tk>0):.0f}% | "
-          f"maker med {np.median(mk):+.2f}c pos {100*np.mean(mk>0):.0f}% "
-          f"fill {100*np.mean([r['maker_filled'] for r in rows]):.0f}%")
-
     if args.trig_sweep:
         print("\n[trigger sweep — EV-vs-threshold, tuned PER CONTRACT in $ (Greg S87)]")
         grids = {"CL": (0.05, 0.10, 0.15, 0.20, 0.30, 0.50), "NG": (0.005, 0.01, 0.02, 0.03, 0.05, 0.08)}
@@ -472,11 +427,7 @@ def main():
                 rr = [r for r in run_release(dict(cfg, trigger_usd={**cfg["trigger_usd"], root: trig}))
                       if r["root"] == root]
                 if rr:
-                    tk = np.array([r["pnl_taker"] for r in rr]); mk = np.array([r["pnl_maker"] for r in rr])
-                    print(f"    trig>=${trig:>5.3f}  n={len(rr):>2}  "
-                          f"taker {np.median(tk):+5.1f}c/{100*np.mean(tk>0):>3.0f}%  "
-                          f"maker {np.median(mk):+5.1f}c/{100*np.mean(mk>0):>3.0f}%  "
-                          f"fill {100*np.mean([r['maker_filled'] for r in rr]):>3.0f}%")
+                    report(rr, ["dir"], f"trigger >= ${trig:.3f}")
 
 
 if __name__ == "__main__":
