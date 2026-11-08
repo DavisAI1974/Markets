@@ -439,14 +439,17 @@ all twelve criteria BM-01..BM-12 still need completion evidence; `docs/RUNTIME_O
 10. Re-baseline `browser-check.mjs` to the real dogfood card count; refresh or stop citing the stale dogfood
     receipts (BM-10, BM-11).
 
-### 7.7 Keep / drop recommendation
+### 7.7 Status (owner decision, 2026-11-08)
 
-KEEP, as the owner already decided, as an included Markets component with the status "scanner and viewer work on
-their own fixtures; not yet correct on Markets' import style; evidence states are bookkeeping, not proof". Measured
-reviewer value today: a navigable static map that found one real parse problem (`forecaster_month_pass.workflow.js`)
-and correctly surfaced its own stale receipts. Measured cost: BM-2 makes its connectivity claims wrong for the
-Markets tree until fixed. The optional trial (`buildmap_trial.py`) is harmless scaffolding and can stay; it should
-not be cited as integration evidence.
+BuildMap is a planned, included component of the Markets scientific workflow. It is NOT experimental and there is no
+keep/drop question; any earlier "optional" or "experimental" wording in the historical BuildMap documents is
+superseded by the owner's decision. What remains is testing: the scanner and viewer work on their own fixtures,
+are not yet correct on Markets' import style (BM-2), and their evidence states are bookkeeping rather than proof
+(7.3). Measured value today: a navigable static map that found one real parse problem
+(`forecaster_month_pass.workflow.js`) and correctly surfaced its own stale receipts. Measured cost: BM-2 makes its
+connectivity claims wrong for the Markets tree until fixed. `buildmap_trial.py` and its Node test are a scaffold
+that stays as part of the component; the scaffold must not be cited as integration evidence. The ten tests in 7.6
+are the path to trustworthy use on the real tree.
 
 ---
 
