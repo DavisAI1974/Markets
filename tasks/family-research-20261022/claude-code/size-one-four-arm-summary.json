@@ -1,0 +1,684 @@
+{
+  "episodes": 1012,
+  "flow_counts": {
+    "no_reduction": 601,
+    "fill_linked": 135,
+    "unlinked_reduction": 276
+  },
+  "next_size_quantiles": {
+    "min": 1,
+    "median": 10.0,
+    "max": 147
+  },
+  "next_gap_ticks": {
+    "1": 1010,
+    "2": 2
+  },
+  "baseline": {
+    "A|NEW_BEST": {
+      "episodes": 310,
+      "retreats": 105,
+      "recoveries": 203,
+      "improved": 2,
+      "still_open_at_entry": 93,
+      "retreats_after_entry": 43,
+      "recoveries_after_entry": 50,
+      "median_ms_to_first_end": 0.7728475
+    },
+    "A|STANDING_BEST_SHRANK": {
+      "episodes": 191,
+      "retreats": 134,
+      "recoveries": 56,
+      "improved": 1,
+      "still_open_at_entry": 65,
+      "retreats_after_entry": 34,
+      "recoveries_after_entry": 30,
+      "median_ms_to_first_end": 0.955178
+    },
+    "B|NEW_BEST": {
+      "episodes": 293,
+      "retreats": 90,
+      "recoveries": 203,
+      "improved": 0,
+      "still_open_at_entry": 116,
+      "retreats_after_entry": 49,
+      "recoveries_after_entry": 67,
+      "median_ms_to_first_end": 1.092267
+    },
+    "B|STANDING_BEST_SHRANK": {
+      "episodes": 218,
+      "retreats": 132,
+      "recoveries": 86,
+      "improved": 0,
+      "still_open_at_entry": 79,
+      "retreats_after_entry": 37,
+      "recoveries_after_entry": 42,
+      "median_ms_to_first_end": 1.1772235
+    }
+  },
+  "baseline_plus_flow": {
+    "A|NEW_BEST|fill_linked": {
+      "episodes": 1,
+      "retreats": 0,
+      "recoveries": 1,
+      "improved": 0,
+      "still_open_at_entry": 1,
+      "retreats_after_entry": 0,
+      "recoveries_after_entry": 1,
+      "median_ms_to_first_end": 3.744121
+    },
+    "A|NEW_BEST|no_reduction": {
+      "episodes": 309,
+      "retreats": 105,
+      "recoveries": 202,
+      "improved": 2,
+      "still_open_at_entry": 92,
+      "retreats_after_entry": 43,
+      "recoveries_after_entry": 49,
+      "median_ms_to_first_end": 0.772722
+    },
+    "A|STANDING_BEST_SHRANK|fill_linked": {
+      "episodes": 68,
+      "retreats": 54,
+      "recoveries": 13,
+      "improved": 1,
+      "still_open_at_entry": 15,
+      "retreats_after_entry": 8,
+      "recoveries_after_entry": 6,
+      "median_ms_to_first_end": 0.533882
+    },
+    "A|STANDING_BEST_SHRANK|unlinked_reduction": {
+      "episodes": 123,
+      "retreats": 80,
+      "recoveries": 43,
+      "improved": 0,
+      "still_open_at_entry": 50,
+      "retreats_after_entry": 26,
+      "recoveries_after_entry": 24,
+      "median_ms_to_first_end": 1.447241
+    },
+    "B|NEW_BEST|fill_linked": {
+      "episodes": 1,
+      "retreats": 1,
+      "recoveries": 0,
+      "improved": 0,
+      "still_open_at_entry": 1,
+      "retreats_after_entry": 1,
+      "recoveries_after_entry": 0,
+      "median_ms_to_first_end": 17.173757
+    },
+    "B|NEW_BEST|no_reduction": {
+      "episodes": 292,
+      "retreats": 89,
+      "recoveries": 203,
+      "improved": 0,
+      "still_open_at_entry": 115,
+      "retreats_after_entry": 48,
+      "recoveries_after_entry": 67,
+      "median_ms_to_first_end": 1.0845105
+    },
+    "B|STANDING_BEST_SHRANK|fill_linked": {
+      "episodes": 65,
+      "retreats": 50,
+      "recoveries": 15,
+      "improved": 0,
+      "still_open_at_entry": 14,
+      "retreats_after_entry": 8,
+      "recoveries_after_entry": 6,
+      "median_ms_to_first_end": 0.471394
+    },
+    "B|STANDING_BEST_SHRANK|unlinked_reduction": {
+      "episodes": 153,
+      "retreats": 82,
+      "recoveries": 71,
+      "improved": 0,
+      "still_open_at_entry": 65,
+      "retreats_after_entry": 29,
+      "recoveries_after_entry": 36,
+      "median_ms_to_first_end": 1.656535
+    }
+  },
+  "baseline_plus_book_next": {
+    "A|NEW_BEST|next_ge10": {
+      "episodes": 162,
+      "retreats": 48,
+      "recoveries": 112,
+      "improved": 2,
+      "still_open_at_entry": 44,
+      "retreats_after_entry": 16,
+      "recoveries_after_entry": 28,
+      "median_ms_to_first_end": 0.5614245
+    },
+    "A|NEW_BEST|next_lt10": {
+      "episodes": 148,
+      "retreats": 57,
+      "recoveries": 91,
+      "improved": 0,
+      "still_open_at_entry": 49,
+      "retreats_after_entry": 27,
+      "recoveries_after_entry": 22,
+      "median_ms_to_first_end": 0.8782355
+    },
+    "A|STANDING_BEST_SHRANK|next_ge10": {
+      "episodes": 131,
+      "retreats": 87,
+      "recoveries": 43,
+      "improved": 1,
+      "still_open_at_entry": 46,
+      "retreats_after_entry": 21,
+      "recoveries_after_entry": 24,
+      "median_ms_to_first_end": 1.008614
+    },
+    "A|STANDING_BEST_SHRANK|next_lt10": {
+      "episodes": 60,
+      "retreats": 47,
+      "recoveries": 13,
+      "improved": 0,
+      "still_open_at_entry": 19,
+      "retreats_after_entry": 13,
+      "recoveries_after_entry": 6,
+      "median_ms_to_first_end": 0.9037515
+    },
+    "B|NEW_BEST|next_ge10": {
+      "episodes": 141,
+      "retreats": 39,
+      "recoveries": 102,
+      "improved": 0,
+      "still_open_at_entry": 52,
+      "retreats_after_entry": 19,
+      "recoveries_after_entry": 33,
+      "median_ms_to_first_end": 1.024521
+    },
+    "B|NEW_BEST|next_lt10": {
+      "episodes": 152,
+      "retreats": 51,
+      "recoveries": 101,
+      "improved": 0,
+      "still_open_at_entry": 64,
+      "retreats_after_entry": 30,
+      "recoveries_after_entry": 34,
+      "median_ms_to_first_end": 1.1842915
+    },
+    "B|STANDING_BEST_SHRANK|next_ge10": {
+      "episodes": 139,
+      "retreats": 84,
+      "recoveries": 55,
+      "improved": 0,
+      "still_open_at_entry": 46,
+      "retreats_after_entry": 20,
+      "recoveries_after_entry": 26,
+      "median_ms_to_first_end": 1.172541
+    },
+    "B|STANDING_BEST_SHRANK|next_lt10": {
+      "episodes": 79,
+      "retreats": 48,
+      "recoveries": 31,
+      "improved": 0,
+      "still_open_at_entry": 33,
+      "retreats_after_entry": 17,
+      "recoveries_after_entry": 16,
+      "median_ms_to_first_end": 1.592153
+    }
+  },
+  "baseline_plus_book_prior_orders": {
+    "A|NEW_BEST|prior_orders_gt2": {
+      "episodes": 302,
+      "retreats": 102,
+      "recoveries": 198,
+      "improved": 2,
+      "still_open_at_entry": 91,
+      "retreats_after_entry": 42,
+      "recoveries_after_entry": 49,
+      "median_ms_to_first_end": 0.7737080000000001
+    },
+    "A|NEW_BEST|prior_orders_le2": {
+      "episodes": 8,
+      "retreats": 3,
+      "recoveries": 5,
+      "improved": 0,
+      "still_open_at_entry": 2,
+      "retreats_after_entry": 1,
+      "recoveries_after_entry": 1,
+      "median_ms_to_first_end": 0.568556
+    },
+    "A|STANDING_BEST_SHRANK|prior_orders_gt2": {
+      "episodes": 11,
+      "retreats": 10,
+      "recoveries": 1,
+      "improved": 0,
+      "still_open_at_entry": 2,
+      "retreats_after_entry": 1,
+      "recoveries_after_entry": 1,
+      "median_ms_to_first_end": 0.680663
+    },
+    "A|STANDING_BEST_SHRANK|prior_orders_le2": {
+      "episodes": 180,
+      "retreats": 124,
+      "recoveries": 55,
+      "improved": 1,
+      "still_open_at_entry": 63,
+      "retreats_after_entry": 33,
+      "recoveries_after_entry": 29,
+      "median_ms_to_first_end": 0.9796149999999999
+    },
+    "B|NEW_BEST|prior_orders_gt2": {
+      "episodes": 287,
+      "retreats": 89,
+      "recoveries": 198,
+      "improved": 0,
+      "still_open_at_entry": 114,
+      "retreats_after_entry": 49,
+      "recoveries_after_entry": 65,
+      "median_ms_to_first_end": 1.100628
+    },
+    "B|NEW_BEST|prior_orders_le2": {
+      "episodes": 6,
+      "retreats": 1,
+      "recoveries": 5,
+      "improved": 0,
+      "still_open_at_entry": 2,
+      "retreats_after_entry": 0,
+      "recoveries_after_entry": 2,
+      "median_ms_to_first_end": 0.64136
+    },
+    "B|STANDING_BEST_SHRANK|prior_orders_gt2": {
+      "episodes": 9,
+      "retreats": 8,
+      "recoveries": 1,
+      "improved": 0,
+      "still_open_at_entry": 2,
+      "retreats_after_entry": 1,
+      "recoveries_after_entry": 1,
+      "median_ms_to_first_end": 0.471394
+    },
+    "B|STANDING_BEST_SHRANK|prior_orders_le2": {
+      "episodes": 209,
+      "retreats": 124,
+      "recoveries": 85,
+      "improved": 0,
+      "still_open_at_entry": 77,
+      "retreats_after_entry": 36,
+      "recoveries_after_entry": 41,
+      "median_ms_to_first_end": 1.190654
+    }
+  },
+  "baseline_plus_both": {
+    "A|NEW_BEST|fill_linked|next_lt10": {
+      "episodes": 1,
+      "retreats": 0,
+      "recoveries": 1,
+      "improved": 0,
+      "still_open_at_entry": 1,
+      "retreats_after_entry": 0,
+      "recoveries_after_entry": 1,
+      "median_ms_to_first_end": 3.744121
+    },
+    "A|NEW_BEST|no_reduction|next_ge10": {
+      "episodes": 162,
+      "retreats": 48,
+      "recoveries": 112,
+      "improved": 2,
+      "still_open_at_entry": 44,
+      "retreats_after_entry": 16,
+      "recoveries_after_entry": 28,
+      "median_ms_to_first_end": 0.5614245
+    },
+    "A|NEW_BEST|no_reduction|next_lt10": {
+      "episodes": 147,
+      "retreats": 57,
+      "recoveries": 90,
+      "improved": 0,
+      "still_open_at_entry": 48,
+      "retreats_after_entry": 27,
+      "recoveries_after_entry": 21,
+      "median_ms_to_first_end": 0.853638
+    },
+    "A|STANDING_BEST_SHRANK|fill_linked|next_ge10": {
+      "episodes": 43,
+      "retreats": 32,
+      "recoveries": 10,
+      "improved": 1,
+      "still_open_at_entry": 9,
+      "retreats_after_entry": 3,
+      "recoveries_after_entry": 5,
+      "median_ms_to_first_end": 0.57437
+    },
+    "A|STANDING_BEST_SHRANK|fill_linked|next_lt10": {
+      "episodes": 25,
+      "retreats": 22,
+      "recoveries": 3,
+      "improved": 0,
+      "still_open_at_entry": 6,
+      "retreats_after_entry": 5,
+      "recoveries_after_entry": 1,
+      "median_ms_to_first_end": 0.382539
+    },
+    "A|STANDING_BEST_SHRANK|unlinked_reduction|next_ge10": {
+      "episodes": 88,
+      "retreats": 55,
+      "recoveries": 33,
+      "improved": 0,
+      "still_open_at_entry": 37,
+      "retreats_after_entry": 18,
+      "recoveries_after_entry": 19,
+      "median_ms_to_first_end": 1.410921
+    },
+    "A|STANDING_BEST_SHRANK|unlinked_reduction|next_lt10": {
+      "episodes": 35,
+      "retreats": 25,
+      "recoveries": 10,
+      "improved": 0,
+      "still_open_at_entry": 13,
+      "retreats_after_entry": 8,
+      "recoveries_after_entry": 5,
+      "median_ms_to_first_end": 1.477305
+    },
+    "B|NEW_BEST|fill_linked|next_ge10": {
+      "episodes": 1,
+      "retreats": 1,
+      "recoveries": 0,
+      "improved": 0,
+      "still_open_at_entry": 1,
+      "retreats_after_entry": 1,
+      "recoveries_after_entry": 0,
+      "median_ms_to_first_end": 17.173757
+    },
+    "B|NEW_BEST|no_reduction|next_ge10": {
+      "episodes": 140,
+      "retreats": 38,
+      "recoveries": 102,
+      "improved": 0,
+      "still_open_at_entry": 51,
+      "retreats_after_entry": 18,
+      "recoveries_after_entry": 33,
+      "median_ms_to_first_end": 1.0016255
+    },
+    "B|NEW_BEST|no_reduction|next_lt10": {
+      "episodes": 152,
+      "retreats": 51,
+      "recoveries": 101,
+      "improved": 0,
+      "still_open_at_entry": 64,
+      "retreats_after_entry": 30,
+      "recoveries_after_entry": 34,
+      "median_ms_to_first_end": 1.1842915
+    },
+    "B|STANDING_BEST_SHRANK|fill_linked|next_ge10": {
+      "episodes": 40,
+      "retreats": 30,
+      "recoveries": 10,
+      "improved": 0,
+      "still_open_at_entry": 8,
+      "retreats_after_entry": 3,
+      "recoveries_after_entry": 5,
+      "median_ms_to_first_end": 0.4089165
+    },
+    "B|STANDING_BEST_SHRANK|fill_linked|next_lt10": {
+      "episodes": 25,
+      "retreats": 20,
+      "recoveries": 5,
+      "improved": 0,
+      "still_open_at_entry": 6,
+      "retreats_after_entry": 5,
+      "recoveries_after_entry": 1,
+      "median_ms_to_first_end": 0.531977
+    },
+    "B|STANDING_BEST_SHRANK|unlinked_reduction|next_ge10": {
+      "episodes": 99,
+      "retreats": 54,
+      "recoveries": 45,
+      "improved": 0,
+      "still_open_at_entry": 38,
+      "retreats_after_entry": 17,
+      "recoveries_after_entry": 21,
+      "median_ms_to_first_end": 1.563815
+    },
+    "B|STANDING_BEST_SHRANK|unlinked_reduction|next_lt10": {
+      "episodes": 54,
+      "retreats": 28,
+      "recoveries": 26,
+      "improved": 0,
+      "still_open_at_entry": 27,
+      "retreats_after_entry": 12,
+      "recoveries_after_entry": 15,
+      "median_ms_to_first_end": 3.7692335
+    }
+  },
+  "standing_only_both_prior_orders": {
+    "A|fill_linked|prior_orders_gt2": {
+      "episodes": 11,
+      "retreats": 10,
+      "recoveries": 1,
+      "improved": 0,
+      "still_open_at_entry": 2,
+      "retreats_after_entry": 1,
+      "recoveries_after_entry": 1,
+      "median_ms_to_first_end": 0.680663
+    },
+    "A|fill_linked|prior_orders_le2": {
+      "episodes": 57,
+      "retreats": 44,
+      "recoveries": 12,
+      "improved": 1,
+      "still_open_at_entry": 13,
+      "retreats_after_entry": 7,
+      "recoveries_after_entry": 5,
+      "median_ms_to_first_end": 0.495857
+    },
+    "A|unlinked_reduction|prior_orders_le2": {
+      "episodes": 123,
+      "retreats": 80,
+      "recoveries": 43,
+      "improved": 0,
+      "still_open_at_entry": 50,
+      "retreats_after_entry": 26,
+      "recoveries_after_entry": 24,
+      "median_ms_to_first_end": 1.447241
+    },
+    "B|fill_linked|prior_orders_gt2": {
+      "episodes": 9,
+      "retreats": 8,
+      "recoveries": 1,
+      "improved": 0,
+      "still_open_at_entry": 2,
+      "retreats_after_entry": 1,
+      "recoveries_after_entry": 1,
+      "median_ms_to_first_end": 0.471394
+    },
+    "B|fill_linked|prior_orders_le2": {
+      "episodes": 56,
+      "retreats": 42,
+      "recoveries": 14,
+      "improved": 0,
+      "still_open_at_entry": 12,
+      "retreats_after_entry": 7,
+      "recoveries_after_entry": 5,
+      "median_ms_to_first_end": 0.47946599999999995
+    },
+    "B|unlinked_reduction|prior_orders_le2": {
+      "episodes": 153,
+      "retreats": 82,
+      "recoveries": 71,
+      "improved": 0,
+      "still_open_at_entry": 65,
+      "retreats_after_entry": 29,
+      "recoveries_after_entry": 36,
+      "median_ms_to_first_end": 1.656535
+    },
+    "new_best": {
+      "episodes": 603,
+      "retreats": 195,
+      "recoveries": 406,
+      "improved": 2,
+      "still_open_at_entry": 209,
+      "retreats_after_entry": 92,
+      "recoveries_after_entry": 117,
+      "median_ms_to_first_end": 0.902833
+    }
+  },
+  "survivor_refresh": {
+    "A|NEW_BEST|no_recorded_refresh": {
+      "episodes": 310,
+      "retreats": 105,
+      "recoveries": 203,
+      "improved": 2,
+      "still_open_at_entry": 93,
+      "retreats_after_entry": 43,
+      "recoveries_after_entry": 50,
+      "median_ms_to_first_end": 0.7728475
+    },
+    "A|STANDING_BEST_SHRANK|no_recorded_refresh": {
+      "episodes": 189,
+      "retreats": 133,
+      "recoveries": 55,
+      "improved": 1,
+      "still_open_at_entry": 64,
+      "retreats_after_entry": 34,
+      "recoveries_after_entry": 29,
+      "median_ms_to_first_end": 0.923824
+    },
+    "A|STANDING_BEST_SHRANK|refreshed_before": {
+      "episodes": 2,
+      "retreats": 1,
+      "recoveries": 1,
+      "improved": 0,
+      "still_open_at_entry": 1,
+      "retreats_after_entry": 0,
+      "recoveries_after_entry": 1,
+      "median_ms_to_first_end": 3.6526515
+    },
+    "B|NEW_BEST|no_recorded_refresh": {
+      "episodes": 293,
+      "retreats": 90,
+      "recoveries": 203,
+      "improved": 0,
+      "still_open_at_entry": 116,
+      "retreats_after_entry": 49,
+      "recoveries_after_entry": 67,
+      "median_ms_to_first_end": 1.092267
+    },
+    "B|STANDING_BEST_SHRANK|no_recorded_refresh": {
+      "episodes": 211,
+      "retreats": 126,
+      "recoveries": 85,
+      "improved": 0,
+      "still_open_at_entry": 76,
+      "retreats_after_entry": 35,
+      "recoveries_after_entry": 41,
+      "median_ms_to_first_end": 1.181906
+    },
+    "B|STANDING_BEST_SHRANK|refreshed_before": {
+      "episodes": 7,
+      "retreats": 6,
+      "recoveries": 1,
+      "improved": 0,
+      "still_open_at_entry": 3,
+      "retreats_after_entry": 2,
+      "recoveries_after_entry": 1,
+      "median_ms_to_first_end": 0.946111
+    }
+  },
+  "recorded_t_vs_fill_link": {
+    "A|NEW_BEST|T=False|no_reduction": {
+      "episodes": 307,
+      "retreats": 104,
+      "recoveries": 201,
+      "improved": 2,
+      "still_open_at_entry": 91,
+      "retreats_after_entry": 42,
+      "recoveries_after_entry": 49,
+      "median_ms_to_first_end": 0.772722
+    },
+    "A|NEW_BEST|T=True|fill_linked": {
+      "episodes": 1,
+      "retreats": 0,
+      "recoveries": 1,
+      "improved": 0,
+      "still_open_at_entry": 1,
+      "retreats_after_entry": 0,
+      "recoveries_after_entry": 1,
+      "median_ms_to_first_end": 3.744121
+    },
+    "A|NEW_BEST|T=True|no_reduction": {
+      "episodes": 2,
+      "retreats": 1,
+      "recoveries": 1,
+      "improved": 0,
+      "still_open_at_entry": 1,
+      "retreats_after_entry": 1,
+      "recoveries_after_entry": 0,
+      "median_ms_to_first_end": 1.55633
+    },
+    "A|STANDING_BEST_SHRANK|T=False|unlinked_reduction": {
+      "episodes": 123,
+      "retreats": 80,
+      "recoveries": 43,
+      "improved": 0,
+      "still_open_at_entry": 50,
+      "retreats_after_entry": 26,
+      "recoveries_after_entry": 24,
+      "median_ms_to_first_end": 1.447241
+    },
+    "A|STANDING_BEST_SHRANK|T=True|fill_linked": {
+      "episodes": 68,
+      "retreats": 54,
+      "recoveries": 13,
+      "improved": 1,
+      "still_open_at_entry": 15,
+      "retreats_after_entry": 8,
+      "recoveries_after_entry": 6,
+      "median_ms_to_first_end": 0.533882
+    },
+    "B|NEW_BEST|T=False|no_reduction": {
+      "episodes": 283,
+      "retreats": 83,
+      "recoveries": 200,
+      "improved": 0,
+      "still_open_at_entry": 109,
+      "retreats_after_entry": 44,
+      "recoveries_after_entry": 65,
+      "median_ms_to_first_end": 1.074117
+    },
+    "B|NEW_BEST|T=True|fill_linked": {
+      "episodes": 1,
+      "retreats": 1,
+      "recoveries": 0,
+      "improved": 0,
+      "still_open_at_entry": 1,
+      "retreats_after_entry": 1,
+      "recoveries_after_entry": 0,
+      "median_ms_to_first_end": 17.173757
+    },
+    "B|NEW_BEST|T=True|no_reduction": {
+      "episodes": 9,
+      "retreats": 6,
+      "recoveries": 3,
+      "improved": 0,
+      "still_open_at_entry": 6,
+      "retreats_after_entry": 4,
+      "recoveries_after_entry": 2,
+      "median_ms_to_first_end": 1.653939
+    },
+    "B|STANDING_BEST_SHRANK|T=False|unlinked_reduction": {
+      "episodes": 153,
+      "retreats": 82,
+      "recoveries": 71,
+      "improved": 0,
+      "still_open_at_entry": 65,
+      "retreats_after_entry": 29,
+      "recoveries_after_entry": 36,
+      "median_ms_to_first_end": 1.656535
+    },
+    "B|STANDING_BEST_SHRANK|T=True|fill_linked": {
+      "episodes": 65,
+      "retreats": 50,
+      "recoveries": 15,
+      "improved": 0,
+      "still_open_at_entry": 14,
+      "retreats_after_entry": 8,
+      "recoveries_after_entry": 6,
+      "median_ms_to_first_end": 0.471394
+    }
+  },
+  "note": "All predictors are as of the onset close. Retreats among episodes still open at the assumed 1 ms entry are the actionable subset; the all-episode counts describe the mechanism."
+}

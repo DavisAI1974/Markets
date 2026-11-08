@@ -1,0 +1,6 @@
+{
+  "instance375": {"instance": 375, "family_id": "ow-a76c2c9727ecf53400a6", "start_recv_ns": 1697634552081390598, "cutoff_ns": 1697634552081390597,
+                  "cursor_cap": 303655, "pre_input_cursor": 303645, "pre_bid_raw": 3152000000, "pre_ask_raw": 3154000000},
+  "instance391": {"instance": 391, "family_id": "ow-01b606e004de7b1d9a51", "start_recv_ns": 1697634840878613141, "cutoff_ns": 1697634840878613140,
+                  "cursor_cap": 319232, "pre_input_cursor": 319188, "pre_bid_raw": 3139000000, "pre_ask_raw": 3140000000}
+}
