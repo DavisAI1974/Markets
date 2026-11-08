@@ -7,3 +7,4 @@ Read [Reading trade charts and testing market behavior](reading-trade-charts-and
 - Treat strike concentration as a separate hypothesis requiring options evidence available at the time for the matching underlying and expiry.
 - Keep all four dates as discovery. Record October 2 and 17 as partial. Preserve contrary cases and distinguish historical signal decisions, scored outcomes, and prospective simulator execution.
 - Investigate the order-level mechanism and what was observable before the outcome before drafting a strategy. Use the [October 18 mechanism audit](why-october18-touch-behaved-differently.md) for the first cohort and the 99-plane and 13-data-point crosswalk.
+- Use the [prebirth, dipole and exhaustion log](october18-prebirth-and-exhaustion-log.md) for timing and forecast research. Keep candidate availability, terminal phases, fresh flow, and rolling flow distinct.

@@ -1,0 +1,267 @@
+{
+  "close_pairs": {
+    "matching": {
+      "candidate_next_print_group": 3980,
+      "candidate_opportunities": 63274,
+      "expected_using_matched_reference": 4576.951034402359,
+      "strata": [
+        "UTC hour",
+        "current group has a print",
+        "quoted spread raw"
+      ]
+    },
+    "midpoint": {
+      "falling_touch": {
+        "agree": 2173,
+        "flat": 58739,
+        "no_unique_call": 521124,
+        "oppose": 1557
+      },
+      "queue_imbalance_sign": {
+        "agree": 25384,
+        "flat": 502947,
+        "no_unique_call": 47552,
+        "oppose": 7710
+      }
+    },
+    "next_print_lead_ns": {
+      "median": 365853,
+      "minimum": 0,
+      "target_groups": 29797,
+      "zero_lead": 63
+    },
+    "skips": {
+      "pair_outside_scope_or_boundary": 94
+    },
+    "unconditional": [
+      {
+        "current_group_has_print": false,
+        "falling_touch": false,
+        "next_print_group": 22312,
+        "opportunities": 498417
+      },
+      {
+        "current_group_has_print": false,
+        "falling_touch": true,
+        "next_print_group": 2408,
+        "opportunities": 55379
+      },
+      {
+        "current_group_has_print": true,
+        "falling_touch": false,
+        "next_print_group": 3505,
+        "opportunities": 21902
+      },
+      {
+        "current_group_has_print": true,
+        "falling_touch": true,
+        "next_print_group": 1572,
+        "opportunities": 7895
+      }
+    ]
+  },
+  "exhaustion_at_strict_prior_close": [
+    {
+      "age": "beyond_last_gap",
+      "gap_trend": "narrowing",
+      "outcomes": {
+        "RETREATED": 87,
+        "SIZE_RECOVERED_AT_SAME_PRICE": 69
+      },
+      "side": "A",
+      "source": "all_print_groups"
+    },
+    {
+      "age": "within_last_gap",
+      "gap_trend": "narrowing",
+      "outcomes": {
+        "IMPROVED": 1,
+        "RETREATED": 46,
+        "SIZE_RECOVERED_AT_SAME_PRICE": 39
+      },
+      "side": "A",
+      "source": "all_print_groups"
+    },
+    {
+      "age": "beyond_last_gap",
+      "gap_trend": "widening",
+      "outcomes": {
+        "IMPROVED": 1,
+        "RETREATED": 44,
+        "SIZE_RECOVERED_AT_SAME_PRICE": 51
+      },
+      "side": "A",
+      "source": "all_print_groups"
+    },
+    {
+      "age": "within_last_gap",
+      "gap_trend": "widening",
+      "outcomes": {
+        "IMPROVED": 1,
+        "RETREATED": 62,
+        "SIZE_RECOVERED_AT_SAME_PRICE": 100
+      },
+      "side": "A",
+      "source": "all_print_groups"
+    },
+    {
+      "age": "beyond_last_gap",
+      "gap_trend": "narrowing",
+      "outcomes": {
+        "RETREATED": 72,
+        "SIZE_RECOVERED_AT_SAME_PRICE": 98
+      },
+      "side": "B",
+      "source": "all_print_groups"
+    },
+    {
+      "age": "within_last_gap",
+      "gap_trend": "narrowing",
+      "outcomes": {
+        "RETREATED": 26,
+        "SIZE_RECOVERED_AT_SAME_PRICE": 44
+      },
+      "side": "B",
+      "source": "all_print_groups"
+    },
+    {
+      "age": "beyond_last_gap",
+      "gap_trend": "widening",
+      "outcomes": {
+        "RETREATED": 39,
+        "SIZE_RECOVERED_AT_SAME_PRICE": 46
+      },
+      "side": "B",
+      "source": "all_print_groups"
+    },
+    {
+      "age": "within_last_gap",
+      "gap_trend": "widening",
+      "outcomes": {
+        "RETREATED": 85,
+        "SIZE_RECOVERED_AT_SAME_PRICE": 101
+      },
+      "side": "B",
+      "source": "all_print_groups"
+    },
+    {
+      "age": "insufficient_history",
+      "gap_trend": "insufficient_history",
+      "outcomes": {
+        "RETREATED": 4,
+        "SIZE_RECOVERED_AT_SAME_PRICE": 4
+      },
+      "side": "A",
+      "source": "known_attacking_side_at_touch_price"
+    },
+    {
+      "age": "beyond_last_gap",
+      "gap_trend": "narrowing",
+      "outcomes": {
+        "IMPROVED": 1,
+        "RETREATED": 75,
+        "SIZE_RECOVERED_AT_SAME_PRICE": 97
+      },
+      "side": "A",
+      "source": "known_attacking_side_at_touch_price"
+    },
+    {
+      "age": "within_last_gap",
+      "gap_trend": "narrowing",
+      "outcomes": {
+        "RETREATED": 40,
+        "SIZE_RECOVERED_AT_SAME_PRICE": 23
+      },
+      "side": "A",
+      "source": "known_attacking_side_at_touch_price"
+    },
+    {
+      "age": "beyond_last_gap",
+      "gap_trend": "widening",
+      "outcomes": {
+        "IMPROVED": 2,
+        "RETREATED": 42,
+        "SIZE_RECOVERED_AT_SAME_PRICE": 58
+      },
+      "side": "A",
+      "source": "known_attacking_side_at_touch_price"
+    },
+    {
+      "age": "within_last_gap",
+      "gap_trend": "widening",
+      "outcomes": {
+        "RETREATED": 78,
+        "SIZE_RECOVERED_AT_SAME_PRICE": 77
+      },
+      "side": "A",
+      "source": "known_attacking_side_at_touch_price"
+    },
+    {
+      "age": "insufficient_history",
+      "gap_trend": "insufficient_history",
+      "outcomes": {
+        "RETREATED": 1,
+        "SIZE_RECOVERED_AT_SAME_PRICE": 2
+      },
+      "side": "B",
+      "source": "known_attacking_side_at_touch_price"
+    },
+    {
+      "age": "beyond_last_gap",
+      "gap_trend": "narrowing",
+      "outcomes": {
+        "RETREATED": 80,
+        "SIZE_RECOVERED_AT_SAME_PRICE": 118
+      },
+      "side": "B",
+      "source": "known_attacking_side_at_touch_price"
+    },
+    {
+      "age": "within_last_gap",
+      "gap_trend": "narrowing",
+      "outcomes": {
+        "RETREATED": 31,
+        "SIZE_RECOVERED_AT_SAME_PRICE": 26
+      },
+      "side": "B",
+      "source": "known_attacking_side_at_touch_price"
+    },
+    {
+      "age": "beyond_last_gap",
+      "gap_trend": "widening",
+      "outcomes": {
+        "RETREATED": 36,
+        "SIZE_RECOVERED_AT_SAME_PRICE": 50
+      },
+      "side": "B",
+      "source": "known_attacking_side_at_touch_price"
+    },
+    {
+      "age": "within_last_gap",
+      "gap_trend": "widening",
+      "outcomes": {
+        "RETREATED": 74,
+        "SIZE_RECOVERED_AT_SAME_PRICE": 93
+      },
+      "side": "B",
+      "source": "known_attacking_side_at_touch_price"
+    }
+  ],
+  "instrument_id": 150611,
+  "pinned_inputs": "c7740c6e9ce35bb4a3abeb30c7cdee2470fbd1af",
+  "retained_dipole_overlap": {
+    "all_prints": 30739,
+    "birth_label_before_print": 17845,
+    "candidate_clock_before_print": 6639,
+    "completed_path_available_by_prior_eligible_close": 0,
+    "completed_path_clock_and_cursor_before_print": 0,
+    "completed_path_clock_before_print": 0,
+    "linked_prints": 14699,
+    "links": 17845,
+    "paths": 862,
+    "prints_with_candidate_clock_before": 5426,
+    "prints_with_full_path_before": 0
+  },
+  "scope": "October 18 discovery diagnostics with completed touch and print inputs",
+  "trade_date": "20231018"
+}

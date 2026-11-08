@@ -8,6 +8,8 @@ misses and unavailable inputs. Keep original group and cursor coordinates.
 
 Use the [trade chart and signal research guide](reading-trade-charts-and-signals.md) to interpret event sequences, measure the moves that follow, and define replay and paper-test comparisons.
 
+The [prebirth, dipole and exhaustion research log](october18-prebirth-and-exhaustion-log.md) records strict-prior signal checks and quantitative methods for the lifecycle study.
+
 ## What to watch across all four dates
 
 Describe the ordered behavior at the touch and link the observations that
