@@ -3641,7 +3641,9 @@ class Session:
                         resume_checkpoint=getattr(self, 'native_resume_checkpoint', None),
                         reconstruct_missing=getattr(self, 'native_reconstruct_missing', False),
                         opening_adapter_state=opening_adapter_state, opening_book=opening_book,
-                        save_requested=save_requested, recovery=recovery)
+                        save_requested=save_requested, recovery=recovery,
+                        ledger_readback=(self.source_binding or {}).get('schema') !=
+                            'FRANKIE_EXPERIMENT_DAY_CALCULATION_SOURCE_V1')
             if recovery:
                 receipt_path = Path(run['result']['path']).parent / 'receipt.json'
                 artifacts = [dict(path=str(receipt_path), **witness(receipt_path)), run['result']]
