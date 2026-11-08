@@ -1,0 +1,97 @@
+{
+  "session": "20231018",
+  "original_trades_retained": 30739,
+  "observed_books": 22194,
+  "source_book_file": "all-22194-window-local-liquidity-books.jsonl.gz",
+  "entry_delay_ns": 1000000,
+  "hold_seconds": [
+    1,
+    5,
+    30
+  ],
+  "results_by_side": {
+    "B": {
+      "signals": 1438,
+      "thinning_boundaries": {
+        "RETREATED_BEFORE_ONE": 308,
+        "IMPROVED_BEFORE_ONE": 728,
+        "REACHED_ONE_AT_SAME_PRICE": 400,
+        "WINDOW_CENSORED": 2
+      },
+      "outcomes": {
+        "1": {
+          "OBSERVED": 1438,
+          "signed_twice_midpoint_change_raw_flat": 566,
+          "cross_spread_pnl_raw_negative": 1217,
+          "signed_twice_midpoint_change_raw_positive": 422,
+          "signed_twice_midpoint_change_raw_negative": 450,
+          "cross_spread_pnl_raw_flat": 159,
+          "cross_spread_pnl_raw_positive": 62
+        },
+        "5": {
+          "OBSERVED": 1433,
+          "signed_twice_midpoint_change_raw_flat": 282,
+          "cross_spread_pnl_raw_negative": 986,
+          "signed_twice_midpoint_change_raw_negative": 545,
+          "signed_twice_midpoint_change_raw_positive": 606,
+          "cross_spread_pnl_raw_flat": 243,
+          "cross_spread_pnl_raw_positive": 204,
+          "EXIT_CENSORED": 5
+        },
+        "30": {
+          "OBSERVED": 1397,
+          "signed_twice_midpoint_change_raw_negative": 537,
+          "cross_spread_pnl_raw_negative": 777,
+          "signed_twice_midpoint_change_raw_flat": 148,
+          "signed_twice_midpoint_change_raw_positive": 712,
+          "cross_spread_pnl_raw_flat": 228,
+          "cross_spread_pnl_raw_positive": 392,
+          "EXIT_CENSORED": 41
+        }
+      }
+    },
+    "A": {
+      "signals": 1412,
+      "thinning_boundaries": {
+        "IMPROVED_BEFORE_ONE": 606,
+        "RETREATED_BEFORE_ONE": 357,
+        "REACHED_ONE_AT_SAME_PRICE": 444,
+        "WINDOW_CENSORED": 5
+      },
+      "outcomes": {
+        "1": {
+          "OBSERVED": 1412,
+          "signed_twice_midpoint_change_raw_flat": 532,
+          "cross_spread_pnl_raw_negative": 1149,
+          "signed_twice_midpoint_change_raw_negative": 397,
+          "signed_twice_midpoint_change_raw_positive": 483,
+          "cross_spread_pnl_raw_positive": 63,
+          "cross_spread_pnl_raw_flat": 200
+        },
+        "5": {
+          "OBSERVED": 1398,
+          "signed_twice_midpoint_change_raw_flat": 238,
+          "cross_spread_pnl_raw_negative": 1024,
+          "signed_twice_midpoint_change_raw_positive": 568,
+          "cross_spread_pnl_raw_flat": 211,
+          "cross_spread_pnl_raw_positive": 163,
+          "signed_twice_midpoint_change_raw_negative": 592,
+          "EXIT_CENSORED": 14
+        },
+        "30": {
+          "OBSERVED": 1344,
+          "signed_twice_midpoint_change_raw_positive": 516,
+          "cross_spread_pnl_raw_positive": 287,
+          "cross_spread_pnl_raw_flat": 151,
+          "cross_spread_pnl_raw_negative": 906,
+          "signed_twice_midpoint_change_raw_flat": 130,
+          "signed_twice_midpoint_change_raw_negative": 698,
+          "EXIT_CENSORED": 68
+        }
+      }
+    }
+  },
+  "dipole_use": "RESEARCH_CONTEXT_ONLY_NO_STAGE_OR_CLASSROOM_LABEL_USED_FOR_SIGNAL_OR_ENTRY",
+  "semantic_coverage": "NOT_PASSED",
+  "mlp_reproducibility": "UNRESOLVED"
+}
