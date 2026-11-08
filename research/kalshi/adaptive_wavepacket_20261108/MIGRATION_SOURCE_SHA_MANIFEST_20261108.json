@@ -5,10 +5,10 @@
   "destination_repository": "DavisAI1974/Markets",
   "destination_branch": "research/markets-adaptive-wavepacket-migration-20261108",
   "source_total_files": 133,
-  "exact_matched_count": 131,
-  "pending_count": 2,
+  "exact_matched_count": 133,
+  "pending_count": 0,
   "sha_mismatch_count": 0,
-  "generated_state": "TRANSFER_IN_PROGRESS_BINARY_REPORTS_PENDING",
+  "generated_state": "ALL_133_SOURCE_BLOBS_EXACT_MATCH_PENDING_OWNER_MIGRATION_COMPLETE_DECLARATION",
   "scope_note": "Byte-for-byte original Git blob identity in nested Markets snapshot; not independent scientific validation.",
   "files": [
     {
@@ -592,16 +592,16 @@
       "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/docs/reports/BuildMap_Work_Completed_Remaining_and_Additions_20261021.docx",
       "size_bytes": 43549,
       "source_blob_sha": "f5c9b474c2bee3a3d97a76e1d836b828b597b088",
-      "destination_blob_sha": null,
-      "status": "NOT_YET_TRANSFERRED"
+      "destination_blob_sha": "f5c9b474c2bee3a3d97a76e1d836b828b597b088",
+      "status": "EXACT_MATCH"
     },
     {
       "source_path": "docs/reports/BuildMap_Work_Completed_Remaining_and_Additions_20261021.pdf",
       "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/docs/reports/BuildMap_Work_Completed_Remaining_and_Additions_20261021.pdf",
       "size_bytes": 42743,
       "source_blob_sha": "18c7e60928244408768e6bd2a76a1673d2c2b236",
-      "destination_blob_sha": null,
-      "status": "NOT_YET_TRANSFERRED"
+      "destination_blob_sha": "18c7e60928244408768e6bd2a76a1673d2c2b236",
+      "status": "EXACT_MATCH"
     },
     {
       "source_path": "package-lock.json",
@@ -1075,5 +1075,6 @@
       "destination_blob_sha": "a2e4a0ae2ea8224abe72cc7f02dde7460cbc491e",
       "status": "EXACT_MATCH"
     }
-  ]
+  ],
+  "binary_reports_note": "2026-11-08: the two binary reports were copied byte-for-byte from the pinned BuildMap commit via git blob extraction and verified against source_blob_sha. Completion declaration remains the owner call."
 }

@@ -31,3 +31,11 @@ The linked [full per-file migration manifest](MIGRATION_SOURCE_SHA_MANIFEST_2026
 2. Perform relocated, read-only test audit in the snapshot directory; previous BuildMap CI receipts certify **source branch only**, not Markets cross-repo integration.
 3. Build the Markets-specific scientific interface plan and test matrix for Frankie, native market data, BuildMap evidence inspection, signed receipts, real conditioning/Neumann/causal controls and no scientific evidence loss.
 4. Publish an explicit final migration disposition and tests-to-finish inventory before requesting a final architecture verdict or any integration work.
+
+## Addendum 2026-11-08 (Claude Code): binary reports copied
+
+Both binary reports were extracted by git blob id from the pinned BuildMap commit `8b4295dcb4044a6e4df4b7dbad897a81348fe6e2`
+(read-only clone) and placed at `buildmap_source_snapshot/docs/reports/`. Recomputed destination blob SHAs:
+`f5c9b474c2bee3a3d97a76e1d836b828b597b088` (docx) and `18c7e60928244408768e6bd2a76a1673d2c2b236` (pdf), equal to the
+manifest source SHAs. The manifest now records 133 of 133 EXACT_MATCH, 0 pending, 0 mismatch. The explicit
+`MIGRATION_COMPLETE` declaration remains the owner's call; this addendum records the transfer only.
