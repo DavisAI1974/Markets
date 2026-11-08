@@ -6,6 +6,27 @@ The [November 8 execution update](runpod/discovery-execution-20261108.md) contro
 
 Use the [trade chart and signal research guide](reading-trade-charts-and-signals.md) to interpret event sequences, measure the moves that follow, and define replay and paper-test comparisons.
 
+## Standing handoff for the first paper phase
+
+The first paper phase is discovery. Its purpose is to learn **what works,
+what fails, under which conditions, and why**. Carry every discovery,
+finding, signal, counterexample and strategy hypothesis forward. A failed
+or flat instance is evidence about that case and its conditions. Preserve
+the idea, its original version and the result for future comparisons.
+
+Log what the market did, what was observable at the decision, what the
+simulator did, and what remains unexplained. Keep unfavorable, missed,
+ambiguous and unavailable cases. The intended orchestrator will use
+the recorded conditions and evidence to decide which candidates are
+worth considering or testing in the current setup. It should record its
+reason and use evidence available at the decision. A candidate can stay
+in the register while its inputs or simulator setup are held.
+
+Treat a candidate as noise only when evidence supports that judgment for
+a defined scope. Record the comparison, controls, limits and reason, and
+keep the original history. Keep the agreed paper-ticket requirements in
+effect. See the [paper discovery register](october-discovery-log.md#paper-discovery-register).
+
 ## What the earlier sessions established
 
 The relevant Work chats, including **Assembly fitting update** and **Planning Options Review**, record the audit of the approximately 1.59 million planned Search selections. Sampled groups included order IDs and arbitrary saved list positions. That number was a count of overlapping selections in an old work plan. Later discussions distinguished it from both pair-slot estimates and actual calculations. The family research used a separate SQLite-to-Julia route. The user left old Search unchanged.

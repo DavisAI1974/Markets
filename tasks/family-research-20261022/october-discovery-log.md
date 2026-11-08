@@ -164,6 +164,27 @@ of its available session.
 · [Decision runner](../../research/kalshi/adaptive_wavepacket_20261108/markets_bridge/discovery_touch_print.py)
 · [Standalone inputs](../../research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/october18-standalone-inputs/groups.jsonl.gz)
 
+## Paper discovery register
+
+Keep every idea and every result in the register. Use the paper phase to
+learn how behavior, timing, market conditions and execution interact.
+
+| Keep | Record |
+| --- | --- |
+| Discovery, finding, signal or strategy hypothesis | Stable ID and version, original observation and source links, the behavior it describes, and the conditions where it might apply |
+| Each historical or paper instance | Date, contract, setup, exact decision and available evidence, later market path, simulator action and fill, miss or rejection |
+| Interpretation | What worked, what failed, why the evidence supports that explanation, rival explanations, and what still needs checking |
+| Orchestrator decision | Which candidates it considered, which present conditions matched, unavailable inputs, and the reason it selected, deferred or skipped a test |
+| Noise judgment | Defined scope, comparison and controls, evidence supporting the judgment, and the preserved original history |
+
+Distinguish candidate status from an individual outcome. Adverse, flat,
+ambiguous and execution-limited tests stay attached to the same version.
+Compare the idea again when its conditions recur. A noise finding applies
+to the scope supported by the evidence and stays in the log. This register
+feeds the orchestrator's contextual selection. The paper-test queue
+records the agreed trigger, side, order type, size, exit and environment
+before a simulator test.
+
 ## Paper-test queue
 
 The logged signals are historical discovery candidates. The Git evidence
