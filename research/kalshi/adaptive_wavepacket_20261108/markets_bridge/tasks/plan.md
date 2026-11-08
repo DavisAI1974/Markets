@@ -82,6 +82,17 @@ The pinned sealed journal is the other recovery route. It is 8,824,270,848 bytes
 
 Verify the bytes and opening state. The raw route applies the first 841,601 October 17 records to opening state, then journals the 17,375-record October 17 tail plus the first 754,412 October 18 records. Reconcile 771,787 source records and 583,688 completed groups, exact instrument, native group continuity, clocks and cursors. Compare overlapping original saved books and prints, and keep any disagreements visible. Audit observed zero versus unavailable flow and require the as-of timing and strictly earlier calibration inputs before admitting full-flow results. Only run new discovery scores after coverage is verified.
 
+## Databento fallback for both sessions
+
+The pinned acquisition used `GLBX.MDP3`, continuous symbol `NG.v.0` (volume rank zero), `mbo`, DBN encoding, zstd compression and daily splitting. Request only the two windows below. [Original acquisition workflow](https://github.com/DavisAI1974/Markets/blob/93895487c199b1e486d5407f9e103a0964903d2d/.github/workflows/ng_historical_mbo_5y_to_s3_20260820.yml) · [Databento batch download](https://databento.com/docs/portal/batch-download)
+
+| Session | Inclusive UTC start | Exclusive UTC end | Daily members |
+| --- | --- | --- | --- |
+| October 3 | 2023-10-02 00:00 | 2023-10-04 00:00 | October 2 and 3 |
+| October 18 | 2023-10-17 00:00 | 2023-10-19 00:00 | October 17 and 18 |
+
+The prior UTC day provides opening-state warm-up and the first part of each target session. Check the signed-in portal estimate before submitting. Preserve request metadata, condition and symbol mapping with the files. Cost and account entitlement are pending. Check all four files against their pinned manifests. If the new batch differs, record its own provenance and verify contract mapping, native timestamps, sequence and session boundaries plus replay reconciliation before admitting it as a new source version. Keep requests and verification in Git. Store tape in a repository-backed location consistent with its distribution rights. [October 3 manifest](https://github.com/DavisAI1974/Markets/blob/93895487c199b1e486d5407f9e103a0964903d2d/research/kalshi/frankie_boss/blocks/BLOCK_20231003_SOURCE_MANIFEST.json) · [Databento request parameters](https://databento.com/docs/api-historical/batch)
+
 ## October 3 and October 18 discovery evidence
 
 October 3, 2023 is a Tuesday trading session. The pinned tape includes the opening segment after the Monday, October 2 21:00 UTC halt. Earlier records reconstruct the opening state. Obtain and verify the pinned sealed journal or both original raw tape members before running October 3. Check SHA-256, opening state, continuity and session cuts. The manifests and journal pointer are in Git. The tape payload is pending. [October 3 source recovery](../../../../../artifacts/sqlite-triage/20261022/families/trade-lifecycle-targeted-v1/other-30-day-local-liquidity-readiness-20261107.md)
