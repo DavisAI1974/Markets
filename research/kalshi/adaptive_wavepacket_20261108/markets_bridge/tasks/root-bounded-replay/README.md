@@ -17,6 +17,8 @@ Native passed its pre-traversal gates and stopped before applying records. The p
 
 The follow-up [compressed scratch check](compressed-scratch.md) verified ROOT on Btrfs with Zstandard level 1, including stop and resume, byte-offset reads and SQLite reconciliation.
 
+The [Git retention manifest](retained/manifest.json) records the bounded replay scripts, receipts, output bytes and October 18 standalone touch and print export. For a split archive, concatenate the listed parts in manifest order, check the combined SHA-256 and byte count, then decompress and check the logical file against `decoded_equivalents`. The staged producer trees are reproducible from the commits and hashes in the source manifests. The [supplemental inventory](retained/additional-files.json) preserves the unique audit drafts and source excerpt.
+
 ## Repeat the local checkpoint
 
 Stage the verified runtime source at `db96f24f3260bf0d70c763b297c2ba9b84f571a6` into a Linux scratch tree. Place the `2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134` producer tree in `producers`. In a separate `root-producers` overlay, expose that tree's `research/kalshi/frankie_raw_mbo_benchmark` and `research/kalshi/agents` paths and install the ROOT adapter from `af36937d1e478831d4c7bc612c98d969e9a0848b` at `research/ng_exhaustion_mbo_v4_state_adapter_20260820.py`. The [receipt](receipt.json) carries the adapter digests and the comparison runtime versions. Keep the Native adapter at its own pin. An optional `root-producers-candidate` overlay takes the [ROOT queue-age patch](../root-native-efficiency-patches/root-queue-ages.patch) and its own output directory.
