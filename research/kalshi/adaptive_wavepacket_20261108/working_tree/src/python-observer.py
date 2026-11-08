@@ -27,6 +27,12 @@ import time
 if sys.version_info < (3, 11):
     raise SystemExit('BuildMap observation requires Python 3.11 or newer; the target was not started.')
 
+# Belt and braces for the parent's gate (collected-runs.js observationAllowed):
+# this process executes the mapped project's entry point, so it refuses to
+# start unless the environment opted in explicitly.
+if os.environ.get('BUILDMAP_ALLOW_OBSERVE') != '1':
+    raise SystemExit('BuildMap observation is disabled: set BUILDMAP_ALLOW_OBSERVE=1 to run project code; the target was not started.')
+
 config = json.load(sys.stdin)
 root = os.path.realpath(config['root'])
 manifest = config['sourceHashes']

@@ -13,7 +13,7 @@ import { readAnalysisDocument } from './review-evidence.js';
 import { observePython, generateCollectorKey } from './collected-runs.js';
 
 export function parseArgs(args) {
-  const options = { target: '.', port: 4173, host: '127.0.0.1', json: false, html: null, ref: null, init: false, walkthrough: false, piece: false, extendPiece: false, workflowAll: false, help: false };
+  const options = { target: '.', port: 4173, host: '127.0.0.1', hostExplicit: false, json: false, html: null, ref: null, init: false, walkthrough: false, piece: false, extendPiece: false, workflowAll: false, create: false, help: false };
   let targetSeen = false;
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -24,10 +24,12 @@ export function parseArgs(args) {
     else if (arg === '--extend-piece') options.extendPiece = true;
     else if (arg === '--json') options.json = true;
     else if (arg === '--workflow-all') options.workflowAll = true;
+    else if (arg === '--create') options.create = true;
     else if (['--port','--host','--html','--ref','--import-measurements','--analysis-output','--observe-python','--observe-args','--observe-timeout','--python-runtime','--collector-key','--collector-id','--observation-output','--new-collector-key','--collector-public'].includes(arg)) {
       const value = args[++i];
       if (!value || value.startsWith('--')) throw new Error(`Missing value for ${arg}.`);
       options[arg.slice(2)] = arg === '--port' ? Number(value) : value;
+      if (arg === '--host') options.hostExplicit = true;
     } else if (arg.startsWith('-')) throw new Error(`Unknown option: ${arg}.`);
     else if (targetSeen) throw new Error('Pass one project path or GitHub URL.');
     else { options.target = arg; targetSeen = true; }
@@ -51,7 +53,7 @@ export function parseArgs(args) {
   return options;
 }
 
-export function prepareTarget(target, log = console.log, ref = null) {
+export function prepareTarget(target, log = console.log, ref = null, { create = false } = {}) {
   if (ref && !/^https:\/\/github\.com\//i.test(target)) throw new Error('--ref applies to GitHub URL input. For local mapping, check out the branch yourself.');
   if (/^https?:\/\//i.test(target)) {
     if (!/^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/?$/i.test(target)) throw new Error('Use a repository URL like https://github.com/owner/repo, or a local path.');
@@ -73,7 +75,11 @@ export function prepareTarget(target, log = console.log, ref = null) {
     return { root: dest, source, cleanup: () => fs.rmSync(dest, { recursive: true, force: true }) };
   }
   const full = path.resolve(target);
-  if (!fs.existsSync(full)) { fs.mkdirSync(full, { recursive: true }); log(`Created empty project folder: ${full}`); }
+  // A mistyped path must not silently become a new empty project (BM-8).
+  if (!fs.existsSync(full)) {
+    if (!create) throw new Error(`Project folder does not exist: ${full}. Check the path, or pass --create to start an empty project there.`);
+    fs.mkdirSync(full, { recursive: true }); log(`Created empty project folder: ${full}`);
+  }
   if (!fs.statSync(full).isDirectory()) throw new Error(`Not a directory: ${full}`);
   return { root: full, cleanup: () => {} };
 }
@@ -82,7 +88,7 @@ async function main() {
   try {
     const options = parseArgs(process.argv.slice(2));
     if (options.help) {
-      console.log(`BuildMap v0.1\n\nUsage:\n  buildmap [project-path-or-github-url] [--port 4173] [--host 127.0.0.1] [--ref branch-or-tag] [--json | --html output.html]\n  buildmap [local-project-path] --init\n  buildmap [local-project-path] --walkthrough\n  buildmap [local-project-path] --piece\n  buildmap [local-project-path] --extend-piece\n\n--extend-piece adds files to one existing piece after review, retaining its identity, fields, goals and evidence.\n--piece groups unassigned files or declares a planned piece through a reviewed local interview. It preserves source/evidence and never grants proof.\n--walkthrough guides you through one goal, ordered existing pieces, expected results, and support assignments. Review before saving; existing plans are retained and no proof is recorded.\n--init asks four plain-English questions and saves an initial project description, then exits. Existing plans are never overwritten; code and evidence are untouched.\n--workflow-all analyzes every eligible Python file in bounded sequential batches for a one-shot --json or --html snapshot. Workflow/config files remain visible; unsupported semantics stay unknown.\n--observe-python ENTRY --collector-key PRIVATE --collector-id ID --observation-output NEW_FILE explicitly runs a local Python test script and signs its observation. Optional --observe-args JSON, --observe-timeout MS, --python-runtime EXECUTABLE.\n--new-collector-key PRIVATE --collector-public NEW_FILE --collector-id ID creates a local signing key/public trust document. Keep private keys outside projects.\n--import-measurements INPUT --analysis-output NEW_FILE imports structured JSON/NDJSON observations and stage events to a new review file, never overwriting existing data.\n--json prints one map snapshot, including gaps and source hashes, then exits.\n--html writes a self-contained interactive snapshot to a new file, then exits.\n--ref selects a branch or tag for GitHub URL input; omitted uses the default branch.\n\nExamples:\n  buildmap ../my-project --init\n  buildmap ../my-project --piece\n  buildmap ../my-project --extend-piece\n  buildmap ../my-project --walkthrough\n  buildmap .\n  buildmap --port 5000 ../my-project\n  buildmap https://github.com/owner/repo\n  buildmap https://github.com/owner/repo --ref feature/map\n  buildmap . --json\n  buildmap . --html ../buildmap.html\n`);
+      console.log(`BuildMap v0.1\n\nUsage:\n  buildmap [project-path-or-github-url] [--port 4173] [--host 127.0.0.1] [--ref branch-or-tag] [--create] [--json | --html output.html]\n  buildmap [local-project-path] --init\n  buildmap [local-project-path] --walkthrough\n  buildmap [local-project-path] --piece\n  buildmap [local-project-path] --extend-piece\n\n--extend-piece adds files to one existing piece after review, retaining its identity, fields, goals and evidence.\n--piece groups unassigned files or declares a planned piece through a reviewed local interview. It preserves source/evidence and never grants proof.\n--walkthrough guides you through one goal, ordered existing pieces, expected results, and support assignments. Review before saving; existing plans are retained and no proof is recorded.\n--init asks four plain-English questions and saves an initial project description, then exits. Existing plans are never overwritten; code and evidence are untouched.\n--workflow-all analyzes every eligible Python file in bounded sequential batches for a one-shot --json or --html snapshot. Workflow/config files remain visible; unsupported semantics stay unknown.\n--observe-python ENTRY --collector-key PRIVATE --collector-id ID --observation-output NEW_FILE explicitly runs a local Python test script and signs its observation. Optional --observe-args JSON, --observe-timeout MS, --python-runtime EXECUTABLE.\n--new-collector-key PRIVATE --collector-public NEW_FILE --collector-id ID creates a local signing key/public trust document. Keep private keys outside projects.\n--import-measurements INPUT --analysis-output NEW_FILE imports structured JSON/NDJSON observations and stage events to a new review file, never overwriting existing data.\n--create creates the local project folder when it does not exist; without it a missing folder is an error.\n--host, when given explicitly, also disables the loopback Host-header check (the default server answers only localhost/127.0.0.1/[::1]).\n--observe-python additionally requires BUILDMAP_ALLOW_OBSERVE=1 in the environment because it executes project code.\n--json prints one map snapshot, including gaps and source hashes, then exits.\n--html writes a self-contained interactive snapshot to a new file, then exits.\n--ref selects a branch or tag for GitHub URL input; omitted uses the default branch.\n\nExamples:\n  buildmap ../my-project --init\n  buildmap ../my-project --piece\n  buildmap ../my-project --extend-piece\n  buildmap ../my-project --walkthrough\n  buildmap .\n  buildmap --port 5000 ../my-project\n  buildmap https://github.com/owner/repo\n  buildmap https://github.com/owner/repo --ref feature/map\n  buildmap . --json\n  buildmap . --html ../buildmap.html\n`);
       return;
     }
     if(options['new-collector-key']) {
@@ -115,7 +121,7 @@ async function main() {
       fs.writeFileSync(output, json + '\n', { flag: 'wx' });
       console.log(`Imported ${imported.imported} observation(s) and ${imported.importedEvents} event(s) to ${output}. ${imported.note}`); return;
     }
-    const { root, cleanup, source } = prepareTarget(options.target, options.json ? console.error : console.log, options.ref);
+    const { root, cleanup, source } = prepareTarget(options.target, options.json ? console.error : console.log, options.ref, { create: options.create });
     process.once('exit', cleanup);
     if (options.json) { console.log(JSON.stringify(scanProject(root, { source, workflowAll: options.workflowAll }), null, 2)); return; }
     if (options.html) {
@@ -124,7 +130,7 @@ async function main() {
       console.log(`Snapshot saved: ${output}`);
       return;
     }
-    const server = startServer({ root, source, host: options.host, port: options.port });
+    const server = startServer({ root, source, host: options.host, port: options.port, hostCheck: !options.hostExplicit });
     server.once('error', err => { console.error(`BuildMap could not start: ${err.message}`); process.exitCode = 1; });
     for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, () => server.close());
   } catch (err) { console.error(`BuildMap: ${err.message}`); process.exitCode = 1; }

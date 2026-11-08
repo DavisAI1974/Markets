@@ -21,7 +21,13 @@ export function generateCollectorKey(privateFile, publicFile, collectorId) {
   return {collectorId,publicKeyFingerprint:hash(publicKey.export({format:'der',type:'spki'}))};
 }
 
+// Observation EXECUTES project code in-process (python-observer.py imports the
+// entry point). It is opt-in per environment so it can never run against a
+// trading script by accident: fail closed unless BUILDMAP_ALLOW_OBSERVE=1.
+export function observationAllowed(env=process.env){return env.BUILDMAP_ALLOW_OBSERVE==='1';}
+
 export async function observePython({root,entry,args=[],sourceHashes,privateKeyFile,collectorId,output,timeoutMs=60000,pythonExecutable='python3'}) {
+  if(!observationAllowed())throw Error('Refusing to run project code: --observe-python executes the entry point in-process and is disabled unless the environment sets BUILDMAP_ALLOW_OBSERVE=1 (set it only for a non-production checkout, never for trading scripts).');
   root=fs.realpathSync(root);
   if(!exact(entry) || !entry.endsWith('.py') || !sourceHashes?.[entry]) throw Error('Choose an inventoried project-relative Python entry point.');
   const entryReal=fs.realpathSync(path.join(root,entry)), rel=path.relative(root,entryReal);

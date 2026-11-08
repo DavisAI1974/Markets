@@ -107,7 +107,8 @@
         "tests/fixtures/workflow-pipeline.py",
         "tests/completion.test.js",
         "tests/collected-runs.test.js",
-        "tests/recovery-extension.test.js"
+        "tests/recovery-extension.test.js",
+        "tests/markets-fixes.test.js"
       ],
       "purpose": "Check source/evidence semantics, outcome plans and example freshness, Git inventory, export safety, CLI/HTTP behavior, and client logic with a DOM harness; browser layout still needs observation.",
       "contributes": "Prevents BuildMap from confusing 'exists on disk' with 'actually proven to work.'",
@@ -116,6 +117,86 @@
         "scanner",
         "server",
         "visualizer"
+      ],
+      "visual": {
+        "kind": "proof",
+        "label": "Prove"
+      }
+    },
+    {
+      "id": "adaptive-locality",
+      "name": "Adaptive Locality engine",
+      "group": "Research",
+      "files": [
+        "adaptive_locality/__init__.py",
+        "adaptive_locality/adapters.py",
+        "adaptive_locality/advanced.py",
+        "adaptive_locality/benchmark.py",
+        "adaptive_locality/boundary_validation.py",
+        "adaptive_locality/buildmap_trial.py",
+        "adaptive_locality/checkpoints.py",
+        "adaptive_locality/cli.py",
+        "adaptive_locality/contracts.py",
+        "adaptive_locality/core.py",
+        "adaptive_locality/coupling.py",
+        "adaptive_locality/disk_index.py",
+        "adaptive_locality/durable_queue.py",
+        "adaptive_locality/experiments.py",
+        "adaptive_locality/geometry_probe.py",
+        "adaptive_locality/geometry_validation.py",
+        "adaptive_locality/graph_boundary.py",
+        "adaptive_locality/grouping.py",
+        "adaptive_locality/index.py",
+        "adaptive_locality/information.py",
+        "adaptive_locality/ledger.py",
+        "adaptive_locality/level2_coupling.py",
+        "adaptive_locality/outliers.py",
+        "adaptive_locality/packing_boundary.py",
+        "adaptive_locality/queue.py",
+        "adaptive_locality/research_gates.py",
+        "adaptive_locality/research_holds.py",
+        "adaptive_locality/result_cache.py",
+        "adaptive_locality/review_cli.py",
+        "adaptive_locality/standalone_review.py",
+        "adaptive_locality/visualization.py"
+      ],
+      "purpose": "Markets-owned research engine (locality index, grouping, queues, checkpoints, review tooling) mapped for inspection only; no scientific calculation is eliminated or averaged here.",
+      "contributes": "Shows the research engine's pieces and their source wiring beside the BuildMap tool that inspects them.",
+      "visual": {
+        "kind": "flow",
+        "label": "Compute"
+      }
+    },
+    {
+      "id": "adaptive-locality-tests",
+      "name": "Adaptive Locality verification",
+      "group": "Research",
+      "files": [
+        "tests/test_adaptive_locality.py",
+        "tests/test_adaptive_locality_advanced.py",
+        "tests/test_adaptive_locality_archive_first.py",
+        "tests/test_adaptive_locality_coupling.py",
+        "tests/test_adaptive_locality_full_raw_coupling.py",
+        "tests/test_adaptive_locality_geometry.py",
+        "tests/test_adaptive_locality_geometry_controls.py",
+        "tests/test_adaptive_locality_geometry_validation.py",
+        "tests/test_adaptive_locality_graph_queue.py",
+        "tests/test_adaptive_locality_independent.py",
+        "tests/test_adaptive_locality_level2_coupling.py",
+        "tests/test_adaptive_locality_numeric_disk.py",
+        "tests/test_adaptive_locality_registry_integrity.py",
+        "tests/test_adaptive_locality_research_holds.py",
+        "tests/test_adaptive_locality_review_fixes.py",
+        "tests/test_adaptive_locality_review_policy.py",
+        "tests/test_adaptive_locality_unverified_gates.py",
+        "tests/test_adaptive_locality_visualization.py",
+        "tests/adaptive-locality-buildmap-trial.test.js"
+      ],
+      "purpose": "Python unittest suites for the Adaptive Locality engine plus the Node trial that maps it; run with python3 -m unittest discover -s tests -p 'test_adaptive_locality*.py'.",
+      "contributes": "Provides verification evidence for the research engine; no receipt is recorded here because its sources are under concurrent edit.",
+      "dependsOn": [
+        "adaptive-locality",
+        "scanner"
       ],
       "visual": {
         "kind": "proof",

@@ -590,3 +590,26 @@ class MisspecifiedControlTests(unittest.TestCase):
                 # exactly why the status never says causal.
                 self.assertTrue(all("CAUSAL" not in s.status or "REVIEW_ONLY" in s.status
                                     for s in report["splits"]))
+
+
+class CircularShiftNullTests(unittest.TestCase):
+    """Bolster: the Markets tautology-killing circular-shift null, per directed pair."""
+
+    def test_known_coupling_ranks_above_most_shifts_and_all_shifts_are_retained(self):
+        from adaptive_locality.coupling import circular_shift_null
+        data=synthetic_series(n=140)
+        report=circular_shift_null(data,"a","b",shifts=20)
+        self.assertEqual(report["shift_count"],20)
+        self.assertEqual(len(report["distribution"]),20)
+        self.assertTrue(all("improvement" in d and "status" in d for d in report["distribution"]))
+        self.assertIsNotNone(report["fraction_of_shifts_at_or_above_actual"])
+        self.assertLess(report["fraction_of_shifts_at_or_above_actual"],0.2)
+        self.assertEqual(report["shifted_results_dropped"],0)
+        self.assertEqual(report["actual"].null_gain_by_lag,())   # lag profile off here
+
+    def test_independent_channels_do_not_rank_high(self):
+        from adaptive_locality.coupling import circular_shift_null
+        data=synthetic_series(coupled=False,n=140)
+        report=circular_shift_null(data,"a","b",shifts=20)
+        frac=report["fraction_of_shifts_at_or_above_actual"]
+        self.assertTrue(frac is None or frac>=0.2)

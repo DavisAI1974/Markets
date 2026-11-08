@@ -7,6 +7,8 @@ import crypto from 'node:crypto';
 import {spawnSync} from 'node:child_process';
 import {generateCollectorKey,observePython,verifyCollectedRun,observedReuseGroups,compareCollectedRuns} from '../src/collected-runs.js';
 import {scanProject} from '../src/scan.js';
+// Running project code is opt-in (BM-S2); these tests exercise the collector on purpose.
+process.env.BUILDMAP_ALLOW_OBSERVE='1';
 const hash=x=>crypto.createHash('sha256').update(x).digest('hex');
 function setup(t,source){const temp=fs.mkdtempSync(path.join(os.tmpdir(),'buildmap-observe-'));t.after(()=>fs.rmSync(temp,{recursive:true,force:true}));
  const root=path.join(temp,'project');fs.mkdirSync(root);fs.mkdirSync(path.join(root,'.buildmap'));fs.writeFileSync(path.join(root,'main.py'),source);

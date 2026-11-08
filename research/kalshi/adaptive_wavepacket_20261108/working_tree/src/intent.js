@@ -1,8 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+// Priority order after the manifest mission: README first, then the
+// agent-facing project docs Markets keeps (CLAUDE.md, KALSHI_TRADING.md), then
+// the conventional design documents.
 const INTENT_FILES = [
-  'README.md', 'README', 'docs/README.md', 'docs/architecture.md', 'ARCHITECTURE.md',
+  'README.md', 'README', 'CLAUDE.md', 'KALSHI_TRADING.md', 'docs/README.md', 'docs/architecture.md', 'ARCHITECTURE.md',
   'docs/design.md', 'DESIGN.md', 'SPEC.md'
 ];
 

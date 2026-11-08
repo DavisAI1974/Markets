@@ -25,11 +25,18 @@ try{
  const context=await browser.newContext({viewport:{width:1440,height:1000}});
  context.on('page',p=>p.on('pageerror',e=>report.errors.push(e.message)));
  const page=await context.newPage();
+ // Expected cards: every declared component in .buildmap/project.json, the
+ // mission card, plus any inventoried file the manifest leaves unassigned
+ // (reported by the scanner as source 'discovered'), never a hard-coded count.
+ const manifest=JSON.parse(await fs.readFile(path.join(root,'.buildmap/project.json'),'utf8'));
+ const dogfood=scanProject(root);
+ const expectedCards=manifest.components.length+1+dogfood.nodes.filter(n=>n.source==='discovered').length;
+ assert.equal(dogfood.nodes.length,expectedCards);
  const url=await listen(startServer({root,port:0}));
  await page.goto(url);await page.locator('.node').first().waitFor();
- assert.equal(await page.locator('.node').count(),6);
+ assert.equal(await page.locator('.node').count(),expectedCards);
  assert.match(await page.locator('#stateCounts').innerText(),/live: 0/);
- check('Live dogfood map loads six cards, free views and no live states');
+ check(`Live dogfood map loads ${expectedCards} cards (${manifest.components.length} declared pieces + mission + ${expectedCards-manifest.components.length-1} discovered), free views and no live states`,{expectedCards});
  await page.locator('#fitButton').click();
  assert.equal(await page.locator('#fitButton').getAttribute('aria-pressed'),'true');
  const fit=await page.locator('#mapViewport').evaluate(el=>({width:el.clientWidth,height:el.clientHeight,sw:el.scrollWidth,sh:el.scrollHeight}));

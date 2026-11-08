@@ -35,9 +35,11 @@ function bindingNames(pattern, add) {
   else if (pattern.type === 'ObjectPattern') pattern.properties.forEach(p => bindingNames(p.type === 'RestElement' ? p.argument : p.value, add));
 }
 
-export function analyzeJavaScript(source, ext = '.js') {
+export function analyzeJavaScript(source, ext = '.js', { allowReturnOutsideFunction = false } = {}) {
   let ast;
-  try { ast = parse(source, { ecmaVersion: 'latest', sourceType: ext === '.cjs' ? 'commonjs' : 'module', locations: true }); }
+  // Workflow-tool scripts (*.workflow.js) are evaluated as a function body and
+  // may `return` at the top level; ordinary modules keep the strict parse.
+  try { ast = parse(source, { ecmaVersion: 'latest', sourceType: ext === '.cjs' ? 'commonjs' : 'module', locations: true, allowReturnOutsideFunction }); }
   catch (err) {
     return { imports: [], requests: [], providers: [], error: `JavaScript parsing failed at ${err.loc?.line || '?'}:${(err.loc?.column ?? -1) + 1}; source references were skipped.` };
   }

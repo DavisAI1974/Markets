@@ -8,6 +8,8 @@ import { scanProject } from '../src/scan.js';
 import { spawnSync } from 'node:child_process';
 import { clientSource } from '../src/export.js';
 import { generateCollectorKey, observePython } from '../src/collected-runs.js';
+// Running project code is opt-in (BM-S2); this test exercises the collector on purpose.
+process.env.BUILDMAP_ALLOW_OBSERVE='1';
 
 // Executes the real client against a small DOM double. This covers rendering
 // logic and interactions, not CSS layout or browser integration.

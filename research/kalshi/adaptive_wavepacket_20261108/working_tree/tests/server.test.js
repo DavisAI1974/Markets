@@ -19,7 +19,7 @@ function fixture(t) {
 }
 
 test('CLI consumes flag values independently of project position and rejects mistakes', () => {
-  assert.deepEqual(parseArgs(['--port', '5000', '--host', 'localhost', '../demo', '--json']), { target: '../demo', port: 5000, host: 'localhost', json: true, html: null, ref: null, init: false, walkthrough: false, piece: false, extendPiece: false, workflowAll: false, help: false });
+  assert.deepEqual(parseArgs(['--port', '5000', '--host', 'localhost', '../demo', '--json']), { target: '../demo', port: 5000, host: 'localhost', hostExplicit: true, json: true, html: null, ref: null, init: false, walkthrough: false, piece: false, extendPiece: false, workflowAll: false, create: false, help: false });
   for (const args of [['--port'], ['--port', 'NaN'], ['--port', '65536'], ['--unknown'], ['a', 'b'], ['--html'], ['--html', 'out.html', '--json'], ['--ref'], ['--ref', 'main', '.'], ['https://github.com/owner/repo', '--ref', '-bad']]) assert.throws(() => parseArgs(args));
 });
 

@@ -15,6 +15,8 @@ const CODE_EXT = new Set(['.js','.mjs','.cjs','.jsx','.ts','.tsx','.py','.go','.
 const SPECIAL_CODE = new Set(['Dockerfile','Makefile']);
 const IGNORE_DIRS = new Set(['.git','node_modules','dist','build','coverage','.next','.cache','.venv','venv','__pycache__','target','vendor']);
 const STATES = ['planned','coded','connected','computing','verified','live'];
+const WORKFLOW_YAML = /^\.github\/workflows\/[^/]+\.ya?ml$/;
+const WORKFLOW_TOOL_JS = /\.workflow\.(?:js|mjs|cjs)$/;
 const WEIGHTS = { planned: 0, coded: 20, connected: 45, computing: 65, verified: 85, live: 100 };
 
 export function scanProject(root, { source = null, workflowFiles = null, workflowAll = false } = {}) {
@@ -28,14 +30,21 @@ export function scanProject(root, { source = null, workflowFiles = null, workflo
   const rawEvidence = readJson(root, '.buildmap/evidence.json', diagnostics);
   const evidence = evidenceCollections(rawEvidence, diagnostics);
   const components = validComponents(manifest.components, diagnostics);
-  const inventory = inventoryFiles(root, diagnostics);
+  const excludes = readExcludes(root, manifest, diagnostics);
+  const excluded = rel => excludes.some(prefix => rel === prefix || rel.startsWith(`${prefix}/`));
+  const inventory = inventoryFiles(root, diagnostics, excluded);
   const files = inventory.files;
   const fileSet = new Set(files.map(f => f.path));
   // Declared implementation can include assets/configuration outside discovered
   // extensions. Never follow a manifest path or symlink out of the project.
   for (const component of components) {
+    const componentId = component.id || slug(component.name || normalizeFiles(component.files || component.file || [])[0] || 'component');
     for (const rel of normalizeFiles(component.files || component.file || [])) {
       if (fileSet.has(rel)) continue;
+      if (excluded(rel)) {
+        diagnostics.push({ code: 'excluded-declared-file', nodeId: componentId, message: `${rel} is declared by ${componentId} but lies under an excluded prefix; exclusion wins and the file stays missing from the map.` });
+        continue;
+      }
       try {
         if (!safeFile(root, rel)) continue;
         const buffer = fs.readFileSync(path.join(root, rel));
@@ -89,7 +98,12 @@ export function scanProject(root, { source = null, workflowFiles = null, workflo
   function makeNode(fields, receipt) {
     const present = fields.files.filter(f => fileSet.has(f));
     const complete = fields.files.length > 0 && present.length === fields.files.length;
+    // `wired` keeps the original meaning (any import edge touching a present
+    // file, including edges between this piece's own files). `crossWired` is
+    // the stricter read: an edge whose other end is a file this piece does not
+    // own, i.e. another piece or an unassigned file.
     const wired = importEdges.some(e => present.includes(e.from) || present.includes(e.to));
+    const crossWired = importEdges.some(e => present.includes(e.from) !== present.includes(e.to));
     const base = complete ? (wired ? 'connected' : 'coded') : 'planned';
     const sourceHashes = Object.fromEntries(present.map(f => [f, fileHashes.get(f)]));
     const conflictingFiles = fields.files.filter(f => (fileOwners.get(f)?.length || 0) > 1);
@@ -97,7 +111,7 @@ export function scanProject(root, { source = null, workflowFiles = null, workflo
       ? { accepted: false, reason: 'Implementation ownership is ambiguous. Resolve overlapping component file assignments before claiming component behavior.' }
       : assessEvidence(receipt, complete, sourceHashes, readInputHash);
     return { ...fields, presentFiles: present, missingFiles: fields.files.filter(f => !fileSet.has(f)),
-      conflictingFiles,
+      conflictingFiles, wired, crossWired,
       implementation: complete ? 'complete' : present.length ? 'partial' : 'missing',
       baseStatus: base, status: resolveStatus({ base, evidence: assessment.accepted ? receipt.status : null }),
       evidence: receipt || null, evidenceAssessment: assessment, sourceHashes,
@@ -125,8 +139,11 @@ export function scanProject(root, { source = null, workflowFiles = null, workflo
 
   for (const file of files) {
     if (assignedFiles.has(file.path)) continue;
-    nodes.push(makeNode({ id: `file:${file.path}`, name: titleFromFile(file.path), kind: 'file', group: inferGroup(file.path),
-      files: [file.path], purpose: inferFilePurpose(root, file.path), contributes: '', visual: inferVisual(file.path),
+    // Workflow YAML is inventoried only: present, never parsed or wired.
+    const workflowYaml = WORKFLOW_YAML.test(file.path);
+    nodes.push(makeNode({ id: `file:${file.path}`, name: titleFromFile(file.path), kind: workflowYaml ? 'workflow-yaml' : 'file', group: inferGroup(file.path),
+      files: [file.path], purpose: workflowYaml ? 'GitHub Actions workflow YAML: inventoried, not analyzed.' : inferFilePurpose(root, file.path), contributes: '', visual: inferVisual(file.path),
+      ...(workflowYaml ? { analysis: { kind: 'workflow-yaml', status: 'inventoried', text: 'inventoried, not analyzed' } } : {}),
       plannedDependencies: [], dependencyIntent: 'unspecified', source: 'discovered'
     }, Object.hasOwn(evidence.files || {}, file.path) ? evidence.files[file.path] : undefined));
   }
@@ -152,7 +169,7 @@ export function scanProject(root, { source = null, workflowFiles = null, workflo
     progressLabel: 'Evidence index', counts, uncertainty: intent.confidence === 'unknown' ? ['Intent is unknown; interview recommended.'] : [] },
     states: STATES, nodes, edges: uniqueEdges(edges), outcomes: outcomeMap.outcomes, gaps, diagnostics,
     workflow: buildWorkflow(discovery.guides),
-    scan: { inventoryMode: inventory.mode, fileCount: files.length, importCount: discovery.importCount, httpReferenceCount: discovery.httpCount,
+    scan: { inventoryMode: inventory.mode, excludes, fileCount: files.length, importCount: discovery.importCount, httpReferenceCount: discovery.httpCount,
       dependencyLanguages: ['JavaScript', 'TypeScript', 'Python', 'HTML', 'CSS'], javascriptParser: 'acorn', httpAdapter: 'literal-fetch/node-http-path', heuristic: true },
     generatedAt: new Date().toISOString() };
   result.workflow.scope = { mode: workflowFiles === null ? workflowAll ? 'whole-python-inventory' : 'bounded-inventory' : 'selected-files',
@@ -167,7 +184,10 @@ export function scanProject(root, { source = null, workflowFiles = null, workflo
   for(const run of result.workflow.collected.runs.filter(r=>r.eligibleForComparison))for(const c of run.calculations){if(!c.calculationId)continue;if(!observedIndex.has(c.calculationId))observedIndex.set(c.calculationId,[]);observedIndex.get(c.calculationId).push({runId:run.runId,collectorId:run.collectorId,calculationId:c.calculationId,observedEntries:c.calls,resumable:c.resumable});}
   for(const finding of result.workflow.findings)finding.observationContext=finding.calculationIds.flatMap(id=>observedIndex.get(id)||[]);
   result.workflow.coverage.inventoryMode = inventory.mode;
-  result.fingerprint = fingerprint({ ...result, generatedAt: undefined, manifest, evidence: rawEvidence });
+  // The fingerprint describes the tree's content, not where it is checked out:
+  // the absolute root is replaced by a stable marker so the same tree at
+  // another path yields the same fingerprint.
+  result.fingerprint = fingerprint({ ...result, project: { ...result.project, root: '' }, generatedAt: undefined, manifest, evidence: rawEvidence });
   return result;
 }
 
@@ -233,6 +253,7 @@ function findGaps(nodes, edges, diagnostics, intent) {
     if (n.evidence && !n.evidenceAssessment.accepted) add('unsupported-evidence', n.id, n.evidenceAssessment.reason, 'blocker');
     if (n.evidenceAssessment.accepted && n.evidenceAssessment.binding === 'unbound' && STATES.indexOf(n.status) >= 3) add('unbound-evidence', n.id, 'Evidence is recorded but its freshness is unknown. Bind it to the current source hashes.', 'info');
     if (n.implementation === 'complete' && !edges.some(e => e.type === 'code' && (e.from === n.id || e.to === n.id))) add('no-observed-connection', n.id, 'No cross-piece source connection found. This may be an entry point or use wiring the scanner cannot see.');
+    if (n.implementation === 'complete' && n.wired && !n.crossWired) add('intra-piece-wiring', n.id, 'Status connected rests only on imports between files inside this piece (wired); no import reaches another piece or an unassigned file (crossWired is false). Treat it as internally assembled, not integrated.', 'info');
     if (n.implementation === 'complete' && STATES.indexOf(n.status) < 3) add('unproved', n.id, 'Observe useful work or record a behavior check before claiming computing or verified.');
     for (const edge of edges.filter(e => e.type === 'code' && e.to === n.id && e.planStatus === 'undeclared')) {
       add('unexpected-dependency', n.id, `Observed dependency on ${edge.from} is outside this piece’s explicit dependsOn plan. Review the plan or the wiring.`, 'warning', { dependencyId: edge.from, observations: edge.observations });
@@ -321,7 +342,30 @@ function safeFile(root, rel) {
   return !relative.startsWith(`..${path.sep}`) && relative !== '..' && !path.isAbsolute(relative) && fs.statSync(full).isFile();
 }
 
-function inventoryFiles(root, diagnostics) {
+function readExcludes(root, manifest, diagnostics) {
+  // Path prefixes (project-relative, no globs) from the manifest `exclude`
+  // array and a `.buildmapignore` file (one prefix per line, # comments).
+  const prefixes = [];
+  const push = (value, origin) => {
+    const clean = path.posix.normalize(String(value).trim().replaceAll('\\', '/').replace(/^\.\//, '')).replace(/\/+$/, '');
+    if (!clean || clean === '.' || clean === '..' || clean.startsWith('../') || path.posix.isAbsolute(clean)) {
+      diagnostics.push({ code: 'invalid-config', message: `${origin}: exclude entries must be project-relative path prefixes (got ${JSON.stringify(value)}).` });
+      return;
+    }
+    if (!prefixes.includes(clean)) prefixes.push(clean);
+  };
+  if (manifest.exclude !== undefined) {
+    if (!Array.isArray(manifest.exclude) || manifest.exclude.some(v => typeof v !== 'string')) diagnostics.push({ code: 'invalid-config', message: '.buildmap/project.json exclude must be an array of path-prefix strings.' });
+    else for (const value of manifest.exclude) push(value, '.buildmap/project.json');
+  }
+  try {
+    const text = fs.readFileSync(path.join(root, '.buildmapignore'), 'utf8');
+    for (const line of text.split(/\r?\n/)) { const trimmed = line.trim(); if (trimmed && !trimmed.startsWith('#')) push(trimmed, '.buildmapignore'); }
+  } catch (err) { if (err.code !== 'ENOENT') diagnostics.push({ code: 'invalid-config', message: `.buildmapignore: ${err.code || err.message}` }); }
+  return prefixes;
+}
+
+function inventoryFiles(root, diagnostics, excluded = () => false) {
   // Git's own ignore semantics handle negation, nested rules, and tracked files.
   // Disable fsmonitor so reading an unfamiliar repository cannot run its hook.
   const args = ['-c', 'core.fsmonitor=false', '-C', root, 'ls-files', '--cached', '--others', '--exclude-standard', '-z',
@@ -329,11 +373,11 @@ function inventoryFiles(root, diagnostics) {
   const result = spawnSync('git', args, { encoding: 'utf8', timeout: 5000, maxBuffer: 16 * 1024 * 1024, env: { ...process.env, LC_ALL: 'C' } });
   if (result.status !== 0) {
     if (result.error?.code !== 'ENOENT' && !result.stderr?.includes('not a git repository')) diagnostics.push({ code: 'git-inventory-unavailable', message: 'Git inventory failed; using filesystem discovery with default directory exclusions.' });
-    return { files: walkFiles(root, diagnostics), mode: 'filesystem' };
+    return { files: walkFiles(root, diagnostics, excluded), mode: 'filesystem' };
   }
   const files = [];
   for (const rel of new Set(result.stdout.split('\0').filter(Boolean))) {
-    if (rel.startsWith('.buildmap/') || (!CODE_EXT.has(path.extname(rel).toLowerCase()) && !SPECIAL_CODE.has(path.basename(rel)))) continue;
+    if (rel.startsWith('.buildmap/') || excluded(rel) || (!CODE_EXT.has(path.extname(rel).toLowerCase()) && !SPECIAL_CODE.has(path.basename(rel)))) continue;
     try {
       // Git can list deleted tracked files and symlinks; neither establishes a
       // present implementation. Paths are relative to the requested subtree.
@@ -347,7 +391,7 @@ function inventoryFiles(root, diagnostics) {
   return { files, mode: 'git' };
 }
 
-function walkFiles(root, diagnostics) {
+function walkFiles(root, diagnostics, excluded = () => false) {
   const out = [];
   const stack = [''];
   while (stack.length) {
@@ -357,6 +401,7 @@ function walkFiles(root, diagnostics) {
     catch (err) { diagnostics.push({ code: 'unreadable-directory', message: `Could not scan ${relDir || '.'}: ${err.code}.` }); continue; }
     for (const entry of entries) {
       const rel = slash(path.join(relDir, entry.name));
+      if (excluded(rel)) continue;
       if (entry.isDirectory()) {
         if (IGNORE_DIRS.has(entry.name) || entry.name.startsWith('.')) continue;
         stack.push(rel); continue;
@@ -371,17 +416,19 @@ function walkFiles(root, diagnostics) {
 
 function discoverImports(root, files, fileSet, diagnostics, workflowFiles, workflowAll) {
   const edges = [], requests = [], providers = [], guides = new Map(), pythonSources = [];
+  const topLevel = new Set(files.map(f => f.path.includes('/') ? f.path.split('/')[0] : f.path.endsWith('.py') ? f.path.slice(0, -3) : null).filter(Boolean));
   for (const file of files) {
     const ext = path.extname(file.path).toLowerCase();
     const supported = ['.js', '.mjs', '.cjs', '.py'].includes(ext);
     const guide = { path: file.path, status: supported ? 'unreadable' : 'unsupported', sourceHash: file.hash, functions: [],
       reason: supported ? 'Source could not be read for this explanation.' : 'Function explanations support JavaScript .js, .mjs, .cjs and optional Python .py.' };
     guides.set(file.path, guide);
+    if (WORKFLOW_YAML.test(file.path)) { guide.kind = 'workflow-yaml'; guide.status = 'inventoried'; guide.reason = 'inventoried, not analyzed'; continue; }
     if (supported && file.size > 1_000_000) { guide.status = 'size-limit'; guide.reason = 'Source explanation is skipped above the existing 1 MB discovery limit.'; }
     if (file.size > 1_000_000) { diagnostics.push({ code: 'large-file', message: `${file.path} is present but import discovery is skipped above 1 MB.` }); continue; }
     try {
       const bytes = fs.readFileSync(path.join(root, file.path));
-      const references = sourceReferences(bytes.toString('utf8'), ext);
+      const references = sourceReferences(bytes.toString('utf8'), ext, { allowReturnOutsideFunction: WORKFLOW_TOOL_JS.test(file.path) });
       if (supported) {
         if (hash(bytes) !== file.hash) { guide.status = 'changed-during-scan'; guide.reason = 'Source changed while being scanned. Refresh before inspecting its functions.'; }
         else if (references.error) { guide.status = 'parse-error'; guide.reason = references.error; }
@@ -398,7 +445,9 @@ function discoverImports(root, files, fileSet, diagnostics, workflowFiles, workf
       for (const spec of references.imports) {
         const target = resolveImport(file.path, spec, fileSet, ext);
         if (target && target !== file.path) edges.push({ from: file.path, to: target, type: 'import' });
-        else if (!target && ext !== '.py' && spec.startsWith('.')) diagnostics.push({ code: 'unresolved-import', message: `${file.path} references ${spec}, but no supported local file resolves.` });
+        else if (!target && (ext === '.py' ? unresolvedPython(file.path, spec, references.importForms[spec], fileSet, topLevel) : spec.startsWith('.'))) {
+          diagnostics.push({ code: 'unresolved-import', message: `${file.path} references ${spec}, but no supported local file resolves.` });
+        }
       }
     } catch (err) { diagnostics.push({ code: 'unreadable-file', message: `Source reference discovery failed for ${file.path}: ${err.code || err.name}.` }); }
   }
@@ -418,6 +467,18 @@ function discoverImports(root, files, fileSet, diagnostics, workflowFiles, workf
   }
   const unique = uniqueEdges(edges);
   return { edges: unique, importCount, httpCount: unique.filter(e => e.type === 'http').length, guides };
+}
+
+// Diagnose a Python import only when it looks local: a relative module, a
+// sibling name in a directory with no __init__.py (nothing else could define
+// it), or an absolute module whose first segment is a top-level directory or
+// top-level .py file of this project. Stdlib/third-party names stay silent, as
+// do `from X import name` symbols, which may be names rather than modules.
+function unresolvedPython(fromFile, spec, form, fileSet, topLevel) {
+  if (form === 'symbol') return false;
+  if (form === 'sibling') return !fileSet.has(path.posix.join(path.posix.dirname(fromFile), '__init__.py'));
+  if (spec.startsWith('.')) return true;
+  return topLevel.has(spec.split('.')[0]);
 }
 
 function buildComponentEdges(nodes, importEdges) {

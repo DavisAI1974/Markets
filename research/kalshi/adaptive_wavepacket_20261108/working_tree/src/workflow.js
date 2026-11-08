@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { inspectResources } from './workflow-risk.js';
+import { pythonCandidateGroups } from './imports.js';
 
 export const WORKFLOW_LIMITS = [
   'Static Python and JavaScript syntax only; no target module is imported and no workflow runs. Actual reads, jobs, pair comparisons, memory, elapsed time and savings remain unknown.',
@@ -11,33 +12,63 @@ export const WORKFLOW_LIMITS = [
   'A literal filename match is only a possible shared product. Working directories, source identity, schema, axes, coverage, checkpoint compatibility and actual reuse are unverified.',
   'Nested loops describe possible fan-out, not a job or pair counter. Literal range products assume every iteration reaches the inner body; guards, breaks, exceptions and dependent bounds can change actual work. AB/BA equivalence is never assumed.',
   'Cache, lazy scheduler, FFT and checkpoint names/decorators are review cues only. Their presence does not prove effective reuse; their absence does not prove a cache or checkpoint is missing.',
-  'Default analysis covers at most 64 Python files / 4 MB total. Explicit whole-project snapshots process every eligible Python file in sequential batches of at most 64 files / 4 MB. The scanner’s 1 MB per-file and parser’s 5-second / 16 MB per-process limits still apply. Missing Python, unsupported files and failures stay visible. No findings is not clearance to run.'
+  'Default analysis covers at most 64 Python files / 4 MB total. Explicit whole-project snapshots process every eligible Python file in sequential batches of at most 64 files / 4 MB. The scanner’s 1 MB per-file and parser’s per-process time limit (5 seconds by default, BUILDMAP_ANALYZER_TIMEOUT_MS) / 16 MB output limits still apply; a failed batch is bisected so one difficult file is reported alone. Missing Python, unsupported files and failures stay visible. No findings is not clearance to run.'
 ];
+
+const DEFAULT_ANALYZER_TIMEOUT_MS = 5000;
+
+// Per-process analyzer timeout. BUILDMAP_ANALYZER_TIMEOUT_MS overrides the
+// 5000 ms default; anything that is not a positive integer keeps the default.
+export function analyzerTimeoutMs(env = process.env) {
+  const value = env.BUILDMAP_ANALYZER_TIMEOUT_MS;
+  return value !== undefined && /^[1-9][0-9]{0,8}$/.test(String(value).trim()) ? Number(value) : DEFAULT_ANALYZER_TIMEOUT_MS;
+}
 
 // Source bytes came from the existing inventory/read boundary. -I/-S prevent a
 // mapped project's modules/site hooks from being imported by this trusted reader.
-export function pythonGuides(sources, guides, { all = false } = {}) {
+function spawnAnalyzer(batch, timeoutMs) {
+  const result = spawnSync('python3', ['-I', '-S', fileURLToPath(new URL('./python-analyzer.py', import.meta.url))], {
+    input: JSON.stringify(batch.map(s => ({ source: s.source }))), encoding: 'utf8', timeout: timeoutMs, maxBuffer: 16 * 1024 * 1024
+  });
+  if (result.error?.code === 'ENOENT') return { failure: 'missing-runtime' };
+  if (result.error?.code === 'ETIMEDOUT' || result.signal === 'SIGTERM') return { failure: 'timeout' };
+  if (result.error?.code === 'ENOBUFS') return { failure: 'output-limit' };
+  if (result.error || result.status !== 0) return { failure: `exit-${result.status ?? result.error?.code ?? 'unknown'}` };
+  let parsed;
+  try { parsed = JSON.parse(result.stdout); } catch { return { failure: 'invalid-output' }; }
+  if (!Array.isArray(parsed) || parsed.length !== batch.length) return { failure: 'invalid-output' };
+  return { parsed };
+}
+
+function unavailableReason(failure, timeoutMs, isolated) {
+  const cause = failure === 'missing-runtime' ? 'python3 is missing'
+    : failure === 'timeout' ? `the analyzer timed out after ${timeoutMs} ms (BUILDMAP_ANALYZER_TIMEOUT_MS)`
+    : failure === 'output-limit' ? 'the analyzer exceeded the 16 MB parser output limit'
+    : failure === 'invalid-output' ? 'the analyzer returned unusable output' : `the analyzer failed (${failure})`;
+  return `Python analysis unavailable for ${isolated ? 'this file' : 'this batch'}: ${cause}. File inventory and the free map remain available.`;
+}
+
+// Batches run through the analyzer; a failed batch is bisected (in bounded
+// and whole-project modes alike) so one slow or difficult file is reported on
+// its own instead of flipping every file in the batch to unavailable.
+export function pythonGuides(sources, guides, { all = false, runAnalyzer = null, timeoutMs = analyzerTimeoutMs() } = {}) {
   let selected = [], bytes = 0, missingRuntime = false;
-  const unavailable = batch => { for (const s of batch) Object.assign(guides.get(s.path), { status: 'analyzer-unavailable',
-    reason: 'Python analysis unavailable (python3 missing, timeout, or parser output limit). File inventory and the free map remain available.' }); };
+  const run = runAnalyzer || (batch => spawnAnalyzer(batch, timeoutMs));
+  const unavailable = (batch, failure) => { for (const s of batch) Object.assign(guides.get(s.path), { status: 'analyzer-unavailable',
+    reason: unavailableReason(failure, timeoutMs, batch.length === 1) }); };
   function analyze(batch) {
     if (!batch.length) return;
-    if (missingRuntime) { unavailable(batch); return; }
-    const result = spawnSync('python3', ['-I', '-S', fileURLToPath(new URL('./python-analyzer.py', import.meta.url))], {
-      input: JSON.stringify(batch.map(s => ({ source: s.source }))), encoding: 'utf8', timeout: 5000, maxBuffer: 16 * 1024 * 1024
-    });
-    let parsed;
-    try { if (!result.error && result.status === 0) parsed = JSON.parse(result.stdout); } catch { /* Visible unsupported state below. */ }
-    if (!Array.isArray(parsed) || parsed.length !== batch.length) {
-      missingRuntime = result.error?.code === 'ENOENT';
-      // Isolate a difficult file or a batch output/timeout limit without losing
-      // every other file in an explicitly requested whole-project inspection.
-      if (all && !missingRuntime && batch.length > 1) {
+    if (missingRuntime) { unavailable(batch, 'missing-runtime'); return; }
+    const result = run(batch);
+    if (!result.parsed) {
+      const failure = result.failure || 'invalid-output';
+      missingRuntime = failure === 'missing-runtime';
+      if (!missingRuntime && batch.length > 1) {
         const middle = Math.floor(batch.length / 2); analyze(batch.slice(0, middle)); analyze(batch.slice(middle));
-      } else unavailable(batch);
+      } else unavailable(batch, failure);
       return;
     }
-    batch.forEach((s, i) => Object.assign(guides.get(s.path), parsed[i]));
+    batch.forEach((s, i) => Object.assign(guides.get(s.path), result.parsed[i]));
   }
   for (const source of sources) {
     const guide = guides.get(source.path);
@@ -182,15 +213,14 @@ function calculationLinks(calculations, guides) {
 }
 
 function moduleCandidates(importer, ref, guides) {
-  const parts = path.posix.dirname(importer).split('/').filter(p => p && p !== '.');
-  let bases;
+  // Same candidate bases and order as the map's import resolver (imports.js):
+  // a relative level from the importer, or importer directory then root. The
+  // map edge takes the first present file; call links stay conservative and
+  // treat a file present in more than one base as ambiguous (no link).
   if (ref.level) {
+    const parts = path.posix.dirname(importer).split('/').filter(p => p && p !== '.');
     if (ref.level - 1 > parts.length) return [];
-    bases = [parts.slice(0, parts.length - ref.level + 1).join('/')];
-  } else bases = ['', parts.join('/')];
-  const module = ref.module.replaceAll('.', '/');
-  return [...new Set(bases.flatMap(base => {
-    const stem = path.posix.join(base, module);
-    return [`${stem}.py`, `${stem}/__init__.py`];
-  }).filter(file => guides.has(file)))];
+  }
+  const spec = `${'.'.repeat(ref.level || 0)}${ref.module}`;
+  return [...new Set(pythonCandidateGroups(importer, spec).flat().filter(file => guides.has(file)))];
 }

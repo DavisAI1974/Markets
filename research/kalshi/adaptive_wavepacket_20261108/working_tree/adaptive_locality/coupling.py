@@ -352,7 +352,8 @@ def _lag_profile(frames, target, donor, original, y, lag, training, testing):
 
 
 def _test_direction(frames: tuple[InfoFrame,...],target: str,donor: str,
-                    min_gain:float, null_margin:float) -> CouplingResult:
+                    min_gain:float, null_margin:float, *,
+                    lag_profile: bool=True) -> CouplingResult:
     N=len(frames)-1
     # A past-lag null never cycles into future data. All three
     # comparisons use exactly the same eligible chronological intervals.
@@ -396,7 +397,8 @@ def _test_direction(frames: tuple[InfoFrame,...],target: str,donor: str,
             status="ABSTAIN_UNIDENTIFIABLE_DIPOLE_RATIO"
             reason=("|c_HaHb| below 1e-8 x coefficient scale; ratio not identified "
                     "(no epsilon is injected)")
-        profile=_lag_profile(frames,target,donor,original,y,lag,training,testing)
+        profile=(_lag_profile(frames,target,donor,original,y,lag,training,testing)
+                 if lag_profile else ())
         autocorr=lag1_autocorrelation([dict(f.entropy)[donor] for f in frames])
         return CouplingResult(target,donor,status,base_error,full_error,null_error,
                               improvement,null_gain,opposing,ratio,full,
@@ -409,14 +411,15 @@ def _test_direction(frames: tuple[InfoFrame,...],target: str,donor: str,
 
 
 def discover_coupling(frames: tuple[InfoFrame,...], *, min_gain:float=0.15,
-                      null_margin:float=0.08, max_nodes:int=12) -> dict:
+                      null_margin:float=0.08, max_nodes:int=12,
+                      lag_profile: bool=True) -> dict:
     if not (0<min_gain<1 and 0<null_margin<1) or type(max_nodes) is not int or max_nodes<2:
         raise LocalityError("invalid independent coupling selection thresholds")
     frames=tuple(frames)
     names=validate_series(frames,min_frames=50)
     if len(names)>max_nodes:
         raise LocalityError("node count exceeds bounded pairwise CPU budget; batch explicitly")
-    results=tuple(_test_direction(frames,a,b,min_gain,null_margin)
+    results=tuple(_test_direction(frames,a,b,min_gain,null_margin,lag_profile=lag_profile)
                   for a,b in permutations(names,2))
     return {"schema":1,"method":"AGNOSTIC_FIVE_STEP_PROBE",
             "trust":"UNSIGNED_ASSOCIATION_RESEARCH_ONLY_NOT_SCIENTIFIC_EQUIVALENCE",
@@ -517,3 +520,59 @@ def cross_domain_motif(reports: dict[str,dict], *,
             "required":tuple(sorted(required_set)),
             "candidate_directed_pairs":detail,"promotable":False,
             "caveat":"Separate fits; no raw-data pooling or proof of universality. Correct for multiple testing and validate real independent domains."}
+
+
+def circular_shift_null(frames: tuple[InfoFrame,...], target: str, donor: str, *,
+                        shifts: int=40, min_gain: float=0.15, null_margin: float=0.08) -> dict:
+    """Tautology-killing circular-shift null for one directed pair (Markets odcore precedent).
+
+    The donor's columns (Hb, Hb^2, HaHb through Hb, MIab, FIb) are circularly
+    shifted as a block by `shifts` distinct offsets; `_test_direction` is re-run
+    each time and the holdout `improvement` is recorded. The actual improvement
+    is reported WITH its rank in that distribution. No threshold is applied and
+    no result is dropped: every shifted improvement is returned. This addresses
+    multiplicity and autocorrelation artifacts only partially (the shift keeps
+    the donor's own spectrum); it does not establish causality.
+    """
+    frames=tuple(frames)
+    if type(shifts) is not int or shifts<5 or shifts>=len(frames)-1:
+        raise LocalityError("shift count must be an integer in [5, frames-2]")
+    actual=_test_direction(frames,target,donor,min_gain,null_margin,lag_profile=False)
+    n=len(frames)
+    step=max(1,(n-2)//shifts)
+    offsets=sorted({(k*step)%n for k in range(1,shifts+1)}-{0})
+    donors=[dict(f.entropy)[donor] for f in frames]
+    fis=[dict(f.fisher_proxy)[donor] for f in frames]
+    pair=tuple(sorted((target,donor)))
+    mis=[{(a,b):v for a,b,v in f.mi}[pair] for f in frames]
+    distribution=[]
+    for offset in offsets:
+        shifted=[]
+        for i,f in enumerate(frames):
+            j=(i-offset)%n
+            entropy=tuple((k,donors[j] if k==donor else v) for k,v in f.entropy)
+            fisher=tuple((k,fis[j] if k==donor else v) for k,v in f.fisher_proxy)
+            mutual=tuple((a,b,mis[j] if (a,b)==pair else v) for a,b,v in f.mi)
+            shifted.append(InfoFrame(f.clock,f.source_identity,f.calibration_identity,
+                                     f.raw_identity,f.raw_evidence_ids,f.raw_count,
+                                     entropy,fisher,mutual,f.status,f.review_reasons))
+        result=_test_direction(tuple(shifted),target,donor,min_gain,null_margin,
+                               lag_profile=False)
+        distribution.append({"offset":offset,"status":result.status,
+                             "improvement":result.improvement,"reason":result.reason})
+    finite=[d["improvement"] for d in distribution if d["improvement"] is not None]
+    rank=None
+    if actual.improvement is not None and finite:
+        rank=sum(1 for v in finite if v>=actual.improvement)/len(finite)
+    return {"schema":1,"kind":"CIRCULAR_SHIFT_NULL_SINGLE_PAIR","target":target,"donor":donor,
+            "actual":actual,"shift_count":len(distribution),"distribution":tuple(distribution),
+            "fraction_of_shifts_at_or_above_actual":rank,
+            "evidence_identity":_digest({"frames":[f.identity() for f in frames],
+                                         "method":"CIRCULAR_SHIFT_NULL","target":target,
+                                         "donor":donor}),
+            "scientific_jobs_eliminated":0,"shifted_results_dropped":0,
+            "limitations":(
+                "A small fraction is consistent with a non-tautological association; it is not a p-value "
+                "corrected for the number of directed pairs tested in a run.",
+                "Circular shifts preserve the donor's autocorrelation but break its alignment; a common "
+                "driver that is itself shifted is not controlled.",)}
