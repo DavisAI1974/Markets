@@ -1,0 +1,64 @@
+test_both_estimators_cover_the_same_admitted_frames_with_distinct_identities (test_markets_bridge.EstimatorBridgeTests.test_both_estimators_cover_the_same_admitted_frames_with_distinct_identities) ... ok
+test_continuous_series_runs_through_the_five_step_probe_without_mixing (test_markets_bridge.EstimatorBridgeTests.test_continuous_series_runs_through_the_five_step_probe_without_mixing) ... ok
+test_vasicek_entropy_of_a_gaussian_quantile_sample_is_near_closed_form (test_markets_bridge.EstimatorBridgeTests.test_vasicek_entropy_of_a_gaussian_quantile_sample_is_near_closed_form) ... ok
+test_a_leaking_signal_is_caught_by_both_gates (test_markets_bridge.LeakageGateTests.test_a_leaking_signal_is_caught_by_both_gates) ... ok
+test_operator_rows_pass_both_gates (test_markets_bridge.LeakageGateTests.test_operator_rows_pass_both_gates) ... ok
+test_training_coefficients_pass_both_gates (test_markets_bridge.LeakageGateTests.test_training_coefficients_pass_both_gates) ... ok
+test_cli_help_and_defaults (test_ng_runner.NgRunnerCliTests.test_cli_help_and_defaults) ... ok
+test_real_day_runs_end_to_end_and_registries_verify (test_ng_runner.NgRunnerRealDayTests.test_real_day_runs_end_to_end_and_registries_verify) ... skipped 'no cached NG day under data/nymex_cont (AWS not accessible)'
+test_days_are_counted_not_pooled (test_ng_runner.ReplicationTableTests.test_days_are_counted_not_pooled) ... ok
+test_single_estimator_day_cannot_meet_criteria (test_ng_runner.ReplicationTableTests.test_single_estimator_day_cannot_meet_criteria) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 4.159s
+
+OK (skipped=1)
+usage: python.exe -m unittest [-h] --day DAY
+                              [--calibrate-from-day CALIBRATE_FROM_DAY]
+                              [--source {local,s3}] --out OUT
+                              [--kalshi-bins KALSHI_BINS] [--depth]
+                              [--start-ts START_TS] [--end-ts END_TS]
+                              [--max-seconds MAX_SECONDS] [--window WINDOW]
+                              [--stride STRIDE] [--nbins NBINS]
+                              [--calibration-fraction CALIBRATION_FRACTION]
+                              [--no-settle-exclusion]
+                              [--settle-guard-s SETTLE_GUARD_S]
+                              [--mark-utc MARK_UTC]
+                              [--level2-window LEVEL2_WINDOW]
+                              [--level2-stride LEVEL2_STRIDE]
+                              [--shift-null SHIFT_NULL]
+                              [--estimator {frozen-bin,vasicek-ksg}]
+                              [--prefix PREFIX]
+
+Henry Hub NG historical probe (no trade signal).
+
+options:
+  -h, --help            show this help message and exit
+  --day DAY             YYYYMMDD; repeatable. Each day runs INDEPENDENTLY into
+                        <out>/<day>/; a replication table (no pooling) is
+                        written to <out>/replication.json
+  --calibrate-from-day CALIBRATE_FROM_DAY
+                        freeze bins from this PRIOR day instead of the probed
+                        day
+  --source {local,s3}
+  --out OUT             output directory (outside git)
+  --kalshi-bins KALSHI_BINS
+                        optional KXNATGASD_bins.jsonl to add
+                        kalshi_buy/kalshi_sell
+  --depth               add ng_bid_dep/ng_ask_dep channels
+  --start-ts START_TS
+  --end-ts END_TS
+  --max-seconds MAX_SECONDS
+  --window WINDOW
+  --stride STRIDE
+  --nbins NBINS
+  --calibration-fraction CALIBRATION_FRACTION
+  --no-settle-exclusion
+  --settle-guard-s SETTLE_GUARD_S
+  --mark-utc MARK_UTC   HH:MM regime mark, repeatable
+  --level2-window LEVEL2_WINDOW
+  --level2-stride LEVEL2_STRIDE
+  --shift-null SHIFT_NULL
+                        0 disables
+  --estimator {frozen-bin,vasicek-ksg}
+  --prefix PREFIX

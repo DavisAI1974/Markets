@@ -1,5 +1,7 @@
 # CODEX DROP-IN - HENRY HUB NG: ADAPTIVE LOCALITY ENGINE, PRE PAPER-TRADING REVIEW
 
+**Current NG discovery handoff.** Use the [standalone discovery plan](markets_bridge/tasks/plan.md) on `codex/ng-shadow-discovery-20261108`. Git is the durable source of truth. Use a repository-backed workspace without a dependency on C:, E:, or desktop copies. October 3 and October 18 are both discovery evidence. Complete the October 3 comparison before paper orders. The migration-era instructions below are retained as historical provenance.
+
 Repository: DavisAI1974/Markets
 Branch: research/markets-adaptive-wavepacket-migration-20261108
 Read first, in order:
