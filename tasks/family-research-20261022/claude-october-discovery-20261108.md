@@ -596,3 +596,121 @@ Open: the same pass with prices on October 2, 3 and 17 when their print exports 
 clock structure is already in place for 2 and 17); a volume-floored variant of the detector; and whether
 the P family's long runway carries direction once the pre-arc-undefined and defined halves are matched
 on activity.
+
+## 12. The frozen runway-clock duration math, tested on the whole October 18 session
+
+Greg's pointer to the frozen NG exhaustion clock came with its original duration math: the V0 runway clock
+(commit 637778d6, `ng_exhaustion_runway_clock.py`, documented by Codex in
+`research-atlas-v2/sources/ng-frozen-runway-clock.md`). That clock assigns a revealed Family A event to one of
+two post-states by a frozen 61-sample classifier on the oriented roll-20 curve at t0..+60 (normalized by the
+t0 value, nearest of two centroids; `FRANKIE_NG_A_POSTSTATE_CLASSIFIER_FROZEN_PREBLIND_20260816.json`, SHA
+698b956f, read from the pinned commit and hash-checked), and states reveal totals in seconds from t0 for how
+long the exhaustion lasts at four tick scales:
+
+| state | 3t | 5t | 8t | 13t |
+|---|---|---|---|---|
+| A-fast-collapse (frozen) | 358 | 993 | 1802 | 4386 |
+| A-persistent (frozen) | 700 | 1802 | 3455 | 6836 |
+
+with remaining = max(0, total minus elapsed), and a replay proof that required persistent > fast-collapse at
+every scale on each held-out day. This is a fourth clock, distinct from the three in section 11: the
+information horizon (t0+50), the state-confirmation time (median 35 s) and the exhaustion runway (onset,
+median 33 s) are all about the burst itself; the duration math is about the post-state, how long the price
+takes to travel k ticks after the burst. I kept it separate and tested it as written on all 890 events the
+frozen detector finds on the full October 18 session (scripts `runway_duration_test_oct18.py`,
+`frozen_a_classifier_oct18.py`, `a_state_direction_knowable_oct18.py`; outputs beside them). Durations are
+the first second after t0 at which the forward-filled last-trade price (and separately the midpoint) is k
+ticks from its t0 value, in either direction and in the burst-polarity direction; session-end censoring is
+handled with Kaplan-Meier medians. Nothing refit. No trade cost anywhere.
+
+**Caveat stated first.** The frozen pipeline applies the A classifier only to events the pre-family A/B/C
+classifier (78 features on t-60..t0, RobustScaler, separate frozen artifact) puts in Family A. That artifact
+exists at 637778d6 (`FRANKIE_NG_PRE_FAMILY_CLASSIFIER_FROZEN_OPERATIONAL_20260817.json`) but I have not
+applied it yet, so here the A classifier labels every detected event. The frozen reveal population was 831
+fast and 785 persistent on four other days. If the pre-family gate matters, the numbers below move; the
+ordering test is the part most likely to survive it.
+
+**The classifier splits the day in half and agrees with the seed proxy one way.** 442 A-fast-collapse, 448
+A-persistent. Every event whose oriented curve reaches zero within +60 and is labeled fast is also a
+collapsed seed (O, S or X): 442 of 442. The persistent label is wider than seed P: 265 P plus 183 collapsed
+seeds. So "P" is a sufficient but not necessary mark of the persistent state under the frozen classifier.
+
+**The ordering holds at every scale, with both labelings and all four series.** Persistent > fast-collapse
+(and seed-proxy persistent > collapsed) for price-with, price-either, mid-with and mid-either at 3, 5, 8 and
+13 ticks, 16 of 16 comparisons. That is the frozen proof's own criterion and October 18 passes it.
+
+**The absolute totals: persistent close, fast long.** Kaplan-Meier medians, with-polarity price, seconds from
+t0:
+
+| state | 3t | 5t | 8t | 13t |
+|---|---|---|---|---|
+| A-fast-collapse realised | 450 | 1128 | 2798 | 6388 |
+| A-fast-collapse frozen | 358 | 993 | 1802 | 4386 |
+| A-persistent realised | 579 | 1341 | 3536 | 6956 |
+| A-persistent frozen | 700 | 1802 | 3455 | 6836 |
+
+The persistent totals are within 3 to 26 percent of the frozen values at all four scales. The fast-collapse
+totals run 14 to 55 percent longer than frozen, and the gap widens with scale. Either-direction medians are
+far shorter (fast 85 / 240 / 598 / 1415, persistent 201 / 545 / 1282 / 3425), which says the frozen totals
+were polarity-oriented durations, and that the first k-tick excursion after a burst is often not in the
+burst's direction. Censoring is material only for with-polarity at 8 and 13 ticks (70 and 95 fast events
+never reach the level before 21:00 UTC).
+
+**The countdown at +60, the first moment the state exists.** Remaining time under the frozen rule
+(total minus 60) against the realised Kaplan-Meier median remaining among events not yet at the level:
+
+| state | 3t | 5t | 8t | 13t |
+|---|---|---|---|---|
+| fast, frozen remaining | 298 | 933 | 1742 | 4326 |
+| fast, realised remaining | 620 | 1229 | 2903 | 6328 |
+| persistent, frozen remaining | 640 | 1742 | 3395 | 6776 |
+| persistent, realised remaining | 759 | 1470 | 3519 | 6896 |
+
+Persistent is a usable countdown on this day (within 4 to 16 percent). Fast-collapse undercounts by about
+2x at 3 ticks and 1.5x at 8 and 13. Only 62 fast and 54 persistent events (14 and 12 percent) had already
+moved 3 ticks by +60; at 8 ticks it is 3 and 3, at 13 ticks none. So the clock is almost never already over
+when it starts, which is the opposite of the burst clocks in section 11.
+
+**Direction: contemporaneous at t0, null once knowable.** Measured from t0, the first k-tick excursion is in
+the burst direction 39 to 44 percent of the time for fast-collapse and 52 to 59 percent for persistent; by
+seed, O is 33 percent (two-thirds reversal), P 53, S 49, X 50. That looks like a direction read. It is not
+one that can be used: the state is defined on t0..+60, and a large part of those first excursions happen
+inside or just after that window. Re-anchored at +60 (and at max(+60, archived recognition)), measured
+from the price at the anchor, every group is at 44 to 56 percent with-polarity for the first 3/5/8-tick
+excursion, and the oriented tick change at anchor+60/+300/+600 has median 0 for both A states and all four
+seeds (fast at +300: 198 with / 45 flat / 196 against; persistent: 183 / 77 / 186; O at +300: 107 / 32 / 110).
+The A state and the seed state tell you how long the price will take to travel, not which way. Same
+conclusion as sections 1 and 11, reached a third way.
+
+**What this means for the program.** (1) The frozen duration math is a time-to-distance clock and on October
+18 it is well calibrated for the persistent state and slow for the fast state; as a countdown it is honest
+about the former and optimistic about the latter. (2) It is the one clock in this reanalysis that is NOT
+over before it is knowable, because it measures the post-state, so it is the one with a possible operating
+use on the Kalshi lag: a time-to-k-ticks forecast at +60 with the direction supplied elsewhere (the S92
+price-leg nowcast, or nothing). (3) The missing pre-family gate is the next check; if Family A is a minority
+of these 890, the fast-collapse gap may be a Family B/C contamination rather than a day effect. (4) Repeat
+on October 2, 3 and 17 when prices land; the either-direction medians are a day-activity measure and should
+be read against the day's print count before any cross-day comparison.
+
+### Coverage: the missing evening prefix, and whether the other two have it
+
+Greg asked whether the missing data could be filled and whether Desktop and Codex are missing it too.
+Filled: the October 18 session begins 21:00 UTC October 17, and the print export's 30,739 prints cover it,
+but the Databento member file named for October 18 starts at 00:00 UTC, so a replay from that member alone
+starts three hours into the session with no state, drops the 21:00 to 24:00 prefix, and (if the clip at
+21:00 UTC October 18 is missed) picks up 327 prints of the next session. My exhaustion pass now replays the
+October 17 member (cursor offset minus 841,601) ahead of the October 18 member, clips at 21:00 UTC, and
+matches 30,739 prints and 813 of the 863 archived births. Coverage of the other two passes as read from
+their files on the branch:
+
+- Desktop (`october-discovery-log-claude.md`, `claude-pass/`): states one UTC member, so its replay is missing
+  the evening prefix and any statistic it computes over "the day" from the tape omits 21:00 to 24:00 UTC
+  October 17 and begins with an empty book at 00:00. Its group-export work is unaffected because the export
+  is already session-complete.
+- Codex (`codex-flow-book-discovery-20261108.md`, `flow-book-discovery-v1/`): the raw-record inventory and the
+  extracts are built from the October 18 member only, so the same prefix is missing there; the group-export
+  tables (583,688 groups) are full-session. Its per-second legacy signed-flow files for October 2 and 17 are
+  from the group export and are full-session.
+
+So the answer is yes on both counts for the tape-replay side and no for the group-export side. Any merge of
+the three passes should note which side each number came from before comparing counts.

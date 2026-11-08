@@ -1,0 +1,421 @@
+{
+  "a_state": {
+    "A-fast-collapse": {
+      "n": 442,
+      "plus60_first3t_with_share": [
+        440,
+        0.491
+      ],
+      "plus60_first5t_with_share": [
+        439,
+        0.474
+      ],
+      "plus60_first8t_with_share": [
+        438,
+        0.479
+      ],
+      "plus60_d60_oriented": {
+        "n": 440,
+        "median": 0.0,
+        "with_": 149,
+        "flat": 127,
+        "against": 164
+      },
+      "plus60_d300_oriented": {
+        "n": 439,
+        "median": 0,
+        "with_": 198,
+        "flat": 45,
+        "against": 196
+      },
+      "plus60_d600_oriented": {
+        "n": 436,
+        "median": 0.0,
+        "with_": 206,
+        "flat": 29,
+        "against": 201
+      },
+      "known_first3t_with_share": [
+        400,
+        0.487
+      ],
+      "known_first5t_with_share": [
+        399,
+        0.474
+      ],
+      "known_first8t_with_share": [
+        398,
+        0.477
+      ],
+      "known_d60_oriented": {
+        "n": 400,
+        "median": 0.0,
+        "with_": 136,
+        "flat": 112,
+        "against": 152
+      },
+      "known_d300_oriented": {
+        "n": 399,
+        "median": 0,
+        "with_": 182,
+        "flat": 42,
+        "against": 175
+      },
+      "known_d600_oriented": {
+        "n": 396,
+        "median": 0.0,
+        "with_": 185,
+        "flat": 27,
+        "against": 184
+      }
+    },
+    "A-persistent": {
+      "n": 448,
+      "plus60_first3t_with_share": [
+        448,
+        0.475
+      ],
+      "plus60_first5t_with_share": [
+        448,
+        0.52
+      ],
+      "plus60_first8t_with_share": [
+        445,
+        0.544
+      ],
+      "plus60_d60_oriented": {
+        "n": 448,
+        "median": 0.0,
+        "with_": 122,
+        "flat": 192,
+        "against": 134
+      },
+      "plus60_d300_oriented": {
+        "n": 446,
+        "median": 0.0,
+        "with_": 183,
+        "flat": 77,
+        "against": 186
+      },
+      "plus60_d600_oriented": {
+        "n": 444,
+        "median": 0.0,
+        "with_": 194,
+        "flat": 41,
+        "against": 209
+      },
+      "known_first3t_with_share": [
+        412,
+        0.483
+      ],
+      "known_first5t_with_share": [
+        411,
+        0.521
+      ],
+      "known_first8t_with_share": [
+        409,
+        0.548
+      ],
+      "known_d60_oriented": {
+        "n": 412,
+        "median": 0.0,
+        "with_": 111,
+        "flat": 180,
+        "against": 121
+      },
+      "known_d300_oriented": {
+        "n": 410,
+        "median": 0.0,
+        "with_": 164,
+        "flat": 74,
+        "against": 172
+      },
+      "known_d600_oriented": {
+        "n": 408,
+        "median": 0.0,
+        "with_": 179,
+        "flat": 38,
+        "against": 191
+      }
+    }
+  },
+  "seed": {
+    "O": {
+      "n": 251,
+      "plus60_first3t_with_share": [
+        250,
+        0.456
+      ],
+      "plus60_first5t_with_share": [
+        249,
+        0.462
+      ],
+      "plus60_first8t_with_share": [
+        248,
+        0.452
+      ],
+      "plus60_d60_oriented": {
+        "n": 250,
+        "median": 0.0,
+        "with_": 82,
+        "flat": 64,
+        "against": 104
+      },
+      "plus60_d300_oriented": {
+        "n": 249,
+        "median": 0,
+        "with_": 107,
+        "flat": 32,
+        "against": 110
+      },
+      "plus60_d600_oriented": {
+        "n": 247,
+        "median": 0,
+        "with_": 114,
+        "flat": 21,
+        "against": 112
+      },
+      "known_first3t_with_share": [
+        225,
+        0.444
+      ],
+      "known_first5t_with_share": [
+        224,
+        0.455
+      ],
+      "known_first8t_with_share": [
+        223,
+        0.457
+      ],
+      "known_d60_oriented": {
+        "n": 225,
+        "median": 0,
+        "with_": 73,
+        "flat": 55,
+        "against": 97
+      },
+      "known_d300_oriented": {
+        "n": 224,
+        "median": 0.0,
+        "with_": 95,
+        "flat": 29,
+        "against": 100
+      },
+      "known_d600_oriented": {
+        "n": 222,
+        "median": 0.0,
+        "with_": 103,
+        "flat": 20,
+        "against": 99
+      }
+    },
+    "P": {
+      "n": 265,
+      "plus60_first3t_with_share": [
+        265,
+        0.46
+      ],
+      "plus60_first5t_with_share": [
+        265,
+        0.517
+      ],
+      "plus60_first8t_with_share": [
+        264,
+        0.561
+      ],
+      "plus60_d60_oriented": {
+        "n": 265,
+        "median": 0,
+        "with_": 66,
+        "flat": 132,
+        "against": 67
+      },
+      "plus60_d300_oriented": {
+        "n": 264,
+        "median": 0.0,
+        "with_": 103,
+        "flat": 49,
+        "against": 112
+      },
+      "plus60_d600_oriented": {
+        "n": 263,
+        "median": 0,
+        "with_": 113,
+        "flat": 24,
+        "against": 126
+      },
+      "known_first3t_with_share": [
+        254,
+        0.465
+      ],
+      "known_first5t_with_share": [
+        253,
+        0.514
+      ],
+      "known_first8t_with_share": [
+        253,
+        0.557
+      ],
+      "known_d60_oriented": {
+        "n": 254,
+        "median": 0.0,
+        "with_": 63,
+        "flat": 130,
+        "against": 61
+      },
+      "known_d300_oriented": {
+        "n": 253,
+        "median": 0,
+        "with_": 97,
+        "flat": 49,
+        "against": 107
+      },
+      "known_d600_oriented": {
+        "n": 252,
+        "median": 0.0,
+        "with_": 110,
+        "flat": 21,
+        "against": 121
+      }
+    },
+    "S": {
+      "n": 220,
+      "plus60_first3t_with_share": [
+        219,
+        0.498
+      ],
+      "plus60_first5t_with_share": [
+        219,
+        0.507
+      ],
+      "plus60_first8t_with_share": [
+        217,
+        0.525
+      ],
+      "plus60_d60_oriented": {
+        "n": 219,
+        "median": 0,
+        "with_": 76,
+        "flat": 64,
+        "against": 79
+      },
+      "plus60_d300_oriented": {
+        "n": 218,
+        "median": 0.0,
+        "with_": 100,
+        "flat": 19,
+        "against": 99
+      },
+      "plus60_d600_oriented": {
+        "n": 217,
+        "median": 0,
+        "with_": 106,
+        "flat": 18,
+        "against": 93
+      },
+      "known_first3t_with_share": [
+        194,
+        0.515
+      ],
+      "known_first5t_with_share": [
+        194,
+        0.515
+      ],
+      "known_first8t_with_share": [
+        192,
+        0.521
+      ],
+      "known_d60_oriented": {
+        "n": 194,
+        "median": 0.0,
+        "with_": 70,
+        "flat": 57,
+        "against": 67
+      },
+      "known_d300_oriented": {
+        "n": 193,
+        "median": 0,
+        "with_": 90,
+        "flat": 19,
+        "against": 84
+      },
+      "known_d600_oriented": {
+        "n": 192,
+        "median": 0.0,
+        "with_": 92,
+        "flat": 17,
+        "against": 83
+      }
+    },
+    "X": {
+      "n": 154,
+      "plus60_first3t_with_share": [
+        154,
+        0.545
+      ],
+      "plus60_first5t_with_share": [
+        154,
+        0.506
+      ],
+      "plus60_first8t_with_share": [
+        154,
+        0.506
+      ],
+      "plus60_d60_oriented": {
+        "n": 154,
+        "median": 0.0,
+        "with_": 47,
+        "flat": 59,
+        "against": 48
+      },
+      "plus60_d300_oriented": {
+        "n": 154,
+        "median": 0.0,
+        "with_": 71,
+        "flat": 22,
+        "against": 61
+      },
+      "plus60_d600_oriented": {
+        "n": 153,
+        "median": -1,
+        "with_": 67,
+        "flat": 7,
+        "against": 79
+      },
+      "known_first3t_with_share": [
+        139,
+        0.547
+      ],
+      "known_first5t_with_share": [
+        139,
+        0.511
+      ],
+      "known_first8t_with_share": [
+        139,
+        0.511
+      ],
+      "known_d60_oriented": {
+        "n": 139,
+        "median": 0,
+        "with_": 41,
+        "flat": 50,
+        "against": 48
+      },
+      "known_d300_oriented": {
+        "n": 139,
+        "median": 0,
+        "with_": 64,
+        "flat": 19,
+        "against": 56
+      },
+      "known_d600_oriented": {
+        "n": 138,
+        "median": -1.0,
+        "with_": 59,
+        "flat": 7,
+        "against": 72
+      }
+    }
+  },
+  "note": "Anchors: plus60 = t0+60 (earliest the A state exists); known = max(t0+60, archived recognition second). with = move in the burst polarity direction (continuation); against = reversal. First-excursion shares are over events where the excursion occurred before session end. Oriented tick changes are polarity times the signed change from the anchor."
+}
