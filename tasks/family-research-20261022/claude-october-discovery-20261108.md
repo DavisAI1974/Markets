@@ -873,3 +873,117 @@ coming and how big it will be, which is exactly what the activity read and the c
 the activity read as the arm-and-size layer and the observed NYMEX move as the trigger, scored on Kalshi
 fills for the same dates. That needs Kalshi-side data for October 2023, which is not in the repository, and
 is the next comparison I would run.
+
+## 14. The October 17 session, full tape, as the out-of-sample day
+
+### 14.1 Coverage and the re-pull
+
+The tape commit (1d15dc6f) held only the October 2, 3, 17 and 18 UTC-day members, each starting at 00:00
+UTC with Databento's range-start snapshot, so the October 17 session (22:00 UTC October 16 to 21:00 UTC
+October 17) had no tape for its first three hours, and the October 2 session (Sunday evening October 1)
+likewise. At Greg's request the two missing UTC days were pulled on 2026-11-08 with the tape commit's own
+recipe (GLBX.MDP3, NG.v.0 continuous, mbo, one UTC day per file): 2023-10-16 is 925,662 records, 2023-10-01
+is 12,532 records (the Sunday evening), USD 0.09 in total, committed as data commit 603c4def with the
+manifest extended and a README addendum. The replay now pins each member to its commit. The October 17
+pass without the prefix is kept in `claude-code/no-prefix-oct17/` for comparison; everything below is the
+full-session pass. Databento's range-start `R` record clears the book before the snapshot re-adds it, so
+chaining members does not double count (checked on the Book class).
+
+**What the prefix changed.** 33,703 prints instead of 33,451; 830 frozen-detector events instead of 765
+(65 in the evening hours); the first trade at 22:00 UTC October 16 instead of 00:00 UTC. One result
+changed sign: the frozen duration ordering at 3 ticks, which the no-prefix pass failed (694 vs 707 s) and
+the full session passes (823 vs 739). Everything else moved by hundredths. So the missing prefix was worth
+filling and it did not drive any conclusion.
+
+### 14.2 The clocks and the detector
+
+Same contract, same constants, archived births not available for this date (no standalone export yet).
+Threshold saturates at 1.0 again. 830 events, 424 sell / 406 buy polarity; seeds P 268, O 223, S 182,
+X 157. Runway median 36 s (q25 18, q75 84, max 985), confirmation median 38 s, 492 of 830 confirmed before
+the archived adapter's t0+50 horizon, 59 before t0+5; remaining runway at t0+50 negative for 481 (58
+percent). The October 18 figures were 33 / 35 s, 62 percent over before knowable. The three clocks have
+the same shape on both days.
+
+### 14.3 The frozen duration math
+
+A classifier: 400 fast-collapse, 430 persistent; every seed-P event is persistent, every fast event is a
+collapsed seed, as on the 18th. Kaplan-Meier medians, with-polarity price, seconds from t0:
+
+| state | 3t | 5t | 8t | 13t |
+|---|---|---|---|---|
+| fast-collapse realised (Oct 17) | 739 | 1651 | 2931 | 9371 |
+| fast-collapse realised (Oct 18) | 450 | 1128 | 2798 | 6388 |
+| fast-collapse frozen | 358 | 993 | 1802 | 4386 |
+| persistent realised (Oct 17) | 823 | 2057 | 4622 | 11587 |
+| persistent realised (Oct 18) | 579 | 1341 | 3536 | 6956 |
+| persistent frozen | 700 | 1802 | 3455 | 6836 |
+
+Ordering persistent > fast-collapse holds 4 of 4 with polarity and 4 of 4 either way, and on the
+Family-A-only subset (774 of 830 are Family A; 28 B, 28 C). October 17 is a slower price-travel day
+than the 18th (either-direction medians 111 / 315 / 871 / 2506 s for fast against 85 / 240 / 598 / 1415)
+despite more volume (74,222 lots against 64,462), so the absolute totals run long on both states: fast
+about 2x frozen at every scale, persistent 1.2x at 3 and 5 ticks and 1.3x to 1.7x at 8 and 13. The +60
+countdown is correspondingly optimistic on this day for both states (persistent frozen remaining 640 /
+1742 / 3395 / 6776 against realised 966 / 2297 / 4566 / 11527). Two-day reading of the duration math: the
+two-state ordering is robust; the persistent totals are calibrated on a day like the 18th and slow on a
+day like the 17th; the fast totals are short on both. A day-level speed scale (price travel per lot, or
+the either-direction 3-tick median of the first hours) is the obvious correction to test before any use.
+
+### 14.4 Replication table for section 13
+
+| claim | Oct 18 | Oct 17 full | holds |
+|---|---|---|---|
+| state carries no price direction at +60 (first 3t with share) | 0.49 / 0.48 | 0.45 / 0.46 | yes |
+| persistent state = quieter 600 s (volume AUC) | 0.27 | 0.30 | yes |
+| range / path / dispersion AUC | 0.33 / 0.28 / 0.30 | 0.36 / 0.30 / 0.32 | yes |
+| time to first tick / hold share AUC | 0.65 / 0.61 | 0.65 / 0.57 | yes |
+| low-activity tercile: state AUCs collapse | 0.48 / 0.47 | 0.50 / 0.51 | yes |
+| pre-300 s volume separates the states (AUC) | 0.28 | 0.29 | yes |
+| pre-arc shape separates the states (arc_min AUC) | 0.57 | 0.56 | yes, weakly |
+| pre-300 s volume vs time to 3t (rho) | -0.52 | -0.55 | yes |
+| pre-300 s path vs 600 s range (rho) | +0.63 | +0.62 | yes |
+| pre-birth vs oriented 300 s change (rho) | 0.00 | -0.01 | yes (null) |
+| pre-family A share | 0.93 | 0.93 | yes |
+| next burst flips after persistent / fast | 0.33 / 0.56 | 0.37 / 0.56 | yes |
+| next burst flips after P / O / S / X | 0.28 / 0.64 / 0.36 / 0.54 | 0.34 / 0.69 / 0.28 / 0.55 | yes |
+| next-state forecast realised | 0.61 | 0.59 | yes |
+| thinner book, wider spread at persistent events (toward depth / spread AUC) | 0.33 / 0.59 | 0.36 / 0.57 | yes |
+| post-anchor depth change by state | 0.47 to 0.57 | 0.51 | yes (null) |
+| median abs move by cell, fast high / persistent low, 600 s | 6 / 2 | 5 / 2 | yes |
+| book imbalance direction in persistent cells (+300) | 0.56 | 0.50 | no |
+| book imbalance inverted in busy fast-collapse cells (+600) | 0.36 | 0.56 | no, reversed |
+| strong flow in mid-activity band (+300) | 0.69 | 0.41 | no, reversed |
+| momentum in busy tape (+300) | 0.55 | 0.46 | no |
+| fast-collapse x mid: book (+300) / next-seed (+300) | 0.57 / 0.60 | 0.59 / 0.61 | yes, n 96 / 38, watch list |
+| next-burst forecast right: price against that burst | 0.64 | 0.69 | yes |
+| next-burst forecast wrong: price with that burst | 0.57 | 0.65 | yes |
+
+Two October 17 readings are not explained by section 13.3's drift account and are recorded as such. First,
+pooled over the whole day, the burst polarity reverses at +300 (286 with / 128 flat / 412 against, 0.41),
+where the 18th was 0.50; in the persistent state it is 0.36 and both call sides are below 0.5 (buy bursts
+0.33, sell bursts 0.41), so this is not only the day's fall. Second, strong flow in the mid band points the
+wrong way on both call sides. One day each; neither is a finding, both are the kind of day-level
+difference (a falling day with reversing bursts) that a third and fourth day will sort.
+
+### 14.5 The one two-day regularity that is new
+
+Section 13.4's result sharpened on the 17th: when the state's forecast of the next burst's side is right,
+the price during that next burst moves against it (Oct 18: 82 / 76 / 143; Oct 17: 59 / 80 / 130), and when
+the forecast is wrong the price moves with the burst that came (105 / 74 / 78 and 125 / 74 / 66). In
+plain terms, a second burst from the expected side is absorbed and a burst from the unexpected side
+moves price. The outcome is contemporaneous with the burst (its side is known at its own t0+5 to +50, by
+section 11, and its move is mostly done by confirmation), so this is not an entry read from the anchor;
+it is a statement about which bursts move price, consistent on two days, and the first candidate I would
+hand to the frozen chain plays (SSOS, P-O-X enter at endpoint+5 of a sequence) as a filter to test, with the
+caveat that it was found on the same two days it is reported on.
+
+### 14.6 Index of this session's October 17 artifacts
+
+Full-session pass, all under `claude-code/`: `exhaustion-clock-oct17-*`, `runway-duration-oct17-*`,
+`frozen-a-classifier-oct17-*`, `a-state-direction-knowable-oct17-*`, `beyond-direction-prebirth-oct17-*`,
+`other-things-oct17-*`, `stack-direction-sources-oct17-*`, `next-burst-forecast-oct17-*`; the no-prefix
+pass in `no-prefix-oct17/`; the cross-day diagnosis in `cell-flip-diagnosis.json` (built on the no-prefix
+stack table; the full-session table differs by the 65 prefix events). The group export and archived births
+for October 17 have not landed; when they do, the four-arm, dipole post-recognition, size-one and sweep
+cohort passes run unchanged, and the exhaustion pass gains its archived-recognition comparison. October 2
+and 3 are ready to run from the tape now (`NG_DAY=20231002`, `20231003`), October 2 with its Sunday prefix.
