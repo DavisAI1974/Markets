@@ -126,6 +126,8 @@ new bid, and final fill explain the outcomes and belong on the outcome
 side of that test. The tape leaves remaining hidden quantity and trader
 motives unresolved.
 
+The [cohort mechanism audit](why-october18-touch-behaved-differently.md) extends this comparison to all 1,012 saved size-one episodes and maps the related 99-plane and 13-data-point evidence.
+
 ## October 18 full-session touch and print decisions
 
 The decision pass read all 583,688 group rows and 30,739 prints from the
