@@ -161,3 +161,26 @@ Bulk publication remains in progress. Record each confirmed shutdown
 after its archives appear on the shared branch.
 [Archive preparation](runpod/runpod_archive_remaining_outputs.sh) ·
 [Git publisher](runpod/publish_root_frame_archive.py)
+
+
+### Bulk archive seal and publication queue
+
+All three date archives are sealed under
+`/opt/frankie-box/work/git-publication/YYYYMMDD`. Each contains
+`root-frames` and `root-native-remaining` with an ordered part list and a
+source index. Counts below exclude the two index files per archive.
+
+| Trading date | ROOT frame parts | Remaining ROOT and Native parts | Remaining archive sealed (UTC) |
+| --- | ---: | ---: | --- |
+| October 2, partial | 211 | 929 | 21:24:51 |
+| October 3, full session | 236 | 1,090 | 21:28:29 |
+| October 17, partial | 243 | 1,029 | 21:28:01 |
+
+On November 8, 2026, the publisher queued each remaining archive behind
+that date's live ROOT frame upload. The queue starts its publisher after
+the frame publisher confirms the full frame tree on the shared branch.
+Each date uses its own staging branch. The local publisher logs are under
+`F:/MarketsReplayPublication` with names
+`YYYYMMDD-frame-staging.log` and `YYYYMMDD-remaining-staging.log`.
+Both archive trees and the published standalone inputs and decisions are
+required before stopping the corresponding pod.
