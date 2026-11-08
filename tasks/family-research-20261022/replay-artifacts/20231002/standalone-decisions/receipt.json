@@ -1,0 +1,71 @@
+{
+  "trade_date": "20231002",
+  "input": "/opt/frankie-box/work/standalone-inputs/20231002/groups.jsonl.gz",
+  "input_groups": {
+    "path": "groups.jsonl.gz",
+    "bytes": 19758887,
+    "sha256": "ae0c8778503ebd1169b6f737b6992f8f9a006c65d26f13a75ee8bf51727029e3"
+  },
+  "runner_sha256": "9450d087fe21155f09c9461c3688c9dd718bd83782d35e298cccbb0750188bb7",
+  "status": "touch-print-decisions-sealed",
+  "summary": {
+    "trade_date": "20231002",
+    "scope": "partial",
+    "counts": {
+      "source_groups": 600291,
+      "source_prints": 37670,
+      "BOUNDARY_GROUP": 1,
+      "eligible_groups": 600290
+    },
+    "dispositions": [
+      [
+        "falling-touch+print.v1",
+        "ask",
+        "CANDIDATE",
+        6059
+      ],
+      [
+        "falling-touch+print.v1",
+        "bid",
+        "CANDIDATE",
+        5539
+      ],
+      [
+        "falling-touch.v1",
+        "ask",
+        "CANDIDATE",
+        35051
+      ],
+      [
+        "falling-touch.v1",
+        "bid",
+        "CANDIDATE",
+        35219
+      ],
+      [
+        "prior-touch-print.v1",
+        "ask",
+        "CANDIDATE",
+        18135
+      ],
+      [
+        "prior-touch-print.v1",
+        "bid",
+        "CANDIDATE",
+        17169
+      ],
+      [
+        "prior-touch-print.v1",
+        "unassigned",
+        "AMBIGUOUS_VS_PRIOR_TOUCH",
+        1537
+      ]
+    ]
+  },
+  "decision_rows": 118709,
+  "output": {
+    "path": "decisions.jsonl.gz",
+    "bytes": 5410554,
+    "sha256": "90726dff365b8710ddb155e47a22e8f96914159a92ad9cc5ace16d8d841dfe06"
+  }
+}
