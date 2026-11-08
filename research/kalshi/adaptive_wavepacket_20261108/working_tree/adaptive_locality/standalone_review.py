@@ -19,7 +19,8 @@ from .level2_coupling import discover_level2_balance_links
 from .research_holds import (
     ResearchHoldRegistry, preserve_geometric_holds,
     preserve_geometric_predictive_controls,
-    preserve_full_raw_five_step_holds, preserve_full_raw_level2_holds)
+    preserve_full_raw_five_step_holds, preserve_full_raw_level2_holds,
+    _contract_identity)
 
 
 def archive_first_geometric_review(raw_frames: Sequence[RawFrame],
@@ -27,17 +28,18 @@ def archive_first_geometric_review(raw_frames: Sequence[RawFrame],
                                    registry: ResearchHoldRegistry,
                                    target: str, donor: str, *,
                                    archive_prefix: str,
-                                   max_frames: int=12000) -> dict:
+                                   max_frames: int=12000, derive=None) -> dict:
     """Archive originals, then run both bounded diagnostics when admissible.
 
     The raw archive is committed first. Every unavailable fit is explicitly
     linked to a research-hold case; a fit that succeeds can still return
     RESEARCH_HOLD. No laboratory condition authorizes science suppression.
     """
+    derive=derive or derive_information
     raw=tuple(raw_frames)
     if (not archive_prefix or not isinstance(bins,FixedBins) or
         bins.source_identity!=registry.source_identity or
-        bins.identity()!=registry.contract_identity or
+        _contract_identity(bins,derive)!=registry.contract_identity or
         not raw or type(max_frames) is not int or max_frames<64 or
         any(not isinstance(r,RawFrame) or
             r.source_identity!=registry.source_identity for r in raw) or
@@ -45,7 +47,7 @@ def archive_first_geometric_review(raw_frames: Sequence[RawFrame],
         raise LocalityError("complete source-bound raw input and bounded review policy required")
     original_name=archive_prefix+"-unmodified-raw"
     raw_digest=registry.archive(original_name,raw)
-    information=tuple(derive_information(r,bins) for r in raw)
+    information=tuple(derive(r,bins) for r in raw)
     # The full information series, including REVIEW_REQUIRED frames, is also
     # archived before fit. This is NOT a fit gate that deletes observations.
     info_name=archive_prefix+"-derived-information"
@@ -78,7 +80,7 @@ def archive_first_geometric_review(raw_frames: Sequence[RawFrame],
             static=geometric_dipole_probe(information,target,donor)
             static_receipt=preserve_geometric_holds(
                 static,information,raw,bins,registry,
-                archive_name=archive_prefix+"-static-geometry")
+                archive_name=archive_prefix+"-static-geometry",derive=derive)
             holds.extend(static_receipt["research_case_ids"])
         except (LocalityError,ArithmeticError,OverflowError) as exc:
             hold("STATIC_GEOMETRY_UNVERIFIED_NO_VALID_FIT",
@@ -96,7 +98,7 @@ def archive_first_geometric_review(raw_frames: Sequence[RawFrame],
                     information,target,donor,max_frames=max_frames)
                 predictive_receipt=preserve_geometric_predictive_controls(
                     predicted,information,raw,bins,registry,
-                    archive_name=archive_prefix+"-predictive-controls")
+                    archive_name=archive_prefix+"-predictive-controls",derive=derive)
                 holds.extend(predictive_receipt["research_case_ids"])
             except (LocalityError,ArithmeticError,OverflowError) as exc:
                 hold("PREDICTIVE_GEOMETRY_UNVERIFIED_NO_VALID_FIT",
@@ -134,12 +136,13 @@ def archive_first_geometric_review(raw_frames: Sequence[RawFrame],
     }
 
 
-def _archive_originals(raw_frames, bins, registry, archive_prefix, *, max_frames):
+def _archive_originals(raw_frames, bins, registry, archive_prefix, *, max_frames, derive=None):
     """Shared admission: validate the contract, archive raw then derived, return both."""
+    derive=derive or derive_information
     raw=tuple(raw_frames)
     if (not archive_prefix or not isinstance(bins,FixedBins) or
         bins.source_identity!=registry.source_identity or
-        bins.identity()!=registry.contract_identity or
+        _contract_identity(bins,derive)!=registry.contract_identity or
         not raw or type(max_frames) is not int or max_frames<2 or
         any(not isinstance(r,RawFrame) or
             r.source_identity!=registry.source_identity for r in raw)):
@@ -149,7 +152,7 @@ def _archive_originals(raw_frames, bins, registry, archive_prefix, *, max_frames
         raw_digest=registry.archive_partitioned(original_name,raw)["manifest_digest"]
     else:
         raw_digest=registry.archive(original_name,raw)
-    information=tuple(derive_information(r,bins) for r in raw)
+    information=tuple(derive(r,bins) for r in raw)
     info_name=archive_prefix+"-derived-information"
     if len(raw)>max_frames:
         info_digest=registry.archive_partitioned(info_name,information)["manifest_digest"]
@@ -185,7 +188,7 @@ def archive_first_five_step_review(raw_frames: Sequence[RawFrame], bins: FixedBi
                                    registry: ResearchHoldRegistry, *,
                                    archive_prefix: str, max_frames: int=12000,
                                    min_gain: float=0.15, null_margin: float=0.08,
-                                   max_nodes: int=12) -> dict:
+                                   max_nodes: int=12, derive=None) -> dict:
     """PG-1: archive originals, THEN run the five-step probe; every refusal is a hold.
 
     `discover_coupling` raises on non-READY frames, schema changes, duplicate
@@ -194,7 +197,7 @@ def archive_first_five_step_review(raw_frames: Sequence[RawFrame], bins: FixedBi
     archived raw series instead of an exception on nothing.
     """
     raw,information,original_name,raw_digest,info_name,info_digest=_archive_originals(
-        raw_frames,bins,registry,archive_prefix,max_frames=max_frames)
+        raw_frames,bins,registry,archive_prefix,max_frames=max_frames,derive=derive)
     holds=[]
     hold=_hold_factory(registry,original_name,raw_digest,info_digest,holds,
                        extra={"kind":"FIVE_STEP"})
@@ -206,7 +209,7 @@ def archive_first_five_step_review(raw_frames: Sequence[RawFrame], bins: FixedBi
                                      null_margin=null_margin,max_nodes=max_nodes)
             receipt=preserve_full_raw_five_step_holds(
                 report,information,raw,bins,registry,
-                archive_name=archive_prefix+"-five-step")
+                archive_name=archive_prefix+"-five-step",derive=derive)
             holds.extend(receipt["research_case_ids"])
         except (LocalityError,ArithmeticError,OverflowError) as exc:
             hold("FIVE_STEP_UNVERIFIED_NO_VALID_FIT",
@@ -235,13 +238,15 @@ def archive_first_level2_review(raw_frames: Sequence[RawFrame], bins: FixedBins,
                                 archive_prefix: str, max_frames: int=12000,
                                 window: int=40, stride: int=4, max_nodes: int=12,
                                 min_gain: float=0.15, null_margin: float=0.08,
-                                max_channels: int=36, max_windows: int=12000) -> dict:
+                                max_channels: int=36, max_windows: int=12000,
+                                balance_transform: str="raw", derive=None) -> dict:
     """PG-1: archive originals, then Level 1 windows, then Level 2 links; holds on refusal."""
     raw,information,original_name,raw_digest,info_name,info_digest=_archive_originals(
-        raw_frames,bins,registry,archive_prefix,max_frames=max_frames)
+        raw_frames,bins,registry,archive_prefix,max_frames=max_frames,derive=derive)
     holds=[]
     hold=_hold_factory(registry,original_name,raw_digest,info_digest,holds,
-                       extra={"kind":"LEVEL2","window":window,"stride":stride})
+                       extra={"kind":"LEVEL2","window":window,"stride":stride,
+                              "transform":balance_transform})
     windows=None
     report=None
     receipt=None
@@ -259,10 +264,11 @@ def archive_first_level2_review(raw_frames: Sequence[RawFrame], bins: FixedBins,
                     windows,source_identity=registry.source_identity,
                     calibration_identity=registry.contract_identity,
                     min_gain=min_gain,null_margin=null_margin,
-                    max_channels=max_channels,max_windows=max_windows)
+                    max_channels=max_channels,max_windows=max_windows,
+                    balance_transform=balance_transform)
                 receipt=preserve_full_raw_level2_holds(
                     report,information,raw,bins,registry,
-                    archive_name=archive_prefix+"-level2")
+                    archive_name=archive_prefix+"-level2",derive=derive)
                 holds.extend(receipt["research_case_ids"])
             except (LocalityError,ArithmeticError,OverflowError) as exc:
                 hold("LEVEL2_UNVERIFIED_NO_VALID_FIT",

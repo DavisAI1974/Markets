@@ -334,6 +334,12 @@ class ResearchHoldRegistry:
                 "scientific_jobs_eliminated":0}
 
 
+def _contract_identity(bins, derive):
+    """A derive hook may carry its own calibration identity (e.g. a continuous
+    estimator declared in Markets); otherwise the frozen bins identify the contract."""
+    return getattr(derive,"identity",None) or bins.identity()
+
+
 def preserve_level2_holds(report: dict, registry: ResearchHoldRegistry,
                           *, archive_name: str) -> dict:
     """Persist EVERY Level 1 input once, then link each unresolved fit/issue."""
@@ -401,7 +407,7 @@ def preserve_five_step_holds(report: dict, original_information_frames: Sequence
 def preserve_geometric_holds(report: dict, information_frames: Sequence[object],
                              raw_frames: Sequence[object], bins: object,
                              registry: ResearchHoldRegistry, *,
-                             archive_name: str) -> dict:
+                             archive_name: str, derive=None) -> dict:
     """Preserve full upstream measurements, derived observables and geometry.
 
     Reject mismatched or missing raw data. Unlike archival of InfoFrames
@@ -410,7 +416,8 @@ def preserve_geometric_holds(report: dict, information_frames: Sequence[object],
     suppression, or production connections are involved.
     """
     from .information import RawFrame, InfoFrame, FixedBins, derive_information
-    if not isinstance(bins, FixedBins) or bins.identity()!=registry.contract_identity:
+    derive=derive or derive_information
+    if not isinstance(bins, FixedBins) or _contract_identity(bins,derive)!=registry.contract_identity:
         raise LocalityError("missing or incompatible frozen calibration for raw evidence")
     frames=tuple(information_frames)
     raw=tuple(raw_frames)
@@ -442,7 +449,7 @@ def preserve_geometric_holds(report: dict, information_frames: Sequence[object],
             raise LocalityError("upstream RawFrame identity/clock mismatch")
         if f.raw_evidence_ids!=tuple(s.evidence_id for s in r.samples) or f.raw_count!=len(r.samples):
             raise LocalityError("original ordered measurement identities mismatch")
-        if derive_information(r,bins)!=f:
+        if derive(r,bins)!=f:
             raise LocalityError("derived information inconsistent with frozen original measurements")
         if (p.clock!=f.clock or p.raw_identity!=f.raw_identity or
             p.original_evidence_ids!=f.raw_evidence_ids or
@@ -485,17 +492,18 @@ def preserve_geometric_holds(report: dict, information_frames: Sequence[object],
 def preserve_rejected_geometric_inputs(raw_frames: Sequence[object],
                                        bins: object, registry: ResearchHoldRegistry,
                                        *, archive_name: str,
-                                       reason: str) -> dict:
+                                       reason: str, derive=None) -> dict:
     """Retain inputs that could NOT safely enter the geometric fitting API.
 
     This creates a research case without pretending an invalid/missing
     information series was fitted; complete raw records remain inspectable.
     """
-    from .information import RawFrame, FixedBins
+    from .information import RawFrame, FixedBins, derive_information
+    derive=derive or derive_information
     raw=tuple(raw_frames)
     if (not raw or not reason or
         not isinstance(bins,FixedBins) or
-        bins.identity()!=registry.contract_identity or
+        _contract_identity(bins,derive)!=registry.contract_identity or
         bins.source_identity!=registry.source_identity or
         any(not isinstance(r,RawFrame) or
             r.source_identity!=registry.source_identity for r in raw)):
@@ -504,7 +512,7 @@ def preserve_rejected_geometric_inputs(raw_frames: Sequence[object],
     case_id=_digest({"archive":digest,"reason":reason,"kind":"REJECTED_GEOMETRY_INPUT"})
     registry.hold(case_id,archive_name,reason="GEOMETRY_INPUT_REJECTED:"+reason,
                   details={"archive_digest":digest,"raw_frame_count":len(raw),
-                           "calibration":bins.identity()})
+                           "calibration":_contract_identity(bins,derive)})
     return {"archive_name":archive_name,"archive_digest":digest,
             "retained_full_raw_frames":len(raw),"research_case_ids":(case_id,),
             "original_measurements_dropped":0,"scientific_jobs_eliminated":0}
@@ -515,7 +523,7 @@ def preserve_geometric_predictive_controls(report: dict,
                                            raw_frames: Sequence[object],
                                            bins: object,
                                            registry: ResearchHoldRegistry, *,
-                                           archive_name: str) -> dict:
+                                           archive_name: str, derive=None) -> dict:
     """Bind every negative, rank, positive or conflicting split to raw evidence.
 
     Archive one per-frame record (with original IDs/values/directions) and a
@@ -523,6 +531,7 @@ def preserve_geometric_predictive_controls(report: dict,
     this is an auditable observation, never a claim of causal equivalence.
     """
     from .information import RawFrame, InfoFrame, FixedBins, derive_information
+    derive=derive or derive_information
     frames=tuple(information_frames)
     raw=tuple(raw_frames)
     splits=tuple(report.get("splits",()))
@@ -530,7 +539,7 @@ def preserve_geometric_predictive_controls(report: dict,
         report.get("source_identity")!=registry.source_identity or
         report.get("calibration_identity")!=registry.contract_identity or
         not isinstance(bins,FixedBins) or
-        bins.identity()!=registry.contract_identity or
+        _contract_identity(bins,derive)!=registry.contract_identity or
         bins.source_identity!=registry.source_identity or
         report.get("scientific_jobs_eliminated")!=0 or
         report.get("frames_dropped")!=0 or
@@ -552,7 +561,7 @@ def preserve_geometric_predictive_controls(report: dict,
         if (r.source_identity!=registry.source_identity or f.clock!=r.clock or
             f.raw_identity!=r.identity() or
             tuple(s.evidence_id for s in r.samples)!=f.raw_evidence_ids or
-            derive_information(r,bins)!=f):
+            derive(r,bins)!=f):
             raise LocalityError("predictive controls do not match upstream raw values")
         records.append({"kind":"RAW_AND_INFORMATION_FRAME","index":i,
                         "raw_frame":r,"information_frame":f})
@@ -592,14 +601,15 @@ def preserve_geometric_predictive_controls(report: dict,
 def _verify_complete_raw_information(raw_frames: Sequence[object],
                                      information_frames: Sequence[object],
                                      bins: object,
-                                     registry: ResearchHoldRegistry) -> tuple:
+                                     registry: ResearchHoldRegistry, derive=None) -> tuple:
     """Verify every exact original RawFrame against each reported InfoFrame."""
     from .information import RawFrame, InfoFrame, FixedBins, derive_information
+    derive=derive or derive_information
     raw=tuple(raw_frames)
     info=tuple(information_frames)
     if (not isinstance(bins,FixedBins) or
         bins.source_identity!=registry.source_identity or
-        bins.identity()!=registry.contract_identity or
+        _contract_identity(bins,derive)!=registry.contract_identity or
         not info or len(raw)!=len(info)):
         raise LocalityError("full original RawFrame and calibration series required")
     complete=[]
@@ -612,7 +622,7 @@ def _verify_complete_raw_information(raw_frames: Sequence[object],
             f.clock!=r.clock or f.raw_identity!=r.identity() or
             f.raw_count!=len(r.samples) or
             f.raw_evidence_ids!=tuple(sample.evidence_id for sample in r.samples) or
-            f!=derive_information(r,bins)):
+            f!=derive(r,bins)):
             raise LocalityError("original raw measurements do not reproduce information frame")
         complete.append({"index":index,"raw_frame":r,
                          "information_frame":f})
@@ -624,7 +634,7 @@ def preserve_full_raw_five_step_holds(report:dict,
                                      raw_frames:Sequence[object],
                                      bins:object,
                                      registry:ResearchHoldRegistry, *,
-                                     archive_name:str) -> dict:
+                                     archive_name:str, derive=None) -> dict:
     """Archive all upstream RawFrames, ALL directional results, even 'no support'.
 
     This is the stronger, *full original source* companion to the legacy
@@ -644,7 +654,7 @@ def preserve_full_raw_five_step_holds(report:dict,
             "frames":[f.identity() for f in frames],
             "method":"AGNOSTIC_FIVE_STEP_PROBE"})):
         raise LocalityError("five-step report is not bound to the exact information series")
-    complete=_verify_complete_raw_information(raw_frames,frames,bins,registry)
+    complete=_verify_complete_raw_information(raw_frames,frames,bins,registry,derive)
     original_ids=tuple(f.raw_identity for f in frames)
     lineage_issues=[]
     for index,result in enumerate(report["results"]):
@@ -682,7 +692,7 @@ def preserve_full_raw_level2_holds(report:dict,
                                   raw_frames:Sequence[object],
                                   bins:object,
                                   registry:ResearchHoldRegistry, *,
-                                  archive_name:str) -> dict:
+                                  archive_name:str, derive=None) -> dict:
     """Bind Level 2 pair-window/link archive to every original raw measurement.
 
     Every observed and unverified link, conflicting clock, issue, and the
@@ -706,7 +716,7 @@ def preserve_full_raw_level2_holds(report:dict,
             **({"transform":"log"} if report.get("balance_transform")=="log" else {}),
             "windows":[asdict(w) for w in original]})):
         raise LocalityError("Level 2 report does not bind complete original windows")
-    complete=_verify_complete_raw_information(raw_frames,frames,bins,registry)
+    complete=_verify_complete_raw_information(raw_frames,frames,bins,registry,derive)
     frame_ids=tuple(f.raw_identity for f in frames)
     starts={identity:index for index,identity in enumerate(frame_ids)}
     lineage_issues=[]
