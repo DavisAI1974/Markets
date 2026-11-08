@@ -1,0 +1,103 @@
+{
+  "session": "20231018",
+  "total_signals": 2850,
+  "instrument_id": 150611,
+  "availability_by_side": {
+    "A": {
+      "NO_SAVED_PRIOR_SECOND": 1287,
+      "WITHOUT_EXACT_CLOSE_DIPOLE": 1412,
+      "SAVED_BUT_NO_EXACT_CLOSE": 121,
+      "EXACT_USABLE": 4
+    },
+    "B": {
+      "NO_SAVED_PRIOR_SECOND": 1335,
+      "WITHOUT_EXACT_CLOSE_DIPOLE": 1438,
+      "SAVED_BUT_NO_EXACT_CLOSE": 99,
+      "EXACT_USABLE": 4
+    }
+  },
+  "flow_source_file": "all-8088-original-flow-seconds-with-tape.jsonl.gz",
+  "dipole_source_file": "supporting-dipole-paths.csv.gz",
+  "one_second_matched_cells": [
+    {
+      "side": "A",
+      "fresh_sign": -1,
+      "rolling_sign": 1,
+      "had_fresh_prints": true,
+      "counts": {
+        "OBSERVED": 1,
+        "quote_pnl_sign_-1": 1,
+        "midpoint_sign_1": 1
+      }
+    },
+    {
+      "side": "A",
+      "fresh_sign": 0,
+      "rolling_sign": -1,
+      "had_fresh_prints": false,
+      "counts": {
+        "OBSERVED": 1,
+        "quote_pnl_sign_-1": 1,
+        "midpoint_sign_0": 1
+      }
+    },
+    {
+      "side": "A",
+      "fresh_sign": 0,
+      "rolling_sign": 1,
+      "had_fresh_prints": false,
+      "counts": {
+        "OBSERVED": 2,
+        "quote_pnl_sign_-1": 2,
+        "midpoint_sign_0": 2
+      }
+    },
+    {
+      "side": "B",
+      "fresh_sign": -1,
+      "rolling_sign": -1,
+      "had_fresh_prints": true,
+      "counts": {
+        "OBSERVED": 1,
+        "quote_pnl_sign_-1": 1,
+        "midpoint_sign_0": 1
+      }
+    },
+    {
+      "side": "B",
+      "fresh_sign": -1,
+      "rolling_sign": 1,
+      "had_fresh_prints": true,
+      "counts": {
+        "OBSERVED": 1,
+        "quote_pnl_sign_-1": 1,
+        "midpoint_sign_0": 1
+      }
+    },
+    {
+      "side": "B",
+      "fresh_sign": 0,
+      "rolling_sign": -1,
+      "had_fresh_prints": false,
+      "counts": {
+        "OBSERVED": 1,
+        "quote_pnl_sign_-1": 1,
+        "midpoint_sign_0": 1
+      }
+    },
+    {
+      "side": "B",
+      "fresh_sign": 0,
+      "rolling_sign": 1,
+      "had_fresh_prints": false,
+      "counts": {
+        "OBSERVED": 1,
+        "quote_pnl_sign_-1": 1,
+        "midpoint_sign_-1": 1
+      }
+    }
+  ],
+  "research_status": "NOT_ENOUGH_INFO",
+  "semantic_coverage": "NOT_PASSED",
+  "mlp_reproducibility": "UNRESOLVED"
+}
