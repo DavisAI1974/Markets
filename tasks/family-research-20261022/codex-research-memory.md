@@ -123,3 +123,22 @@ For later days, apply the same definitions once their standalone outputs are
 saved; carry missing fields as unavailable, never fill them with a different
 date or quietly swap classifier definitions. Extend continuous prebirth timing
 and state/transition analysis without redefining exhaustion as direction alone.
+
+## Complementary stacks and missing-data ownership
+
+The user explicitly requests combinations of indicators that tell different parts
+of the story. Organize by price response/context, dipole strength/shape, fresh
+participation, displayed book, and changes at unchanged prices. Test incremental
+value and leave-one-layer-out comparisons; correlated indicators are not separate
+votes. The first saved 11-arm pass is `research_atlas_stack.py` / `stack-*` tables:
+all 863 retained, 231 chronological fits, full stack worsens all seven pooled
+target comparisons in this fixed linear model, book adds a small short-horizon
+price improvement. Preserve conditional contrasts and contrary cases. This is
+not a revalidation of NG applicability or a universal verdict on the mechanisms.
+
+CCODE is making the missing-data changes (user steering, November 8). Do not
+duplicate that work. Use `codex-input-coverage-20261108.md` for the pinned coverage
+snapshot, then record CCODE's final source revision before extending the other
+dates. Source coverage and job completion are separate requirements. Latest
+monitor snapshot in that file says three Native passes advancing, standalone
+queued; do not mistake this dated statement for live status.

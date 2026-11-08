@@ -13,7 +13,7 @@ reviewers at the end. Existing NG applicability is settled. No producer reruns.
    outcome purge plus 600-second embargo. Retain per-case predictions and fold
    results. Targets: midpoint change/magnitude at 5/20/60 seconds and change in
    absolute rolling-flow strength at 20 seconds where both ratios exist.
-3. [ ] Preserve interpretable state combinations, missing cases, sample counts,
+3. [x] Preserve interpretable state combinations, missing cases, sample counts,
    source examples, and overlapping outcome clusters. Produce a graph and append
    positives, inverse findings and limitations to Codex's own findings file.
    Run focused tests, inspect graph, commit and push without overwriting peers.
@@ -26,3 +26,8 @@ Same-price display additions are an aggregate proxy, not proof of same-order
 refresh, iceberg reserve, executed absorption or participant intent. Retain
 unknown trade volume. Observe survival/undefined-flow separately from price side.
 Do not identify the best-looking October arm as a validated general-market rule.
+
+Completed: five new focused tests pass, both graphs inspected, all trial arms and
+state counts retained. User steering assigns missing-data repair to CCODE;
+coverage is documented in `codex-input-coverage-20261108.md`. Later-date application
+awaits saved comparable outputs and their verified coverage.

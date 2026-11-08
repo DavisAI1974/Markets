@@ -805,3 +805,150 @@ expiry accounting, all-case retention and existing order-path checks. Apply the
 same primer and dipole lenses to the other dates from their final saved outputs,
 then compare mechanisms and continuous precursor timing across dates. No producer
 or teacher rerun was used for this extension.
+
+## Complementary indicator stacks — November 8 continuation
+
+The user asked whether dipole and related observations stack with indicators that
+describe different parts of the story. This pass applies that question to all
+863 October 18 recognition states. It measures additional information and keeps
+conflicts visible; it does not reopen established NG applicability.
+
+### Five distinct questions at the same decision
+
+| Layer | Question | Inputs used here |
+| --- | --- | --- |
+| Price context | What has price already done, and how wide is the market? | Prior 20-second midpoint displacement/range and current spread, in ticks |
+| Dipole | How does classified flow lean and how has its shape changed? | Existing five operator outputs, early/late empty flags, and change in absolute half-window imbalance; signed C is transformed with signed log1p |
+| Fresh trades | Is there recent classified participation behind that state? | Last five completed seconds' buy/sell imbalance, classified lots and unknown lots |
+| Book | What displayed size and order-count imbalance is present now? | Touch size/count imbalance, total displayed lots and total orders |
+| Display changes | Is displayed stock being added or removed at unchanged best prices? | Five-second bid/ask additions/removals at unchanged prices, with best-price changes counted separately |
+
+The last layer is an aggregate quote-change proxy. It cannot establish same-order
+refresh, hidden reserve, executed absorption or intention. Exact same-order
+replenishment remains a separate source-linked mechanism. Unknown volume and
+undefined ratios remain explicit. No candidate identity, clock position, cursor,
+future polarity, final duration or future family enters the predictor.
+
+### Conditional combinations tell a fuller story
+
+Here, measurable weakening means the absolute imbalance in the last ten seconds
+is smaller than in the preceding ten, with classified flow present in both.
+It occurs in 95 recognition states. This differs from the earlier count of 511
+candidate paths containing any weakening step between birth and recognition.
+
+The table shows subsequent midpoint movement relative to the **current observed
+20-second flow sign**, not retrospective birth polarity:
+
+| Recognition state | Book vs current flow | Cases | Following / opposing / flat at +20 s |
+| --- | --- | ---: | --- |
+| Weakening | Aligned | 45 | 25 / 12 / 8 |
+| Weakening | Opposed | 40 | 15 / 16 / 9 |
+| Strengthening | Aligned | 49 | 20 / 16 / 13 |
+| Strengthening | Opposed | 37 | 17 / 11 / 9 |
+| One half empty | Aligned | 114 | 44 / 24 / 46 |
+| One half empty | Opposed | 112 | 24 / 43 / 44, plus one unavailable |
+
+Thus weakening with aligned displayed depth differs from weakening against it.
+But the strengthening cases do not obey a simple "more agreement is better"
+ordering. Also, one empty half is not automatically exhaustion: absence of fresh
+observations must be distinguished from balanced two-sided trading. The complete
+table retains 345 both-empty-flow cases, 76 balanced-book/flow cases, and the steady
+states omitted from this short table. These are descriptive conditions, not a
+formal interaction test or a newly admitted entry rule.
+
+![Conditional dipole and book story](research-atlas-v2/figures/stack-conditional-story.png)
+
+The first chronological example in each state is saved, rather than selecting
+examples for favorable outcomes. For `dip-19648-1697594960`, at receive nanosecond
+`1697595011102838019`, flow imbalance is −0.6 and its half-window strength has
+fallen by 0.2222. The touch also leans negative (−0.5), but the last five seconds
+contain no classified trade volume and the preceding twenty-second midpoint
+change is zero. The next twenty-second midpoint change is **+1 tick**, against
+that flow. The fuller story is weakening historical selling pressure, no recent
+classified participation, ask-heavy displayed stock, and price holding—not an
+automatic sell signal.
+
+For `dip-19648-1697620774`, at `1697620820532378050`, the full flow ratio is +1/3,
+the half-window strength falls by 1, the fresh five-second ratio is balanced,
+and the touch is −1/3. The preceding price displacement is zero. At unchanged
+best prices the last five seconds show three lots of bid additions and two lots
+of ask removals. The next twenty-second midpoint stays flat. Those concurrent
+observations describe a transition without manufacturing a directional trade.
+
+### Does the combination add predictive information?
+
+Eleven fixed arms compare the same eligible rows: price-context baseline, each
+single added layer, dipole+book, the full stack, and the full stack with each layer
+removed. Ridge alpha remains 10; imputation, missingness flags, scaling and the
+intercept use training rows only. Expanding chronological 40/60/80% cuts purge
+overlapping target windows and add a 600-second embargo. There is no parameter
+search, arm selection, or model voting. All 11 arms × 7 target/horizon pairs × 3
+folds are retained: **231 fits**.
+
+The target pairs are signed midpoint change and absolute midpoint change at
+5/20/60 seconds, plus the change in absolute 20-second flow strength at +20 seconds
+where both starting and future flow ratios exist. Price comparisons score
+518/518/517 chronological test rows at 5/20/60 seconds; flow-strength comparisons
+score 260 from 433 eligible rows. Undefined future flow remains in its outcome
+table rather than being treated as balanced flow. At sixty seconds the 517
+test rows form 330 overlapping-window clusters; neither those clusters nor the
+three folds make this one day independent cross-date validation.
+
+Selected squared-error changes versus the price-context baseline (negative is
+better) are:
+
+| Added layers | Price +5 s | Price +20 s | Price +60 s | Magnitude +20 s | Flow strength +20 s |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Dipole | +2.3% | −0.2% | −1.2% | +4.3% | +2.9% |
+| Fresh trades | +0.7% | +1.5% | +2.4% | +2.0% | −0.5% |
+| Book | −1.7% | −0.8% | +1.4% | +0.5% | +3.1% |
+| Display changes | +13.0% | +3.2% | +1.6% | +12.7% | +12.6% |
+| Dipole and book | +0.7% | −0.7% | +0.3% | +5.1% | +4.8% |
+| Full stack | +11.4% | +4.5% | +4.5% | +18.7% | +15.1% |
+
+Book's small twenty-second price improvement occurs in each chronological fold:
+0.5%, 0.2% and 1.8% lower error. The full stack is 1.0% better in the first fold,
+then 8.0% and 5.9% worse in the next two. At twenty seconds, adding book back to
+the otherwise full stack lowers error by 0.66%; adding back dipole, fresh trades
+or display changes increases it in this model. At other horizons the ordering
+changes. This is not evidence that a maximal stack is stronger or that the
+physical mechanisms are useless. It measures this fixed linear representation
+on these selected cases. Nonlinear state interactions, other windows, other
+dates, continuous precursor timing and original frozen-family identity remain
+separate questions; none is silently inferred from this result.
+
+![Incremental information by layer](research-atlas-v2/figures/stack-incremental-information.png)
+
+Some indicators also repeat much of the same information. Across defined rows,
+rank correlation is 0.918 between imbalance and signed-log C, 0.885 between total
+touch size and order count, and 0.829 between touch size and order-count imbalance.
+Fresh classified volume correlates 0.745 with ask display removal. These are not
+independent confirming votes. A defensible general approach is to organize the
+story by **pressure, participation, displayed resistance and observed response**,
+then measure the incremental contribution of each layer instead of counting
+agreeing indicator names.
+
+[All causal feature rows](research-atlas-v2/stack-features.csv.gz),
+[conditional states](research-atlas-v2/stack-conditional-states.csv),
+[per-case predictions](research-atlas-v2/stack-predictions.csv.gz),
+[all arms/folds](research-atlas-v2/stack-metrics.csv),
+[leave-one-layer-out contributions](research-atlas-v2/stack-layer-contributions.csv),
+[feature redundancy](research-atlas-v2/stack-feature-redundancy.csv),
+[source-linked examples](research-atlas-v2/stack-state-examples.csv),
+[method](research-atlas-v2/stack-method.json), [code](research_atlas_stack.py).
+
+### Coverage and the remaining dates
+
+The [coverage manifest](codex-input-coverage-20261108.md) separates the deliberately
+bounded 375/391 extract from the later two-member order-path study and the full
+saved October 18 session tables. The prior UTC source segment for the October 17
+session is absent from the named pinned tape directory; CCODE owns the missing-data
+changes. A sparse or stale checkout is a separate issue from missing source tape.
+Codex's Desktop artifacts are already on the shared branch.
+
+At the latest completion-monitor read, all three other dates' Native passes were
+advancing and standalone exports were queued. They are not fully complete.
+Apply the same stack comparison after CCODE's source changes and final saved
+exports arrive, with explicit source revision and coverage changes. Do not rerun
+or repair producers in this research pass, or replace earlier partial evidence
+without preserving its provenance.
