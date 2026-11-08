@@ -1,0 +1,47 @@
+{
+  "session": "20231003",
+  "tape_git_commit": "1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202",
+  "adapter_git_commit": "af36937d1e478831d4c7bc612c98d969e9a0848b",
+  "session_manifest_commit": "93895487c199b1e486d5407f9e103a0964903d2d",
+  "sealed_receipt_commit": "c28a4de13263b6354662cd376fecc7733b47a991",
+  "databento_version": "0.81.0",
+  "opening_warmup_records": 808453,
+  "opening_snapshot_records": 733,
+  "opening_resting_orders": 725,
+  "records": 879830,
+  "completed_groups": 653912,
+  "archived_books_compared": 0,
+  "integrity": {
+    "150611": {}
+  },
+  "wall_seconds": 558.43,
+  "coverage_scope": "Pinned native group-close touch and trade print inputs",
+  "full_discovery_gate": "NOT_PASSED",
+  "counts": {
+    "groups": 653912,
+    "no_print_groups": 613395,
+    "without_two_sided_touch": 0,
+    "snapshot_member": 1,
+    "reset_member": 1,
+    "bad_receive_clock_member": 1,
+    "prints": 41410
+  },
+  "archived_prints_sha256": "eb882d21cd5c7f84f1dadefb3eaab86e62f5d3ccd2f28be0472611db5ffc0b5c",
+  "groups_file": {
+    "path": "groups.jsonl.gz",
+    "bytes": 21484199,
+    "sha256": "1589974b8d6a3f70d8459ed764fac087c7395b13c8d1c9de4fe70d520f42a6ef"
+  },
+  "format": {
+    "instrument_id": 150611,
+    "cursor_base": 0,
+    "group_base": 0,
+    "touch_fields": [
+      "price_raw",
+      "size",
+      "order_count"
+    ],
+    "known_by": "group close receive_ns; ties ordered by close_cursor",
+    "note": "Boundary flags and empty sides are retained; no rule eligibility is inferred."
+  }
+}
