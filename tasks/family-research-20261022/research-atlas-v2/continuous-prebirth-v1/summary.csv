@@ -1,0 +1,11 @@
+hypothesis,active_seconds,onsets,input_available_seconds,retained_births,births_with_prior_onset,median_last_lead_s,onsets_with_next_birth,onsets_without_next_birth,median_quote_age_s,left_censored_onsets,paper_disposition
+step_weakening,6841,5425,82758,863,553,13.0,2680,2745,0.319054746,0,retain_for_more_days
+expiry_only_weakening,2574,2327,82758,863,447,13.0,1232,1095,0.852001467,0,retain_for_more_days
+fresh_opposed_weakening,3294,2932,82758,863,502,19.0,1368,1564,0.196380006,0,retain_for_more_days
+flow_vanished,816,816,82758,863,481,31.0,514,302,2.9835670965,0,retain_for_more_days
+flow_resumed,817,817,82758,863,425,25.0,501,316,0.230956965,0,retain_for_more_days
+half_weakening,12540,2349,82758,863,463,19.0,1120,1229,0.335502001,0,retain_for_more_days
+half_weakening_book_aligned,5808,1916,82758,863,375,23.0,837,1079,0.2743038915,0,retain_for_more_days
+half_weakening_book_opposed,5256,1792,82758,863,360,22.5,795,997,0.28346746850000004,0,retain_for_more_days
+half_weakening_price_opposed,2158,724,82758,863,196,28.0,304,420,0.314912688,0,retain_for_more_days
+half_weakening_fresh_book_opposed,1609,741,82758,863,198,24.0,302,439,0.292880868,0,retain_for_more_days

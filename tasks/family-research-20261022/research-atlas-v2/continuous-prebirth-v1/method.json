@@ -1,0 +1,36 @@
+{
+  "evidence_revision": "8f4c15083392233c28ad5c450d44fdc34a466a67",
+  "source_revision": "b5f28bd57de5ed4ff889335edb9a33216b67eb6a",
+  "source_groups": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/october18-standalone-inputs/groups.jsonl.gz",
+  "flow_sha256": "cb96144d12bb70cb5972365435672d917d80490a031fee1db623281f007fcf43",
+  "operator_sha256": "0fb1f3d868973fcf0ee25be30d7ffe1f7b388a9235a19d893f8495012c0df23b",
+  "script_sha256": "78c9f157fe32281e6d4431f8279a94ac36589b7bf94565f7e97e55610ca0a537",
+  "session_date": "2023-10-18",
+  "observation_seconds": 82800,
+  "input_available_seconds": 82758,
+  "hypotheses": [
+    "step_weakening",
+    "expiry_only_weakening",
+    "fresh_opposed_weakening",
+    "flow_vanished",
+    "flow_resumed",
+    "half_weakening",
+    "half_weakening_book_aligned",
+    "half_weakening_book_opposed",
+    "half_weakening_price_opposed",
+    "half_weakening_fresh_book_opposed"
+  ],
+  "retained_births": 863,
+  "unique_onset_seconds": 10383,
+  "clock": "Decision is completed-second boundary; quote strictly earlier; 21-second same-segment history required. This is accounting availability, not measured processing or execution time.",
+  "onset": "First true observed bin after false/unavailable/gap, separately per predicate. All active seconds retained; a state already true at first eligibility is left-censored, not a proven physical onset.",
+  "birth_alignment": "Post-hoc [birth-60s, birth) report window only. All 863 births retained per predicate. No birth labels enter predicates; unlinked onsets retained.",
+  "limits": [
+    "One discovery session; no signal exclusion.",
+    "One-second observation floor is not earliest native-group information or recovered NG look-ahead.",
+    "No original Family A identity supplied; frozen classifier/runway not assigned.",
+    "No matched background, causal lift, profitability or execution claim; no-birth events are not false trades.",
+    "Shared input groups, nested predicates and overlapping outcomes remain dependent.",
+    "October 2/3/17 final repaired inputs not verified; CCODE owns repair."
+  ]
+}

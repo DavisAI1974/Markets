@@ -1,0 +1,3906 @@
+[
+  {
+    "hypothesis_id": "NG-STACK-v1:baseline",
+    "version": 1,
+    "kind": "recognition_model_arm",
+    "definition": [
+      "context"
+    ],
+    "source": "research-atlas-v2/stack-method.json",
+    "retained_evidence": "Every target, fold, prediction, ablation and contrary result in stack-* retained; no arm selected or dropped.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-STACK-v1:plus_dipole",
+    "version": 1,
+    "kind": "recognition_model_arm",
+    "definition": [
+      "context",
+      "dipole"
+    ],
+    "source": "research-atlas-v2/stack-method.json",
+    "retained_evidence": "Every target, fold, prediction, ablation and contrary result in stack-* retained; no arm selected or dropped.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-STACK-v1:plus_fresh",
+    "version": 1,
+    "kind": "recognition_model_arm",
+    "definition": [
+      "context",
+      "fresh"
+    ],
+    "source": "research-atlas-v2/stack-method.json",
+    "retained_evidence": "Every target, fold, prediction, ablation and contrary result in stack-* retained; no arm selected or dropped.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-STACK-v1:plus_book",
+    "version": 1,
+    "kind": "recognition_model_arm",
+    "definition": [
+      "context",
+      "book"
+    ],
+    "source": "research-atlas-v2/stack-method.json",
+    "retained_evidence": "Every target, fold, prediction, ablation and contrary result in stack-* retained; no arm selected or dropped.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-STACK-v1:plus_display",
+    "version": 1,
+    "kind": "recognition_model_arm",
+    "definition": [
+      "context",
+      "display"
+    ],
+    "source": "research-atlas-v2/stack-method.json",
+    "retained_evidence": "Every target, fold, prediction, ablation and contrary result in stack-* retained; no arm selected or dropped.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-STACK-v1:dipole_book",
+    "version": 1,
+    "kind": "recognition_model_arm",
+    "definition": [
+      "context",
+      "dipole",
+      "book"
+    ],
+    "source": "research-atlas-v2/stack-method.json",
+    "retained_evidence": "Every target, fold, prediction, ablation and contrary result in stack-* retained; no arm selected or dropped.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-STACK-v1:full",
+    "version": 1,
+    "kind": "recognition_model_arm",
+    "definition": [
+      "context",
+      "dipole",
+      "fresh",
+      "book",
+      "display"
+    ],
+    "source": "research-atlas-v2/stack-method.json",
+    "retained_evidence": "Every target, fold, prediction, ablation and contrary result in stack-* retained; no arm selected or dropped.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-STACK-v1:without_dipole",
+    "version": 1,
+    "kind": "recognition_model_arm",
+    "definition": [
+      "context",
+      "fresh",
+      "book",
+      "display"
+    ],
+    "source": "research-atlas-v2/stack-method.json",
+    "retained_evidence": "Every target, fold, prediction, ablation and contrary result in stack-* retained; no arm selected or dropped.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-STACK-v1:without_fresh",
+    "version": 1,
+    "kind": "recognition_model_arm",
+    "definition": [
+      "context",
+      "dipole",
+      "book",
+      "display"
+    ],
+    "source": "research-atlas-v2/stack-method.json",
+    "retained_evidence": "Every target, fold, prediction, ablation and contrary result in stack-* retained; no arm selected or dropped.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-STACK-v1:without_book",
+    "version": 1,
+    "kind": "recognition_model_arm",
+    "definition": [
+      "context",
+      "dipole",
+      "fresh",
+      "display"
+    ],
+    "source": "research-atlas-v2/stack-method.json",
+    "retained_evidence": "Every target, fold, prediction, ablation and contrary result in stack-* retained; no arm selected or dropped.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-STACK-v1:without_display",
+    "version": 1,
+    "kind": "recognition_model_arm",
+    "definition": [
+      "context",
+      "dipole",
+      "fresh",
+      "book"
+    ],
+    "source": "research-atlas-v2/stack-method.json",
+    "retained_evidence": "Every target, fold, prediction, ablation and contrary result in stack-* retained; no arm selected or dropped.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:1:displayed_lots",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 1,
+      "feature": "displayed_lots"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 487,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:1:flow1",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 1,
+      "feature": "flow1"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 1,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:1:flow20",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 1,
+      "feature": "flow20"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 250,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:1:flow5",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 1,
+      "feature": "flow5"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 50,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:1:mid_change1",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 1,
+      "feature": "mid_change1"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 487,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:1:mid_change20",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 1,
+      "feature": "mid_change20"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 487,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:1:mid_change5",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 1,
+      "feature": "mid_change5"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 487,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:1:total1",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 1,
+      "feature": "total1"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 487,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:1:total20",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 1,
+      "feature": "total20"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 487,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:1:touch_change5",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 1,
+      "feature": "touch_change5"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 487,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:1:touch_imbalance",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 1,
+      "feature": "touch_imbalance"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 487,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:5:displayed_lots",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 5,
+      "feature": "displayed_lots"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 526,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:5:flow1",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 5,
+      "feature": "flow1"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 1,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:5:flow20",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 5,
+      "feature": "flow20"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 266,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:5:flow5",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 5,
+      "feature": "flow5"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 62,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:5:mid_change1",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 5,
+      "feature": "mid_change1"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 526,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:5:mid_change20",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 5,
+      "feature": "mid_change20"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 526,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:5:mid_change5",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 5,
+      "feature": "mid_change5"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 526,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:5:total1",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 5,
+      "feature": "total1"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 526,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:5:total20",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 5,
+      "feature": "total20"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 526,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:5:touch_change5",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 5,
+      "feature": "touch_change5"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 526,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:5:touch_imbalance",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 5,
+      "feature": "touch_imbalance"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 526,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:20:displayed_lots",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 20,
+      "feature": "displayed_lots"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 572,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:20:flow1",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 20,
+      "feature": "flow1"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 16,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:20:flow20",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 20,
+      "feature": "flow20"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 268,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:20:flow5",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 20,
+      "feature": "flow5"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 121,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:20:mid_change1",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 20,
+      "feature": "mid_change1"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 572,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:20:mid_change20",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 20,
+      "feature": "mid_change20"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 572,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:20:mid_change5",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 20,
+      "feature": "mid_change5"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 572,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:20:total1",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 20,
+      "feature": "total1"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 572,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:20:total20",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 20,
+      "feature": "total20"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 572,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:20:touch_change5",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 20,
+      "feature": "touch_change5"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 572,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:20:touch_imbalance",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 20,
+      "feature": "touch_imbalance"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 572,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:60:displayed_lots",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 60,
+      "feature": "displayed_lots"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 522,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:60:flow1",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 60,
+      "feature": "flow1"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 13,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:60:flow20",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 60,
+      "feature": "flow20"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 281,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:60:flow5",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 60,
+      "feature": "flow5"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 116,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:60:mid_change1",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 60,
+      "feature": "mid_change1"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 522,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:60:mid_change20",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 60,
+      "feature": "mid_change20"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 522,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:60:mid_change5",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 60,
+      "feature": "mid_change5"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 522,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:60:total1",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 60,
+      "feature": "total1"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 522,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:60:total20",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 60,
+      "feature": "total20"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 522,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:60:touch_change5",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 60,
+      "feature": "touch_change5"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 522,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:dipole_birth:60:touch_imbalance",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "dipole_birth",
+      "lead_s": 60,
+      "feature": "touch_imbalance"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 522,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:1:displayed_lots",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 1,
+      "feature": "displayed_lots"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 488,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:1:flow1",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 1,
+      "feature": "flow1"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 21,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:1:flow20",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 1,
+      "feature": "flow20"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 411,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:1:flow5",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 1,
+      "feature": "flow5"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 152,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:1:mid_change1",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 1,
+      "feature": "mid_change1"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 488,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:1:mid_change20",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 1,
+      "feature": "mid_change20"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 488,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:1:mid_change5",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 1,
+      "feature": "mid_change5"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 488,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:1:total1",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 1,
+      "feature": "total1"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 488,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:1:total20",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 1,
+      "feature": "total20"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 488,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:1:touch_change5",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 1,
+      "feature": "touch_change5"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 488,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:1:touch_imbalance",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 1,
+      "feature": "touch_imbalance"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 488,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:5:displayed_lots",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 5,
+      "feature": "displayed_lots"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 498,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:5:flow1",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 5,
+      "feature": "flow1"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 11,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:5:flow20",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 5,
+      "feature": "flow20"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 412,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:5:flow5",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 5,
+      "feature": "flow5"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 153,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:5:mid_change1",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 5,
+      "feature": "mid_change1"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 498,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:5:mid_change20",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 5,
+      "feature": "mid_change20"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 498,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:5:mid_change5",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 5,
+      "feature": "mid_change5"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 498,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:5:total1",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 5,
+      "feature": "total1"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 498,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:5:total20",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 5,
+      "feature": "total20"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 498,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:5:touch_change5",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 5,
+      "feature": "touch_change5"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 498,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:5:touch_imbalance",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 5,
+      "feature": "touch_imbalance"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 498,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:20:displayed_lots",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 20,
+      "feature": "displayed_lots"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 536,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:20:flow1",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 20,
+      "feature": "flow1"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 24,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:20:flow20",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 20,
+      "feature": "flow20"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 445,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:20:flow5",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 20,
+      "feature": "flow5"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 177,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:20:mid_change1",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 20,
+      "feature": "mid_change1"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 536,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:20:mid_change20",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 20,
+      "feature": "mid_change20"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 536,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:20:mid_change5",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 20,
+      "feature": "mid_change5"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 536,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:20:total1",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 20,
+      "feature": "total1"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 536,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:20:total20",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 20,
+      "feature": "total20"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 536,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:20:touch_change5",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 20,
+      "feature": "touch_change5"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 536,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:20:touch_imbalance",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 20,
+      "feature": "touch_imbalance"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 536,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:60:displayed_lots",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 60,
+      "feature": "displayed_lots"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 556,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:60:flow1",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 60,
+      "feature": "flow1"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 31,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:60:flow20",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 60,
+      "feature": "flow20"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 455,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:60:flow5",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 60,
+      "feature": "flow5"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 194,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:60:mid_change1",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 60,
+      "feature": "mid_change1"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 556,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:60:mid_change20",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 60,
+      "feature": "mid_change20"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 556,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:60:mid_change5",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 60,
+      "feature": "mid_change5"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 556,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:60:total1",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 60,
+      "feature": "total1"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 556,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:60:total20",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 60,
+      "feature": "total20"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 556,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:60:touch_change5",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 60,
+      "feature": "touch_change5"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 556,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-PREBIRTH-v1:family_start:60:touch_imbalance",
+    "version": 1,
+    "kind": "retrospective_prebirth_contrast",
+    "definition": {
+      "population": "family_start",
+      "lead_s": 60,
+      "feature": "touch_imbalance"
+    },
+    "source": "research-atlas-v2/prebirth-summary.csv",
+    "retained_evidence": {
+      "quarters": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "rows": 4,
+      "defined_pairs": 556,
+      "note": "All positive, negative and undefined contrasts retained; source rows preserve operands and controls."
+    },
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-CARRY-v1:de361f73734d",
+    "version": 1,
+    "kind": "prior_mechanism_or_principle",
+    "definition": "| Urgent selling followed by relief or aggressive bargain buying | Case 391's sweep, resting remainder and later opposite-side fills fit the observable sequence. Ordinary algorithmic slicing, hedging or inventory adjustment can produce the same sequence. Compare sweep-to-rest episodes with similarly sized sweeps without a resting remainder, matched on prior flow, spread and depth. Participant positions or execution instructions would distinguish motives. |",
+    "source": "8f4c15083392233c28ad5c450d44fdc34a466a67:codex-flow-book-discovery-20261108.md:301",
+    "retained_evidence": "Entire original table row retained, including rival explanations and contrary evidence.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-CARRY-v1:2013f24ff74d",
+    "version": 1,
+    "kind": "prior_mechanism_or_principle",
+    "definition": "| Defensive withdrawal amplifies selling | Case 375 has lower bids removed and new lower offers during the decline. Some removals are fill-linked; treating every C message as voluntary withdrawal would be wrong. Compare order-linked fill reductions with unmatched removals at fixed prices before the decision. |",
+    "source": "8f4c15083392233c28ad5c450d44fdc34a466a67:codex-flow-book-discovery-20261108.md:302",
+    "retained_evidence": "Entire original table row retained, including rival explanations and contrary evidence.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-CARRY-v1:63815330c1a3",
+    "version": 1,
+    "kind": "prior_mechanism_or_principle",
+    "definition": "| Absorption or resilient liquidity predicts a rebound | Case 391's large ask is completely executed and bids recover, but earlier bid reappearances preceded another drop. The original 50 also include contrary and flat outcomes in every touch-alignment stratum. Distinguish execution against a surviving order, new displayed orders, and price improvement; test what was known before the intended decision. |",
+    "source": "8f4c15083392233c28ad5c450d44fdc34a466a67:codex-flow-book-discovery-20261108.md:303",
+    "retained_evidence": "Entire original table row retained, including rival explanations and contrary evidence.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-CARRY-v1:3ad04a88a022",
+    "version": 1,
+    "kind": "prior_mechanism_or_principle",
+    "definition": "| Shared information rather than distinct signals | Flow, midpoint, dipoles and the front curve leg reuse trades; several external inputs reuse the same source. Compare independently timed other-maturity changes and genuine publication revisions after controlling for local activity. The existing evidence does not supply trader intent or an independent surprise for these two cases. |",
+    "source": "8f4c15083392233c28ad5c450d44fdc34a466a67:codex-flow-book-discovery-20261108.md:304",
+    "retained_evidence": "Entire original table row retained, including rival explanations and contrary evidence.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-CARRY-v1:12756102b24d",
+    "version": 1,
+    "kind": "prior_mechanism_or_principle",
+    "definition": "| A rolling signal changes through both new observations and expiring observations. | Accounting identity; aging-only flips recur in all three currently available date tables. | Separate incoming volume from expired volume before calling a flip new pressure. Test whether their subsequent price responses differ on all four dates. |",
+    "source": "8f4c15083392233c28ad5c450d44fdc34a466a67:codex-flow-book-discovery-20261108.md:549",
+    "retained_evidence": "Entire original table row retained, including rival explanations and contrary evidence.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-CARRY-v1:29a0c4bb402b",
+    "version": 1,
+    "kind": "prior_mechanism_or_principle",
+    "definition": "| A ratio needs its operands; saturation is not evidence of large participation. | A single classified lot accounts for 47.68%, 48.49% and 42.34% of saturated rolling seconds on October 2, 17 and 18 respectively. | Retain classified volume, unknown volume, observation age and duration alongside the sign. Compare low-volume and higher-volume states without tuning a threshold to one case. |",
+    "source": "8f4c15083392233c28ad5c450d44fdc34a466a67:codex-flow-book-discovery-20261108.md:550",
+    "retained_evidence": "Entire original table row retained, including rival explanations and contrary evidence.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-CARRY-v1:391c4096e6c1",
+    "version": 1,
+    "kind": "prior_mechanism_or_principle",
+    "definition": "| Displayed stock, executed flow and their changes answer different questions. | Every selected full book is bid-heavy, while touch depth and later movement vary. The four-arm additions do not consistently improve the baseline. | Test local depth, actual removals/replenishment and flow jointly; reject a universal whole-book-sign rule unless it adds information across dates. |",
+    "source": "8f4c15083392233c28ad5c450d44fdc34a466a67:codex-flow-book-discovery-20261108.md:551",
+    "retained_evidence": "Entire original table row retained, including rival explanations and contrary evidence.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-CARRY-v1:1d8287972fc4",
+    "version": 1,
+    "kind": "prior_mechanism_or_principle",
+    "definition": "| The path that creates and removes liquidity matters. | The 980-event inventory includes aggression becoming resting liquidity and several distinct terminal mechanisms. | Track the same order and price. Do not equate a final cancel message with withdrawal, or infer intent from a large displayed number. |",
+    "source": "8f4c15083392233c28ad5c450d44fdc34a466a67:codex-flow-book-discovery-20261108.md:552",
+    "retained_evidence": "Entire original table row retained, including rival explanations and contrary evidence.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-CARRY-v1:f1fc83700bc8",
+    "version": 1,
+    "kind": "prior_mechanism_or_principle",
+    "definition": "| Information improves over time while the available population changes. | Only 395 of 980 tracked resting events survive to 25 ms. | Compare decisions at fixed observation delays using only then-available features; report survival and missed cases rather than crediting a later observation at birth. |",
+    "source": "8f4c15083392233c28ad5c450d44fdc34a466a67:codex-flow-book-discovery-20261108.md:553",
+    "retained_evidence": "Entire original table row retained, including rival explanations and contrary evidence.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-CARRY-v1:06ebc4afd7f7",
+    "version": 1,
+    "kind": "prior_mechanism_or_principle",
+    "definition": "| A precursor must distinguish upcoming setups from comparable ordinary periods. | New strictly prebirth case/control tables below. | Require recurrence across session conditions and dates, explicit missing cases, and a useful lead time before promoting a candidate. |",
+    "source": "8f4c15083392233c28ad5c450d44fdc34a466a67:codex-flow-book-discovery-20261108.md:554",
+    "retained_evidence": "Entire original table row retained, including rival explanations and contrary evidence.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-CARRY-v1:20e89abaa4c5",
+    "version": 1,
+    "kind": "prior_mechanism_or_principle",
+    "definition": "| Prebirth and candidate selection | Separate birth, recognition, active phase and completion. Compare accepted peaks with time- and activity-matched unselected peaks, eligible groups without prints, and repeat prints after a burst. Test whether early queue loss, new orders, ratios with adequate denominators, and quote response add information beyond recent prints and spread. Count candidates and opportunities separately. |",
+    "source": "8f4c15083392233c28ad5c450d44fdc34a466a67:october-discovery-log.md:284",
+    "retained_evidence": "Entire original table row retained, including rival explanations and contrary evidence.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-CARRY-v1:cd0067bfdcf0",
+    "version": 1,
+    "kind": "prior_mechanism_or_principle",
+    "definition": "| Signed flow, depth and liquidity | Connect plane 47 to the raw trades, fills, order identity, queue and depletion or recovery planes. Test same-direction transmission, inverse response from replenishment or withdrawal, and no response. Follow fixed-price orders and distinguish changes at the standing level from new prices becoming best. Match on starting depth, spread, order count and classified volume. |",
+    "source": "8f4c15083392233c28ad5c450d44fdc34a466a67:october-discovery-log.md:285",
+    "retained_evidence": "Entire original table row retained, including rival explanations and contrary evidence.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-CARRY-v1:0bb07deac978",
+    "version": 1,
+    "kind": "prior_mechanism_or_principle",
+    "definition": "| Dipole lifecycle and exhaustion | Compare same, opposed and undefined flow across lifecycle stages with raw pressure at the touch, fill-linked depth changes, repeated adds, and midpoint movement per unit of flow. Seek pairs with equal ratios and different lot counts, and equal flows with different quote responses. Use completion labels for outcomes and keep the predictor clocks separate. |",
+    "source": "8f4c15083392233c28ad5c450d44fdc34a466a67:october-discovery-log.md:286",
+    "retained_evidence": "Entire original table row retained, including rival explanations and contrary evidence.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-CARRY-v1:3fd3995703aa",
+    "version": 1,
+    "kind": "prior_mechanism_or_principle",
+    "definition": "| Positioning and roll | Points 1, 3, and 4 reuse a NYMEX positioning history. Point 8 covers ICE LD1. Test shared versus independent regime information, including inverse responses during unwind. Compare point 6 with observed expiry and delivery-month context. One carried value cannot identify an intraday effect. |",
+    "source": "8f4c15083392233c28ad5c450d44fdc34a466a67:october-discovery-log.md:287",
+    "retained_evidence": "Entire original table row retained, including rival explanations and contrary evidence.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-CARRY-v1:b48bee048908",
+    "version": 1,
+    "kind": "prior_mechanism_or_principle",
+    "definition": "| Weather, power and stocks | Test forecast HDD and model disagreement (2 and 9), realized weather (10), wind and estimated gas burn (5 and 7), and carry-in stocks and release surprises (11 and 12). Separate forecast revisions, shared source inputs, publication surprises and baseline context. Keep demand and power channels open in both directions and compare event-time paths only with defensible first-available vintages. |",
+    "source": "8f4c15083392233c28ad5c450d44fdc34a466a67:october-discovery-log.md:288",
+    "retained_evidence": "Entire original table row retained, including rival explanations and contrary evidence.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-CARRY-v1:4ea4d1cb8d76",
+    "version": 1,
+    "kind": "prior_mechanism_or_principle",
+    "definition": "| Curve and options | For point 13, check each delivery month's trade and settlement clocks and whether the front leg reuses the same tape. Compare spreads, lead-lag and reversals after removing that mechanical overlap. Strike concentration needs separate as-of option evidence for the same underlying and expiry. |",
+    "source": "8f4c15083392233c28ad5c450d44fdc34a466a67:october-discovery-log.md:289",
+    "retained_evidence": "Entire original table row retained, including rival explanations and contrary evidence.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-CARRY-v1:93fdc150b75f",
+    "version": 1,
+    "kind": "prior_mechanism_or_principle",
+    "definition": "| Cross-layer combinations | Test intra-plane, inter-plane and plane-to-data-point pairings, then combinations with a plausible transmission path. Include timing shifts, inverse signs, availability gaps, nonlinear responses and condition-specific effects. Keep the number of comparisons, coverage, repeated source dependencies, session blocks and missing data visible. Use future discovery dates to seek contrary evidence and new conditions. |",
+    "source": "8f4c15083392233c28ad5c450d44fdc34a466a67:october-discovery-log.md:290",
+    "retained_evidence": "Entire original table row retained, including rival explanations and contrary evidence.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-FLOW-BOOK-v1",
+    "version": 1,
+    "kind": "named_prior_finding",
+    "definition": "NG-FLOW-BOOK-v1",
+    "source": "codex-flow-book-discovery-20261108.md",
+    "retained_evidence": "Full original finding, all associated tables and cases remain in the base revision.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-DIPOLE-POST-RECOGNITION-v1",
+    "version": 1,
+    "kind": "named_prior_finding",
+    "definition": "NG-DIPOLE-POST-RECOGNITION-v1",
+    "source": "codex-flow-book-discovery-20261108.md",
+    "retained_evidence": "Full original finding, all associated tables and cases remain in the base revision.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-391-SWEEP-AND-REST-v1",
+    "version": 1,
+    "kind": "named_prior_finding",
+    "definition": "NG-391-SWEEP-AND-REST-v1",
+    "source": "codex-flow-book-discovery-20261108.md",
+    "retained_evidence": "Full original finding, all associated tables and cases remain in the base revision.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-RELATION-SCOPE-v1",
+    "version": 1,
+    "kind": "named_prior_finding",
+    "definition": "NG-RELATION-SCOPE-v1",
+    "source": "codex-flow-book-discovery-20261108.md",
+    "retained_evidence": "Full original finding, all associated tables and cases remain in the base revision.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-CURVE-CLOCK-COMMON-DRIVER-v1",
+    "version": 1,
+    "kind": "named_prior_finding",
+    "definition": "NG-CURVE-CLOCK-COMMON-DRIVER-v1",
+    "source": "codex-flow-book-discovery-20261108.md",
+    "retained_evidence": "Full original finding, all associated tables and cases remain in the base revision.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-RETAIN-v1:four_arm_models",
+    "version": 1,
+    "kind": "retained_research_collection",
+    "definition": "All baseline, flow, book and both arms, embargo and initial no-embargo results.",
+    "source": "codex-flow-book-discovery-20261108.md; october-discovery-log.md; codex-research-memory.md",
+    "retained_evidence": "Collection-level index, not a replacement for individual retained source cases or variants.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-RETAIN-v1:inverse_flow_and_stack",
+    "version": 1,
+    "kind": "retained_research_collection",
+    "definition": "Original 50-case stack, inverse flow, and unsupported inverse full-stack remain distinct.",
+    "source": "codex-flow-book-discovery-20261108.md; october-discovery-log.md; codex-research-memory.md",
+    "retained_evidence": "Collection-level index, not a replacement for individual retained source cases or variants.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-RETAIN-v1:order_paths",
+    "version": 1,
+    "kind": "retained_research_collection",
+    "definition": "All 980 aggression-to-rest events, survival delays, refresh and terminal-mechanism alternatives.",
+    "source": "codex-flow-book-discovery-20261108.md; october-discovery-log.md; codex-research-memory.md",
+    "retained_evidence": "Collection-level index, not a replacement for individual retained source cases or variants.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-RETAIN-v1:size_one_lifecycle",
+    "version": 1,
+    "kind": "retained_research_collection",
+    "definition": "All 1,012 size-one episodes: recovery, retreat, improvement and entry-survival distinctions.",
+    "source": "codex-flow-book-discovery-20261108.md; october-discovery-log.md; codex-research-memory.md",
+    "retained_evidence": "Collection-level index, not a replacement for individual retained source cases or variants.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-RETAIN-v1:next_print_prebirth",
+    "version": 1,
+    "kind": "retained_research_collection",
+    "definition": "Falling touch with/without a current print; all next-print and no-print opportunities.",
+    "source": "codex-flow-book-discovery-20261108.md; october-discovery-log.md; codex-research-memory.md",
+    "retained_evidence": "Collection-level index, not a replacement for individual retained source cases or variants.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-RETAIN-v1:exhaustion_print_gaps",
+    "version": 1,
+    "kind": "retained_research_collection",
+    "definition": "All-print versus same-side pressure gaps, withdrawal, opposite flow and quote response.",
+    "source": "codex-flow-book-discovery-20261108.md; october-discovery-log.md; codex-research-memory.md",
+    "retained_evidence": "Collection-level index, not a replacement for individual retained source cases or variants.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-RETAIN-v1:quote_classifier_variants",
+    "version": 1,
+    "kind": "retained_research_collection",
+    "definition": "Wire side, action-time midpoint, preceding completed-group midpoint; unknowns retained.",
+    "source": "codex-flow-book-discovery-20261108.md; october-discovery-log.md; codex-research-memory.md",
+    "retained_evidence": "Collection-level index, not a replacement for individual retained source cases or variants.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-RETAIN-v1:quote_age_control_sensitivity",
+    "version": 1,
+    "kind": "retained_research_collection",
+    "definition": "All ordinary and equal-control weights, full and fresh-quote subsets; negative contrast retained.",
+    "source": "codex-flow-book-discovery-20261108.md; october-discovery-log.md; codex-research-memory.md",
+    "retained_evidence": "Collection-level index, not a replacement for individual retained source cases or variants.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-RETAIN-v1:post_recognition_paths",
+    "version": 1,
+    "kind": "retained_research_collection",
+    "definition": "All same/opposed/undefined flow states, fresh versus expiry paths, flats and censoring.",
+    "source": "codex-flow-book-discovery-20261108.md; october-discovery-log.md; codex-research-memory.md",
+    "retained_evidence": "Collection-level index, not a replacement for individual retained source cases or variants.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-RETAIN-v1:flow_nowcast",
+    "version": 1,
+    "kind": "retained_research_collection",
+    "definition": "Established NG flow nowcast kept separate from archived Native candidate detector.",
+    "source": "codex-flow-book-discovery-20261108.md; october-discovery-log.md; codex-research-memory.md",
+    "retained_evidence": "Collection-level index, not a replacement for individual retained source cases or variants.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-RETAIN-v1:book_contrarian",
+    "version": 1,
+    "kind": "retained_research_collection",
+    "definition": "direction.book_contrarian retained even where original trigger operands are unavailable.",
+    "source": "codex-flow-book-discovery-20261108.md; october-discovery-log.md; codex-research-memory.md",
+    "retained_evidence": "Collection-level index, not a replacement for individual retained source cases or variants.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-RETAIN-v1:frozen_runway",
+    "version": 1,
+    "kind": "retained_research_collection",
+    "definition": "Original Family A checksum and +60 availability; exact duration totals, no relabeling October candidates.",
+    "source": "codex-flow-book-discovery-20261108.md; october-discovery-log.md; codex-research-memory.md",
+    "retained_evidence": "Collection-level index, not a replacement for individual retained source cases or variants.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-RETAIN-v1:continuous_timing",
+    "version": 1,
+    "kind": "retained_research_collection",
+    "definition": "August 20 causal-instance timing precedence; exact later NG-specific look-ahead source still unresolved.",
+    "source": "codex-flow-book-discovery-20261108.md; october-discovery-log.md; codex-research-memory.md",
+    "retained_evidence": "Collection-level index, not a replacement for individual retained source cases or variants.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-RETAIN-v1:external_and_psychology",
+    "version": 1,
+    "kind": "retained_research_collection",
+    "definition": "All 99-plane/13-input, external-clock, curve/options and psychology alternatives in shared discovery log.",
+    "source": "codex-flow-book-discovery-20261108.md; october-discovery-log.md; codex-research-memory.md",
+    "retained_evidence": "Collection-level index, not a replacement for individual retained source cases or variants.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-RETAIN-v1:nonlinear_combinations",
+    "version": 1,
+    "kind": "retained_research_collection",
+    "definition": "Nonlinear, inverse and condition-specific combinations remain open; linear stack results do not eliminate them.",
+    "source": "codex-flow-book-discovery-20261108.md; october-discovery-log.md; codex-research-memory.md",
+    "retained_evidence": "Collection-level index, not a replacement for individual retained source cases or variants.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-CONTINUOUS-v1:step_weakening",
+    "version": 1,
+    "kind": "completed_second_predicate",
+    "definition": "step_weakening",
+    "source": "research_atlas_continuous.py:predicates",
+    "retained_evidence": "Every active second, onset, non-birth onset, unmatched birth and 5/20/60-second outcome retained.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-CONTINUOUS-v1:expiry_only_weakening",
+    "version": 1,
+    "kind": "completed_second_predicate",
+    "definition": "expiry_only_weakening",
+    "source": "research_atlas_continuous.py:predicates",
+    "retained_evidence": "Every active second, onset, non-birth onset, unmatched birth and 5/20/60-second outcome retained.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-CONTINUOUS-v1:fresh_opposed_weakening",
+    "version": 1,
+    "kind": "completed_second_predicate",
+    "definition": "fresh_opposed_weakening",
+    "source": "research_atlas_continuous.py:predicates",
+    "retained_evidence": "Every active second, onset, non-birth onset, unmatched birth and 5/20/60-second outcome retained.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-CONTINUOUS-v1:flow_vanished",
+    "version": 1,
+    "kind": "completed_second_predicate",
+    "definition": "flow_vanished",
+    "source": "research_atlas_continuous.py:predicates",
+    "retained_evidence": "Every active second, onset, non-birth onset, unmatched birth and 5/20/60-second outcome retained.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-CONTINUOUS-v1:flow_resumed",
+    "version": 1,
+    "kind": "completed_second_predicate",
+    "definition": "flow_resumed",
+    "source": "research_atlas_continuous.py:predicates",
+    "retained_evidence": "Every active second, onset, non-birth onset, unmatched birth and 5/20/60-second outcome retained.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-CONTINUOUS-v1:half_weakening",
+    "version": 1,
+    "kind": "completed_second_predicate",
+    "definition": "half_weakening",
+    "source": "research_atlas_continuous.py:predicates",
+    "retained_evidence": "Every active second, onset, non-birth onset, unmatched birth and 5/20/60-second outcome retained.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-CONTINUOUS-v1:half_weakening_book_aligned",
+    "version": 1,
+    "kind": "completed_second_predicate",
+    "definition": "half_weakening_book_aligned",
+    "source": "research_atlas_continuous.py:predicates",
+    "retained_evidence": "Every active second, onset, non-birth onset, unmatched birth and 5/20/60-second outcome retained.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-CONTINUOUS-v1:half_weakening_book_opposed",
+    "version": 1,
+    "kind": "completed_second_predicate",
+    "definition": "half_weakening_book_opposed",
+    "source": "research_atlas_continuous.py:predicates",
+    "retained_evidence": "Every active second, onset, non-birth onset, unmatched birth and 5/20/60-second outcome retained.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-CONTINUOUS-v1:half_weakening_price_opposed",
+    "version": 1,
+    "kind": "completed_second_predicate",
+    "definition": "half_weakening_price_opposed",
+    "source": "research_atlas_continuous.py:predicates",
+    "retained_evidence": "Every active second, onset, non-birth onset, unmatched birth and 5/20/60-second outcome retained.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  },
+  {
+    "hypothesis_id": "NG-CONTINUOUS-v1:half_weakening_fresh_book_opposed",
+    "version": 1,
+    "kind": "completed_second_predicate",
+    "definition": "half_weakening_fresh_book_opposed",
+    "source": "research_atlas_continuous.py:predicates",
+    "retained_evidence": "Every active second, onset, non-birth onset, unmatched birth and 5/20/60-second outcome retained.",
+    "paper_disposition": "retain_for_more_days",
+    "execution_status": "not_configured_or_executed",
+    "execution_contract": {
+      "trigger": null,
+      "side": null,
+      "order_type": null,
+      "size": null,
+      "exit": null,
+      "simulator_environment": null
+    }
+  }
+]
