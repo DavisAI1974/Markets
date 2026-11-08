@@ -79,10 +79,10 @@ durable data still on branches: `data/kalshi-bins`, `data/pyth-ticks` (Pyth, non
 - `research/kalshi/NG_BEHAVIOR_KNOWLEDGE.md` — living, status-tagged knowledge base (grows every pass; the human view).
 - `research/kalshi/NG_FORECAST_LOG_S92.md` — the blind-forecaster's reasoning + magnitude-scaling + the data-gap plan.
 - `research/kalshi/FORECASTER_RUNBOOK_S93.md` — **VERBOSE operating manual** for the loop: the vision, the plays,
-  the machinery, the exact loop commands, JOB 2 (net-of-fee coach replay), the guard, and the NYMEX-OPTIONS
+  the machinery, the exact loop commands, JOB 2 (coach replay, gross), the guard, and the NYMEX-OPTIONS
   trading-vehicle survey (Greg S92: "look at nymex options for actual trading very soon"). Read this to run S93.
 - `research/kalshi/coach_replay.py` — **executable playbook backtest** (the rigid baseline the adaptive coach must
-  beat): applies ng_brain.json plays per leg net-of-fee, per-event, no pooling. Canary-side + indicative for now;
+  beat): applies ng_brain.json plays per leg GROSS (no trade cost), per-event, no pooling. Canary-side + indicative for now;
   real fill model + Kalshi/NYMEX-option venue = S93. `--selftest` PASS.
 - `research/kalshi/forecast_harness.py` — turn-key loop helpers: `decision-state` (blind-safe group state),
   `overlay` (guess-vs-actual render), `brain-show`. `--selftest` PASS.
@@ -201,7 +201,7 @@ durable data still on branches: `data/kalshi-bins`, `data/pyth-ticks` (Pyth, non
 | skill | what it does |
 |-------|--------------|
 | `kalshi-session-start` | Session-start ritual: stale-tip branch check → read handoff/kickoff/index → materialize `data/kalshi-bins` + `data/pyth-ticks` locally → verify accrual (newest timestamp, not existence). |
-| `kalshi-backtest` | The mandatory backtest discipline: leakage gate → settle-window exclusion → per-cell never pooled → distributions/fingerprints never means → net-of-fee at maker AND taker. |
+| `kalshi-backtest` | The mandatory backtest discipline: leakage gate → settle-window exclusion → per-cell never pooled → distributions/fingerprints never means → no trade cost in any calculation (Greg 2026-11-08; fee rules retired). |
 | `kalshi-roll` | Re-point Pyth front-month feeds at contract expiry (FEEDS dict + docstring in `pyth_collector.py`, sanity-stream, push to trunk; old-symbol history kept, roll boundary = separate cells). |
 
 ### Current docs
