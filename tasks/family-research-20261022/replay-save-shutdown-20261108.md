@@ -184,3 +184,16 @@ Each date uses its own staging branch. The local publisher logs are under
 `YYYYMMDD-frame-staging.log` and `YYYYMMDD-remaining-staging.log`.
 Both archive trees and the published standalone inputs and decisions are
 required before stopping the corresponding pod.
+
+
+October 2 and 3 ROOT frame archives reached the shared branch in
+[82f177d687](https://github.com/DavisAI1974/Markets/commit/82f177d6871af5bcb455096ab8c32dc6256ce5a7)
+and [df0091d5b0](https://github.com/DavisAI1974/Markets/commit/df0091d5b0f6497cf4294c5973cd437938f41506).
+The shared tree at df0091d5b0 contains all 211 and 236 frame parts
+respectively, with both indexes for each date. The local queue stopped
+while checking the frame publishers' log output. October 3's older
+publisher wrote a completion line without the archive name. After
+confirming both remote trees directly and checking that the previous
+publishers had exited, the remaining uploads started from the sealed
+archives at the recorded source paths. October 17's frame publisher
+and its queued successor were still active at this check.
