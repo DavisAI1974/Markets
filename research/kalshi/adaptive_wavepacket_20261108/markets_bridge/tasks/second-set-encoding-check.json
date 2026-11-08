@@ -1,0 +1,167 @@
+{
+  "archive_git_commit": "2de247bbf02c3918e537c32d32c3267a54d563df",
+  "rows": 771787,
+  "components": {
+    "far_front_age_log": {
+      "state_counts_by_code": {
+        "0": 495733,
+        "1": 276054
+      },
+      "present_float32_identity": 495733,
+      "nonpresent_encoded_zero": 276054
+    },
+    "far_queue_age_p90_log": {
+      "state_counts_by_code": {
+        "0": 495733,
+        "1": 276054
+      },
+      "present_float32_identity": 495733,
+      "nonpresent_encoded_zero": 276054
+    },
+    "far_size_hhi": {
+      "state_counts_by_code": {
+        "0": 495733,
+        "1": 276054
+      },
+      "present_float32_identity": 495733,
+      "nonpresent_encoded_zero": 276054
+    },
+    "far_replenish_log1p_64": {
+      "state_counts_by_code": {
+        "0": 495733,
+        "1": 276054
+      },
+      "present_float32_identity": 495733,
+      "nonpresent_encoded_zero": 276054
+    },
+    "far_replenish_log1p_1024": {
+      "state_counts_by_code": {
+        "0": 495733,
+        "1": 276054
+      },
+      "present_float32_identity": 495733,
+      "nonpresent_encoded_zero": 276054
+    },
+    "far_priority_loss_rate_64": {
+      "state_counts_by_code": {
+        "0": 409538,
+        "1": 362249
+      },
+      "present_float32_identity": 409538,
+      "nonpresent_encoded_zero": 362249
+    },
+    "far_priority_loss_rate_1024": {
+      "state_counts_by_code": {
+        "0": 495623,
+        "1": 276164
+      },
+      "present_float32_identity": 495623,
+      "nonpresent_encoded_zero": 276164
+    },
+    "far_absorption_share_64": {
+      "state_counts_by_code": {
+        "0": 495733,
+        "1": 276054
+      },
+      "present_float32_identity": 495733,
+      "nonpresent_encoded_zero": 276054
+    },
+    "far_absorption_share_1024": {
+      "state_counts_by_code": {
+        "0": 495733,
+        "1": 276054
+      },
+      "present_float32_identity": 495733,
+      "nonpresent_encoded_zero": 276054
+    },
+    "far_identity_survival_64": {
+      "state_counts_by_code": {
+        "0": 495733,
+        "1": 276054
+      },
+      "present_float32_identity": 495733,
+      "nonpresent_encoded_zero": 276054
+    },
+    "far_identity_survival_1024": {
+      "state_counts_by_code": {
+        "0": 495733,
+        "1": 276054
+      },
+      "present_float32_identity": 495733,
+      "nonpresent_encoded_zero": 276054
+    },
+    "far_size_retention_64": {
+      "state_counts_by_code": {
+        "0": 495733,
+        "1": 276054
+      },
+      "present_float32_identity": 495733,
+      "nonpresent_encoded_zero": 276054
+    },
+    "far_size_retention_1024": {
+      "state_counts_by_code": {
+        "0": 495733,
+        "1": 276054
+      },
+      "present_float32_identity": 495733,
+      "nonpresent_encoded_zero": 276054
+    },
+    "unresolved_age_groups_log": {
+      "state_counts_by_code": {
+        "0": 495733,
+        "1": 276054
+      },
+      "present_float32_identity": 495733,
+      "nonpresent_encoded_zero": 276054
+    },
+    "extension_count_log": {
+      "state_counts_by_code": {
+        "0": 495733,
+        "1": 276054
+      },
+      "present_float32_identity": 495733,
+      "nonpresent_encoded_zero": 276054
+    },
+    "step_ratio_log": {
+      "state_counts_by_code": {
+        "0": 4600,
+        "1": 767187
+      },
+      "present_float32_identity": 4600,
+      "nonpresent_encoded_zero": 767187
+    },
+    "pullback_ticks_last_log": {
+      "state_counts_by_code": {
+        "0": 48794,
+        "1": 722993
+      },
+      "present_float32_identity": 48794,
+      "nonpresent_encoded_zero": 722993
+    },
+    "step_duration_groups_log": {
+      "state_counts_by_code": {
+        "0": 48794,
+        "1": 722993
+      },
+      "present_float32_identity": 48794,
+      "nonpresent_encoded_zero": 722993
+    },
+    "pullback_ticks_prev_log": {
+      "state_counts_by_code": {
+        "0": 4600,
+        "1": 767187
+      },
+      "present_float32_identity": 4600,
+      "nonpresent_encoded_zero": 767187
+    }
+  },
+  "flagged_ratios": {
+    "far_absorption_share_64": {
+      "outside_unit_interval": 1493,
+      "max_observed": 10.6,
+      "cursor_at_max": 185120,
+      "known_by_ns_at_max": 1697630456457796796
+    }
+  },
+  "scope": "Byte integrity, identity float32 encoding and range checks. Original market formulae remain held."
+}

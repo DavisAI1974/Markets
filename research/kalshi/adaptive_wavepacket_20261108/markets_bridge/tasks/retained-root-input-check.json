@@ -1,0 +1,23 @@
+{
+  "session": "20231018",
+  "tape_git_commit": "1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202",
+  "archive_git_commit": "2de247bbf02c3918e537c32d32c3267a54d563df",
+  "group_first": 3046,
+  "group_last": 4712,
+  "checks": {
+    "groups": 1667,
+    "messages": 1858,
+    "activity_cells": 66680,
+    "windows_with_unspecified_trade_side": 1790
+  },
+  "raw_message_mismatches": 0,
+  "activity_mismatches": {},
+  "first_activity_difference": {},
+  "activity_definition": "Non-snapshot DBN messages in the inclusive receive window through this F_LAST cursor",
+  "exclusions": [
+    "Book-state-dependent activity",
+    "Original extraction hash formula",
+    "Full-session verification"
+  ],
+  "wall_seconds": 37.23
+}
