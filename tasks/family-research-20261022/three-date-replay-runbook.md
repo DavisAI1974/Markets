@@ -2,6 +2,8 @@
 
 **Reference trade date** October 18, 2023. **Next runs** October 2, 3 and 17, 2023 as three separate discovery dates. Use the same process on each available span. Finish and preserve those three runs before running all four dates on the new standalone component. This document records the sequence and readiness checks. It does not stand in for a per-date completion receipt.
 
+The [November 8 execution update](runpod/discovery-execution-20261108.md) controls the current RunPod discovery pass. It hands ROOT and Native tables directly to the standalone component. The original repeat below records the broader historical workflow.
+
 ## What the earlier sessions established
 
 The relevant Work chats, including **Assembly fitting update** and **Planning Options Review**, record the audit of the approximately 1.59 million planned Search selections. Sampled groups included order IDs and arbitrary saved list positions. That number was a count of overlapping selections in an old work plan. Later discussions distinguished it from both pair-slot estimates and actual calculations. The family research used a separate SQLite-to-Julia route. The user left old Search unchanged.
