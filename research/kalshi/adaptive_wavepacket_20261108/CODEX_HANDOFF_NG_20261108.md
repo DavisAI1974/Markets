@@ -53,6 +53,17 @@ PYTHONPATH=.:research/kalshi:research/kalshi/adaptive_wavepacket_20261108/workin
   --day 20260617 --source local --out /tmp/ng-probe-20260617 --mark-utc 14:30
 ```
 
+Several days in one command, each run INDEPENDENTLY into `<out>/<day>/`, with bins frozen from a prior day
+so no probed day is its own calibration, and a no-pooling replication table written to
+`<out>/replication.json` (criteria 1 to 4 of section 5 checked per day, days counted, nothing averaged):
+
+```bash
+PYTHONPATH=.:research/kalshi:research/kalshi/adaptive_wavepacket_20261108/working_tree \
+  python3 -m research.kalshi.adaptive_wavepacket_20261108.markets_bridge.ng_runner \
+  --calibrate-from-day 20260616 --day 20260617 --day 20260618 --day 20260619 \
+  --source local --out /tmp/ng-probe-june --mark-utc 14:30
+```
+
 Then the real-day test, which asserts the registries verify and prints the one-screen summary:
 
 ```bash
@@ -102,14 +113,19 @@ Carry forward only if ALL of these hold, per direction, with nothing pooled acro
    event, as the existing rule requires. The engine output is an input to hold length and timing, layered on
    the S92 direction nowcast; it is not a stand-alone entry rule.
 
+Criteria 1 to 4 are evaluated per day by `replication.json` (`directions.<pair>.meets_criteria_by_day` and
+`days_meeting_criteria`); criterion 5 is its day count reaching 3; criterion 6 is manual and outside this
+engine.
+
 Does NOT count: a perfect static quadratic (algebra), a candidate under one estimator only, a candidate on
 one day, anything inside the settle guard, anything whose frames were REVIEW_REQUIRED, any result where the
 registry did not verify.
 
 ## 6. Overlooked or worth bolstering (honest list, in priority order)
 
-1. Calibrate bins from a PRIOR day (`--calibrate-from-day`, not built) instead of the first 30 percent of the
-   same day, so the release regime does not flood REVIEW_REQUIRED. Easy to add in `ng_runner.py`.
+1. BUILT: `--calibrate-from-day` freezes bins from all frames of a prior day (the version string records the
+   calibration day); default remains the probed day's earliest 30 percent. Untested on data like the rest of
+   the runner.
 2. Pre-register the directed pairs for NG (ng_buy <- ng_sell, ng_sell <- ng_buy, and if Kalshi bins are
    present kalshi_* <- ng_*) and keep the count fixed; the engine tests every permutation of whatever channels
    you give it.
@@ -118,8 +134,8 @@ registry did not verify.
    supports via `--window`, `--stride`, `--start-ts`, `--end-ts`).
 4. The Kalshi channel: verify `kalshi_coupling_adapter.load_kalshi_market` bar fields (`ts`, `buy_vol`,
    `sell_vol`) match what `kalshi_channels` reads; untested here.
-5. The session-start hook still materializes the crypto bins (`realbins/`) every session; nothing here uses
-   them. Greg's call whether to turn that off.
+5. DONE: the session-start hook no longer materializes the crypto bins (`scripts/session_start.sh`,
+   opt-in via `KALSHI_MATERIALIZE_CRYPTO_BINS=1`; the data branches are untouched).
 6. Frankie adapter and the fuller Frankie tree (review F-1) remain open; the RawFrame contract already carries
    free-string family and direction fields for P/O/S/X and SAME/FLIP when that time comes.
 7. No signing anywhere (sha256 content pins only); the registries are local evidence, not attestations.

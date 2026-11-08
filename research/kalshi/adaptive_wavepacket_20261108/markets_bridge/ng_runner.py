@@ -223,7 +223,10 @@ def run_probe(ts: np.ndarray, channels: dict[str, np.ndarray], *, source_identit
               marks_utc: Sequence[tuple[int, int]] = (EIA_STORAGE_UTC,),
               level2_window: int = 40, level2_stride: int = 4,
               estimators: Sequence[str] = ESTIMATORS, max_frames: int = 12000,
-              shift_null: int = 20, max_archive_bytes: int = 256 * 1024 * 1024) -> dict:
+              shift_null: int = 20, max_archive_bytes: int = 256 * 1024 * 1024,
+              bins: FixedBins | None = None) -> dict:
+    """bins: pass FixedBins frozen from a PRIOR day (see bins_from_prior_day) to avoid calibrating on
+    the same day; otherwise bins are frozen from this day's earliest calibration_fraction of frames."""
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
     started = time.time()
@@ -232,7 +235,12 @@ def run_probe(ts: np.ndarray, channels: dict[str, np.ndarray], *, source_identit
                                             settle_utc=settle_utc, settle_guard_s=settle_guard_s)
     if len(frames) < 64:
         raise LocalityError(f"only {len(frames)} frames after the settle exclusion; need >= 64")
-    bins = frozen_bins_from_history(frames, calibration_fraction=calibration_fraction, nbins=nbins)
+    if bins is None:
+        bins = frozen_bins_from_history(frames, calibration_fraction=calibration_fraction, nbins=nbins)
+    else:
+        if bins.source_identity != source_identity:
+            # Bins frozen on another day carry that day's identity; rebind the identity only, never the edges.
+            bins = FixedBins(source_identity, bins.version, bins.edges)
     nodes = tuple(sorted(dict(bins.edges)))
     summary = {"schema": 1, "kind": "MARKETS_NG_HISTORICAL_PROBE", "trust": TRUST,
                "source_identity": source_identity, "provenance": provenance,
@@ -358,6 +366,76 @@ def one_screen(summary: dict) -> str:
     return "\n".join(lines)
 
 
+def bins_from_prior_day(day: str, source: str, *, window: int, stride: int, nbins: int,
+                        depth: bool = False, kalshi_bins: str | None = None,
+                        settle_utc: tuple[int, int] | None = NG_SETTLE_UTC,
+                        settle_guard_s: int = NG_SETTLE_GUARD_S) -> FixedBins:
+    """Freeze bins from ALL frames of a PRIOR day (calibration_fraction=1.0), so the probed day is never
+    its own calibration. The version string records the calibration day."""
+    grid, channels, _ = load_ng_day(day, source, depth=depth)
+    if kalshi_bins:
+        channels.update(kalshi_channels(kalshi_bins, grid))
+    frames, _ = frames_from_channels(grid, channels, window=window, stride=stride,
+                                     source_identity=f"NG_{day}", provenance=f"calibration:NG_{day}",
+                                     settle_utc=settle_utc, settle_guard_s=settle_guard_s)
+    return frozen_bins_from_history(frames, calibration_fraction=1.0, nbins=nbins,
+                                    version=f"ng-prior-day-{day}")
+
+
+CARRY_FORWARD_SHIFT_FRACTION = 0.05
+CARRY_FORWARD_B_OVER_SE = 2.0
+
+
+def replication_table(summaries: Sequence[dict]) -> dict:
+    """Side-by-side per-day readings per direction; NOTHING is pooled or averaged.
+
+    For each (target, donor) and each day: status under each estimator, the shift-null fraction, |B|/se,
+    the predictive-geometry status, and whether the handoff's carry-forward criteria 1-4 all hold on that
+    day. `days_meeting_criteria` is a COUNT of days, which is the replication reading (criterion 5 asks
+    for at least three), never a pooled statistic.
+    """
+    table: dict[str, dict] = {}
+    for summary in summaries:
+        day = summary.get("source_identity")
+        for estimator, block in summary.get("estimators", {}).items():
+            shift = {(n["target"], n["donor"]): n.get("fraction_of_shifts_at_or_above_actual")
+                     for n in block.get("circular_shift_null", [])}
+            predictive = {(g["target"], g["donor"]): g.get("predictive", {}).get("status")
+                          for g in block.get("geometry", [])}
+            for d in block.get("five_step", {}).get("directions", []):
+                key = f"{d['target']}<-{d['donor']}"
+                row = table.setdefault(key, {"days": {}})
+                entry = row["days"].setdefault(day, {})
+                b, se = d.get("dipole_balance"), d.get("balance_standard_error")
+                entry[estimator] = {
+                    "status": d["status"], "improvement": d.get("improvement"),
+                    "shift_fraction": shift.get((d["target"], d["donor"])),
+                    "b_over_se": (abs(b) / se) if (b is not None and se) else None,
+                    "predictive_status": predictive.get((d["target"], d["donor"])),
+                    "reason": d.get("reason")}
+    for key, row in table.items():
+        meets = {}
+        for day, per_est in row["days"].items():
+            ok = len(per_est) >= 2 and all(
+                e["status"] == "CANDIDATE_ASSOCIATION_REVIEW_ONLY"
+                and e["shift_fraction"] is not None and e["shift_fraction"] <= CARRY_FORWARD_SHIFT_FRACTION
+                and e["b_over_se"] is not None and e["b_over_se"] > CARRY_FORWARD_B_OVER_SE
+                and e["predictive_status"] == "CONSISTENT_MULTISPLIT_ASSOCIATION_REVIEW_ONLY"
+                for e in per_est.values())
+            meets[day] = ok
+        row["meets_criteria_by_day"] = meets
+        row["days_meeting_criteria"] = sum(meets.values())
+        row["days_run"] = len(meets)
+    return {"schema": 1, "kind": "NG_PROBE_REPLICATION_TABLE", "trust": TRUST,
+            "criteria": {"both_estimators_candidate": True,
+                         "shift_fraction_at_most": CARRY_FORWARD_SHIFT_FRACTION,
+                         "b_over_se_above": CARRY_FORWARD_B_OVER_SE,
+                         "predictive": "CONSISTENT_MULTISPLIT_ASSOCIATION_REVIEW_ONLY",
+                         "days_required_before_lag_join": 3},
+            "directions": table, "pooled": False, "averaged": False,
+            "net_of_fee_computed": False, "no_trade_signal_computed": True}
+
+
 def load_ng_day(day: str, source: str = "local", *, depth: bool = False):
     """Load one NG day through the repo's own loader (local cache or S3 read-time fetch)."""
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # research/kalshi
@@ -373,7 +451,10 @@ def load_ng_day(day: str, source: str = "local", *, depth: bool = False):
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Henry Hub NG historical probe (no trade signal).")
-    parser.add_argument("--day", required=True, help="YYYYMMDD, one day per run (never pooled)")
+    parser.add_argument("--day", action="append", required=True,
+                        help="YYYYMMDD; repeatable. Each day runs INDEPENDENTLY into <out>/<day>/; "
+                             "a replication table (no pooling) is written to <out>/replication.json")
+    parser.add_argument("--calibrate-from-day", help="freeze bins from this PRIOR day instead of the probed day")
     parser.add_argument("--source", choices=("local", "s3"), default="local")
     parser.add_argument("--out", required=True, help="output directory (outside git)")
     parser.add_argument("--kalshi-bins", help="optional KXNATGASD_bins.jsonl to add kalshi_buy/kalshi_sell")
@@ -394,28 +475,46 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--estimator", action="append", choices=ESTIMATORS)
     parser.add_argument("--prefix", default="ng")
     args = parser.parse_args(argv)
-    grid, channels, provenance = load_ng_day(args.day, args.source, depth=args.depth)
-    if args.kalshi_bins:
-        channels.update(kalshi_channels(args.kalshi_bins, grid))
-        provenance += f";kalshi={Path(args.kalshi_bins).name}"
-    lo = 0 if args.start_ts is None else int(np.searchsorted(grid, args.start_ts))
-    hi = grid.size if args.end_ts is None else int(np.searchsorted(grid, args.end_ts, side="right"))
-    if args.max_seconds is not None:
-        hi = min(hi, lo + args.max_seconds)
-    grid = grid[lo:hi]
-    channels = {k: v[lo:hi] for k, v in channels.items()}
+    settle = None if args.no_settle_exclusion else NG_SETTLE_UTC
+    prior_bins = None
+    if args.calibrate_from_day:
+        if args.calibrate_from_day in args.day:
+            raise LocalityError("the calibration day must not be one of the probed days")
+        prior_bins = bins_from_prior_day(args.calibrate_from_day, args.source, window=args.window,
+                                         stride=args.stride, nbins=args.nbins, depth=args.depth,
+                                         kalshi_bins=args.kalshi_bins, settle_utc=settle,
+                                         settle_guard_s=args.settle_guard_s)
     marks = [EIA_STORAGE_UTC] + [tuple(int(x) for x in m.split(":")) for m in args.mark_utc]
-    summary = run_probe(grid, channels, source_identity=f"NG_{args.day}", provenance=provenance,
-                        out_dir=args.out, archive_prefix=args.prefix, window=args.window,
-                        stride=args.stride, nbins=args.nbins,
-                        calibration_fraction=args.calibration_fraction,
-                        settle_utc=None if args.no_settle_exclusion else NG_SETTLE_UTC,
-                        settle_guard_s=args.settle_guard_s, marks_utc=marks,
-                        level2_window=args.level2_window, level2_stride=args.level2_stride,
-                        estimators=tuple(args.estimator) if args.estimator else ESTIMATORS,
-                        shift_null=args.shift_null)
-    print(one_screen(summary))
-    print(f"summary: {Path(args.out) / 'summary.json'}")
+    summaries = []
+    for day in args.day:
+        grid, channels, provenance = load_ng_day(day, args.source, depth=args.depth)
+        if args.kalshi_bins:
+            channels.update(kalshi_channels(args.kalshi_bins, grid))
+            provenance += f";kalshi={Path(args.kalshi_bins).name}"
+        lo = 0 if args.start_ts is None else int(np.searchsorted(grid, args.start_ts))
+        hi = grid.size if args.end_ts is None else int(np.searchsorted(grid, args.end_ts, side="right"))
+        if args.max_seconds is not None:
+            hi = min(hi, lo + args.max_seconds)
+        grid = grid[lo:hi]
+        channels = {k: v[lo:hi] for k, v in channels.items()}
+        out_dir = Path(args.out) / day if len(args.day) > 1 else Path(args.out)
+        summary = run_probe(grid, channels, source_identity=f"NG_{day}", provenance=provenance,
+                            out_dir=out_dir, archive_prefix=args.prefix, window=args.window,
+                            stride=args.stride, nbins=args.nbins,
+                            calibration_fraction=args.calibration_fraction,
+                            settle_utc=settle, settle_guard_s=args.settle_guard_s, marks_utc=marks,
+                            level2_window=args.level2_window, level2_stride=args.level2_stride,
+                            estimators=tuple(args.estimator) if args.estimator else ESTIMATORS,
+                            shift_null=args.shift_null, bins=prior_bins)
+        print(one_screen(summary))
+        print(f"summary: {out_dir / 'summary.json'}")
+        summaries.append(summary)
+    table = replication_table(summaries)
+    (Path(args.out) / "replication.json").write_text(json.dumps(_plain(table), indent=2, sort_keys=True) + "\n")
+    for key, row in table["directions"].items():
+        print(f"replication {key}: {row['days_meeting_criteria']} of {row['days_run']} day(s) meet criteria 1-4 "
+              f"(3 required before lag_join; never pooled)")
+    print(f"replication table: {Path(args.out) / 'replication.json'}")
     return 0
 
 

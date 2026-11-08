@@ -28,7 +28,12 @@ materialize() {  # $1=branch  $2=basename e.g. btc_coinbase_bins.json
     git show "origin/${branch}:${name}" > "realbins/${name}" 2>/dev/null || true
   fi
 }
-if [ ! -d realbins ] || [ -z "$(ls -A realbins 2>/dev/null)" ]; then
+# 2026-11-08 (Greg): the crypto bins are OFF by default. The live product is Kalshi/NYMEX (Henry Hub NG);
+# nothing current reads realbins/. Set KALSHI_MATERIALIZE_CRYPTO_BINS=1 to restore the old behaviour.
+# The data/btc-bins, data/eth-bins and data/perp-history branches are untouched.
+if [ "${KALSHI_MATERIALIZE_CRYPTO_BINS:-0}" != "1" ]; then
+  echo "[session_start] crypto bins OFF (set KALSHI_MATERIALIZE_CRYPTO_BINS=1 to materialize)"
+elif [ ! -d realbins ] || [ -z "$(ls -A realbins 2>/dev/null)" ]; then
   echo "[session_start] materializing real bins from data/* branches..."
   mkdir -p realbins
   git fetch origin data/btc-bins data/eth-bins data/perp-history >/dev/null 2>&1

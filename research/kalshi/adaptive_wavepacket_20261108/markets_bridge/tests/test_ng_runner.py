@@ -74,5 +74,43 @@ class NgRunnerRealDayTests(unittest.TestCase):
             print(ng_runner.one_screen(summary))
 
 
+class ReplicationTableTests(unittest.TestCase):
+    """The table reads engine OUTPUT schemas (status strings); it contains no market data."""
+
+    @staticmethod
+    def _summary(day, status, frac, b, se, pred):
+        d = {"target": "ng_buy", "donor": "ng_sell", "status": status, "improvement": 0.3,
+             "dipole_balance": b, "balance_standard_error": se, "reason": ""}
+        block = {"five_step": {"directions": [d]},
+                 "circular_shift_null": [{"target": "ng_buy", "donor": "ng_sell",
+                                          "fraction_of_shifts_at_or_above_actual": frac}],
+                 "geometry": [{"target": "ng_buy", "donor": "ng_sell", "predictive": {"status": pred}}]}
+        return {"source_identity": day, "estimators": {"frozen-bin": block, "vasicek-ksg": block}}
+
+    def test_days_are_counted_not_pooled(self):
+        from research.kalshi.adaptive_wavepacket_20261108.markets_bridge.ng_runner import replication_table
+        good = self._summary("NG_1", "CANDIDATE_ASSOCIATION_REVIEW_ONLY", 0.0, 2.0, 0.5,
+                             "CONSISTENT_MULTISPLIT_ASSOCIATION_REVIEW_ONLY")
+        weak_b = self._summary("NG_2", "CANDIDATE_ASSOCIATION_REVIEW_ONLY", 0.0, 1.0, 0.9,
+                               "CONSISTENT_MULTISPLIT_ASSOCIATION_REVIEW_ONLY")
+        no = self._summary("NG_3", "NO_SUPPORTED_ASSOCIATION", 0.4, None, None,
+                           "NO_STABLE_ADDITIONAL_GEOMETRIC_PREDICTION")
+        table = replication_table([good, weak_b, no])
+        row = table["directions"]["ng_buy<-ng_sell"]
+        self.assertEqual(row["days_run"], 3)
+        self.assertEqual(row["days_meeting_criteria"], 1)
+        self.assertEqual(row["meets_criteria_by_day"], {"NG_1": True, "NG_2": False, "NG_3": False})
+        self.assertFalse(table["pooled"])
+        self.assertEqual(table["criteria"]["days_required_before_lag_join"], 3)
+        self.assertEqual(row["days"]["NG_3"]["frozen-bin"]["b_over_se"], None)
+
+    def test_single_estimator_day_cannot_meet_criteria(self):
+        from research.kalshi.adaptive_wavepacket_20261108.markets_bridge.ng_runner import replication_table
+        one = self._summary("NG_1", "CANDIDATE_ASSOCIATION_REVIEW_ONLY", 0.0, 2.0, 0.5,
+                            "CONSISTENT_MULTISPLIT_ASSOCIATION_REVIEW_ONLY")
+        del one["estimators"]["vasicek-ksg"]
+        self.assertEqual(replication_table([one])["directions"]["ng_buy<-ng_sell"]["days_meeting_criteria"], 0)
+
+
 if __name__ == "__main__":
     unittest.main()
