@@ -1,0 +1,54 @@
+{
+  "block": "20231017",
+  "bucket": null,
+  "canonical_source_rewritten": false,
+  "causal_clock": "ts_recv_ns",
+  "completed_groups": 635170,
+  "halt_boundaries_close_groups": true,
+  "halt_utc_hour": 21,
+  "manifest_hash": "6342fdf1cba10e132e84717dc857e51b4c2ee1350acc8d8829e3b5435d07217d",
+  "member_seams_close_groups": true,
+  "opening_scope": "MIDNIGHT_UTC_SNAPSHOT_PARTIAL_TRADING_DATE",
+  "partial_members": [
+    {
+      "member_key": "NG_v0_mbo_20231017.dbn.zst",
+      "partition_mbo_records": 858976,
+      "reason": "Keep the records before the 21:00 UTC halt boundary.",
+      "take": 841601
+    }
+  ],
+  "prefix": null,
+  "role": "DISCOVERY_DATA",
+  "sampled": false,
+  "schema": "BOSS_BLOCK_SOURCE_MANIFEST_V1",
+  "sessions": [
+    {
+      "after_halt": 17375,
+      "before_halt": 841601,
+      "day_utc": "20231017",
+      "f_last_before_halt": 635170,
+      "f_last_groups": 649795,
+      "first_ts_recv_ns": 1697500800000000000,
+      "halt_boundary_f_last": true,
+      "instruments": 1,
+      "last_record_f_last": true,
+      "last_ts_recv_ns": 1697587199866160393,
+      "mbo_records": 858976,
+      "member_key": "NG_v0_mbo_20231017.dbn.zst"
+    }
+  ],
+  "source_kind": "NATIVE_DBN_MBO",
+  "sources": [
+    {
+      "mbo_records": 841601,
+      "member_index": 0,
+      "member_key": "NG_v0_mbo_20231017.dbn.zst",
+      "sha256": "ce36e2ed242731698004cd83c1947365e8aac0e9dac939d271a8f22752bcca65",
+      "size_bytes": 16842309
+    }
+  ],
+  "tail_members": [],
+  "tape_git_commit": "1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202",
+  "total_mbo_records": 841601,
+  "trading_day": "20231017"
+}

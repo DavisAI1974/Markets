@@ -1,0 +1,83 @@
+{
+  "block": "20231003",
+  "bucket": null,
+  "canonical_source_rewritten": false,
+  "causal_clock": "ts_recv_ns",
+  "completed_groups": 653912,
+  "halt_boundaries_close_groups": true,
+  "halt_utc_hour": 21,
+  "manifest_hash": "a5a8d2dc83da92cf15d12edac840c73b30b43c1eca696f8582430fe105111753",
+  "member_seams_close_groups": true,
+  "opening_scope": "PREVIOUS_UTC_TAIL",
+  "partial_members": [
+    {
+      "member_key": "NG_v0_mbo_20231003.dbn.zst",
+      "partition_mbo_records": 879077,
+      "reason": "Keep the records before the 21:00 UTC halt boundary.",
+      "take": 874941
+    }
+  ],
+  "prefix": null,
+  "role": "DISCOVERY_DATA",
+  "sampled": false,
+  "schema": "BOSS_BLOCK_SOURCE_MANIFEST_V1",
+  "sessions": [
+    {
+      "after_halt": 4889,
+      "before_halt": 808453,
+      "day_utc": "20231002",
+      "f_last_before_halt": 600291,
+      "f_last_groups": 603529,
+      "first_ts_recv_ns": 1696204800000000000,
+      "halt_boundary_f_last": true,
+      "instruments": 1,
+      "last_record_f_last": true,
+      "last_ts_recv_ns": 1696291199817162842,
+      "mbo_records": 813342,
+      "member_key": "NG_v0_mbo_20231002.dbn.zst"
+    },
+    {
+      "after_halt": 4136,
+      "before_halt": 874941,
+      "day_utc": "20231003",
+      "f_last_before_halt": 650674,
+      "f_last_groups": 653409,
+      "first_ts_recv_ns": 1696291200000000000,
+      "halt_boundary_f_last": true,
+      "instruments": 1,
+      "last_record_f_last": true,
+      "last_ts_recv_ns": 1696377599808026499,
+      "mbo_records": 879077,
+      "member_key": "NG_v0_mbo_20231003.dbn.zst"
+    }
+  ],
+  "source_kind": "NATIVE_DBN_MBO",
+  "sources": [
+    {
+      "mbo_records": 4889,
+      "member_index": 0,
+      "member_key": "NG_v0_mbo_20231002.dbn.zst",
+      "sha256": "4fd5fb8827e2ee560a9d938c54460f4a45d2569425157f910db06d4f55b7fe0d",
+      "size_bytes": 15818310
+    },
+    {
+      "mbo_records": 874941,
+      "member_index": 1,
+      "member_key": "NG_v0_mbo_20231003.dbn.zst",
+      "sha256": "8db4b0042d9324b299f616c5de5c6c66ff3bfa1d2a1288eb69cc575e7653c600",
+      "size_bytes": 17118175
+    }
+  ],
+  "tail_members": [
+    {
+      "member_key": "NG_v0_mbo_20231002.dbn.zst",
+      "partition_mbo_records": 813342,
+      "reason": "Include the previous UTC member's tail for this trading date.",
+      "skip": 808453,
+      "take": 4889
+    }
+  ],
+  "tape_git_commit": "1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202",
+  "total_mbo_records": 879830,
+  "trading_day": "20231003"
+}

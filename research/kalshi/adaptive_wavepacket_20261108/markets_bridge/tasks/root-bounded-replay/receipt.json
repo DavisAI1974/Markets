@@ -1,0 +1,115 @@
+{
+  "root_runtime_git_commit": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+  "root_adapter_git_commit": "af36937d1e478831d4c7bc612c98d969e9a0848b",
+  "root_adapter_sha256": "bf49d5fc41a19827200db920dc54568c149750df30ddaf43fae9f269499271dc",
+  "native_git_commit": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+  "native_adapter_sha256": "4a80e3e4b83867046d318ba97d350c2d7aca22e9d182d98399d01eeacc72d3ce",
+  "tape_git_commit": "1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202",
+  "utc_member": "NG_v0_mbo_20231018.dbn.zst",
+  "source_member_sha256": "54b2b14c4762a7e4160cc00ce1e70504961ea4e6954e28866dd1bfbaa140f5d5",
+  "prefix_sha256": "0e33370cb2d39461d5d6ca69ee59f5ed6182bb5cc2a79f54586d9baad8851485",
+  "journal_sha256": "7c07be71d4208297a27c878b0be9106f796189e505c6e7d030ad88c1a66d188f",
+  "journal_head": "01051fc0ebcd1ccabe78158d5399a6395d135fb3d8aadc23a240def8e68344c0",
+  "first_ts_recv_ns": 1697587200000000000,
+  "last_ts_recv_ns": 1697589060113857429,
+  "opening_reset_records": 1,
+  "environment": {
+    "platform": "WSL2 Ubuntu on ext4",
+    "cpus": 4,
+    "physical_cores": 4,
+    "python": "3.12.3",
+    "packages": {
+      "torch": "2.11.0+cpu",
+      "numpy": "2.5.4",
+      "cloudpickle": "3.1.2",
+      "databento-dbn": "0.62.0",
+      "zstandard": "0.25.0"
+    }
+  },
+  "measurement_scope": "Fresh offline ROOT legacy stages, including one separate spool digest read. GNU time RSS is the heaviest single process. Native, rich teacher, and model fitting are outside the timing.",
+  "measurements": {
+    "replica_shards": {
+      "wall_seconds": 125.12,
+      "cpu_seconds": 311.0,
+      "max_single_process_rss_kib": 292100
+    },
+    "single_replay": {
+      "wall_seconds": 158.71,
+      "cpu_seconds": 349.37,
+      "max_single_process_rss_kib": 290716
+    }
+  },
+  "root": {
+    "input_records": 6000,
+    "frames": 4489,
+    "retained": {
+      "legacy": "run",
+      "bedrock_traversal": "skipped",
+      "bedrock_projection": "skipped",
+      "digest": "skipped"
+    },
+    "files": {
+      "failures.jsonl": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "frames.jsonl": {
+        "bytes": 2903246916,
+        "sha256": "2d0f6717080dcfea2b8f58262369d9faf9bc2c1ac90bcd2ac60f75dcaecc6162"
+      },
+      "prices.jsonl": {
+        "bytes": 64631,
+        "sha256": "67d9264fd6a5b6b8440af28709967db0c6deda8cc29ba62cf439831a6f2a491f"
+      },
+      "structures.jsonl": {
+        "bytes": 8144560,
+        "sha256": "0070e9508e0c3f02d488c3a1fa9d71c6e7bbfa0395a06d0a3ff4a51d63bece7b"
+      }
+    }
+  },
+  "recovery": {
+    "mode": "single_replay",
+    "saved_next_input": 2999,
+    "saved_input_spool_byte_offset": 2085164,
+    "ordered_spools_identical": true,
+    "included_in_wall_comparison": false
+  },
+  "replica_worker_loss": {
+    "utc_member": "NG_v0_mbo_20231002.dbn.zst",
+    "source_member_sha256": "4fd5fb8827e2ee560a9d938c54460f4a45d2569425157f910db06d4f55b7fe0d",
+    "prefix_sha256": "969cc82a16eda34b2a07cbea78322ad2ffe5e4136586f97819ff0966ef073c78",
+    "journal_sha256": "bfafbb49482214584ee46ddc13e7e16e6c71843911f982d3aea58647bacea788",
+    "input_records": 2500,
+    "closed_group_members": 2500,
+    "frames": 1303,
+    "trades": 89,
+    "structures": 1303,
+    "first_observed_families": 43,
+    "kill_requested_at_frame_ordinal": 200,
+    "loss_detected_at_frame_ordinal": 203,
+    "rows_rebuilt_in_replay": 1,
+    "ordered_spools_identical": true,
+    "frame_sha256": "3519da997dbcb7bb18be95d3f5fb440b9e3a60cc6be147f93bdb19ea603f15ce",
+    "price_sha256": "df03e2de0a67f6058d4970fad4980bcecb837fb371c3c0109f884bf52bca7108",
+    "structure_sha256": "7abd6c15ad0c720efe5f31200ee8e4fd6e94472068dc12213e0104cbb7459e09",
+    "sqlite_integrity_check": "ok"
+  },
+  "sqlite": {
+    "input_records": 6000,
+    "closed_group_members": 6000,
+    "open_group_members": 0,
+    "frames": 4489,
+    "trades": 115,
+    "structures": 4489,
+    "family_first": 51,
+    "integrity_check": "ok",
+    "sha256": "924d2ee15de2e07e9737368662466a943ee27f2d5e283e55895c4a4e5d081bdb"
+  },
+  "native": {
+    "status": "blocked_before_replay",
+    "pre_traversal_gates": "passed",
+    "completed_groups": 0,
+    "required_distinct_cores": 8,
+    "available_distinct_cores": 4
+  }
+}
