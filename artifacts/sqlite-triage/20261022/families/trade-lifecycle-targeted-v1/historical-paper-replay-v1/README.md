@@ -10,6 +10,8 @@ The size-one onset, continuation after a retreat to the previous second level, a
 
 Marginal ideas may be tested in a separately labeled forward simulator experiment. Before each test, record the environment and instrument, trigger, size, order type, exit, and what would help distinguish a signal issue from an execution or data issue. Retain simulator fills, partial fills, missed fills and outcomes under those conditions. Link each experiment back to its historical evidence so later work can revisit it.
 
+The first forward paper sessions are a discovery phase because few historical days are available for replay. Use them to learn which signals show up in the simulator's market environment, whether there is time to act, and which parts of the outcome reflect the signal, data coverage, or execution. Review individual observations even when the trade loses or never fills. Keep hypotheses open as NOT_ENOUGH_INFO where evidence is limited. Once repeated observations give clear answers under documented conditions, shift the focus toward tighter execution and consistent performance.
+
 ## Included evidence and decision boundaries
 
 The [source projection](../local-liquidity-v1/README.md) preserves all 30,739 original market trades and identifies every known missing view. The replay population is the 22,194 consecutive observed books for instrument 150611, native groups 229201–251394. It also reads the matching transitions, first-ten source references and all original trade links. The rest of the tape, sparse quotes, and the separate exact-action window for trades 118–149 remain evidence for research. Their gaps prevent them from supplying entries or exits for this replay. The first observed book cannot establish a newly thin episode at the left boundary.
