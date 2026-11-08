@@ -1,0 +1,109 @@
+{
+  "root_stage_receipt": "receipt.json",
+  "archives": {
+    "20231002": {
+      "logical_bytes": 796297501,
+      "logical_sha256": "3519da997dbcb7bb18be95d3f5fb440b9e3a60cc6be147f93bdb19ea603f15ce",
+      "zstd_level_1_archive_bytes": 44122358,
+      "zstd_level_1_archive_sha256": "ab66d88f48dc403725dc3c2660d05df76edd2274331ebe02ffbf5f7a730a92d1",
+      "modeled_extent_bytes": 131072,
+      "modeled_sector_bytes": 4096,
+      "modeled_allocation_bytes": {
+        "1": 58724352,
+        "3": 59174912
+      },
+      "all_codec_pass_wall_seconds": 6.81,
+      "all_codec_pass_cpu_seconds": 5.72,
+      "decoded_sha256": "3519da997dbcb7bb18be95d3f5fb440b9e3a60cc6be147f93bdb19ea603f15ce",
+      "decoded_bytes": 796297501,
+      "archive_readback_and_hash_wall_seconds": 3.2
+    },
+    "20231018": {
+      "logical_bytes": 2903246916,
+      "logical_sha256": "2d0f6717080dcfea2b8f58262369d9faf9bc2c1ac90bcd2ac60f75dcaecc6162",
+      "zstd_level_1_archive_bytes": 164920866,
+      "zstd_level_1_archive_sha256": "97c3d504340db83d294b1a6696fa477b3b5fcf3ba7cce5dda055b04b6ade44bc",
+      "modeled_extent_bytes": 131072,
+      "modeled_sector_bytes": 4096,
+      "modeled_allocation_bytes": {
+        "1": 213250048,
+        "3": 215232512
+      },
+      "all_codec_pass_wall_seconds": 24.41,
+      "all_codec_pass_cpu_seconds": 20.28,
+      "decoded_sha256": "2d0f6717080dcfea2b8f58262369d9faf9bc2c1ac90bcd2ac60f75dcaecc6162",
+      "decoded_bytes": 2903246916,
+      "archive_readback_and_hash_wall_seconds": 11.8
+    }
+  },
+  "btrfs": {
+    "platform": "WSL2 Ubuntu, Btrfs loop scratch on ext4, four cores",
+    "mount_option": "compress=zstd:1",
+    "scope": "First 2,500 records of the October 2 UTC tape member",
+    "logical_frame_bytes_per_run": 796297501,
+    "logical_frame_bytes_both_runs": 1592595002,
+    "fresh_and_resumed_spools_match_ext4": true,
+    "frames_sha256": "3519da997dbcb7bb18be95d3f5fb440b9e3a60cc6be147f93bdb19ea603f15ce",
+    "final_fs_used_bytes": 122843136,
+    "final_fs_data_used_bytes": 118157312,
+    "final_fs_used_scope": "Entire isolated volume after both producer runs and SQLite, includes filesystem metadata. Single-file st_blocks returned logical-size-equivalent counts.",
+    "fresh_wall_seconds": 37.61,
+    "save_wall_seconds": 10.64,
+    "resume_wall_seconds": 28.71,
+    "next_input_at_save": 1249,
+    "saved_input_spool_byte_offset": 863553,
+    "sqlite": {
+      "input_records": 2500,
+      "closed_group_members": 2500,
+      "open_group_members": 0,
+      "frames": 1303,
+      "trades": 89,
+      "structures": 1303,
+      "family_first": 43
+    },
+    "exact_readback_after_readonly_remount": [
+      {
+        "row": 0,
+        "offset": 0,
+        "length": 1518760,
+        "sha256": "b3d0bc2382ac1b88828d7b6c5f33d8e8e45a9765412574da419012ab17c2371d"
+      },
+      {
+        "row": 100,
+        "offset": 59768189,
+        "length": 589150,
+        "sha256": "0159e3255b803118ae88524a472b9c0d82180aef8e88949cd35e1f6b49c0606a"
+      },
+      {
+        "row": 257,
+        "offset": 152688994,
+        "length": 603366,
+        "sha256": "044edfda3d8fafc9cf6c76b64fe3235bc77bfc16c21a1f55c7e9bb4fd5595c0e"
+      },
+      {
+        "row": 511,
+        "offset": 308465502,
+        "length": 619676,
+        "sha256": "a422b0c543318c837015b6027f2e6da8c8de5b0b57dada8b838aaf85fc2f0c75"
+      },
+      {
+        "row": 777,
+        "offset": 473029304,
+        "length": 610694,
+        "sha256": "259e609fa28d4b82f7123e2f4c6b2012a246d12ec82ea2ea925ada5a04ac2f24"
+      },
+      {
+        "row": 1023,
+        "offset": 623903683,
+        "length": 616997,
+        "sha256": "3fd513b3e9419c710a4eee829bc2c5e52a1670ce9ca265ee95174a51aa1c126f"
+      },
+      {
+        "row": 1302,
+        "offset": 795679547,
+        "length": 617954,
+        "sha256": "adc8a47d8893dbe944f3517366a86c2cfa081331c4b8fc3094b310dd45fbb589"
+      }
+    ]
+  }
+}
