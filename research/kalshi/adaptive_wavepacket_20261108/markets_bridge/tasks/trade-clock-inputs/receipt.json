@@ -1,0 +1,56 @@
+[
+  {
+    "trade_date": "20231002",
+    "scope": "available partial trade date",
+    "tape_git_commit": "1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202",
+    "boundary_manifest_git_commit": "93895487c199b1e486d5407f9e103a0964903d2d",
+    "source_records": 808453,
+    "completed_groups": 600291,
+    "trades": 37670,
+    "archived_trades_compared": 0,
+    "clock_basis": "Integer event/receive nanoseconds and receive clock of the source F_LAST record",
+    "ordinal_basis": "Zero-based tape trade, session input and F_LAST group coordinates",
+    "output": "20231002.csv.gz",
+    "sha256": "be1e4b4ccf88d916ef3d9843b792c36d6a2febecd5a198f9f19a4d11d7c88a07"
+  },
+  {
+    "trade_date": "20231003",
+    "scope": "full trade date",
+    "tape_git_commit": "1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202",
+    "boundary_manifest_git_commit": "93895487c199b1e486d5407f9e103a0964903d2d",
+    "source_records": 879830,
+    "completed_groups": 653912,
+    "trades": 41410,
+    "archived_trades_compared": 0,
+    "clock_basis": "Integer event/receive nanoseconds and receive clock of the source F_LAST record",
+    "ordinal_basis": "Zero-based tape trade, session input and F_LAST group coordinates",
+    "output": "20231003.csv.gz",
+    "sha256": "eb882d21cd5c7f84f1dadefb3eaab86e62f5d3ccd2f28be0472611db5ffc0b5c"
+  },
+  {
+    "trade_date": "20231017",
+    "scope": "available partial trade date",
+    "tape_git_commit": "1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202",
+    "boundary_manifest_git_commit": "93895487c199b1e486d5407f9e103a0964903d2d",
+    "source_records": 841601,
+    "completed_groups": 635170,
+    "trades": 33451,
+    "archived_trades_compared": 0,
+    "clock_basis": "Integer event/receive nanoseconds and receive clock of the source F_LAST record",
+    "ordinal_basis": "Zero-based tape trade, session input and F_LAST group coordinates",
+    "output": "20231017.csv.gz",
+    "sha256": "7f8aa4bc50c861d95129ec07abc3fda229ca6ec869e8fc891c2a1162fb9c8dac"
+  },
+  {
+    "trade_date": "20231018",
+    "scope": "full trade date",
+    "tape_git_commit": "1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202",
+    "boundary_manifest_git_commit": "93895487c199b1e486d5407f9e103a0964903d2d",
+    "source_records": 771787,
+    "completed_groups": 583688,
+    "trades": 30739,
+    "archived_trades_compared": 30739,
+    "clock_basis": "Integer event/receive nanoseconds and receive clock of the source F_LAST record",
+    "ordinal_basis": "Zero-based tape trade, session input and F_LAST group coordinates"
+  }
+]

@@ -47,10 +47,16 @@ The existing [ROOT input audit](../../research/kalshi/adaptive_wavepacket_202611
 
 The local host reports 4 logical CPUs, about 16 GiB of RAM and about 169 GB free on the current repository drive. October 18's historical shared matrix alone was about 35 GB and some observed fits peaked around 26 GiB. Original Native and ROOT carriers were about 699 GB uncompressed for October 18. Measure actual runtime memory and scratch for a bounded producer-to-SQLite slice before selecting compute or storage. Lossless streaming may change representation, with exact readback and retained indexing, while preserving depth and all observations.
 
+## Trade-price clock prerequisite completed
+
+The three date-specific exports preserve every original trade and exact integer event, receive and group-close availability clocks, plus source input and group ordinals. The exporter matched all 30,739 archived October 18 trades on the recorded comparison fields. Each new gzip CSV passed readback and was imported into a strict SQLite table with exact integer clocks and unique tape cursor keys. October 2 has 37,670 trades, October 3 has 41,410 and October 17 has 33,451. Source coordinates refer to the pinned DBN replay. Original journal-only hashes and block ordinals are unavailable for these exports. [Export receipts](../../research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/trade-clock-inputs/receipt.json)
+
+Repeat the reference check from the repository root with `python -B -m research.kalshi.adaptive_wavepacket_20261108.markets_bridge.export_trade_clocks 20231018`. For a new export of one of the other dates, use its date and `--output` with a fresh gzip CSV path. Reuse the saved exports where the tape, dates, code and digests agree.
+
 ## First runnable checkpoint
 
 1. Reuse the already verified tape, external and absorption receipts. Resolve exact Native/ROOT, family and second-set producer code and dependencies using the pinned source lists. Record concrete paths and readback hashes in a new per-date manifest.
 2. Bind the existing clock, SQLite and extraction kernels to an explicit date/span and output identity. Validate one bounded native prefix with an independent check of original clock/price membership, family identity, rich second set, and output size. Include a real October 18 overlap check to catch changes in implementation semantics.
-3. Stream complete available spans for October 2, 3 and 17 into their date-specific inputs. Admit the Julia suite only after each day's aligned inputs and exact runner environment pass the checks above. Retain incomplete stages as such. The current checkpoint starts before step 2. No new Julia fit was launched.
+3. Stream complete available spans for October 2, 3 and 17 into their date-specific inputs. Admit the Julia suite only after each day's aligned inputs and exact runner environment pass the checks above. Retain incomplete stages as such. The price-clock prerequisite passed. The current checkpoint starts before the full producer-to-SQLite prefix test in step 2. No new Julia fit was launched.
 
 The retained Python source, clock, context, external-scope and dipole checks passed in this checkout (44 tests). Those tests establish the retained helpers' behavior. They do not certify the missing three per-date inputs.
