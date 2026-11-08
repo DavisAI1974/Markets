@@ -1,0 +1,124 @@
+{
+ "pulled_utc": "2026-11-08 11:39:22.252688+00:00",
+ "client": "0.90.0",
+ "files": [
+  {
+   "day": "2023-10-01",
+   "symbol": "NG.v.0",
+   "stype_in": "continuous",
+   "schema": "mbo",
+   "dataset": "GLBX.MDP3",
+   "file": "NG_v0_mbo_20231001.dbn.zst",
+   "bytes": 257829,
+   "sha256": "4c0b3ebc07c3c46dceeba0e3d0a26693a42e320a413fe0109ed962a7a6f6bc78",
+   "records": 12532,
+   "expected_records": 12532,
+   "cost_usd": 0.0012,
+   "ts_event_first": "2023-10-01 11:05:07.821000+00:00",
+   "ts_event_last": "2023-10-01 23:59:59.475405+00:00",
+   "mappings": [
+    "NG.v.0"
+   ],
+   "zstd_magic": "28b52ffd",
+   "pulled_utc": "2026-11-08 20:03:48.522217+00:00",
+   "purpose": "evening prefix (22:00-24:00 UTC) of the following trading session; pulled 2026-11-08 at Greg's request"
+  },
+  {
+   "day": "2023-10-02",
+   "symbol": "NG.v.0",
+   "stype_in": "continuous",
+   "schema": "mbo",
+   "dataset": "GLBX.MDP3",
+   "file": "NG_v0_mbo_20231002.dbn.zst",
+   "bytes": 15818310,
+   "sha256": "4fd5fb8827e2ee560a9d938c54460f4a45d2569425157f910db06d4f55b7fe0d",
+   "records": 813342,
+   "expected_records": 813342,
+   "cost_usd": 0.0764,
+   "ts_event_first": "2023-10-01 12:00:04.281532+00:00",
+   "ts_event_last": "2023-10-02 23:59:59.817062+00:00",
+   "mappings": [
+    "NG.v.0"
+   ],
+   "zstd_magic": "28b52ffd"
+  },
+  {
+   "day": "2023-10-03",
+   "symbol": "NG.v.0",
+   "stype_in": "continuous",
+   "schema": "mbo",
+   "dataset": "GLBX.MDP3",
+   "file": "NG_v0_mbo_20231003.dbn.zst",
+   "bytes": 17118175,
+   "sha256": "8db4b0042d9324b299f616c5de5c6c66ff3bfa1d2a1288eb69cc575e7653c600",
+   "records": 879077,
+   "expected_records": 879077,
+   "cost_usd": 0.0825,
+   "ts_event_first": "2023-10-01 12:00:04.281532+00:00",
+   "ts_event_last": "2023-10-03 23:59:59.802958+00:00",
+   "mappings": [
+    "NG.v.0"
+   ],
+   "zstd_magic": "28b52ffd"
+  },
+  {
+   "day": "2023-10-16",
+   "symbol": "NG.v.0",
+   "stype_in": "continuous",
+   "schema": "mbo",
+   "dataset": "GLBX.MDP3",
+   "file": "NG_v0_mbo_20231016.dbn.zst",
+   "bytes": 17931105,
+   "sha256": "c3b9a0390180fedd88a52a3fc49a5a0546b1aa275ba9ecbcfb2bd0403650835e",
+   "records": 925662,
+   "expected_records": 925662,
+   "cost_usd": 0.0869,
+   "ts_event_first": "2023-10-15 12:54:42.688701+00:00",
+   "ts_event_last": "2023-10-16 23:59:59.917262+00:00",
+   "mappings": [
+    "NG.v.0"
+   ],
+   "zstd_magic": "28b52ffd",
+   "pulled_utc": "2026-11-08 20:04:09.722846+00:00",
+   "purpose": "evening prefix (22:00-24:00 UTC) of the following trading session; pulled 2026-11-08 at Greg's request"
+  },
+  {
+   "day": "2023-10-17",
+   "symbol": "NG.v.0",
+   "stype_in": "continuous",
+   "schema": "mbo",
+   "dataset": "GLBX.MDP3",
+   "file": "NG_v0_mbo_20231017.dbn.zst",
+   "bytes": 16842309,
+   "sha256": "ce36e2ed242731698004cd83c1947365e8aac0e9dac939d271a8f22752bcca65",
+   "records": 858976,
+   "expected_records": 858976,
+   "cost_usd": 0.0806,
+   "ts_event_first": "2023-10-15 12:54:42.688701+00:00",
+   "ts_event_last": "2023-10-17 23:59:59.865514+00:00",
+   "mappings": [
+    "NG.v.0"
+   ],
+   "zstd_magic": "28b52ffd"
+  },
+  {
+   "day": "2023-10-18",
+   "symbol": "NG.v.0",
+   "stype_in": "continuous",
+   "schema": "mbo",
+   "dataset": "GLBX.MDP3",
+   "file": "NG_v0_mbo_20231018.dbn.zst",
+   "bytes": 15064243,
+   "sha256": "54b2b14c4762a7e4160cc00ce1e70504961ea4e6954e28866dd1bfbaa140f5d5",
+   "records": 760803,
+   "expected_records": 760803,
+   "cost_usd": 0.0714,
+   "ts_event_first": "2023-10-15 12:54:42.688701+00:00",
+   "ts_event_last": "2023-10-18 23:59:59.994872+00:00",
+   "mappings": [
+    "NG.v.0"
+   ],
+   "zstd_magic": "28b52ffd"
+  }
+ ]
+}
