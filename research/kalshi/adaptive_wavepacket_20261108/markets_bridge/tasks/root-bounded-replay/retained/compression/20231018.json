@@ -1,0 +1,17 @@
+{
+  "logical_bytes": 2903246916,
+  "logical_sha256": "2d0f6717080dcfea2b8f58262369d9faf9bc2c1ac90bcd2ac60f75dcaecc6162",
+  "zstd_level_1_archive_bytes": 164920866,
+  "zstd_level_1_archive_sha256": "97c3d504340db83d294b1a6696fa477b3b5fcf3ba7cce5dda055b04b6ade44bc",
+  "modeled_extent_bytes": 131072,
+  "modeled_sector_bytes": 4096,
+  "modeled_allocation_bytes": {
+    "1": 213250048,
+    "3": 215232512
+  },
+  "all_codec_pass_wall_seconds": 24.41,
+  "all_codec_pass_cpu_seconds": 20.28,
+  "archive_readback_wall_seconds": 11.8,
+  "decoded_sha256": "2d0f6717080dcfea2b8f58262369d9faf9bc2c1ac90bcd2ac60f75dcaecc6162",
+  "decoded_bytes": 2903246916
+}

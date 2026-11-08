@@ -1,0 +1,798 @@
+{
+  "purpose": "Lossless retention of bounded replay artifacts previously in local scratch",
+  "files": {
+    "20231002-input-receipt.json": {
+      "sha256": "1b12a500b700704c7bb4ec080d9ea2fc8996f869a6e5eb78768bb6671287bca7",
+      "bytes": 751,
+      "parts": [
+        {
+          "git_blob": "9420e3db532b494ac3dee734102eab1d2c7c8ef4",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/20231002-input-receipt.json",
+          "bytes": 751,
+          "sha256": "1b12a500b700704c7bb4ec080d9ea2fc8996f869a6e5eb78768bb6671287bca7"
+        }
+      ]
+    },
+    "20231002-input.jsonl": {
+      "sha256": "969cc82a16eda34b2a07cbea78322ad2ffe5e4136586f97819ff0966ef073c78",
+      "bytes": 947048,
+      "parts": [
+        {
+          "git_blob": "cfbee4bdac2d52defaffde61eacd6369f4054a58",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/20231002-input.jsonl",
+          "bytes": 947048,
+          "sha256": "969cc82a16eda34b2a07cbea78322ad2ffe5e4136586f97819ff0966ef073c78"
+        }
+      ]
+    },
+    "20231003-input-receipt.json": {
+      "sha256": "fc4ca8aa29dce49569325ba0379bfc589afb8f0b9bd45d49de63450e31721ce6",
+      "bytes": 751,
+      "parts": [
+        {
+          "git_blob": "7ec429f1b06ae5e5f1373c05c82ff7d648ea79b7",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/20231003-input-receipt.json",
+          "bytes": 751,
+          "sha256": "fc4ca8aa29dce49569325ba0379bfc589afb8f0b9bd45d49de63450e31721ce6"
+        }
+      ]
+    },
+    "20231003-input.jsonl": {
+      "sha256": "f4b6d7c742824cba1fcd1777ca6053ef54becc1aeffb72996d54ac38852d7e48",
+      "bytes": 952065,
+      "parts": [
+        {
+          "git_blob": "3e827382b4bf3a657f50fd769b403a28c1b3e292",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/20231003-input.jsonl",
+          "bytes": 952065,
+          "sha256": "f4b6d7c742824cba1fcd1777ca6053ef54becc1aeffb72996d54ac38852d7e48"
+        }
+      ]
+    },
+    "20231017-input-receipt.json": {
+      "sha256": "92e486fbbebd793113d921ccac5cf3cae3f0ce879df7dd85fc9a35d5d239f507",
+      "bytes": 751,
+      "parts": [
+        {
+          "git_blob": "df68dfe7fda43aa8f8d75f18e6b42ef22a413c1f",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/20231017-input-receipt.json",
+          "bytes": 751,
+          "sha256": "92e486fbbebd793113d921ccac5cf3cae3f0ce879df7dd85fc9a35d5d239f507"
+        }
+      ]
+    },
+    "20231017-input.jsonl": {
+      "sha256": "408e57f87a7cf723f5f65d8c96dd8e1aabfd31cff388b2229071aaabfdd6aafb",
+      "bytes": 952094,
+      "parts": [
+        {
+          "git_blob": "c65c115235f5f969f4287bee50caf7ea0248f043",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/20231017-input.jsonl",
+          "bytes": 952094,
+          "sha256": "408e57f87a7cf723f5f65d8c96dd8e1aabfd31cff388b2229071aaabfdd6aafb"
+        }
+      ]
+    },
+    "20231018-input-receipt.json": {
+      "sha256": "edf97eb0ad681d88a58e35c03eb544f7a536341cdda67f3ec0748e603f6ab875",
+      "bytes": 752,
+      "parts": [
+        {
+          "git_blob": "87f9426162bf0c0a4bd001f5c968d449668a6f0e",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/20231018-input-receipt.json",
+          "bytes": 752,
+          "sha256": "edf97eb0ad681d88a58e35c03eb544f7a536341cdda67f3ec0748e603f6ab875"
+        }
+      ]
+    },
+    "20231018-input.jsonl": {
+      "sha256": "0e33370cb2d39461d5d6ca69ee59f5ed6182bb5cc2a79f54586d9baad8851485",
+      "bytes": 2291262,
+      "parts": [
+        {
+          "git_blob": "4816d7d115a3d18c70970b68e81b27ac5acaefc2",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/20231018-input.jsonl",
+          "bytes": 2291262,
+          "sha256": "0e33370cb2d39461d5d6ca69ee59f5ed6182bb5cc2a79f54586d9baad8851485"
+        }
+      ]
+    },
+    "after_compare.sh": {
+      "sha256": "3967a557e06ae84594ff000489dda5a5beddad6e09817018b49e0fa1c4a2f90f",
+      "bytes": 922,
+      "parts": [
+        {
+          "git_blob": "4d7c520039bdf60bffc5f5acf44cbc03be34467c",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/after_compare.sh",
+          "bytes": 922,
+          "sha256": "3967a557e06ae84594ff000489dda5a5beddad6e09817018b49e0fa1c4a2f90f"
+        }
+      ]
+    },
+    "bounded_native.py": {
+      "sha256": "79d4f15c307e20e9b6543364bc8af410857d90caf59e47b0801e0b3167c8b5d4",
+      "bytes": 1559,
+      "parts": [
+        {
+          "git_blob": "7d9ff75335105091ab5193eef84dc436b0e9f183",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/bounded_native.py",
+          "bytes": 1559,
+          "sha256": "79d4f15c307e20e9b6543364bc8af410857d90caf59e47b0801e0b3167c8b5d4"
+        }
+      ]
+    },
+    "bounded_root.py": {
+      "sha256": "215368242f8ccc55621149b6ba7bf3d83910cfae3e232d6e70a845ebba5cbc85",
+      "bytes": 5060,
+      "parts": [
+        {
+          "git_blob": "26196b41f90d6f9b90b5cacbdecf4b7cc15e4437",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/bounded_root.py",
+          "bytes": 5060,
+          "sha256": "215368242f8ccc55621149b6ba7bf3d83910cfae3e232d6e70a845ebba5cbc85"
+        }
+      ]
+    },
+    "btrfs_canary.sh": {
+      "sha256": "b75ef00c7f249a1485e228a038060aac381c0383175c77d70c38a4a2dce1fd8a",
+      "bytes": 1598,
+      "parts": [
+        {
+          "git_blob": "48f072c83205794e18cf2415fba35de92a74d328",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/btrfs_canary.sh",
+          "bytes": 1598,
+          "sha256": "b75ef00c7f249a1485e228a038060aac381c0383175c77d70c38a4a2dce1fd8a"
+        }
+      ]
+    },
+    "btrfs_offset_check.sh": {
+      "sha256": "bce4853b239ef114785cbc5c74126fbd0cc2d373a6e03b69e9224c177c531e2d",
+      "bytes": 1365,
+      "parts": [
+        {
+          "git_blob": "a22e21eba858806f9b6f730e31a873c074780347",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/btrfs_offset_check.sh",
+          "bytes": 1365,
+          "sha256": "bce4853b239ef114785cbc5c74126fbd0cc2d373a6e03b69e9224c177c531e2d"
+        }
+      ]
+    },
+    "check_sqlite.py": {
+      "sha256": "cb423faeb0b6230e301478214bc4bfd2e6fe8e6158ae00c5a309661f7b401326",
+      "bytes": 7471,
+      "parts": [
+        {
+          "git_blob": "55719949eaf1ea45d74601d5ffce559248e4d786",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/check_sqlite.py",
+          "bytes": 7471,
+          "sha256": "cb423faeb0b6230e301478214bc4bfd2e6fe8e6158ae00c5a309661f7b401326"
+        }
+      ]
+    },
+    "compare.sh": {
+      "sha256": "301c130e1b58fa9135505864ba5c0e6b8e5dcc7f1def93f305e30b20c2a1643e",
+      "bytes": 500,
+      "parts": [
+        {
+          "git_blob": "ee592c67bf7a6315cf6227317371eedf27eb69e3",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/compare.sh",
+          "bytes": 500,
+          "sha256": "301c130e1b58fa9135505864ba5c0e6b8e5dcc7f1def93f305e30b20c2a1643e"
+        }
+      ]
+    },
+    "compare_remaining.sh": {
+      "sha256": "c9acf1026aaaf3931fa4b4ed244d0039dbba416c3bf6cebcc92673b32db1f234",
+      "bytes": 572,
+      "parts": [
+        {
+          "git_blob": "0a370ff0dd117827a3098c01f80ab7b84132a4df",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/compare_remaining.sh",
+          "bytes": 572,
+          "sha256": "c9acf1026aaaf3931fa4b4ed244d0039dbba416c3bf6cebcc92673b32db1f234"
+        }
+      ]
+    },
+    "compression/20231002.json": {
+      "sha256": "d2e73ac7285cfeee975a13ec1bc2a6c47d7d351efd74243d3f23d6e182afba94",
+      "bytes": 639,
+      "parts": [
+        {
+          "git_blob": "7a51b52d18f36abe33c479ecde6d97a638cd8ca7",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/compression/20231002.json",
+          "bytes": 639,
+          "sha256": "d2e73ac7285cfeee975a13ec1bc2a6c47d7d351efd74243d3f23d6e182afba94"
+        }
+      ]
+    },
+    "compression/20231018.json": {
+      "sha256": "9af0a38a1cd2f25d3f19ac7cd4af07a5e4ba735bc5a8fdaa25ca815d27448d00",
+      "bytes": 647,
+      "parts": [
+        {
+          "git_blob": "8cddeb544ccbc969f199af411d8c8c2482985e8d",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/compression/20231018.json",
+          "bytes": 647,
+          "sha256": "9af0a38a1cd2f25d3f19ac7cd4af07a5e4ba735bc5a8fdaa25ca815d27448d00"
+        }
+      ]
+    },
+    "compression/btrfs-fresh-stat.txt": {
+      "sha256": "c3c97820a75eb76c4b6eaf4d29696b18ce4ab77ae838791fa8572dc5de6b0576",
+      "bytes": 22,
+      "parts": [
+        {
+          "git_blob": "76730ccfcc56e6430a2943bb5e3fe5b2497bceac",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/compression/btrfs-fresh-stat.txt",
+          "bytes": 22,
+          "sha256": "c3c97820a75eb76c4b6eaf4d29696b18ce4ab77ae838791fa8572dc5de6b0576"
+        }
+      ]
+    },
+    "compression/btrfs-fresh.time": {
+      "sha256": "16c260c03d24a3d9c44a00f0c394a0dc8ce0b5236eb8adfca6aa33805fc6f941",
+      "bytes": 985,
+      "parts": [
+        {
+          "git_blob": "6888ea570b9e8fcceb6e326ecaaab62a7ae25d10",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/compression/btrfs-fresh.time",
+          "bytes": 985,
+          "sha256": "16c260c03d24a3d9c44a00f0c394a0dc8ce0b5236eb8adfca6aa33805fc6f941"
+        }
+      ]
+    },
+    "compression/btrfs-mount.txt": {
+      "sha256": "72e922212a37d3153b607670ba248b22ae5ca78186a1f7e8d236b66c19d3f5cd",
+      "bytes": 84,
+      "parts": [
+        {
+          "git_blob": "36087534f61b8e23ebf5ee2efe3424d8ee73d08d",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/compression/btrfs-mount.txt",
+          "bytes": 84,
+          "sha256": "72e922212a37d3153b607670ba248b22ae5ca78186a1f7e8d236b66c19d3f5cd"
+        }
+      ]
+    },
+    "compression/btrfs-offsets.json": {
+      "sha256": "85b8b643a08dac1b9c9353deca61b4902f97dad8ee8c4a4c9b8145c127a09283",
+      "bytes": 1066,
+      "parts": [
+        {
+          "git_blob": "dee5e98bc9351a483198a686f71066c73997f01b",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/compression/btrfs-offsets.json",
+          "bytes": 1066,
+          "sha256": "85b8b643a08dac1b9c9353deca61b4902f97dad8ee8c4a4c9b8145c127a09283"
+        }
+      ]
+    },
+    "compression/btrfs-resume-stat.txt": {
+      "sha256": "c3c97820a75eb76c4b6eaf4d29696b18ce4ab77ae838791fa8572dc5de6b0576",
+      "bytes": 22,
+      "parts": [
+        {
+          "git_blob": "76730ccfcc56e6430a2943bb5e3fe5b2497bceac",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/compression/btrfs-resume-stat.txt",
+          "bytes": 22,
+          "sha256": "c3c97820a75eb76c4b6eaf4d29696b18ce4ab77ae838791fa8572dc5de6b0576"
+        }
+      ]
+    },
+    "compression/btrfs-resume.time": {
+      "sha256": "c7da8db680b45dcb53a9bd45714a885ac14d17fabf9845dfcff6de5a0bf82ed2",
+      "bytes": 985,
+      "parts": [
+        {
+          "git_blob": "207c016ff8546c91a7ced81b1d048cbb818e562e",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/compression/btrfs-resume.time",
+          "bytes": 985,
+          "sha256": "c7da8db680b45dcb53a9bd45714a885ac14d17fabf9845dfcff6de5a0bf82ed2"
+        }
+      ]
+    },
+    "compression/btrfs-save.time": {
+      "sha256": "45341ade82f16bdac7064d5353d49b4cfed4bae6636476ad48f50fad919cde46",
+      "bytes": 991,
+      "parts": [
+        {
+          "git_blob": "b5f76f10f69584733e3ea0be65bbaa5e3624c926",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/compression/btrfs-save.time",
+          "bytes": 991,
+          "sha256": "45341ade82f16bdac7064d5353d49b4cfed4bae6636476ad48f50fad919cde46"
+        }
+      ]
+    },
+    "compression/btrfs-sqlite.json": {
+      "sha256": "a2b87885afaff5f91d6b4035d7acdbf4c50d8f122cd7499b7242ba41f9cad109",
+      "bytes": 165,
+      "parts": [
+        {
+          "git_blob": "5c9da6f0aa78db6151c771a3508d93085caf2579",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/compression/btrfs-sqlite.json",
+          "bytes": 165,
+          "sha256": "a2b87885afaff5f91d6b4035d7acdbf4c50d8f122cd7499b7242ba41f9cad109"
+        }
+      ]
+    },
+    "compression/btrfs-usage.txt": {
+      "sha256": "122fac32565e30bcd8d10f7ff7cc367402fb34a1019d25f1c1a0a144848a3d58",
+      "bytes": 780,
+      "parts": [
+        {
+          "git_blob": "05e90d40e3fca06e4117dc99238c18edb7e39e1c",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/compression/btrfs-usage.txt",
+          "bytes": 780,
+          "sha256": "122fac32565e30bcd8d10f7ff7cc367402fb34a1019d25f1c1a0a144848a3d58"
+        }
+      ]
+    },
+    "compression/frames-20231002.jsonl.zst": {
+      "sha256": "ab66d88f48dc403725dc3c2660d05df76edd2274331ebe02ffbf5f7a730a92d1",
+      "bytes": 44122358,
+      "parts": [
+        {
+          "git_blob": "9b730c303a8255f987f486f215fcf2e094d1fdfa",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/compression/frames-20231002.jsonl.zst.part-000",
+          "bytes": 33554432,
+          "sha256": "703f46e9eef105eb569240eb61c8db96aa06dcc712fa53fa02b10626a0498590"
+        },
+        {
+          "git_blob": "ffdb4431bf7bd8651156bf12ceda92313c689baa",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/compression/frames-20231002.jsonl.zst.part-001",
+          "bytes": 10567926,
+          "sha256": "08fa71afe3da67bcb85e80f55bef5a9ce255aba3e7dd9b046b53c9638211492b"
+        }
+      ]
+    },
+    "compression/frames-20231018.jsonl.zst": {
+      "sha256": "97c3d504340db83d294b1a6696fa477b3b5fcf3ba7cce5dda055b04b6ade44bc",
+      "bytes": 164920866,
+      "parts": [
+        {
+          "git_blob": "cafb450f14beabe6691514471112d186cbc0031e",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/compression/frames-20231018.jsonl.zst.part-000",
+          "bytes": 33554432,
+          "sha256": "21662520228e582b07a2edb0336522cbaa7b5613ff51c69045aae6b106db0c1f"
+        },
+        {
+          "git_blob": "97ca6b9dbd1dc1e45bcf8e5cd3e4de3e1eb3edda",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/compression/frames-20231018.jsonl.zst.part-001",
+          "bytes": 33554432,
+          "sha256": "da5857581dfed0a816fe97c865bacb55929f1ccdfab5fc6de696a75bd954826d"
+        },
+        {
+          "git_blob": "7018fcb3eab7310506809321780fb2ded5f9b577",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/compression/frames-20231018.jsonl.zst.part-002",
+          "bytes": 33554432,
+          "sha256": "ca169bc78aaa344368fb6db291b78ef927cf2f7cc5fd5486db75e47f37aa5546"
+        },
+        {
+          "git_blob": "e018b3c9682cd3301d705bf44b5241753f52e833",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/compression/frames-20231018.jsonl.zst.part-003",
+          "bytes": 33554432,
+          "sha256": "1a103c9bee01041d7946f27469a7d5225fb14bc483961521c074544c021d798e"
+        },
+        {
+          "git_blob": "d1d572bed3b225e5a9bb4436616f36a4f56553bb",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/compression/frames-20231018.jsonl.zst.part-004",
+          "bytes": 30703138,
+          "sha256": "3abbf41d89984f9f50d504748d882fe7a85c4fe74da666695ef841d02b7d71cd"
+        }
+      ]
+    },
+    "export-check/20231018-input-receipt.json": {
+      "sha256": "e3c29845ed89e84781c233e0148e8cf384a7c4843eb1db9580b0b1baccfefab4",
+      "bytes": 813,
+      "parts": [
+        {
+          "git_blob": "c3e72f0455a4a9b2115ad53ae4d45b783c5f7f27",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/export-check/20231018-input-receipt.json",
+          "bytes": 813,
+          "sha256": "e3c29845ed89e84781c233e0148e8cf384a7c4843eb1db9580b0b1baccfefab4"
+        }
+      ]
+    },
+    "export-check/20231018-input.jsonl": {
+      "sha256": "0e33370cb2d39461d5d6ca69ee59f5ed6182bb5cc2a79f54586d9baad8851485",
+      "bytes": 2291262,
+      "parts": [
+        {
+          "git_blob": "4816d7d115a3d18c70970b68e81b27ac5acaefc2",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/export-check/20231018-input.jsonl",
+          "bytes": 2291262,
+          "sha256": "0e33370cb2d39461d5d6ca69ee59f5ed6182bb5cc2a79f54586d9baad8851485"
+        }
+      ]
+    },
+    "markets-paths": {
+      "sha256": "5cca24a2b3f53113ccd959b41aac9a3e59877c57f1c521cc6e466aff3125e673",
+      "bytes": 465,
+      "parts": [
+        {
+          "git_blob": "13be4dc066f247ee444cc1df1ad7bba938ff460a",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/markets-paths",
+          "bytes": 465,
+          "sha256": "5cca24a2b3f53113ccd959b41aac9a3e59877c57f1c521cc6e466aff3125e673"
+        }
+      ]
+    },
+    "markets_adapter.py": {
+      "sha256": "784c53d6187a9b40178b4fc5b784c8a371a748ff2bbd214ddccf571f00130951",
+      "bytes": 34748,
+      "parts": [
+        {
+          "git_blob": "d9ad3dbb58865c70b1e9f7d650f16a18281a4f2f",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/markets_adapter.py",
+          "bytes": 34748,
+          "sha256": "784c53d6187a9b40178b4fc5b784c8a371a748ff2bbd214ddccf571f00130951"
+        }
+      ]
+    },
+    "measure_compression.py": {
+      "sha256": "1d5dfc5bdcd9301cffab69ed033b7ad8fdc945db0b4f138650d175d2e5a39cbb",
+      "bytes": 3102,
+      "parts": [
+        {
+          "git_blob": "5931e2cd7d9918f6e95e4504216d9f0259540ecb",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/measure_compression.py",
+          "bytes": 3102,
+          "sha256": "1d5dfc5bdcd9301cffab69ed033b7ad8fdc945db0b4f138650d175d2e5a39cbb"
+        }
+      ]
+    },
+    "measure_compression.sh": {
+      "sha256": "e1d3736448b4e00084ef7ae3a7bb7060feb0cc91e09136cb9985e481562936db",
+      "bytes": 668,
+      "parts": [
+        {
+          "git_blob": "d869e7898cd026daeb3846aee037d0a8d5cdc452",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/measure_compression.sh",
+          "bytes": 668,
+          "sha256": "e1d3736448b4e00084ef7ae3a7bb7060feb0cc91e09136cb9985e481562936db"
+        }
+      ]
+    },
+    "native-registry-source-manifest.json": {
+      "sha256": "e466f0e589f096b78f11e4f278b93e71f09fe85d4e01ea1d3ae7792dee6ffbd0",
+      "bytes": 10369,
+      "parts": [
+        {
+          "git_blob": "10f445b7296b680a1021984229826917244d8d65",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/native-registry-source-manifest.json",
+          "bytes": 10369,
+          "sha256": "e466f0e589f096b78f11e4f278b93e71f09fe85d4e01ea1d3ae7792dee6ffbd0"
+        }
+      ]
+    },
+    "native_retry.sh": {
+      "sha256": "e1c57735ae8de0fe59d023d483604c4e8c7144ae139bc5e733a0661a2f2b6064",
+      "bytes": 288,
+      "parts": [
+        {
+          "git_blob": "adb49418a354e4ffee126f8c4a031829ba4848fb",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/native_retry.sh",
+          "bytes": 288,
+          "sha256": "e1c57735ae8de0fe59d023d483604c4e8c7144ae139bc5e733a0661a2f2b6064"
+        }
+      ]
+    },
+    "october18-standalone-inputs/groups.jsonl.gz": {
+      "sha256": "f03255af6121568165843504965cf1ad2e482178ad9995e5727ef99336d90143",
+      "bytes": 18751004,
+      "parts": [
+        {
+          "git_blob": "bdc2896cc7bf582d9134964bb37e3b785c795a9f",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/october18-standalone-inputs/groups.jsonl.gz",
+          "bytes": 18751004,
+          "sha256": "f03255af6121568165843504965cf1ad2e482178ad9995e5727ef99336d90143"
+        }
+      ]
+    },
+    "october18-standalone-inputs/receipt.json": {
+      "sha256": "4343ac37a2665e5bf86566e6679bddd904ed7e2e8f822d74795f510d89c7c621",
+      "bytes": 1559,
+      "parts": [
+        {
+          "git_blob": "6a1a151b8a45e74516fbd16b82c47b5122a0b9ae",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/october18-standalone-inputs/receipt.json",
+          "bytes": 1559,
+          "sha256": "4343ac37a2665e5bf86566e6679bddd904ed7e2e8f822d74795f510d89c7c621"
+        }
+      ]
+    },
+    "out/on/work/derived/.rows/input-e2418016d82548d38ff2db4b9ce4aaee.jsonl": {
+      "sha256": "94cf6bb45ea755ac4284868eaa54c19a20c2c08b8b5e7944cdb8d841cd03bdfa",
+      "bytes": 4175262,
+      "parts": [
+        {
+          "git_blob": "1f616eb262d497ef28e864493a19735ee144069b",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/out/on/work/derived/.rows/input-e2418016d82548d38ff2db4b9ce4aaee.jsonl",
+          "bytes": 4175262,
+          "sha256": "94cf6bb45ea755ac4284868eaa54c19a20c2c08b8b5e7944cdb8d841cd03bdfa"
+        }
+      ]
+    },
+    "out/on/work/input-state.pkl": {
+      "sha256": "829a2660b47b9c1be7cddb8760dcdc02cbe47454e45eda23d130f288f5afd7f7",
+      "bytes": 1613,
+      "parts": [
+        {
+          "git_blob": "a852b788c3480c6092b9e23a02a40d1f7c3c8816",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/out/on/work/input-state.pkl",
+          "bytes": 1613,
+          "sha256": "829a2660b47b9c1be7cddb8760dcdc02cbe47454e45eda23d130f288f5afd7f7"
+        }
+      ]
+    },
+    "out/sharded/note": {
+      "sha256": "16a6c509f84f919a81cb64cda4e5a550c6f1ad57ad12594f14e5e869196f4ce8",
+      "bytes": 108,
+      "parts": [
+        {
+          "git_blob": "205b779bca43618f56fc46266f2fe1a8e5231a25",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/out/sharded/note",
+          "bytes": 108,
+          "sha256": "16a6c509f84f919a81cb64cda4e5a550c6f1ad57ad12594f14e5e869196f4ce8"
+        }
+      ]
+    },
+    "out/sharded/progress.json": {
+      "sha256": "8d9e637433e9f26f140b2f961a225621e829181c8f90b4282507088e014457db",
+      "bytes": 310,
+      "parts": [
+        {
+          "git_blob": "71592d722630fc54abed62916e2f0c8f6bddd74b",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/out/sharded/progress.json",
+          "bytes": 310,
+          "sha256": "8d9e637433e9f26f140b2f961a225621e829181c8f90b4282507088e014457db"
+        }
+      ]
+    },
+    "out/sharded/work/derived/.rows/failures.jsonl": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "parts": [
+        {
+          "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/out/sharded/work/derived/.rows/failures.jsonl",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    "out/sharded/work/derived/.rows/input-53300b3fc1204246aa8db52c9be901ff.jsonl": {
+      "sha256": "94cf6bb45ea755ac4284868eaa54c19a20c2c08b8b5e7944cdb8d841cd03bdfa",
+      "bytes": 4175262,
+      "parts": [
+        {
+          "git_blob": "1f616eb262d497ef28e864493a19735ee144069b",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/out/sharded/work/derived/.rows/input-53300b3fc1204246aa8db52c9be901ff.jsonl",
+          "bytes": 4175262,
+          "sha256": "94cf6bb45ea755ac4284868eaa54c19a20c2c08b8b5e7944cdb8d841cd03bdfa"
+        }
+      ]
+    },
+    "out/sharded/work/derived/.rows/prices.jsonl": {
+      "sha256": "67d9264fd6a5b6b8440af28709967db0c6deda8cc29ba62cf439831a6f2a491f",
+      "bytes": 64631,
+      "parts": [
+        {
+          "git_blob": "f1146ae50e30829ccd88c96dcb5c2128b6ca7afa",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/out/sharded/work/derived/.rows/prices.jsonl",
+          "bytes": 64631,
+          "sha256": "67d9264fd6a5b6b8440af28709967db0c6deda8cc29ba62cf439831a6f2a491f"
+        }
+      ]
+    },
+    "out/sharded/work/derived/.rows/structures.jsonl": {
+      "sha256": "0070e9508e0c3f02d488c3a1fa9d71c6e7bbfa0395a06d0a3ff4a51d63bece7b",
+      "bytes": 8144560,
+      "parts": [
+        {
+          "git_blob": "7f104872ec9cfb5b28ef6e569ff5e3ed862db8db",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/out/sharded/work/derived/.rows/structures.jsonl",
+          "bytes": 8144560,
+          "sha256": "0070e9508e0c3f02d488c3a1fa9d71c6e7bbfa0395a06d0a3ff4a51d63bece7b"
+        }
+      ]
+    },
+    "out/sharded/work/input-state.pkl": {
+      "sha256": "9839a03f69e7105bb5fa3381bc3426df80d7c24496b37482203b407bfe8f0b01",
+      "bytes": 2185,
+      "parts": [
+        {
+          "git_blob": "8adcd57f5f9725608821cd647838056949d31946",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/out/sharded/work/input-state.pkl",
+          "bytes": 2185,
+          "sha256": "9839a03f69e7105bb5fa3381bc3426df80d7c24496b37482203b407bfe8f0b01"
+        }
+      ]
+    },
+    "out/sharded/work/legacy-cpu-split.json": {
+      "sha256": "37b8c67d8f3c270a52ac8fc469e6c04a92626f20fbffde00f06881cbbc20e3cf",
+      "bytes": 640,
+      "parts": [
+        {
+          "git_blob": "1ac4b90345826d64783638dfa7b2750480f63c6d",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/out/sharded/work/legacy-cpu-split.json",
+          "bytes": 640,
+          "sha256": "37b8c67d8f3c270a52ac8fc469e6c04a92626f20fbffde00f06881cbbc20e3cf"
+        }
+      ]
+    },
+    "out/sharded/work/legacy-cpu-split.json.pending-a948c436a14447f5bd3d70c7eb8d602a": {
+      "sha256": "80e726fa18b385f43f341cdf0c082a5ae5a6d6da75a5c3654e5fbc5787695f6b",
+      "bytes": 961,
+      "parts": [
+        {
+          "git_blob": "7f1dfcd9d211a5468c8b4c201eaec0ad10597a8a",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/out/sharded/work/legacy-cpu-split.json.pending-a948c436a14447f5bd3d70c7eb8d602a",
+          "bytes": 961,
+          "sha256": "80e726fa18b385f43f341cdf0c082a5ae5a6d6da75a5c3654e5fbc5787695f6b"
+        }
+      ]
+    },
+    "out/sharded.time": {
+      "sha256": "f306cbe5c5a1e0b527c9239d0524f33d3c7a2a812aad591f3cb2d3edbb341368",
+      "bytes": 857,
+      "parts": [
+        {
+          "git_blob": "a68b81a6a358fc1b602de3838f7ac1c6d4f8f75c",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/out/sharded.time",
+          "bytes": 857,
+          "sha256": "f306cbe5c5a1e0b527c9239d0524f33d3c7a2a812aad591f3cb2d3edbb341368"
+        }
+      ]
+    },
+    "producers-paths": {
+      "sha256": "0c32007157a871ed30e3bfe57b15fd7783f608b9cd21fcf7671b3d0340276013",
+      "bytes": 9771,
+      "parts": [
+        {
+          "git_blob": "0c7037e6381498f224c2ffc0f5928a0fdd7cecc8",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/producers-paths",
+          "bytes": 9771,
+          "sha256": "0c32007157a871ed30e3bfe57b15fd7783f608b9cd21fcf7671b3d0340276013"
+        }
+      ]
+    },
+    "receipt.py": {
+      "sha256": "bc238f6b8b2cd9ef4995c95cb34b786ff3c0548a2c89bb0d21c987b4b55bb1b5",
+      "bytes": 3825,
+      "parts": [
+        {
+          "git_blob": "736d31b528af3d2d33bba91ddd01c071f2752646",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/receipt.py",
+          "bytes": 3825,
+          "sha256": "bc238f6b8b2cd9ef4995c95cb34b786ff3c0548a2c89bb0d21c987b4b55bb1b5"
+        }
+      ]
+    },
+    "run.sh": {
+      "sha256": "29ca6c0a8bb32cd3e3bca559b964036e810aecdf592e73d5a3da15c575871107",
+      "bytes": 866,
+      "parts": [
+        {
+          "git_blob": "c108092bf37ba09abc596283695635a64f732a84",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/run.sh",
+          "bytes": 866,
+          "sha256": "29ca6c0a8bb32cd3e3bca559b964036e810aecdf592e73d5a3da15c575871107"
+        }
+      ]
+    },
+    "runpod_local_runtime.sh": {
+      "sha256": "06be7da942ef6487d452c7bd8c857eb2fe625063a7092ae8d977939e6c5a523d",
+      "bytes": 754,
+      "parts": [
+        {
+          "git_blob": "b358afc14b6fc7b772ada05317f0ef73dda284ee",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/runpod_local_runtime.sh",
+          "bytes": 754,
+          "sha256": "06be7da942ef6487d452c7bd8c857eb2fe625063a7092ae8d977939e6c5a523d"
+        }
+      ]
+    },
+    "runpod_replay_day.sh": {
+      "sha256": "777bb15bccaa84bd56c7b1e265fa10169b79e9c800f25b4549968e303617b168",
+      "bytes": 3995,
+      "parts": [
+        {
+          "git_blob": "6650f911200644d25184b12c8ea956a9969d6b13",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/runpod_replay_day.sh",
+          "bytes": 3995,
+          "sha256": "777bb15bccaa84bd56c7b1e265fa10169b79e9c800f25b4549968e303617b168"
+        }
+      ]
+    },
+    "runpod_stage.sh": {
+      "sha256": "a3c82b693f538f5e31edb4cf53109e1791945f28bae5e1b524b89fdc888d2dbb",
+      "bytes": 3309,
+      "parts": [
+        {
+          "git_blob": "93c714b9329d646c7dbbaa11219ae566ca87eef1",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/runpod_stage.sh",
+          "bytes": 3309,
+          "sha256": "a3c82b693f538f5e31edb4cf53109e1791945f28bae5e1b524b89fdc888d2dbb"
+        }
+      ]
+    },
+    "setup.sh": {
+      "sha256": "e7c37961595af48b232f86434b0663ab20c62427d24b2f9d759a290a9bf09683",
+      "bytes": 369,
+      "parts": [
+        {
+          "git_blob": "556abd235700c70cc8be183e81927aaa4592996c",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/setup.sh",
+          "bytes": 369,
+          "sha256": "e7c37961595af48b232f86434b0663ab20c62427d24b2f9d759a290a9bf09683"
+        }
+      ]
+    },
+    "setup_btrfs_tools.sh": {
+      "sha256": "2578731679ef7c6f27e6890e1defd669cf58fb2f59e44a783ab7405439ceda12",
+      "bytes": 249,
+      "parts": [
+        {
+          "git_blob": "d23f0a4c2f358df9c9ff1919fd06544655e9dffc",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/setup_btrfs_tools.sh",
+          "bytes": 249,
+          "sha256": "2578731679ef7c6f27e6890e1defd669cf58fb2f59e44a783ab7405439ceda12"
+        }
+      ]
+    },
+    "source-manifest.json": {
+      "sha256": "aa85ca24022f20fe6183bd4f5031f4681d7524b3192da77be712d07c0c6e7a74",
+      "bytes": 57323,
+      "parts": [
+        {
+          "git_blob": "d2ced31495ef7e22029058f326c59251df0e0f0e",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/source-manifest.json",
+          "bytes": 57323,
+          "sha256": "aa85ca24022f20fe6183bd4f5031f4681d7524b3192da77be712d07c0c6e7a74"
+        }
+      ]
+    },
+    "stage_sources.py": {
+      "sha256": "5a311d7f0a80090f96620b40501fb866573209f50ea30422340e2b026f5229a7",
+      "bytes": 3871,
+      "parts": [
+        {
+          "git_blob": "65a754474ffe39340a0d3a5dc89fc4f8597eb73c",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/stage_sources.py",
+          "bytes": 3871,
+          "sha256": "5a311d7f0a80090f96620b40501fb866573209f50ea30422340e2b026f5229a7"
+        }
+      ]
+    },
+    "validate_manifests.sh": {
+      "sha256": "54b59ff4cff4ff43981950c1a48b5dc1498cde2cfcea457bb21901ffdaa3e7de",
+      "bytes": 809,
+      "parts": [
+        {
+          "git_blob": "1642d918f9e0c25832522ce4185a512c2da2e514",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/validate_manifests.sh",
+          "bytes": 809,
+          "sha256": "54b59ff4cff4ff43981950c1a48b5dc1498cde2cfcea457bb21901ffdaa3e7de"
+        }
+      ]
+    },
+    "worker_loss.sh": {
+      "sha256": "e43b0332cd091c20bfd9168ff418e7147e83319eed466d62c5dcdb8f3982c1ea",
+      "bytes": 937,
+      "parts": [
+        {
+          "git_blob": "df8ebe568d288fb132b43ded12301844ea665660",
+          "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/worker_loss.sh",
+          "bytes": 937,
+          "sha256": "e43b0332cd091c20bfd9168ff418e7147e83319eed466d62c5dcdb8f3982c1ea"
+        }
+      ]
+    }
+  },
+  "decoded_equivalents": {
+    "out/sharded/work/derived/.rows/frames.jsonl": {
+      "archive": "compression/frames-20231018.jsonl.zst",
+      "sha256": "2d0f6717080dcfea2b8f58262369d9faf9bc2c1ac90bcd2ac60f75dcaecc6162",
+      "bytes": 2903246916
+    }
+  }
+}

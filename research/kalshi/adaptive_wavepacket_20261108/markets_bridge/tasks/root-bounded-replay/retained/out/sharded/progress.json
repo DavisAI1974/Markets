@@ -1,0 +1,1 @@
+{"at": 1794146236.3526278, "completed": 6000, "failed": 0, "in_flight": 0, "percent": 100.0, "phase": null, "pid": 366, "process_token": "0ec83f47-3709-4201-8d4d-e06cb34a8015:29143", "request_sha256": null, "schema": "FRANKIE_WORK_PROBE_V1", "stage": "root-legacy-records", "state": "complete", "total": 6000}

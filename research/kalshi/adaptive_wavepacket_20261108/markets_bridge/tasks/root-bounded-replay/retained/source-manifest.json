@@ -1,0 +1,1312 @@
+[
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/agents/frankie_native_raw_mbo_ingestion_layer_registry_20260828.json",
+    "sha256": "7ee754f1f9b080cdc5b7b68cf75829897d6216a1fadbb4b8a5ecd7b4f2133e06"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/flow_calendar.py",
+    "sha256": "ac7174c107b63cf990e3278bf1d553a92fe5fdd3adfd3391649a39192e439dbc"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/__init__.py",
+    "sha256": "0fc2da9d463803d9772871ace96ddf982a0caee694852101a6fbd77a8cd0e5a8"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/a_memory_member_first_recalculation_20260828.py",
+    "sha256": "04194df484a69bb8d91a296e67145d34ada1a24ed1cf2aa1b4529565808369bb"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/a_memory_prepare_20260828.py",
+    "sha256": "26234793ba6ddf2c450dcdaaa7c9f3bf2e01d61395325e8bd2ca5bf690678660"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/a_memory_rt_resume_20260828.py",
+    "sha256": "20185830ad1e58bf6943c5185bae47cec2835f0d2886bba123a5f04a74ee5916"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/a_memory_rt_resume_latest_20260828.py",
+    "sha256": "ec27b196408635e36541b555fda85a127c1e19dd3dd5db0c790551ddcc9e12d1"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/benchmark_checkpoint.py",
+    "sha256": "06934557cf0441dac31d0abd3aafc9ae05e35a1d17a684480cf605a652e8cbf7"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/build_a_memory_seed.py",
+    "sha256": "a3065971d48c469bbdb66ef964e8b5f462d2987b242a67fd744358379fb8313b"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/chat_packet_seam.py",
+    "sha256": "4bc9b81144d26e191d46c88122e3a857539fea3b2e67f25401c957d37f191e12"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/corrected_a_arm_execution_gate_20260828.py",
+    "sha256": "a6a63a28b9d792dea74cca26af73120dadb248e0039b2660a370873517f1da3d"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/emit_frankie_spawn.py",
+    "sha256": "ced1dd4ddcb1c408c00c94c7647c480acff2f684d411494d62b2a4cfcb826525"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/fetch_frankie_ledgers.py",
+    "sha256": "9512bedf070e429a86ea43324c36ce7619f3da6fbd7ebb60585acdb1ed4ad62e"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/mbo_resume_state.py",
+    "sha256": "e7d1dcf3a66c10bd4c2342c8e35d79ea5a58cbf44952bfbdb2b3195a7b1dd7e3"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_a_arm_launch.py",
+    "sha256": "d2fb9746a525c368e0c978f92e7f24d1ad9b391580d4c8b62bfd4c6c0c949ae8"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_absorption.py",
+    "sha256": "7441004d165230cd0681a95ea13508efb846456457cfa5ee6bb9597bc2edfc01"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_book_regime.py",
+    "sha256": "aea1396df7cd838184de07fa029b4b2bf6d1e9434732b73f908538b4b7a62ab4"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_boss_attachment.py",
+    "sha256": "ec1a8f37091d6cf680eb038eb622671b04def0a08e3503e554569defa17fc69f"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_calculation_runner.py",
+    "sha256": "afa1cbc075937ab9f3e649d18139c471fc87afbefa1ee54c8c7565c64367302b"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_candidate.py",
+    "sha256": "b7b45c0fcdea2488fc2675d4c80db1e974753882998709852a1a2b694e3f1023"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_candidate_adapter.py",
+    "sha256": "2369340a1e257fbd87c17fe760ec8c25263bfe96cadbafad4107f158d0544793"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_causal_stream.py",
+    "sha256": "126ddf67ecbdc0dbe08c867b8ff7421044380c600ec740cdfd35ddd2640b5d43"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_clocks.py",
+    "sha256": "f333efc43345eaecef375ed3b2cb8e19c5f8d4414a47b24e93bfef58b6e99f05"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_cross_section_agreement.py",
+    "sha256": "13771ead24e684401779f8b28e090181a7efc124f7df86678f774af936c4a87d"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_detector_coverage.py",
+    "sha256": "b677af87333e87f37d3176873f91d047406fc5e9fd212b88af22653471ed0166"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_dipole.py",
+    "sha256": "184761568c0470f0ec826a3c40e83742d8d09ced63b186f63f8f03645f3b7a23"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_discovery.py",
+    "sha256": "965022dde5968d61f1b6efb9c348110b69ba08d176ca4aaf1146d7481f707d15"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_evidence_bundle.py",
+    "sha256": "a1d6d1e41d519a956754f6199f5a14825c243776b3c328ca9e2956ae909149ae"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_exhaustion.py",
+    "sha256": "8e25fe9b25f9b83110aa64e1ebfbd1607528bb65738ad686243ec39fb2347094"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_flow_substrate.py",
+    "sha256": "c904119f8e826e92578039182303425e0b6a0060f320c28955ebe85d8ecd8be0"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_frankie_knowledge_registry.py",
+    "sha256": "849a329034c57f19c9160c20a0d46d4fedba6103156f17715c74cabb637f2a01"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_full_capture_adapter.py",
+    "sha256": "d45febff374323d0ef1713078ac68775bad69d3f372f5d595503479ac52b59a4"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_group_adapters.py",
+    "sha256": "27da0a5095ed25def6561ad0a1d2c2d1a09a5aa7659ff190c3cb71bef99630f8"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_ingestion_layer_registry.py",
+    "sha256": "b33c254c3925b6b023462d15a3634fe37471744902f2095233b4ce5ffb8687c4"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_key_alias.py",
+    "sha256": "fb218dc5356a6f5ab27a4756d0f575dda1f0c1b9f32f058e0656a44fde22e58e"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_knowledge_delivery.py",
+    "sha256": "1b8d3bb354930e390fe487fa84ca974d4a4f969accc2b553da332d191c8886a5"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_ladder.py",
+    "sha256": "28563cb7b0cfdb37c439929de50f0e196b24982d6ca5a91c363a5bf1edd69e26"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_layer_crosswalk.py",
+    "sha256": "928f5369438af869feddcb5cd01895f7cc90beb754ac9dd51a658c1d956d4f19"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_lineage.py",
+    "sha256": "410bdaec363a97e2a7f64de68da54f8cd30d252d65aabc697d26cd5290284167"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_mbo_field_census.py",
+    "sha256": "28e9b60829fd970695f10113e25c8466f7cd625d6221e3f5fae514b0486e7d02"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_mirror.py",
+    "sha256": "397bdc142d0939913990e5b3afd388bc906a7c49cfcd4c08d1b07057a45827a6"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_principal_outputs.py",
+    "sha256": "9c10ae7ea9c2902f601b717d729272905dac2cf83afc72273902bd4da0587f8d"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_principal_outputs_draft_20260902.py",
+    "sha256": "a5656afbf98c2535b9291785a2a2ef493d0ab46dca4fb43f1b232c2279969ee0"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_queue.py",
+    "sha256": "7189626da9149eb7a6f04b0780c36ae82dad7490f248f78037f40cb893d9b68c"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_queue_adapter.py",
+    "sha256": "98834f4c62ea39d91891daa7ae8179cb2ecc0d0e23ae83aea9458f2efd44dbe3"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_recognition.py",
+    "sha256": "0b279fda54cedcd3c812580da181356814afe4a35dffc52379d64814a716ac7c"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_recurrence.py",
+    "sha256": "f5fe0608acd96b86ce1735f0f608718b2f12e9e9d7f37932d5deca01b0470d1d"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_replay_driver.py",
+    "sha256": "67996f3e1da9f6584bcca888eefe015c3b31508b9451335a76e2f49bfd7a8762"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_replenishment.py",
+    "sha256": "04f59f5e3bdca834f2b240f6e4f1104079e474e8ec38d1ee11f402c23111df6f"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_replenishment_adapter.py",
+    "sha256": "1cb5b0f7c2e75ee49adb9750e4e546c6e4752ed56d4b818ba52268a0cde5cc36"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_response.py",
+    "sha256": "fa88f6dc9a319eb2bddb8282bc6a723b20473c274178cd6bcfd42cc4f9fdab83"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_roll20.py",
+    "sha256": "8e0a8dd6111cf65dfd87ac153f72824c75fe372da55f24a7ea0c278517d58179"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_row_sink.py",
+    "sha256": "afd7ac6afb026643f8ec092887986cc566037723407af9c20369b4f951c23797"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_rt_book.py",
+    "sha256": "ff6950ef67b891a25b7d41968072934b02df21990e3b264e401b2721d7099a6f"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_sealed_absence.py",
+    "sha256": "75321b3b09edc3902aaa9b75c10e23675d990e1036c1d0b248629829fae59b56"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_session.py",
+    "sha256": "bf3ac5bd1b6af7f62ef75bb741f273d94d9ae75a7bd7fe9229a0c501a99fa2d9"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_staging.py",
+    "sha256": "842601a274f44f4d988d19b19f30b9c1c8bef7d8b28c2d4c688a544b8f407c38"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_stratum.py",
+    "sha256": "6226d708d085d75afc6a725d50663a67a645c607b79fc458882aa11b2806af6c"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/periodic_checkpointer.py",
+    "sha256": "93484d37a6cea884074514a1b6165c785b39f8fa4abd450985cf3696f4163faa"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/raw_mbo_source_manifest.py",
+    "sha256": "bb3ea86bdb8509ec9342a65698e50e8f99f516796d849354e41f2f4ee7b4c97b"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/refresh_native_frankie_knowledge.py",
+    "sha256": "cd86357cf9db1b56232bb4956302f5306f3da30127e99221cd2060eb684702e3"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/register_a_memory_knowledge.py",
+    "sha256": "7c0701f9ecba325e9ce258783bfbb757615fa064a10e94527447c59184a519be"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/render_frankie_report.py",
+    "sha256": "79eddae5be7efdd43945c2e91cf1c256b42236e85f9e8a5ddb9544644420ac4f"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_a_arm_launch.py",
+    "sha256": "8f013f390ebd15be7e89a85125d554c05e3e766b371b96b1bbb78fba947031bf"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_role_context_profiles_20260824.py",
+    "sha256": "c972bda636abaa4315b727ecd9f7f7eadf862c2e50b3518f99995ab6688108ce"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/ng_exhaustion_two_frankies_prior_surface_blind_2day_20260825.py",
+    "sha256": "e8b376d2adecab5979af31f7f684517132411b6eae24a0c157c903059a2ad79b"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/ng_exhaustion_two_frankies_workmode_coordinate_2day_20260825.py",
+    "sha256": "2c7cf46f7cdaf5784be2eaf02d941efef8ed4f0762a49933d4dad3774a9767b5"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/plant_calendar.py",
+    "sha256": "858097caf5113201a35c8b2362b59267773ec7c72fd687a0774fb3d3d71f96e5"
+  },
+  {
+    "pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py",
+    "sha256": "4a80e3e4b83867046d318ba97d350c2d7aca22e9d182d98399d01eeacc72d3ce"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_adviser_market.py",
+    "sha256": "1206043a897974be1a41535b235eb3e06d7802112dc52cbd8ae6997c5728ea00"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_all99_coverage.py",
+    "sha256": "20e679b8f27fc0be9da8739dd0a75d68876ccb3ed64e99601d5257f2147271e5"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_author_monday_launch.py",
+    "sha256": "b313e0fa70a3c9af6114dd40d31c1fe5e0fc97eaea33da09d1998d6839684e42"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_bedrock.py",
+    "sha256": "9b6e75a315213b1c88182a045d361d51aa712014f9eb2a8a81d87ca27eba1da0"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_boss_session.py",
+    "sha256": "1dfa4389f053831311792233d65f555c0b2ef1526e878ea6441069aec6a7f60c"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_brain.py",
+    "sha256": "e027d7c670f0034bb32775d22b8b0fb74c5332cb037125b5b5a3e05e6085adfe"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_candidate_claims.py",
+    "sha256": "505271335c3c7600e626d9e02c17f34906d81e50ef5ec42475d4b5b6a979ee19"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_classroom.py",
+    "sha256": "1ab12e23c283272b50e4d6ce15c66b5fff1a9df627cf97947f9e2caa010c431d"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_classroom_code.py",
+    "sha256": "7390913a760cff888d36264bee7f311eb438c52f0b7dd061a0950ff2409b8225"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_classroom_external_code.py",
+    "sha256": "39c555fd16547e3d3c28bf869f351f5a12dddd4b46945a274ea762e7595d38c3"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_cores.py",
+    "sha256": "748ea16f39b021146975b7df062313f2042034c07bfe0915659ba211863fedbe"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_digest_document.py",
+    "sha256": "77eae049ade0478b0e9092779a9301475fd2d53e024cfe67298e4f7ac71e3b2c"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_digest_parallel.py",
+    "sha256": "2447e647a88ac15829c4267f12b09fcf8d17495aebe86d0ff11e9e9f14fd3e22"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_digest_read.py",
+    "sha256": "34899f3f9ca8cc49ea9e791de0cfa3e04f77b0a1c6f36076e85b07abc0975dea"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_digest_render.py",
+    "sha256": "9e3fe34920e96b083ade3912d77a29b9678d27a2ab215d74682a8775da058702"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_digest_sources.py",
+    "sha256": "7bd9071cae3c84173234bee968c80c9abfcf356c405fd9598b61030993cb3105"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_digest_stream.py",
+    "sha256": "7f1c8469b96448a1036a86971edba172fceb1b51cb52cbf8ebe41a688a5d995e"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_durable.py",
+    "sha256": "eaa9210c52a8c3f8a2d8f9696eb6a587e08fb9fecc00261d8ca477c7868dfc5b"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_exchange_voice.py",
+    "sha256": "0e1e9b8106efd6f422340df4dd32f5860fdf9ec562740250379fd013df35696e"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_experiment.py",
+    "sha256": "2482d7f35c3cd302354dfb2c519e9c17841576ad09ac663ef597499b265ec088"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_experiment_day_reports.py",
+    "sha256": "b46378334bc56b695040e07a51e72414df815cd2c200423db3b0246250f9eaf6"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_experiment_dipole.py",
+    "sha256": "610665d7efefe69b8ea4ada533230b1ead605458eb62bce457f307a22e85c62c"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_experiment_exchange.py",
+    "sha256": "fa46a0b1bcecd8ddb8240f738fcc90f84b1d1b35af967340b9ff3cec5e2878bf"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_experiment_journal.py",
+    "sha256": "0f61ab2e48f61c2365471b0eb4f0ea12bd34dcc23cd0693cb06b065d1f3cd172"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_experiment_native.py",
+    "sha256": "f36515f98a51c35b90aa4804fc28138e0507cc48ad068fbfa58be8004ce8a836"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_experiment_review.py",
+    "sha256": "8da47b753e04d3245a1ec4b057d98670c1840de0550d6570d557751268158fd9"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_experiment_root.py",
+    "sha256": "f79b610038fc7edc384ee9a56a2567857c0ac02ba5bc78b67800348d960ebfa8"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_experiment_search.py",
+    "sha256": "8eeae0f06bbac3f46470d52ed3ed942c386014117ceb2767751e0c72d5809e2d"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_experiment_surface.py",
+    "sha256": "afa2d70985e56bb49ee02f8270fbeb8405e7807635d143df6c98987fe104b0ce"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_experiment_transforms.py",
+    "sha256": "7fe5fb896803ca3f6f36466b2c82f41e0aa73bd0e44173e1c750e80cbd769a2c"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_filehash.py",
+    "sha256": "9eab2a88485e9cb59908f3c553bcf5fa28b25ef9e394d00df04f52351f75441c"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_finalization.py",
+    "sha256": "ab6579f026ad849c5ffd4d8c083968724279bfb1bebd9c992733de05933b019a"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_fleet.py",
+    "sha256": "d0a57f029df7a36a21e2b19ae683e2cb27e34d59546cba0d9f40035835222daa"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_frankie_queue.py",
+    "sha256": "a5e6a22283fd93a7742aa4c29eec507e2757a0ba91c3110ef1161f0c471fe695"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_granite_meeting.py",
+    "sha256": "3738450a83b8cebbdbb5ff0c283b93bb02bff6b26ccb26a2c070a106628f9c5a"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_head_render.py",
+    "sha256": "b791cc4d3667221406f41370c88c41a8ecc7f7afc3391bd026eba0b814ccd0d0"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_historical_claims.py",
+    "sha256": "6c5eff2422d2f29fab937612af04e724e1da88a58e7eab51b5af8c7c2e5d7921"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_historical_reproduction.py",
+    "sha256": "84e91801378b0dbd660977b4358aca0b4c0d6a0453e5e5b6a77db545c4a251bd"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_jev_cpu.py",
+    "sha256": "3cd2e584a5bd49fd5131ffba639727f77a96a9f0cd3a6f400fe21faf8978ca4a"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_joined_teacher.py",
+    "sha256": "c98ba4fd7b004a2b141a6c94681d1b57ae7333dfe966e32b09ad5921aea54baa"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_lane_pin.py",
+    "sha256": "184ea4ea059f338ad84eef7d99af1c534d1822ead6367793ef6b12d1d7c98c90"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_lane_state.py",
+    "sha256": "424f2410e4bad34dc5b27c42e3ddb0e0c34983250efd3cd3e621abe0f2c59492"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_layer_spool.py",
+    "sha256": "92987b86c4d72c285431c9dd19d66fcf8e9f0b78d8e71c450f76e11ba2d099f1"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_market_timeline.py",
+    "sha256": "0e72726ea95a11a6dd7c07f0be010fa16bc7f541ccd903d7bacf99cf35f298bc"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_model_clock.py",
+    "sha256": "8a99772e79e897c648e0dd8b780e3a596799dbde3b689c6a675e464f721d2163"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_monday_calculations.py",
+    "sha256": "1e2193e82f091fbf558abf777a7078111fb5c9cb66a8291a0d536208ac1aed09"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_native_auxiliary.py",
+    "sha256": "7504eb4dc01092783b18e2eada325bb66380195f5aa3ef06ca77c89593e970e6"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_native_checkpoint.py",
+    "sha256": "b091e5c7fb48f7119f3e365bd012e4632b6ad2fe435b655827099cf3dc2fdcaa"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_native_emission.py",
+    "sha256": "a8ac1930ee7cf3ff096b808f6a89c4587855fc7535f8747a265a2ba404add38e"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_native_parallel.py",
+    "sha256": "7a27f0e67b3faac52fc89329e8bcbf1d8c024dc3d2e4b3c284b488a5bc09423f"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_parallel_evidence.py",
+    "sha256": "623dc5743cb9543bab0b30da2245300926417bb833173051378f46516a7da810"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_prepare_trading_day.py",
+    "sha256": "313ef8b0d2f178d8cd6b846360c1449ff4b39424930bacd5ee63a9e544a42e8d"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_progress.py",
+    "sha256": "8d370448d0d7361f83010c146e9508fd9b03355fb74b268551a6c63ddc2fd516"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_projection.py",
+    "sha256": "8a15e5e70a0e748b13af28748b883655793941bddb7474397ee4996f428c4b23"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_reading_render.py",
+    "sha256": "1d51be8778884dde3e1aa2fcf1294269cdc0d67b1102acc579362a2e983160ee"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_root_claims.py",
+    "sha256": "f3441cdf88499ec08034a0b4dcd4643fc632560b71858bb78c6d41cc1cdeed33"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_root_move.py",
+    "sha256": "6ed2efd784f324c5450a998bfaf9531640366014d3656291b91f8b36ae50c838"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_root_validate.py",
+    "sha256": "c61ccef9931fa212d882cd6f642b235579245e2d18fead5490047af4a8673827"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_s3_transport.py",
+    "sha256": "db23b172ecad0121e457085c2193dfe9a1f02c21fc2f373bf2d77f1562c03316"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_school_knowledge.py",
+    "sha256": "891bdb2229c658e02a9f57c512a8df7d6d7118c6308a76e3783bda14e41cd4b6"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_scientific_teacher.py",
+    "sha256": "76914466569963f3fcc003992b7b601aed247a0f55e5d970fe8939957f171840"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_segmented_ledger.py",
+    "sha256": "267070065b427da2eba205d5668fcbc36c04892ae70054b79d75dd8fa7403e1a"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_stacked_text.py",
+    "sha256": "53e9431cfbdb570a04c366e85aaf2afe0421f2ee881b46f55762a19d28e1f937"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_stage_handoff.py",
+    "sha256": "bdac80afd6933023e6b3a5a9435a1c75caf8112da76d7fb7fe2389123e4d755e"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_stage_progress.py",
+    "sha256": "cf405ccec157ced43b5e5dd5ba29343cd9d52281394474e5810b4deba5830373"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_staged_reading.py",
+    "sha256": "0698b9824559c5f0391ae6dc4e62cfaca15673d4aff4b6f0d4c6578e0a786b99"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_successor_dispatch.py",
+    "sha256": "472e93b4f71686997ce6637fe5824f6f51b9aef2c360b9a8f79a7bd98933ed1d"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_teach.py",
+    "sha256": "7f518eec01620cae25b3b72208bc1cbe93503995a60820f0aa03b86c6c5aeb94"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "deploy/aws/box/frankie_box_teacher_knowledge.py",
+    "sha256": "3a95e8593f2c81a7b72e3e539fc337bdf766c478a471d9a1f2dae280c1175b6f"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/cot_feed.py",
+    "sha256": "c5f0de536acd66d1050bfa94623379d840e44548b342f86dcc3a7d929fd264bc"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/creds.py",
+    "sha256": "4572393c5cda71de06104018c06cef0dcb62adcd1c047ffd0acba73deae2cd5d"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/databento_backfill.py",
+    "sha256": "eccfe4c95b3bcc5f03b1b47d95cbbefb4e3498847b894c3de98663c4d38d44c0"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/flow_calendar.py",
+    "sha256": "ac7174c107b63cf990e3278bf1d553a92fe5fdd3adfd3391649a39192e439dbc"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/forward_curve.py",
+    "sha256": "80b083469ab7c611c9bd25dae0aa4d299d6d4de9e1a3393b37d3d6f729b1614a"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/__init__.py",
+    "sha256": "2cb4cc3a3c1b7b2f16ea0cb2a4e407fe89c7fc8bc8e3e55808ef24da97bfcbe2"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/agent_file_handoff.py",
+    "sha256": "6636c57f93ba976729efcb2739128cfea5998ab1a765ca0dcc11c906d9118f4f"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/b1_reasoner.py",
+    "sha256": "14a76e945392df7bc6914406ac9194cbb685827673a98b27df646db1243c7d47"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/block_source_scope.py",
+    "sha256": "64c8788ce6185852b1ac5800a94bbcbabde3bd5bc186acb400d4e6f79a341855"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/boss_training_checkpoint.py",
+    "sha256": "2ecca929c94e3715bc0058fc004dcc843059e5ba4da061d29a9930bb2cb3d3b3"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/box_standard.py",
+    "sha256": "24f2da59a6fa8587defbeb2bb8d611721a62f98b4c1045d0f90986f6e8c5a7b4"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/c15_builder.py",
+    "sha256": "e6597dbbdaeef71541f9adba245ef88bb15a0801c91c208174ba38ae43258102"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/c15_builder_none.py",
+    "sha256": "f4888082759d82d25b643b89f9415edb8a07fe539bbafd9e9818b99604917120"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/c15_dstate.py",
+    "sha256": "0347563ba14884a2980a86c8aca7958068d5c9f5c54ff22d3954966c6d89e5fc"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/c15_journal.py",
+    "sha256": "808ecb551f509f2bc9f8d30e6148ed74c01d3bb3b53141e950cd4b879f1acb9d"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/c15_normalizer.py",
+    "sha256": "8ffee56aa4a1229565553ef8f9b110e241fcf006ea5c6d6e360de03469ad9b4a"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/c15_normalizer_r3.py",
+    "sha256": "43db5249d356ed73367c846196bd92a986af2da75737a791db79418fa03dde5f"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/c15_observer.py",
+    "sha256": "9e4be13661abb7953269c507a2499be3cd1eba2bb199ebdf949ee35ac1967d32"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/c15_registry.py",
+    "sha256": "65a0b26e57bc7db8ff6c16e6c74a7b350eef2826826ee70a56bac5ff6bbbee8c"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/c15_teacher.py",
+    "sha256": "56f18c04a29166a1f8a5f96997a5e9f23884d87a2586b052cf63202080726759"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/c15_teacher_r3.py",
+    "sha256": "419599757bce4e0f5a56d64b73180271ca3f521a0c576c77b2dc93a86e230a32"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/causal_packet.py",
+    "sha256": "c6dfcf4758896c94b9e55ceeacc7b570ba157bf1dbe1195ad96fd8c784a00346"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/causal_prefix.py",
+    "sha256": "61c096c2076ccbc872f75076555fb47aaae1f3adc40d6b261f1eee465418a230"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/causal_prefix_records.py",
+    "sha256": "3a48b5d5e2808d780b4d6d3991c7b7688e3b263a48b0c6b956f230e88cf8d30d"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/clm_sidecar/jev_report.py",
+    "sha256": "daff84cfc19364c18e4804795c97065edad38ee796a017a2c3e198a94f75ed38"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/clm_sidecar/sit_in.py",
+    "sha256": "457b812e311ef463921e60c63f1399722297be45c0dfba7baec8319182916ae8"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/compact_build_journal.py",
+    "sha256": "672ff178a873d7b8968813532c97215d50e66de51300a5482c72b7a53d43a8d2"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/compact_conformance_reader.py",
+    "sha256": "a9c0c10c178a132c6fc5e7e62ca4a0d95b85a945863618093dd8907afa1d7870"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/compact_journal.py",
+    "sha256": "7f5c8cf3eb8e7287d80603ea508a0a4448c29fa74de785bff8d6c667f2297365"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/compact_journal_snapshot.py",
+    "sha256": "0b60d00e7686b12800b2953546e92ca359c5a686e7b1e824ca676510a5a1ca7a"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/compact_source.py",
+    "sha256": "f1f9f4acbc93fe704192e23e17612063aa83d0aca401f785fe9a286fc1c1796a"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/completed_schedule_view.py",
+    "sha256": "4826e2cf5d353439542393905492f8dc8acf01ecaf87ec7c5290ac79029e5dcf"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/concurrent_teacher.py",
+    "sha256": "802a9455e6c8d37ee724ab878fa63684d891014447983608928f60bb9ab44c08"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/context_session.py",
+    "sha256": "2c88b5b3f037b44adecd2db4c2c0b4046f2585ed9582de366e8f92ea6346478d"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/controller_journal.py",
+    "sha256": "0f8c402118dae5dddc5d964d4051b145d1d9f27aa6ae37249bd0720530fdc081"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/critic_knowledge.py",
+    "sha256": "cd7e22db82e070e8b0f64fb34d133f1ec29ceb6527dd42926dc141ceaaf9655d"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/databento_adapter.py",
+    "sha256": "d43630fc1a58820a6f931185595823ab7ddaec1c036174717b3c148c91c9acca"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/dipole_classroom.py",
+    "sha256": "e6e6d238989d8d8be7835f1c74928fb4f706e0f5d5cb71c3d0c1f5a054b6cc7c"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/dipole_classroom_external.py",
+    "sha256": "8f1965513a9eb304dddd76e466f16f9083ef07abf9a2d88a31078ec0419cc669"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/dipole_classroom_final_review.py",
+    "sha256": "b48ca5daf29a46294dcef360fc8fa2fbc3a6e6c39919dcef1cde15abec75fd55"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/dipole_classroom_hardening.py",
+    "sha256": "9bde52c9b4fb1541620abb30e994a989b4e547a1bc4d7d32d93d64d9afb17dc4"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/dipole_classroom_integration.py",
+    "sha256": "e66b922a8e5a6222d788d4b27e7542289aa9d4f13ec601f32276f6c887f1113f"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/dipole_classroom_learning.py",
+    "sha256": "43eb2960538bacc519f79658065f0642d7d91bb2563fbae81afbb8c21c85bad0"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/dipole_classroom_render.py",
+    "sha256": "a48528e114c9cf97b7df187aaabf29eeeb54ab182c0ce218a706396393dd13c4"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/dipole_classroom_resolution.py",
+    "sha256": "b2d9b527a7ebce650ee68293bc54cdec8580ea201aabf2d4702d578673c2db13"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/dipole_classroom_session.py",
+    "sha256": "0993eef3f80a1062d25ec23de24ae9c0ca17473adaf6121902c914043224f362"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/dipole_joined_teacher.py",
+    "sha256": "6210f77ec76c26c216d8befe110ac23d0c43bba9e4ea32b475e66203dcf8d801"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/dipole_scientific_history.py",
+    "sha256": "554010cd916083cbc9bfd45ee9cb22481055f5ae2d47bc4943657229ea4cf023"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/dipole_scientific_review.py",
+    "sha256": "5e28d8da870b823aa8cc9fcacd87c17fc524d9373925630630c9aea15a6069e2"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/dipole_shared_knowledge.py",
+    "sha256": "12d96cc6464c5708cd0a7d8f8903bac7fcb60362cdede49d2ffd478e0e629cf0"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/dipole_target.py",
+    "sha256": "e3f89eaca9553271ba7ec1e505d21a1b07c681f9fb9ca0673fa11cc515b4ab82"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/dipole_teacher_discussion.py",
+    "sha256": "8e5b8766a2bfa723cc0b364c91119950e447da513382b395957825b2d7ae1a7f"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/fast_mbo_decode.py",
+    "sha256": "4794684395c9c929569d4b74cb646c4acd94d5e7a1575c9e0659df4ada2a815f"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/feedback_cycle.py",
+    "sha256": "d1c49176c787b40e7a402420b3e62bad79e6367faba70169efaa636b73a87aae"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/forecast_artifact.py",
+    "sha256": "5541f072348d2f2f0d4b43b30ad651eb4f03359ef52fe554dbe68e017e1c2449"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/forecast_bridge.py",
+    "sha256": "3087c2f252d604f5fc8d67fb0a30220138adbb05e1ceddbe96318efa0a2f457b"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/forecast_contract.py",
+    "sha256": "6f8acac163c09cbc2c3185b34e3234817c8bd9bb3b71b64e169b6b2e4aeaba84"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/forecast_heads.py",
+    "sha256": "147ac1ea8f4cd3e2661b4140c0a581c2c69db233a8be1b8cf87d992c9d919fbf"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/forecast_refresh.py",
+    "sha256": "fec5661446afc234e064907b8c20cadd99e57277d3f6649512f206fc2080889e"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/forecast_session.py",
+    "sha256": "2fe840aaf7691da305d91970834fd0a65c15169fd94157a212f58d3e8a5a2bc9"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/frankie_category_free.py",
+    "sha256": "2c4cfc3000adfa61d49bb9260021e8c94129bd6faa2643be28ce18e0d35684f1"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/frankie_contract.py",
+    "sha256": "366f9a111eb736762244c9d8105b0111251e3751d1fab9082e9c136f55faa48e"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/frankie_dipole_classroom_adapter.py",
+    "sha256": "9f9cc9b2a7462fb28257a3591b6edc1e5966808370cc47680fa784a3be49f9c6"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/frankie_forecast_consumer.py",
+    "sha256": "e5143f0b006e7d194f18d7f1061d4290d362fda8596795f85e3d357af9ab00ca"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/frankie_journal_reader.py",
+    "sha256": "3d4464ef896f1a018bdc54802cee1b1b3c688432917d5696db094404f6c423ac"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/frankie_principal_adapter.py",
+    "sha256": "10d33048603217f154d01aaa661b8a478fe09c57ccd9fa6da08d0c9fcf9288e6"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/frankie_source_mapping.py",
+    "sha256": "8356f18683b894ab6cb6cb930fe9e92d6a96096aadc5e894c02b187678f26358"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/granite_context.py",
+    "sha256": "820d62d282bc06c7bf1be7467af5668993457424ec4ee801d720237ce88001b0"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/granite_context_compact.py",
+    "sha256": "3d6fef46b523f8ec42aafe4fc35677a6e2f3ab5f0eaf2ef78926f7367a98fb25"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/granite_context_route.py",
+    "sha256": "3a8d063afb07604158987c9cc5787a045ff6a1af110e2eaa1c6c191b58969dae"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/granite_context_stacked.py",
+    "sha256": "adc79577e830cc3748fdd1983782feabd570335cabdae3ce69a25abbbbdb0660"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/granite_context_stacked_route.py",
+    "sha256": "48ef5701568346735b5b11fbdfd22c7fa0b9aa979399a71e27e772f1b15fe716"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/granite_context_stacked_route_v2.py",
+    "sha256": "d9498a4a5e91c52bd314974d0a569a5ead09baa204596202f8a82196304f3a3f"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/granite_context_stacked_v2.py",
+    "sha256": "0479d1a16fcd957c9595cadf8de69a7fd35eead9ffded9d70ca7e6480c69110d"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/granite_contract.py",
+    "sha256": "b3e71a7a4aae71911215f833ed651a23ad5fc4c1b03fcca7c3d7b1117523a9cf"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/granite_durable_job_client.py",
+    "sha256": "25f0f5bb22a928088a4676ee5a2765b1691d6d0c195748ae46b61b57a95a37a1"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/granite_open_ended_service.py",
+    "sha256": "fa1d65c8eea3db2b4d41d09f6f4da99d7eb168e7e3c93754e764ed7aed7143ff"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/granite_output_schema.py",
+    "sha256": "dba5bc96a9cbf7e4104ee5a32db5787daf5daccd0b61886a84396d30f7ebd08e"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/granite_parser.py",
+    "sha256": "a4274ddc79f49939048cede98d3f82772e9335e81f5e04c91185b613d112a571"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/granite_positive_priming.py",
+    "sha256": "d2a95cf2cca688bd482c63d430d3779ff9297a6a323741aff9cbec0d6be45365"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/granite_prompt.py",
+    "sha256": "4884f02fd644e0ea5c02e24753ed68067f5547d9096ddbb0d2b764d9cf1f8deb"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/granite_run_artifacts.py",
+    "sha256": "8a1e07529fd4b88456e689cfc0525ebe0f07b3d4552ce74ae0c6c22e4f701b0e"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/granite_runpod_admission.py",
+    "sha256": "63013baca3031196d60fe2d238f1d0c5318c7860472916bf262a246d83011dd9"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/granite_runpod_probe.py",
+    "sha256": "f4f8ab5432c765a114a940358d67083aa5c03977d4fc7aecb66fe3a8cf1f23f3"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/granite_runpod_service.py",
+    "sha256": "10909fa4c6525daff40188209f7e1e29de12d81fd16caf08e43f8635fa218347"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/granite_sagemaker.py",
+    "sha256": "bf2988aae86d26238656e63026e8c7947a29f9e077e6de4f6b421d78d539ff3a"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/granite_shadow.py",
+    "sha256": "cb2bc0be71244f0a7757b5f3cd45e72a840a2e64c5f37cf5e15fa7bb51128f4e"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/journal_prefix_snapshot.py",
+    "sha256": "e84cea8d7d11050e62496d043f924791b13daf4affcbe1768fd0c29d6db72bd9"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/knowledge/CYCLE_CALCULATION_PINS.json",
+    "sha256": "e57de0ba9edc2d66bfee0a644d766656829868bfc6f98254c34cbc7c57ed19f4"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/knowledge_calendar.py",
+    "sha256": "7b1caf2fa84ffbaf313c55923551ff25a6a3840251004f8411b06d325d23731c"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/mbo_resume_state.py",
+    "sha256": "0e667faa19f39ee36d78f9486340b40a68d756b04ebc0b22102a8bad9abd380c"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/mbo_source.py",
+    "sha256": "3c66532256b273e38fa78f5779ad8f738eaa1ba05b6d0bdb75f988a7d9386c97"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/native_forecast_learning.py",
+    "sha256": "cc54caf1b8bd143199a9a0b850cdbca402cb20e7268ad5c3f4fb209731d69375"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/native_forecast_refresh.py",
+    "sha256": "70446fe959144ac64a999edb37a4856096a3fa9f0151511c00136ce8465e1166"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/native_mbo_encoder.py",
+    "sha256": "77de0141efd00a525f40e96c15c2eb0a4d5583276e4c8742b6c93417037b8063"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/opening_book.py",
+    "sha256": "8f6718720a4c65b4a14a518d91897018b9fe68ee6854207b7eaa91e878ca6da3"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/operations/build_remaining_sunday_prefixes.py",
+    "sha256": "16dfdf5f8f19423c0681569d9f243521f7f20fcacd97c1a435775df678da6cc7"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/operations/fetch_day_history.py",
+    "sha256": "343ff1085a23e27ea3d0aa08647ea336615d68a236413151cce061db5b51785d"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/operations/frankie_day_external.py",
+    "sha256": "713990d53101afdbb16c8705fb2742fba557e0addd70f042a6d91997afcbaca0"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/operations/ingest_block_sources.py",
+    "sha256": "05ab8d59de45ea1a25a827ffefa6633c60b8afe93ecbde92ce5bf112e9c2969e"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/operations/ingest_cpus.py",
+    "sha256": "2465b03adbd9f555d2a394c2e0cb2399b7f9810204241b5598a6a506b836f001"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/operations/parallel_ingest.py",
+    "sha256": "6d1c5360aaf6d57fa37b8bfa59881d08e2c4c6e7b44faf704029c19549c98512"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/operations/prepare_trading_day.py",
+    "sha256": "1cebe4c5a4f90e47a37ab19bc2af5c44fcb6f29648a0d67514662ac0d830cf00"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/parallel_context.py",
+    "sha256": "c226e129b1b0bffdbbc228f52a4e01a2ce96ff31f5c89a14085c1eeb1ada5387"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/parallel_journal.py",
+    "sha256": "2795ce13e51190384acc49520ed0476eee88d71519453246379fe004fca9cfbd"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/parallel_teacher.py",
+    "sha256": "64d549c79df44889e78883bd0303e232520ebf25f9f7cc27a37a764c30e4feb1"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/raw_mbo_source_manifest.py",
+    "sha256": "7229bfc2d4befa4664aabca4b0321fd39a2c281c846022e5ec2cfdd975ae75e9"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/recovered_ingestion.py",
+    "sha256": "30ab4dbb03e3ae6a288fed42facefb7d5587659c8212bbcfb401550548fa5c0a"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/rolling_forecast.py",
+    "sha256": "d8c56e7fc6e7284add1271d27bfd7b7cc383acc36c22d100d23b8e4820816a43"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/sealed_compact_recovery.py",
+    "sha256": "9dd35512e8e4efb7454ee87a92b1a58654406c03ab361fbb8034954db461aae7"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/selected_source_scope.py",
+    "sha256": "02566d0653d3b1c65b3bda9ff4b1b0a161d51928bae00373bddc3fb8af9319a1"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/source_conformance.py",
+    "sha256": "5ec5afb0de48825868cbdc92f78b6528b6e28360aaa1be56aa3f3a8ae2b07147"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/source_contract_runtime.py",
+    "sha256": "4fa19132e5412cf8599ef4c0790e28873246bf21ec31798dbfd9848b8c78cfe2"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/state_serialization.py",
+    "sha256": "176d4d966bfeb5fca7286d4f378a7055c84240ccf2583c491c0262c03a23173d"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/sunday_native_runtime.py",
+    "sha256": "2e0afc7795ac5bed92eff4ae88ca76c39b052f45e961a8993e442e41eef8a4a7"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/sunday_schedule.py",
+    "sha256": "a07b7a78cbc40256eff12a9ba11a394755c592ff7ab3caeed929e5e19ae0d520"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/teacher_changes.py",
+    "sha256": "184130cd5a9b62c04963f4b7954f04eeac0ca9e18fd691657b1a7639d1c17a50"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/trading_day_schedule.py",
+    "sha256": "0ca42f729ecba559cf97a7b628870899e3b28432488c3cbc45b7c4b0db0f1f86"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/trunk.py",
+    "sha256": "ff538669342f82597a4c49afcdd9e80f101354bfa6fecb5050a146ad63790b02"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/verified_journal_reader.py",
+    "sha256": "3bc6679d3a7a94f30407bd4bfc9015e9623f90b9cbcdde63d0d1bd91701136eb"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/frankie_boss/verified_sunday_schedule.py",
+    "sha256": "ad568841c12b3931449b0418529d2c17f282bf345289aa7f569b9d298cf3f3a2"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/kalshi/nws_temp_feed.py",
+    "sha256": "53a0f09853524962e2fb7ad487ec8317d1e77fb19632e149ffddd03ae0722d63"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py",
+    "sha256": "bf49d5fc41a19827200db920dc54568c149750df30ddaf43fae9f269499271dc"
+  },
+  {
+    "pin": "db96f24f3260bf0d70c763b297c2ba9b84f571a6",
+    "path": "research/refrag/qsv_registry.py",
+    "sha256": "b742f1c658309c0814b69de0201350019443a59017853a427aaa91629c37918f"
+  }
+]

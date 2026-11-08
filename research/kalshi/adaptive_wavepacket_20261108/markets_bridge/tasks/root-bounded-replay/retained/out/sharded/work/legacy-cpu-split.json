@@ -1,0 +1,40 @@
+{
+ "at": 1794146134.5847242,
+ "book_workers": [],
+ "booked": [
+  0,
+  1,
+  2,
+  3
+ ],
+ "encoders": [],
+ "frame_route": "replica_shards",
+ "frame_shards": [
+  1,
+  2,
+  3
+ ],
+ "replay": 0,
+ "replay_core_idle_siblings": [],
+ "rule": "one CPU per process, none shared: the replay, one replica shard per helper CPU (each replays the INPUT spool and builds the frame rows of its closed-group ordinals mod the shard count)",
+ "schema": "FRANKIE_ROOT_LEGACY_CPUS_V1",
+ "topology": {
+  "0": [
+   0,
+   0
+  ],
+  "1": [
+   0,
+   1
+  ],
+  "2": [
+   0,
+   2
+  ],
+  "3": [
+   0,
+   3
+  ]
+ },
+ "topology_basis": "/sys/devices/system/cpu/cpu*/topology"
+}

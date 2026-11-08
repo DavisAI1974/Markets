@@ -1,0 +1,27 @@
+{
+  "day": "20231017",
+  "source": {
+    "day": "2023-10-17",
+    "symbol": "NG.v.0",
+    "stype_in": "continuous",
+    "schema": "mbo",
+    "dataset": "GLBX.MDP3",
+    "file": "NG_v0_mbo_20231017.dbn.zst",
+    "bytes": 16842309,
+    "sha256": "ce36e2ed242731698004cd83c1947365e8aac0e9dac939d271a8f22752bcca65",
+    "records": 858976,
+    "expected_records": 858976,
+    "cost_usd": 0.0806,
+    "ts_event_first": "2023-10-15 12:54:42.688701+00:00",
+    "ts_event_last": "2023-10-17 23:59:59.865514+00:00",
+    "mappings": [
+      "NG.v.0"
+    ],
+    "zstd_magic": "28b52ffd"
+  },
+  "rows": 2500,
+  "f_last": 1468,
+  "trades": 51,
+  "resets": 1,
+  "sha256": "408e57f87a7cf723f5f65d8c96dd8e1aabfd31cff388b2229071aaabfdd6aafb"
+}
