@@ -63,9 +63,24 @@ Before the first simulator order for any variant, agree on its exact trigger, or
 
 ## First run and open work
 
-Implement the read-only saved-window runner first. Use group 241500 as the overlap check, group 229205 at cursor 297873 as the directional disagreement check and group 229253 at cursor 297953 as the ambiguous print check. The last group includes print 10862. Check the entire window against the pinned per-row decisions and compare identical raw prefixes with different real suffix lengths. Record availability differences and censoring as outcomes of coverage. Start operator capture in November 6 Replay only as a separate no-order mechanics check.
+Recover and verify October 18 full-session coverage before generating new market scores. Keep the saved window and original receipts as provenance and use its cases for source reconciliation. Use group 241500 as the overlap check, group 229205 at cursor 297873 as the directional disagreement check and group 229253 at cursor 297953 as the ambiguous print check. The last group includes print 10862. Once source coverage passes, reconcile the archived window against the recovered stream and compare identical raw prefixes with different real suffix lengths. Record availability differences and censoring as outcomes of coverage. Start operator capture in November 6 Replay only as a separate no-order mechanics check.
 
 Keep BuildMap scanner/viewer and the algebraic five-step, Level 2 and predictive geometry work in the component. Log their inputs, run receipts and holds independently. The fixed-bin book pilot leaves full flow and algebraic runs open. October 18 full flow requires verified contiguous native records, original trade identities, native timing and complete-window availability, strictly earlier calibration, disjoint raw spans, valid settle segmentation and the audit's null and leakage controls. Review current donor averaging and dispersion before admitting a geometry result. Frankie integration follows a later handoff.
+
+## October 18 coverage gate
+
+Status is `HOLD_MISSING_NATIVE_TAPE`. No new scoring ran. The Git projection contains 22,194 consecutive completed books for instrument 150611, groups 229201 through 251394, from 13:07:12.293731473 to 13:19:12.020583540 UTC. All adjacent group numbers and increasing cursors were checked. This window is 3.8% of the 583,688 completed groups in the sealed-session receipt. Sparse book views, the 30,739 original trade links and the 8,088 saved flow-second rows remain evidence. They do not reconstruct the remaining consecutive book and flow history. The 13-data-point external attachment remains linked separately.
+
+The smaller recovery route is the two exact raw MBO members:
+
+| Original file | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `glbx-mdp3-20231017.mbo.dbn.zst` | 14,484,156 | `189f85d015131362092a5f1e5cf023d27c3b89adecbb54752a1dff5b3b87221b` |
+| `glbx-mdp3-20231018.mbo.dbn.zst` | 12,867,663 | `bc6cf8dff8662d540e36f1b73579bf97c8eb597cd9fdc8f83723dd6d35d68d7f` |
+
+The pinned sealed journal is the other recovery route. It is 8,824,270,848 bytes with SHA-256 `46ca9fa0f046c3c22c958c66f4a3bfdfc3876a4d7bc2c010b9f163003f6c0319`. The raw pair, journal and exact opening-book size did not match any locally available Git blobs. The source manifest and pointer supply expected values. [Raw source manifest](https://github.com/DavisAI1974/Markets/blob/93895487c199b1e486d5407f9e103a0964903d2d/research/kalshi/frankie_boss/blocks/BLOCK_20231018_SOURCE_MANIFEST.json) · [Sealed journal pointer](https://github.com/DavisAI1974/Markets/blob/c28a4de13263b6354662cd376fecc7733b47a991/ingest_pointers/20231018-gh-36571235912-1.json)
+
+Verify the bytes and opening state. The raw route applies the first 841,601 October 17 records to opening state, then journals the 17,375-record October 17 tail plus the first 754,412 October 18 records. Reconcile 771,787 source records and 583,688 completed groups, exact instrument, native group continuity, clocks and cursors. Compare overlapping original saved books and prints, and keep any disagreements visible. Audit observed zero versus unavailable flow and require the as-of timing and strictly earlier calibration inputs before admitting full-flow results. Only run new discovery scores after coverage is verified.
 
 ## October 3 and October 18 discovery evidence
 
