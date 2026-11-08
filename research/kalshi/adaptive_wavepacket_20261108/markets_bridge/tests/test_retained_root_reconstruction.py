@@ -2,9 +2,11 @@ from collections import Counter
 from importlib.util import find_spec
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 HAS_DBN = bool(find_spec("databento") and find_spec("databento_dbn"))
 if HAS_DBN:
+    from .. import verify_absorption_ratio
     from ..verify_absorption_ratio import Window, apply_record, ratio
     from ..verify_retained_root_inputs import RestingBook
 
@@ -58,6 +60,24 @@ class RestingBookTests(unittest.TestCase):
         window.add(Counter(fills=1, reduction=1))
         window.add(Counter(fills=4))
         self.assertEqual(window.totals, Counter(fills=5, reduction=1))
+
+    def test_long_absorption_retains_first_fill_past_legacy_limit(self):
+        messages = [
+            event("A", 1, 1),
+            event("F", 2, 2),
+            event("C", 1, 3, flags=128),
+            *(event("N", 0, clock, flags=128) for clock in range(4, 1030)),
+        ]
+        for message in messages:
+            message.instrument_id = 150611
+        with patch.object(verify_absorption_ratio, "records", return_value=enumerate(messages)):
+            receipt, unusual = verify_absorption_ratio.evaluate("20231002")
+        self.assertEqual(set(receipt["window_counts_by_side"]), {"64", "span_to_date"})
+        span_rows = [row for row in unusual if row["horizon"] == "span_to_date"]
+        self.assertEqual(span_rows[0]["groups_observed"], 1)
+        self.assertEqual(span_rows[-1]["groups_observed"], 1027)
+        self.assertEqual(span_rows[-1]["linked_fill_qty"], 2)
+        self.assertEqual(span_rows[-1]["displayed_reduction_qty"], 1)
 
     def test_fill_side_requires_resting_id_and_price(self):
         book = RestingBook()

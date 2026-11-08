@@ -37,20 +37,6 @@
         "fills_with_zero_reduction": 0
       }
     },
-    "1024": {
-      "A": {
-        "windows": 652828,
-        "ratio_defined": 652828,
-        "above_one": 0,
-        "fills_with_zero_reduction": 0
-      },
-      "B": {
-        "windows": 652828,
-        "ratio_defined": 652828,
-        "above_one": 0,
-        "fills_with_zero_reduction": 0
-      }
-    },
     "span_to_date": {
       "A": {
         "windows": 653851,
@@ -68,14 +54,13 @@
   },
   "window_row_sha256": {
     "64": "6444564b671b7cd9014e21aaf9819fdc3e5feff3778087229d1c2ed5f89d971a",
-    "1024": "a7f3d5a22de749b618d12789639786e706cbdb4411eb5636ab0b05ada3842b59",
     "span_to_date": "38b23e9ae3b6194e162c6bb3d244aa10349ac78c50d053a567072fb0b022b221"
   },
   "archive_discrepancies": [],
   "largest_archived_ratio_tape_trace": {},
-  "wall_seconds": 49.61,
+  "wall_seconds": 44.71,
   "unusual_window_count": 1601,
-  "unusual_window_sha256": "24fbc263f2ac467799b6d9fbc61f4f8867b0d1a463c08a4a32e3a8e873b6a028",
+  "unusual_window_sha256": "6bc1072ea11edc1e3972a2b9694a4cbf2cef3ca84a1d887ee7ba4ce2f1c2f88b",
   "tape_git_commit": "1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202",
   "boundary_manifest_git_commit": "93895487c199b1e486d5407f9e103a0964903d2d"
 }

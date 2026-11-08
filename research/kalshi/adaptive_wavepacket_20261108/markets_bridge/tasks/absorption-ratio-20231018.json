@@ -39,20 +39,6 @@
         "fills_with_zero_reduction": 0
       }
     },
-    "1024": {
-      "A": {
-        "windows": 582572,
-        "ratio_defined": 582572,
-        "above_one": 0,
-        "fills_with_zero_reduction": 0
-      },
-      "B": {
-        "windows": 582572,
-        "ratio_defined": 582572,
-        "above_one": 0,
-        "fills_with_zero_reduction": 0
-      }
-    },
     "span_to_date": {
       "A": {
         "windows": 583595,
@@ -70,7 +56,6 @@
   },
   "window_row_sha256": {
     "64": "9069edc3f5b18135a936e7e9e86308c5c7767f83327189a800be4aacd5255dc6",
-    "1024": "89f441d1ce5784399da4831507b8c207f4afbdb92c14c02a42b2cf0da4da9ef6",
     "span_to_date": "1de2f36f486ea45bb1538ad24e771296818e38af97b2621af2b7092b92e7d97d"
   },
   "archive_discrepancies": [],
@@ -2813,9 +2798,9 @@
       ]
     ]
   },
-  "wall_seconds": 38.4,
+  "wall_seconds": 39.66,
   "unusual_window_count": 1641,
-  "unusual_window_sha256": "a5564699287e1ff792c2eb767f6463d217b8cfef466275c2dfd3a4a0e278d393",
+  "unusual_window_sha256": "eeecb46d1dd4f37c14941b6d9ad1654e97984df9c49b83bc4bce78673bf2abbd",
   "tape_git_commit": "1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202",
   "boundary_manifest_git_commit": "93895487c199b1e486d5407f9e103a0964903d2d"
 }

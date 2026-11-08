@@ -107,7 +107,7 @@ def apply_record(book, record, pending, counts):
 def evaluate(day, reference=None):
     started = time.perf_counter()
     book = RestingBook()
-    windows = {label: Window(length) for label, length in (("64", 64), ("1024", 1024), ("span_to_date", None))}
+    windows = {"64": Window(64), "span_to_date": Window(None)}
     historical = Window(64)
     history_detail = deque(maxlen=64)
     checks = Counter()
@@ -187,6 +187,7 @@ def evaluate(day, reference=None):
                 window.add(counts)
                 if window.length is not None and len(window.groups) < window.length:
                     continue
+                groups_observed = checks["active_groups"] if window.length is None else len(window.groups)
                 identity = [cursor, record.ts_recv]
                 for side in ("A", "B"):
                     fills = window.totals["linked_fill", side]
@@ -205,6 +206,7 @@ def evaluate(day, reference=None):
                     if fills > removed:
                         unusual.append({
                             "cursor": cursor, "receive_ns": record.ts_recv, "side": side, "horizon": label,
+                            "groups_observed": groups_observed,
                             "linked_fill_qty": fills, "displayed_reduction_qty": removed,
                             "independently_sided_fill_qty": sided_fills, "explicit_wire_side_fill_qty": explicit_wire_fills,
                             "unchanged_display_fill_qty": unchanged,
