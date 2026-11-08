@@ -14,7 +14,7 @@ Sections A-C, E-H below are the original Oct 18 record and were computed on the 
 | Dipole cohort (863 candidates) | run on Oct 17 evening and Oct 18 tapes: 852 covered, 11 in the seam (section L) |
 | 99-plane / 13-input crosswalk | run (section M). Inputs are bound for Oct 18 only, so no cross-day comparison exists for them |
 | ROOT/Native/standalone output index for Oct 2/3/17 | not built; not re-checked for newer publications |
-| Prefix members (data commit 603c4def, per Claude Code) | not available to this pass; commit not reachable by short hash from my clone. My four days are single UTC members (see Caveats) |
+| Prefix members (evening members of the Oct 2 and Oct 17 sessions) | published on the branch (data commit b9ed761, UTC days 2023-10-01 and 2023-10-16; Claude Code cited 603c4def). Not used in this pass: my four days are single UTC members (see Caveats) |
 | Disagreements with Codex | recorded in L and M where compared line by line; earlier Codex conclusions outside those tables not yet compared |
 
 ## Conventions that hold for every number below
@@ -297,8 +297,8 @@ contract_session_roll_state for 13; aggressor_and_native_signed_flow for the pos
 
 ## Caveats on days
 
-- My Oct 2, 3, 17 and 18 members are single UTC days. Claude Code reports prefix members (the preceding evening, data commit 603c4def) that add the
-  22:00-24:00 UTC hours; I could not reach that commit by its short hash. Day counts from a prefix-complete run will differ from mine by those evening hours
+- My Oct 2, 3, 17 and 18 members are single UTC days. The branch now holds prefix members (the preceding evening, data commit b9ed761 for Oct 2 and Oct 17; Claude Code cited 603c4def) that add the
+  22:00-24:00 UTC hours; this pass did not use them, and the Codex and Claude Code logs carry full-session Oct 17 results that this log does not reconcile with. Day counts from a prefix-complete run will differ from mine by those evening hours
   (65 events on Oct 17 per Claude Code). My dipole cohort already uses the Oct 17 tape for the evening births.
 - Reserved exchange states (velocity or stop logic) are not observable in the mbo schema; only the closed-market and settle-window handling applies.
 
@@ -322,7 +322,7 @@ contract_session_roll_state for 13; aggressor_and_native_signed_flow for the pos
    observations_behind_threshold, searched_span_seconds, window_truncated) and research-atlas-v2/dipole-completed-group-flow.csv.gz (20 s signed ratio by second)
    to test whether one rule reproduces all 863 births and their timing, including the 6 to 50 s birth-to-emission gap; list births it misses or adds.
    Ids, cursors and timestamps stay provenance; no thresholds or verdicts unless asked.
-1. Re-run with prefix members (Oct 2, 3, 17, 18 plus the preceding evening) once the data commit is reachable; compare regime-row counts with these.
+1. Re-run with the published prefix members (Oct 2 and 17 evenings, data commit b9ed761; check Oct 3 and 18) and compare regime-row counts and cross-day agreement with the single-UTC-day numbers here; then reconcile with the full-session Oct 17 sections in the Codex and Claude Code logs.
 2. ROOT/Native/standalone output index for Oct 2/3/17: re-fetch the branch and map what has published; then run the dipole cohort on those days if candidates exist.
 3. Run c15 (pairs) and c18 (forward stack) per regime; they are date-parameterised but unrun on the four-day data.
 4. Dipole: record-level paths for the remaining cells beyond the eight cases; test whether the below-control move rate after recognition holds at group closes matched on flow state.
