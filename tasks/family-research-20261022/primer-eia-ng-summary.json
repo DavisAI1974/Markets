@@ -1,0 +1,126 @@
+{
+  "sources": {
+    "RNGWHHD": {
+      "url": "https://www.eia.gov/dnav/ng/hist_xls/RNGWHHDd.xls",
+      "sha256": "de1a4694257b3a8acc161087c268111d908b974b8963c122323fa6ba002c750b",
+      "first": "1997-01-07",
+      "last": "2026-11-03",
+      "observations": 5722
+    },
+    "RNGC1": {
+      "url": "https://www.eia.gov/dnav/ng/hist_xls/RNGC1d.xls",
+      "sha256": "6a84b4c42a8364ea8e4ee9f82ccad884855bd3983280effc1299e58ca69cd391",
+      "first": "1994-01-13",
+      "last": "2024-04-05",
+      "observations": 7496
+    },
+    "RNGC2": {
+      "url": "https://www.eia.gov/dnav/ng/hist_xls/RNGC2d.xls",
+      "sha256": "16937a6cc49c039b6c1cc1c5d171aeccefd8881a83caf0d6b08c411da7fe2256",
+      "first": "1994-01-12",
+      "last": "2024-04-05",
+      "observations": 7500
+    },
+    "RNGC3": {
+      "url": "https://www.eia.gov/dnav/ng/hist_xls/RNGC3d.xls",
+      "sha256": "94bbce4f009bb460733fa2bd7237b9e2e35bb77432325c9a6e11fe004ebbb535",
+      "first": "1994-01-19",
+      "last": "2024-04-05",
+      "observations": 7452
+    },
+    "RNGC4": {
+      "url": "https://www.eia.gov/dnav/ng/hist_xls/RNGC4d.xls",
+      "sha256": "d07c513467b17203f956875624e91daa5da45eda987c4ee1c2c4d58fe599224a",
+      "first": "1993-12-20",
+      "last": "2024-04-05",
+      "observations": 7453
+    }
+  },
+  "forecast_first_origin": "1997-02-14",
+  "forecast_last_origin": "2024-03-15",
+  "forecast_errors": {
+    "all": {
+      "n": 209,
+      "futures": {
+        "bias": 0.06087049587865155,
+        "mae": 0.4342295181787679,
+        "rmse": 0.6761118869573286
+      },
+      "prior_spot": {
+        "bias": 0.025578629849943406,
+        "mae": 0.49228805872799636,
+        "rmse": 0.7657859005406441
+      },
+      "trailing20_spot": {
+        "bias": 0.03508580688343625,
+        "mae": 0.5741744303390787,
+        "rmse": 0.8619929990178979
+      }
+    },
+    "abs_basis_under_5pct": {
+      "n": 133,
+      "futures": {
+        "bias": 0.05224861284774276,
+        "mae": 0.4120902183208402,
+        "rmse": 0.6531539244854869
+      },
+      "prior_spot": {
+        "bias": 0.029632071494359296,
+        "mae": 0.4102324301462818,
+        "rmse": 0.6450768289966049
+      },
+      "trailing20_spot": {
+        "bias": 0.03880876322368261,
+        "mae": 0.516619912977107,
+        "rmse": 0.7764380744281689
+      }
+    },
+    "abs_basis_5pct_or_more": {
+      "n": 76,
+      "futures": {
+        "bias": 0.07595879118274193,
+        "mae": 0.47297329293014145,
+        "rmse": 0.7145155311537048
+      },
+      "prior_spot": {
+        "bias": 0.0184851069722156,
+        "mae": 0.6358854087459969,
+        "rmse": 0.940457294747759
+      },
+      "trailing20_spot": {
+        "bias": 0.02857063328800512,
+        "mae": 0.6748948357225291,
+        "rmse": 0.9941527359971541
+      }
+    },
+    "2010_onward": {
+      "n": 171,
+      "futures": {
+        "bias": 0.041778787909684374,
+        "mae": 0.3895236000359249,
+        "rmse": 0.6297792953503577
+      },
+      "prior_spot": {
+        "bias": 0.012831419488631713,
+        "mae": 0.43875443670274855,
+        "rmse": 0.7031439427631365
+      },
+      "trailing20_spot": {
+        "bias": 0.034869431184538176,
+        "mae": 0.4896615717189406,
+        "rmse": 0.7555165872693116
+      }
+    }
+  },
+  "maturity": {
+    "paired_same_date_n": 4111,
+    "paired_same_date_rms": [
+      0.033544435992771314,
+      0.029865941538502562,
+      0.02678222700557155,
+      0.024368020149578177
+    ],
+    "paired_same_delivery_n": 339,
+    "paired_same_delivery_front_gt_fourth": 248
+  }
+}

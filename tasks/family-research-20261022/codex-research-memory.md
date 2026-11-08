@@ -148,3 +148,13 @@ snapshot, then record CCODE's final source revision before extending the other
 dates. Source coverage and job completion are separate requirements. Latest
 monitor snapshot in that file says three Native passes advancing, standalone
 queued; do not mistake this dated statement for live status.
+
+
+For full-session October 2 and October 17 raw-tape research, include the
+evening prefix before the date member. Use the October 1 UTC member for
+October 2 and the October 16 UTC member for October 17. Both are in the
+shared branch at `b9ed76186a75b597a507451bc8e9949b9c156d19`. Claude's
+handoff refers to `603c4def`. The reachable branch commit contains the
+prefix files and manifest. October 17 research with the prefix has 830
+detector events versus 765 without it. Record full-session research and
+the original partial RunPod outputs as separate scopes when merging.
