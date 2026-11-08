@@ -469,7 +469,7 @@ def main():
         trailing=summarise(results["trailing"]["rows"], "causal trailing 85th percentile (archived adapter)"),
     )
     (HERE / f"exhaustion-clock-{TAG}-summary.json").write_text(json.dumps(summary, indent=2, default=str) + "\n")
-    with gzip.open(HERE / "exhaustion-clock-oct18-events.jsonl.gz", "wt") as f:
+    with gzip.open(HERE / f"exhaustion-clock-{TAG}-events.jsonl.gz", "wt") as f:
         for mode in ("day", "trailing"):
             for r in results[mode]["rows"]:
                 f.write(json.dumps(dict(mode=mode, **r), default=str) + "\n")

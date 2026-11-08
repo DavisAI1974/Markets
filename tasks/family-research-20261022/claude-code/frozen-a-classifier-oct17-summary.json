@@ -1,0 +1,419 @@
+{
+  "events": 765,
+  "classifier_sha256": "698b956f2a9aad4b99ccb9afab916e7219123d10c82408b8d9340137c266ecb9",
+  "commit": "637778d6f460940379ac0feaf8223be47971c11f",
+  "a_state_counts": {
+    "A-persistent": 382,
+    "A-fast-collapse": 383
+  },
+  "proxy_vs_a_state": {
+    "persistent|A-persistent": 226,
+    "collapsed|A-persistent": 156,
+    "collapsed|A-fast-collapse": 383
+  },
+  "frozen_reveal_counts": {
+    "fast": 831,
+    "persistent": 785
+  },
+  "results": {
+    "price_either": {
+      "by_state": {
+        "A-fast-collapse": {
+          "3": {
+            "n": 383,
+            "observed": 383,
+            "censored": 0,
+            "km_median": 103,
+            "q25": 38.0,
+            "q75": 235.0,
+            "frozen_total": 358
+          },
+          "5": {
+            "n": 383,
+            "observed": 382,
+            "censored": 1,
+            "km_median": 303,
+            "q25": 120.25,
+            "q75": 739.25,
+            "frozen_total": 993
+          },
+          "8": {
+            "n": 383,
+            "observed": 379,
+            "censored": 4,
+            "km_median": 811,
+            "q25": 296.5,
+            "q75": 1854.0,
+            "frozen_total": 1802
+          },
+          "13": {
+            "n": 383,
+            "observed": 348,
+            "censored": 35,
+            "km_median": 2277,
+            "q25": 681.5,
+            "q75": 4028.5,
+            "frozen_total": 4386
+          }
+        },
+        "A-persistent": {
+          "3": {
+            "n": 382,
+            "observed": 382,
+            "censored": 0,
+            "km_median": 229,
+            "q25": 95.5,
+            "q75": 470.5,
+            "frozen_total": 700
+          },
+          "5": {
+            "n": 382,
+            "observed": 382,
+            "censored": 0,
+            "km_median": 535,
+            "q25": 238.0,
+            "q75": 1182.0,
+            "frozen_total": 1802
+          },
+          "8": {
+            "n": 382,
+            "observed": 379,
+            "censored": 3,
+            "km_median": 1284,
+            "q25": 531.0,
+            "q75": 2514.5,
+            "frozen_total": 3455
+          },
+          "13": {
+            "n": 382,
+            "observed": 354,
+            "censored": 28,
+            "km_median": 3003,
+            "q25": 1536.5,
+            "q75": 5539.75,
+            "frozen_total": 6836
+          }
+        }
+      },
+      "persistent_gt_fast_km": {
+        "3": true,
+        "5": true,
+        "8": true,
+        "13": true
+      }
+    },
+    "price_with": {
+      "by_state": {
+        "A-fast-collapse": {
+          "3": {
+            "n": 383,
+            "observed": 350,
+            "censored": 33,
+            "km_median": 691,
+            "q25": 155.25,
+            "q75": 1992.75,
+            "frozen_total": 358
+          },
+          "5": {
+            "n": 383,
+            "observed": 337,
+            "censored": 46,
+            "km_median": 1528,
+            "q25": 331.0,
+            "q75": 3361.0,
+            "frozen_total": 993
+          },
+          "8": {
+            "n": 383,
+            "observed": 319,
+            "censored": 64,
+            "km_median": 2642,
+            "q25": 675.5,
+            "q75": 5817.5,
+            "frozen_total": 1802
+          },
+          "13": {
+            "n": 383,
+            "observed": 274,
+            "censored": 109,
+            "km_median": 8906,
+            "q25": 1482.5,
+            "q75": 11710.0,
+            "frozen_total": 4386
+          }
+        },
+        "A-persistent": {
+          "3": {
+            "n": 382,
+            "observed": 364,
+            "censored": 18,
+            "km_median": 694,
+            "q25": 152.0,
+            "q75": 3338.0,
+            "frozen_total": 700
+          },
+          "5": {
+            "n": 382,
+            "observed": 356,
+            "censored": 26,
+            "km_median": 1909,
+            "q25": 436.0,
+            "q75": 6576.5,
+            "frozen_total": 1802
+          },
+          "8": {
+            "n": 382,
+            "observed": 336,
+            "censored": 46,
+            "km_median": 4205,
+            "q25": 1183.25,
+            "q75": 15399.5,
+            "frozen_total": 3455
+          },
+          "13": {
+            "n": 382,
+            "observed": 310,
+            "censored": 72,
+            "km_median": 9990,
+            "q25": 2509.75,
+            "q75": 19258.0,
+            "frozen_total": 6836
+          }
+        }
+      },
+      "persistent_gt_fast_km": {
+        "3": true,
+        "5": true,
+        "8": true,
+        "13": true
+      }
+    },
+    "mid_either": {
+      "by_state": {
+        "A-fast-collapse": {
+          "3": {
+            "n": 383,
+            "observed": 383,
+            "censored": 0,
+            "km_median": 127,
+            "q25": 50.0,
+            "q75": 325.5,
+            "frozen_total": 358
+          },
+          "5": {
+            "n": 383,
+            "observed": 382,
+            "censored": 1,
+            "km_median": 360,
+            "q25": 137.25,
+            "q75": 962.75,
+            "frozen_total": 993
+          },
+          "8": {
+            "n": 383,
+            "observed": 379,
+            "censored": 4,
+            "km_median": 1026,
+            "q25": 330.0,
+            "q75": 2093.5,
+            "frozen_total": 1802
+          },
+          "13": {
+            "n": 383,
+            "observed": 343,
+            "censored": 40,
+            "km_median": 2525,
+            "q25": 755.0,
+            "q75": 4223.5,
+            "frozen_total": 4386
+          }
+        },
+        "A-persistent": {
+          "3": {
+            "n": 382,
+            "observed": 382,
+            "censored": 0,
+            "km_median": 288,
+            "q25": 113.5,
+            "q75": 596.75,
+            "frozen_total": 700
+          },
+          "5": {
+            "n": 382,
+            "observed": 382,
+            "censored": 0,
+            "km_median": 663,
+            "q25": 279.5,
+            "q75": 1418.0,
+            "frozen_total": 1802
+          },
+          "8": {
+            "n": 382,
+            "observed": 372,
+            "censored": 10,
+            "km_median": 1520,
+            "q25": 620.25,
+            "q75": 2815.0,
+            "frozen_total": 3455
+          },
+          "13": {
+            "n": 382,
+            "observed": 352,
+            "censored": 30,
+            "km_median": 3341,
+            "q25": 1810.25,
+            "q75": 6585.5,
+            "frozen_total": 6836
+          }
+        }
+      },
+      "persistent_gt_fast_km": {
+        "3": true,
+        "5": true,
+        "8": true,
+        "13": true
+      }
+    },
+    "mid_with": {
+      "by_state": {
+        "A-fast-collapse": {
+          "3": {
+            "n": 383,
+            "observed": 350,
+            "censored": 33,
+            "km_median": 707,
+            "q25": 158.0,
+            "q75": 2520.75,
+            "frozen_total": 358
+          },
+          "5": {
+            "n": 383,
+            "observed": 339,
+            "censored": 44,
+            "km_median": 1582,
+            "q25": 348.5,
+            "q75": 3841.5,
+            "frozen_total": 993
+          },
+          "8": {
+            "n": 383,
+            "observed": 319,
+            "censored": 64,
+            "km_median": 3133,
+            "q25": 768.5,
+            "q75": 7201.0,
+            "frozen_total": 1802
+          },
+          "13": {
+            "n": 383,
+            "observed": 273,
+            "censored": 110,
+            "km_median": 9355,
+            "q25": 1570.0,
+            "q75": 12074.0,
+            "frozen_total": 4386
+          }
+        },
+        "A-persistent": {
+          "3": {
+            "n": 382,
+            "observed": 363,
+            "censored": 19,
+            "km_median": 780,
+            "q25": 171.0,
+            "q75": 3646.0,
+            "frozen_total": 700
+          },
+          "5": {
+            "n": 382,
+            "observed": 356,
+            "censored": 26,
+            "km_median": 2208,
+            "q25": 497.75,
+            "q75": 6611.5,
+            "frozen_total": 1802
+          },
+          "8": {
+            "n": 382,
+            "observed": 335,
+            "censored": 47,
+            "km_median": 4804,
+            "q25": 1199.0,
+            "q75": 15519.0,
+            "frozen_total": 3455
+          },
+          "13": {
+            "n": 382,
+            "observed": 311,
+            "censored": 71,
+            "km_median": 10222,
+            "q25": 2706.5,
+            "q75": 19958.5,
+            "frozen_total": 6836
+          }
+        }
+      },
+      "persistent_gt_fast_km": {
+        "3": true,
+        "5": true,
+        "8": true,
+        "13": true
+      }
+    }
+  },
+  "countdown_check": {
+    "A-fast-collapse": {
+      "3": {
+        "frozen_remaining_at_plus60": 298,
+        "realised_km_median_remaining": 832,
+        "reached_before_plus60": 49,
+        "n": 383
+      },
+      "5": {
+        "frozen_remaining_at_plus60": 933,
+        "realised_km_median_remaining": 1648,
+        "reached_before_plus60": 19,
+        "n": 383
+      },
+      "8": {
+        "frozen_remaining_at_plus60": 1742,
+        "realised_km_median_remaining": 2847,
+        "reached_before_plus60": 11,
+        "n": 383
+      },
+      "13": {
+        "frozen_remaining_at_plus60": 4326,
+        "realised_km_median_remaining": 8960,
+        "reached_before_plus60": 1,
+        "n": 383
+      }
+    },
+    "A-persistent": {
+      "3": {
+        "frozen_remaining_at_plus60": 640,
+        "realised_km_median_remaining": 858,
+        "reached_before_plus60": 46,
+        "n": 382
+      },
+      "5": {
+        "frozen_remaining_at_plus60": 1742,
+        "realised_km_median_remaining": 1932,
+        "reached_before_plus60": 17,
+        "n": 382
+      },
+      "8": {
+        "frozen_remaining_at_plus60": 3395,
+        "realised_km_median_remaining": 4203,
+        "reached_before_plus60": 2,
+        "n": 382
+      },
+      "13": {
+        "frozen_remaining_at_plus60": 6776,
+        "realised_km_median_remaining": 9930,
+        "reached_before_plus60": 0,
+        "n": 382
+      }
+    }
+  },
+  "note": "A classifier applied to all detected events, not only frozen Family A; the pre-family A/B/C artifact is not in this repository. Times are seconds from t0 to the first forward-filled price k ticks away; KM medians handle session-end censoring."
+}
