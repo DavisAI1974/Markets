@@ -1,0 +1,41 @@
+{
+  "scope": "Native book replay only. October 3 has no archived book-value comparison in this receipt.",
+  "sessions": [
+    {
+      "session": "20231003",
+      "tape_git_commit": "1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202",
+      "adapter_git_commit": "af36937d1e478831d4c7bc612c98d969e9a0848b",
+      "session_manifest_commit": "93895487c199b1e486d5407f9e103a0964903d2d",
+      "sealed_receipt_commit": "c28a4de13263b6354662cd376fecc7733b47a991",
+      "databento_version": "0.81.0",
+      "integrity": {
+        "150611": {}
+      },
+      "opening_warmup_records": 808453,
+      "opening_snapshot_records": 733,
+      "opening_resting_orders": 725,
+      "records": 879830,
+      "completed_groups": 653912,
+      "archived_books_compared": 0,
+      "wall_seconds": 632.93
+    },
+    {
+      "session": "20231018",
+      "tape_git_commit": "1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202",
+      "adapter_git_commit": "af36937d1e478831d4c7bc612c98d969e9a0848b",
+      "session_manifest_commit": "93895487c199b1e486d5407f9e103a0964903d2d",
+      "sealed_receipt_commit": "c28a4de13263b6354662cd376fecc7733b47a991",
+      "databento_version": "0.81.0",
+      "integrity": {
+        "150611": {}
+      },
+      "opening_warmup_records": 841601,
+      "opening_snapshot_records": 738,
+      "opening_resting_orders": 790,
+      "records": 771787,
+      "completed_groups": 583688,
+      "archived_books_compared": 22194,
+      "wall_seconds": 596.72
+    }
+  ]
+}

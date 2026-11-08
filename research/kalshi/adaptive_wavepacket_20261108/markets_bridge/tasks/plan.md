@@ -69,7 +69,7 @@ Keep BuildMap scanner/viewer and the algebraic five-step, Level 2 and predictive
 
 ## October 18 coverage gate
 
-The original AWS tape was unavailable when this gate was set. The Git redownload passed the source checks below. New scoring is pending full opening-book replay and seam reconciliation. The Git projection contains 22,194 consecutive completed books for instrument 150611, groups 229201 through 251394, from 13:07:12.293731473 to 13:19:12.020583540 UTC. All adjacent group numbers and increasing cursors were checked. This window is 3.8% of the 583,688 completed groups in the sealed-session receipt. Sparse book views, the 30,739 original trade links and the 8,088 saved flow-second rows remain evidence. They do not reconstruct the remaining consecutive book and flow history. The 13-data-point external attachment remains linked separately.
+The original AWS tape was unavailable when this gate was set. The Git redownload passed the source checks below. The pinned native adapter replayed both complete sessions. The October 3 opening order count and session counts matched its original receipt. The archived book-value comparison is available for October 18. The opening resting order count and all 22,194 archived book values checked at their original closes matched. Full calculation scoring still requires the complete pinned inputs and independent calculation checks. The Git projection contains 22,194 consecutive completed books for instrument 150611, groups 229201 through 251394, from 13:07:12.293731473 to 13:19:12.020583540 UTC. All adjacent group numbers and increasing cursors were checked. This window is 3.8% of the 583,688 completed groups in the sealed-session receipt. Sparse book views, the 30,739 original trade links and the 8,088 saved flow-second rows remain evidence. They do not reconstruct the remaining consecutive book and flow history. The 13-data-point external attachment remains linked separately.
 
 The smaller recovery route is the two exact raw MBO members:
 
@@ -102,11 +102,13 @@ Read the four daily DBN files at `1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202` on `
 | October 3 | 808,453 | 879,830 | 653,912 |
 | October 18 | 841,601 | 771,787 | 583,688 |
 
-Both session cuts and completed-group counts match the old sealed receipts. On October 18, all 30,739 native trade rows match the archived trade links by source cursor, group-close cursor, event, receive and availability clocks, instrument, raw price and size. All 22,194 archived book closes match the original group ordinal, cursor, event and receive clocks, and instrument. This comparison checked coordinates. Reconstruct and compare book values before scoring.
+Both session cuts and completed-group counts match the old sealed receipts. See the [native replay receipt](book-replay-receipt.json). On October 18, all 30,739 native trade rows match the archived trade links by source cursor, group-close cursor, event, receive and availability clocks, instrument, raw price and size. All 22,194 archived book closes match the original group ordinal, cursor, event and receive clocks, and instrument. The subsequent native replay also checked each archived close's exact touch price, touch size and order count, top-ten depth, full depth and price-level counts on both sides. All comparisons passed.
 
 Keep the four daily files intact and decode their native records in session order. Warm the opening book from the previous UTC member and apply native snapshots at their recorded positions across the midnight seam. Continuous rule state follows the verified trading session and each rule's declared reset boundaries. If a future file is split for storage, reassemble it byte for byte and verify the original hash before decoding. Chunk boundaries have no trading-session meaning.
 
 ## Complete pinned calculation scope
+
+Resolve the [ROOT and inherited calculation audit](root-calculation-audit.md) before admitting expanded market inputs. Rebuild the eligible feature matrix from the original source observations and role contracts. Verify calculations against independently derived source values. Use historical equality to test reproduction and record any original errors separately. Preserve the frozen V3 matrix for historical comparison.
 
 Run the complete pinned input set together for each requested session. Storage limits cannot remove observations, reduce book depth, omit a plane, shorten a required history, or change calculation definitions. Use lossless compression or restore and verify every byte of any storage chunks before reading them. Keep the raw and external sources, mappings, code, coverage and results pinned. Measure runtime scratch space and durable output size separately before choosing storage for the full outputs.
 
