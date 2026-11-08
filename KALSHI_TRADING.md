@@ -30,6 +30,18 @@ superseded ones down. (Started S81, 2026-07-12.)
 > `lag_join_intraday.py` duplicated ~80% of `lag_join.py` and was folded back in.) Check this index
 > before creating any file.
 
+> **ADAPTIVE WAVEPACKET / BUILDMAP MIGRATION (2026-11-08, branch
+> `research/markets-adaptive-wavepacket-migration-20261108`).** `research/kalshi/adaptive_wavepacket_20261108/`
+> holds the Adaptive Locality research engine (Cauchy/wave-packet/sphere-packing/Neumann program, five-step
+> H/MI/FI coupling, Level 2 directional dipoles, geometry controls, research-hold registry) and the native
+> BuildMap scanner/viewer, migrated byte-exact from `DavisAI1974/BuildMap@8b4295d` into
+> `buildmap_source_snapshot/` (frozen provenance; never edited). Read in order: `MIGRATION_STATUS_20261108.md`,
+> `MIGRATION_COMPLETE_VERIFICATION_20261108.md`, `CCODE_INDEPENDENT_REVIEW_20261108.md` (findings, math
+> derivations, nothing-dropped register, tests-remaining matrix, plan). Fixes land in `working_tree/`.
+> BuildMap is an INCLUDED Markets component; integration and scientific acceptance are still open. Nothing
+> here touches odcore, Frankie or the collectors; the "dipole" in this package is a fifth distinct object
+> (coefficient-ratio balance B), see review section 6.
+
 Data stores are LOCAL/gitignored (too big for git): `data/kalshi_hist_trades/` (historical trades),
 `data/pyth_ticks/` (Pyth + Databento NYMEX trades ticks), `data/nymex_mbp10/` (S86: MBP-10 trade+book
 depth tape), `data/kalshi/` (live bins + consensus). **S90: ALL Databento (bento) tapes now live on AWS S3,

@@ -4,9 +4,14 @@ Date: 2026-11-08
 Reviewer: Claude Code (read-only session on `research/markets-adaptive-wavepacket-migration-20261108`)
 Branch HEAD reviewed: `c073460` (Markets). Snapshot source: `DavisAI1974/BuildMap@8b4295d` (branch `feat/adaptive-locality-engine-20261108`).
 
-STATUS: PRELIMINARY READ-ONLY REVIEW. The file transfer is still declared IN PROGRESS by the owner. No final
-completeness verdict, no migration acceptance, no code modification, no merge, no deploy, no AWS/Frankie/Search
-action was taken. Nothing in this review authorizes any of those.
+STATUS UPDATE 2026-11-08: the owner declared the file transfer COMPLETE at Markets commit `dae3de0` (133/133).
+The final source-completeness verification is in `MIGRATION_COMPLETE_VERIFICATION_20261108.md` (tree identity
+both directions, manifest consistency, Markets untouched, secret scan, 87 tests from the committed bytes). The
+scientific and integration findings below remain OPEN; fixes are being applied in a Markets-owned working copy
+(`working_tree/`), never in `buildmap_source_snapshot/`, which stays byte-exact as provenance.
+
+Original status at first publication: PRELIMINARY READ-ONLY REVIEW while the transfer was in progress. No merge,
+no deploy, no AWS/Frankie/Search action was taken. Nothing in this review authorizes any of those.
 
 GOVERNING RULE APPLIED THROUGHOUT: NOTHING SCIENTIFIC IS DROPPED. Every finding below that challenges an inference
 records the inference, its evidence and the counter-evidence side by side. Unverified items are labelled
