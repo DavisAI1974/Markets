@@ -1,0 +1,44 @@
+{
+  "inspected_code_revision": "e5d7ec4b05167a9610a8697e4f64d1558f38c84d",
+  "book_path": "tasks/family-research-20261022/audit_october18_touch_mechanisms.py",
+  "tape_revision": "1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202",
+  "scope": "Only initial snapshot records inspected and applied; no producer or full-day audit rerun.",
+  "members": [
+    {
+      "day": "20231017",
+      "tape_path": "data/nymex_mbo/ng_v0_oct2023/NG_v0_mbo_20231017.dbn.zst",
+      "first_record": {
+        "action": "R",
+        "flags": 40,
+        "receive_ns": "1697500800000000000"
+      },
+      "snapshot_counts": {
+        "R": 1,
+        "A": 737
+      },
+      "reconstructed_orders": 737,
+      "preexisting_sentinel_cleared": true,
+      "first_non_snapshot_index": 738,
+      "first_non_snapshot_flags": 128,
+      "pending_empty_at_snapshot_end": true
+    },
+    {
+      "day": "20231018",
+      "tape_path": "data/nymex_mbo/ng_v0_oct2023/NG_v0_mbo_20231018.dbn.zst",
+      "first_record": {
+        "action": "R",
+        "flags": 40,
+        "receive_ns": "1697587200000000000"
+      },
+      "snapshot_counts": {
+        "R": 1,
+        "A": 717
+      },
+      "reconstructed_orders": 717,
+      "preexisting_sentinel_cleared": true,
+      "first_non_snapshot_index": 718,
+      "first_non_snapshot_flags": 128,
+      "pending_empty_at_snapshot_end": true
+    }
+  ]
+}
