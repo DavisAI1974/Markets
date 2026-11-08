@@ -40,3 +40,20 @@ The [producer source fix](https://github.com/DavisAI1974/Markets/commit/36212b9e
 keeps the coordinator on the wider lane while it launches the reader pool,
 then pins it once the first decoded row arrives. The live jobs retain their
 original runtime revision and use the watcher where needed.
+
+## Serial Native recovery
+
+October 2 reached the serial Native stage after legacy ROOT. Python 3.12
+refused the encoder's Python 3.13 shared-memory attachment argument. A
+3.13 interpreter can attach but has a different checkpoint runtime identity.
+The recovery launcher keeps the original interpreter and calculation code.
+It registers the pinned adapter before the checkpoint path imports Markets
+research modules and adapts the evidence encoder's attachment call to the
+single resource tracker shared by ROOT and its encoder on Python 3.12.
+
+The original date lock and sealed input remain the recovery boundary. The
+launcher reuses completed legacy evidence and retries Native from the saved
+checkpoint. It restarts the existing standalone waiter once the retry starts.
+For another date still running the original command, the recovery watcher
+waits for this specific error and exits if the original producer seals.
+[Bootstrap](runpod_root_bootstrap.py) · [Recovery watcher](runpod_watch_native_compat.sh)

@@ -7,7 +7,7 @@ case "$day" in 20231002|20231003|20231017) ;; *) exit 64 ;; esac
 base=/opt/frankie-box
 ctl=$base/replay-control
 markets=$base/replay-code/markets
-py=$base/replay-code/venv/bin/python
+py=${FRANKIE_REPLAY_PYTHON:-$base/replay-code/venv/bin/python}
 logs=$ctl/$day
 mkdir -p "$logs"
 exec 9>"$logs/job.lock"
@@ -73,7 +73,9 @@ stage=root-native
 mark "$stage"
 resume=()
 if [[ -d "$root" ]]; then resume=(--resume); fi
-"$py" -u deploy/aws/box/frankie_box_experiment_root.py \
+root_command=("$py" -u)
+if [[ -n ${FRANKIE_REPLAY_BOOTSTRAP:-} ]]; then root_command+=("$FRANKIE_REPLAY_BOOTSTRAP"); fi
+"${root_command[@]}" deploy/aws/box/frankie_box_experiment_root.py \
   --commit "$commit" --ingestion-receipt "$receipt" --ingestion-receipt-sha256 "$receipt_sha" \
   --day "$day" --day-role discovery --output-root "$root" --data-workers 31 \
   --digest off --bedrock on --shared-market-policy "$policy" "${resume[@]}" > "$logs/root.log" 2>&1
