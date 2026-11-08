@@ -6,6 +6,8 @@ the UTC midnight snapshots. October 3 and 18 have full-session tape coverage.
 Each date gets its own observed signals, including opposing calls, flats,
 misses and unavailable inputs. Keep original group and cursor coordinates.
 
+Use the [trade chart and signal research guide](reading-trade-charts-and-signals.md) to interpret event sequences, measure the moves that follow, and define replay and paper-test comparisons.
+
 ## What to watch across all four dates
 
 Describe the ordered behavior at the touch and link the observations that

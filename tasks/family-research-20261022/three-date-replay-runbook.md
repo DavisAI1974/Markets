@@ -4,6 +4,8 @@
 
 The [November 8 execution update](runpod/discovery-execution-20261108.md) controls the current RunPod discovery pass. It hands ROOT and Native tables directly to the standalone component. The original repeat below records the broader historical workflow.
 
+Use the [trade chart and signal research guide](reading-trade-charts-and-signals.md) to interpret event sequences, measure the moves that follow, and define replay and paper-test comparisons.
+
 ## What the earlier sessions established
 
 The relevant Work chats, including **Assembly fitting update** and **Planning Options Review**, record the audit of the approximately 1.59 million planned Search selections. Sampled groups included order IDs and arbitrary saved list positions. That number was a count of overlapping selections in an old work plan. Later discussions distinguished it from both pair-slot estimates and actual calculations. The family research used a separate SQLite-to-Julia route. The user left old Search unchanged.
