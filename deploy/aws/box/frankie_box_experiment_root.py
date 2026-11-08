@@ -390,13 +390,12 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
                             listed='this day opens at the prior halt and its ingest had no opening book; the legacy pass '
                                    'starts from an empty book')
     journal = directory / receipt['journal_file']
-    # Hashed once per ROOT process: the stat-keyed cache (frankie_box_filehash) is the one Session.derive's input
-    # reader witnesses the same container with, so the multi-GB journal is read for its sha256 once, not twice. Same
-    # bytes, same sha256, same refusal on any difference.
-    import frankie_box_filehash
-    journal_witness = frankie_box_filehash.witness(journal)
-    if journal_witness != dict(bytes=receipt['journal_bytes'], sha256=receipt['journal_sha256']):
-        raise ValueError('the sealed journal differs from its ingestion receipt (bytes or sha256)')
+    # Reuse ingest's measurement for an unchanged journal. The INPUT extraction
+    # still decodes the original blocks for the calculation.
+    from frankie_box_boss_session import _artifact_check, _load_file_claims
+    journal_pin = dict(path=str(safe_path(journal)), bytes=receipt['journal_bytes'],
+                       sha256=receipt['journal_sha256'])
+    _, journal_hash_basis = _artifact_check(journal_pin, _load_file_claims(directory), 'claim')
     completion_path = directory / 'completion.json'
     completion = json.loads(completion_path.read_bytes())
     for key in ('record_count', 'journal_count', 'journal_hash'):
@@ -694,9 +693,8 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
         # additive (session 6, the ROOT AWS treatment audit): stated, not measured. How this ROOT's file hashes were
         # taken and that it moved no bytes over S3 itself (its inputs are the sealed ingest and the attached day file
         # read in place; the day file's fetch and the outputs' archive are other pieces with their own receipts).
-        hash_basis='frankie_box_filehash.witness: one streamed sha256 per unchanged file per process (16 MiB reads), '
-                   'keyed on path, device, inode, size, mtime_ns, ctime_ns; no stat-only skip across processes '
-                   '(Greg\'s open call (c) undecided); the spool witnesses are the reference layers\' single scans',
+        hash_basis=journal_hash_basis,
+        spool_hash_basis='reference-layer scans witness their input spools',
         s3_transfer='none in this process: the sealed journal, the opening book and day-external.json are read in '
                     'place; the presigned day-external fetch (frankie_box_day_external, shared transport) and the '
                     'archive/offload of the outputs carry their own transport receipts')
@@ -751,6 +749,8 @@ def main():
                                                          exit_code=RESUME_REFUSED_EXIT), sort_keys=True), flush=True)
         sys.exit(RESUME_REFUSED_EXIT)
     print(json.dumps(result, sort_keys=True), flush=True)
+    if result['status'] != 'calculations_retained':
+        sys.exit(1)
 
 
 if __name__ == '__main__':

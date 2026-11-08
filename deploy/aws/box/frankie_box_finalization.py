@@ -223,5 +223,20 @@ def reconcile_all(sinks, *, member, lifecycle, legacy, progress=None):
     return result
 
 
+def written_ledgers(sinks, identities, *, member, lifecycle, legacy):
+    """Publish the just-closed writers' digests and exact counters without a second disk pass."""
+    result = {}
+    for name, expected in (('member', member), ('lifecycle', lifecycle), ('legacy', legacy)):
+        sink = getattr(sinks, name)
+        receipt = sink.receipt()
+        observed = identities[sink.ledger]
+        if (not sink._closed or not sink._handle.closed or file_identity(sink.path) != observed
+                or receipt['bytes'] != observed[2] or receipt['row_count'] != expected):
+            raise ValueError('closed ledger differs from the writer byte or row count')
+        result[sink.ledger] = dict(receipt, reconciled_against_counter=expected,
+                                   verification_basis='closed_write_stream')
+    return result
+
+
 def execution_receipt(sinks):
     return {name:dict(_CACHE[getattr(sinks,name)][2]) for name in ('member','lifecycle','legacy')}

@@ -111,7 +111,8 @@ def ledger_file_identity(path):
 
 
 def reconciled_ledger_witness(sink, receipt, observed):
-    """Reuse actual disk readback, never a checkpoint's unverified counters."""
+    """Reuse the published ledger witness while the closed file is unchanged."""
+    rows = receipt['reconciled_against_counter']
     if (not sink._closed or not sink._handle.closed
             or ledger_file_identity(sink.path) != observed
             or receipt['path'] != str(sink.path)
@@ -119,11 +120,11 @@ def reconciled_ledger_witness(sink, receipt, observed):
             or receipt['bytes'] != sink._bytes
             or receipt['sha256'] != sink._digest.hexdigest()
             or receipt['row_count'] != sink.rows_written
-            or receipt['rows_read_back_from_disk'] != sink.rows_written
-            or receipt['reconciled_against_counter'] != sink.rows_written):
+            or rows != sink.rows_written
+            or ('rows_read_back_from_disk' in receipt and receipt['rows_read_back_from_disk'] != rows)):
         raise ValueError('ledger changed after its completed disk reconciliation')
     return dict(bytes=receipt['bytes'], sha256=receipt['sha256'],
-                path=str(sink.path), rows=receipt['rows_read_back_from_disk'])
+                path=str(sink.path), rows=rows)
 
 
 class RowSpool(list):
@@ -473,7 +474,7 @@ def recovery_checkpoint(out_dir):
 
 def run(records, container, out_dir, producers, cycle, code_commit, day, *, progress=None, source_manifest=None,
         resume_checkpoint=None, reconstruct_missing=False, opening_adapter_state=None, opening_book=None,
-        save_requested=None, recovery=False):
+        save_requested=None, recovery=False, ledger_readback=True):
     """The pinned traversal on this cycle's rows: identity -> NativeCalculationRun (the launcher's canonical arguments) ->
     NativeReplayDriver(ExchangeSessionRule, NeverInvoke, LedgerSinks) -> consume -> finalize -> reconcile (a mismatch
     raises: a ledger that does not match its counter is not evidence). Files result.json (the exact rows live in the
@@ -675,9 +676,14 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
         sink.close()
     ledger_identities = {sink.ledger: ledger_file_identity(sink.path) for sink in finalized_sinks}
     import frankie_box_finalization as finalization
-    result['ledger_retention'] = finalization.reconcile_all(
-        sinks, member=calculation.member_rows_written, lifecycle=calculation.lifecycle_rows_written,
-        legacy=driver.counters.legacy_rows_retained, progress=progress)
+    counters = dict(member=calculation.member_rows_written, lifecycle=calculation.lifecycle_rows_written,
+                    legacy=driver.counters.legacy_rows_retained)
+    if ledger_readback:
+        result['ledger_retention'] = finalization.reconcile_all(sinks, **counters, progress=progress)
+        ledger_verification = finalization.execution_receipt(sinks)
+    else:
+        result['ledger_retention'] = finalization.written_ledgers(sinks, ledger_identities, **counters)
+        ledger_verification = dict(basis='closed writer byte counts and digests', disk_readback=False)
     if driver.counters.records_seen != len(records):
         raise ValueError('final native state is not complete')
     driver._frankie_final_result = result
@@ -694,7 +700,6 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
     result['runner_result_hash'] = result.pop('result_hash')
     result['result_hash'] = canonical_hash(result)
     result_witness = write_json(out_dir / 'result.json', result)
-    # The unchanged reconciliation already measured all three fields from disk.
     # The full-state checkpoint writes elsewhere; refuse reuse if any ledger's
     # inode, extent or write timestamps changed in the meantime.
     ledgers = {
@@ -724,7 +729,7 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
                        auxiliary_policy=getattr(driver, '_frankie_auxiliary_policy', None),
                        evidence_policy=getattr(driver, '_frankie_evidence_policy', None),
                        evidence_metrics=getattr(driver, '_frankie_evidence_metrics', {}),
-                       ledger_verification=finalization.execution_receipt(sinks),
+                       ledger_verification=ledger_verification,
                        ledger_materialization={name:getattr(getattr(sinks, name), '_frankie_ledger_transfer', None)
                            for name in ('member', 'lifecycle', 'legacy')},
                        reconstruction_boundary=getattr(driver, '_frankie_parallel_boundary', None),
