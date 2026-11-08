@@ -1,5 +1,7 @@
 # CCODE COPY/PASTE DROP-IN — MARKETS MIGRATION STILL TRANSFERRING
 
+> **MIGRATION STATUS UPDATE:** The [latest audited inventory](MIGRATION_STATUS_20261108.md) confirms **131 of 133 original source files copied with exact matching Git blob SHAs**. The only two remaining source files are the original DOCX and PDF binary reports, still linked and recorded by source SHA. **Transfer is not declared complete; Claude Code may begin read-only review but should defer any final completeness verdict.** The earlier 63-file figure below records the count when this handoff was first published.
+
 @GitHub
 
 Repository: `DavisAI1974/Markets`
