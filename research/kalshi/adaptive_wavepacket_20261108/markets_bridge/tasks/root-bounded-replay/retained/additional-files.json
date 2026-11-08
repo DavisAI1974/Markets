@@ -1,0 +1,17 @@
+{
+  "pinned-source-excerpts/E2E_ONE_DAY_20231018.md": {
+    "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/pinned-source-excerpts/E2E_ONE_DAY_20231018.md",
+    "sha256": "ce7a704eb9f27199549f0803f9ff01137e8d8a29c0a26097a01f9a7b59c4cd82",
+    "bytes": 220000
+  },
+  "audit-drafts/audit-report.md": {
+    "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/audit-drafts/audit-report.md",
+    "sha256": "34f39b80705f5c08849c797f76764e607c88865faea4f88a795ac8bafcb7d0c9",
+    "bytes": 8737
+  },
+  "audit-drafts/ng_runner.py": {
+    "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/audit-drafts/ng_runner.py",
+    "sha256": "0334b1b8cf926544e62ade8db101c9cb1258ad8724bb7288c734a3764333af7f",
+    "bytes": 32698
+  }
+}
