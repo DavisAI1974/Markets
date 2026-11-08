@@ -1,15 +1,15 @@
 {
-  "events": 765,
+  "events": 830,
   "classifier_sha256": "698b956f2a9aad4b99ccb9afab916e7219123d10c82408b8d9340137c266ecb9",
   "commit": "637778d6f460940379ac0feaf8223be47971c11f",
   "a_state_counts": {
-    "A-persistent": 382,
-    "A-fast-collapse": 383
+    "A-fast-collapse": 400,
+    "A-persistent": 430
   },
   "proxy_vs_a_state": {
-    "persistent|A-persistent": 226,
-    "collapsed|A-persistent": 156,
-    "collapsed|A-fast-collapse": 383
+    "collapsed|A-fast-collapse": 400,
+    "persistent|A-persistent": 268,
+    "collapsed|A-persistent": 162
   },
   "frozen_reveal_counts": {
     "fast": 831,
@@ -20,77 +20,77 @@
       "by_state": {
         "A-fast-collapse": {
           "3": {
-            "n": 383,
-            "observed": 383,
+            "n": 400,
+            "observed": 400,
             "censored": 0,
-            "km_median": 103,
-            "q25": 38.0,
-            "q75": 235.0,
+            "km_median": 111,
+            "q25": 40.0,
+            "q75": 260.0,
             "frozen_total": 358
           },
           "5": {
-            "n": 383,
-            "observed": 382,
+            "n": 400,
+            "observed": 399,
             "censored": 1,
-            "km_median": 303,
-            "q25": 120.25,
-            "q75": 739.25,
+            "km_median": 315,
+            "q25": 126.0,
+            "q75": 899.5,
             "frozen_total": 993
           },
           "8": {
-            "n": 383,
-            "observed": 379,
+            "n": 400,
+            "observed": 396,
             "censored": 4,
-            "km_median": 811,
-            "q25": 296.5,
-            "q75": 1854.0,
+            "km_median": 871,
+            "q25": 317.5,
+            "q75": 2062.5,
             "frozen_total": 1802
           },
           "13": {
-            "n": 383,
-            "observed": 348,
+            "n": 400,
+            "observed": 365,
             "censored": 35,
-            "km_median": 2277,
-            "q25": 681.5,
-            "q75": 4028.5,
+            "km_median": 2506,
+            "q25": 743.0,
+            "q75": 4321.0,
             "frozen_total": 4386
           }
         },
         "A-persistent": {
           "3": {
-            "n": 382,
-            "observed": 382,
+            "n": 430,
+            "observed": 430,
             "censored": 0,
-            "km_median": 229,
-            "q25": 95.5,
-            "q75": 470.5,
+            "km_median": 261,
+            "q25": 111.5,
+            "q75": 563.0,
             "frozen_total": 700
           },
           "5": {
-            "n": 382,
-            "observed": 382,
+            "n": 430,
+            "observed": 430,
             "censored": 0,
-            "km_median": 535,
-            "q25": 238.0,
-            "q75": 1182.0,
+            "km_median": 683,
+            "q25": 264.0,
+            "q75": 1371.75,
             "frozen_total": 1802
           },
           "8": {
-            "n": 382,
-            "observed": 379,
+            "n": 430,
+            "observed": 427,
             "censored": 3,
-            "km_median": 1284,
-            "q25": 531.0,
-            "q75": 2514.5,
+            "km_median": 1441,
+            "q25": 628.0,
+            "q75": 2777.0,
             "frozen_total": 3455
           },
           "13": {
-            "n": 382,
-            "observed": 354,
+            "n": 430,
+            "observed": 402,
             "censored": 28,
-            "km_median": 3003,
-            "q25": 1536.5,
-            "q75": 5539.75,
+            "km_median": 3622,
+            "q25": 1795.25,
+            "q75": 6918.0,
             "frozen_total": 6836
           }
         }
@@ -106,77 +106,77 @@
       "by_state": {
         "A-fast-collapse": {
           "3": {
-            "n": 383,
-            "observed": 350,
+            "n": 400,
+            "observed": 367,
             "censored": 33,
-            "km_median": 691,
-            "q25": 155.25,
-            "q75": 1992.75,
+            "km_median": 739,
+            "q25": 158.0,
+            "q75": 2178.0,
             "frozen_total": 358
           },
           "5": {
-            "n": 383,
-            "observed": 337,
+            "n": 400,
+            "observed": 354,
             "censored": 46,
-            "km_median": 1528,
-            "q25": 331.0,
-            "q75": 3361.0,
+            "km_median": 1651,
+            "q25": 347.0,
+            "q75": 4512.75,
             "frozen_total": 993
           },
           "8": {
-            "n": 383,
-            "observed": 319,
+            "n": 400,
+            "observed": 336,
             "censored": 64,
-            "km_median": 2642,
-            "q25": 675.5,
-            "q75": 5817.5,
+            "km_median": 2931,
+            "q25": 709.5,
+            "q75": 7085.75,
             "frozen_total": 1802
           },
           "13": {
-            "n": 383,
-            "observed": 274,
-            "censored": 109,
-            "km_median": 8906,
-            "q25": 1482.5,
-            "q75": 11710.0,
+            "n": 400,
+            "observed": 290,
+            "censored": 110,
+            "km_median": 9371,
+            "q25": 1648.75,
+            "q75": 12121.5,
             "frozen_total": 4386
           }
         },
         "A-persistent": {
           "3": {
-            "n": 382,
-            "observed": 364,
+            "n": 430,
+            "observed": 412,
             "censored": 18,
-            "km_median": 694,
-            "q25": 152.0,
-            "q75": 3338.0,
+            "km_median": 823,
+            "q25": 171.5,
+            "q75": 3586.0,
             "frozen_total": 700
           },
           "5": {
-            "n": 382,
-            "observed": 356,
+            "n": 430,
+            "observed": 404,
             "censored": 26,
-            "km_median": 1909,
-            "q25": 436.0,
-            "q75": 6576.5,
+            "km_median": 2057,
+            "q25": 598.25,
+            "q75": 7841.0,
             "frozen_total": 1802
           },
           "8": {
-            "n": 382,
-            "observed": 336,
+            "n": 430,
+            "observed": 384,
             "censored": 46,
-            "km_median": 4205,
-            "q25": 1183.25,
-            "q75": 15399.5,
+            "km_median": 4622,
+            "q25": 1238.25,
+            "q75": 16385.25,
             "frozen_total": 3455
           },
           "13": {
-            "n": 382,
-            "observed": 310,
-            "censored": 72,
-            "km_median": 9990,
-            "q25": 2509.75,
-            "q75": 19258.0,
+            "n": 430,
+            "observed": 354,
+            "censored": 76,
+            "km_median": 11587,
+            "q25": 2893.5,
+            "q75": 25657.25,
             "frozen_total": 6836
           }
         }
@@ -192,77 +192,77 @@
       "by_state": {
         "A-fast-collapse": {
           "3": {
-            "n": 383,
-            "observed": 383,
+            "n": 400,
+            "observed": 400,
             "censored": 0,
-            "km_median": 127,
-            "q25": 50.0,
-            "q75": 325.5,
+            "km_median": 134,
+            "q25": 51.0,
+            "q75": 341.5,
             "frozen_total": 358
           },
           "5": {
-            "n": 383,
-            "observed": 382,
+            "n": 400,
+            "observed": 399,
             "censored": 1,
-            "km_median": 360,
-            "q25": 137.25,
-            "q75": 962.75,
+            "km_median": 385,
+            "q25": 141.5,
+            "q75": 1075.0,
             "frozen_total": 993
           },
           "8": {
-            "n": 383,
-            "observed": 379,
+            "n": 400,
+            "observed": 396,
             "censored": 4,
-            "km_median": 1026,
-            "q25": 330.0,
-            "q75": 2093.5,
+            "km_median": 1099,
+            "q25": 344.25,
+            "q75": 2320.25,
             "frozen_total": 1802
           },
           "13": {
-            "n": 383,
-            "observed": 343,
+            "n": 400,
+            "observed": 360,
             "censored": 40,
-            "km_median": 2525,
-            "q25": 755.0,
-            "q75": 4223.5,
+            "km_median": 2681,
+            "q25": 813.75,
+            "q75": 4835.0,
             "frozen_total": 4386
           }
         },
         "A-persistent": {
           "3": {
-            "n": 382,
-            "observed": 382,
+            "n": 430,
+            "observed": 430,
             "censored": 0,
-            "km_median": 288,
-            "q25": 113.5,
-            "q75": 596.75,
+            "km_median": 309,
+            "q25": 125.0,
+            "q75": 743.0,
             "frozen_total": 700
           },
           "5": {
-            "n": 382,
-            "observed": 382,
+            "n": 430,
+            "observed": 430,
             "censored": 0,
-            "km_median": 663,
-            "q25": 279.5,
-            "q75": 1418.0,
+            "km_median": 771,
+            "q25": 292.25,
+            "q75": 1721.5,
             "frozen_total": 1802
           },
           "8": {
-            "n": 382,
-            "observed": 372,
+            "n": 430,
+            "observed": 420,
             "censored": 10,
-            "km_median": 1520,
-            "q25": 620.25,
-            "q75": 2815.0,
+            "km_median": 1692,
+            "q25": 721.25,
+            "q75": 3076.5,
             "frozen_total": 3455
           },
           "13": {
-            "n": 382,
-            "observed": 352,
+            "n": 430,
+            "observed": 400,
             "censored": 30,
-            "km_median": 3341,
-            "q25": 1810.25,
-            "q75": 6585.5,
+            "km_median": 4028,
+            "q25": 1990.75,
+            "q75": 7357.25,
             "frozen_total": 6836
           }
         }
@@ -278,77 +278,77 @@
       "by_state": {
         "A-fast-collapse": {
           "3": {
-            "n": 383,
-            "observed": 350,
+            "n": 400,
+            "observed": 367,
             "censored": 33,
-            "km_median": 707,
-            "q25": 158.0,
-            "q75": 2520.75,
+            "km_median": 772,
+            "q25": 166.0,
+            "q75": 2656.0,
             "frozen_total": 358
           },
           "5": {
-            "n": 383,
-            "observed": 339,
+            "n": 400,
+            "observed": 356,
             "censored": 44,
-            "km_median": 1582,
-            "q25": 348.5,
-            "q75": 3841.5,
+            "km_median": 1729,
+            "q25": 377.75,
+            "q75": 4949.25,
             "frozen_total": 993
           },
           "8": {
-            "n": 383,
-            "observed": 319,
+            "n": 400,
+            "observed": 336,
             "censored": 64,
-            "km_median": 3133,
-            "q25": 768.5,
-            "q75": 7201.0,
+            "km_median": 3432,
+            "q25": 796.5,
+            "q75": 8271.25,
             "frozen_total": 1802
           },
           "13": {
-            "n": 383,
-            "observed": 273,
-            "censored": 110,
-            "km_median": 9355,
-            "q25": 1570.0,
-            "q75": 12074.0,
+            "n": 400,
+            "observed": 289,
+            "censored": 111,
+            "km_median": 9572,
+            "q25": 1732.0,
+            "q75": 12525.0,
             "frozen_total": 4386
           }
         },
         "A-persistent": {
           "3": {
-            "n": 382,
-            "observed": 363,
+            "n": 430,
+            "observed": 411,
             "censored": 19,
-            "km_median": 780,
-            "q25": 171.0,
-            "q75": 3646.0,
+            "km_median": 956,
+            "q25": 206.0,
+            "q75": 3980.0,
             "frozen_total": 700
           },
           "5": {
-            "n": 382,
-            "observed": 356,
+            "n": 430,
+            "observed": 404,
             "censored": 26,
-            "km_median": 2208,
-            "q25": 497.75,
-            "q75": 6611.5,
+            "km_median": 2357,
+            "q25": 621.5,
+            "q75": 7776.5,
             "frozen_total": 1802
           },
           "8": {
-            "n": 382,
-            "observed": 335,
+            "n": 430,
+            "observed": 383,
             "censored": 47,
-            "km_median": 4804,
-            "q25": 1199.0,
-            "q75": 15519.0,
+            "km_median": 4884,
+            "q25": 1309.0,
+            "q75": 17881.5,
             "frozen_total": 3455
           },
           "13": {
-            "n": 382,
-            "observed": 311,
-            "censored": 71,
-            "km_median": 10222,
-            "q25": 2706.5,
-            "q75": 19958.5,
+            "n": 430,
+            "observed": 357,
+            "censored": 73,
+            "km_median": 11787,
+            "q25": 3123.0,
+            "q75": 26745.0,
             "frozen_total": 6836
           }
         }
@@ -365,53 +365,53 @@
     "A-fast-collapse": {
       "3": {
         "frozen_remaining_at_plus60": 298,
-        "realised_km_median_remaining": 832,
+        "realised_km_median_remaining": 868,
         "reached_before_plus60": 49,
-        "n": 383
+        "n": 400
       },
       "5": {
         "frozen_remaining_at_plus60": 933,
-        "realised_km_median_remaining": 1648,
+        "realised_km_median_remaining": 1808,
         "reached_before_plus60": 19,
-        "n": 383
+        "n": 400
       },
       "8": {
         "frozen_remaining_at_plus60": 1742,
-        "realised_km_median_remaining": 2847,
+        "realised_km_median_remaining": 3196,
         "reached_before_plus60": 11,
-        "n": 383
+        "n": 400
       },
       "13": {
         "frozen_remaining_at_plus60": 4326,
-        "realised_km_median_remaining": 8960,
+        "realised_km_median_remaining": 9311,
         "reached_before_plus60": 1,
-        "n": 383
+        "n": 400
       }
     },
     "A-persistent": {
       "3": {
         "frozen_remaining_at_plus60": 640,
-        "realised_km_median_remaining": 858,
+        "realised_km_median_remaining": 966,
         "reached_before_plus60": 46,
-        "n": 382
+        "n": 430
       },
       "5": {
         "frozen_remaining_at_plus60": 1742,
-        "realised_km_median_remaining": 1932,
+        "realised_km_median_remaining": 2297,
         "reached_before_plus60": 17,
-        "n": 382
+        "n": 430
       },
       "8": {
         "frozen_remaining_at_plus60": 3395,
-        "realised_km_median_remaining": 4203,
+        "realised_km_median_remaining": 4566,
         "reached_before_plus60": 2,
-        "n": 382
+        "n": 430
       },
       "13": {
         "frozen_remaining_at_plus60": 6776,
-        "realised_km_median_remaining": 9930,
+        "realised_km_median_remaining": 11527,
         "reached_before_plus60": 0,
-        "n": 382
+        "n": 430
       }
     }
   },

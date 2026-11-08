@@ -1,11 +1,11 @@
 {
   "tape_counts": {
-    "prints": 33451,
-    "buy": 15969,
-    "sell": 16079,
-    "at_mid": 1403
+    "prints": 33703,
+    "sell": 16202,
+    "buy": 16093,
+    "at_mid": 1408
   },
-  "first_trade_s": 10816,
+  "first_trade_s": 3600,
   "last_trade_s": 86394,
   "day_threshold_85pct": 1.0,
   "archived_recognitions": 0,
@@ -21,153 +21,153 @@
   },
   "day_native": {
     "label": "frozen day-native 85th percentile (retrospective)",
-    "events": 765,
+    "events": 830,
     "polarity": {
-      "-1": 405,
-      "1": 360
+      "-1": 424,
+      "1": 406
     },
     "seed_states": {
-      "P": 226,
-      "O": 216,
-      "S": 176,
-      "X": 147
+      "S": 182,
+      "X": 157,
+      "P": 268,
+      "O": 223
     },
     "censored": 0,
     "runway_s": {
-      "n": 765,
+      "n": 830,
       "min": 1,
-      "q25": 16.0,
-      "median": 35,
-      "q75": 77.0,
-      "max": 562
+      "q25": 18.0,
+      "median": 36.0,
+      "q75": 84.0,
+      "max": 985
     },
     "confirm_offset_s": {
-      "n": 765,
+      "n": 830,
       "min": 3,
-      "q25": 18.0,
-      "median": 37,
-      "q75": 79.0,
-      "max": 564
+      "q25": 20.0,
+      "median": 38.0,
+      "q75": 86.0,
+      "max": 987
     },
-    "confirmed_before_info50": 473,
-    "confirmed_before_info5": 55,
+    "confirmed_before_info50": 492,
+    "confirmed_before_info5": 59,
     "remaining_runway_at_info50_s": {
-      "negative": 462,
-      "zero_to_20": 82,
-      "over_20": 221,
-      "median": -13
+      "negative": 481,
+      "zero_to_20": 87,
+      "over_20": 262,
+      "median": -12.0
     },
     "archived_recognition_offset_s": null,
     "archived_recognition_after_confirm": 0,
     "matched_archived_births": 0,
     "price_t0_to_confirm": {
-      "n": 765,
-      "with_pol": 186,
-      "flat": 210,
-      "against": 369,
+      "n": 830,
+      "with_pol": 200,
+      "flat": 234,
+      "against": 396,
       "median": 0.0
     },
     "mid_t0_to_confirm": {
-      "n": 765,
-      "with_pol": 277,
-      "flat": 205,
-      "against": 283,
+      "n": 830,
+      "with_pol": 303,
+      "flat": 229,
+      "against": 298,
       "median": 0.0
     },
     "price_t0_to_info50": {
-      "n": 765,
-      "with_pol": 216,
-      "flat": 301,
-      "against": 248,
+      "n": 830,
+      "with_pol": 224,
+      "flat": 349,
+      "against": 257,
       "median": 0.0
     },
     "price_info50_plus30": {
-      "n": 765,
-      "with_pol": 204,
-      "flat": 355,
-      "against": 206,
+      "n": 830,
+      "with_pol": 211,
+      "flat": 404,
+      "against": 215,
       "median": 0.0
     },
     "mid_info50_plus30": {
-      "n": 765,
-      "with_pol": 220,
-      "flat": 319,
-      "against": 226,
-      "median": -0.0
+      "n": 830,
+      "with_pol": 232,
+      "flat": 364,
+      "against": 234,
+      "median": 0.0
     },
     "price_info50_plus60": {
-      "n": 764,
-      "with_pol": 229,
-      "flat": 258,
-      "against": 277,
+      "n": 829,
+      "with_pol": 235,
+      "flat": 303,
+      "against": 291,
       "median": 0.0
     },
     "price_confirm5_to_30": {
-      "n": 765,
-      "with_pol": 184,
-      "flat": 431,
-      "against": 150,
+      "n": 830,
+      "with_pol": 196,
+      "flat": 482,
+      "against": 152,
       "median": 0.0
     },
     "aftermath": {
       "5": {
-        "chop": 725,
+        "chop": 790,
         "reversal": 21,
         "continuation": 19
       },
       "10": {
-        "chop": 693,
+        "chop": 758,
         "reversal": 46,
         "continuation": 26
       },
       "20": {
-        "chop": 633,
+        "chop": 698,
         "reversal": 69,
         "continuation": 63
       },
       "30": {
-        "chop": 590,
+        "chop": 655,
         "reversal": 83,
         "continuation": 92
       },
       "60": {
-        "chop": 523,
-        "reversal": 125,
-        "continuation": 117
+        "continuation": 121,
+        "chop": 584,
+        "reversal": 125
       },
       "120": {
-        "chop": 428,
-        "reversal": 177,
-        "continuation": 159,
+        "chop": 483,
+        "reversal": 182,
+        "continuation": 164,
         "censored": 1
       },
       "300": {
-        "chop": 281,
-        "reversal": 266,
-        "continuation": 215,
+        "continuation": 231,
+        "chop": 319,
+        "reversal": 277,
         "censored": 3
       }
     },
-    "pre_arc_defined": 487,
-    "confirmed_before_seed_known": 518,
+    "pre_arc_defined": 511,
+    "confirmed_before_seed_known": 541,
     "runway_by_seed": {
       "P": {
-        "n": 226,
-        "median": 110.0,
-        "q75": 177.5
+        "n": 268,
+        "median": 113.0,
+        "q75": 188.25
       },
       "O": {
-        "n": 216,
-        "median": 24.0,
+        "n": 223,
+        "median": 24,
         "q75": 46.0
       },
       "S": {
-        "n": 176,
+        "n": 182,
         "median": 20.0,
-        "q75": 32.0
+        "q75": 31.0
       },
       "X": {
-        "n": 147,
+        "n": 157,
         "median": 21,
         "q75": 35.0
       }
@@ -175,93 +175,93 @@
     "price_from_seed_known_by_seed": {
       "P": {
         "30": {
-          "n": 226,
-          "with_pol": 36,
-          "flat": 143,
-          "against": 47,
+          "n": 268,
+          "with_pol": 40,
+          "flat": 176,
+          "against": 52,
           "median": 0.0
         },
         "60": {
-          "n": 226,
-          "with_pol": 45,
-          "flat": 115,
-          "against": 66,
+          "n": 268,
+          "with_pol": 51,
+          "flat": 143,
+          "against": 74,
           "median": 0.0
         },
         "300": {
-          "n": 226,
-          "with_pol": 65,
-          "flat": 38,
-          "against": 123,
+          "n": 268,
+          "with_pol": 76,
+          "flat": 49,
+          "against": 143,
           "median": -1.0
         }
       },
       "O": {
         "30": {
-          "n": 216,
-          "with_pol": 57,
-          "flat": 89,
+          "n": 223,
+          "with_pol": 59,
+          "flat": 94,
           "against": 70,
           "median": 0.0
         },
         "60": {
-          "n": 216,
-          "with_pol": 69,
-          "flat": 63,
+          "n": 223,
+          "with_pol": 71,
+          "flat": 68,
           "against": 84,
           "median": 0.0
         },
         "300": {
-          "n": 213,
-          "with_pol": 84,
-          "flat": 31,
-          "against": 98,
+          "n": 220,
+          "with_pol": 85,
+          "flat": 35,
+          "against": 100,
           "median": 0.0
         }
       },
       "S": {
         "30": {
-          "n": 176,
-          "with_pol": 41,
-          "flat": 66,
-          "against": 69,
+          "n": 182,
+          "with_pol": 42,
+          "flat": 70,
+          "against": 70,
           "median": 0.0
         },
         "60": {
-          "n": 175,
+          "n": 181,
           "with_pol": 59,
-          "flat": 39,
-          "against": 77,
+          "flat": 41,
+          "against": 81,
           "median": 0.0
         },
         "300": {
-          "n": 175,
+          "n": 181,
           "with_pol": 76,
-          "flat": 11,
-          "against": 88,
+          "flat": 14,
+          "against": 91,
           "median": -1.0
         }
       },
       "X": {
         "30": {
-          "n": 147,
-          "with_pol": 37,
-          "flat": 82,
-          "against": 28,
+          "n": 157,
+          "with_pol": 38,
+          "flat": 89,
+          "against": 30,
           "median": 0.0
         },
         "60": {
-          "n": 147,
-          "with_pol": 36,
-          "flat": 67,
-          "against": 44,
+          "n": 157,
+          "with_pol": 37,
+          "flat": 74,
+          "against": 46,
           "median": 0.0
         },
         "300": {
-          "n": 147,
-          "with_pol": 45,
-          "flat": 30,
-          "against": 72,
+          "n": 157,
+          "with_pol": 47,
+          "flat": 33,
+          "against": 77,
           "median": 0.0
         }
       }
@@ -269,224 +269,224 @@
     "price_from_seed_known_by_seed_and_prearc": {
       "P/defined": {
         "60": {
-          "n": 106,
-          "with_pol": 21,
-          "flat": 48,
+          "n": 118,
+          "with_pol": 24,
+          "flat": 57,
           "against": 37,
           "median": 0.0
         },
         "300": {
-          "n": 106,
-          "with_pol": 31,
-          "flat": 13,
-          "against": 62,
+          "n": 118,
+          "with_pol": 34,
+          "flat": 17,
+          "against": 67,
           "median": -1.0
         }
       },
       "P/undefined": {
         "60": {
-          "n": 120,
-          "with_pol": 24,
-          "flat": 67,
-          "against": 29,
+          "n": 150,
+          "with_pol": 27,
+          "flat": 86,
+          "against": 37,
           "median": 0.0
         },
         "300": {
-          "n": 120,
-          "with_pol": 34,
-          "flat": 25,
-          "against": 61,
+          "n": 150,
+          "with_pol": 42,
+          "flat": 32,
+          "against": 76,
           "median": -1.0
         }
       },
       "O/defined": {
         "60": {
-          "n": 162,
+          "n": 165,
           "with_pol": 54,
-          "flat": 41,
+          "flat": 44,
           "against": 67,
           "median": 0.0
         },
         "300": {
-          "n": 159,
-          "with_pol": 68,
+          "n": 162,
+          "with_pol": 69,
           "flat": 19,
-          "against": 72,
+          "against": 74,
           "median": 0.0
         }
       },
       "O/undefined": {
         "60": {
-          "n": 54,
-          "with_pol": 15,
-          "flat": 22,
+          "n": 58,
+          "with_pol": 17,
+          "flat": 24,
           "against": 17,
           "median": 0.0
         },
         "300": {
-          "n": 54,
+          "n": 58,
           "with_pol": 16,
-          "flat": 12,
+          "flat": 16,
           "against": 26,
           "median": 0.0
         }
       },
       "S/defined": {
         "60": {
-          "n": 142,
+          "n": 146,
           "with_pol": 51,
           "flat": 29,
-          "against": 62,
+          "against": 66,
           "median": 0.0
         },
         "300": {
-          "n": 142,
+          "n": 146,
           "with_pol": 63,
-          "flat": 9,
-          "against": 70,
-          "median": 0.0
+          "flat": 10,
+          "against": 73,
+          "median": -0.5
         }
       },
       "S/undefined": {
         "60": {
-          "n": 33,
+          "n": 35,
           "with_pol": 8,
-          "flat": 10,
+          "flat": 12,
           "against": 15,
           "median": 0.0
         },
         "300": {
-          "n": 33,
+          "n": 35,
           "with_pol": 13,
-          "flat": 2,
+          "flat": 4,
           "against": 18,
-          "median": -2.0
+          "median": -1.0
         }
       },
       "X/defined": {
         "60": {
-          "n": 76,
-          "with_pol": 18,
-          "flat": 24,
-          "against": 34,
+          "n": 81,
+          "with_pol": 19,
+          "flat": 27,
+          "against": 35,
           "median": 0.0
         },
         "300": {
-          "n": 76,
+          "n": 81,
           "with_pol": 20,
-          "flat": 12,
-          "against": 44,
+          "flat": 15,
+          "against": 46,
           "median": -1.0
         }
       },
       "X/undefined": {
         "60": {
-          "n": 71,
+          "n": 76,
           "with_pol": 18,
-          "flat": 43,
-          "against": 10,
+          "flat": 47,
+          "against": 11,
           "median": 0.0
         },
         "300": {
-          "n": 71,
-          "with_pol": 25,
+          "n": 76,
+          "with_pol": 27,
           "flat": 18,
-          "against": 28,
+          "against": 31,
           "median": 0.0
         }
       }
     },
     "aftermath_by_seed_30s": {
       "P": {
-        "chop": 194,
+        "chop": 236,
         "reversal": 11,
         "continuation": 21
       },
       "O": {
-        "chop": 150,
+        "chop": 157,
         "reversal": 40,
         "continuation": 26
       },
       "S": {
-        "chop": 110,
+        "chop": 116,
         "continuation": 38,
         "reversal": 28
       },
       "X": {
-        "chop": 136,
+        "chop": 146,
         "reversal": 4,
         "continuation": 7
       }
     },
     "aftermath_by_seed_60s": {
       "P": {
-        "chop": 189,
-        "reversal": 15,
-        "continuation": 22
+        "chop": 230,
+        "continuation": 23,
+        "reversal": 15
       },
       "O": {
-        "chop": 116,
+        "chop": 123,
         "reversal": 72,
         "continuation": 28
       },
       "S": {
-        "chop": 101,
-        "continuation": 50,
+        "continuation": 52,
+        "chop": 105,
         "reversal": 25
       },
       "X": {
-        "reversal": 13,
-        "chop": 117,
-        "continuation": 17
+        "chop": 126,
+        "continuation": 18,
+        "reversal": 13
       }
     },
     "dip300_t0_vs_t0_to_confirm": {
-      "flat": 210,
-      "disagree": 299,
-      "agree": 256
+      "agree": 279,
+      "flat": 234,
+      "disagree": 317
     },
     "dip300_t0_strong_vs_t0_to_confirm": {
-      "flat": 115,
-      "weak": 311,
-      "disagree": 189,
-      "agree": 150
+      "agree": 167,
+      "weak": 327,
+      "flat": 133,
+      "disagree": 203
     },
     "dip300_info50_vs_info50_plus30": {
-      "flat": 355,
-      "agree": 198,
-      "disagree": 212
+      "flat": 404,
+      "disagree": 224,
+      "agree": 202
     },
     "dip300_info50_strong_vs_info50_plus30": {
-      "weak": 305,
-      "agree": 107,
-      "flat": 240,
-      "disagree": 113
+      "weak": 318,
+      "disagree": 120,
+      "flat": 281,
+      "agree": 111
     },
     "dip300_info50_strong_vs_info50_plus60": {
-      "weak": 305,
-      "agree": 152,
-      "flat": 180,
-      "disagree": 127,
+      "weak": 318,
+      "agree": 160,
+      "flat": 216,
+      "disagree": 135,
       "undefined": 1
     },
     "dip300_t0_sign_vs_polarity": {
-      "opposite": 331,
-      "same": 411,
-      "zero_or_undefined": 23
+      "same": 452,
+      "opposite": 352,
+      "zero_or_undefined": 26
     },
     "book_at_t0_vs_t0_to_confirm": {
       "book_aligned": {
-        "n": 245,
-        "with_pol": 60,
-        "flat": 69,
-        "against": 116,
+        "n": 289,
+        "with_pol": 73,
+        "flat": 84,
+        "against": 132,
         "median": 0.0
       },
       "book_opposed": {
-        "n": 227,
-        "with_pol": 58,
-        "flat": 54,
-        "against": 115,
+        "n": 248,
+        "with_pol": 59,
+        "flat": 63,
+        "against": 126,
         "median": -1.0
       },
       "book_flat": {
@@ -499,17 +499,17 @@
     },
     "book_at_t0_vs_info50_plus30": {
       "book_aligned": {
-        "n": 245,
-        "with_pol": 63,
-        "flat": 117,
-        "against": 65,
+        "n": 289,
+        "with_pol": 70,
+        "flat": 147,
+        "against": 72,
         "median": 0.0
       },
       "book_opposed": {
-        "n": 227,
+        "n": 248,
         "with_pol": 75,
-        "flat": 99,
-        "against": 53,
+        "flat": 118,
+        "against": 55,
         "median": 0.0
       },
       "book_flat": {
@@ -521,14 +521,14 @@
       }
     },
     "prev_gap_s": {
-      "median": 72.0,
-      "under_60": 267
+      "median": 73,
+      "under_60": 282
     },
-    "next_starts_before_confirm": 236,
+    "next_starts_before_confirm": 278,
     "same_as_prev": {
       "null": 1,
-      "true": 404,
-      "false": 360
+      "false": 382,
+      "true": 447
     },
     "ssos_motif": {
       "n": 15,
@@ -538,9 +538,9 @@
       "median": 0.0
     },
     "pox_motif": {
-      "n": 12,
+      "n": 13,
       "with_pol": 0,
-      "flat": 11,
+      "flat": 12,
       "against": 1,
       "median": 0.0
     },
@@ -552,173 +552,173 @@
       "median": 0.0
     },
     "seed_transitions": {
-      "P->P": 100,
-      "P->O": 45,
-      "O->S": 71,
-      "S->X": 29,
-      "X->O": 36,
-      "O->P": 43,
-      "O->O": 70,
-      "P->X": 57,
-      "X->P": 58,
-      "O->X": 32,
-      "P->S": 24,
-      "S->P": 24,
-      "X->X": 29,
-      "X->S": 24,
-      "S->O": 65,
-      "S->S": 57
+      "S->S": 59,
+      "S->X": 30,
+      "X->P": 65,
+      "P->P": 129,
+      "P->X": 64,
+      "X->S": 25,
+      "S->P": 27,
+      "P->S": 25,
+      "P->O": 50,
+      "O->X": 33,
+      "X->X": 30,
+      "X->O": 37,
+      "O->P": 47,
+      "O->S": 72,
+      "O->O": 71,
+      "S->O": 65
     }
   },
   "trailing": {
     "label": "causal trailing 85th percentile (archived adapter)",
-    "events": 765,
+    "events": 830,
     "polarity": {
-      "-1": 405,
-      "1": 360
+      "-1": 424,
+      "1": 406
     },
     "seed_states": {
-      "P": 226,
-      "O": 216,
-      "S": 176,
-      "X": 147
+      "S": 182,
+      "X": 157,
+      "P": 268,
+      "O": 223
     },
     "censored": 0,
     "runway_s": {
-      "n": 765,
+      "n": 830,
       "min": 1,
-      "q25": 16.0,
-      "median": 35,
-      "q75": 77.0,
-      "max": 562
+      "q25": 18.0,
+      "median": 36.0,
+      "q75": 84.0,
+      "max": 985
     },
     "confirm_offset_s": {
-      "n": 765,
+      "n": 830,
       "min": 3,
-      "q25": 18.0,
-      "median": 37,
-      "q75": 79.0,
-      "max": 564
+      "q25": 20.0,
+      "median": 38.0,
+      "q75": 86.0,
+      "max": 987
     },
-    "confirmed_before_info50": 473,
-    "confirmed_before_info5": 55,
+    "confirmed_before_info50": 492,
+    "confirmed_before_info5": 59,
     "remaining_runway_at_info50_s": {
-      "negative": 462,
-      "zero_to_20": 82,
-      "over_20": 221,
-      "median": -13
+      "negative": 481,
+      "zero_to_20": 87,
+      "over_20": 262,
+      "median": -12.0
     },
     "archived_recognition_offset_s": null,
     "archived_recognition_after_confirm": 0,
     "matched_archived_births": 0,
     "price_t0_to_confirm": {
-      "n": 765,
-      "with_pol": 186,
-      "flat": 210,
-      "against": 369,
+      "n": 830,
+      "with_pol": 200,
+      "flat": 234,
+      "against": 396,
       "median": 0.0
     },
     "mid_t0_to_confirm": {
-      "n": 765,
-      "with_pol": 277,
-      "flat": 205,
-      "against": 283,
+      "n": 830,
+      "with_pol": 303,
+      "flat": 229,
+      "against": 298,
       "median": 0.0
     },
     "price_t0_to_info50": {
-      "n": 765,
-      "with_pol": 216,
-      "flat": 301,
-      "against": 248,
+      "n": 830,
+      "with_pol": 224,
+      "flat": 349,
+      "against": 257,
       "median": 0.0
     },
     "price_info50_plus30": {
-      "n": 765,
-      "with_pol": 204,
-      "flat": 355,
-      "against": 206,
+      "n": 830,
+      "with_pol": 211,
+      "flat": 404,
+      "against": 215,
       "median": 0.0
     },
     "mid_info50_plus30": {
-      "n": 765,
-      "with_pol": 220,
-      "flat": 319,
-      "against": 226,
-      "median": -0.0
+      "n": 830,
+      "with_pol": 232,
+      "flat": 364,
+      "against": 234,
+      "median": 0.0
     },
     "price_info50_plus60": {
-      "n": 764,
-      "with_pol": 229,
-      "flat": 258,
-      "against": 277,
+      "n": 829,
+      "with_pol": 235,
+      "flat": 303,
+      "against": 291,
       "median": 0.0
     },
     "price_confirm5_to_30": {
-      "n": 765,
-      "with_pol": 184,
-      "flat": 431,
-      "against": 150,
+      "n": 830,
+      "with_pol": 196,
+      "flat": 482,
+      "against": 152,
       "median": 0.0
     },
     "aftermath": {
       "5": {
-        "chop": 725,
+        "chop": 790,
         "reversal": 21,
         "continuation": 19
       },
       "10": {
-        "chop": 693,
+        "chop": 758,
         "reversal": 46,
         "continuation": 26
       },
       "20": {
-        "chop": 633,
+        "chop": 698,
         "reversal": 69,
         "continuation": 63
       },
       "30": {
-        "chop": 590,
+        "chop": 655,
         "reversal": 83,
         "continuation": 92
       },
       "60": {
-        "chop": 523,
-        "reversal": 125,
-        "continuation": 117
+        "continuation": 121,
+        "chop": 584,
+        "reversal": 125
       },
       "120": {
-        "chop": 428,
-        "reversal": 177,
-        "continuation": 159,
+        "chop": 483,
+        "reversal": 182,
+        "continuation": 164,
         "censored": 1
       },
       "300": {
-        "chop": 281,
-        "reversal": 266,
-        "continuation": 215,
+        "continuation": 231,
+        "chop": 319,
+        "reversal": 277,
         "censored": 3
       }
     },
-    "pre_arc_defined": 487,
-    "confirmed_before_seed_known": 518,
+    "pre_arc_defined": 511,
+    "confirmed_before_seed_known": 541,
     "runway_by_seed": {
       "P": {
-        "n": 226,
-        "median": 110.0,
-        "q75": 177.5
+        "n": 268,
+        "median": 113.0,
+        "q75": 188.25
       },
       "O": {
-        "n": 216,
-        "median": 24.0,
+        "n": 223,
+        "median": 24,
         "q75": 46.0
       },
       "S": {
-        "n": 176,
+        "n": 182,
         "median": 20.0,
-        "q75": 32.0
+        "q75": 31.0
       },
       "X": {
-        "n": 147,
+        "n": 157,
         "median": 21,
         "q75": 35.0
       }
@@ -726,93 +726,93 @@
     "price_from_seed_known_by_seed": {
       "P": {
         "30": {
-          "n": 226,
-          "with_pol": 36,
-          "flat": 143,
-          "against": 47,
+          "n": 268,
+          "with_pol": 40,
+          "flat": 176,
+          "against": 52,
           "median": 0.0
         },
         "60": {
-          "n": 226,
-          "with_pol": 45,
-          "flat": 115,
-          "against": 66,
+          "n": 268,
+          "with_pol": 51,
+          "flat": 143,
+          "against": 74,
           "median": 0.0
         },
         "300": {
-          "n": 226,
-          "with_pol": 65,
-          "flat": 38,
-          "against": 123,
+          "n": 268,
+          "with_pol": 76,
+          "flat": 49,
+          "against": 143,
           "median": -1.0
         }
       },
       "O": {
         "30": {
-          "n": 216,
-          "with_pol": 57,
-          "flat": 89,
+          "n": 223,
+          "with_pol": 59,
+          "flat": 94,
           "against": 70,
           "median": 0.0
         },
         "60": {
-          "n": 216,
-          "with_pol": 69,
-          "flat": 63,
+          "n": 223,
+          "with_pol": 71,
+          "flat": 68,
           "against": 84,
           "median": 0.0
         },
         "300": {
-          "n": 213,
-          "with_pol": 84,
-          "flat": 31,
-          "against": 98,
+          "n": 220,
+          "with_pol": 85,
+          "flat": 35,
+          "against": 100,
           "median": 0.0
         }
       },
       "S": {
         "30": {
-          "n": 176,
-          "with_pol": 41,
-          "flat": 66,
-          "against": 69,
+          "n": 182,
+          "with_pol": 42,
+          "flat": 70,
+          "against": 70,
           "median": 0.0
         },
         "60": {
-          "n": 175,
+          "n": 181,
           "with_pol": 59,
-          "flat": 39,
-          "against": 77,
+          "flat": 41,
+          "against": 81,
           "median": 0.0
         },
         "300": {
-          "n": 175,
+          "n": 181,
           "with_pol": 76,
-          "flat": 11,
-          "against": 88,
+          "flat": 14,
+          "against": 91,
           "median": -1.0
         }
       },
       "X": {
         "30": {
-          "n": 147,
-          "with_pol": 37,
-          "flat": 82,
-          "against": 28,
+          "n": 157,
+          "with_pol": 38,
+          "flat": 89,
+          "against": 30,
           "median": 0.0
         },
         "60": {
-          "n": 147,
-          "with_pol": 36,
-          "flat": 67,
-          "against": 44,
+          "n": 157,
+          "with_pol": 37,
+          "flat": 74,
+          "against": 46,
           "median": 0.0
         },
         "300": {
-          "n": 147,
-          "with_pol": 45,
-          "flat": 30,
-          "against": 72,
+          "n": 157,
+          "with_pol": 47,
+          "flat": 33,
+          "against": 77,
           "median": 0.0
         }
       }
@@ -820,224 +820,224 @@
     "price_from_seed_known_by_seed_and_prearc": {
       "P/defined": {
         "60": {
-          "n": 106,
-          "with_pol": 21,
-          "flat": 48,
+          "n": 118,
+          "with_pol": 24,
+          "flat": 57,
           "against": 37,
           "median": 0.0
         },
         "300": {
-          "n": 106,
-          "with_pol": 31,
-          "flat": 13,
-          "against": 62,
+          "n": 118,
+          "with_pol": 34,
+          "flat": 17,
+          "against": 67,
           "median": -1.0
         }
       },
       "P/undefined": {
         "60": {
-          "n": 120,
-          "with_pol": 24,
-          "flat": 67,
-          "against": 29,
+          "n": 150,
+          "with_pol": 27,
+          "flat": 86,
+          "against": 37,
           "median": 0.0
         },
         "300": {
-          "n": 120,
-          "with_pol": 34,
-          "flat": 25,
-          "against": 61,
+          "n": 150,
+          "with_pol": 42,
+          "flat": 32,
+          "against": 76,
           "median": -1.0
         }
       },
       "O/defined": {
         "60": {
-          "n": 162,
+          "n": 165,
           "with_pol": 54,
-          "flat": 41,
+          "flat": 44,
           "against": 67,
           "median": 0.0
         },
         "300": {
-          "n": 159,
-          "with_pol": 68,
+          "n": 162,
+          "with_pol": 69,
           "flat": 19,
-          "against": 72,
+          "against": 74,
           "median": 0.0
         }
       },
       "O/undefined": {
         "60": {
-          "n": 54,
-          "with_pol": 15,
-          "flat": 22,
+          "n": 58,
+          "with_pol": 17,
+          "flat": 24,
           "against": 17,
           "median": 0.0
         },
         "300": {
-          "n": 54,
+          "n": 58,
           "with_pol": 16,
-          "flat": 12,
+          "flat": 16,
           "against": 26,
           "median": 0.0
         }
       },
       "S/defined": {
         "60": {
-          "n": 142,
+          "n": 146,
           "with_pol": 51,
           "flat": 29,
-          "against": 62,
+          "against": 66,
           "median": 0.0
         },
         "300": {
-          "n": 142,
+          "n": 146,
           "with_pol": 63,
-          "flat": 9,
-          "against": 70,
-          "median": 0.0
+          "flat": 10,
+          "against": 73,
+          "median": -0.5
         }
       },
       "S/undefined": {
         "60": {
-          "n": 33,
+          "n": 35,
           "with_pol": 8,
-          "flat": 10,
+          "flat": 12,
           "against": 15,
           "median": 0.0
         },
         "300": {
-          "n": 33,
+          "n": 35,
           "with_pol": 13,
-          "flat": 2,
+          "flat": 4,
           "against": 18,
-          "median": -2.0
+          "median": -1.0
         }
       },
       "X/defined": {
         "60": {
-          "n": 76,
-          "with_pol": 18,
-          "flat": 24,
-          "against": 34,
+          "n": 81,
+          "with_pol": 19,
+          "flat": 27,
+          "against": 35,
           "median": 0.0
         },
         "300": {
-          "n": 76,
+          "n": 81,
           "with_pol": 20,
-          "flat": 12,
-          "against": 44,
+          "flat": 15,
+          "against": 46,
           "median": -1.0
         }
       },
       "X/undefined": {
         "60": {
-          "n": 71,
+          "n": 76,
           "with_pol": 18,
-          "flat": 43,
-          "against": 10,
+          "flat": 47,
+          "against": 11,
           "median": 0.0
         },
         "300": {
-          "n": 71,
-          "with_pol": 25,
+          "n": 76,
+          "with_pol": 27,
           "flat": 18,
-          "against": 28,
+          "against": 31,
           "median": 0.0
         }
       }
     },
     "aftermath_by_seed_30s": {
       "P": {
-        "chop": 194,
+        "chop": 236,
         "reversal": 11,
         "continuation": 21
       },
       "O": {
-        "chop": 150,
+        "chop": 157,
         "reversal": 40,
         "continuation": 26
       },
       "S": {
-        "chop": 110,
+        "chop": 116,
         "continuation": 38,
         "reversal": 28
       },
       "X": {
-        "chop": 136,
+        "chop": 146,
         "reversal": 4,
         "continuation": 7
       }
     },
     "aftermath_by_seed_60s": {
       "P": {
-        "chop": 189,
-        "reversal": 15,
-        "continuation": 22
+        "chop": 230,
+        "continuation": 23,
+        "reversal": 15
       },
       "O": {
-        "chop": 116,
+        "chop": 123,
         "reversal": 72,
         "continuation": 28
       },
       "S": {
-        "chop": 101,
-        "continuation": 50,
+        "continuation": 52,
+        "chop": 105,
         "reversal": 25
       },
       "X": {
-        "reversal": 13,
-        "chop": 117,
-        "continuation": 17
+        "chop": 126,
+        "continuation": 18,
+        "reversal": 13
       }
     },
     "dip300_t0_vs_t0_to_confirm": {
-      "flat": 210,
-      "disagree": 299,
-      "agree": 256
+      "agree": 279,
+      "flat": 234,
+      "disagree": 317
     },
     "dip300_t0_strong_vs_t0_to_confirm": {
-      "flat": 115,
-      "weak": 311,
-      "disagree": 189,
-      "agree": 150
+      "agree": 167,
+      "weak": 327,
+      "flat": 133,
+      "disagree": 203
     },
     "dip300_info50_vs_info50_plus30": {
-      "flat": 355,
-      "agree": 198,
-      "disagree": 212
+      "flat": 404,
+      "disagree": 224,
+      "agree": 202
     },
     "dip300_info50_strong_vs_info50_plus30": {
-      "weak": 305,
-      "agree": 107,
-      "flat": 240,
-      "disagree": 113
+      "weak": 318,
+      "disagree": 120,
+      "flat": 281,
+      "agree": 111
     },
     "dip300_info50_strong_vs_info50_plus60": {
-      "weak": 305,
-      "agree": 152,
-      "flat": 180,
-      "disagree": 127,
+      "weak": 318,
+      "agree": 160,
+      "flat": 216,
+      "disagree": 135,
       "undefined": 1
     },
     "dip300_t0_sign_vs_polarity": {
-      "opposite": 331,
-      "same": 411,
-      "zero_or_undefined": 23
+      "same": 452,
+      "opposite": 352,
+      "zero_or_undefined": 26
     },
     "book_at_t0_vs_t0_to_confirm": {
       "book_aligned": {
-        "n": 245,
-        "with_pol": 60,
-        "flat": 69,
-        "against": 116,
+        "n": 289,
+        "with_pol": 73,
+        "flat": 84,
+        "against": 132,
         "median": 0.0
       },
       "book_opposed": {
-        "n": 227,
-        "with_pol": 58,
-        "flat": 54,
-        "against": 115,
+        "n": 248,
+        "with_pol": 59,
+        "flat": 63,
+        "against": 126,
         "median": -1.0
       },
       "book_flat": {
@@ -1050,17 +1050,17 @@
     },
     "book_at_t0_vs_info50_plus30": {
       "book_aligned": {
-        "n": 245,
-        "with_pol": 63,
-        "flat": 117,
-        "against": 65,
+        "n": 289,
+        "with_pol": 70,
+        "flat": 147,
+        "against": 72,
         "median": 0.0
       },
       "book_opposed": {
-        "n": 227,
+        "n": 248,
         "with_pol": 75,
-        "flat": 99,
-        "against": 53,
+        "flat": 118,
+        "against": 55,
         "median": 0.0
       },
       "book_flat": {
@@ -1072,14 +1072,14 @@
       }
     },
     "prev_gap_s": {
-      "median": 72.0,
-      "under_60": 267
+      "median": 73,
+      "under_60": 282
     },
-    "next_starts_before_confirm": 236,
+    "next_starts_before_confirm": 278,
     "same_as_prev": {
       "null": 1,
-      "true": 404,
-      "false": 360
+      "false": 382,
+      "true": 447
     },
     "ssos_motif": {
       "n": 15,
@@ -1089,9 +1089,9 @@
       "median": 0.0
     },
     "pox_motif": {
-      "n": 12,
+      "n": 13,
       "with_pol": 0,
-      "flat": 11,
+      "flat": 12,
       "against": 1,
       "median": 0.0
     },
@@ -1103,22 +1103,22 @@
       "median": 0.0
     },
     "seed_transitions": {
-      "P->P": 100,
-      "P->O": 45,
-      "O->S": 71,
-      "S->X": 29,
-      "X->O": 36,
-      "O->P": 43,
-      "O->O": 70,
-      "P->X": 57,
-      "X->P": 58,
-      "O->X": 32,
-      "P->S": 24,
-      "S->P": 24,
-      "X->X": 29,
-      "X->S": 24,
-      "S->O": 65,
-      "S->S": 57
+      "S->S": 59,
+      "S->X": 30,
+      "X->P": 65,
+      "P->P": 129,
+      "P->X": 64,
+      "X->S": 25,
+      "S->P": 27,
+      "P->S": 25,
+      "P->O": 50,
+      "O->X": 33,
+      "X->X": 30,
+      "X->O": 37,
+      "O->P": 47,
+      "O->S": 72,
+      "O->O": 71,
+      "S->O": 65
     }
   }
 }

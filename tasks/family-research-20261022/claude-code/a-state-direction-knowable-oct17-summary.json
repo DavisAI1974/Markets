@@ -1,78 +1,78 @@
 {
   "a_state": {
     "A-fast-collapse": {
-      "n": 383,
+      "n": 400,
       "plus60_first3t_with_share": [
-        381,
-        0.446
+        398,
+        0.447
       ],
       "plus60_first5t_with_share": [
-        381,
-        0.475
+        398,
+        0.472
       ],
       "plus60_first8t_with_share": [
-        380,
-        0.487
+        397,
+        0.476
       ],
       "plus60_d60_oriented": {
-        "n": 382,
-        "median": 0.0,
-        "with_": 125,
-        "flat": 120,
-        "against": 137
+        "n": 399,
+        "median": 0,
+        "with_": 126,
+        "flat": 132,
+        "against": 141
       },
       "plus60_d300_oriented": {
-        "n": 380,
-        "median": 0.0,
-        "with_": 153,
-        "flat": 51,
-        "against": 176
+        "n": 397,
+        "median": 0,
+        "with_": 156,
+        "flat": 57,
+        "against": 184
       },
       "plus60_d600_oriented": {
-        "n": 378,
-        "median": 0.0,
-        "with_": 164,
-        "flat": 43,
-        "against": 171
+        "n": 395,
+        "median": 0,
+        "with_": 170,
+        "flat": 45,
+        "against": 180
       },
       "known_first3t_with_share": null,
       "known_first5t_with_share": null,
       "known_first8t_with_share": null
     },
     "A-persistent": {
-      "n": 382,
+      "n": 430,
       "plus60_first3t_with_share": [
-        382,
-        0.448
+        430,
+        0.458
       ],
       "plus60_first5t_with_share": [
-        382,
-        0.463
+        430,
+        0.472
       ],
       "plus60_first8t_with_share": [
-        380,
-        0.429
+        428,
+        0.437
       ],
       "plus60_d60_oriented": {
-        "n": 382,
+        "n": 430,
         "median": 0.0,
-        "with_": 90,
-        "flat": 160,
-        "against": 132
+        "with_": 98,
+        "flat": 190,
+        "against": 142
       },
       "plus60_d300_oriented": {
-        "n": 381,
+        "n": 429,
         "median": -1,
-        "with_": 119,
-        "flat": 56,
-        "against": 206
+        "with_": 130,
+        "flat": 71,
+        "against": 228
       },
       "plus60_d600_oriented": {
-        "n": 378,
-        "median": -1.0,
-        "with_": 149,
-        "flat": 36,
-        "against": 193
+        "n": 426,
+        "median": -0.5,
+        "with_": 165,
+        "flat": 48,
+        "against": 213
       },
       "known_first3t_with_share": null,
       "known_first5t_with_share": null,
@@ -81,156 +81,156 @@
   },
   "seed": {
     "O": {
-      "n": 216,
+      "n": 223,
       "plus60_first3t_with_share": [
-        215,
-        0.437
+        222,
+        0.441
       ],
       "plus60_first5t_with_share": [
-        215,
-        0.474
+        222,
+        0.468
       ],
       "plus60_first8t_with_share": [
-        213,
-        0.469
+        220,
+        0.464
       ],
       "plus60_d60_oriented": {
-        "n": 216,
-        "median": 0.0,
-        "with_": 72,
-        "flat": 62,
+        "n": 223,
+        "median": 0,
+        "with_": 74,
+        "flat": 67,
         "against": 82
       },
       "plus60_d300_oriented": {
-        "n": 213,
-        "median": 0,
-        "with_": 86,
-        "flat": 30,
-        "against": 97
+        "n": 220,
+        "median": 0.0,
+        "with_": 87,
+        "flat": 34,
+        "against": 99
       },
       "plus60_d600_oriented": {
-        "n": 213,
-        "median": 0,
-        "with_": 95,
-        "flat": 21,
-        "against": 97
+        "n": 220,
+        "median": 0.0,
+        "with_": 98,
+        "flat": 22,
+        "against": 100
       },
       "known_first3t_with_share": null,
       "known_first5t_with_share": null,
       "known_first8t_with_share": null
     },
     "P": {
-      "n": 226,
+      "n": 268,
       "plus60_first3t_with_share": [
-        226,
-        0.46
+        268,
+        0.474
       ],
       "plus60_first5t_with_share": [
-        226,
-        0.451
+        268,
+        0.47
       ],
       "plus60_first8t_with_share": [
-        226,
-        0.42
+        268,
+        0.44
       ],
       "plus60_d60_oriented": {
-        "n": 226,
+        "n": 268,
         "median": 0.0,
-        "with_": 49,
-        "flat": 109,
-        "against": 68
+        "with_": 55,
+        "flat": 137,
+        "against": 76
       },
       "plus60_d300_oriented": {
-        "n": 226,
+        "n": 268,
         "median": -1.0,
-        "with_": 65,
-        "flat": 36,
-        "against": 125
+        "with_": 76,
+        "flat": 47,
+        "against": 145
       },
       "plus60_d600_oriented": {
-        "n": 224,
-        "median": -1.0,
-        "with_": 86,
-        "flat": 25,
-        "against": 113
+        "n": 266,
+        "median": 0.0,
+        "with_": 100,
+        "flat": 36,
+        "against": 130
       },
       "known_first3t_with_share": null,
       "known_first5t_with_share": null,
       "known_first8t_with_share": null
     },
     "S": {
-      "n": 176,
+      "n": 182,
       "plus60_first3t_with_share": [
-        175,
-        0.44
+        181,
+        0.442
       ],
       "plus60_first5t_with_share": [
-        175,
-        0.446
+        181,
+        0.448
       ],
       "plus60_first8t_with_share": [
-        174,
-        0.454
+        180,
+        0.439
       ],
       "plus60_d60_oriented": {
-        "n": 175,
+        "n": 181,
         "median": 0,
         "with_": 58,
-        "flat": 43,
-        "against": 74
+        "flat": 45,
+        "against": 78
       },
       "plus60_d300_oriented": {
-        "n": 175,
+        "n": 181,
         "median": -1,
         "with_": 76,
-        "flat": 11,
-        "against": 88
+        "flat": 14,
+        "against": 91
       },
       "plus60_d600_oriented": {
-        "n": 173,
+        "n": 179,
         "median": 0,
-        "with_": 75,
+        "with_": 77,
         "flat": 15,
-        "against": 83
+        "against": 87
       },
       "known_first3t_with_share": null,
       "known_first5t_with_share": null,
       "known_first8t_with_share": null
     },
     "X": {
-      "n": 147,
+      "n": 157,
       "plus60_first3t_with_share": [
-        147,
-        0.449
+        157,
+        0.446
       ],
       "plus60_first5t_with_share": [
-        147,
-        0.517
+        157,
+        0.51
       ],
       "plus60_first8t_with_share": [
-        147,
-        0.503
+        157,
+        0.49
       ],
       "plus60_d60_oriented": {
-        "n": 147,
+        "n": 157,
         "median": 0,
-        "with_": 36,
-        "flat": 66,
-        "against": 45
+        "with_": 37,
+        "flat": 73,
+        "against": 47
       },
       "plus60_d300_oriented": {
-        "n": 147,
+        "n": 157,
         "median": 0,
-        "with_": 45,
-        "flat": 30,
-        "against": 72
+        "with_": 47,
+        "flat": 33,
+        "against": 77
       },
       "plus60_d600_oriented": {
-        "n": 146,
+        "n": 156,
         "median": 0.0,
-        "with_": 57,
-        "flat": 18,
-        "against": 71
+        "with_": 60,
+        "flat": 20,
+        "against": 76
       },
       "known_first3t_with_share": null,
       "known_first5t_with_share": null,
