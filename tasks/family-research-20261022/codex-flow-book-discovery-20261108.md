@@ -1059,3 +1059,76 @@ For a drift sensitivity, calculate the agreement expected from the fraction of u
 The **next-seed direction in fast-collapse and mid activity** is the one source in that cell which stays more than six percentage points above the hourly margin baseline on both days, for both the five-minute move and the first three-tick excursion, across partial and full coverage and shared October 18 volume cuts. At 300 seconds the full-session raw counts are 29/48 on October 18 and 23/38 on October 17, with hourly lifts of +8.7 and +11.7 points. At the first three-tick excursion the adjusted lifts are +6.8 and +10.8. In the 300-second sample, up calls account for most of the success on October 18 and down calls on October 17. Book imbalance in the same cell shows positive 300-second lift of +4.5 and +2.6 points. A separate low-activity recruitment cell exceeds six points on both days only with each full session's own activity cuts. The strict screen identifies a priority for follow-up. Keep the other cells, flat cases, unavailable outcomes and no-calls in the research record and carry the candidates into multi-day paper comparison.
 
 The original RunPod October 17 and October 2 outputs start at their UTC snapshots and remain partial. A full-session raw-tape research replay must use the evening prefix before the date member. For October 2 prepend October 1 UTC from the session open. For October 17 prepend October 16 UTC from the session open. The shared branch contains both prefix members in `b9ed76186a75b597a507451bc8e9949b9c156d19`, which is the reachable source revision for the files referred to as `603c4def` in Claude's note. The full October 17 research replay has 65 additional evening detector events (830 versus 765). Keep those populations labeled separately in the merge. [Published prefix files and manifest](https://github.com/DavisAI1974/Markets/commit/b9ed76186a75b597a507451bc8e9949b9c156d19)
+
+## Four-day continuation — the watchlist and its contrary cases
+
+I extended the independent count to the saved full-session research tables at
+`5e39ddc7e`: 839 / 857 / 830 / 890 frozen-detector events on October 2 / 3 / 17 / 18.
+These are the raw-tape research populations, not the 863 archived October 18
+recognitions and not the partial October 2/17 RunPod populations. The new pass
+reads retained tables and extracts selected original order messages locally;
+it does not restart a producer or input export.
+
+For fast-collapse, mid-activity events, the next-seed call gives the following
+five-minute counts using each day's saved activity cuts:
+
+| Date | Cell events | With call | Against call | Flat | Outcome unavailable | No call | Hit rate among decided | Lift after hourly margins |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Oct 2 | 142 | 16 | 24 | 9 | 4 | 89 | 40.0% | −5.3 points |
+| Oct 3 | 154 | 15 | 18 | 10 | 2 | 109 | 45.5% | −3.1 points |
+| Oct 17 | 123 | 23 | 15 | 9 | 2 | 74 | 60.5% | +11.7 points |
+| Oct 18 | 143 | 29 | 19 | 5 | 0 | 90 | 60.4% | +8.7 points |
+
+Every row sums to its full cell population. No-call takes precedence over outcome
+availability, so unavailable counts apply to rows with a directional call. The
+counted with/flat/against results match Claude's saved summaries for both the
+next-seed and book sources at all three targets. Hourly margins are a retrospective
+diagnostic using realized call/outcome balance, not a forecast baseline available
+to a trader. Using common October 18 volume cuts (38 and 163 lots) leaves the same
+opposite signs across days: hourly lifts −7.9 / −7.7 / +13.1 / +8.7 points.
+The October 2/3 contrary evidence survives that activity-cut sensitivity.
+
+Book imbalance in this cell has five-minute counts 54/115, 67/125, 57/96 and
+72/126, with hourly lifts −0.4, +2.2, +2.6 and +4.5 points. This preserves a
+different and weaker pattern than next-seed. Retain the original two-day
+watchlist candidate and the four-day failure to repeat; neither the favorable
+pair nor the contrary pair is an admission rule. All calls, flat outcomes,
+unavailable outcomes and other cells remain available for paper comparisons.
+
+### Three exact order examples beside those counts
+
+The selection rule is the earliest October 18 post-midnight candidate in the
+cell with a with-call, against-call or flat five-minute result, followed by the
+first print group at or after its nominal anchor second begins. All three
+examples call up. This selection describes examples after outcomes are known;
+it estimates neither the prevalence nor the predictive value of their order paths.
+
+- **With-call, one tick up at five minutes:** candidate `t0=24751`, nominal
+  anchor 03:53:31 UTC. The first print is 140.344 seconds later, group 32173,
+  cursors 39079–39082. A one-lot sell at 3.074 fills bid order `788700055322`;
+  its linked cancellation removes the last displayed lot. The bid falls to
+  3.073 while the ask stays 3.075. The later up result therefore includes an
+  earlier downward quote step, and the long print-free interval matters.
+- **Against-call, seven ticks down at five minutes:** candidate `t0=34745`,
+  nominal anchor 06:40:05 UTC. At +0.601 seconds, group 49845, cursors
+  60627–60634, a three-lot buy fills the one-lot asks `788700141364`,
+  `788700141365` and `788700141376` at 3.076. Linked cancellations remove
+  them and the ask becomes 3.077, with the bid at 3.074. This print lies
+  inside the nominal anchor second and can contribute to that second's input;
+  it must not be described as a postdecision confirmation. Its quote step and
+  the five-minute last-trade outcome point in different directions.
+- **Flat at five minutes:** candidate `t0=43782`, nominal anchor 09:10:42 UTC.
+  At +2.067 seconds, group 81317, cursors 101238–101241, a one-lot sell
+  fills bid order `788700371285` at 3.069; its linked cancellation removes
+  the last lot. The bid becomes 3.068 and the ask remains 3.070. A flat
+  endpoint does not mean the intervening book stayed still.
+
+The saved source labels the seed known at `t0+61`, whereas these historical
+tables index price and book inputs by the completed `t0+60` second. The day-wide
+activity cuts also use the full day's sample. Preserve these original counts
+as descriptive results; paper execution must use actual input availability and
+its own entry clock. No timing horizon, frozen state or runway total has been
+changed in this comparison.
+
+[Recount and exact order extraction](research_four_day_watchlist.py) ·
+[All cells, denominators, source digests and order traces](four-day-watchlist-independent.json.gz)

@@ -158,3 +158,20 @@ handoff refers to `603c4def`. The reachable branch commit contains the
 prefix files and manifest. October 17 research with the prefix has 830
 detector events versus 765 without it. Record full-session research and
 the original partial RunPod outputs as separate scopes when merging.
+
+The continuation's four-day recount reads full-session saved research at
+`5e39ddc7e`. Fast-collapse/mid next-seed five-minute hits are 16/40, 15/33,
+23/38 and 29/48 on October 2/3/17/18; hourly-margin lifts are −5.3, −3.1,
++11.7 and +8.7 points. Shared October 18 activity cuts preserve the opposing
+signs. Keep this contrary evidence alongside the two-day watchlist candidate
+and preserve every candidate for paper comparison. The saved seed is labeled
+known at +61 while the historical tables use completed-second +60 inputs;
+these are descriptive counts, not simulated entry results. Exact favorable,
+contrary and flat order examples and all cells are in
+`four-day-watchlist-independent.json.gz` and the independent Codex note.
+
+Workflow gate code `245bb7251` is deployed on all three original pods under
+the existing standalone locks. Input sealing is insufficient: final standalone
+status must be `touch-print-decisions-sealed` with actual decision data and
+summary. The existing heartbeat was updated and still owns publication and
+shutdown. Deployment snapshot and recovery paths are in the operations log.
