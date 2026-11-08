@@ -48,13 +48,15 @@ import os
 # the Databento UTC-day files at the tape commit, with the cursor offset that aligns each member's record
 # index to the standalone export's cursor (only known for October 18; 0 elsewhere). The tape commit holds
 # only the October 2, 3, 17 and 18 UTC members, so the 22:00-24:00 UTC prefix of the prior calendar day is
-# available for October 18 (from the 17 member) and October 3 (from the 2 member) and ABSENT for October 2
-# and 17; those two sessions start at 00:00 UTC with the range-start snapshot book and no prints before it.
+# available for October 18 (from the 17 member) and October 3 (from the 2 member); for October 2 and 17 it comes
+# from the 2023-10-01 and 2023-10-16 members pulled on 2026-11-08 (PREFIX_TAPE commit). Member tuple = (UTC day,
+# cursor offset, commit or None for the original tape commit).
+PREFIX_TAPE = "603c4defcb28fbf66cb6afc8d7728b1d7b1ed268"  # data commit carrying the 2023-10-01 and 2023-10-16 members pulled 2026-11-08
 DAYS = {
-    "20231018": dict(day0=1697576400, members=(("20231017", -841601), ("20231018", 17375)), archived="october18-candidate-inputs.jsonl.gz", tag="oct18"),
-    "20231017": dict(day0=1697490000, members=(("20231017", 0),), archived=None, tag="oct17"),
-    "20231003": dict(day0=1696280400, members=(("20231002", 0), ("20231003", 0)), archived=None, tag="oct03"),
-    "20231002": dict(day0=1696194000, members=(("20231002", 0),), archived=None, tag="oct02"),
+    "20231018": dict(day0=1697576400, members=(("20231017", -841601, None), ("20231018", 17375, None)), archived="october18-candidate-inputs.jsonl.gz", tag="oct18"),
+    "20231017": dict(day0=1697490000, members=(("20231016", 0, PREFIX_TAPE), ("20231017", 0, None)), archived=None, tag="oct17"),
+    "20231003": dict(day0=1696280400, members=(("20231002", 0, None), ("20231003", 0, None)), archived=None, tag="oct03"),
+    "20231002": dict(day0=1696194000, members=(("20231001", 0, PREFIX_TAPE), ("20231002", 0, None)), archived=None, tag="oct02"),
 }
 NG_DAY = os.environ.get("NG_DAY", "20231018")
 CFG = DAYS[NG_DAY]
@@ -90,10 +92,10 @@ def replay():
     book = Book()
     pending = Counter()
     counts = Counter()
-    members = tuple((TAPE_FILE.replace("20231018", d), off) for d, off in CFG["members"])
+    members = tuple((TAPE_FILE.replace("20231018", d), off, commit or TAPE) for d, off, commit in CFG["members"])
     def records():
-        for path, offset in members:
-            for index, record in enumerate(db.DBNStore.from_bytes(git_blob(TAPE, path))):
+        for path, offset, commit in members:
+            for index, record in enumerate(db.DBNStore.from_bytes(git_blob(commit, path))):
                 yield index + offset, record
     for cursor, record in records():
         if record.instrument_id != INSTRUMENT:

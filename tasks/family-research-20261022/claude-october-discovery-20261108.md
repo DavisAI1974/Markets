@@ -714,3 +714,162 @@ their files on the branch:
 
 So the answer is yes on both counts for the tape-replay side and no for the group-export side. Any merge of
 the three passes should note which side each number came from before comparing counts.
+
+## 13. What the frozen state says besides direction, what the pre-birth window says, and the stack
+
+Greg's two prompts after section 12 were that the state might say something other than direction, and
+to look before birth as well. Both were tested on all 890 October 18 events from the knowable anchor
+t0+60, and every claim below was then re-run on the October 17 session as the out-of-sample check (the
+October 17 numbers in this section are from the pass without the evening prefix, archived in
+`claude-code/no-prefix-oct17/`; section 14 carries the full-session pass). Scripts:
+`beyond_direction_prebirth_oct18.py`, `other_things_oct18.py`, `stack_direction_sources_oct18.py`,
+`next_burst_forecast_oct18.py`, `cell_flip_diagnosis.py`; outputs beside them. All scripts take `NG_DAY`.
+No trade cost anywhere; nothing refit.
+
+### 13.1 The state is an activity and persistence readout
+
+Known at +60, the persistent state marks a quieter aftermath. Medians over the next 600 s, October 18,
+fast-collapse first then persistent: range 9 vs 6 ticks, largest excursion 8 vs 5, path length 44 vs 20,
+volume 325 vs 88 lots, time to the first 1-tick move 14 vs 31 s, share of seconds within a tick of the
+anchor price 0.11 vs 0.18. Rank AUCs (probability a persistent value exceeds a fast one):
+
+| measure, 600 s from +60 | Oct 18 | Oct 17 |
+|---|---|---|
+| volume | 0.27 | 0.30 |
+| path length | 0.28 | 0.30 |
+| range | 0.33 | 0.36 |
+| dispersion of 1 s changes | 0.30 | n/a |
+| time to first tick | 0.65 | 0.64 |
+| hold share | 0.61 | 0.56 |
+
+That is the "something other than direction": the state forecasts how much the tape will move and how
+long the price will sit, in the next ten minutes, and it does so on both days.
+
+**Most of it is pre-birth activity carried forward.** Fast-collapse events come from busy tape: the
+pre-event 300 s volume separates the states at AUC 0.28 (Oct 18) and 0.30 (Oct 17), hour of day at 0.38,
+and forward 300 s volume correlates 0.84 and 0.83 with pre-event volume. Inside the low and mid activity
+terciles the state's forward AUCs collapse toward 0.5 (Oct 18 low tercile: volume 0.48, range 0.47; mid:
+0.39, 0.44); a residual survives in the high tercile (volume 0.32, dispersion 0.32) and on October 17 in
+the mid and high terciles (volume 0.38 and 0.39). So: the activity read is the larger part, the state
+adds a smaller part among busy events.
+
+**Pre-birth predicts the clocks, not the direction.** Spearman correlations with the post-state clocks,
+both days within a few hundredths of each other (Oct 18 / Oct 17):
+
+| pre-birth feature | time to 3 ticks either way | 600 s range from +60 | oriented 300 s change |
+|---|---|---|---|
+| 300 s volume | -0.52 / -0.52 | +0.60 / +0.58 | 0.00 / -0.01 |
+| 300 s path length | -0.54 / -0.54 | +0.63 / +0.61 | 0.00 / -0.01 |
+| 60 s volume | -0.48 / n/a | +0.51 / n/a | 0.00 |
+| prominence | +0.26 | -0.28 | 0.00 |
+
+Prominence is a relative measure (burst against a quiet background), so a high value is a quiet-tape
+mark and belongs with the activity family. The oriented roll-20 pre-arc itself (base, slope, minimum)
+separates the states at 0.49 to 0.57 on both days, i.e. the shape before t0 is nearly uninformative about
+the shape after t0; what the frozen A classifier reads at t0..+60 is not readable before t0 from the arc,
+but the activity level that accompanies it is.
+
+**Frozen pre-family.** The frozen pre-family classifier (SHA 583f6a12, loaded through the frozen live
+clock's own integrity-checked loader) puts 832 of 890 October 18 events in Family A (39 B, 19 C) and 711
+of 765 on October 17 (26 B, 28 C). The section 12 caveat is therefore minor: the Family-A-only duration
+test is unchanged on October 18 (ordering 4 of 4; persistent 579 / 1291 / 3605 / 7001 s vs frozen 700 /
+1802 / 3455 / 6836; fast 479 / 1130 / 2963 / 6446 vs 358 / 993 / 1802 / 4386).
+
+### 13.2 The book, the spread, and the next event
+
+Persistent events happen on thinner books and wider spreads (toward-side 10-level depth AUC 0.33 and
+0.37, away-side 0.34 and 0.38, spread at t0 0.59 on both days): the quiet-tape signature again. After the
+anchor the state says nothing about recruitment or consumption: the 300 s and 600 s depth-change AUCs are
+0.47 to 0.57 on both sides, both days.
+
+**The state forecasts the polarity of the next burst.** Share of next frozen-detector events that flip
+polarity, base rate 0.45 (Oct 18) and 0.47 (Oct 17):
+
+| after | Oct 18 | Oct 17 |
+|---|---|---|
+| A-persistent | 0.33 | 0.38 |
+| A-fast-collapse | 0.56 | 0.56 |
+| seed P | 0.28 | 0.35 |
+| seed O | 0.64 | 0.69 |
+| seed S | 0.36 | 0.27 |
+| seed X | 0.54 | 0.57 |
+
+This survives the activity terciles (AUC 0.35 to 0.40 in each on Oct 18) and replicates in sign and
+roughly in size. The median gap to the next event is 72 to 73 s from t0 on both days, and 37 percent of
+next events have already begun by +60. A flow that has not exhausted (persistent, P) continues as the same
+side's next burst; one that collapsed or met late opposite pressure (fast-collapse, O) is followed by the
+other side. That is a statement about the sequence of flow bursts, knowable at +60.
+
+### 13.3 Does any direction source stack with it
+
+Nine direction sources available at the anchor were crossed with the activity read: the burst's own
+polarity; the state's forecast of the next burst's side (two forms); the 300 s flow imbalance (the S92
+nowcast operand) and a strong-flow variant (this day's top tercile of |imbalance|, not the S92 cut); the
+10-level resting-book imbalance; the touch imbalance; the S92 recruitment read (toward-side minus away-side
+depth change over t0..+60, times polarity); and 300 s price momentum. Targets: the signed change from the
+anchor at +300 and +600 and the side of the first 3-tick excursion. Cells: A state, activity tercile,
+state x tercile, hour class, and every two-source agreement.
+
+**Pooled over the day, nothing.** Every source sits at 0.46 to 0.52 non-flat hit share on both horizons
+on both days (book 0.54 on the first 3-tick side, Oct 18 only).
+
+**Per cell, October 18 showed structure.** Book imbalance in persistent cells 0.56 to 0.57 (n about
+400) and inverted in busy fast-collapse cells (0.36 at +600, median 3 ticks against, n 194); strong flow
+in the mid-activity band 0.65 to 0.69 and 0.77 in fast-collapse x mid (n 31 to 83); momentum with the move
+in busy tape (0.55) and against it in quiet tape (0.41). Across the 371 cells with 30 or more decided
+outcomes, 46 were beyond 0.42 / 0.58 where 23 would be by chance: twice chance, so the day had structure.
+
+**None of it survived October 17.** The same cells: book in persistent 0.48 / 0.46, book in busy
+fast-collapse 0.57 (sign reversed), strong flow in the mid band 0.39 / 0.56, momentum in busy tape 0.46 /
+0.49. Across the 360 cells common to both days, the sign of (hit minus 0.5) agrees 52 percent of the time
+and the rank correlation of hit rates across days is minus 0.08. October 17 also had 46 cells beyond the
+band against 24 expected, so each day has structure of its own and they do not share it.
+
+**The difference between the days is the drift.** `cell_flip_diagnosis.py` splits every cell's hit rate
+by the sign of the call. October 18 opened the session at 3059 and closed at 3072 (plus 13 ticks) with
+every overnight hour from 23:00 to 12:00 UTC rising except two; October 17 opened at 3120 and closed at
+3061 (minus 59), with minus 66 in the 13:00 hour. Book imbalance in persistent cells on October 18: buy
+calls hit 0.63 (n 180), sell calls 0.51 (n 261); on October 17 buy calls 0.44 (n 210), sell calls 0.53
+(n 157). Book in persistent x low activity: buy calls 0.77 on the 18th (n 40), 0.40 on the 17th (n 108).
+Momentum in quiet tape: the 18th's "mean reversion" was sell calls failing at 0.30 on a rising overnight;
+the 17th's was buy calls failing at 0.34 on a falling day. Burst polarity in the persistent state on the
+17th (0.37, the day's largest cell): buy bursts at 0.33, on a day that fell. In each case the lift lives
+on the side that the day drifted toward, and the calls are not balanced within the cell (book buy-call
+share ranges 0.19 to 0.68 across cells and days), so the cell hit rate is a drift detector. Activity level
+is not the difference: the tercile cuts are 38 / 163 lots on the 18th and 34 / 153 on the 17th, and
+recutting each day at the other's cuts changes nothing. Centering each cell on its median move does not
+remove it either, because the median is 0 at this tick resolution and the asymmetry is in the sign split.
+This is the Simpson's-on-a-trending-window artifact the dipole discipline already records for the crypto
+era, reproduced on NG at one-day scale.
+
+**What is left.** Nine cells sit beyond 0.06 on the same side both days, where about eleven would by
+chance; two of them share a cell and point the same way: fast-collapse x mid activity, book imbalance at
++300 (0.57 and 0.57, n about 90 each) and the next-seed forecast (0.60 and 0.60, n about 50). That is a
+watch-list entry for October 2 and 3, not a finding.
+
+### 13.4 Does the next-burst forecast convert into price
+
+Section 11 found that a burst's price move is contemporaneous with the burst. A correct forecast of the
+next burst's side, held from +60, should then capture the next burst's own move if the later burst moves
+price the way the first did. It does not. Restricting to next events that begin after the anchor (558 on
+Oct 18), the forecast is right 54 percent of the time (57 after persistent, 51 after fast-collapse), and
+the price change over the next burst's own window, oriented by the forecast, is 187 with / 150 flat / 221
+against. Conditioning on the forecast being right makes it worse: 82 / 76 / 143, the price moves against
+the correctly forecast burst 64 percent of the time; when the forecast is wrong the price goes with it
+(105 / 74 / 78). The later same-side burst is absorbed. Longer horizons from the anchor (+1800, +3600) are
+at 0.51. The sequence of flow is forecastable; the sequence of price is not, from these anchors.
+
+### 13.5 The broad reading
+
+Put together: this family of frozen objects reads the tape's activity and the persistence of a flow. It
+says when the price will travel k ticks (the duration math, calibrated for the persistent state), how far
+and how hard the tape will move in the next ten minutes, how long the price will sit, and which side the
+next burst will come from. It says nothing about which way the price goes, and the per-cell direction reads
+that appeared on one day were the day's drift. The direction half of any stack has to come from a source
+that is not a function of the same tape at the same anchor. On the Kalshi lag that source already exists:
+NYMEX itself. The move happens on NYMEX first and Kalshi follows seconds to a minute later, so the direction
+does not need to be forecast, it is observed; what the lag trade lacks is advance notice of when a move is
+coming and how big it will be, which is exactly what the activity read and the clocks supply. The test is
+the activity read as the arm-and-size layer and the observed NYMEX move as the trigger, scored on Kalshi
+fills for the same dates. That needs Kalshi-side data for October 2023, which is not in the repository, and
+is the next comparison I would run.
