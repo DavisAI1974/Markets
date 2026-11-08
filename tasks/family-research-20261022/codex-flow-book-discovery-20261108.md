@@ -532,3 +532,112 @@ families versus the rest of the session. Queue changes and external instruments
 need their own availability alignment. This increment does not settle those
 questions or provide scoring/simulator admission. Independent Claude findings
 remain separate until the final evidence comparison, including disagreements.
+
+## General behavior rules and signals before setup birth
+
+The user added two priorities: find overarching behavior that can be applied
+beyond one case, and investigate trade prebirth signals. Here, "birth" means a
+recorded setup origin, not an actual order submission or profitable trade. The
+study keeps the 749 family starts separate from the 863 reconstructed dipole
+births. A dipole's birth location is retrospective; it was not necessarily known
+to be a dipole at that time. Recognition remains a different clock.
+
+### Candidate rules, with a clear evidence status
+
+| Proposed general principle | What supports it now | How to apply or challenge it |
+| --- | --- | --- |
+| A rolling signal changes through both new observations and expiring observations. | Accounting identity; aging-only flips recur in all three currently available date tables. | Separate incoming volume from expired volume before calling a flip new pressure. Test whether their subsequent price responses differ on all four dates. |
+| A ratio needs its operands; saturation is not evidence of large participation. | A single classified lot accounts for 47.68%, 48.49% and 42.34% of saturated rolling seconds on October 2, 17 and 18 respectively. | Retain classified volume, unknown volume, observation age and duration alongside the sign. Compare low-volume and higher-volume states without tuning a threshold to one case. |
+| Displayed stock, executed flow and their changes answer different questions. | Every selected full book is bid-heavy, while touch depth and later movement vary. The four-arm additions do not consistently improve the baseline. | Test local depth, actual removals/replenishment and flow jointly; reject a universal whole-book-sign rule unless it adds information across dates. |
+| The path that creates and removes liquidity matters. | The 980-event inventory includes aggression becoming resting liquidity and several distinct terminal mechanisms. | Track the same order and price. Do not equate a final cancel message with withdrawal, or infer intent from a large displayed number. |
+| Information improves over time while the available population changes. | Only 395 of 980 tracked resting events survive to 25 ms. | Compare decisions at fixed observation delays using only then-available features; report survival and missed cases rather than crediting a later observation at birth. |
+| A precursor must distinguish upcoming setups from comparable ordinary periods. | New strictly prebirth case/control tables below. | Require recurrence across session conditions and dates, explicit missing cases, and a useful lead time before promoting a candidate. |
+
+The first two principles can be applied immediately as measurement rules. The
+others guide conditional tests. None is presently an admitted entry/exit rule.
+The shares above count overlapping seconds, not independent opportunities.
+
+The broader literature motivates conditioning rather than a universal direction
+claim: Cont, Kukanov and Stoikov relate best-quote order-flow imbalance and depth
+to contemporaneous price changes in 50 US stocks; this is not proof of predictive
+NG performance. Gould and Bonart study next-midpoint-move prediction in ten Nasdaq
+stocks and report stronger improvements for large-tick than small-tick stocks.
+Our fixed-time futures targets need their own tests. The primary abstract pages
+were checked directly on November 8, 2026.
+[Cont et al.](https://arxiv.org/abs/1011.6402),
+[Gould and Bonart](https://arxiv.org/abs/1512.03492).
+
+### First strict-prebirth comparison
+
+For every selected birth, the analysis samples 1, 5, 20 and 60 seconds earlier.
+It uses only completed groups strictly earlier than that earlier decision clock.
+The features include prior 1/5/20-second classified buy/sell lots and unknown lots,
+flow ratios, midpoint changes, touch imbalance, displayed lots and the recent
+change in touch imbalance. Exact nanosecond/cursor provenance is retained.
+Birth polarity, later reconstructed thresholds, terminal order disposition and
+future price movement are absent from the features.
+
+Controls come from a five-second grid: the latest earlier eligible observation
+within thirty minutes, with the same exact spread and the same
+`floor(log2(1 + classified lots over 20 seconds))` bucket. A control has no recorded
+birth from the same selected population within plus or minus sixty seconds.
+That last condition is a retrospective label, not an implementable online filter.
+Controls can be reused. Matching on an activity bucket is coarse, and excluding
+nearby births can preferentially select quiet periods. Retain those alternatives
+before interpreting a volume difference as a precursor.
+
+| Population | Lead | Available features / all births | Matched cases |
+| --- | ---: | ---: | ---: |
+| Family starts | 1 s | 729 / 749 | 488 |
+| Family starts | 5 s | 729 / 749 | 498 |
+| Family starts | 20 s | 726 / 749 | 536 |
+| Family starts | 60 s | 723 / 749 | 556 |
+| Dipole births | 1 s | 862 / 863 | 487 |
+| Dipole births | 5 s | 862 / 863 | 526 |
+| Dipole births | 20 s | 863 / 863 | 572 |
+| Dipole births | 60 s | 862 / 863 | 522 |
+
+All 6,448 birth/lead rows remain in the case table, including unavailable and
+unmatched cases. Matched feature differences are summarized in four equal elapsed
+session quarters, with defined-pair and unique-control counts. Quarters are a
+stability check, not independent validation or a proposed clock-based signal.
+
+Two candidates emerged from this first descriptive pass:
+
+- Before family starts, fresh classified lots in the prior second average
+  **0.2275 lots more than controls at a one-second lead**, and **0.4291 more at a
+  twenty-second lead**. The mean difference has the same positive sign in all four
+  quarters at both leads. At sixty seconds the pooled difference is negative and
+  the quarter signs disagree. This is a small, conditional activity difference,
+  not a trade direction or a usable detection threshold.
+- One second before dipole birth, displayed touch size averages **0.5708 lots
+  more than controls**, positive in all four quarters. At twenty seconds the
+  pooled difference is negative and the quarter signs disagree. This needs
+  deeper-depth and quote-persistence checks and replication on other dates.
+
+Many signed-flow and touch-imbalance contrasts change sign across quarters.
+At a one-second lead before dipole birth, only **one matched pair** has a defined
+one-second flow ratio on both sides. Treating undefined flow as zero would create
+an artificial sample. Pooled signed contrasts also mix positive and negative
+births, so failure of a pooled direction test does not establish absence of a
+direction-conditional precursor. No precursor is admitted from this pass.
+
+![Prebirth candidate contrasts](research-atlas-v2/figures/prebirth-candidate-contrasts.png)
+
+[All prebirth cases](research-atlas-v2/prebirth-cases.csv.gz),
+[matched feature pairs](research-atlas-v2/prebirth-matched-pairs.csv.gz),
+[quarter summaries](research-atlas-v2/prebirth-summary.csv),
+[method and limitations](research-atlas-v2/prebirth-method.json),
+[analysis code](research_atlas_prebirth.py),
+[figure code](research_atlas_prebirth_figures.py).
+The retained control grids are separate for family starts and dipole births in
+the same output directory. Ten focused tests now pass, including strict cutoff
+exclusion, preservation of all selected births, and decision/source ordering.
+
+Next, repeat on the other three saved date outputs, examine direction-conditional
+and non-overlapping episodes, vary the control exclusion/matching method openly,
+and compare precursor detection against the unconditional birth rate. Order-ID
+turnover, same-price replenishment, deeper depth and independently timed external
+inputs remain additional precursor hypotheses. A useful result must supply lead
+time and false-alarm/missed-birth rates, then separately explain later movement;
+finding the retrospective birth is not itself a profitable trade signal.

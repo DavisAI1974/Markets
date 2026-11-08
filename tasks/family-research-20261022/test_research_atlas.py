@@ -7,9 +7,16 @@ import numpy as np
 import pandas as pd
 
 from research_atlas import OUT, RestingOrder, rolling_flow, mechanism_inventory
+from research_atlas_prebirth import strict_before
 
 
 class ResearchMechanics(unittest.TestCase):
+    def test_prebirth_excludes_a_group_at_the_exact_cutoff(self):
+        clocks = np.array([100,200,300],dtype=np.int64)
+        self.assertEqual(strict_before(clocks,200),0)
+        self.assertEqual(strict_before(clocks,201),1)
+        self.assertEqual(strict_before(clocks,100),-1)
+
     def test_passive_fill_and_cancel_are_one_depletion(self):
         order = RestingOrder('A', 100, 150)
         order.update('F', 'A', 100, 106)
@@ -55,6 +62,18 @@ class ResearchMechanics(unittest.TestCase):
 
 
 class RetainedEvidence(unittest.TestCase):
+    def test_prebirth_retains_missing_cases_and_strict_clocks(self):
+        cases = pd.read_csv(OUT/'prebirth-cases.csv.gz',dtype=str)
+        self.assertEqual(len(cases), (749+863)*4)
+        valid = cases[cases.input_disposition.eq('available')]
+        self.assertTrue(all(int(r.source_known_by_ns)<int(r.decision_ns)<int(r.birth_ns)
+                            for r in valid.itertuples()))
+        self.assertTrue(all(int(r.birth_ns)-int(r.decision_ns)==int(r.lead_s)*1_000_000_000
+                            for r in cases.itertuples()))
+        pairs = pd.read_csv(OUT/'prebirth-matched-pairs.csv.gz')
+        self.assertTrue((pairs.control_decision_ns < pairs.case_decision_ns).all())
+        self.assertNotIn('birth_polarity',cases.columns)
+
     def test_event_identity_and_known_case_accounting(self):
         events = pd.read_csv(OUT/'aggression-to-rest-events.csv')
         self.assertEqual(len(events), 980)
