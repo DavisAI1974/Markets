@@ -1,0 +1,153 @@
+{
+  "trading_session": "20231018",
+  "source_files": [
+    "all-22194-window-local-liquidity-books.jsonl.gz",
+    "all-22193-consecutive-local-liquidity-transitions.jsonl.gz",
+    "all-22193-first-ten-membership-effects.jsonl.gz",
+    "every-trade-local-liquidity-links.jsonl.gz"
+  ],
+  "original_trades_retained": 30739,
+  "observed_books": 22194,
+  "first_book": {
+    "book_line": 1,
+    "group": 229201,
+    "cursor": 297867,
+    "event_ns": 1697634432293454855,
+    "receive_ns": 1697634432293731473,
+    "known_by_ns": 1697634432293731473,
+    "bid_raw": 3152000000,
+    "ask_raw": 3153000000
+  },
+  "last_book": {
+    "book_line": 22194,
+    "group": 251394,
+    "cursor": 328134,
+    "event_ns": 1697635152020317297,
+    "receive_ns": 1697635152020583540,
+    "known_by_ns": 1697635152020583540,
+    "bid_raw": 3149000000,
+    "ask_raw": 3150000000
+  },
+  "transitions": 22193,
+  "geometry_counts": {
+    "B": {
+      "stable_size_changed": 4737,
+      "stable_size_unchanged": 16760,
+      "retreat_to_previous_second": 341,
+      "improved_old_touch_remains": 349,
+      "retreat_to_deeper_prior_level": 6
+    },
+    "A": {
+      "stable_size_unchanged": 16885,
+      "stable_size_changed": 4590,
+      "improved_old_touch_remains": 359,
+      "retreat_to_previous_second": 357,
+      "retreat_to_deeper_prior_level": 2
+    }
+  },
+  "groups_with_original_t": {
+    "B": {
+      "stable_size_changed": 321,
+      "stable_size_unchanged": 644,
+      "retreat_to_previous_second": 239,
+      "improved_old_touch_remains": 30,
+      "retreat_to_deeper_prior_level": 6
+    },
+    "A": {
+      "stable_size_unchanged": 604,
+      "stable_size_changed": 360,
+      "improved_old_touch_remains": 14,
+      "retreat_to_previous_second": 260,
+      "retreat_to_deeper_prior_level": 2
+    }
+  },
+  "signal_counts": {
+    "retreat_to_previous_second": 698,
+    "size_one_touch_onset": 1012
+  },
+  "entry_delay_ns": 1000000,
+  "hold_seconds": [
+    1,
+    5,
+    30
+  ],
+  "outcomes": {
+    "retreat_to_previous_second": {
+      "1": {
+        "OBSERVED": 698,
+        "signed_twice_midpoint_change_raw_1": 228,
+        "cross_spread_pnl_raw_-1": 618,
+        "signed_twice_midpoint_change_raw_0": 225,
+        "signed_twice_midpoint_change_raw_-1": 245,
+        "cross_spread_pnl_raw_1": 27,
+        "cross_spread_pnl_raw_0": 53
+      },
+      "5": {
+        "OBSERVED": 696,
+        "signed_twice_midpoint_change_raw_-1": 301,
+        "cross_spread_pnl_raw_-1": 525,
+        "signed_twice_midpoint_change_raw_1": 311,
+        "cross_spread_pnl_raw_0": 91,
+        "signed_twice_midpoint_change_raw_0": 84,
+        "cross_spread_pnl_raw_1": 80,
+        "EXIT_CENSORED": 2
+      },
+      "30": {
+        "OBSERVED": 674,
+        "signed_twice_midpoint_change_raw_-1": 319,
+        "cross_spread_pnl_raw_-1": 443,
+        "signed_twice_midpoint_change_raw_1": 296,
+        "cross_spread_pnl_raw_1": 155,
+        "cross_spread_pnl_raw_0": 76,
+        "signed_twice_midpoint_change_raw_0": 59,
+        "EXIT_CENSORED": 24
+      }
+    },
+    "size_one_touch_onset": {
+      "1": {
+        "OBSERVED": 1012,
+        "signed_twice_midpoint_change_raw_1": 377,
+        "cross_spread_pnl_raw_0": 127,
+        "cross_spread_pnl_raw_-1": 846,
+        "cross_spread_pnl_raw_1": 39,
+        "signed_twice_midpoint_change_raw_0": 361,
+        "signed_twice_midpoint_change_raw_-1": 274
+      },
+      "5": {
+        "OBSERVED": 1010,
+        "signed_twice_midpoint_change_raw_-1": 369,
+        "cross_spread_pnl_raw_-1": 682,
+        "signed_twice_midpoint_change_raw_1": 466,
+        "cross_spread_pnl_raw_0": 189,
+        "signed_twice_midpoint_change_raw_0": 175,
+        "cross_spread_pnl_raw_1": 139,
+        "EXIT_CENSORED": 2
+      },
+      "30": {
+        "OBSERVED": 973,
+        "signed_twice_midpoint_change_raw_-1": 407,
+        "cross_spread_pnl_raw_-1": 572,
+        "signed_twice_midpoint_change_raw_1": 467,
+        "cross_spread_pnl_raw_1": 282,
+        "signed_twice_midpoint_change_raw_0": 99,
+        "cross_spread_pnl_raw_0": 119,
+        "EXIT_CENSORED": 39
+      }
+    }
+  },
+  "thin_episode_end_counts": {
+    "SIZE_RECOVERED_AT_SAME_PRICE": 548,
+    "RETREATED": 461,
+    "IMPROVED": 3
+  },
+  "thin_episode_end_by_entry": {
+    "SIZE_RECOVERED_AT_SAME_PRICE": 359,
+    "RETREATED": 298,
+    "IMPROVED": 2
+  },
+  "master": "../../completed-run-source-list.json",
+  "frankie": "../local-liquidity-v1/frankie-local-liquidity-use.json",
+  "oct03_status": "PROTOCOL_READY_SOURCE_BYTES_UNAVAILABLE",
+  "semantic_coverage": "NOT_PASSED",
+  "mlp_reproducibility": "UNRESOLVED"
+}
