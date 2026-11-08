@@ -29,3 +29,36 @@ The [publisher](runpod/publish_root_frame_archive.py) reads the sealed
 part list, reuses existing verified blobs and adds batches under
 `replay-artifacts/YYYYMMDD/root-frames`. It publishes the source record and
 part checksums only after all the parts are present on the shared branch.
+
+## Completion gate correction — November 8 continuation
+
+`october18_inputs.py` only seals the input directory. Its receipt explicitly
+keeps `full_discovery_gate=NOT_PASSED`. The separate decision runner takes the
+file `standalone-inputs/YYYYMMDD/groups.jsonl.gz` as `--input`, not its parent
+directory. The existing standalone waiter now runs that decision step under
+the same per-date `standalone.lock`, after ROOT/Native and the input export.
+It reuses a retained input directory and never launches a second export for it.
+
+[Decision sealer](runpod/runpod_seal_touch_print.py) invokes the unchanged
+`discovery_touch_print.py --day YYYYMMDD --input .../groups.jsonl.gz --output .../decisions.jsonl.gz`.
+It compares the actual consumed group/print counts with the sealed input counts,
+then atomically exposes `/opt/frankie-box/work/standalone-decisions/YYYYMMDD/`
+containing `decisions.jsonl.gz` and `receipt.json`. The latter retains the actual
+decision summary, row count, source identity, runner digest and output digest.
+A failed or incomplete run cannot expose a completed result directory.
+The producer and input-export source/runtime revisions above remain unchanged.
+
+The final standalone status is now `touch-print-decisions-sealed`.
+`standalone-inputs-sealed` alone never completes a date. The existing
+`verify-markets-replay-receipts` heartbeat owns publication and shutdown and
+has been updated to enforce this requirement. Before shutdown it must save
+both input files, both decision files, required ROOT/Native outputs, and the
+deployed gate code, confirm their presence on the shared Git branch, and
+confirm the original pod has no required work. This is workflow completion,
+not scoring admission or a claim that downstream research is complete.
+
+At 20:27 UTC all three producers were still in `root-native`; their input
+waiters were waiting. No new decision result existed yet. The October 2
+ROOT publisher was still running as local Python PID 48372 against
+`F:/MarketsReplayPublication/Markets.git`; no second publisher was started.
+Deployment and actual per-date output observations follow below.
