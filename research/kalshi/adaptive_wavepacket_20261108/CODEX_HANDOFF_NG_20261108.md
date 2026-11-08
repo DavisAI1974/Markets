@@ -9,6 +9,25 @@ environment. This document says what is built and tested, what is not, how to ru
 output, and what would and would not count as a signal. It is an independent piece for now; a Frankie
 attachment is a later task.
 
+## 0. Standing rule set tonight (Greg, 2026-11-08) and what it changed
+
+Trade cost is not a market condition. Fees play no part in deriving market conditions or trade signals; they
+can be layered on at the execution stage later if ever wanted. This is now written at the top of the trading
+rules in `CLAUDE.md` and in the `kalshi-backtest` skill (Rule 3). Repo-wide effects, all committed:
+
+- `research/kalshi/lag_join.py` (the NYMEX-to-Kalshi lag engine the NG forecaster imports; not a crypto file)
+  now reports the echo GROSS: entry at the stale Kalshi mark, exit at the mark when the dollar trailing stop
+  fires (`pnl_taker` key) or at the favorable extreme when the echo made a wave (`pnl_maker` key). Fee,
+  slippage and maker offset are removed; output keys are unchanged; `--selftest` passes.
+- `coach_replay.py` round-trip fee is 0; `lag_exploit_backtest.py` and `level_hit_dataset.py` fee functions
+  return 0 (the observable bid/ask spread is still measured there as a book condition).
+- Nothing from the crypto-era trade strategies (S36 dipole-fade rules, fee floors, maker/taker thresholds,
+  the `DEPLOY` cell map) influences the NG program. The dipole toolkit itself (imbalance read, pre-entry
+  look-ahead window, leakage gate) is what carries over.
+- The session-start hook no longer materializes the crypto bins.
+- Past findings files (S85 to S87) still describe net-of-fee readouts as records of what was measured then;
+  they are history, not instructions.
+
 ## 1. What is built and verified (today, on this branch)
 
 | Piece | Where | Verified by |
@@ -146,7 +165,15 @@ registry did not verify.
    `DEPLOY` cell map) is used here. The only odcore pieces this piece touches are the two numerical estimators
    (`vasicek_entropy`, `ksg_mi`) and the leakage gate, which are data-agnostic.
 
-## 7. Rules that bind every run
+## 7. State at handoff
+
+Branch `research/markets-adaptive-wavepacket-migration-20261108`, 30 commits on top of the Markets base
+`c93895e`, working tree clean, last commit the one that carries this document. Frozen snapshot untouched
+(133/133 byte-exact). Suites green: Python engine 87 + 31 + engineering tests, Node 183, bridge 10 (one
+real-day test skipped until an NG day is cached), `lag_join.py --selftest` and `coach_replay.py --selftest`
+pass. Nothing merged, nothing deployed, no AWS, Frankie or Search action, launch HOLD.
+
+## 8. Rules that bind every run
 
 Zero synthetic trading data. Leakage gate before any backtest (passed for these fitters; re-run if you change
 them). Settle window excluded. Each event individually, never averaged. Distributions and per-trade
