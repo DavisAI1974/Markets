@@ -24,8 +24,8 @@ Inputs (all existing Markets contracts):
 
 Discipline carried over unchanged: zero synthetic trading data (the test uses a real cached day or
 skips); the leakage gate already passes on these fitters (markets_bridge/leakage_gate.py); per-day
-runs, never pooled across days; net-of-fee is NOT computed here (that is lag_join.py's job before any
-paper trade).
+runs, never pooled across days. Trade cost is not a market condition and appears nowhere in this
+engine: no fee, no slippage, no execution assumption of any kind enters any calculation or output.
 
 Run from the Markets root:
 
@@ -252,7 +252,7 @@ def run_probe(ts: np.ndarray, channels: dict[str, np.ndarray], *, source_identit
                "first_clock": frames[0].clock, "last_clock": frames[-1].clock,
                "nodes": list(nodes), "frozen_bins_version": bins.version,
                "estimators": {}, "scientific_jobs_eliminated": 0, "frames_dropped": 0,
-               "no_trade_signal_computed": True, "net_of_fee_computed": False}
+               "no_trade_signal_computed": True, "trade_cost_in_any_calculation": False}
     for estimator in estimators:
         derive = derive_information if estimator == "frozen-bin" else _ContinuousDeriver(bins)
         contract = estimator_identity(bins, estimator)
@@ -361,8 +361,8 @@ def one_screen(summary: dict) -> str:
             lines.append(f"  geometry {g['target']}<-{g['donor']}: "
                          f"static={g.get('static', {}).get('status', 'n/a')} "
                          f"predictive={g.get('predictive', {}).get('status', 'n/a')}")
-    lines.append("No trade signal computed; no fee applied. A candidate is a research hold for review, "
-                 "not an entry rule. Next step for any candidate: lag_join.py net-of-fee, per event.")
+    lines.append("No trade signal computed; no trade cost anywhere. A candidate is a research hold for "
+                 "review, not an entry rule.")
     return "\n".join(lines)
 
 
@@ -431,9 +431,9 @@ def replication_table(summaries: Sequence[dict]) -> dict:
                          "shift_fraction_at_most": CARRY_FORWARD_SHIFT_FRACTION,
                          "b_over_se_above": CARRY_FORWARD_B_OVER_SE,
                          "predictive": "CONSISTENT_MULTISPLIT_ASSOCIATION_REVIEW_ONLY",
-                         "days_required_before_lag_join": 3},
+                         "days_required_for_replication": 3},
             "directions": table, "pooled": False, "averaged": False,
-            "net_of_fee_computed": False, "no_trade_signal_computed": True}
+            "trade_cost_in_any_calculation": False, "no_trade_signal_computed": True}
 
 
 def load_ng_day(day: str, source: str = "local", *, depth: bool = False):
@@ -513,7 +513,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     (Path(args.out) / "replication.json").write_text(json.dumps(_plain(table), indent=2, sort_keys=True) + "\n")
     for key, row in table["directions"].items():
         print(f"replication {key}: {row['days_meeting_criteria']} of {row['days_run']} day(s) meet criteria 1-4 "
-              f"(3 required before lag_join; never pooled)")
+              f"(3 required for replication; never pooled)")
     print(f"replication table: {Path(args.out) / 'replication.json'}")
     return 0
 

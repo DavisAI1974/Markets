@@ -28,9 +28,11 @@ attachment is a later task.
   novelty, rank/conditioning, parameter Fisher information, physical Neumann, raw external validation,
   scientific equivalence), plus the review's additional holds.
 - The engine's "candidate" is a predictive association between ENTROPY changes of two channels. It is not a
-  price-direction call and it is not net of fee. Direction on NG is the S92 nowcast (`dip_imb_level`,
-  OOS 34/34 on strong flow); the realistic contribution of this engine is to the WHEN and the hold length,
-  not the WHICH side.
+  price-direction call. Direction on NG is the S92 nowcast (`dip_imb_level`, OOS 34/34 on strong flow,
+  validated on NG); the realistic contribution of this engine is to the WHEN and the hold length, not the
+  WHICH side.
+- Trade cost is not a market condition. No fee, slippage or execution assumption enters any calculation or
+  output here, by design; do not add one.
 - Kalshi KXNATGASD channel and the depth channels in the runner are coded but untested on data.
 - The synthetic controls that pass contain the fitted term by construction (review 4.6). They prove the
   fitter, not the science.
@@ -109,13 +111,12 @@ Carry forward only if ALL of these hold, per direction, with nothing pooled acro
 4. `|dipole_balance| / balance_standard_error` above 2 (otherwise B is noise, see review 4.3).
 5. The same reading on at least three separate days (replication without pooling; multiplicity is otherwise
    uncontrolled: only two directed pairs are pre-registered here, do not add pairs after looking).
-6. Then, and only then, hand the day and direction to `lag_join.py` for net-of-fee at taker AND maker, per
-   event, as the existing rule requires. The engine output is an input to hold length and timing, layered on
-   the S92 direction nowcast; it is not a stand-alone entry rule.
+6. Then carry the day and direction into the paper-trading test as an input to hold length and timing,
+   layered on the S92 direction nowcast; it is not a stand-alone entry rule.
 
 Criteria 1 to 4 are evaluated per day by `replication.json` (`directions.<pair>.meets_criteria_by_day` and
-`days_meeting_criteria`); criterion 5 is its day count reaching 3; criterion 6 is manual and outside this
-engine.
+`days_meeting_criteria`); criterion 5 is its day count reaching 3; criterion 6 is the paper-trading test
+itself, outside this engine.
 
 Does NOT count: a perfect static quadratic (algebra), a candidate under one estimator only, a candidate on
 one day, anything inside the settle guard, anything whose frames were REVIEW_REQUIRED, any result where the
@@ -141,10 +142,13 @@ registry did not verify.
 7. No signing anywhere (sha256 content pins only); the registries are local evidence, not attestations.
 8. The static-geometry chemistry coefficients in `odcore/dipole_predictor.py` have still not been put through
    the reparameterization null; the engine can do it on any series with `geometric_dipole_probe`.
+9. Nothing from the crypto-era strategy work (S36 dipole-fade rules, fee floors, maker/taker thresholds, the
+   `DEPLOY` cell map) is used here. The only odcore pieces this piece touches are the two numerical estimators
+   (`vasicek_entropy`, `ksg_mi`) and the leakage gate, which are data-agnostic.
 
 ## 7. Rules that bind every run
 
 Zero synthetic trading data. Leakage gate before any backtest (passed for these fitters; re-run if you change
 them). Settle window excluded. Each event individually, never averaged. Distributions and per-trade
-fingerprints, never means. Net-of-fee at taker and maker before anything is called a trade. Provisional until
-live. Launch is HOLD. Nothing scientific is dropped: every abstention is in the registry with its reason.
+fingerprints, never means. No trade cost in any calculation. Provisional until live. Launch is HOLD. Nothing
+scientific is dropped: every abstention is in the registry with its reason.

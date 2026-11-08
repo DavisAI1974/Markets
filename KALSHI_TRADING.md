@@ -40,7 +40,7 @@ superseded ones down. (Started S81, 2026-07-12.)
 > derivations, nothing-dropped register, tests-remaining matrix, plan). Fixes land in `working_tree/`.
 > Markets-owned bridge in `markets_bridge/` (estimator bridge, leakage gate, and `ng_runner.py`, the Henry
 > Hub NG workflow: one NG day -> frames -> both estimators -> archive-first probes -> registries; no trade
-> signal, no fee). Codex pre-paper-trading review: `CODEX_HANDOFF_NG_20261108.md`.
+> signal, no trade cost anywhere). Codex pre-paper-trading review: `CODEX_HANDOFF_NG_20261108.md`.
 > BuildMap is an INCLUDED Markets component; integration and scientific acceptance are still open. Nothing
 > here touches odcore, Frankie or the collectors; the "dipole" in this package is a fifth distinct object
 > (coefficient-ratio balance B), see review section 6.

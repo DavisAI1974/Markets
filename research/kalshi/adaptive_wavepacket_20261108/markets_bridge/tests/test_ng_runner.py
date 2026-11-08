@@ -55,7 +55,7 @@ class NgRunnerRealDayTests(unittest.TestCase):
             summary = ng_runner.run_probe(grid, channels, source_identity=f"NG_{day}",
                                           provenance=provenance, out_dir=folder, shift_null=10)
             self.assertEqual(summary["no_trade_signal_computed"], True)
-            self.assertEqual(summary["net_of_fee_computed"], False)
+            self.assertEqual(summary["trade_cost_in_any_calculation"], False)
             self.assertEqual(summary["frames_dropped"], 0)
             self.assertEqual(set(summary["estimators"]), {"frozen-bin", "vasicek-ksg"})
             for name, block in summary["estimators"].items():
@@ -101,7 +101,7 @@ class ReplicationTableTests(unittest.TestCase):
         self.assertEqual(row["days_meeting_criteria"], 1)
         self.assertEqual(row["meets_criteria_by_day"], {"NG_1": True, "NG_2": False, "NG_3": False})
         self.assertFalse(table["pooled"])
-        self.assertEqual(table["criteria"]["days_required_before_lag_join"], 3)
+        self.assertEqual(table["criteria"]["days_required_for_replication"], 3)
         self.assertEqual(row["days"]["NG_3"]["frozen-bin"]["b_over_se"], None)
 
     def test_single_estimator_day_cannot_meet_criteria(self):
