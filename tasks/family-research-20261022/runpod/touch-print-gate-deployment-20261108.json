@@ -1,0 +1,86 @@
+{
+  "observed_utc": "2026-11-08T20:32:59.927992+00:00",
+  "dates": {
+    "20231002": {
+      "deployment": {
+        "day": "20231002",
+        "gate_revision": "245bb7251",
+        "waiter_pid": 5461,
+        "waiter": "/opt/frankie-box/replay-control/touch-print-gate-245bb7251/runpod_standalone_after_handoff.sh",
+        "input_bundle": "/opt/frankie-box/replay-control/standalone-f06e8e90f"
+      },
+      "producer_status": "2026-11-08T18:10:01Z root-native",
+      "standalone_status": "2026-11-08T20:31:28Z waiting-for-producers",
+      "progress": {
+        "at": 1794169964.7760084,
+        "completed": 35366676637,
+        "failed": 0,
+        "in_flight": 0,
+        "percent": 17.63,
+        "phase": "deriving",
+        "pid": 4402,
+        "process_token": "65c77249-f30c-4536-8a0f-f16282164d1f:145838637",
+        "request_sha256": "1cf6c248e34978db95f972ab9bcacdd345e540f3733f3c1bc42caccdb3967ad5",
+        "schema": "FRANKIE_WORK_PROBE_V1",
+        "stage": "root-projection-member",
+        "state": "running",
+        "total": 200620970437
+      },
+      "decision_output_exists": false
+    },
+    "20231003": {
+      "deployment": {
+        "day": "20231003",
+        "gate_revision": "245bb7251",
+        "waiter_pid": 2650,
+        "waiter": "/opt/frankie-box/replay-control/touch-print-gate-245bb7251/runpod_standalone_after_handoff.sh",
+        "input_bundle": "/opt/frankie-box/replay-control/standalone-f06e8e90f"
+      },
+      "producer_status": "2026-11-08T18:30:54Z root-native",
+      "standalone_status": "2026-11-08T20:31:29Z waiting-for-producers",
+      "progress": {
+        "at": 1794169972.2250702,
+        "completed": 871185,
+        "failed": 0,
+        "in_flight": 0,
+        "percent": 99.02,
+        "phase": "deriving",
+        "pid": 2151,
+        "process_token": "a6f324c7-aa41-4421-aa7a-9ce404449db9:145965200",
+        "request_sha256": "f5dc47e0096c8785435db7d03bd813d8261c47e33811efc0fd24023bc3ccac39",
+        "schema": "FRANKIE_WORK_PROBE_V1",
+        "stage": "root-native-records",
+        "state": "running",
+        "total": 879830
+      },
+      "decision_output_exists": false
+    },
+    "20231017": {
+      "deployment": {
+        "day": "20231017",
+        "gate_revision": "245bb7251",
+        "waiter_pid": 2359,
+        "waiter": "/opt/frankie-box/replay-control/touch-print-gate-245bb7251/runpod_standalone_after_handoff.sh",
+        "input_bundle": "/opt/frankie-box/replay-control/standalone-f06e8e90f"
+      },
+      "producer_status": "2026-11-08T18:18:54Z root-native",
+      "standalone_status": "2026-11-08T20:31:32Z waiting-for-producers",
+      "progress": {
+        "at": 1794169971.8075519,
+        "completed": 10469046945,
+        "failed": 0,
+        "in_flight": 0,
+        "percent": 4.67,
+        "phase": "deriving",
+        "pid": 1790,
+        "process_token": "a6f324c7-aa41-4421-aa7a-9ce404449db9:145893268",
+        "request_sha256": "55264aeee23a72c4619fdd5283587c244dd47fa1dccbce1e362799155dd66dd9",
+        "schema": "FRANKIE_WORK_PROBE_V1",
+        "stage": "root-projection-member",
+        "state": "running",
+        "total": 224020642401
+      },
+      "decision_output_exists": false
+    }
+  }
+}

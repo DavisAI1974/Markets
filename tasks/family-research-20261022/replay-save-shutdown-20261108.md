@@ -62,3 +62,26 @@ waiters were waiting. No new decision result existed yet. The October 2
 ROOT publisher was still running as local Python PID 48372 against
 `F:/MarketsReplayPublication/Markets.git`; no second publisher was started.
 Deployment and actual per-date output observations follow below.
+
+At 20:31 UTC gate commit `245bb7251` was deployed to the shared directory
+`/opt/frankie-box/replay-control/touch-print-gate-245bb7251`. Each original
+waiter was paused, confirmed to be waiting with only a sleep child, and
+replaced on its original pod. New waiter PIDs are 5461 / 2650 / 2359 for
+October 2 / 3 / 17. Each holds the existing `standalone.lock`. Producers
+4402 / 2151 / 1790 continued unchanged. The original standalone bundle is
+still `standalone-f06e8e90f`. Recovery uses the deployed waiter path with
+arguments `YYYYMMDD /opt/frankie-box/replay-control/standalone-f06e8e90f`.
+
+Seven focused local tests passed, including running the actual decision CLI
+against a sealed fixture, refusing a group-count mismatch or wrong date,
+refusing missing output, and reusing a completed result. The four sealer
+tests also passed on the pod's Python runtime. Bash syntax and deployed
+source hashes were checked. These fixture tests do not claim real-date
+decision completion.
+
+At 20:33 UTC Native projection was 17.63% for October 2 and 4.67% for
+October 17; October 3 Native input processing was 99.02%. These percentages
+describe only the named stage. All three progress files reported zero
+failures, all three waiters remained queued, and none had actual decision
+output yet. No pod was stopped. The existing heartbeat remains the sole
+publication/shutdown owner. [Deployment and progress snapshot](runpod/touch-print-gate-deployment-20261108.json)
