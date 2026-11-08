@@ -25,6 +25,23 @@ versioned rule and needs its own evidence before reuse across setups.
   entropy, inspect the touch-size observations in both blocks that produced
   the change. Keep similar sequences with different outcomes side by side.
 
+Keep three parts of each observation linked:
+
+- **Behavior.** Record the ordered book updates and prints. Ratios can
+  characterize that behavior, such as order-linked fills relative to
+  displayed reductions. Keep the numerator, denominator, and observation
+  span so the ratio remains interpretable.
+- **Measured move.** Keep exact prices and timestamps at the relevant
+  starting, decision, and later observations. Report signed movement in raw
+  price units and in ticks when the instrument's tick size is known. Retain
+  elapsed time and the quote side or midpoint used for the measurement.
+- **Option contract context.** When evaluating a particular option, map the
+  move to that contract's specified underlying reference, strike, call or
+  put, expiry, and settlement terms. Keep the underlying's distance to
+  strike and time to expiry at the observation. Record the option premium
+  separately when it is observed. The same underlying move can have
+  different implications for two contracts.
+
 ## October 18 observations
 
 The full-session standalone input export covers 583,688 completed groups and
