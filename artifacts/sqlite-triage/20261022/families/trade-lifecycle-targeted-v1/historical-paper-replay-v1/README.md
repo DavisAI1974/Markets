@@ -45,6 +45,23 @@ The two different outcomes can start with the same visible quotes. Trade **10924
 This comparison is descriptive and in-sample. It does not add a paper rule or estimate a fill. For October 3, use the prior and current best raw prices and fixed-price quantities from adjacent verified group closes to classify the onset. Use the original same-group T rows and their cursors for the tape flag. A gap or left window edge cannot establish a standing onset. Reuse the same entry clock and end definitions, and report the cells separately. No October 3 episode was scored.
 
 [Every size-one comparison](every-size-one-onset-comparison.jsonl.gz) · [Comparison receipt](size-one-onset-comparison-receipt.json)
+
+## What the standing best was doing before it thinned
+
+The path comparison covers all **409 standing-best shrink onsets**. The 603 onsets at a new best price remain in the previous ledger. For each standing onset, read the three immediately preceding completed groups in order. The three quotes must be consecutive and available by the signal clock and cursor. For a size path comparison, all three must show the same absolute best price as the signal. Three equal sizes are flat. A nonincreasing or nondecreasing path with at least one change is falling or building, respectively. Reversing paths are mixed. A prior price change or short history has its own category. Three group closes can span different amounts of time. Their exact clocks are retained, with no fixed-duration interpretation.
+
+The comparison keeps bids and asks separate, and preserves the original T/no-T distinction at the onset group. The first episode outcome and the first eligible paper quote remain exactly as in the original ledger. A later action or observation cannot qualify an earlier group. This pass measures timing and outcomes within the already observed size-one episodes. It makes no change to simulated entries or exits.
+
+- **Falling path with a recorded T at onset.** The ask retreated in **21 of 24** episodes and the bid in **20 of 23**. In both cells, **19** retreats were already visible by the first eligible entry. After entry there were two ask retreats and one bid retreat. The remaining evidence includes three same-price recoveries on each side, with one bid recovery after entry.
+- **Falling path without a recorded T at onset.** After entry, the ask had **nine retreats and eight same-price recoveries**, and the bid also had **nine retreats and eight recoveries**. The earlier outcomes remain in the receipt.
+- **Flat path as a counterexample.** With a recorded T at onset, the flat-path bid had **six retreats and four recoveries after entry**, compared with one retreat and one recovery for the falling-path bid. On the ask, the flat path had **three retreats and five recoveries after entry**. These small cells do not establish a side-independent entry rule.
+
+The falling path helps describe a fast retreat in this selected sample. Before the onset, we would have known the three earlier books. We would still be waiting to see whether the next group thinned to one or contained a T. The next forward test would have to start at the earlier book and include **every qualifying falling path, including those that never thinned**. Using only these 409 later-confirmed episodes would select on information unavailable at that earlier entry.
+
+For October 3, apply the same three-close definitions to verified adjacent groups and preserve the original clocks, cursors and T rows. A missing interval prevents a fixed-price history from being classified. No October 3 outcomes are available yet.
+
+[Every standing-best history](every-standing-touch-pre-onset-path.jsonl.gz) · [Pre-onset receipt](standing-touch-pre-onset-receipt.json)
+
 ## October 3
 
 The [October 3 handoff](../other-30-day-local-liquidity-readiness-20261107.md) pins a sealed journal and both original raw members. The [journal receipt](https://github.com/DavisAI1974/Markets/blob/c28a4de13263b6354662cd376fecc7733b47a991/ingest_pointers/20231003-gh-36571235912-1.json) establishes session boundaries and group counts. October 3 has no replay outcomes while the original bytes are unavailable. On recovery, use its consecutive group closes and the same definitions, timing, price convention and censoring, with October 3 source coordinates. Keep its results separate from the October 18 rule-development window. Preserve all raw trade and contradictory action evidence when attributing a mechanism.
