@@ -1,0 +1,11 @@
+/deploy/aws/box/
+/research/kalshi/frankie_boss/*.py
+/research/kalshi/frankie_boss/operations/
+/research/kalshi/frankie_boss/knowledge/
+/research/kalshi/frankie_boss/blocks/
+/research/kalshi/frankie_boss/sunday_20260915_package/FB/principal-source-contract/
+/research/kalshi/agents/frankie_native_raw_mbo_ingestion_layer_registry_20260828.json
+/research/kalshi/*.py
+/research/refrag/*.py
+/research/ng_exhaustion_mbo_v4_state_adapter_20260820.py
+/markets_adapter.py
