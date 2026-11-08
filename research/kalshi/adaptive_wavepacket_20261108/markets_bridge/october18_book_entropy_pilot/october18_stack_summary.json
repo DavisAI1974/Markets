@@ -1,0 +1,504 @@
+{
+  "arms": [
+    "BASELINE",
+    "ENTROPY",
+    "SAME_GROUP_PRINT",
+    "ENTROPY_AND_PRINT"
+  ],
+  "entropy_dispositions": [
+    [
+      "A",
+      "CALIBRATION_PERIOD",
+      319
+    ],
+    [
+      "A",
+      "NEEDS_TWO_POST_CALIBRATION_BLOCKS",
+      4
+    ],
+    [
+      "A",
+      "REVIEW_REQUIRED",
+      99
+    ],
+    [
+      "A",
+      "SKIP_NO_COMPRESSION",
+      470
+    ],
+    [
+      "A",
+      "TAKE",
+      520
+    ],
+    [
+      "B",
+      "CALIBRATION_PERIOD",
+      400
+    ],
+    [
+      "B",
+      "NEEDS_TWO_POST_CALIBRATION_BLOCKS",
+      2
+    ],
+    [
+      "B",
+      "REVIEW_REQUIRED",
+      105
+    ],
+    [
+      "B",
+      "SKIP_NO_COMPRESSION",
+      478
+    ],
+    [
+      "B",
+      "TAKE",
+      453
+    ]
+  ],
+  "outcomes": [
+    [
+      "A",
+      "ALL",
+      "BASELINE",
+      "1",
+      {
+        "AGREES": 483,
+        "FLAT": 532,
+        "OPPOSES": 397
+      }
+    ],
+    [
+      "A",
+      "ALL",
+      "BASELINE",
+      "30",
+      {
+        "AGREES": 516,
+        "EXIT_CENSORED": 68,
+        "FLAT": 130,
+        "OPPOSES": 698
+      }
+    ],
+    [
+      "A",
+      "ALL",
+      "BASELINE",
+      "5",
+      {
+        "AGREES": 568,
+        "EXIT_CENSORED": 14,
+        "FLAT": 238,
+        "OPPOSES": 592
+      }
+    ],
+    [
+      "A",
+      "ALL",
+      "SAME_GROUP_PRINT",
+      "1",
+      {
+        "AGREES": 76,
+        "FLAT": 52,
+        "OPPOSES": 43
+      }
+    ],
+    [
+      "A",
+      "ALL",
+      "SAME_GROUP_PRINT",
+      "30",
+      {
+        "AGREES": 66,
+        "EXIT_CENSORED": 2,
+        "FLAT": 20,
+        "OPPOSES": 83
+      }
+    ],
+    [
+      "A",
+      "ALL",
+      "SAME_GROUP_PRINT",
+      "5",
+      {
+        "AGREES": 67,
+        "FLAT": 34,
+        "OPPOSES": 70
+      }
+    ],
+    [
+      "A",
+      "COMMON",
+      "BASELINE",
+      "1",
+      {
+        "AGREES": 330,
+        "FLAT": 395,
+        "OPPOSES": 265
+      }
+    ],
+    [
+      "A",
+      "COMMON",
+      "BASELINE",
+      "30",
+      {
+        "AGREES": 307,
+        "EXIT_CENSORED": 55,
+        "FLAT": 103,
+        "OPPOSES": 525
+      }
+    ],
+    [
+      "A",
+      "COMMON",
+      "BASELINE",
+      "5",
+      {
+        "AGREES": 400,
+        "EXIT_CENSORED": 12,
+        "FLAT": 189,
+        "OPPOSES": 389
+      }
+    ],
+    [
+      "A",
+      "COMMON",
+      "ENTROPY",
+      "1",
+      {
+        "AGREES": 173,
+        "FLAT": 224,
+        "OPPOSES": 123
+      }
+    ],
+    [
+      "A",
+      "COMMON",
+      "ENTROPY",
+      "30",
+      {
+        "AGREES": 171,
+        "EXIT_CENSORED": 31,
+        "FLAT": 62,
+        "OPPOSES": 256
+      }
+    ],
+    [
+      "A",
+      "COMMON",
+      "ENTROPY",
+      "5",
+      {
+        "AGREES": 220,
+        "EXIT_CENSORED": 8,
+        "FLAT": 95,
+        "OPPOSES": 197
+      }
+    ],
+    [
+      "A",
+      "COMMON",
+      "ENTROPY_AND_PRINT",
+      "1",
+      {
+        "AGREES": 27,
+        "FLAT": 21,
+        "OPPOSES": 11
+      }
+    ],
+    [
+      "A",
+      "COMMON",
+      "ENTROPY_AND_PRINT",
+      "30",
+      {
+        "AGREES": 22,
+        "FLAT": 8,
+        "OPPOSES": 29
+      }
+    ],
+    [
+      "A",
+      "COMMON",
+      "ENTROPY_AND_PRINT",
+      "5",
+      {
+        "AGREES": 24,
+        "FLAT": 10,
+        "OPPOSES": 25
+      }
+    ],
+    [
+      "A",
+      "COMMON",
+      "SAME_GROUP_PRINT",
+      "1",
+      {
+        "AGREES": 50,
+        "FLAT": 35,
+        "OPPOSES": 26
+      }
+    ],
+    [
+      "A",
+      "COMMON",
+      "SAME_GROUP_PRINT",
+      "30",
+      {
+        "AGREES": 34,
+        "EXIT_CENSORED": 2,
+        "FLAT": 16,
+        "OPPOSES": 59
+      }
+    ],
+    [
+      "A",
+      "COMMON",
+      "SAME_GROUP_PRINT",
+      "5",
+      {
+        "AGREES": 46,
+        "FLAT": 18,
+        "OPPOSES": 47
+      }
+    ],
+    [
+      "B",
+      "ALL",
+      "BASELINE",
+      "1",
+      {
+        "AGREES": 422,
+        "FLAT": 566,
+        "OPPOSES": 450
+      }
+    ],
+    [
+      "B",
+      "ALL",
+      "BASELINE",
+      "30",
+      {
+        "AGREES": 712,
+        "EXIT_CENSORED": 41,
+        "FLAT": 148,
+        "OPPOSES": 537
+      }
+    ],
+    [
+      "B",
+      "ALL",
+      "BASELINE",
+      "5",
+      {
+        "AGREES": 606,
+        "EXIT_CENSORED": 5,
+        "FLAT": 282,
+        "OPPOSES": 545
+      }
+    ],
+    [
+      "B",
+      "ALL",
+      "SAME_GROUP_PRINT",
+      "1",
+      {
+        "AGREES": 59,
+        "FLAT": 52,
+        "OPPOSES": 44
+      }
+    ],
+    [
+      "B",
+      "ALL",
+      "SAME_GROUP_PRINT",
+      "30",
+      {
+        "AGREES": 76,
+        "EXIT_CENSORED": 4,
+        "FLAT": 12,
+        "OPPOSES": 63
+      }
+    ],
+    [
+      "B",
+      "ALL",
+      "SAME_GROUP_PRINT",
+      "5",
+      {
+        "AGREES": 68,
+        "EXIT_CENSORED": 1,
+        "FLAT": 24,
+        "OPPOSES": 62
+      }
+    ],
+    [
+      "B",
+      "COMMON",
+      "BASELINE",
+      "1",
+      {
+        "AGREES": 268,
+        "FLAT": 401,
+        "OPPOSES": 262
+      }
+    ],
+    [
+      "B",
+      "COMMON",
+      "BASELINE",
+      "30",
+      {
+        "AGREES": 515,
+        "EXIT_CENSORED": 34,
+        "FLAT": 100,
+        "OPPOSES": 282
+      }
+    ],
+    [
+      "B",
+      "COMMON",
+      "BASELINE",
+      "5",
+      {
+        "AGREES": 367,
+        "EXIT_CENSORED": 5,
+        "FLAT": 201,
+        "OPPOSES": 358
+      }
+    ],
+    [
+      "B",
+      "COMMON",
+      "ENTROPY",
+      "1",
+      {
+        "AGREES": 119,
+        "FLAT": 201,
+        "OPPOSES": 133
+      }
+    ],
+    [
+      "B",
+      "COMMON",
+      "ENTROPY",
+      "30",
+      {
+        "AGREES": 226,
+        "EXIT_CENSORED": 20,
+        "FLAT": 54,
+        "OPPOSES": 153
+      }
+    ],
+    [
+      "B",
+      "COMMON",
+      "ENTROPY",
+      "5",
+      {
+        "AGREES": 158,
+        "EXIT_CENSORED": 2,
+        "FLAT": 106,
+        "OPPOSES": 187
+      }
+    ],
+    [
+      "B",
+      "COMMON",
+      "ENTROPY_AND_PRINT",
+      "1",
+      {
+        "AGREES": 19,
+        "FLAT": 20,
+        "OPPOSES": 11
+      }
+    ],
+    [
+      "B",
+      "COMMON",
+      "ENTROPY_AND_PRINT",
+      "30",
+      {
+        "AGREES": 26,
+        "FLAT": 5,
+        "OPPOSES": 19
+      }
+    ],
+    [
+      "B",
+      "COMMON",
+      "ENTROPY_AND_PRINT",
+      "5",
+      {
+        "AGREES": 21,
+        "FLAT": 10,
+        "OPPOSES": 19
+      }
+    ],
+    [
+      "B",
+      "COMMON",
+      "SAME_GROUP_PRINT",
+      "1",
+      {
+        "AGREES": 38,
+        "FLAT": 36,
+        "OPPOSES": 22
+      }
+    ],
+    [
+      "B",
+      "COMMON",
+      "SAME_GROUP_PRINT",
+      "30",
+      {
+        "AGREES": 52,
+        "EXIT_CENSORED": 1,
+        "FLAT": 9,
+        "OPPOSES": 34
+      }
+    ],
+    [
+      "B",
+      "COMMON",
+      "SAME_GROUP_PRINT",
+      "5",
+      {
+        "AGREES": 45,
+        "EXIT_CENSORED": 1,
+        "FLAT": 17,
+        "OPPOSES": 33
+      }
+    ]
+  ],
+  "signals": 2850,
+  "source_sha256": {
+    "85c16576c:research/kalshi/adaptive_wavepacket_20261108/markets_bridge/october18_book_entropy_pilot/october18_book_entropy_pilot.jsonl.gz": "2e1a1e73cd9698f6213518dd61d4d32d1b18b14f9d0a230d56654d6bb60664fc",
+    "artifacts\\sqlite-triage\\20261022\\families\\trade-lifecycle-targeted-v1\\historical-paper-replay-v1\\every-early-falling-touch-signal.jsonl.gz": "8af618de076c118c038aadba1ed67490b67d7f76b7b85a53b8972346a0919b63",
+    "artifacts\\sqlite-triage\\20261022\\families\\trade-lifecycle-targeted-v1\\local-liquidity-v1\\every-trade-local-liquidity-links.jsonl.gz": "b796e6343448fc1df20453ef9c7906874664817fecea136b04bb377a7a751b66"
+  },
+  "support": [
+    [
+      "A",
+      "ALL",
+      1412
+    ],
+    [
+      "A",
+      "COMMON",
+      990
+    ],
+    [
+      "B",
+      "ALL",
+      1438
+    ],
+    [
+      "B",
+      "COMMON",
+      931
+    ]
+  ]
+}
