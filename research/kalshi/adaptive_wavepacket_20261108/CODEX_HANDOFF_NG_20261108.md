@@ -167,6 +167,14 @@ registry did not verify.
 
 ## 7. State at handoff
 
+Workflow status (2026-11-08, end of session): the NG workflow (`markets_bridge/ng_runner.py`) is complete in
+code and is under a final double-check. Everything else in this handoff is done except the items explicitly
+noted as open (no real NG day run yet, Kalshi channel untested on data, Frankie adapter later, AWS not in use).
+Git-workflow verification at `0456eca`: local equals remote, merge base is the trunk tip, working tree clean,
+every commit typed and single-purpose, zero secrets in the branch diff, zero stray artifacts tracked, all
+suites green at HEAD, frozen snapshot still byte-exact. PR: https://github.com/DavisAI1974/Markets/pull/12.
+
+
 Branch `research/markets-adaptive-wavepacket-migration-20261108`, 30 commits on top of the Markets base
 `c93895e`, working tree clean, last commit the one that carries this document. Frozen snapshot untouched
 (133/133 byte-exact). Suites green: Python engine 87 + 31 + engineering tests, Node 183, bridge 10 (one

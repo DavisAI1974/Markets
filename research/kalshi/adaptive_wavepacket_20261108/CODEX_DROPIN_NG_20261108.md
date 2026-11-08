@@ -32,6 +32,10 @@ Rules that bind
   working_tree/ and markets_bridge/. Do not merge, deploy, or touch AWS, Frankie or Search.
 
 State you inherit
+- Status note: the NG workflow (ng_runner.py) is complete in code and under a final double-check; everything
+  else here is done except the items noted (no real NG day run yet, Kalshi channel untested on data, Frankie
+  adapter later, no AWS work). Git-workflow checks passed at 0456eca. PR open:
+  https://github.com/DavisAI1974/Markets/pull/12 (fast-forward onto the trunk).
 - 133/133 BuildMap files migrated byte-exact; all review findings fixed with tests; engine 87+31+engineering
   Python tests, Node 183, bridge 10 green; lag_join.py and coach_replay.py selftests pass; the real-day NG test
   skips until a day is cached. No real NG data has been through the engine yet: that first run is yours.
