@@ -32,15 +32,25 @@ Keep three parts of each observation linked:
   displayed reductions. Keep the numerator, denominator, and observation
   span so the ratio remains interpretable.
 - **Measured move.** Keep exact prices and timestamps at the relevant
-  starting, decision, and later observations. Report signed movement in raw
-  price units and in ticks when the instrument's tick size is known. Retain
-  elapsed time and the quote side or midpoint used for the measurement.
+  starting, decision, and later observations. Report signed percentage
+  change from a defined nonzero starting price, with raw changes and ticks
+  where available. Retain elapsed time and the quote side or midpoint used
+  for the measurement. Compare the distribution of moves at consistent
+  horizons across recurring market events and conditions, including flat
+  and opposing moves. Use the event and its context to define the pattern.
 - **Option contract context.** When evaluating a particular option, map the
   move to that contract's specified underlying reference, strike, call or
   put, expiry, and settlement terms. Keep the underlying's distance to
   strike and time to expiry at the observation. Record the option premium
   separately when it is observed. The same underlying move can have
   different implications for two contracts.
+
+Treat a specific price level as a separate strike-concentration hypothesis
+when contemporaneously available options data show a concentration there.
+Bind the observation to the matching underlying and expiry, record how the
+concentration was measured, and compare behavior near that strike with
+comparable levels without that concentration. Keep open interest and traded
+volume separate if both are available.
 
 ## October 18 observations
 
