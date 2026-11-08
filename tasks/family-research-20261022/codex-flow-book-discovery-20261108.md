@@ -968,3 +968,39 @@ established by that analysis; it must not be read as denying that candidate a
 paper trial. Keep the original measurements and contrary cases, give each
 candidate the planned opportunity over further days, and record its outcomes.
 Missing source/input coverage is recorded separately from signal performance.
+
+
+## Primer section 7 — How the largest October 18 quote moves formed
+
+The supplied PDF asks whether large moves come from aggressive flow, changes in available liquidity, or information arriving from outside the book. The October 18 test starts with the observable mechanism. It compares every pair of adjacent eligible completed groups, traces the raw order messages for every absolute midpoint move of at least two ticks, and follows the quote for 1, 5 and 20 seconds. It uses the PDF's pages 8–9 and two primary studies as motivation. The studies concern equity markets. [Supplied PDF, section 7](research-atlas-v2/sources/claude-primer-user-20261108.pdf#page=8) · [Joulin et al. on price jumps](https://arxiv.org/abs/0803.1769) · [Cont, Kukanov and Stoikov on book events and price impact](https://arxiv.org/abs/1011.6402)
+
+### What the cohort shows
+
+| Absolute midpoint move within one completed group | With a print in the group | Without a print in the group |
+| --- | ---: | ---: |
+| Half a tick | 11,199 | 23,051 |
+| One tick | 1,033 | 134 |
+| One and a half ticks | 127 | 14 |
+| Two ticks or more | 64 | 0 |
+
+There were 583,593 eligible group pairs and 35,622 nonflat midpoint changes. Among the 64 largest moves, 55 combined fill-linked depletion at the old best with an order entering at the new best on the other side. Seven had fill-linked depletion alone at the changed touch, and two changed the touch through a new best order alongside a print. The new best shared a print's order ID in 54 of the 57 groups with a new best order. That links execution and new displayed liquidity within the same event in those cases. Executed size ranged from 1 to 140 contracts, with a median of 26.5. A trade count or trade size by itself leaves out how far away the next available quote was and where the incoming order rested.
+
+All 64 moves fell within one second after at least one retained traded-curve update. None fell within one second after another publication in the retained file. The curve includes the traded front leg, so its timing can reflect activity in the same market. The file also has limited coverage of outside information. The trace establishes what moved the displayed quote and leaves the original motivation open.
+
+| Horizon from the move close | Further in the original direction | Flat from the move close | Against the original direction | Unavailable |
+| --- | ---: | ---: | ---: | ---: |
+| 1 second | 41 | 13 | 10 | 0 |
+| 5 seconds | 34 | 9 | 11 | 10 |
+| 20 seconds | 33 | 3 | 15 | 13 |
+
+The endpoint is the most recent eligible quote at or before the horizon in the same continuous segment, with a maximum quote age of one second. A full retrace is a move back to the prior midpoint or beyond. Two cases fully retraced by the one-second observation, two by the five-second observation, and five by the 20-second observation. A check that retained the earliest jump and then required a 20-second gap between selected jumps left 57 cases. The one-second counts were 37 further in the original direction, 13 flat, and 7 against. The windows share one trading session, and the observed counts do not estimate performance across sessions.
+
+### What the orders show in specific cases
+
+- **Same immediate mechanism, different first second.** At groups 569998 and 570830, the spread was five ticks. In each, a one-lot buy printed inside the prior spread and seven lots with the same order ID appeared at the improved bid. The ask stayed put, and the midpoint rose two ticks. Over the next second the first rose another 4.5 ticks and the second fell 1.5 ticks from its move close. There were 24 versus 80 print messages in the preceding 20 seconds. That gives a concrete way to compare activity and refill around two otherwise similar immediate moves. Source cursors 754073–754075 and 755240–755242.
+- **A larger move combined a sweep and a new bid.** Group 326598 rose five midpoint ticks from an initially one-tick spread. The buy executed 140 lots across several prices, removed the six lots at the previous best ask, and left a 60-lot bid at 3.100. The best offer ended at 3.101. Source cursors 427823–427943.
+- **A retrace can depend on the horizon.** Group 333456 fell two midpoint ticks after four sell lots printed, a linked fill removed the last displayed bid at 3.111, and a 14-lot offer appeared at that price. The midpoint fully retraced by the one-second observation and was one tick below the move close at 20 seconds. Source cursors 437101–437105.
+
+The next comparison can hold spread, nearby depth, preceding activity and initial move size constant, then split cases by whether the incoming order rested and how the vacated levels refilled. This tests whether the sequence describes continuation and reversal better than initial traded size alone. For the primer's long-memory and impact questions, use observable runs of signed flow and their pauses, compare depth and refill before the next print, and keep participant and parent-order attribution open. For the announcement question, compare sessions with independently timed release and surprise data against activity-matched windows. Use more independent dates and comparable contracts for tail exponents, persistent volatility, expiry effects and index-flow attribution. The one-day results leave those hypotheses open.
+
+[Replay and measurement code](research_october18_large_quote_moves.py) · [All 64 traces and outcomes](october18-large-quote-moves.jsonl.gz) · [Counts and sensitivity results](october18-large-quote-moves-summary.json)

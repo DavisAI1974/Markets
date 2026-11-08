@@ -1,0 +1,366 @@
+{
+  "comparable_group_pairs": {
+    "all": 583593,
+    "nonzero": 35622,
+    "three_ticks_or_more": 16,
+    "two_ticks_or_more": 64
+  },
+  "counts": {
+    "all_moves/print/1s": {
+      "against": 10,
+      "flat": 13,
+      "full_retrace": 2,
+      "with": 41
+    },
+    "all_moves/print/20s": {
+      "against": 15,
+      "flat": 3,
+      "full_retrace": 5,
+      "unavailable": 13,
+      "with": 33
+    },
+    "all_moves/print/5s": {
+      "against": 11,
+      "flat": 9,
+      "full_retrace": 2,
+      "unavailable": 10,
+      "with": 34
+    },
+    "cohort": {
+      "direction/-1": 30,
+      "direction/1": 34,
+      "mechanism/fill_linked": 7,
+      "mechanism/new_best": 2,
+      "mechanism/new_best+fill_linked": 55,
+      "near_retained_other_publication": 0,
+      "near_retained_traded_curve": 64,
+      "new_best_shares_print_order_id": 54,
+      "print/print": 64,
+      "prior_spread_ticks/1": 43,
+      "prior_spread_ticks/2": 16,
+      "prior_spread_ticks/3": 3,
+      "prior_spread_ticks/5": 2,
+      "size_half_ticks/10": 1,
+      "size_half_ticks/4": 38,
+      "size_half_ticks/5": 10,
+      "size_half_ticks/6": 7,
+      "size_half_ticks/7": 4,
+      "size_half_ticks/8": 3,
+      "size_half_ticks/9": 1
+    },
+    "disjoint/all_moves/print/1s": {
+      "against": 7,
+      "flat": 13,
+      "with": 37
+    },
+    "disjoint/all_moves/print/20s": {
+      "against": 15,
+      "flat": 3,
+      "unavailable": 13,
+      "with": 26
+    },
+    "disjoint/all_moves/print/5s": {
+      "against": 10,
+      "flat": 8,
+      "unavailable": 10,
+      "with": 29
+    },
+    "disjoint/fill_linked/print/1s": {
+      "flat": 1,
+      "with": 5
+    },
+    "disjoint/fill_linked/print/20s": {
+      "against": 1,
+      "flat": 1,
+      "with": 4
+    },
+    "disjoint/fill_linked/print/5s": {
+      "unavailable": 1,
+      "with": 5
+    },
+    "disjoint/new_best+fill_linked/print/1s": {
+      "against": 7,
+      "flat": 12,
+      "with": 32
+    },
+    "disjoint/new_best+fill_linked/print/20s": {
+      "against": 14,
+      "flat": 2,
+      "unavailable": 13,
+      "with": 22
+    },
+    "disjoint/new_best+fill_linked/print/5s": {
+      "against": 10,
+      "flat": 8,
+      "unavailable": 9,
+      "with": 24
+    },
+    "disjoint/size_10_half_ticks/print/1s": {
+      "with": 1
+    },
+    "disjoint/size_10_half_ticks/print/20s": {
+      "unavailable": 1
+    },
+    "disjoint/size_10_half_ticks/print/5s": {
+      "with": 1
+    },
+    "disjoint/size_4_half_ticks/print/1s": {
+      "against": 2,
+      "flat": 8,
+      "with": 23
+    },
+    "disjoint/size_4_half_ticks/print/20s": {
+      "against": 8,
+      "flat": 3,
+      "unavailable": 5,
+      "with": 17
+    },
+    "disjoint/size_4_half_ticks/print/5s": {
+      "against": 4,
+      "flat": 6,
+      "unavailable": 6,
+      "with": 17
+    },
+    "disjoint/size_5_half_ticks/print/1s": {
+      "against": 2,
+      "flat": 3,
+      "with": 4
+    },
+    "disjoint/size_5_half_ticks/print/20s": {
+      "against": 3,
+      "unavailable": 3,
+      "with": 3
+    },
+    "disjoint/size_5_half_ticks/print/5s": {
+      "against": 3,
+      "flat": 1,
+      "unavailable": 1,
+      "with": 4
+    },
+    "disjoint/size_6_half_ticks/print/1s": {
+      "against": 1,
+      "flat": 2,
+      "with": 3
+    },
+    "disjoint/size_6_half_ticks/print/20s": {
+      "against": 2,
+      "unavailable": 1,
+      "with": 3
+    },
+    "disjoint/size_6_half_ticks/print/5s": {
+      "against": 1,
+      "flat": 1,
+      "unavailable": 1,
+      "with": 3
+    },
+    "disjoint/size_7_half_ticks/print/1s": {
+      "against": 1,
+      "with": 3
+    },
+    "disjoint/size_7_half_ticks/print/20s": {
+      "against": 1,
+      "unavailable": 1,
+      "with": 2
+    },
+    "disjoint/size_7_half_ticks/print/5s": {
+      "against": 1,
+      "unavailable": 1,
+      "with": 2
+    },
+    "disjoint/size_8_half_ticks/print/1s": {
+      "against": 1,
+      "with": 2
+    },
+    "disjoint/size_8_half_ticks/print/20s": {
+      "against": 1,
+      "unavailable": 1,
+      "with": 1
+    },
+    "disjoint/size_8_half_ticks/print/5s": {
+      "against": 1,
+      "unavailable": 1,
+      "with": 1
+    },
+    "disjoint/size_9_half_ticks/print/1s": {
+      "with": 1
+    },
+    "disjoint/size_9_half_ticks/print/20s": {
+      "unavailable": 1
+    },
+    "disjoint/size_9_half_ticks/print/5s": {
+      "with": 1
+    },
+    "fill_linked/print/1s": {
+      "flat": 1,
+      "with": 6
+    },
+    "fill_linked/print/20s": {
+      "against": 1,
+      "flat": 1,
+      "full_retrace": 1,
+      "with": 5
+    },
+    "fill_linked/print/5s": {
+      "unavailable": 1,
+      "with": 6
+    },
+    "new_best+fill_linked/print/1s": {
+      "against": 9,
+      "flat": 12,
+      "full_retrace": 2,
+      "with": 34
+    },
+    "new_best+fill_linked/print/20s": {
+      "against": 14,
+      "flat": 2,
+      "full_retrace": 4,
+      "unavailable": 13,
+      "with": 26
+    },
+    "new_best+fill_linked/print/5s": {
+      "against": 11,
+      "flat": 9,
+      "full_retrace": 2,
+      "unavailable": 9,
+      "with": 26
+    },
+    "new_best/print/1s": {
+      "against": 1,
+      "with": 1
+    },
+    "new_best/print/20s": {
+      "with": 2
+    },
+    "new_best/print/5s": {
+      "with": 2
+    },
+    "size_10_half_ticks/print/1s": {
+      "with": 1
+    },
+    "size_10_half_ticks/print/20s": {
+      "unavailable": 1
+    },
+    "size_10_half_ticks/print/5s": {
+      "with": 1
+    },
+    "size_4_half_ticks/print/1s": {
+      "against": 4,
+      "flat": 8,
+      "full_retrace": 1,
+      "with": 26
+    },
+    "size_4_half_ticks/print/20s": {
+      "against": 8,
+      "flat": 3,
+      "full_retrace": 4,
+      "unavailable": 5,
+      "with": 22
+    },
+    "size_4_half_ticks/print/5s": {
+      "against": 5,
+      "flat": 6,
+      "full_retrace": 1,
+      "unavailable": 6,
+      "with": 21
+    },
+    "size_5_half_ticks/print/1s": {
+      "against": 3,
+      "flat": 3,
+      "with": 4
+    },
+    "size_5_half_ticks/print/20s": {
+      "against": 3,
+      "unavailable": 3,
+      "with": 4
+    },
+    "size_5_half_ticks/print/5s": {
+      "against": 3,
+      "flat": 2,
+      "unavailable": 1,
+      "with": 4
+    },
+    "size_6_half_ticks/print/1s": {
+      "against": 1,
+      "flat": 2,
+      "with": 4
+    },
+    "size_6_half_ticks/print/20s": {
+      "against": 2,
+      "unavailable": 1,
+      "with": 4
+    },
+    "size_6_half_ticks/print/5s": {
+      "against": 1,
+      "flat": 1,
+      "unavailable": 1,
+      "with": 4
+    },
+    "size_7_half_ticks/print/1s": {
+      "against": 1,
+      "full_retrace": 1,
+      "with": 3
+    },
+    "size_7_half_ticks/print/20s": {
+      "against": 1,
+      "full_retrace": 1,
+      "unavailable": 1,
+      "with": 2
+    },
+    "size_7_half_ticks/print/5s": {
+      "against": 1,
+      "full_retrace": 1,
+      "unavailable": 1,
+      "with": 2
+    },
+    "size_8_half_ticks/print/1s": {
+      "against": 1,
+      "with": 2
+    },
+    "size_8_half_ticks/print/20s": {
+      "against": 1,
+      "unavailable": 1,
+      "with": 1
+    },
+    "size_8_half_ticks/print/5s": {
+      "against": 1,
+      "unavailable": 1,
+      "with": 1
+    },
+    "size_9_half_ticks/print/1s": {
+      "with": 1
+    },
+    "size_9_half_ticks/print/20s": {
+      "unavailable": 1
+    },
+    "size_9_half_ticks/print/5s": {
+      "with": 1
+    }
+  },
+  "nonzero_midpoint_moves_by_absolute_half_ticks": {
+    "1": {
+      "with_print": 11199,
+      "without_print": 23051
+    },
+    "2": {
+      "with_print": 1033,
+      "without_print": 134
+    },
+    "3": {
+      "with_print": 127,
+      "without_print": 14
+    },
+    "4_or_more": {
+      "with_print": 64
+    }
+  },
+  "retained_publications_by_table": {
+    "calendar.sessions_since_prompt_expiry": 1,
+    "curve.settled_shape": 3,
+    "curve.traded_shape": 14063,
+    "eia930.us48": 22,
+    "mos.disagreement_by_cycle": 2,
+    "mos.gw_by_cycle": 4,
+    "weather.gw_daily": 1,
+    "weather.obs_hourly": 397
+  }
+}
