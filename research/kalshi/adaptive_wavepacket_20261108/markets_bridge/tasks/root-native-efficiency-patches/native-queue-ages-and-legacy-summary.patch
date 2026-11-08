@@ -1,0 +1,140 @@
+--- a/research/ng_exhaustion_mbo_v4_state_adapter_20260820.py
++++ b/research/ng_exhaustion_mbo_v4_state_adapter_20260820.py
+@@ -103,7 +103,10 @@
+ 
+ 
+ def _quantile(values: Iterable[float], q: float) -> float | None:
+-    vals = sorted(float(x) for x in values)
++    return _quantile_sorted(sorted(float(x) for x in values), q)
++
++
++def _quantile_sorted(vals: list[float], q: float) -> float | None:
+     if not vals:
+         return None
+     if len(vals) == 1:
+@@ -348,23 +351,29 @@
+             return old_visible or new_visible, sides
+         raise ValueError(f"unsupported legacy projection action {msg.action!r}")
+ 
++    def _legacy_level_summaries(self, side: str, *, raw_price: bool = False) -> list[tuple[int | float, int, int]]:
++        """Return the exact price, size, and count consumed by legacy projection.
++
++        Signatures use integer prices; emitted control rows use decimal prices.
++        Full frame/checkpoint snapshots still compute every level statistic.
++        """
++        summaries = []
++        for price in self._top10_prices(side):
++            size = count = 0
++            for order_id in self.levels[side].get(price, ()):
++                order = self.orders.get(order_id)
++                if order is not None:
++                    size += order.size
++                    count += 1
++            summaries.append((price if raw_price else decimal_price(price), size, count))
++        return summaries
++
+     def _legacy_book_signature(self, now_ns: int) -> tuple[Any, ...]:
+-        book = self.book_snapshot(
+-            now_ns,
+-            depth_levels=10,
+-            include_full_depth=False,
+-            include_order_ids=False,
+-        )
+         signature: list[Any] = []
+-        for side_key in ("bid_levels", "ask_levels"):
+-            levels = book[side_key]
++        for side in ("B", "A"):
++            levels = self._legacy_level_summaries(side, raw_price=True)
+             for i in range(10):
+-                level = levels[i] if i < len(levels) else None
+-                signature.extend((
+-                    None if level is None else level["price_raw"],
+-                    0 if level is None else level["size"],
+-                    0 if level is None else level["order_count"],
+-                ))
++                signature.extend(levels[i] if i < len(levels) else (None, 0, 0))
+         return tuple(signature)
+ 
+     def _prices(self, side: str) -> list[int]:
+@@ -611,6 +620,7 @@
+         orders = [self.orders[oid] for oid in ids if oid in self.orders]
+         total = sum(o.size for o in orders)
+         ages = [max(0.0, (now_ns - o.priority_recv_ns) / 1e9) for o in orders]
++        sorted_ages = sorted(ages)
+         out: dict[str, Any] = {
+             "side": side,
+             "price": decimal_price(price_raw),
+@@ -619,21 +629,21 @@
+             "order_count": len(orders),
+             "front_order_size": None if not orders else orders[0].size,
+             "front_order_age_s": None if not orders else ages[0],
+-            "queue_age_median_s": _quantile(ages, 0.5),
+-            "queue_age_p90_s": _quantile(ages, 0.9),
++            "queue_age_median_s": _quantile_sorted(sorted_ages, 0.5),
++            "queue_age_p90_s": _quantile_sorted(sorted_ages, 0.9),
+             "largest_order_share": _ratio(max((o.size for o in orders), default=0), total),
+         }
+         if include_order_ids:
+             ahead = 0
+             queue = []
+-            for order in orders:
++            for order, age in zip(orders, ages):
+                 queue.append({
+                     "order_id": order.order_id,
+                     "size": order.size,
+                     "volume_ahead": ahead,
+                     "priority_recv_ns": order.priority_recv_ns,
+                     "priority_sequence": order.priority_sequence,
+-                    "priority_age_s": max(0.0, (now_ns - order.priority_recv_ns) / 1e9),
++                    "priority_age_s": age,
+                 })
+                 ahead += order.size
+             out["fifo_queue"] = queue
+@@ -748,14 +758,8 @@
+         projection_at_group_end: bool = False,
+     ) -> dict[str, Any]:
+         """Project one MBP-10-emitting MBO action with its immediate post-action book."""
+-        book = self.book_snapshot(
+-            msg.ts_recv_ns,
+-            depth_levels=10,
+-            include_full_depth=False,
+-            include_order_ids=False,
+-        )
+-        bids = book["bid_levels"]
+-        asks = book["ask_levels"]
++        bids = self._legacy_level_summaries("B")
++        asks = self._legacy_level_summaries("A")
+         rec: dict[str, Any] = {
+             "adapter_revision": ADAPTER_REVISION,
+             "census_view": "LEGACY_CONTROL",
+@@ -775,14 +779,10 @@
+             "projection_at_f_last": bool(msg.is_last or projection_at_group_end),
+         }
+         for i in range(10):
+-            bid = bids[i] if i < len(bids) else None
+-            ask = asks[i] if i < len(asks) else None
+-            rec[f"bid_px_{i:02d}"] = 0.0 if bid is None else bid["price"]
+-            rec[f"bid_sz_{i:02d}"] = 0 if bid is None else bid["size"]
+-            rec[f"bid_ct_{i:02d}"] = 0 if bid is None else bid["order_count"]
+-            rec[f"ask_px_{i:02d}"] = 0.0 if ask is None else ask["price"]
+-            rec[f"ask_sz_{i:02d}"] = 0 if ask is None else ask["size"]
+-            rec[f"ask_ct_{i:02d}"] = 0 if ask is None else ask["order_count"]
++            bid = bids[i] if i < len(bids) else (0.0, 0, 0)
++            ask = asks[i] if i < len(asks) else (0.0, 0, 0)
++            rec[f"bid_px_{i:02d}"], rec[f"bid_sz_{i:02d}"], rec[f"bid_ct_{i:02d}"] = bid
++            rec[f"ask_px_{i:02d}"], rec[f"ask_sz_{i:02d}"], rec[f"ask_ct_{i:02d}"] = ask
+         return rec
+ 
+ 
+@@ -824,7 +824,10 @@
+ 
+     def apply(self, record: Any, raw_symbol: str | None = None, source_dbn_object: str | None = None, source_dbn_sha256: str | None = None) -> tuple[dict[str, Any] | None, list[dict[str, Any]]]:
+         msg = self.normalize(record, raw_symbol, source_dbn_object, source_dbn_sha256)
+-        book = self.books.setdefault(msg.instrument_id, InstrumentBook(msg.instrument_id))
++        book = self.books.get(msg.instrument_id)
++        if book is None:
++            book = InstrumentBook(msg.instrument_id)
++            self.books[msg.instrument_id] = book
+         _, frame, legacy_rows = book.apply(msg)
+         self.record_count += 1
+         if frame is None:

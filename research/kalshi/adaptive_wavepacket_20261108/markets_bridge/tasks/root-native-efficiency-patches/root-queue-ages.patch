@@ -1,0 +1,48 @@
+--- a/research/ng_exhaustion_mbo_v4_state_adapter_20260820.py
++++ b/research/ng_exhaustion_mbo_v4_state_adapter_20260820.py
+@@ -103,7 +103,10 @@
+ 
+ 
+ def _quantile(values: Iterable[float], q: float) -> float | None:
+-    vals = sorted(float(x) for x in values)
++    return _quantile_sorted(sorted(float(x) for x in values), q)
++
++
++def _quantile_sorted(vals: list[float], q: float) -> float | None:
+     if not vals:
+         return None
+     if len(vals) == 1:
+@@ -617,6 +620,7 @@
+         orders = [self.orders[oid] for oid in ids if oid in self.orders]
+         total = sum(o.size for o in orders)
+         ages = [max(0.0, (now_ns - o.priority_recv_ns) / 1e9) for o in orders]
++        sorted_ages = sorted(ages)
+         out: dict[str, Any] = {
+             "side": side,
+             "price": decimal_price(price_raw),
+@@ -625,21 +629,21 @@
+             "order_count": len(orders),
+             "front_order_size": None if not orders else orders[0].size,
+             "front_order_age_s": None if not orders else ages[0],
+-            "queue_age_median_s": _quantile(ages, 0.5),
+-            "queue_age_p90_s": _quantile(ages, 0.9),
++            "queue_age_median_s": _quantile_sorted(sorted_ages, 0.5),
++            "queue_age_p90_s": _quantile_sorted(sorted_ages, 0.9),
+             "largest_order_share": _ratio(max((o.size for o in orders), default=0), total),
+         }
+         if include_order_ids:
+             ahead = 0
+             queue = []
+-            for order in orders:
++            for order, age in zip(orders, ages):
+                 queue.append({
+                     "order_id": order.order_id,
+                     "size": order.size,
+                     "volume_ahead": ahead,
+                     "priority_recv_ns": order.priority_recv_ns,
+                     "priority_sequence": order.priority_sequence,
+-                    "priority_age_s": max(0.0, (now_ns - order.priority_recv_ns) / 1e9),
++                    "priority_age_s": age,
+                 })
+                 ahead += order.size
+             out["fifo_queue"] = queue

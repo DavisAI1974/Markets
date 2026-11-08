@@ -1,0 +1,69 @@
+{
+  "tape_pin": "1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202",
+  "utc_members": [
+    "20231003",
+    "20231018"
+  ],
+  "records_per_member": 1600,
+  "root_pin": "af36937d1e478831d4c7bc612c98d969e9a0848b",
+  "native_pin": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+  "scope": "In-process book and legacy output. Excludes whole-stage encoding, IPC, checkpoint and disk I/O.",
+  "root": {
+    "verified_frames": 1488,
+    "ordered_output_sha256": "c7ecf6d27c72fa474818b4d52d8fdaf02a087efb4e38c94e08b479276ddc8513",
+    "seconds": {
+      "baseline": [
+        4.1633,
+        4.2875,
+        4.1703
+      ],
+      "reuse_queue_ages": [
+        3.4806,
+        3.8834,
+        3.3881
+      ]
+    },
+    "median_seconds": {
+      "baseline": 4.1703,
+      "reuse_queue_ages": 3.4806
+    }
+  },
+  "native": {
+    "verified_frames": 1488,
+    "ordered_output_sha256": "0331884d8f5b291e56e007360a00fdc9d8d062f90893dc4ec3c9c619b668f9c0",
+    "seconds": {
+      "baseline": [
+        4.9871,
+        5.1365,
+        5.0249
+      ],
+      "reuse_queue_ages": [
+        4.2406,
+        4.1756,
+        4.2327
+      ],
+      "legacy_summary_backport": [
+        4.5581,
+        4.4638,
+        4.5551
+      ],
+      "reuse_live_book": [
+        5.0001,
+        4.9106,
+        5.0694
+      ],
+      "reuse_queue_ages_and_legacy_summary": [
+        3.7833,
+        3.7918,
+        4.0206
+      ]
+    },
+    "median_seconds": {
+      "baseline": 5.0249,
+      "reuse_queue_ages": 4.2327,
+      "legacy_summary_backport": 4.5551,
+      "reuse_live_book": 5.0001,
+      "reuse_queue_ages_and_legacy_summary": 3.7918
+    }
+  }
+}
