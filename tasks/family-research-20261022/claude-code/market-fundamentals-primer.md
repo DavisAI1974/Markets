@@ -493,14 +493,17 @@ The crypto-era fee-floor rules and the `DEPLOY` cell map are retired and do not 
 | NG release move speed | 60 s after the 14:30 UTC storage print captures a median 0.66 of the full move; 60 s move p50 106 bps ($310 per contract), p90 174 bps ($490); one day peaked in 1 s, five of twelve within 2 minutes; the pooled median time to peak (about 12 min) hides this | S85, `EVENT_MOVE_FINDINGS_S85.md`, 12 releases Apr to Jul 2026 |
 | NG lag-join echo | Release mode NG taker plus 17 cents, 100 percent, tiny n; provisional | S87, `lag_join.py` |
 | Direction nowcast window | about 300 s of flow overlapping the leg's trigger push | S92 |
-| Candidate recognition delay | median 2.407 s after the nominal second, maximum 87.4 s; a quiet second completes only when a later group arrives | this session's reconstruction, October 18 |
+| Candidate recognition delay | median 2.407 s after the nominal available second, maximum 87.4 s; the available second is itself t0+50 (5 s local maximum plus 45 s refractory), so actual recognition is a median 51 s after the burst (range 7 to 137 s) | this session's reconstruction, October 18 |
+| Exhaustion runway under the frozen contract | structural onset a median 31 to 34 s after t0 on October 2, 17 and 18; persistent (P) family 110 to 121 s, collapsed families 20 to 24 s | this session's whole-day pass, three dates |
+| State-confirmation versus information horizon | 62 to 63 percent of exhaustions are confirmed over before t0+50; 68 to 69 percent before the seed state is knowable at t0+61; the 85th-percentile threshold saturates at 1.0 on all three days | this session's whole-day pass, three dates |
 | Next print after a decision close | median lead 0.366 ms; 63 of 29,797 had a zero receive-time lead with tape order still separating them | October 18 prebirth log |
 | Paper replay entry assumption | first completed book at least 1 ms after the signal group | historical paper replay |
 | Settlement reference | KXNATGASD settles on the Pyth NGDQ6 1-minute candle close at 5:00 pm EDT (21:00 UTC), not the CME settle; the project guards 1,800 s before it | S84, S87 |
 | Sampling floor | 1 s historical sampling undersamples NYMEX and is a lower bound; MBO is the actual tape | S84 |
 
 Read together: if the exploitable Kalshi window is on the order of 7 to 20 s after a NYMEX move, a
-detector whose recognition arrives a median 2.4 s after the nominal second spends 12 to 35 percent of
-that window before a decision exists, and its 87 s tail exceeds the window entirely. The NG release
+detector whose recognition arrives a median 51 s after the burst, and after the burst itself has ended
+in five of eight cases, cannot serve that window at all; its post-endpoint plays start at confirmation
+plus 5 s by design. The NG release
 move itself is two-thirds done within 60 s and sometimes within 1 s. Any signal meant for the lag has to
 be judged on its recognition clock, not its nominal clock, against these numbers.

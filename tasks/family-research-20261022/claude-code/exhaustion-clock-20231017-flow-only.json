@@ -1,0 +1,58 @@
+{
+  "date": "20231017",
+  "seconds": 75579,
+  "first_second": 1697500816,
+  "trades_seen": 33451,
+  "day_threshold_85pct": 1.0,
+  "share_of_finite_roll_seconds_saturated": 0.2783,
+  "events": 766,
+  "candidates": 13779,
+  "polarity": {
+    "-1": 402,
+    "1": 364
+  },
+  "seed_states": {
+    "P": 226,
+    "O": 214,
+    "S": 177,
+    "X": 149
+  },
+  "pre_arc_defined": 488,
+  "censored": 0,
+  "runway_s": {
+    "q25": 16.0,
+    "median": 34.0,
+    "q75": 77.75,
+    "max": 562
+  },
+  "confirm_offset_s": {
+    "q25": 18.0,
+    "median": 36.0,
+    "q75": 79.75,
+    "max": 564
+  },
+  "confirmed_before_info5": 57,
+  "confirmed_before_info50": 477,
+  "confirmed_before_seed_known": 519,
+  "runway_by_seed": {
+    "P": 110.0,
+    "O": 23.5,
+    "S": 20,
+    "X": 21
+  },
+  "burst_volume_20s": {
+    "one_lot": 350,
+    "two_to_five": 297,
+    "over_five": 119
+  },
+  "dip300_sign_vs_polarity": {
+    "opposite": 329,
+    "same": 414,
+    "zero_or_undefined": 23
+  },
+  "inter_event_gap_s": {
+    "median": 72,
+    "under_60": 271
+  },
+  "note": "Flow only; no price outcomes until the date's print export lands. Partial-span dates begin at the UTC midnight snapshot."
+}

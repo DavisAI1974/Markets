@@ -476,3 +476,123 @@ NG release move two-thirds complete within 60 s, sometimes within 1 s; Kalshi se
 Against that budget the detector's 2.4 s median recognition delay is 12 to 35 percent of the window and
 its 87 s tail exceeds it. The size-one replay's 1 ms entry and the 0.366 ms median lead of the next print
 are the same problem at a finer scale. Every candidate here should be scored on its recognition clock.
+
+## 11. The whole day under the frozen exhaustion contract, with the three clocks kept apart
+
+Re-analysis of the full October 18 session (21:00 UTC October 17 to 21:00 UTC October 18, both UTC
+tape members, 30,739 prints exactly as archived) with the frozen NG exhaustion detector from the
+canonical chain sources (`artifacts/sqlite-triage/20261022/families/full-context-audit/canonical-sources/research/`):
+roll-20 classified flow, the 85th percentile of |roll20| for the day, a 5 s local maximum, a 45 s
+refractory resolved by prominence, polarity = sign of roll20 at t0, endpoint = three consecutive
+forward-filled oriented roll20 at or below zero, seed state P/O/S/X from the first zero within +60 and
+the late pressure over t0+41..t0+60, aftermath in 2-tick classes at confirmation + 5..300 s. Script and
+tables: [exhaustion_clock_reanalysis_oct18.py](claude-code/exhaustion_clock_reanalysis_oct18.py),
+[summary](claude-code/exhaustion-clock-oct18-summary.json), [events](claude-code/exhaustion-clock-oct18-events.jsonl.gz);
+flow-only runs on the October 2 and 17 per-second tables Codex captured from the boxes:
+[script](claude-code/exhaustion_clock_flow_only.py), [October 2](claude-code/exhaustion-clock-20231002-flow-only.json),
+[October 17](claude-code/exhaustion-clock-20231017-flow-only.json).
+
+**The detector reproduces.** 813 of the 863 archived births are reproduced second for second; the other 50
+are refractory tie-breaks among equal-magnitude candidates. The frozen canonical table would then drop 309
+of the 890 detected events because the oriented roll20 is undefined 60 s before t0 (no classified volume
+in that window); the archived Native adapter keeps them. Both are reported here, flagged.
+
+**The threshold is saturated.** On all three days the 85th percentile of |roll20| is exactly 1.0 (27.7 and
+27.8 percent of all flow-bearing seconds are fully one-sided on October 2 and 17). So the frozen detector
+fires only on completely one-sided 20-second windows, which are mostly tiny: 351 of 766 October 2 events
+and 350 of 766 October 17 events have one classified lot in the burst window. It therefore fires in quiet
+periods and goes silent when the market is busy: October 18 had 11 events in the 13:00 UTC hour (the
+hour of 375 and 391 and the day's heaviest trading) against 48 to 54 in the overnight hours. One event sits
+in the 13:00 to 13:20 window (13:18:32 UTC, sell polarity, 972 lots of 300 s volume, runway 7 s, price
+reversed 16 ticks by seed-known +300 s). Whatever "exhaustion" means on these days, this detector measures
+the end of one- and two-lot bursts in thin tape, not the end of the pushes that moved the price.
+
+**Three clocks, three days.** The clock structure is nearly identical across the three dates:
+
+| Clock | October 18 (full, 890 events) | October 17 (partial, 766) | October 2 (partial, 766) |
+| --- | --- | --- | --- |
+| Information horizon, local maximum | t0+5 s | t0+5 s | t0+5 s |
+| Information horizon, refractory-final | t0+50 s; archived actual recognition median 51 s, range 7 to 137 s | t0+50 s | t0+50 s |
+| Exhaustion runway (structural onset minus t0), median and quartiles | 33 s (17 to 77) | 34 s (16 to 78) | 31 s (15 to 71) |
+| State-confirmation offset (confirm minus t0) | 35 s (19 to 79), max 675 | 36 s (18 to 80), max 564 | 33 s (17 to 73), max 507 |
+| Runway by seed state, median | P 121 s, O 24, S 20, X 20 | P 110, O 24, S 20, X 21 | P 110, O 22, S 20, X 20 |
+| Exhaustion already confirmed before t0+5 | 49 (5.5 percent) | 57 (7.4 percent) | 56 (7.3 percent) |
+| Already confirmed before t0+50 | 556 (62 percent) | 477 (62 percent) | 484 (63 percent) |
+| Already confirmed before the seed state is knowable (t0+61) | 604 (68 percent) | 519 (68 percent) | 530 (69 percent) |
+| Archived recognition arrived after confirmation | 449 of 813 | not available | not available |
+| Inter-event gap, median; gaps under 60 s | 72 s; 323 | 72 s; 271 | 72 s; 249 |
+| Next event starts before the current one confirms | 270 (30 percent) | not computed | not computed |
+
+By the time an event is knowable under its own contract, it is over in about five of eight cases, and the
+seed state that the chain grammar is built from is knowable only after seven of ten have ended. The
+only family with runway left at the information horizon is P (persistent, no zero within 60 s): 265 of
+the 334 events still running at t0+50 are P.
+
+**Price over the three intervals (October 18 only, last-trade price, oriented to polarity).**
+
+| Interval | With polarity / flat / against |
+| --- | --- |
+| t0 to confirmation (the runway) | 236 / 255 / 399 (midpoint: 318 / 202 / 370) |
+| t0+50 to +30 s, events already over at t0+50 (556) | 159 / 215 / 181 |
+| t0+50 to +30 s, events still running at t0+50 (334) | 56 / 210 / 68 |
+| confirmation +5 s to +30 s (the SSOS and P-O-X entry window) | 226 / 441 / 223 |
+| Aftermath from confirmation, 2-tick classes, +60 s | continuation 155 / chop 565 / reversal 169 |
+| Aftermath from confirmation, +300 s | 310 / 309 / 266 |
+
+During the runway the price more often gives back than continues (399 against versus 236 with): the
+flow burst that defines t0 is already the tail of its own move. After the information horizon and after
+confirmation there is nothing in either direction, in both the already-over and still-running subsets.
+
+**The seed-state split is contemporaneous, not predictive.** From confirmation, O (collapsed, opposite
+flow) shows reversal 84 against continuation 36 at +60 s and S (collapsed, same-flow reload) shows
+continuation 71 against reversal 31. Measured instead from t0+61, the first second at which the seed
+state exists, the same families give O 85 with / 104 against and S 81 / 79, P 65 / 68, X 47 / 46. The
+late-pressure window that defines the seed (t0+41..60) overlaps the price path from confirmation
+(median t0+35), so the apparent aftermath split is flow and price moving together inside the seed's own
+window. Codex's "aging-only flips" result is the same mechanism seen from the other side.
+
+**The dipole applications at these anchors.** The 300 s flow imbalance (the S92 direction nowcast's
+operand) has no relation to the price over the runway (agree 299 / disagree 336; strong flow 172 / 198) or
+to the 30 s after the information horizon (strong 136 / 114), and its sign agrees with the 20 s burst
+polarity in only 510 of 856 defined cases on October 18 (428 of 733 on October 2, 414 of 743 on October
+17). Among the 189 P-family events with strong 300 s flow, the next 60 s after the seed is knowable went
+41 with the flow sign and 41 against. The resting-book contrarian read at t0 (10-level imbalance over
+t0-19..t0) does not separate either: aligned 73 / 148, opposed 77 / 131, flat 86 / 120, all showing the
+general runway give-back. This is not a test of the S92 nowcast, whose anchor is a price leg's birth;
+it says the nowcast's operand carries nothing at flow-exhaustion anchors.
+
+**The frozen chain plays on this day.** S,S,O,S occurred 14 times (confirmation+5 to +30: 4 with / 5 flat /
+5 against) and P,O,X 11 times (4 / 4 / 3). Too few to say anything, consistent with the chain work's own
+expectation of about 2.5 percent frequency, and recorded as such.
+
+**Examples (October 18, seconds are the session index from 21:00 UTC October 17).**
+
+- Longest runway: 01:48:50 UTC (s 17330), sell polarity, P, runway 673 s, confirmation 675 s, archived
+  recognition at +53 s, 300 s flow +0.10 against the burst, price minus 1 tick over the runway and +1 tick
+  by seed-known +300 s. An exhaustion that outlived its own recognition by ten minutes and went nowhere.
+- Over before knowable: 00:22:19 UTC (s 12139), buy polarity, X, runway 1 s, confirmation 3 s, archived
+  recognition at +104 s. The burst was a one-second event recognized a minute and three quarters later.
+- O with reversal: 00:53:58 UTC (s 14038), buy polarity, runway 41 s, confirmation 43 s, recognition at
+  +51 s, price minus 3 ticks over the runway and minus 2 by seed-known +300 s. The reversal was already
+  in the price before the state was confirmed.
+- S with continuation: 22:37:12 UTC (s 5832), buy polarity, 300 s flow +0.76, book minus 0.59 (ask heavy),
+  price minus 3 ticks over the runway, then +2 by seed-known +60 s. Continuation after a give-back.
+- Release window, 14:30 to 15:00 UTC: eight events, 300 s volumes 287 to 481 lots, runways 3 to 66 s, every
+  recognition 32 to 53 s after t0; outcomes from seed-known +300 s range from minus 11 to +14 ticks with
+  no relation to polarity. The storage-report hour is where the detector is least able to keep up.
+
+**What this changes.** (1) The dipole-direction null in section 1 and the clock finding here are the same
+fact: this detector recognizes an event about 50 s after a burst that typically ended 33 s after it began,
+so nothing measured from recognition can carry the burst's direction. (2) The frozen contract's own
+numbers put the information horizon (50 s) past the state-confirmation time (35 s) for most events; any
+chain research built on it is research into what follows an already-ended burst, which is what the SSOS
+and P-O-X plays correctly assume by entering at endpoint+5. (3) The saturated threshold means the
+exhaustion population is a quiet-tape population; a detector meant for the moves that matter needs a
+threshold that does not saturate (a volume floor on the window, or a quantile of a non-saturating
+statistic). (4) None of this touches the S92 price-leg nowcast, which is anchored differently; it does say
+that reusing its 300 s operand at exhaustion anchors is empty.
+
+Open: the same pass with prices on October 2, 3 and 17 when their print exports land (the flow-only
+clock structure is already in place for 2 and 17); a volume-floored variant of the detector; and whether
+the P family's long runway carries direction once the pre-arc-undefined and defined halves are matched
+on activity.
