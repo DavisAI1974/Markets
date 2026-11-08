@@ -456,3 +456,23 @@ here launched, monitored or stopped anything.
    same definitions, before any threshold is kept.
 5. Match size-one onsets on recent print rate and hour to see whether the thin
    next shelf survives.
+
+## 10. Carried from earlier sessions: dipole applications and the NG look-ahead budget
+
+Two different objects are called "the dipole" in this repository. The S92 direction nowcast
+`dip_imb_level` (about 300 s of Lee-Ready flow overlapping a leg's trigger push; 7 percent versus 93
+percent up by tercile, 34 of 34 out of sample on strong flow) and the S36 divergence and exhaustion
+filter are the project's dipole applications. The October 18 candidate detector studied in sections 1
+and 2 is a third thing: a peak of a 20-second rolling signed-lot ratio, recognized a median 2.407 s
+after its nominal second. The null found here (no post-recognition direction) is about that detector
+and does not touch the S92 nowcast; equally, the S92 result does not validate the detector. The S90
+NG canary already found the static divergence read did not transfer to NG and the exhaustion read gave
+only a faint pulse; the S92 pass ruled `dip_aligned_flow`, `dip_mi_flow` and `exhaustion` noise for
+direction, sustain, turn and peak on 12 warm-season days.
+
+The look-ahead budget measured so far (WTI sub-minute first reprice about 7 s and continuing about 20 s;
+NG release move two-thirds complete within 60 s, sometimes within 1 s; Kalshi settles on the Pyth NGDQ6
+5:00 pm EDT candle) is tabulated in [Appendix A of the primer](claude-code/market-fundamentals-primer.md#appendix-a-project-carry-over-the-dipole-applications-and-the-ng-look-ahead-time-budget).
+Against that budget the detector's 2.4 s median recognition delay is 12 to 35 percent of the window and
+its 87 s tail exceeds it. The size-one replay's 1 ms entry and the 0.366 ms median lead of the next print
+are the same problem at a finer scale. Every candidate here should be scored on its recognition clock.

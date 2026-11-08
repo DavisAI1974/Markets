@@ -464,3 +464,43 @@ release, not the tick, is the unit of independence; and fundamentals enter the i
 tape mostly at fixed clocks (10:30 ET Thursdays, model runs at 00, 06, 12, 18 UTC, the
 14:28 to 14:30 ET settlement), with the rest of the tape's movement attributable, on
 present evidence, mostly to the flow and liquidity dynamics in sections 4 and 7.
+
+## Appendix A. Project carry-over: the dipole applications and the NG look-ahead time budget
+
+This appendix is project knowledge from earlier sessions (S36, S80 to S92), not literature. It is
+kept here so the two meanings of "dipole" and the measured clocks travel with the primer.
+
+**Two different objects are both called "the dipole".**
+
+| Name | What it measures | Window and clock | Status |
+| --- | --- | --- | --- |
+| `dip_imb_level` (S92 direction nowcast) | Lee-Ready buy-minus-sell flow imbalance around a leg's trigger push | about 300 s, overlapping the leg's birth | Direction only: low tercile 7 percent up, high 93 percent up, monotone with strength (0.68 at under 0.05 to 0.94 at 0.15 to 0.30), out of sample 34 of 34 on strong flow across three unseen warm-season days. A nowcast, not a from-flat forecast; correctly signed legs still round-trip. `research/kalshi/NG_BEHAVIOR_KNOWLEDGE.md`, `knowledge/ng_brain.json` play `direction.flow_nowcast` |
+| `imb_R` (resting-book contrarian tilt) | Resting-book imbalance at entry | at entry | Ask-heavy book went up 0.61 (n 158), bid-heavy up 0.42 (n 121); when flow and book disagree flow wins 262 of 293. Tie-breaker only |
+| Divergence and exhaustion filter (S36, `odcore/info_dipole.py`) | `aligned_flow = imb_level x sign(price_drift)`; exhaustion = the imbalance collapsing toward 0.5 | crypto era, 1 s bins | Crypto: divergence at or below minus 0.20 gave about 65 percent reversal; oppose plus exhaust 64 percent, with-trend plus strengthen 49 percent. NG canary (S90, one day, 34.5k trades): static divergence did not transfer (reversal 0.26 to 0.39, below aligned); exhaustion showed a faint right-signed pulse at W60/K30/F60 (0.410 vs 0.382). S92 multi-target pass: `dip_aligned_flow`, `dip_mi_flow`, `exhaustion` were noise for direction, sustain, turn and peak on 12 warm-season days |
+| Archived Native candidate detector (the October 18 "dipole" in the discovery logs) | Peak of the 20-second rolling signed-lot ratio above a trailing 85th-percentile bar, SAME or FLIP against the predecessor | recognized at a later completed group; median 2.407 s after the nominal second, maximum 87.4 s | A different object from `dip_imb_level`. Nothing found about it on October 18 bears on the S92 nowcast, and the S92 result does not validate it |
+
+Also carried over: the turning-point read (held big legs recruit far-side liquidity, `turn_far_thinning`
+median minus 0.156 versus 0.000 for reversed tops, n 101), the magnitude staircase (continuation 0.92
+once a leg crosses $350, 11 of 11 at $500), and the leakage gate `odcore/leakage.py` before any backtest.
+The crypto-era fee-floor rules and the `DEPLOY` cell map are retired and do not apply to NG.
+
+**The NG look-ahead time budget (the clocks the program has measured).**
+
+| Clock | Measured value | Source and scope |
+| --- | --- | --- |
+| Futures lead Kalshi, 1-minute bars | WTI: 41 contracts, 15 significant, peak lags {0 min: 6, 1 min: 8, 5 min: 1}; futures lead or synchronous, Kalshi never leads. Gold and silver: same shape, 0 to 1 minute. NG at 1 minute not measured (Pyth has no gas feed; Yahoo 1-minute only) | S80, S91; `futures_kalshi_lag.py` |
+| Futures lead Kalshi, sub-minute | On a 17 cent WTI jump the most liquid strike's first reprice tick came about 7 s later and the reprice continued for about 20 s; less liquid strikes lag longer. One event; the NG-specific sub-minute lag is still unmeasured | S81 |
+| NG release move speed | 60 s after the 14:30 UTC storage print captures a median 0.66 of the full move; 60 s move p50 106 bps ($310 per contract), p90 174 bps ($490); one day peaked in 1 s, five of twelve within 2 minutes; the pooled median time to peak (about 12 min) hides this | S85, `EVENT_MOVE_FINDINGS_S85.md`, 12 releases Apr to Jul 2026 |
+| NG lag-join echo | Release mode NG taker plus 17 cents, 100 percent, tiny n; provisional | S87, `lag_join.py` |
+| Direction nowcast window | about 300 s of flow overlapping the leg's trigger push | S92 |
+| Candidate recognition delay | median 2.407 s after the nominal second, maximum 87.4 s; a quiet second completes only when a later group arrives | this session's reconstruction, October 18 |
+| Next print after a decision close | median lead 0.366 ms; 63 of 29,797 had a zero receive-time lead with tape order still separating them | October 18 prebirth log |
+| Paper replay entry assumption | first completed book at least 1 ms after the signal group | historical paper replay |
+| Settlement reference | KXNATGASD settles on the Pyth NGDQ6 1-minute candle close at 5:00 pm EDT (21:00 UTC), not the CME settle; the project guards 1,800 s before it | S84, S87 |
+| Sampling floor | 1 s historical sampling undersamples NYMEX and is a lower bound; MBO is the actual tape | S84 |
+
+Read together: if the exploitable Kalshi window is on the order of 7 to 20 s after a NYMEX move, a
+detector whose recognition arrives a median 2.4 s after the nominal second spends 12 to 35 percent of
+that window before a decision exists, and its 87 s tail exceeds the window entirely. The NG release
+move itself is two-thirds done within 60 s and sometimes within 1 s. Any signal meant for the lag has to
+be judged on its recognition clock, not its nominal clock, against these numbers.
