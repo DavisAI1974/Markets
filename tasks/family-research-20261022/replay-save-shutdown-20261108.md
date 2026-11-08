@@ -141,3 +141,23 @@ parts were retained in the local publisher and reused for a push to
 `codex/replay-archive-20231002`. The updated publisher stages each date
 under its own ref, then adds the verified archive tree to the latest
 shared branch. The final shared publication remains required for shutdown.
+
+### Producer and standalone results
+
+| Trading date | ROOT and Native sealed | Standalone decision output | Git evidence |
+| --- | --- | --- | --- |
+| October 2, partial | 20:55:50 UTC | 21:00:46 UTC. 118,709 decision rows from 600,291 groups and 37,670 prints. | [Standalone inputs and decisions](replay-artifacts/20231002) · [Publication commit](https://github.com/DavisAI1974/Markets/commit/610ee59d4331d18f9383d9137aa643789c02e31a) |
+| October 3, full session | 21:02:49 UTC | Input export running at the last check. | Bulk archives staging. |
+| October 17, partial | 21:01:44 UTC | 21:07:05 UTC. 110,500 decision rows from 635,170 groups and 33,451 prints. | [Standalone inputs and decisions](replay-artifacts/20231017) |
+
+All times are November 8, 2026. The ROOT and Native archive preparations
+now use the sealed output paths. The remaining archive contains the
+non-frame legacy spools, the exact Native data and published layers, and
+their source and calculation bindings. Previously published compact ROOT
+tables are listed in its source index and reused. Restore this archive
+under a separate directory with
+`cat remaining.tar.zst.part-* | zstd -d -c | tar -xf -`.
+Bulk publication remains in progress. Record each confirmed shutdown
+after its archives appear on the shared branch.
+[Archive preparation](runpod/runpod_archive_remaining_outputs.sh) ·
+[Git publisher](runpod/publish_root_frame_archive.py)

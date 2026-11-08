@@ -1,4 +1,4 @@
-"""Publish a sealed RunPod ROOT frame archive to Git in bounded batches."""
+"""Publish a sealed RunPod replay archive to Git in bounded batches."""
 
 import argparse
 import hashlib
@@ -12,7 +12,8 @@ BRANCH = "refs/heads/codex/ng-shadow-discovery-20261108"
 REPOSITORY = "https://github.com/DavisAI1974/Markets.git"
 DESTINATION = "tasks/family-research-20261022/replay-artifacts"
 PORTS = {"20231002": "34955", "20231003": "31686", "20231017": "31620"}
-PART = re.compile(r"([0-9a-f]{64})  (frames\.jsonl\.zst\.part-[0-9]{6})")
+PART = re.compile(r"([0-9a-f]{64})  ([a-z0-9.-]+)")
+ARCHIVES = {"root-frames": "frames.jsonl.zst", "root-native-remaining": "remaining.tar.zst"}
 BATCH_PARTS = 8
 
 
@@ -89,13 +90,15 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("day", choices=PORTS)
     parser.add_argument("bare_repository", type=Path)
+    parser.add_argument("--archive", choices=ARCHIVES, default="root-frames")
     args = parser.parse_args()
     repo, day = args.bare_repository.resolve(), args.day
     if git(repo, "remote", "get-url", "origin").decode().strip() != REPOSITORY:
         raise ValueError("unexpected Git remote")
+    archive = args.archive
     ssh = archive_ssh(day)
-    remote = f"/opt/frankie-box/work/git-publication/{day}/root-frames"
-    folder = f"{DESTINATION}/{day}/root-frames"
+    remote = f"/opt/frankie-box/work/git-publication/{day}/{archive}"
+    folder = f"{DESTINATION}/{day}/{archive}"
     staging = f"refs/heads/codex/replay-archive-{day}"
     sums = subprocess.check_output([*ssh, "cat", "--", f"{remote}/SHA256SUMS"])
     source = subprocess.check_output([*ssh, "cat", "--", f"{remote}/source.json"])
@@ -103,7 +106,7 @@ def main():
     if not parts or any(part is None for part in parts):
         raise ValueError("malformed or empty archive checksum list")
     inventory = [part.groups() for part in parts]
-    if [name for _, name in inventory] != [f"frames.jsonl.zst.part-{i:06d}" for i in range(len(inventory))]:
+    if [name for _, name in inventory] != [f"{ARCHIVES[archive]}.part-{i:06d}" for i in range(len(inventory))]:
         raise ValueError("archive parts are incomplete or out of order")
     with tempfile.TemporaryDirectory(prefix=f"publish-{day}-", dir=repo.parent) as work:
         temporary = Path(work)
@@ -114,9 +117,9 @@ def main():
                     git(repo, "cat-file", "blob", current[f"{folder}/source.json"]) == source)
             if same and all(f"{folder}/{name}" in current for _, name in inventory):
                 remote_commit = publish(
-                    repo, BRANCH, folder, current, index, f"data: publish the sealed {day} ROOT frame archive [skip ci]",
+                    repo, BRANCH, folder, current, index, f"data: publish the sealed {day} {archive} archive [skip ci]",
                 )
-                print(f"COMPLETE {day} {len(inventory)} parts {remote_commit}", flush=True)
+                print(f"COMPLETE {day} {archive} {len(inventory)} parts {remote_commit}", flush=True)
                 return
             raise ValueError("existing final manifest differs from the sealed archive")
         verified = {}
@@ -125,15 +128,15 @@ def main():
             for digest, name in inventory[first:first+BATCH_PARTS]:
                 path = f"{folder}/{name}"
                 batch[path] = part_blob(repo, ssh, f"{remote}/{name}", temporary / "part", digest, current.get(path))
-            publish(repo, staging, folder, batch, index, f"data: save {day} ROOT frame archive parts {first:06d} onward [skip ci]")
+            publish(repo, staging, folder, batch, index, f"data: save {day} {archive} archive parts {first:06d} onward [skip ci]")
             verified.update(batch)
         for name, payload in (("SHA256SUMS", sums), ("source.json", source)):
             verified[f"{folder}/{name}"] = git(repo, "hash-object", "-w", "--stdin", data=payload).decode().strip()
-        publish(repo, staging, folder, verified, index, f"data: seal the {day} ROOT frame archive in Git [skip ci]")
+        publish(repo, staging, folder, verified, index, f"data: seal the {day} {archive} archive in Git [skip ci]")
         remote_commit = publish(
-            repo, BRANCH, folder, verified, index, f"data: publish the sealed {day} ROOT frame archive [skip ci]",
+            repo, BRANCH, folder, verified, index, f"data: publish the sealed {day} {archive} archive [skip ci]",
         )
-        print(f"COMPLETE {day} {len(inventory)} parts {remote_commit}", flush=True)
+        print(f"COMPLETE {day} {archive} {len(inventory)} parts {remote_commit}", flush=True)
 
 
 if __name__ == "__main__":
