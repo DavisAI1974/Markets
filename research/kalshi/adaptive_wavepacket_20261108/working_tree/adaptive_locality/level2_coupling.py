@@ -7,7 +7,7 @@ outlier, or unstable window is a RESEARCH_HOLD with full original lineage.
 The positive result is only a predictive ASSOCIATION, not causal coupling.
 """
 from __future__ import annotations
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, replace
 from itertools import permutations
 import math
 from typing import Sequence
@@ -105,15 +105,29 @@ def _fit_link(target,donor,clock,series,*, min_gain,null_margin,evidence_identit
 def discover_level2_balance_links(windows: Sequence[BalanceWindow], *,
                                   source_identity:str, calibration_identity:str,
                                   min_gain:float=0.15, null_margin:float=0.08,
-                                  max_channels:int=36, max_windows:int=12000) -> dict:
+                                  max_channels:int=36, max_windows:int=12000,
+                                  balance_transform:str="raw",
+                                  min_segment_clocks:int=35) -> dict:
     """Return ALL original windows, ALL proposed directed links, ALL review holds.
 
     Source/calibration are mandatory external identities; the Level 1 balance
     channels must agree on exact source frames at each matching clock.
     Invalid channels are set aside from fitting, never from the returned data.
+
+    balance_transform (M-3): "raw" fits dB/dt on B as the standalone engine
+    always did; "log" fits d(log B)/dt as the original Basic_equations Level 2
+    did, EXCEPT that a nonpositive B is an abstention here, never B+1e-6. The
+    two are distinct observables and both results are retained as such.
+
+    Segment links (PG-5): the strict result holds every link of a channel with
+    one held window. Beside it, the longest run of clocks on which EVERY channel
+    is READY is fitted again and reported as SEGMENT_* links. Neither replaces
+    the other.
     """
     if not source_identity or not calibration_identity:
         raise LocalityError("missing Level 2 source/calibration identity")
+    if balance_transform not in ("raw","log"):
+        raise LocalityError("balance_transform must be 'raw' or 'log'")
     if not (0<min_gain<1 and 0<null_margin<1):
         raise LocalityError("invalid candidate thresholds")
     windows=tuple(windows)
@@ -124,6 +138,7 @@ def discover_level2_balance_links(windows: Sequence[BalanceWindow], *,
     if any(not isinstance(w,BalanceWindow) or w.scientific_jobs_eliminated!=0 for w in windows):
         raise LocalityError("invalid or destructive Level 1 windows")
     identity=_digest({"source":source_identity,"calibration":calibration_identity,
+                      **({"transform":"log"} if balance_transform=="log" else {}),
                       "windows":[asdict(w) for w in windows]})
     groups:dict[tuple[str,str],dict[int,BalanceWindow]]={}
     issues=[]
@@ -141,6 +156,9 @@ def discover_level2_balance_links(windows: Sequence[BalanceWindow], *,
         if w.status!="READY_RESEARCH_ONLY" or w.balance is None or not math.isfinite(w.balance):
             issues.append({"index":index,"channel":channel,"clock":w.end_clock,
                            "reason":"LEVEL1_FIT_RESEARCH_HOLD:"+w.status})
+        elif balance_transform=="log" and w.balance<=0:
+            issues.append({"index":index,"channel":channel,"clock":w.end_clock,
+                           "reason":"LOG_TRANSFORM_UNDEFINED_NONPOSITIVE_BALANCE"})
     channels=tuple(sorted(groups))
     if not 2<=len(channels)<=max_channels:
         raise LocalityError("bounded Level 2 needs 2..max_channels pair series")
@@ -161,7 +179,13 @@ def discover_level2_balance_links(windows: Sequence[BalanceWindow], *,
         global_problem=True
         issues.append({"index":None,"channel":None,"clock":None,
                        "reason":"INSUFFICIENT_LEVEL2_SUPPORT"})
-    series={channel:tuple(groups[channel][clock].balance for clock in clocks)
+    def value(window):
+        return math.log(window.balance) if balance_transform=="log" else window.balance
+    def usable(window):
+        return (window.status=="READY_RESEARCH_ONLY" and window.balance is not None
+                and math.isfinite(window.balance)
+                and (balance_transform=="raw" or window.balance>0))
+    series={channel:tuple(value(groups[channel][clock]) for clock in clocks)
             for channel in channels if not global_problem and channel not in invalid}
     links=[]
     for a,b in permutations(channels,2):
@@ -174,8 +198,40 @@ def discover_level2_balance_links(windows: Sequence[BalanceWindow], *,
                 issues.append({"index":None,"channel":a,"donor_channel":b,
                                "clock":None,"reason":link.reason})
         links.append(link)
+    # PG-5: side-by-side fit on the longest fully READY clock run.
+    segment_clocks=None
+    segment_links=()
+    if not global_problem and invalid:
+        ready=[all(clock in groups[ch] and usable(groups[ch][clock]) for ch in channels)
+               for clock in clocks]
+        best=(0,-1,-1); start=None
+        for index,flag in enumerate(ready+[False]):
+            if flag and start is None:
+                start=index
+            elif not flag and start is not None:
+                if index-start>best[0]:
+                    best=(index-start,start,index-1)
+                start=None
+        length,s0,s1=best
+        if length>=min_segment_clocks and length<len(clocks):
+            seg_clocks=clocks[s0:s1+1]
+            seg_series={ch:tuple(value(groups[ch][c]) for c in seg_clocks) for ch in channels}
+            fitted=[]
+            for a,b in permutations(channels,2):
+                link=_fit_link(a,b,seg_clocks,seg_series,min_gain=min_gain,
+                               null_margin=null_margin,evidence_identity=identity)
+                fitted.append(replace(link,status="SEGMENT_"+link.status,
+                                      reason=(f"SEGMENT_FIT_ON_LONGEST_FULLY_READY_RUN "
+                                              f"clocks {seg_clocks[0]}..{seg_clocks[-1]} "
+                                              f"({length} of {len(clocks)}); strict result "
+                                              f"retained separately: ")+link.reason))
+            segment_links=tuple(fitted)
+            segment_clocks=(seg_clocks[0],seg_clocks[-1],length)
     return {
         "schema":1,"kind":"OFFLINE_LEVEL2_UNSMOOTHED_BALANCE_LINKS",
+        "balance_transform":balance_transform,
+        "segment_clocks":segment_clocks,"segment_links":segment_links,
+        "segment_link_count":len(segment_links),
         "trust":"UNSIGNED_RESEARCH_ONLY_NOT_CAUSAL_OR_SCIENTIFIC_EQUIVALENCE",
         "source_identity":source_identity,"calibration_identity":calibration_identity,
         "evidence_identity":identity,"channels":channels,"clocks":clocks,

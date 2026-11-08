@@ -95,8 +95,12 @@ def scientific_frame(
         "y": float(observations[eid].features[y_feature]),
         "status": mapped[eid]["status"],
         "center": mapped[eid].get("center"),
+        "reason": mapped[eid].get("reason"),  # E-7: the decision reason reaches the view
         "event_identity": observations[eid].identity(),
     } for eid in chosen]
+    shown_set = set(chosen)
+    # E-14: the display-sampled-out ids stay reachable; the sha256 below still covers every id.
+    omitted = [eid for eid in ids if eid not in shown_set]
 
     groups = defaultdict(list)
     for event in events:
@@ -130,6 +134,7 @@ def scientific_frame(
         "all_center_count": len(centers),
         "families": sorted(groups),
         "points": points,
+        "omitted_event_ids": omitted,
         "finite_convergence": diagnostics,
         "scientific_jobs_eliminated": 0,
         "source_event_set_sha256": _digest([
@@ -246,7 +251,7 @@ const get=id=>document.getElementById(id);
 function add(tag,content,parent){const node=document.createElement(tag);node.textContent=String(content);parent.appendChild(node);return node;}
 function choose(p){const panel=get("selected");panel.replaceChildren();
  for(const [name,value] of Object.entries({"ID":p.id,"Family":p.family,"Clock":p.clock,"Status":p.status,
- "Candidate center":p.center||"None","X":p.x,"Y":p.y,"Event identity":p.event_identity})){
+ "Reason":p.reason||"None recorded","Candidate center":p.center||"None","X":p.x,"Y":p.y,"Event identity":p.event_identity})){
  const row=add("div",name+": ",panel);const strong=add("strong",value,row);strong.style.overflowWrap="anywhere";}}
 function draw(){
  const rect=plot.getBoundingClientRect(),w=Math.max(250,rect.width),h=Math.max(250,rect.height),dpr=Math.min(2,window.devicePixelRatio||1);
@@ -273,7 +278,8 @@ function draw(){
 }
 function populate(){
  for(const [name,value] of Object.entries({"Original observations":frame.source_count,"Displayed":frame.shown_count,
- "All source centers":frame.all_center_count,"Families":frame.families.length,"Jobs eliminated":frame.scientific_jobs_eliminated}))
+ "All source centers":frame.all_center_count,"Omitted from display (ids kept in frame)":(frame.omitted_event_ids||[]).length,
+ "Families":frame.families.length,"Jobs eliminated":frame.scientific_jobs_eliminated}))
  add("div",name+": "+value,get("counts"));
  get("scope").textContent="Run "+frame.provenance.run+" / "+frame.provenance.day+
  (frame.sampled_for_display_only?". Deterministic display subset only.":". Entire bounded source displayed.");

@@ -6,7 +6,7 @@ from pathlib import Path
 from .core import Observation, MetricContract, LocalityConfig, LocalityEngine, LocalityError
 from .ledger import DecisionLedger
 from .adapters import EvidenceManifest, shadow_batch, buildmap_evidence
-from .visualization import scientific_frame, write_html, replay_probes
+from .visualization import scientific_frame, render_html, replay_probes
 
 
 def build_review(input_data: dict, x: str, y: str, *, limit: int, window: int,
@@ -48,19 +48,33 @@ def main() -> None:
         parser.error("input and output must differ")
     if input_path.stat().st_size > 8_000_000:
         parser.error("input exceeds offline review byte limit")
-    payload = json.loads(input_path.read_text(encoding="utf-8"))
-    frame = build_review(payload, args.x, args.y, limit=args.limit,
-                         window=args.window, tolerance=args.tolerance)
-    # Reserve optional probe destination first and publish only from a verified frame.
-    if args.probes and Path(args.probes).resolve() in (input_path.resolve(), output_path.resolve()):
+    probes_path = Path(args.probes) if args.probes else None
+    if probes_path is not None and probes_path.resolve() in (input_path.resolve(), output_path.resolve()):
         parser.error("all destinations must be distinct")
-    probes = replay_probes(frame)
-    write_html(frame, output_path)
-    if args.probes:
-        with Path(args.probes).open("x", encoding="utf-8") as out:
-            json.dump({"frame_sha256": frame["frame_sha256"], "probes": probes}, out,
+    payload = json.loads(input_path.read_text(encoding="utf-8"))
+    # E-3: reserve EVERY destination with no-clobber opens before writing any of them,
+    # so a collision on one output never leaves a partial sibling behind.
+    reserved: list = []
+    try:
+        reserved.append(output_path.open("x", encoding="utf-8"))
+        if probes_path is not None:
+            reserved.append(probes_path.open("x", encoding="utf-8"))
+        frame = build_review(payload, args.x, args.y, limit=args.limit,
+                             window=args.window, tolerance=args.tolerance)
+        probes = replay_probes(frame)
+        reserved[0].write(render_html(frame))
+        if probes_path is not None:
+            json.dump({"frame_sha256": frame["frame_sha256"], "probes": probes}, reserved[1],
                       sort_keys=True, indent=2)
-            out.write("\n")
+            reserved[1].write("\n")
+    except BaseException:
+        for handle in reserved:
+            handle.close()
+            Path(handle.name).unlink(missing_ok=True)
+        raise
+    finally:
+        for handle in reserved:
+            handle.close()
     print("Offline visualization:", output_path)
     print("Raw source observations:", frame["source_count"])
     print("Displayed observations:", frame["shown_count"])

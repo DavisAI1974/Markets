@@ -16,22 +16,32 @@ def benchmark(*, centers: int = 2000, queries: int = 200, seed: int = 1729) -> d
         raise ValueError("bounded benchmark: centers 1..10000, queries 1..2000")
     metric=MetricContract(("x","y"),(1.,1.),(1.,1.),"benchmark-frozen")
     rng=random.Random(seed)
+    # E-8: mixed directions and INTERLEAVED clocks (centres on even ticks, queries on odd ticks
+    # spread through the same range) so the direction/historical filters are exercised, not vacuous.
+    span=2*(centers+queries)
+    radius=10.
+    # Box sized to the centre count so a query averages ~2 in-radius centres before filtering.
+    half=max(radius,math.sqrt(math.pi*radius**2*centers/2)/2)
     observations=[
         Observation(f"c{i}", "P" if i%3 else "X",
-                    {"x":rng.uniform(-1000,1000),"y":rng.uniform(-1000,1000)},
-                    i,"synthetic-benchmark",direction="AB") for i in range(centers)]
+                    {"x":rng.uniform(-half,half),"y":rng.uniform(-half,half)},
+                    2*i,"synthetic-benchmark",direction="AB" if i%4 else "BA") for i in range(centers)]
     targets=[
         Observation(f"q{i}", "P" if i%2 else "X",
-                    {"x":rng.uniform(-1000,1000),"y":rng.uniform(-1000,1000)},
-                    centers+i,"synthetic-benchmark",direction="AB") for i in range(queries)]
-    radius=10.
+                    {"x":rng.uniform(-half,half),"y":rng.uniform(-half,half)},
+                    min(span,2*((i*centers)//max(queries,1))+1),"synthetic-benchmark",
+                    direction="AB" if i%3 else "BA") for i in range(queries)]
     t0=perf_counter()
     expected=[]
+    filtered_out=0  # in-radius same-family centres removed by the direction/clock filters
     for target in targets:
         hits=sorted(((metric.distance(target,c),c.event_id) for c in observations
                      if c.family==target.family and c.event_clock<=target.event_clock
                      and c.direction==target.direction),key=lambda v:(v[0],v[1]))
         expected.append(tuple(cid for distance,cid in hits if distance<=radius)[:8])
+        filtered_out+=sum(1 for c in observations if c.family==target.family
+                          and metric.distance(target,c)<=radius
+                          and (c.direction!=target.direction or c.event_clock>target.event_clock))
     brute_seconds=perf_counter()-t0
     index=ExactGridIndex(metric,radius)
     for c in observations:
@@ -52,8 +62,12 @@ def benchmark(*, centers: int = 2000, queries: int = 200, seed: int = 1729) -> d
                 if actual!=wanted:
                     raise AssertionError("disk index differential failure")
             disk_query_seconds=perf_counter()-t0
+    nonempty=sum(1 for wanted in expected if wanted)
     return {"benchmark_schema":1,"source":"DETERMINISTIC_SYNTHETIC_ONLY",
             "metric_identity":metric.identity(),"centers":centers,"queries":queries,
+            "queries_with_hits":nonempty,
+            "in_radius_centers_filtered_by_direction_or_clock":filtered_out,
+            "filters_exercised":{"mixed_directions":True,"interleaved_clocks":True},
             "baseline_seconds":brute_seconds,
             "memory_index_query_seconds":memory_query_seconds,
             "disk_index_query_seconds":disk_query_seconds,

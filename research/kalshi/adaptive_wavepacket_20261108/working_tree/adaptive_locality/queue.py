@@ -52,7 +52,11 @@ class ShadowQueue:
         queue=cls(snapshot["capacity"])
         for raw in snapshot["pending"]:
             group=ReadyGroup(**{**raw,"evidence_ids":tuple(raw["evidence_ids"])})
-            if queue.submit(group)!="QUEUED": raise LocalityError("duplicate pending entry")
+            status=queue.submit(group)
+            if status=="BACKPRESSURE":
+                raise LocalityError(f"snapshot pending entries exceed capacity {queue.capacity}")
+            if status!="QUEUED":
+                raise LocalityError("duplicate pending entry")
         for key,digest in snapshot["completed"].items():
             if key in queue.pending or not isinstance(digest,str) or len(digest)!=64:
                 raise LocalityError("invalid completed record")

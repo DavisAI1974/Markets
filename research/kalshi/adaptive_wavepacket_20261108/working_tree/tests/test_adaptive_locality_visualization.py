@@ -108,5 +108,117 @@ class OfflineVisualizationTests(unittest.TestCase):
         verify_frame(result)
 
 
+class ReviewFixVisualizationTests(unittest.TestCase):
+    """Findings E-3, E-7, E-14."""
+
+    def setUp(self):
+        self.metric = MetricContract(("spread", "pressure"), (1, 1), (1, 1), "v1")
+        self.events = [
+            Observation("p1", "P", {"spread": 0, "pressure": 0}, 1, "test"),
+            Observation("p2", "P", {"spread": 0.1, "pressure": 0.2}, 2, "test"),
+            Observation("p3", "P", {"spread": 0.2, "pressure": 0.3}, 3, "test"),
+            Observation("x1", "X", {"spread": 5, "pressure": 5}, 4, "test"),
+            Observation("x2", "X", {"spread": 5.1, "pressure": 5.1}, 5, "test"),
+        ]
+        self.manifest = EvidenceManifest("demo", "20231018", "fake-test-hash", ("test-plane",))
+
+    def test_e7_abstain_reason_survives_export_and_frame(self):
+        # bandwidth tiny relative to distance -> gaussian kernel underflows to 0 -> ABSTAIN
+        engine = LocalityEngine(self.metric, LocalityConfig(1000.0, 1e-3))
+        far = [Observation("a", "P", {"spread": 0, "pressure": 0}, 1, "test"),
+               Observation("b", "P", {"spread": 500, "pressure": 0}, 2, "test")]
+        raw = shadow_batch(far, engine, DecisionLedger(), self.manifest)
+        statuses = {d["event_id"]: d for d in raw["decisions"]}
+        self.assertEqual(statuses["b"]["status"], "ABSTAIN")
+        self.assertEqual(statuses["b"]["reason"], "kernel underflow")
+        self.assertEqual(statuses["a"]["reason"], "no eligible center")
+        exported = buildmap_evidence(raw)
+        self.assertEqual({d["event_id"]: d["reason"] for d in exported["decisions"]},
+                         {"a": "no eligible center", "b": "kernel underflow"})
+        frame = scientific_frame(far, exported, self.metric, "spread", "pressure")
+        reasons = {p["id"]: p["reason"] for p in frame["points"]}
+        self.assertEqual(reasons, {"a": "no eligible center", "b": "kernel underflow"})
+        self.assertIn("kernel underflow", render_html(frame))
+
+    def test_e7_cli_export_carries_decision_reason(self):
+        import json
+        from unittest import mock
+        from adaptive_locality import cli
+        payload = {
+            "manifest": {"run_id": "demo", "day": "20231018",
+                         "source_identity": "fake-test-hash", "planes": ["test-plane"]},
+            "metric": {"features": ["spread", "pressure"], "scales": [1, 1],
+                       "weights": [1, 1], "version": "v1"},
+            "config": {"radius": 1000, "bandwidth": 0.001},
+            "events": [dict(e.__dict__, features=dict(e.features)) for e in (
+                Observation("a", "P", {"spread": 0, "pressure": 0}, 1, "test"),
+                Observation("b", "P", {"spread": 500, "pressure": 0}, 2, "test"))],
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            source = Path(temporary) / "in.json"
+            source.write_text(json.dumps(payload), encoding="utf-8")
+            out = Path(temporary) / "out.json"
+            with mock.patch("sys.argv", ["cli", str(source), "--output", str(out)]):
+                cli.main()
+            exported = json.loads(out.read_text(encoding="utf-8"))
+            reasons = {d["event_id"]: (d["status"], d["reason"]) for d in exported["decisions"]}
+            self.assertEqual(reasons["b"], ("ABSTAIN", "kernel underflow"))
+            self.assertEqual(reasons["a"], ("NEW_CENTER", "no eligible center"))
+
+    def test_e14_omitted_event_ids_listed_when_display_sampled(self):
+        engine = LocalityEngine(self.metric, LocalityConfig(1, 0.5))
+        shadow = buildmap_evidence(shadow_batch(self.events, engine, DecisionLedger(), self.manifest))
+        frame = scientific_frame(self.events, shadow, self.metric, "spread", "pressure", limit=2)
+        shown = {p["id"] for p in frame["points"]}
+        self.assertEqual(sorted(shown | set(frame["omitted_event_ids"])), sorted(e.event_id for e in self.events))
+        self.assertEqual(len(frame["omitted_event_ids"]), 3)
+        self.assertEqual(frame["omitted_event_ids"], sorted(frame["omitted_event_ids"]))
+        full = scientific_frame(self.events, shadow, self.metric, "spread", "pressure")
+        self.assertEqual(full["omitted_event_ids"], [])
+        self.assertEqual(full["source_event_set_sha256"], frame["source_event_set_sha256"])
+        verify_frame(frame)
+
+    def test_e3_probe_collision_leaves_no_html_behind(self):
+        import json
+        from unittest import mock
+        from adaptive_locality import review_cli
+        payload = {
+            "manifest": {"run_id": "demo", "day": "20231018",
+                         "source_identity": "fake-test-hash", "planes": ["test-plane"]},
+            "metric": {"features": ["spread", "pressure"], "scales": [1, 1],
+                       "weights": [1, 1], "version": "v1"},
+            "config": {"radius": 1, "bandwidth": 0.5},
+            "events": [dict(event.__dict__, features=dict(event.features)) for event in self.events],
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            folder = Path(temporary)
+            source = folder / "input.json"
+            source.write_text(json.dumps(payload), encoding="utf-8")
+            html = folder / "out.html"
+            probes = folder / "probes.json"
+            probes.write_text("{}", encoding="utf-8")
+            argv = ["review", str(source), "--output", str(html), "--x", "spread", "--y", "pressure",
+                    "--probes", str(probes)]
+            with mock.patch("sys.argv", argv):
+                with self.assertRaises((LocalityError, FileExistsError)):
+                    review_cli.main()
+            self.assertFalse(html.exists())
+            self.assertEqual(probes.read_text(encoding="utf-8"), "{}")
+            # and the mirrored case: HTML present, probes absent -> probes must not be created
+            html.write_text("existing", encoding="utf-8")
+            probes.unlink()
+            with mock.patch("sys.argv", argv):
+                with self.assertRaises((LocalityError, FileExistsError)):
+                    review_cli.main()
+            self.assertFalse(probes.exists())
+            self.assertEqual(html.read_text(encoding="utf-8"), "existing")
+            # happy path still writes both
+            html.unlink()
+            with mock.patch("sys.argv", argv):
+                review_cli.main()
+            self.assertIn("Locality Lab", html.read_text(encoding="utf-8"))
+            self.assertIn("probes", json.loads(probes.read_text(encoding="utf-8")))
+
+
 if __name__ == "__main__":
     unittest.main()

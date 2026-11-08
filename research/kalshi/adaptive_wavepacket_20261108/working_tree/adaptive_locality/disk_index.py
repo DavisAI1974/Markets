@@ -13,7 +13,7 @@ import math
 from pathlib import Path
 import sqlite3
 from .core import Observation, MetricContract, LocalityError
-from .index import IndexedHit
+from .index import IndexedHit, grid_offsets
 
 
 class DiskGridIndex:
@@ -44,6 +44,13 @@ class DiskGridIndex:
             )""")
             self.db.execute("CREATE INDEX IF NOT EXISTS centers_cell ON centers(cell,family,active)")
             self.db.execute("CREATE INDEX IF NOT EXISTS centers_active ON centers(active,family)")
+            # E-2: every retire/restore keeps its reason here; restore never NULLs a reason.
+            self.db.execute("""CREATE TABLE IF NOT EXISTS center_history(
+                seq INTEGER PRIMARY KEY AUTOINCREMENT, event_id TEXT NOT NULL,
+                action TEXT NOT NULL CHECK(action IN ('RETIRE','RESTORE')),
+                reason TEXT NOT NULL, revision INTEGER NOT NULL
+            )""")
+            self.db.execute("CREATE INDEX IF NOT EXISTS center_history_event ON center_history(event_id,seq)")
             config={"source":source_identity,"metric":metric.identity(),
                     "radius":repr(radius),"dimensions":str(self.dimensions),"schema":"1"}
             existing=dict(self.db.execute("SELECT k,v FROM index_meta WHERE k!='revision'"))
@@ -56,6 +63,20 @@ class DiskGridIndex:
     @contextmanager
     def _tx(self):
         self.db.execute("BEGIN IMMEDIATE")
+        try:
+            yield
+            self.db.execute("COMMIT")
+        except BaseException:
+            self.db.execute("ROLLBACK")
+            raise
+
+    @contextmanager
+    def _read_tx(self):
+        """E-9: a deferred read transaction so batched SELECTs see one consistent revision."""
+        if self.db.in_transaction:
+            yield  # a caller already holds a transaction; read inside it
+            return
+        self.db.execute("BEGIN")
         try:
             yield
             self.db.execute("COMMIT")
@@ -83,15 +104,26 @@ class DiskGridIndex:
     def _revision_advance(self):
         self.db.execute("UPDATE index_meta SET v=CAST(CAST(v AS INTEGER)+1 AS TEXT) WHERE k='revision'")
 
-    def _cell(self, obs: Observation):
+    def _scaled(self, obs: Observation):
         coords=[]
         vec=self.metric.vector(obs)
         for i in self.dimensions:
             scaled = math.sqrt(self.metric.weights[i]) * vec[i] / self.radius
             if not math.isfinite(scaled):
                 raise LocalityError("index coordinate overflow")
-            coords.append(math.floor(scaled))
+            coords.append(scaled)
         return tuple(coords)
+
+    def _cell(self, obs: Observation):
+        return tuple(math.floor(x) for x in self._scaled(obs))
+
+    def _query_cells(self, obs: Observation):
+        """Every cell a within-radius centre can occupy, boundary-widened per E-1."""
+        scaled=self._scaled(obs)
+        cell=tuple(math.floor(x) for x in scaled)
+        fans=[grid_offsets(x) for x in scaled]
+        return [json.dumps(tuple(a+b for a,b in zip(cell,offsets)),separators=(",",":"))
+                for offsets in product(*fans)]
 
     @staticmethod
     def _encode(obs: Observation):
@@ -136,6 +168,11 @@ class DiskGridIndex:
             self._revision_advance()
         return "ADDED"
 
+    def _history_append(self, event_id: str, action: str, reason: str):
+        revision=int(self.db.execute("SELECT v FROM index_meta WHERE k='revision'").fetchone()[0])
+        self.db.execute("INSERT INTO center_history(event_id,action,reason,revision) VALUES (?,?,?,?)",
+                        (event_id,action,reason,revision))
+
     def retire(self, center_id: str, reason: str):
         if not reason:
             raise LocalityError("retirement reason required")
@@ -145,23 +182,31 @@ class DiskGridIndex:
             if count!=1:
                 raise LocalityError("center missing or already retired")
             self._revision_advance()
+            self._history_append(center_id,"RETIRE",reason)
 
     def restore(self, obs: Observation):
         with self._tx():
-            row=self.db.execute("SELECT identity,active FROM centers WHERE event_id=?",
+            row=self.db.execute("SELECT identity,active,reason FROM centers WHERE event_id=?",
                                 (obs.event_id,)).fetchone()
             if row is None or row[1] or row[0]!=obs.identity():
                 raise LocalityError("original retired evidence required")
-            self.db.execute("""UPDATE centers SET active=1,reason=NULL
-                WHERE event_id=?""",(obs.event_id,))
+            # E-2: the retirement reason stays on the row and in center_history.
+            self.db.execute("UPDATE centers SET active=1 WHERE event_id=?",(obs.event_id,))
             self._revision_advance()
+            self._history_append(obs.event_id,"RESTORE",row[2] if row[2] is not None else "")
 
-    def candidates(self, obs: Observation, *, max_neighbors: int = 64,
-                   allow_cross_family: bool = False, same_direction: bool = True,
-                   historical_only: bool = True) -> tuple[IndexedHit, ...]:
+    def history(self, event_id: str) -> tuple[dict, ...]:
+        """E-2: full retire/restore history for one centre, oldest first."""
+        rows=self.db.execute("""SELECT seq,event_id,action,reason,revision FROM center_history
+            WHERE event_id=? ORDER BY seq""",(event_id,)).fetchall()
+        return tuple(dict(zip(("seq","event_id","action","reason","revision"),row)) for row in rows)
+
+    def candidate_report(self, obs: Observation, *, max_neighbors: int = 64,
+                         allow_cross_family: bool = False, same_direction: bool = True,
+                         historical_only: bool = True) -> dict:
+        """Exact in-radius hits plus truncation disclosure (E-6) and the read revision (E-9)."""
         if type(max_neighbors) is not int or not 1 <= max_neighbors <= 4096:
             raise LocalityError("bounded neighbor count must be 1..4096")
-        cell=self._cell(obs)
         clauses=["active=1"]
         params=[]
         if not allow_cross_family:
@@ -175,13 +220,15 @@ class DiskGridIndex:
             params.append(obs.event_clock)
         base=" AND ".join(clauses)
         if self.indexed:
-            cells=[json.dumps(tuple(a+b for a,b in zip(cell,offsets)),separators=(",",":"))
-                   for offsets in product((-1,0,1),repeat=len(cell))]
+            cells=self._query_cells(obs)
         else:
+            self._scaled(obs)  # same finite-coordinate validation as the grid path
             cells=None
 
         ordered=[]
+        total=0
         def process(cursor):
+            nonlocal total
             while True:
                 rows=cursor.fetchmany(128)
                 if not rows:
@@ -193,21 +240,34 @@ class DiskGridIndex:
                     distance=self.metric.distance(obs,center)
                     if distance>self.radius:
                         continue
+                    total+=1
                     candidate=(distance,center.event_id,IndexedHit(center.event_id,distance,evidence_id))
                     bisect.insort(ordered,candidate)
                     if len(ordered)>max_neighbors:
                         ordered.pop()
 
-        if cells is None:
-            process(self.db.execute("SELECT identity,payload FROM centers WHERE "+base,
-                                    params))
-        else:
-            for begin in range(0,len(cells),100):
-                batch=cells[begin:begin+100]
-                sql="SELECT identity,payload FROM centers WHERE "+base+" AND cell IN (" + (
-                    ",".join("?" for _ in batch)) + ")"
-                process(self.db.execute(sql,params+batch))
-        return tuple(row[2] for row in ordered)
+        with self._read_tx():
+            revision=self.revision
+            if cells is None:
+                process(self.db.execute("SELECT identity,payload FROM centers WHERE "+base,
+                                        params))
+            else:
+                for begin in range(0,len(cells),100):
+                    batch=cells[begin:begin+100]
+                    sql="SELECT identity,payload FROM centers WHERE "+base+" AND cell IN (" + (
+                        ",".join("?" for _ in batch)) + ")"
+                    process(self.db.execute(sql,params+batch))
+        hits=tuple(row[2] for row in ordered)
+        return {"hits":hits,"total_in_radius":total,"truncated":len(hits)<total,
+                "revision":revision}
+
+    def candidates(self, obs: Observation, *, max_neighbors: int = 64,
+                   allow_cross_family: bool = False, same_direction: bool = True,
+                   historical_only: bool = True) -> tuple[IndexedHit, ...]:
+        return self.candidate_report(obs,max_neighbors=max_neighbors,
+                                     allow_cross_family=allow_cross_family,
+                                     same_direction=same_direction,
+                                     historical_only=historical_only)["hits"]
 
     def snapshot(self):
         return {"schema":1,"source_identity":self.source_identity,

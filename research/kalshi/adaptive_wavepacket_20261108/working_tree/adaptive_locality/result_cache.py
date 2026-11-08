@@ -39,11 +39,22 @@ class OfflineCache:
         return self.root / digest[:2] / (digest + ".json")
 
     def put(self, key: CacheKey, payload: dict) -> str:
-        if not isinstance(payload, dict) or payload.get("scientific_jobs_eliminated", 0) != 0:
+        # E-15: the counter must be PRESENT and zero; absence is not assumed to be zero.
+        if not isinstance(payload, dict) or "scientific_jobs_eliminated" not in payload:
+            raise LocalityError("cache artifact must declare scientific_jobs_eliminated")
+        if payload["scientific_jobs_eliminated"] != 0:
             raise LocalityError("cache cannot suppress jobs")
-        return seal_snapshot(self._path(key),
+        target = self._path(key)
+        artifact_identity = _digest(payload)
+        if target.exists():
+            existing = load_snapshot(target, source_identity=key.source_identity,
+                                     contract_identity=key.digest())
+            if existing.get("key") == key.__dict__ and existing.get("artifact_identity") == artifact_identity:
+                return "ALREADY_PRESENT"
+            raise LocalityError("cache entry exists with a different artifact")
+        return seal_snapshot(target,
                              {"key": key.__dict__, "artifact": payload,
-                              "artifact_identity": _digest(payload)},
+                              "artifact_identity": artifact_identity},
                              source_identity=key.source_identity,
                              contract_identity=key.digest())
 

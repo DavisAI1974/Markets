@@ -28,4 +28,20 @@ class GraphAndQueueTests(unittest.TestCase):
         self.assertEqual(restored.submit(g),"ALREADY_COMPLETED")
         with self.assertRaises(LocalityError):
             restored.submit(ReadyGroup("g","different","features",("e1",),"P","AB"))
+    def test_e11_recover_distinguishes_overflow_from_duplicate(self):
+        g1=ReadyGroup("g1","src","features",("e1",),"P","AB")
+        g2=ReadyGroup("g2","src","features",("e2",),"P","AB")
+        overflow={"capacity":1,"pending":[g1.__dict__,g2.__dict__],"completed":{}}
+        with self.assertRaises(LocalityError) as ctx:
+            ShadowQueue.recover(overflow)
+        self.assertIn("capacity",str(ctx.exception))
+        self.assertNotIn("duplicate",str(ctx.exception))
+        duplicate={"capacity":4,"pending":[g1.__dict__,g1.__dict__],"completed":{}}
+        with self.assertRaises(LocalityError) as ctx:
+            ShadowQueue.recover(duplicate)
+        self.assertIn("duplicate",str(ctx.exception))
+        conflict={"capacity":4,"pending":[g1.__dict__,dict(g1.__dict__,family="Q")],"completed":{}}
+        with self.assertRaises(LocalityError) as ctx:
+            ShadowQueue.recover(conflict)
+        self.assertIn("conflict",str(ctx.exception))
 if __name__=="__main__":unittest.main()

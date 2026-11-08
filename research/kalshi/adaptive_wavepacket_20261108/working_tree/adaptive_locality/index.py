@@ -13,6 +13,22 @@ import math
 from .core import Observation, MetricContract, LocalityError, _digest
 
 
+# E-1: a scaled coordinate within this distance of an integer boundary widens the
+# (-1,0,1) cell fan by one extra cell on that side so an exact-radius hit whose
+# centre sits one ulp below the boundary is never missed. The exact recheck stays.
+BOUNDARY_TOLERANCE = 1e-9
+
+
+def grid_offsets(scaled: float) -> tuple[int, ...]:
+    """Cell offsets to scan for one scaled coordinate; widened near a cell boundary."""
+    fraction = scaled - math.floor(scaled)
+    if fraction < BOUNDARY_TOLERANCE:
+        return (-2, -1, 0, 1)
+    if 1.0 - fraction < BOUNDARY_TOLERANCE:
+        return (-1, 0, 1, 2)
+    return (-1, 0, 1)
+
+
 @dataclass(frozen=True)
 class IndexedHit:
     center_id: str
@@ -37,7 +53,7 @@ class ExactGridIndex:
         self._dimensions = tuple(i for i, w in enumerate(metric.weights) if w > 0)
         self._grid_enabled = 3 ** len(self._dimensions) <= max_cells
 
-    def _key(self, obs: Observation) -> tuple:
+    def _scaled(self, obs: Observation) -> tuple[float, ...]:
         vector = self.metric.vector(obs)
         coords = []
         for i in self._dimensions:
@@ -47,8 +63,18 @@ class ExactGridIndex:
             scaled = weighted / self.radius
             if not math.isfinite(scaled):
                 raise LocalityError("index cell coordinate overflow")
-            coords.append(math.floor(scaled))
+            coords.append(scaled)
         return tuple(coords)
+
+    def _key(self, obs: Observation) -> tuple:
+        return tuple(math.floor(scaled) for scaled in self._scaled(obs))
+
+    def _query_cells(self, obs: Observation) -> list[tuple]:
+        """Every cell a within-radius centre can occupy, boundary-widened per E-1."""
+        scaled = self._scaled(obs)
+        key = tuple(math.floor(x) for x in scaled)
+        fans = [grid_offsets(x) for x in scaled]
+        return [tuple(a + b for a, b in zip(key, offsets)) for offsets in product(*fans)]
 
     @property
     def revision(self) -> int:
@@ -101,32 +127,51 @@ class ExactGridIndex:
         del self._archive[obs.event_id]
         self.add(original)
 
-    def candidates(self, obs: Observation, *, allow_cross_family: bool = False,
-                   max_neighbors: int | None = None) -> tuple[IndexedHit, ...]:
-        key = self._key(obs)
+    def candidate_report(self, obs: Observation, *, allow_cross_family: bool = False,
+                         max_neighbors: int | None = None, same_direction: bool = True,
+                         historical_only: bool = True) -> dict:
+        """Exact in-radius hits plus disclosure of any max_neighbors truncation (E-6).
+
+        same_direction / historical_only are exact filters with the same defaults
+        and semantics as DiskGridIndex.candidates (E-8).
+        """
         if max_neighbors is not None and max_neighbors < 1:
             raise LocalityError("invalid neighbor limit")
         if self._grid_enabled:
+            cells = self._query_cells(obs)
             families = sorted({x.family for x in self._active.values()}) if allow_cross_family else [obs.family]
             ids: set[str] = set()
             for family in families:
-                for offsets in product((-1, 0, 1), repeat=len(key)):
-                    cell = tuple(a + b for a, b in zip(key, offsets))
+                for cell in cells:
                     ids.update(self._cells.get((family, cell), ()))
         else:
+            self._scaled(obs)  # same finite-coordinate validation as the grid path
             ids = {k for k, x in self._active.items() if allow_cross_family or x.family == obs.family}
         result = []
         for center_id in ids:
             center = self._active[center_id]
+            if same_direction and center.direction != obs.direction:
+                continue
+            if historical_only and center.event_clock > obs.event_clock:
+                continue
             distance = self.metric.distance(obs, center)
             if not math.isfinite(distance):
                 raise LocalityError("non-finite exact distance")
             if distance <= self.radius:
                 result.append(IndexedHit(center_id, distance, center.identity()))
         result.sort(key=lambda h: (h.distance, h.center_id))
+        total = len(result)
         if max_neighbors is not None:
             result = result[:max_neighbors]
-        return tuple(result)
+        return {"hits": tuple(result), "total_in_radius": total,
+                "truncated": len(result) < total, "revision": self._revision}
+
+    def candidates(self, obs: Observation, *, allow_cross_family: bool = False,
+                   max_neighbors: int | None = None, same_direction: bool = True,
+                   historical_only: bool = True) -> tuple[IndexedHit, ...]:
+        return self.candidate_report(obs, allow_cross_family=allow_cross_family,
+                                     max_neighbors=max_neighbors, same_direction=same_direction,
+                                     historical_only=historical_only)["hits"]
 
     def snapshot(self) -> dict:
         return {"schema": 1, "metric": self.metric.identity(), "radius": self.radius,

@@ -29,7 +29,8 @@ def shadow_batch(events:Iterable[Observation],engine:LocalityEngine,
             engine.admit(obs,d)
         decisions.append({"event_id":obs.event_id,"status":d.status,
                           "center":d.proposed_center,"candidate_weights":d.candidates,
-                          "event_identity":d.evidence_identity})
+                          "event_identity":d.evidence_identity,
+                          "reason":d.reason})  # E-7: an ABSTAIN keeps its reason at export
     return {"version":1,"mode":"SHADOW_ONLY","run":manifest.run_id,"day":manifest.day,
             "source_identity":manifest.source_identity,"planes":list(manifest.planes),
             "metric_identity":engine.metric.identity(),"decisions":decisions,
@@ -45,6 +46,7 @@ def buildmap_evidence(shadow_result:dict)->dict:
             "provenance":{"run":shadow_result["run"],"day":shadow_result["day"],
                           "source_identity":shadow_result["source_identity"],
                           "metric_identity":shadow_result["metric_identity"]},
+            # decisions pass through whole, so each decision's "reason" survives (E-7)
             "decisions":shadow_result["decisions"],"ledger_head":shadow_result["ledger_head"],
             "scientific_jobs_eliminated":0,
             "trust":"UNSIGNED_RESEARCH_ARTIFACT_NOT_ACCEPTANCE_EVIDENCE"}

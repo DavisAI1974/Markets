@@ -60,6 +60,11 @@ class LosslessReviewPolicyTests(unittest.TestCase):
         self.assertTrue(report["all_exact_results_match"])
         self.assertEqual(report["scientific_jobs_eliminated"],0)
         self.assertEqual(report["source"],"DETERMINISTIC_SYNTHETIC_ONLY")
+        # E-8: the differential is not vacuous - some queries hit, and the direction/clock
+        # filters actually remove in-radius centres that an unfiltered index would return.
+        self.assertGreater(report["queries_with_hits"],0)
+        self.assertGreater(report["in_radius_centers_filtered_by_direction_or_clock"],0)
+        self.assertEqual(report["filters_exercised"],{"mixed_directions":True,"interleaved_clocks":True})
 
 
 if __name__=="__main__":

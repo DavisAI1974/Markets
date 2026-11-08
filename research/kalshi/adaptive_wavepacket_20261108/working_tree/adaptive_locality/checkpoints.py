@@ -14,8 +14,12 @@ def seal_snapshot(path:str|Path, payload:dict, *, source_identity:str,
     if target.exists(): raise LocalityError("refusing to overwrite snapshot")
     wrapper={"schema":1,"source_identity":source_identity,
              "contract_identity":contract_identity,"payload":payload}
-    wrapper["sha256"]=_digest(wrapper)
-    data=json.dumps(wrapper,sort_keys=True,allow_nan=False).encode("utf-8")
+    try:
+        wrapper["sha256"]=_digest(wrapper)
+        data=json.dumps(wrapper,sort_keys=True,allow_nan=False).encode("utf-8")
+    except ValueError as exc:
+        # E-13: a NaN/inf payload is a contract refusal, not a bare serializer error.
+        raise LocalityError("snapshot payload must be finite JSON (no NaN/inf)") from exc
     target.parent.mkdir(parents=True,exist_ok=True)
     fd,tmp=tempfile.mkstemp(prefix=".locality-",dir=str(target.parent))
     try:
@@ -34,10 +38,19 @@ def seal_snapshot(path:str|Path, payload:dict, *, source_identity:str,
     return wrapper["sha256"]
 
 def load_snapshot(path:str|Path,*,source_identity:str,contract_identity:str)->dict:
+    # E-13: distinct, cause-preserving failures so the operator can tell them apart.
     try:
-        raw=json.loads(Path(path).read_text(encoding="utf-8"))
-    except (OSError,ValueError) as exc:
-        raise LocalityError("missing or torn snapshot") from exc
+        text=Path(path).read_text(encoding="utf-8")
+    except FileNotFoundError as exc:
+        raise LocalityError("missing snapshot") from exc
+    except PermissionError as exc:
+        raise LocalityError("unreadable snapshot: permission denied") from exc
+    except OSError as exc:
+        raise LocalityError("unreadable snapshot") from exc
+    try:
+        raw=json.loads(text)
+    except ValueError as exc:
+        raise LocalityError("torn or corrupt snapshot JSON") from exc
     if not isinstance(raw,dict) or raw.get("schema")!=1:
         raise LocalityError("unsupported snapshot")
     digest=raw.get("sha256")

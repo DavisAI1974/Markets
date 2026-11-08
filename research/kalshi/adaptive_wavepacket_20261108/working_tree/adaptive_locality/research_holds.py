@@ -89,26 +89,133 @@ class ResearchHoldRegistry:
     def close(self):
         self.db.close()
 
-    def archive(self, archive_name: str, evidence: Sequence[object]) -> str:
-        if not archive_name or not evidence:
-            raise LocalityError("archive name and complete original evidence required")
+    def _serialize(self, evidence: Sequence[object]) -> tuple[dict,str,str]:
         raw={"source_identity":self.source_identity,
              "contract_identity":self.contract_identity,
              "records":[_plain(v) for v in evidence]}
         data=json.dumps(raw,sort_keys=True,separators=(",",":"),allow_nan=False)
+        return raw,data,_digest(raw)
+
+    def archive(self, archive_name: str, evidence: Sequence[object]) -> str:
+        """Archive immutable evidence under a name.
+
+        A different payload under an existing name is a CONFLICT (PG-3): the
+        original stays untouched, the NEW payload is archived under
+        ``<name>-conflict-<digest[:12]>`` with a linked research hold, and the
+        call still fails closed so no caller proceeds on the wrong evidence.
+        """
+        if not archive_name or not evidence:
+            raise LocalityError("archive name and complete original evidence required")
+        raw,data,digest=self._serialize(evidence)
         if len(data.encode())>self.max_archive_bytes:
-            raise LocalityError("archive exceeds bounded local limit; repartition with separate manifests, never discard")
-        digest=_digest(raw)
+            raise LocalityError("archive exceeds bounded local limit; use archive_partitioned "
+                                "(lossless parts + manifest), never discard")
         with self._tx():
             row=self.db.execute("SELECT sha256 FROM archives WHERE archive_name=?",
                                 (archive_name,)).fetchone()
-            if row:
-                if row[0]!=digest:
-                    raise LocalityError("immutable original evidence conflict")
+            if not row:
+                self.db.execute("INSERT INTO archives VALUES (?,?,?)",
+                                (archive_name,digest,data))
                 return digest
-            self.db.execute("INSERT INTO archives VALUES (?,?,?)",
-                            (archive_name,digest,data))
-        return digest
+            if row[0]==digest:
+                return digest
+            original_digest=row[0]
+        # Conflict: persist the new payload and its hold in a committed
+        # transaction of their own, THEN fail closed. The raise must not roll
+        # back the retention.
+        conflict_name=f"{archive_name}-conflict-{digest[:12]}"
+        with self._tx():
+            existing=self.db.execute(
+                "SELECT sha256 FROM archives WHERE archive_name=?",
+                (conflict_name,)).fetchone()
+            if not existing:
+                self.db.execute("INSERT INTO archives VALUES (?,?,?)",
+                                (conflict_name,digest,data))
+            case_id=_digest({"conflict":conflict_name,"original":archive_name,
+                             "original_digest":original_digest,"conflict_digest":digest})
+            if not self.db.execute("SELECT 1 FROM cases WHERE case_id=?",
+                                   (case_id,)).fetchone():
+                detail=json.dumps({"original_archive_name":archive_name,
+                                   "original_archive_digest":original_digest,
+                                   "conflicting_archive_digest":digest,
+                                   "disposition":"RETAIN_BOTH_FOR_FURTHER_INSPECTION"},
+                                  sort_keys=True,separators=(",",":"))
+                self.db.execute("""INSERT INTO cases(case_id,archive_name,reason,
+                    detail_json,state) VALUES (?,?,?,?,'RESEARCH_HOLD')""",
+                    (case_id,conflict_name,
+                     "ARCHIVE_NAME_CONFLICT:"+archive_name,detail))
+                self._append(case_id,"RESEARCH_HOLD",
+                             "ARCHIVE_NAME_CONFLICT:"+archive_name,
+                             "automatic-research-triage")
+        raise LocalityError(
+            f"immutable original evidence conflict; conflicting payload retained as "
+            f"{conflict_name}")
+
+    def conflicts(self, archive_name: str) -> tuple[dict, ...]:
+        """Every retained conflicting payload for a name, oldest first."""
+        rows=self.db.execute("""SELECT case_id,archive_name,reason,detail_json FROM cases
+            WHERE reason=? ORDER BY rowid""",("ARCHIVE_NAME_CONFLICT:"+archive_name,)).fetchall()
+        return tuple({"case_id":c,"archive_name":a,"reason":r,"details":json.loads(d)}
+                     for c,a,r,d in rows)
+
+    def archive_partitioned(self, archive_name: str, evidence: Sequence[object]) -> dict:
+        """PG-4: archive a long series losslessly as ordered parts plus a manifest.
+
+        Records keep their order; each part stays under the byte cap; the
+        manifest binds part names, part digests, counts and the digest of the
+        whole serialized series so reassembly can be verified. Nothing is
+        truncated. A series whose single record exceeds the cap fails closed.
+        """
+        if not archive_name or not evidence:
+            raise LocalityError("archive name and complete original evidence required")
+        records=[_plain(v) for v in evidence]
+        whole=_digest({"source_identity":self.source_identity,
+                       "contract_identity":self.contract_identity,"records":records})
+        budget=max(1024,self.max_archive_bytes-2048)
+        parts=[]
+        current=[]
+        size=0
+        for record in records:
+            piece=len(json.dumps(record,sort_keys=True,separators=(",",":"),
+                                 allow_nan=False).encode())+1
+            if piece>budget:
+                raise LocalityError("single record exceeds the bounded archive limit; "
+                                    "raise max_archive_bytes, never truncate")
+            if current and size+piece>budget:
+                parts.append(current); current=[]; size=0
+            current.append(record); size+=piece
+        if current:
+            parts.append(current)
+        part_receipts=[]
+        for index,part in enumerate(parts):
+            name=f"{archive_name}-part-{index:05d}"
+            part_receipts.append({"archive_name":name,"records":len(part),
+                                  "sha256":self.archive(name,part)})
+        manifest={"kind":"LOSSLESS_PARTITION_MANIFEST","archive_name":archive_name,
+                  "part_count":len(parts),"record_count":len(records),
+                  "parts":part_receipts,"whole_series_digest":whole,
+                  "records_dropped":0,"scientific_jobs_eliminated":0}
+        digest=self.archive(archive_name+"-manifest",(manifest,))
+        return {**manifest,"manifest_digest":digest}
+
+    def read_partitioned(self, archive_name: str) -> list:
+        """Reassemble a partitioned series and verify it against the manifest."""
+        manifest=self.read_archive(archive_name+"-manifest")["records"][0]
+        if manifest.get("kind")!="LOSSLESS_PARTITION_MANIFEST":
+            raise LocalityError("not a partition manifest")
+        records=[]
+        for part in manifest["parts"]:
+            archive=self.read_archive(part["archive_name"])
+            if len(archive["records"])!=part["records"]:
+                raise LocalityError("partition part count mismatch")
+            records.extend(archive["records"])
+        if len(records)!=manifest["record_count"]:
+            raise LocalityError("partition record count mismatch")
+        whole=_digest({"source_identity":self.source_identity,
+                       "contract_identity":self.contract_identity,"records":records})
+        if whole!=manifest["whole_series_digest"]:
+            raise LocalityError("reassembled series digest mismatch")
+        return records
 
     def read_archive(self, archive_name: str) -> dict:
         row=self.db.execute("SELECT sha256,evidence_json FROM archives WHERE archive_name=?",
@@ -596,6 +703,7 @@ def preserve_full_raw_level2_holds(report:dict,
         report.get("evidence_identity")!=_digest({
             "source":registry.source_identity,
             "calibration":registry.contract_identity,
+            **({"transform":"log"} if report.get("balance_transform")=="log" else {}),
             "windows":[asdict(w) for w in original]})):
         raise LocalityError("Level 2 report does not bind complete original windows")
     complete=_verify_complete_raw_information(raw_frames,frames,bins,registry)

@@ -134,18 +134,29 @@ def geometric_dipole_probe(frames: Sequence[InfoFrame], target: str,
                       "target":target,"donor":donor})
     basis_audit=_basis_condition_audit(rows[:split]) if not issue_ids else None
     algebraic_degeneracy_flags=[]
+    donor_mean=None
+    donor_cv=None
     if not issue_ids:
         train_donor=[p.hb for p in points[:split]]
         donor_span=max(train_donor)-min(train_donor)
         donor_scale=max(1.,*(abs(v) for v in train_donor))
+        donor_mean=math.fsum(train_donor)/len(train_donor)
+        donor_sd=math.sqrt(math.fsum((v-donor_mean)**2 for v in train_donor)/len(train_donor))
+        donor_cv=(donor_sd/abs(donor_mean)) if abs(donor_mean)>0 else None
         if donor_span<=1e-12*donor_scale:
             algebraic_degeneracy_flags.append("CONSTANT_TRAIN_DONOR_HB")
+        elif donor_cv is not None and donor_cv<1e-2:
+            # M-2: a slowly varying donor makes Ha^2 = (HaHb)^2 / Hb^2 NEAR-exact
+            # for the same algebraic reason as a constant one.
+            algebraic_degeneracy_flags.append("NEAR_CONSTANT_TRAIN_DONOR_HB")
         if all(p.ha==p.hb for p in points):
             algebraic_degeneracy_flags.append("EXACT_EQUAL_ENTROPY_HA_HB")
     fitted=None
     linear_sse=None
     quad_sse=None
     gain=None
+    algebraic_sse=None
+    gain_over_algebraic=None
     status="RESEARCH_HOLD"
     reason="RANK_OR_NUMERICAL_INVESTIGATION_REQUIRED"
     # Do not fit a subset if any original data are unsupported. Preserve
@@ -169,6 +180,21 @@ def geometric_dipole_probe(frames: Sequence[InfoFrame], target: str,
                 status=("EXPLORATORY_ALGEBRAIC_PATTERN_ONLY" if gain>=min_gain
                         else "NO_ADDITIONAL_QUADRATIC_SUPPORT")
                 reason="OPERATOR_SPACE_CURVE_NOT_PHYSICAL_CAUSAL_GEOMETRY"
+            # M-2 reparameterization null: the FIXED algebraic curve
+            # y = x^2 / mean(Hb_train)^2 needs no fit at all. A quadratic that
+            # does not beat it by min_gain is explained by algebra, not data.
+            if donor_mean and donor_mean!=0:
+                algebraic_sse=math.fsum((p.ha_squared-(r[1]*r[1])/(donor_mean*donor_mean))**2
+                                        for p,r in zip(points[split:],rows[split:]))
+                if math.isfinite(algebraic_sse) and algebraic_sse>1e-14:
+                    gain_over_algebraic=(algebraic_sse-quad_sse)/algebraic_sse
+                elif math.isfinite(algebraic_sse):
+                    gain_over_algebraic=None
+            if status=="EXPLORATORY_ALGEBRAIC_PATTERN_ONLY" and (
+                    "NEAR_CONSTANT_TRAIN_DONOR_HB" in algebraic_degeneracy_flags or
+                    gain_over_algebraic is None or gain_over_algebraic<min_gain):
+                status="RESEARCH_HOLD"
+                reason="QUADRATIC_NOT_BETTER_THAN_ALGEBRAIC_REPARAMETERIZATION"
             fitted=quadratic.coefficients
             coeff=[v for _,v in fitted]
             # Algebraically perfect points may still be outliers. Measure
@@ -242,6 +268,10 @@ def geometric_dipole_probe(frames: Sequence[InfoFrame], target: str,
         "test_frames":n-split,"linear_holdout_sse":linear_sse,
         "quadratic_holdout_sse":quad_sse,"quadratic_gain":gain,
         "quadratic_coefficients":fitted,
+        "algebraic_curve_holdout_sse":algebraic_sse,
+        "gain_over_algebraic_curve":gain_over_algebraic,
+        "train_donor_mean":donor_mean,
+        "train_donor_coefficient_of_variation":donor_cv,
         "design_basis_audit":basis_audit,
         "algebraic_degeneracy_flags":tuple(algebraic_degeneracy_flags),
         "static_curve_is_not_a_forecast_of_future_entropy":True,
@@ -260,6 +290,7 @@ def geometric_dipole_probe(frames: Sequence[InfoFrame], target: str,
         "limitations":(
             "The equal-entropy null direction is a universal algebraic identity and may arise in pure noise.",
             "A constant donor makes a quadratic curve exact by reparameterization; this is not a predictive interaction.",
+            "A slowly varying donor makes it near-exact; the fitted quadratic is compared against the fixed curve x^2/mean(Hb)^2 (M-2).",
             "The static curve can be estimator-, regime- and fit-dependent, even with high heldout R2.",
             "Each outlier/underidentified fit must be retained for scientific investigation.",
             "This does not establish continuum geometry, a Neumann PDE, or causality.",

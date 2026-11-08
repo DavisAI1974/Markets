@@ -14,7 +14,7 @@ from typing import Sequence
 
 from .core import LocalityError, _digest
 from .information import InfoFrame, validate_series
-from .coupling import _qr_fit, _predict_sse
+from .coupling import _qr_fit, _predict_sse, lag1_autocorrelation, lag_sweep_candidates
 
 SELF=("const","Ha","Ha2","FIa")
 INTERACTION=SELF+("HaHb",)
@@ -42,6 +42,9 @@ class GeometryPredictiveSplit:
     full_coefficients: tuple[tuple[str,float], ...]
     original_training_frame_identities: tuple[str, ...]
     original_testing_frame_identities: tuple[str, ...]
+    # M-4: lag profile of the past-donor null and donor memory, per split.
+    donor_lag1_autocorrelation: float | None = None
+    past_donor_gain_by_lag: tuple[dict, ...] = ()
 
 
 def _directional_terms(frames: Sequence[InfoFrame], i: int,
@@ -179,6 +182,37 @@ def geometric_predictive_controls(frames: Sequence[InfoFrame],target:str,donor:s
                                           full_fit.rank_diagonal_ratio,
                                           lag_fit.rank_diagonal_ratio)
             near_singular=worst_condition_indicator>1e6
+            # M-4: every candidate lag is a record; none is selected.
+            profile=[]
+            for L in lag_sweep_candidates(len(frames),lag):
+                sub=[i for i in train_idx if i>=L]
+                entry={"lag":L,"training_intervals":len(sub)}
+                if len(sub)<2*len(GEOMETRY) or any(i<L for i in test_idx):
+                    profile.append({**entry,"past_donor_gain":None,"geometry_gain":None,
+                                    "reason":"insufficient matched intervals for this lag"})
+                    continue
+                try:
+                    ysub=[_rate(frames,i,target) for i in sub]
+                    s_fit=_qr_fit([_directional_terms(frames,i,target,donor)[:len(SELF)]
+                                   for i in sub],ysub,SELF)
+                    f_fit=_qr_fit([_directional_terms(frames,i,target,donor) for i in sub],
+                                  ysub,GEOMETRY)
+                    l_fit=_qr_fit([_directional_terms(frames,i,target,donor,L) for i in sub],
+                                  ysub,GEOMETRY)
+                    b=_predict_sse(s_fit,self_test,ytest)
+                    f=_predict_sse(f_fit,full_test,ytest)
+                    l=_predict_sse(l_fit,[_directional_terms(frames,i,target,donor,L)
+                                          for i in test_idx],ytest)
+                    if b<=1e-14:
+                        profile.append({**entry,"past_donor_gain":None,"geometry_gain":None,
+                                        "reason":"self-only model already explains holdout"})
+                    else:
+                        profile.append({**entry,"past_donor_gain":(b-l)/b,
+                                        "geometry_gain":(b-f)/b,"reason":""})
+                except (LocalityError,ArithmeticError,OverflowError) as exc:
+                    profile.append({**entry,"past_donor_gain":None,"geometry_gain":None,
+                                    "reason":f"{type(exc).__name__}: {exc}"})
+            autocorr=lag1_autocorrelation([dict(f.entropy)[donor] for f in frames])
             results.append(GeometryPredictiveSplit(
                 status=("RESEARCH_HOLD" if near_singular else
                         "CANDIDATE_PREDICTIVE_ASSOCIATION_REVIEW_ONLY" if promising
@@ -195,7 +229,9 @@ def geometric_predictive_controls(frames: Sequence[InfoFrame],target:str,donor:s
                 past_donor_gain=past_gain,early_holdout_gain=early,
                 late_holdout_gain=late,
                 coefficient_condition_indicator=worst_condition_indicator,
-                full_coefficients=full_fit.coefficients,**kwargs))
+                full_coefficients=full_fit.coefficients,
+                donor_lag1_autocorrelation=autocorr,
+                past_donor_gain_by_lag=tuple(profile),**kwargs))
         except (LocalityError,ArithmeticError,OverflowError) as exc:
             results.append(hold("RANK_NUMERICAL_OR_CONTROL_RESEARCH:"+str(exc)))
     all_promising=all(x.status=="CANDIDATE_PREDICTIVE_ASSOCIATION_REVIEW_ONLY"

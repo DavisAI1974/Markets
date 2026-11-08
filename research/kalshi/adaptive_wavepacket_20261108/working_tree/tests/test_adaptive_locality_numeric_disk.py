@@ -128,5 +128,204 @@ class NumericDiskAndOutlierTests(unittest.TestCase):
                     self.assertEqual(g.snapshot()["scientific_jobs_eliminated"],0)
 
 
+class DiskIndexReviewFixTests(unittest.TestCase):
+    """Disk index findings E-1, E-2, E-6, E-9 and the missing-coverage tests."""
+
+    def setUp(self):
+        self.metric=MetricContract(("x","y"),(1.,1.),(1.,1.),"v")
+
+    def test_e1_exact_radius_boundary_hit(self):
+        metric=MetricContract(("x",),(1,),(1,),"boundary-v1")
+        center=Observation("c","P",{"x":1-2**-53},1,"synthetic",direction="AB")
+        query=Observation("q","P",{"x":2.0},2,"synthetic",direction="AB")
+        self.assertEqual(metric.distance(query,center),1.0)
+        with tempfile.TemporaryDirectory() as folder:
+            with DiskGridIndex(Path(folder)/"i.db",metric,1.0,source_identity="s") as ix:
+                ix.add(center)
+                self.assertEqual([(h.center_id,h.distance) for h in ix.candidates(query)],[("c",1.0)])
+            with DiskGridIndex(Path(folder)/"j.db",metric,1.0,source_identity="s") as ix:
+                ix.add(Observation("c2","P",{"x":2.0},1,"synthetic",direction="AB"))
+                mirrored=Observation("q2","P",{"x":1-2**-53},2,"synthetic",direction="AB")
+                self.assertEqual([h.center_id for h in ix.candidates(mirrored)],["c2"])
+
+    def test_e1_randomized_differential_with_boundary_pairs(self):
+        rng=random.Random(7)
+        for radius in (0.5,1.0,2.5):
+            centers=[obs(i,rng.uniform(-6,6),rng.uniform(-6,6),"P" if i%3 else "X","AB" if i%4 else "BA")
+                     for i in range(1,91)]
+            centers.append(Observation("edge-lo","P",{"x":radius*(1-2**-53),"y":0.},1,"synthetic",direction="AB"))
+            centers.append(Observation("edge-hi","P",{"x":2*radius,"y":0.},1,"synthetic",direction="AB"))
+            targets=[obs(n,rng.uniform(-6,6),rng.uniform(-6,6),"P" if n%2 else "X","AB" if n%3 else "BA")
+                     for n in range(100,130)]
+            targets.append(Observation("tq-lo","P",{"x":2*radius,"y":0.},200,"synthetic",direction="AB"))
+            targets.append(Observation("tq-hi","P",{"x":radius*(1-2**-53),"y":0.},201,"synthetic",direction="AB"))
+            with tempfile.TemporaryDirectory() as folder:
+                with DiskGridIndex(Path(folder)/"c.db",self.metric,radius,source_identity="s") as ix:
+                    for c in centers:
+                        ix.add(c)
+                    for target in targets:
+                        expected=sorted([(self.metric.distance(target,c),c.event_id) for c in centers
+                                         if c.family==target.family and c.direction==target.direction
+                                         and c.event_clock<=target.event_clock
+                                         and self.metric.distance(target,c)<=radius])
+                        actual=[(h.distance,h.center_id) for h in ix.candidates(target,max_neighbors=4096)]
+                        self.assertEqual(actual,expected)
+
+    def test_e2_restore_keeps_retirement_reason_and_history(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with DiskGridIndex(Path(folder)/"i.db",self.metric,1.,source_identity="s") as ix:
+                a=obs(1,0.)
+                ix.add(a)
+                ix.retire("1","manual review: suspected duplicate feed")
+                ix.restore(a)
+                self.assertIsNotNone(ix.get("1"))
+                rows=ix.history("1")
+                self.assertEqual([r["action"] for r in rows],["RETIRE","RESTORE"])
+                self.assertEqual(rows[0]["reason"],"manual review: suspected duplicate feed")
+                self.assertEqual(rows[1]["reason"],"manual review: suspected duplicate feed")
+                self.assertLess(rows[0]["revision"],rows[1]["revision"])
+                self.assertEqual(rows[0]["seq"]+1,rows[1]["seq"])
+                stored=ix.db.execute("SELECT reason FROM centers WHERE event_id='1'").fetchone()[0]
+                self.assertEqual(stored,"manual review: suspected duplicate feed")
+                self.assertEqual(ix.history("missing"),())
+
+    def test_e6_candidate_report_truncation_disclosed(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with DiskGridIndex(Path(folder)/"i.db",self.metric,1.,source_identity="s") as ix:
+                for i in range(1,6):
+                    ix.add(obs(i,0.1*i))
+                query=obs(50,0.)
+                report=ix.candidate_report(query,max_neighbors=2)
+                self.assertEqual(len(report["hits"]),2)
+                self.assertEqual(report["total_in_radius"],5)
+                self.assertTrue(report["truncated"])
+                self.assertEqual(report["revision"],ix.revision)
+                self.assertEqual(ix.candidates(query,max_neighbors=2),report["hits"])
+                full=ix.candidate_report(query,max_neighbors=64)
+                self.assertFalse(full["truncated"])
+                self.assertEqual(len(full["hits"]),5)
+
+    def test_e9_candidate_read_is_transactional_and_reports_revision(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with DiskGridIndex(Path(folder)/"i.db",self.metric,1.,source_identity="s") as ix:
+                ix.add(obs(1,0.))
+                self.assertFalse(ix.db.in_transaction)
+                report=ix.candidate_report(obs(9,0.))
+                self.assertFalse(ix.db.in_transaction)
+                self.assertEqual(report["revision"],1)
+                ix.add(obs(2,0.))
+                self.assertEqual(ix.candidate_report(obs(9,0.))["revision"],2)
+
+    def test_streaming_fallback_above_grid_dimension_limit(self):
+        metric=MetricContract(tuple("abcdef"),(1.,)*6,(1.,)*6,"v6")
+        base=dict.fromkeys(metric.features,0.)
+        with tempfile.TemporaryDirectory() as folder:
+            with DiskGridIndex(Path(folder)/"i.db",metric,1.,source_identity="s") as ix:
+                self.assertFalse(ix.indexed)
+                ix.add(Observation("a","P",base,1,"s",direction="AB"))
+                ix.add(Observation("b","X",base,2,"s",direction="AB"))
+                query=Observation("q","P",base,5,"s",direction="AB")
+                self.assertEqual([h.center_id for h in ix.candidates(query)],["a"])
+                self.assertEqual([h.center_id for h in ix.candidates(query,allow_cross_family=True)],["a","b"])
+                self.assertFalse(ix.snapshot()["grid_accelerated"])
+
+    def test_metric_and_radius_mismatch_on_reopen(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/"i.db"
+            with DiskGridIndex(path,self.metric,1.,source_identity="s"):
+                pass
+            with self.assertRaises(LocalityError):
+                with DiskGridIndex(path,self.metric,2.,source_identity="s"):
+                    pass
+            other=MetricContract(("x","y"),(1.,2.),(1.,1.),"v")
+            with self.assertRaises(LocalityError):
+                with DiskGridIndex(path,other,1.,source_identity="s"):
+                    pass
+
+
+class GroupingReviewFixTests(unittest.TestCase):
+    """Grouping findings E-4 and E-16."""
+
+    def setUp(self):
+        self.metric=MetricContract(("x","y"),(1.,1.),(1.,1.),"v")
+
+    def test_e4_refusals_are_ledgered_before_raising(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with DiskGridIndex(Path(folder)/"i.db",self.metric,1.,source_identity="s") as ix:
+                g=ShadowGrouper(ix)
+                first=obs(5,0.)
+                g.admit(first,g.propose(first))
+                with self.assertRaises(LocalityError):
+                    g.propose(obs(3,0.))  # non-monotone ordering
+                with self.assertRaises(LocalityError):
+                    g.propose(replace(first,member_id="tampered"))  # conflicting evidence
+                refused=[e for e in g.snapshot()["entries"] if e["kind"]=="REFUSED"]
+                self.assertEqual(len(refused),2)
+                self.assertEqual(refused[0]["payload"]["event_id"],"3")
+                self.assertIn("ordering",refused[0]["payload"]["reason"])
+                self.assertEqual(refused[1]["payload"]["event_id"],"5")
+                self.assertEqual(g.snapshot()["refused"],2)
+                self.assertTrue(g.verify())
+                self.assertEqual(len(g.snapshot()["entries"]),g.snapshot()["ledger_count"])
+
+    def test_e4_proposal_carries_alternatives_from_candidate_report(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with DiskGridIndex(Path(folder)/"i.db",self.metric,1.,source_identity="s") as ix:
+                g=ShadowGrouper(ix,alternatives=2)
+                for i in range(1,5):
+                    e=obs(i,float(i)*3)  # four isolated centres
+                    g.admit(e,g.propose(e))
+                for i,x in ((10,0.5),(11,0.4),(12,0.3),(13,0.6)):
+                    ix.add(Observation(str(i),"P",{"x":x,"y":0.},i,"synthetic",direction="AB"))
+                query=obs(20,0.)
+                proposal=g.propose(query)
+                self.assertEqual(proposal.status,"ASSIGN_SHADOW_ONLY")
+                self.assertEqual(proposal.center_id,"12")
+                self.assertEqual([c for c,_ in proposal.alternatives],["11","10"])
+                self.assertEqual(proposal.total_in_radius,4)
+                self.assertTrue(proposal.truncated)
+                g.admit(query,proposal)
+                self.assertEqual(g.snapshot()["members"]["20"]["center_id"],"12")
+
+    def test_e4_snapshot_recover_round_trip_and_chain_verification(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with DiskGridIndex(Path(folder)/"i.db",self.metric,1.,source_identity="s") as ix:
+                g=ShadowGrouper(ix)
+                for e in (obs(1,0.),obs(2,0.2),obs(3,5.),obs(4,9.)):
+                    g.admit(e,g.propose(e))
+                g.alias_view("3","4","display only")
+                with self.assertRaises(LocalityError):
+                    g.propose(obs(0,0.))  # a REFUSED entry must survive the round trip
+                snap=g.snapshot()
+                restored=ShadowGrouper.recover(ix,snap)
+                self.assertEqual(restored.snapshot(),snap)
+                self.assertTrue(restored.verify())
+                nxt=obs(5,0.1)
+                self.assertEqual(restored.propose(nxt).center_id,"1")
+                with self.assertRaises(LocalityError):
+                    restored.propose(obs(3,7.))  # last_order restored: clock 3 is not after 4
+                self.assertEqual(restored.snapshot()["refused"],snap["refused"]+1)
+                bad=dict(snap,entries=[dict(e,payload=dict(e["payload"],event_id="x")) for e in snap["entries"]])
+                with self.assertRaises(LocalityError):
+                    ShadowGrouper.recover(ix,bad)
+                with self.assertRaises(LocalityError):
+                    ShadowGrouper.recover(ix,dict(snap,source_identity="other"))
+
+    def test_e16_counters_are_derived_from_ledger_kinds(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with DiskGridIndex(Path(folder)/"i.db",self.metric,1.,source_identity="s") as ix:
+                g=ShadowGrouper(ix)
+                g.admit(obs(1,0.),g.propose(obs(1,0.)))
+                snap=g.snapshot()
+                self.assertEqual(snap["discarded"],0)
+                self.assertEqual(snap["averaged"],0)
+                self.assertEqual(snap["flattened"],0)
+                self.assertEqual(snap["refused"],0)
+                self.assertEqual(snap["counter_derivation"],"derived from ledger kinds")
+                self.assertEqual(snap["ledger_kind_counts"],{"ADMIT_SHADOW_ONLY":1})
+                g._log("DISCARD",{"event_id":"synthetic-proof","reason":"test only"})
+                self.assertEqual(g.snapshot()["discarded"],1)
+
+
 if __name__=="__main__":
     unittest.main()
