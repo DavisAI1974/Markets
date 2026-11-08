@@ -21,6 +21,30 @@ The size-one premise produced 1,012 calls. There were 461 retreats, 548 same-pri
 
 The continuation premise produced 698 calls. At one second the midpoint agreed 228 times, opposed 245 times and was flat 225 times. After the spread, 27 were positive, 53 flat and 618 negative before fees. All longer horizons, contrary outcomes, and window-censored cases are retained in the individual ledger and receipt. The results leave two separate research questions: what evidence distinguishes an imminent retreat from recovery at the same price, and whether that evidence is available early enough to enter before the quote moves.
 
+## Which size-one onsets preceded a retreat?
+
+The follow-up partitions every saved size-one episode by the side, how the one-unit best appeared, and whether the signal group contains an original T. A standing best must stay at the same absolute price while its displayed size falls to one. A different price becoming best with one unit includes both improving and retreating quotes. The exact old/new prices and sizes stay on the individual row. A T counts only if its original trade link points to the same transition and close cursor and its availability clock is at or before the signal. This is group context. It supplies neither an aggressor classification nor a causal explanation for the missing size.
+
+Each outcome below is **by the first eligible entry / after entry**. The first eligible entry still uses the original 1 ms assumption. There were zero censored episodes in this comparison. These counts describe outcomes in the saved window, with all bid and ask cases separate.
+
+| Side | How best became size one | Recorded T in onset group | Episodes | Retreat | Same-price recovery | Improvement |
+|---|---|---|---:|---:|---:|---:|
+| Ask | New best price | No | 307 | 62 / 42 | 152 / 49 | 2 / 0 |
+| Ask | New best price | Yes | 3 | 0 / 1 | 1 / 1 | 0 / 0 |
+| Ask | Standing best shrank | No | 123 | 54 / 26 | 19 / 24 | 0 / 0 |
+| Ask | Standing best shrank | Yes | 68 | 46 / 8 | 7 / 6 | 0 / 1 |
+| Bid | New best price | No | 283 | 39 / 44 | 135 / 65 | 0 / 0 |
+| Bid | New best price | Yes | 10 | 2 / 5 | 1 / 2 | 0 / 0 |
+| Bid | Standing best shrank | No | 153 | 53 / 29 | 35 / 36 | 0 / 0 |
+| Bid | Standing best shrank | Yes | 65 | 42 / 8 | 9 / 6 | 0 / 0 |
+
+When a standing best shrank in a group with a recorded T, the first outcome was a retreat in **54 of 68 ask episodes** and **50 of 65 bid episodes**. Most of those retreats were visible by entry. Among episodes still open at entry in those cells, the ask had **8 retreats, 6 same-price recoveries and 1 improvement**, and the bid had **8 retreats and 6 same-price recoveries**. Without a recorded T, the after-entry comparison goes opposite ways by side for a standing best: **26 retreats versus 24 recoveries** on the ask, and **29 versus 36** on the bid. A new one-unit best without a recorded T more often recovered at that price than retreated on either side. The two new-best-with-T cells have just 3 and 10 episodes.
+
+The two different outcomes can start with the same visible quotes. Trade **10924** is in group **230690**, where the standing bid at 3.154 falls from two units to one. The bid later recovers at the same price at cursor **299890**, after the entry quote at cursor **299877**. Trade **11048** is in group **232857**, where that same standing bid falls from four units to one. It retreats to 3.153 at cursor **302836**, after the entry quote at cursor **302829**. Both onset groups close at **3.154/3.155**. The full onset records, exact clocks, source links and opposing outcomes are saved on comparison lines **70 and 172**.
+
+This comparison is descriptive and in-sample. It does not add a paper rule or estimate a fill. For October 3, use the prior and current best raw prices and fixed-price quantities from adjacent verified group closes to classify the onset. Use the original same-group T rows and their cursors for the tape flag. A gap or left window edge cannot establish a standing onset. Reuse the same entry clock and end definitions, and report the cells separately. No October 3 episode was scored.
+
+[Every size-one comparison](every-size-one-onset-comparison.jsonl.gz) · [Comparison receipt](size-one-onset-comparison-receipt.json)
 ## October 3
 
 The [October 3 handoff](../other-30-day-local-liquidity-readiness-20261107.md) pins a sealed journal and both original raw members. The [journal receipt](https://github.com/DavisAI1974/Markets/blob/c28a4de13263b6354662cd376fecc7733b47a991/ingest_pointers/20231003-gh-36571235912-1.json) establishes session boundaries and group counts. October 3 has no replay outcomes while the original bytes are unavailable. On recovery, use its consecutive group closes and the same definitions, timing, price convention and censoring, with October 3 source coordinates. Keep its results separate from the October 18 rule-development window. Preserve all raw trade and contradictory action evidence when attributing a mechanism.

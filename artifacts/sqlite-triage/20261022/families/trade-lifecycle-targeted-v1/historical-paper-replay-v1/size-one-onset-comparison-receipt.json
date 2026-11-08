@@ -1,0 +1,239 @@
+{
+  "session": "20231018",
+  "scenarios": 1012,
+  "original_trades_retained": 30739,
+  "entry_delay_ns": 1000000,
+  "cells": [
+    {
+      "side": "A",
+      "onset": "NEW_BEST",
+      "recorded_t": false,
+      "total": 307,
+      "outcomes": [
+        {
+          "status": "IMPROVED",
+          "timing": "BY_ENTRY",
+          "count": 2
+        },
+        {
+          "status": "RETREATED",
+          "timing": "AFTER_ENTRY",
+          "count": 42
+        },
+        {
+          "status": "RETREATED",
+          "timing": "BY_ENTRY",
+          "count": 62
+        },
+        {
+          "status": "SIZE_RECOVERED_AT_SAME_PRICE",
+          "timing": "AFTER_ENTRY",
+          "count": 49
+        },
+        {
+          "status": "SIZE_RECOVERED_AT_SAME_PRICE",
+          "timing": "BY_ENTRY",
+          "count": 152
+        }
+      ]
+    },
+    {
+      "side": "A",
+      "onset": "NEW_BEST",
+      "recorded_t": true,
+      "total": 3,
+      "outcomes": [
+        {
+          "status": "RETREATED",
+          "timing": "AFTER_ENTRY",
+          "count": 1
+        },
+        {
+          "status": "SIZE_RECOVERED_AT_SAME_PRICE",
+          "timing": "AFTER_ENTRY",
+          "count": 1
+        },
+        {
+          "status": "SIZE_RECOVERED_AT_SAME_PRICE",
+          "timing": "BY_ENTRY",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "side": "A",
+      "onset": "STANDING_BEST_SHRANK",
+      "recorded_t": false,
+      "total": 123,
+      "outcomes": [
+        {
+          "status": "RETREATED",
+          "timing": "AFTER_ENTRY",
+          "count": 26
+        },
+        {
+          "status": "RETREATED",
+          "timing": "BY_ENTRY",
+          "count": 54
+        },
+        {
+          "status": "SIZE_RECOVERED_AT_SAME_PRICE",
+          "timing": "AFTER_ENTRY",
+          "count": 24
+        },
+        {
+          "status": "SIZE_RECOVERED_AT_SAME_PRICE",
+          "timing": "BY_ENTRY",
+          "count": 19
+        }
+      ]
+    },
+    {
+      "side": "A",
+      "onset": "STANDING_BEST_SHRANK",
+      "recorded_t": true,
+      "total": 68,
+      "outcomes": [
+        {
+          "status": "IMPROVED",
+          "timing": "AFTER_ENTRY",
+          "count": 1
+        },
+        {
+          "status": "RETREATED",
+          "timing": "AFTER_ENTRY",
+          "count": 8
+        },
+        {
+          "status": "RETREATED",
+          "timing": "BY_ENTRY",
+          "count": 46
+        },
+        {
+          "status": "SIZE_RECOVERED_AT_SAME_PRICE",
+          "timing": "AFTER_ENTRY",
+          "count": 6
+        },
+        {
+          "status": "SIZE_RECOVERED_AT_SAME_PRICE",
+          "timing": "BY_ENTRY",
+          "count": 7
+        }
+      ]
+    },
+    {
+      "side": "B",
+      "onset": "NEW_BEST",
+      "recorded_t": false,
+      "total": 283,
+      "outcomes": [
+        {
+          "status": "RETREATED",
+          "timing": "AFTER_ENTRY",
+          "count": 44
+        },
+        {
+          "status": "RETREATED",
+          "timing": "BY_ENTRY",
+          "count": 39
+        },
+        {
+          "status": "SIZE_RECOVERED_AT_SAME_PRICE",
+          "timing": "AFTER_ENTRY",
+          "count": 65
+        },
+        {
+          "status": "SIZE_RECOVERED_AT_SAME_PRICE",
+          "timing": "BY_ENTRY",
+          "count": 135
+        }
+      ]
+    },
+    {
+      "side": "B",
+      "onset": "NEW_BEST",
+      "recorded_t": true,
+      "total": 10,
+      "outcomes": [
+        {
+          "status": "RETREATED",
+          "timing": "AFTER_ENTRY",
+          "count": 5
+        },
+        {
+          "status": "RETREATED",
+          "timing": "BY_ENTRY",
+          "count": 2
+        },
+        {
+          "status": "SIZE_RECOVERED_AT_SAME_PRICE",
+          "timing": "AFTER_ENTRY",
+          "count": 2
+        },
+        {
+          "status": "SIZE_RECOVERED_AT_SAME_PRICE",
+          "timing": "BY_ENTRY",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "side": "B",
+      "onset": "STANDING_BEST_SHRANK",
+      "recorded_t": false,
+      "total": 153,
+      "outcomes": [
+        {
+          "status": "RETREATED",
+          "timing": "AFTER_ENTRY",
+          "count": 29
+        },
+        {
+          "status": "RETREATED",
+          "timing": "BY_ENTRY",
+          "count": 53
+        },
+        {
+          "status": "SIZE_RECOVERED_AT_SAME_PRICE",
+          "timing": "AFTER_ENTRY",
+          "count": 36
+        },
+        {
+          "status": "SIZE_RECOVERED_AT_SAME_PRICE",
+          "timing": "BY_ENTRY",
+          "count": 35
+        }
+      ]
+    },
+    {
+      "side": "B",
+      "onset": "STANDING_BEST_SHRANK",
+      "recorded_t": true,
+      "total": 65,
+      "outcomes": [
+        {
+          "status": "RETREATED",
+          "timing": "AFTER_ENTRY",
+          "count": 8
+        },
+        {
+          "status": "RETREATED",
+          "timing": "BY_ENTRY",
+          "count": 42
+        },
+        {
+          "status": "SIZE_RECOVERED_AT_SAME_PRICE",
+          "timing": "AFTER_ENTRY",
+          "count": 6
+        },
+        {
+          "status": "SIZE_RECOVERED_AT_SAME_PRICE",
+          "timing": "BY_ENTRY",
+          "count": 9
+        }
+      ]
+    }
+  ],
+  "semantic_coverage": "NOT_PASSED",
+  "mlp_reproducibility": "UNRESOLVED"
+}
