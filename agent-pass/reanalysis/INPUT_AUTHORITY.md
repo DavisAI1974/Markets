@@ -1,8 +1,8 @@
 # Shared input authority — preparation only
 
-Reanalysis is on HOLD until the user explicitly says to start. Ccode is still finishing. This inventory is a checked preparation snapshot, not a final evidence freeze or permission to analyze.
+Reanalysis is on HOLD until the user explicitly says to start. Ccode's final positions have been supplied. This inventory remains a preparation snapshot, not a final evidence freeze or permission to analyze.
 
-Both analysts use [this single canonical input packet](https://github.com/DavisAI1974/markets-data/tree/5347fb95a760de8732c1b27d6fb0536a85a2628e/tasks/family-research-20261022/shared-reanalysis-inputs/run-42588327774-1). Start with SUMMARY.json and DEFINITION_CHECK.json, then CANONICAL_INPUTS.json. Refresh this same manifest after Ccode's final handoff; do not create a competing ledger or input list.
+Both analysts use [this single canonical input packet](https://github.com/DavisAI1974/markets-data/tree/36658bb5f15cad3a0dfea0201bff2cfe4acbf47e/tasks/family-research-20261022/shared-reanalysis-inputs/precision-fix-42592319662-1). Start with SUMMARY.json and DEFINITION_CHECK.json, then CANONICAL_INPUTS.json. Refresh this same manifest after Ccode's final handoff; do not create a competing ledger or input list.
 
 ## Agreed definitions
 
@@ -27,3 +27,11 @@ Three historical archive directory references lack available file receipts and a
 Obtain Ccode's final changed-file list and completion receipts; refresh this one packet; attach necessary clocks for new timed files and resolve any consequential row-level overlap. Freeze the shared snapshot only after preparation is complete. Completion alone does not authorize starting: wait for the user's explicit start instruction.
 
 Once started, use SHARED_BRIEF.md for shared goals, evidence requirements and comparable deliverables. Each analyst independently chooses methods and hypotheses, then reports before reading the other's new analysis.
+
+## Tier 1 timestamp precision correction — November 9
+
+The active packet above replaces only the four Tier 1 ledgers and their summary. The generator now parses integer CSV text before floating-point conversion. Corrected annotations retain exact nanosecond clocks, including the start-minus-one-nanosecond cutoff. Original CSV observations are unchanged.
+
+[Verification](https://github.com/DavisAI1974/markets-data/blob/36658bb5f15cad3a0dfea0201bff2cfe4acbf47e/tasks/family-research-20261022/claude-code-pins/precision-fix-42592319662-1/VERIFICATION.json): all 3,215 source rows and 555,008 pins passed exact clock checks, with unchanged non-clock values, IDs, source links and layer assignments. The correction replaces 11,852 rounded integer clock values in the embedded rows and regenerates their corresponding pin and UTC clocks. [Correction map](https://github.com/DavisAI1974/markets-data/blob/36658bb5f15cad3a0dfea0201bff2cfe4acbf47e/tasks/family-research-20261022/shared-reanalysis-inputs/precision-fix-42592319662-1/PRECISION_CORRECTION.json) identifies the superseded coordinates and replacements; do not use the older rounded Tier 1 annotations as active inputs.
+
+Generator fix: Markets commit 418462afeaf0f14aa8129f6f4d02c3867d772fd0 on codex/ng-shadow-discovery-20261108. Verification run: markets-data 42592319662. This is solely the precision repair requested by the user; broader final-suite preparation was stopped, and reanalysis remains on HOLD. Both analysts retain the same complete analytical assignment.
