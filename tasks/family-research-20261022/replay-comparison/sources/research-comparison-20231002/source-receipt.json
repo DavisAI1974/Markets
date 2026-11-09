@@ -1,0 +1,98 @@
+{
+  "source": {
+    "bytes": 7629582880,
+    "claim": {
+      "at": 1794168037.4371908,
+      "bytes": 7629582880,
+      "claimed_by": "ROOT native stage (the reconciled ledger witness)",
+      "fs_basis": "mount-source",
+      "fs_uuid": "us-ca-2-vast.runpod.net:/runpodfs/networkvolumes/qu5lhaqqbx",
+      "path": "/opt/frankie-box/work/experiment-roots/ng-replay-20231002/work/bedrock/recovery-177e06a555494fb19fa1c63cee97ae5f/ledgers/exact_lifecycle_rows.jsonl",
+      "rule": "taken by a later stage only when inode, size, mtime_ns, the filesystem identity and the last 64 KiB match; else that stage hashes in full",
+      "schema": "FRANKIE_FILE_CLAIM_V2",
+      "sha256": "8e786344be6b0071ccad7f84d954f4b87b6e8cef04ac18ca9a3a4bb21ae8ac02",
+      "st_dev_observed": 49,
+      "stat": [
+        16129819383947554940,
+        7629582880,
+        1794167986973836626
+      ],
+      "tail_bytes": 65536,
+      "tail_sha256": "a9dd5119b7ce5e3aa834ba46aeefa9c39739da0086cf62a213421dfdf639bdb3"
+    },
+    "path": "/opt/frankie-box/work/experiment-roots/ng-replay-20231002/work/bedrock/recovery-177e06a555494fb19fa1c63cee97ae5f/ledgers/exact_lifecycle_rows.jsonl",
+    "sha256": "8e786344be6b0071ccad7f84d954f4b87b6e8cef04ac18ca9a3a4bb21ae8ac02"
+  },
+  "sections": {
+    "recurrence": 600291,
+    "mirror": 1200582,
+    "ladder": 1200582,
+    "absorption": 600291,
+    "replenishment": 987321,
+    "queue": 292091,
+    "flow_substrate": 75600,
+    "candidate": 741,
+    "episode": 1482,
+    "response": 5186,
+    "detector_coverage": 1,
+    "lineage": 325646
+  },
+  "selected": {
+    "flow_substrate": 75600,
+    "candidate": 741,
+    "episode": 1482
+  },
+  "candidate_detection": [
+    {
+      "baseline_lag_seconds": 9,
+      "baseline_points": 21,
+      "baseline_start_seconds": 30,
+      "candidates_emitted": 741,
+      "candidates_pending_in_window": 0,
+      "continuity_segment": 19632,
+      "endpoint_note": "the episode endpoint walks forward and is an OUTCOME; it is not computed here and is never available at a decision point",
+      "local_radius_seconds": 5,
+      "min_threshold_observations": 600,
+      "not_the_frozen_population": "a causal bar finds a different set than the frozen whole-day quantile and a causal selection keeps a different member of a cluster; reproducing the frozen 3,429 would be the warning sign, not the goal",
+      "peak_quantile": 0.85,
+      "prominence_rule": "|flow| minus the median of |flow| over t-30..t-10 (21 points), causal",
+      "refractory_seconds": 45,
+      "rejected_below_threshold": 34167,
+      "rejected_in_refractory": 1048,
+      "rejected_in_refractory_at_release": 78,
+      "rejected_not_local_max": 0,
+      "rejected_zero_magnitude": 2712,
+      "seconds_in_warmup": 1231,
+      "seconds_judged": 75589,
+      "seconds_observed": 75599,
+      "seconds_without_finite_flow": 23729,
+      "selection_rule": "CAUSAL_WINDOWED_PROMINENCE",
+      "suppressed_by_prominence": 11883,
+      "threshold_observation_cap": 86400,
+      "threshold_rule": "TRAILING_CAUSAL_QUANTILE",
+      "unit": "DIPOLE_FLOW_EVENT",
+      "warmup_seconds": 900,
+      "zero_flow_epsilon": 1e-12
+    }
+  ],
+  "candidate_episodes": [
+    {
+      "dipole_paths_withheld_no_predecessor": 1,
+      "episodes_censored": 0,
+      "episodes_open_at_report": 0,
+      "episodes_opened": 741,
+      "episodes_reversed": 741,
+      "orientation_counts": {
+        "FLIP": 353,
+        "NO_PREDECESSOR": 1,
+        "SAME": 387
+      },
+      "orientation_note": "SAME and FLIP are polarity against the LATEST PREDECESSOR candidate, the frozen definition; a segment's first candidate is NO_PREDECESSOR rather than being given a fabricated orientation that would enter a stratum key",
+      "persist_seconds": 3,
+      "prior_note": "PRIOR requires a precursor signal that precedes the spike; a candidate whose birth is its own detection can only ever be recognised at H+N, and reporting otherwise would be backdating",
+      "prior_reachable": false,
+      "unit": "DIPOLE_FLOW_EVENT"
+    }
+  ],
+  "output_sha256": "b51f459afba5e59a9d161108c564c393e5f28c1d8b18768c9ee837a90a78c714"
+}

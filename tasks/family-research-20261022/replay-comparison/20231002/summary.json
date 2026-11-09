@@ -1,0 +1,26 @@
+{
+  "day": "20231002",
+  "source_revision": "2f12d6d47",
+  "groups": 600291,
+  "groups_sha256": "ae0c8778503ebd1169b6f737b6992f8f9a006c65d26f13a75ee8bf51727029e3",
+  "candidates": 741,
+  "recognition_states": {
+    "undefined_at_emission": 322,
+    "opposite_direction_at_emission": 181,
+    "same_direction_at_emission": 213,
+    "balanced_at_emission": 25
+  },
+  "scope": "partial",
+  "open_ns": 1696204800000000000,
+  "close_ns": 1696280400000000000,
+  "resting_events": 1129,
+  "resting_endings": {
+    "fill_linked_clear": 628,
+    "unmatched_clear": 476,
+    "reprice": 25
+  },
+  "resting_visible_at_start": 1129,
+  "live_recognitions": 741,
+  "unavailable_finalize_only": 0,
+  "raw_group_closes_verified": 600291
+}

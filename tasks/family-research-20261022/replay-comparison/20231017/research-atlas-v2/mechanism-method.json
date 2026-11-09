@@ -1,0 +1,20 @@
+{
+  "version": "NG-AGGRESSION-TO-REST-v1",
+  "source_tape_revision": "1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202",
+  "source_groups_revision": "2f12d6d47",
+  "raw_records_processed": 841601,
+  "print_groups": 32482,
+  "residual_groups": 1010,
+  "events": 1010,
+  "definition": "Same nonzero order ID and wire side on T then A within the same completed group; follow the new resting display until removal, reprice, reset or session end.",
+  "boundaries": [
+    "The match is order identity, not participant identity or private intent.",
+    "T summaries and F passive fills remain separate quantities.",
+    "Final removal mechanism is a later outcome, never a birth predictor.",
+    "Unmatched removal means no matched passive F in the tracked group; it is not proof of discretionary cancellation.",
+    "Implied display additions are accounting from F plus mutation; reserve quantity is unobserved.",
+    "All events retained, including those gone before the initial group close."
+  ],
+  "trade_date": "20231017",
+  "source_groups_sha256": "30364aaecfbbe1f3d58c25e9b645ee240c299065bb46222bd6d3ca5a0f471c74"
+}

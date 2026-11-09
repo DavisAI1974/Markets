@@ -1,0 +1,16 @@
+day,ending,n,total
+20231002,fill_linked_clear,628,1129
+20231002,unmatched_clear,476,1129
+20231002,reprice,25,1129
+20231003,fill_linked_clear,736,1202
+20231003,unmatched_clear,435,1202
+20231003,reprice,31,1202
+20231017,fill_linked_clear,582,1010
+20231017,unmatched_clear,393,1010
+20231017,reprice,34,1010
+20231017,session_end_censored,1,1010
+20231018,fill_linked_clear,613,980
+20231018,unmatched_clear,324,980
+20231018,reprice,41,980
+20231018,reset_censored,1,980
+20231018,session_end_censored,1,980

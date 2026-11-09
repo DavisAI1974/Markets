@@ -1,0 +1,27 @@
+{
+  "version": "NG-RESTING-OBSERVATION-v1",
+  "delays_ms": [
+    0,
+    5,
+    25,
+    100
+  ],
+  "horizons_s": [
+    0.1,
+    1,
+    5,
+    20
+  ],
+  "decision": "Timer after initial completed-group recognition; state and quote use only completed groups at or before that timer.",
+  "eligibility": "Original order still present at the decision; identity may have moved away from the touch. Endpoint availability separately recorded.",
+  "prohibited_inference": "This is an observation schedule, not order placement, processing latency or fill simulation.",
+  "limitations": [
+    "Survival cohorts change with delay; denominator selection is explicit.",
+    "Some fills and final disposition observed later cannot be used at an earlier decision.",
+    "Same-day overlapping events and repeated observations are dependent.",
+    "No cost-adjusted return or scoring admission."
+  ],
+  "trade_date": "20231003",
+  "source_groups_revision": "2f12d6d47",
+  "source_groups_sha256": "1589974b8d6a3f70d8459ed764fac087c7395b13c8d1c9de4fe70d520f42a6ef"
+}

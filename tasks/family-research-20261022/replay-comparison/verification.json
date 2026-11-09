@@ -1,0 +1,53 @@
+{
+  "date_checks": {
+    "20231002": {
+      "candidates": 741,
+      "live_recognitions": 741,
+      "finalize_only_retained": 0,
+      "identical_arms": true,
+      "causal_feature_clocks": true,
+      "purge_and_embargo": true,
+      "conditional_denominators": true,
+      "all_prebirths_retained": true
+    },
+    "20231003": {
+      "candidates": 833,
+      "live_recognitions": 832,
+      "finalize_only_retained": 1,
+      "identical_arms": true,
+      "causal_feature_clocks": true,
+      "purge_and_embargo": true,
+      "conditional_denominators": true,
+      "all_prebirths_retained": true
+    },
+    "20231017": {
+      "candidates": 741,
+      "live_recognitions": 740,
+      "finalize_only_retained": 1,
+      "identical_arms": true,
+      "causal_feature_clocks": true,
+      "purge_and_embargo": true,
+      "conditional_denominators": true,
+      "all_prebirths_retained": true
+    },
+    "20231018": {
+      "candidates": 863,
+      "live_recognitions": 863,
+      "finalize_only_retained": 0,
+      "identical_arms": true,
+      "causal_feature_clocks": true,
+      "purge_and_embargo": true,
+      "conditional_denominators": true,
+      "all_prebirths_retained": true
+    }
+  },
+  "october18_exact_reproduction": [
+    "stack-features.csv.gz",
+    "stack-metrics.csv",
+    "stack-conditional-states.csv",
+    "dipole-operator-observations.csv.gz",
+    "aggression-to-rest-events.csv",
+    "resting-observation-summary.csv",
+    "prebirth-cases.csv.gz (dipole population)"
+  ]
+}

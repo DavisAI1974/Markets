@@ -1,0 +1,28 @@
+{
+  "day": "20231017",
+  "source_revision": "2f12d6d47",
+  "groups": 635170,
+  "groups_sha256": "30364aaecfbbe1f3d58c25e9b645ee240c299065bb46222bd6d3ca5a0f471c74",
+  "candidates": 741,
+  "live_recognitions": 740,
+  "unavailable_finalize_only": 1,
+  "recognition_states": {
+    "undefined_at_emission": 347,
+    "same_direction_at_emission": 217,
+    "opposite_direction_at_emission": 158,
+    "balanced_at_emission": 18,
+    "unavailable_finalize_only": 1
+  },
+  "scope": "partial",
+  "open_ns": 1697500800000000000,
+  "close_ns": 1697576400000000000,
+  "raw_group_closes_verified": 635170,
+  "resting_events": 1010,
+  "resting_endings": {
+    "fill_linked_clear": 582,
+    "unmatched_clear": 393,
+    "reprice": 34,
+    "session_end_censored": 1
+  },
+  "resting_visible_at_start": 1010
+}

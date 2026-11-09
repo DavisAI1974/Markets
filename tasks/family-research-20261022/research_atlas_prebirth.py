@@ -38,7 +38,7 @@ def features_at(a, cumulative, cutoff):
     return r
 
 
-def main():
+def main(populations=None):
     groups = rows(GROUPS)
     a = group_matrix(groups)
     quantities = np.zeros((len(groups),3), dtype=np.int64)
@@ -51,12 +51,13 @@ def main():
             delta = 2*t['price_raw']-a[i-1,2]
             quantities[i,0 if delta>0 else 1 if delta<0 else 2] += t['size']
     cumulative = np.vstack([np.zeros(3,dtype=np.int64),np.cumsum(quantities,axis=0)])
-    family = pd.read_csv(HERE/'flow-book-discovery-v1/opportunities.csv.gz',dtype={'anchor_ns':str})
-    candidates = rows('tasks/family-research-20261022/october18-candidate-inputs.jsonl.gz')
-    populations = {
-        'family_start':[(str(r.instance),int(r.anchor_ns)) for r in family.itertuples()],
-        'dipole_birth':[(r['candidate_id'],int(r['birth_second'])*NS) for r in candidates],
-    }
+    if populations is None:
+        family = pd.read_csv(HERE/'flow-book-discovery-v1/opportunities.csv.gz',dtype={'anchor_ns':str})
+        candidates = rows('tasks/family-research-20261022/october18-candidate-inputs.jsonl.gz')
+        populations = {
+            'family_start':[(str(r.instance),int(r.anchor_ns)) for r in family.itertuples()],
+            'dipole_birth':[(r['candidate_id'],int(r['birth_second'])*NS) for r in candidates],
+        }
     grid = []
     for t in range(OPEN+120*NS,CLOSE-60*NS,5*NS):
         f = features_at(a,cumulative,t)

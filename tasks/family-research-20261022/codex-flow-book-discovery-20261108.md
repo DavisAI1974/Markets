@@ -1132,3 +1132,32 @@ changed in this comparison.
 
 [Recount and exact order extraction](research_four_day_watchlist.py) ·
 [All cells, denominators, source digests and order traces](four-day-watchlist-independent.json.gz)
+
+## Sealed replay comparison — same October 18 dipole and stack analysis
+
+The three runs and their actual standalone decisions are complete. I applied the
+existing October 18 dipole, complementary stack, strict-prebirth and order-path
+calculations to their saved outputs. The archived Native populations are
+741/833/741/863 on October 2/3/17/18. One candidate on October 3 and one on
+October 17 exist only at finalization; both remain unavailable for live recognition,
+and both remain in the source ledger and retrospective prebirth population.
+These are distinct from the full-session raw-tape populations counted above.
+
+The full fixed stack has higher pooled chronological-fold error in all 28
+date/target/window comparisons. Book alone reduces five-second midpoint error
+by 0.17%/2.04%/0.73%/1.68%, but not in every time block and not consistently at
+longer horizons. These are separately fitted discovery-date comparisons, not a
+single model transferred across dates or simulated trading returns. All 11 arms
+and all hypotheses remain for paper comparison.
+
+In the weakening-flow/aligned-book cell, 20-second with/against/flat outcomes are
+8/7/9, 20/12/14, 9/9/11 and 25/12/8. The favorable October 18 skew weakens
+elsewhere. The opposite-book cell favors contrary outcomes more strongly on
+October 2/3 than on October 17/18. The report pairs these denominators with exact
+recognition groups and subsequent order messages, including a flat case with no
+later print until after the outcome window. Every raw group close reconciles.
+
+[Full comparison, methods and exact cases](replay-comparison/README.md) ·
+[All arms and folds](replay-comparison/four-date-metrics.csv) ·
+[Comparison chart](replay-comparison/four-date-stack-comparison.png) ·
+[Seven October 18 parity checks and four-date invariants](replay-comparison/verification.json)

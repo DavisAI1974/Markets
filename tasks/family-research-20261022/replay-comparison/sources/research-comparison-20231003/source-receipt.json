@@ -1,0 +1,147 @@
+{
+  "source": {
+    "bytes": 8710157080,
+    "claim": {
+      "at": 1794170300.8038898,
+      "bytes": 8710157080,
+      "claimed_by": "ROOT native stage (the reconciled ledger witness)",
+      "fs_basis": "mount-source",
+      "fs_uuid": "us-ca-2-vast.runpod.net:/runpodfs/networkvolumes/qu5lhaqqbx",
+      "path": "/opt/frankie-box/work/experiment-roots/ng-replay-20231003/work/bedrock/recovery-bdfa3e944d094920953ebd19d179d9a4/ledgers/exact_lifecycle_rows.jsonl",
+      "rule": "taken by a later stage only when inode, size, mtime_ns, the filesystem identity and the last 64 KiB match; else that stage hashes in full",
+      "schema": "FRANKIE_FILE_CLAIM_V2",
+      "sha256": "ec5ca8313ac19e86f7af567978493b66f0b81eab396b8327ad53ba5bf99190e4",
+      "st_dev_observed": 65,
+      "stat": [
+        13013524553311873184,
+        8710157080,
+        1794170253071641473
+      ],
+      "tail_bytes": 65536,
+      "tail_sha256": "9cf149207e9486552c7d5a313a589c17b56cedcc9edd95b21b1255d154e10658"
+    },
+    "path": "/opt/frankie-box/work/experiment-roots/ng-replay-20231003/work/bedrock/recovery-bdfa3e944d094920953ebd19d179d9a4/ledgers/exact_lifecycle_rows.jsonl",
+    "sha256": "ec5ca8313ac19e86f7af567978493b66f0b81eab396b8327ad53ba5bf99190e4"
+  },
+  "sections": {
+    "recurrence": 653912,
+    "mirror": 1307824,
+    "ladder": 1307824,
+    "absorption": 653912,
+    "flow_substrate": 86400,
+    "replenishment": 1084740,
+    "detector_coverage": 2,
+    "queue": 316861,
+    "lineage": 354125,
+    "candidate": 833,
+    "episode": 1666,
+    "response": 5825,
+    "exhaustion": 1
+  },
+  "selected": {
+    "flow_substrate": 86400,
+    "candidate": 833,
+    "episode": 1666
+  },
+  "candidate_detection": [
+    {
+      "baseline_lag_seconds": 9,
+      "baseline_points": 21,
+      "baseline_start_seconds": 30,
+      "candidates_emitted": 0,
+      "candidates_pending_in_window": 0,
+      "continuity_segment": 19632,
+      "endpoint_note": "the episode endpoint walks forward and is an OUTCOME; it is not computed here and is never available at a decision point",
+      "local_radius_seconds": 5,
+      "min_threshold_observations": 600,
+      "not_the_frozen_population": "a causal bar finds a different set than the frozen whole-day quantile and a causal selection keeps a different member of a cluster; reproducing the frozen 3,429 would be the warning sign, not the goal",
+      "peak_quantile": 0.85,
+      "prominence_rule": "|flow| minus the median of |flow| over t-30..t-10 (21 points), causal",
+      "refractory_seconds": 45,
+      "rejected_below_threshold": 0,
+      "rejected_in_refractory": 0,
+      "rejected_in_refractory_at_release": 0,
+      "rejected_not_local_max": 0,
+      "rejected_zero_magnitude": 0,
+      "seconds_in_warmup": 3589,
+      "seconds_judged": 3589,
+      "seconds_observed": 3599,
+      "seconds_without_finite_flow": 0,
+      "selection_rule": "CAUSAL_WINDOWED_PROMINENCE",
+      "suppressed_by_prominence": 0,
+      "threshold_observation_cap": 86400,
+      "threshold_rule": "TRAILING_CAUSAL_QUANTILE",
+      "unit": "DIPOLE_FLOW_EVENT",
+      "warmup_seconds": 900,
+      "zero_flow_epsilon": 1e-12
+    },
+    {
+      "baseline_lag_seconds": 9,
+      "baseline_points": 21,
+      "baseline_start_seconds": 30,
+      "candidates_emitted": 833,
+      "candidates_pending_in_window": 0,
+      "continuity_segment": 19633,
+      "endpoint_note": "the episode endpoint walks forward and is an OUTCOME; it is not computed here and is never available at a decision point",
+      "local_radius_seconds": 5,
+      "min_threshold_observations": 600,
+      "not_the_frozen_population": "a causal bar finds a different set than the frozen whole-day quantile and a causal selection keeps a different member of a cluster; reproducing the frozen 3,429 would be the warning sign, not the goal",
+      "peak_quantile": 0.85,
+      "prominence_rule": "|flow| minus the median of |flow| over t-30..t-10 (21 points), causal",
+      "refractory_seconds": 45,
+      "rejected_below_threshold": 36544,
+      "rejected_in_refractory": 1284,
+      "rejected_in_refractory_at_release": 91,
+      "rejected_not_local_max": 0,
+      "rejected_zero_magnitude": 2629,
+      "seconds_in_warmup": 1676,
+      "seconds_judged": 82789,
+      "seconds_observed": 82799,
+      "seconds_without_finite_flow": 25538,
+      "selection_rule": "CAUSAL_WINDOWED_PROMINENCE",
+      "suppressed_by_prominence": 14194,
+      "threshold_observation_cap": 86400,
+      "threshold_rule": "TRAILING_CAUSAL_QUANTILE",
+      "unit": "DIPOLE_FLOW_EVENT",
+      "warmup_seconds": 900,
+      "zero_flow_epsilon": 1e-12
+    }
+  ],
+  "candidate_episodes": [
+    {
+      "dipole_paths_withheld_no_predecessor": 0,
+      "episodes_censored": 0,
+      "episodes_open_at_report": 0,
+      "episodes_opened": 0,
+      "episodes_reversed": 0,
+      "orientation_counts": {
+        "FLIP": 0,
+        "NO_PREDECESSOR": 0,
+        "SAME": 0
+      },
+      "orientation_note": "SAME and FLIP are polarity against the LATEST PREDECESSOR candidate, the frozen definition; a segment's first candidate is NO_PREDECESSOR rather than being given a fabricated orientation that would enter a stratum key",
+      "persist_seconds": 3,
+      "prior_note": "PRIOR requires a precursor signal that precedes the spike; a candidate whose birth is its own detection can only ever be recognised at H+N, and reporting otherwise would be backdating",
+      "prior_reachable": false,
+      "unit": "DIPOLE_FLOW_EVENT"
+    },
+    {
+      "dipole_paths_withheld_no_predecessor": 1,
+      "episodes_censored": 1,
+      "episodes_open_at_report": 0,
+      "episodes_opened": 833,
+      "episodes_reversed": 832,
+      "orientation_counts": {
+        "FLIP": 383,
+        "NO_PREDECESSOR": 1,
+        "SAME": 449
+      },
+      "orientation_note": "SAME and FLIP are polarity against the LATEST PREDECESSOR candidate, the frozen definition; a segment's first candidate is NO_PREDECESSOR rather than being given a fabricated orientation that would enter a stratum key",
+      "persist_seconds": 3,
+      "prior_note": "PRIOR requires a precursor signal that precedes the spike; a candidate whose birth is its own detection can only ever be recognised at H+N, and reporting otherwise would be backdating",
+      "prior_reachable": false,
+      "unit": "DIPOLE_FLOW_EVENT"
+    }
+  ],
+  "output_sha256": "df18874c32cdb7c54506b9fb7e81251ec120f80b5f23b51f40475720cd4cc328"
+}

@@ -175,3 +175,19 @@ the existing standalone locks. Input sealing is insufficient: final standalone
 status must be `touch-print-decisions-sealed` with actual decision data and
 summary. The existing heartbeat was updated and still owns publication and
 shutdown. Deployment snapshot and recovery paths are in the operations log.
+
+The later November 8 comparison is complete at `replay-comparison/README.md`.
+All three Native and actual standalone decision passes are sealed. Same October 18
+dipole/stack/prebirth/order-path methods were applied to 741/833/741/863 archived
+Native candidates. Do not substitute Claude's 839/857/830/890 full-session research
+population. October 2/17 remain partial. One finalization-only candidate each on
+October 3/17 has no live recognition; preserve it as unavailable, never backdate
+to the last group. Prebirth comparisons retain all births.
+
+Full stack has higher pooled error in all 28 date/target pairs; book alone has
+small five-second price improvements on all dates, with contrary folds and longer
+windows retained. All 11 arms and every hypothesis remain in the paper handoff.
+Seven original Oct 18 tables reproduce; all 2,473,061 raw group closes reconcile.
+The saved comparison includes exact order examples, source hashes and all tables.
+Bulk archive publication/shutdown remains with the existing heartbeat. The user
+asked to compare first, then decide the next step; no paper strategy was selected.
