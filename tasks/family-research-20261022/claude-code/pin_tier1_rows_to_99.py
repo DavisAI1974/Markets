@@ -50,6 +50,8 @@ def clock_for(rule, row, day0, field=None):
 def num(v):
     if v in ("", None): return None
     if v in ("True", "False"): return v == "True"
+    # Parse integer text before float: receive clocks exceed binary64 precision.
+    if re.fullmatch(r"[+-]?\d+", v): return int(v)
     try:
         f = float(v); return int(f) if f.is_integer() and ("." not in v or v.endswith(".0")) and abs(f) < 1e18 else f
     except ValueError: return v
