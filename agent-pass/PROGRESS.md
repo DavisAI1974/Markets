@@ -34,3 +34,13 @@ Commands: `python agent-pass/scripts/part1a.py 20231018`; `python agent-pass/scr
 Charts and CSV were built before FINDINGS measurements/interpretation. Inspected the FLIP quote heat strips visually. Spreadsheet bundled runtime is available; an E-drive junction was unsupported, so the builder uses createRequire anchored to the bundled Node runtime without modifying dependencies. Workbook contains exact review rows, with long paths in CSV.gz. No missing data source is being replaced by another population.
 
 Next: Part 1B detector recovery, complete added/missed birth lists, operands and three lag clocks. New artifacts only under agent-pass/.
+
+## Part 1B completed
+
+Commands: `python agent-pass/scripts/part1b.py 20231018`; `python agent-pass/scripts/verify_detector.py`; workbook builder rerun. Completed-group series: 866 recovered, 842 matched, 21 missed, 24 added, 840 exact nominal timings. Native action-time reconstruction: 863 recovered, 863 matched, zero missed/added, all 863 nominal and actual recognition times exact. Six recorded operand columns each reconcile for 863. Saved full comparisons, empty/nonempty difference lists, every judged-second disposition, all lag rows and six-panel full-distribution figure. Fixed clipped chart titles after viewing the first rendering.
+
+Raw action quote reconstruction checks 583,687 usable closes against saved book state. Initial incomplete quote is preserved and not tested as a two-sided book. The recovered detector was checked against pinned original source on plateau, quiet, and variable synthetic streams (27/24/35 outputs); all operands and clocks identical. Nominal lag equals 50 minus winner position for all 863. The observed extra wait is the first group close in a second after the nominal second. No producer reran.
+
+Workbook review found that long clock strings could be coerced to floating point by the artifact library. Builder now prefixes exact nanosecond strings for literal-text preservation and widens identifier/clock columns. CSV remains the authoritative exact observations. Nullable clocks for the two later-day finalization-only records will use pandas Int64, avoiding float conversion.
+
+Next: Part 2, replication of A/B on each archived day, full path-distance hierarchy without preset cluster count, governing-form counterexamples against both control draws and across days. Keep partial Oct 2/17 separate from full-session research.

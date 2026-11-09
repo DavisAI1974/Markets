@@ -46,5 +46,17 @@
     "path": "tasks/family-research-20261022/replay-comparison/sources/research-comparison-20231002/native-research-records.jsonl.gz",
     "bytes": 3212217,
     "sha256": "b51f459afba5e59a9d161108c564c393e5f28c1d8b18768c9ee837a90a78c714"
+  },
+  {
+    "revision": "d25fc3f7e59c2a1cb51ec943cd91ff34e176a72a",
+    "path": "artifacts/sqlite-triage/20261022/families/trade-lifecycle-targeted-v1/source-episode.jsonl.gz",
+    "bytes": 1726365,
+    "sha256": "1d39d9d89c7bed68bceafb0f0c3f554fa8503cbeee232f0797ccc07b9a3011f5"
+  },
+  {
+    "revision": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+    "path": "research/kalshi/frankie_raw_mbo_benchmark/native_candidate.py",
+    "bytes": 31910,
+    "sha256": "b7b45c0fcdea2488fc2675d4c80db1e974753882998709852a1a2b694e3f1023"
   }
 ]

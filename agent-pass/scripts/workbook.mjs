@@ -12,7 +12,15 @@ for(const table of input){
  const header=sh.getRangeByIndexes(0,0,1,table.columns.length);
  header.format={fill:'#203A52',font:{name:'Arial',size:10,bold:true,color:'#FFFFFF'},wrapText:true,rowHeight:45};
  sh.getUsedRange().format.columnWidth=21;sh.getUsedRange().format.font.name='Arial';sh.getUsedRange().format.font.size=10;
- sh.getRangeByIndexes(1,0,a.length-1,table.columns.length).setNumberFormat('0.############');
+ for(let c=0;c<table.columns.length;c++){
+  const key=table.columns[c], vals=table.rows.map(r=>r[c]);
+  const col=sh.getRangeByIndexes(0,c,a.length,1);
+  if(key.includes('candidate_id')) col.format.columnWidth=32;
+  if(key.endsWith('_ns')) {col.format.columnWidth=31;col.setNumberFormat('@');}
+  else if(key==='figure') col.format.columnWidth=61;
+  else if(vals.some(v=>typeof v==='number'&&!Number.isInteger(v))) col.setNumberFormat('0.000000');
+  else col.setNumberFormat('0');
+ }
  sh.freezePanes.freezeRows(1);sh.freezePanes.freezeColumns(2);
  sh.getRangeByIndexes(0,table.columns.length+1,1,1).values=[['Source: agent-pass/tables/'+table.file+'; pinned inputs in source-manifest.json']];
  sh.getRangeByIndexes(0,table.columns.length+1,1,1).format.columnWidth=100;
