@@ -4,7 +4,7 @@ Branch `claude/crypto-trading-platform-plan-MpqwG` (PUSHED to origin). Read orde
 (S36 delta top) -> this file -> `KICKOFF_2026-06-22_S36.md` -> `BUILD_PLAN.md` (now has **Part N** =
 the order-flow divergence/exhaustion detector + a **PART 3** S36 execution note). Continues the S35b fingerprint thread;
 all S35 memories still apply (`bucket-distinctiveness-is-the-goal`, `tools-are-complementary-not-competing`,
-`deploy-signal-per-cell-not-universal`, `markets-data-lives-local-not-git`).
+`deploy-signal-per-cell-not-universal`, `markets-data GitHub routing (2026-11-08)`).
 
 ## WHAT THIS SESSION DID
 Started from the S35b "bleed" (the 128-dim OD coeff is side-AGNOSTIC -> buy & sell on the same chunk

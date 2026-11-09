@@ -170,7 +170,7 @@ Built `odcore/fingerprint.py` (the live encoder: verbatim `signed_bps`/`trade_sc
   `_build_sameperiod_cand.py`, `_eligible_cross_section.py`, the detached-task `.bat`, etc.) are NOT yet
   committed — they sit in the shared `E:\Markets` root on `claude/xenodochial-montalcini-f21fb6`. They are
   the S34 chat's to push (committing them from here risks colliding with that active session). Sweep them in
-  on request. The local bins/data + `_full_pipeline*` dirs stay OUT of git by design (`markets-data-lives-local-not-git`).
+  on request. Bins/data + `_full_pipeline*` outputs belong in DavisAI1974/markets-data (current data destination: DavisAI1974/markets-data; user correction 2026-11-08).
 - **MEMORIES are separate from git (note):** Claude's memories live in the memory store
   (`C:\Users\A\.claude\projects\E--Markets\memory\` + `MEMORY.md` index), NOT in the repo. They auto-load
   each session and are saved regardless of pushes — so the S35 principles (`bucket-distinctiveness-is-the-goal`,
@@ -180,5 +180,5 @@ Built `odcore/fingerprint.py` (the live encoder: verbatim `signed_bps`/`trade_sc
 - Crypto trading platform per BUILD_PLAN.md only. Quote service OUT. Zero-synthetic (no synthetic trading data).
 - Did NOT branch-switch shared `E:\Markets`. **Commit + push working files (code/docs) REGULARLY — git is the
   source of truth** (Greg S35; the old "no commit/push unless asked" rule is REMOVED). Data/bins stay LOCAL
-  (`markets-data-lives-local-not-git`). Discovery now parallel-safe
+  (current data destination: DavisAI1974/markets-data; user correction 2026-11-08). Discovery now parallel-safe
   (`--workers 4`) after the os.replace fix — but it is DONE, do not relaunch.

@@ -34,7 +34,7 @@ canonical/durable mirror.
 absolute path (`E:\refrag\...`). It CANNOT go in the markets repo (size + GitHub limits). The live
 HEAVY tier (`_markets_gate_v2.py` coeff recompute) and the discovery re-runs require `E:\refrag`
 present locally — it is, and stays put. The per-cell coeffs live in
-`E:\refrag\discoveries\operator_discoveries\` (local data, never git; `markets-data-lives-local-not-git`).
+`E:\refrag\discoveries\operator_discoveries\` (data destination: DavisAI1974/markets-data; user correction 2026-11-08).
 
 Already-cloned and present locally (not re-fetched): `E:\basic_equations_src` (the OD research repo,
 four-sciences chem code; the markets dipole logic is reconstructed in `odcore/`).

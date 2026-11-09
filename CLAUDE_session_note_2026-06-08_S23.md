@@ -30,5 +30,5 @@ unchanged and unmet. The full 15-source validation numbers are still pending (ru
 resumable; relaunched at session end) — that is S24's first action. Hygiene fixed so S24 starts
 fast: `safe.directory '*'` is global (no more "dubious ownership"); onboarding docs live IN GIT
 (never re-upload/paste); the data branches are current. See `SESSION_HANDOFF_2026-06-08_S23.md`
-+ `KICKOFF_2026-06-08_S24.md`; memory `markets-data-lives-local-not-git`.
++ `KICKOFF_2026-06-08_S24.md`; memory `markets-data GitHub routing (2026-11-08)`.
 

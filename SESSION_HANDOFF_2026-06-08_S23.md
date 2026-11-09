@@ -44,7 +44,7 @@ is why everything ran on partial data. The collectors kept writing locally to
 assets** (btc, eth, doge, link, xrp) x venues (coinbase, kraken, bybit_perp). Rebuilt **30 days
 x 15 sources** locally, and pushed **gzipped** 30-day bins back to git (`aa4736d`/`977f979`;
 114 MiB -> 18 M etc., under GitHub's 100-MiB/file cap). Future hooks now get current data.
-Memory: see `markets-data-lives-local-not-git`.
+Memory: see `markets-data GitHub routing (2026-11-08)`.
 
 ## KEY FINDING (unresolved — for S24 to confirm at scale)
 On a small/imbalanced smoke sample the in-sample control did NOT reproduce the reference convex

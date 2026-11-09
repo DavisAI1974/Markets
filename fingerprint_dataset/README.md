@@ -30,5 +30,5 @@ without the local machine's bulk (the full coeff records are ~47GB; `E:\refrag` 
 
 ## Provenance / discipline
 All derived from LOCAL data (`E:\refrag\discoveries\operator_discoveries`, `live_data_history`); the
-bulk stays local ([[markets-data-lives-local-not-git]]). This compact slice is the fingerprint
+bulk belongs in DavisAI1974/markets-data (user correction, 2026-11-08). This compact slice is the fingerprint
 payload, committed by Greg's S35b request so the build is reproducible off git alone.

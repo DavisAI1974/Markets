@@ -1,5 +1,9 @@
 # CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-09-22 06:4xZ, Frankie/BOSS: THE MONDAY INGEST IS RUNNING on the box (run 35694087514, 5x faster: 1.77 ms/record, about an hour); the launch build behind it (schedule, host, box modules) is NOT built; no canary without Greg's word)
 
+## Current storage instruction — user correction, 2026-11-08
+
+GitHub is the durable working source. Publish code, findings and handoffs to DavisAI1974/Markets; publish data, tables, renders, workbooks and provenance to DavisAI1974/markets-data. The local-only storage rule is removed. Do not restore it from older instructions, historical notes, memory or report generators. Preserve immutable artifact paths and SHA256. Existing E-drive files are migration sources only; no further desktop computation or UI. No AWS/S3.
+
 
 ## FRANKIE / BOSS standing rules (Greg, 2026-09-16) -- MEMORY, read before touching Granite or the native context
 
