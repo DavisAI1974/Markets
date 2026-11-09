@@ -27,6 +27,14 @@ Replication: the four UTC tapes (sha256 equal to the markets-data `MANIFEST.json
 stack byte-identical; coupling rho equal to 1.1e-16 with identical n, chunk counts and line flags on every row of every day. x17 reproduces every c15
 top-400 row (max difference 9.7e-17).
 
+Why the Oct 18 tables here (2,669 pairs, 42 cells) differ in row count from the original Oct 18 run in `claude-pass/tables/` (2,635 pairs, 44 cells;
+identical to `claude-pass/tables/20231018_legacy/`): the original ran in the scripts' legacy mode, which builds the grid from the retained export's groups,
+flags no closed-market rows (28,380 grid rows against 26,980 after the 1,400 closed-market rows are left out) and keeps the snapshot-age conditions
+`age_s` and `qage_s` out of X (155 conditions against 157; 155 x 17 = 2,635, 157 x 17 = 2,669). In the one-second tables the closed-market seconds are
+likewise left out of the dense run, which takes the `down|ask-heavy|none` cell below the 100-second floor at both horizons (44 cells against 42). On
+the 2,635 shared pairs the two Oct 18 runs agree in sign on 96 percent, largest |rho| difference 0.067. The four-day comparison uses the dense run on
+every day, so the days are like for like.
+
 ## 2. Condition/outcome couplings (c14), 2,669 pairs on all four days
 
 Counts of pairs by how many days share the majority sign, observed against the same pairs with Y cyclically shifted on each day (20 draws, draw s combining
