@@ -567,3 +567,14 @@ Next use these tables to pin the existing individual renders and other researche
 
 Known mistakes are corrected in the active results and summaries. The corrected version is authoritative; erroneous substitutes are not competing findings. Original observations, including unfavorable cases and genuine missing data, remain intact.
 
+
+
+# 2026-11-09 — whole-lifecycle audit and complete render publication
+
+All four source audits and final render jobs passed. See [DIPOLE_RENDERS.md](DIPOLE_RENDERS.md) for immutable publications, full counts, scope and visual review. 3,178 candidates and 6,352 original matched controls retain separate parent identities. 397,815 original-scale lifecycle points remain in complete ordered sequences, including undefined seconds. Original path windows retain their own sampling cut clocks, cursor selectors and explicit parent links. Whole print-leg and quote-episode spans remain separate from their timed observations.
+
+Corrections: restored anchor points omitted from the old lifecycle point tables; reconstructed two finalization-only lifecycles from original flow without invented recognition. Thirteen controls outside native-flow coverage remain explicit unavailable cases. All 166 per-date tables and 37 cross-date tables passed candidate-reference checks. Per-date checks also reconciled trade/leg and pressure-event child identities and source clocks.
+
+**Agrees:** original operational lifecycle endpoints and every existing post-anchor path value reproduce. Source clocks/cursors and IDs agree across the joined individual records. **Differs:** whole lifecycles can outlast or end before recognition; birth-to-recognition windows are context components rather than lifecycle boundaries. Native action-midpoint flow and completed-group/wire measurements remain explicitly different definitions. **Unresolved:** the third-opposite-second convention is not a proven natural event death. CCode's independent population still requires actual identity/scope reconciliation, and paper readiness is not established by these renders.
+
+The complete collection includes 337 original figures, 9,530 whole-instance pages and four individual-duration figures with source-row indices. The 24-page starter packet chooses first chronological cases by orientation and their original control1, not winning outcomes. The known plotting mistakes were corrected; the latest verified render publication is authoritative. No desktop research computation or external message was used.

@@ -2,6 +2,12 @@
 
 Updated 2026-11-09. Operational handoff, not a new findings report.
 
+## Current render completion
+
+The user requested all dipole renders after checking individual records, whole lifecycles and timed components. Completed: [DIPOLE_RENDERS.md](DIPOLE_RENDERS.md). All 3,178 candidates retain whole parents; 6,352 control instances remain separate. Anchor rows and two finalization-only lifecycle omissions were repaired without inventing recognition. Every whole lifecycle fits on one page; component clocks and original source IDs remain attached. All 337 original figures are indexed alongside the full lifecycle books. Use the current verified publication, not earlier partial rendering runs.
+
+CCode is pinning his work in parallel. [DIPOLE_PINNING_PACKET.md](DIPOLE_PINNING_PACKET.md) supplies five coordinated views, a small 24-page source-ordered packet and exact source joins. It is a navigation sample, not a performance sample. No need to serialize the two researchers' work or merge different populations. Paper readiness remains outstanding; 99 layers/13 external points remain deferred.
+
 ## User's current objective
 
 **November 9 current completion:** the family four-arm/prebirth/primer work and all three combined timing/event studies are complete on October 2, 3, 17 and 18. Our source-clock joins are now published and verified, including explicit cross-study links. Start with [COMBINED_EVENT_STUDIES.md](COMBINED_EVENT_STUDIES.md) for the authoritative results, scope and successful run 42571551209. Next pin existing renders and other researchers’ records to these source-clock joins; paper readiness/configuration remains unchecked. The 99 layers and 13 external points remain deferred.
