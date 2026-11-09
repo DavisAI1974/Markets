@@ -70,7 +70,9 @@
         "formula": "(bid_order_count - ask_order_count) / (bid_order_count + ask_order_count)",
         "long_gte": 0.3333333333333333,
         "short_lte": -0.3333333333333333,
-        "threshold_provenance": "Provisional 2:1 count ratio, not a tested or optimized cutoff."
+        "threshold_provenance": "Provisional 2:1 count ratio, not a tested or optimized cutoff.",
+        "threshold_numerator": 1,
+        "threshold_denominator": 3
       },
       "trigger": "Cross into a qualifying side from a previously nonqualifying or opposite eligible grid state. First observation initializes state without entry.",
       "support_claims": [
@@ -79,7 +81,11 @@
         "C10"
       ],
       "adverse": "Many flat and adverse outcomes; effect decays; no verified net return.",
-      "dipole_role": "Log actual recognition and fresh/expiring flow for comparison; they are not extra confirming votes."
+      "dipole_role": "Log actual recognition and fresh/expiring flow for comparison; they are not extra confirming votes.",
+      "initialization": "Any missing/stale/gap/reset state clears previous trigger state. First valid grid observation after recovery initializes without entry.",
+      "stop_and_target_measurement": "From actual weighted entry fill: long exits evaluated at executable bid; short at executable ask. Stop is adverse4ticks, target favorable4ticks. Trigger does not guarantee that fill price.",
+      "hold_clock": "Maximum hold starts at first actual partial or full entry fill, not at signal time.",
+      "loss_limit": "Realized net P&L plus marked open exposure in tick-contract units; fees converted using pinned contract tick value. If unresolved, pause new entries. At or below-20, cancel entries and request exit; no new entries until next verified session."
     },
     {
       "instrument": "NG futures; contract/security ID must be pinned before activation",
@@ -157,7 +163,11 @@
         "C13"
       ],
       "adverse": "Small denominator can dominate; delayed entry, spread and fees may consume the association.",
-      "dipole_role": "Log flow, empty halves and expiry; no future seed used."
+      "dipole_role": "Log flow, empty halves and expiry; no future seed used.",
+      "initialization": "Any missing/stale/gap/reset state clears previous trigger state. First valid grid observation after recovery initializes without entry.",
+      "stop_and_target_measurement": "From actual weighted entry fill: long exits evaluated at executable bid; short at executable ask. Stop is adverse4ticks, target favorable4ticks. Trigger does not guarantee that fill price.",
+      "hold_clock": "Maximum hold starts at first actual partial or full entry fill, not at signal time.",
+      "loss_limit": "Realized net P&L plus marked open exposure in tick-contract units; fees converted using pinned contract tick value. If unresolved, pause new entries. At or below-20, cancel entries and request exit; no new entries until next verified session."
     },
     {
       "id": "O03",

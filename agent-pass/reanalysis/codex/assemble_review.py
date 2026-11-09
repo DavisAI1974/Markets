@@ -34,6 +34,28 @@ def section(path):
     return "sources-and-populations"
 def fieldmeaning(field,path):
     f=field.lower();leaf=f.rsplit(".",1)[-1].replace("[]","")
+    if "case-tape-" in path:
+        if ".per_second." in f:
+            if leaf.endswith("_lots"):
+                return "Per-receive-second lots for the named raw MBO action/side or action-time aggressor; raw cancel lots can include fill-linked removals","lots","price-and-market-behavior-in-both-directions","complete receive-second and source group availability"
+            return "Per-receive-second raw MBO message count by named side; cancellations are not automatically discretionary withdrawals","messages","price-and-market-behavior-in-both-directions","complete receive-second; original epoch origin retained"
+        if ".touch_by_second." in f:
+            if leaf in ("bid","ask"):
+                return "Last completed-group quote tuple [raw price, displayed lots, order count]; flattened inventory mixes tuple positions","tuple: price in1e-9 currency units, lots, orders","price-and-market-behavior-in-both-directions","original ts_recv_ns/cursor; not necessarily a fresh quote"
+            if leaf in ("bid_depth10","ask_depth10"):
+                return "Total displayed lots across ten best price levels of named side","lots","liquidity-order-identities-and-short-horizons","last completed group stored for that second"
+            if leaf=="spread_ticks":
+                return "Ask minus bid divided by1e6 raw price units in this source","ticks","price-and-market-behavior-in-both-directions","same stored quote clock"
+        if ".prints" in f:
+            if leaf=="price_raw":return "Original raw MBO print price","1e-9 currency units","price-and-market-behavior-in-both-directions","original receive clock and cursor"
+            if leaf=="size":return "Original print summary size; not interchangeable with passive fills","lots","price-and-market-behavior-in-both-directions","original print receive clock"
+            if leaf=="aggressor":return "Action-time midpoint classification buy/sell/mid/unknown; distinct from wire-side attribution","category","flow-dipoles-and-weakening","preceding action-time book"
+    if "summary" in path and (leaf in ("n","events","episodes","continued","flat","reversed","censored","with","against","up","down","rows","population","eligible","retreats","recoveries","improved","open_at_entry","retreats_after_entry") or "counts" in f or leaf.startswith(("n_","count_","overlap_clusters"))):
+        return "Saved count in named population/cell/horizon; overlap clusters and events are distinct","count (source-defined unit)","sources-and-populations","retrospective aggregate; source cell denominator"
+    if "first-family-four-arm" in path and ".horizons." in f and leaf in ("median_ticks","q25","q75","min","max"):
+        return "Quantile/extreme of midpoint change oriented to recent flow in named arm/horizon","ticks","direction-regimes-and-combinations","retrospective outcome summary"
+    if leaf.endswith(("_share","_rate","_fraction","_pct")) or leaf in ("share","fraction"):
+        return "Source proportion/percentage; retain original denominator and flat/censor convention","source proportion/percent","direction-regimes-and-combinations","aggregate unless source defines per-event ratio"
     if re.search(r"(^|_)(ns|receive_ns|event_ns|cutoff_ns)$",leaf) or leaf.endswith("_ns"):
         return "Source nanosecond clock; distinguish event, receive, known-by and cutoff by original field","integer ns","clock-and-measurement-rules","defined by field; never float or interchangeable"
     if "cursor" in leaf or "ordinal" in leaf or leaf.endswith("_id") or "sha256" in leaf or leaf in ("row","row_index"):
@@ -212,15 +234,19 @@ def main(out):
     # Bulk annotations already verified in original hosted run: inventory manifest pointers without pretending this is new raw data.
     support2=packet["supporting_packets"][1]
     bulk={}
-    try:bulk=js(support2["repository"],support2["revision"],support2["path"]+"/MANIFEST.json")
+    try:
+        bulk={"summary":js(support2["repository"],support2["revision"],support2["path"]+"/SUMMARY.json"),
+          "catalogs":{tag:js(support2["repository"],support2["revision"],support2["path"]+"/"+tag+"/CATALOG.json") for tag in ("20231002","20231003","20231017","20231018","cross")}}
     except Exception as exc:bulk={"unavailable_manifest":str(exc)}
     dump(out/"BULK_CLOCK_ANNOTATION_REFERENCE.json",dict(source=support2,manifest=bulk,interpretation="Completed clock annotation packet, not independent market samples. Individual source sidecars remain in COVERAGE.csv; not rerun."))
-    dump(out/"UNAVAILABLE_REFERENCES.json",packet["unavailable_archive_references"])
+    unavailable=js(D,REV,PACKET+"/UNAVAILABLE_REFERENCES.json")
+    assert len(unavailable)==packet["unavailable_archive_references"]==3
+    dump(out/"UNAVAILABLE_REFERENCES.json",unavailable)
     # Conflicts are authored against exact sources, never a cross-report reconciliation.
     conflicts=js(M,CODE_REV,"agent-pass/reanalysis/codex/conflicts.json")
     writecsv(out/"CONFLICTS.csv",conflicts)
     summary=dict(analyst="Codex",brief_revision=os.environ["BRIEF_REV"],evidence_revision=REV,
-      source_contents=len(catalog),source_aliases=len(aliases),flattened_field_paths=fieldtotal,
+      source_contents=len(catalog),source_aliases=len(aliases),flattened_field_paths=fieldtotal,unavailable_archive_references=len(unavailable),
       field_semantic_status_counts=dict(fieldcounts),relationship_rows=relcount,relationship_source_tables=len(rel_sources),
       core_claims=len(core),price_response_comparisons=len(price),cases=len(cases),registry_layers=len(maps)-len(aspects),
       source_defined_additional_aspects=len(aspects),supporting_files=len(support_rows),supporting_fields=len(extra_fields),
@@ -232,6 +258,7 @@ def main(out):
         "Raw DBN bytes verified; completed reconstruction receipts reused, no producer rerun.",
         "No causal effect, net strategy performance or paper deployment claimed.",
         "Separate final reports; no reconciliation or joint synthesis."])
+    assert "unavailable_manifest" not in bulk, bulk
     assert summary["registry_layers"]==99 and len(cases)>=20
     assert all(r.get("bytes_verified") for r in support_rows), "support bytes failed"
     dump(out/"SUMMARY.json",summary)

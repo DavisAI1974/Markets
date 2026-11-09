@@ -1,0 +1,157 @@
+# Codex independent reanalysis
+Method: observable sequences, information availability and incremental contribution. The same frozen packet is used for the entire assignment; no duties were divided with Ccode. Ccode's new report has not been read. Historical findings from both researchers are evidence to reassess, not a consensus to inherit.
+
+Evidence: markets-data e7b1c4acac2e37205cdb9ce1c53829b6ca30f4ee, tasks/family-research-20261022/shared-reanalysis-inputs/final-42593665910-1. Shared brief: Markets 64f599312106537d83a23fc65447dd2db0e6ca95, including price-to-behavior feedback. All four dates remain discovery. No new producer, fitting, path normalization or market replay was run for this reading.
+
+## Interpretation
+The evidence describes a market that repeatedly changes both the flow hitting a price and the liquidity offered there. A rolling-flow dipole identifies one aspect of that process. It does not by itself identify a future price direction, a natural event endpoint, or an executable trade. Price belongs inside the sequence: consuming or improving a quote changes the prices available to the next participants; replenishment, withdrawal, repricing and later aggressive orders then determine whether that displacement persists.
+
+Three readings carry across the evidence. First, flow persistence and price persistence are different. Second, a meaningful microstructure observation can be consumed before an implementable decision. Third, the original event population and clock materially change the answer. These conclusions preserve the small directional associations, adverse cases and context-dependent patterns; they do not imply that only large effects deserve study.
+
+## Sources and populations
+Use the canonical content IDs and exact paths in COVERAGE.csv, with alias coordinates in SOURCE_ALIASES.csv. Byte equality removes repeated copies, not complementary projections. SOURCE_CATALOG and FIELD_INVENTORY describe structural accounting; they do not certify causal meaning or claim that every chart was visually inspected. Unassessed formats/fields and missing sources remain explicit. Supporting lifecycle/external/pin packets are separately inventoried, because their contents are not all enumerated among the 1,296 active content entries.
+
+| Population, Oct 2 / 3 / 17 / 18 | Counts | Meaning |
+| --- | --- | --- |
+| Archived Native candidates | 741 / 833 / 741 / 863 | Retrospective selected births |
+| Live Native recognitions | 741 / 832 / 740 / 863 | Two finalization-only rows have no live recognition |
+| Ccode full-session research detector | 839 / 857 / 830 / 890 | Different threshold construction and session coverage |
+| First-observed structural families | 796 / 849 / 824 / 749 | Oct 18 is the original selected catalog |
+| Strict-pre family inputs | 795 / 848 / 823 / 749 | One new-date family has no earlier source group |
+| Expanded chronology families | 796 / 849 / 824 / 764 | Includes 15 additional Oct 18 structures |
+| Independent cohort/event-study covered candidates | 741 / 824 / 740 / 852 | Additional seam/warm-up coverage omissions |
+| Combined pressure signals | 109307 / 116187 / 114994 / 109754 | Overlapping size-one/falling-size/retreat signals, not independent trades |
+| Large midpoint moves, at least 2 ticks | 46 / 58 / 57 / 64 | Adjacent eligible group changes in retained spans |
+
+Native Oct 2/17 coverage starts at UTC midnight; the research detector and rebuilt Tier 1 session groups include earlier evening prefixes. The dense Tier 2 grid uses UTC members and excludes closed-market stretches. These are not interchangeable sessions. First observation of a structural descriptor is not necessarily a new participant event. Summing files, pins, horizons or overlapping windows would inflate observations.
+
+The common packet includes 1,459 source coordinates, 1,296 distinct contents, 163 alias copies and eight distinct annotation-ledger contents. These are file counts, not independent studies. The 99 registry entries include controls, runtime, provenance, outputs and target restrictions as well as market measurements. Registry membership does not mean 99 measured predictors.
+
+## Clock and measurement rules
+Preserve source event time, receive time, completed-group known-by time, feature availability, nominal detector emission and actual recognition. Nanoseconds remain integers. The corrected Tier 1 ledgers supersede rounded embedded clocks: all 3,215 rows and 555,008 pins were checked, with 11,852 clock values corrected. Non-clock values and original CSV clocks were unchanged.
+
+A family strict-pre cutoff is start minus one nanosecond, subject also to the source cursor cap. A group's outcome cannot become a feature at its prior quote. Receive-clock ties are ordered by source close cursor. A completed second is available only after its right boundary; labels indexed at t0+60 can require t0+61. A dated external target is not its publication time, and declared publication is not measured feed receipt.
+
+Native recognition is not universally birth+50. The recovered detector selects within a competition window; nominal delay depends on the winning birth's position, and dispatch adds waiting for a later completed group. Oct 18 birth-to-actual recognition ranges 7.060–137.368 seconds, median 51.673. The 2.407-second median dispatch delay has a different origin. Both can be correct.
+
+The event-study aggressor marker is the left boundary of a one-second interval; its contents become known at the right boundary. Quote/size markers sample boundaries and can miss changes that reverse within the interval. Exact structural action events answer another question. The identity recognition-minus-event = recognition-minus-birth minus event-minus-birth explains shared geometry in sorted curves without making rank a chronological transition.
+
+## Flow, dipoles and weakening
+Native action-time attribution, completed-group midpoint attribution and wire-side attribution preserve different observations. The exact Native-action reconstruction recovers the 3,178 archived births; discrepancies with a completed-group reconstruction do not disprove the source detector. At Oct 18 recognition the companion buy/sell operands agree with the Native operands for 842/863 candidates and differ for 21.
+
+For signed net flow over 20 seconds, the accounting recurrence is exact: previous net + new buy - new sell - expiring buy + expiring sell. A change can reflect new opposition, expiration of earlier support, or both. An empty denominator is unavailable recent classified flow, not balanced activity. A saturated ratio can have one lot behind it. No fresh classified lots also does not prove no trade: unknown/unclassified prints remain.
+
+At Oct 18, 511/863 paths contain a defined weakening step; 327 include an expiry-only step but none of those entire paths is expiry-only. Among those 327, the next 20-second outcomes after recognition are 111 with birth, 110 against, 106 flat. Another 589 candidates contain a defined-to-undefined transition as volume expires. Therefore weakening needs its operands and subsequent book response; it is not automatically fresh selling, exhaustion of a participant, or a reversal instruction.
+
+The inherited operator supplies signed imbalance, entropy asymmetry, signed entropy/coupling ratio, mutual-information change and imbalance change. Empty half-windows must be carried with these values. EPS-regularized ratios are not confidence probabilities. Several derived features reuse the same input: the earlier Oct 18 stack reports rank correlation .918 between imbalance and signed-log coupling. Counting them as independent confirming votes would overstate evidence.
+
+The Native 20-second peak detector, S36 exhaustion/divergence and S92 roughly 300-second flow nowcast are distinct applications. Historical Family A/seed objects and their operational lifetimes are also distinct. A result about one cannot establish or refute the others.
+
+## Price and market behavior in both directions
+The sequence to interpret is prior state → observed price change → subsequent order/flow/liquidity response → subsequent price. This is a temporal organizing model, not proof of a causal arrow. Same-group prints, passive fills, linked removals and residual orders explain how the observed quote changed; they cannot independently establish that the changed quote caused those same actions.
+
+The dense-grid source explicitly includes prior midpoint displacements in ticks over 1/5/20/60/300 seconds and counts of prior best-quote changes. Its forward flow/book windows start after the decision cutoff. Existing cross-day rows therefore already contain price-as-input evidence:
+- qchg_300 versus subsequent five-second ask additions: rho .211/.207/.184/.205; bid additions .218/.221/.162/.201. The association exceeds each day's saved shifted-reference line. Both additions and cancellations increase, so this describes activity/turnover after active quoting, not one-sided buying pressure.
+- prior_60 versus subsequent ask cancellations: -.039/-.028/-.042/-.033. Prior_300 versus subsequent 20-second signed flow: -.022/-.024/-.047/-.083. These small inverse associations retain the same sign on all four days but do not cross the saved family-wise line. Keep them as measured conditional relationships, not established causal feedback.
+- prior_1 versus subsequent five-second signed flow: -.018/-.027/-.024/-.015. Weak opposite-direction subsequent flow is compatible with replenishment, reaction, selection or shared state; this table alone cannot choose among them.
+
+The source ranks inside activity quintiles defined on each day's entire sample and uses overlapping three-second decisions. This is historical conditioning, not a prospective calibrated threshold. The grid lacks a causal intervention, independent instrument for price, and full conditioning on all common causes. No causal effect size is inferred. Price level, speed/acceleration, distance to prior levels and revisits need separate source-defined evaluations where not already measured; they are not silently covered by a prior-return coefficient.
+
+Exact paths sharpen the interpretation. On Oct 3 the last ask at 2.895 is taken; the taker's residual then posts a bid at that vacated price and other bids join. The same order sequence links aggressive execution, a price change and new displayed support. On Oct 17 a bid retreats from 3.070 to 3.069, asks then occupy 3.070 and bids rebuild it within milliseconds. A first-retreat label misses this recovery. These are examples of price-conditioned market evolution, with source clocks in CASES.csv; neither establishes intent or a general response law.
+
+Case 391 supplies a slower example. A sell sweep leaves a 150-lot ask at 3.137 under the same order ID; buyers then execute that resting amount, the ask disappears through linked fills, and quotes recover. The new ask is simultaneously an obstacle and liquidity for the recovery. Case 375 follows a different sequence of removals and lower offers. Large displayed size, flow sign and immediate quote direction alone do not distinguish the later paths.
+
+The large-move studies retain the old price, new price, fixed-price queues, moving-rank depth, first half/full return and later outcomes. Fixed-price replenishment is the relevant evidence for a response at the vacated level; a change in the new best's size may merely expose another queue. Full returns within the defined 600-second observation occur in 35/46, 48/58, 42/57 and 49/64 moves. Non-return is censored observation, not permanent impact; first return is not event death.
+
+A narrow future discriminating test is to compare matched pre-move states and initial price displacements, distinguish fill/depletion from inside-spread improvement, then measure strictly subsequent adds/cancels/executions at fixed old/new prices. Report response latency, no-response cases, subsequent excursions and both directions by day. This is proposed work; no result from that new test is claimed here.
+
+## Liquidity, order identities and short horizons
+Displayed depth is a stock; executions, cancellations and replenishment are flows. Full-book, ten-level and touch imbalances need not agree. Full depth is bid-heavy at 718/795, 847/848, 754/823 and 749/749 strict-pre family starts. Full-versus-near imbalance correlations are approximately .55/.28/.53/.22. The far ladder's nearly constant sign cannot by itself separate directional outcomes in these populations.
+
+Refill on the hit side is a more direct mechanism: prior one-second adds at/within four ticks divided by positive passive fills. Sell-hit bid refill versus next midpoint has rho .21/.15/.10/.26 at one second, .14/.13/.06/.24 at five seconds and weaker/mixed long horizons. Buy-lift ask refill mirrors the short sign (-.14/-.13/-.29/-.27 at one second). Counts differ by side/day and are retained in the cross-day tables. Day-specific retrospective terciles are explanatory summaries, not deployable cutoffs. A ratio can be large because fills are few, and distinct orders can supply the adds.
+
+Size-one source summaries contain 22,042/24,353/27,111/27,560 episodes, including one censored episode on each of Oct 2 and Oct 3. The 101,000 completed/tape-classified onsets in discovery prose exclude those two censored rows; the complete source population is 101,002. Keep both scopes labeled. A one-lot best created by a new price differs from a standing queue consumed down to one. Fill-linked standing remnants retreat much more often in the original all-onset cells, but many resolve before the assumed one-millisecond observation; surviving subsets show weaker differences.
+
+Order history adds information that a snapshot cannot. Repriced older orders and fresh adds have different subsequent fates. Repeated survivor IDs show more holding/refreshing than first appearances, but one order ID is not a participant identity and repeated episodes are dependent. We cannot infer a hidden reserve size, common owner, manipulation or a participant's psychological state.
+
+There is a further timing warning in the source: displayed one-lot duration medians and the 'BY_ENTRY' fraction appear inconsistent if entry is interpreted as exactly onset+1 ms. The actual code defines entry as the first eligible completed-group quote at/after that delayed target. Those are different clocks; the later observation can arrive after an episode whose duration exceeds one millisecond. Use target, observed entry group and episode end separately, not a literal 1-ms-fill interpretation. This distinction is checked in the accompanying source notes.
+
+## Direction, regimes and combinations
+Actual-recognition baseline birth polarity has roughly balanced with/against outcomes among nonflat cases. On Oct 18, 671/863 one-second midpoint outcomes are flat. Touch alignment has a repeatable short-horizon association; it decays with horizon and is also present among ordinary active seconds. That contrast does not yet identify incremental dipole value because the cohorts differ in activity and selection.
+
+The original 60+/5-/1- flow plus bid-heavy full-depth screen appears on 40/57/46/50 family starts. Its 60-second down-share is .50/.28/.57/.58 versus all-family .47/.42/.42/.47. Oct 3 is important contrary evidence. Inverse full-stack cases are extremely rare. Do not fabricate a balanced mirror population or relabel the original screen a universal short rule.
+
+Tier 2 retains all 2,669 condition/outcome pairs on each day. 1,330 share a sign on all four days versus 372–633 in the 20 saved shifted draws; 99 exceed all four saved lines, concentrated in book-response activity. This supports repeated conditional structure but not causation, independent replication per row, or achievable returns. The same-sign set includes very small effects (median minimum absolute rho about .022).
+
+A demonstrated prose error matters: the final Tier 2 summary says no signed-move pair exceeds the line on more than one day. Its own table records FIVE signed pairs on three days, ONE on two, FOUR on one and none on four. In particular tchn_imb→dm_5 is .128/.142/.121/.132, beyond the line on Oct 2/3/18. The corrected reading preserves repeatable modest directional information. The source table takes precedence; the mistaken sentence is not a competing finding.
+
+The 5,166 common interaction rows include nine beyond every saved line, all spread-change relationships. A repeated interaction does not by itself prove incremental predictive benefit over its constituents. The 21 distinct lead-lag pair families include 12 with peaks at zero on every day. The reported one-second touch-imbalance lead to flow is a temporal association, not an order-entry advantage. State cells use (up-down)/all outcomes, including flats; it is not accuracy among nonflats.
+
+Spread regimes alter support. The source's one-/two-/three-plus-tick grids retain constant and undefined fields with reasons. Same-sign counts across all dates are 1329/2652, 1337/2652, 755/2397 for the three regimes; the wide-spread group has no pair beyond every day's own reference line. Excluding settlement windows gives 1336/2652 and 1355/2652 in the first two, with 755/2397 unchanged in the last. Sparse wide-spread evidence limits precision; it does not erase those observations.
+
+The archived 11-arm comparison raises pooled error for the full stack in all 28 date/target/window cells. Book alone slightly improves five-second midpoint error (0.17/2.04/0.73/1.68 percent) but not every block. Tier 1's 40 four-arm rows beat the zero-move MSE on no more than two dates. These are results for fixed representations, training-only transformations, purged chronological splits and embargoes. They do not show that the physical inputs are useless or that a different combination will work. Preserve all arms for future paper observation with new configurations frozen before outcomes.
+
+The earlier fast-collapse/mid-activity next-seed watchlist has positive five-minute hourly-margin lifts on Oct 17/18 and negative lifts on Oct 2/3. Common activity cuts preserve that difference. Opposing evidence survives a reasonable diagnostic. The six-point retrospective screen and outcome-margin adjustment are not trade-time features.
+
+## Duration, exhaustion and remaining opportunity
+The third opposite-sign second is an operational flow endpoint. A price pause, first return, flow loss, reversal and final market-event end are different outcomes. Whole parents and their child windows preserve those distinctions. Price can continue after a flow burst ends, reverse before a duration estimate, or remain flat while flow changes.
+
+Frozen A state and P/O/S/X seeds describe activity/persistence more consistently than subsequent price direction in these sources. The 61-sample classifier and seed anchor need their true availability; they cannot provide prebirth warnings. A substantial fraction of next bursts already began before +60, so retrospective next-burst classification is not all prospective prediction.
+
+The original duration totals rank persistent longer than fast-collapse on all four dates, but absolute times are poorly calibrated without adaptation. The v4 activity/day/state calibration has a median realized/predicted ratio near .99 and 22/32 cell medians within 20 percent; the range .70–1.66 and broad bands remain. These are leave-one-day-out and historically selected calibrations on already-seen data. Oct 2 persistent nominal 50-percent bands cover only about 34 percent. Do not promise a turning time or treat time to an absolute distance as a directional trade duration.
+
+The frozen SSOS play has 7/3/10/10 instances across Oct 2/3/17/18 and gross mean ticks approximately -.43/+.67/-.30/-.30. Its pooled 30 instances have nine with, eight flat and thirteen against, mean -.21 ticks before costs. Absorption over a burst's own window does not transfer consistently to onset+5..+30. Keep the play and adverse evidence visible; no favorable-window substitution.
+
+Continuous precursor predicates occur on every date, but lead-to-retrospective-birth is not actionable warning performance. The ten retained predicates need unconditional false-alarm/missed-event accounting and a future decision rule. Control reuse and quote-age sensitivity can reverse some prebirth mean contrasts. Keep every birth, unmatched control, missing operand and contrary context.
+
+## External context, historical sources and scale
+All 13 source-defined bindings remain. Points 1/3/4 share positioning; 5/7 share power data; 2/9 share weather forecasts; 11/12 share storage actuals. Shared source does not imply identical numeric series. Point 13's front leg overlaps the traded instrument; other maturities and settled versus traded shapes have distinct clocks. Forecast versus observed weather and estimate versus actual require publication vintages, target dates and units.
+
+In the 749-family Oct 18 source, positioning and carried storage values are constant; this prevents identification of an intraday revision effect, not contextual relevance. The expiry point is available in only 90 saved contexts under its declared clock. Existing external histories must not be shifted from an Oct 18 target to fit earlier days. INVALID and MISSING states remain, including station-level limitations.
+
+The two original family cases' traded-curve updates coincide with the same group prints and occur after the frozen prior quote. They are not independent early warnings. Selected external comparisons can reflect chronological drift, repeated held values or shared trade inputs. The crosswalk correctly flags storage points 11/12 as shared-source; the earlier simplified flag did not. Use the explicit lineage.
+
+The supplied primer raises valuable questions about impact, volatility, maturity, news, positioning and participant behavior. Historical EIA results and crypto screenshots remain contextual evidence at their own scales. The saved 209-month futures-versus-spot and 339-delivery-month maturity comparisons cannot validate a millisecond NG entry. Publication vintages limit those historical baselines. The user-reported recurrence in roughly 2,000 crypto events is retained; the exact underlying individual source and generator remain unavailable, so no cross-market equivalence or dismissal is justified.
+
+The 99-layer map accounts for actual source names rather than conflicting numeric shorthand in older prose. Controls, models, provenance and sealed outcomes help interpret evidence but are not additional market signals. The original registry even references a 2021 mission; that description is historical schema context, not proof that the 2023 observations came from 2021.
+
+## Dipole sufficiency
+Dipole layers help describe flow direction, participation, rolling-window memory, formation, persistence, observed weakening and ancestry. Together with clocks they explain why a recognizable shape may precede, coincide with or follow a price move. They can be valuable for deciding what to monitor and when an earlier interpretation has lost its observed support.
+
+They do not presently supply all the required knowledge. Short-price direction still varies within the same state; execution often depends on faster queue events; remaining-duration calibration is uncertain; external surprises, unobserved reserve and participant objectives are incomplete. Exact price response and fixed-price replenishment provide complementary information that is not equivalent to a flow-ratio curve.
+
+Measured comparisons do not establish that dipole-only covers most decision needs. The available linear ablations show small, mixed increments and a frequently worse full stack. They do not quantify a percentage of 'market understanding'. Recognition, direction, strength, duration, continuation/failure, reversal, adverse-move avoidance and executable entry/hold/exit each have a separate status in DIPOLE_LAYER_MAP.csv. No aspect is silently discarded because it fails to complete the whole task.
+
+## Paper handoff
+PAPER_STRATEGIES.md/.json specify a small set of observation/paper-check candidates: touch direction at an actual decision, hit-side refill, price-response sequence logging and contextual duration. All earlier arms, precursor hypotheses, inverse screens and SSOS remain in the retained research register. Performance weakness is not a reason to remove a candidate; a missing definition or execution route is a reason not to pretend it is already executable.
+
+No live or paper order has been submitted. The inspected executor/exchanges/paper.py obtains cryptocurrency minute closes from Coinbase/Kraken, manufactures a one-basis-point spread and defaults to a 25-bps fee. It is not evidence of an NG MBO simulator or credible millisecond futures fills. Readiness requires an actual NG paper route, contract identity, true bid/ask and source clocks, fee/latency configuration and a receipted test. Do not substitute that adapter's invented spread or cash sizing for NG evidence.
+
+Rules remain observation-only until their stated capability checks pass. Risk limits and thresholds proposed for paper are explicit engineering settings, not optimized performance claims. Log opportunities and suppressed triggers as well as orders, partial fills, misses, excursions and exits. Freeze changes before a new session and keep all discovery-date outcomes outside prospective evaluation.
+
+## Limits and independent delivery
+This is an independent interpretation of the saved evidence, with complete machine-readable accounting and explicit unresolved coverage. It is not a claim to have visually inspected every render, identified every causal mechanism, tested every feature combination or achieved flawless performance. Missing formats/source archives remain in coverage; no synthetic observation repairs them.
+
+The final reports remain separate, as explicitly requested. There is no reconciliation, joint synthesis or automatic cross-report comparison. This report assesses conflicts within the common historical evidence without incorporating Ccode's new conclusions. The ranked open questions distinguish execution prerequisites from useful future research; a new large suite is not required merely to retain uncertainty.
+
+## Source index
+
+The tables in the analysis publication retain immutable source coordinates, row selectors, all saved comparison rows and exact case clocks. These entry points supply definitions and historical results; corrected readings above take precedence over demonstrated prose errors.
+
+- [Native observations, clocks, shapes and earlier reconciliations](https://github.com/DavisAI1974/Markets/blob/43aa3ec3a925d27d805eb69320c8fdd68fe0e6d0/agent-pass/FINDINGS.md)
+- [Original flow/book, order mechanisms, external lineage and11-arm comparisons](https://github.com/DavisAI1974/Markets/blob/43aa3ec3a925d27d805eb69320c8fdd68fe0e6d0/tasks/family-research-20261022/codex-flow-book-discovery-20261108.md)
+- [Combined event chronology, pressure and recovery](https://github.com/DavisAI1974/Markets/blob/43aa3ec3a925d27d805eb69320c8fdd68fe0e6d0/agent-pass/COMBINED_EVENT_STUDIES.md)
+- [Family replication and control sensitivity](https://github.com/DavisAI1974/Markets/blob/43aa3ec3a925d27d805eb69320c8fdd68fe0e6d0/agent-pass/FAMILY_REPLICATION.md)
+- [Historical discovery sections1–26](https://github.com/DavisAI1974/Markets/blob/f1c7277d2d303cea190e710abc1589f597a1e31d/tasks/family-research-20261022/claude-october-discovery-20261108.md)
+- [Tier1 cross-day findings](https://github.com/DavisAI1974/Markets/blob/3d0b06aa29781d5e39cc3eb45c6d09e174f195a2/tasks/family-research-20261022/claude-pass-3day/FINDINGS_TIER1_CROSSDAY_20261109.md)
+- [Complete Tier2 pair table (authoritative for corrected sentence)](https://github.com/DavisAI1974/Markets/blob/3d0b06aa29781d5e39cc3eb45c6d09e174f195a2/tasks/family-research-20261022/claude-pass-3day/crossday/t2x_coupling_crossday.csv)
+- [Tier2 definitions and strict forward response windows](https://github.com/DavisAI1974/Markets/blob/3d0b06aa29781d5e39cc3eb45c6d09e174f195a2/tasks/family-research-20261022/claude-pass/c12_tier2_build.py)
+- [Historical activity-conditioned coupling method](https://github.com/DavisAI1974/Markets/blob/3d0b06aa29781d5e39cc3eb45c6d09e174f195a2/tasks/family-research-20261022/claude-pass/c14_coupling_conditions.py)
+- [Spread-regime counts and saved shifted references](https://github.com/DavisAI1974/Markets/blob/3d0b06aa29781d5e39cc3eb45c6d09e174f195a2/tasks/family-research-20261022/claude-pass/tables/crossday/t4_crossday_summary.csv)
+- [Event-study coverage, axes and selection limits](https://github.com/DavisAI1974/Markets/blob/3d0b06aa29781d5e39cc3eb45c6d09e174f195a2/tasks/family-research-20261022/claude-pass-3day/FINDINGS_EVENT_STUDY_20261108.md)
+- [Size-one entry and first-end definitions](https://github.com/DavisAI1974/Markets/blob/f1c7277d2d303cea190e710abc1589f597a1e31d/tasks/family-research-20261022/claude-code/size_one_from_groups.py)
+- [Original selected cases and integer recognition clocks](https://github.com/DavisAI1974/Markets/blob/f1c7277d2d303cea190e710abc1589f597a1e31d/tasks/family-research-20261022/claude-code/cases-10.json)
+- [Case selection code, including absolute-move correction](https://github.com/DavisAI1974/Markets/blob/f1c7277d2d303cea190e710abc1589f597a1e31d/tasks/family-research-20261022/claude-code/select_cases.py)
+- [External13-point crosswalk and source sharing](https://github.com/DavisAI1974/Markets/blob/3d0b06aa29781d5e39cc3eb45c6d09e174f195a2/tasks/family-research-20261022/claude-pass/tables/crosswalk/t7_input_crosswalk.csv)
+- [Canonical99 names and roles](https://github.com/DavisAI1974/Markets/blob/c93895e22a2388112404f0122e37eee4947c5c45/artifacts/sqlite-triage/20261022/families/full-context-audit/canonical-99-registry.json)
+- [Inspected paper adapter](https://github.com/DavisAI1974/Markets/blob/43aa3ec3a925d27d805eb69320c8fdd68fe0e6d0/executor/exchanges/paper.py)
