@@ -1,0 +1,62 @@
+{
+ "session": "20231018",
+ "members": [
+  "20231017",
+  "20231018"
+ ],
+ "family_index": "/tmp/claude-0/-home-user-Markets/bc691f30-868d-52b9-970a-629e12f705ec/scratchpad/family/index_20231018.csv",
+ "family_index_sha256": "769a390c6e7a80159669b50dc81a1a3fd0579509317362691e938bf13fec3ae8",
+ "families": 749,
+ "cutoff_rule": "index cutoff_ns",
+ "groups": {
+  "prior_from_21utc": 14625,
+  "day_to_close": 569063,
+  "day_after_close_left_out": 4235,
+  "total": 583688,
+  "first_recv_utc": "2023-10-17 21:00:00.191664816+00:00",
+  "last_recv_utc": "2023-10-18 20:59:59.696377528+00:00"
+ },
+ "excluded_no_earlier_group": {
+  "count": 0,
+  "instances": [],
+  "family_ids": [],
+  "start_utc": [],
+  "reason": []
+ },
+ "families_used": 749,
+ "censored_per_horizon": {
+  "1": 0,
+  "5": 0,
+  "20": 0,
+  "60": 0,
+  "120": 0,
+  "300": 4,
+  "600": 5
+ },
+ "rows": 749,
+ "in_member": 694,
+ "settle_tag": 17,
+ "reconcile_buy_60s": 654,
+ "reconcile_sell_60s": 656,
+ "of_in_member": 694,
+ "member_start_utc": "2023-10-18 00:00:00+00:00",
+ "depth": {
+  "full_imbalance": {
+   "min": 0.0147368421052631,
+   "q25": 0.1424251587541578,
+   "med": 0.1930246542393265,
+   "q75": 0.2452603069515498,
+   "max": 0.4167686658506732
+  },
+  "full_ratio_med": 1.4783904619970194,
+  "near_neg": 365,
+  "near_pos": 378,
+  "near_zero": 6,
+  "corr_full_near": 0.22420682503361333
+ },
+ "refill": {
+  "in_member": 694,
+  "sell_hit_with_bid_fills": 263,
+  "buy_lift_with_ask_fills": 279
+ }
+}

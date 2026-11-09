@@ -1,0 +1,13 @@
+fill_stratum,group,horizon_s,n,down,flat,up,med
+small fills,ratio>=median,1,67,19,14,34,0.4999999999997229
+small fills,ratio<median,1,65,34,12,19,-0.500000000000167
+small fills,ratio>=median,5,67,20,14,33,0.0
+small fills,ratio<median,5,65,37,5,23,-0.500000000000167
+small fills,ratio>=median,300,67,37,3,27,-1.000000000000334
+small fills,ratio<median,300,65,35,3,27,-0.9999999999998899
+large fills,ratio>=median,1,66,37,12,17,-0.500000000000167
+large fills,ratio<median,1,65,37,9,19,-0.500000000000167
+large fills,ratio>=median,5,66,33,12,21,-0.24999999999986144
+large fills,ratio<median,5,65,39,9,17,-0.9999999999998899
+large fills,ratio>=median,300,65,23,2,40,3.0000000000001137
+large fills,ratio<median,300,65,32,4,29,0.0

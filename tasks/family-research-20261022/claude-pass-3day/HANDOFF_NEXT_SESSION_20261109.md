@@ -39,6 +39,10 @@ Then: put the Tier 2 tables for all four days side by side with Oct 18, instance
   `crossday/pairs_full/`); charts `x15_tier2_crossday_charts.py` -> `crossday/t2x-*.png`, every plotted count reconciled to its table rows. Write-up
   `FINDINGS_TIER2_CROSSDAY_20261109.md`. The grids were rebuilt from the tapes in that session and reproduce every committed Tier 2 table exactly.
   Still open in 3B: only the Tier 1 question above.
+- DONE 2026-11-09 (same later session): the Tier 1 question is answered by section 22 of `claude-october-discovery-20261108.md`: the actual first-observed
+  family starts exist for all four sessions (markets-data 7b50d634, 795 / 848 / 823 / 749). `x18_tier1_days.py` runs the Oct 18 Tier 1 chain on them
+  (Oct 18 reproduces every committed table exactly), `x19_tier1_crossday.py` puts the four days side by side (`crossday/t1x_*.csv`), write-up
+  `FINDINGS_TIER1_CROSSDAY_20261109.md`. Section 3B is complete.
 
 ### 3C. Reverse-engineering the detector (all four days)
 Source of the detector settings: `replay-comparison/sources/research-comparison-<day>/source-receipt.json` (candidate_detection) for Oct 2, 3, 17. Note the Oct 3 receipt covers only 3,599 seconds with 0 emitted (a different slice); no receipt in the repo for Oct 18. Settings: flow is the 20 s signed ratio; warm-up 900 s and at least 600 finite observations; threshold = 0.85 quantile of the trailing finite |ratio| (always 1.0 where one-sided windows exceed 15 percent of observations); baseline = median of the finite |ratio| over t-30..t-10 (21 points); refractory 45 s; local radius 5 s; zero epsilon 1e-12.

@@ -179,7 +179,6 @@ days modT_b_60 -> dm_60 has rho -0.013, +0.008, +0.009 against -0.076 on Oct 18 
 
 ## 8. What remains of section 3B
 
-- Tier 1 (the 749 first-observed families, the flow-transition audit, outcomes at fixed horizons, order-level windows per family) and the 99-plane and
-  13-input crosswalk exist for Oct 18 only; their inputs (the family run) do not exist for Oct 2, 3 and 17. Building an equivalent from the Native candidates
-  needs a definition of "first-observed family" for those days, which is Greg's call (handoff section 3B).
+- Tier 1 was run later the same day on the actual first-observed family starts of all four sessions (`FINDINGS_TIER1_CROSSDAY_20261109.md`); the
+  family-run inputs exist in markets-data 7b50d634, as section 22 of the discovery document records. The 99-plane and 13-input crosswalk remains Oct 18 only.
 - The regime comparison (c19 to c23, `claude-pass/tables/crossday/t4_*`) already covers all four days and is unchanged.
