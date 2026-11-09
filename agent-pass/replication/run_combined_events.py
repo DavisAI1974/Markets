@@ -4,6 +4,7 @@ from event_common import Context
 import event_chronology
 import event_pressure
 import event_moves
+import verify_combined_events
 
 def main():
     p=argparse.ArgumentParser();p.add_argument("--day",required=True);p.add_argument("--output",type=pathlib.Path,required=True)
@@ -13,6 +14,7 @@ def main():
         event_chronology.tests();event_chronology.study(ctx)
         event_pressure.study(ctx)
         event_moves.study(ctx)
+        verify_combined_events.run(ctx)
         ctx.finish()
         print(ctx.summary,flush=True)
 if __name__=="__main__":main()

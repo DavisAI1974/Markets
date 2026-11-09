@@ -34,3 +34,10 @@ Latest user instruction: finish the October 18 NG dipole analysis on October 2, 
 
 
 November 9 completion: the user's remaining-family-first instruction has been fulfilled for the four-arm family comparison, family prebirth controls and primer diagnostics on October 2/3/17. October 18 reference results reproduce. See FAMILY_REPLICATION.md for immutable receipts and population distinctions. Timestamp assembly and paper setup have not started; older 99-field/external-point and targeted lifecycle studies remain separate scopes.
+
+
+## Current combined-study execution and corrections
+
+The user authorized running the three combined chronology, pressure/response, and large-move/recovery studies on all four dates, including October 18. The 99 layers and 13 external data points are deferred until the event evidence is pinned together. Retain separate event, receive, known-by and recognition clocks, source order, event types and populations.
+
+User correction: we do not need to preserve a mistake. Fix mistaken assumptions or calculations, replace the affected active result and summary, and make the corrected version authoritative. Do not keep known-wrong substitute analyses as competing findings. This differs from genuine contrary market observations, failed hypotheses and missing data, which remain real evidence. Preserve original source observations; no local-only storage rule or desktop calculation.

@@ -50,7 +50,7 @@ For these files replace t0+50-second assumptions with the actual archived recogn
 
 [Export construction, group checks and coverage](https://github.com/DavisAI1974/Markets/blob/1a8ba3478a70c1b01405eb04d37659354e92e807/tasks/family-research-20261022/replay-comparison/README.md).
 [Adapter source](https://github.com/DavisAI1974/Markets/blob/1a8ba3478a70c1b01405eb04d37659354e92e807/tasks/family-research-20261022/research_replay_comparison.py).
-Preserve earlier substitute-based results; publish actual-input comparisons separately.
+Replace the substitute-based result files and their summaries with the corrected actual-input analysis. The corrected version is authoritative; do not retain a known mistake as a competing research result.
 
 ## Current division of work
 
