@@ -99,6 +99,43 @@ FIELD_MAP = [
     (r"^(buy|sell)(1|5|20|60)$|^d(1|5|20|60)$|^recent$", [L["flow"]], "cutoff_ns"),
     (r"^(bid_depth_full|ask_depth_full|depth_sign|near_depth_imbalance|near_sign)$", [L["depth"], L["spread_imb"]], "cutoff_ns"),
     (r"^(move_ticks|prior_move_ticks)$", [L["path"], L["outcome"]], "cutoff_ns"),
+    # flow-only detector rows (Codex-captured per-second tables; clock = the row's own epoch second)
+    (r"^second$", [L["recv"]], "row_default"),
+    (r"^runway$|^burst_vol$|^dip300$", [L["dipole_state"], L["flow"]], "row_default"),
+    # sweep cohort rows (post-family order sweep per first-family instance)
+    (r"^counters$", [L["adds"], L["cancels"], L["levels"], L["depth"]], "cutoff_ns"),
+    (r"^family_(print_lots_buy|print_lots_sell|print_lots_unknown|levels_printed|aggressor_orders)$", [L["trades"], L["fills"]], "cutoff_ns"),
+    (r"^family_remainder_posted_lots$", [L["adds"], L["depth"]], "cutoff_ns"),
+    (r"^hit_side$", [L["levels"], L["identity"]], "cutoff_ns"),
+    (r"^post(1s|250)_(hit|opp)_side_.*fills", [L["fills"], L["trades"], L["outcome"]], "cutoff_ns"),
+    (r"^post(1s|250)_(hit|opp)_side_.*cancels", [L["cancels"], L["depletion"], L["outcome"]], "cutoff_ns"),
+    (r"^post(1s|250)_(hit|opp)_side_.*adds", [L["adds"], L["recovery"], L["outcome"]], "cutoff_ns"),
+    (r"^(family_close_ns|family_cursors|has_tape)$", [L["known_by"], L["recv"], L["raw"]], "cutoff_ns"),
+    # raw tape messages (instance traces, pair traces, case prints and touch snapshots)
+    (r"^(ts_recv|ts_recv_ns|ts_event|cursor)$", [L["recv"], L["raw"]], "row_default"),
+    (r"^action$|^before$|^after$", [L["adds"], L["cancels"], L["modifies"], L["identity"]], "row_default"),
+    (r"^(linked_display_reduction|linked_fill_unchanged_display|linked_fill_reduction)$", [L["fills"], L["identity"]], "row_default"),
+    (r"^flags$|^flags_last$", [L["raw"]], "row_default"),
+    (r"^(price_raw|price|size)$", [L["levels"], L["trades"]], "row_default"),
+    (r"^aggressor$", [L["trades"]], "row_default"),
+    (r"^(near_best|far_touch|next_level|marker)$", [L["levels"], L["depth"]], "row_default"),
+    (r"^t_ms$", [L["recv"]], "row_default"),
+    (r"^(bid|ask)$", [L["levels"]], "row_default"),
+    (r"^(bid|ask)_depth10$", [L["depth"]], "row_default"),
+    (r"^spread_ticks$", [L["spread_imb"]], "row_default"),
+    # case per-second rows
+    (r"^(add|cancel|modify|fill)_[ABN](_lots)?$", [L["adds"], L["cancels"], L["modifies"], L["fills"]], "row_default"),
+    (r"^aggr_(buy|sell|mid)_lots$|^print$|^print_lots$", [L["trades"]], "row_default"),
+    (r"^mid$", [L["legacy_price"], L["path"]], "row_default"),
+    (r"^roll20$", [L["roll20"]], "row_default"),
+    (r"^(buy|sell)(_expiring)?$", [L["flow"]], "row_default"),
+    (r"^(bid|ask)_depth$", [L["depth"]], "row_default"),
+    (r"^(bid|ask)_touch$", [L["levels"]], "row_default"),
+    (r"^spread$", [L["spread_imb"]], "row_default"),
+    # pair rows
+    (r"^kind$|^role$|^pair_index$", [L["identity"], L["depletion"], L["recovery"]], "row_default"),
+    (r"^(retreated|recovered)$", [L["identity"], L["depletion"], L["recovery"], L["outcome"]], "row_default"),
+    (r"^sec$|^epoch_s$|^seed$", None, None),
     (r"^hour_utc$|^hour_class$|^vol_tercile$|^tercile$|^session$|^day0_epoch_s$|^mode$|^file$", None, None),
 ]
 SESSION_SECOND = {"t0", "onset", "confirm", "seed_known_s", "info_horizon_local_s", "info_horizon_refractory_s", "archived_recognition_s", "next_t0"}
@@ -130,8 +167,11 @@ def load_registry():
     return layers, hashlib.sha256(raw).hexdigest()
 
 
-def clock_for(rule, row, day0):
-    """Return (clock_kind, epoch_s, ns, utc) for a rule, or None if the row lacks it."""
+def clock_for(rule, row, day0, default=None):
+    """Return (clock_kind, epoch_s, ns, utc) for a rule, or None if the row lacks it. `default` is the row's own
+    clock for sources whose rows carry one clock (tape messages, per-second rows, pair rows)."""
+    if rule == "row_default":
+        return default
     def sec(v):
         if isinstance(v, bool) or not isinstance(v, (int, float)):
             return None
@@ -164,7 +204,117 @@ def clock_for(rule, row, day0):
         return nsc(row.get("start_recv_ns"), "receive_ns")
     if rule == "cutoff_ns":
         return nsc(row.get("cutoff_ns"), "known_by_cutoff_ns") or nsc(row.get("start_recv_ns"), "receive_ns")
-    return None
+    return default
+
+
+CASES_DATA = "tasks/family-research-20261022/claude-code-cases"
+FLOW_ONLY_TABLE = "tasks/family-research-20261022/flow-book-discovery-v1/date-tables/{d}/legacy_native_signed_flow.json.gz"
+
+
+def ns_clock(ns, kind="receive_ns"):
+    ns = int(ns); return (kind, ns // NS, ns, utc_ns(ns))
+
+
+def s_clock(e, kind="receive_second_bin"):
+    e = int(e); return (kind, e, None, utc_s(e))
+
+
+def extra_sources(tag, day0, src):
+    """The row sources outside FILES: yields (label, source_dict, rows) where rows yields (row, default_clock, day0_eff, extra_ids).
+    Only this work's own rows: Codex's family-start and touch-print rows that the case context cites are not pinned here."""
+    import data_locator
+    # 1. flow-only detector runs on the Codex-captured per-second tables (October 2 and 17); t0 is relative to the table's first second
+    p = HERE / f"exhaustion-clock-{DAY[tag]}-flow-only-events.jsonl.gz"
+    if p.exists():
+        fsrc = dict(per_second_table=FLOW_ONLY_TABLE.format(d=DAY[tag]), origin="Codex-captured box per-second table, not the tape", tape_members=None, exports=None)
+        def rows_flow():
+            for row in (json.loads(l) for l in gzip.open(p, "rt")):
+                yield row, s_clock(row["second"]), row["second"] - row["t0"], {}
+        yield p.name, fsrc, rows_flow()
+    if tag == "oct18":
+        # 2. the sweep cohort (post-family order sweep per first-family instance)
+        p = HERE / "sweep-cohort-events.jsonl.gz"
+        def rows_sweep():
+            for row in (json.loads(l) for l in gzip.open(p, "rt")):
+                yield row, ns_clock(row["start_recv_ns"]), day0, {}
+        yield p.name, src, rows_sweep()
+        # 3. the order-level traces of instances 375 and 391 (raw tape messages)
+        tr = json.loads((HERE / "trace-events.json").read_text())
+        for inst in (375, 391):
+            p = HERE / f"trace-instance{inst}-messages.jsonl.gz"
+            def rows_tr(p=p, inst=inst):
+                for row in (json.loads(l) for l in gzip.open(p, "rt")):
+                    yield row, ns_clock(row["ts_recv"]), day0, dict(instance=inst, family_id=tr[f"instance{inst}"]["family_id"])
+            yield p.name, src, rows_tr()
+    # 4. traced divergent pairs (October 2, 3, 17): one row per pair, one row per message of each role
+    p = HERE / f"divergent-pairs-{tag}.json"
+    if p.exists():
+        d = json.loads(p.read_text())
+        def rows_pairs():
+            for k, pair in enumerate(d["pairs"]):
+                roles = {r: dict(onset_group=pair[r]["episode"]["onset_group"], side=pair[r]["episode"]["side"], onset_ns=pair[r]["episode"]["onset_ns"],
+                                 onset_cursor=pair[r]["episode"]["onset_cursor"], outcome=pair[r]["episode"]["outcome"], order_id=pair[r]["order"]["order_id"],
+                                 fate=pair[r]["order"]["fate"], messages=len(pair[r]["messages"])) for r in ("retreated", "recovered")}
+                yield dict(kind=pair["kind"], pair_index=k, **roles), ns_clock(roles["retreated"]["onset_ns"]), day0, dict(pair_index=k, kind=pair["kind"])
+                for r in ("retreated", "recovered"):
+                    ep = pair[r]["episode"]
+                    for m in pair[r]["messages"]:
+                        ns = int(ep["onset_ns"] + round(m["t_ms"] * 1_000_000))
+                        yield dict(role=r, **m), ns_clock(ns, "receive_ns_from_t_ms"), day0, dict(pair_index=k, kind=pair["kind"], role=r, onset_group=ep["onset_group"], order_id=m.get("order_id"))
+        yield p.name, src, rows_pairs()
+    # 5. the five-view case rows (markets-data): context series, tape per-second, touch snapshots, prints
+    try:
+        ctx = json.loads(gzip.decompress(data_locator.read_bytes(f"{CASES_DATA}/case-context-{tag}.json.gz")))
+        tape = json.loads(gzip.decompress(data_locator.read_bytes(f"{CASES_DATA}/case-tape-{tag}.json.gz")))
+    except Exception as e:  # the case rows are optional inputs; say so rather than fail the ledger
+        print(tag, "case rows not resolvable:", e); ctx = tape = None
+    if ctx:
+        csrc = dict(src, case_rows=[f"{CASES_DATA}/case-context-{tag}.json.gz", f"{CASES_DATA}/case-tape-{tag}.json.gz"])
+        def rows_ctx():
+            for key, c in ctx.items():
+                ids = dict(case_t0=c["case"]["t0"], candidate_id=c["clocks"].get("candidate_id"))
+                for row in c["series"]:
+                    yield row, s_clock(row["epoch_s"]), day0, ids
+        yield f"case-context-{tag}.json.gz#series", csrc, rows_ctx()
+        def rows_tape():
+            for key, c in tape.items():
+                ids = dict(case_t0=c["case"]["t0"])
+                for sec, row in c["per_second"].items():
+                    yield dict(sec=int(sec), **row), s_clock(day0 + int(sec)), day0, ids
+        yield f"case-tape-{tag}.json.gz#per_second", csrc, rows_tape()
+        def rows_touch():
+            for key, c in tape.items():
+                ids = dict(case_t0=c["case"]["t0"])
+                for sec, row in c["touch_by_second"].items():
+                    yield dict(sec=int(sec), **row), ns_clock(row["ts_recv_ns"]), day0, ids
+        yield f"case-tape-{tag}.json.gz#touch_by_second", csrc, rows_touch()
+        def rows_prints():
+            for key, c in tape.items():
+                ids = dict(case_t0=c["case"]["t0"])
+                for row in c["prints"]:
+                    yield row, ns_clock(row["ts_recv_ns"]), day0, ids
+        yield f"case-tape-{tag}.json.gz#prints", csrc, rows_prints()
+
+
+def pin_row(row, day0, layers, default=None):
+    pins, unknown = [], []
+    for field, value in row.items():
+        hit = False
+        for pat_f, ls, rule in FIELD_MAP:
+            if re.search(pat_f, field):
+                hit = True
+                if ls is None:
+                    break
+                c = clock_for(rule, row, day0, default)
+                if c is None:
+                    break
+                kind, es, ns, u = c
+                pins.append(dict(field=field, value=value, layers=[dict(index=i, layer_id=layers[i]["layer_id"], group_id=layers[i]["group_id"]) for i in ls],
+                                 clock_kind=kind, clock_epoch_s=es, clock_ns=ns, clock_utc=u))
+                break
+        if not hit:
+            unknown.append(field)
+    return pins, unknown
 
 
 def main():
@@ -193,30 +343,35 @@ def main():
                 n_rows = n_pins = 0
                 for ordinal, line in enumerate(gzip.open(p, "rt")):
                     row = json.loads(line)
-                    if row.get("mode") == "trailing":
-                        pass  # kept: the trailing-threshold variant rows are pinned like the day-native ones, with their mode in ids
                     ids = {k: row[k] for k in ID_FIELDS if k in row}
                     clocks = {k: v for k, v in row.items() if k.endswith("_ns") or k.endswith("_utc") or k.endswith("_epoch_s") or k in ("birth_second", "t0", "onset", "confirm")}
-                    pins = []
-                    for field, value in row.items():
-                        for pat_f, ls, rule in FIELD_MAP:
-                            if re.search(pat_f, field):
-                                if ls is None:
-                                    break
-                                c = clock_for(rule, row, day0)
-                                if c is None:
-                                    break
-                                kind, es, ns, u = c
-                                pins.append(dict(field=field, value=value, layers=[dict(index=i, layer_id=layers[i]["layer_id"], group_id=layers[i]["group_id"]) for i in ls],
-                                                 clock_kind=kind, clock_epoch_s=es, clock_ns=ns, clock_utc=u))
-                                for i in ls:
-                                    counts[i] += 1
-                                break
+                    pins, _ = pin_row(row, day0, layers)
+                    for pin in pins:
+                        for l in pin["layers"]:
+                            counts[l["index"]] += 1
                     rec = dict(session=tag, file=p.name, ordinal=ordinal, ids=ids, clocks=clocks, sources=src, pins=pins, row=row)
                     fo.write(json.dumps(rec, default=str) + "\n")
                     n_rows += 1; n_pins += len(pins)
                 per_file[p.name] = dict(rows=n_rows, pins=n_pins)
-        grand[tag] = dict(files=per_file, pins_by_layer={f"{i:02d} {layers[i]['layer_id']}": n for i, n in sorted(counts.items())},
+            for label, esrc, rows in extra_sources(tag, day0, src):
+                n_rows = n_pins = 0; unknown_fields = Counter()
+                for ordinal, (row, default, day0_eff, extra_ids) in enumerate(rows):
+                    ids = {k: row[k] for k in ID_FIELDS if k in row}; ids.update(extra_ids)
+                    kind, es, ns, u = default
+                    clocks = {k: v for k, v in row.items() if k.endswith("_ns") or k in ("ts_recv", "ts_event", "second", "epoch_s", "start_recv_ns", "family_close_ns")}
+                    clocks["row_clock"] = dict(kind=kind, epoch_s=es, ns=ns, utc=u)
+                    pins, unknown = pin_row(row, day0_eff, layers, default)
+                    unknown_fields.update(unknown)
+                    for pin in pins:
+                        for l in pin["layers"]:
+                            counts[l["index"]] += 1
+                    rec = dict(session=tag, file=label, ordinal=ordinal, ids=ids, clocks=clocks, sources=esrc, pins=pins, row=row)
+                    fo.write(json.dumps(rec, default=str) + "\n")
+                    n_rows += 1; n_pins += len(pins)
+                per_file[label] = dict(rows=n_rows, pins=n_pins, fields_without_layer=sorted(unknown_fields))
+        grand[tag] = dict(files=per_file, not_pinned_here=["family_starts and touch_print_decisions cited in the case context are Codex's rows, pinned by their owner",
+                                                            "other_detector_events and size_one_onsets in the case context are already pinned from their own files"],
+                          identical_predecessor_copies=(["dipole-post-recognition-rows.jsonl.gz = dipole-post-recognition-oct18-rows.jsonl.gz", "first-family-four-arm-events.jsonl.gz = first-family-four-arm-oct18-events.jsonl.gz"] if tag == "oct18" else []), pins_by_layer={f"{i:02d} {layers[i]['layer_id']}": n for i, n in sorted(counts.items())},
                           rows=sum(v["rows"] for v in per_file.values()), pins=sum(v["pins"] for v in per_file.values()))
         print(tag, "rows", grand[tag]["rows"], "pins", grand[tag]["pins"], "layers touched", len(counts))
     (HERE / "ninety-nine-pins-summary.json").write_text(json.dumps(grand, indent=2) + "\n")

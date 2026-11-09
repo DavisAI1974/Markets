@@ -396,46 +396,46 @@
   {
    "tier": "derived",
    "path": "tasks/family-research-20261022/claude-code-pins/ninety-nine-pins-oct02.jsonl.gz",
-   "bytes": 24675729,
-   "sha256": "393aa990b57377f135d59a2c3299676f5534d2f41e9ad1e922db77d715a6767f",
+   "bytes": 25764845,
+   "sha256": "bcc170f5586dfaba252893105b2c420a49b3ecbb4c52fcbda12bdada5bc9da3f",
    "markets_commit": null,
-   "markets_data_commit": "158ae78dfa37fc035d02fedbd03a500e4e2aec38",
+   "markets_data_commit": "5c94c6453d9dfd3c6ce32386050d7bdc23c765c5",
    "session": "20231002",
    "markets_data_path": "tasks/family-research-20261022/claude-code-pins/ninety-nine-pins-oct02.jsonl.gz",
-   "note": "99-layer pin ledger of every Claude Code per-event row for the session; built by pin_rows_to_99.py at Markets 24da8788a3e0; one record per row with the original row, ids, clocks, sources and layer pins"
+   "note": "99-layer pin ledger of every Claude Code per-event row for the session; rebuilt at the second pass to add the flow-only detector runs, the Oct 18 sweep cohort and instance traces, the traced divergent pairs and the five-view case rows (series, per-second tape, touch snapshots, prints); 31 layers"
   },
   {
    "tier": "derived",
    "path": "tasks/family-research-20261022/claude-code-pins/ninety-nine-pins-oct03.jsonl.gz",
-   "bytes": 26904201,
-   "sha256": "6021759ed33aefd2fb75f668fda3e6f5d24e50e99c5bc2fa0bf1f39471fbd5ef",
+   "bytes": 27461772,
+   "sha256": "86a905973d28816483f26a41baba057aac3ac5b029aef3eca6285f67e58bb6cb",
    "markets_commit": null,
-   "markets_data_commit": "158ae78dfa37fc035d02fedbd03a500e4e2aec38",
+   "markets_data_commit": "5c94c6453d9dfd3c6ce32386050d7bdc23c765c5",
    "session": "20231003",
    "markets_data_path": "tasks/family-research-20261022/claude-code-pins/ninety-nine-pins-oct03.jsonl.gz",
-   "note": "99-layer pin ledger of every Claude Code per-event row for the session; built by pin_rows_to_99.py at Markets 24da8788a3e0; one record per row with the original row, ids, clocks, sources and layer pins"
+   "note": "99-layer pin ledger of every Claude Code per-event row for the session; rebuilt at the second pass to add the flow-only detector runs, the Oct 18 sweep cohort and instance traces, the traced divergent pairs and the five-view case rows (series, per-second tape, touch snapshots, prints); 31 layers"
   },
   {
    "tier": "derived",
    "path": "tasks/family-research-20261022/claude-code-pins/ninety-nine-pins-oct17.jsonl.gz",
-   "bytes": 29236073,
-   "sha256": "f400dd034268ee45c84598395a0cd8f0d9128a8bdcaa316f38a029fbc02b7df0",
+   "bytes": 30246972,
+   "sha256": "13622ec8c4745b72531a76d5da6710c75bca69eb1f2f5fedc74366523e81a872",
    "markets_commit": null,
-   "markets_data_commit": "158ae78dfa37fc035d02fedbd03a500e4e2aec38",
+   "markets_data_commit": "5c94c6453d9dfd3c6ce32386050d7bdc23c765c5",
    "session": "20231017",
    "markets_data_path": "tasks/family-research-20261022/claude-code-pins/ninety-nine-pins-oct17.jsonl.gz",
-   "note": "99-layer pin ledger of every Claude Code per-event row for the session; built by pin_rows_to_99.py at Markets 24da8788a3e0; one record per row with the original row, ids, clocks, sources and layer pins"
+   "note": "99-layer pin ledger of every Claude Code per-event row for the session; rebuilt at the second pass to add the flow-only detector runs, the Oct 18 sweep cohort and instance traces, the traced divergent pairs and the five-view case rows (series, per-second tape, touch snapshots, prints); 31 layers"
   },
   {
    "tier": "derived",
    "path": "tasks/family-research-20261022/claude-code-pins/ninety-nine-pins-oct18.jsonl.gz",
-   "bytes": 31780281,
-   "sha256": "68634d57adb99c05c5886f06cbef11d1db9fcb82720dc18579d877787ca76f04",
+   "bytes": 33748538,
+   "sha256": "351b9b27f16bf2f01351a0dbb9de1f301a87f25ccf772636503bb81c2ae6970b",
    "markets_commit": null,
-   "markets_data_commit": "158ae78dfa37fc035d02fedbd03a500e4e2aec38",
+   "markets_data_commit": "5c94c6453d9dfd3c6ce32386050d7bdc23c765c5",
    "session": "20231018",
    "markets_data_path": "tasks/family-research-20261022/claude-code-pins/ninety-nine-pins-oct18.jsonl.gz",
-   "note": "99-layer pin ledger of every Claude Code per-event row for the session; built by pin_rows_to_99.py at Markets 24da8788a3e0; one record per row with the original row, ids, clocks, sources and layer pins"
+   "note": "99-layer pin ledger of every Claude Code per-event row for the session; rebuilt at the second pass to add the flow-only detector runs, the Oct 18 sweep cohort and instance traces, the traced divergent pairs and the five-view case rows (series, per-second tape, touch snapshots, prints); 31 layers"
   },
   {
    "tier": "derived",

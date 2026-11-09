@@ -64,41 +64,78 @@
       "size-one-four-arm-oct02-rows.jsonl.gz": {
         "rows": 22041,
         "pins": 418779
+      },
+      "exhaustion-clock-20231002-flow-only-events.jsonl.gz": {
+        "rows": 766,
+        "pins": 6894,
+        "fields_without_layer": []
+      },
+      "divergent-pairs-oct02.json": {
+        "rows": 561,
+        "pins": 7275,
+        "fields_without_layer": []
+      },
+      "case-context-oct02.json.gz#series": {
+        "rows": 1802,
+        "pins": 19822,
+        "fields_without_layer": []
+      },
+      "case-tape-oct02.json.gz#per_second": {
+        "rows": 1542,
+        "pins": 15446,
+        "fields_without_layer": []
+      },
+      "case-tape-oct02.json.gz#touch_by_second": {
+        "rows": 1542,
+        "pins": 9252,
+        "fields_without_layer": []
+      },
+      "case-tape-oct02.json.gz#prints": {
+        "rows": 3268,
+        "pins": 16340,
+        "fields_without_layer": []
       }
     },
+    "not_pinned_here": [
+      "family_starts and touch_print_decisions cited in the case context are Codex's rows, pinned by their owner",
+      "other_detector_events and size_one_onsets in the case context are already pinned from their own files"
+    ],
+    "identical_predecessor_copies": [],
     "pins_by_layer": {
       "14 learned_d_structures_and_families": 8214,
       "15 learned_dipoles_and_geometry": 7550,
-      "29 raw_source_identity_provenance_clocks_integrity": 312559,
-      "30 order_lifecycle_adds": 154294,
-      "31 order_lifecycle_cancels": 132251,
-      "32 order_lifecycle_modifies": 220420,
-      "35 order_lifecycle_fills": 110209,
-      "37 order_identity_transitions": 176336,
-      "39 full_bid_ask_depth": 82684,
-      "40 price_level_and_order_counts": 341114,
+      "29 raw_source_identity_provenance_clocks_integrity": 323297,
+      "30 order_lifecycle_adds": 169027,
+      "31 order_lifecycle_cancels": 146984,
+      "32 order_lifecycle_modifies": 235153,
+      "34 order_lifecycle_trades": 15114,
+      "35 order_lifecycle_fills": 123824,
+      "37 order_identity_transitions": 179139,
+      "39 full_bid_ask_depth": 91049,
+      "40 price_level_and_order_counts": 358935,
       "42 queue_age_and_survival": 22042,
       "45 spread_and_depth_imbalance": 63056,
-      "48 aggressor_and_native_signed_flow": 76904,
-      "49 depletion_and_replenishment": 339014,
-      "50 resilience_and_recovery": 471265,
-      "52 price_and_book_path": 121428,
-      "55 legacy_native_signed_flow": 8390,
-      "56 legacy_per_second_roll20": 18457,
+      "48 aggressor_and_native_signed_flow": 87176,
+      "49 depletion_and_replenishment": 339581,
+      "50 resilience_and_recovery": 471832,
+      "52 price_and_book_path": 123230,
+      "54 legacy_price": 1802,
+      "55 legacy_native_signed_flow": 9156,
+      "56 legacy_per_second_roll20": 21791,
       "57 legacy_book_imbalance": 1678,
       "58 legacy_structure_observables": 13406,
-      "59 derived_roll20_and_dipole_state": 61299,
+      "59 derived_roll20_and_dipole_state": 65895,
       "60 derived_d_family_geometry": 5034,
       "61 derived_open_world_predecessor_state": 26842,
       "66 derived_feature_availability_timestamps": 6712,
-      "73 clock_receive_time": 323269,
+      "73 clock_receive_time": 335539,
       "74 clock_event_known_by": 471889,
       "75 clock_feature_availability": 11746,
-      "76 clock_prospective_discovery_confirmation": 8390,
-      "79 later_outcome_reveal": 650436
+      "76 clock_prospective_discovery_confirmation": 9156,
+      "79 later_outcome_reveal": 650440
     },
-    "rows": 98931,
-    "pins": 1697333
+    "rows": 108412,
+    "pins": 1772362
   },
   "oct03": {
     "files": {
@@ -165,41 +202,73 @@
       "size-one-four-arm-oct03-rows.jsonl.gz": {
         "rows": 24352,
         "pins": 462688
+      },
+      "divergent-pairs-oct03.json": {
+        "rows": 224,
+        "pins": 2894,
+        "fields_without_layer": []
+      },
+      "case-context-oct03.json.gz#series": {
+        "rows": 1802,
+        "pins": 19822,
+        "fields_without_layer": []
+      },
+      "case-tape-oct03.json.gz#per_second": {
+        "rows": 865,
+        "pins": 7745,
+        "fields_without_layer": []
+      },
+      "case-tape-oct03.json.gz#touch_by_second": {
+        "rows": 865,
+        "pins": 5190,
+        "fields_without_layer": []
+      },
+      "case-tape-oct03.json.gz#prints": {
+        "rows": 1327,
+        "pins": 6635,
+        "fields_without_layer": []
       }
     },
+    "not_pinned_here": [
+      "family_starts and touch_print_decisions cited in the case context are Codex's rows, pinned by their owner",
+      "other_detector_events and size_one_onsets in the case context are already pinned from their own files"
+    ],
+    "identical_predecessor_copies": [],
     "pins_by_layer": {
       "14 learned_d_structures_and_families": 8534,
       "15 learned_dipoles_and_geometry": 7712,
-      "29 raw_source_identity_provenance_clocks_integrity": 345178,
-      "30 order_lifecycle_adds": 170471,
-      "31 order_lifecycle_cancels": 146102,
-      "32 order_lifecycle_modifies": 243515,
-      "35 order_lifecycle_fills": 121749,
-      "37 order_identity_transitions": 194824,
-      "39 full_bid_ask_depth": 90152,
-      "40 price_level_and_order_counts": 376334,
+      "29 raw_source_identity_provenance_clocks_integrity": 350006,
+      "30 order_lifecycle_adds": 177751,
+      "31 order_lifecycle_cancels": 153382,
+      "32 order_lifecycle_modifies": 250795,
+      "34 order_lifecycle_trades": 7358,
+      "35 order_lifecycle_fills": 128585,
+      "37 order_identity_transitions": 195942,
+      "39 full_bid_ask_depth": 96152,
+      "40 price_level_and_order_counts": 387234,
       "42 queue_age_and_survival": 24353,
       "45 spread_and_depth_imbalance": 64907,
-      "48 aggressor_and_native_signed_flow": 79328,
-      "49 depletion_and_replenishment": 373859,
-      "50 resilience_and_recovery": 519976,
-      "52 price_and_book_path": 124139,
+      "48 aggressor_and_native_signed_flow": 86536,
+      "49 depletion_and_replenishment": 374089,
+      "50 resilience_and_recovery": 520206,
+      "52 price_and_book_path": 125941,
+      "54 legacy_price": 1802,
       "55 legacy_native_signed_flow": 8570,
-      "56 legacy_per_second_roll20": 18853,
+      "56 legacy_per_second_roll20": 20655,
       "57 legacy_book_imbalance": 1714,
       "58 legacy_structure_observables": 14912,
       "59 derived_roll20_and_dipole_state": 63215,
       "60 derived_d_family_geometry": 5142,
       "61 derived_open_world_predecessor_state": 27418,
       "66 derived_feature_availability_timestamps": 6856,
-      "73 clock_receive_time": 356268,
+      "73 clock_receive_time": 361096,
       "74 clock_event_known_by": 521342,
       "75 clock_feature_availability": 11998,
       "76 clock_prospective_discovery_confirmation": 8570,
-      "79 later_outcome_reveal": 708590
+      "79 later_outcome_reveal": 708594
     },
-    "rows": 108517,
-    "pins": 1854015
+    "rows": 113600,
+    "pins": 1896301
   },
   "oct17": {
     "files": {
@@ -266,41 +335,78 @@
       "size-one-four-arm-oct17-rows.jsonl.gz": {
         "rows": 27111,
         "pins": 515109
+      },
+      "exhaustion-clock-20231017-flow-only-events.jsonl.gz": {
+        "rows": 766,
+        "pins": 6894,
+        "fields_without_layer": []
+      },
+      "divergent-pairs-oct17.json": {
+        "rows": 171,
+        "pins": 2205,
+        "fields_without_layer": []
+      },
+      "case-context-oct17.json.gz#series": {
+        "rows": 1802,
+        "pins": 19822,
+        "fields_without_layer": []
+      },
+      "case-tape-oct17.json.gz#per_second": {
+        "rows": 1562,
+        "pins": 15852,
+        "fields_without_layer": []
+      },
+      "case-tape-oct17.json.gz#touch_by_second": {
+        "rows": 1562,
+        "pins": 9372,
+        "fields_without_layer": []
+      },
+      "case-tape-oct17.json.gz#prints": {
+        "rows": 2850,
+        "pins": 14250,
+        "fields_without_layer": []
       }
     },
+    "not_pinned_here": [
+      "family_starts and touch_print_decisions cited in the case context are Codex's rows, pinned by their owner",
+      "other_detector_events and size_one_onsets in the case context are already pinned from their own files"
+    ],
+    "identical_predecessor_copies": [],
     "pins_by_layer": {
       "14 learned_d_structures_and_families": 8272,
       "15 learned_dipoles_and_geometry": 7469,
-      "29 raw_source_identity_provenance_clocks_integrity": 383669,
-      "30 order_lifecycle_adds": 189777,
-      "31 order_lifecycle_cancels": 162666,
-      "32 order_lifecycle_modifies": 271110,
-      "35 order_lifecycle_fills": 135555,
-      "37 order_identity_transitions": 216888,
-      "39 full_bid_ask_depth": 97898,
-      "40 price_level_and_order_counts": 417240,
+      "29 raw_source_identity_provenance_clocks_integrity": 392831,
+      "30 order_lifecycle_adds": 203822,
+      "31 order_lifecycle_cancels": 176711,
+      "32 order_lifecycle_modifies": 285155,
+      "34 order_lifecycle_trades": 13004,
+      "35 order_lifecycle_fills": 149262,
+      "37 order_identity_transitions": 217741,
+      "39 full_bid_ask_depth": 105133,
+      "40 price_level_and_order_counts": 432315,
       "42 queue_age_and_survival": 27111,
       "45 spread_and_depth_imbalance": 62790,
-      "48 aggressor_and_native_signed_flow": 76591,
-      "49 depletion_and_replenishment": 414965,
-      "50 resilience_and_recovery": 577631,
-      "52 price_and_book_path": 120203,
-      "55 legacy_native_signed_flow": 8300,
-      "56 legacy_per_second_roll20": 18259,
+      "48 aggressor_and_native_signed_flow": 86863,
+      "49 depletion_and_replenishment": 415142,
+      "50 resilience_and_recovery": 577808,
+      "52 price_and_book_path": 122005,
+      "54 legacy_price": 1802,
+      "55 legacy_native_signed_flow": 9066,
+      "56 legacy_per_second_roll20": 21593,
       "57 legacy_book_imbalance": 1660,
       "58 legacy_structure_observables": 13456,
-      "59 derived_roll20_and_dipole_state": 60697,
+      "59 derived_roll20_and_dipole_state": 65293,
       "60 derived_d_family_geometry": 4980,
       "61 derived_open_world_predecessor_state": 26554,
       "66 derived_feature_availability_timestamps": 6640,
-      "73 clock_receive_time": 394278,
+      "73 clock_receive_time": 404972,
       "74 clock_event_known_by": 578430,
       "75 clock_feature_availability": 11620,
-      "76 clock_prospective_discovery_confirmation": 8300,
-      "79 later_outcome_reveal": 770871
+      "76 clock_prospective_discovery_confirmation": 9066,
+      "79 later_outcome_reveal": 770875
     },
-    "rows": 119136,
-    "pins": 2019990
+    "rows": 127849,
+    "pins": 2088385
   },
   "oct18": {
     "files": {
@@ -367,40 +473,85 @@
       "size-one-four-arm-oct18-rows.jsonl.gz": {
         "rows": 27560,
         "pins": 523640
+      },
+      "sweep-cohort-events.jsonl.gz": {
+        "rows": 749,
+        "pins": 13130,
+        "fields_without_layer": []
+      },
+      "trace-instance375-messages.jsonl.gz": {
+        "rows": 1650,
+        "pins": 16905,
+        "fields_without_layer": []
+      },
+      "trace-instance391-messages.jsonl.gz": {
+        "rows": 1212,
+        "pins": 12351,
+        "fields_without_layer": []
+      },
+      "case-context-oct18.json.gz#series": {
+        "rows": 3604,
+        "pins": 39644,
+        "fields_without_layer": []
+      },
+      "case-tape-oct18.json.gz#per_second": {
+        "rows": 1823,
+        "pins": 18131,
+        "fields_without_layer": []
+      },
+      "case-tape-oct18.json.gz#touch_by_second": {
+        "rows": 1823,
+        "pins": 10938,
+        "fields_without_layer": []
+      },
+      "case-tape-oct18.json.gz#prints": {
+        "rows": 3817,
+        "pins": 19085,
+        "fields_without_layer": []
       }
     },
+    "not_pinned_here": [
+      "family_starts and touch_print_decisions cited in the case context are Codex's rows, pinned by their owner",
+      "other_detector_events and size_one_onsets in the case context are already pinned from their own files"
+    ],
+    "identical_predecessor_copies": [
+      "dipole-post-recognition-rows.jsonl.gz = dipole-post-recognition-oct18-rows.jsonl.gz",
+      "first-family-four-arm-events.jsonl.gz = first-family-four-arm-oct18-events.jsonl.gz"
+    ],
     "pins_by_layer": {
-      "14 learned_d_structures_and_families": 8336,
+      "14 learned_d_structures_and_families": 9085,
       "15 learned_dipoles_and_geometry": 8009,
-      "29 raw_source_identity_provenance_clocks_integrity": 389585,
-      "30 order_lifecycle_adds": 192920,
-      "31 order_lifecycle_cancels": 165339,
-      "32 order_lifecycle_modifies": 275579,
-      "35 order_lifecycle_fills": 137779,
-      "37 order_identity_transitions": 220480,
-      "39 full_bid_ask_depth": 99775,
-      "40 price_level_and_order_counts": 424211,
+      "29 raw_source_identity_provenance_clocks_integrity": 415309,
+      "30 order_lifecycle_adds": 218569,
+      "31 order_lifecycle_cancels": 189862,
+      "32 order_lifecycle_modifies": 298599,
+      "34 order_lifecycle_trades": 28610,
+      "35 order_lifecycle_fills": 162071,
+      "37 order_identity_transitions": 232941,
+      "39 full_bid_ask_depth": 112127,
+      "40 price_level_and_order_counts": 453153,
       "42 queue_age_and_survival": 27560,
       "45 spread_and_depth_imbalance": 89630,
-      "48 aggressor_and_native_signed_flow": 104167,
-      "49 depletion_and_replenishment": 422300,
-      "50 resilience_and_recovery": 587660,
-      "52 price_and_book_path": 152320,
+      "48 aggressor_and_native_signed_flow": 119332,
+      "49 depletion_and_replenishment": 423054,
+      "50 resilience_and_recovery": 588791,
+      "52 price_and_book_path": 155924,
+      "54 legacy_price": 3604,
       "55 legacy_native_signed_flow": 8900,
-      "56 legacy_per_second_roll20": 19579,
+      "56 legacy_per_second_roll20": 23183,
       "57 legacy_book_imbalance": 1780,
-      "58 legacy_structure_observables": 14878,
+      "58 legacy_structure_observables": 15627,
       "59 derived_roll20_and_dipole_state": 65641,
       "60 derived_d_family_geometry": 5340,
       "61 derived_open_world_predecessor_state": 28474,
       "66 derived_feature_availability_timestamps": 7120,
-      "73 clock_receive_time": 401100,
-      "74 clock_event_known_by": 588346,
+      "73 clock_receive_time": 423962,
+      "74 clock_event_known_by": 591342,
       "75 clock_feature_availability": 12460,
       "76 clock_prospective_discovery_confirmation": 8900,
-      "79 later_outcome_reveal": 813749
+      "79 later_outcome_reveal": 816765
     },
-    "rows": 121641,
-    "pins": 2089722
+    "rows": 136319,
+    "pins": 2219906
   }
 }

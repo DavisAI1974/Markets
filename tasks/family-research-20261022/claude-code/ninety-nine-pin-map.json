@@ -8,6 +8,7 @@
     30,
     31,
     32,
+    34,
     35,
     37,
     39,
@@ -18,6 +19,7 @@
     49,
     50,
     52,
+    54,
     55,
     56,
     57,
@@ -842,6 +844,445 @@
         }
       ],
       "clock_rule": "cutoff_ns"
+    },
+    {
+      "pattern": "^second$",
+      "layers": [
+        {
+          "index": 73,
+          "layer_id": "clock_receive_time"
+        }
+      ],
+      "clock_rule": "row_default"
+    },
+    {
+      "pattern": "^runway$|^burst_vol$|^dip300$",
+      "layers": [
+        {
+          "index": 59,
+          "layer_id": "derived_roll20_and_dipole_state"
+        },
+        {
+          "index": 48,
+          "layer_id": "aggressor_and_native_signed_flow"
+        }
+      ],
+      "clock_rule": "row_default"
+    },
+    {
+      "pattern": "^counters$",
+      "layers": [
+        {
+          "index": 30,
+          "layer_id": "order_lifecycle_adds"
+        },
+        {
+          "index": 31,
+          "layer_id": "order_lifecycle_cancels"
+        },
+        {
+          "index": 40,
+          "layer_id": "price_level_and_order_counts"
+        },
+        {
+          "index": 39,
+          "layer_id": "full_bid_ask_depth"
+        }
+      ],
+      "clock_rule": "cutoff_ns"
+    },
+    {
+      "pattern": "^family_(print_lots_buy|print_lots_sell|print_lots_unknown|levels_printed|aggressor_orders)$",
+      "layers": [
+        {
+          "index": 34,
+          "layer_id": "order_lifecycle_trades"
+        },
+        {
+          "index": 35,
+          "layer_id": "order_lifecycle_fills"
+        }
+      ],
+      "clock_rule": "cutoff_ns"
+    },
+    {
+      "pattern": "^family_remainder_posted_lots$",
+      "layers": [
+        {
+          "index": 30,
+          "layer_id": "order_lifecycle_adds"
+        },
+        {
+          "index": 39,
+          "layer_id": "full_bid_ask_depth"
+        }
+      ],
+      "clock_rule": "cutoff_ns"
+    },
+    {
+      "pattern": "^hit_side$",
+      "layers": [
+        {
+          "index": 40,
+          "layer_id": "price_level_and_order_counts"
+        },
+        {
+          "index": 37,
+          "layer_id": "order_identity_transitions"
+        }
+      ],
+      "clock_rule": "cutoff_ns"
+    },
+    {
+      "pattern": "^post(1s|250)_(hit|opp)_side_.*fills",
+      "layers": [
+        {
+          "index": 35,
+          "layer_id": "order_lifecycle_fills"
+        },
+        {
+          "index": 34,
+          "layer_id": "order_lifecycle_trades"
+        },
+        {
+          "index": 79,
+          "layer_id": "later_outcome_reveal"
+        }
+      ],
+      "clock_rule": "cutoff_ns"
+    },
+    {
+      "pattern": "^post(1s|250)_(hit|opp)_side_.*cancels",
+      "layers": [
+        {
+          "index": 31,
+          "layer_id": "order_lifecycle_cancels"
+        },
+        {
+          "index": 49,
+          "layer_id": "depletion_and_replenishment"
+        },
+        {
+          "index": 79,
+          "layer_id": "later_outcome_reveal"
+        }
+      ],
+      "clock_rule": "cutoff_ns"
+    },
+    {
+      "pattern": "^post(1s|250)_(hit|opp)_side_.*adds",
+      "layers": [
+        {
+          "index": 30,
+          "layer_id": "order_lifecycle_adds"
+        },
+        {
+          "index": 50,
+          "layer_id": "resilience_and_recovery"
+        },
+        {
+          "index": 79,
+          "layer_id": "later_outcome_reveal"
+        }
+      ],
+      "clock_rule": "cutoff_ns"
+    },
+    {
+      "pattern": "^(family_close_ns|family_cursors|has_tape)$",
+      "layers": [
+        {
+          "index": 74,
+          "layer_id": "clock_event_known_by"
+        },
+        {
+          "index": 73,
+          "layer_id": "clock_receive_time"
+        },
+        {
+          "index": 29,
+          "layer_id": "raw_source_identity_provenance_clocks_integrity"
+        }
+      ],
+      "clock_rule": "cutoff_ns"
+    },
+    {
+      "pattern": "^(ts_recv|ts_recv_ns|ts_event|cursor)$",
+      "layers": [
+        {
+          "index": 73,
+          "layer_id": "clock_receive_time"
+        },
+        {
+          "index": 29,
+          "layer_id": "raw_source_identity_provenance_clocks_integrity"
+        }
+      ],
+      "clock_rule": "row_default"
+    },
+    {
+      "pattern": "^action$|^before$|^after$",
+      "layers": [
+        {
+          "index": 30,
+          "layer_id": "order_lifecycle_adds"
+        },
+        {
+          "index": 31,
+          "layer_id": "order_lifecycle_cancels"
+        },
+        {
+          "index": 32,
+          "layer_id": "order_lifecycle_modifies"
+        },
+        {
+          "index": 37,
+          "layer_id": "order_identity_transitions"
+        }
+      ],
+      "clock_rule": "row_default"
+    },
+    {
+      "pattern": "^(linked_display_reduction|linked_fill_unchanged_display|linked_fill_reduction)$",
+      "layers": [
+        {
+          "index": 35,
+          "layer_id": "order_lifecycle_fills"
+        },
+        {
+          "index": 37,
+          "layer_id": "order_identity_transitions"
+        }
+      ],
+      "clock_rule": "row_default"
+    },
+    {
+      "pattern": "^flags$|^flags_last$",
+      "layers": [
+        {
+          "index": 29,
+          "layer_id": "raw_source_identity_provenance_clocks_integrity"
+        }
+      ],
+      "clock_rule": "row_default"
+    },
+    {
+      "pattern": "^(price_raw|price|size)$",
+      "layers": [
+        {
+          "index": 40,
+          "layer_id": "price_level_and_order_counts"
+        },
+        {
+          "index": 34,
+          "layer_id": "order_lifecycle_trades"
+        }
+      ],
+      "clock_rule": "row_default"
+    },
+    {
+      "pattern": "^aggressor$",
+      "layers": [
+        {
+          "index": 34,
+          "layer_id": "order_lifecycle_trades"
+        }
+      ],
+      "clock_rule": "row_default"
+    },
+    {
+      "pattern": "^(near_best|far_touch|next_level|marker)$",
+      "layers": [
+        {
+          "index": 40,
+          "layer_id": "price_level_and_order_counts"
+        },
+        {
+          "index": 39,
+          "layer_id": "full_bid_ask_depth"
+        }
+      ],
+      "clock_rule": "row_default"
+    },
+    {
+      "pattern": "^t_ms$",
+      "layers": [
+        {
+          "index": 73,
+          "layer_id": "clock_receive_time"
+        }
+      ],
+      "clock_rule": "row_default"
+    },
+    {
+      "pattern": "^(bid|ask)$",
+      "layers": [
+        {
+          "index": 40,
+          "layer_id": "price_level_and_order_counts"
+        }
+      ],
+      "clock_rule": "row_default"
+    },
+    {
+      "pattern": "^(bid|ask)_depth10$",
+      "layers": [
+        {
+          "index": 39,
+          "layer_id": "full_bid_ask_depth"
+        }
+      ],
+      "clock_rule": "row_default"
+    },
+    {
+      "pattern": "^spread_ticks$",
+      "layers": [
+        {
+          "index": 45,
+          "layer_id": "spread_and_depth_imbalance"
+        }
+      ],
+      "clock_rule": "row_default"
+    },
+    {
+      "pattern": "^(add|cancel|modify|fill)_[ABN](_lots)?$",
+      "layers": [
+        {
+          "index": 30,
+          "layer_id": "order_lifecycle_adds"
+        },
+        {
+          "index": 31,
+          "layer_id": "order_lifecycle_cancels"
+        },
+        {
+          "index": 32,
+          "layer_id": "order_lifecycle_modifies"
+        },
+        {
+          "index": 35,
+          "layer_id": "order_lifecycle_fills"
+        }
+      ],
+      "clock_rule": "row_default"
+    },
+    {
+      "pattern": "^aggr_(buy|sell|mid)_lots$|^print$|^print_lots$",
+      "layers": [
+        {
+          "index": 34,
+          "layer_id": "order_lifecycle_trades"
+        }
+      ],
+      "clock_rule": "row_default"
+    },
+    {
+      "pattern": "^mid$",
+      "layers": [
+        {
+          "index": 54,
+          "layer_id": "legacy_price"
+        },
+        {
+          "index": 52,
+          "layer_id": "price_and_book_path"
+        }
+      ],
+      "clock_rule": "row_default"
+    },
+    {
+      "pattern": "^roll20$",
+      "layers": [
+        {
+          "index": 56,
+          "layer_id": "legacy_per_second_roll20"
+        }
+      ],
+      "clock_rule": "row_default"
+    },
+    {
+      "pattern": "^(buy|sell)(_expiring)?$",
+      "layers": [
+        {
+          "index": 48,
+          "layer_id": "aggressor_and_native_signed_flow"
+        }
+      ],
+      "clock_rule": "row_default"
+    },
+    {
+      "pattern": "^(bid|ask)_depth$",
+      "layers": [
+        {
+          "index": 39,
+          "layer_id": "full_bid_ask_depth"
+        }
+      ],
+      "clock_rule": "row_default"
+    },
+    {
+      "pattern": "^(bid|ask)_touch$",
+      "layers": [
+        {
+          "index": 40,
+          "layer_id": "price_level_and_order_counts"
+        }
+      ],
+      "clock_rule": "row_default"
+    },
+    {
+      "pattern": "^spread$",
+      "layers": [
+        {
+          "index": 45,
+          "layer_id": "spread_and_depth_imbalance"
+        }
+      ],
+      "clock_rule": "row_default"
+    },
+    {
+      "pattern": "^kind$|^role$|^pair_index$",
+      "layers": [
+        {
+          "index": 37,
+          "layer_id": "order_identity_transitions"
+        },
+        {
+          "index": 49,
+          "layer_id": "depletion_and_replenishment"
+        },
+        {
+          "index": 50,
+          "layer_id": "resilience_and_recovery"
+        }
+      ],
+      "clock_rule": "row_default"
+    },
+    {
+      "pattern": "^(retreated|recovered)$",
+      "layers": [
+        {
+          "index": 37,
+          "layer_id": "order_identity_transitions"
+        },
+        {
+          "index": 49,
+          "layer_id": "depletion_and_replenishment"
+        },
+        {
+          "index": 50,
+          "layer_id": "resilience_and_recovery"
+        },
+        {
+          "index": 79,
+          "layer_id": "later_outcome_reveal"
+        }
+      ],
+      "clock_rule": "row_default"
+    },
+    {
+      "pattern": "^sec$|^epoch_s$|^seed$",
+      "layers": null,
+      "clock_rule": null
     },
     {
       "pattern": "^hour_utc$|^hour_class$|^vol_tercile$|^tercile$|^session$|^day0_epoch_s$|^mode$|^file$",

@@ -1639,6 +1639,24 @@ clocks, and the sealed later-outcome layer) are data, so they live in markets-da
 `tasks/family-research-20261022/claude-code-pins/`, commit 158ae78, with manifest entries. No summary or
 render was pinned; those are views over these rows.
 
+Second pass of the ledger (after section 25). An audit of every row file against the ledger found row
+sources of mine outside the sixteen per-session files, so the builder now also pins: the flow-only detector
+runs on the Codex-captured per-second tables for October 2 and 17 (766 rows each; their clock is the row's
+own epoch second and their source is the per-second table, not the tape, which the record says); the
+October 18 sweep cohort (749 rows, one per first-family instance, clock = the family start receive clock);
+the order-level traces of instances 375 and 391 (1,650 and 1,212 raw tape messages, clock = receive
+nanoseconds); the traced divergent pairs of October 2, 3 and 17 (one row per pair and one per message, the
+message clock derived from the episode onset plus the message's millisecond offset, named as such); and the
+five-view case rows of section 25 (the per-second context series, the per-second tape counts, the touch
+snapshots with their receive clock and cursor, and the prints). The two untagged October 18 files
+(`dipole-post-recognition-rows`, `first-family-four-arm-events`) were checked row for row against their
+tagged copies and are identical, so they are recorded as predecessor copies rather than pinned twice. The
+family starts and touch-print decisions that the case context cites are Codex's rows and are left to their
+owner; the detector events and size-one onsets it cites were already pinned from their own files. The
+sixteen original files pin exactly as before (row and pin counts unchanged). The ledgers now hold 486,180
+rows touching 31 layers (order identity transitions and legacy price were added by the tape messages and
+the case series), markets-data commit 5c94c64, manifest re-pinned.
+
 ## 25. Ten cases through five coordinated views
 
 The per-event renders of section 24's rows. Ten individual events were chosen by stated rules across all
