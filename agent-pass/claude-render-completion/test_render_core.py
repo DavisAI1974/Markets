@@ -1,7 +1,19 @@
 import unittest, math
-from render_core import relative_seconds, lifecycle_markers, display_values
+from render_core import relative_seconds, lifecycle_markers, display_values, candidate_labels
 
 class RenderContracts(unittest.TestCase):
+    def test_finalize_only_has_explicit_birth_but_no_live_recognition(self):
+        row={"input_disposition":"finalize_only_no_live_recognition",
+             "original_episode":{"birth_recv_ns":1696366763000000000,"recognized_recv_ns":1696366809000000000},
+             "recorded_operands":{"event_second":1696366763,"available_second":1696366809}}
+        labels=candidate_labels(row)
+        self.assertEqual(labels["birth_second"],1696366763)
+        self.assertEqual(labels["available_second"],1696366809)
+        self.assertFalse(labels["live_recognition_allowed"])
+    def test_disagreeing_birth_clocks_are_not_guessed(self):
+        with self.assertRaises(ValueError):
+            candidate_labels({"original_episode":{"birth_recv_ns":100000000000},
+                              "recorded_operands":{"event_second":101}})
     def test_nanosecond_anchor(self):
         self.assertEqual(relative_seconds(1696197693000000000,1696197692999999999),1e-9)
     def test_missing_recognition(self):

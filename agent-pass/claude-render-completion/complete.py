@@ -5,7 +5,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.collections import PolyCollection
-from render_core import relative_seconds,lifecycle_markers
+from render_core import relative_seconds,lifecycle_markers,candidate_labels
 REV="beb2104c079045c24832f2279eac5e8e69bc576e"
 ROOT="tasks/family-research-20261022"
 CLAUDE=ROOT+"/claude-pass-3day"
@@ -73,18 +73,30 @@ def render(day,shard,out):
     assert len(order)==len(rows)==len(set(order))
     weakby={}
     for w in weak:weakby.setdefault(w["candidate_id"],[]).append(w)
-    records=[];counts=[];clocks=[];allbirths=[(int(r["birth_second"]),int(r.get("recorded_operands",{}).get("polarity",0))) for r in rows if r.get("birth_second") is not None]
+    oldrecords={};oldcounts={};oldclocks={}
+    if (out/f"index-{shard}.json").exists():
+        oldrecords={r["input_row"]:r for r in json.loads((out/f"index-{shard}.json").read_text())}
+        for c in json.loads((out/f"reconciliation-{shard}.json").read_text()):oldcounts.setdefault(c["input_row"],[]).append(c)
+        oldclocks={r["candidate_id"]:r for r in json.loads((out/f"clocks-{shard}.json").read_text())}
+    recovered_births=[candidate_labels(r)["birth_second"] for r in rows if r.get("birth_second") is None]
+    records=[];counts=[];clocks=[];allbirths=[(candidate_labels(r)["birth_second"],int(r.get("recorded_operands",{}).get("polarity",0))) for r in rows]
     for ordinal,rowidx in enumerate(order):
         if ordinal%4!=shard:continue
-        r=rows[rowidx];cid=r["candidate_id"];bs=int(r["birth_second"]);pol=int(r.get("recorded_operands",{}).get("polarity",0))
+        r=rows[rowidx];cid=r["candidate_id"];labels=candidate_labels(r);bs=labels["birth_second"];pol=int(r.get("recorded_operands",{}).get("polarity",0))
         assert pol in (-1,1)
         n=zi.get(rowidx);c=cov.get(rowidx,{})
         pre=number(c.get("pre_ns"));pre=bs*10**9-1 if pre is None else pre
         assert pre==bs*10**9-1,(day,rowidx,pre,bs)
         rec=number(c.get("rec_ns")) if n is not None else None
-        if rec is not None and rec<=0:rec=None
-        available=number(r.get("available_second"))
+        if not labels["live_recognition_allowed"] or (rec is not None and rec<=0):rec=None
+        available=labels["available_second"]
         m=lifecycle_markers(sec,ratio,bs,pol);hi=m["window_end_s"];L=int((ks<=hi).sum())
+        old=oldrecords.get(rowidx)
+        if old is not None and not any(b!=bs and -60<=b-bs<=hi for b in recovered_births):
+            assert sha(out/old["file"])==old["sha256"]
+            old["reused_image"]=True;old["render_code_revision"]="141d876541aae7e04e5de242d0af0a9e047228b9"
+            records.append(old);counts.extend(oldcounts[rowidx]);clocks.append(oldclocks[cid])
+            continue
         kvals=ks[:L];xb=kvals[:-1]+.5
         fig,ax=plt.subplots(6,1,figsize=(14,15),sharex=True,gridspec_kw={"height_ratios":[1.3,1,1,1.2,1.2,1.1]})
         missing=[];candidate_counts=[]
@@ -166,7 +178,7 @@ def render(day,shard,out):
             birth_ns=bs*10**9,pre_cutoff_ns=pre,recognition_ns=rec,available_second=available,
             markers=m,detector_disposition=disposition.get(bs,"not present in saturated-second ledger"),
             missing_array=n is None,sha256=sha(out/filename),weakening_rows=weakby.get(cid,[]),
-            source_revision=REV)
+            source_revision=REV,render_code_revision=os.environ.get("CODE_REV"),reused_image=False,birth_clock_source=labels["birth_clock_source"],input_disposition=r.get("input_disposition"))
         records.append(record);counts.extend(candidate_counts)
         clocks.append(dict(candidate_id=cid,birth_ns=bs*10**9,pre_cutoff_ns=pre,recognition_ns=rec,
             recognition_after_cutoff_s=relative_seconds(rec,pre),available_second=available,

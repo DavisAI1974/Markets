@@ -25,3 +25,19 @@ def lifecycle_markers(seconds,ratio,birth,polarity):
     return dict(run_onset_s=onset,run_end_s=end,first_flip_s=flip,first_empty_s=empty,
                 tail_unresolved=unresolved,window_end_s=min(1260,horizon),
                 window_capped=horizon>1260)
+
+def candidate_labels(row):
+    operands=row.get("recorded_operands",{})
+    birth=row.get("birth_second")
+    source="birth_second"
+    if birth is None:
+        episode_ns=row.get("original_episode",{}).get("birth_recv_ns")
+        event=operands.get("event_second")
+        if episode_ns is None or event is None:
+            raise ValueError("No explicit original birth clock")
+        if int(episode_ns)!=int(event)*1_000_000_000:
+            raise ValueError("Original episode and event-second clocks disagree")
+        birth=int(event);source="original_episode.birth_recv_ns + recorded_operands.event_second"
+    available=row.get("available_second",operands.get("available_second"))
+    return dict(birth_second=int(birth),available_second=None if available is None else int(available),
+                birth_clock_source=source,live_recognition_allowed=row.get("input_disposition")!="finalize_only_no_live_recognition")
