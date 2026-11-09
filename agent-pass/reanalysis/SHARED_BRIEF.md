@@ -46,6 +46,18 @@ Seek rules that extend across days, instances and trades. Report each day's supp
 
 Evaluate a combination against its constituents and simple reference rules. Identify incremental information, redundancy, lead/lag, false alarms, missed events, coverage and opportunities that were not traded. Compare performance after spread, fees, slippage, latency and credible fill assumptions. Mark unavailable execution evidence explicitly. Nearby overlapping events and correlated samples are not independent replications. Account for the number of patterns/thresholds explored; freeze candidate rules before prospective paper observation. These already-studied four days cannot be relabelled untouched validation.
 
+## Dedicated dipole layer and aspect review
+
+Pay special attention to every distinct dipole layer and aspect present in the evidence. Build a source-defined map before interpreting them; use actual saved names and definitions rather than inventing layers. Include, where observed, underlying buy/sell flow and rolling-window contributions, fresh activity versus expiring activity, birth and recognition, formation and prebirth behavior, direction/orientation and magnitude, family geometry and ancestry, price/book response, component and trade legs, continuation, exhaustion, recovery, reversal and endpoint conventions. Keep raw observations, derived states and retrospective labels distinct.
+
+For each layer/aspect, establish what it measures, its units and own clock, earliest defensible availability, original path and whole-parent links, individual behavioral correspondence, inverse or delayed relationships, failures and conflicts. Examine how layers combine, disagree, lead or lag one another and whether their relative sequence supplies information absent from any single curve. Do not require layers to share a shape or direction. Do not automatically treat several derived views of the same source as independent confirmation.
+
+Explicitly evaluate the user's hypothesis: can the dipole layers together supply most, or potentially all, of the market understanding needed for the intended decisions? Treat this as a question to investigate, not a conclusion to presume. Define the decision coverage: recognition, direction, remaining strength and duration, continuation versus failure, exhaustion/reversal, adverse-move avoidance and executable entry/hold/exit/change-of-direction rules.
+
+Compare dipole-only evidence, other data alone and their combination using existing measured comparisons where available. Report what each adds, what is redundant, where dipole evidence is contradicted, what remains unexplained and what other observations are needed. If the required comparison has not been measured, say so and specify the smallest useful follow-up; do not invent a percentage of market knowledge explained. Trace supporting and adverse examples across all four days and separate retrospective explanation from information available early enough to act.
+
+Deliver DIPOLE_LAYER_MAP.csv with source layer/aspect, definition, clock/availability, source coordinates, individual role, interactions, decision coverage, incremental evidence, conflicts and gaps. Add a dedicated section to REPORT.md assessing sufficiency and limitations, and link each paper strategy to the specific dipole layers and complementary inputs it uses. This review is an interpretation of the completed evidence, not a restart of the skipped reverse-engineering work.
+
 ## Direct conflicts and contradictory evidence
 
 Flag any data in direct conflict with other data, even when inconvenient to a favored interpretation. Record exact source revisions, paths, row/event/parent IDs, values, units, definitions and relevant clocks on both sides, plus the affected claims and strategies. Do not average away or silently choose between incompatible records.
@@ -86,7 +98,8 @@ Write separate analyst-specific outputs without reading the other analyst's new 
 6. COVERAGE.csv: every supplied source and substantive field/data type, interpretation, availability, individual/group/whole review references, duplicate lineage and explicit unassessable cases.
 7. CONFLICTS.csv: both source coordinates and values, comparison basis, conflict category, affected claims/strategies, severity, resolution or needed check, and action while unresolved.
 8. PAPER_STRATEGIES.md and PAPER_STRATEGIES.json: matching explicit rule cards and machine-readable configurations, parameter provenance, evidence references, readiness and implementation requirements. Missing prerequisites remain explicit; no invented measured parameters.
-9. PAPER_READINESS.md: ranked candidates, exact launch/check steps, shared logging/evaluation requirements, tonight blockers and deferred gaps. Identify actual connection/configuration needs from the available project; do not assume a platform is already connected.
+9. DIPOLE_LAYER_MAP.csv: source-defined layers/aspects, clocks, individual and combined roles, decision coverage, incremental evidence, conflicts and gaps.
+10. PAPER_READINESS.md: ranked candidates, exact launch/check steps, shared logging/evaluation requirements, tonight blockers and deferred gaps. Identify actual connection/configuration needs from the available project; do not assume a platform is already connected.
 
 Choose illustrative cases by a declared rule, including successful, failed/adverse and recovery cases across the four dates where present. Counts and distributions use the defined population, not just chosen illustrations. No fixed quota should force invented examples.
 
