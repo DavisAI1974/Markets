@@ -12,3 +12,5 @@ Acceptance: one shared immutable starting packet; every input and substantive fi
 Execution: GitHub-hosted computation only. No completed-suite reruns, reverse-engineering restart, desktop research computation, AWS/S3, live-money trading or PR15 merge.
 
 Method choice: observable-sequence and incremental-information review. Interpret what each measurement describes and when it becomes known; compare concordant, opposing, absent and conditional relationships against the raw event path and existing measured summaries. Differences across days and populations remain visible. Historical studies are common background, not new out-of-sample validation.
+
+Scope addition: explicitly trace price → subsequent orders/liquidity/flow/activity → subsequent price, alongside behavior → price. Distinguish mechanical same-group effects, later responses and shared causes; document where existing evidence cannot identify causation. Reflect this in report, claims, cases, coverage and dipole review.

@@ -69,3 +69,7 @@ Latest user clarification: the reanalysis is comprehensive discovery and underst
 ## Explicit start and identical full assignments — November 9
 
 The user explicitly said Start. This supersedes the historical reanalysis hold above. The final common packet is frozen at markets-data e7b1c4acac2e37205cdb9ce1c53829b6ca30f4ee, tasks/family-research-20261022/shared-reanalysis-inputs/final-42593665910-1. Use reanalysis/INPUT_AUTHORITY.md and the shared brief committed with this update. Codex and Ccode each perform the complete analysis independently; do not divide dates, data types, methods or deliverables between them. Each saves its complete report before reading the other's new conclusions. All distinct evidence remains in scope.
+
+## Two-way market feedback — November 9
+
+User addition: analyze how price affects subsequent market behavior, as well as how behavior precedes price. Both analysts independently cover the full feedback sequence using the same frozen evidence; retain clocks, mechanical-versus-behavioral distinctions, contrary cases and causal uncertainty. See the price-as-input section of reanalysis/SHARED_BRIEF.md.

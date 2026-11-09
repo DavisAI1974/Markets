@@ -11,3 +11,5 @@ Produce every deliverable listed in SHARED_BRIEF.md, including the complete repo
 The final packet includes the historical discovery record at f1c7277, suite/receipts at 3d0b06a, data at c01caaf and corrected Tier 1 clocks. Do not use older rounded Tier 1 annotations. Record the exact common brief and manifest commits in RECEIPT.json.
 
 Keep work and artifacts in GitHub. No desktop research computation, AWS/S3, live-money trading or PR15 merge.
+
+Additional shared requirement: analyze both directions—behavior preceding price changes and price changes followed by market behavior. Examine the feedback sequence, subsequent flow/book/liquidity responses, adverse and absent responses, and distinguish mechanical/simultaneous changes from later participant actions. Apply the price-as-input section of SHARED_BRIEF.md. The evidence packet remains unchanged; record this updated brief commit.
