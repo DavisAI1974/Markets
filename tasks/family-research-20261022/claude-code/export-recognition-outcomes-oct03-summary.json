@@ -1,0 +1,600 @@
+{
+  "session": "oct03",
+  "export_scope": "full session",
+  "export_groups": 653912,
+  "export_prints": null,
+  "replay_prints": 41410,
+  "events": 857,
+  "used": 857,
+  "skipped": {},
+  "recognition_delay_s": {
+    "median": 52.048,
+    "max": 153.367
+  },
+  "export_vs_replay_midpoint_abs_ticks": {
+    "n": 857,
+    "median": 0.0,
+    "max": 3.0,
+    "zero_share": 0.842
+  },
+  "arms": {
+    "baseline": {
+      "label": "all recognitions, oriented to polarity",
+      "events": 857,
+      "horizons": {
+        "1": {
+          "n": 857,
+          "with_birth": 73,
+          "flat": 716,
+          "against_birth": 68,
+          "median_ticks": 0.0,
+          "with_share_nonflat": 0.518
+        },
+        "5": {
+          "n": 857,
+          "with_birth": 124,
+          "flat": 611,
+          "against_birth": 122,
+          "median_ticks": 0.0,
+          "with_share_nonflat": 0.504
+        },
+        "20": {
+          "n": 857,
+          "with_birth": 216,
+          "flat": 424,
+          "against_birth": 217,
+          "median_ticks": 0.0,
+          "with_share_nonflat": 0.499
+        },
+        "60": {
+          "n": 857,
+          "with_birth": 274,
+          "flat": 278,
+          "against_birth": 305,
+          "median_ticks": -0.0,
+          "with_share_nonflat": 0.473
+        },
+        "300": {
+          "n": 855,
+          "with_birth": 378,
+          "flat": 107,
+          "against_birth": 370,
+          "median_ticks": -0.0,
+          "with_share_nonflat": 0.505
+        },
+        "600": {
+          "n": 849,
+          "with_birth": 398,
+          "flat": 79,
+          "against_birth": 372,
+          "median_ticks": 0.0,
+          "with_share_nonflat": 0.517
+        }
+      }
+    },
+    "flow/same_direction": {
+      "label": "300 s flow at recognition same_direction",
+      "events": 492,
+      "horizons": {
+        "1": {
+          "n": 492,
+          "with_birth": 37,
+          "flat": 417,
+          "against_birth": 38,
+          "median_ticks": 0.0,
+          "with_share_nonflat": 0.493
+        },
+        "5": {
+          "n": 492,
+          "with_birth": 62,
+          "flat": 360,
+          "against_birth": 70,
+          "median_ticks": 0.0,
+          "with_share_nonflat": 0.47
+        },
+        "20": {
+          "n": 492,
+          "with_birth": 107,
+          "flat": 261,
+          "against_birth": 124,
+          "median_ticks": 0.0,
+          "with_share_nonflat": 0.463
+        },
+        "60": {
+          "n": 492,
+          "with_birth": 146,
+          "flat": 170,
+          "against_birth": 176,
+          "median_ticks": 0.0,
+          "with_share_nonflat": 0.453
+        },
+        "300": {
+          "n": 492,
+          "with_birth": 199,
+          "flat": 68,
+          "against_birth": 225,
+          "median_ticks": -0.0,
+          "with_share_nonflat": 0.469
+        },
+        "600": {
+          "n": 490,
+          "with_birth": 197,
+          "flat": 54,
+          "against_birth": 239,
+          "median_ticks": 0.0,
+          "with_share_nonflat": 0.452
+        }
+      }
+    },
+    "flow/opposite_direction": {
+      "label": "300 s flow at recognition opposite_direction",
+      "events": 342,
+      "horizons": {
+        "1": {
+          "n": 342,
+          "with_birth": 36,
+          "flat": 277,
+          "against_birth": 29,
+          "median_ticks": -0.0,
+          "with_share_nonflat": 0.554
+        },
+        "5": {
+          "n": 342,
+          "with_birth": 58,
+          "flat": 235,
+          "against_birth": 49,
+          "median_ticks": -0.0,
+          "with_share_nonflat": 0.542
+        },
+        "20": {
+          "n": 342,
+          "with_birth": 102,
+          "flat": 153,
+          "against_birth": 87,
+          "median_ticks": 0.0,
+          "with_share_nonflat": 0.54
+        },
+        "60": {
+          "n": 342,
+          "with_birth": 120,
+          "flat": 101,
+          "against_birth": 121,
+          "median_ticks": -0.0,
+          "with_share_nonflat": 0.498
+        },
+        "300": {
+          "n": 340,
+          "with_birth": 168,
+          "flat": 36,
+          "against_birth": 136,
+          "median_ticks": 0.0,
+          "with_share_nonflat": 0.553
+        },
+        "600": {
+          "n": 336,
+          "with_birth": 189,
+          "flat": 22,
+          "against_birth": 125,
+          "median_ticks": 1.0,
+          "with_share_nonflat": 0.602
+        }
+      }
+    },
+    "flow/balanced": {
+      "label": "300 s flow at recognition balanced",
+      "events": 23,
+      "horizons": {
+        "1": {
+          "n": 23,
+          "with_birth": 0,
+          "flat": 22,
+          "against_birth": 1,
+          "median_ticks": 0.0,
+          "with_share_nonflat": 0.0
+        },
+        "5": {
+          "n": 23,
+          "with_birth": 4,
+          "flat": 16,
+          "against_birth": 3,
+          "median_ticks": -0.0,
+          "with_share_nonflat": 0.571
+        },
+        "20": {
+          "n": 23,
+          "with_birth": 7,
+          "flat": 10,
+          "against_birth": 6,
+          "median_ticks": 0.0,
+          "with_share_nonflat": 0.538
+        },
+        "60": {
+          "n": 23,
+          "with_birth": 8,
+          "flat": 7,
+          "against_birth": 8,
+          "median_ticks": 0.0,
+          "with_share_nonflat": 0.5
+        },
+        "300": {
+          "n": 23,
+          "with_birth": 11,
+          "flat": 3,
+          "against_birth": 9,
+          "median_ticks": 0.0,
+          "with_share_nonflat": 0.55
+        },
+        "600": {
+          "n": 23,
+          "with_birth": 12,
+          "flat": 3,
+          "against_birth": 8,
+          "median_ticks": 1.0,
+          "with_share_nonflat": 0.6
+        }
+      }
+    },
+    "flow/undefined": {
+      "label": "300 s flow at recognition undefined",
+      "events": 0,
+      "horizons": {
+        "1": {
+          "n": 0,
+          "with_birth": 0,
+          "flat": 0,
+          "against_birth": 0,
+          "median_ticks": null,
+          "with_share_nonflat": null
+        },
+        "5": {
+          "n": 0,
+          "with_birth": 0,
+          "flat": 0,
+          "against_birth": 0,
+          "median_ticks": null,
+          "with_share_nonflat": null
+        },
+        "20": {
+          "n": 0,
+          "with_birth": 0,
+          "flat": 0,
+          "against_birth": 0,
+          "median_ticks": null,
+          "with_share_nonflat": null
+        },
+        "60": {
+          "n": 0,
+          "with_birth": 0,
+          "flat": 0,
+          "against_birth": 0,
+          "median_ticks": null,
+          "with_share_nonflat": null
+        },
+        "300": {
+          "n": 0,
+          "with_birth": 0,
+          "flat": 0,
+          "against_birth": 0,
+          "median_ticks": null,
+          "with_share_nonflat": null
+        },
+        "600": {
+          "n": 0,
+          "with_birth": 0,
+          "flat": 0,
+          "against_birth": 0,
+          "median_ticks": null,
+          "with_share_nonflat": null
+        }
+      }
+    },
+    "touch/aligned": {
+      "label": "recognition touch size aligned to polarity",
+      "events": 419,
+      "horizons": {
+        "1": {
+          "n": 419,
+          "with_birth": 53,
+          "flat": 348,
+          "against_birth": 18,
+          "median_ticks": 0.0,
+          "with_share_nonflat": 0.746
+        },
+        "5": {
+          "n": 419,
+          "with_birth": 85,
+          "flat": 293,
+          "against_birth": 41,
+          "median_ticks": -0.0,
+          "with_share_nonflat": 0.675
+        },
+        "20": {
+          "n": 419,
+          "with_birth": 128,
+          "flat": 187,
+          "against_birth": 104,
+          "median_ticks": -0.0,
+          "with_share_nonflat": 0.552
+        },
+        "60": {
+          "n": 419,
+          "with_birth": 149,
+          "flat": 130,
+          "against_birth": 140,
+          "median_ticks": 0.0,
+          "with_share_nonflat": 0.516
+        },
+        "300": {
+          "n": 419,
+          "with_birth": 189,
+          "flat": 56,
+          "against_birth": 174,
+          "median_ticks": -0.0,
+          "with_share_nonflat": 0.521
+        },
+        "600": {
+          "n": 417,
+          "with_birth": 207,
+          "flat": 43,
+          "against_birth": 167,
+          "median_ticks": -0.0,
+          "with_share_nonflat": 0.553
+        }
+      }
+    },
+    "touch/opposed": {
+      "label": "recognition touch size opposed to polarity",
+      "events": 359,
+      "horizons": {
+        "1": {
+          "n": 359,
+          "with_birth": 17,
+          "flat": 301,
+          "against_birth": 41,
+          "median_ticks": 0.0,
+          "with_share_nonflat": 0.293
+        },
+        "5": {
+          "n": 359,
+          "with_birth": 33,
+          "flat": 259,
+          "against_birth": 67,
+          "median_ticks": -0.0,
+          "with_share_nonflat": 0.33
+        },
+        "20": {
+          "n": 359,
+          "with_birth": 75,
+          "flat": 191,
+          "against_birth": 93,
+          "median_ticks": 0.0,
+          "with_share_nonflat": 0.446
+        },
+        "60": {
+          "n": 359,
+          "with_birth": 110,
+          "flat": 116,
+          "against_birth": 133,
+          "median_ticks": 0.0,
+          "with_share_nonflat": 0.453
+        },
+        "300": {
+          "n": 357,
+          "with_birth": 156,
+          "flat": 43,
+          "against_birth": 158,
+          "median_ticks": 0.0,
+          "with_share_nonflat": 0.497
+        },
+        "600": {
+          "n": 353,
+          "with_birth": 158,
+          "flat": 27,
+          "against_birth": 168,
+          "median_ticks": -0.0,
+          "with_share_nonflat": 0.485
+        }
+      }
+    },
+    "touch/equal": {
+      "label": "recognition touch size equal to polarity",
+      "events": 79,
+      "horizons": {
+        "1": {
+          "n": 79,
+          "with_birth": 3,
+          "flat": 67,
+          "against_birth": 9,
+          "median_ticks": 0.0,
+          "with_share_nonflat": 0.25
+        },
+        "5": {
+          "n": 79,
+          "with_birth": 6,
+          "flat": 59,
+          "against_birth": 14,
+          "median_ticks": -0.0,
+          "with_share_nonflat": 0.3
+        },
+        "20": {
+          "n": 79,
+          "with_birth": 13,
+          "flat": 46,
+          "against_birth": 20,
+          "median_ticks": 0.0,
+          "with_share_nonflat": 0.394
+        },
+        "60": {
+          "n": 79,
+          "with_birth": 15,
+          "flat": 32,
+          "against_birth": 32,
+          "median_ticks": -0.0,
+          "with_share_nonflat": 0.319
+        },
+        "300": {
+          "n": 79,
+          "with_birth": 33,
+          "flat": 8,
+          "against_birth": 38,
+          "median_ticks": 0.0,
+          "with_share_nonflat": 0.465
+        },
+        "600": {
+          "n": 79,
+          "with_birth": 33,
+          "flat": 9,
+          "against_birth": 37,
+          "median_ticks": -0.0,
+          "with_share_nonflat": 0.471
+        }
+      }
+    },
+    "state/A-fast-collapse": {
+      "label": "A-fast-collapse",
+      "events": 458,
+      "horizons": {
+        "1": {
+          "n": 458,
+          "with_birth": 46,
+          "flat": 369,
+          "against_birth": 43,
+          "median_ticks": -0.0,
+          "with_share_nonflat": 0.517
+        },
+        "5": {
+          "n": 458,
+          "with_birth": 79,
+          "flat": 294,
+          "against_birth": 85,
+          "median_ticks": 0.0,
+          "with_share_nonflat": 0.482
+        },
+        "20": {
+          "n": 458,
+          "with_birth": 128,
+          "flat": 192,
+          "against_birth": 138,
+          "median_ticks": 0.0,
+          "with_share_nonflat": 0.481
+        },
+        "60": {
+          "n": 458,
+          "with_birth": 154,
+          "flat": 117,
+          "against_birth": 187,
+          "median_ticks": -0.0,
+          "with_share_nonflat": 0.452
+        },
+        "300": {
+          "n": 456,
+          "with_birth": 205,
+          "flat": 41,
+          "against_birth": 210,
+          "median_ticks": 0.0,
+          "with_share_nonflat": 0.494
+        },
+        "600": {
+          "n": 453,
+          "with_birth": 218,
+          "flat": 31,
+          "against_birth": 204,
+          "median_ticks": 0.0,
+          "with_share_nonflat": 0.517
+        }
+      }
+    },
+    "state/A-persistent": {
+      "label": "A-persistent",
+      "events": 399,
+      "horizons": {
+        "1": {
+          "n": 399,
+          "with_birth": 27,
+          "flat": 347,
+          "against_birth": 25,
+          "median_ticks": -0.0,
+          "with_share_nonflat": 0.519
+        },
+        "5": {
+          "n": 399,
+          "with_birth": 45,
+          "flat": 317,
+          "against_birth": 37,
+          "median_ticks": -0.0,
+          "with_share_nonflat": 0.549
+        },
+        "20": {
+          "n": 399,
+          "with_birth": 88,
+          "flat": 232,
+          "against_birth": 79,
+          "median_ticks": 0.0,
+          "with_share_nonflat": 0.527
+        },
+        "60": {
+          "n": 399,
+          "with_birth": 120,
+          "flat": 161,
+          "against_birth": 118,
+          "median_ticks": 0.0,
+          "with_share_nonflat": 0.504
+        },
+        "300": {
+          "n": 399,
+          "with_birth": 173,
+          "flat": 66,
+          "against_birth": 160,
+          "median_ticks": -0.0,
+          "with_share_nonflat": 0.52
+        },
+        "600": {
+          "n": 396,
+          "with_birth": 180,
+          "flat": 48,
+          "against_birth": 168,
+          "median_ticks": 0.0,
+          "with_share_nonflat": 0.517
+        }
+      }
+    }
+  },
+  "touch_as_direction_call": {
+    "1": {
+      "with_touch": 94,
+      "flat": 649,
+      "against_touch": 35,
+      "with_share_nonflat": 0.729
+    },
+    "5": {
+      "with_touch": 152,
+      "flat": 552,
+      "against_touch": 74,
+      "with_share_nonflat": 0.673
+    },
+    "20": {
+      "with_touch": 221,
+      "flat": 378,
+      "against_touch": 179,
+      "with_share_nonflat": 0.552
+    },
+    "60": {
+      "with_touch": 282,
+      "flat": 246,
+      "against_touch": 250,
+      "with_share_nonflat": 0.53
+    },
+    "300": {
+      "with_touch": 347,
+      "flat": 99,
+      "against_touch": 330,
+      "with_share_nonflat": 0.513
+    },
+    "600": {
+      "with_touch": 375,
+      "flat": 70,
+      "against_touch": 325,
+      "with_share_nonflat": 0.536
+    }
+  }
+}

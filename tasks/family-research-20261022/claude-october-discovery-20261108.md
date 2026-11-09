@@ -1163,3 +1163,101 @@ tape's print stream. Before any use: a fifth and sixth day to test the state fac
 fixed numbers rather than leave-one-day-out estimates; a faster-adapting day scale for sessions like
 October 2; and the Kalshi side, where the clock's job would be to say when the NYMEX move that Kalshi
 follows is due.
+
+## 17. The export side on four sessions: what the standalone exports changed, and what they did not
+
+The standalone writer finished overnight. Exports for October 2, 3 and 17 are on the branch under
+`tasks/family-research-20261022/replay-artifacts/<date>/standalone-inputs/groups.jsonl.gz` with their
+receipts, and the sealed touch-print decisions beside them (`standalone-decisions/decisions.jsonl.gz`).
+Receipts: October 2 is PARTIAL_TRADE_DATE from the October 2 UTC member (600,291 groups, 37,670 prints, no
+Sunday-evening prefix); October 17 is PARTIAL_TRADE_DATE from the October 17 member (635,170 groups,
+33,451 prints, no evening prefix); October 3 is the full session with the October 2 member replayed as
+warm-up (653,912 groups, 41,410 prints); October 18 unchanged (583,688 groups, 30,739 prints). All four
+pin the original tape commit 1d15dc6f and adapter af36937d; none used the prefix members from data commit
+603c4def. Each file's sha256 matches its receipt. Scripts: `export_paths.py`, `export_recognition_outcomes.py`,
+`decision_candidates_four_arm.py`; outputs `export-recognition-outcomes-<tag>-*` and
+`decision-candidates-four-arm-<tag>-*` for the four tags.
+
+**What the exports changed on my side: nothing in sections 11 to 16, which never read them.** They add
+two things: an independent outcome source (the group-close midpoints under the known-by clock) and a
+population defined by the same frozen touch-print rules on every day.
+
+### 17.1 Export against tape
+
+Print counts agree exactly where the export is session-complete (October 3: 41,410 both; October 18:
+30,739 both) and differ by the prefix hours where it is not (October 17: 33,451 export vs 33,703 tape;
+October 2: 37,670 vs 38,127). At every recognition second the export's group midpoint and my per-second
+replay midpoint agree exactly 81 to 84 percent of the time with median difference 0 ticks; the largest
+differences (3 to 6 ticks) are within-second quote moves between the group close and the second's last
+quote. Events born in the missing prefix hours have no groups and are counted out (63 on October 17, 72
+on October 2). The two reconstructions of the book agree.
+
+### 17.2 Section 1 on four sessions: outcomes after the archived adapter's recognition
+
+Recognition = first group close at or after t0 + 50 s, as the archived adapter's available_second. The
+realised recognition delay from t0 has median 51.4 / 52.3 / 52.0 / 52.2 s on October 18 / 17 / 3 / 2
+(section 11 had 51 s from the archived candidates themselves). Outcomes from the export's midpoints,
+oriented to polarity, non-flat with-share:
+
+| arm | horizon | Oct 18 | Oct 17 | Oct 3 | Oct 2 |
+|---|---|---|---|---|---|
+| baseline (all recognitions) | 60 s | 0.50 | 0.49 | 0.47 | 0.52 |
+| baseline | 300 s | 0.50 | 0.46 | 0.51 | 0.49 |
+| baseline | 600 s | 0.50 | 0.48 | 0.52 | 0.51 |
+| flow opposite at recognition | 600 s | 0.55 | 0.47 | 0.60 | 0.45 |
+| touch aligned to polarity | 5 s | 0.54 | 0.64 | 0.68 | 0.67 |
+| touch opposed to polarity | 5 s | 0.40 | 0.43 | 0.33 | 0.30 |
+| touch aligned | 600 s | 0.50 | 0.47 | 0.55 | 0.53 |
+
+The section 1 result holds on all four: the recognition carries no direction for the burst polarity at
+any horizon, and the touch-size relation at recognition carries direction at the short horizons. Read as
+a plain direction call irrespective of polarity (bigger touch side wins), the touch imbalance is right
+63 / 64 / 73 / 74 percent of decided outcomes at 1 s, 57 / 61 / 67 / 69 at 5 s, 63 / 57 / 55 / 64 at 20 s,
+55 / 56 / 53 / 59 at 60 s, and 51 / 52 / 51 / 53 at 300 s on October 18 / 17 / 3 / 2. Most 1 to 5 s outcomes
+are flat (56 to 76 percent), so the decided ones are few. This is the queue-imbalance effect of the
+microstructure literature (the primer's section on order books): the heavier side of the touch predicts
+the next tick, and the information is gone within a few minutes. It is a general book property present at
+every second, not a property of the exhaustion anchor, and section 1 said so for October 18 alone.
+
+### 17.3 The four arms on the frozen touch-print candidates
+
+The falling-touch+print.v1 CANDIDATE groups (8,122 / 8,880 / 13,266 / 11,598 on October 18 / 17 / 3 / 2)
+are the one population the sealed decisions define identically on every day. Pressure side = the rule
+side (a falling bid touch is selling pressure); outcome = midpoint change from the decision's known-by
+clock, oriented so positive is continuation; flow arm = 60 s aggressor imbalance opposing the pressure;
+book arm = 10-level depth skew opposing it (per-second replay operands; the first-family ledger's were
+ns-exact). Continuation share of decided outcomes:
+
+| arm | horizon | Oct 18 | Oct 17 | Oct 3 | Oct 2 |
+|---|---|---|---|---|---|
+| baseline | 60 s | 0.53 | 0.54 | 0.54 | 0.54 |
+| baseline | 600 s | 0.51 | 0.51 | 0.52 | 0.51 |
+| +both oppose (the 375/391 stack) | 60 s | 0.56 | 0.54 | 0.54 | 0.51 |
+| +both oppose | 600 s | 0.57 | 0.55 | 0.52 | 0.49 |
+| inverse, both agree | 600 s | 0.46 | 0.48 | 0.53 | 0.52 |
+| baseline, bid side | 600 s | 0.59 | 0.58 | 0.45 | 0.51 |
+| baseline, ask side | 600 s | 0.44 | 0.44 | 0.61 | 0.50 |
+| book bid-heavy share at decisions | | 0.58 | 0.61 | 0.50 | 0.54 |
+
+Four-day reading. (1) The rule's pressure side continues at 60 s on every day, 53 to 54 percent, median 0
+ticks: a small, consistent, bounce-sized continuation. (2) The 375/391 stack's lift over baseline is
+October 18's: plus 3 to 6 points there, plus 0 to 4 on the 17th, zero on the 3rd, minus 2 to 4 on the
+2nd; the inverse stack reverses on 18 and 17 and continues on 3 and 2. Same shape as section 13.3's
+drift finding: on the two falling-tape days the selling-pressure side continues at 600 s (0.58 to 0.59)
+and the buying side reverses (0.44); on the rising October 3 it is the mirror (0.45 / 0.61); October 2 is
+even. The side split is the day's path. (3) The bid-heavy displayed book that section 2 called a day
+constant on October 18 is a two-day constant (18 and 17 at 0.58 and 0.61), even on the 3rd and mild on
+the 2nd; it is not a property of NG's book in general.
+
+### 17.4 What this adds to the merge
+
+- The exports and the tape agree, so numbers from either side can be compared across the three reviews
+  once the prefix difference is stated (sections 14.1 and 17.1).
+- Section 1 and section 2 of this file were October 18 results; sections 17.2 and 17.3 are their four-day
+  forms, and both land where sections 13 to 15 did: no direction from the exhaustion anchors, a short-lived
+  queue-imbalance direction read that belongs to the book at every second, and per-cell lifts that follow
+  each day's drift.
+- Not done on the export side, because their inputs are October 18 only: the 749 first-family population
+  (saved screening ledger), the 1,012 size-one episodes (SQLite triage) and the 375 / 391 order traces.
+  The size-one onsets could be derived from the groups on every day and validated against the October 18
+  ledger; that is the next export-side job if the size-one four arms are wanted on four days.

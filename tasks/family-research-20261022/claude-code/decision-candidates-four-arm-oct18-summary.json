@@ -1,0 +1,1175 @@
+{
+  "session": "oct18",
+  "export_scope": "full session",
+  "rule": "falling-touch+print.v1",
+  "decision_rule_counts": {
+    "falling-touch.v1|CANDIDATE": 64079,
+    "prior-touch-print.v1|CANDIDATE": 27829,
+    "falling-touch+print.v1|CANDIDATE": 8122,
+    "prior-touch-print.v1|AMBIGUOUS_VS_PRIOR_TOUCH": 1968
+  },
+  "candidates": 8122,
+  "by_side": {
+    "bid": 3947,
+    "ask": 4175
+  },
+  "vol_cuts": [
+    359.0,
+    743.0
+  ],
+  "all": {
+    "baseline": {
+      "60": {
+        "n": 8116,
+        "continue_": 3773,
+        "flat": 1021,
+        "reverse": 3322,
+        "continue_share_nonflat": 0.532,
+        "median_ticks": 0.0
+      },
+      "300": {
+        "n": 8098,
+        "continue_": 3964,
+        "flat": 389,
+        "reverse": 3745,
+        "continue_share_nonflat": 0.514,
+        "median_ticks": 0.0
+      },
+      "600": {
+        "n": 8085,
+        "continue_": 3946,
+        "flat": 314,
+        "reverse": 3825,
+        "continue_share_nonflat": 0.508,
+        "median_ticks": 0.0
+      },
+      "n": 8122
+    },
+    "+flow opposes": {
+      "60": {
+        "n": 3567,
+        "continue_": 1679,
+        "flat": 462,
+        "reverse": 1426,
+        "continue_share_nonflat": 0.541,
+        "median_ticks": 0.0
+      },
+      "300": {
+        "n": 3558,
+        "continue_": 1846,
+        "flat": 181,
+        "reverse": 1531,
+        "continue_share_nonflat": 0.547,
+        "median_ticks": 0.5
+      },
+      "600": {
+        "n": 3548,
+        "continue_": 1836,
+        "flat": 136,
+        "reverse": 1576,
+        "continue_share_nonflat": 0.538,
+        "median_ticks": 0.5
+      },
+      "n": 3569
+    },
+    "+book opposes": {
+      "60": {
+        "n": 3886,
+        "continue_": 1881,
+        "flat": 495,
+        "reverse": 1510,
+        "continue_share_nonflat": 0.555,
+        "median_ticks": 0.0
+      },
+      "300": {
+        "n": 3879,
+        "continue_": 1976,
+        "flat": 199,
+        "reverse": 1704,
+        "continue_share_nonflat": 0.537,
+        "median_ticks": 0.5
+      },
+      "600": {
+        "n": 3873,
+        "continue_": 2030,
+        "flat": 146,
+        "reverse": 1697,
+        "continue_share_nonflat": 0.545,
+        "median_ticks": 0.5
+      },
+      "n": 3890
+    },
+    "+both oppose": {
+      "60": {
+        "n": 2155,
+        "continue_": 1060,
+        "flat": 272,
+        "reverse": 823,
+        "continue_share_nonflat": 0.563,
+        "median_ticks": 0.0
+      },
+      "300": {
+        "n": 2152,
+        "continue_": 1136,
+        "flat": 111,
+        "reverse": 905,
+        "continue_share_nonflat": 0.557,
+        "median_ticks": 0.5
+      },
+      "600": {
+        "n": 2148,
+        "continue_": 1168,
+        "flat": 88,
+        "reverse": 892,
+        "continue_share_nonflat": 0.567,
+        "median_ticks": 1.0
+      },
+      "n": 2155
+    },
+    "inverse: flow agrees": {
+      "60": {
+        "n": 4405,
+        "continue_": 2031,
+        "flat": 538,
+        "reverse": 1836,
+        "continue_share_nonflat": 0.525,
+        "median_ticks": 0.0
+      },
+      "300": {
+        "n": 4396,
+        "continue_": 2054,
+        "flat": 205,
+        "reverse": 2137,
+        "continue_share_nonflat": 0.49,
+        "median_ticks": 0.0
+      },
+      "600": {
+        "n": 4393,
+        "continue_": 2051,
+        "flat": 173,
+        "reverse": 2169,
+        "continue_share_nonflat": 0.486,
+        "median_ticks": 0.0
+      },
+      "n": 4409
+    },
+    "inverse: book agrees": {
+      "60": {
+        "n": 4145,
+        "continue_": 1858,
+        "flat": 514,
+        "reverse": 1773,
+        "continue_share_nonflat": 0.512,
+        "median_ticks": 0.0
+      },
+      "300": {
+        "n": 4134,
+        "continue_": 1947,
+        "flat": 187,
+        "reverse": 2000,
+        "continue_share_nonflat": 0.493,
+        "median_ticks": 0.0
+      },
+      "600": {
+        "n": 4127,
+        "continue_": 1871,
+        "flat": 165,
+        "reverse": 2091,
+        "continue_share_nonflat": 0.472,
+        "median_ticks": -0.5
+      },
+      "n": 4147
+    },
+    "inverse: both agree": {
+      "60": {
+        "n": 2675,
+        "continue_": 1216,
+        "flat": 317,
+        "reverse": 1142,
+        "continue_share_nonflat": 0.516,
+        "median_ticks": 0.0
+      },
+      "300": {
+        "n": 2670,
+        "continue_": 1215,
+        "flat": 118,
+        "reverse": 1337,
+        "continue_share_nonflat": 0.476,
+        "median_ticks": -0.5
+      },
+      "600": {
+        "n": 2669,
+        "continue_": 1184,
+        "flat": 115,
+        "reverse": 1370,
+        "continue_share_nonflat": 0.464,
+        "median_ticks": -0.5
+      },
+      "n": 2675
+    }
+  },
+  "by_side_arms": {
+    "bid": {
+      "baseline": {
+        "60": {
+          "n": 3945,
+          "continue_": 1906,
+          "flat": 520,
+          "reverse": 1519,
+          "continue_share_nonflat": 0.556,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 3936,
+          "continue_": 2040,
+          "flat": 200,
+          "reverse": 1696,
+          "continue_share_nonflat": 0.546,
+          "median_ticks": 0.5
+        },
+        "600": {
+          "n": 3926,
+          "continue_": 2194,
+          "flat": 173,
+          "reverse": 1559,
+          "continue_share_nonflat": 0.585,
+          "median_ticks": 1.0
+        },
+        "n": 3947
+      },
+      "+flow opposes": {
+        "60": {
+          "n": 1917,
+          "continue_": 940,
+          "flat": 250,
+          "reverse": 727,
+          "continue_share_nonflat": 0.564,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 1909,
+          "continue_": 1020,
+          "flat": 117,
+          "reverse": 772,
+          "continue_share_nonflat": 0.569,
+          "median_ticks": 1.0
+        },
+        "600": {
+          "n": 1901,
+          "continue_": 1139,
+          "flat": 69,
+          "reverse": 693,
+          "continue_share_nonflat": 0.622,
+          "median_ticks": 2.0
+        },
+        "n": 1919
+      },
+      "+book opposes": {
+        "60": {
+          "n": 2217,
+          "continue_": 1093,
+          "flat": 295,
+          "reverse": 829,
+          "continue_share_nonflat": 0.569,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 2215,
+          "continue_": 1152,
+          "flat": 120,
+          "reverse": 943,
+          "continue_share_nonflat": 0.55,
+          "median_ticks": 0.5
+        },
+        "600": {
+          "n": 2209,
+          "continue_": 1299,
+          "flat": 87,
+          "reverse": 823,
+          "continue_share_nonflat": 0.612,
+          "median_ticks": 1.5
+        },
+        "n": 2217
+      },
+      "+both oppose": {
+        "60": {
+          "n": 1294,
+          "continue_": 656,
+          "flat": 160,
+          "reverse": 478,
+          "continue_share_nonflat": 0.578,
+          "median_ticks": 0.5
+        },
+        "300": {
+          "n": 1292,
+          "continue_": 665,
+          "flat": 88,
+          "reverse": 539,
+          "continue_share_nonflat": 0.552,
+          "median_ticks": 0.5
+        },
+        "600": {
+          "n": 1288,
+          "continue_": 772,
+          "flat": 49,
+          "reverse": 467,
+          "continue_share_nonflat": 0.623,
+          "median_ticks": 2.0
+        },
+        "n": 1294
+      },
+      "inverse: flow agrees": {
+        "60": {
+          "n": 1952,
+          "continue_": 939,
+          "flat": 258,
+          "reverse": 755,
+          "continue_share_nonflat": 0.554,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 1951,
+          "continue_": 978,
+          "flat": 82,
+          "reverse": 891,
+          "continue_share_nonflat": 0.523,
+          "median_ticks": 0.5
+        },
+        "600": {
+          "n": 1949,
+          "continue_": 1017,
+          "flat": 102,
+          "reverse": 830,
+          "continue_share_nonflat": 0.551,
+          "median_ticks": 0.5
+        },
+        "n": 1952
+      },
+      "inverse: book agrees": {
+        "60": {
+          "n": 1683,
+          "continue_": 795,
+          "flat": 217,
+          "reverse": 671,
+          "continue_share_nonflat": 0.542,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 1676,
+          "continue_": 864,
+          "flat": 79,
+          "reverse": 733,
+          "continue_share_nonflat": 0.541,
+          "median_ticks": 0.5
+        },
+        "600": {
+          "n": 1672,
+          "continue_": 869,
+          "flat": 84,
+          "reverse": 719,
+          "continue_share_nonflat": 0.547,
+          "median_ticks": 0.5
+        },
+        "n": 1685
+      },
+      "inverse: both agree": {
+        "60": {
+          "n": 1032,
+          "continue_": 504,
+          "flat": 122,
+          "reverse": 406,
+          "continue_share_nonflat": 0.554,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 1031,
+          "continue_": 493,
+          "flat": 50,
+          "reverse": 488,
+          "continue_share_nonflat": 0.503,
+          "median_ticks": 0.0
+        },
+        "600": {
+          "n": 1031,
+          "continue_": 491,
+          "flat": 64,
+          "reverse": 476,
+          "continue_share_nonflat": 0.508,
+          "median_ticks": 0.0
+        },
+        "n": 1032
+      }
+    },
+    "ask": {
+      "baseline": {
+        "60": {
+          "n": 4171,
+          "continue_": 1867,
+          "flat": 501,
+          "reverse": 1803,
+          "continue_share_nonflat": 0.509,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 4162,
+          "continue_": 1924,
+          "flat": 189,
+          "reverse": 2049,
+          "continue_share_nonflat": 0.484,
+          "median_ticks": 0.0
+        },
+        "600": {
+          "n": 4159,
+          "continue_": 1752,
+          "flat": 141,
+          "reverse": 2266,
+          "continue_share_nonflat": 0.436,
+          "median_ticks": -1.0
+        },
+        "n": 4175
+      },
+      "+flow opposes": {
+        "60": {
+          "n": 1650,
+          "continue_": 739,
+          "flat": 212,
+          "reverse": 699,
+          "continue_share_nonflat": 0.514,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 1649,
+          "continue_": 826,
+          "flat": 64,
+          "reverse": 759,
+          "continue_share_nonflat": 0.521,
+          "median_ticks": 0.5
+        },
+        "600": {
+          "n": 1647,
+          "continue_": 697,
+          "flat": 67,
+          "reverse": 883,
+          "continue_share_nonflat": 0.441,
+          "median_ticks": -1.0
+        },
+        "n": 1650
+      },
+      "+book opposes": {
+        "60": {
+          "n": 1669,
+          "continue_": 788,
+          "flat": 200,
+          "reverse": 681,
+          "continue_share_nonflat": 0.536,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 1664,
+          "continue_": 824,
+          "flat": 79,
+          "reverse": 761,
+          "continue_share_nonflat": 0.52,
+          "median_ticks": 0.0
+        },
+        "600": {
+          "n": 1664,
+          "continue_": 731,
+          "flat": 59,
+          "reverse": 874,
+          "continue_share_nonflat": 0.455,
+          "median_ticks": -1.0
+        },
+        "n": 1673
+      },
+      "+both oppose": {
+        "60": {
+          "n": 861,
+          "continue_": 404,
+          "flat": 112,
+          "reverse": 345,
+          "continue_share_nonflat": 0.539,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 860,
+          "continue_": 471,
+          "flat": 23,
+          "reverse": 366,
+          "continue_share_nonflat": 0.563,
+          "median_ticks": 1.0
+        },
+        "600": {
+          "n": 860,
+          "continue_": 396,
+          "flat": 39,
+          "reverse": 425,
+          "continue_share_nonflat": 0.482,
+          "median_ticks": 0.0
+        },
+        "n": 861
+      },
+      "inverse: flow agrees": {
+        "60": {
+          "n": 2453,
+          "continue_": 1092,
+          "flat": 280,
+          "reverse": 1081,
+          "continue_share_nonflat": 0.503,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 2445,
+          "continue_": 1076,
+          "flat": 123,
+          "reverse": 1246,
+          "continue_share_nonflat": 0.463,
+          "median_ticks": -0.5
+        },
+        "600": {
+          "n": 2444,
+          "continue_": 1034,
+          "flat": 71,
+          "reverse": 1339,
+          "continue_share_nonflat": 0.436,
+          "median_ticks": -1.5
+        },
+        "n": 2457
+      },
+      "inverse: book agrees": {
+        "60": {
+          "n": 2462,
+          "continue_": 1063,
+          "flat": 297,
+          "reverse": 1102,
+          "continue_share_nonflat": 0.491,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 2458,
+          "continue_": 1083,
+          "flat": 108,
+          "reverse": 1267,
+          "continue_share_nonflat": 0.461,
+          "median_ticks": -0.5
+        },
+        "600": {
+          "n": 2455,
+          "continue_": 1002,
+          "flat": 81,
+          "reverse": 1372,
+          "continue_share_nonflat": 0.422,
+          "median_ticks": -1.5
+        },
+        "n": 2462
+      },
+      "inverse: both agree": {
+        "60": {
+          "n": 1643,
+          "continue_": 712,
+          "flat": 195,
+          "reverse": 736,
+          "continue_share_nonflat": 0.492,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 1639,
+          "continue_": 722,
+          "flat": 68,
+          "reverse": 849,
+          "continue_share_nonflat": 0.46,
+          "median_ticks": -0.5
+        },
+        "600": {
+          "n": 1638,
+          "continue_": 693,
+          "flat": 51,
+          "reverse": 894,
+          "continue_share_nonflat": 0.437,
+          "median_ticks": -1.5
+        },
+        "n": 1643
+      }
+    }
+  },
+  "by_tercile": {
+    "low": {
+      "baseline": {
+        "60": {
+          "n": 2707,
+          "continue_": 1234,
+          "flat": 467,
+          "reverse": 1006,
+          "continue_share_nonflat": 0.551,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 2689,
+          "continue_": 1304,
+          "flat": 159,
+          "reverse": 1226,
+          "continue_share_nonflat": 0.515,
+          "median_ticks": 0.0
+        },
+        "600": {
+          "n": 2676,
+          "continue_": 1290,
+          "flat": 102,
+          "reverse": 1284,
+          "continue_share_nonflat": 0.501,
+          "median_ticks": 0.0
+        },
+        "n": 2713
+      },
+      "+flow opposes": {
+        "60": {
+          "n": 1087,
+          "continue_": 509,
+          "flat": 188,
+          "reverse": 390,
+          "continue_share_nonflat": 0.566,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 1078,
+          "continue_": 514,
+          "flat": 75,
+          "reverse": 489,
+          "continue_share_nonflat": 0.512,
+          "median_ticks": 0.0
+        },
+        "600": {
+          "n": 1068,
+          "continue_": 511,
+          "flat": 50,
+          "reverse": 507,
+          "continue_share_nonflat": 0.502,
+          "median_ticks": 0.0
+        },
+        "n": 1089
+      },
+      "+book opposes": {
+        "60": {
+          "n": 1259,
+          "continue_": 585,
+          "flat": 223,
+          "reverse": 451,
+          "continue_share_nonflat": 0.565,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 1252,
+          "continue_": 598,
+          "flat": 82,
+          "reverse": 572,
+          "continue_share_nonflat": 0.511,
+          "median_ticks": 0.0
+        },
+        "600": {
+          "n": 1246,
+          "continue_": 631,
+          "flat": 55,
+          "reverse": 560,
+          "continue_share_nonflat": 0.53,
+          "median_ticks": 0.5
+        },
+        "n": 1263
+      },
+      "+both oppose": {
+        "60": {
+          "n": 644,
+          "continue_": 318,
+          "flat": 105,
+          "reverse": 221,
+          "continue_share_nonflat": 0.59,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 641,
+          "continue_": 299,
+          "flat": 47,
+          "reverse": 295,
+          "continue_share_nonflat": 0.503,
+          "median_ticks": 0.0
+        },
+        "600": {
+          "n": 637,
+          "continue_": 312,
+          "flat": 31,
+          "reverse": 294,
+          "continue_share_nonflat": 0.515,
+          "median_ticks": 0.0
+        },
+        "n": 644
+      },
+      "inverse: flow agrees": {
+        "60": {
+          "n": 1552,
+          "continue_": 699,
+          "flat": 264,
+          "reverse": 589,
+          "continue_share_nonflat": 0.543,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 1543,
+          "continue_": 759,
+          "flat": 83,
+          "reverse": 701,
+          "continue_share_nonflat": 0.52,
+          "median_ticks": 0.0
+        },
+        "600": {
+          "n": 1540,
+          "continue_": 748,
+          "flat": 48,
+          "reverse": 744,
+          "continue_share_nonflat": 0.501,
+          "median_ticks": 0.0
+        },
+        "n": 1556
+      },
+      "inverse: book agrees": {
+        "60": {
+          "n": 1410,
+          "continue_": 630,
+          "flat": 238,
+          "reverse": 542,
+          "continue_share_nonflat": 0.538,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 1399,
+          "continue_": 688,
+          "flat": 76,
+          "reverse": 635,
+          "continue_share_nonflat": 0.52,
+          "median_ticks": 0.0
+        },
+        "600": {
+          "n": 1392,
+          "continue_": 638,
+          "flat": 46,
+          "reverse": 708,
+          "continue_share_nonflat": 0.474,
+          "median_ticks": -0.5
+        },
+        "n": 1412
+      },
+      "inverse: both agree": {
+        "60": {
+          "n": 935,
+          "continue_": 431,
+          "flat": 148,
+          "reverse": 356,
+          "continue_share_nonflat": 0.548,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 930,
+          "continue_": 456,
+          "flat": 49,
+          "reverse": 425,
+          "continue_share_nonflat": 0.518,
+          "median_ticks": 0.0
+        },
+        "600": {
+          "n": 929,
+          "continue_": 424,
+          "flat": 25,
+          "reverse": 480,
+          "continue_share_nonflat": 0.469,
+          "median_ticks": -0.5
+        },
+        "n": 935
+      }
+    },
+    "mid": {
+      "baseline": {
+        "60": {
+          "n": 2707,
+          "continue_": 1277,
+          "flat": 310,
+          "reverse": 1120,
+          "continue_share_nonflat": 0.533,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 2707,
+          "continue_": 1293,
+          "flat": 137,
+          "reverse": 1277,
+          "continue_share_nonflat": 0.503,
+          "median_ticks": 0.0
+        },
+        "600": {
+          "n": 2707,
+          "continue_": 1332,
+          "flat": 106,
+          "reverse": 1269,
+          "continue_share_nonflat": 0.512,
+          "median_ticks": 0.0
+        },
+        "n": 2707
+      },
+      "+flow opposes": {
+        "60": {
+          "n": 1236,
+          "continue_": 543,
+          "flat": 148,
+          "reverse": 545,
+          "continue_share_nonflat": 0.499,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 1236,
+          "continue_": 585,
+          "flat": 63,
+          "reverse": 588,
+          "continue_share_nonflat": 0.499,
+          "median_ticks": 0.0
+        },
+        "600": {
+          "n": 1236,
+          "continue_": 622,
+          "flat": 41,
+          "reverse": 573,
+          "continue_share_nonflat": 0.521,
+          "median_ticks": 0.5
+        },
+        "n": 1236
+      },
+      "+book opposes": {
+        "60": {
+          "n": 1283,
+          "continue_": 650,
+          "flat": 147,
+          "reverse": 486,
+          "continue_share_nonflat": 0.572,
+          "median_ticks": 0.5
+        },
+        "300": {
+          "n": 1283,
+          "continue_": 697,
+          "flat": 62,
+          "reverse": 524,
+          "continue_share_nonflat": 0.571,
+          "median_ticks": 1.0
+        },
+        "600": {
+          "n": 1283,
+          "continue_": 731,
+          "flat": 35,
+          "reverse": 517,
+          "continue_share_nonflat": 0.586,
+          "median_ticks": 1.0
+        },
+        "n": 1283
+      },
+      "+both oppose": {
+        "60": {
+          "n": 744,
+          "continue_": 348,
+          "flat": 87,
+          "reverse": 309,
+          "continue_share_nonflat": 0.53,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 744,
+          "continue_": 394,
+          "flat": 30,
+          "reverse": 320,
+          "continue_share_nonflat": 0.552,
+          "median_ticks": 1.0
+        },
+        "600": {
+          "n": 744,
+          "continue_": 425,
+          "flat": 24,
+          "reverse": 295,
+          "continue_share_nonflat": 0.59,
+          "median_ticks": 1.0
+        },
+        "n": 744
+      },
+      "inverse: flow agrees": {
+        "60": {
+          "n": 1428,
+          "continue_": 716,
+          "flat": 157,
+          "reverse": 555,
+          "continue_share_nonflat": 0.563,
+          "median_ticks": 0.5
+        },
+        "300": {
+          "n": 1428,
+          "continue_": 690,
+          "flat": 73,
+          "reverse": 665,
+          "continue_share_nonflat": 0.509,
+          "median_ticks": 0.0
+        },
+        "600": {
+          "n": 1428,
+          "continue_": 694,
+          "flat": 64,
+          "reverse": 670,
+          "continue_share_nonflat": 0.509,
+          "median_ticks": 0.0
+        },
+        "n": 1428
+      },
+      "inverse: book agrees": {
+        "60": {
+          "n": 1402,
+          "continue_": 618,
+          "flat": 162,
+          "reverse": 622,
+          "continue_share_nonflat": 0.498,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 1402,
+          "continue_": 588,
+          "flat": 73,
+          "reverse": 741,
+          "continue_share_nonflat": 0.442,
+          "median_ticks": -1.0
+        },
+        "600": {
+          "n": 1402,
+          "continue_": 592,
+          "flat": 70,
+          "reverse": 740,
+          "continue_share_nonflat": 0.444,
+          "median_ticks": -1.0
+        },
+        "n": 1402
+      },
+      "inverse: both agree": {
+        "60": {
+          "n": 890,
+          "continue_": 415,
+          "flat": 99,
+          "reverse": 376,
+          "continue_share_nonflat": 0.525,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 890,
+          "continue_": 390,
+          "flat": 40,
+          "reverse": 460,
+          "continue_share_nonflat": 0.459,
+          "median_ticks": -0.5
+        },
+        "600": {
+          "n": 890,
+          "continue_": 389,
+          "flat": 53,
+          "reverse": 448,
+          "continue_share_nonflat": 0.465,
+          "median_ticks": -0.5
+        },
+        "n": 890
+      }
+    },
+    "high": {
+      "baseline": {
+        "60": {
+          "n": 2702,
+          "continue_": 1262,
+          "flat": 244,
+          "reverse": 1196,
+          "continue_share_nonflat": 0.513,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 2702,
+          "continue_": 1367,
+          "flat": 93,
+          "reverse": 1242,
+          "continue_share_nonflat": 0.524,
+          "median_ticks": 0.5
+        },
+        "600": {
+          "n": 2702,
+          "continue_": 1324,
+          "flat": 106,
+          "reverse": 1272,
+          "continue_share_nonflat": 0.51,
+          "median_ticks": 0.0
+        },
+        "n": 2702
+      },
+      "+flow opposes": {
+        "60": {
+          "n": 1244,
+          "continue_": 627,
+          "flat": 126,
+          "reverse": 491,
+          "continue_share_nonflat": 0.561,
+          "median_ticks": 0.5
+        },
+        "300": {
+          "n": 1244,
+          "continue_": 747,
+          "flat": 43,
+          "reverse": 454,
+          "continue_share_nonflat": 0.622,
+          "median_ticks": 2.25
+        },
+        "600": {
+          "n": 1244,
+          "continue_": 703,
+          "flat": 45,
+          "reverse": 496,
+          "continue_share_nonflat": 0.586,
+          "median_ticks": 1.75
+        },
+        "n": 1244
+      },
+      "+book opposes": {
+        "60": {
+          "n": 1344,
+          "continue_": 646,
+          "flat": 125,
+          "reverse": 573,
+          "continue_share_nonflat": 0.53,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 1344,
+          "continue_": 681,
+          "flat": 55,
+          "reverse": 608,
+          "continue_share_nonflat": 0.528,
+          "median_ticks": 0.5
+        },
+        "600": {
+          "n": 1344,
+          "continue_": 668,
+          "flat": 56,
+          "reverse": 620,
+          "continue_share_nonflat": 0.519,
+          "median_ticks": 0.0
+        },
+        "n": 1344
+      },
+      "+both oppose": {
+        "60": {
+          "n": 767,
+          "continue_": 394,
+          "flat": 80,
+          "reverse": 293,
+          "continue_share_nonflat": 0.574,
+          "median_ticks": 0.5
+        },
+        "300": {
+          "n": 767,
+          "continue_": 443,
+          "flat": 34,
+          "reverse": 290,
+          "continue_share_nonflat": 0.604,
+          "median_ticks": 2.0
+        },
+        "600": {
+          "n": 767,
+          "continue_": 431,
+          "flat": 33,
+          "reverse": 303,
+          "continue_share_nonflat": 0.587,
+          "median_ticks": 1.5
+        },
+        "n": 767
+      },
+      "inverse: flow agrees": {
+        "60": {
+          "n": 1425,
+          "continue_": 616,
+          "flat": 117,
+          "reverse": 692,
+          "continue_share_nonflat": 0.471,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 1425,
+          "continue_": 605,
+          "flat": 49,
+          "reverse": 771,
+          "continue_share_nonflat": 0.44,
+          "median_ticks": -1.0
+        },
+        "600": {
+          "n": 1425,
+          "continue_": 609,
+          "flat": 61,
+          "reverse": 755,
+          "continue_share_nonflat": 0.446,
+          "median_ticks": -1.0
+        },
+        "n": 1425
+      },
+      "inverse: book agrees": {
+        "60": {
+          "n": 1333,
+          "continue_": 610,
+          "flat": 114,
+          "reverse": 609,
+          "continue_share_nonflat": 0.5,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 1333,
+          "continue_": 671,
+          "flat": 38,
+          "reverse": 624,
+          "continue_share_nonflat": 0.518,
+          "median_ticks": 0.5
+        },
+        "600": {
+          "n": 1333,
+          "continue_": 641,
+          "flat": 49,
+          "reverse": 643,
+          "continue_share_nonflat": 0.499,
+          "median_ticks": 0.0
+        },
+        "n": 1333
+      },
+      "inverse: both agree": {
+        "60": {
+          "n": 850,
+          "continue_": 370,
+          "flat": 70,
+          "reverse": 410,
+          "continue_share_nonflat": 0.474,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 850,
+          "continue_": 369,
+          "flat": 29,
+          "reverse": 452,
+          "continue_share_nonflat": 0.449,
+          "median_ticks": -1.0
+        },
+        "600": {
+          "n": 850,
+          "continue_": 371,
+          "flat": 37,
+          "reverse": 442,
+          "continue_share_nonflat": 0.456,
+          "median_ticks": -1.0
+        },
+        "n": 850
+      }
+    }
+  },
+  "book_skew_sign_share": {
+    "bid_heavy": 4679,
+    "ask_heavy": 3358,
+    "even": 85
+  }
+}
