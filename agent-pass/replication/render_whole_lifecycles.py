@@ -33,7 +33,7 @@ def chart(c,rect,title,series,xrange,marks=()):
             xx,_=xy(t,low);c.setStrokeColor(color);c.setDash(2,2);c.line(xx,py,xx,py+ph);c.setDash()
     c.saveState();clip=c.beginPath();clip.rect(px,py,pw,ph);c.clipPath(clip,stroke=0,fill=0)
     for xs,ys,color,step in series:
-        c.setStrokeColor(color);c.setLineWidth(.7);p=c.beginPath();last=None;count=0
+        c.setStrokeColor(color);c.setLineWidth(.7);p=c.beginPath();last=None;last_finite=None;count=0
         for t,v in zip(xs,ys):
             if v is None or not np.isfinite(v) or not np.isfinite(t):
                 last=None;continue
@@ -42,12 +42,19 @@ def chart(c,rect,title,series,xrange,marks=()):
             else:
                 if step:p.lineTo(xx,last[1])
                 p.lineTo(xx,yy)
-            last=(xx,yy);count+=1
+            last=(xx,yy);last_finite=last;count+=1
         c.drawPath(p)
         if count==1:
-            c.setFillColor(color);c.circle(last[0],last[1],1.8,fill=1,stroke=0)
+            c.setFillColor(color);c.circle(last_finite[0],last_finite[1],1.8,fill=1,stroke=0)
     c.restoreState()
     if not vals:label(c,px+10,py+ph/2,"No observed values",9)
+def chart_tests():
+    target=io.BytesIO();c=canvas.Canvas(target,pagesize=(W,H))
+    for values in ([None,1.,None],[1.,None,None],[None,None,None]):
+        chart(c,(30,30,350,200),"Gap regression",[(range(3),values,COLORS[0],False)],(0,2))
+        c.showPage()
+    c.save();d=fitz.open(stream=target.getvalue(),filetype="pdf");assert len(d)==3;d.close()
+    print("PASS: isolated valid point followed by gaps and entirely missing series",flush=True)
 def preview(pdf,out,name,page=0):
     d=fitz.open(pdf);p=d[page];p.get_pixmap(matrix=fitz.Matrix(1.7,1.7),alpha=False).save(out/name)
     assert p.get_text().strip();d.close()
@@ -206,5 +213,5 @@ def archive(out):
     jsonwrite(out/"input-manifest.json",READS);seal(out)
 if __name__=="__main__":
     p=argparse.ArgumentParser();p.add_argument("--day",required=True);p.add_argument("--output",required=True,type=pathlib.Path)
-    a=p.parse_args();a.output.mkdir(parents=True,exist_ok=True)
+    a=p.parse_args();a.output.mkdir(parents=True,exist_ok=True);chart_tests()
     archive(a.output) if a.day=="archive" else daybook(a.day,a.output)
