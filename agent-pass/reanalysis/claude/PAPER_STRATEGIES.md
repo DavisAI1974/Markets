@@ -53,3 +53,9 @@ Thesis (EVIDENCE, CLAIM M6-1). flow_vanished / flow_resumed onsets in the live 2
 ## Not promoted
 
 Tier 1 original stack (60+/5-/1- bid-heavy): reversed on Oct 3 (CONFLICTS C4). Chain plays: 8/6/15/14 eligible per date. a-state direction: symmetric. Pre-recognition drift: not available at the decision clock.
+
+## S6 — Dipole weakening as a "no reason to stay" exit overlay (status: OBSERVATION-ONLY; added after the user's exit question)
+
+Thesis (EVIDENCE, CLAIMS X-4, X-6; negative results X-3, X-5 retained). For a position held in a dipole's direction from any entry, the first fresh-opposed weakening or vanished-flow onset of that dipole marks the point after which later moves follow and oppose the direction in near-equal counts (expected further drive zero, median absolute 60 s move 0.5 to 1.5 ticks). Exiting there is justified as removing exposure without drive, not as avoiding a measured adverse move. Exiting at an "opposite" recognition is neutral versus holding; a dipole recognized inside a large-move fade does not reliably mark non-return.
+
+Rule to log (not trade). Inputs: live 20 s native buy/sell lots by completed second (message-level feed required; Tradovate does not supply it). Exit cue A: fresh opposed lots reduce |ratio| from 1 (fresh_opposed_weakening onset). Exit cue B: window total falls to zero (flow_vanished). Log the oriented 5/20/60 s move after each cue for positions held in paper by S2 or any other rule; evaluate per date, no pooling. Not applied to S2 tonight (S2 uses only best bid/ask).

@@ -1,5 +1,5 @@
 {
- "version": "claude-paper-candidates-v0.1",
+ "version": "claude-paper-candidates-v0.2",
  "written": "2026-11-09",
  "platform": "Tradovate demo (user selection); best bid/ask + depth snapshots; no message-level order flow",
  "research_numbers": "gross; execution assumptions are paper-only settings to be logged, never applied to findings",
@@ -190,6 +190,18 @@
     "no price-outcome evidence after onsets; message-level flow"
    ],
    "evidence": "CLAIM M6-1; tables/m5_m6_summary.json"
+  },
+  {
+   "id": "S6",
+   "name": "dipole_weakening_no_reason_to_stay_exit",
+   "status": "observation_only",
+   "blockers": [
+    "message-level flow not available on Tradovate",
+    "onset outcomes not measured conditional on an open position"
+   ],
+   "evidence": "CLAIMS X-4, X-6 (support); X-3, X-5 (negative results retained)",
+   "rule": "log exits at first fresh_opposed_weakening or flow_vanished onset of the ridden dipole; evaluate oriented 5/20/60 s move per date",
+   "not_claimed": "protective exit before an adverse move"
   }
  ],
  "not_promoted": [
