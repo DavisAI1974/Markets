@@ -14,3 +14,9 @@ Execution: GitHub-hosted computation only. No completed-suite reruns, reverse-en
 Method choice: observable-sequence and incremental-information review. Interpret what each measurement describes and when it becomes known; compare concordant, opposing, absent and conditional relationships against the raw event path and existing measured summaries. Differences across days and populations remain visible. Historical studies are common background, not new out-of-sample validation.
 
 Scope addition: explicitly trace price → subsequent orders/liquidity/flow/activity → subsequent price, alongside behavior → price. Distinguish mechanical same-group effects, later responses and shared causes; document where existing evidence cannot identify causation. Reflect this in report, claims, cases, coverage and dipole review.
+
+## Delivered independent artifacts
+
+Report and paper specifications saved at Markets 864a9fa1b98c3e8ee446a3bb30068ea4fbbe5a5f. Final data at markets-data 8c761b486d4a9910d77eedad83ae23078c971bee, tasks/family-research-20261022/codex-independent-analysis/run-42599646462-1; hosted verification run 42599646462 passed. README.md and RECEIPT.json provide the complete artifact index.
+
+All 1,296 active contents are accounted for; 209,020 saved comparison/summary rows and all 170 price-as-input coupling rows remain in the ledgers. Detailed semantics remain pending for 43,406 flattened paths (including nested keys and metadata); original images retain explicit visual-review limits and three unavailable archive references remain. These are disclosed limits, not discarded observations or assertions of complete understanding. Paper configurations are not deployed. No reconciliation or joint synthesis follows this delivery.

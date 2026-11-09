@@ -1,0 +1,290 @@
+{
+  "schema": "codex-independent-reanalysis-receipt-v1",
+  "analyst": "Codex",
+  "status": "Independent report and requested artifact categories delivered; unresolved semantics, visual coverage and execution prerequisites explicitly retained.",
+  "shared_brief_commit": "64f599312106537d83a23fc65447dd2db0e6ca95",
+  "shared_brief_path": "agent-pass/reanalysis/SHARED_BRIEF.md",
+  "evidence_repository": "DavisAI1974/markets-data",
+  "evidence_commit": "e7b1c4acac2e37205cdb9ce1c53829b6ca30f4ee",
+  "evidence_path": "tasks/family-research-20261022/shared-reanalysis-inputs/final-42593665910-1",
+  "report_repository": "DavisAI1974/Markets",
+  "report_commit": "864a9fa1b98c3e8ee446a3bb30068ea4fbbe5a5f",
+  "report_path": "agent-pass/reanalysis/codex/REPORT.md",
+  "report_git_blob": "dcaeb25f6283f8696e0124bbc9cc44821bba0d33",
+  "authored_artifacts_commit": "864a9fa1b98c3e8ee446a3bb30068ea4fbbe5a5f",
+  "authored_artifacts": [
+    "REPORT.md",
+    "OPEN_QUESTIONS.md",
+    "PAPER_STRATEGIES.md",
+    "PAPER_STRATEGIES.json",
+    "PAPER_READINESS.md"
+  ],
+  "code_commit": "864a9fa1b98c3e8ee446a3bb30068ea4fbbe5a5f",
+  "source_review_commit": "e2731854a42bcce04a8cf89e249603dc18d3b0f7",
+  "source_review_path": "tasks/family-research-20261022/codex-independent-review/run-42594360842-1",
+  "analysis_data_commit": "8c761b486d4a9910d77eedad83ae23078c971bee",
+  "analysis_data_path": "tasks/family-research-20261022/codex-independent-analysis/run-42599646462-1",
+  "output_manifest": [
+    {
+      "path": "BULK_CLOCK_ANNOTATION_REFERENCE.json",
+      "bytes": 2839227,
+      "sha256": "348fd7b95d9d8d008aea425402de831587d180fd2d57dc6964d401d4af3c27eb"
+    },
+    {
+      "path": "CASES.csv",
+      "bytes": 374789,
+      "sha256": "3eda2294b4a592e8ad980cbdb7d05489844ad56b5b273e84ea10293cf2f0eb1a"
+    },
+    {
+      "path": "CLAIMS.csv",
+      "bytes": 54107,
+      "sha256": "24e47aee5ce6b307e95aeb3bc3e19b4b38112bb29b7fad3291a690640916e08c"
+    },
+    {
+      "path": "CONFLICTS.csv",
+      "bytes": 7521,
+      "sha256": "cb3e9d3edf38ed4c72cc77f2bf406d8434b0ae4909171063e54b2b72d09a5418"
+    },
+    {
+      "path": "COVERAGE.csv",
+      "bytes": 1987736,
+      "sha256": "4faacec66ccd3ad10729994eda31583d14ff1c0e9304b69dbb307527900bab36"
+    },
+    {
+      "path": "DIPOLE_LAYER_MAP.csv",
+      "bytes": 99349,
+      "sha256": "d8403656670fef80ffe207c2b55e46ee68bea617966273155957f1a5d06fb158"
+    },
+    {
+      "path": "DIRECTIONAL_PROSE_CORRECTION.json",
+      "bytes": 438,
+      "sha256": "3df38e5c738695e7f5f769fa0fa2fd92e852cba7a2b7d1381f82a76d5cdd08e4"
+    },
+    {
+      "path": "PRICE_RESPONSE_RELATIONSHIPS.csv",
+      "bytes": 76904,
+      "sha256": "b23795a70a7a4f06a8990849b1aca13c56f3eb632a595db28375d12942b5abea"
+    },
+    {
+      "path": "RELATIONSHIP_ROWS.csv.gz",
+      "bytes": 6943939,
+      "sha256": "9e1dff50bbbaf934987707d30cf1532de19113724dec9900b0a7eb2119d4461a"
+    },
+    {
+      "path": "RELATIONSHIP_SOURCE_INDEX.csv",
+      "bytes": 49869,
+      "sha256": "6657eee524421c9d2b2ce7ec749e4e33af7686b7f583551b994d7e8cb8814771"
+    },
+    {
+      "path": "SOURCE_ALIASES.csv",
+      "bytes": 82254,
+      "sha256": "8915c576d577e2a6e7996bd10a27525efab2222beb00564e6964f208f6d19f15"
+    },
+    {
+      "path": "SUMMARY.json",
+      "bytes": 1401,
+      "sha256": "defe9e931c2833c20af394199cb528351ee0caee18fd848c97aae9aba40f92f8"
+    },
+    {
+      "path": "SUPPORTING_PACKET_COVERAGE.csv",
+      "bytes": 23063,
+      "sha256": "352b0eb4bcc6488f3bad1bc3d3acdd1d610cf81ddedb69d64d029bb4122ff056"
+    },
+    {
+      "path": "UNAVAILABLE_REFERENCES.json",
+      "bytes": 2835,
+      "sha256": "7f1a0d0fee8f7c9db595339b5fbca315da7957c226ad53bd897a68152ac17854"
+    },
+    {
+      "path": "VERIFICATION.json",
+      "bytes": 254,
+      "sha256": "547681dca26695ec1e8647609a50da0d21453f262f044faac89a0e0a9890b9a0"
+    },
+    {
+      "path": "coverage-fields-001.csv.gz",
+      "bytes": 321430,
+      "sha256": "f1ef72a7aef6b61395a397c2bc59abf7902c1bf3e847ef9d74e337b03dc8581a"
+    },
+    {
+      "path": "coverage-fields-002.csv.gz",
+      "bytes": 279241,
+      "sha256": "22b13262812db3939a84234545bfb8ffb879ce3b719a028d5259842a9725cce5"
+    },
+    {
+      "path": "coverage-fields-003.csv.gz",
+      "bytes": 301066,
+      "sha256": "4a2290e74c9bb0e35e7388ed741b9bd3e267f3fd2e8029fb38a38e1481781e6e"
+    },
+    {
+      "path": "coverage-fields-004.csv.gz",
+      "bytes": 321888,
+      "sha256": "f49c38f08e0d7d01bec1b8b5189d36825fa6554f38934a1a0445743e3a5eef7f"
+    },
+    {
+      "path": "coverage-fields-005.csv.gz",
+      "bytes": 158880,
+      "sha256": "e73b57414a0b4d9f38a6adc4375d910da7a29f952dec3653c72bbecde1b5ac8c"
+    },
+    {
+      "path": "coverage-fields-006.csv.gz",
+      "bytes": 273489,
+      "sha256": "3e4429cdb80f6ee0eb548ae7d65878777fa0e9190cd937845308c9acace286dc"
+    },
+    {
+      "path": "coverage-fields-007.csv.gz",
+      "bytes": 157929,
+      "sha256": "b75ac84fa607f3788003a58e4e58e667bbac97330df3373f94134d77ab66cbc1"
+    },
+    {
+      "path": "coverage-fields-008.csv.gz",
+      "bytes": 220003,
+      "sha256": "56882d636a64a450ca4c5299c86eec8468b1f05f0a0ec5bfbeb4359d43032a57"
+    },
+    {
+      "path": "coverage-fields-009.csv.gz",
+      "bytes": 167261,
+      "sha256": "00b11440fe70ae5f7dcad78103f6ca9235fef3cde1dae7816363a0ec346d80c9"
+    },
+    {
+      "path": "coverage-fields-010.csv.gz",
+      "bytes": 241760,
+      "sha256": "6826cc9482e4d02632463cd70e630991f4c81dd203cf5b999e202b661e6e243a"
+    },
+    {
+      "path": "coverage-fields-011.csv.gz",
+      "bytes": 211052,
+      "sha256": "153878be918dc4ef028814e1b417689d343872b7a72c6a31615d934ce34c036b"
+    },
+    {
+      "path": "coverage-fields-012.csv.gz",
+      "bytes": 70527,
+      "sha256": "c18c9d778fb73a4dac7223ba81fab9b14dc33dc1e8c4820588d95b92da511995"
+    },
+    {
+      "path": "supporting-fields.csv.gz",
+      "bytes": 20480,
+      "sha256": "96b49d267a7c6481aff4f77dfa27940668afa00785206525d76b1a488705f12e"
+    }
+  ],
+  "verification_runs": [
+    {
+      "id": 42594360842,
+      "status": "success"
+    },
+    {
+      "id": 42599646462,
+      "status": "success"
+    }
+  ],
+  "superseded_ledger": {
+    "commit": "d0fbc0c2d23672cf78a10f06edcf1bc04a2187db",
+    "path": "tasks/family-research-20261022/codex-independent-analysis/run-42598562586-1",
+    "reason": "Replace unavailable-reference count with actual records, correct bulk catalog location, expand field semantics."
+  },
+  "counts": {
+    "analyst": "Codex",
+    "brief_revision": "64f599312106537d83a23fc65447dd2db0e6ca95",
+    "evidence_revision": "e7b1c4acac2e37205cdb9ce1c53829b6ca30f4ee",
+    "source_contents": 1296,
+    "source_aliases": 163,
+    "flattened_field_paths": 223428,
+    "unavailable_archive_references": 3,
+    "field_semantic_status_counts": {
+      "pending detailed field interpretation": 43406,
+      "class-level interpretation; source definition authoritative": 180022
+    },
+    "relationship_rows": 209020,
+    "relationship_source_tables": 191,
+    "core_claims": 30,
+    "price_response_comparisons": 170,
+    "cases": 22,
+    "registry_layers": 99,
+    "source_defined_additional_aspects": 9,
+    "supporting_files": 65,
+    "supporting_fields": 1435,
+    "supporting_unassessed": [],
+    "limitations": [
+      "Field paths include metadata and nested keys, not independent features.",
+      "Missing count includes explicit None/empty values; absent keys and all NaN-like strings are not a complete missingness census.",
+      "Class-level field interpretations and structural parsing do not certify full semantic resolution.",
+      "Images/PDFs retain source links; not every render visually inspected.",
+      "Raw DBN bytes verified; completed reconstruction receipts reused, no producer rerun.",
+      "No causal effect, net strategy performance or paper deployment claimed.",
+      "Separate final reports; no reconciliation or joint synthesis."
+    ]
+  },
+  "independence": {
+    "same_complete_packet": true,
+    "duty_split": false,
+    "other_new_report_read": false,
+    "reconciliation": false,
+    "joint_synthesis": false
+  },
+  "price_feedback_scope": true,
+  "new_producer_suite_rerun": false,
+  "new_path_normalization": false,
+  "paper_orders_submitted": false,
+  "live_money_orders_submitted": false,
+  "unavailable_sources": [
+    {
+      "source_manifest_entry": {
+        "tier": "archive",
+        "path": "tasks/family-research-20261022/replay-artifacts/20231002/root-frames/",
+        "bytes_uncompressed": 520064232895,
+        "spool_sha256": "d1801a98138551d75fa675d1153d616b0b81f65e5a42311d78ab46ea934f30a2",
+        "rows": 600291,
+        "parts": 211,
+        "parts_listing": "tasks/family-research-20261022/replay-artifacts/20231002/root-frames/SHA256SUMS",
+        "markets_commit": "ac52a6ac59a9610aba031740bd29a93b2dcb614d",
+        "session": "20231002",
+        "markets_data_path": null,
+        "target": "s3://bento-568968024170-us-east-2-an/root-frames/20231002/",
+        "note": "ROOT frame spool split into sub-100 MB parts; not for any git repository; verify parts against SHA256SUMS after the move"
+      },
+      "status": "historical_archive_reference_not_an_available_file",
+      "action": "do not fetch prohibited external storage; resolve from GitHub final handoff"
+    },
+    {
+      "source_manifest_entry": {
+        "tier": "archive",
+        "path": "tasks/family-research-20261022/replay-artifacts/20231003/root-frames/",
+        "bytes_uncompressed": 572726375854,
+        "spool_sha256": "9320ab9c0bc71786458291d01758243842ca6ec9b29e3e6cc58073a44efe0cce",
+        "rows": 653912,
+        "parts": 236,
+        "parts_listing": "tasks/family-research-20261022/replay-artifacts/20231003/root-frames/SHA256SUMS",
+        "markets_commit": "ac52a6ac59a9610aba031740bd29a93b2dcb614d",
+        "session": "20231003",
+        "markets_data_path": null,
+        "target": "s3://bento-568968024170-us-east-2-an/root-frames/20231003/",
+        "note": "ROOT frame spool split into sub-100 MB parts; not for any git repository; verify parts against SHA256SUMS after the move"
+      },
+      "status": "historical_archive_reference_not_an_available_file",
+      "action": "do not fetch prohibited external storage; resolve from GitHub final handoff"
+    },
+    {
+      "source_manifest_entry": {
+        "tier": "archive",
+        "path": "tasks/family-research-20261022/replay-artifacts/20231017/root-frames/",
+        "bytes_uncompressed": 581067333483,
+        "spool_sha256": "729dcd74f72124092c0c0816e69a05d137217f80369b424c552ef10783c5fcf8",
+        "rows": 635170,
+        "parts": 243,
+        "parts_listing": "tasks/family-research-20261022/replay-artifacts/20231017/root-frames/SHA256SUMS",
+        "markets_commit": "ac52a6ac59a9610aba031740bd29a93b2dcb614d",
+        "session": "20231017",
+        "markets_data_path": null,
+        "target": "s3://bento-568968024170-us-east-2-an/root-frames/20231017/",
+        "note": "ROOT frame spool split into sub-100 MB parts; not for any git repository; verify parts against SHA256SUMS after the move"
+      },
+      "status": "historical_archive_reference_not_an_available_file",
+      "action": "do not fetch prohibited external storage; resolve from GitHub final handoff"
+    }
+  ],
+  "limits": [
+    "43406 flattened field paths retain pending detailed interpretation; no claim of complete semantic understanding.",
+    "Not every render visually inspected.",
+    "Original completed raw reconstruction receipts reused; no new DBN decoding.",
+    "Actual NG feed/simulator, fees and fills unverified; paper configurations not deployed."
+  ]
+}
