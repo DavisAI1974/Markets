@@ -590,6 +590,50 @@
       "session": null,
       "markets_data_path": "tasks/family-research-20261022/claude-code-pins/ninety-nine-pins-tier1-summary.json",
       "note": "field map added, clock kinds added and per-session counts for the Tier 1 pin ledgers; published to markets-data main at 67b7a6a"
+    },
+    {
+      "tier": "derived",
+      "path": "tasks/family-research-20261022/claude-code-derived/t2_nullrho_20231002.npz",
+      "bytes": 431730,
+      "sha256": "f54801d9e0fbdc58fe7ee03b23ab564351be7f3735b241b3429e172482fc4d7b",
+      "markets_commit": null,
+      "markets_data_commit": "c01caaf",
+      "session": "20231002",
+      "markets_data_path": "tasks/family-research-20261022/claude-code-derived/t2_nullrho_20231002.npz",
+      "note": "x16_tier2_shift_draws.py (claude/three-day-dipole-20261108): the c14 condition/outcome rank-correlation matrix of the UTC member and the first 20 of 300 shifted-Y draws (seed 11), with the family-wise 95 percent line; the reference behind crossday/t2x_coupling_shifted_reference.csv"
+    },
+    {
+      "tier": "derived",
+      "path": "tasks/family-research-20261022/claude-code-derived/t2_nullrho_20231003.npz",
+      "bytes": 431689,
+      "sha256": "ac94e55bbc3009fc71066913148397affa7a104a2639c4024bfb505282d48208",
+      "markets_commit": null,
+      "markets_data_commit": "c01caaf",
+      "session": "20231003",
+      "markets_data_path": "tasks/family-research-20261022/claude-code-derived/t2_nullrho_20231003.npz",
+      "note": "x16_tier2_shift_draws.py (claude/three-day-dipole-20261108): the c14 condition/outcome rank-correlation matrix of the UTC member and the first 20 of 300 shifted-Y draws (seed 11), with the family-wise 95 percent line; the reference behind crossday/t2x_coupling_shifted_reference.csv"
+    },
+    {
+      "tier": "derived",
+      "path": "tasks/family-research-20261022/claude-code-derived/t2_nullrho_20231017.npz",
+      "bytes": 431740,
+      "sha256": "9c6f175470fd57932aea1c822fa72da5b86be97ffc8a81861bf10fcf04efb5d2",
+      "markets_commit": null,
+      "markets_data_commit": "c01caaf",
+      "session": "20231017",
+      "markets_data_path": "tasks/family-research-20261022/claude-code-derived/t2_nullrho_20231017.npz",
+      "note": "x16_tier2_shift_draws.py (claude/three-day-dipole-20261108): the c14 condition/outcome rank-correlation matrix of the UTC member and the first 20 of 300 shifted-Y draws (seed 11), with the family-wise 95 percent line; the reference behind crossday/t2x_coupling_shifted_reference.csv"
+    },
+    {
+      "tier": "derived",
+      "path": "tasks/family-research-20261022/claude-code-derived/t2_nullrho_20231018.npz",
+      "bytes": 431727,
+      "sha256": "105def4ba275c73cc00e78bffe8c2bd441a038e01b9dd151e62b301e2359160b",
+      "markets_commit": null,
+      "markets_data_commit": "c01caaf",
+      "session": "20231018",
+      "markets_data_path": "tasks/family-research-20261022/claude-code-derived/t2_nullrho_20231018.npz",
+      "note": "x16_tier2_shift_draws.py (claude/three-day-dipole-20261108): the c14 condition/outcome rank-correlation matrix of the UTC member and the first 20 of 300 shifted-Y draws (seed 11), with the family-wise 95 percent line; the reference behind crossday/t2x_coupling_shifted_reference.csv"
     }
   ],
   "totals": {
