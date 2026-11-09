@@ -13,3 +13,17 @@ Investigate formation, continuation, exhaustion and reversal as sequences of obs
 For each historical analogue, retain the raw path, known-by time, recognition time, subsequent behavior and contrary cases. Compare only the information available at the proposed decision time when assessing early recognition; later outcomes can evaluate that recognition but cannot define its inputs. Keep all hypotheses in paper research, including weak or failed cases. Any claimed timing advantage must be supported by measured availability and lead time.
 
 The user reports that the historical roughly 2,000-event crypto average displayed a recurring shape with modest variation across events. Preserve that historical observation and recover the individual paths to quantify variation; averaging alone is not a reason to dismiss it. Record where historical crypto, current NG and Desktop findings agree, differ or remain unresolved. Shape resemblance is evidence to investigate for market meaning and useful timing.
+
+## Remaining duration, leg strength, exhaustion and decision timing
+
+Further user clarification, 2026-11-08: explain how long an event and its current trade leg are likely to persist, how much driving strength remains, and when exhaustion or reversal is developing. Include opportunities to avoid a developing squeeze or adverse move, not only opportunities to enter. The desired practical decisions include entry, continued participation, exit and a possible change of direction, with enough warning to act before the obvious consequence.
+
+At each observable stage, investigate:
+- Event onset and the earliest time its developing behavior could actually be recognized.
+- Current leg strength and whether fresh flow/liquidity behavior sustains it, weakens it or contradicts it. Distinguish new activity from old activity expiring out of a rolling window.
+- Remaining duration, continuation and subsequent movement among historical individual analogues using only their prefixes available at the corresponding decision time. Preserve original units and clocks; do not force matches by adjusting values.
+- Early exhaustion signs, their warning time before the specified endpoint, false alarms, missed warnings and cases that resume after an apparent weakening.
+- Distinct outcomes: a pause, loss of directional driving strength, an actual reversal and the end of the defined event. Record endpoint definitions explicitly; the earlier three-opposite-second lifetime convention is not an established natural endpoint.
+- Entry/hold/exit/change-of-direction timing evaluated with decision availability, execution delay and fill evidence separated from hindsight-optimal turning points. Perfect entry/exit is the user's aspiration, not an achieved result or an assumption in the measurements.
+
+Keep every hypothesis and unfavorable case in paper research. Report condition-specific individual outcomes and unresolved duration cases, including right-censored events. Support claims of earlier or more accurate recognition with measured lead time and an explicit comparison; do not assume access to other participants' information or certainty about future interruptions. No live-money execution is authorized by this research objective.
