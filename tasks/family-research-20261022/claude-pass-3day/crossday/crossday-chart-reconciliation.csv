@@ -1,0 +1,45 @@
+figure,panel,plotted,table_rows,source,match
+1 oriented move distributions,Oct 2 | birth-to-recognition,741,741,20231002/t6_cohort_features.csv retro_o,True
+1 oriented move distributions,Oct 3 | birth-to-recognition,824,824,20231003/t6_cohort_features.csv retro_o,True
+1 oriented move distributions,Oct 17 | birth-to-recognition,740,740,20231017/t6_cohort_features.csv retro_o,True
+1 oriented move distributions,Oct 18 | birth-to-recognition,852,852,20231018/t6_cohort_features.csv retro_o,True
+1 oriented move distributions,Oct 2 | +1s from recognition,741,741,20231002/t6_cohort_features.csv fwd_1_o,True
+1 oriented move distributions,Oct 3 | +1s from recognition,824,824,20231003/t6_cohort_features.csv fwd_1_o,True
+1 oriented move distributions,Oct 17 | +1s from recognition,740,740,20231017/t6_cohort_features.csv fwd_1_o,True
+1 oriented move distributions,Oct 18 | +1s from recognition,852,852,20231018/t6_cohort_features.csv fwd_1_o,True
+1 oriented move distributions,Oct 2 | +5s from recognition,741,741,20231002/t6_cohort_features.csv fwd_5_o,True
+1 oriented move distributions,Oct 3 | +5s from recognition,824,824,20231003/t6_cohort_features.csv fwd_5_o,True
+1 oriented move distributions,Oct 17 | +5s from recognition,740,740,20231017/t6_cohort_features.csv fwd_5_o,True
+1 oriented move distributions,Oct 18 | +5s from recognition,852,852,20231018/t6_cohort_features.csv fwd_5_o,True
+1 oriented move distributions,Oct 2 | +20s from recognition,741,741,20231002/t6_cohort_features.csv fwd_20_o,True
+1 oriented move distributions,Oct 3 | +20s from recognition,824,824,20231003/t6_cohort_features.csv fwd_20_o,True
+1 oriented move distributions,Oct 17 | +20s from recognition,740,740,20231017/t6_cohort_features.csv fwd_20_o,True
+1 oriented move distributions,Oct 18 | +20s from recognition,852,852,20231018/t6_cohort_features.csv fwd_20_o,True
+1 oriented move distributions,Oct 2 | +60s from recognition,741,741,20231002/t6_cohort_features.csv fwd_60_o,True
+1 oriented move distributions,Oct 3 | +60s from recognition,824,824,20231003/t6_cohort_features.csv fwd_60_o,True
+1 oriented move distributions,Oct 17 | +60s from recognition,740,740,20231017/t6_cohort_features.csv fwd_60_o,True
+1 oriented move distributions,Oct 18 | +60s from recognition,852,852,20231018/t6_cohort_features.csv fwd_60_o,True
+2 shares vs control range,Oct 2 | birth-to-recognition,741,741,20231002/t6_cohort_controls.csv,True
+2 shares vs control range,Oct 3 | birth-to-recognition,824,824,20231003/t6_cohort_controls.csv,True
+2 shares vs control range,Oct 17 | birth-to-recognition,740,740,20231017/t6_cohort_controls.csv,True
+2 shares vs control range,Oct 18 | birth-to-recognition,852,852,20231018/t6_cohort_controls.csv,True
+2 shares vs control range,Oct 2 | +1s from recognition,741,741,20231002/t6_cohort_controls.csv,True
+2 shares vs control range,Oct 3 | +1s from recognition,824,824,20231003/t6_cohort_controls.csv,True
+2 shares vs control range,Oct 17 | +1s from recognition,740,740,20231017/t6_cohort_controls.csv,True
+2 shares vs control range,Oct 18 | +1s from recognition,852,852,20231018/t6_cohort_controls.csv,True
+2 shares vs control range,Oct 2 | +5s from recognition,741,741,20231002/t6_cohort_controls.csv,True
+2 shares vs control range,Oct 3 | +5s from recognition,824,824,20231003/t6_cohort_controls.csv,True
+2 shares vs control range,Oct 17 | +5s from recognition,740,740,20231017/t6_cohort_controls.csv,True
+2 shares vs control range,Oct 18 | +5s from recognition,852,852,20231018/t6_cohort_controls.csv,True
+2 shares vs control range,Oct 2 | +20s from recognition,741,741,20231002/t6_cohort_controls.csv,True
+2 shares vs control range,Oct 3 | +20s from recognition,824,824,20231003/t6_cohort_controls.csv,True
+2 shares vs control range,Oct 17 | +20s from recognition,740,740,20231017/t6_cohort_controls.csv,True
+2 shares vs control range,Oct 18 | +20s from recognition,852,852,20231018/t6_cohort_controls.csv,True
+2 shares vs control range,Oct 2 | +60s from recognition,741,741,20231002/t6_cohort_controls.csv,True
+2 shares vs control range,Oct 3 | +60s from recognition,824,824,20231003/t6_cohort_controls.csv,True
+2 shares vs control range,Oct 17 | +60s from recognition,740,740,20231017/t6_cohort_controls.csv,True
+2 shares vs control range,Oct 18 | +60s from recognition,852,852,20231018/t6_cohort_controls.csv,True
+3 recognition delay,Oct 2,741,741,20231002/t6_cohort_features.csv delay_s,True
+3 recognition delay,Oct 3,824,824,20231003/t6_cohort_features.csv delay_s,True
+3 recognition delay,Oct 17,740,740,20231017/t6_cohort_features.csv delay_s,True
+3 recognition delay,Oct 18,852,852,20231018/t6_cohort_features.csv delay_s,True

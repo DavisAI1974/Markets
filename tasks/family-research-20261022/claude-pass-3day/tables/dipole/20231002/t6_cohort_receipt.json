@@ -1,0 +1,19 @@
+{
+ "candidates": 741,
+ "covered": 741,
+ "uncovered_seam_or_warmup": 0,
+ "tape_counts": {
+  "20231002": 741
+ },
+ "pre_lockcross": 0,
+ "rec_lockcross": 0,
+ "pre_regime_counts": {
+  "1": 438,
+  "2": 278,
+  "3+": 25
+ },
+ "orient": {},
+ "delay_median_s": 52.121223697,
+ "delay_max_s": 138.814864468,
+ "draws": 500
+}

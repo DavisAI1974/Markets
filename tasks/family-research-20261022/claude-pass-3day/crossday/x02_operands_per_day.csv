@@ -1,0 +1,5 @@
+day,candidate_rows,births,event_second_equals_birth_second,series_seconds,series_ratio_defined,series_abs_ratio_eq_1,births_on_abs_ratio_1,polarity_equals_ratio_sign,magnitude_equals_abs_ratio,prominence_equals_magnitude_minus_baseline,threshold_values,detection_lag_eq_50,detection_lag_41_49,detection_lag_below_41,detection_lag_min,available_minus_event_eq_detection_lag,gap_min_s,gap_median_s,gaps_below_50,gap_max_s,obs_behind_threshold_min,obs_behind_threshold_max,baseline_min,baseline_max
+20231002,741,741,741,75600,51198,14157,741,741,741,741,[1.0],526,116,99,6,741,45,75.0,140,3042,600,51169,0.0,1.0
+20231003,833,832,832,82800,56176,16734,832,832,832,832,[1.0],584,126,122,6,832,45,74.0,159,2168,601,56062,0.0,1.0
+20231017,741,740,740,75600,49554,13808,738,738,738,740,[1.0],545,94,101,6,740,45,74.0,137,969,614,49519,0.0,1.0
+20231018,863,863,863,82800,54335,16689,859,859,859,863,[1.0],599,138,126,6,863,45,74.0,155,1126,604,54371,0.0,1.0

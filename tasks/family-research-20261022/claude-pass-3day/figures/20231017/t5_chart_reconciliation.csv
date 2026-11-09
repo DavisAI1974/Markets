@@ -1,0 +1,58 @@
+figure,panel,plotted,table_rows,source,match
+6 cohort vs controls,birth-to-recognition,1000,1000,t6_cohort_controls.csv + cohort_draw_stats.npz,True
+6 cohort vs controls,+1s from recognition,1000,1000,t6_cohort_controls.csv + cohort_draw_stats.npz,True
+6 cohort vs controls,+5s from recognition,1000,1000,t6_cohort_controls.csv + cohort_draw_stats.npz,True
+6 cohort vs controls,+20s from recognition,1000,1000,t6_cohort_controls.csv + cohort_draw_stats.npz,True
+6 cohort vs controls,+60s from recognition,1000,1000,t6_cohort_controls.csv + cohort_draw_stats.npz,True
+7 cohort cells,birth to recognition | spread regime at prebirth cutoff | 1,381,381,t6_cohort_cells.csv,True
+7 cohort cells,birth to recognition | spread regime at prebirth cutoff | 2,352,352,t6_cohort_cells.csv,True
+7 cohort cells,birth to recognition | spread regime at prebirth cutoff | 3+,7,7,t6_cohort_cells.csv,True
+7 cohort cells,birth to recognition | Codex flow state at recognition | same_direction_at_emission,217,217,t6_cohort_cells.csv,True
+7 cohort cells,birth to recognition | Codex flow state at recognition | opposite_direction_at_emission,158,158,t6_cohort_cells.csv,True
+7 cohort cells,birth to recognition | Codex flow state at recognition | balanced_at_emission,18,18,t6_cohort_cells.csv,True
+7 cohort cells,birth to recognition | Codex flow state at recognition | undefined_at_emission,347,347,t6_cohort_cells.csv,True
+7 cohort cells,birth to recognition | prebirth displayed depth vs birth direction (mine) | aligned,351,351,t6_cohort_cells.csv,True
+7 cohort cells,birth to recognition | prebirth displayed depth vs birth direction (mine) | opposed,303,303,t6_cohort_cells.csv,True
+7 cohort cells,birth to recognition | prebirth displayed depth vs birth direction (mine) | equal,86,86,t6_cohort_cells.csv,True
+7 cohort cells,birth to recognition | recognition delay | fastest third,247,247,t6_cohort_cells.csv,True
+7 cohort cells,birth to recognition | recognition delay | middle third,246,246,t6_cohort_cells.csv,True
+7 cohort cells,birth to recognition | recognition delay | slowest third,247,247,t6_cohort_cells.csv,True
+7 cohort cells,birth to recognition | birth direction | buy birth,353,353,t6_cohort_cells.csv,True
+7 cohort cells,birth to recognition | birth direction | sell birth,387,387,t6_cohort_cells.csv,True
+7 cohort cells,+5 s after recognition | spread regime at prebirth cutoff | 1,381,381,t6_cohort_cells.csv,True
+7 cohort cells,+5 s after recognition | spread regime at prebirth cutoff | 2,352,352,t6_cohort_cells.csv,True
+7 cohort cells,+5 s after recognition | spread regime at prebirth cutoff | 3+,7,7,t6_cohort_cells.csv,True
+7 cohort cells,+5 s after recognition | Codex flow state at recognition | same_direction_at_emission,217,217,t6_cohort_cells.csv,True
+7 cohort cells,+5 s after recognition | Codex flow state at recognition | opposite_direction_at_emission,158,158,t6_cohort_cells.csv,True
+7 cohort cells,+5 s after recognition | Codex flow state at recognition | balanced_at_emission,18,18,t6_cohort_cells.csv,True
+7 cohort cells,+5 s after recognition | Codex flow state at recognition | undefined_at_emission,347,347,t6_cohort_cells.csv,True
+7 cohort cells,+5 s after recognition | prebirth displayed depth vs birth direction (mine) | aligned,351,351,t6_cohort_cells.csv,True
+7 cohort cells,+5 s after recognition | prebirth displayed depth vs birth direction (mine) | opposed,303,303,t6_cohort_cells.csv,True
+7 cohort cells,+5 s after recognition | prebirth displayed depth vs birth direction (mine) | equal,86,86,t6_cohort_cells.csv,True
+7 cohort cells,+5 s after recognition | recognition delay | fastest third,247,247,t6_cohort_cells.csv,True
+7 cohort cells,+5 s after recognition | recognition delay | middle third,246,246,t6_cohort_cells.csv,True
+7 cohort cells,+5 s after recognition | recognition delay | slowest third,247,247,t6_cohort_cells.csv,True
+7 cohort cells,+5 s after recognition | birth direction | buy birth,353,353,t6_cohort_cells.csv,True
+7 cohort cells,+5 s after recognition | birth direction | sell birth,387,387,t6_cohort_cells.csv,True
+7 cohort cells,+20 s after recognition | spread regime at prebirth cutoff | 1,381,381,t6_cohort_cells.csv,True
+7 cohort cells,+20 s after recognition | spread regime at prebirth cutoff | 2,352,352,t6_cohort_cells.csv,True
+7 cohort cells,+20 s after recognition | spread regime at prebirth cutoff | 3+,7,7,t6_cohort_cells.csv,True
+7 cohort cells,+20 s after recognition | Codex flow state at recognition | same_direction_at_emission,217,217,t6_cohort_cells.csv,True
+7 cohort cells,+20 s after recognition | Codex flow state at recognition | opposite_direction_at_emission,158,158,t6_cohort_cells.csv,True
+7 cohort cells,+20 s after recognition | Codex flow state at recognition | balanced_at_emission,18,18,t6_cohort_cells.csv,True
+7 cohort cells,+20 s after recognition | Codex flow state at recognition | undefined_at_emission,347,347,t6_cohort_cells.csv,True
+7 cohort cells,+20 s after recognition | prebirth displayed depth vs birth direction (mine) | aligned,351,351,t6_cohort_cells.csv,True
+7 cohort cells,+20 s after recognition | prebirth displayed depth vs birth direction (mine) | opposed,303,303,t6_cohort_cells.csv,True
+7 cohort cells,+20 s after recognition | prebirth displayed depth vs birth direction (mine) | equal,86,86,t6_cohort_cells.csv,True
+7 cohort cells,+20 s after recognition | recognition delay | fastest third,247,247,t6_cohort_cells.csv,True
+7 cohort cells,+20 s after recognition | recognition delay | middle third,246,246,t6_cohort_cells.csv,True
+7 cohort cells,+20 s after recognition | recognition delay | slowest third,247,247,t6_cohort_cells.csv,True
+7 cohort cells,+20 s after recognition | birth direction | buy birth,353,353,t6_cohort_cells.csv,True
+7 cohort cells,+20 s after recognition | birth direction | sell birth,387,387,t6_cohort_cells.csv,True
+8 signed prebirth conditions,imb_20,489,489,t6_cohort_signed_conditions.csv,True
+8 signed prebirth conditions,imb_60,587,587,t6_cohort_signed_conditions.csv,True
+8 signed prebirth conditions,tch_imb,740,740,t6_cohort_signed_conditions.csv,True
+8 signed prebirth conditions,near5_imb,740,740,t6_cohort_signed_conditions.csv,True
+8 signed prebirth conditions,supdiff_20,740,740,t6_cohort_signed_conditions.csv,True
+8 signed prebirth conditions,prior_20,740,740,t6_cohort_signed_conditions.csv,True
+8 signed prebirth conditions,prior_60,740,740,t6_cohort_signed_conditions.csv,True
