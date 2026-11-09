@@ -125,10 +125,23 @@ def main(config_path, output_path):
                     cursor=(r.get('causal_clocks') or {}).get('input_cursor')
                 if cursor is not None: native[int(cursor)]=dict(value=r,path=s['path'],ordinal=ordinal)
     static={}
+    canonical_prefix='artifacts/sqlite-triage/20261022/families/full-context-audit/canonical-sources/'
+    static_text_written=set()
     for layer in layers[:99]:
         if layer['policy'] in ('STATIC_REQUIRED_INPUT','ARM_REQUIRED_INPUT','PROVISIONAL_SHADOW'):
-            entries=[p for p in pins if p['path'] in layer.get('source_paths',[]) and p['status']=='BYTES_VERIFIED']
-            static[layer['layer_id']]=dict(status='STATIC_KNOWLEDGE_PINNED' if entries else 'MISSING_STATIC_SOURCE',sources=entries)
+            entries=[]; missing=[]
+            for original_path in layer.get('source_paths',[]):
+                candidates=[p for p in pins if p['path'] in (original_path,canonical_prefix+original_path) and p['status']=='BYTES_VERIFIED']
+                if not candidates:
+                    missing.append(original_path); continue
+                pin=candidates[0]
+                name='K-'+pin['sha256'][:12]+'-'+pathlib.PurePosixPath(original_path).name
+                if name not in static_text_written:
+                    b=read(pin['repository'],pin['revision'],pin['path'])
+                    brain_file(name,b,pin['repository']+'@'+pin['revision']+':'+pin['path'],'retained original knowledge/control source; original scope restrictions apply')
+                    static_text_written.add(name)
+                entries.append(dict(pin,original_registry_path=original_path,brain_file=name))
+            static[layer['layer_id']]=dict(status='STATIC_KNOWLEDGE_PINNED' if entries and not missing else 'MISSING_STATIC_SOURCE',sources=entries,missing_sources=missing)
     # Explicit source-column bindings. These copy observations, not fitted aliases.
     select={
       'full_bid_ask_depth':['bid_full_size','ask_full_size','bid_top10_json','ask_top10_json'],
