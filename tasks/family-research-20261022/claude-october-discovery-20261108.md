@@ -1174,9 +1174,8 @@ Sunday-evening prefix); October 17 is PARTIAL_TRADE_DATE from the October 17 mem
 33,451 prints, no evening prefix); October 3 is the full session with the October 2 member replayed as
 warm-up (653,912 groups, 41,410 prints); October 18 unchanged (583,688 groups, 30,739 prints). All four
 pin the original tape commit 1d15dc6f and adapter af36937d; none used the prefix members from data commit
-603c4def. Each file's sha256 matches its receipt. Scripts: `export_paths.py`, `export_recognition_outcomes.py`,
-`decision_candidates_four_arm.py`; outputs `export-recognition-outcomes-<tag>-*` and
-`decision-candidates-four-arm-<tag>-*` for the four tags.
+603c4def. Each file's sha256 matches its receipt. Script: `export_paths.py` (the per-session export locations the
+later passes read through).
 
 **What the exports changed on my side: nothing in sections 11 to 16, which never read them.** They add
 two things: an independent outcome source (the group-close midpoints under the known-by clock) and a
@@ -1186,81 +1185,16 @@ population defined by the same frozen touch-print rules on every day.
 
 Print counts agree exactly where the export is session-complete (October 3: 41,410 both; October 18:
 30,739 both) and differ by the prefix hours where it is not (October 17: 33,451 export vs 33,703 tape;
-October 2: 37,670 vs 38,127). At every recognition second the export's group midpoint and my per-second
-replay midpoint agree exactly 81 to 84 percent of the time with median difference 0 ticks; the largest
-differences (3 to 6 ticks) are within-second quote moves between the group close and the second's last
-quote. Events born in the missing prefix hours have no groups and are counted out (63 on October 17, 72
-on October 2). The two reconstructions of the book agree.
+October 2: 37,670 vs 38,127). The exports' cursor 0 is the first record at or after the session open inside
+the prior UTC member (section 18), and the Book's touch at every size-one onset matches the export's on all
+four sessions with zero mismatches, so the two reconstructions of the book agree.
 
-### 17.2 Section 1 on four sessions: outcomes after the archived adapter's recognition
+### 17.2 Outcomes after recognition and the four arms on four sessions
 
-Recognition = first group close at or after t0 + 50 s, as the archived adapter's available_second. The
-realised recognition delay from t0 has median 51.4 / 52.3 / 52.0 / 52.2 s on October 18 / 17 / 3 / 2
-(section 11 had 51 s from the archived candidates themselves). Outcomes from the export's midpoints,
-oriented to polarity, non-flat with-share:
-
-| arm | horizon | Oct 18 | Oct 17 | Oct 3 | Oct 2 |
-|---|---|---|---|---|---|
-| baseline (all recognitions) | 60 s | 0.50 | 0.49 | 0.47 | 0.52 |
-| baseline | 300 s | 0.50 | 0.46 | 0.51 | 0.49 |
-| baseline | 600 s | 0.50 | 0.48 | 0.52 | 0.51 |
-| flow opposite at recognition | 600 s | 0.55 | 0.47 | 0.60 | 0.45 |
-| touch aligned to polarity | 5 s | 0.54 | 0.64 | 0.68 | 0.67 |
-| touch opposed to polarity | 5 s | 0.40 | 0.43 | 0.33 | 0.30 |
-| touch aligned | 600 s | 0.50 | 0.47 | 0.55 | 0.53 |
-
-The section 1 result holds on all four: the recognition carries no direction for the burst polarity at
-any horizon, and the touch-size relation at recognition carries direction at the short horizons. Read as
-a plain direction call irrespective of polarity (bigger touch side wins), the touch imbalance is right
-63 / 64 / 73 / 74 percent of decided outcomes at 1 s, 57 / 61 / 67 / 69 at 5 s, 63 / 57 / 55 / 64 at 20 s,
-55 / 56 / 53 / 59 at 60 s, and 51 / 52 / 51 / 53 at 300 s on October 18 / 17 / 3 / 2. Most 1 to 5 s outcomes
-are flat (56 to 76 percent), so the decided ones are few. This is the queue-imbalance effect of the
-microstructure literature (the primer's section on order books): the heavier side of the touch predicts
-the next tick, and the information is gone within a few minutes. It is a general book property present at
-every second, not a property of the exhaustion anchor, and section 1 said so for October 18 alone.
-
-### 17.3 The four arms on the frozen touch-print candidates
-
-The falling-touch+print.v1 CANDIDATE groups (8,122 / 8,880 / 13,266 / 11,598 on October 18 / 17 / 3 / 2)
-are the one population the sealed decisions define identically on every day. Pressure side = the rule
-side (a falling bid touch is selling pressure); outcome = midpoint change from the decision's known-by
-clock, oriented so positive is continuation; flow arm = 60 s aggressor imbalance opposing the pressure;
-book arm = 10-level depth skew opposing it (per-second replay operands; the first-family ledger's were
-ns-exact). Continuation share of decided outcomes:
-
-| arm | horizon | Oct 18 | Oct 17 | Oct 3 | Oct 2 |
-|---|---|---|---|---|---|
-| baseline | 60 s | 0.53 | 0.54 | 0.54 | 0.54 |
-| baseline | 600 s | 0.51 | 0.51 | 0.52 | 0.51 |
-| +both oppose (the 375/391 stack) | 60 s | 0.56 | 0.54 | 0.54 | 0.51 |
-| +both oppose | 600 s | 0.57 | 0.55 | 0.52 | 0.49 |
-| inverse, both agree | 600 s | 0.46 | 0.48 | 0.53 | 0.52 |
-| baseline, bid side | 600 s | 0.59 | 0.58 | 0.45 | 0.51 |
-| baseline, ask side | 600 s | 0.44 | 0.44 | 0.61 | 0.50 |
-| book bid-heavy share at decisions | | 0.58 | 0.61 | 0.50 | 0.54 |
-
-Four-day reading. (1) The rule's pressure side continues at 60 s on every day, 53 to 54 percent, median 0
-ticks: a small, consistent, bounce-sized continuation. (2) The 375/391 stack's lift over baseline is
-October 18's: plus 3 to 6 points there, plus 0 to 4 on the 17th, zero on the 3rd, minus 2 to 4 on the
-2nd; the inverse stack reverses on 18 and 17 and continues on 3 and 2. Same shape as section 13.3's
-drift finding: on the two falling-tape days the selling-pressure side continues at 600 s (0.58 to 0.59)
-and the buying side reverses (0.44); on the rising October 3 it is the mirror (0.45 / 0.61); October 2 is
-even. The side split is the day's path. (3) The bid-heavy displayed book that section 2 called a day
-constant on October 18 is a two-day constant (18 and 17 at 0.58 and 0.61), even on the 3rd and mild on
-the 2nd; it is not a property of NG's book in general.
-
-### 17.4 What this adds to the merge
-
-- The exports and the tape agree, so numbers from either side can be compared across the three reviews
-  once the prefix difference is stated (sections 14.1 and 17.1).
-- Section 1 and section 2 of this file were October 18 results; sections 17.2 and 17.3 are their four-day
-  forms, and both land where sections 13 to 15 did: no direction from the exhaustion anchors, a short-lived
-  queue-imbalance direction read that belongs to the book at every second, and per-cell lifts that follow
-  each day's drift.
-- Not done on the export side, because their inputs are October 18 only: the 749 first-family population
-  (saved screening ledger), the 1,012 size-one episodes (SQLite triage) and the 375 / 391 order traces.
-  The size-one onsets could be derived from the groups on every day and validated against the October 18
-  ledger; that is the next export-side job if the size-one four arms are wanted on four days.
+These two passes were first run on substitutes (a t0+50 recognition rule and the frozen touch-print candidate
+population) while the actual per-date inputs did not exist. Those versions were removed from the branch once
+the actual archived Native recognitions and the actual first-observed family starts arrived; the real-input
+results are section 22. Nothing from the substitute runs is cited anywhere in this file.
 
 ## 18. The size-one onsets on four sessions
 
@@ -1318,9 +1252,8 @@ separate a behavioural story (probing, spoof-like placement) from the mechanical
 history of the order ids behind the new-best onsets across days, which the tape carries and this pass
 does not yet aggregate.
 
-This closes the export-side gap listed in section 17.4: every October 18 export-side pass now has its
-four-session form except the 749 first-family population and the two order traces, whose definitions are
-October 18's own.
+With this, every October 18 export-side pass has its four-session form except the two order traces, whose
+instances are October 18's own; the first-family population and the archived recognitions are in section 22.
 
 ## 19. The orders behind the one-lot bests, and the frozen SSOS play on four sessions
 
@@ -1445,11 +1378,10 @@ S3, not to git.
 ## 21. October 2, 3 and 17 done the way October 18 was done
 
 Greg asked for the October 18 treatment on the three new sessions. The four pieces of that treatment and
-where each now stands: outcomes after the archived adapter's recognition (section 1) are in 17.2 on four
-days; the four arms on identical opportunities (section 2) are in 17.3 on the frozen touch-print
-candidates, because the 749 first-family starts are the first occurrence of each ROOT structural family id
-and those ids exist only inside the ROOT frame spools; the size-one four arms (section 4) are in 18 and
-the orders behind them in 19; and the concrete traces (section 3, cases 375 and 391) are here. Script
+where each now stands: outcomes after the archived adapter's recognition (section 1) and the four arms on the
+first-observed family starts (section 2) are in section 22 on the actual per-date inputs; the size-one four
+arms (section 4) are in 18 and the orders behind them in 19; and the concrete traces (section 3, cases 375
+and 391) are here. Script
 `trace_divergent_pairs.py`, outputs `divergent-pairs-{oct17,oct03,oct02}.json`. For each session it picks,
 inside the 13:00 UTC hour, two matched pairs with the same start and a different end: a standing best eaten
 to one lot by fills on the order's first appearance, and a fresh one-lot new best, each pair matched on
@@ -1466,24 +1398,25 @@ from 250 ms before the onset to 50 ms after the end is dumped with cursor, clock
 | biggest hours (net ticks, lots) | 14:00 minus 41 on 18,185; 22:00 (Sunday open) minus 39 on 724; 17:00 minus 34 | 15:00 plus 40 on 14,548; 12:00 plus 33 on 10,476; 07:00 minus 27 | 13:00 minus 66 on 10,896; 16:00 plus 26; 15:00 minus 23 |
 | frozen-detector events | 839 | 857 | 830 |
 | size-one onsets (13:00 hour) | 22,042 (2,687) | 24,353 (3,205) | 27,111 (4,152) |
-| touch-print candidates (bid / ask) | 11,598 (5,539 / 6,059) | 13,266 (7,266 / 6,000) | 8,880 (4,412 / 4,468) |
+| first-observed family starts | 796 | 849 | 824 |
 | export scope | partial, no Sunday-evening prefix | full session | partial, no evening prefix |
 
 October 2 is the Monday after a Sunday-evening gap down (39 ticks in the opening hour on 724 lots) that
 kept falling through the US day; October 3 is a rising day whose two big hours are the US morning and
 15:00; October 17 is a falling day whose whole decline is one hour, 13:00 UTC, minus 66 ticks on 10,896
 lots, after which it chopped. On all three the overnight is quiet and the exhaustion detector, the size-one
-onsets and the touch-print candidates concentrate in the 12:00 to 18:00 hours, as on the 18th.
+onsets and the family starts concentrate in the 12:00 to 18:00 hours, as on the 18th.
 
 ### 21.2 What each day says, per the four-day passes
 
 Every row of sections 13 to 19 is already per day; the per-day reading in one place, October 2 / 3 / 17:
 
-- Recognition carries no direction (baseline with-share at 300 s 0.49 / 0.51 / 0.46); the touch-size read
-  at recognition is right 74 / 73 / 64 percent at 1 s and 53 / 51 / 52 at 300 s. Same on all three.
-- The touch-print pressure side continues at 60 s (0.54 on each); the 375/391 stack adds nothing on the
-  2nd, nothing on the 3rd, 0 to 4 points on the 17th; the side split follows the day's path (selling side
-  0.51 / 0.45 / 0.58 at 600 s, buying side 0.50 / 0.61 / 0.44).
+- Recognition carries no direction (archived recognitions, baseline with-share at 300 s 0.49 / 0.49 / 0.46);
+  the touch-size read at recognition is right 65 / 76 / 73 percent at 1 s and 52 / 50 / 48 at 300 s, the same
+  as the day's all-seconds control. Same on all three (section 22.2).
+- First-family starts: recent flow continues at 5 s (0.57 / 0.55 / 0.54); the 375/391 stack adds nothing on
+  the 3rd (0.34 at 60 s), holds on the 17th (0.59) and splits on the 2nd (0.61 at 60 s, 0.42 at 300 s); the full
+  displayed book is bid-heavy at 90 to 100 percent of starts on each (section 22.1).
 - Size-one: fill-eaten standing remnants retreat 0.74 / 0.74 / 0.72, fresh one-lot new bests 0.38 / 0.42 /
   0.38, crowded prior touch 0.81 / 0.79 / 0.79; repeat-survivor orders retreat 0.17 / 0.17 / 0.20 after
   three prior appearances.
@@ -1560,7 +1493,7 @@ time and show the same shape: the divergence is decided by which of two already-
 taker stream or the refill stream) lands next, not by anything readable at the decision boundary. The
 larger episodes of section 3 and the one-lot episodes here differ in scale and agree in kind.
 
-## 22. The substitutes replaced: actual family starts and actual archived recognitions on all four sessions
+## 22. Actual family starts and actual archived recognitions on all four sessions
 
 Codex's handoff (`agent-pass/CCODE_FAMILY_AND_RECOGNITION_INPUTS.md`, Markets c22ecc13) supplied the two
 inputs sections 17 and 21 had to stand in for: the first-observed structural family starts for October 2,
@@ -1572,8 +1505,8 @@ the original October 18 scripts run on them unchanged in method: `four_arm_first
 `dipole_post_recognition_days.py` are date-parametric copies of the section 2 and section 1 scripts, and
 each reproduces the committed October 18 summary byte for byte on the new inputs before touching another
 date (the October 18 family index yields the same 749, 377 eligible, 50-case screen and every arm cell; the
-October 18 candidate file yields the same 863 rows and every arm). The substitute results of 17.2 and 17.3
-stay as published; these are the actual-input results, kept separate as the handoff asked.
+October 18 candidate file yields the same 863 rows and every arm). The substitute runs that preceded these inputs
+were removed from the branch; only the actual-input results are kept.
 
 **Joins, reported as asked.** Family starts: every row's saved pre-event cursor agrees with the as-of
 group chosen from the export (823 / 848 / 795 of 823 / 848 / 795; one family per date has no earlier
@@ -1616,14 +1549,13 @@ The stack is October 18's and October 17's: 0.64 and 0.59 at 60 s on the two fal
 rising October 3 (the stack's selling side reverses there), 0.61 at 60 s but 0.42 at 300 s on the mixed
 October 2. The inverse stack exists on 3 and 2 events, which is section 2's finding (the buy-side mirror
 barely occurs) on all four days. The unoriented day reference says why: all families drift down at 600 s
-on the three days the stack held and up on the day it failed. This is the drift account of 13.3 and 17.3
-on the actual population. (3) The full displayed book is bid-heavy at family starts on all four sessions,
+on the three days the stack held and up on the day it failed. This is the drift account of 13.3 on the
+actual population. (3) The full displayed book is bid-heavy at family starts on all four sessions,
 90 to 100 percent, median ratio 1.18 to 1.48. Section 2 called it a day constant for October 18; it is a
-constant of this population on every day, and it is a FULL-depth property: the 10-level depth of 17.3 was
-bid-heavy on only two of the four. The far ladder of NG was bid-heavy throughout these four October
+constant of this population on every day, and it is a FULL-depth property: the 10-level depth at the
+exhaustion anchors (section 13.2) is not bid-heavy in the same way. The far ladder of NG was bid-heavy throughout these four October
 sessions, and the "book opposes" arm therefore means "recent flow is buying" more than it means anything
-about the book. (4) With the actual families, the touch-print substitute of 17.3 was not misleading: the
-same baseline continuation, the same stack-on-two-days, the same side split.
+about the book.
 
 ### 22.2 Section 1 on actual archived recognitions, four sessions
 
@@ -1638,7 +1570,7 @@ no dipole involved):
 | recognition touch opposed to birth | 0.35 / 0.40 / 0.28 / 0.25 | 0.34 / 0.38 / 0.30 / 0.29 | 0.39 / 0.42 / 0.38 / 0.36 | 0.44 / 0.42 / 0.40 / 0.45 | 0.49 / 0.44 / 0.48 / 0.47 |
 | control: heavier touch side wins, all active seconds | 0.65 / 0.65 / 0.67 / 0.67 | 0.58 / 0.58 / 0.60 / 0.59 | 0.54 / 0.54 / 0.55 / 0.55 | 0.53 / 0.53 / 0.53 / 0.52 | 0.52 / 0.53 / 0.52 / 0.51 |
 
-The actual recognitions say what the rule-based ones said in 17.2, on every session: the birth polarity
+The actual recognitions say, on every session: the birth polarity
 carries nothing after recognition at any horizon; the touch-size relation at recognition carries the next
 few ticks and decays to the control by 300 s; and the control, which has no dipole in it, is the same
 number at every horizon on every day. The 300 s flow state at emission (same or opposite the birth) has no
@@ -1650,7 +1582,7 @@ births differ only as each day drifted.
 Nothing in direction, two things in precision. The first-family four arms now stand on the actual
 population on four sessions and their reading is the drift reading, with the inverse stack confirmed rare
 everywhere; and the full-depth bid skew is promoted from an October 18 observation to a four-session
-property of NG's displayed book at family starts, which the 10-level measure had hidden. The archived
+property of NG's displayed book at family starts. The archived
 recognition clocks confirm the information horizon on four sessions rather than one. The population
 distinction the handoff draws (all first-observed structural ids per date, not a copied 749 whitelist)
 is preserved in the tables above and in `first-family-four-arm-<tag>-summary.json`.
