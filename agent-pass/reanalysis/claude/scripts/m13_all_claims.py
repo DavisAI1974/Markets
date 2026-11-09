@@ -17,7 +17,8 @@ def add(cid, direction, q, it, obs, cond="", contra="", unres="", src="", pop="p
 m16 = json.load(open(OUT / "m16_lookahead_lifecycle.json"))
 for key, q, clock, end in [("ride_from_k5", "Oriented midpoint from decision clock k=+5 s to each knowable mark / horizon", "birth second +5 s (window saturation knowable; local max confirmed)", "mark or horizon"), ("ride_from_k1", "Oriented midpoint from k=+1 s", "birth second +1 s", "mark/horizon"), ("ride_from_k0", "Oriented midpoint from the pre-birth boundary", "k=0", "horizon"), ("from_recognition", "Oriented midpoint after Native recognition", "recognition", "+60/+300 s"), ("after_exhaustion", "Oriented midpoint after the first fresh opposed lot (exhaustion onset)", "exhaustion onset completed second", "+60/+300 s"), ("after_flip_majority_oriented_to_birth", "Oriented midpoint (to birth direction) after the window turns majority-opposite", "flip completed second", "+60/+300 s"), ("exit_rule_vs_fixed", "Ride from k=+5 with exit at exhaustion onset (else 60 s) or at flip (else 300 s)", "k=+5 s", "exit mark")]:
     for sub in m16[DAYS[0]][key]:
-        add(f"LA-{key}-{sub}", "look-ahead dipole lifecycle", f"{q}: {sub}", interp([m16[d][key][sub]["up"] for d in DAYS], [m16[d][key][sub]["down"] for d in DAYS]), fmt({d: json.dumps({k: m16[d][key][sub][k] for k in ("n", "up", "flat", "down", "p25", "p50", "p75")}) for d in DAYS}), "covered Native candidates 741/824/740/852 (recorded births = competition winners)", "", "earliest-knowable population includes qualifying peaks that did not win the 45 s competition (not measured here)", "tables/m16_lookahead_lifecycle.json; Markets@3d0b06a x13_life_paths.npz", clock=clock, end=end, lim="midpoint ticks, gross")
+        conv = (" | CONVENTION: midpoint at the START of the marking second (before the opposed print is known); the realizable END-of-second variant is the M16B row and the *_end_of_second key, symmetric on all four dates" if ((key in ("ride_from_k5", "ride_from_k1") and sub == "to_exhaustion") or key in ("after_exhaustion", "after_flip_majority_oriented_to_birth") or (key == "exit_rule_vs_fixed" and sub == "k5_to_exhaustion_or_60")) else "")
+        add(f"LA-{key}-{sub}", "look-ahead dipole lifecycle", f"{q}: {sub}", interp([m16[d][key][sub]["up"] for d in DAYS], [m16[d][key][sub]["down"] for d in DAYS]) + conv, fmt({d: json.dumps({k: m16[d][key][sub][k] for k in ("n", "up", "flat", "down", "p25", "p50", "p75")}) for d in DAYS}), "covered Native candidates 741/824/740/852 (recorded births = competition winners)", "", "earliest-knowable population includes qualifying peaks that did not win the 45 s competition (not measured here)", "tables/m16_lookahead_lifecycle.json; Markets@3d0b06a x13_life_paths.npz", clock=clock, end=end, lim="midpoint ticks, gross")
 for sub in m16[DAYS[0]]["knowable_marks_s"]:
     add(f"LA-marks-{sub}", "look-ahead dipole lifecycle (clocks)", f"Seconds from birth second to {sub}", "retained", fmt({d: json.dumps({k: m16[d]["knowable_marks_s"][sub][k] for k in ("n", "p25", "p50", "p75")}) for d in DAYS}), src="tables/m16_lookahead_lifecycle.json", clock="completed second", end=sub)
 add("LA-marks-before-recognition", "look-ahead dipole lifecycle (clocks)", "Exhaustion onset / flip / operational end knowable before Native recognition", "same on all dates", fmt({d: f"exhaustion {m16[d]['exhaustion_before_recognition']}, flip {m16[d]['flip_before_recognition']}, end {m16[d]['end_before_recognition']} of {m16[d]['candidates']}" for d in DAYS}), src="tables/m16_lookahead_lifecycle.json", clock="completed second vs recognition_receive_ns", end="n/a")
@@ -109,7 +110,7 @@ for (o, L), g in cells17.groupby(["outcome", "layer"]):
         if len(h) and len(l): parts[d] = f"high up/flat/down {int(h.up.iloc[0])}/{int(h.flat.iloc[0])}/{int(h.down.iloc[0])} n{int(h.n.iloc[0])} | low {int(l.up.iloc[0])}/{int(l.flat.iloc[0])}/{int(l.down.iloc[0])} n{int(l.n.iloc[0])}"
     add(f"M17-{o}-{L}", "combined layers at look-ahead clock (k=+5)", f"{L} tertiles vs {o}", (f"same high-vs-low direction on all four dates ({cons[(o, L)]:+d})" if (o, L) in cons else "not consistent across dates (retained)"), fmt(parts), "covered candidates", "", "", "tables/m17_layer_tertile_cells.csv", clock="k=+5 s", end=o)
 for o, res in m17["leave_one_date_out"].items():
-    add(f"M17-score-{o}", "combined layers (leave-one-date-out additive score)", f"Additive sign score of layers consistent on the three other dates vs {o}, held-out date", ("top vs bottom separates on every held-out date" if o == "ride_exh" else "weaker; retained"), fmt({d: json.dumps(res[d]["top_vs_bottom"]) + f" layers_used={res[d]['layers_used']}" for d in DAYS}), src="tables/m17_combined_layers.json", clock="k=+5 s", end=o, lim="rank-tertile score, not a fitted model")
+    add(f"M17-score-{o}", "combined layers (leave-one-date-out additive score)", f"Additive sign score of layers consistent on the three other dates vs {o}, held-out date", ("midpoint BEFORE the opposed print: top vs bottom separates on every held-out date, but this convention is not a realistic exit (M16b)" if o == "ride_exh" else ("realistic exit (end of exhaustion second): top leans up, bottom leans down on 3 of 4 dates; Oct 3 does not separate" if o == "ride_exh_end" else "weaker; retained")), fmt({d: json.dumps(res[d]["top_vs_bottom"]) + f" layers_used={res[d]['layers_used']}" for d in DAYS}), src="tables/m17_combined_layers.json", clock="k=+5 s", end=o, lim="rank-tertile score, not a fitted model")
 m18 = json.load(open(OUT / "m18_cross_layer_joins.json"))
 for key in ["by_dipole_state", "by_dipole_direction", "by_dipole_direction_recent", "by_fresh_flow_label", "by_touch_label", "by_gap_trend", "by_family_occurrence", "three_way_onset_flow_dipole"]:
     add(f"M18-{key}", "cross-layer join (thin touch x dipole x flow x family)", f"Size-one episode retreat share {key.replace('_', ' ')}", ("dipole state does not change thin-touch fate; fresh flow does" if "dipole" in key else "retained"), fmt({d: json.dumps(m18[d][key]) for d in DAYS}), src="tables/m18_cross_layer_joins.json", clock="onset known_by", end="episode ending")
@@ -118,11 +119,48 @@ add("M19-external-within-session", "external context layers", "Do any of the 48 
 m20 = json.load(open(OUT / "m20_trade_environment.json"))
 for key in ["before_ratio20", "before_net_flow60", "before_birth", "before_prints60", "before_open_thin_episodes", "after_net_flow20", "after_net_flow60", "after_birth120", "after_prints60"]:
     add(f"M20-fade-{key}", "trade environment before/after (large-move fade)", f"Full return of the fade by {key.replace('_', ' ')}", ("post-move native flow continuing WITH the move marks failures on 3 of 4 dates" if key.startswith("after_net") else ("busy tape before the move: fast return on all 4 dates" if key == "before_prints60" else "retained")), fmt({d: json.dumps(m20["large_moves"][d][key]) for d in DAYS}), src="tables/m20_large_move_environment.csv", clock="move known_by (+20/+60 s for after)", end="full return 600 s")
-for key in ["ride_by_prebirth_total_lots", "ride_by_after_flow", "after_exhaustion_60s_against_share_of_lots", "after_exhaustion_60s_trades_vs_prebirth_26s"]:
-    add(f"M20-ride-{key}", "trade environment before/after (dipole ride)", f"Dipole ride {key.replace('_', ' ')}", ("quiet births (low prebirth lots) drive further on all four dates" if key == "ride_by_prebirth_total_lots" else "retained"), fmt({d: json.dumps(m20["dipole_rides"][d][key]) for d in DAYS}), src="tables/m20_trade_environment.json", clock="k=+5 s / exhaustion exit", end="ride to exhaustion")
+for key in ["ride_by_prebirth_total_lots", "ride_by_after_flow", "ride_end_by_prebirth_total_lots", "ride_end_by_after_flow", "after_exhaustion_60s_against_share_of_lots", "after_exhaustion_60s_trades_vs_prebirth_26s"]:
+    add(f"M20-ride-{key}", "trade environment before/after (dipole ride)", f"Dipole ride {key.replace('_', ' ')}", ("midpoint BEFORE the opposed print (superseded convention, M16b): quiet births appear to drive further on all four dates" if key == "ride_by_prebirth_total_lots" else ("realistic exit: quiet births MOVE more in both directions (fewer flat), no direction lean" if key == "ride_end_by_prebirth_total_lots" else "retained")), fmt({d: json.dumps(m20["dipole_rides"][d][key]) for d in DAYS}), src="tables/m20_trade_environment.json", clock="k=+5 s / exhaustion exit", end="ride to exhaustion")
+
+
+# M23 raw MBO layers at the look-ahead clock and around large moves; M24 flip/successor and earliest-knowable population
+try:
+    m23 = json.load(open(OUT / "m23_raw_mbo_joins.json")); c23 = pd.read_csv(OUT / "m23_raw_layer_tertile_cells.csv")
+    cons23 = {(c["outcome"], c["layer"]): c["direction"] for c in m23["consistent_raw_layers"]}
+    for (o, L), g in c23.groupby(["outcome", "layer"]):
+        parts = {}
+        for d in DAYS:
+            h = g[(g.tertile == "high") & (g.day == int(d))]; l = g[(g.tertile == "low") & (g.day == int(d))]
+            if len(h) and len(l): parts[d] = f"high up/flat/down {int(h.up.iloc[0])}/{int(h.flat.iloc[0])}/{int(h.down.iloc[0])} n{int(h.n.iloc[0])} | low {int(l.up.iloc[0])}/{int(l.flat.iloc[0])}/{int(l.down.iloc[0])} n{int(l.n.iloc[0])}"
+        add(f"M23-{o}-{L}", "raw MBO queue layer at look-ahead clock (k=+5)", f"{L} tertiles vs {o}", (f"same high-vs-low direction on all four dates ({cons23[(o, L)]:+d})" if (o, L) in cons23 else "not consistent across dates (retained)"), fmt(parts), "covered candidates", "", "", "tables/m23_raw_layer_tertile_cells.csv; markets-data@c01caaf raw MBO tapes", clock="k=+5 s (second-end book state) / -20..+5 sums", end=o)
+    for o, res in m23["leave_one_date_out"].items():
+        add(f"M23-score-{o}", "all layers together (derived + raw MBO), leave-one-date-out", f"Additive sign score over all consistent layers vs {o}, held-out date", "retained", fmt({d: json.dumps(res[d]) for d in DAYS}), src="tables/m23_raw_mbo_joins.json", clock="k=+5 s", end=o)
+    e23 = json.load(open(OUT / "m23_large_move_raw_env.json"))
+    for col in sorted({k for d in DAYS for k in e23.get(d, {})}):
+        add(f"M23-fade-{col}", "raw MBO environment around large moves", f"Large-move full return by {col} (above vs at/below the date median)", "retained", fmt({d: json.dumps(e23[d][col]) for d in DAYS if col in e23.get(d, {})}), src="tables/m23_large_move_raw_env.csv", clock="second before the move / +1..+20 s", end="full return 600 s")
+except FileNotFoundError:
+    pass
+try:
+    m24 = json.load(open(OUT / "m24_flip_successor_and_peaks.json"))
+    for k, v in m24.get("per_date", {}).get(DAYS[0], {}).items():
+        add(f"M24-{k}", "look-ahead lifecycle (flip/successor; earliest-knowable population)", k.replace("_", " "), "retained", fmt({d: json.dumps(m24["per_date"][d].get(k)) for d in DAYS}), src="tables/m24_flip_successor_and_peaks.json", clock="completed second", end="see key")
+except FileNotFoundError:
+    pass
+try:
+    m16b = json.load(open(OUT / "m16b_exhaustion_convention_check.json"))
+    NOTE16 = {"ride_to_exhaustion_before_opposed_print": "midpoint at the START of the exhaustion second (before the opposed print is known): up-leaning on all four dates; NOT a realistic exit",
+              "ride_to_exhaustion_after_opposed_print": "midpoint at the END of the exhaustion second (realistic exit): symmetric on all four dates",
+              "midpoint_change_inside_exhaustion_second": "the exhaustion second itself moves AGAINST the birth direction on all four dates (the opposed print takes the tick)",
+              "after_exhaustion_60s_from_end_of_second": "symmetric on all four dates", "after_exhaustion_60s_from_start_of_second": "down-leaning on all four dates, but this includes the exhaustion second's own tick",
+              "after_flip_60s_from_end_of_second": "symmetric on all four dates", "after_flip_60s_from_start_of_second": "down-leaning on all four dates, but this includes the flip second's own tick",
+              "exit_rule_realistic": "exhaustion-end or 60 s: symmetric on all four dates", "k5_to_60_hold": "symmetric on all four dates"}
+    for k in m16b[DAYS[0]]:
+        add(f"M16B-{k}", "exhaustion CONVENTION check (look-ahead ride)", k.replace("_", " "), NOTE16.get(k, "retained"), fmt({d: json.dumps(m16b[d][k]) for d in DAYS}), src="tables/m16b_exhaustion_convention_check.json", clock="k=+5 s entry; mark second start vs end", end="see key", lim="oriented midpoint ticks from Ccode x13 life paths; four dates")
+except FileNotFoundError:
+    pass
 
 with open(OUT.parent / "CLAIMS.csv") as fh: existing = list(csv.reader(fh))
-PFX = ("LA-", "M17-", "M18-", "M19-", "M20-", "M1C-", "M14-", "M2C-", "M3C-", "M3D-", "M4C-", "T2-", "T2S-", "T2L-", "T2F-", "M6G-", "M6O-", "M7C-", "M8G-", "M8R-", "M8N-", "M8S-", "M8B-", "M12A-", "M12F-", "M12B-")
+PFX = ("LA-", "M16B-", "M23-", "M24-", "M17-", "M18-", "M19-", "M20-", "M1C-", "M14-", "M2C-", "M3C-", "M3D-", "M4C-", "T2-", "T2S-", "T2L-", "T2F-", "M6G-", "M6O-", "M7C-", "M8G-", "M8R-", "M8N-", "M8S-", "M8B-", "M12A-", "M12F-", "M12B-")
 hand = [r for r in existing[1:] if r and not r[0].startswith(PFX)]
 with open(OUT.parent / "CLAIMS.csv", "w", newline="") as fh:
     w = csv.writer(fh); w.writerow(H); w.writerows(hand); w.writerows(rows)

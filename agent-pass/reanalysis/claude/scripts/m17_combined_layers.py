@@ -24,27 +24,23 @@ for day in DAYS:
     F["tgt_add_minus_fill"] = F.tgt_add_touch_m20_5 - F.tgt_fill_m20_5; F["own_add_minus_cx"] = F.own_add_touch_m20_5 - F.own_rm_cx_touch_m20_5
     F = F.merge(x03[["row", "delay_s"]], on="row", how="left")
     ops = pd.read_csv(NATIVE / f"{day}-candidate-operands.csv"); pm = pd.read_csv(NATIVE / f"{day}-path-members.csv"); pm = pm[pm.kind == "candidate"]
-    ci = pd.read_csv(LIFE / f"{day}/t6_cohort_features.csv") if (LIFE / f"{day}/t6_cohort_features.csv").exists() else None
-    # map row -> candidate_id via the Ccode cohort features table (row order = input row)
-    if ci is not None and "candidate_id" in ci.columns and "row" in ci.columns:
-        F = F.merge(ci[["row", "candidate_id"]], on="row", how="left")
-    elif ci is not None and "candidate_id" in ci.columns:
-        ci = ci.reset_index().rename(columns={"index": "row"}); F = F.merge(ci[["row", "candidate_id"]], on="row", how="left")
+    ci = pd.read_csv(LIFE / f"{day}/t6_cohort_features.csv")[["row", "prov_candidate_id"]].rename(columns={"prov_candidate_id": "candidate_id"})
+    F = F.merge(ci.drop_duplicates("row"), on="row", how="left"); print(day, "row->candidate_id mapped:", int(F.candidate_id.notna().sum()), "of", len(F))
     if "candidate_id" in F:
-        F = F.merge(ops[["candidate_id", "orientation", "prominence", "baseline", "competing_peaks" if "competing_peaks" in ops else "observations_behind_threshold", "observations_behind_threshold"]].drop_duplicates("candidate_id"), on="candidate_id", how="left")
+        F = F.merge(ops[list(dict.fromkeys(["candidate_id", "orientation", "prominence", "baseline", "competing_peaks" if "competing_peaks" in ops else "observations_behind_threshold", "observations_behind_threshold"]))].drop_duplicates("candidate_id"), on="candidate_id", how="left")
         F = F.merge(pm[["candidate_id", "regime", "activity_bucket", "activity"]], on="candidate_id", how="left")
         lag = pd.read_csv(NATIVE / f"{day}-lag-measurements.csv")[["candidate_id", "competing_peaks", "window_open", "winning_offset_s"]]; F = F.merge(lag, on="candidate_id", how="left", suffixes=("", "_lag"))
         c1 = pd.read_csv(OUT / f"m1_candidates_{day}.csv", low_memory=False)[["candidate_id", "anchor_label_ns", "flow_state"]]; F = F.merge(c1, on="candidate_id", how="left")
         F["hour"] = pd.to_datetime(F.anchor_label_ns, unit="ns").dt.hour
         b = np.sort(F.anchor_label_ns.dropna().values); F["prev_gap_s"] = [(t - b[b < t].max()) / 1e9 if pd.notna(t) and (b < t).any() else np.nan for t in F.anchor_label_ns.values]
     # outcomes from m16
-    F = F.merge(lc[["k_exhaustion", "k_flip_majority", "m5", "m_exh", "m60", "m300", "m_flipmaj"]], left_on="row", right_index=True, how="left")
-    F["ride_exh"] = F.m_exh - F.m5; F["ride_60"] = F.m60 - F.m5; F["ride_300"] = F.m300 - F.m5; F["exh_class"] = pd.cut(F.k_exhaustion.fillna(9999), [0, 19.5, 60, 1e9], labels=["lt20", "20to60", "gt60"])
+    F = F.merge(lc[["k_exhaustion", "k_flip_majority", "m5", "m_exh", "m_exh_end", "m60", "m300", "m_flipmaj"]], left_on="row", right_index=True, how="left")
+    F["ride_exh"] = F.m_exh - F.m5; F["ride_exh_end"] = np.where(F.k_exhaustion <= 5, 0.0, F.m_exh_end - F.m5); F["ride_60"] = F.m60 - F.m5; F["ride_300"] = F.m300 - F.m5; F["exh_class"] = pd.cut(F.k_exhaustion.fillna(9999), [0, 19.5, 60, 1e9], labels=["lt20", "20to60", "gt60"])
     F["day"] = day; feats_all.append(F)
 A = pd.concat(feats_all, ignore_index=True); A.to_csv(OUT / "m17_features.csv.gz", index=False)
 LAYERS = ["spr_k5", "tgt_sz_k5", "own_sz_k5", "tgt_n_k5", "own_n_k5", "tgt_near5_k5", "own_near5_k5", "touch_ratio_k5", "near5_ratio_k5", "with_lots_0_5", "with_lots_m20_m1", "against_lots_m20_m1", "n_trades_m20_5", "tgt_add_touch_m20_5", "own_add_touch_m20_5", "tgt_fill_m20_5", "own_fill_m20_5", "tgt_rm_cx_touch_m20_5", "own_rm_cx_touch_m20_5", "tgt_add_near_m20_5", "own_add_near_m20_5", "tgt_add_minus_fill", "own_add_minus_cx", "mid_m60_0", "mid_m20_0", "mid_0_5", "spr_change_m20_5", "prominence", "baseline", "observations_behind_threshold", "competing_peaks", "winning_offset_s", "activity", "prev_gap_s", "hour"]
 LAYERS = [l for l in LAYERS if l in A.columns]
-OUTC = {"ride_exh": "ride k5->exhaustion (oriented ticks)", "ride_60": "k5->60 s", "ride_300": "k5->300 s"}
+OUTC = {"ride_exh": "ride k5->exhaustion, midpoint before the opposed print (oriented ticks)", "ride_exh_end": "ride k5->exhaustion, midpoint at the end of the exhaustion second (realistic exit)", "ride_60": "k5->60 s", "ride_300": "k5->300 s"}
 def tert(s):
     q = s.rank(pct=True, method="average"); return pd.cut(q, [0, 1/3, 2/3, 1.0001], labels=["low", "mid", "high"], include_lowest=True)
 cells = []; sign_table = {}
@@ -66,7 +62,7 @@ print("layers with the same high-vs-low direction on all four dates:")
 for o, L, p in cons: print("  ", o, L, list(p.values())[0])
 # leave-one-date-out additive sign score for ride_exh and ride_60
 score_res = {}
-for out_name in ["ride_exh", "ride_60"]:
+for out_name in ["ride_exh", "ride_exh_end", "ride_60"]:
     res = {}
     for held in DAYS:
         train = [d for d in DAYS if d != held]

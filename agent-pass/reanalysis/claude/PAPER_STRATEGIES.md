@@ -1,4 +1,4 @@
-# Paper strategy candidates (Claude Code independent reanalysis, 2026-11-09)
+# Paper strategy candidates (Claude Code independent reanalysis, 2026-11-09; rerun v2 — S7 revised, first-pass S7 and its amendment withdrawn)
 
 Research numbers below are GROSS (house rule: trade cost is not a market condition). Execution assumptions are listed as unmeasured paper-only settings to be LOGGED by the paper runner, never applied to the findings. Parameters marked EVIDENCE come from the frozen packet with the table named; parameters marked PROVISIONAL are paper-only settings chosen here and must be frozen before prospective observation. Platform: Tradovate demo (user's selection); it supplies best bid/ask and depth snapshots, not message-level order flow, which is why only S2 can execute tonight. Machine-readable twin: PAPER_STRATEGIES.json.
 
@@ -60,27 +60,31 @@ Thesis (EVIDENCE, CLAIMS X-4, X-6; negative results X-3, X-5 retained). For a po
 
 Rule to log (not trade). Inputs: live 20 s native buy/sell lots by completed second (message-level feed required; Tradovate does not supply it). Exit cue A: fresh opposed lots reduce |ratio| from 1 (fresh_opposed_weakening onset). Exit cue B: window total falls to zero (flow_vanished). Log the oriented 5/20/60 s move after each cue for positions held in paper by S2 or any other rule; evaluate per date, no pooling. Not applied to S2 tonight (S2 uses only best bid/ask).
 
-## S7 — Dipole drive ride at the look-ahead clock with exhaustion exit (status: OBSERVATION-ONLY on Tradovate; READY FOR A PAPER EXECUTION CHECK on a message-level feed)
+## S7 (REVISED in rerun v2) — Touch-queue read at the dipole's look-ahead clock, exhaustion-end exit (status: OBSERVATION-ONLY on Tradovate; CANDIDATE FOR A PAPER EXECUTION CHECK on a message-level feed, small expected magnitude)
 
-Dipole layers used: native fresh buy/sell lots per completed second, the 20 s rolling window, its oriented ratio; complementary input: none required (best bid/ask for the midpoint). Added after the user's look-ahead correction (REPORT section 12).
+What changed. The first-pass S7 ("dipole drive ride, about 3 to 1 until the first opposed lot") is WITHDRAWN. Its ride was measured to the midpoint at the START of the exhaustion second, before the opposed print was known; measured to the END of that second (the first moment a position can act on the cue) the ride is symmetric on all four dates (192/369/180, 213/431/180, 192/345/203, 227/379/246; REPORT section 5, CLAIMS M16B-*). The window alone has no direction at any realizable clock. What does sort the outcome at the window's own +5 s clock is the displayed queue at both touches (REPORT section 6).
 
-Thesis (EVIDENCE, CLAIMS LA-1, LA-2, LA-4). When the 20 s aggressor window becomes fully one-sided and a qualifying peak is confirmed (+5 s), the midpoint moves with that direction about 3 to 1 until the first fresh opposed lot arrives (median 19 to 20 s after the birth second); after that lot the next 60 s moves against. Windows still one-sided at 60 s keep driving (51/20, 46/21, 48/20, 54/31).
+Dipole layers used: native fresh buy/sell lots per completed second, the 20 s rolling window, its oriented ratio (the entry CLOCK), the first fresh opposed lot (the exit MARK). Complementary inputs (the DIRECTION read): own-side and target-side touch size and order count at +5 s (own = the side the birth direction rests on; target = the side being hit); best bid/ask.
 
-Inputs. Message-level prints classified against the preceding completed-group midpoint (the Native action-midpoint rule, CONFLICTS C1); per-second with/against lots; best bid/ask. Decision clock = completed second.
+Thesis (EVIDENCE, CLAIMS M17-ride_exh_end-touch_ratio_k5, M23-ride_exh_end-raw_own_touch_orders_k5, M26 in tables/m26_v2_headline_cells.json). When the 20 s aggressor window becomes fully one-sided and a qualifying peak is confirmed (+5 s), the oriented midpoint from +5 s to the END of the first opposed-lot second (or 60 s) is up/flat/down 80/128/39, 65/166/32, 78/133/40, 84/145/55 when the own/target touch-size ratio is in the session's top tertile, and 35/144/61, 49/170/61, 50/131/71, 52/152/87 in the bottom tertile. With the raw-tape own-side touch order count also in the top tertile: 29/60/19, 39/89/14, 43/73/28, 41/76/31. Same read on the earliest-knowable cluster population with the raw book: 60 s up/flat/down 113/68/84, 104/97/93, 128/68/74, 135/66/85 (high) versus 100/53/112, 84/91/112, 79/69/108, 96/61/130 (low).
 
-Setup and entry. Window fully one-sided (|ratio| = 1) with total lots above the trailing 85th percentile baseline per the recovered detector (EVIDENCE for definition; PROVISIONAL as a live rule because the competition window is not waited for). Enter in the window direction at the first quote after k = +5 s (PROVISIONAL; the local-max confirmation clock). One position at a time.
+Inputs. Message-level prints classified against the preceding completed-group midpoint (CONFLICTS C1); per-second with/against lots; the full touch queue on both sides (size and order count), best bid/ask. Decision clock = completed second.
 
-Exit (EVIDENCE). At the first completed second containing a fresh opposed lot (exhaustion onset), or at 60 s, whichever first. Do not wait for the operational end (third opposite second), which is 20 s later and gives the gain back.
+Setup and entry. Window fully one-sided (|ratio| = 1) with total lots above the trailing baseline per the recovered detector (EVIDENCE for the definition; PROVISIONAL as a live rule because the competition window is not waited for). At the first quote after k = +5 s, read own/target touch-size ratio and own-side order count; enter in the window direction only if both are in the top tertile of the live session's own running distribution (PROVISIONAL thresholds; EVIDENCE for the direction of the sort on all four dates). Otherwise log the window as a suppressed signal. One position at a time.
 
-Flip overlay (EVIDENCE, CLAIM LA-3; PROVISIONAL as a rule). If the window turns majority-opposite (median 34 to 36 s after birth), reverse into the new direction for 60 s: after the flip the midpoint follows it 356/245, 401/220, 395/199, 457/235.
+Exit (EVIDENCE for the mark, M16/M16b). At the END of the first completed second containing a fresh opposed lot (exhaustion onset), or at 60 s, whichever first. The exhaustion second itself carries the adverse tick on every date (146/284/311, 171/359/294, 149/274/317, 184/260/408); the exit cannot precede it. Do not wait for the operational end (third opposite second), 20 s later.
 
-Magnitudes and the honest caveat. Median ride 0 ticks, p75 0.5 tick, mean absolute 0.3 to 0.5 tick; moves of one tick or more with the direction 81/69/96/111 vs against 35/27/24/40. The spread is 1 to 2 ticks. By the house rule that comparison is for the paper log, not for these numbers; it is the first thing the log must measure.
+Flip. The window turning majority-opposite (median 34 to 36 s) precedes the opposite-polarity successor's recorded birth by median 23 to 39 s (M24 A) and is logged as a transition mark; it is NOT a reversal signal (after the flip second ends, the next 60 s is symmetric: 294/166/281, 269/250/305, 257/187/296, 322/199/330). The first-pass flip overlay is withdrawn.
 
-Population caveat. Evidence is on the recorded births (competition winners). A live rule acts on the first qualifying peak; Ccode's emulation puts that population at 803/843/800/863 with 675 to 700 exact matches to the recorded 741/832/740/863. Price paths for the extra peaks are not in the packet (OPEN_QUESTIONS 15); the first paper sessions must log them separately.
+Magnitudes and the honest caveat. Exit-rule outcome in the top tertile: p25/p50/p75 0/0/0.5 tick on Oct 2, 17, 18 and 0/0/0 on Oct 3; non-flat up-to-down about 2 to 1 (80/39, 65/32, 78/40, 84/55). The spread is 1 to 2 ticks. By the house rule that comparison is for the paper log; it is the first thing the log must measure, and the reason the status says small expected magnitude.
 
-Sizing, limits, data handling, logging: as S2, plus the per-second lot classification must be logged with its rule.
+Population. Evidence on the recorded births (741/824/740/852) AND on the earliest-knowable clusters (803/844/801/864, including 64/78/73/87 that never became recorded births; their price behaviour matches the winners, M24 B). The live rule acts on the cluster population.
 
-Status. Tradovate supplies no message-level data, so S7 cannot run there. On a message-level feed (the Databento route used for the historical tape) it is the primary candidate for a paper execution check.
+Invalidation (prospective). Over the first 100 qualifying windows that pass the entry filter, non-flat up-to-down below 1.3 to 1, or the bottom-tertile windows (logged, not traded) not leaning down.
+
+Sizing, limits, data handling, logging: as S2, plus the per-second lot classification, the touch-queue snapshot at +5 s with its tertile boundaries, the exhaustion second, and every suppressed window.
+
+Status. Tradovate supplies no message-level data and no order counts at the touch, so S7 cannot run there. On a message-level feed (the Databento route used for the historical tape) it is a candidate for a paper execution check with a small expected magnitude; S2 remains the primary candidate.
 
 ## S2 amendment (robustness, REPORT section 13)
 
@@ -88,12 +92,12 @@ Entry delay: enter at the first quote after the trigger (+1 s) instead of +5 s; 
 
 ## Dipole layers used by each candidate
 
-S2 none; S1 flow state at emission (Native recognition clock); S3 none (thin touch, fresh wire flow); S4 none (touch queue); S5 weakening onsets (fresh opposed vs expiry, vanished/resumed); S6 fresh opposed / window empty; S7 fresh lots, 20 s window, ratio saturation, exhaustion onset, flip.
+S2 none; S1 flow state at emission (Native recognition clock); S3 none (thin touch, fresh wire flow); S4 none (touch queue); S5 weakening onsets (fresh opposed vs expiry, vanished/resumed); S6 fresh opposed / window empty; S7 (revised) fresh lots, 20 s window, ratio saturation as the clock, exhaustion onset as the exit mark; direction from the touch queue (not a dipole layer).
 
 ## S2 amendment (post-trade dipole exit, REPORT section 19; EVIDENCE M20)
 
 After entering the fade, read the native 20 s aggressor window each completed second. If net native flow over the first 20 s after the move continues WITH the jump, exit: those fades failed to return in 8/28, 6/24, 10/22, 9/31 versus 3/16, 3/32, 3/29, 6/32 when flow turned against the jump. Requires message-level flow; on Tradevate (top-of-book only) this overlay is logged as unavailable. Before-trade note: a busy tape in the prior 60 s returns fast (median 5 to 25 s), a quiet tape slowly (18 to 138 s); use this to set the expected hold, not to filter.
 
-## S7 amendment (entry filters from the combined layers, REPORT section 16; EVIDENCE M17, M20)
+## S7 amendment (first pass) — WITHDRAWN
 
-Prefer births into a quiet, thin-target book: total lots in -20..+5 s below the session median (ride up/down 143/27, 145/28, 140/53, 157/46 vs 101/55, 84/53, 103/48, 140/59), target touch size and order count in the lower tertile, midpoint not yet moved in 0..+5 s. Leave-one-date-out score >= 3: 139/24, 126/26, 126/41, 140/34. These are rank-tertile filters, PROVISIONAL as live thresholds (the per-date tertile boundaries must be set from the live session's own distribution and logged).
+The first-pass amendment ("prefer births into a quiet, thin-target book; leave-one-date-out score >= 3: 139/24, 126/26, 126/41, 140/34") was measured under the start-of-second convention. Under the realizable convention, quiet births move more in BOTH directions (132/129/117, 148/184/116, 130/143/142, 149/131/164 vs busy 60/240/63, 65/247/64, 62/202/61, 78/248/82; M20-ride-ride_end_by_prebirth_total_lots) and the all-layer leave-one-date-out score separates on three of four dates only (79/49 vs 34/52, 55/45 vs 73/73, 78/54 vs 48/74, 99/97 vs 51/67; M23). The entry filter now lives in the revised S7 above (touch ratio and own-side order count).

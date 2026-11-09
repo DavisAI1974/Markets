@@ -40,7 +40,7 @@ A = pd.concat(feats, ignore_index=True); A.to_csv(OUT / "m23_features_with_raw.c
 RAW = [c for c in A.columns if c.startswith("raw_")]
 def tert(s): return pd.cut(s.rank(pct=True, method="average"), [0, 1/3, 2/3, 1.0001], labels=["low", "mid", "high"], include_lowest=True)
 cells = []; sign_table = {}
-for out_name in ["ride_exh", "ride_60", "ride_300"]:
+for out_name in ["ride_exh", "ride_exh_end", "ride_60", "ride_300"]:
     for L in RAW:
         per = {}
         for day in DAYS:
@@ -49,7 +49,8 @@ for out_name in ["ride_exh", "ride_60", "ride_300"]:
             d["t"] = tert(d[L])
             for t in ["low", "mid", "high"]:
                 g = d[d.t == t]; cells.append(dict(outcome=out_name, layer=L, tertile=t, day=day, n=len(g), up=int((g[out_name] > 0).sum()), flat=int((g[out_name] == 0).sum()), down=int((g[out_name] < 0).sum())))
-            hi = d[d.t == "high"][out_name]; lo = d[d.t == "low"][out_name]; per[day] = int(np.sign(((hi > 0).mean() - (hi < 0).mean()) - ((lo > 0).mean() - (lo < 0).mean())))
+            hi = d[d.t == "high"][out_name]; lo = d[d.t == "low"][out_name]
+            if len(hi) and len(lo): per[day] = int(np.sign(((hi > 0).mean() - (hi < 0).mean()) - ((lo > 0).mean() - (lo < 0).mean())))
         sign_table[(out_name, L)] = per
 pd.DataFrame(cells).to_csv(OUT / "m23_raw_layer_tertile_cells.csv", index=False)
 cons = [dict(outcome=o, layer=L, direction=list(p.values())[0]) for (o, L), p in sign_table.items() if len(p) == 4 and len(set(p.values())) == 1 and 0 not in p.values()]
@@ -64,7 +65,7 @@ def sign_for(out_name, L, day):
     if not len(hi) or not len(lo): return None
     h = hi.iloc[0]; l = lo.iloc[0]; return int(np.sign(((h.up - h.down) / max(h.n, 1)) - ((l.up - l.down) / max(l.n, 1))))
 score_res = {}
-for out_name in ["ride_exh", "ride_60"]:
+for out_name in ["ride_exh", "ride_exh_end", "ride_60"]:
     res = {}
     for held in DAYS:
         train = [d for d in DAYS if d != held]

@@ -1,6 +1,6 @@
 {
  "analyst": "Claude Code (Ccode) \u2014 independent reanalysis, no reconciliation with Codex by user instruction",
- "written_utc": "2026-11-09",
+ "written_utc": "2026-11-09 (rerun v2)",
  "shared_brief_commit": {
   "repository": "DavisAI1974/Markets",
   "branch": "codex/lifecycle-data-links-20261109",
@@ -85,7 +85,9 @@
    "tables/m18*",
    "tables/m19*",
    "tables/m20*"
-  ]
+  ],
+  "REPORT_v1_superseded.md": "first pass, superseded",
+  "DIRECTION_MEMORY.md": "reconstructed direction and failure list"
  },
  "execution": {
   "where": "claude.ai cloud container (GitHub-hosted inputs; no desktop computation, no AWS/S3, no live orders, no PR15 merge)",
@@ -95,5 +97,53 @@
  "branch": {
   "repository": "DavisAI1974/Markets",
   "branch": "research/markets-adaptive-wavepacket-migration-20261108"
+ },
+ "rerun_v2": {
+  "date_utc": "2026-11-09",
+  "reason": "first pass measured the dipole from the recognition clock, did not decode the raw tapes, and measured the look-ahead ride to the START of the exhaustion second",
+  "raw_tapes_decoded": {
+   "source": "markets-data@c01caaf4f327e8fdff21e4e8b9c5153aba8604a8 NG_v0_mbo_<day>.dbn.zst",
+   "days": [
+    "20231001",
+    "20231002",
+    "20231003",
+    "20231016",
+    "20231017",
+    "20231018"
+   ],
+   "records": [
+    12532,
+    813342,
+    879077,
+    925662,
+    858976,
+    760803
+   ],
+   "verification": "sha256 and record counts match the manifest; replay midpoint equals x13 life paths at k=+5 in 848/852 Oct 18 candidates (corr 0.999)"
+  },
+  "new_scripts": [
+   "m16b_exhaustion_convention.py",
+   "m22_raw_mbo_queue_layers.py",
+   "m23_raw_mbo_joins.py",
+   "m24_flip_successor_and_peaks.py",
+   "m25_v2_layer_summary.py",
+   "m26_v2_headline_cells.py",
+   "patch_m13_v2.py"
+  ],
+  "modified_scripts": [
+   "m16_lookahead_lifecycle.py (m_exh_end)",
+   "m17_combined_layers.py (ride_exh_end outcome; operands column dedupe; prov_candidate_id mapping)",
+   "m20_trade_environment.py (ride_end cells)",
+   "m23_raw_mbo_joins.py (ride_exh_end)",
+   "m13_all_claims.py (convention-aware conclusions)"
+  ],
+  "superseded": "REPORT_v1_superseded.md (first pass kept verbatim)",
+  "claims_rows": 3942,
+  "withdrawn": [
+   "S7 drive ride and flip overlay (first pass)",
+   "S7 amendment (quiet births)",
+   "REPORT v1 section 12 drive/after-exhaustion/after-flip direction statements"
+  ],
+  "no_reconciliation": "Codex's report and conclusions were not read for this rerun"
  }
 }

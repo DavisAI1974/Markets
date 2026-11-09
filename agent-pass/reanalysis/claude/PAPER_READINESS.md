@@ -1,4 +1,4 @@
-# Paper readiness (Claude Code independent reanalysis, 2026-11-09)
+# Paper readiness (Claude Code independent reanalysis, 2026-11-09; rerun v2)
 
 Platform: Tradovate demo environment (user's selection, stated 2026-11-09). This repository contains no Tradovate client, credential handling, contract mapping, quote logger or paper order/fill ledger (repository-wide search for "tradovate": no files). The NG runner on this branch (`research/kalshi/adaptive_wavepacket_20261108/markets_bridge/ng_runner.py`) is a tape replay probe with, in its own words, "no paper ledger". Nothing is connected. No paper order has been placed by this work.
 
@@ -10,6 +10,7 @@ Platform: Tradovate demo environment (user's selection, stated 2026-11-09). This
 | 2 | S1 dipole recognition log / no-entry | observation-only | needs message-level flow for the 20 s native window; Tradovate does not provide it |
 | 3 | S5 weakening-onset exit warning | observation-only | same data need; no price-outcome evidence after onsets |
 | 4 | S4 touch-imbalance / refill nowcast | observation-only | 1-2 tick effect vs 1-2 tick spread; needs depth and order counts at the touch |
+| 5 | S7 (revised) touch-queue read at the dipole look-ahead clock, exhaustion-end exit | observation-only | needs message-level flow and touch order counts; top-tertile exit-rule p75 0.5 tick (0 on Oct 3) vs 1-2 tick spread; the first-pass S7 drive ride is withdrawn (convention artefact, REPORT section 5) |
 | 5 | S3 thin-touch retreat nowcast | observation-only | millisecond horizon; message-level data; S3b sign convention unresolved (CONFLICTS C9) |
 
 ## Exact launch / check steps for S2

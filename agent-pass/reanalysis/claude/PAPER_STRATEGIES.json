@@ -1,5 +1,5 @@
 {
- "version": "claude-paper-candidates-v0.4",
+ "version": "0.5",
  "written": "2026-11-09",
  "platform": "Tradovate demo (user selection); best bid/ask + depth snapshots; no message-level order flow",
  "research_numbers": "gross; execution assumptions are paper-only settings to be logged, never applied to findings",
@@ -305,20 +305,26 @@
   },
   {
    "id": "S7",
-   "name": "dipole_drive_ride_lookahead_clock",
-   "status": "observation_only_on_tradovate; ready_for_paper_execution_check_on_message_level_feed",
+   "name": "touch_queue_read_at_dipole_lookahead_clock_exhaustion_end_exit",
+   "revised_in": "rerun v2",
+   "status": "observation_only_on_tradovate; candidate_for_paper_execution_check_on_message_level_feed; small_expected_magnitude",
+   "withdrawn_first_pass_version": {
+    "name": "dipole_drive_ride_lookahead_clock",
+    "reason": "ride measured to midpoint at START of exhaustion second; realizable END-of-second ride symmetric on all four dates",
+    "evidence": "tables/m16b_exhaustion_convention_check.json"
+   },
    "blockers": [
-    "message-level prints and classification required (Tradovate lacks it)",
-    "earliest-knowable population (qualifying peaks) not priced in packet"
+    "message-level prints, classification and touch order counts required (Tradovate lacks them)"
    ],
    "dipole_layers_used": [
     "native fresh buy/sell lots",
     "20 s rolling window",
-    "oriented ratio saturation",
-    "first fresh opposed lot (exhaustion onset)",
-    "majority flip"
+    "oriented ratio saturation (entry clock)",
+    "first fresh opposed lot (exit mark)"
    ],
    "complementary_inputs": [
+    "own/target touch size ratio at +5 s",
+    "own-side touch order count at +5 s (raw tape)",
     "best bid/ask midpoint"
    ],
    "parameters": {
@@ -326,13 +332,17 @@
      "value": "birth second + 5 s",
      "provenance": "PROVISIONAL (local-max confirmation per Ccode emulation)"
     },
-    "exit": {
-     "value": "first fresh opposed lot else 60 s",
-     "provenance": "EVIDENCE LA-2"
+    "entry_filter": {
+     "value": "own/target touch-size ratio AND own-side touch order count both in the top tertile of the live session's running distribution",
+     "provenance": "EVIDENCE for direction of sort on all four dates (M17, M23, M26); PROVISIONAL thresholds"
     },
-    "flip_overlay": {
-     "value": "reverse for 60 s when window majority-opposite",
-     "provenance": "EVIDENCE LA-3; PROVISIONAL as rule"
+    "exit": {
+     "value": "END of first fresh-opposed-lot second, else 60 s",
+     "provenance": "EVIDENCE M16/M16b"
+    },
+    "flip": {
+     "value": "log only (transition mark; no reversal)",
+     "provenance": "EVIDENCE M24 A, M16b"
     },
     "size": {
      "value": 1,
@@ -340,124 +350,158 @@
     }
    },
    "evidence": {
-    "k5_to_exhaustion_up_flat_down": {
+    "exit_rule_up_flat_down_touch_ratio_high": {
      "20231002": [
-      244,
-      415,
-      82
+      80,
+      128,
+      39
      ],
      "20231003": [
-      229,
-      514,
-      81
+      65,
+      166,
+      32
      ],
      "20231017": [
-      243,
-      396,
-      101
+      78,
+      133,
+      40
      ],
      "20231018": [
-      297,
-      450,
-      105
+      84,
+      145,
+      55
      ]
     },
-    "after_exhaustion_60s_up_down": {
+    "exit_rule_up_flat_down_touch_ratio_low": {
      "20231002": [
-      265,
-      352
+      35,
+      144,
+      61
      ],
      "20231003": [
-      269,
-      374
+      49,
+      170,
+      61
      ],
      "20231017": [
-      253,
-      354
+      50,
+      131,
+      71
      ],
      "20231018": [
-      289,
-      423
+      52,
+      152,
+      87
      ]
     },
-    "after_flip_60s_with_flip_vs_against": {
+    "exit_rule_high_ratio_and_high_own_orders": {
      "20231002": [
-      356,
-      245
+      29,
+      60,
+      19
      ],
      "20231003": [
-      401,
-      220
+      39,
+      89,
+      14
      ],
      "20231017": [
-      395,
-      199
+      43,
+      73,
+      28
      ],
      "20231018": [
-      457,
-      235
+      41,
+      76,
+      31
      ]
     },
-    "exit_rule_up_flat_down": {
+    "clusters_r60_high_vs_low": {
      "20231002": [
-      207,
-      454,
-      80
+      [
+       113,
+       68,
+       84
+      ],
+      [
+       100,
+       53,
+       112
+      ]
      ],
      "20231003": [
-      186,
-      561,
-      77
+      [
+       104,
+       97,
+       93
+      ],
+      [
+       84,
+       91,
+       112
+      ]
      ],
      "20231017": [
-      204,
-      447,
-      89
+      [
+       128,
+       68,
+       74
+      ],
+      [
+       79,
+       69,
+       108
+      ]
      ],
      "20231018": [
-      245,
-      502,
-      105
+      [
+       135,
+       66,
+       85
+      ],
+      [
+       96,
+       61,
+       130
+      ]
      ]
     },
-    "magnitude": "median 0, p75 0.5 tick, mean |ride| 0.30-0.47 tick",
-    "source": "tables/m16_lookahead_lifecycle.json"
+    "window_alone_exit_rule_up_flat_down": {
+     "20231002": [
+      174,
+      420,
+      147
+     ],
+     "20231003": [
+      178,
+      493,
+      153
+     ],
+     "20231017": [
+      176,
+      403,
+      161
+     ],
+     "20231018": [
+      191,
+      451,
+      210
+     ]
+    },
+    "magnitude": "top tertile exit-rule p25/p50/p75 0/0/0.5 tick (Oct 2, 17, 18), 0/0/0 (Oct 3)",
+    "source": "tables/m26_v2_headline_cells.json; tables/m16b_exhaustion_convention_check.json; tables/m24_flip_successor_and_peaks.json"
    },
-   "invalidation": "prospective with:against ratio of non-flat rides below 1.5:1 over the first 100 qualifying peaks, or post-exhaustion 60 s moves not against the direction",
+   "invalidation": "over the first 100 filtered windows, non-flat up:down below 1.3:1, or bottom-tertile (suppressed) windows not leaning down",
    "logging": [
     "window saturation second",
     "qualifying-peak confirmation second",
+    "touch sizes and order counts both sides at +5 s with running tertile boundaries",
     "entry quote",
-    "first fresh opposed lot second",
+    "first fresh opposed lot second and its end-of-second quote",
     "exit quote",
     "flip second",
-    "per-second lot classification rule",
-    "spread at entry/exit"
-   ],
-   "entry_filters": {
-    "quiet_window": "total lots -20..+5 s below session median",
-    "thin_target": "target touch size and order count lower tertile",
-    "price_not_moved": "|mid change 0..+5| lower tertile",
-    "lodo_score_ge3_up_down": {
-     "20231002": [
-      139,
-      24
-     ],
-     "20231003": [
-      126,
-      26
-     ],
-     "20231017": [
-      126,
-      41
-     ],
-     "20231018": [
-      140,
-      34
-     ]
-    },
-    "provenance": "PROVISIONAL thresholds from per-date tertiles (M17)"
-   }
+    "every suppressed window with its outcome"
+   ]
   }
  ],
  "not_promoted": [
@@ -465,5 +509,6 @@
   "chain plays (n 8/6/15/14)",
   "a_state direction (symmetric)",
   "pre-recognition drift (not at decision clock)"
- ]
+ ],
+ "revision_note": "rerun v2 2026-11-09: S7 revised (touch-queue read at the look-ahead clock, exhaustion-end exit); first-pass S7 drive ride and flip overlay withdrawn (start-of-second convention artefact, CLAIMS M16B-*)"
 }

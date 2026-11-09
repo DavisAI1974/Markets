@@ -57,11 +57,13 @@ for day in DAYS:
             if np.isfinite(kk) and i0 + int(kk) + b < arr.shape[1]: o[i] = np.nansum(arr[i, i0 + int(kk) + a:i0 + int(kk) + b + 1])
         return o
     w60 = win(z["with_lots"], ke, 1, 60); a60 = win(z["against_lots"], ke, 1, 60); t60 = win(z["n_trades"], ke, 1, 60); w_pre = win(z["with_lots"], np.zeros(n), -20, 5); a_pre = win(z["against_lots"], np.zeros(n), -20, 5)
-    ride = (lc.m_exh - lc.m5).values; post = (pd.read_json(OUT / "m16_lookahead_lifecycle.json")[day]["after_exhaustion"] if False else None)
+    ride = (lc.m_exh - lc.m5).values; ride_end = np.where(ke <= 5, 0.0, (lc.m_exh_end - lc.m5).values)
     def sc(x): x = x[np.isfinite(x)]; return dict(n=int(x.size), up=int((x > 0).sum()), flat=int((x == 0).sum()), down=int((x < 0).sum()))
     B[day] = dict(n=n, after_exhaustion_60s_against_share_of_lots=dict(p25=float(np.nanpercentile(a60 / np.where(w60 + a60 > 0, w60 + a60, np.nan), 25)), p50=float(np.nanpercentile(a60 / np.where(w60 + a60 > 0, w60 + a60, np.nan), 50)), p75=float(np.nanpercentile(a60 / np.where(w60 + a60 > 0, w60 + a60, np.nan), 75))),
                   after_exhaustion_60s_trades_vs_prebirth_26s=dict(after_p50=float(np.nanmedian(t60)), before_p50=float(np.nanmedian(win(z["n_trades"], np.zeros(n), -20, 5)))),
                   ride_by_after_flow=dict(after_mostly_against=sc(ride[(a60 > w60)]), after_mostly_with=sc(ride[(a60 < w60)])),
-                  ride_by_prebirth_total_lots=dict(low=sc(ride[(w_pre + a_pre) <= np.nanmedian(w_pre + a_pre)]), high=sc(ride[(w_pre + a_pre) > np.nanmedian(w_pre + a_pre)])))
+                  ride_by_prebirth_total_lots=dict(low=sc(ride[(w_pre + a_pre) <= np.nanmedian(w_pre + a_pre)]), high=sc(ride[(w_pre + a_pre) > np.nanmedian(w_pre + a_pre)])),
+                  ride_end_by_after_flow=dict(after_mostly_against=sc(ride_end[(a60 > w60)]), after_mostly_with=sc(ride_end[(a60 < w60)])),
+                  ride_end_by_prebirth_total_lots=dict(low=sc(ride_end[(w_pre + a_pre) <= np.nanmedian(w_pre + a_pre)]), high=sc(ride_end[(w_pre + a_pre) > np.nanmedian(w_pre + a_pre)])))
     print(day, "S7 after-exit env:", B[day])
 json.dump(dict(large_moves=summ, dipole_rides=B), open(OUT / "m20_trade_environment.json", "w"), indent=1)

@@ -28,3 +28,5 @@ The memory files named in the Ccode handoff (`/areas/october-ng-dipole-direction
 - Did not decode the raw MBO tape; treated the derived tables as the data.
 - Did not find or ask for the memory file at the start.
 - Summarised claims instead of recording every measured cell.
+- Measured the look-ahead ride to the midpoint at the START of the exhaustion second (before the opposed print existed) and promoted the resulting 3:1 "drive" to a paper candidate. Rule from this: every mark is dated at the END of the completed second that contains it, and every ride to a mark uses that end-of-second price; tabulate the start-of-second variant only as the mechanical component.
+- Hard-coded conclusion text in the claim generator (M17/M20) instead of deriving it from the cells, so a convention change did not propagate. Rule: conclusions in generated rows come from the numbers or name the convention explicitly.

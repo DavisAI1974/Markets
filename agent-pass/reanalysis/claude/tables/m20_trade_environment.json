@@ -708,6 +708,34 @@
      "flat": 207,
      "down": 55
     }
+   },
+   "ride_end_by_after_flow": {
+    "after_mostly_against": {
+     "n": 287,
+     "up": 72,
+     "flat": 154,
+     "down": 61
+    },
+    "after_mostly_with": {
+     "n": 346,
+     "up": 92,
+     "flat": 161,
+     "down": 93
+    }
+   },
+   "ride_end_by_prebirth_total_lots": {
+    "low": {
+     "n": 378,
+     "up": 132,
+     "flat": 129,
+     "down": 117
+    },
+    "high": {
+     "n": 363,
+     "up": 60,
+     "flat": 240,
+     "down": 63
+    }
    }
   },
   "20231003": {
@@ -747,6 +775,34 @@
      "up": 84,
      "flat": 239,
      "down": 53
+    }
+   },
+   "ride_end_by_after_flow": {
+    "after_mostly_against": {
+     "n": 353,
+     "up": 92,
+     "flat": 190,
+     "down": 71
+    },
+    "after_mostly_with": {
+     "n": 361,
+     "up": 84,
+     "flat": 196,
+     "down": 81
+    }
+   },
+   "ride_end_by_prebirth_total_lots": {
+    "low": {
+     "n": 448,
+     "up": 148,
+     "flat": 184,
+     "down": 116
+    },
+    "high": {
+     "n": 376,
+     "up": 65,
+     "flat": 247,
+     "down": 64
     }
    }
   },
@@ -788,6 +844,34 @@
      "flat": 174,
      "down": 48
     }
+   },
+   "ride_end_by_after_flow": {
+    "after_mostly_against": {
+     "n": 319,
+     "up": 93,
+     "flat": 151,
+     "down": 75
+    },
+    "after_mostly_with": {
+     "n": 312,
+     "up": 74,
+     "flat": 151,
+     "down": 87
+    }
+   },
+   "ride_end_by_prebirth_total_lots": {
+    "low": {
+     "n": 415,
+     "up": 130,
+     "flat": 143,
+     "down": 142
+    },
+    "high": {
+     "n": 325,
+     "up": 62,
+     "flat": 202,
+     "down": 61
+    }
    }
   },
   "20231018": {
@@ -827,6 +911,34 @@
      "up": 140,
      "flat": 209,
      "down": 59
+    }
+   },
+   "ride_end_by_after_flow": {
+    "after_mostly_against": {
+     "n": 336,
+     "up": 91,
+     "flat": 158,
+     "down": 87
+    },
+    "after_mostly_with": {
+     "n": 366,
+     "up": 90,
+     "flat": 167,
+     "down": 109
+    }
+   },
+   "ride_end_by_prebirth_total_lots": {
+    "low": {
+     "n": 444,
+     "up": 149,
+     "flat": 131,
+     "down": 164
+    },
+    "high": {
+     "n": 408,
+     "up": 78,
+     "flat": 248,
+     "down": 82
     }
    }
   }

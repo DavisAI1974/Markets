@@ -71,12 +71,30 @@
   "ride_from_k5": {
    "to_exhaustion": {
     "n": 741,
-    "up": 244,
-    "flat": 415,
-    "down": 82,
+    "up": 184,
+    "flat": 520,
+    "down": 37,
+    "p25": 0.0,
+    "p50": 0.0,
+    "p75": 0.0
+   },
+   "to_exhaustion_end_of_second": {
+    "n": 741,
+    "up": 192,
+    "flat": 369,
+    "down": 180,
     "p25": 0.0,
     "p50": 0.0,
     "p75": 0.5
+   },
+   "inside_exhaustion_second": {
+    "n": 741,
+    "up": 146,
+    "flat": 284,
+    "down": 311,
+    "p25": -0.5,
+    "p50": 0.0,
+    "p75": 0.0
    },
    "to_flip_majority": {
     "n": 741,
@@ -263,12 +281,21 @@
   "exit_rule_vs_fixed": {
    "k5_to_exhaustion_or_60": {
     "n": 741,
-    "up": 207,
-    "flat": 454,
-    "down": 80,
+    "up": 147,
+    "flat": 559,
+    "down": 35,
     "p25": 0.0,
     "p50": 0.0,
-    "p75": 0.5
+    "p75": 0.0
+   },
+   "k5_to_exhaustion_end_or_60": {
+    "n": 741,
+    "up": 174,
+    "flat": 420,
+    "down": 147,
+    "p25": 0.0,
+    "p50": 0.0,
+    "p75": 0.0
    },
    "k5_to_flip_or_300": {
     "n": 741,
@@ -353,12 +380,30 @@
   "ride_from_k5": {
    "to_exhaustion": {
     "n": 824,
-    "up": 229,
-    "flat": 514,
-    "down": 81,
+    "up": 179,
+    "flat": 609,
+    "down": 36,
+    "p25": 0.0,
+    "p50": 0.0,
+    "p75": 0.0
+   },
+   "to_exhaustion_end_of_second": {
+    "n": 824,
+    "up": 213,
+    "flat": 431,
+    "down": 180,
     "p25": 0.0,
     "p50": 0.0,
     "p75": 0.5
+   },
+   "inside_exhaustion_second": {
+    "n": 824,
+    "up": 171,
+    "flat": 359,
+    "down": 294,
+    "p25": -0.5,
+    "p50": 0.0,
+    "p75": 0.0
    },
    "to_flip_majority": {
     "n": 824,
@@ -545,9 +590,18 @@
   "exit_rule_vs_fixed": {
    "k5_to_exhaustion_or_60": {
     "n": 824,
-    "up": 186,
-    "flat": 561,
-    "down": 77,
+    "up": 136,
+    "flat": 656,
+    "down": 32,
+    "p25": 0.0,
+    "p50": 0.0,
+    "p75": 0.0
+   },
+   "k5_to_exhaustion_end_or_60": {
+    "n": 824,
+    "up": 178,
+    "flat": 493,
+    "down": 153,
     "p25": 0.0,
     "p50": 0.0,
     "p75": 0.0
@@ -635,12 +689,30 @@
   "ride_from_k5": {
    "to_exhaustion": {
     "n": 740,
-    "up": 243,
-    "flat": 396,
-    "down": 101,
+    "up": 180,
+    "flat": 497,
+    "down": 63,
     "p25": 0.0,
     "p50": 0.0,
+    "p75": 0.0
+   },
+   "to_exhaustion_end_of_second": {
+    "n": 740,
+    "up": 192,
+    "flat": 345,
+    "down": 203,
+    "p25": -0.5,
+    "p50": 0.0,
     "p75": 0.5
+   },
+   "inside_exhaustion_second": {
+    "n": 740,
+    "up": 149,
+    "flat": 274,
+    "down": 317,
+    "p25": -0.5,
+    "p50": 0.0,
+    "p75": 0.0
    },
    "to_flip_majority": {
     "n": 740,
@@ -827,12 +899,21 @@
   "exit_rule_vs_fixed": {
    "k5_to_exhaustion_or_60": {
     "n": 740,
-    "up": 204,
-    "flat": 447,
-    "down": 89,
+    "up": 141,
+    "flat": 548,
+    "down": 51,
     "p25": 0.0,
     "p50": 0.0,
-    "p75": 0.5
+    "p75": 0.0
+   },
+   "k5_to_exhaustion_end_or_60": {
+    "n": 740,
+    "up": 176,
+    "flat": 403,
+    "down": 161,
+    "p25": 0.0,
+    "p50": 0.0,
+    "p75": 0.0
    },
    "k5_to_flip_or_300": {
     "n": 740,
@@ -917,12 +998,30 @@
   "ride_from_k5": {
    "to_exhaustion": {
     "n": 852,
-    "up": 297,
-    "flat": 450,
-    "down": 105,
+    "up": 216,
+    "flat": 577,
+    "down": 59,
     "p25": 0.0,
     "p50": 0.0,
     "p75": 0.5
+   },
+   "to_exhaustion_end_of_second": {
+    "n": 852,
+    "up": 227,
+    "flat": 379,
+    "down": 246,
+    "p25": -0.5,
+    "p50": 0.0,
+    "p75": 0.5
+   },
+   "inside_exhaustion_second": {
+    "n": 852,
+    "up": 184,
+    "flat": 260,
+    "down": 408,
+    "p25": -1.0,
+    "p50": 0.0,
+    "p75": 0.0
    },
    "to_flip_majority": {
     "n": 851,
@@ -1109,12 +1208,21 @@
   "exit_rule_vs_fixed": {
    "k5_to_exhaustion_or_60": {
     "n": 852,
-    "up": 245,
-    "flat": 502,
-    "down": 105,
+    "up": 164,
+    "flat": 629,
+    "down": 59,
     "p25": 0.0,
     "p50": 0.0,
-    "p75": 0.5
+    "p75": 0.0
+   },
+   "k5_to_exhaustion_end_or_60": {
+    "n": 852,
+    "up": 191,
+    "flat": 451,
+    "down": 210,
+    "p25": 0.0,
+    "p50": 0.0,
+    "p75": 0.0
    },
    "k5_to_flip_or_300": {
     "n": 851,
