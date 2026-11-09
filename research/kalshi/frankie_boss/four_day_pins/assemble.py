@@ -120,7 +120,7 @@ def main(config_path, output_path):
         if '/quote-order-gapfill-v1/native.member.chunk' in s['path'] and s['path'].endswith('.jsonl.gz'):
             for ordinal,line in enumerate(gzip.decompress(read(M,s['revision'],s['path'])).splitlines()):
                 r=json.loads(line);cl=r.get('clocks',{})
-                cursor=cl.get('input_cursor',r.get('input_cursor'))
+                cursor=(r.get('frankie_emission') or {}).get('input_cursor',cl.get('input_cursor',r.get('input_cursor')))
                 if cursor is None:
                     cursor=(r.get('causal_clocks') or {}).get('input_cursor')
                 if cursor is not None: native[int(cursor)]=dict(value=r,path=s['path'],ordinal=ordinal)
@@ -188,8 +188,12 @@ def main(config_path, output_path):
                     have(name,v,'ORIGINAL_SECOND_SET_WITH_STATES')
                 nr=native.get(int(g['close_cursor']))
                 if nr:
+                    assert int(nr['value']['frankie_emission']['input_cursor'])==int(g['close_cursor'])
                     for key,field in [('fifo_queues','book_full'),('full_bid_ask_depth','book_full'),('queue_age_and_survival','book_full'),('queue_concentration','book_full'),('orders_and_volume_ahead','book_full')]:
                         have(key,dict(source=nr['path'],source_row=nr['ordinal'],original=nr['value'].get(field),scope='exact matched saved member; original nested values'))
+                    for key,field in [('order_lifecycle_adds','raw_actions'),('order_lifecycle_cancels','raw_actions'),('order_lifecycle_modifies','raw_actions'),('order_lifecycle_replaces','raw_actions'),('order_lifecycle_fills','raw_actions'),('order_lifecycle_clears','raw_actions'),('native_acmrtfn_messages','raw_actions'),('derived_d_family_geometry','structure'),('mechanics_actions_by_side_and_level','activity_since'),('complete_state_reset_bootstrap_receipts','integrity')]:
+                        if field in nr['value']:
+                            have(key,dict(source=nr['path'],source_row=nr['ordinal'],original=nr['value'][field],scope='exact matched saved member; no invented absent action'))
             row=dict(day=day,trade_ordinal=ordinal,trade_id=day+':trade:'+str(ordinal),trade_cursor=str(t['trade_input_cursor']),event_ns=str(t['event_ns']),receive_ns=str(clock),known_by_ns=str(t['available_ns']),coverage='partial archived' if day in ('20231002','20231017') else 'full archived',source_trade_revision=EREV,source_trade_path=EP+'/events-'+day+'/a-trades.parquet')
             for layer in layers:
                 v=vals[layer['layer_id']];row[layer['column']]=compact(v);counts[(layer['column'],v['status'])]+=1
