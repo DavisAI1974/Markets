@@ -41,3 +41,7 @@ def candidate_labels(row):
     available=row.get("available_second",operands.get("available_second"))
     return dict(birth_second=int(birth),available_second=None if available is None else int(available),
                 birth_clock_source=source,live_recognition_allowed=row.get("input_disposition")!="finalize_only_no_live_recognition")
+
+def prebirth_cutoff(saved,birth_second):
+    # Negative coverage values are an explicit unavailable sentinel.
+    return int(birth_second)*1_000_000_000-1 if saved in (None,"") or int(saved)<0 else int(saved)
