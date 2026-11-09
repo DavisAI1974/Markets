@@ -89,7 +89,7 @@ def repair(out):
                         elif kind == "known_by_receive_ns": exact = ref
                         elif kind == "receive_ns": exact = start
                         elif kind.startswith("outcome_window_start_plus_"):
-                            exact = start + int(re.search(r"plus_(\\d+)s", kind).group(1)) * module.NS
+                            exact = start + int(re.search(r"plus_(\d+)s", kind).group(1)) * module.NS
                         else: raise AssertionError(kind)
                         assert type(after["clock_ns"]) is int and after["clock_ns"] == exact
                         assert after["clock_epoch_s"] == exact // module.NS
