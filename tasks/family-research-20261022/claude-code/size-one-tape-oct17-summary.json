@@ -1,0 +1,19 @@
+{
+  "session": "oct17",
+  "members": [
+    [
+      "20231017",
+      0
+    ]
+  ],
+  "episodes": 27111,
+  "captured": 27111,
+  "missing": 0,
+  "touch_check_mismatch": 0,
+  "next_level_missing": 0,
+  "flow_classes": {
+    "fill_linked": 3796,
+    "no_reduction": 16182,
+    "unlinked": 7133
+  }
+}

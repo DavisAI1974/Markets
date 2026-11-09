@@ -1,0 +1,29 @@
+{
+  "session": "oct18",
+  "members": [
+    [
+      "20231017",
+      -841601
+    ],
+    [
+      "20231018",
+      17375
+    ]
+  ],
+  "episodes": 27560,
+  "captured": 27560,
+  "missing": 0,
+  "touch_check_mismatch": 0,
+  "next_level_missing": 0,
+  "flow_classes": {
+    "no_reduction": 16205,
+    "unlinked": 7820,
+    "fill_linked": 3535
+  },
+  "validation_oct18": {
+    "ledger_matched": 1012,
+    "next_level_agree": 1012,
+    "flow_class_agree": 1012,
+    "flow_disagreements": {}
+  }
+}

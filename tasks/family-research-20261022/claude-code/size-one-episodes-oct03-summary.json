@@ -1,0 +1,49 @@
+{
+  "session": "oct03",
+  "export_scope": "full session",
+  "groups": 653912,
+  "episodes": 24353,
+  "by_side_onset": {
+    "A|NEW_BEST": 7403,
+    "B|NEW_BEST": 7489,
+    "B|STANDING_BEST_SHRANK": 4611,
+    "A|STANDING_BEST_SHRANK": 4850
+  },
+  "outcomes": {
+    "SIZE_RECOVERED_AT_SAME_PRICE": 11966,
+    "RETREATED": 12188,
+    "IMPROVED": 198,
+    "CENSORED": 1
+  },
+  "end_vs_entry": {
+    "BY_ENTRY": 14536,
+    "AFTER_ENTRY": 9816,
+    "None": 1
+  },
+  "by_hour": {
+    "0": 95,
+    "1": 115,
+    "2": 125,
+    "3": 560,
+    "4": 330,
+    "5": 305,
+    "6": 448,
+    "7": 912,
+    "8": 640,
+    "9": 918,
+    "10": 966,
+    "11": 1392,
+    "12": 3581,
+    "13": 3205,
+    "14": 2192,
+    "15": 2719,
+    "16": 1556,
+    "17": 1052,
+    "18": 1661,
+    "19": 941,
+    "20": 372,
+    "21": 3,
+    "22": 144,
+    "23": 121
+  }
+}

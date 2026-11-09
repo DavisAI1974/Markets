@@ -1,0 +1,73 @@
+{
+  "session": "oct18",
+  "export_scope": "full session",
+  "groups": 583688,
+  "episodes": 27560,
+  "by_side_onset": {
+    "B|NEW_BEST": 8246,
+    "A|NEW_BEST": 7875,
+    "A|STANDING_BEST_SHRANK": 5245,
+    "B|STANDING_BEST_SHRANK": 6194
+  },
+  "outcomes": {
+    "IMPROVED": 281,
+    "SIZE_RECOVERED_AT_SAME_PRICE": 14602,
+    "RETREATED": 12677
+  },
+  "end_vs_entry": {
+    "AFTER_ENTRY": 11068,
+    "BY_ENTRY": 16492
+  },
+  "by_hour": {
+    "0": 294,
+    "1": 160,
+    "2": 183,
+    "3": 201,
+    "4": 209,
+    "5": 320,
+    "6": 541,
+    "7": 696,
+    "8": 686,
+    "9": 1095,
+    "10": 1295,
+    "11": 1482,
+    "12": 3044,
+    "13": 5048,
+    "14": 2237,
+    "15": 1597,
+    "16": 2268,
+    "17": 1643,
+    "18": 2028,
+    "19": 720,
+    "20": 684,
+    "21": 9,
+    "22": 600,
+    "23": 520
+  },
+  "validation_oct18_13h": {
+    "ledger": 1012,
+    "derived_13h": 5048,
+    "matched": 1012,
+    "onset_type_agree": 1012,
+    "outcome_agree": 1012,
+    "end_group_agree": 1012,
+    "end_vs_entry_agree": 1012,
+    "only_derived": {
+      "n": 4036,
+      "by": {
+        "A|STANDING_BEST_SHRANK|better=None": 777,
+        "B|STANDING_BEST_SHRANK|better=None": 859,
+        "A|NEW_BEST|better=True": 1170,
+        "B|NEW_BEST|better=True": 1213,
+        "A|NEW_BEST|better=False": 7,
+        "B|NEW_BEST|better=False": 10
+      }
+    },
+    "only_ledger": {
+      "n": 0,
+      "by": {},
+      "sample": []
+    },
+    "outcome_disagreements": {}
+  }
+}

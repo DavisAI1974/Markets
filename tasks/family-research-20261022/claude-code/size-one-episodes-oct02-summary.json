@@ -1,0 +1,46 @@
+{
+  "session": "oct02",
+  "export_scope": "partial (no Sunday-evening prefix)",
+  "groups": 600291,
+  "episodes": 22042,
+  "by_side_onset": {
+    "A|NEW_BEST": 6623,
+    "A|STANDING_BEST_SHRANK": 4632,
+    "B|NEW_BEST": 6436,
+    "B|STANDING_BEST_SHRANK": 4351
+  },
+  "outcomes": {
+    "RETREATED": 10663,
+    "SIZE_RECOVERED_AT_SAME_PRICE": 11218,
+    "IMPROVED": 160,
+    "CENSORED": 1
+  },
+  "end_vs_entry": {
+    "BY_ENTRY": 13417,
+    "AFTER_ENTRY": 8624,
+    "None": 1
+  },
+  "by_hour": {
+    "0": 312,
+    "1": 198,
+    "2": 301,
+    "3": 241,
+    "4": 172,
+    "5": 133,
+    "6": 539,
+    "7": 599,
+    "8": 634,
+    "9": 634,
+    "10": 778,
+    "11": 1696,
+    "12": 2497,
+    "13": 2687,
+    "14": 3174,
+    "15": 2191,
+    "16": 1516,
+    "17": 1104,
+    "18": 1546,
+    "19": 572,
+    "20": 518
+  }
+}
