@@ -7,7 +7,7 @@ The report and supporting artifacts are saved separately from Ccode's work. Ther
 Read [REPORT.md](REPORT.md), then [PAPER_STRATEGIES.md](PAPER_STRATEGIES.md), [PAPER_READINESS.md](PAPER_READINESS.md) and [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md). [RECEIPT.json](RECEIPT.json) pins the shared brief, evidence, code, report and data revisions.
 
 ## Evidence ledgers
-All data files are in the [immutable analysis publication](https://github.com/DavisAI1974/markets-data/tree/8c761b486d4a9910d77eedad83ae23078c971bee/tasks/family-research-20261022/codex-independent-analysis/run-42599646462-1). CSV fields referring to REPORT.md sections resolve to [this Markets report](https://github.com/DavisAI1974/Markets/blob/864a9fa1b98c3e8ee446a3bb30068ea4fbbe5a5f/agent-pass/reanalysis/codex/REPORT.md).
+All data files are in the [immutable analysis publication](https://github.com/DavisAI1974/markets-data/tree/8c761b486d4a9910d77eedad83ae23078c971bee/tasks/family-research-20261022/codex-independent-analysis/run-42599646462-1). CSV fields referring to REPORT.md sections resolve to [this Markets report](https://github.com/DavisAI1974/Markets/blob/c67483435d1cbf0467c8afdb5bc02a330cf2f35a/agent-pass/reanalysis/codex/REPORT.md).
 
 | Deliverable | Contents |
 | --- | --- |

@@ -1,17 +1,17 @@
 {
   "schema": "codex-independent-reanalysis-receipt-v1",
   "analyst": "Codex",
-  "status": "Independent report and requested artifact categories delivered; unresolved semantics, visual coverage and execution prerequisites explicitly retained.",
-  "shared_brief_commit": "64f599312106537d83a23fc65447dd2db0e6ca95",
+  "status": "Interim findings and source accounting saved; full broad substantive analysis is incomplete and remains outstanding.",
+  "shared_brief_commit": "c67483435d1cbf0467c8afdb5bc02a330cf2f35a",
   "shared_brief_path": "agent-pass/reanalysis/SHARED_BRIEF.md",
   "evidence_repository": "DavisAI1974/markets-data",
   "evidence_commit": "e7b1c4acac2e37205cdb9ce1c53829b6ca30f4ee",
   "evidence_path": "tasks/family-research-20261022/shared-reanalysis-inputs/final-42593665910-1",
   "report_repository": "DavisAI1974/Markets",
-  "report_commit": "864a9fa1b98c3e8ee446a3bb30068ea4fbbe5a5f",
+  "report_commit": "c67483435d1cbf0467c8afdb5bc02a330cf2f35a",
   "report_path": "agent-pass/reanalysis/codex/REPORT.md",
-  "report_git_blob": "dcaeb25f6283f8696e0124bbc9cc44821bba0d33",
-  "authored_artifacts_commit": "864a9fa1b98c3e8ee446a3bb30068ea4fbbe5a5f",
+  "report_git_blob": "ab24b864d659ec5ae481d32f2eec48dbdbd6a211",
+  "authored_artifacts_commit": "c67483435d1cbf0467c8afdb5bc02a330cf2f35a",
   "authored_artifacts": [
     "REPORT.md",
     "OPEN_QUESTIONS.md",
@@ -286,5 +286,19 @@
     "Not every render visually inspected.",
     "Original completed raw reconstruction receipts reused; no new DBN decoding.",
     "Actual NG feed/simulator, fees and fills unverified; paper configurations not deployed."
+  ],
+  "interpretation_addendum": {
+    "commit": "c67483435d1cbf0467c8afdb5bc02a330cf2f35a",
+    "scope": "Explicit broad coverage, dipole continuous recognition/runway distinct from direction and detector delay; unfinished available-material interpretation remains current work.",
+    "new_measurements": false,
+    "prior_analysis_ledger_unchanged": true
+  },
+  "dipole_lookahead_scope": true,
+  "full_broad_analysis_complete": false,
+  "outstanding_current_work": [
+    "Resolve remaining substantive field/type semantics and relationships from source definitions; administrative/nested keys classified in their actual role.",
+    "Review distinct supplied visual evidence alongside source rows.",
+    "Recover the exact specifically unresolved later NG look-ahead source lineage while retaining recovered continuous-timing/runway evidence.",
+    "Extend incomplete interpretation of price features, complementary market influences and interactions from available evidence."
   ]
 }
