@@ -1743,8 +1743,8 @@ predict-zero error on more than two days at any horizon; the one-second flow cel
 of mine: `claude-code/pin_tier1_rows_to_99.py` (the pin_rows_to_99 field map and clock rules, extended for the ROOT operands, reference-group
 fields, prior displacement, order-level windows and the horizon outcomes; two clock kinds added, the reference group's known-by receive clock and
 the outcome window from the start by horizon) writes `claude-code-pins/ninety-nine-pins-tier1-<tag>.jsonl.gz` (795 / 848 / 823 / 749 records,
-133k to 145k pins, 19 to 20 layers, every field mapped), committed in markets-data with manifest entries; this session has no push access to
-markets-data, so that commit is local until pushed (noted in `data-manifest.json`). Every record carries the start, cutoff and reference-group clocks
+133k to 145k pins, 19 to 20 layers, every field mapped), published to markets-data main at 67b7a6a with manifest entries (the push went through once the
+repository was attached to the session; `data-manifest.json` carries the commit). Every record carries the start, cutoff and reference-group clocks
 as nanoseconds and UTC strings. The cross-day tables are aggregates and are not pinned.
 
 **Index.** The October 2 and 3 rows of "Where to find the four dates" in `october-discovery-log.md` now carry coverage, session members and cursors,

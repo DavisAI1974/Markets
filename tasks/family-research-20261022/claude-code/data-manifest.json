@@ -545,7 +545,7 @@
       "markets_data_commit": "67b7a6afaaaa7bf77bb4048011b1da28af2875b1",
       "session": "20231002",
       "markets_data_path": "tasks/family-research-20261022/claude-code-pins/ninety-nine-pins-tier1-oct02.jsonl.gz",
-      "note": "99-layer pin ledger of the Tier 1 family-master rows (actual first-observed family starts, x18_tier1_days.py on claude/three-day-dipole-20261108), one record per family, built by pin_tier1_rows_to_99.py; markets-data commit is LOCAL in the 2026-11-09 session (no push access to markets-data from that session); push pending"
+      "note": "99-layer pin ledger of the Tier 1 family-master rows (actual first-observed family starts, x18_tier1_days.py on claude/three-day-dipole-20261108), one record per family, built by pin_tier1_rows_to_99.py; published to markets-data main at 67b7a6a"
     },
     {
       "tier": "derived",
@@ -556,7 +556,7 @@
       "markets_data_commit": "67b7a6afaaaa7bf77bb4048011b1da28af2875b1",
       "session": "20231003",
       "markets_data_path": "tasks/family-research-20261022/claude-code-pins/ninety-nine-pins-tier1-oct03.jsonl.gz",
-      "note": "99-layer pin ledger of the Tier 1 family-master rows (actual first-observed family starts, x18_tier1_days.py on claude/three-day-dipole-20261108), one record per family, built by pin_tier1_rows_to_99.py; markets-data commit is LOCAL in the 2026-11-09 session (no push access to markets-data from that session); push pending"
+      "note": "99-layer pin ledger of the Tier 1 family-master rows (actual first-observed family starts, x18_tier1_days.py on claude/three-day-dipole-20261108), one record per family, built by pin_tier1_rows_to_99.py; published to markets-data main at 67b7a6a"
     },
     {
       "tier": "derived",
@@ -567,7 +567,7 @@
       "markets_data_commit": "67b7a6afaaaa7bf77bb4048011b1da28af2875b1",
       "session": "20231017",
       "markets_data_path": "tasks/family-research-20261022/claude-code-pins/ninety-nine-pins-tier1-oct17.jsonl.gz",
-      "note": "99-layer pin ledger of the Tier 1 family-master rows (actual first-observed family starts, x18_tier1_days.py on claude/three-day-dipole-20261108), one record per family, built by pin_tier1_rows_to_99.py; markets-data commit is LOCAL in the 2026-11-09 session (no push access to markets-data from that session); push pending"
+      "note": "99-layer pin ledger of the Tier 1 family-master rows (actual first-observed family starts, x18_tier1_days.py on claude/three-day-dipole-20261108), one record per family, built by pin_tier1_rows_to_99.py; published to markets-data main at 67b7a6a"
     },
     {
       "tier": "derived",
@@ -578,7 +578,7 @@
       "markets_data_commit": "67b7a6afaaaa7bf77bb4048011b1da28af2875b1",
       "session": "20231018",
       "markets_data_path": "tasks/family-research-20261022/claude-code-pins/ninety-nine-pins-tier1-oct18.jsonl.gz",
-      "note": "99-layer pin ledger of the Tier 1 family-master rows (actual first-observed family starts, x18_tier1_days.py on claude/three-day-dipole-20261108), one record per family, built by pin_tier1_rows_to_99.py; markets-data commit is LOCAL in the 2026-11-09 session (no push access to markets-data from that session); push pending"
+      "note": "99-layer pin ledger of the Tier 1 family-master rows (actual first-observed family starts, x18_tier1_days.py on claude/three-day-dipole-20261108), one record per family, built by pin_tier1_rows_to_99.py; published to markets-data main at 67b7a6a"
     },
     {
       "tier": "derived",
@@ -589,7 +589,7 @@
       "markets_data_commit": "67b7a6afaaaa7bf77bb4048011b1da28af2875b1",
       "session": null,
       "markets_data_path": "tasks/family-research-20261022/claude-code-pins/ninety-nine-pins-tier1-summary.json",
-      "note": "field map added, clock kinds added and per-session counts for the Tier 1 pin ledgers; markets-data commit is LOCAL in the 2026-11-09 session (no push access to markets-data from that session); push pending"
+      "note": "field map added, clock kinds added and per-session counts for the Tier 1 pin ledgers; published to markets-data main at 67b7a6a"
     }
   ],
   "totals": {
