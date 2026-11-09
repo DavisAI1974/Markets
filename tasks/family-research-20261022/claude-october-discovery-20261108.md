@@ -1704,3 +1704,53 @@ its persistence, not the direction. Cases 4, 6 and 8 show the persistent state's
 archived recognition landing at +51 to +53 s, well before confirmation, which is the information horizon of
 section 16. Case 5 sits inside the October 17 13:00 UTC collapse hour where the October 18 cell lifts did
 not hold. These are descriptions of individual events, not a comparison with the other two passes.
+
+## 26. The Oct 18 suites carried onto the other three sessions (the three-day handoff's section 3B), and the index rows
+
+Done 2026-11-09 in the session after the handoff, on Desktop's branch `claude/three-day-dipole-20261108` under `claude-pass-3day/`, because that is
+where the three-day repeat of the Oct 18 suite lives; the discovery record of it belongs here with my other sections. Nothing merged; no comparison with
+the Codex or Desktop findings was made (deferred by Greg); no AWS, pod or producer action.
+
+**Tier 2 side by side (`FINDINGS_TIER2_CROSSDAY_20261109.md`, `crossday/t2x_*.csv`, `crossday/t2x-*.png`).** The c14, c15, c16, c17 and c18 tables of the
+four UTC members had been run with the same code but never put beside each other. `x14_tier2_crossday.py` writes one row per condition/outcome pair
+(2,669 on all four days), per pair coupling (every (x1, x2, y) of the family, 5,166 on all four days, from `x17_pair_couplings_full.py` rather than each day's
+top 400), per lead-lag pair (49), per state cell (42) and per selection step, with the four days' values and counts of days sharing a sign; `x16` saves the
+c14 shifted-Y draws so the agreement counts have the day-by-day reference the regime comparison had. Measured: 1,330 of 2,669 pairs share a sign on all
+four days against 372 to 633 under the shifted draws; 99 pairs are beyond every day's own line against 0 in every draw, 93 of them book-response pairs
+(touch activity over the past 5 to 60 s against touch activity over the next 5 s), 5 the spread and touch counts against the next spread change, 1 the
+300 s quote-change count against the next 20 s absolute move; no signed-move or flow-persistence pair is beyond the line on more than one day; the touch
+imbalances against the signed move repeat in sign on all four days at +0.11 to +0.14. State cells: every bid-heavy cell positive and every ask-heavy cell
+negative on all four days at both horizons; the mid-imbalance cells do not agree. Lead-lag: 12 of 21 distinct pairs beyond the band on all four days
+with the peak at lag 0; touch imbalance leads flow by one second on all four days. Pair couplings beyond every day's line: 9 rows, all with y = dspr_5
+(tch_imb x tchn_imb +0.126 to +0.145 and the touch sizes and counts against the 5 s quote-change count, negative). Oct 17 stands apart on bid-side
+book pairs (0.29 to 0.32 against 0.15 to 0.23). The grids were rebuilt from the manifest-pinned tapes and reproduce every committed Tier 2 table to
+1e-16. The Oct 18 original Tier 2 tables in `claude-pass/tables/` (2,635 pairs, 44 cells) were a legacy-mode run (export groups, no closed-market
+exclusion, `age_s` and `qage_s` out); the reason is now recorded in the findings file.
+
+**Tier 1 on the actual family starts (`FINDINGS_TIER1_CROSSDAY_20261109.md`, `tables/<session>/t1_*.csv`, `crossday/t1x_*.csv`).** The handoff's open
+question (which population to use for Tier 1 on the other days) is answered by section 22: the actual first-observed family starts exist for all four
+sessions. `x18_tier1_days.py` runs c02, c06, c07, c08, c10 and c11 unchanged in method on them (795 / 848 / 823 / 749, the one-per-date family with no
+earlier group left out with its id recorded; session groups from the tape members, prior member from 21:00 UTC to the 21:00 UTC close; order-level
+windows from the date member, 781 / 796 / 809 / 694 families inside it). On Oct 18 the chain reproduces every committed Tier 1 table value for value,
+including the 4 and 5 censored outcomes at 300 and 600 s. Measured on the four sessions: the full displayed book bid-heavy at 718 / 847 / 754 / 749 of
+the starts with the near ten levels split evenly; the refill read at the side being hit, which had been Oct 18 only, with the same sign on all four
+days (sell-hit bid adds per lot filled against the next midpoint, Spearman +0.21 / +0.15 / +0.10 / +0.26 at 1 s; the mirror on the ask -0.14 / -0.13 /
+-0.29 / -0.27), holding inside fill-size halves at 1 s and gone by 300 s; the original 60+/5-/1- stack lower at 60 s on Oct 17 and 18 (0.57, 0.58 down
+share against 0.42, 0.47 for all families), flat on Oct 2 and reversed on Oct 3, as section 22 found by its own orientation; no ridge arm below the
+predict-zero error on more than two days at any horizon; the one-second flow cells sorting the next 5 s on every day and fading by 60 s.
+
+**Pins and clocks.** The family masters are per-event rows (one per family start) and are pinned to the canonical 99-layer registry like every other row
+of mine: `claude-code/pin_tier1_rows_to_99.py` (the pin_rows_to_99 field map and clock rules, extended for the ROOT operands, reference-group
+fields, prior displacement, order-level windows and the horizon outcomes; two clock kinds added, the reference group's known-by receive clock and
+the outcome window from the start by horizon) writes `claude-code-pins/ninety-nine-pins-tier1-<tag>.jsonl.gz` (795 / 848 / 823 / 749 records,
+133k to 145k pins, 19 to 20 layers, every field mapped), committed in markets-data with manifest entries; this session has no push access to
+markets-data, so that commit is local until pushed (noted in `data-manifest.json`). Every record carries the start, cutoff and reference-group clocks
+as nanoseconds and UTC strings. The cross-day tables are aggregates and are not pinned.
+
+**Index.** The October 2 and 3 rows of "Where to find the four dates" in `october-discovery-log.md` now carry coverage, session members and cursors,
+the sealed export and decision locations with their markets-data commits, the archived candidate files and counts, the family indexes, my per-event
+row files, pin ledgers and case rows, and the three-day tables (commit 5d9c269). October 17 keeps its placeholder; it is indexed in 14.6.
+
+Not done, by Greg's direction: the agreement and disagreement pass against the Codex and Desktop passes; the 99 and 13 crosswalk and the merge of the
+three reviewer files (merge time); the detector reverse-engineering (3C, not needed for discovery); the two Oct 18-only coupling variants c13 and
+c14_deseason (superseded by c14 and c19, which run on all four days).
