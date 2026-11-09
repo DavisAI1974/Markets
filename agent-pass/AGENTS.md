@@ -31,3 +31,5 @@ Keep every hypothesis and unfavorable case in paper research. Report condition-s
 ## Four-date sequence
 
 Latest user instruction: finish the October 18 NG dipole analysis on October 2, 3 and 17 before assembling timestamped layers. The remaining continuous and primer extensions completed on GitHub; see FOUR_DAY_REPLICATION.md for exact scope and missing separate family populations. Next assemble our results against raw MBO clocks, then add the other researchers' work, and advance paper configuration. Stay on these four dates. Do not turn the historical crypto-source backlog into a prerequisite or restart desktop work.
+
+Latest steering, November 9: finish the outstanding family study before timestamp assembly or paper setup. Track actual per-date completion in FAMILY_REPLICATION.md; a passed reference check is not completion of the other dates.

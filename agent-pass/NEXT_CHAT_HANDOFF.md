@@ -4,6 +4,8 @@ Updated 2026-11-08. Operational handoff, not a new findings report.
 
 ## User's current objective
 
+**November 9 correction:** the user said "Do the other stuff first." Finish the remaining family study before timestamp assembly or paper setup. See [FAMILY_REPLICATION.md](FAMILY_REPLICATION.md) for the active hosted run and exact completion state. This supersedes the earlier instruction below that assembly was next.
+
 **Latest steering supersedes the historical crypto-first sequence below:** finish the same NG dipole analyses on October 2, 3 and 17 first. The remaining continuous precursor and primer extensions are now complete and verified in [FOUR_DAY_REPLICATION.md](FOUR_DAY_REPLICATION.md). Next is timestamp assembly of our retained results and raw MBO, then the other researchers' layers. Paper work follows; no claim of readiness or orders. Keep the separate missing family populations explicit.
 
 Track down the historical crypto dipole-dive and direction-specific pre-onset/tail renders. Compare them against the current NG findings and other completed research, explicitly reconciling evidence instead of treating each discovery in isolation. User sees a shared concept, not transferable numerical values or identical shapes. Preserve this as a hypothesis, not an established mechanism. User still intends paper trading tonight; this handoff does not establish that a paper-trading setup is ready or authorize live trading.
