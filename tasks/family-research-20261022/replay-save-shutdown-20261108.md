@@ -206,3 +206,22 @@ four standalone files. The queued successor rejected the older
 completion log format. Its upload started after confirming the remote
 tree directly and checking that the frame publisher had exited. All
 three remaining ROOT and Native archives are now in transfer.
+
+### Publication paused for the storage change
+
+At 02:50 UTC on November 9, all three legacy data publishers were
+confirmed inactive. All three producer and standalone decision stages
+are sealed. Both archive indexes for each date remain on shared RunPod
+volume `qu5lhaqqbx` under `/opt/frankie-box/work/git-publication/YYYYMMDD`.
+The local publisher state remains under `F:/MarketsReplayPublication`.
+
+Previously published frame archives, standalone files and staged chunks
+stay at their existing Git revisions. The final observed staging tips
+were `bebd939d99171ef747febdee4029aa729a8786fe` (October 2),
+`209f99ca3dab185bfdeca5db93e98036af0a56c5` (October 3) and
+`f00fbac0dc1dcad53b349d43fc5ad4aa0c915c1e` (October 17).
+Further data publication awaits Ccode's confirmed three-tier destinations
+and manifest conventions. The three original pods remain running because
+shutdown requires durable copies of each date's unique outputs at those
+destinations. This is a storage dependency. The replay and touch/print
+calculations have finished.
