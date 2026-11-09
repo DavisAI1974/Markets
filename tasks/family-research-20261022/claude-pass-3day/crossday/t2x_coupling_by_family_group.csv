@@ -1,0 +1,31 @@
+family,x_group,pairs,same_sign_4_of_4,same_sign_3_of_4,beyond_line_4_days,beyond_line_0_days
+book response,book behaviour by side,600,449,118,78,383
+book response,flow,180,123,34,4,113
+book response,near depth,36,20,12,5,20
+book response,prior displacement,30,19,11,0,30
+book response,quote changes,30,24,6,4,23
+book response,touch state,66,40,20,2,50
+flow persistence,book behaviour by side,200,34,91,0,200
+flow persistence,flow,60,33,19,0,60
+flow persistence,near depth,12,0,7,0,12
+flow persistence,prior displacement,10,10,0,0,10
+flow persistence,quote changes,10,0,4,0,10
+flow persistence,touch state,22,12,7,0,22
+magnitude,book behaviour by side,200,159,23,0,194
+magnitude,flow,60,34,8,0,60
+magnitude,near depth,12,1,2,0,12
+magnitude,prior displacement,10,3,7,0,10
+magnitude,quote changes,10,10,0,1,7
+magnitude,touch state,22,12,5,0,22
+quote response,book behaviour by side,300,109,127,0,299
+quote response,flow,90,27,36,0,90
+quote response,near depth,18,14,1,0,18
+quote response,prior displacement,15,9,4,0,15
+quote response,quote changes,15,7,7,0,15
+quote response,touch state,33,24,6,5,18
+signed move,book behaviour by side,400,70,225,0,400
+signed move,flow,120,17,56,0,120
+signed move,near depth,24,19,2,0,24
+signed move,prior displacement,20,20,0,0,19
+signed move,quote changes,20,1,9,0,20
+signed move,touch state,44,30,7,0,35

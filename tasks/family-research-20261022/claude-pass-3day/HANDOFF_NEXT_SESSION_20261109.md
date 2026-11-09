@@ -34,6 +34,11 @@ Inventory of the Oct 18 suite against the other days:
 - Exists only for Oct 18, inputs not present for the other days: Tier 1 (the 749 first-observed families from the family run, `candidate-flow-transition-audit.csv`, outcomes at fixed horizons, order-level windows per family), the 99-plane and 13-input crosswalk (`all-99-relationship-roles.csv`, `external-operands.csv.gz`). The other days have candidate inputs (741, 833, 741), research-atlas-v2 tables, root frames and standalone inputs/decisions, but no family-level audit.
 - Open question for Greg (ask, do not assume): should a Tier 1 equivalent be built on the other days from their Native candidates (the closest analogue to the Oct 18 families), and with which definition of "first-observed family"?
 Then: put the Tier 2 tables for all four days side by side with Oct 18, instance by instance where applicable, reconciled to rows; no averages as the final word.
+- DONE 2026-11-09 (later session): `x14_tier2_crossday.py` puts c14, c15, c16, c17 and c18 side by side on the four days (`crossday/t2x_*.csv`), with a
+  shifted-Y reference built from saved draws (`x16_tier2_shift_draws.py`) and the full pair-coupling family (`x17_pair_couplings_full.py`,
+  `crossday/pairs_full/`); charts `x15_tier2_crossday_charts.py` -> `crossday/t2x-*.png`, every plotted count reconciled to its table rows. Write-up
+  `FINDINGS_TIER2_CROSSDAY_20261109.md`. The grids were rebuilt from the tapes in that session and reproduce every committed Tier 2 table exactly.
+  Still open in 3B: only the Tier 1 question above.
 
 ### 3C. Reverse-engineering the detector (all four days)
 Source of the detector settings: `replay-comparison/sources/research-comparison-<day>/source-receipt.json` (candidate_detection) for Oct 2, 3, 17. Note the Oct 3 receipt covers only 3,599 seconds with 0 emitted (a different slice); no receipt in the repo for Oct 18. Settings: flow is the 20 s signed ratio; warm-up 900 s and at least 600 finite observations; threshold = 0.85 quantile of the trailing finite |ratio| (always 1.0 where one-sided windows exceed 15 percent of observations); baseline = median of the finite |ratio| over t-30..t-10 (21 points); refractory 45 s; local radius 5 s; zero epsilon 1e-12.

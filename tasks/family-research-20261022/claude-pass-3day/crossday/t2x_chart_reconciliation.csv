@@ -1,0 +1,28 @@
+figure,panel,plotted,table_rows,source,match
+1 pair scatter,Oct 2,2669,2669,t2x_coupling_crossday.csv,True
+1 pair scatter,Oct 3,2669,2669,t2x_coupling_crossday.csv,True
+1 pair scatter,Oct 17,2669,2669,t2x_coupling_crossday.csv,True
+2 agreement counts,same sign,2669,2669,t2x_coupling_summary.csv,True
+2 agreement counts,beyond line,2669,2669,t2x_coupling_summary.csv,True
+3 per-family heatmap,signed move,40,40,t2x_coupling_crossday.csv (4 rho columns x top rows),True
+3 per-family heatmap,magnitude,40,40,t2x_coupling_crossday.csv (4 rho columns x top rows),True
+3 per-family heatmap,quote response,40,40,t2x_coupling_crossday.csv (4 rho columns x top rows),True
+3 per-family heatmap,flow persistence,40,40,t2x_coupling_crossday.csv (4 rho columns x top rows),True
+3 per-family heatmap,book response,40,40,t2x_coupling_crossday.csv (4 rho columns x top rows),True
+4 state cells,next1s,84,84,t2x_state_cells_crossday.csv (4 net columns),True
+4 state cells,next5s,84,84,t2x_state_cells_crossday.csv (4 net columns),True
+5 lead-lag,lag 0,84,84,"t2x_leadlag_crossday.csv (A<B rows, 4 rho_lag0 columns)",True
+5 lead-lag,peak lag,84,84,"t2x_leadlag_crossday.csv (A<B rows, 4 peak_lag columns)",True
+6 forward stack,F_net_5,18,18,t2x_forward_stack_paths.csv (4 oof_corr columns),True
+6 forward stack,F_supdiff_5,18,18,t2x_forward_stack_paths.csv (4 oof_corr columns),True
+6 forward stack,am_20,23,23,t2x_forward_stack_paths.csv (4 oof_corr columns),True
+6 forward stack,dm_20,18,18,t2x_forward_stack_paths.csv (4 oof_corr columns),True
+6 forward stack,dm_5,13,13,t2x_forward_stack_paths.csv (4 oof_corr columns),True
+6 forward stack,dm_60,21,21,t2x_forward_stack_paths.csv (4 oof_corr columns),True
+6 forward stack,dspr_5,15,15,t2x_forward_stack_paths.csv (4 oof_corr columns),True
+7 pair couplings,dm_5,40,40,t2x_pair_couplings_full_crossday.csv,True
+7 pair couplings,dm_20,40,40,t2x_pair_couplings_full_crossday.csv,True
+7 pair couplings,dspr_5,40,40,t2x_pair_couplings_full_crossday.csv,True
+7 pair couplings,F_supdiff_5,40,40,t2x_pair_couplings_full_crossday.csv,True
+7 pair couplings,F_net_5,40,40,t2x_pair_couplings_full_crossday.csv,True
+7 pair couplings,am_20,40,40,t2x_pair_couplings_full_crossday.csv,True

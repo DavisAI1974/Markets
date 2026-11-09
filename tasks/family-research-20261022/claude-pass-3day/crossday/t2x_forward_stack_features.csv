@@ -1,0 +1,102 @@
+outcome,feature,family,x_group,step_1002,gain_1002,step_1003,gain_1003,step_1017,gain_1017,step_1018,gain_1018,days_selected,selected_oct18
+F_net_5,bsz_per_ord,flow persistence,touch state,,,1.0,0.0243997702471178,,,1.0,0.0302705928563284,2,True
+F_net_5,prior_1,flow persistence,prior displacement,5.0,0.0022267833188488,5.0,0.0063187701255349,,,,,2,False
+F_net_5,cxT_b_5,flow persistence,book behaviour by side,,,,,,,2.0,0.0105036665307917,1,True
+F_net_5,addT_a_5,flow persistence,book behaviour by side,,,,,,,3.0,0.0032579383327445,1,True
+F_net_5,addT_b_1,flow persistence,book behaviour by side,3.0,0.0044026508477139,,,,,,,1,False
+F_net_5,asz,flow persistence,touch state,1.0,0.0330870607599127,,,,,,,1,False
+F_net_5,asz_per_ord,flow persistence,touch state,,,2.0,0.0067153173072381,,,,,1,False
+F_net_5,cxshare_a_60,flow persistence,book behaviour by side,,,3.0,0.0054449311283183,,,,,1,False
+F_net_5,net_20,flow persistence,flow,,,,,4.0,0.00299577722027,,,1,False
+F_net_5,qchg_20,flow persistence,quote changes,4.0,0.0030572827836999,,,,,,,1,False
+F_net_5,qchg_300,flow persistence,quote changes,,,,,2.0,0.0061079602132503,,,1,False
+F_net_5,rmF_a_20,flow persistence,book behaviour by side,,,,,5.0,0.0024229469439177,,,1,False
+F_net_5,supdiff_1,flow persistence,book behaviour by side,,,4.0,0.0039402106555421,,,,,1,False
+F_net_5,supdiff_5,flow persistence,book behaviour by side,2.0,0.0083510474485845,,,,,,,1,False
+F_net_5,tch_imb,flow persistence,touch state,,,,,1.0,0.0300157043557407,,,1,False
+F_net_5,tchn_imb,flow persistence,touch state,,,,,3.0,0.0039514741241769,,,1,False
+F_supdiff_5,tch_imb,,touch state,1.0,0.0278925447177244,,,,,2.0,0.0078140562124653,2,True
+F_supdiff_5,addT_a_1,,book behaviour by side,,,4.0,0.0042641491649336,3.0,0.004243642129219,,,2,False
+F_supdiff_5,near5_imb,,near depth,,,1.0,0.0209050462158706,2.0,0.009445515274096,,,2,False
+F_supdiff_5,net_1,,flow,2.0,0.0056801871266266,5.0,0.0044914441121763,,,,,2,False
+F_supdiff_5,prior_5,,prior displacement,,,,,,,1.0,0.0215039895704993,1,True
+F_supdiff_5,addT_b_5,,book behaviour by side,,,,,,,3.0,0.0047252733133078,1,True
+F_supdiff_5,prior_300,,prior displacement,,,,,,,4.0,0.0030948906512419,1,True
+F_supdiff_5,net_20,,flow,,,,,,,5.0,0.0024425324342354,1,True
+F_supdiff_5,addT_b_1,,book behaviour by side,,,2.0,0.0115500835154821,,,,,1,False
+F_supdiff_5,buy_2,,flow,,,,,1.0,0.0263669839931776,,,1,False
+F_supdiff_5,cxT_a_1,,book behaviour by side,,,,,4.0,0.0020739682183813,,,1,False
+F_supdiff_5,prior_20,,prior displacement,,,3.0,0.0070791467548724,,,,,1,False
+F_supdiff_5,prior_60,,prior displacement,3.0,0.0020373998087585,,,,,,,1,False
+F_supdiff_5,rmF_b_60,,book behaviour by side,,,6.0,0.0034259195966777,,,,,1,False
+am_20,qchg_300,magnitude,quote changes,1.0,0.0119392187282787,1.0,0.0699830752376151,1.0,0.0414510061663245,1.0,0.074708564968626,4,True
+am_20,addF_a_60,magnitude,book behaviour by side,,,6.0,0.0028176859898867,2.0,0.015947716840046,,,2,False
+am_20,nb5,magnitude,near depth,,,,,,,2.0,0.0119027228984032,1,True
+am_20,modT_b_60,magnitude,book behaviour by side,,,,,,,3.0,0.0116926454025357,1,True
+am_20,tch_imb,magnitude,touch state,,,,,,,4.0,0.0042516099407536,1,True
+am_20,cxN_a_60,magnitude,book behaviour by side,,,,,,,5.0,0.0041422827234306,1,True
+am_20,addN_a_20,magnitude,book behaviour by side,,,,,6.0,0.0030121315056901,,,1,False
+am_20,addN_a_5,magnitude,book behaviour by side,3.0,0.0051253140304705,,,,,,,1,False
+am_20,addT_b_60,magnitude,book behaviour by side,6.0,0.0023861489115755,,,,,,,1,False
+am_20,asz,magnitude,touch state,,,4.0,0.0041798052420382,,,,,1,False
+am_20,bsz_per_ord,magnitude,touch state,4.0,0.0035768932704164,,,,,,,1,False
+am_20,cxF_b_5,magnitude,book behaviour by side,,,,,3.0,0.0072063245648383,,,1,False
+am_20,cxN_b_20,magnitude,book behaviour by side,,,2.0,0.0112879662317239,,,,,1,False
+am_20,na5,magnitude,near depth,,,,,4.0,0.0032103298368049,,,1,False
+am_20,nb10,magnitude,near depth,2.0,0.0087840941141941,,,,,,,1,False
+am_20,ntr_1,magnitude,flow,,,5.0,0.0031016463573446,,,,,1,False
+am_20,qage_s,magnitude,touch state,5.0,0.0024263029148268,,,,,,,1,False
+am_20,qchg_60,magnitude,quote changes,,,3.0,0.0063510266931052,,,,,1,False
+am_20,rmF_b_20,magnitude,book behaviour by side,,,,,5.0,0.002290570275194,,,1,False
+dm_20,tchn_imb,signed move,touch state,1.0,0.0609634345964692,1.0,0.0632522072402659,,,1.0,0.0672106990878369,3,True
+dm_20,addF_a_60,signed move,book behaviour by side,,,,,4.0,0.0022743575899785,3.0,0.0075099267505917,2,True
+dm_20,modT_b_60,signed move,book behaviour by side,,,,,,,2.0,0.0138356816819086,1,True
+dm_20,prior_5,signed move,prior displacement,,,,,,,4.0,0.0020003703125628,1,True
+dm_20,supdiff_5,signed move,book behaviour by side,,,,,,,5.0,0.0030145531740751,1,True
+dm_20,addF_b_20,signed move,book behaviour by side,,,,,3.0,0.003667072390419,,,1,False
+dm_20,an,signed move,touch state,,,2.0,0.0066752711721502,,,,,1,False
+dm_20,asz_per_ord,signed move,touch state,3.0,0.0025803500345137,,,,,,,1,False
+dm_20,near5_imb,signed move,near depth,2.0,0.0041895087219071,,,,,,,1,False
+dm_20,net_60,signed move,flow,4.0,0.0024162099466309,,,,,,,1,False
+dm_20,prior_300,signed move,prior displacement,,,4.0,0.0024835918136262,,,,,1,False
+dm_20,rmF_b_60,signed move,book behaviour by side,,,,,2.0,0.0048051583254311,,,1,False
+dm_20,supdiff_1,signed move,book behaviour by side,,,3.0,0.0059374789794395,,,,,1,False
+dm_20,supdiff_60,signed move,book behaviour by side,,,5.0,0.0043614272929429,,,,,1,False
+dm_20,tch_imb,signed move,touch state,,,,,1.0,0.0596737270566558,,,1,False
+dm_5,tchn_imb,signed move,touch state,1.0,0.0775504634541467,1.0,0.0974280132052789,1.0,0.0785765917365606,1.0,0.0866137259061495,4,True
+dm_5,supdiff_5,signed move,book behaviour by side,2.0,0.0039735152643012,,,,,4.0,0.0035911600952588,2,True
+dm_5,prior_1,signed move,prior displacement,3.0,0.0022927569054752,4.0,0.0034986677309576,,,,,2,False
+dm_5,modT_b_60,signed move,book behaviour by side,,,,,,,2.0,0.0042380731318734,1,True
+dm_5,prior_5,signed move,prior displacement,,,,,,,3.0,0.0036088419156009,1,True
+dm_5,an,signed move,touch state,,,2.0,0.0027762422797693,,,,,1,False
+dm_5,sup_b_1,signed move,book behaviour by side,4.0,0.0021714832500686,,,,,,,1,False
+dm_5,supdiff_1,signed move,book behaviour by side,,,3.0,0.002450028770753,,,,,1,False
+dm_60,qchg_300,signed move,quote changes,,,5.0,0.0064716309774291,,,4.0,0.0049365633202569,2,True
+dm_60,modT_b_60,signed move,book behaviour by side,,,,,,,1.0,0.0612307379723221,1,True
+dm_60,tchn_imb,signed move,touch state,,,,,,,2.0,0.0182520670928699,1,True
+dm_60,cxF_a_60,signed move,book behaviour by side,,,,,,,3.0,0.0085142376769005,1,True
+dm_60,age_s,signed move,touch state,,,,,,,5.0,0.0025503559819626,1,True
+dm_60,qchg_20,signed move,quote changes,,,,,,,6.0,0.0026211634016286,1,True
+dm_60,addF_a_20,signed move,book behaviour by side,3.0,0.0055723832528959,,,,,,,1,False
+dm_60,addN_b_20,signed move,book behaviour by side,,,4.0,0.0063407063991053,,,,,1,False
+dm_60,an,signed move,touch state,,,1.0,0.0297860455546991,,,,,1,False
+dm_60,asz,signed move,touch state,2.0,0.0154387497202537,,,,,,,1,False
+dm_60,cxN_b_60,signed move,book behaviour by side,,,6.0,0.0044728703494599,,,,,1,False
+dm_60,modT_a_60,signed move,book behaviour by side,,,,,4.0,0.003053504502794,,,1,False
+dm_60,modT_b_20,signed move,book behaviour by side,,,,,3.0,0.0050023258667531,,,1,False
+dm_60,net_60,signed move,flow,1.0,0.0344217553632902,,,,,,,1,False
+dm_60,prior_1,signed move,prior displacement,5.0,0.0029059541605133,,,,,,,1,False
+dm_60,prior_300,signed move,prior displacement,,,2.0,0.0144535696364889,,,,,1,False
+dm_60,qage_s,signed move,touch state,4.0,0.0038330328175879,,,,,,,1,False
+dm_60,rmF_b_60,signed move,book behaviour by side,,,,,2.0,0.0070794692393606,,,1,False
+dm_60,supdiff_20,signed move,book behaviour by side,,,3.0,0.0079267766164407,,,,,1,False
+dm_60,tch_imb,signed move,touch state,,,,,1.0,0.0423677500636263,,,1,False
+dspr_5,spr,quote response,touch state,1.0,0.3896452943503251,1.0,0.3538954499094063,1.0,0.2926710640533334,1.0,0.3710574826717614,4,True
+dspr_5,an,quote response,touch state,,,2.0,0.0404270112963613,3.0,0.0136150482885115,3.0,0.013330843860296,3,True
+dspr_5,bn,quote response,touch state,2.0,0.0137103812577703,,,,,2.0,0.0193739738380767,2,True
+dspr_5,asz,quote response,touch state,,,5.0,0.0021763961277089,,,,,1,False
+dspr_5,bsz,quote response,touch state,,,,,2.0,0.0248138657515803,,,1,False
+dspr_5,nb5,quote response,near depth,,,3.0,0.0095790923492911,,,,,1,False
+dspr_5,near5_imb,quote response,near depth,,,6.0,0.0036147496529909,,,,,1,False
+dspr_5,rmF_a_5,quote response,book behaviour by side,,,4.0,0.002051062332393,,,,,1,False
+dspr_5,tch_imb,quote response,touch state,3.0,0.0082245520878601,,,,,,,1,False
