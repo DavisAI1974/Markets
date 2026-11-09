@@ -1,0 +1,251 @@
+{
+  "schema": "codex-paper-candidates-v1",
+  "brief_commit": "64f599312106537d83a23fc65447dd2db0e6ca95",
+  "evidence_commit": "e7b1c4acac2e37205cdb9ce1c53829b6ca30f4ee",
+  "not_deployed": true,
+  "measured_strategy_performance": null,
+  "strategies": [
+    {
+      "instrument": "NG futures; contract/security ID must be pinned before activation",
+      "session": "Pinned contract's explicit feed session; no automatic roll",
+      "status": "observation-only",
+      "orders_enabled": false,
+      "size_contracts": 1,
+      "max_gross_contracts": 1,
+      "adds": false,
+      "decision_grid_seconds": 3,
+      "grid_alignment": "UTC epoch multiples of 3; latest completed group at or before cutoff, ties ordered by close cursor",
+      "fees_per_contract_per_side": null,
+      "latency_ms": 100,
+      "limit_tolerance_ticks": 1,
+      "stop_ticks": 4,
+      "target_ticks": 4,
+      "max_hold_seconds": 5,
+      "cooldown_seconds": 60,
+      "daily_loss_limit_ticks_times_contracts": 20,
+      "max_entries_per_session": 20,
+      "parameter_provenance": "Risk and execution settings are provisional paper engineering choices; no measured strategy performance is claimed.",
+      "entry": "After the 100 ms simulated delay, recheck the trigger on the latest available completed group. Submit one-contract marketable-limit IOC at the opposing touch plus one tick tolerance in trade direction. A quote is not a fill: require the chosen simulator's executable liquidity and order receipt.",
+      "partial_fills": "Retain actual filled quantity and fees; cancel unfilled remainder; do not chase.",
+      "holding": "No adds. Manage filled quantity only. Exit on a side reversal, stop, time limit or target according to stated priority.",
+      "exit_priority": [
+        "Integrity failure: cancel pending orders, pause new entries, preserve unresolved exposure if no valid exit quote",
+        "Exposure or daily loss limit",
+        "Stop",
+        "Time limit",
+        "Target",
+        "Signal side reversal"
+      ],
+      "exit_execution": "Apply the same latency and executable-quote requirements. No invented fill during a gap. Record slippage beyond stop or target.",
+      "reversal": "Exit first; wait cooldown; require a fresh trigger. No automatic reversal.",
+      "duplicates": "Each source group/trigger ID is processed once. Each candidate has a separate virtual ledger, with at most one position; no pooled voting.",
+      "no_trade": "No entry for group age over 1 second, unresolved sequence gap/reset, clock regression, invalid or crossed quote, unknown contract, missing fee parameter or required zero denominator.",
+      "conflicts": "Opposing measured signals remain logged; only the candidate's explicit conflict rules suppress its order. An unresolved source/clock conflict pauses new entries.",
+      "restart": "Cancel pending orders and pause. Reconcile journal, position and order IDs; verify a fresh snapshot and the full lookback before resuming.",
+      "logging": [
+        "All opportunities, raw operands, source IDs and separate clocks",
+        "Suppressed signals and reasons",
+        "Order, acknowledgment, fill, partial fill, miss, cancellation and exit",
+        "Spread, liquidity, fees, latency and slippage",
+        "Adverse/favorable excursions, duration and net results when fully observed",
+        "Missing endpoints and unresolved exposure"
+      ],
+      "readiness_blockers": [
+        "NG feed and simulator route unverified",
+        "Fees missing",
+        "Order lifecycle, clock, gap and restart behavior not verified"
+      ],
+      "activation": "Requires a frozen configuration and receipted paper-only connection/order test. This configuration does not authorize live-money execution.",
+      "id": "P01",
+      "version": "1",
+      "name": "Touch order-count imbalance",
+      "thesis": "Repeated modest short-horizon midpoint association; incremental dipole value remains unresolved.",
+      "inputs": [
+        "bid/ask order counts",
+        "best bid/ask",
+        "source group and clocks"
+      ],
+      "setup": "One-tick spread, positive total order count, no open position.",
+      "signal": {
+        "formula": "(bid_order_count - ask_order_count) / (bid_order_count + ask_order_count)",
+        "long_gte": 0.3333333333333333,
+        "short_lte": -0.3333333333333333,
+        "threshold_provenance": "Provisional 2:1 count ratio, not a tested or optimized cutoff."
+      },
+      "trigger": "Cross into a qualifying side from a previously nonqualifying or opposite eligible grid state. First observation initializes state without entry.",
+      "support_claims": [
+        "C04",
+        "C09",
+        "C10"
+      ],
+      "adverse": "Many flat and adverse outcomes; effect decays; no verified net return.",
+      "dipole_role": "Log actual recognition and fresh/expiring flow for comparison; they are not extra confirming votes."
+    },
+    {
+      "instrument": "NG futures; contract/security ID must be pinned before activation",
+      "session": "Pinned contract's explicit feed session; no automatic roll",
+      "status": "observation-only",
+      "orders_enabled": false,
+      "size_contracts": 1,
+      "max_gross_contracts": 1,
+      "adds": false,
+      "decision_grid_seconds": 3,
+      "grid_alignment": "UTC epoch multiples of 3; latest completed group at or before cutoff, ties ordered by close cursor",
+      "fees_per_contract_per_side": null,
+      "latency_ms": 100,
+      "limit_tolerance_ticks": 1,
+      "stop_ticks": 4,
+      "target_ticks": 4,
+      "max_hold_seconds": 1,
+      "cooldown_seconds": 60,
+      "daily_loss_limit_ticks_times_contracts": 20,
+      "max_entries_per_session": 20,
+      "parameter_provenance": "Risk and execution settings are provisional paper engineering choices; no measured strategy performance is claimed.",
+      "entry": "After the 100 ms simulated delay, recheck the trigger on the latest available completed group. Submit one-contract marketable-limit IOC at the opposing touch plus one tick tolerance in trade direction. A quote is not a fill: require the chosen simulator's executable liquidity and order receipt.",
+      "partial_fills": "Retain actual filled quantity and fees; cancel unfilled remainder; do not chase.",
+      "holding": "No adds. Manage filled quantity only. Exit on a side reversal, stop, time limit or target according to stated priority.",
+      "exit_priority": [
+        "Integrity failure: cancel pending orders, pause new entries, preserve unresolved exposure if no valid exit quote",
+        "Exposure or daily loss limit",
+        "Stop",
+        "Time limit",
+        "Target",
+        "Signal side reversal"
+      ],
+      "exit_execution": "Apply the same latency and executable-quote requirements. No invented fill during a gap. Record slippage beyond stop or target.",
+      "reversal": "Exit first; wait cooldown; require a fresh trigger. No automatic reversal.",
+      "duplicates": "Each source group/trigger ID is processed once. Each candidate has a separate virtual ledger, with at most one position; no pooled voting.",
+      "no_trade": "No entry for group age over 1 second, unresolved sequence gap/reset, clock regression, invalid or crossed quote, unknown contract, missing fee parameter or required zero denominator.",
+      "conflicts": "Opposing measured signals remain logged; only the candidate's explicit conflict rules suppress its order. An unresolved source/clock conflict pauses new entries.",
+      "restart": "Cancel pending orders and pause. Reconcile journal, position and order IDs; verify a fresh snapshot and the full lookback before resuming.",
+      "logging": [
+        "All opportunities, raw operands, source IDs and separate clocks",
+        "Suppressed signals and reasons",
+        "Order, acknowledgment, fill, partial fill, miss, cancellation and exit",
+        "Spread, liquidity, fees, latency and slippage",
+        "Adverse/favorable excursions, duration and net results when fully observed",
+        "Missing endpoints and unresolved exposure"
+      ],
+      "readiness_blockers": [
+        "NG feed and simulator route unverified",
+        "Fees missing",
+        "Order lifecycle, clock, gap and restart behavior not verified"
+      ],
+      "activation": "Requires a frozen configuration and receipted paper-only connection/order test. This configuration does not authorize live-money execution.",
+      "id": "P02",
+      "version": "1",
+      "name": "Hit-side replenishment",
+      "thesis": "Prior hit-side refill has a repeatable short signed association on all four dates.",
+      "inputs": [
+        "Prior one-second adds at touch and within four ticks by side",
+        "Prior one-second passive fills by side",
+        "Best bid/ask and clocks"
+      ],
+      "setup": "One-tick spread, no open position; positive filled quantity on a qualifying side.",
+      "signal": {
+        "formula": "(touch_add_lots + near_add_lots) / passive_fill_lots",
+        "threshold_gte": 2,
+        "positive_fill_required": true,
+        "long": "Bid ratio qualifies",
+        "short": "Ask ratio qualifies",
+        "both_sides_qualify": "No order; log opposing responses",
+        "threshold_provenance": "Provisional two adds per filled lot; not the retrospective daily tercile."
+      },
+      "trigger": "A side crosses from nonqualifying to qualifying on the grid. First observation initializes state only.",
+      "support_claims": [
+        "C06",
+        "C13"
+      ],
+      "adverse": "Small denominator can dominate; delayed entry, spread and fees may consume the association.",
+      "dipole_role": "Log flow, empty halves and expiry; no future seed used."
+    },
+    {
+      "id": "O03",
+      "version": "1",
+      "name": "Price-response sequence recorder",
+      "status": "observation-only",
+      "orders_enabled": false,
+      "size_contracts": 0,
+      "trigger": "Every eligible completed-group midpoint change of at least two ticks.",
+      "direction": "Initial move is orientation, not a forecast.",
+      "inputs": [
+        "Old/new quote and fixed-price queues",
+        "Same-group actions and order IDs",
+        "Strictly subsequent additions, cancellations, fills and aggressive trades"
+      ],
+      "response_horizons_ms": [
+        1,
+        5,
+        25,
+        100,
+        250,
+        500,
+        1000,
+        5000,
+        20000,
+        60000,
+        600000
+      ],
+      "record": "Last eligible group at or before each horizon with its age; no interpolation. Also retain exact first half/full return and full available parent path, including no-response cases.",
+      "entry": "None",
+      "exit": "Observation window end, reset or session end; not natural event death.",
+      "missing_data": "Retain the event and explicit unavailable response.",
+      "conflicts": "Separate same-group mechanics from later response and fixed-price queues from moving ranks.",
+      "dipole_role": "Attach only then-known Native/flow states by their own clocks.",
+      "support_claims": [
+        "C11",
+        "C12",
+        "C13",
+        "C21"
+      ],
+      "readiness": "Verified NG recorder required; no order route needed."
+    },
+    {
+      "id": "O04",
+      "version": "1",
+      "name": "Duration and flow-state context",
+      "status": "observation-only",
+      "orders_enabled": false,
+      "size_contracts": 0,
+      "trigger": "Actual availability of the original frozen classifier after all 61 required samples and exact lineage are verified.",
+      "inputs": [
+        "Frozen classifier checksum",
+        "Original input vector",
+        "State, t0 and last complete sample clock",
+        "Frozen calibration version"
+      ],
+      "distance_ticks": [
+        3,
+        5,
+        8,
+        13
+      ],
+      "fast_total_seconds": [
+        358,
+        993,
+        1802,
+        4386
+      ],
+      "persistent_total_seconds": [
+        700,
+        1802,
+        3455,
+        6836
+      ],
+      "remaining_formula": "max(0, frozen_total - elapsed_since_t0)",
+      "calibration": "These are the original historical totals. Keep v4 separately until exact factors/bands are pinned. No new normalization or refitting.",
+      "direction": "None",
+      "entry": "None",
+      "exit": "Observe target reach or right-censoring; do not equate deadline with reversal.",
+      "conflicts": "Do not replace actual recognition with t0+50 or adjust state using book confidence.",
+      "support_claims": [
+        "C16",
+        "C18",
+        "C27"
+      ],
+      "adverse": "Wide bands and day dependence; time to absolute distance does not select direction.",
+      "readiness": "Causal classifier input contract and calibration files must be verified before automated use."
+    }
+  ],
+  "retained_other_hypotheses": "All 11 stack arms, 10 continuous precursor predicates, original and inverse family screens, original SSOS and the historical 146-entry registry remain research hypotheses. No performance-based removal. Missing operational definitions remain explicit pending work."
+}
