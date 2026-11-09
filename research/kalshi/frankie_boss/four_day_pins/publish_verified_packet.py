@@ -20,13 +20,23 @@ def main(directory,branch,prefix):
         request=urllib.request.Request(f'https://api.github.com/repos/{repository}/{path}',data=data,method=method,
                                       headers={'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json',
                                                'User-Agent':'Frankie-verified-packet-publication'})
-        for attempt in range(8):
+        for attempt in range(16):
             try:
                 with urllib.request.urlopen(request,timeout=180) as response:
                     return None if method=='HEAD' else json.load(response)
             except urllib.error.HTTPError as exc:
-                if exc.code not in (429,500,502,503,504) or attempt==7:raise
-                time.sleep(min(60,2**attempt))
+                detail=exc.read().decode('utf-8',errors='replace')
+                limited=exc.code==403 and ('rate limit' in detail.lower() or 'abuse' in detail.lower())
+                if (exc.code not in (429,500,502,503,504) and not limited) or attempt==15:
+                    print('Git API error',method,path,exc.code,detail[:1500],flush=True)
+                    raise
+                delay=max(5,min(60,2**attempt))
+                if limited or exc.code==429:
+                    delay=max(delay,int(exc.headers.get('Retry-After','60')))
+                    if exc.headers.get('X-RateLimit-Remaining')=='0':
+                        delay=max(delay,int(exc.headers.get('X-RateLimit-Reset','0'))-int(time.time())+5)
+                print('Git API retry',exc.code,'wait seconds',delay,flush=True)
+                time.sleep(delay)
     receipt=json.loads((root/'RECOVERY_RECEIPT.json').read_text())
     allowed={'FRANKIE_MBO_BOOK_RECOVERY_V1':'completed_book_fifo_recovery',
              'FRANKIE_NATIVE_LIFECYCLE_RECOVERY_V1':'complete_retained_lifecycle_ledger'}
@@ -51,9 +61,10 @@ def main(directory,branch,prefix):
             if exc.code!=404:raise
             result=api('POST','git/blobs',{'encoding':'base64','content':base64.b64encode(data).decode()})
             assert result['sha']==sha
+            time.sleep(1.1)
         return dict(path=path.relative_to(root).as_posix(),mode='100644',type='blob',sha=sha)
     elements=[]
-    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
         for i,item in enumerate(pool.map(blob,files),1):
             elements.append(item)
             if i%25==0:print('verified Git blobs',i,'of',len(files),flush=True)
