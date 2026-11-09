@@ -1,0 +1,17 @@
+{
+  "day": "20231018",
+  "candidates": 863,
+  "live": 863,
+  "path_candidates": 863,
+  "path_rows": 288144,
+  "groups": 583688,
+  "raw_records": 771787,
+  "matched_controls": 1726,
+  "distinct_control_anchors": 1532,
+  "original_coverage": {
+    "20231018": 793,
+    "20231017": 59,
+    "none": 11
+  },
+  "figures": 36
+}

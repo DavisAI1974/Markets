@@ -1,0 +1,3 @@
+day,variant,recorded,recovered,matched,missed,added,nominal_exact
+20231018,completed_group,863,866,842,21,24,840
+20231018,native_action,863,863,863,0,0,863
