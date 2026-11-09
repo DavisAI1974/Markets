@@ -89,3 +89,11 @@ Entry delay: enter at the first quote after the trigger (+1 s) instead of +5 s; 
 ## Dipole layers used by each candidate
 
 S2 none; S1 flow state at emission (Native recognition clock); S3 none (thin touch, fresh wire flow); S4 none (touch queue); S5 weakening onsets (fresh opposed vs expiry, vanished/resumed); S6 fresh opposed / window empty; S7 fresh lots, 20 s window, ratio saturation, exhaustion onset, flip.
+
+## S2 amendment (post-trade dipole exit, REPORT section 19; EVIDENCE M20)
+
+After entering the fade, read the native 20 s aggressor window each completed second. If net native flow over the first 20 s after the move continues WITH the jump, exit: those fades failed to return in 8/28, 6/24, 10/22, 9/31 versus 3/16, 3/32, 3/29, 6/32 when flow turned against the jump. Requires message-level flow; on Tradevate (top-of-book only) this overlay is logged as unavailable. Before-trade note: a busy tape in the prior 60 s returns fast (median 5 to 25 s), a quiet tape slowly (18 to 138 s); use this to set the expected hold, not to filter.
+
+## S7 amendment (entry filters from the combined layers, REPORT section 16; EVIDENCE M17, M20)
+
+Prefer births into a quiet, thin-target book: total lots in -20..+5 s below the session median (ride up/down 143/27, 145/28, 140/53, 157/46 vs 101/55, 84/53, 103/48, 140/59), target touch size and order count in the lower tertile, midpoint not yet moved in 0..+5 s. Leave-one-date-out score >= 3: 139/24, 126/26, 126/41, 140/34. These are rank-tertile filters, PROVISIONAL as live thresholds (the per-date tertile boundaries must be set from the live session's own distribution and logged).

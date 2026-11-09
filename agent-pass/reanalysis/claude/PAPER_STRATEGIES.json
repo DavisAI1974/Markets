@@ -1,5 +1,5 @@
 {
- "version": "claude-paper-candidates-v0.3",
+ "version": "claude-paper-candidates-v0.4",
  "written": "2026-11-09",
  "platform": "Tradovate demo (user selection); best bid/ask + depth snapshots; no message-level order flow",
  "research_numbers": "gross; execution assumptions are paper-only settings to be logged, never applied to findings",
@@ -205,7 +205,53 @@
    "dipole_layers_used": [],
    "complementary_inputs": [
     "best bid/ask"
-   ]
+   ],
+   "post_trade_exit_overlay": {
+    "rule": "exit if net native flow in the 20 s after the move continues with the jump",
+    "evidence_not_returned_with_vs_against": {
+     "20231002": [
+      [
+       8,
+       28
+      ],
+      [
+       3,
+       16
+      ]
+     ],
+     "20231003": [
+      [
+       6,
+       24
+      ],
+      [
+       3,
+       32
+      ]
+     ],
+     "20231017": [
+      [
+       10,
+       22
+      ],
+      [
+       3,
+       29
+      ]
+     ],
+     "20231018": [
+      [
+       9,
+       31
+      ],
+      [
+       6,
+       32
+      ]
+     ]
+    },
+    "availability": "message-level flow required; unavailable on Tradovate, log as such"
+   }
   },
   {
    "id": "S1",
@@ -387,7 +433,31 @@
     "flip second",
     "per-second lot classification rule",
     "spread at entry/exit"
-   ]
+   ],
+   "entry_filters": {
+    "quiet_window": "total lots -20..+5 s below session median",
+    "thin_target": "target touch size and order count lower tertile",
+    "price_not_moved": "|mid change 0..+5| lower tertile",
+    "lodo_score_ge3_up_down": {
+     "20231002": [
+      139,
+      24
+     ],
+     "20231003": [
+      126,
+      26
+     ],
+     "20231017": [
+      126,
+      41
+     ],
+     "20231018": [
+      140,
+      34
+     ]
+    },
+    "provenance": "PROVISIONAL thresholds from per-date tertiles (M17)"
+   }
   }
  ],
  "not_promoted": [

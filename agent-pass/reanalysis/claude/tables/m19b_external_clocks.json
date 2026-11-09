@@ -1,0 +1,304 @@
+{
+ "20231002": {
+  "publications_in_session": 1,
+  "tables": [
+   "weather.gw_daily"
+  ],
+  "aggregate": {
+   "births": {
+    "before5_total": 4,
+    "after5_total": 2,
+    "expected_per_window": 2.57,
+    "n_publications": 1
+   },
+   "large_moves": {
+    "before5_total": 0,
+    "after5_total": 0,
+    "expected_per_window": 0.16,
+    "n_publications": 1
+   },
+   "thin_episodes": {
+    "before5_total": 0,
+    "after5_total": 13,
+    "expected_per_window": 76.53,
+    "n_publications": 1
+   },
+   "prints": {
+    "before5_total": 5,
+    "after5_total": 17,
+    "expected_per_window": 130.8,
+    "n_publications": 1
+   }
+  },
+  "by_table": {
+   "weather.gw_daily": {
+    "n": 1,
+    "births_after5": 2,
+    "births_before5": 4,
+    "moves_after5": 0,
+    "moves_before5": 0,
+    "prints_after5": 17,
+    "prints_before5": 5
+   }
+  }
+ },
+ "20231003": {
+  "publications_in_session": 1,
+  "tables": [
+   "weather.gw_daily"
+  ],
+  "aggregate": {
+   "births": {
+    "before5_total": 3,
+    "after5_total": 3,
+    "expected_per_window": 2.89,
+    "n_publications": 1
+   },
+   "large_moves": {
+    "before5_total": 0,
+    "after5_total": 0,
+    "expected_per_window": 0.2,
+    "n_publications": 1
+   },
+   "thin_episodes": {
+    "before5_total": 11,
+    "after5_total": 36,
+    "expected_per_window": 84.55,
+    "n_publications": 1
+   },
+   "prints": {
+    "before5_total": 9,
+    "after5_total": 19,
+    "expected_per_window": 143.78,
+    "n_publications": 1
+   }
+  },
+  "by_table": {
+   "weather.gw_daily": {
+    "n": 1,
+    "births_after5": 3,
+    "births_before5": 3,
+    "moves_after5": 0,
+    "moves_before5": 0,
+    "prints_after5": 19,
+    "prints_before5": 9
+   }
+  }
+ },
+ "20231017": {
+  "publications_in_session": 15125,
+  "tables": [
+   "curve.settled_shape",
+   "curve.traded_shape",
+   "eia930.us48",
+   "mos.disagreement_by_cycle",
+   "mos.gw_by_cycle",
+   "weather.gw_daily",
+   "weather.obs_hourly"
+  ],
+  "aggregate": {
+   "births": {
+    "before5_total": 33338,
+    "after5_total": 31475,
+    "expected_per_window": 2.57,
+    "n_publications": 15125
+   },
+   "large_moves": {
+    "before5_total": 7379,
+    "after5_total": 6742,
+    "expected_per_window": 0.2,
+    "n_publications": 15125
+   },
+   "thin_episodes": {
+    "before5_total": 3394665,
+    "after5_total": 3433249,
+    "expected_per_window": 94.14,
+    "n_publications": 15125
+   },
+   "prints": {
+    "before5_total": 4515538,
+    "after5_total": 4534371,
+    "expected_per_window": 116.15,
+    "n_publications": 15125
+   }
+  },
+  "by_table": {
+   "curve.settled_shape": {
+    "n": 3,
+    "births_after5": 6,
+    "births_before5": 0,
+    "moves_after5": 0,
+    "moves_before5": 0,
+    "prints_after5": 537,
+    "prints_before5": 3822
+   },
+   "curve.traded_shape": {
+    "n": 14694,
+    "births_after5": 30407,
+    "births_before5": 32269,
+    "moves_after5": 6672,
+    "moves_before5": 7299,
+    "prints_after5": 4485382,
+    "prints_before5": 4459029
+   },
+   "eia930.us48": {
+    "n": 24,
+    "births_after5": 55,
+    "births_before5": 63,
+    "moves_after5": 3,
+    "moves_before5": 9,
+    "prints_after5": 3558,
+    "prints_before5": 2925
+   },
+   "mos.disagreement_by_cycle": {
+    "n": 2,
+    "births_after5": 3,
+    "births_before5": 8,
+    "moves_after5": 1,
+    "moves_before5": 0,
+    "prints_after5": 401,
+    "prints_before5": 256
+   },
+   "mos.gw_by_cycle": {
+    "n": 4,
+    "births_after5": 7,
+    "births_before5": 13,
+    "moves_after5": 1,
+    "moves_before5": 0,
+    "prints_after5": 419,
+    "prints_before5": 328
+   },
+   "weather.gw_daily": {
+    "n": 1,
+    "births_after5": 3,
+    "births_before5": 3,
+    "moves_after5": 0,
+    "moves_before5": 0,
+    "prints_after5": 11,
+    "prints_before5": 15
+   },
+   "weather.obs_hourly": {
+    "n": 428,
+    "births_after5": 1062,
+    "births_before5": 1069,
+    "moves_after5": 70,
+    "moves_before5": 80,
+    "prints_after5": 48452,
+    "prints_before5": 52687
+   }
+  }
+ },
+ "20231018": {
+  "publications_in_session": 14480,
+  "tables": [
+   "calendar.sessions_since_prompt_expiry",
+   "curve.settled_shape",
+   "curve.traded_shape",
+   "eia930.us48",
+   "mos.disagreement_by_cycle",
+   "mos.gw_by_cycle",
+   "weather.gw_daily",
+   "weather.obs_hourly"
+  ],
+  "aggregate": {
+   "births": {
+    "before5_total": 38616,
+    "after5_total": 35709,
+    "expected_per_window": 3.0,
+    "n_publications": 14480
+   },
+   "large_moves": {
+    "before5_total": 7693,
+    "after5_total": 6998,
+    "expected_per_window": 0.22,
+    "n_publications": 14480
+   },
+   "thin_episodes": {
+    "before5_total": 3062446,
+    "after5_total": 3159310,
+    "expected_per_window": 95.66,
+    "n_publications": 14480
+   },
+   "prints": {
+    "before5_total": 3806373,
+    "after5_total": 3902636,
+    "expected_per_window": 106.73,
+    "n_publications": 14480
+   }
+  },
+  "by_table": {
+   "calendar.sessions_since_prompt_expiry": {
+    "n": 1,
+    "births_after5": 4,
+    "births_before5": 1,
+    "moves_after5": 0,
+    "moves_before5": 0,
+    "prints_after5": 156,
+    "prints_before5": 169
+   },
+   "curve.settled_shape": {
+    "n": 3,
+    "births_after5": 7,
+    "births_before5": 6,
+    "moves_after5": 0,
+    "moves_before5": 5,
+    "prints_after5": 567,
+    "prints_before5": 1904
+   },
+   "curve.traded_shape": {
+    "n": 14063,
+    "births_after5": 34428,
+    "births_before5": 37349,
+    "moves_after5": 6906,
+    "moves_before5": 7601,
+    "prints_after5": 3855114,
+    "prints_before5": 3757891
+   },
+   "eia930.us48": {
+    "n": 23,
+    "births_after5": 78,
+    "births_before5": 71,
+    "moves_after5": 7,
+    "moves_before5": 1,
+    "prints_after5": 3451,
+    "prints_before5": 1871
+   },
+   "mos.disagreement_by_cycle": {
+    "n": 2,
+    "births_after5": 5,
+    "births_before5": 5,
+    "moves_after5": 0,
+    "moves_before5": 0,
+    "prints_after5": 379,
+    "prints_before5": 321
+   },
+   "mos.gw_by_cycle": {
+    "n": 4,
+    "births_after5": 12,
+    "births_before5": 11,
+    "moves_after5": 0,
+    "moves_before5": 0,
+    "prints_after5": 474,
+    "prints_before5": 403
+   },
+   "weather.gw_daily": {
+    "n": 1,
+    "births_after5": 4,
+    "births_before5": 3,
+    "moves_after5": 0,
+    "moves_before5": 0,
+    "prints_after5": 17,
+    "prints_before5": 16
+   },
+   "weather.obs_hourly": {
+    "n": 414,
+    "births_after5": 1274,
+    "births_before5": 1261,
+    "moves_after5": 92,
+    "moves_before5": 87,
+    "prints_after5": 46955,
+    "prints_before5": 46578
+   }
+  }
+ }
+}

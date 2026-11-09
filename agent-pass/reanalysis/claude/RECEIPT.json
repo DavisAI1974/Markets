@@ -11,7 +11,13 @@
    "agent-pass/AGENTS.md",
    "agent-pass/reanalysis/START_FOR_CCODE.md"
   ],
-  "note": "includes the November 9 price-as-input / two-way feedback addition"
+  "note": "includes the November 9 price-as-input / two-way feedback addition",
+  "latest_brief_revision": "c67483435d1cbf0467c8afdb5bc02a330cf2f35a (breadth and look-ahead clarification, no reconciliation)",
+  "commit_history_recorded": [
+   "2781ad1",
+   "64f5993",
+   "c674834"
+  ]
  },
  "handoff_commit_named_by_user": "43aa3ec3a925d27d805eb69320c8fdd68fe0e6d0",
  "evidence_manifest": {
@@ -72,7 +78,13 @@
    "DIPOLE_LAYER_MAP.csv",
    "PAPER_READINESS.md",
    "scripts/*.py",
-   "tables/*"
+   "tables/*",
+   "FIELD_INTERPRETATION.csv",
+   "tables/m16*",
+   "tables/m17*",
+   "tables/m18*",
+   "tables/m19*",
+   "tables/m20*"
   ]
  },
  "execution": {
