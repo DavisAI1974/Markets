@@ -225,3 +225,29 @@ and manifest conventions. The three original pods remain running because
 shutdown requires durable copies of each date's unique outputs at those
 destinations. This is a storage dependency. The replay and touch/print
 calculations have finished.
+
+### RunPod terminated the original pods
+
+On November 9, 2026, RunPod audit records show `delete` by actor
+`runpod` with status `TERMINATED` for all three original pods.
+
+| Trading date | Pod ID | Audit time (UTC) |
+| --- | --- | --- |
+| October 2, partial | `skqgzuaskb6d10` | 04:23:37 |
+| October 3, full session | `902unhjrkncf8c` | 04:23:36 |
+| October 17, partial | `9m9fubscvdgow5` | 04:23:37 |
+
+The API returned 404 for each original pod and listed no pods on this
+account. At 04:35 UTC the network volume `qu5lhaqqbx` still existed
+in `US-CA-2`. The last successful SSH check at 04:20 UTC saw all three
+sealed replay and decision statuses and both archive indexes for each
+date on the shared mount. The contents have not been rechecked since
+the pods were terminated. The existing Git copies and staged chunks
+remain available at their recorded revisions.
+
+The pinned input repository is
+[markets-data at 968fa113](https://github.com/DavisAI1974/markets-data/tree/968fa11324f66b70cd318140c51bf19e23f9ee4e).
+The remaining bulk archive destination and access to the preserved
+volume are still required for publication. RunPod's termination
+preceded completion of publication. The monitor remains active for
+the outstanding archive work.
