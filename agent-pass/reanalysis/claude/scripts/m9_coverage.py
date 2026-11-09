@@ -68,7 +68,7 @@ RULES = [
  (r"replay-artifacts/.*candidate-inputs.*", "archived Native candidate inputs (recognition, operands)", "decision_time_inputs", "M1"),
  (r"replay-artifacts/.*(standalone-inputs|standalone-decisions|touch-print-decisions|size-one-mechanisms|large-quote-moves).*", "replay inputs/decisions (Oct 18 touch mechanisms)", "raw_timed_records", "inventoried_not_separately_analyzed"),
  (r"replay-artifacts/.*root-frames.*", "ROOT frame archive reference", "unavailable_archive", "COVERAGE"),
- (r"data/nymex_mbo/.*\.dbn\.zst$", "raw MBO tape (UTC day)", "raw_source_tape", "not_reprocessed"),
+ (r"data/nymex_mbo/.*\.dbn\.zst$", "raw MBO tape (UTC day): every order message with order_id; decoded and replayed with an order-ID book for queue concentration, front-of-queue age, churn, modifies/replaces, clears, actions by side and level distance", "raw_source_tape_decoded", "M22,M23"),
  (r"claude-code/.*(exhaustion-clock|runway|a-state|next-burst|chain-play|frozen-a|beyond-direction|stack-direction|other-things).*", "Ccode independent detector population per-event files", "decision_time_inputs_and_outcomes", "M7"),
  (r"claude-code/.*size-one.*", "Ccode size-one episodes / orders / tape / four-arm rows", "decision_time_inputs_and_outcomes", "M3(reference),COVERAGE"),
  (r"claude-code/.*(first-family-four-arm|sweep-cohort|dipole-post-recognition|divergent-pairs|cell-flip|trace-instance).*", "Ccode family/sweep/post-recognition rows and traces", "decision_time_inputs_and_outcomes", "M1,M4"),
