@@ -6,7 +6,7 @@ Use exactly this frozen input packet: https://github.com/DavisAI1974/markets-dat
 
 You and Codex each perform a full independent analysis of the same complete data. Do not split analytical duties. Cover all four dates and every distinct source, field/data type, dipole layer and aspect individually, in meaningful groups and together. Choose your own methods, hypotheses and conclusions. Retain weak, inverse, conflicting, rare, unfavorable and unexplained observations. Preserve original values, whole lifecycles, IDs and separate clocks.
 
-Produce every deliverable listed in SHARED_BRIEF.md, including the complete report, coverage, claims, cases, conflicts, dipole-layer assessment, open questions and explicit paper-strategy specifications/readiness. Historical findings are common background. Save your complete independent report before reading Codex's new analysis. Compare only after both reports are saved, preserving supported differences and unresolved disagreement.
+Produce every deliverable listed in SHARED_BRIEF.md, including the complete report, coverage, claims, cases, conflicts, dipole-layer assessment, open questions and explicit paper-strategy specifications/readiness. Historical findings are common background. Deliver your complete independent report separately. Do not reconcile with Codex, produce a joint synthesis or perform an automatic cross-report comparison. Do not incorporate Codex's new conclusions into this task.
 
 The final packet includes the historical discovery record at f1c7277, suite/receipts at 3d0b06a, data at c01caaf and corrected Tier 1 clocks. Do not use older rounded Tier 1 annotations. Record the exact common brief and manifest commits in RECEIPT.json.
 

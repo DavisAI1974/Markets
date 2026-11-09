@@ -33,9 +33,9 @@ Duplicate cleanup removes only redundant copies/references to the same informati
 
 The shared brief defines the goals, complete evidence coverage, source/clock integrity and comparable deliverables. It does not prescribe identical hypotheses, feature groupings, analytical techniques, exploration order, weighting or conclusions. Each analyst should choose and explain their own approach, use their own judgment and pursue promising relationships beyond the examples listed here. The individual/group/whole and dipole reviews are coverage obligations, not a fixed theory of the market.
 
-Both analysts receive the same frozen input manifest. Save independent findings, strategy candidates and a short method rationale before reading the other's new report. Existing historical findings remain available to both as common background. This aims to obtain complementary perspectives without cross-contaminating the new readings.
+Both analysts receive the same frozen input manifest. Deliver independent findings, strategy candidates and a short method rationale. Do not read or incorporate the other's new report as part of this task. Existing historical findings remain available to both as common background. This aims to obtain complementary perspectives without cross-contaminating the new readings.
 
-Compare conclusions by evidence and decision usefulness. Different explanations may both fit different conditions; explicitly test whether they are compatible, redundant or contradictory. Neither different viewpoints nor agreement establishes correctness. Do not force consensus or average competing strategies into one rule. Preserve complementary supported strategies and unresolved disagreements with their conditions and failure cases. The user explicitly authorized starting on November 9, 2026.
+Each analyst interprets the common historical evidence independently and preserves their own conclusions, strategy candidates, conflicts and uncertainties. The user explicitly authorized starting on November 9, 2026 and explicitly prohibited report reconciliation or joint synthesis. Agreement or disagreement between analysts is not a deliverable.
 
 ## Identical task for each analyst
 
@@ -125,11 +125,9 @@ Write separate analyst-specific outputs without reading the other analyst's new 
 
 Choose illustrative cases by a declared rule, including successful, failed/adverse and recovery cases across the four dates where present. Counts and distributions use the defined population, not just chosen illustrations. No fixed quota should force invented examples.
 
-## Reconcile after both reports are saved
+## Deliver separate final reports
 
-Compare claims against the same source IDs and clocks. Make a disagreement table: claim, analyst A conclusion, analyst B conclusion, evidence, reason for difference and resolution or remaining uncertainty. Distinguish different populations, clock definitions and endpoint definitions from real conflicting evidence. Agreement by two analysts is not independent empirical validation.
-
-Publish one joint synthesis, a reconciled conflict register, paper-strategy specifications and readiness list, plus the smallest ranked follow-up list. Retain original independent reports. If additional testing is authorized, run only the tests needed to resolve material disagreements; do not reopen the completed reverse-engineering backlog.
+The user explicitly reiterated: do not reconcile the two reports when finished. Each analyst delivers a complete independent report and its own supporting artifacts. No joint synthesis, merged conflict register, negotiated conclusions or automatic cross-report comparison. This supersedes older handoff and frozen-manifest workflow wording about comparing or reconciling after both reports are saved; the frozen evidence itself is unchanged. Source-data conflict checks within each analysis remain required.
 
 ## Price as an input and market feedback — user addition November 9
 

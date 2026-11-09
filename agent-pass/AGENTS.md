@@ -52,7 +52,7 @@ User direction, November 9: analyze all supplied data types individually, in gro
 
 Flag direct conflicts with exact source records and clocks. Distinguish incompatible measurements from valid inverse relationships, differing definitions and opposing signals. Preserve unresolved conflicts and state their effect on each conclusion and proposed action.
 
-Perfection and 100% accurate market understanding are aspirations, not established performance. After Ccode's final suite is attached and both analysts receive the same frozen evidence, produce independent comprehensive reports and actionable paper-strategy specifications for tonight, then reconcile. Include exact rules, parameter provenance, risk/execution/missing-data/conflict handling, logging, readiness and falsification criteria. Identify gaps and concrete remedies; separate tonight's execution blockers from deferred research without trying to fill the entire backlog tonight. The detailed common instructions and matching deliverables are in reanalysis/SHARED_BRIEF.md. Reanalysis has not begun merely because this direction is saved.
+Perfection and 100% accurate market understanding are aspirations, not established performance. After Ccode's final suite is attached and both analysts receive the same frozen evidence, produce independent comprehensive reports and actionable paper-strategy specifications for tonight, delivered separately. Include exact rules, parameter provenance, risk/execution/missing-data/conflict handling, logging, readiness and falsification criteria. Identify gaps and concrete remedies; separate tonight's execution blockers from deferred research without trying to fill the entire backlog tonight. The detailed common instructions and matching deliverables are in reanalysis/SHARED_BRIEF.md. Reanalysis has not begun merely because this direction is saved.
 
 Additional user direction: pay special attention to distinct dipole layers and aspects, individually and together. Evaluate whether they provide most or all of the knowledge needed for the intended market decisions, using explicit decision coverage, contrary cases and comparisons with complementary data. Do not presume sufficiency or invent a percentage of market knowledge explained. Map actual source-defined layers, their clocks, interactions, conflicts and remaining gaps; see the dedicated dipole review in reanalysis/SHARED_BRIEF.md.
 
@@ -60,7 +60,7 @@ Additional user direction: pay special attention to distinct dipole layers and a
 
 Latest user instruction: Ccode is still finishing. Do not start reanalysis until the user explicitly says to start. Registry reconciliation and duplicate cleanup are preparation only. Use reanalysis/INPUT_AUTHORITY.md and its single canonical input manifest for both analysts. Do not create duplicate ledgers or competing registries. Verified duplicate file/ledger references are removed from the active input list; distinct populations and complementary views remain. Refresh the common manifest after the final handoff before freezing it.
 
-The analysts share evidence, goals, clock/provenance rules and comparable deliverables but independently choose methods, hypotheses, grouping and interpretation. Save each independent report before reading the other's new conclusions, then reconcile by evidence without forcing consensus. See reanalysis/SHARED_BRIEF.md.
+The analysts share evidence, goals, clock/provenance rules and comparable deliverables but independently choose methods, hypotheses, grouping and interpretation. Deliver each independent report separately. Do not read the other's new conclusions for this task, reconcile reports or produce a joint synthesis. See reanalysis/SHARED_BRIEF.md.
 
 ## Nothing dropped during analysis
 
@@ -68,8 +68,12 @@ Latest user clarification: the reanalysis is comprehensive discovery and underst
 
 ## Explicit start and identical full assignments — November 9
 
-The user explicitly said Start. This supersedes the historical reanalysis hold above. The final common packet is frozen at markets-data e7b1c4acac2e37205cdb9ce1c53829b6ca30f4ee, tasks/family-research-20261022/shared-reanalysis-inputs/final-42593665910-1. Use reanalysis/INPUT_AUTHORITY.md and the shared brief committed with this update. Codex and Ccode each perform the complete analysis independently; do not divide dates, data types, methods or deliverables between them. Each saves its complete report before reading the other's new conclusions. All distinct evidence remains in scope.
+The user explicitly said Start. This supersedes the historical reanalysis hold above. The final common packet is frozen at markets-data e7b1c4acac2e37205cdb9ce1c53829b6ca30f4ee, tasks/family-research-20261022/shared-reanalysis-inputs/final-42593665910-1. Use reanalysis/INPUT_AUTHORITY.md and the shared brief committed with this update. Codex and Ccode each perform the complete analysis independently; do not divide dates, data types, methods or deliverables between them. Each delivers its complete report independently; no cross-report reconciliation or joint synthesis. All distinct evidence remains in scope.
 
 ## Two-way market feedback — November 9
 
 User addition: analyze how price affects subsequent market behavior, as well as how behavior precedes price. Both analysts independently cover the full feedback sequence using the same frozen evidence; retain clocks, mechanical-versus-behavioral distinctions, contrary cases and causal uncertainty. See the price-as-input section of reanalysis/SHARED_BRIEF.md.
+
+## Separate final reports — explicit November 9 correction
+
+The user reiterated that Codex and Ccode must not reconcile their reports after completion. Each delivers their full independent analysis and artifacts. No joint synthesis or automatic cross-report comparison. This supersedes older instructions to reconcile; source-data conflicts within each report still require analysis.

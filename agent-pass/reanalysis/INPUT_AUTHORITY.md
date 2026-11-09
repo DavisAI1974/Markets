@@ -8,7 +8,7 @@ Both analysts use [this single frozen canonical input packet](https://github.com
 - Directory: tasks/family-research-20261022/shared-reanalysis-inputs/final-42593665910-1
 - Read SUMMARY.json, DEFINITION_CHECK.json, then CANONICAL_INPUTS.json.
 - The input freeze ran successfully in [42593665910](https://github.com/DavisAI1974/markets-data/actions/runs/42593665910).
-- The common brief is the version of SHARED_BRIEF.md committed alongside this authority update. Record that exact commit and the manifest revision in each analyst's RECEIPT.json.
+- The common brief is the version of SHARED_BRIEF.md committed alongside this authority update, including the explicit price-feedback scope and separate-report requirement. Record that exact commit and the manifest revision in each analyst's RECEIPT.json.
 
 ## Complete common scope
 
@@ -41,4 +41,4 @@ The four invalid manifest-revision aliases for family indexes were replaced by t
 
 Three historical archive directory references remain unavailable in UNAVAILABLE_REFERENCES.json. Retain them explicitly in coverage. Freezing the common evidence does not establish early availability, execution validity or complete row-overlap resolution for every observation. Each analyst must assess claimed signals against original clocks, IDs and scope, retain unassessable cases and avoid pooled double counting.
 
-Nothing distinct is dropped during analysis. Weak, inverse, rare, unfavorable, conflicting and unexplained evidence remains part of both complete reviews. Save separate complete reports, then reconcile by source evidence without forcing agreement.
+Nothing distinct is dropped during analysis. Weak, inverse, rare, unfavorable, conflicting and unexplained evidence remains part of both complete reviews. Deliver separate complete reports. The user explicitly prohibited report reconciliation and joint synthesis. Historical frozen-manifest workflow wording about later comparison is superseded; the frozen evidence remains unchanged.
