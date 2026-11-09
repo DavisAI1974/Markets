@@ -55,9 +55,9 @@ import os
 PREFIX_TAPE = "603c4defcb28fbf66cb6afc8d7728b1d7b1ed268"  # data commit carrying the 2023-10-01 and 2023-10-16 members pulled 2026-11-08
 DAYS = {
     "20231018": dict(day0=1697576400, members=(("20231017", -841601, None), ("20231018", 17375, None)), archived="october18-candidate-inputs.jsonl.gz", tag="oct18"),
-    "20231017": dict(day0=1697490000, members=(("20231016", 0, PREFIX_TAPE), ("20231017", 0, None)), archived=None, tag="oct17"),
-    "20231003": dict(day0=1696280400, members=(("20231002", 0, None), ("20231003", 0, None)), archived=None, tag="oct03"),
-    "20231002": dict(day0=1696194000, members=(("20231001", 0, PREFIX_TAPE), ("20231002", 0, None)), archived=None, tag="oct02"),
+    "20231017": dict(archived_locator=f"tasks/family-research-20261022/replay-comparison/20231017/candidate-inputs.jsonl.gz", day0=1697490000, members=(("20231016", 0, PREFIX_TAPE), ("20231017", 0, None)), archived=None, tag="oct17"),
+    "20231003": dict(archived_locator=f"tasks/family-research-20261022/replay-comparison/20231003/candidate-inputs.jsonl.gz", day0=1696280400, members=(("20231002", 0, None), ("20231003", 0, None)), archived=None, tag="oct03"),
+    "20231002": dict(archived_locator=f"tasks/family-research-20261022/replay-comparison/20231002/candidate-inputs.jsonl.gz", day0=1696194000, members=(("20231001", 0, PREFIX_TAPE), ("20231002", 0, None)), archived=None, tag="oct02"),
 }
 NG_DAY = os.environ.get("NG_DAY", "20231018")
 CFG = DAYS[NG_DAY]
@@ -306,7 +306,9 @@ def main():
     SESSION_CLOSE = 86400  # 21:00 UTC on the trading day; prints after this belong to the next trading day
     stream["last_trade"] = min(stream["last_trade"], SESSION_CLOSE - 1)
     last_trade = stream["last_trade"]
-    archived = [json.loads(l) for l in gzip.open(HERE.parent / CFG["archived"], "rt")] if CFG["archived"] else []
+    archived_path = (HERE.parent / CFG["archived"]) if CFG.get("archived") else (data_locator.local_path(CFG["archived_locator"]) if CFG.get("archived_locator") else None)
+    archived = [json.loads(l) for l in gzip.open(archived_path, "rt")] if archived_path else []
+    archived = [c for c in archived if c.get("recognition_receive_ns") is not None]  # finalization-only rows carry no live recognition
     arch_by_birth = {c["birth_second"] - DAY0: c for c in archived}
     results = {}
     for mode in ("day", "trailing"):

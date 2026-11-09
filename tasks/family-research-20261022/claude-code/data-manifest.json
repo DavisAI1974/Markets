@@ -318,6 +318,80 @@
       "markets_data_path": null,
       "target": "s3://bento-568968024170-us-east-2-an/root-frames/20231017/",
       "note": "ROOT frame spool split into sub-100 MB parts; not for any git repository; verify parts against SHA256SUMS after the move"
+    },
+    {
+      "tier": "export",
+      "path": "tasks/family-research-20261022/replay-comparison/20231002/candidate-inputs.jsonl.gz",
+      "bytes": 69711,
+      "sha256": "7cfd46759f4112875aa70464dab738773d62a6f64b0cf26182d2ae3de36e034a",
+      "markets_commit": "1a8ba3478a70c1b01405eb04d37659354e92e807",
+      "session": "20231002",
+      "markets_data_path": "tasks/family-research-20261022/replay-artifacts/20231002/candidate-inputs.jsonl.gz",
+      "note": "archived Native dipole candidates with live recognition clocks (Codex replay-comparison export); finalization-only rows have recognition_group null"
+    },
+    {
+      "tier": "export",
+      "path": "tasks/family-research-20261022/replay-comparison/20231003/candidate-inputs.jsonl.gz",
+      "bytes": 78439,
+      "sha256": "f7f4c1278bd48244b60ab16d401dfbb35ea4b534a9371215eac869ba74e0cde4",
+      "markets_commit": "1a8ba3478a70c1b01405eb04d37659354e92e807",
+      "session": "20231003",
+      "markets_data_path": "tasks/family-research-20261022/replay-artifacts/20231003/candidate-inputs.jsonl.gz",
+      "note": "archived Native dipole candidates with live recognition clocks (Codex replay-comparison export); finalization-only rows have recognition_group null"
+    },
+    {
+      "tier": "export",
+      "path": "tasks/family-research-20261022/replay-comparison/20231017/candidate-inputs.jsonl.gz",
+      "bytes": 69690,
+      "sha256": "4a2a5af0be04877d863c37ed4e021860561c6d401705baa7a01f38e1861f5753",
+      "markets_commit": "1a8ba3478a70c1b01405eb04d37659354e92e807",
+      "session": "20231017",
+      "markets_data_path": "tasks/family-research-20261022/replay-artifacts/20231017/candidate-inputs.jsonl.gz",
+      "note": "archived Native dipole candidates with live recognition clocks (Codex replay-comparison export); finalization-only rows have recognition_group null"
+    },
+    {
+      "tier": "export",
+      "path": "tasks/family-research-20261022/family-replication/run-42566535537-1/family-20231002/chronological-instance-index.csv",
+      "bytes": 329366,
+      "sha256": "9e0ea6324e6408227602b7be6e13fc80bde0bb7767de8eaf86d581e62f64e5b1",
+      "markets_commit": null,
+      "markets_data_commit": "7b50d634f94ea4777d1e772ac2b916b001019582",
+      "session": "20231002",
+      "markets_data_path": "tasks/family-research-20261022/family-replication/run-42566535537-1/family-20231002/chronological-instance-index.csv",
+      "note": "first-observed structural family starts with strict-pre ROOT operands (family replication run 42566535537)"
+    },
+    {
+      "tier": "export",
+      "path": "tasks/family-research-20261022/family-replication/run-42566535537-1/family-20231003/chronological-instance-index.csv",
+      "bytes": 349903,
+      "sha256": "5b6d655af9f2ebfe7c516c4344bfa534a122f4203138e29cfc3f5b9b75599443",
+      "markets_commit": null,
+      "markets_data_commit": "7b50d634f94ea4777d1e772ac2b916b001019582",
+      "session": "20231003",
+      "markets_data_path": "tasks/family-research-20261022/family-replication/run-42566535537-1/family-20231003/chronological-instance-index.csv",
+      "note": "first-observed structural family starts with strict-pre ROOT operands (family replication run 42566535537)"
+    },
+    {
+      "tier": "export",
+      "path": "tasks/family-research-20261022/family-replication/run-42566535537-1/family-20231017/chronological-instance-index.csv",
+      "bytes": 339984,
+      "sha256": "b912a498099cc2094167741da07228eea29eacb1108c3d6876f0a79bdb707bef",
+      "markets_commit": null,
+      "markets_data_commit": "7b50d634f94ea4777d1e772ac2b916b001019582",
+      "session": "20231017",
+      "markets_data_path": "tasks/family-research-20261022/family-replication/run-42566535537-1/family-20231017/chronological-instance-index.csv",
+      "note": "first-observed structural family starts with strict-pre ROOT operands (family replication run 42566535537)"
+    },
+    {
+      "tier": "export",
+      "path": "tasks/family-research-20261022/family-replication/run-42566535537-1/family-20231018/chronological-instance-index.csv",
+      "bytes": 497923,
+      "sha256": "769a390c6e7a80159669b50dc81a1a3fd0579509317362691e938bf13fec3ae8",
+      "markets_commit": null,
+      "markets_data_commit": "7b50d634f94ea4777d1e772ac2b916b001019582",
+      "session": "20231018",
+      "markets_data_path": "tasks/family-research-20261022/family-replication/run-42566535537-1/family-20231018/chronological-instance-index.csv",
+      "note": "first-observed structural family starts with strict-pre ROOT operands (family replication run 42566535537)"
     }
   ],
   "totals": {
@@ -326,8 +400,8 @@
       "bytes": 83031971
     },
     "export": {
-      "files": 19,
-      "bytes": 101767370
+      "files": 26,
+      "bytes": 103502386
     }
   },
   "archive_total_uncompressed_bytes": 1673857942232

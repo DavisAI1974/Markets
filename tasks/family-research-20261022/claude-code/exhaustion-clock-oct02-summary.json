@@ -8,9 +8,9 @@
   "first_trade_s": 3600,
   "last_trade_s": 86396,
   "day_threshold_85pct": 1.0,
-  "archived_recognitions": 0,
-  "archived_birth_seconds_matching_day_events": 0,
-  "archived_birth_seconds_matching_trailing_events": 0,
+  "archived_recognitions": 741,
+  "archived_birth_seconds_matching_day_events": 704,
+  "archived_birth_seconds_matching_trailing_events": 704,
   "constants": {
     "ROLL": 20,
     "PEAK_Q": 0.85,
@@ -57,9 +57,14 @@
       "over_20": 230,
       "median": -16
     },
-    "archived_recognition_offset_s": null,
-    "archived_recognition_after_confirm": 0,
-    "matched_archived_births": 0,
+    "archived_recognition_offset_s": {
+      "n": 704,
+      "min": 7,
+      "median": 52.0,
+      "max": 138
+    },
+    "archived_recognition_after_confirm": 407,
+    "matched_archived_births": 704,
     "price_t0_to_confirm": {
       "n": 839,
       "with_pol": 186,
@@ -611,9 +616,14 @@
       "over_20": 230,
       "median": -16
     },
-    "archived_recognition_offset_s": null,
-    "archived_recognition_after_confirm": 0,
-    "matched_archived_births": 0,
+    "archived_recognition_offset_s": {
+      "n": 704,
+      "min": 7,
+      "median": 52.0,
+      "max": 138
+    },
+    "archived_recognition_after_confirm": 407,
+    "matched_archived_births": 704,
     "price_t0_to_confirm": {
       "n": 839,
       "with_pol": 186,

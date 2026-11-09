@@ -1,0 +1,7291 @@
+{
+  "population": 795,
+  "eligible_recent_flow_defined": 428,
+  "pre_cursor_agreement": 795,
+  "saved_screen": 0,
+  "reproduced_screen": 40,
+  "saved_equals_reproduced": false,
+  "inverse_stack": 2,
+  "tape_end_receive_ns": 1696280399697648657,
+  "recent_direction_counts": {
+    "0": 367,
+    "1": 202,
+    "-1": 226
+  },
+  "cell_counts": {
+    "60s_agrees|depth_agrees": 188,
+    "60s_agrees|depth_opposes": 140,
+    "60s_balanced|depth_agrees": 4,
+    "60s_opposes|depth_agrees": 53,
+    "60s_opposes|depth_equal": 1,
+    "60s_opposes|depth_opposes": 42
+  },
+  "full_depth_sign_counts": {
+    "1": 718,
+    "-1": 76,
+    "0": 1
+  },
+  "full_depth_ratio": {
+    "min": 0.8398876404494382,
+    "median": 1.1760961810466761,
+    "max": 1.6815235008103728
+  },
+  "near_vs_touch_sign": {
+    "1|-1": 165,
+    "1|1": 234,
+    "-1|-1": 194,
+    "-1|0": 17,
+    "0|1": 5,
+    "-1|1": 150,
+    "1|0": 27,
+    "0|-1": 3
+  },
+  "arms": {
+    "baseline": {
+      "label": "recent 1 s and 5 s flow agree (all)",
+      "events": 428,
+      "overlap_clusters_600s": 36,
+      "recent_sell": 226,
+      "recent_buy": 202,
+      "horizons": {
+        "1": {
+          "n": 428,
+          "censored": 0,
+          "continued": 194,
+          "flat": 97,
+          "reversed": 137,
+          "median_ticks": -0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -7.0,
+          "max": 6.0
+        },
+        "5": {
+          "n": 428,
+          "censored": 0,
+          "continued": 192,
+          "flat": 89,
+          "reversed": 147,
+          "median_ticks": 0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -7.5,
+          "max": 6.5
+        },
+        "20": {
+          "n": 428,
+          "censored": 0,
+          "continued": 205,
+          "flat": 53,
+          "reversed": 170,
+          "median_ticks": -0.0,
+          "q25": -1.5,
+          "q75": 1.5,
+          "min": -8.0,
+          "max": 14.0
+        },
+        "60": {
+          "n": 428,
+          "censored": 0,
+          "continued": 209,
+          "flat": 42,
+          "reversed": 177,
+          "median_ticks": -0.0,
+          "q25": -2.0,
+          "q75": 2.5,
+          "min": -10.0,
+          "max": 14.5
+        },
+        "120": {
+          "n": 428,
+          "censored": 0,
+          "continued": 221,
+          "flat": 26,
+          "reversed": 181,
+          "median_ticks": 0.5,
+          "q25": -2.0,
+          "q75": 3.0,
+          "min": -18.0,
+          "max": 17.5
+        },
+        "300": {
+          "n": 428,
+          "censored": 0,
+          "continued": 227,
+          "flat": 22,
+          "reversed": 179,
+          "median_ticks": 1.0,
+          "q25": -3.0,
+          "q75": 5.0,
+          "min": -17.0,
+          "max": 26.0
+        },
+        "600": {
+          "n": 428,
+          "censored": 0,
+          "continued": 210,
+          "flat": 15,
+          "reversed": 203,
+          "median_ticks": 0.0,
+          "q25": -5.0,
+          "q75": 6.0,
+          "min": -31.0,
+          "max": 34.0
+        }
+      }
+    },
+    "baseline_plus_flow": {
+      "label": "recent flow with 60 s window opposing",
+      "events": 96,
+      "overlap_clusters_600s": 29,
+      "recent_sell": 47,
+      "recent_buy": 49,
+      "horizons": {
+        "1": {
+          "n": 96,
+          "censored": 0,
+          "continued": 36,
+          "flat": 23,
+          "reversed": 37,
+          "median_ticks": 0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -7.0,
+          "max": 5.5
+        },
+        "5": {
+          "n": 96,
+          "censored": 0,
+          "continued": 38,
+          "flat": 16,
+          "reversed": 42,
+          "median_ticks": -0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -7.5,
+          "max": 6.0
+        },
+        "20": {
+          "n": 96,
+          "censored": 0,
+          "continued": 37,
+          "flat": 14,
+          "reversed": 45,
+          "median_ticks": 0.0,
+          "q25": -2.0,
+          "q75": 1.0,
+          "min": -8.0,
+          "max": 9.0
+        },
+        "60": {
+          "n": 96,
+          "censored": 0,
+          "continued": 49,
+          "flat": 11,
+          "reversed": 36,
+          "median_ticks": 0.5,
+          "q25": -2.0,
+          "q75": 2.5,
+          "min": -10.0,
+          "max": 9.0
+        },
+        "120": {
+          "n": 96,
+          "censored": 0,
+          "continued": 50,
+          "flat": 4,
+          "reversed": 42,
+          "median_ticks": 0.75,
+          "q25": -3.5,
+          "q75": 3.0,
+          "min": -18.0,
+          "max": 17.5
+        },
+        "300": {
+          "n": 96,
+          "censored": 0,
+          "continued": 44,
+          "flat": 6,
+          "reversed": 46,
+          "median_ticks": 0.0,
+          "q25": -4.5,
+          "q75": 5.0,
+          "min": -16.0,
+          "max": 26.0
+        },
+        "600": {
+          "n": 96,
+          "censored": 0,
+          "continued": 42,
+          "flat": 2,
+          "reversed": 52,
+          "median_ticks": -1.5,
+          "q25": -6.0,
+          "q75": 5.0,
+          "min": -24.0,
+          "max": 34.0
+        }
+      }
+    },
+    "baseline_flow_agrees": {
+      "label": "recent flow with 60 s window agreeing (contrast)",
+      "events": 328,
+      "overlap_clusters_600s": 40,
+      "recent_sell": 179,
+      "recent_buy": 149,
+      "horizons": {
+        "1": {
+          "n": 328,
+          "censored": 0,
+          "continued": 156,
+          "flat": 73,
+          "reversed": 99,
+          "median_ticks": -0.0,
+          "q25": -0.5,
+          "q75": 1.0,
+          "min": -7.0,
+          "max": 6.0
+        },
+        "5": {
+          "n": 328,
+          "censored": 0,
+          "continued": 151,
+          "flat": 73,
+          "reversed": 104,
+          "median_ticks": -0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -7.5,
+          "max": 6.5
+        },
+        "20": {
+          "n": 328,
+          "censored": 0,
+          "continued": 166,
+          "flat": 39,
+          "reversed": 123,
+          "median_ticks": 0.5,
+          "q25": -1.0,
+          "q75": 1.5,
+          "min": -8.0,
+          "max": 14.0
+        },
+        "60": {
+          "n": 328,
+          "censored": 0,
+          "continued": 158,
+          "flat": 31,
+          "reversed": 139,
+          "median_ticks": -0.0,
+          "q25": -2.0,
+          "q75": 2.5,
+          "min": -9.0,
+          "max": 14.5
+        },
+        "120": {
+          "n": 328,
+          "censored": 0,
+          "continued": 168,
+          "flat": 22,
+          "reversed": 138,
+          "median_ticks": 0.5,
+          "q25": -2.0,
+          "q75": 3.0,
+          "min": -15.0,
+          "max": 16.0
+        },
+        "300": {
+          "n": 328,
+          "censored": 0,
+          "continued": 180,
+          "flat": 16,
+          "reversed": 132,
+          "median_ticks": 1.0,
+          "q25": -3.0,
+          "q75": 5.0,
+          "min": -17.0,
+          "max": 20.5
+        },
+        "600": {
+          "n": 328,
+          "censored": 0,
+          "continued": 167,
+          "flat": 13,
+          "reversed": 148,
+          "median_ticks": 0.5,
+          "q25": -5.0,
+          "q75": 6.0,
+          "min": -31.0,
+          "max": 21.5
+        }
+      }
+    },
+    "baseline_plus_book": {
+      "label": "recent flow with full depth skew opposing",
+      "events": 182,
+      "overlap_clusters_600s": 37,
+      "recent_sell": 179,
+      "recent_buy": 3,
+      "horizons": {
+        "1": {
+          "n": 182,
+          "censored": 0,
+          "continued": 99,
+          "flat": 30,
+          "reversed": 53,
+          "median_ticks": 0.5,
+          "q25": -0.5,
+          "q75": 1.0,
+          "min": -7.0,
+          "max": 6.0
+        },
+        "5": {
+          "n": 182,
+          "censored": 0,
+          "continued": 92,
+          "flat": 32,
+          "reversed": 58,
+          "median_ticks": 0.5,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -5.0,
+          "max": 6.5
+        },
+        "20": {
+          "n": 182,
+          "censored": 0,
+          "continued": 97,
+          "flat": 18,
+          "reversed": 67,
+          "median_ticks": 0.5,
+          "q25": -1.0,
+          "q75": 1.5,
+          "min": -7.5,
+          "max": 14.0
+        },
+        "60": {
+          "n": 182,
+          "censored": 0,
+          "continued": 99,
+          "flat": 14,
+          "reversed": 69,
+          "median_ticks": 0.5,
+          "q25": -1.5,
+          "q75": 3.0,
+          "min": -8.0,
+          "max": 14.0
+        },
+        "120": {
+          "n": 182,
+          "censored": 0,
+          "continued": 106,
+          "flat": 12,
+          "reversed": 64,
+          "median_ticks": 1.0,
+          "q25": -2.0,
+          "q75": 4.0,
+          "min": -15.0,
+          "max": 14.5
+        },
+        "300": {
+          "n": 182,
+          "censored": 0,
+          "continued": 100,
+          "flat": 13,
+          "reversed": 69,
+          "median_ticks": 1.5,
+          "q25": -2.0,
+          "q75": 6.5,
+          "min": -16.0,
+          "max": 26.0
+        },
+        "600": {
+          "n": 182,
+          "censored": 0,
+          "continued": 103,
+          "flat": 10,
+          "reversed": 69,
+          "median_ticks": 1.5,
+          "q25": -3.0,
+          "q75": 7.5,
+          "min": -24.0,
+          "max": 34.0
+        }
+      }
+    },
+    "baseline_book_agrees": {
+      "label": "recent flow with full depth skew agreeing (contrast)",
+      "events": 245,
+      "overlap_clusters_600s": 37,
+      "recent_sell": 47,
+      "recent_buy": 198,
+      "horizons": {
+        "1": {
+          "n": 245,
+          "censored": 0,
+          "continued": 95,
+          "flat": 67,
+          "reversed": 83,
+          "median_ticks": 0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -7.0,
+          "max": 5.5
+        },
+        "5": {
+          "n": 245,
+          "censored": 0,
+          "continued": 100,
+          "flat": 57,
+          "reversed": 88,
+          "median_ticks": 0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -7.5,
+          "max": 6.5
+        },
+        "20": {
+          "n": 245,
+          "censored": 0,
+          "continued": 108,
+          "flat": 35,
+          "reversed": 102,
+          "median_ticks": 0.0,
+          "q25": -1.5,
+          "q75": 1.5,
+          "min": -8.0,
+          "max": 9.0
+        },
+        "60": {
+          "n": 245,
+          "censored": 0,
+          "continued": 110,
+          "flat": 28,
+          "reversed": 107,
+          "median_ticks": 0.0,
+          "q25": -2.0,
+          "q75": 2.0,
+          "min": -10.0,
+          "max": 14.5
+        },
+        "120": {
+          "n": 245,
+          "censored": 0,
+          "continued": 115,
+          "flat": 14,
+          "reversed": 116,
+          "median_ticks": -0.0,
+          "q25": -2.0,
+          "q75": 2.5,
+          "min": -18.0,
+          "max": 17.5
+        },
+        "300": {
+          "n": 245,
+          "censored": 0,
+          "continued": 126,
+          "flat": 9,
+          "reversed": 110,
+          "median_ticks": 0.5,
+          "q25": -4.0,
+          "q75": 3.0,
+          "min": -17.0,
+          "max": 18.5
+        },
+        "600": {
+          "n": 245,
+          "censored": 0,
+          "continued": 106,
+          "flat": 5,
+          "reversed": 134,
+          "median_ticks": -1.5,
+          "q25": -7.0,
+          "q75": 4.0,
+          "min": -31.0,
+          "max": 26.5
+        }
+      }
+    },
+    "baseline_plus_both": {
+      "label": "60 s opposes and depth opposes (375/391 stack and its mirror)",
+      "events": 42,
+      "overlap_clusters_600s": 22,
+      "recent_sell": 40,
+      "recent_buy": 2,
+      "horizons": {
+        "1": {
+          "n": 42,
+          "censored": 0,
+          "continued": 17,
+          "flat": 9,
+          "reversed": 16,
+          "median_ticks": -0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -2.0,
+          "max": 5.0
+        },
+        "5": {
+          "n": 42,
+          "censored": 0,
+          "continued": 17,
+          "flat": 8,
+          "reversed": 17,
+          "median_ticks": -0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -4.0,
+          "max": 5.0
+        },
+        "20": {
+          "n": 42,
+          "censored": 0,
+          "continued": 16,
+          "flat": 5,
+          "reversed": 21,
+          "median_ticks": -0.25,
+          "q25": -2.0,
+          "q75": 1.0,
+          "min": -7.5,
+          "max": 5.0
+        },
+        "60": {
+          "n": 42,
+          "censored": 0,
+          "continued": 22,
+          "flat": 6,
+          "reversed": 14,
+          "median_ticks": 0.5,
+          "q25": -2.0,
+          "q75": 2.0,
+          "min": -8.0,
+          "max": 6.0
+        },
+        "120": {
+          "n": 42,
+          "censored": 0,
+          "continued": 24,
+          "flat": 1,
+          "reversed": 17,
+          "median_ticks": 1.0,
+          "q25": -3.0,
+          "q75": 1.5,
+          "min": -12.0,
+          "max": 9.0
+        },
+        "300": {
+          "n": 42,
+          "censored": 0,
+          "continued": 17,
+          "flat": 1,
+          "reversed": 24,
+          "median_ticks": -1.5,
+          "q25": -5.0,
+          "q75": 5.0,
+          "min": -16.0,
+          "max": 26.0
+        },
+        "600": {
+          "n": 42,
+          "censored": 0,
+          "continued": 15,
+          "flat": 1,
+          "reversed": 26,
+          "median_ticks": -2.75,
+          "q25": -8.0,
+          "q75": 4.5,
+          "min": -24.0,
+          "max": 34.0
+        }
+      }
+    },
+    "both_agree": {
+      "label": "60 s agrees and depth agrees (contrast)",
+      "events": 188,
+      "overlap_clusters_600s": 37,
+      "recent_sell": 40,
+      "recent_buy": 148,
+      "horizons": {
+        "1": {
+          "n": 188,
+          "censored": 0,
+          "continued": 74,
+          "flat": 52,
+          "reversed": 62,
+          "median_ticks": 0.0,
+          "q25": -1.0,
+          "q75": 0.5,
+          "min": -6.0,
+          "max": 4.5
+        },
+        "5": {
+          "n": 188,
+          "censored": 0,
+          "continued": 76,
+          "flat": 49,
+          "reversed": 63,
+          "median_ticks": 0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -7.5,
+          "max": 6.5
+        },
+        "20": {
+          "n": 188,
+          "censored": 0,
+          "continued": 85,
+          "flat": 26,
+          "reversed": 77,
+          "median_ticks": 0.0,
+          "q25": -1.5,
+          "q75": 1.5,
+          "min": -8.0,
+          "max": 8.5
+        },
+        "60": {
+          "n": 188,
+          "censored": 0,
+          "continued": 81,
+          "flat": 23,
+          "reversed": 84,
+          "median_ticks": 0.0,
+          "q25": -2.0,
+          "q75": 2.0,
+          "min": -9.0,
+          "max": 14.5
+        },
+        "120": {
+          "n": 188,
+          "censored": 0,
+          "continued": 86,
+          "flat": 11,
+          "reversed": 91,
+          "median_ticks": 0.0,
+          "q25": -2.0,
+          "q75": 2.0,
+          "min": -10.0,
+          "max": 16.0
+        },
+        "300": {
+          "n": 188,
+          "censored": 0,
+          "continued": 97,
+          "flat": 4,
+          "reversed": 87,
+          "median_ticks": 0.5,
+          "q25": -4.0,
+          "q75": 3.0,
+          "min": -17.0,
+          "max": 15.0
+        },
+        "600": {
+          "n": 188,
+          "censored": 0,
+          "continued": 79,
+          "flat": 4,
+          "reversed": 105,
+          "median_ticks": -2.0,
+          "q25": -8.0,
+          "q75": 3.0,
+          "min": -31.0,
+          "max": 21.5
+        }
+      }
+    },
+    "flow_opposes_depth_agrees": {
+      "label": "60 s opposes, depth agrees",
+      "events": 53,
+      "overlap_clusters_600s": 22,
+      "recent_sell": 7,
+      "recent_buy": 46,
+      "horizons": {
+        "1": {
+          "n": 53,
+          "censored": 0,
+          "continued": 19,
+          "flat": 14,
+          "reversed": 20,
+          "median_ticks": 0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -7.0,
+          "max": 5.5
+        },
+        "5": {
+          "n": 53,
+          "censored": 0,
+          "continued": 21,
+          "flat": 8,
+          "reversed": 24,
+          "median_ticks": 0.0,
+          "q25": -1.5,
+          "q75": 1.0,
+          "min": -7.5,
+          "max": 6.0
+        },
+        "20": {
+          "n": 53,
+          "censored": 0,
+          "continued": 21,
+          "flat": 9,
+          "reversed": 23,
+          "median_ticks": 0.0,
+          "q25": -2.0,
+          "q75": 2.0,
+          "min": -8.0,
+          "max": 9.0
+        },
+        "60": {
+          "n": 53,
+          "censored": 0,
+          "continued": 27,
+          "flat": 5,
+          "reversed": 21,
+          "median_ticks": 0.5,
+          "q25": -1.0,
+          "q75": 3.0,
+          "min": -10.0,
+          "max": 9.0
+        },
+        "120": {
+          "n": 53,
+          "censored": 0,
+          "continued": 26,
+          "flat": 3,
+          "reversed": 24,
+          "median_ticks": 0.0,
+          "q25": -3.0,
+          "q75": 3.5,
+          "min": -18.0,
+          "max": 17.5
+        },
+        "300": {
+          "n": 53,
+          "censored": 0,
+          "continued": 26,
+          "flat": 5,
+          "reversed": 22,
+          "median_ticks": 0.0,
+          "q25": -3.0,
+          "q75": 4.5,
+          "min": -15.0,
+          "max": 18.5
+        },
+        "600": {
+          "n": 53,
+          "censored": 0,
+          "continued": 26,
+          "flat": 1,
+          "reversed": 26,
+          "median_ticks": 0.0,
+          "q25": -5.0,
+          "q75": 5.0,
+          "min": -13.5,
+          "max": 26.5
+        }
+      }
+    },
+    "flow_agrees_depth_opposes": {
+      "label": "60 s agrees, depth opposes",
+      "events": 140,
+      "overlap_clusters_600s": 36,
+      "recent_sell": 139,
+      "recent_buy": 1,
+      "horizons": {
+        "1": {
+          "n": 140,
+          "censored": 0,
+          "continued": 82,
+          "flat": 21,
+          "reversed": 37,
+          "median_ticks": 0.5,
+          "q25": -0.5,
+          "q75": 1.0,
+          "min": -7.0,
+          "max": 6.0
+        },
+        "5": {
+          "n": 140,
+          "censored": 0,
+          "continued": 75,
+          "flat": 24,
+          "reversed": 41,
+          "median_ticks": 0.5,
+          "q25": -1.0,
+          "q75": 1.5,
+          "min": -5.0,
+          "max": 6.5
+        },
+        "20": {
+          "n": 140,
+          "censored": 0,
+          "continued": 81,
+          "flat": 13,
+          "reversed": 46,
+          "median_ticks": 0.5,
+          "q25": -1.0,
+          "q75": 2.0,
+          "min": -7.5,
+          "max": 14.0
+        },
+        "60": {
+          "n": 140,
+          "censored": 0,
+          "continued": 77,
+          "flat": 8,
+          "reversed": 55,
+          "median_ticks": 0.75,
+          "q25": -1.5,
+          "q75": 3.0,
+          "min": -7.5,
+          "max": 14.0
+        },
+        "120": {
+          "n": 140,
+          "censored": 0,
+          "continued": 82,
+          "flat": 11,
+          "reversed": 47,
+          "median_ticks": 1.25,
+          "q25": -2.0,
+          "q75": 4.5,
+          "min": -15.0,
+          "max": 14.5
+        },
+        "300": {
+          "n": 140,
+          "censored": 0,
+          "continued": 83,
+          "flat": 12,
+          "reversed": 45,
+          "median_ticks": 2.0,
+          "q25": -1.0,
+          "q75": 7.0,
+          "min": -9.5,
+          "max": 20.5
+        },
+        "600": {
+          "n": 140,
+          "censored": 0,
+          "continued": 88,
+          "flat": 9,
+          "reversed": 43,
+          "median_ticks": 2.0,
+          "q25": -1.5,
+          "q75": 8.0,
+          "min": -19.5,
+          "max": 19.0
+        }
+      }
+    },
+    "original_stack_sell_side": {
+      "label": "saved 50-case screen: selling recent, 60 s buy-heavy, bid depth larger",
+      "events": 40,
+      "overlap_clusters_600s": 22,
+      "recent_sell": 40,
+      "recent_buy": 0,
+      "horizons": {
+        "1": {
+          "n": 40,
+          "censored": 0,
+          "continued": 16,
+          "flat": 9,
+          "reversed": 15,
+          "median_ticks": -0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -2.0,
+          "max": 5.0
+        },
+        "5": {
+          "n": 40,
+          "censored": 0,
+          "continued": 16,
+          "flat": 8,
+          "reversed": 16,
+          "median_ticks": -0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -4.0,
+          "max": 5.0
+        },
+        "20": {
+          "n": 40,
+          "censored": 0,
+          "continued": 14,
+          "flat": 5,
+          "reversed": 21,
+          "median_ticks": -0.5,
+          "q25": -2.0,
+          "q75": 1.0,
+          "min": -7.5,
+          "max": 5.0
+        },
+        "60": {
+          "n": 40,
+          "censored": 0,
+          "continued": 20,
+          "flat": 6,
+          "reversed": 14,
+          "median_ticks": 0.25,
+          "q25": -2.0,
+          "q75": 1.5,
+          "min": -8.0,
+          "max": 6.0
+        },
+        "120": {
+          "n": 40,
+          "censored": 0,
+          "continued": 22,
+          "flat": 1,
+          "reversed": 17,
+          "median_ticks": 0.75,
+          "q25": -3.5,
+          "q75": 1.5,
+          "min": -12.0,
+          "max": 9.0
+        },
+        "300": {
+          "n": 40,
+          "censored": 0,
+          "continued": 17,
+          "flat": 1,
+          "reversed": 22,
+          "median_ticks": -1.5,
+          "q25": -5.0,
+          "q75": 5.5,
+          "min": -16.0,
+          "max": 26.0
+        },
+        "600": {
+          "n": 40,
+          "censored": 0,
+          "continued": 15,
+          "flat": 1,
+          "reversed": 24,
+          "median_ticks": -2.25,
+          "q25": -7.5,
+          "q75": 5.0,
+          "min": -24.0,
+          "max": 34.0
+        }
+      }
+    },
+    "inverse_stack_buy_side": {
+      "label": "inverse: buying recent, 60 s sell-heavy, ask depth larger",
+      "events": 2,
+      "overlap_clusters_600s": 1,
+      "recent_sell": 0,
+      "recent_buy": 2,
+      "horizons": {
+        "1": {
+          "n": 2,
+          "censored": 0,
+          "continued": 1,
+          "flat": 0,
+          "reversed": 1,
+          "median_ticks": 0.25,
+          "q25": -0.5,
+          "q75": -0.5,
+          "min": -0.5,
+          "max": 1.0
+        },
+        "5": {
+          "n": 2,
+          "censored": 0,
+          "continued": 1,
+          "flat": 0,
+          "reversed": 1,
+          "median_ticks": 0.75,
+          "q25": -0.5,
+          "q75": -0.5,
+          "min": -0.5,
+          "max": 2.0
+        },
+        "20": {
+          "n": 2,
+          "censored": 0,
+          "continued": 2,
+          "flat": 0,
+          "reversed": 0,
+          "median_ticks": 2.25,
+          "q25": 2.0,
+          "q75": 2.0,
+          "min": 2.0,
+          "max": 2.5
+        },
+        "60": {
+          "n": 2,
+          "censored": 0,
+          "continued": 2,
+          "flat": 0,
+          "reversed": 0,
+          "median_ticks": 3.25,
+          "q25": 3.0,
+          "q75": 3.0,
+          "min": 3.0,
+          "max": 3.5
+        },
+        "120": {
+          "n": 2,
+          "censored": 0,
+          "continued": 2,
+          "flat": 0,
+          "reversed": 0,
+          "median_ticks": 1.5,
+          "q25": 1.5,
+          "q75": 1.5,
+          "min": 1.5,
+          "max": 1.5
+        },
+        "300": {
+          "n": 2,
+          "censored": 0,
+          "continued": 0,
+          "flat": 0,
+          "reversed": 2,
+          "median_ticks": -1.5,
+          "q25": -2.0,
+          "q75": -2.0,
+          "min": -2.0,
+          "max": -1.0
+        },
+        "600": {
+          "n": 2,
+          "censored": 0,
+          "continued": 0,
+          "flat": 0,
+          "reversed": 2,
+          "median_ticks": -11.5,
+          "q25": -12.0,
+          "q75": -12.0,
+          "min": -12.0,
+          "max": -11.0
+        }
+      }
+    },
+    "both_recent_sell": {
+      "label": "both, recent selling",
+      "events": 40,
+      "overlap_clusters_600s": 22,
+      "recent_sell": 40,
+      "recent_buy": 0,
+      "horizons": {
+        "1": {
+          "n": 40,
+          "censored": 0,
+          "continued": 16,
+          "flat": 9,
+          "reversed": 15,
+          "median_ticks": -0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -2.0,
+          "max": 5.0
+        },
+        "5": {
+          "n": 40,
+          "censored": 0,
+          "continued": 16,
+          "flat": 8,
+          "reversed": 16,
+          "median_ticks": -0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -4.0,
+          "max": 5.0
+        },
+        "20": {
+          "n": 40,
+          "censored": 0,
+          "continued": 14,
+          "flat": 5,
+          "reversed": 21,
+          "median_ticks": -0.5,
+          "q25": -2.0,
+          "q75": 1.0,
+          "min": -7.5,
+          "max": 5.0
+        },
+        "60": {
+          "n": 40,
+          "censored": 0,
+          "continued": 20,
+          "flat": 6,
+          "reversed": 14,
+          "median_ticks": 0.25,
+          "q25": -2.0,
+          "q75": 1.5,
+          "min": -8.0,
+          "max": 6.0
+        },
+        "120": {
+          "n": 40,
+          "censored": 0,
+          "continued": 22,
+          "flat": 1,
+          "reversed": 17,
+          "median_ticks": 0.75,
+          "q25": -3.5,
+          "q75": 1.5,
+          "min": -12.0,
+          "max": 9.0
+        },
+        "300": {
+          "n": 40,
+          "censored": 0,
+          "continued": 17,
+          "flat": 1,
+          "reversed": 22,
+          "median_ticks": -1.5,
+          "q25": -5.0,
+          "q75": 5.5,
+          "min": -16.0,
+          "max": 26.0
+        },
+        "600": {
+          "n": 40,
+          "censored": 0,
+          "continued": 15,
+          "flat": 1,
+          "reversed": 24,
+          "median_ticks": -2.25,
+          "q25": -7.5,
+          "q75": 5.0,
+          "min": -24.0,
+          "max": 34.0
+        }
+      }
+    },
+    "both_recent_buy": {
+      "label": "both, recent buying",
+      "events": 2,
+      "overlap_clusters_600s": 1,
+      "recent_sell": 0,
+      "recent_buy": 2,
+      "horizons": {
+        "1": {
+          "n": 2,
+          "censored": 0,
+          "continued": 1,
+          "flat": 0,
+          "reversed": 1,
+          "median_ticks": 0.25,
+          "q25": -0.5,
+          "q75": -0.5,
+          "min": -0.5,
+          "max": 1.0
+        },
+        "5": {
+          "n": 2,
+          "censored": 0,
+          "continued": 1,
+          "flat": 0,
+          "reversed": 1,
+          "median_ticks": 0.75,
+          "q25": -0.5,
+          "q75": -0.5,
+          "min": -0.5,
+          "max": 2.0
+        },
+        "20": {
+          "n": 2,
+          "censored": 0,
+          "continued": 2,
+          "flat": 0,
+          "reversed": 0,
+          "median_ticks": 2.25,
+          "q25": 2.0,
+          "q75": 2.0,
+          "min": 2.0,
+          "max": 2.5
+        },
+        "60": {
+          "n": 2,
+          "censored": 0,
+          "continued": 2,
+          "flat": 0,
+          "reversed": 0,
+          "median_ticks": 3.25,
+          "q25": 3.0,
+          "q75": 3.0,
+          "min": 3.0,
+          "max": 3.5
+        },
+        "120": {
+          "n": 2,
+          "censored": 0,
+          "continued": 2,
+          "flat": 0,
+          "reversed": 0,
+          "median_ticks": 1.5,
+          "q25": 1.5,
+          "q75": 1.5,
+          "min": 1.5,
+          "max": 1.5
+        },
+        "300": {
+          "n": 2,
+          "censored": 0,
+          "continued": 0,
+          "flat": 0,
+          "reversed": 2,
+          "median_ticks": -1.5,
+          "q25": -2.0,
+          "q75": -2.0,
+          "min": -2.0,
+          "max": -1.0
+        },
+        "600": {
+          "n": 2,
+          "censored": 0,
+          "continued": 0,
+          "flat": 0,
+          "reversed": 2,
+          "median_ticks": -11.5,
+          "q25": -12.0,
+          "q75": -12.0,
+          "min": -12.0,
+          "max": -11.0
+        }
+      }
+    }
+  },
+  "alternative_book_layers": {
+    "near_sign/opposes": {
+      "label": "near_sign opposes recent flow",
+      "events": 130,
+      "overlap_clusters_600s": 39,
+      "recent_sell": 74,
+      "recent_buy": 56,
+      "horizons": {
+        "1": {
+          "n": 130,
+          "censored": 0,
+          "continued": 54,
+          "flat": 23,
+          "reversed": 53,
+          "median_ticks": -0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -7.0,
+          "max": 5.5
+        },
+        "5": {
+          "n": 130,
+          "censored": 0,
+          "continued": 55,
+          "flat": 25,
+          "reversed": 50,
+          "median_ticks": 0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -7.5,
+          "max": 6.0
+        },
+        "20": {
+          "n": 130,
+          "censored": 0,
+          "continued": 60,
+          "flat": 17,
+          "reversed": 53,
+          "median_ticks": 0.0,
+          "q25": -1.5,
+          "q75": 1.0,
+          "min": -8.0,
+          "max": 7.0
+        },
+        "60": {
+          "n": 130,
+          "censored": 0,
+          "continued": 68,
+          "flat": 12,
+          "reversed": 50,
+          "median_ticks": 0.5,
+          "q25": -1.5,
+          "q75": 2.0,
+          "min": -10.0,
+          "max": 9.0
+        },
+        "120": {
+          "n": 130,
+          "censored": 0,
+          "continued": 68,
+          "flat": 9,
+          "reversed": 53,
+          "median_ticks": 0.5,
+          "q25": -2.5,
+          "q75": 2.0,
+          "min": -13.0,
+          "max": 17.5
+        },
+        "300": {
+          "n": 130,
+          "censored": 0,
+          "continued": 64,
+          "flat": 11,
+          "reversed": 55,
+          "median_ticks": -0.0,
+          "q25": -3.5,
+          "q75": 3.5,
+          "min": -16.0,
+          "max": 24.5
+        },
+        "600": {
+          "n": 130,
+          "censored": 0,
+          "continued": 59,
+          "flat": 3,
+          "reversed": 68,
+          "median_ticks": -1.0,
+          "q25": -5.0,
+          "q75": 4.5,
+          "min": -24.0,
+          "max": 34.0
+        }
+      }
+    },
+    "near_sign/opposes/recent_sell": {
+      "label": "recent selling",
+      "events": 74,
+      "overlap_clusters_600s": 35,
+      "recent_sell": 74,
+      "recent_buy": 0,
+      "horizons": {
+        "1": {
+          "n": 74,
+          "censored": 0,
+          "continued": 31,
+          "flat": 14,
+          "reversed": 29,
+          "median_ticks": -0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -7.0,
+          "max": 5.5
+        },
+        "5": {
+          "n": 74,
+          "censored": 0,
+          "continued": 30,
+          "flat": 17,
+          "reversed": 27,
+          "median_ticks": -0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -5.0,
+          "max": 5.5
+        },
+        "20": {
+          "n": 74,
+          "censored": 0,
+          "continued": 33,
+          "flat": 11,
+          "reversed": 30,
+          "median_ticks": -0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -7.5,
+          "max": 7.0
+        },
+        "60": {
+          "n": 74,
+          "censored": 0,
+          "continued": 40,
+          "flat": 6,
+          "reversed": 28,
+          "median_ticks": 0.5,
+          "q25": -1.5,
+          "q75": 1.5,
+          "min": -8.0,
+          "max": 8.0
+        },
+        "120": {
+          "n": 74,
+          "censored": 0,
+          "continued": 42,
+          "flat": 5,
+          "reversed": 27,
+          "median_ticks": 0.75,
+          "q25": -2.0,
+          "q75": 3.0,
+          "min": -12.0,
+          "max": 10.0
+        },
+        "300": {
+          "n": 74,
+          "censored": 0,
+          "continued": 37,
+          "flat": 9,
+          "reversed": 28,
+          "median_ticks": 0.5,
+          "q25": -3.0,
+          "q75": 5.0,
+          "min": -16.0,
+          "max": 24.5
+        },
+        "600": {
+          "n": 74,
+          "censored": 0,
+          "continued": 36,
+          "flat": 3,
+          "reversed": 35,
+          "median_ticks": -0.0,
+          "q25": -4.0,
+          "q75": 6.0,
+          "min": -24.0,
+          "max": 34.0
+        }
+      }
+    },
+    "near_sign/opposes/recent_buy": {
+      "label": "recent buying",
+      "events": 56,
+      "overlap_clusters_600s": 23,
+      "recent_sell": 0,
+      "recent_buy": 56,
+      "horizons": {
+        "1": {
+          "n": 56,
+          "censored": 0,
+          "continued": 23,
+          "flat": 9,
+          "reversed": 24,
+          "median_ticks": 0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -6.0,
+          "max": 5.5
+        },
+        "5": {
+          "n": 56,
+          "censored": 0,
+          "continued": 25,
+          "flat": 8,
+          "reversed": 23,
+          "median_ticks": 0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -7.5,
+          "max": 6.0
+        },
+        "20": {
+          "n": 56,
+          "censored": 0,
+          "continued": 27,
+          "flat": 6,
+          "reversed": 23,
+          "median_ticks": 0.0,
+          "q25": -2.0,
+          "q75": 2.0,
+          "min": -8.0,
+          "max": 5.0
+        },
+        "60": {
+          "n": 56,
+          "censored": 0,
+          "continued": 28,
+          "flat": 6,
+          "reversed": 22,
+          "median_ticks": 0.25,
+          "q25": -1.5,
+          "q75": 2.0,
+          "min": -10.0,
+          "max": 9.0
+        },
+        "120": {
+          "n": 56,
+          "censored": 0,
+          "continued": 26,
+          "flat": 4,
+          "reversed": 26,
+          "median_ticks": 0.0,
+          "q25": -3.0,
+          "q75": 1.5,
+          "min": -13.0,
+          "max": 17.5
+        },
+        "300": {
+          "n": 56,
+          "censored": 0,
+          "continued": 27,
+          "flat": 2,
+          "reversed": 27,
+          "median_ticks": 0.0,
+          "q25": -3.5,
+          "q75": 2.5,
+          "min": -15.0,
+          "max": 18.5
+        },
+        "600": {
+          "n": 56,
+          "censored": 0,
+          "continued": 23,
+          "flat": 0,
+          "reversed": 33,
+          "median_ticks": -2.0,
+          "q25": -8.5,
+          "q75": 1.5,
+          "min": -13.5,
+          "max": 26.5
+        }
+      }
+    },
+    "near_sign/opposes/60s_opposes": {
+      "label": "near_sign opposes recent flow and 60 s opposes",
+      "events": 56,
+      "overlap_clusters_600s": 25,
+      "recent_sell": 29,
+      "recent_buy": 27,
+      "horizons": {
+        "1": {
+          "n": 56,
+          "censored": 0,
+          "continued": 22,
+          "flat": 11,
+          "reversed": 23,
+          "median_ticks": -0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -3.0,
+          "max": 5.5
+        },
+        "5": {
+          "n": 56,
+          "censored": 0,
+          "continued": 25,
+          "flat": 8,
+          "reversed": 23,
+          "median_ticks": 0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -7.5,
+          "max": 6.0
+        },
+        "20": {
+          "n": 56,
+          "censored": 0,
+          "continued": 26,
+          "flat": 5,
+          "reversed": 25,
+          "median_ticks": 0.0,
+          "q25": -2.0,
+          "q75": 1.5,
+          "min": -8.0,
+          "max": 5.0
+        },
+        "60": {
+          "n": 56,
+          "censored": 0,
+          "continued": 31,
+          "flat": 4,
+          "reversed": 21,
+          "median_ticks": 0.5,
+          "q25": -2.0,
+          "q75": 2.5,
+          "min": -10.0,
+          "max": 9.0
+        },
+        "120": {
+          "n": 56,
+          "censored": 0,
+          "continued": 30,
+          "flat": 1,
+          "reversed": 25,
+          "median_ticks": 0.75,
+          "q25": -3.5,
+          "q75": 1.5,
+          "min": -13.0,
+          "max": 17.5
+        },
+        "300": {
+          "n": 56,
+          "censored": 0,
+          "continued": 23,
+          "flat": 4,
+          "reversed": 29,
+          "median_ticks": -0.75,
+          "q25": -5.0,
+          "q75": 2.0,
+          "min": -16.0,
+          "max": 24.5
+        },
+        "600": {
+          "n": 56,
+          "censored": 0,
+          "continued": 21,
+          "flat": 1,
+          "reversed": 34,
+          "median_ticks": -2.75,
+          "q25": -8.0,
+          "q75": 1.5,
+          "min": -24.0,
+          "max": 34.0
+        }
+      }
+    },
+    "near_sign/agrees": {
+      "label": "near_sign agrees recent flow",
+      "events": 291,
+      "overlap_clusters_600s": 36,
+      "recent_sell": 147,
+      "recent_buy": 144,
+      "horizons": {
+        "1": {
+          "n": 291,
+          "censored": 0,
+          "continued": 136,
+          "flat": 73,
+          "reversed": 82,
+          "median_ticks": 0.0,
+          "q25": -0.5,
+          "q75": 1.0,
+          "min": -7.0,
+          "max": 6.0
+        },
+        "5": {
+          "n": 291,
+          "censored": 0,
+          "continued": 133,
+          "flat": 63,
+          "reversed": 95,
+          "median_ticks": 0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -4.0,
+          "max": 6.5
+        },
+        "20": {
+          "n": 291,
+          "censored": 0,
+          "continued": 141,
+          "flat": 35,
+          "reversed": 115,
+          "median_ticks": -0.0,
+          "q25": -1.5,
+          "q75": 1.5,
+          "min": -7.5,
+          "max": 14.0
+        },
+        "60": {
+          "n": 291,
+          "censored": 0,
+          "continued": 137,
+          "flat": 29,
+          "reversed": 125,
+          "median_ticks": -0.0,
+          "q25": -2.0,
+          "q75": 2.5,
+          "min": -9.0,
+          "max": 14.5
+        },
+        "120": {
+          "n": 291,
+          "censored": 0,
+          "continued": 150,
+          "flat": 17,
+          "reversed": 124,
+          "median_ticks": 0.5,
+          "q25": -2.0,
+          "q75": 3.0,
+          "min": -18.0,
+          "max": 17.0
+        },
+        "300": {
+          "n": 291,
+          "censored": 0,
+          "continued": 161,
+          "flat": 10,
+          "reversed": 120,
+          "median_ticks": 1.0,
+          "q25": -3.0,
+          "q75": 5.5,
+          "min": -17.0,
+          "max": 26.0
+        },
+        "600": {
+          "n": 291,
+          "censored": 0,
+          "continued": 148,
+          "flat": 12,
+          "reversed": 131,
+          "median_ticks": 0.5,
+          "q25": -5.0,
+          "q75": 6.5,
+          "min": -31.0,
+          "max": 34.0
+        }
+      }
+    },
+    "near_sign/agrees/recent_sell": {
+      "label": "recent selling",
+      "events": 147,
+      "overlap_clusters_600s": 24,
+      "recent_sell": 147,
+      "recent_buy": 0,
+      "horizons": {
+        "1": {
+          "n": 147,
+          "censored": 0,
+          "continued": 78,
+          "flat": 34,
+          "reversed": 35,
+          "median_ticks": 0.5,
+          "q25": -0.0,
+          "q75": 1.0,
+          "min": -3.0,
+          "max": 6.0
+        },
+        "5": {
+          "n": 147,
+          "censored": 0,
+          "continued": 73,
+          "flat": 29,
+          "reversed": 45,
+          "median_ticks": -0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -3.0,
+          "max": 6.5
+        },
+        "20": {
+          "n": 147,
+          "censored": 0,
+          "continued": 77,
+          "flat": 13,
+          "reversed": 57,
+          "median_ticks": 0.5,
+          "q25": -1.5,
+          "q75": 2.0,
+          "min": -7.5,
+          "max": 14.0
+        },
+        "60": {
+          "n": 147,
+          "censored": 0,
+          "continued": 71,
+          "flat": 12,
+          "reversed": 64,
+          "median_ticks": -0.0,
+          "q25": -2.5,
+          "q75": 3.0,
+          "min": -9.0,
+          "max": 14.0
+        },
+        "120": {
+          "n": 147,
+          "censored": 0,
+          "continued": 80,
+          "flat": 9,
+          "reversed": 58,
+          "median_ticks": 1.0,
+          "q25": -2.0,
+          "q75": 4.0,
+          "min": -15.0,
+          "max": 14.5
+        },
+        "300": {
+          "n": 147,
+          "censored": 0,
+          "continued": 79,
+          "flat": 4,
+          "reversed": 64,
+          "median_ticks": 1.0,
+          "q25": -3.0,
+          "q75": 7.0,
+          "min": -17.0,
+          "max": 26.0
+        },
+        "600": {
+          "n": 147,
+          "censored": 0,
+          "continued": 79,
+          "flat": 8,
+          "reversed": 60,
+          "median_ticks": 1.5,
+          "q25": -4.5,
+          "q75": 7.5,
+          "min": -19.5,
+          "max": 34.0
+        }
+      }
+    },
+    "near_sign/agrees/recent_buy": {
+      "label": "recent buying",
+      "events": 144,
+      "overlap_clusters_600s": 33,
+      "recent_sell": 0,
+      "recent_buy": 144,
+      "horizons": {
+        "1": {
+          "n": 144,
+          "censored": 0,
+          "continued": 58,
+          "flat": 39,
+          "reversed": 47,
+          "median_ticks": 0.0,
+          "q25": -1.0,
+          "q75": 0.5,
+          "min": -7.0,
+          "max": 4.5
+        },
+        "5": {
+          "n": 144,
+          "censored": 0,
+          "continued": 60,
+          "flat": 34,
+          "reversed": 50,
+          "median_ticks": 0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -4.0,
+          "max": 6.5
+        },
+        "20": {
+          "n": 144,
+          "censored": 0,
+          "continued": 64,
+          "flat": 22,
+          "reversed": 58,
+          "median_ticks": 0.0,
+          "q25": -1.5,
+          "q75": 1.0,
+          "min": -6.0,
+          "max": 9.0
+        },
+        "60": {
+          "n": 144,
+          "censored": 0,
+          "continued": 66,
+          "flat": 17,
+          "reversed": 61,
+          "median_ticks": 0.0,
+          "q25": -2.0,
+          "q75": 2.0,
+          "min": -8.0,
+          "max": 14.5
+        },
+        "120": {
+          "n": 144,
+          "censored": 0,
+          "continued": 70,
+          "flat": 8,
+          "reversed": 66,
+          "median_ticks": 0.0,
+          "q25": -2.0,
+          "q75": 2.5,
+          "min": -18.0,
+          "max": 17.0
+        },
+        "300": {
+          "n": 144,
+          "censored": 0,
+          "continued": 82,
+          "flat": 6,
+          "reversed": 56,
+          "median_ticks": 1.0,
+          "q25": -4.0,
+          "q75": 3.0,
+          "min": -15.0,
+          "max": 15.0
+        },
+        "600": {
+          "n": 144,
+          "censored": 0,
+          "continued": 69,
+          "flat": 4,
+          "reversed": 71,
+          "median_ticks": 0.0,
+          "q25": -6.0,
+          "q75": 5.0,
+          "min": -31.0,
+          "max": 25.0
+        }
+      }
+    },
+    "near_sign/agrees/60s_opposes": {
+      "label": "near_sign agrees recent flow and 60 s opposes",
+      "events": 37,
+      "overlap_clusters_600s": 19,
+      "recent_sell": 16,
+      "recent_buy": 21,
+      "horizons": {
+        "1": {
+          "n": 37,
+          "censored": 0,
+          "continued": 12,
+          "flat": 12,
+          "reversed": 13,
+          "median_ticks": -0.0,
+          "q25": -0.5,
+          "q75": 1.0,
+          "min": -7.0,
+          "max": 4.5
+        },
+        "5": {
+          "n": 37,
+          "censored": 0,
+          "continued": 11,
+          "flat": 8,
+          "reversed": 18,
+          "median_ticks": 0.0,
+          "q25": -1.0,
+          "q75": 0.5,
+          "min": -4.0,
+          "max": 4.5
+        },
+        "20": {
+          "n": 37,
+          "censored": 0,
+          "continued": 9,
+          "flat": 9,
+          "reversed": 19,
+          "median_ticks": -0.5,
+          "q25": -2.5,
+          "q75": 0.0,
+          "min": -7.0,
+          "max": 9.0
+        },
+        "60": {
+          "n": 37,
+          "censored": 0,
+          "continued": 16,
+          "flat": 7,
+          "reversed": 14,
+          "median_ticks": -0.0,
+          "q25": -1.0,
+          "q75": 2.5,
+          "min": -8.0,
+          "max": 8.5
+        },
+        "120": {
+          "n": 37,
+          "censored": 0,
+          "continued": 19,
+          "flat": 3,
+          "reversed": 15,
+          "median_ticks": 1.0,
+          "q25": -3.0,
+          "q75": 3.5,
+          "min": -18.0,
+          "max": 17.0
+        },
+        "300": {
+          "n": 37,
+          "censored": 0,
+          "continued": 20,
+          "flat": 2,
+          "reversed": 15,
+          "median_ticks": 3.0,
+          "q25": -3.0,
+          "q75": 6.0,
+          "min": -14.0,
+          "max": 26.0
+        },
+        "600": {
+          "n": 37,
+          "censored": 0,
+          "continued": 20,
+          "flat": 1,
+          "reversed": 16,
+          "median_ticks": 3.0,
+          "q25": -5.0,
+          "q75": 7.0,
+          "min": -15.0,
+          "max": 34.0
+        }
+      }
+    },
+    "near_sign/equal": {
+      "label": "near_sign equal recent flow",
+      "events": 7,
+      "overlap_clusters_600s": 7,
+      "recent_sell": 5,
+      "recent_buy": 2,
+      "horizons": {
+        "1": {
+          "n": 7,
+          "censored": 0,
+          "continued": 4,
+          "flat": 1,
+          "reversed": 2,
+          "median_ticks": 1.0,
+          "q25": -0.5,
+          "q75": 1.0,
+          "min": -1.0,
+          "max": 4.5
+        },
+        "5": {
+          "n": 7,
+          "censored": 0,
+          "continued": 4,
+          "flat": 1,
+          "reversed": 2,
+          "median_ticks": 1.0,
+          "q25": -1.0,
+          "q75": 1.5,
+          "min": -1.5,
+          "max": 4.5
+        },
+        "20": {
+          "n": 7,
+          "censored": 0,
+          "continued": 4,
+          "flat": 1,
+          "reversed": 2,
+          "median_ticks": 1.0,
+          "q25": -1.0,
+          "q75": 2.0,
+          "min": -1.5,
+          "max": 6.0
+        },
+        "60": {
+          "n": 7,
+          "censored": 0,
+          "continued": 4,
+          "flat": 1,
+          "reversed": 2,
+          "median_ticks": 1.0,
+          "q25": -2.0,
+          "q75": 2.0,
+          "min": -8.5,
+          "max": 4.0
+        },
+        "120": {
+          "n": 7,
+          "censored": 0,
+          "continued": 3,
+          "flat": 0,
+          "reversed": 4,
+          "median_ticks": -1.0,
+          "q25": -4.5,
+          "q75": 2.5,
+          "min": -7.5,
+          "max": 4.0
+        },
+        "300": {
+          "n": 7,
+          "censored": 0,
+          "continued": 2,
+          "flat": 1,
+          "reversed": 4,
+          "median_ticks": -4.5,
+          "q25": -8.0,
+          "q75": -0.0,
+          "min": -16.5,
+          "max": 6.0
+        },
+        "600": {
+          "n": 7,
+          "censored": 0,
+          "continued": 3,
+          "flat": 0,
+          "reversed": 4,
+          "median_ticks": -2.0,
+          "q25": -10.0,
+          "q75": 0.5,
+          "min": -14.5,
+          "max": 10.5
+        }
+      }
+    },
+    "near_sign/equal/recent_sell": {
+      "label": "recent selling",
+      "events": 5,
+      "overlap_clusters_600s": 5,
+      "recent_sell": 5,
+      "recent_buy": 0,
+      "horizons": {
+        "1": {
+          "n": 5,
+          "censored": 0,
+          "continued": 3,
+          "flat": 0,
+          "reversed": 2,
+          "median_ticks": 1.0,
+          "q25": -0.5,
+          "q75": 1.0,
+          "min": -1.0,
+          "max": 4.5
+        },
+        "5": {
+          "n": 5,
+          "censored": 0,
+          "continued": 3,
+          "flat": 0,
+          "reversed": 2,
+          "median_ticks": 1.0,
+          "q25": -1.0,
+          "q75": 1.5,
+          "min": -1.5,
+          "max": 4.5
+        },
+        "20": {
+          "n": 5,
+          "censored": 0,
+          "continued": 3,
+          "flat": 0,
+          "reversed": 2,
+          "median_ticks": 1.0,
+          "q25": -1.0,
+          "q75": 2.0,
+          "min": -1.5,
+          "max": 6.0
+        },
+        "60": {
+          "n": 5,
+          "censored": 0,
+          "continued": 3,
+          "flat": 0,
+          "reversed": 2,
+          "median_ticks": 1.0,
+          "q25": -2.0,
+          "q75": 2.0,
+          "min": -8.5,
+          "max": 4.0
+        },
+        "120": {
+          "n": 5,
+          "censored": 0,
+          "continued": 3,
+          "flat": 0,
+          "reversed": 2,
+          "median_ticks": 2.5,
+          "q25": -4.5,
+          "q75": 4.0,
+          "min": -7.5,
+          "max": 4.0
+        },
+        "300": {
+          "n": 5,
+          "censored": 0,
+          "continued": 2,
+          "flat": 1,
+          "reversed": 2,
+          "median_ticks": -0.0,
+          "q25": -5.0,
+          "q75": 2.0,
+          "min": -16.5,
+          "max": 6.0
+        },
+        "600": {
+          "n": 5,
+          "censored": 0,
+          "continued": 3,
+          "flat": 0,
+          "reversed": 2,
+          "median_ticks": 0.5,
+          "q25": -3.0,
+          "q75": 7.0,
+          "min": -14.5,
+          "max": 10.5
+        }
+      }
+    },
+    "near_sign/equal/recent_buy": {
+      "label": "recent buying",
+      "events": 2,
+      "overlap_clusters_600s": 2,
+      "recent_sell": 0,
+      "recent_buy": 2,
+      "horizons": {
+        "1": {
+          "n": 2,
+          "censored": 0,
+          "continued": 1,
+          "flat": 1,
+          "reversed": 0,
+          "median_ticks": 1.5,
+          "q25": 0.0,
+          "q75": 0.0,
+          "min": 0.0,
+          "max": 3.0
+        },
+        "5": {
+          "n": 2,
+          "censored": 0,
+          "continued": 1,
+          "flat": 1,
+          "reversed": 0,
+          "median_ticks": 1.5,
+          "q25": 0.0,
+          "q75": 0.0,
+          "min": 0.0,
+          "max": 3.0
+        },
+        "20": {
+          "n": 2,
+          "censored": 0,
+          "continued": 1,
+          "flat": 1,
+          "reversed": 0,
+          "median_ticks": 1.5,
+          "q25": 0.0,
+          "q75": 0.0,
+          "min": 0.0,
+          "max": 3.0
+        },
+        "60": {
+          "n": 2,
+          "censored": 0,
+          "continued": 1,
+          "flat": 1,
+          "reversed": 0,
+          "median_ticks": 1.25,
+          "q25": 0.0,
+          "q75": 0.0,
+          "min": 0.0,
+          "max": 2.5
+        },
+        "120": {
+          "n": 2,
+          "censored": 0,
+          "continued": 0,
+          "flat": 0,
+          "reversed": 2,
+          "median_ticks": -2.0,
+          "q25": -3.0,
+          "q75": -3.0,
+          "min": -3.0,
+          "max": -1.0
+        },
+        "300": {
+          "n": 2,
+          "censored": 0,
+          "continued": 0,
+          "flat": 0,
+          "reversed": 2,
+          "median_ticks": -6.25,
+          "q25": -8.0,
+          "q75": -8.0,
+          "min": -8.0,
+          "max": -4.5
+        },
+        "600": {
+          "n": 2,
+          "censored": 0,
+          "continued": 0,
+          "flat": 0,
+          "reversed": 2,
+          "median_ticks": -6.0,
+          "q25": -10.0,
+          "q75": -10.0,
+          "min": -10.0,
+          "max": -2.0
+        }
+      }
+    },
+    "near_sign/equal/60s_opposes": {
+      "label": "near_sign equal recent flow and 60 s opposes",
+      "events": 3,
+      "overlap_clusters_600s": 3,
+      "recent_sell": 2,
+      "recent_buy": 1,
+      "horizons": {
+        "1": {
+          "n": 3,
+          "censored": 0,
+          "continued": 2,
+          "flat": 0,
+          "reversed": 1,
+          "median_ticks": 1.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -1.0,
+          "max": 3.0
+        },
+        "5": {
+          "n": 3,
+          "censored": 0,
+          "continued": 2,
+          "flat": 0,
+          "reversed": 1,
+          "median_ticks": 1.5,
+          "q25": -1.0,
+          "q75": 1.5,
+          "min": -1.0,
+          "max": 3.0
+        },
+        "20": {
+          "n": 3,
+          "censored": 0,
+          "continued": 2,
+          "flat": 0,
+          "reversed": 1,
+          "median_ticks": 2.0,
+          "q25": -1.0,
+          "q75": 2.0,
+          "min": -1.0,
+          "max": 3.0
+        },
+        "60": {
+          "n": 3,
+          "censored": 0,
+          "continued": 2,
+          "flat": 0,
+          "reversed": 1,
+          "median_ticks": 2.0,
+          "q25": -2.0,
+          "q75": 2.0,
+          "min": -2.0,
+          "max": 2.5
+        },
+        "120": {
+          "n": 3,
+          "censored": 0,
+          "continued": 1,
+          "flat": 0,
+          "reversed": 2,
+          "median_ticks": -1.0,
+          "q25": -4.5,
+          "q75": -1.0,
+          "min": -4.5,
+          "max": 4.0
+        },
+        "300": {
+          "n": 3,
+          "censored": 0,
+          "continued": 1,
+          "flat": 0,
+          "reversed": 2,
+          "median_ticks": -5.0,
+          "q25": -8.0,
+          "q75": -5.0,
+          "min": -8.0,
+          "max": 2.0
+        },
+        "600": {
+          "n": 3,
+          "censored": 0,
+          "continued": 1,
+          "flat": 0,
+          "reversed": 2,
+          "median_ticks": -2.0,
+          "q25": -3.0,
+          "q75": -2.0,
+          "min": -3.0,
+          "max": 7.0
+        }
+      }
+    },
+    "touch_sign/opposes": {
+      "label": "touch_sign opposes recent flow",
+      "events": 197,
+      "overlap_clusters_600s": 38,
+      "recent_sell": 105,
+      "recent_buy": 92,
+      "horizons": {
+        "1": {
+          "n": 197,
+          "censored": 0,
+          "continued": 73,
+          "flat": 43,
+          "reversed": 81,
+          "median_ticks": 0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -7.0,
+          "max": 5.5
+        },
+        "5": {
+          "n": 197,
+          "censored": 0,
+          "continued": 77,
+          "flat": 39,
+          "reversed": 81,
+          "median_ticks": 0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -7.5,
+          "max": 6.5
+        },
+        "20": {
+          "n": 197,
+          "censored": 0,
+          "continued": 88,
+          "flat": 22,
+          "reversed": 87,
+          "median_ticks": -0.0,
+          "q25": -2.0,
+          "q75": 1.5,
+          "min": -8.0,
+          "max": 14.0
+        },
+        "60": {
+          "n": 197,
+          "censored": 0,
+          "continued": 91,
+          "flat": 18,
+          "reversed": 88,
+          "median_ticks": 0.0,
+          "q25": -2.0,
+          "q75": 2.5,
+          "min": -9.0,
+          "max": 14.5
+        },
+        "120": {
+          "n": 197,
+          "censored": 0,
+          "continued": 97,
+          "flat": 17,
+          "reversed": 83,
+          "median_ticks": 0.0,
+          "q25": -2.0,
+          "q75": 3.0,
+          "min": -11.5,
+          "max": 17.5
+        },
+        "300": {
+          "n": 197,
+          "censored": 0,
+          "continued": 110,
+          "flat": 13,
+          "reversed": 74,
+          "median_ticks": 1.0,
+          "q25": -3.0,
+          "q75": 5.5,
+          "min": -17.0,
+          "max": 26.0
+        },
+        "600": {
+          "n": 197,
+          "censored": 0,
+          "continued": 104,
+          "flat": 5,
+          "reversed": 88,
+          "median_ticks": 1.0,
+          "q25": -4.0,
+          "q75": 6.0,
+          "min": -31.0,
+          "max": 34.0
+        }
+      }
+    },
+    "touch_sign/opposes/recent_sell": {
+      "label": "recent selling",
+      "events": 105,
+      "overlap_clusters_600s": 30,
+      "recent_sell": 105,
+      "recent_buy": 0,
+      "horizons": {
+        "1": {
+          "n": 105,
+          "censored": 0,
+          "continued": 46,
+          "flat": 17,
+          "reversed": 42,
+          "median_ticks": -0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -7.0,
+          "max": 5.5
+        },
+        "5": {
+          "n": 105,
+          "censored": 0,
+          "continued": 48,
+          "flat": 18,
+          "reversed": 39,
+          "median_ticks": -0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -5.0,
+          "max": 6.5
+        },
+        "20": {
+          "n": 105,
+          "censored": 0,
+          "continued": 52,
+          "flat": 9,
+          "reversed": 44,
+          "median_ticks": -0.0,
+          "q25": -2.0,
+          "q75": 2.0,
+          "min": -7.5,
+          "max": 14.0
+        },
+        "60": {
+          "n": 105,
+          "censored": 0,
+          "continued": 54,
+          "flat": 6,
+          "reversed": 45,
+          "median_ticks": 0.5,
+          "q25": -2.0,
+          "q75": 3.0,
+          "min": -9.0,
+          "max": 14.0
+        },
+        "120": {
+          "n": 105,
+          "censored": 0,
+          "continued": 56,
+          "flat": 10,
+          "reversed": 39,
+          "median_ticks": 1.0,
+          "q25": -2.5,
+          "q75": 3.5,
+          "min": -11.5,
+          "max": 14.5
+        },
+        "300": {
+          "n": 105,
+          "censored": 0,
+          "continued": 57,
+          "flat": 9,
+          "reversed": 39,
+          "median_ticks": 2.0,
+          "q25": -2.5,
+          "q75": 6.5,
+          "min": -17.0,
+          "max": 26.0
+        },
+        "600": {
+          "n": 105,
+          "censored": 0,
+          "continued": 61,
+          "flat": 3,
+          "reversed": 41,
+          "median_ticks": 2.0,
+          "q25": -4.0,
+          "q75": 7.5,
+          "min": -24.0,
+          "max": 34.0
+        }
+      }
+    },
+    "touch_sign/opposes/recent_buy": {
+      "label": "recent buying",
+      "events": 92,
+      "overlap_clusters_600s": 30,
+      "recent_sell": 0,
+      "recent_buy": 92,
+      "horizons": {
+        "1": {
+          "n": 92,
+          "censored": 0,
+          "continued": 27,
+          "flat": 26,
+          "reversed": 39,
+          "median_ticks": 0.0,
+          "q25": -1.0,
+          "q75": 0.5,
+          "min": -6.0,
+          "max": 3.5
+        },
+        "5": {
+          "n": 92,
+          "censored": 0,
+          "continued": 29,
+          "flat": 21,
+          "reversed": 42,
+          "median_ticks": 0.0,
+          "q25": -1.5,
+          "q75": 0.5,
+          "min": -7.5,
+          "max": 5.0
+        },
+        "20": {
+          "n": 92,
+          "censored": 0,
+          "continued": 36,
+          "flat": 13,
+          "reversed": 43,
+          "median_ticks": 0.0,
+          "q25": -2.0,
+          "q75": 1.5,
+          "min": -8.0,
+          "max": 6.5
+        },
+        "60": {
+          "n": 92,
+          "censored": 0,
+          "continued": 37,
+          "flat": 12,
+          "reversed": 43,
+          "median_ticks": 0.0,
+          "q25": -2.0,
+          "q75": 2.0,
+          "min": -5.5,
+          "max": 14.5
+        },
+        "120": {
+          "n": 92,
+          "censored": 0,
+          "continued": 41,
+          "flat": 7,
+          "reversed": 44,
+          "median_ticks": 0.0,
+          "q25": -2.0,
+          "q75": 2.0,
+          "min": -10.0,
+          "max": 17.5
+        },
+        "300": {
+          "n": 92,
+          "censored": 0,
+          "continued": 53,
+          "flat": 4,
+          "reversed": 35,
+          "median_ticks": 1.0,
+          "q25": -3.5,
+          "q75": 3.0,
+          "min": -13.5,
+          "max": 18.0
+        },
+        "600": {
+          "n": 92,
+          "censored": 0,
+          "continued": 43,
+          "flat": 2,
+          "reversed": 47,
+          "median_ticks": -1.0,
+          "q25": -5.5,
+          "q75": 3.0,
+          "min": -31.0,
+          "max": 21.5
+        }
+      }
+    },
+    "touch_sign/opposes/60s_opposes": {
+      "label": "touch_sign opposes recent flow and 60 s opposes",
+      "events": 46,
+      "overlap_clusters_600s": 20,
+      "recent_sell": 22,
+      "recent_buy": 24,
+      "horizons": {
+        "1": {
+          "n": 46,
+          "censored": 0,
+          "continued": 17,
+          "flat": 11,
+          "reversed": 18,
+          "median_ticks": 0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -2.0,
+          "max": 5.0
+        },
+        "5": {
+          "n": 46,
+          "censored": 0,
+          "continued": 20,
+          "flat": 5,
+          "reversed": 21,
+          "median_ticks": 0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -7.5,
+          "max": 5.0
+        },
+        "20": {
+          "n": 46,
+          "censored": 0,
+          "continued": 17,
+          "flat": 8,
+          "reversed": 21,
+          "median_ticks": 0.0,
+          "q25": -2.0,
+          "q75": 1.0,
+          "min": -8.0,
+          "max": 5.0
+        },
+        "60": {
+          "n": 46,
+          "censored": 0,
+          "continued": 22,
+          "flat": 6,
+          "reversed": 18,
+          "median_ticks": -0.0,
+          "q25": -1.0,
+          "q75": 2.0,
+          "min": -8.0,
+          "max": 5.0
+        },
+        "120": {
+          "n": 46,
+          "censored": 0,
+          "continued": 23,
+          "flat": 3,
+          "reversed": 20,
+          "median_ticks": 0.5,
+          "q25": -1.5,
+          "q75": 1.5,
+          "min": -8.5,
+          "max": 17.5
+        },
+        "300": {
+          "n": 46,
+          "censored": 0,
+          "continued": 24,
+          "flat": 3,
+          "reversed": 19,
+          "median_ticks": 1.5,
+          "q25": -3.0,
+          "q75": 5.0,
+          "min": -12.0,
+          "max": 26.0
+        },
+        "600": {
+          "n": 46,
+          "censored": 0,
+          "continued": 24,
+          "flat": 0,
+          "reversed": 22,
+          "median_ticks": 0.75,
+          "q25": -5.0,
+          "q75": 4.5,
+          "min": -24.0,
+          "max": 34.0
+        }
+      }
+    },
+    "touch_sign/agrees": {
+      "label": "touch_sign agrees recent flow",
+      "events": 206,
+      "overlap_clusters_600s": 31,
+      "recent_sell": 110,
+      "recent_buy": 96,
+      "horizons": {
+        "1": {
+          "n": 206,
+          "censored": 0,
+          "continued": 108,
+          "flat": 49,
+          "reversed": 49,
+          "median_ticks": 0.5,
+          "q25": 0.0,
+          "q75": 1.0,
+          "min": -7.0,
+          "max": 6.0
+        },
+        "5": {
+          "n": 206,
+          "censored": 0,
+          "continued": 101,
+          "flat": 45,
+          "reversed": 60,
+          "median_ticks": 0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -6.5,
+          "max": 6.0
+        },
+        "20": {
+          "n": 206,
+          "censored": 0,
+          "continued": 102,
+          "flat": 28,
+          "reversed": 76,
+          "median_ticks": 0.0,
+          "q25": -1.0,
+          "q75": 1.5,
+          "min": -8.0,
+          "max": 9.0
+        },
+        "60": {
+          "n": 206,
+          "censored": 0,
+          "continued": 105,
+          "flat": 21,
+          "reversed": 80,
+          "median_ticks": 0.5,
+          "q25": -2.0,
+          "q75": 2.5,
+          "min": -10.0,
+          "max": 11.0
+        },
+        "120": {
+          "n": 206,
+          "censored": 0,
+          "continued": 110,
+          "flat": 8,
+          "reversed": 88,
+          "median_ticks": 0.5,
+          "q25": -2.0,
+          "q75": 3.0,
+          "min": -18.0,
+          "max": 17.5
+        },
+        "300": {
+          "n": 206,
+          "censored": 0,
+          "continued": 107,
+          "flat": 7,
+          "reversed": 92,
+          "median_ticks": 0.75,
+          "q25": -3.0,
+          "q75": 4.0,
+          "min": -16.5,
+          "max": 24.5
+        },
+        "600": {
+          "n": 206,
+          "censored": 0,
+          "continued": 96,
+          "flat": 10,
+          "reversed": 100,
+          "median_ticks": -0.0,
+          "q25": -5.5,
+          "q75": 5.5,
+          "min": -23.0,
+          "max": 34.0
+        }
+      }
+    },
+    "touch_sign/agrees/recent_sell": {
+      "label": "recent selling",
+      "events": 110,
+      "overlap_clusters_600s": 26,
+      "recent_sell": 110,
+      "recent_buy": 0,
+      "horizons": {
+        "1": {
+          "n": 110,
+          "censored": 0,
+          "continued": 58,
+          "flat": 29,
+          "reversed": 23,
+          "median_ticks": 0.5,
+          "q25": -0.0,
+          "q75": 1.0,
+          "min": -4.0,
+          "max": 6.0
+        },
+        "5": {
+          "n": 110,
+          "censored": 0,
+          "continued": 51,
+          "flat": 26,
+          "reversed": 33,
+          "median_ticks": -0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -4.0,
+          "max": 6.0
+        },
+        "20": {
+          "n": 110,
+          "censored": 0,
+          "continued": 52,
+          "flat": 14,
+          "reversed": 44,
+          "median_ticks": -0.0,
+          "q25": -1.0,
+          "q75": 1.5,
+          "min": -7.5,
+          "max": 8.5
+        },
+        "60": {
+          "n": 110,
+          "censored": 0,
+          "continued": 53,
+          "flat": 11,
+          "reversed": 46,
+          "median_ticks": -0.0,
+          "q25": -2.0,
+          "q75": 2.0,
+          "min": -9.0,
+          "max": 8.5
+        },
+        "120": {
+          "n": 110,
+          "censored": 0,
+          "continued": 62,
+          "flat": 3,
+          "reversed": 45,
+          "median_ticks": 0.75,
+          "q25": -2.0,
+          "q75": 4.0,
+          "min": -15.0,
+          "max": 9.0
+        },
+        "300": {
+          "n": 110,
+          "censored": 0,
+          "continued": 55,
+          "flat": 5,
+          "reversed": 50,
+          "median_ticks": 0.25,
+          "q25": -3.0,
+          "q75": 5.5,
+          "min": -16.5,
+          "max": 24.5
+        },
+        "600": {
+          "n": 110,
+          "censored": 0,
+          "continued": 51,
+          "flat": 8,
+          "reversed": 51,
+          "median_ticks": -0.0,
+          "q25": -3.0,
+          "q75": 6.0,
+          "min": -23.0,
+          "max": 34.0
+        }
+      }
+    },
+    "touch_sign/agrees/recent_buy": {
+      "label": "recent buying",
+      "events": 96,
+      "overlap_clusters_600s": 30,
+      "recent_sell": 0,
+      "recent_buy": 96,
+      "horizons": {
+        "1": {
+          "n": 96,
+          "censored": 0,
+          "continued": 50,
+          "flat": 20,
+          "reversed": 26,
+          "median_ticks": 0.5,
+          "q25": -0.5,
+          "q75": 1.0,
+          "min": -7.0,
+          "max": 5.5
+        },
+        "5": {
+          "n": 96,
+          "censored": 0,
+          "continued": 50,
+          "flat": 19,
+          "reversed": 27,
+          "median_ticks": 0.5,
+          "q25": -1.0,
+          "q75": 1.5,
+          "min": -6.5,
+          "max": 6.0
+        },
+        "20": {
+          "n": 96,
+          "censored": 0,
+          "continued": 50,
+          "flat": 14,
+          "reversed": 32,
+          "median_ticks": 0.5,
+          "q25": -1.0,
+          "q75": 1.5,
+          "min": -8.0,
+          "max": 9.0
+        },
+        "60": {
+          "n": 96,
+          "censored": 0,
+          "continued": 52,
+          "flat": 10,
+          "reversed": 34,
+          "median_ticks": 0.5,
+          "q25": -1.0,
+          "q75": 2.5,
+          "min": -10.0,
+          "max": 11.0
+        },
+        "120": {
+          "n": 96,
+          "censored": 0,
+          "continued": 48,
+          "flat": 5,
+          "reversed": 43,
+          "median_ticks": 0.25,
+          "q25": -2.5,
+          "q75": 2.0,
+          "min": -18.0,
+          "max": 17.5
+        },
+        "300": {
+          "n": 96,
+          "censored": 0,
+          "continued": 52,
+          "flat": 2,
+          "reversed": 42,
+          "median_ticks": 1.0,
+          "q25": -4.0,
+          "q75": 3.0,
+          "min": -15.0,
+          "max": 18.5
+        },
+        "600": {
+          "n": 96,
+          "censored": 0,
+          "continued": 45,
+          "flat": 2,
+          "reversed": 49,
+          "median_ticks": -1.0,
+          "q25": -8.0,
+          "q75": 4.0,
+          "min": -16.0,
+          "max": 26.5
+        }
+      }
+    },
+    "touch_sign/agrees/60s_opposes": {
+      "label": "touch_sign agrees recent flow and 60 s opposes",
+      "events": 45,
+      "overlap_clusters_600s": 22,
+      "recent_sell": 24,
+      "recent_buy": 21,
+      "horizons": {
+        "1": {
+          "n": 45,
+          "censored": 0,
+          "continued": 18,
+          "flat": 10,
+          "reversed": 17,
+          "median_ticks": -0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -7.0,
+          "max": 5.5
+        },
+        "5": {
+          "n": 45,
+          "censored": 0,
+          "continued": 16,
+          "flat": 10,
+          "reversed": 19,
+          "median_ticks": 0.0,
+          "q25": -1.0,
+          "q75": 1.0,
+          "min": -6.5,
+          "max": 6.0
+        },
+        "20": {
+          "n": 45,
+          "censored": 0,
+          "continued": 18,
+          "flat": 5,
+          "reversed": 22,
+          "median_ticks": 0.0,
+          "q25": -2.0,
+          "q75": 1.0,
+          "min": -8.0,
+          "max": 9.0
+        },
+        "60": {
+          "n": 45,
+          "censored": 0,
+          "continued": 26,
+          "flat": 4,
+          "reversed": 15,
+          "median_ticks": 1.0,
+          "q25": -2.0,
+          "q75": 3.5,
+          "min": -10.0,
+          "max": 9.0
+        },
+        "120": {
+          "n": 45,
+          "censored": 0,
+          "continued": 25,
+          "flat": 1,
+          "reversed": 19,
+          "median_ticks": 1.0,
+          "q25": -3.0,
+          "q75": 5.0,
+          "min": -18.0,
+          "max": 17.5
+        },
+        "300": {
+          "n": 45,
+          "censored": 0,
+          "continued": 19,
+          "flat": 1,
+          "reversed": 25,
+          "median_ticks": -1.5,
+          "q25": -5.0,
+          "q75": 5.5,
+          "min": -16.0,
+          "max": 24.5
+        },
+        "600": {
+          "n": 45,
+          "censored": 0,
+          "continued": 16,
+          "flat": 2,
+          "reversed": 27,
+          "median_ticks": -2.0,
+          "q25": -7.0,
+          "q75": 5.0,
+          "min": -23.0,
+          "max": 34.0
+        }
+      }
+    },
+    "touch_sign/equal": {
+      "label": "touch_sign equal recent flow",
+      "events": 25,
+      "overlap_clusters_600s": 19,
+      "recent_sell": 11,
+      "recent_buy": 14,
+      "horizons": {
+        "1": {
+          "n": 25,
+          "censored": 0,
+          "continued": 13,
+          "flat": 5,
+          "reversed": 7,
+          "median_ticks": 0.5,
+          "q25": -0.5,
+          "q75": 1.0,
+          "min": -4.0,
+          "max": 4.5
+        },
+        "5": {
+          "n": 25,
+          "censored": 0,
+          "continued": 14,
+          "flat": 5,
+          "reversed": 6,
+          "median_ticks": 0.5,
+          "q25": 0.0,
+          "q75": 1.0,
+          "min": -4.0,
+          "max": 6.5
+        },
+        "20": {
+          "n": 25,
+          "censored": 0,
+          "continued": 15,
+          "flat": 3,
+          "reversed": 7,
+          "median_ticks": 0.5,
+          "q25": -0.5,
+          "q75": 1.5,
+          "min": -3.5,
+          "max": 7.0
+        },
+        "60": {
+          "n": 25,
+          "censored": 0,
+          "continued": 13,
+          "flat": 3,
+          "reversed": 9,
+          "median_ticks": 0.5,
+          "q25": -1.0,
+          "q75": 2.5,
+          "min": -8.0,
+          "max": 8.0
+        },
+        "120": {
+          "n": 25,
+          "censored": 0,
+          "continued": 14,
+          "flat": 1,
+          "reversed": 10,
+          "median_ticks": 1.0,
+          "q25": -2.0,
+          "q75": 3.0,
+          "min": -10.0,
+          "max": 8.0
+        },
+        "300": {
+          "n": 25,
+          "censored": 0,
+          "continued": 10,
+          "flat": 2,
+          "reversed": 13,
+          "median_ticks": -0.5,
+          "q25": -4.0,
+          "q75": 3.0,
+          "min": -15.0,
+          "max": 12.0
+        },
+        "600": {
+          "n": 25,
+          "censored": 0,
+          "continued": 10,
+          "flat": 0,
+          "reversed": 15,
+          "median_ticks": -2.0,
+          "q25": -6.0,
+          "q75": 4.5,
+          "min": -29.0,
+          "max": 14.5
+        }
+      }
+    },
+    "touch_sign/equal/recent_sell": {
+      "label": "recent selling",
+      "events": 11,
+      "overlap_clusters_600s": 10,
+      "recent_sell": 11,
+      "recent_buy": 0,
+      "horizons": {
+        "1": {
+          "n": 11,
+          "censored": 0,
+          "continued": 8,
+          "flat": 2,
+          "reversed": 1,
+          "median_ticks": 1.0,
+          "q25": -0.0,
+          "q75": 1.0,
+          "min": -1.5,
+          "max": 4.5
+        },
+        "5": {
+          "n": 11,
+          "censored": 0,
+          "continued": 7,
+          "flat": 2,
+          "reversed": 2,
+          "median_ticks": 1.0,
+          "q25": -0.0,
+          "q75": 1.0,
+          "min": -2.0,
+          "max": 4.5
+        },
+        "20": {
+          "n": 11,
+          "censored": 0,
+          "continued": 9,
+          "flat": 1,
+          "reversed": 1,
+          "median_ticks": 1.5,
+          "q25": 0.5,
+          "q75": 2.0,
+          "min": -1.0,
+          "max": 5.0
+        },
+        "60": {
+          "n": 11,
+          "censored": 0,
+          "continued": 7,
+          "flat": 1,
+          "reversed": 3,
+          "median_ticks": 1.5,
+          "q25": -1.0,
+          "q75": 2.5,
+          "min": -2.5,
+          "max": 8.0
+        },
+        "120": {
+          "n": 11,
+          "censored": 0,
+          "continued": 7,
+          "flat": 1,
+          "reversed": 3,
+          "median_ticks": 1.0,
+          "q25": -2.0,
+          "q75": 3.0,
+          "min": -5.0,
+          "max": 8.0
+        },
+        "300": {
+          "n": 11,
+          "censored": 0,
+          "continued": 6,
+          "flat": 0,
+          "reversed": 5,
+          "median_ticks": 2.0,
+          "q25": -4.0,
+          "q75": 5.5,
+          "min": -5.5,
+          "max": 12.0
+        },
+        "600": {
+          "n": 11,
+          "censored": 0,
+          "continued": 6,
+          "flat": 0,
+          "reversed": 5,
+          "median_ticks": 3.0,
+          "q25": -6.0,
+          "q75": 6.0,
+          "min": -15.0,
+          "max": 14.5
+        }
+      }
+    },
+    "touch_sign/equal/recent_buy": {
+      "label": "recent buying",
+      "events": 14,
+      "overlap_clusters_600s": 12,
+      "recent_sell": 0,
+      "recent_buy": 14,
+      "horizons": {
+        "1": {
+          "n": 14,
+          "censored": 0,
+          "continued": 5,
+          "flat": 3,
+          "reversed": 6,
+          "median_ticks": 0.0,
+          "q25": -1.0,
+          "q75": 0.5,
+          "min": -4.0,
+          "max": 4.5
+        },
+        "5": {
+          "n": 14,
+          "censored": 0,
+          "continued": 7,
+          "flat": 3,
+          "reversed": 4,
+          "median_ticks": 0.25,
+          "q25": -0.5,
+          "q75": 0.5,
+          "min": -4.0,
+          "max": 6.5
+        },
+        "20": {
+          "n": 14,
+          "censored": 0,
+          "continued": 6,
+          "flat": 2,
+          "reversed": 6,
+          "median_ticks": 0.0,
+          "q25": -2.5,
+          "q75": 0.5,
+          "min": -3.5,
+          "max": 7.0
+        },
+        "60": {
+          "n": 14,
+          "censored": 0,
+          "continued": 6,
+          "flat": 2,
+          "reversed": 6,
+          "median_ticks": 0.0,
+          "q25": -4.0,
+          "q75": 2.0,
+          "min": -8.0,
+          "max": 3.5
+        },
+        "120": {
+          "n": 14,
+          "censored": 0,
+          "continued": 7,
+          "flat": 0,
+          "reversed": 7,
+          "median_ticks": 0.0,
+          "q25": -4.5,
+          "q75": 2.5,
+          "min": -10.0,
+          "max": 3.5
+        },
+        "300": {
+          "n": 14,
+          "censored": 0,
+          "continued": 4,
+          "flat": 2,
+          "reversed": 8,
+          "median_ticks": -1.5,
+          "q25": -7.0,
+          "q75": 0.0,
+          "min": -15.0,
+          "max": 3.5
+        },
+        "600": {
+          "n": 14,
+          "censored": 0,
+          "continued": 4,
+          "flat": 0,
+          "reversed": 10,
+          "median_ticks": -3.75,
+          "q25": -9.5,
+          "q75": -0.5,
+          "min": -29.0,
+          "max": 10.0
+        }
+      }
+    },
+    "touch_sign/equal/60s_opposes": {
+      "label": "touch_sign equal recent flow and 60 s opposes",
+      "events": 5,
+      "overlap_clusters_600s": 4,
+      "recent_sell": 1,
+      "recent_buy": 4,
+      "horizons": {
+        "1": {
+          "n": 5,
+          "censored": 0,
+          "continued": 1,
+          "flat": 2,
+          "reversed": 2,
+          "median_ticks": -0.0,
+          "q25": -0.5,
+          "q75": 0.0,
+          "min": -4.0,
+          "max": 4.5
+        },
+        "5": {
+          "n": 5,
+          "censored": 0,
+          "continued": 2,
+          "flat": 1,
+          "reversed": 2,
+          "median_ticks": -0.0,
+          "q25": -2.5,
+          "q75": 1.0,
+          "min": -4.0,
+          "max": 4.5
+        },
+        "20": {
+          "n": 5,
+          "censored": 0,
+          "continued": 2,
+          "flat": 1,
+          "reversed": 2,
+          "median_ticks": 0.0,
+          "q25": -3.0,
+          "q75": 1.0,
+          "min": -3.5,
+          "max": 4.5
+        },
+        "60": {
+          "n": 5,
+          "censored": 0,
+          "continued": 1,
+          "flat": 1,
+          "reversed": 3,
+          "median_ticks": -1.0,
+          "q25": -4.0,
+          "q75": -0.0,
+          "min": -8.0,
+          "max": 3.5
+        },
+        "120": {
+          "n": 5,
+          "censored": 0,
+          "continued": 2,
+          "flat": 0,
+          "reversed": 3,
+          "median_ticks": -3.5,
+          "q25": -4.5,
+          "q75": 3.0,
+          "min": -10.0,
+          "max": 3.5
+        },
+        "300": {
+          "n": 5,
+          "censored": 0,
+          "continued": 1,
+          "flat": 2,
+          "reversed": 2,
+          "median_ticks": 0.0,
+          "q25": -5.5,
+          "q75": 0.0,
+          "min": -9.5,
+          "max": 3.0
+        },
+        "600": {
+          "n": 5,
+          "censored": 0,
+          "continued": 2,
+          "flat": 0,
+          "reversed": 3,
+          "median_ticks": -4.5,
+          "q25": -9.0,
+          "q75": 4.5,
+          "min": -9.5,
+          "max": 6.5
+        }
+      }
+    }
+  },
+  "day_reference": {
+    "all_749": {
+      "label": "all first-family events, unoriented",
+      "events": 795,
+      "horizons": {
+        "1": {
+          "n": 795,
+          "up": 281,
+          "flat": 182,
+          "down": 332,
+          "median_ticks": 0.0
+        },
+        "5": {
+          "n": 795,
+          "up": 298,
+          "flat": 158,
+          "down": 339,
+          "median_ticks": 0.0
+        },
+        "20": {
+          "n": 795,
+          "up": 339,
+          "flat": 108,
+          "down": 348,
+          "median_ticks": 0.0
+        },
+        "60": {
+          "n": 795,
+          "up": 345,
+          "flat": 76,
+          "down": 374,
+          "median_ticks": 0.0
+        },
+        "120": {
+          "n": 795,
+          "up": 347,
+          "flat": 57,
+          "down": 391,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 795,
+          "up": 372,
+          "flat": 49,
+          "down": 374,
+          "median_ticks": 0.0
+        },
+        "600": {
+          "n": 795,
+          "up": 343,
+          "flat": 26,
+          "down": 426,
+          "median_ticks": -1.0
+        }
+      }
+    },
+    "recent_sell": {
+      "label": "recent selling, unoriented",
+      "events": 226,
+      "horizons": {
+        "1": {
+          "n": 226,
+          "up": 66,
+          "flat": 48,
+          "down": 112,
+          "median_ticks": 0.0
+        },
+        "5": {
+          "n": 226,
+          "up": 74,
+          "flat": 46,
+          "down": 106,
+          "median_ticks": 0.0
+        },
+        "20": {
+          "n": 226,
+          "up": 89,
+          "flat": 24,
+          "down": 113,
+          "median_ticks": -0.25
+        },
+        "60": {
+          "n": 226,
+          "up": 94,
+          "flat": 18,
+          "down": 114,
+          "median_ticks": -0.5
+        },
+        "120": {
+          "n": 226,
+          "up": 87,
+          "flat": 14,
+          "down": 125,
+          "median_ticks": -1.0
+        },
+        "300": {
+          "n": 226,
+          "up": 94,
+          "flat": 14,
+          "down": 118,
+          "median_ticks": -1.0
+        },
+        "600": {
+          "n": 226,
+          "up": 97,
+          "flat": 11,
+          "down": 118,
+          "median_ticks": -1.0
+        }
+      }
+    },
+    "recent_buy": {
+      "label": "recent buying, unoriented",
+      "events": 202,
+      "horizons": {
+        "1": {
+          "n": 202,
+          "up": 82,
+          "flat": 49,
+          "down": 71,
+          "median_ticks": 0.0
+        },
+        "5": {
+          "n": 202,
+          "up": 86,
+          "flat": 43,
+          "down": 73,
+          "median_ticks": 0.0
+        },
+        "20": {
+          "n": 202,
+          "up": 92,
+          "flat": 29,
+          "down": 81,
+          "median_ticks": 0.0
+        },
+        "60": {
+          "n": 202,
+          "up": 95,
+          "flat": 24,
+          "down": 83,
+          "median_ticks": 0.0
+        },
+        "120": {
+          "n": 202,
+          "up": 96,
+          "flat": 12,
+          "down": 94,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 202,
+          "up": 109,
+          "flat": 8,
+          "down": 85,
+          "median_ticks": 1.0
+        },
+        "600": {
+          "n": 202,
+          "up": 92,
+          "flat": 4,
+          "down": 106,
+          "median_ticks": -1.25
+        }
+      }
+    },
+    "no_recent_direction": {
+      "label": "no agreeing 1 s/5 s direction",
+      "events": 367,
+      "horizons": {
+        "1": {
+          "n": 367,
+          "up": 133,
+          "flat": 85,
+          "down": 149,
+          "median_ticks": 0.0
+        },
+        "5": {
+          "n": 367,
+          "up": 138,
+          "flat": 69,
+          "down": 160,
+          "median_ticks": 0.0
+        },
+        "20": {
+          "n": 367,
+          "up": 158,
+          "flat": 55,
+          "down": 154,
+          "median_ticks": 0.0
+        },
+        "60": {
+          "n": 367,
+          "up": 156,
+          "flat": 34,
+          "down": 177,
+          "median_ticks": 0.0
+        },
+        "120": {
+          "n": 367,
+          "up": 164,
+          "flat": 31,
+          "down": 172,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 367,
+          "up": 169,
+          "flat": 27,
+          "down": 171,
+          "median_ticks": 0.0
+        },
+        "600": {
+          "n": 367,
+          "up": 154,
+          "flat": 11,
+          "down": 202,
+          "median_ticks": -1.5
+        }
+      }
+    },
+    "by_quarter": {
+      "1": {
+        "label": "quarter 1",
+        "events": 199,
+        "horizons": {
+          "1": {
+            "n": 199,
+            "up": 70,
+            "flat": 47,
+            "down": 82,
+            "median_ticks": 0.0
+          },
+          "5": {
+            "n": 199,
+            "up": 71,
+            "flat": 42,
+            "down": 86,
+            "median_ticks": 0.0
+          },
+          "20": {
+            "n": 199,
+            "up": 75,
+            "flat": 29,
+            "down": 95,
+            "median_ticks": 0.0
+          },
+          "60": {
+            "n": 199,
+            "up": 81,
+            "flat": 23,
+            "down": 95,
+            "median_ticks": 0.0
+          },
+          "120": {
+            "n": 199,
+            "up": 93,
+            "flat": 19,
+            "down": 87,
+            "median_ticks": 0.0
+          },
+          "300": {
+            "n": 199,
+            "up": 115,
+            "flat": 16,
+            "down": 68,
+            "median_ticks": 1.0
+          },
+          "600": {
+            "n": 199,
+            "up": 91,
+            "flat": 8,
+            "down": 100,
+            "median_ticks": -0.5
+          }
+        }
+      },
+      "2": {
+        "label": "quarter 2",
+        "events": 199,
+        "horizons": {
+          "1": {
+            "n": 199,
+            "up": 78,
+            "flat": 25,
+            "down": 96,
+            "median_ticks": 0.0
+          },
+          "5": {
+            "n": 199,
+            "up": 85,
+            "flat": 27,
+            "down": 87,
+            "median_ticks": 0.0
+          },
+          "20": {
+            "n": 199,
+            "up": 93,
+            "flat": 18,
+            "down": 88,
+            "median_ticks": 0.0
+          },
+          "60": {
+            "n": 199,
+            "up": 89,
+            "flat": 9,
+            "down": 101,
+            "median_ticks": -0.5
+          },
+          "120": {
+            "n": 199,
+            "up": 91,
+            "flat": 5,
+            "down": 103,
+            "median_ticks": -1.0
+          },
+          "300": {
+            "n": 199,
+            "up": 86,
+            "flat": 8,
+            "down": 105,
+            "median_ticks": -1.0
+          },
+          "600": {
+            "n": 199,
+            "up": 81,
+            "flat": 6,
+            "down": 112,
+            "median_ticks": -1.5
+          }
+        }
+      },
+      "3": {
+        "label": "quarter 3",
+        "events": 199,
+        "horizons": {
+          "1": {
+            "n": 199,
+            "up": 70,
+            "flat": 46,
+            "down": 83,
+            "median_ticks": 0.0
+          },
+          "5": {
+            "n": 199,
+            "up": 73,
+            "flat": 36,
+            "down": 90,
+            "median_ticks": 0.0
+          },
+          "20": {
+            "n": 199,
+            "up": 88,
+            "flat": 26,
+            "down": 85,
+            "median_ticks": 0.0
+          },
+          "60": {
+            "n": 199,
+            "up": 94,
+            "flat": 15,
+            "down": 90,
+            "median_ticks": 0.0
+          },
+          "120": {
+            "n": 199,
+            "up": 70,
+            "flat": 12,
+            "down": 117,
+            "median_ticks": -1.0
+          },
+          "300": {
+            "n": 199,
+            "up": 82,
+            "flat": 7,
+            "down": 110,
+            "median_ticks": -2.0
+          },
+          "600": {
+            "n": 199,
+            "up": 75,
+            "flat": 4,
+            "down": 120,
+            "median_ticks": -6.0
+          }
+        }
+      },
+      "4": {
+        "label": "quarter 4",
+        "events": 198,
+        "horizons": {
+          "1": {
+            "n": 198,
+            "up": 63,
+            "flat": 64,
+            "down": 71,
+            "median_ticks": 0.0
+          },
+          "5": {
+            "n": 198,
+            "up": 69,
+            "flat": 53,
+            "down": 76,
+            "median_ticks": 0.0
+          },
+          "20": {
+            "n": 198,
+            "up": 83,
+            "flat": 35,
+            "down": 80,
+            "median_ticks": 0.0
+          },
+          "60": {
+            "n": 198,
+            "up": 81,
+            "flat": 29,
+            "down": 88,
+            "median_ticks": 0.0
+          },
+          "120": {
+            "n": 198,
+            "up": 93,
+            "flat": 21,
+            "down": 84,
+            "median_ticks": 0.0
+          },
+          "300": {
+            "n": 198,
+            "up": 89,
+            "flat": 18,
+            "down": 91,
+            "median_ticks": 0.0
+          },
+          "600": {
+            "n": 198,
+            "up": 96,
+            "flat": 8,
+            "down": 94,
+            "median_ticks": 0.0
+          }
+        }
+      }
+    },
+    "stack50_by_quarter": {
+      "1": {
+        "label": "stack quarter 1",
+        "events": 6,
+        "overlap_clusters_600s": 5,
+        "recent_sell": 6,
+        "recent_buy": 0,
+        "horizons": {
+          "1": {
+            "n": 6,
+            "censored": 0,
+            "continued": 2,
+            "flat": 4,
+            "reversed": 0,
+            "median_ticks": -0.0,
+            "q25": -0.0,
+            "q75": -0.0,
+            "min": -0.0,
+            "max": 1.5
+          },
+          "5": {
+            "n": 6,
+            "censored": 0,
+            "continued": 2,
+            "flat": 4,
+            "reversed": 0,
+            "median_ticks": -0.0,
+            "q25": -0.0,
+            "q75": -0.0,
+            "min": -0.0,
+            "max": 1.5
+          },
+          "20": {
+            "n": 6,
+            "censored": 0,
+            "continued": 5,
+            "flat": 0,
+            "reversed": 1,
+            "median_ticks": 1.0,
+            "q25": 0.5,
+            "q75": 1.0,
+            "min": -0.5,
+            "max": 1.5
+          },
+          "60": {
+            "n": 6,
+            "censored": 0,
+            "continued": 3,
+            "flat": 3,
+            "reversed": 0,
+            "median_ticks": 0.5,
+            "q25": -0.0,
+            "q75": 1.0,
+            "min": -0.0,
+            "max": 4.5
+          },
+          "120": {
+            "n": 6,
+            "censored": 0,
+            "continued": 3,
+            "flat": 0,
+            "reversed": 3,
+            "median_ticks": -0.25,
+            "q25": -3.0,
+            "q75": 0.5,
+            "min": -3.5,
+            "max": 1.0
+          },
+          "300": {
+            "n": 6,
+            "censored": 0,
+            "continued": 2,
+            "flat": 0,
+            "reversed": 4,
+            "median_ticks": -2.5,
+            "q25": -5.5,
+            "q75": -2.0,
+            "min": -7.0,
+            "max": 3.0
+          },
+          "600": {
+            "n": 6,
+            "censored": 0,
+            "continued": 1,
+            "flat": 1,
+            "reversed": 4,
+            "median_ticks": -7.75,
+            "q25": -9.0,
+            "q75": -7.5,
+            "min": -11.0,
+            "max": 1.0
+          }
+        }
+      },
+      "2": {
+        "label": "stack quarter 2",
+        "events": 9,
+        "overlap_clusters_600s": 5,
+        "recent_sell": 9,
+        "recent_buy": 0,
+        "horizons": {
+          "1": {
+            "n": 9,
+            "censored": 0,
+            "continued": 6,
+            "flat": 1,
+            "reversed": 2,
+            "median_ticks": 1.0,
+            "q25": -0.0,
+            "q75": 2.5,
+            "min": -1.0,
+            "max": 5.0
+          },
+          "5": {
+            "n": 9,
+            "censored": 0,
+            "continued": 6,
+            "flat": 1,
+            "reversed": 2,
+            "median_ticks": 1.0,
+            "q25": -0.0,
+            "q75": 2.0,
+            "min": -1.0,
+            "max": 5.0
+          },
+          "20": {
+            "n": 9,
+            "censored": 0,
+            "continued": 5,
+            "flat": 2,
+            "reversed": 2,
+            "median_ticks": 0.5,
+            "q25": -0.0,
+            "q75": 2.0,
+            "min": -2.0,
+            "max": 5.0
+          },
+          "60": {
+            "n": 9,
+            "censored": 0,
+            "continued": 7,
+            "flat": 0,
+            "reversed": 2,
+            "median_ticks": 1.5,
+            "q25": 0.5,
+            "q75": 5.0,
+            "min": -5.5,
+            "max": 6.0
+          },
+          "120": {
+            "n": 9,
+            "censored": 0,
+            "continued": 7,
+            "flat": 0,
+            "reversed": 2,
+            "median_ticks": 1.0,
+            "q25": 1.0,
+            "q75": 4.0,
+            "min": -5.0,
+            "max": 7.0
+          },
+          "300": {
+            "n": 9,
+            "censored": 0,
+            "continued": 4,
+            "flat": 0,
+            "reversed": 5,
+            "median_ticks": -1.5,
+            "q25": -5.0,
+            "q75": 5.5,
+            "min": -12.0,
+            "max": 10.0
+          },
+          "600": {
+            "n": 9,
+            "censored": 0,
+            "continued": 4,
+            "flat": 0,
+            "reversed": 5,
+            "median_ticks": -3.0,
+            "q25": -4.0,
+            "q75": 6.0,
+            "min": -24.0,
+            "max": 8.0
+          }
+        }
+      },
+      "3": {
+        "label": "stack quarter 3",
+        "events": 14,
+        "overlap_clusters_600s": 5,
+        "recent_sell": 14,
+        "recent_buy": 0,
+        "horizons": {
+          "1": {
+            "n": 14,
+            "censored": 0,
+            "continued": 6,
+            "flat": 2,
+            "reversed": 6,
+            "median_ticks": -0.0,
+            "q25": -1.0,
+            "q75": 1.0,
+            "min": -2.0,
+            "max": 1.5
+          },
+          "5": {
+            "n": 14,
+            "censored": 0,
+            "continued": 6,
+            "flat": 1,
+            "reversed": 7,
+            "median_ticks": -0.25,
+            "q25": -1.0,
+            "q75": 0.5,
+            "min": -2.0,
+            "max": 2.0
+          },
+          "20": {
+            "n": 14,
+            "censored": 0,
+            "continued": 3,
+            "flat": 2,
+            "reversed": 9,
+            "median_ticks": -1.0,
+            "q25": -3.0,
+            "q75": -0.0,
+            "min": -7.5,
+            "max": 2.5
+          },
+          "60": {
+            "n": 14,
+            "censored": 0,
+            "continued": 6,
+            "flat": 0,
+            "reversed": 8,
+            "median_ticks": -1.25,
+            "q25": -6.0,
+            "q75": 1.5,
+            "min": -8.0,
+            "max": 4.0
+          },
+          "120": {
+            "n": 14,
+            "censored": 0,
+            "continued": 7,
+            "flat": 0,
+            "reversed": 7,
+            "median_ticks": -0.5,
+            "q25": -6.0,
+            "q75": 1.5,
+            "min": -12.0,
+            "max": 9.0
+          },
+          "300": {
+            "n": 14,
+            "censored": 0,
+            "continued": 5,
+            "flat": 0,
+            "reversed": 9,
+            "median_ticks": -3.25,
+            "q25": -5.5,
+            "q75": 5.0,
+            "min": -16.0,
+            "max": 26.0
+          },
+          "600": {
+            "n": 14,
+            "censored": 0,
+            "continued": 4,
+            "flat": 0,
+            "reversed": 10,
+            "median_ticks": -3.25,
+            "q25": -8.0,
+            "q75": -1.0,
+            "min": -23.0,
+            "max": 34.0
+          }
+        }
+      },
+      "4": {
+        "label": "stack quarter 4",
+        "events": 11,
+        "overlap_clusters_600s": 8,
+        "recent_sell": 11,
+        "recent_buy": 0,
+        "horizons": {
+          "1": {
+            "n": 11,
+            "censored": 0,
+            "continued": 2,
+            "flat": 2,
+            "reversed": 7,
+            "median_ticks": -1.0,
+            "q25": -1.0,
+            "q75": -0.0,
+            "min": -2.0,
+            "max": 1.0
+          },
+          "5": {
+            "n": 11,
+            "censored": 0,
+            "continued": 2,
+            "flat": 2,
+            "reversed": 7,
+            "median_ticks": -0.5,
+            "q25": -1.5,
+            "q75": -0.0,
+            "min": -4.0,
+            "max": 1.5
+          },
+          "20": {
+            "n": 11,
+            "censored": 0,
+            "continued": 1,
+            "flat": 1,
+            "reversed": 9,
+            "median_ticks": -1.0,
+            "q25": -3.0,
+            "q75": -0.5,
+            "min": -3.0,
+            "max": 1.0
+          },
+          "60": {
+            "n": 11,
+            "censored": 0,
+            "continued": 4,
+            "flat": 3,
+            "reversed": 4,
+            "median_ticks": -0.0,
+            "q25": -2.0,
+            "q75": 0.5,
+            "min": -3.0,
+            "max": 4.0
+          },
+          "120": {
+            "n": 11,
+            "censored": 0,
+            "continued": 5,
+            "flat": 1,
+            "reversed": 5,
+            "median_ticks": -0.0,
+            "q25": -2.0,
+            "q75": 1.0,
+            "min": -4.5,
+            "max": 8.5
+          },
+          "300": {
+            "n": 11,
+            "censored": 0,
+            "continued": 6,
+            "flat": 1,
+            "reversed": 4,
+            "median_ticks": 1.0,
+            "q25": -1.5,
+            "q75": 5.5,
+            "min": -5.0,
+            "max": 10.0
+          },
+          "600": {
+            "n": 11,
+            "censored": 0,
+            "continued": 6,
+            "flat": 0,
+            "reversed": 5,
+            "median_ticks": 1.0,
+            "q25": -3.0,
+            "q75": 5.0,
+            "min": -6.5,
+            "max": 15.5
+          }
+        }
+      }
+    }
+  },
+  "activity_matched_controls": {
+    "low": {
+      "activity_bounds": [
+        90.0,
+        253.0
+      ],
+      "stack": {
+        "label": "stack, 60 s activity low",
+        "events": 15,
+        "overlap_clusters_600s": 13,
+        "recent_sell": 15,
+        "recent_buy": 0,
+        "horizons": {
+          "1": {
+            "n": 15,
+            "censored": 0,
+            "continued": 7,
+            "flat": 5,
+            "reversed": 3,
+            "median_ticks": -0.0,
+            "q25": -0.0,
+            "q75": 1.0,
+            "min": -1.0,
+            "max": 5.0
+          },
+          "5": {
+            "n": 15,
+            "censored": 0,
+            "continued": 7,
+            "flat": 4,
+            "reversed": 4,
+            "median_ticks": -0.0,
+            "q25": -0.5,
+            "q75": 1.5,
+            "min": -1.0,
+            "max": 5.0
+          },
+          "20": {
+            "n": 15,
+            "censored": 0,
+            "continued": 9,
+            "flat": 1,
+            "reversed": 5,
+            "median_ticks": 0.5,
+            "q25": -0.5,
+            "q75": 1.0,
+            "min": -3.0,
+            "max": 5.0
+          },
+          "60": {
+            "n": 15,
+            "censored": 0,
+            "continued": 8,
+            "flat": 4,
+            "reversed": 3,
+            "median_ticks": 1.0,
+            "q25": -0.0,
+            "q75": 1.5,
+            "min": -6.0,
+            "max": 5.0
+          },
+          "120": {
+            "n": 15,
+            "censored": 0,
+            "continued": 8,
+            "flat": 0,
+            "reversed": 7,
+            "median_ticks": 0.5,
+            "q25": -3.5,
+            "q75": 1.0,
+            "min": -6.0,
+            "max": 8.5
+          },
+          "300": {
+            "n": 15,
+            "censored": 0,
+            "continued": 6,
+            "flat": 1,
+            "reversed": 8,
+            "median_ticks": -1.5,
+            "q25": -5.0,
+            "q75": 2.0,
+            "min": -7.0,
+            "max": 24.5
+          },
+          "600": {
+            "n": 15,
+            "censored": 0,
+            "continued": 5,
+            "flat": 1,
+            "reversed": 9,
+            "median_ticks": -3.0,
+            "q25": -7.5,
+            "q75": 1.0,
+            "min": -11.0,
+            "max": 34.0
+          }
+        }
+      },
+      "control": {
+        "label": "same-activity eligible events outside the stack, low",
+        "events": 127,
+        "overlap_clusters_600s": 41,
+        "recent_sell": 49,
+        "recent_buy": 78,
+        "horizons": {
+          "1": {
+            "n": 127,
+            "censored": 0,
+            "continued": 59,
+            "flat": 32,
+            "reversed": 36,
+            "median_ticks": -0.0,
+            "q25": -0.5,
+            "q75": 1.0,
+            "min": -6.0,
+            "max": 5.0
+          },
+          "5": {
+            "n": 127,
+            "censored": 0,
+            "continued": 58,
+            "flat": 29,
+            "reversed": 40,
+            "median_ticks": 0.0,
+            "q25": -1.0,
+            "q75": 0.5,
+            "min": -7.5,
+            "max": 4.5
+          },
+          "20": {
+            "n": 127,
+            "censored": 0,
+            "continued": 66,
+            "flat": 19,
+            "reversed": 42,
+            "median_ticks": 0.5,
+            "q25": -1.0,
+            "q75": 1.0,
+            "min": -8.0,
+            "max": 6.0
+          },
+          "60": {
+            "n": 127,
+            "censored": 0,
+            "continued": 67,
+            "flat": 15,
+            "reversed": 45,
+            "median_ticks": 0.5,
+            "q25": -1.0,
+            "q75": 2.0,
+            "min": -8.0,
+            "max": 12.5
+          },
+          "120": {
+            "n": 127,
+            "censored": 0,
+            "continued": 65,
+            "flat": 12,
+            "reversed": 50,
+            "median_ticks": 0.5,
+            "q25": -1.5,
+            "q75": 2.5,
+            "min": -7.0,
+            "max": 17.5
+          },
+          "300": {
+            "n": 127,
+            "censored": 0,
+            "continued": 71,
+            "flat": 10,
+            "reversed": 46,
+            "median_ticks": 1.0,
+            "q25": -1.5,
+            "q75": 3.0,
+            "min": -15.0,
+            "max": 18.0
+          },
+          "600": {
+            "n": 127,
+            "censored": 0,
+            "continued": 63,
+            "flat": 5,
+            "reversed": 59,
+            "median_ticks": 0.0,
+            "q25": -2.5,
+            "q75": 4.5,
+            "min": -31.0,
+            "max": 15.5
+          }
+        }
+      }
+    },
+    "mid": {
+      "activity_bounds": [
+        90.0,
+        253.0
+      ],
+      "stack": {
+        "label": "stack, 60 s activity mid",
+        "events": 12,
+        "overlap_clusters_600s": 11,
+        "recent_sell": 12,
+        "recent_buy": 0,
+        "horizons": {
+          "1": {
+            "n": 12,
+            "censored": 0,
+            "continued": 3,
+            "flat": 2,
+            "reversed": 7,
+            "median_ticks": -0.5,
+            "q25": -2.0,
+            "q75": -0.0,
+            "min": -2.0,
+            "max": 2.5
+          },
+          "5": {
+            "n": 12,
+            "censored": 0,
+            "continued": 3,
+            "flat": 2,
+            "reversed": 7,
+            "median_ticks": -0.5,
+            "q25": -1.0,
+            "q75": -0.0,
+            "min": -2.0,
+            "max": 1.0
+          },
+          "20": {
+            "n": 12,
+            "censored": 0,
+            "continued": 3,
+            "flat": 0,
+            "reversed": 9,
+            "median_ticks": -1.0,
+            "q25": -2.5,
+            "q75": -0.5,
+            "min": -7.5,
+            "max": 3.5
+          },
+          "60": {
+            "n": 12,
+            "censored": 0,
+            "continued": 5,
+            "flat": 2,
+            "reversed": 5,
+            "median_ticks": -0.0,
+            "q25": -2.5,
+            "q75": 1.5,
+            "min": -8.0,
+            "max": 6.0
+          },
+          "120": {
+            "n": 12,
+            "censored": 0,
+            "continued": 6,
+            "flat": 1,
+            "reversed": 5,
+            "median_ticks": 0.5,
+            "q25": -5.0,
+            "q75": 1.5,
+            "min": -6.0,
+            "max": 7.0
+          },
+          "300": {
+            "n": 12,
+            "censored": 0,
+            "continued": 4,
+            "flat": 0,
+            "reversed": 8,
+            "median_ticks": -3.0,
+            "q25": -7.0,
+            "q75": 5.0,
+            "min": -8.0,
+            "max": 26.0
+          },
+          "600": {
+            "n": 12,
+            "censored": 0,
+            "continued": 5,
+            "flat": 0,
+            "reversed": 7,
+            "median_ticks": -2.25,
+            "q25": -6.0,
+            "q75": 7.5,
+            "min": -15.0,
+            "max": 34.0
+          }
+        }
+      },
+      "control": {
+        "label": "same-activity eligible events outside the stack, mid",
+        "events": 131,
+        "overlap_clusters_600s": 14,
+        "recent_sell": 65,
+        "recent_buy": 66,
+        "horizons": {
+          "1": {
+            "n": 131,
+            "censored": 0,
+            "continued": 66,
+            "flat": 24,
+            "reversed": 41,
+            "median_ticks": 0.5,
+            "q25": -0.5,
+            "q75": 1.0,
+            "min": -3.0,
+            "max": 5.5
+          },
+          "5": {
+            "n": 131,
+            "censored": 0,
+            "continued": 69,
+            "flat": 24,
+            "reversed": 38,
+            "median_ticks": 0.5,
+            "q25": -1.0,
+            "q75": 1.5,
+            "min": -3.5,
+            "max": 6.5
+          },
+          "20": {
+            "n": 131,
+            "censored": 0,
+            "continued": 67,
+            "flat": 13,
+            "reversed": 51,
+            "median_ticks": 0.5,
+            "q25": -2.0,
+            "q75": 2.0,
+            "min": -7.5,
+            "max": 14.0
+          },
+          "60": {
+            "n": 131,
+            "censored": 0,
+            "continued": 64,
+            "flat": 7,
+            "reversed": 60,
+            "median_ticks": -0.0,
+            "q25": -2.5,
+            "q75": 3.0,
+            "min": -7.5,
+            "max": 14.5
+          },
+          "120": {
+            "n": 131,
+            "censored": 0,
+            "continued": 72,
+            "flat": 6,
+            "reversed": 53,
+            "median_ticks": 1.0,
+            "q25": -3.0,
+            "q75": 3.0,
+            "min": -15.0,
+            "max": 17.0
+          },
+          "300": {
+            "n": 131,
+            "censored": 0,
+            "continued": 73,
+            "flat": 6,
+            "reversed": 52,
+            "median_ticks": 1.5,
+            "q25": -3.5,
+            "q75": 6.0,
+            "min": -15.0,
+            "max": 20.5
+          },
+          "600": {
+            "n": 131,
+            "censored": 0,
+            "continued": 64,
+            "flat": 5,
+            "reversed": 62,
+            "median_ticks": -0.0,
+            "q25": -6.0,
+            "q75": 6.0,
+            "min": -29.0,
+            "max": 26.5
+          }
+        }
+      }
+    },
+    "high": {
+      "activity_bounds": [
+        90.0,
+        253.0
+      ],
+      "stack": {
+        "label": "stack, 60 s activity high",
+        "events": 15,
+        "overlap_clusters_600s": 8,
+        "recent_sell": 13,
+        "recent_buy": 2,
+        "horizons": {
+          "1": {
+            "n": 15,
+            "censored": 0,
+            "continued": 7,
+            "flat": 2,
+            "reversed": 6,
+            "median_ticks": -0.0,
+            "q25": -1.0,
+            "q75": 1.0,
+            "min": -1.5,
+            "max": 1.5
+          },
+          "5": {
+            "n": 15,
+            "censored": 0,
+            "continued": 7,
+            "flat": 2,
+            "reversed": 6,
+            "median_ticks": -0.0,
+            "q25": -1.0,
+            "q75": 1.0,
+            "min": -4.0,
+            "max": 2.0
+          },
+          "20": {
+            "n": 15,
+            "censored": 0,
+            "continued": 4,
+            "flat": 4,
+            "reversed": 7,
+            "median_ticks": -0.0,
+            "q25": -3.0,
+            "q75": -0.0,
+            "min": -4.0,
+            "max": 2.5
+          },
+          "60": {
+            "n": 15,
+            "censored": 0,
+            "continued": 9,
+            "flat": 0,
+            "reversed": 6,
+            "median_ticks": 0.5,
+            "q25": -2.0,
+            "q75": 2.0,
+            "min": -6.0,
+            "max": 4.0
+          },
+          "120": {
+            "n": 15,
+            "censored": 0,
+            "continued": 10,
+            "flat": 0,
+            "reversed": 5,
+            "median_ticks": 1.5,
+            "q25": -2.0,
+            "q75": 1.5,
+            "min": -12.0,
+            "max": 9.0
+          },
+          "300": {
+            "n": 15,
+            "censored": 0,
+            "continued": 7,
+            "flat": 0,
+            "reversed": 8,
+            "median_ticks": -1.0,
+            "q25": -5.0,
+            "q75": 5.5,
+            "min": -16.0,
+            "max": 14.5
+          },
+          "600": {
+            "n": 15,
+            "censored": 0,
+            "continued": 5,
+            "flat": 0,
+            "reversed": 10,
+            "median_ticks": -4.0,
+            "q25": -12.0,
+            "q75": 1.0,
+            "min": -24.0,
+            "max": 15.5
+          }
+        }
+      },
+      "control": {
+        "label": "same-activity eligible events outside the stack, high",
+        "events": 128,
+        "overlap_clusters_600s": 13,
+        "recent_sell": 72,
+        "recent_buy": 56,
+        "horizons": {
+          "1": {
+            "n": 128,
+            "censored": 0,
+            "continued": 52,
+            "flat": 32,
+            "reversed": 44,
+            "median_ticks": 0.0,
+            "q25": -1.0,
+            "q75": 1.0,
+            "min": -7.0,
+            "max": 6.0
+          },
+          "5": {
+            "n": 128,
+            "censored": 0,
+            "continued": 48,
+            "flat": 28,
+            "reversed": 52,
+            "median_ticks": 0.0,
+            "q25": -1.5,
+            "q75": 1.0,
+            "min": -6.5,
+            "max": 6.0
+          },
+          "20": {
+            "n": 128,
+            "censored": 0,
+            "continued": 56,
+            "flat": 16,
+            "reversed": 56,
+            "median_ticks": 0.0,
+            "q25": -2.0,
+            "q75": 1.5,
+            "min": -8.0,
+            "max": 9.0
+          },
+          "60": {
+            "n": 128,
+            "censored": 0,
+            "continued": 56,
+            "flat": 14,
+            "reversed": 58,
+            "median_ticks": 0.0,
+            "q25": -2.0,
+            "q75": 3.0,
+            "min": -10.0,
+            "max": 8.5
+          },
+          "120": {
+            "n": 128,
+            "censored": 0,
+            "continued": 60,
+            "flat": 7,
+            "reversed": 61,
+            "median_ticks": 0.0,
+            "q25": -3.0,
+            "q75": 4.0,
+            "min": -18.0,
+            "max": 14.5
+          },
+          "300": {
+            "n": 128,
+            "censored": 0,
+            "continued": 66,
+            "flat": 5,
+            "reversed": 57,
+            "median_ticks": 0.75,
+            "q25": -4.0,
+            "q75": 6.0,
+            "min": -17.0,
+            "max": 15.0
+          },
+          "600": {
+            "n": 128,
+            "censored": 0,
+            "continued": 68,
+            "flat": 4,
+            "reversed": 56,
+            "median_ticks": 1.0,
+            "q25": -6.0,
+            "q75": 7.5,
+            "min": -19.5,
+            "max": 25.0
+          }
+        }
+      }
+    }
+  },
+  "same_hour_controls_for_saved_screen": {
+    "2": {
+      "stack": {
+        "label": "stack",
+        "events": 1,
+        "overlap_clusters_600s": 1,
+        "recent_sell": 1,
+        "recent_buy": 0,
+        "horizons": {
+          "1": {
+            "n": 1,
+            "censored": 0,
+            "continued": 0,
+            "flat": 1,
+            "reversed": 0,
+            "median_ticks": -0.0,
+            "q25": -0.0,
+            "q75": -0.0,
+            "min": -0.0,
+            "max": -0.0
+          },
+          "5": {
+            "n": 1,
+            "censored": 0,
+            "continued": 0,
+            "flat": 1,
+            "reversed": 0,
+            "median_ticks": -0.0,
+            "q25": -0.0,
+            "q75": -0.0,
+            "min": -0.0,
+            "max": -0.0
+          },
+          "20": {
+            "n": 1,
+            "censored": 0,
+            "continued": 1,
+            "flat": 0,
+            "reversed": 0,
+            "median_ticks": 1.0,
+            "q25": 1.0,
+            "q75": 1.0,
+            "min": 1.0,
+            "max": 1.0
+          },
+          "60": {
+            "n": 1,
+            "censored": 0,
+            "continued": 1,
+            "flat": 0,
+            "reversed": 0,
+            "median_ticks": 1.0,
+            "q25": 1.0,
+            "q75": 1.0,
+            "min": 1.0,
+            "max": 1.0
+          },
+          "120": {
+            "n": 1,
+            "censored": 0,
+            "continued": 1,
+            "flat": 0,
+            "reversed": 0,
+            "median_ticks": 0.5,
+            "q25": 0.5,
+            "q75": 0.5,
+            "min": 0.5,
+            "max": 0.5
+          },
+          "300": {
+            "n": 1,
+            "censored": 0,
+            "continued": 1,
+            "flat": 0,
+            "reversed": 0,
+            "median_ticks": 1.5,
+            "q25": 1.5,
+            "q75": 1.5,
+            "min": 1.5,
+            "max": 1.5
+          },
+          "600": {
+            "n": 1,
+            "censored": 0,
+            "continued": 0,
+            "flat": 1,
+            "reversed": 0,
+            "median_ticks": -0.0,
+            "q25": -0.0,
+            "q75": -0.0,
+            "min": -0.0,
+            "max": -0.0
+          }
+        }
+      },
+      "control": {
+        "label": "same hour, recent selling, outside stack",
+        "events": 6,
+        "overlap_clusters_600s": 2,
+        "recent_sell": 6,
+        "recent_buy": 0,
+        "horizons": {
+          "1": {
+            "n": 6,
+            "censored": 0,
+            "continued": 3,
+            "flat": 2,
+            "reversed": 1,
+            "median_ticks": 0.25,
+            "q25": -0.0,
+            "q75": 0.5,
+            "min": -1.5,
+            "max": 1.5
+          },
+          "5": {
+            "n": 6,
+            "censored": 0,
+            "continued": 3,
+            "flat": 2,
+            "reversed": 1,
+            "median_ticks": 0.25,
+            "q25": -0.0,
+            "q75": 0.5,
+            "min": -1.5,
+            "max": 2.0
+          },
+          "20": {
+            "n": 6,
+            "censored": 0,
+            "continued": 4,
+            "flat": 1,
+            "reversed": 1,
+            "median_ticks": 1.0,
+            "q25": -0.0,
+            "q75": 1.5,
+            "min": -1.0,
+            "max": 2.5
+          },
+          "60": {
+            "n": 6,
+            "censored": 0,
+            "continued": 5,
+            "flat": 0,
+            "reversed": 1,
+            "median_ticks": 1.5,
+            "q25": 0.5,
+            "q75": 2.5,
+            "min": -3.0,
+            "max": 5.0
+          },
+          "120": {
+            "n": 6,
+            "censored": 0,
+            "continued": 4,
+            "flat": 0,
+            "reversed": 2,
+            "median_ticks": 3.25,
+            "q25": -0.5,
+            "q75": 4.5,
+            "min": -3.5,
+            "max": 5.0
+          },
+          "300": {
+            "n": 6,
+            "censored": 0,
+            "continued": 4,
+            "flat": 1,
+            "reversed": 1,
+            "median_ticks": 3.5,
+            "q25": -0.0,
+            "q75": 4.5,
+            "min": -4.0,
+            "max": 7.0
+          },
+          "600": {
+            "n": 6,
+            "censored": 0,
+            "continued": 5,
+            "flat": 0,
+            "reversed": 1,
+            "median_ticks": 6.5,
+            "q25": 4.5,
+            "q75": 6.5,
+            "min": -3.5,
+            "max": 8.5
+          }
+        }
+      }
+    },
+    "6": {
+      "stack": {
+        "label": "stack",
+        "events": 1,
+        "overlap_clusters_600s": 1,
+        "recent_sell": 1,
+        "recent_buy": 0,
+        "horizons": {
+          "1": {
+            "n": 1,
+            "censored": 0,
+            "continued": 0,
+            "flat": 1,
+            "reversed": 0,
+            "median_ticks": -0.0,
+            "q25": -0.0,
+            "q75": -0.0,
+            "min": -0.0,
+            "max": -0.0
+          },
+          "5": {
+            "n": 1,
+            "censored": 0,
+            "continued": 0,
+            "flat": 1,
+            "reversed": 0,
+            "median_ticks": -0.0,
+            "q25": -0.0,
+            "q75": -0.0,
+            "min": -0.0,
+            "max": -0.0
+          },
+          "20": {
+            "n": 1,
+            "censored": 0,
+            "continued": 1,
+            "flat": 0,
+            "reversed": 0,
+            "median_ticks": 1.0,
+            "q25": 1.0,
+            "q75": 1.0,
+            "min": 1.0,
+            "max": 1.0
+          },
+          "60": {
+            "n": 1,
+            "censored": 0,
+            "continued": 0,
+            "flat": 1,
+            "reversed": 0,
+            "median_ticks": -0.0,
+            "q25": -0.0,
+            "q75": -0.0,
+            "min": -0.0,
+            "max": -0.0
+          },
+          "120": {
+            "n": 1,
+            "censored": 0,
+            "continued": 0,
+            "flat": 0,
+            "reversed": 1,
+            "median_ticks": -3.5,
+            "q25": -3.5,
+            "q75": -3.5,
+            "min": -3.5,
+            "max": -3.5
+          },
+          "300": {
+            "n": 1,
+            "censored": 0,
+            "continued": 0,
+            "flat": 0,
+            "reversed": 1,
+            "median_ticks": -5.5,
+            "q25": -5.5,
+            "q75": -5.5,
+            "min": -5.5,
+            "max": -5.5
+          },
+          "600": {
+            "n": 1,
+            "censored": 0,
+            "continued": 0,
+            "flat": 0,
+            "reversed": 1,
+            "median_ticks": -9.0,
+            "q25": -9.0,
+            "q75": -9.0,
+            "min": -9.0,
+            "max": -9.0
+          }
+        }
+      },
+      "control": {
+        "label": "same hour, recent selling, outside stack",
+        "events": 1,
+        "overlap_clusters_600s": 1,
+        "recent_sell": 1,
+        "recent_buy": 0,
+        "horizons": {
+          "1": {
+            "n": 1,
+            "censored": 0,
+            "continued": 0,
+            "flat": 0,
+            "reversed": 1,
+            "median_ticks": -1.0,
+            "q25": -1.0,
+            "q75": -1.0,
+            "min": -1.0,
+            "max": -1.0
+          },
+          "5": {
+            "n": 1,
+            "censored": 0,
+            "continued": 0,
+            "flat": 1,
+            "reversed": 0,
+            "median_ticks": -0.0,
+            "q25": -0.0,
+            "q75": -0.0,
+            "min": -0.0,
+            "max": -0.0
+          },
+          "20": {
+            "n": 1,
+            "censored": 0,
+            "continued": 0,
+            "flat": 0,
+            "reversed": 1,
+            "median_ticks": -0.5,
+            "q25": -0.5,
+            "q75": -0.5,
+            "min": -0.5,
+            "max": -0.5
+          },
+          "60": {
+            "n": 1,
+            "censored": 0,
+            "continued": 0,
+            "flat": 0,
+            "reversed": 1,
+            "median_ticks": -0.5,
+            "q25": -0.5,
+            "q75": -0.5,
+            "min": -0.5,
+            "max": -0.5
+          },
+          "120": {
+            "n": 1,
+            "censored": 0,
+            "continued": 0,
+            "flat": 0,
+            "reversed": 1,
+            "median_ticks": -2.5,
+            "q25": -2.5,
+            "q75": -2.5,
+            "min": -2.5,
+            "max": -2.5
+          },
+          "300": {
+            "n": 1,
+            "censored": 0,
+            "continued": 0,
+            "flat": 0,
+            "reversed": 1,
+            "median_ticks": -2.0,
+            "q25": -2.0,
+            "q75": -2.0,
+            "min": -2.0,
+            "max": -2.0
+          },
+          "600": {
+            "n": 1,
+            "censored": 0,
+            "continued": 0,
+            "flat": 0,
+            "reversed": 1,
+            "median_ticks": -4.0,
+            "q25": -4.0,
+            "q75": -4.0,
+            "min": -4.0,
+            "max": -4.0
+          }
+        }
+      }
+    },
+    "7": {
+      "stack": {
+        "label": "stack",
+        "events": 2,
+        "overlap_clusters_600s": 2,
+        "recent_sell": 2,
+        "recent_buy": 0,
+        "horizons": {
+          "1": {
+            "n": 2,
+            "censored": 0,
+            "continued": 1,
+            "flat": 1,
+            "reversed": 0,
+            "median_ticks": 0.5,
+            "q25": -0.0,
+            "q75": -0.0,
+            "min": -0.0,
+            "max": 1.0
+          },
+          "5": {
+            "n": 2,
+            "censored": 0,
+            "continued": 1,
+            "flat": 1,
+            "reversed": 0,
+            "median_ticks": 0.5,
+            "q25": -0.0,
+            "q75": -0.0,
+            "min": -0.0,
+            "max": 1.0
+          },
+          "20": {
+            "n": 2,
+            "censored": 0,
+            "continued": 2,
+            "flat": 0,
+            "reversed": 0,
+            "median_ticks": 1.25,
+            "q25": 1.0,
+            "q75": 1.0,
+            "min": 1.0,
+            "max": 1.5
+          },
+          "60": {
+            "n": 2,
+            "censored": 0,
+            "continued": 2,
+            "flat": 0,
+            "reversed": 0,
+            "median_ticks": 3.0,
+            "q25": 1.5,
+            "q75": 1.5,
+            "min": 1.5,
+            "max": 4.5
+          },
+          "120": {
+            "n": 2,
+            "censored": 0,
+            "continued": 2,
+            "flat": 0,
+            "reversed": 0,
+            "median_ticks": 1.0,
+            "q25": 1.0,
+            "q75": 1.0,
+            "min": 1.0,
+            "max": 1.0
+          },
+          "300": {
+            "n": 2,
+            "censored": 0,
+            "continued": 1,
+            "flat": 0,
+            "reversed": 1,
+            "median_ticks": 0.0,
+            "q25": -3.0,
+            "q75": -3.0,
+            "min": -3.0,
+            "max": 3.0
+          },
+          "600": {
+            "n": 2,
+            "censored": 0,
+            "continued": 1,
+            "flat": 0,
+            "reversed": 1,
+            "median_ticks": -3.5,
+            "q25": -8.0,
+            "q75": -8.0,
+            "min": -8.0,
+            "max": 1.0
+          }
+        }
+      },
+      "control": {
+        "label": "same hour, recent selling, outside stack",
+        "events": 0,
+        "overlap_clusters_600s": 0,
+        "recent_sell": 0,
+        "recent_buy": 0,
+        "horizons": {
+          "1": {
+            "censored": 0
+          },
+          "5": {
+            "censored": 0
+          },
+          "20": {
+            "censored": 0
+          },
+          "60": {
+            "censored": 0
+          },
+          "120": {
+            "censored": 0
+          },
+          "300": {
+            "censored": 0
+          },
+          "600": {
+            "censored": 0
+          }
+        }
+      }
+    },
+    "8": {
+      "stack": {
+        "label": "stack",
+        "events": 2,
+        "overlap_clusters_600s": 1,
+        "recent_sell": 2,
+        "recent_buy": 0,
+        "horizons": {
+          "1": {
+            "n": 2,
+            "censored": 0,
+            "continued": 1,
+            "flat": 1,
+            "reversed": 0,
+            "median_ticks": 0.75,
+            "q25": -0.0,
+            "q75": -0.0,
+            "min": -0.0,
+            "max": 1.5
+          },
+          "5": {
+            "n": 2,
+            "censored": 0,
+            "continued": 1,
+            "flat": 1,
+            "reversed": 0,
+            "median_ticks": 0.75,
+            "q25": -0.0,
+            "q75": -0.0,
+            "min": -0.0,
+            "max": 1.5
+          },
+          "20": {
+            "n": 2,
+            "censored": 0,
+            "continued": 1,
+            "flat": 0,
+            "reversed": 1,
+            "median_ticks": 0.0,
+            "q25": -0.5,
+            "q75": -0.5,
+            "min": -0.5,
+            "max": 0.5
+          },
+          "60": {
+            "n": 2,
+            "censored": 0,
+            "continued": 0,
+            "flat": 2,
+            "reversed": 0,
+            "median_ticks": -0.0,
+            "q25": -0.0,
+            "q75": -0.0,
+            "min": -0.0,
+            "max": -0.0
+          },
+          "120": {
+            "n": 2,
+            "censored": 0,
+            "continued": 0,
+            "flat": 0,
+            "reversed": 2,
+            "median_ticks": -2.0,
+            "q25": -3.0,
+            "q75": -3.0,
+            "min": -3.0,
+            "max": -1.0
+          },
+          "300": {
+            "n": 2,
+            "censored": 0,
+            "continued": 0,
+            "flat": 0,
+            "reversed": 2,
+            "median_ticks": -4.5,
+            "q25": -7.0,
+            "q75": -7.0,
+            "min": -7.0,
+            "max": -2.0
+          },
+          "600": {
+            "n": 2,
+            "censored": 0,
+            "continued": 0,
+            "flat": 0,
+            "reversed": 2,
+            "median_ticks": -9.25,
+            "q25": -11.0,
+            "q75": -11.0,
+            "min": -11.0,
+            "max": -7.5
+          }
+        }
+      },
+      "control": {
+        "label": "same hour, recent selling, outside stack",
+        "events": 3,
+        "overlap_clusters_600s": 3,
+        "recent_sell": 3,
+        "recent_buy": 0,
+        "horizons": {
+          "1": {
+            "n": 3,
+            "censored": 0,
+            "continued": 2,
+            "flat": 0,
+            "reversed": 1,
+            "median_ticks": 1.0,
+            "q25": -1.0,
+            "q75": 1.0,
+            "min": -1.0,
+            "max": 1.5
+          },
+          "5": {
+            "n": 3,
+            "censored": 0,
+            "continued": 2,
+            "flat": 0,
+            "reversed": 1,
+            "median_ticks": 1.0,
+            "q25": -1.0,
+            "q75": 1.0,
+            "min": -1.0,
+            "max": 1.5
+          },
+          "20": {
+            "n": 3,
+            "censored": 0,
+            "continued": 2,
+            "flat": 0,
+            "reversed": 1,
+            "median_ticks": 1.0,
+            "q25": -1.0,
+            "q75": 1.0,
+            "min": -1.0,
+            "max": 1.5
+          },
+          "60": {
+            "n": 3,
+            "censored": 0,
+            "continued": 1,
+            "flat": 1,
+            "reversed": 1,
+            "median_ticks": -0.0,
+            "q25": -3.0,
+            "q75": -0.0,
+            "min": -3.0,
+            "max": 2.5
+          },
+          "120": {
+            "n": 3,
+            "censored": 0,
+            "continued": 1,
+            "flat": 0,
+            "reversed": 2,
+            "median_ticks": -0.5,
+            "q25": -4.5,
+            "q75": -0.5,
+            "min": -4.5,
+            "max": 1.0
+          },
+          "300": {
+            "n": 3,
+            "censored": 0,
+            "continued": 0,
+            "flat": 0,
+            "reversed": 3,
+            "median_ticks": -0.5,
+            "q25": -5.5,
+            "q75": -0.5,
+            "min": -5.5,
+            "max": -0.5
+          },
+          "600": {
+            "n": 3,
+            "censored": 0,
+            "continued": 0,
+            "flat": 0,
+            "reversed": 3,
+            "median_ticks": -5.0,
+            "q25": -8.0,
+            "q75": -5.0,
+            "min": -8.0,
+            "max": -2.0
+          }
+        }
+      }
+    },
+    "11": {
+      "stack": {
+        "label": "stack",
+        "events": 3,
+        "overlap_clusters_600s": 2,
+        "recent_sell": 3,
+        "recent_buy": 0,
+        "horizons": {
+          "1": {
+            "n": 3,
+            "censored": 0,
+            "continued": 3,
+            "flat": 0,
+            "reversed": 0,
+            "median_ticks": 2.5,
+            "q25": 2.0,
+            "q75": 2.5,
+            "min": 2.0,
+            "max": 2.5
+          },
+          "5": {
+            "n": 3,
+            "censored": 0,
+            "continued": 2,
+            "flat": 1,
+            "reversed": 0,
+            "median_ticks": 2.0,
+            "q25": -0.0,
+            "q75": 2.0,
+            "min": -0.0,
+            "max": 2.5
+          },
+          "20": {
+            "n": 3,
+            "censored": 0,
+            "continued": 2,
+            "flat": 1,
+            "reversed": 0,
+            "median_ticks": 0.5,
+            "q25": -0.0,
+            "q75": 0.5,
+            "min": -0.0,
+            "max": 2.0
+          },
+          "60": {
+            "n": 3,
+            "censored": 0,
+            "continued": 3,
+            "flat": 0,
+            "reversed": 0,
+            "median_ticks": 5.0,
+            "q25": 1.5,
+            "q75": 5.0,
+            "min": 1.5,
+            "max": 5.0
+          },
+          "120": {
+            "n": 3,
+            "censored": 0,
+            "continued": 3,
+            "flat": 0,
+            "reversed": 0,
+            "median_ticks": 7.0,
+            "q25": 1.0,
+            "q75": 7.0,
+            "min": 1.0,
+            "max": 7.0
+          },
+          "300": {
+            "n": 3,
+            "censored": 0,
+            "continued": 1,
+            "flat": 0,
+            "reversed": 2,
+            "median_ticks": -4.0,
+            "q25": -5.0,
+            "q75": -4.0,
+            "min": -5.0,
+            "max": 5.5
+          },
+          "600": {
+            "n": 3,
+            "censored": 0,
+            "continued": 1,
+            "flat": 0,
+            "reversed": 2,
+            "median_ticks": -3.0,
+            "q25": -4.0,
+            "q75": -3.0,
+            "min": -4.0,
+            "max": 4.5
+          }
+        }
+      },
+      "control": {
+        "label": "same hour, recent selling, outside stack",
+        "events": 24,
+        "overlap_clusters_600s": 2,
+        "recent_sell": 24,
+        "recent_buy": 0,
+        "horizons": {
+          "1": {
+            "n": 24,
+            "censored": 0,
+            "continued": 14,
+            "flat": 2,
+            "reversed": 8,
+            "median_ticks": 0.5,
+            "q25": -1.5,
+            "q75": 1.5,
+            "min": -2.0,
+            "max": 5.5
+          },
+          "5": {
+            "n": 24,
+            "censored": 0,
+            "continued": 14,
+            "flat": 2,
+            "reversed": 8,
+            "median_ticks": 0.5,
+            "q25": -1.5,
+            "q75": 1.5,
+            "min": -3.0,
+            "max": 5.5
+          },
+          "20": {
+            "n": 24,
+            "censored": 0,
+            "continued": 12,
+            "flat": 1,
+            "reversed": 11,
+            "median_ticks": 0.25,
+            "q25": -2.0,
+            "q75": 1.5,
+            "min": -5.0,
+            "max": 7.0
+          },
+          "60": {
+            "n": 24,
+            "censored": 0,
+            "continued": 10,
+            "flat": 1,
+            "reversed": 13,
+            "median_ticks": -0.5,
+            "q25": -2.0,
+            "q75": 2.0,
+            "min": -4.5,
+            "max": 8.0
+          },
+          "120": {
+            "n": 24,
+            "censored": 0,
+            "continued": 11,
+            "flat": 2,
+            "reversed": 11,
+            "median_ticks": -0.0,
+            "q25": -2.5,
+            "q75": 3.0,
+            "min": -5.0,
+            "max": 8.5
+          },
+          "300": {
+            "n": 24,
+            "censored": 0,
+            "continued": 13,
+            "flat": 0,
+            "reversed": 11,
+            "median_ticks": 0.75,
+            "q25": -2.5,
+            "q75": 2.5,
+            "min": -9.5,
+            "max": 11.5
+          },
+          "600": {
+            "n": 24,
+            "censored": 0,
+            "continued": 10,
+            "flat": 2,
+            "reversed": 12,
+            "median_ticks": -0.25,
+            "q25": -2.5,
+            "q75": 6.0,
+            "min": -16.5,
+            "max": 14.5
+          }
+        }
+      }
+    },
+    "12": {
+      "stack": {
+        "label": "stack",
+        "events": 3,
+        "overlap_clusters_600s": 2,
+        "recent_sell": 3,
+        "recent_buy": 0,
+        "horizons": {
+          "1": {
+            "n": 3,
+            "censored": 0,
+            "continued": 2,
+            "flat": 1,
+            "reversed": 0,
+            "median_ticks": 1.0,
+            "q25": -0.0,
+            "q75": 1.0,
+            "min": -0.0,
+            "max": 5.0
+          },
+          "5": {
+            "n": 3,
+            "censored": 0,
+            "continued": 3,
+            "flat": 0,
+            "reversed": 0,
+            "median_ticks": 1.5,
+            "q25": 1.0,
+            "q75": 1.5,
+            "min": 1.0,
+            "max": 5.0
+          },
+          "20": {
+            "n": 3,
+            "censored": 0,
+            "continued": 2,
+            "flat": 1,
+            "reversed": 0,
+            "median_ticks": 2.0,
+            "q25": -0.0,
+            "q75": 2.0,
+            "min": -0.0,
+            "max": 5.0
+          },
+          "60": {
+            "n": 3,
+            "censored": 0,
+            "continued": 3,
+            "flat": 0,
+            "reversed": 0,
+            "median_ticks": 1.0,
+            "q25": 0.5,
+            "q75": 1.0,
+            "min": 0.5,
+            "max": 2.0
+          },
+          "120": {
+            "n": 3,
+            "censored": 0,
+            "continued": 3,
+            "flat": 0,
+            "reversed": 0,
+            "median_ticks": 3.5,
+            "q25": 1.0,
+            "q75": 3.5,
+            "min": 1.0,
+            "max": 4.0
+          },
+          "300": {
+            "n": 3,
+            "censored": 0,
+            "continued": 3,
+            "flat": 0,
+            "reversed": 0,
+            "median_ticks": 7.0,
+            "q25": 2.0,
+            "q75": 7.0,
+            "min": 2.0,
+            "max": 10.0
+          },
+          "600": {
+            "n": 3,
+            "censored": 0,
+            "continued": 3,
+            "flat": 0,
+            "reversed": 0,
+            "median_ticks": 7.0,
+            "q25": 6.0,
+            "q75": 7.0,
+            "min": 6.0,
+            "max": 8.0
+          }
+        }
+      },
+      "control": {
+        "label": "same hour, recent selling, outside stack",
+        "events": 14,
+        "overlap_clusters_600s": 2,
+        "recent_sell": 14,
+        "recent_buy": 0,
+        "horizons": {
+          "1": {
+            "n": 14,
+            "censored": 0,
+            "continued": 10,
+            "flat": 1,
+            "reversed": 3,
+            "median_ticks": 1.0,
+            "q25": -0.0,
+            "q75": 2.0,
+            "min": -1.0,
+            "max": 2.5
+          },
+          "5": {
+            "n": 14,
+            "censored": 0,
+            "continued": 5,
+            "flat": 2,
+            "reversed": 7,
+            "median_ticks": -0.25,
+            "q25": -1.0,
+            "q75": 1.0,
+            "min": -3.5,
+            "max": 3.0
+          },
+          "20": {
+            "n": 14,
+            "censored": 0,
+            "continued": 6,
+            "flat": 1,
+            "reversed": 7,
+            "median_ticks": -0.5,
+            "q25": -3.0,
+            "q75": 1.0,
+            "min": -7.5,
+            "max": 2.0
+          },
+          "60": {
+            "n": 14,
+            "censored": 0,
+            "continued": 6,
+            "flat": 1,
+            "reversed": 7,
+            "median_ticks": -0.5,
+            "q25": -4.0,
+            "q75": 2.0,
+            "min": -7.5,
+            "max": 6.5
+          },
+          "120": {
+            "n": 14,
+            "censored": 0,
+            "continued": 6,
+            "flat": 0,
+            "reversed": 8,
+            "median_ticks": -2.5,
+            "q25": -7.0,
+            "q75": 2.0,
+            "min": -15.0,
+            "max": 10.0
+          },
+          "300": {
+            "n": 14,
+            "censored": 0,
+            "continued": 8,
+            "flat": 2,
+            "reversed": 4,
+            "median_ticks": 1.75,
+            "q25": -0.5,
+            "q75": 4.0,
+            "min": -9.0,
+            "max": 10.0
+          },
+          "600": {
+            "n": 14,
+            "censored": 0,
+            "continued": 9,
+            "flat": 1,
+            "reversed": 4,
+            "median_ticks": 1.75,
+            "q25": -1.0,
+            "q75": 3.0,
+            "min": -7.5,
+            "max": 14.5
+          }
+        }
+      }
+    },
+    "13": {
+      "stack": {
+        "label": "stack",
+        "events": 7,
+        "overlap_clusters_600s": 3,
+        "recent_sell": 7,
+        "recent_buy": 0,
+        "horizons": {
+          "1": {
+            "n": 7,
+            "censored": 0,
+            "continued": 2,
+            "flat": 1,
+            "reversed": 4,
+            "median_ticks": -0.5,
+            "q25": -1.0,
+            "q75": -0.0,
+            "min": -1.0,
+            "max": 1.0
+          },
+          "5": {
+            "n": 7,
+            "censored": 0,
+            "continued": 2,
+            "flat": 0,
+            "reversed": 5,
+            "median_ticks": -0.5,
+            "q25": -1.0,
+            "q75": -0.5,
+            "min": -1.0,
+            "max": 2.0
+          },
+          "20": {
+            "n": 7,
+            "censored": 0,
+            "continued": 1,
+            "flat": 0,
+            "reversed": 6,
+            "median_ticks": -1.0,
+            "q25": -3.0,
+            "q75": -1.0,
+            "min": -4.0,
+            "max": 3.5
+          },
+          "60": {
+            "n": 7,
+            "censored": 0,
+            "continued": 2,
+            "flat": 0,
+            "reversed": 5,
+            "median_ticks": -4.5,
+            "q25": -6.0,
+            "q75": -2.5,
+            "min": -6.0,
+            "max": 6.0
+          },
+          "120": {
+            "n": 7,
+            "censored": 0,
+            "continued": 2,
+            "flat": 0,
+            "reversed": 5,
+            "median_ticks": -5.0,
+            "q25": -6.0,
+            "q75": -4.0,
+            "min": -12.0,
+            "max": 1.0
+          },
+          "300": {
+            "n": 7,
+            "censored": 0,
+            "continued": 1,
+            "flat": 0,
+            "reversed": 6,
+            "median_ticks": -7.0,
+            "q25": -12.0,
+            "q75": -5.0,
+            "min": -16.0,
+            "max": 24.5
+          },
+          "600": {
+            "n": 7,
+            "censored": 0,
+            "continued": 1,
+            "flat": 0,
+            "reversed": 6,
+            "median_ticks": -3.5,
+            "q25": -23.0,
+            "q75": -2.5,
+            "min": -24.0,
+            "max": 34.0
+          }
+        }
+      },
+      "control": {
+        "label": "same hour, recent selling, outside stack",
+        "events": 33,
+        "overlap_clusters_600s": 2,
+        "recent_sell": 33,
+        "recent_buy": 0,
+        "horizons": {
+          "1": {
+            "n": 33,
+            "censored": 0,
+            "continued": 22,
+            "flat": 2,
+            "reversed": 9,
+            "median_ticks": 1.0,
+            "q25": -1.0,
+            "q75": 2.0,
+            "min": -7.0,
+            "max": 6.0
+          },
+          "5": {
+            "n": 33,
+            "censored": 0,
+            "continued": 21,
+            "flat": 1,
+            "reversed": 11,
+            "median_ticks": 1.0,
+            "q25": -1.0,
+            "q75": 2.5,
+            "min": -5.0,
+            "max": 6.0
+          },
+          "20": {
+            "n": 33,
+            "censored": 0,
+            "continued": 20,
+            "flat": 2,
+            "reversed": 11,
+            "median_ticks": 1.0,
+            "q25": -2.0,
+            "q75": 3.0,
+            "min": -6.0,
+            "max": 7.5
+          },
+          "60": {
+            "n": 33,
+            "censored": 0,
+            "continued": 21,
+            "flat": 3,
+            "reversed": 9,
+            "median_ticks": 1.0,
+            "q25": -0.5,
+            "q75": 3.5,
+            "min": -5.0,
+            "max": 8.5
+          },
+          "120": {
+            "n": 33,
+            "censored": 0,
+            "continued": 22,
+            "flat": 0,
+            "reversed": 11,
+            "median_ticks": 2.0,
+            "q25": -2.0,
+            "q75": 4.5,
+            "min": -5.0,
+            "max": 14.5
+          },
+          "300": {
+            "n": 33,
+            "censored": 0,
+            "continued": 21,
+            "flat": 1,
+            "reversed": 11,
+            "median_ticks": 5.0,
+            "q25": -2.0,
+            "q75": 8.5,
+            "min": -4.0,
+            "max": 13.0
+          },
+          "600": {
+            "n": 33,
+            "censored": 0,
+            "continued": 16,
+            "flat": 2,
+            "reversed": 15,
+            "median_ticks": -0.0,
+            "q25": -4.0,
+            "q75": 2.0,
+            "min": -19.5,
+            "max": 13.0
+          }
+        }
+      }
+    },
+    "14": {
+      "stack": {
+        "label": "stack",
+        "events": 8,
+        "overlap_clusters_600s": 3,
+        "recent_sell": 8,
+        "recent_buy": 0,
+        "horizons": {
+          "1": {
+            "n": 8,
+            "censored": 0,
+            "continued": 5,
+            "flat": 1,
+            "reversed": 2,
+            "median_ticks": 0.75,
+            "q25": -2.0,
+            "q75": 1.0,
+            "min": -2.0,
+            "max": 1.5
+          },
+          "5": {
+            "n": 8,
+            "censored": 0,
+            "continued": 4,
+            "flat": 1,
+            "reversed": 3,
+            "median_ticks": 0.25,
+            "q25": -1.0,
+            "q75": 0.5,
+            "min": -1.0,
+            "max": 2.0
+          },
+          "20": {
+            "n": 8,
+            "censored": 0,
+            "continued": 3,
+            "flat": 2,
+            "reversed": 3,
+            "median_ticks": -0.0,
+            "q25": -2.0,
+            "q75": 0.5,
+            "min": -7.0,
+            "max": 2.5
+          },
+          "60": {
+            "n": 8,
+            "censored": 0,
+            "continued": 5,
+            "flat": 0,
+            "reversed": 3,
+            "median_ticks": 1.0,
+            "q25": -2.0,
+            "q75": 2.0,
+            "min": -7.0,
+            "max": 4.0
+          },
+          "120": {
+            "n": 8,
+            "censored": 0,
+            "continued": 5,
+            "flat": 0,
+            "reversed": 3,
+            "median_ticks": 1.5,
+            "q25": -4.0,
+            "q75": 2.5,
+            "min": -6.0,
+            "max": 9.0
+          },
+          "300": {
+            "n": 8,
+            "censored": 0,
+            "continued": 4,
+            "flat": 0,
+            "reversed": 4,
+            "median_ticks": 1.75,
+            "q25": -5.0,
+            "q75": 5.5,
+            "min": -5.5,
+            "max": 26.0
+          },
+          "600": {
+            "n": 8,
+            "censored": 0,
+            "continued": 3,
+            "flat": 0,
+            "reversed": 5,
+            "median_ticks": -5.0,
+            "q25": -8.0,
+            "q75": 9.0,
+            "min": -14.0,
+            "max": 34.0
+          }
+        }
+      },
+      "control": {
+        "label": "same hour, recent selling, outside stack",
+        "events": 40,
+        "overlap_clusters_600s": 1,
+        "recent_sell": 40,
+        "recent_buy": 0,
+        "horizons": {
+          "1": {
+            "n": 40,
+            "censored": 0,
+            "continued": 14,
+            "flat": 11,
+            "reversed": 15,
+            "median_ticks": -0.0,
+            "q25": -1.0,
+            "q75": 1.0,
+            "min": -3.0,
+            "max": 5.5
+          },
+          "5": {
+            "n": 40,
+            "censored": 0,
+            "continued": 14,
+            "flat": 8,
+            "reversed": 18,
+            "median_ticks": -0.0,
+            "q25": -1.5,
+            "q75": 1.0,
+            "min": -3.0,
+            "max": 6.5
+          },
+          "20": {
+            "n": 40,
+            "censored": 0,
+            "continued": 18,
+            "flat": 3,
+            "reversed": 19,
+            "median_ticks": -0.0,
+            "q25": -2.0,
+            "q75": 3.0,
+            "min": -4.0,
+            "max": 14.0
+          },
+          "60": {
+            "n": 40,
+            "censored": 0,
+            "continued": 21,
+            "flat": 1,
+            "reversed": 18,
+            "median_ticks": 0.75,
+            "q25": -2.0,
+            "q75": 6.0,
+            "min": -4.0,
+            "max": 14.0
+          },
+          "120": {
+            "n": 40,
+            "censored": 0,
+            "continued": 25,
+            "flat": 4,
+            "reversed": 11,
+            "median_ticks": 1.75,
+            "q25": -1.0,
+            "q75": 7.0,
+            "min": -6.0,
+            "max": 14.0
+          },
+          "300": {
+            "n": 40,
+            "censored": 0,
+            "continued": 29,
+            "flat": 0,
+            "reversed": 11,
+            "median_ticks": 5.75,
+            "q25": -1.0,
+            "q75": 13.0,
+            "min": -14.0,
+            "max": 20.5
+          },
+          "600": {
+            "n": 40,
+            "censored": 0,
+            "continued": 30,
+            "flat": 0,
+            "reversed": 10,
+            "median_ticks": 7.5,
+            "q25": -2.0,
+            "q75": 12.0,
+            "min": -15.0,
+            "max": 19.0
+          }
+        }
+      }
+    },
+    "15": {
+      "stack": {
+        "label": "stack",
+        "events": 2,
+        "overlap_clusters_600s": 1,
+        "recent_sell": 2,
+        "recent_buy": 0,
+        "horizons": {
+          "1": {
+            "n": 2,
+            "censored": 0,
+            "continued": 0,
+            "flat": 0,
+            "reversed": 2,
+            "median_ticks": -1.5,
+            "q25": -2.0,
+            "q75": -2.0,
+            "min": -2.0,
+            "max": -1.0
+          },
+          "5": {
+            "n": 2,
+            "censored": 0,
+            "continued": 1,
+            "flat": 0,
+            "reversed": 1,
+            "median_ticks": -0.75,
+            "q25": -2.0,
+            "q75": -2.0,
+            "min": -2.0,
+            "max": 0.5
+          },
+          "20": {
+            "n": 2,
+            "censored": 0,
+            "continued": 0,
+            "flat": 0,
+            "reversed": 2,
+            "median_ticks": -4.25,
+            "q25": -7.5,
+            "q75": -7.5,
+            "min": -7.5,
+            "max": -1.0
+          },
+          "60": {
+            "n": 2,
+            "censored": 0,
+            "continued": 0,
+            "flat": 0,
+            "reversed": 2,
+            "median_ticks": -4.25,
+            "q25": -8.0,
+            "q75": -8.0,
+            "min": -8.0,
+            "max": -0.5
+          },
+          "120": {
+            "n": 2,
+            "censored": 0,
+            "continued": 1,
+            "flat": 0,
+            "reversed": 1,
+            "median_ticks": -2.25,
+            "q25": -6.0,
+            "q75": -6.0,
+            "min": -6.0,
+            "max": 1.5
+          },
+          "300": {
+            "n": 2,
+            "censored": 0,
+            "continued": 0,
+            "flat": 0,
+            "reversed": 2,
+            "median_ticks": -5.0,
+            "q25": -8.0,
+            "q75": -8.0,
+            "min": -8.0,
+            "max": -2.0
+          },
+          "600": {
+            "n": 2,
+            "censored": 0,
+            "continued": 0,
+            "flat": 0,
+            "reversed": 2,
+            "median_ticks": -4.5,
+            "q25": -8.0,
+            "q75": -8.0,
+            "min": -8.0,
+            "max": -1.0
+          }
+        }
+      },
+      "control": {
+        "label": "same hour, recent selling, outside stack",
+        "events": 9,
+        "overlap_clusters_600s": 2,
+        "recent_sell": 9,
+        "recent_buy": 0,
+        "horizons": {
+          "1": {
+            "n": 9,
+            "censored": 0,
+            "continued": 4,
+            "flat": 4,
+            "reversed": 1,
+            "median_ticks": -0.0,
+            "q25": -0.0,
+            "q75": 1.0,
+            "min": -0.5,
+            "max": 1.0
+          },
+          "5": {
+            "n": 9,
+            "censored": 0,
+            "continued": 4,
+            "flat": 5,
+            "reversed": 0,
+            "median_ticks": -0.0,
+            "q25": -0.0,
+            "q75": 1.0,
+            "min": -0.0,
+            "max": 2.0
+          },
+          "20": {
+            "n": 9,
+            "censored": 0,
+            "continued": 6,
+            "flat": 1,
+            "reversed": 2,
+            "median_ticks": 0.5,
+            "q25": -0.0,
+            "q75": 1.5,
+            "min": -1.0,
+            "max": 5.0
+          },
+          "60": {
+            "n": 9,
+            "censored": 0,
+            "continued": 3,
+            "flat": 1,
+            "reversed": 5,
+            "median_ticks": -1.5,
+            "q25": -2.5,
+            "q75": 4.5,
+            "min": -3.0,
+            "max": 7.0
+          },
+          "120": {
+            "n": 9,
+            "censored": 0,
+            "continued": 7,
+            "flat": 2,
+            "reversed": 0,
+            "median_ticks": 5.5,
+            "q25": 0.5,
+            "q75": 7.0,
+            "min": -0.0,
+            "max": 9.0
+          },
+          "300": {
+            "n": 9,
+            "censored": 0,
+            "continued": 6,
+            "flat": 1,
+            "reversed": 2,
+            "median_ticks": 5.0,
+            "q25": -0.0,
+            "q75": 9.0,
+            "min": -3.5,
+            "max": 11.0
+          },
+          "600": {
+            "n": 9,
+            "censored": 0,
+            "continued": 8,
+            "flat": 1,
+            "reversed": 0,
+            "median_ticks": 12.5,
+            "q25": 5.5,
+            "q75": 14.0,
+            "min": -0.0,
+            "max": 15.5
+          }
+        }
+      }
+    },
+    "16": {
+      "stack": {
+        "label": "stack",
+        "events": 4,
+        "overlap_clusters_600s": 3,
+        "recent_sell": 4,
+        "recent_buy": 0,
+        "horizons": {
+          "1": {
+            "n": 4,
+            "censored": 0,
+            "continued": 0,
+            "flat": 0,
+            "reversed": 4,
+            "median_ticks": -1.25,
+            "q25": -2.0,
+            "q75": -1.0,
+            "min": -2.0,
+            "max": -0.5
+          },
+          "5": {
+            "n": 4,
+            "censored": 0,
+            "continued": 0,
+            "flat": 0,
+            "reversed": 4,
+            "median_ticks": -1.25,
+            "q25": -2.0,
+            "q75": -1.0,
+            "min": -2.0,
+            "max": -0.5
+          },
+          "20": {
+            "n": 4,
+            "censored": 0,
+            "continued": 0,
+            "flat": 0,
+            "reversed": 4,
+            "median_ticks": -1.75,
+            "q25": -3.0,
+            "q75": -1.0,
+            "min": -3.0,
+            "max": -0.5
+          },
+          "60": {
+            "n": 4,
+            "censored": 0,
+            "continued": 3,
+            "flat": 0,
+            "reversed": 1,
+            "median_ticks": 0.75,
+            "q25": -2.0,
+            "q75": 1.0,
+            "min": -2.0,
+            "max": 2.5
+          },
+          "120": {
+            "n": 4,
+            "censored": 0,
+            "continued": 2,
+            "flat": 0,
+            "reversed": 2,
+            "median_ticks": -0.75,
+            "q25": -4.5,
+            "q75": 0.5,
+            "min": -4.5,
+            "max": 6.5
+          },
+          "300": {
+            "n": 4,
+            "censored": 0,
+            "continued": 2,
+            "flat": 0,
+            "reversed": 2,
+            "median_ticks": 0.25,
+            "q25": -5.0,
+            "q75": 5.5,
+            "min": -5.0,
+            "max": 6.5
+          },
+          "600": {
+            "n": 4,
+            "censored": 0,
+            "continued": 2,
+            "flat": 0,
+            "reversed": 2,
+            "median_ticks": 2.75,
+            "q25": -3.0,
+            "q75": 7.5,
+            "min": -3.0,
+            "max": 15.5
+          }
+        }
+      },
+      "control": {
+        "label": "same hour, recent selling, outside stack",
+        "events": 6,
+        "overlap_clusters_600s": 3,
+        "recent_sell": 6,
+        "recent_buy": 0,
+        "horizons": {
+          "1": {
+            "n": 6,
+            "censored": 0,
+            "continued": 3,
+            "flat": 2,
+            "reversed": 1,
+            "median_ticks": 0.25,
+            "q25": -0.0,
+            "q75": 0.5,
+            "min": -2.0,
+            "max": 1.0
+          },
+          "5": {
+            "n": 6,
+            "censored": 0,
+            "continued": 3,
+            "flat": 1,
+            "reversed": 2,
+            "median_ticks": 0.25,
+            "q25": -0.5,
+            "q75": 0.5,
+            "min": -3.0,
+            "max": 1.0
+          },
+          "20": {
+            "n": 6,
+            "censored": 0,
+            "continued": 3,
+            "flat": 1,
+            "reversed": 2,
+            "median_ticks": 0.25,
+            "q25": -0.5,
+            "q75": 0.5,
+            "min": -1.0,
+            "max": 1.0
+          },
+          "60": {
+            "n": 6,
+            "censored": 0,
+            "continued": 2,
+            "flat": 0,
+            "reversed": 4,
+            "median_ticks": -2.0,
+            "q25": -3.0,
+            "q75": -1.5,
+            "min": -3.5,
+            "max": 3.0
+          },
+          "120": {
+            "n": 6,
+            "censored": 0,
+            "continued": 2,
+            "flat": 1,
+            "reversed": 3,
+            "median_ticks": -0.25,
+            "q25": -2.0,
+            "q75": -0.0,
+            "min": -4.0,
+            "max": 2.0
+          },
+          "300": {
+            "n": 6,
+            "censored": 0,
+            "continued": 3,
+            "flat": 0,
+            "reversed": 3,
+            "median_ticks": -0.75,
+            "q25": -5.0,
+            "q75": 0.5,
+            "min": -6.5,
+            "max": 12.0
+          },
+          "600": {
+            "n": 6,
+            "censored": 0,
+            "continued": 3,
+            "flat": 0,
+            "reversed": 3,
+            "median_ticks": 1.25,
+            "q25": -5.5,
+            "q75": 3.0,
+            "min": -12.5,
+            "max": 12.5
+          }
+        }
+      }
+    },
+    "17": {
+      "stack": {
+        "label": "stack",
+        "events": 2,
+        "overlap_clusters_600s": 2,
+        "recent_sell": 2,
+        "recent_buy": 0,
+        "horizons": {
+          "1": {
+            "n": 2,
+            "censored": 0,
+            "continued": 0,
+            "flat": 1,
+            "reversed": 1,
+            "median_ticks": -0.5,
+            "q25": -1.0,
+            "q75": -1.0,
+            "min": -1.0,
+            "max": -0.0
+          },
+          "5": {
+            "n": 2,
+            "censored": 0,
+            "continued": 0,
+            "flat": 1,
+            "reversed": 1,
+            "median_ticks": -0.5,
+            "q25": -1.0,
+            "q75": -1.0,
+            "min": -1.0,
+            "max": -0.0
+          },
+          "20": {
+            "n": 2,
+            "censored": 0,
+            "continued": 0,
+            "flat": 0,
+            "reversed": 2,
+            "median_ticks": -1.75,
+            "q25": -2.5,
+            "q75": -2.5,
+            "min": -2.5,
+            "max": -1.0
+          },
+          "60": {
+            "n": 2,
+            "censored": 0,
+            "continued": 0,
+            "flat": 2,
+            "reversed": 0,
+            "median_ticks": -0.0,
+            "q25": -0.0,
+            "q75": -0.0,
+            "min": -0.0,
+            "max": -0.0
+          },
+          "120": {
+            "n": 2,
+            "censored": 0,
+            "continued": 1,
+            "flat": 1,
+            "reversed": 0,
+            "median_ticks": 3.0,
+            "q25": -0.0,
+            "q75": -0.0,
+            "min": -0.0,
+            "max": 6.0
+          },
+          "300": {
+            "n": 2,
+            "censored": 0,
+            "continued": 1,
+            "flat": 0,
+            "reversed": 1,
+            "median_ticks": 4.5,
+            "q25": -1.0,
+            "q75": -1.0,
+            "min": -1.0,
+            "max": 10.0
+          },
+          "600": {
+            "n": 2,
+            "censored": 0,
+            "continued": 2,
+            "flat": 0,
+            "reversed": 0,
+            "median_ticks": 6.75,
+            "q25": 5.0,
+            "q75": 5.0,
+            "min": 5.0,
+            "max": 8.5
+          }
+        }
+      },
+      "control": {
+        "label": "same hour, recent selling, outside stack",
+        "events": 7,
+        "overlap_clusters_600s": 3,
+        "recent_sell": 7,
+        "recent_buy": 0,
+        "horizons": {
+          "1": {
+            "n": 7,
+            "censored": 0,
+            "continued": 3,
+            "flat": 1,
+            "reversed": 3,
+            "median_ticks": -0.0,
+            "q25": -0.5,
+            "q75": 1.0,
+            "min": -1.0,
+            "max": 1.5
+          },
+          "5": {
+            "n": 7,
+            "censored": 0,
+            "continued": 4,
+            "flat": 2,
+            "reversed": 1,
+            "median_ticks": 0.5,
+            "q25": -0.0,
+            "q75": 1.0,
+            "min": -2.0,
+            "max": 1.5
+          },
+          "20": {
+            "n": 7,
+            "censored": 0,
+            "continued": 5,
+            "flat": 1,
+            "reversed": 1,
+            "median_ticks": 1.5,
+            "q25": -0.0,
+            "q75": 2.0,
+            "min": -0.5,
+            "max": 2.0
+          },
+          "60": {
+            "n": 7,
+            "censored": 0,
+            "continued": 7,
+            "flat": 0,
+            "reversed": 0,
+            "median_ticks": 3.0,
+            "q25": 1.0,
+            "q75": 3.0,
+            "min": 1.0,
+            "max": 6.0
+          },
+          "120": {
+            "n": 7,
+            "censored": 0,
+            "continued": 6,
+            "flat": 0,
+            "reversed": 1,
+            "median_ticks": 3.0,
+            "q25": 1.0,
+            "q75": 3.0,
+            "min": -1.0,
+            "max": 6.0
+          },
+          "300": {
+            "n": 7,
+            "censored": 0,
+            "continued": 5,
+            "flat": 1,
+            "reversed": 1,
+            "median_ticks": 4.0,
+            "q25": -0.0,
+            "q75": 4.0,
+            "min": -1.0,
+            "max": 5.5
+          },
+          "600": {
+            "n": 7,
+            "censored": 0,
+            "continued": 5,
+            "flat": 1,
+            "reversed": 1,
+            "median_ticks": 6.0,
+            "q25": -0.0,
+            "q75": 6.0,
+            "min": -5.0,
+            "max": 14.0
+          }
+        }
+      }
+    },
+    "18": {
+      "stack": {
+        "label": "stack",
+        "events": 4,
+        "overlap_clusters_600s": 2,
+        "recent_sell": 4,
+        "recent_buy": 0,
+        "horizons": {
+          "1": {
+            "n": 4,
+            "censored": 0,
+            "continued": 2,
+            "flat": 0,
+            "reversed": 2,
+            "median_ticks": -0.25,
+            "q25": -1.0,
+            "q75": 0.5,
+            "min": -1.0,
+            "max": 1.0
+          },
+          "5": {
+            "n": 4,
+            "censored": 0,
+            "continued": 1,
+            "flat": 1,
+            "reversed": 2,
+            "median_ticks": -0.25,
+            "q25": -4.0,
+            "q75": -0.0,
+            "min": -4.0,
+            "max": 1.5
+          },
+          "20": {
+            "n": 4,
+            "censored": 0,
+            "continued": 0,
+            "flat": 1,
+            "reversed": 3,
+            "median_ticks": -1.75,
+            "q25": -3.0,
+            "q75": -0.5,
+            "min": -3.0,
+            "max": -0.0
+          },
+          "60": {
+            "n": 4,
+            "censored": 0,
+            "continued": 1,
+            "flat": 0,
+            "reversed": 3,
+            "median_ticks": -1.5,
+            "q25": -3.0,
+            "q75": -1.0,
+            "min": -3.0,
+            "max": 4.0
+          },
+          "120": {
+            "n": 4,
+            "censored": 0,
+            "continued": 2,
+            "flat": 0,
+            "reversed": 2,
+            "median_ticks": 0.0,
+            "q25": -3.0,
+            "q75": 1.0,
+            "min": -3.0,
+            "max": 8.5
+          },
+          "300": {
+            "n": 4,
+            "censored": 0,
+            "continued": 3,
+            "flat": 0,
+            "reversed": 1,
+            "median_ticks": 2.5,
+            "q25": -1.5,
+            "q75": 4.0,
+            "min": -1.5,
+            "max": 6.0
+          },
+          "600": {
+            "n": 4,
+            "censored": 0,
+            "continued": 2,
+            "flat": 0,
+            "reversed": 2,
+            "median_ticks": 0.0,
+            "q25": -6.5,
+            "q75": 1.0,
+            "min": -6.5,
+            "max": 3.0
+          }
+        }
+      },
+      "control": {
+        "label": "same hour, recent selling, outside stack",
+        "events": 21,
+        "overlap_clusters_600s": 3,
+        "recent_sell": 21,
+        "recent_buy": 0,
+        "horizons": {
+          "1": {
+            "n": 21,
+            "censored": 0,
+            "continued": 9,
+            "flat": 8,
+            "reversed": 4,
+            "median_ticks": -0.0,
+            "q25": -0.0,
+            "q75": 1.0,
+            "min": -1.0,
+            "max": 2.0
+          },
+          "5": {
+            "n": 21,
+            "censored": 0,
+            "continued": 8,
+            "flat": 8,
+            "reversed": 5,
+            "median_ticks": -0.0,
+            "q25": -0.0,
+            "q75": 1.0,
+            "min": -2.0,
+            "max": 2.0
+          },
+          "20": {
+            "n": 21,
+            "censored": 0,
+            "continued": 8,
+            "flat": 7,
+            "reversed": 6,
+            "median_ticks": -0.0,
+            "q25": -0.5,
+            "q75": 1.0,
+            "min": -2.0,
+            "max": 4.0
+          },
+          "60": {
+            "n": 21,
+            "censored": 0,
+            "continued": 6,
+            "flat": 3,
+            "reversed": 12,
+            "median_ticks": -1.0,
+            "q25": -6.0,
+            "q75": 1.0,
+            "min": -9.0,
+            "max": 3.0
+          },
+          "120": {
+            "n": 21,
+            "censored": 0,
+            "continued": 8,
+            "flat": 1,
+            "reversed": 12,
+            "median_ticks": -5.0,
+            "q25": -8.0,
+            "q75": 1.0,
+            "min": -10.0,
+            "max": 5.0
+          },
+          "300": {
+            "n": 21,
+            "censored": 0,
+            "continued": 4,
+            "flat": 3,
+            "reversed": 14,
+            "median_ticks": -3.0,
+            "q25": -6.0,
+            "q75": -0.0,
+            "min": -17.0,
+            "max": 7.5
+          },
+          "600": {
+            "n": 21,
+            "censored": 0,
+            "continued": 5,
+            "flat": 2,
+            "reversed": 14,
+            "median_ticks": -5.5,
+            "q25": -7.0,
+            "q75": -0.0,
+            "min": -15.0,
+            "max": 9.0
+          }
+        }
+      }
+    },
+    "19": {
+      "stack": {
+        "label": "stack",
+        "events": 1,
+        "overlap_clusters_600s": 1,
+        "recent_sell": 1,
+        "recent_buy": 0,
+        "horizons": {
+          "1": {
+            "n": 1,
+            "censored": 0,
+            "continued": 0,
+            "flat": 1,
+            "reversed": 0,
+            "median_ticks": -0.0,
+            "q25": -0.0,
+            "q75": -0.0,
+            "min": -0.0,
+            "max": -0.0
+          },
+          "5": {
+            "n": 1,
+            "censored": 0,
+            "continued": 1,
+            "flat": 0,
+            "reversed": 0,
+            "median_ticks": 1.0,
+            "q25": 1.0,
+            "q75": 1.0,
+            "min": 1.0,
+            "max": 1.0
+          },
+          "20": {
+            "n": 1,
+            "censored": 0,
+            "continued": 1,
+            "flat": 0,
+            "reversed": 0,
+            "median_ticks": 1.0,
+            "q25": 1.0,
+            "q75": 1.0,
+            "min": 1.0,
+            "max": 1.0
+          },
+          "60": {
+            "n": 1,
+            "censored": 0,
+            "continued": 0,
+            "flat": 1,
+            "reversed": 0,
+            "median_ticks": -0.0,
+            "q25": -0.0,
+            "q75": -0.0,
+            "min": -0.0,
+            "max": -0.0
+          },
+          "120": {
+            "n": 1,
+            "censored": 0,
+            "continued": 0,
+            "flat": 0,
+            "reversed": 1,
+            "median_ticks": -1.0,
+            "q25": -1.0,
+            "q75": -1.0,
+            "min": -1.0,
+            "max": -1.0
+          },
+          "300": {
+            "n": 1,
+            "censored": 0,
+            "continued": 0,
+            "flat": 1,
+            "reversed": 0,
+            "median_ticks": -0.0,
+            "q25": -0.0,
+            "q75": -0.0,
+            "min": -0.0,
+            "max": -0.0
+          },
+          "600": {
+            "n": 1,
+            "censored": 0,
+            "continued": 0,
+            "flat": 0,
+            "reversed": 1,
+            "median_ticks": -5.0,
+            "q25": -5.0,
+            "q75": -5.0,
+            "min": -5.0,
+            "max": -5.0
+          }
+        }
+      },
+      "control": {
+        "label": "same hour, recent selling, outside stack",
+        "events": 1,
+        "overlap_clusters_600s": 1,
+        "recent_sell": 1,
+        "recent_buy": 0,
+        "horizons": {
+          "1": {
+            "n": 1,
+            "censored": 0,
+            "continued": 0,
+            "flat": 0,
+            "reversed": 1,
+            "median_ticks": -1.0,
+            "q25": -1.0,
+            "q75": -1.0,
+            "min": -1.0,
+            "max": -1.0
+          },
+          "5": {
+            "n": 1,
+            "censored": 0,
+            "continued": 0,
+            "flat": 0,
+            "reversed": 1,
+            "median_ticks": -1.0,
+            "q25": -1.0,
+            "q75": -1.0,
+            "min": -1.0,
+            "max": -1.0
+          },
+          "20": {
+            "n": 1,
+            "censored": 0,
+            "continued": 0,
+            "flat": 0,
+            "reversed": 1,
+            "median_ticks": -1.0,
+            "q25": -1.0,
+            "q75": -1.0,
+            "min": -1.0,
+            "max": -1.0
+          },
+          "60": {
+            "n": 1,
+            "censored": 0,
+            "continued": 0,
+            "flat": 0,
+            "reversed": 1,
+            "median_ticks": -1.5,
+            "q25": -1.5,
+            "q75": -1.5,
+            "min": -1.5,
+            "max": -1.5
+          },
+          "120": {
+            "n": 1,
+            "censored": 0,
+            "continued": 0,
+            "flat": 0,
+            "reversed": 1,
+            "median_ticks": -1.0,
+            "q25": -1.0,
+            "q75": -1.0,
+            "min": -1.0,
+            "max": -1.0
+          },
+          "300": {
+            "n": 1,
+            "censored": 0,
+            "continued": 0,
+            "flat": 1,
+            "reversed": 0,
+            "median_ticks": -0.0,
+            "q25": -0.0,
+            "q75": -0.0,
+            "min": -0.0,
+            "max": -0.0
+          },
+          "600": {
+            "n": 1,
+            "censored": 0,
+            "continued": 0,
+            "flat": 0,
+            "reversed": 1,
+            "median_ticks": -6.0,
+            "q25": -6.0,
+            "q75": -6.0,
+            "min": -6.0,
+            "max": -6.0
+          }
+        }
+      }
+    }
+  },
+  "pre_start_displacement": {
+    "stack50": {
+      "n": 40,
+      "median_prior_1s_ticks_in_recent_direction": -0.0,
+      "already_moved_with_recent_flow": 14,
+      "flat": 20,
+      "against": 6
+    },
+    "inverse": {
+      "n": 2,
+      "median_prior_1s_ticks_in_recent_direction": 0.25,
+      "already_moved_with_recent_flow": 1,
+      "flat": 1,
+      "against": 0
+    },
+    "eligible": {
+      "n": 425,
+      "median_prior_1s_ticks_in_recent_direction": 1.0,
+      "already_moved_with_recent_flow": 260,
+      "flat": 145,
+      "against": 20
+    }
+  },
+  "note": "Ticks are 0.001 price units; positive = midpoint continued in the recent 1 s/5 s flow direction. Outcomes end at boundary + horizon using the last completed group; censored when beyond the retained tape."
+}

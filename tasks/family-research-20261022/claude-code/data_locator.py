@@ -49,7 +49,10 @@ def read_bytes(path):
     p = SCRATCH / e["path"]
     if p.exists():
         return _verify(e, p.read_bytes())
-    data = subprocess.check_output(["git", "-C", str(ROOT), "show", f"{e['markets_commit']}:{e['path']}"])
+    if e.get("markets_commit"):
+        data = subprocess.check_output(["git", "-C", str(ROOT), "show", f"{e['markets_commit']}:{e['path']}"])
+    else:
+        data = subprocess.check_output(["git", "-C", os.environ.get("MARKETS_DATA_CLONE", "/home/user/markets-data"), "show", f"{e['markets_data_commit']}:{e['path']}"])
     _verify(e, data)
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_bytes(data)

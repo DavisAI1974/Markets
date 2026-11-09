@@ -1,0 +1,1208 @@
+{
+  "session": "oct03",
+  "candidates_in_file": 833,
+  "finalization_only": [
+    "dip-19633-1696366763"
+  ],
+  "join": {
+    "matched_by_clock_and_cursor": 830,
+    "matched_by_cursor_clock_tie": 2
+  },
+  "recognitions": 832,
+  "polarity_counts": {
+    "1": 435,
+    "-1": 397
+  },
+  "flow_state_counts": {
+    "undefined_at_emission": 341,
+    "same_direction_at_emission": 257,
+    "opposite_direction_at_emission": 208,
+    "balanced_at_emission": 26
+  },
+  "recognition_touch_counts": {
+    "aligned": 412,
+    "opposed": 338,
+    "equal": 82
+  },
+  "arms": {
+    "baseline": {
+      "label": "all recognitions, oriented to birth polarity",
+      "events": 832,
+      "horizons": {
+        "1": {
+          "n": 832,
+          "with_birth": 78,
+          "flat": 683,
+          "against_birth": 71,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "5": {
+          "n": 832,
+          "with_birth": 123,
+          "flat": 578,
+          "against_birth": 131,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "20": {
+          "n": 832,
+          "with_birth": 213,
+          "flat": 399,
+          "against_birth": 220,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "60": {
+          "n": 832,
+          "with_birth": 260,
+          "flat": 260,
+          "against_birth": 312,
+          "median_ticks": -0.0,
+          "censored": 0
+        },
+        "300": {
+          "n": 830,
+          "with_birth": 356,
+          "flat": 110,
+          "against_birth": 364,
+          "median_ticks": 0.0,
+          "censored": 2
+        }
+      }
+    },
+    "flow/same_direction_at_emission": {
+      "label": "flow at recognition same_direction_at_emission",
+      "events": 257,
+      "horizons": {
+        "1": {
+          "n": 257,
+          "with_birth": 26,
+          "flat": 208,
+          "against_birth": 23,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "5": {
+          "n": 257,
+          "with_birth": 43,
+          "flat": 169,
+          "against_birth": 45,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "20": {
+          "n": 257,
+          "with_birth": 79,
+          "flat": 102,
+          "against_birth": 76,
+          "median_ticks": -0.0,
+          "censored": 0
+        },
+        "60": {
+          "n": 257,
+          "with_birth": 89,
+          "flat": 61,
+          "against_birth": 107,
+          "median_ticks": -0.0,
+          "censored": 0
+        },
+        "300": {
+          "n": 257,
+          "with_birth": 114,
+          "flat": 26,
+          "against_birth": 117,
+          "median_ticks": -0.0,
+          "censored": 0
+        }
+      }
+    },
+    "flow/opposite_direction_at_emission": {
+      "label": "flow at recognition opposite_direction_at_emission",
+      "events": 208,
+      "horizons": {
+        "1": {
+          "n": 208,
+          "with_birth": 22,
+          "flat": 167,
+          "against_birth": 19,
+          "median_ticks": -0.0,
+          "censored": 0
+        },
+        "5": {
+          "n": 208,
+          "with_birth": 40,
+          "flat": 130,
+          "against_birth": 38,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "20": {
+          "n": 208,
+          "with_birth": 68,
+          "flat": 82,
+          "against_birth": 58,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "60": {
+          "n": 208,
+          "with_birth": 83,
+          "flat": 50,
+          "against_birth": 75,
+          "median_ticks": -0.0,
+          "censored": 0
+        },
+        "300": {
+          "n": 207,
+          "with_birth": 95,
+          "flat": 21,
+          "against_birth": 91,
+          "median_ticks": 0.0,
+          "censored": 1
+        }
+      }
+    },
+    "flow/balanced_at_emission": {
+      "label": "flow at recognition balanced_at_emission",
+      "events": 26,
+      "horizons": {
+        "1": {
+          "n": 26,
+          "with_birth": 2,
+          "flat": 24,
+          "against_birth": 0,
+          "median_ticks": -0.0,
+          "censored": 0
+        },
+        "5": {
+          "n": 26,
+          "with_birth": 4,
+          "flat": 15,
+          "against_birth": 7,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "20": {
+          "n": 26,
+          "with_birth": 6,
+          "flat": 11,
+          "against_birth": 9,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "60": {
+          "n": 26,
+          "with_birth": 6,
+          "flat": 6,
+          "against_birth": 14,
+          "median_ticks": -0.5,
+          "censored": 0
+        },
+        "300": {
+          "n": 26,
+          "with_birth": 9,
+          "flat": 0,
+          "against_birth": 17,
+          "median_ticks": -1.5,
+          "censored": 0
+        }
+      }
+    },
+    "flow/undefined_at_emission": {
+      "label": "flow at recognition undefined_at_emission",
+      "events": 341,
+      "horizons": {
+        "1": {
+          "n": 341,
+          "with_birth": 28,
+          "flat": 284,
+          "against_birth": 29,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "5": {
+          "n": 341,
+          "with_birth": 36,
+          "flat": 264,
+          "against_birth": 41,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "20": {
+          "n": 341,
+          "with_birth": 60,
+          "flat": 204,
+          "against_birth": 77,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "60": {
+          "n": 341,
+          "with_birth": 82,
+          "flat": 143,
+          "against_birth": 116,
+          "median_ticks": -0.0,
+          "censored": 0
+        },
+        "300": {
+          "n": 340,
+          "with_birth": 138,
+          "flat": 63,
+          "against_birth": 139,
+          "median_ticks": 0.0,
+          "censored": 1
+        }
+      }
+    },
+    "book/aligned": {
+      "label": "recognition touch size aligned to birth polarity",
+      "events": 412,
+      "horizons": {
+        "1": {
+          "n": 412,
+          "with_birth": 60,
+          "flat": 333,
+          "against_birth": 19,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "5": {
+          "n": 412,
+          "with_birth": 88,
+          "flat": 285,
+          "against_birth": 39,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "20": {
+          "n": 412,
+          "with_birth": 136,
+          "flat": 184,
+          "against_birth": 92,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "60": {
+          "n": 412,
+          "with_birth": 147,
+          "flat": 125,
+          "against_birth": 140,
+          "median_ticks": -0.0,
+          "censored": 0
+        },
+        "300": {
+          "n": 411,
+          "with_birth": 176,
+          "flat": 60,
+          "against_birth": 175,
+          "median_ticks": 0.0,
+          "censored": 1
+        }
+      }
+    },
+    "book/opposed": {
+      "label": "recognition touch size opposed to birth polarity",
+      "events": 338,
+      "horizons": {
+        "1": {
+          "n": 338,
+          "with_birth": 16,
+          "flat": 280,
+          "against_birth": 42,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "5": {
+          "n": 338,
+          "with_birth": 31,
+          "flat": 234,
+          "against_birth": 73,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "20": {
+          "n": 338,
+          "with_birth": 65,
+          "flat": 168,
+          "against_birth": 105,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "60": {
+          "n": 338,
+          "with_birth": 93,
+          "flat": 106,
+          "against_birth": 139,
+          "median_ticks": -0.0,
+          "censored": 0
+        },
+        "300": {
+          "n": 337,
+          "with_birth": 143,
+          "flat": 40,
+          "against_birth": 154,
+          "median_ticks": 0.0,
+          "censored": 1
+        }
+      }
+    },
+    "book/equal": {
+      "label": "recognition touch size equal to birth polarity",
+      "events": 82,
+      "horizons": {
+        "1": {
+          "n": 82,
+          "with_birth": 2,
+          "flat": 70,
+          "against_birth": 10,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "5": {
+          "n": 82,
+          "with_birth": 4,
+          "flat": 59,
+          "against_birth": 19,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "20": {
+          "n": 82,
+          "with_birth": 12,
+          "flat": 47,
+          "against_birth": 23,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "60": {
+          "n": 82,
+          "with_birth": 20,
+          "flat": 29,
+          "against_birth": 33,
+          "median_ticks": -0.0,
+          "censored": 0
+        },
+        "300": {
+          "n": 82,
+          "with_birth": 37,
+          "flat": 10,
+          "against_birth": 35,
+          "median_ticks": 0.0,
+          "censored": 0
+        }
+      }
+    },
+    "both/same_direction_at_emission/aligned": {
+      "label": "flow same_direction_at_emission and touch aligned",
+      "events": 141,
+      "horizons": {
+        "1": {
+          "n": 141,
+          "with_birth": 23,
+          "flat": 112,
+          "against_birth": 6,
+          "median_ticks": -0.0,
+          "censored": 0
+        },
+        "5": {
+          "n": 141,
+          "with_birth": 36,
+          "flat": 89,
+          "against_birth": 16,
+          "median_ticks": -0.0,
+          "censored": 0
+        },
+        "20": {
+          "n": 141,
+          "with_birth": 59,
+          "flat": 49,
+          "against_birth": 33,
+          "median_ticks": -0.0,
+          "censored": 0
+        },
+        "60": {
+          "n": 141,
+          "with_birth": 57,
+          "flat": 30,
+          "against_birth": 54,
+          "median_ticks": -0.0,
+          "censored": 0
+        },
+        "300": {
+          "n": 141,
+          "with_birth": 70,
+          "flat": 14,
+          "against_birth": 57,
+          "median_ticks": -0.0,
+          "censored": 0
+        }
+      }
+    },
+    "both/same_direction_at_emission/opposed": {
+      "label": "flow same_direction_at_emission and touch opposed",
+      "events": 94,
+      "horizons": {
+        "1": {
+          "n": 94,
+          "with_birth": 3,
+          "flat": 78,
+          "against_birth": 13,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "5": {
+          "n": 94,
+          "with_birth": 6,
+          "flat": 65,
+          "against_birth": 23,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "20": {
+          "n": 94,
+          "with_birth": 16,
+          "flat": 45,
+          "against_birth": 33,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "60": {
+          "n": 94,
+          "with_birth": 27,
+          "flat": 27,
+          "against_birth": 40,
+          "median_ticks": -0.0,
+          "censored": 0
+        },
+        "300": {
+          "n": 94,
+          "with_birth": 35,
+          "flat": 11,
+          "against_birth": 48,
+          "median_ticks": -0.5,
+          "censored": 0
+        }
+      }
+    },
+    "both/opposite_direction_at_emission/aligned": {
+      "label": "flow opposite_direction_at_emission and touch aligned",
+      "events": 90,
+      "horizons": {
+        "1": {
+          "n": 90,
+          "with_birth": 15,
+          "flat": 69,
+          "against_birth": 6,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "5": {
+          "n": 90,
+          "with_birth": 24,
+          "flat": 58,
+          "against_birth": 8,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "20": {
+          "n": 90,
+          "with_birth": 39,
+          "flat": 30,
+          "against_birth": 21,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "60": {
+          "n": 90,
+          "with_birth": 41,
+          "flat": 23,
+          "against_birth": 26,
+          "median_ticks": -0.0,
+          "censored": 0
+        },
+        "300": {
+          "n": 89,
+          "with_birth": 37,
+          "flat": 11,
+          "against_birth": 41,
+          "median_ticks": -0.0,
+          "censored": 1
+        }
+      }
+    },
+    "both/opposite_direction_at_emission/opposed": {
+      "label": "flow opposite_direction_at_emission and touch opposed",
+      "events": 99,
+      "horizons": {
+        "1": {
+          "n": 99,
+          "with_birth": 6,
+          "flat": 82,
+          "against_birth": 11,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "5": {
+          "n": 99,
+          "with_birth": 15,
+          "flat": 62,
+          "against_birth": 22,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "20": {
+          "n": 99,
+          "with_birth": 27,
+          "flat": 42,
+          "against_birth": 30,
+          "median_ticks": -0.0,
+          "censored": 0
+        },
+        "60": {
+          "n": 99,
+          "with_birth": 34,
+          "flat": 23,
+          "against_birth": 42,
+          "median_ticks": -0.0,
+          "censored": 0
+        },
+        "300": {
+          "n": 99,
+          "with_birth": 51,
+          "flat": 7,
+          "against_birth": 41,
+          "median_ticks": 0.5,
+          "censored": 0
+        }
+      }
+    },
+    "both/undefined_at_emission/aligned": {
+      "label": "flow undefined_at_emission and touch aligned",
+      "events": 168,
+      "horizons": {
+        "1": {
+          "n": 168,
+          "with_birth": 21,
+          "flat": 140,
+          "against_birth": 7,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "5": {
+          "n": 168,
+          "with_birth": 25,
+          "flat": 131,
+          "against_birth": 12,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "20": {
+          "n": 168,
+          "with_birth": 36,
+          "flat": 97,
+          "against_birth": 35,
+          "median_ticks": -0.0,
+          "censored": 0
+        },
+        "60": {
+          "n": 168,
+          "with_birth": 46,
+          "flat": 68,
+          "against_birth": 54,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "300": {
+          "n": 168,
+          "with_birth": 64,
+          "flat": 35,
+          "against_birth": 69,
+          "median_ticks": 0.0,
+          "censored": 0
+        }
+      }
+    },
+    "both/undefined_at_emission/opposed": {
+      "label": "flow undefined_at_emission and touch opposed",
+      "events": 133,
+      "horizons": {
+        "1": {
+          "n": 133,
+          "with_birth": 6,
+          "flat": 109,
+          "against_birth": 18,
+          "median_ticks": -0.0,
+          "censored": 0
+        },
+        "5": {
+          "n": 133,
+          "with_birth": 9,
+          "flat": 99,
+          "against_birth": 25,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "20": {
+          "n": 133,
+          "with_birth": 18,
+          "flat": 78,
+          "against_birth": 37,
+          "median_ticks": -0.0,
+          "censored": 0
+        },
+        "60": {
+          "n": 133,
+          "with_birth": 29,
+          "flat": 54,
+          "against_birth": 50,
+          "median_ticks": -0.0,
+          "censored": 0
+        },
+        "300": {
+          "n": 132,
+          "with_birth": 53,
+          "flat": 22,
+          "against_birth": 57,
+          "median_ticks": -0.0,
+          "censored": 1
+        }
+      }
+    },
+    "prebirth_depth/aligned": {
+      "label": "prebirth displayed depth aligned (the existing retrospective stack)",
+      "events": 0,
+      "horizons": {
+        "1": {
+          "n": 0
+        },
+        "5": {
+          "n": 0
+        },
+        "20": {
+          "n": 0
+        },
+        "60": {
+          "n": 0
+        },
+        "300": {
+          "n": 0
+        }
+      }
+    },
+    "prebirth_depth/opposed": {
+      "label": "prebirth displayed depth opposed (the existing retrospective stack)",
+      "events": 0,
+      "horizons": {
+        "1": {
+          "n": 0
+        },
+        "5": {
+          "n": 0
+        },
+        "20": {
+          "n": 0
+        },
+        "60": {
+          "n": 0
+        },
+        "300": {
+          "n": 0
+        }
+      }
+    },
+    "prebirth_depth/balanced": {
+      "label": "prebirth displayed depth balanced (the existing retrospective stack)",
+      "events": 0,
+      "horizons": {
+        "1": {
+          "n": 0
+        },
+        "5": {
+          "n": 0
+        },
+        "20": {
+          "n": 0
+        },
+        "60": {
+          "n": 0
+        },
+        "300": {
+          "n": 0
+        }
+      }
+    },
+    "orientation/SAME": {
+      "label": "orientation SAME",
+      "events": 0,
+      "horizons": {
+        "1": {
+          "n": 0
+        },
+        "5": {
+          "n": 0
+        },
+        "20": {
+          "n": 0
+        },
+        "60": {
+          "n": 0
+        },
+        "300": {
+          "n": 0
+        }
+      }
+    },
+    "orientation/FLIP": {
+      "label": "orientation FLIP",
+      "events": 0,
+      "horizons": {
+        "1": {
+          "n": 0
+        },
+        "5": {
+          "n": 0
+        },
+        "20": {
+          "n": 0
+        },
+        "60": {
+          "n": 0
+        },
+        "300": {
+          "n": 0
+        }
+      }
+    },
+    "realised_by_recognition/same": {
+      "label": "midpoint already moved same relative to birth by recognition",
+      "events": 0,
+      "horizons": {
+        "1": {
+          "n": 0
+        },
+        "5": {
+          "n": 0
+        },
+        "20": {
+          "n": 0
+        },
+        "60": {
+          "n": 0
+        },
+        "300": {
+          "n": 0
+        }
+      }
+    },
+    "realised_by_recognition/opposite": {
+      "label": "midpoint already moved opposite relative to birth by recognition",
+      "events": 0,
+      "horizons": {
+        "1": {
+          "n": 0
+        },
+        "5": {
+          "n": 0
+        },
+        "20": {
+          "n": 0
+        },
+        "60": {
+          "n": 0
+        },
+        "300": {
+          "n": 0
+        }
+      }
+    },
+    "realised_by_recognition/flat": {
+      "label": "midpoint already moved flat relative to birth by recognition",
+      "events": 0,
+      "horizons": {
+        "1": {
+          "n": 0
+        },
+        "5": {
+          "n": 0
+        },
+        "20": {
+          "n": 0
+        },
+        "60": {
+          "n": 0
+        },
+        "300": {
+          "n": 0
+        }
+      }
+    },
+    "birth_lots/one_lot": {
+      "label": "birth window one_lot",
+      "events": 379,
+      "horizons": {
+        "1": {
+          "n": 379,
+          "with_birth": 32,
+          "flat": 308,
+          "against_birth": 39,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "5": {
+          "n": 379,
+          "with_birth": 49,
+          "flat": 271,
+          "against_birth": 59,
+          "median_ticks": -0.0,
+          "censored": 0
+        },
+        "20": {
+          "n": 379,
+          "with_birth": 91,
+          "flat": 203,
+          "against_birth": 85,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "60": {
+          "n": 379,
+          "with_birth": 115,
+          "flat": 132,
+          "against_birth": 132,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "300": {
+          "n": 378,
+          "with_birth": 165,
+          "flat": 53,
+          "against_birth": 160,
+          "median_ticks": 0.0,
+          "censored": 1
+        }
+      }
+    },
+    "birth_lots/multiple_lots": {
+      "label": "birth window multiple_lots",
+      "events": 453,
+      "horizons": {
+        "1": {
+          "n": 453,
+          "with_birth": 46,
+          "flat": 375,
+          "against_birth": 32,
+          "median_ticks": -0.0,
+          "censored": 0
+        },
+        "5": {
+          "n": 453,
+          "with_birth": 74,
+          "flat": 307,
+          "against_birth": 72,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "20": {
+          "n": 453,
+          "with_birth": 122,
+          "flat": 196,
+          "against_birth": 135,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "60": {
+          "n": 453,
+          "with_birth": 145,
+          "flat": 128,
+          "against_birth": 180,
+          "median_ticks": -0.0,
+          "censored": 0
+        },
+        "300": {
+          "n": 452,
+          "with_birth": 191,
+          "flat": 57,
+          "against_birth": 204,
+          "median_ticks": 0.0,
+          "censored": 1
+        }
+      }
+    },
+    "polarity/buy_birth": {
+      "label": "buy_birth",
+      "events": 435,
+      "horizons": {
+        "1": {
+          "n": 435,
+          "with_birth": 38,
+          "flat": 365,
+          "against_birth": 32,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "5": {
+          "n": 435,
+          "with_birth": 67,
+          "flat": 304,
+          "against_birth": 64,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "20": {
+          "n": 435,
+          "with_birth": 118,
+          "flat": 197,
+          "against_birth": 120,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "60": {
+          "n": 435,
+          "with_birth": 147,
+          "flat": 131,
+          "against_birth": 157,
+          "median_ticks": 0.0,
+          "censored": 0
+        },
+        "300": {
+          "n": 434,
+          "with_birth": 197,
+          "flat": 55,
+          "against_birth": 182,
+          "median_ticks": 0.0,
+          "censored": 1
+        }
+      }
+    },
+    "polarity/sell_birth": {
+      "label": "sell_birth",
+      "events": 397,
+      "horizons": {
+        "1": {
+          "n": 397,
+          "with_birth": 40,
+          "flat": 318,
+          "against_birth": 39,
+          "median_ticks": -0.0,
+          "censored": 0
+        },
+        "5": {
+          "n": 397,
+          "with_birth": 56,
+          "flat": 274,
+          "against_birth": 67,
+          "median_ticks": -0.0,
+          "censored": 0
+        },
+        "20": {
+          "n": 397,
+          "with_birth": 95,
+          "flat": 202,
+          "against_birth": 100,
+          "median_ticks": -0.0,
+          "censored": 0
+        },
+        "60": {
+          "n": 397,
+          "with_birth": 113,
+          "flat": 129,
+          "against_birth": 155,
+          "median_ticks": -0.0,
+          "censored": 0
+        },
+        "300": {
+          "n": 396,
+          "with_birth": 159,
+          "flat": 55,
+          "against_birth": 182,
+          "median_ticks": -0.0,
+          "censored": 1
+        }
+      }
+    }
+  },
+  "day_reference": {
+    "all": {
+      "label": "all recognitions, unoriented",
+      "events": 832,
+      "horizons": {
+        "1": {
+          "n": 832,
+          "up": 77,
+          "flat": 683,
+          "down": 72,
+          "median_ticks": 0.0
+        },
+        "5": {
+          "n": 832,
+          "up": 134,
+          "flat": 578,
+          "down": 120,
+          "median_ticks": 0.0
+        },
+        "20": {
+          "n": 832,
+          "up": 218,
+          "flat": 399,
+          "down": 215,
+          "median_ticks": 0.0
+        },
+        "60": {
+          "n": 832,
+          "up": 302,
+          "flat": 260,
+          "down": 270,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 830,
+          "up": 379,
+          "flat": 110,
+          "down": 341,
+          "median_ticks": 0.0
+        }
+      }
+    },
+    "touch_imbalance_control_all_active_seconds": {
+      "touch_imbalance": {
+        "1": {
+          "with_heavier_side": 2187,
+          "flat": 22619,
+          "against_heavier_side": 1058
+        },
+        "5": {
+          "with_heavier_side": 6522,
+          "flat": 15008,
+          "against_heavier_side": 4334
+        },
+        "20": {
+          "with_heavier_side": 10006,
+          "flat": 7729,
+          "against_heavier_side": 8129
+        },
+        "60": {
+          "flat": 4125,
+          "against_heavier_side": 10259,
+          "with_heavier_side": 11480
+        },
+        "300": {
+          "against_heavier_side": 11505,
+          "with_heavier_side": 12615,
+          "flat": 1744
+        }
+      },
+      "touch_equal": {
+        "1": {
+          "flat": 1262,
+          "up": 82,
+          "down": 95
+        },
+        "5": {
+          "flat": 807,
+          "up": 324,
+          "down": 308
+        },
+        "20": {
+          "flat": 401,
+          "up": 557,
+          "down": 481
+        },
+        "60": {
+          "up": 690,
+          "down": 567,
+          "flat": 182
+        },
+        "300": {
+          "up": 833,
+          "down": 533,
+          "flat": 73
+        }
+      },
+      "seconds": 27303
+    },
+    "buy_birth": {
+      "label": "buy births, unoriented",
+      "events": 435,
+      "horizons": {
+        "1": {
+          "n": 435,
+          "up": 38,
+          "flat": 365,
+          "down": 32,
+          "median_ticks": 0.0
+        },
+        "5": {
+          "n": 435,
+          "up": 67,
+          "flat": 304,
+          "down": 64,
+          "median_ticks": 0.0
+        },
+        "20": {
+          "n": 435,
+          "up": 118,
+          "flat": 197,
+          "down": 120,
+          "median_ticks": 0.0
+        },
+        "60": {
+          "n": 435,
+          "up": 147,
+          "flat": 131,
+          "down": 157,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 434,
+          "up": 197,
+          "flat": 55,
+          "down": 182,
+          "median_ticks": 0.0
+        }
+      }
+    },
+    "sell_birth": {
+      "label": "sell births, unoriented",
+      "events": 397,
+      "horizons": {
+        "1": {
+          "n": 397,
+          "up": 39,
+          "flat": 318,
+          "down": 40,
+          "median_ticks": 0.0
+        },
+        "5": {
+          "n": 397,
+          "up": 67,
+          "flat": 274,
+          "down": 56,
+          "median_ticks": 0.0
+        },
+        "20": {
+          "n": 397,
+          "up": 100,
+          "flat": 202,
+          "down": 95,
+          "median_ticks": 0.0
+        },
+        "60": {
+          "n": 397,
+          "up": 155,
+          "flat": 129,
+          "down": 113,
+          "median_ticks": 0.0
+        },
+        "300": {
+          "n": 396,
+          "up": 182,
+          "flat": 55,
+          "down": 159,
+          "median_ticks": 0.0
+        }
+      }
+    }
+  },
+  "note": "Ticks of 0.001. Reference = the recognition close quote itself; later quotes from the group export at recognition receive clock + horizon, last completed group. Positive = moved with the birth polarity."
+}
