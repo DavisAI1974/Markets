@@ -44,3 +44,13 @@ Raw action quote reconstruction checks 583,687 usable closes against saved book 
 Workbook review found that long clock strings could be coerced to floating point by the artifact library. Builder now prefixes exact nanosecond strings for literal-text preservation and widens identifier/clock columns. CSV remains the authoritative exact observations. Nullable clocks for the two later-day finalization-only records will use pandas Int64, avoiding float conversion.
 
 Next: Part 2, replication of A/B on each archived day, full path-distance hierarchy without preset cluster count, governing-form counterexamples against both control draws and across days. Keep partial Oct 2/17 separate from full-session research.
+
+## Storage policy change received during Part 2
+
+Effective immediately, no new data, CSV/XLSX, extracted inputs, charts or bulk research outputs will be staged, committed or pushed to Markets. New code, Markdown and provenance references remain in scope. Generated artifacts stay local pending the user's markets-data repository and S3 destinations. No duplicate destination will be created. Existing published history will not be rewritten.
+
+Already published before the change:
+- `a4064816d`: Part 1A, `agent-pass/tables/20231018-*` (candidate operands, path members, paths.csv.gz, path dispositions, cases, case raw records, figure reconciliation); `agent-pass/figures/20231018-*` (36 figures); `agent-pass/research-tables.xlsx`; receipt and source manifest JSON.
+- `50e04fce5`: Part 1B, `agent-pass/tables/20231018-*` detector comparisons, missed/added lists, detected births, per-second dispositions, lag rows and detector figure reconciliation; `agent-pass/figures/20231018-lag-distributions.png`; updated workbook and source manifest.
+
+Both pushes succeeded with GitHub's repository-size warning. The index and unpublished commit range were inspected on receipt of the policy; the index is empty and no unpublished commit exists. Current generated-data changes will remain unstaged. The still-running October replication writes exclusively under agent-pass/ and will not publish artifacts. Inventory will use only local file/blob sizes, never missing-as-zero. Pending destination coordinates and immutable manifest will be linked when supplied.

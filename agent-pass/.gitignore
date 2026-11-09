@@ -2,3 +2,8 @@ cache/
 __pycache__/
 node_modules/
 *.inspect.ndjson
+tables/
+figures/
+*.xlsx
+*-receipt.json
+source-manifest.json

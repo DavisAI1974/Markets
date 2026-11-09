@@ -12,6 +12,7 @@ def native_flow(day):
     if f.exists(): return pd.read_csv(f)
     import databento as db
     G=groups(day); F=flow(day); seconds=F.second.to_numpy(); buy=np.zeros(len(F));sell=buy.copy();unknown=buy.copy()
+    gc=G.cursor.to_numpy();gt=G.receive_ns.to_numpy();gb=G.bid_raw.to_numpy();ga=G.ask_raw.to_numpy();gbs=G.bid_size.to_numpy();gas=G.ask_size.to_numpy();good=G.good.to_numpy();maxcursor=int(gc[-1])
     sources=[(day,0)] if day in ('20231002','20231017') else [(str(int(day)-1),-808453 if day=='20231003' else -841601),(day,4889 if day=='20231003' else 17375)]
     gi=0;pending=[];checks=0;orders={};levels={'B':{},'A':{}};heaps={'B':[],'A':[]}
     def remove(o):
@@ -24,7 +25,7 @@ def native_flow(day):
       b=blob(f'data/nymex_mbo/ng_v0_oct2023/NG_v0_mbo_{d}.dbn.zst',TAPE)
       for ix,r in enumerate(db.DBNStore.from_bytes(b)):
         cursor=ix+offset
-        if cursor>G.cursor.iloc[-1]:break
+        if cursor>maxcursor:break
         act,side=str(r.action),str(r.side);p,size,oid=int(r.price),int(r.size),int(r.order_id)
         if act=='T' and cursor>=0:
             bb,aa=top('B'),top('A')
@@ -39,13 +40,13 @@ def native_flow(day):
             after=(before[0],before[1],max(0,before[2]-size)) if act=='C' and before else (side,p,size) if act in ('A','M') else None
             if after and after[2]>0 and after[0] in levels:
                 s,px,q=after;orders[oid]=after;levels[s][px]=levels[s].get(px,0)+q;heapq.heappush(heaps[s],-px if s=='B' else px)
-        if cursor>=0 and gi<len(G) and cursor==G.cursor.iloc[gi]:
-            g=G.iloc[gi];bb,aa=top('B'),top('A')
-            if g.good and pd.notna(g.bid_raw) and pd.notna(g.ask_raw):
-                assert (bb,aa)==(g.bid_raw,g.ask_raw),(day,cursor,bb,aa,g.bid_raw,g.ask_raw)
-                assert (levels['B'][bb],levels['A'][aa])==(g.bid_size,g.ask_size)
+        if cursor>=0 and gi<len(G) and cursor==gc[gi]:
+            bb,aa=top('B'),top('A')
+            if good[gi] and np.isfinite(gb[gi]) and np.isfinite(ga[gi]):
+                assert (bb,aa)==(gb[gi],ga[gi]),(day,cursor,bb,aa,gb[gi],ga[gi])
+                assert (levels['B'][bb],levels['A'][aa])==(gbs[gi],gas[gi])
                 checks+=1
-            k=int(g.receive_ns//S-seconds[0])
+            k=int(gt[gi]//S-seconds[0])
             if 0<=k<len(F):
                 for cls,q in pending:{'buy':buy,'sell':sell,'unknown':unknown}[cls][k]+=q
             pending=[];gi+=1

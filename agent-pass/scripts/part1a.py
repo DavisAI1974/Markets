@@ -9,6 +9,7 @@ FIELDS=['bid','ask','bid_size','ask_size']+[a+'_'+s for a in ['add','cancel','fi
 
 def prepare(day):
     G=groups(day); R=raw(day); F=flow(day)
+    flow_index=F.set_index('second')
     gr=G.receive_ns.to_numpy(); rt=R.receive_ns.to_numpy()
     # Action volumes use containing completed group, avoiding half-applied groups.
     gi=np.searchsorted(G.cursor.to_numpy(),R.cursor.to_numpy(),side='left')
@@ -28,7 +29,7 @@ def prepare(day):
             lower=cuts-S if lo is None else lo
             out[k]=cum[np.searchsorted(t,cuts,side='right')]-cum[np.searchsorted(t,lower,side='right')]
         sec=cuts//S-1 # only fully closed seconds, no future within-second information
-        fi=F.set_index('second').reindex(sec)
+        fi=flow_index.reindex(sec)
         out['ratio']=fi.ratio.to_numpy();out['classified_lots_20']=fi.total.to_numpy()
         return out
     return G,R,F,sample
