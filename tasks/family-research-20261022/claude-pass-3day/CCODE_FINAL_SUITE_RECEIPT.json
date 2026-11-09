@@ -7,9 +7,21 @@
       "repository": "DavisAI1974/Markets",
       "branch": "claude/three-day-dipole-20261108",
       "base_commit": "beb2104",
-      "head_commit": "59f92066984935ada5693ba91a9f04fa4f2248ef",
+      "head_commit": "542f64754162de63c332e51f11e5a103fdf6e0f2",
       "folder": "tasks/family-research-20261022/claude-pass-3day/",
       "files_changed_or_added": [
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/CCODE_FINAL_SUITE_RECEIPT.json",
+          "status": "added",
+          "bytes": 51226,
+          "sha256": "14a3619efb6e6d702bd73aecdedd927c9c68d1e41e32516279b3987e6b6a97e5"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/CCODE_FINAL_SUITE_RECEIPT.md",
+          "status": "added",
+          "bytes": 6076,
+          "sha256": "9f2b5309574402e2cbc486eaa6efff64f2253bb471911d41fb716811b6b6f8c8"
+        },
         {
           "path": "tasks/family-research-20261022/claude-pass-3day/FINDINGS_TIER1_CROSSDAY_20261109.md",
           "status": "added",
@@ -561,6 +573,12 @@
           "status": "added",
           "bytes": 7263,
           "sha256": "900b79e34b3bd8b0afcc2da1563d7808d9675d630ee5f66e073e92c20885b9b2"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/x20_final_suite_receipt.py",
+          "status": "added",
+          "bytes": 13770,
+          "sha256": "1612b7422277d3d9224f4f7e5d11e7b88faba5ae3be10e5b8440f0a3d4df7cd4"
         }
       ]
     },
@@ -568,13 +586,13 @@
       "repository": "DavisAI1974/Markets",
       "branch": "codex/ng-shadow-discovery-20261108",
       "base_commit": "de084f5",
-      "head_commit": "533d58ec0a54739cf453fca8c08f51629d44c7f2",
+      "head_commit": "1a534a13d9f1b79af9e2fb9b54c6a097e1cad2c5",
       "files_changed_or_added": [
         {
           "path": "tasks/family-research-20261022/claude-code/HANDOFF_20261109.md",
-          "status": "modified",
-          "bytes": 4713,
-          "sha256": "3d978781cc3a7cd81a9a7a36b77b902b2f14f68d7f1b8f61540f28aecc335638"
+          "status": "deleted",
+          "bytes": null,
+          "sha256": null
         },
         {
           "path": "tasks/family-research-20261022/claude-code/data-manifest.json",
@@ -606,13 +624,37 @@
       "repository": "DavisAI1974/markets-data",
       "branch": "main",
       "base_commit": "993cf54",
-      "head_commit": "67b7a6afaaaa7bf77bb4048011b1da28af2875b1",
+      "head_commit": "c01caaf4f327e8fdff21e4e8b9c5153aba8604a8",
       "files_changed_or_added": [
         {
           "path": "MANIFEST.json",
           "status": "modified",
-          "bytes": 33941,
-          "sha256": "10ed226f89ed5f29ee3c5aaa9d00fc056c355b6efbc71bf5df75d2d7fc2bf3d9"
+          "bytes": 37281,
+          "sha256": "388c07942e0f49f1fcfc994c9063ba1a0e197738a57fb45cd6bd085672394482"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-code-derived/t2_nullrho_20231002.npz",
+          "status": "added",
+          "bytes": 431730,
+          "sha256": "f54801d9e0fbdc58fe7ee03b23ab564351be7f3735b241b3429e172482fc4d7b"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-code-derived/t2_nullrho_20231003.npz",
+          "status": "added",
+          "bytes": 431689,
+          "sha256": "ac94e55bbc3009fc71066913148397affa7a104a2639c4024bfb505282d48208"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-code-derived/t2_nullrho_20231017.npz",
+          "status": "added",
+          "bytes": 431740,
+          "sha256": "9c6f175470fd57932aea1c822fa72da5b86be97ffc8a81861bf10fcf04efb5d2"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-code-derived/t2_nullrho_20231018.npz",
+          "status": "added",
+          "bytes": 431727,
+          "sha256": "105def4ba275c73cc00e78bffe8c2bd441a038e01b9dd151e62b301e2359160b"
         },
         {
           "path": "tasks/family-research-20261022/claude-code-pins/ninety-nine-pins-tier1-oct02.jsonl.gz",
