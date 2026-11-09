@@ -1,0 +1,201 @@
+{
+ "version": "claude-paper-candidates-v0.1",
+ "written": "2026-11-09",
+ "platform": "Tradovate demo (user selection); best bid/ask + depth snapshots; no message-level order flow",
+ "research_numbers": "gross; execution assumptions are paper-only settings to be logged, never applied to findings",
+ "strategies": [
+  {
+   "id": "S2",
+   "name": "large_move_fade",
+   "status": "ready_for_paper_execution_check",
+   "blockers": [
+    "no Tradovate connection in repo",
+    "adverse-path evidence after +5 s absent (stop is provisional)"
+   ],
+   "instrument": "CME NG front month",
+   "session": "Globex; no-trade in SETTLE_UTC guard window and first 15 min after 18:00 ET open (provisional)",
+   "inputs": {
+    "best_bid": "price",
+    "best_ask": "price",
+    "receive_ts": "platform receive time",
+    "tick": 0.001
+   },
+   "parameters": {
+    "jump_ticks_min": {
+     "value": 2,
+     "provenance": "EVIDENCE c-large-quote-events definition"
+    },
+    "extreme_wait_s": {
+     "value": 5,
+     "provenance": "EVIDENCE source first-5s extreme window"
+    },
+    "time_limit_s": {
+     "value": 600,
+     "provenance": "EVIDENCE source recovery window"
+    },
+    "target": {
+     "value": "pre-move midpoint Q0",
+     "provenance": "EVIDENCE full-return endpoint"
+    },
+    "stop_ticks_beyond_extreme": {
+     "value": 3,
+     "provenance": "PROVISIONAL unmeasured"
+    },
+    "cooldown_s": {
+     "value": 60,
+     "provenance": "PROVISIONAL"
+    },
+    "size_contracts": {
+     "value": 1,
+     "provenance": "PROVISIONAL"
+    },
+    "max_open": {
+     "value": 1,
+     "provenance": "PROVISIONAL"
+    },
+    "daily_stop_consecutive_stops": {
+     "value": 3,
+     "provenance": "PROVISIONAL"
+    },
+    "fill_rule": {
+     "value": "touch persists 1 s after order time else missed",
+     "provenance": "PROVISIONAL unmeasured"
+    },
+    "stale_quote_s": {
+     "value": 5,
+     "provenance": "PROVISIONAL"
+    }
+   },
+   "rules": {
+    "setup": "Q0 = last midpoint before jump; trigger when |mid-Q0|>=2 ticks between consecutive quotes; d=sign",
+    "entry": "at trigger+5 s enter against d at the best quote on the joined side; record extreme E",
+    "exit": "target Q0 touch or trigger+600 s",
+    "stop": "mid beyond E by 3 ticks in direction d",
+    "reversal": "none",
+    "priority": "one position; opposite trigger while open -> suppressed+logged; same-direction trigger -> hold+log",
+    "pause": "no entries while open; cooldown 60 s; daily stop after 3 consecutive stops",
+    "data_faults": "stale>5 s: no entry, hold to target/time on next good quote; out-of-order: ignore+log; disconnect: cancel working, flatten at reconnect, log"
+   },
+   "evidence": {
+    "full_return": {
+     "20231002": [
+      35,
+      46
+     ],
+     "20231003": [
+      48,
+      58
+     ],
+     "20231017": [
+      42,
+      57
+     ],
+     "20231018": [
+      49,
+      64
+     ]
+    },
+    "half_return": {
+     "20231002": [
+      41,
+      46
+     ],
+     "20231003": [
+      57,
+      58
+     ],
+     "20231017": [
+      48,
+      57
+     ],
+     "20231018": [
+      53,
+      64
+     ]
+    },
+    "full_return_time_s_p50": {
+     "20231002": 37.8,
+     "20231003": 9.3,
+     "20231017": 14.2,
+     "20231018": 84.2
+    },
+    "full_return_time_s_p90": {
+     "20231002": 203,
+     "20231003": 237,
+     "20231017": 254,
+     "20231018": 341
+    },
+    "extreme_first5s_ticks_p50": {
+     "20231002": 4.0,
+     "20231003": 3.0,
+     "20231017": 3.0,
+     "20231018": 4.5
+    },
+    "source": "markets-data@87dc338 combined-events/run-42571551209-1/events-<day>/c-large-quote-events.parquet; tables/m2_summary.json"
+   },
+   "adverse": "51 of 225 moves did not return within 600 s; Oct 18 returns slow (p50 84 s); prior-signal agreement does not sort returns",
+   "invalidation": "prospective full-return share <0.6 over first 40 triggers or median return time >300 s",
+   "logging": [
+    "Q0",
+    "jump_ticks",
+    "E",
+    "decision_quote",
+    "decision_ts",
+    "order",
+    "fill_or_miss",
+    "target_touch_ts",
+    "exit_reason",
+    "exit_price",
+    "gross_ticks",
+    "MAE_MFE_1s",
+    "spread_entry_exit",
+    "suppressed_signals_with_reason",
+    "platform_vs_local_clock"
+   ]
+  },
+  {
+   "id": "S1",
+   "name": "dipole_recognition_log_no_entry",
+   "status": "observation_only",
+   "blockers": [
+    "needs message-level flow to compute the 20 s native window; Tradovate lacks it"
+   ],
+   "evidence": "CLAIMS M1-1..M1-3; tables/m1_decision_cells.csv",
+   "use": "abstain from directional entry at recognition; exit warning when flow_state=opposite at recognition"
+  },
+  {
+   "id": "S3",
+   "name": "thin_touch_retreat_nowcast",
+   "status": "observation_only",
+   "blockers": [
+    "ms horizon; message-level data",
+    "C9 sign convention unresolved for S3b"
+   ],
+   "evidence": "CLAIM M3-1, M3-3; tables/m3_episode_cells.csv"
+  },
+  {
+   "id": "S4",
+   "name": "touch_imbalance_refill_nowcast",
+   "status": "observation_only",
+   "blockers": [
+    "1-2 tick move vs 1-2 tick spread; no fill evidence; needs depth/order counts"
+   ],
+   "evidence": "CLAIMS M4-1..M4-3, M5-1, M8b-3"
+  },
+  {
+   "id": "S5",
+   "name": "weakening_onset_exit_warning",
+   "status": "observation_only",
+   "blockers": [
+    "no price-outcome evidence after onsets; message-level flow"
+   ],
+   "evidence": "CLAIM M6-1; tables/m5_m6_summary.json"
+  }
+ ],
+ "not_promoted": [
+  "Tier1 original stack (reversed Oct 3, CONFLICTS C4)",
+  "chain plays (n 8/6/15/14)",
+  "a_state direction (symmetric)",
+  "pre-recognition drift (not at decision clock)"
+ ]
+}
