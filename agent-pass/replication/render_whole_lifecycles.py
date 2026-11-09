@@ -145,6 +145,19 @@ def daybook(day,out):
         fig.suptitle(day+" | Individual duration observations - each whole and each component remains identifiable",fontsize=15)
         fig.tight_layout(rect=(0,0,.99,.95));fig.savefig(out/f"{day}-individual-durations.png",dpi=150);fig.savefig(out/f"{day}-individual-durations.pdf");plt.close(fig)
         jsonwrite(out/"duration-render-points.json",renderpoints)
+    # Compact coordination packet: first chronological candidate per orientation plus its original control1.
+    # Selection is by source order, never by a favorable outcome.
+    chosen=[]
+    for ori in ("NO_PREDECESSOR","SAME","FLIP"):
+        pool=sorted((p for p in parents if p["kind"]=="candidate" and p["orientation"]==ori),key=lambda p:p["anchor_label_ns"])
+        if pool:
+            for k in ("candidate","control1"):
+                chosen.extend(r for r in index if r["candidate_id"]==pool[0]["candidate_id"] and r["kind"]==k)
+    packet=fitz.open()
+    for r in chosen:
+        source=fitz.open(out/r["pdf"]);packet.insert_pdf(source,from_page=r["page"]-1,to_page=r["page"]-1);source.close()
+    packet.save(out/f"{day}-pinning-starter.pdf");packet.close()
+    jsonwrite(out/"pinning-starter-index.json",dict(selection="First chronological candidate per orientation, plus its original control1; no outcome selection",pages=chosen))
     jsonwrite(out/"lifecycle-render-index.json",index)
     jsonwrite(out/"render-receipt.json",dict(status="passed",day=day,parents=len(parents),counts=dict(counts),pdf_books=books,
         pages=len(index),audit=audit,whole_paths_retained=True,whole_path_points=len(points),
