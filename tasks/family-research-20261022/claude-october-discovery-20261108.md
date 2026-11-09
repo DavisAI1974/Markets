@@ -1441,3 +1441,121 @@ resolving. What changes for the other two passes: no further data commits to Mar
 the manifest (path plus sha256), with `MARKETS_DATA_DIR` once the repository exists; record the
 markets-data commit in the date-table indexes instead of a Markets path; ROOT frame publication resumes to
 S3, not to git.
+
+## 21. October 2, 3 and 17 done the way October 18 was done
+
+Greg asked for the October 18 treatment on the three new sessions. The four pieces of that treatment and
+where each now stands: outcomes after the archived adapter's recognition (section 1) are in 17.2 on four
+days; the four arms on identical opportunities (section 2) are in 17.3 on the frozen touch-print
+candidates, because the 749 first-family starts are the first occurrence of each ROOT structural family id
+and those ids exist only inside the ROOT frame spools; the size-one four arms (section 4) are in 18 and
+the orders behind them in 19; and the concrete traces (section 3, cases 375 and 391) are here. Script
+`trace_divergent_pairs.py`, outputs `divergent-pairs-{oct17,oct03,oct02}.json`. For each session it picks,
+inside the 13:00 UTC hour, two matched pairs with the same start and a different end: a standing best eaten
+to one lot by fills on the order's first appearance, and a fresh one-lot new best, each pair matched on
+prior touch size, next-level bucket and far-side touch, both episodes still open at the 1 ms entry, one
+RETREATED and one SIZE_RECOVERED, closest onsets in time. Every message at the touch price on both sides
+from 250 ms before the onset to 50 ms after the end is dumped with cursor, clock, order id and fill linkage.
+
+### 21.1 The three sessions
+
+| | October 2 | October 3 | October 17 |
+|---|---|---|---|
+| session path | 2957 to 2841, minus 116 ticks, range 121 | 2841 to 2943, plus 102, range 145 | 3124 to 3061, minus 63, range 110 |
+| volume (lots) | 85,654 | 92,979 | 74,624 |
+| biggest hours (net ticks, lots) | 14:00 minus 41 on 18,185; 22:00 (Sunday open) minus 39 on 724; 17:00 minus 34 | 15:00 plus 40 on 14,548; 12:00 plus 33 on 10,476; 07:00 minus 27 | 13:00 minus 66 on 10,896; 16:00 plus 26; 15:00 minus 23 |
+| frozen-detector events | 839 | 857 | 830 |
+| size-one onsets (13:00 hour) | 22,042 (2,687) | 24,353 (3,205) | 27,111 (4,152) |
+| touch-print candidates (bid / ask) | 11,598 (5,539 / 6,059) | 13,266 (7,266 / 6,000) | 8,880 (4,412 / 4,468) |
+| export scope | partial, no Sunday-evening prefix | full session | partial, no evening prefix |
+
+October 2 is the Monday after a Sunday-evening gap down (39 ticks in the opening hour on 724 lots) that
+kept falling through the US day; October 3 is a rising day whose two big hours are the US morning and
+15:00; October 17 is a falling day whose whole decline is one hour, 13:00 UTC, minus 66 ticks on 10,896
+lots, after which it chopped. On all three the overnight is quiet and the exhaustion detector, the size-one
+onsets and the touch-print candidates concentrate in the 12:00 to 18:00 hours, as on the 18th.
+
+### 21.2 What each day says, per the four-day passes
+
+Every row of sections 13 to 19 is already per day; the per-day reading in one place, October 2 / 3 / 17:
+
+- Recognition carries no direction (baseline with-share at 300 s 0.49 / 0.51 / 0.46); the touch-size read
+  at recognition is right 74 / 73 / 64 percent at 1 s and 53 / 51 / 52 at 300 s. Same on all three.
+- The touch-print pressure side continues at 60 s (0.54 on each); the 375/391 stack adds nothing on the
+  2nd, nothing on the 3rd, 0 to 4 points on the 17th; the side split follows the day's path (selling side
+  0.51 / 0.45 / 0.58 at 600 s, buying side 0.50 / 0.61 / 0.44).
+- Size-one: fill-eaten standing remnants retreat 0.74 / 0.74 / 0.72, fresh one-lot new bests 0.38 / 0.42 /
+  0.38, crowded prior touch 0.81 / 0.79 / 0.79; repeat-survivor orders retreat 0.17 / 0.17 / 0.20 after
+  three prior appearances.
+- Clocks: persistent > fast-collapse at every scale; the frozen persistent totals run 1.2 to 1.6x long on
+  the 2nd, 1.5 to 1.8x on the 3rd, 1.2 to 1.7x on the 17th; the delivered clock (section 16) brings all
+  three inside 20 percent on 17 to 22 of their 24 cells except October 2's persistent state.
+- Next-burst polarity forecast right 0.59 / 0.62 / 0.59; absorption (forecast right, price against that
+  burst) 0.67 / 0.70 / 0.69.
+
+Nothing in the three days contradicts the 18th; the one thing the 18th had that the others do not is its
+per-cell direction lifts, which section 13.3 showed to be its own drift.
+
+### 21.3 The traced pairs: what differs between a retreat and a recovery
+
+Six pairs, twelve episodes, all with exact clocks and order ids in the json. The finding is the same on
+every day, and it is sharper than section 3's: at matched onset conditions, the retreat and the recovery
+are the same process observed at two moments, and the difference between them is a race decided in under
+five milliseconds that the onset book does not contain.
+
+**October 17, bid 3070, 13:00 hour (groups 279739 and 279746, seven milliseconds apart).** The level is
+being nibbled by one-lot sells (`T A 3070 x1`) and refilled by one-lot bids. At the first onset the
+resting order 788697670940 (6.5 s old) is the last lot after a one-lot sell takes 788697670661. 2.1 ms
+later a fresh one-lot bid 788697671119 joins: SIZE_RECOVERED. 0.2 ms after that a one-lot sell takes
+788697670940, and 788697671119, 0.4 ms old, is now the single lot of the second onset, the same level,
+the same order that produced the recovery. For 2.47 s nothing arrives; then one-lot sell 788697671183
+takes it and the bid steps to 3069 x 19: RETREATED. Within 0.4 ms the far side posts one-lot asks AT 3070
+(the spread collapses onto the vacated price), and within 4 ms new one-lot bids rebuild 3070 (788697671201
+first, twenty lots and twelve orders by +17 ms, an 8-lot 788697671267 among them), then a 5-lot buy sweep
+takes 3071 at +22 ms. The retreat lasted 4 ms. Recovery and retreat were one refill apart.
+
+**October 2, ask 2906, 13:00 hour (groups 222337 and 222341, two milliseconds apart).** Same structure on
+the other side: one-lot buys (`T B 2906 x1`) consume one-lot asks that re-arrive every 1 to 3 ms. The
+recovered episode's refill (788650870862, posted at +2.064 ms) is the survivor of the retreated episode
+two groups later; it is taken at +2.877 ms with no refill in time, the ask steps to 2907 x 8, and 1.2 ms
+later 788650870888 re-posts one lot at 2906 and is itself taken 1.7 ms after that. The level flickers
+between one lot and none at a 2 to 3 ms cadence; which state a group close catches decides the label.
+
+**October 3, ask 2895 and 2894 (groups 266919 and 267317).** The retreat: the last ask lot 788654032680
+(8.5 s old) is taken at +2.207 ms by a one-lot buy, and the taker's own residual then posts a one-lot BID at
+2895 (788654033868, +2.492 ms): the price did not just retreat, the aggressor crossed and sat on the level
+it emptied, with three more one-lot bids joining within 8 ms and the ask side reassembling at 2896 x 14.
+The recovery: a 3.4 ms old remnant 788654035110 at 2894 is joined by 788654035139 at +4.66 ms and holds
+14.7 s before it is filled. The next level was 13 to 15 lots in both; the far side 17 to 20 lots in both.
+
+**The fresh one-lot new bests (three pairs).** On October 17 (ask 3097) and October 3 (ask 2896) the
+retreated probe is not taken; it cancels itself at +1.46 and +1.37 ms, and in both cases the message
+immediately before its cancel is a cancel on the far side's touch (bid 3096 x1 at +1.303 ms; the far side's
+fills and cancels in the 4 ms before). Its twin, posted 0.5 to 2 ms later at the same price by the next
+order id, is joined within 1.6 to 6.6 ms and holds (on the 17th, filled 2.7 s later). On October 2 (bid
+2893) the retreated probe is taken by a one-lot sell at +1.386 ms; its twin 788650632114 is joined at
++5.5 ms, grows to four lots and two orders, and then cancels itself at +8.57 ms once a 2-lot order has
+joined it. New-best probes come in trains: three to five one-lot adds at the same price within 10 ms from
+consecutive order ids, each withdrawn or taken within a few milliseconds.
+
+**Reading, mechanics first.** (1) Both sides of the touch are being worked in one-lot increments on all
+three days: one-lot takers and one-lot refills at a cadence of 1 to 3 ms. A standing level eaten to one lot
+is the trough of that cycle; whether the next event is a refill (recovery) or a take (retreat) is the
+phase of the cycle at the group close, and matched onset books cannot tell the two apart. That is why
+sections 4 and 18 found the retreat shares stable across days yet the book arms worth only a few points.
+(2) The retreat is a flicker, not a move: in five of six standing and fresh-add retreats the level is
+re-posted at the same price within 1 to 5 ms, and in the sixth the far side crosses onto it. The frozen
+first-end label is correct and the price did not go anywhere. (3) Order identity threads the episodes:
+the refill that ends one episode is the survivor that begins the next, on every day. (4) The one
+behaviour-shaped regularity is the probe's self-cancel: a fresh one-lot new best pulls itself within 1.5 ms
+of the far-side touch thinning, on two of three days, which is a reactive quoting rule. It is behavioural
+in the sense that a rule is being run, and mechanical in the sense that the rule is visible: watch the far
+touch, pull if it cancels. Nothing in these twelve episodes needs a story about intent beyond that rule and
+the one-lot cadence, and the observable that would separate a human from a machine here is the cadence
+itself, which is sub-5 ms on all three days.
+
+**Against October 18's 375 and 391.** Section 3 found that 375 and 391 diverged on whether a resting 200-lot
+order was consumed in 204 ms or withdrawn. These pairs sit two orders of magnitude below that in size and
+time and show the same shape: the divergence is decided by which of two already-running processes (the
+taker stream or the refill stream) lands next, not by anything readable at the decision boundary. The
+larger episodes of section 3 and the one-lot episodes here differ in scale and agree in kind.

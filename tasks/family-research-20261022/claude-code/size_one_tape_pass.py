@@ -52,15 +52,16 @@ def detect_oct03(close_cursors):
     k = next(i for i, r in enumerate(m2) if r.ts_recv >= open_ns)
     members = [("20231002", -k, TAPE), ("20231003", len(m2) - k, TAPE)]
     m3 = list(db.DBNStore.from_bytes(data_locator.tape_bytes("20231003")))
-    want = sorted(close_cursors)
+    want = sorted(set(close_cursors))
+    probe = want[:400] + want[-400:] if len(want) > 800 else want
     hits = 0
-    for c in want[:400] + want[-400:]:
+    for c in probe:
         if c + k < len(m2):
             hits += bool(int(m2[c + k].flags) & F_LAST)
         else:
             hits += bool(int(m3[c - (len(m2) - k)].flags) & F_LAST)
-    print("october 3 members", [(d, o) for d, o, _ in members], "F_LAST hits", hits, "of 800")
-    if hits < 800:
+    print("october 3 members", [(d, o) for d, o, _ in members], "F_LAST hits", hits, "of", len(probe))
+    if hits < len(probe):
         raise SystemExit("october 3 cursor mapping failed")
     return members
 

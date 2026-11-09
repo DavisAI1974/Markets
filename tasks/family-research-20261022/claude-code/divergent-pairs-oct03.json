@@ -1,0 +1,7003 @@
+{
+ "session": "oct03",
+ "pairs": [
+  {
+   "kind": "standing_fill_linked_first_appearance",
+   "retreated": {
+    "episode": {
+     "onset_group": 266919,
+     "side": "A",
+     "onset": "STANDING_BEST_SHRANK",
+     "onset_ns": 1696340410016097841,
+     "onset_cursor": 359148,
+     "original_price_raw": 2895000000,
+     "prior_touch": [
+      2895000000,
+      2,
+      2
+     ],
+     "other_touch": [
+      2894000000,
+      17,
+      10
+     ],
+     "next_gap_ticks": 1,
+     "book_next": "next_ge10",
+     "outcome": "RETREATED",
+     "end_ns": 1696340410018631379,
+     "end_cursor": 359157,
+     "ending_touch": [
+      2896000000,
+      14,
+      9
+     ],
+     "end_vs_entry": "AFTER_ENTRY"
+    },
+    "order": {
+     "order_id": 788654032680,
+     "origin": "older_resting",
+     "age_ms": 8461.519,
+     "prior_onsets_by_order": 0,
+     "fate": "F",
+     "fate_delay_ms": 2.207
+    },
+    "messages": [
+     {
+      "cursor": 359075,
+      "t_ms": -11.743,
+      "action": "A",
+      "side": "B",
+      "price": 2893000000,
+      "size": 2,
+      "order_id": 788654033804,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2893000000,
+       2
+      ],
+      "near_best": [
+       2894000000,
+       9,
+       7
+      ],
+      "next_level": [
+       2895000000,
+       13
+      ],
+      "far_touch": [
+       2893000000,
+       10,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359077,
+      "t_ms": -11.223,
+      "action": "A",
+      "side": "B",
+      "price": 2893000000,
+      "size": 2,
+      "order_id": 788654033806,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2893000000,
+       2
+      ],
+      "near_best": [
+       2894000000,
+       7,
+       6
+      ],
+      "next_level": [
+       2895000000,
+       13
+      ],
+      "far_touch": [
+       2893000000,
+       12,
+       8
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359078,
+      "t_ms": -11.193,
+      "action": "T",
+      "side": "B",
+      "price": 2894000000,
+      "size": 7,
+      "order_id": 788654033807,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2894000000,
+       7,
+       6
+      ],
+      "next_level": [
+       2895000000,
+       13
+      ],
+      "far_touch": [
+       2893000000,
+       12,
+       8
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359079,
+      "t_ms": -11.193,
+      "action": "F",
+      "side": "A",
+      "price": 2894000000,
+      "size": 1,
+      "order_id": 788654033587,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2894000000,
+       7,
+       6
+      ],
+      "next_level": [
+       2895000000,
+       13
+      ],
+      "far_touch": [
+       2893000000,
+       12,
+       8
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359080,
+      "t_ms": -11.193,
+      "action": "F",
+      "side": "A",
+      "price": 2894000000,
+      "size": 1,
+      "order_id": 788654033623,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2894000000,
+       7,
+       6
+      ],
+      "next_level": [
+       2895000000,
+       13
+      ],
+      "far_touch": [
+       2893000000,
+       12,
+       8
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359081,
+      "t_ms": -11.193,
+      "action": "F",
+      "side": "A",
+      "price": 2894000000,
+      "size": 1,
+      "order_id": 788654033628,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2894000000,
+       7,
+       6
+      ],
+      "next_level": [
+       2895000000,
+       13
+      ],
+      "far_touch": [
+       2893000000,
+       12,
+       8
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359082,
+      "t_ms": -11.193,
+      "action": "F",
+      "side": "A",
+      "price": 2894000000,
+      "size": 1,
+      "order_id": 788654033643,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2894000000,
+       7,
+       6
+      ],
+      "next_level": [
+       2895000000,
+       13
+      ],
+      "far_touch": [
+       2893000000,
+       12,
+       8
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359083,
+      "t_ms": -11.193,
+      "action": "F",
+      "side": "A",
+      "price": 2894000000,
+      "size": 2,
+      "order_id": 788654033650,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2894000000,
+       7,
+       6
+      ],
+      "next_level": [
+       2895000000,
+       13
+      ],
+      "far_touch": [
+       2893000000,
+       12,
+       8
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359084,
+      "t_ms": -11.193,
+      "action": "F",
+      "side": "A",
+      "price": 2894000000,
+      "size": 1,
+      "order_id": 788654033742,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2894000000,
+       7,
+       6
+      ],
+      "next_level": [
+       2895000000,
+       13
+      ],
+      "far_touch": [
+       2893000000,
+       12,
+       8
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359094,
+      "t_ms": -9.679,
+      "action": "A",
+      "side": "B",
+      "price": 2893000000,
+      "size": 2,
+      "order_id": 788654033812,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2893000000,
+       2
+      ],
+      "near_best": [
+       2895000000,
+       13,
+       10
+      ],
+      "next_level": [
+       2896000000,
+       22
+      ],
+      "far_touch": [
+       2893000000,
+       14,
+       9
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359102,
+      "t_ms": -8.228,
+      "action": "A",
+      "side": "B",
+      "price": 2893000000,
+      "size": 1,
+      "order_id": 788654033820,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2893000000,
+       1
+      ],
+      "near_best": [
+       2895000000,
+       13,
+       10
+      ],
+      "next_level": [
+       2896000000,
+       19
+      ],
+      "far_touch": [
+       2893000000,
+       15,
+       10
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359104,
+      "t_ms": -7.968,
+      "action": "A",
+      "side": "B",
+      "price": 2894000000,
+      "size": 1,
+      "order_id": 788654033822,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2894000000,
+       1
+      ],
+      "near_best": [
+       2895000000,
+       13,
+       10
+      ],
+      "next_level": [
+       2896000000,
+       19
+      ],
+      "far_touch": [
+       2894000000,
+       1,
+       1
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359106,
+      "t_ms": -7.829,
+      "action": "A",
+      "side": "B",
+      "price": 2894000000,
+      "size": 1,
+      "order_id": 788654033823,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2894000000,
+       1
+      ],
+      "near_best": [
+       2895000000,
+       13,
+       10
+      ],
+      "next_level": [
+       2896000000,
+       19
+      ],
+      "far_touch": [
+       2894000000,
+       2,
+       2
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359108,
+      "t_ms": -7.696,
+      "action": "A",
+      "side": "B",
+      "price": 2894000000,
+      "size": 2,
+      "order_id": 788654033824,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2894000000,
+       2
+      ],
+      "near_best": [
+       2895000000,
+       13,
+       10
+      ],
+      "next_level": [
+       2896000000,
+       19
+      ],
+      "far_touch": [
+       2894000000,
+       4,
+       3
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359110,
+      "t_ms": -7.679,
+      "action": "A",
+      "side": "B",
+      "price": 2894000000,
+      "size": 2,
+      "order_id": 788654033825,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2894000000,
+       2
+      ],
+      "near_best": [
+       2895000000,
+       13,
+       10
+      ],
+      "next_level": [
+       2896000000,
+       19
+      ],
+      "far_touch": [
+       2894000000,
+       6,
+       4
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359112,
+      "t_ms": -7.408,
+      "action": "C",
+      "side": "A",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654031901,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "A",
+       2895000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2895000000,
+       12,
+       9
+      ],
+      "next_level": [
+       2896000000,
+       19
+      ],
+      "far_touch": [
+       2894000000,
+       6,
+       4
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359113,
+      "t_ms": -7.269,
+      "action": "A",
+      "side": "B",
+      "price": 2894000000,
+      "size": 2,
+      "order_id": 788654033827,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2894000000,
+       2
+      ],
+      "near_best": [
+       2895000000,
+       12,
+       9
+      ],
+      "next_level": [
+       2896000000,
+       19
+      ],
+      "far_touch": [
+       2894000000,
+       8,
+       5
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359114,
+      "t_ms": -7.146,
+      "action": "A",
+      "side": "B",
+      "price": 2894000000,
+      "size": 1,
+      "order_id": 788654033828,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2894000000,
+       1
+      ],
+      "near_best": [
+       2895000000,
+       12,
+       9
+      ],
+      "next_level": [
+       2896000000,
+       19
+      ],
+      "far_touch": [
+       2894000000,
+       9,
+       6
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359115,
+      "t_ms": -6.974,
+      "action": "A",
+      "side": "B",
+      "price": 2894000000,
+      "size": 2,
+      "order_id": 788654033829,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2894000000,
+       2
+      ],
+      "near_best": [
+       2895000000,
+       12,
+       9
+      ],
+      "next_level": [
+       2896000000,
+       19
+      ],
+      "far_touch": [
+       2894000000,
+       11,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359116,
+      "t_ms": -6.845,
+      "action": "A",
+      "side": "B",
+      "price": 2894000000,
+      "size": 2,
+      "order_id": 788654033831,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2894000000,
+       2
+      ],
+      "near_best": [
+       2895000000,
+       12,
+       9
+      ],
+      "next_level": [
+       2896000000,
+       19
+      ],
+      "far_touch": [
+       2894000000,
+       13,
+       8
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359117,
+      "t_ms": -6.693,
+      "action": "C",
+      "side": "A",
+      "price": 2895000000,
+      "size": 2,
+      "order_id": 788654033191,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "A",
+       2895000000,
+       2
+      ],
+      "after": null,
+      "near_best": [
+       2895000000,
+       10,
+       8
+      ],
+      "next_level": [
+       2896000000,
+       19
+      ],
+      "far_touch": [
+       2894000000,
+       13,
+       8
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359118,
+      "t_ms": -6.56,
+      "action": "A",
+      "side": "B",
+      "price": 2894000000,
+      "size": 2,
+      "order_id": 788654033832,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2894000000,
+       2
+      ],
+      "near_best": [
+       2895000000,
+       10,
+       8
+      ],
+      "next_level": [
+       2896000000,
+       19
+      ],
+      "far_touch": [
+       2894000000,
+       15,
+       9
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359119,
+      "t_ms": -6.232,
+      "action": "C",
+      "side": "A",
+      "price": 2895000000,
+      "size": 2,
+      "order_id": 788654032485,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "A",
+       2895000000,
+       2
+      ],
+      "after": null,
+      "near_best": [
+       2895000000,
+       8,
+       7
+      ],
+      "next_level": [
+       2896000000,
+       19
+      ],
+      "far_touch": [
+       2894000000,
+       15,
+       9
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359121,
+      "t_ms": -4.924,
+      "action": "C",
+      "side": "A",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654031902,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "A",
+       2895000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2895000000,
+       7,
+       6
+      ],
+      "next_level": [
+       2896000000,
+       18
+      ],
+      "far_touch": [
+       2894000000,
+       15,
+       9
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359126,
+      "t_ms": -3.285,
+      "action": "C",
+      "side": "A",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654032075,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "A",
+       2895000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2895000000,
+       6,
+       5
+      ],
+      "next_level": [
+       2896000000,
+       18
+      ],
+      "far_touch": [
+       2894000000,
+       15,
+       9
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359129,
+      "t_ms": -2.309,
+      "action": "A",
+      "side": "B",
+      "price": 2894000000,
+      "size": 2,
+      "order_id": 788654033850,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2894000000,
+       2
+      ],
+      "near_best": [
+       2895000000,
+       6,
+       5
+      ],
+      "next_level": [
+       2896000000,
+       16
+      ],
+      "far_touch": [
+       2894000000,
+       17,
+       10
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359131,
+      "t_ms": -1.861,
+      "action": "C",
+      "side": "A",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654033187,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "A",
+       2895000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2895000000,
+       5,
+       4
+      ],
+      "next_level": [
+       2896000000,
+       16
+      ],
+      "far_touch": [
+       2894000000,
+       17,
+       10
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359132,
+      "t_ms": -1.626,
+      "action": "T",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654033853,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2895000000,
+       5,
+       4
+      ],
+      "next_level": [
+       2896000000,
+       16
+      ],
+      "far_touch": [
+       2894000000,
+       17,
+       10
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359133,
+      "t_ms": -1.626,
+      "action": "F",
+      "side": "A",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654031894,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2895000000,
+       5,
+       4
+      ],
+      "next_level": [
+       2896000000,
+       16
+      ],
+      "far_touch": [
+       2894000000,
+       17,
+       10
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359134,
+      "t_ms": -1.475,
+      "action": "C",
+      "side": "A",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654031894,
+      "flags_last": true,
+      "linked_fill_reduction": 1,
+      "before": [
+       "A",
+       2895000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2895000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2896000000,
+       16
+      ],
+      "far_touch": [
+       2894000000,
+       17,
+       10
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359140,
+      "t_ms": -0.316,
+      "action": "T",
+      "side": "B",
+      "price": 2895000000,
+      "size": 2,
+      "order_id": 788654033858,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2895000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2896000000,
+       15
+      ],
+      "far_touch": [
+       2894000000,
+       17,
+       10
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359141,
+      "t_ms": -0.316,
+      "action": "F",
+      "side": "A",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654031904,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2895000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2896000000,
+       15
+      ],
+      "far_touch": [
+       2894000000,
+       17,
+       10
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359142,
+      "t_ms": -0.316,
+      "action": "F",
+      "side": "A",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654031907,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2895000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2896000000,
+       15
+      ],
+      "far_touch": [
+       2894000000,
+       17,
+       10
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359143,
+      "t_ms": -0.167,
+      "action": "C",
+      "side": "A",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654031904,
+      "flags_last": false,
+      "linked_fill_reduction": 1,
+      "before": [
+       "A",
+       2895000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2895000000,
+       3,
+       2
+      ],
+      "next_level": [
+       2896000000,
+       15
+      ],
+      "far_touch": [
+       2894000000,
+       17,
+       10
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359144,
+      "t_ms": -0.167,
+      "action": "M",
+      "side": "A",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654031907,
+      "flags_last": true,
+      "linked_fill_reduction": 1,
+      "before": [
+       "A",
+       2895000000,
+       2
+      ],
+      "after": [
+       "A",
+       2895000000,
+       1
+      ],
+      "near_best": [
+       2895000000,
+       2,
+       2
+      ],
+      "next_level": [
+       2896000000,
+       15
+      ],
+      "far_touch": [
+       2894000000,
+       17,
+       10
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359145,
+      "t_ms": -0.162,
+      "action": "T",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654033859,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2895000000,
+       2,
+       2
+      ],
+      "next_level": [
+       2896000000,
+       15
+      ],
+      "far_touch": [
+       2894000000,
+       17,
+       10
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359146,
+      "t_ms": -0.162,
+      "action": "F",
+      "side": "A",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654031907,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2895000000,
+       2,
+       2
+      ],
+      "next_level": [
+       2896000000,
+       15
+      ],
+      "far_touch": [
+       2894000000,
+       17,
+       10
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359147,
+      "t_ms": -0.019,
+      "action": "C",
+      "side": "A",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654031907,
+      "flags_last": false,
+      "linked_fill_reduction": 1,
+      "before": [
+       "A",
+       2895000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2895000000,
+       1,
+       1
+      ],
+      "next_level": [
+       2896000000,
+       15
+      ],
+      "far_touch": [
+       2894000000,
+       17,
+       10
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359148,
+      "t_ms": 0.0,
+      "action": "N",
+      "side": "N",
+      "price": 9223372036854775807,
+      "size": 0,
+      "order_id": 0,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2895000000,
+       1,
+       1
+      ],
+      "next_level": [
+       2896000000,
+       15
+      ],
+      "far_touch": [
+       2894000000,
+       17,
+       10
+      ],
+      "marker": "ONSET_CLOSE"
+     },
+     {
+      "cursor": 359151,
+      "t_ms": 1.416,
+      "action": "C",
+      "side": "B",
+      "price": 2894000000,
+      "size": 2,
+      "order_id": 788654033827,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2894000000,
+       2
+      ],
+      "after": null,
+      "near_best": [
+       2895000000,
+       1,
+       1
+      ],
+      "next_level": [
+       2896000000,
+       15
+      ],
+      "far_touch": [
+       2894000000,
+       15,
+       9
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359153,
+      "t_ms": 2.207,
+      "action": "T",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654033868,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2895000000,
+       1,
+       1
+      ],
+      "next_level": [
+       2896000000,
+       14
+      ],
+      "far_touch": [
+       2894000000,
+       15,
+       9
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359154,
+      "t_ms": 2.207,
+      "action": "F",
+      "side": "A",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654032680,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2895000000,
+       1,
+       1
+      ],
+      "next_level": [
+       2896000000,
+       14
+      ],
+      "far_touch": [
+       2894000000,
+       15,
+       9
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359155,
+      "t_ms": 2.492,
+      "action": "A",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654033868,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2895000000,
+       1
+      ],
+      "near_best": [
+       2895000000,
+       1,
+       1
+      ],
+      "next_level": [
+       2896000000,
+       14
+      ],
+      "far_touch": [
+       2895000000,
+       1,
+       1
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359156,
+      "t_ms": 2.492,
+      "action": "C",
+      "side": "A",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654032680,
+      "flags_last": false,
+      "linked_fill_reduction": 1,
+      "before": [
+       "A",
+       2895000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2896000000,
+       14,
+       9
+      ],
+      "next_level": [
+       2897000000,
+       36
+      ],
+      "far_touch": [
+       2895000000,
+       1,
+       1
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359157,
+      "t_ms": 2.534,
+      "action": "N",
+      "side": "N",
+      "price": 9223372036854775807,
+      "size": 0,
+      "order_id": 0,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2896000000,
+       14,
+       9
+      ],
+      "next_level": [
+       2897000000,
+       36
+      ],
+      "far_touch": [
+       2895000000,
+       1,
+       1
+      ],
+      "marker": "END_CLOSE"
+     },
+     {
+      "cursor": 359166,
+      "t_ms": 7.892,
+      "action": "A",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654033885,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2895000000,
+       1
+      ],
+      "near_best": [
+       2896000000,
+       11,
+       7
+      ],
+      "next_level": [
+       2897000000,
+       36
+      ],
+      "far_touch": [
+       2895000000,
+       2,
+       2
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359168,
+      "t_ms": 7.911,
+      "action": "A",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654033886,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2895000000,
+       1
+      ],
+      "near_best": [
+       2896000000,
+       11,
+       7
+      ],
+      "next_level": [
+       2897000000,
+       36
+      ],
+      "far_touch": [
+       2895000000,
+       3,
+       3
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359178,
+      "t_ms": 9.893,
+      "action": "A",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654033901,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2895000000,
+       1
+      ],
+      "near_best": [
+       2896000000,
+       9,
+       6
+      ],
+      "next_level": [
+       2897000000,
+       23
+      ],
+      "far_touch": [
+       2895000000,
+       4,
+       4
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359182,
+      "t_ms": 13.723,
+      "action": "C",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654033868,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2895000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2896000000,
+       8,
+       5
+      ],
+      "next_level": [
+       2897000000,
+       23
+      ],
+      "far_touch": [
+       2895000000,
+       3,
+       3
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359185,
+      "t_ms": 14.289,
+      "action": "A",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654033931,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2895000000,
+       1
+      ],
+      "near_best": [
+       2896000000,
+       8,
+       5
+      ],
+      "next_level": [
+       2897000000,
+       23
+      ],
+      "far_touch": [
+       2895000000,
+       4,
+       4
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359189,
+      "t_ms": 14.854,
+      "action": "A",
+      "side": "B",
+      "price": 2895000000,
+      "size": 2,
+      "order_id": 788654033937,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2895000000,
+       2
+      ],
+      "near_best": [
+       2896000000,
+       8,
+       5
+      ],
+      "next_level": [
+       2897000000,
+       23
+      ],
+      "far_touch": [
+       2895000000,
+       6,
+       5
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359190,
+      "t_ms": 15.007,
+      "action": "A",
+      "side": "B",
+      "price": 2895000000,
+      "size": 2,
+      "order_id": 788654033938,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2895000000,
+       2
+      ],
+      "near_best": [
+       2896000000,
+       8,
+       5
+      ],
+      "next_level": [
+       2897000000,
+       23
+      ],
+      "far_touch": [
+       2895000000,
+       8,
+       6
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359191,
+      "t_ms": 15.132,
+      "action": "A",
+      "side": "B",
+      "price": 2895000000,
+      "size": 2,
+      "order_id": 788654033939,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2895000000,
+       2
+      ],
+      "near_best": [
+       2896000000,
+       8,
+       5
+      ],
+      "next_level": [
+       2897000000,
+       23
+      ],
+      "far_touch": [
+       2895000000,
+       10,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359192,
+      "t_ms": 15.291,
+      "action": "T",
+      "side": "B",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788654033942,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2896000000,
+       8,
+       5
+      ],
+      "next_level": [
+       2897000000,
+       23
+      ],
+      "far_touch": [
+       2895000000,
+       10,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359193,
+      "t_ms": 15.291,
+      "action": "F",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788654030832,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2896000000,
+       8,
+       5
+      ],
+      "next_level": [
+       2897000000,
+       23
+      ],
+      "far_touch": [
+       2895000000,
+       10,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359201,
+      "t_ms": 16.967,
+      "action": "T",
+      "side": "B",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788654033955,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2896000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       23
+      ],
+      "far_touch": [
+       2895000000,
+       10,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359202,
+      "t_ms": 16.967,
+      "action": "F",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788654030967,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2896000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       23
+      ],
+      "far_touch": [
+       2895000000,
+       10,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359206,
+      "t_ms": 17.793,
+      "action": "A",
+      "side": "B",
+      "price": 2895000000,
+      "size": 2,
+      "order_id": 788654033957,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2895000000,
+       2
+      ],
+      "near_best": [
+       2896000000,
+       3,
+       2
+      ],
+      "next_level": [
+       2897000000,
+       21
+      ],
+      "far_touch": [
+       2895000000,
+       12,
+       8
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359207,
+      "t_ms": 17.82,
+      "action": "T",
+      "side": "A",
+      "price": 2895000000,
+      "size": 6,
+      "order_id": 788654033959,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2896000000,
+       3,
+       2
+      ],
+      "next_level": [
+       2897000000,
+       21
+      ],
+      "far_touch": [
+       2895000000,
+       12,
+       8
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359208,
+      "t_ms": 17.82,
+      "action": "F",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654033885,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2896000000,
+       3,
+       2
+      ],
+      "next_level": [
+       2897000000,
+       21
+      ],
+      "far_touch": [
+       2895000000,
+       12,
+       8
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359209,
+      "t_ms": 17.82,
+      "action": "F",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654033886,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2896000000,
+       3,
+       2
+      ],
+      "next_level": [
+       2897000000,
+       21
+      ],
+      "far_touch": [
+       2895000000,
+       12,
+       8
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359210,
+      "t_ms": 17.82,
+      "action": "F",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654033901,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2896000000,
+       3,
+       2
+      ],
+      "next_level": [
+       2897000000,
+       21
+      ],
+      "far_touch": [
+       2895000000,
+       12,
+       8
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359211,
+      "t_ms": 17.82,
+      "action": "F",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654033931,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2896000000,
+       3,
+       2
+      ],
+      "next_level": [
+       2897000000,
+       21
+      ],
+      "far_touch": [
+       2895000000,
+       12,
+       8
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359212,
+      "t_ms": 17.82,
+      "action": "F",
+      "side": "B",
+      "price": 2895000000,
+      "size": 2,
+      "order_id": 788654033937,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2896000000,
+       3,
+       2
+      ],
+      "next_level": [
+       2897000000,
+       21
+      ],
+      "far_touch": [
+       2895000000,
+       12,
+       8
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359213,
+      "t_ms": 17.951,
+      "action": "C",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654033885,
+      "flags_last": false,
+      "linked_fill_reduction": 1,
+      "before": [
+       "B",
+       2895000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2896000000,
+       3,
+       2
+      ],
+      "next_level": [
+       2897000000,
+       21
+      ],
+      "far_touch": [
+       2895000000,
+       11,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359214,
+      "t_ms": 17.951,
+      "action": "C",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654033886,
+      "flags_last": false,
+      "linked_fill_reduction": 1,
+      "before": [
+       "B",
+       2895000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2896000000,
+       3,
+       2
+      ],
+      "next_level": [
+       2897000000,
+       21
+      ],
+      "far_touch": [
+       2895000000,
+       10,
+       6
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359215,
+      "t_ms": 17.951,
+      "action": "C",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654033901,
+      "flags_last": false,
+      "linked_fill_reduction": 1,
+      "before": [
+       "B",
+       2895000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2896000000,
+       3,
+       2
+      ],
+      "next_level": [
+       2897000000,
+       21
+      ],
+      "far_touch": [
+       2895000000,
+       9,
+       5
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359216,
+      "t_ms": 17.951,
+      "action": "C",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654033931,
+      "flags_last": false,
+      "linked_fill_reduction": 1,
+      "before": [
+       "B",
+       2895000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2896000000,
+       3,
+       2
+      ],
+      "next_level": [
+       2897000000,
+       21
+      ],
+      "far_touch": [
+       2895000000,
+       8,
+       4
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359217,
+      "t_ms": 17.951,
+      "action": "C",
+      "side": "B",
+      "price": 2895000000,
+      "size": 2,
+      "order_id": 788654033937,
+      "flags_last": true,
+      "linked_fill_reduction": 2,
+      "before": [
+       "B",
+       2895000000,
+       2
+      ],
+      "after": null,
+      "near_best": [
+       2896000000,
+       3,
+       2
+      ],
+      "next_level": [
+       2897000000,
+       21
+      ],
+      "far_touch": [
+       2895000000,
+       6,
+       3
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359220,
+      "t_ms": 18.871,
+      "action": "A",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654033966,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2895000000,
+       1
+      ],
+      "near_best": [
+       2896000000,
+       3,
+       2
+      ],
+      "next_level": [
+       2897000000,
+       21
+      ],
+      "far_touch": [
+       2895000000,
+       7,
+       4
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359221,
+      "t_ms": 18.991,
+      "action": "A",
+      "side": "B",
+      "price": 2895000000,
+      "size": 2,
+      "order_id": 788654033967,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2895000000,
+       2
+      ],
+      "near_best": [
+       2896000000,
+       3,
+       2
+      ],
+      "next_level": [
+       2897000000,
+       21
+      ],
+      "far_touch": [
+       2895000000,
+       9,
+       5
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359223,
+      "t_ms": 19.562,
+      "action": "A",
+      "side": "B",
+      "price": 2895000000,
+      "size": 2,
+      "order_id": 788654033979,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2895000000,
+       2
+      ],
+      "near_best": [
+       2896000000,
+       3,
+       2
+      ],
+      "next_level": [
+       2897000000,
+       21
+      ],
+      "far_touch": [
+       2895000000,
+       11,
+       6
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359230,
+      "t_ms": 23.157,
+      "action": "A",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654034012,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2895000000,
+       1
+      ],
+      "near_best": [
+       2896000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       21
+      ],
+      "far_touch": [
+       2895000000,
+       12,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359233,
+      "t_ms": 24.855,
+      "action": "C",
+      "side": "B",
+      "price": 2895000000,
+      "size": 2,
+      "order_id": 788654033939,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2895000000,
+       2
+      ],
+      "after": null,
+      "near_best": [
+       2896000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       21
+      ],
+      "far_touch": [
+       2895000000,
+       10,
+       6
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359234,
+      "t_ms": 25.045,
+      "action": "A",
+      "side": "B",
+      "price": 2895000000,
+      "size": 2,
+      "order_id": 788654034034,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2895000000,
+       2
+      ],
+      "near_best": [
+       2896000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       21
+      ],
+      "far_touch": [
+       2895000000,
+       12,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359235,
+      "t_ms": 27.05,
+      "action": "C",
+      "side": "B",
+      "price": 2895000000,
+      "size": 2,
+      "order_id": 788654034034,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2895000000,
+       2
+      ],
+      "after": null,
+      "near_best": [
+       2896000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       21
+      ],
+      "far_touch": [
+       2895000000,
+       10,
+       6
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359236,
+      "t_ms": 27.857,
+      "action": "A",
+      "side": "B",
+      "price": 2895000000,
+      "size": 2,
+      "order_id": 788654034052,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2895000000,
+       2
+      ],
+      "near_best": [
+       2896000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       21
+      ],
+      "far_touch": [
+       2895000000,
+       12,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359237,
+      "t_ms": 28.0,
+      "action": "C",
+      "side": "B",
+      "price": 2895000000,
+      "size": 2,
+      "order_id": 788654034052,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2895000000,
+       2
+      ],
+      "after": null,
+      "near_best": [
+       2896000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       21
+      ],
+      "far_touch": [
+       2895000000,
+       10,
+       6
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359238,
+      "t_ms": 28.144,
+      "action": "A",
+      "side": "B",
+      "price": 2895000000,
+      "size": 2,
+      "order_id": 788654034056,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2895000000,
+       2
+      ],
+      "near_best": [
+       2896000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       21
+      ],
+      "far_touch": [
+       2895000000,
+       12,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359239,
+      "t_ms": 28.335,
+      "action": "A",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654034060,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2895000000,
+       1
+      ],
+      "near_best": [
+       2896000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       21
+      ],
+      "far_touch": [
+       2895000000,
+       13,
+       8
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359240,
+      "t_ms": 28.47,
+      "action": "A",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654034062,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2895000000,
+       1
+      ],
+      "near_best": [
+       2896000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       21
+      ],
+      "far_touch": [
+       2895000000,
+       14,
+       9
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359241,
+      "t_ms": 28.648,
+      "action": "C",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654034012,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2895000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2896000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       21
+      ],
+      "far_touch": [
+       2895000000,
+       13,
+       8
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359242,
+      "t_ms": 28.877,
+      "action": "T",
+      "side": "A",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654034066,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2896000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       21
+      ],
+      "far_touch": [
+       2895000000,
+       13,
+       8
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359243,
+      "t_ms": 28.877,
+      "action": "F",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654033938,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2896000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       21
+      ],
+      "far_touch": [
+       2895000000,
+       13,
+       8
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359244,
+      "t_ms": 29.009,
+      "action": "M",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654033938,
+      "flags_last": true,
+      "linked_fill_reduction": 1,
+      "before": [
+       "B",
+       2895000000,
+       2
+      ],
+      "after": [
+       "B",
+       2895000000,
+       1
+      ],
+      "near_best": [
+       2896000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       21
+      ],
+      "far_touch": [
+       2895000000,
+       12,
+       8
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359247,
+      "t_ms": 29.721,
+      "action": "C",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654034060,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2895000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2896000000,
+       3,
+       2
+      ],
+      "next_level": [
+       2897000000,
+       19
+      ],
+      "far_touch": [
+       2895000000,
+       11,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359249,
+      "t_ms": 30.173,
+      "action": "C",
+      "side": "B",
+      "price": 2895000000,
+      "size": 2,
+      "order_id": 788654033957,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2895000000,
+       2
+      ],
+      "after": null,
+      "near_best": [
+       2896000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       19
+      ],
+      "far_touch": [
+       2895000000,
+       9,
+       6
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359250,
+      "t_ms": 30.307,
+      "action": "C",
+      "side": "B",
+      "price": 2895000000,
+      "size": 2,
+      "order_id": 788654033967,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2895000000,
+       2
+      ],
+      "after": null,
+      "near_best": [
+       2896000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       19
+      ],
+      "far_touch": [
+       2895000000,
+       7,
+       5
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359253,
+      "t_ms": 30.729,
+      "action": "C",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654033938,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2895000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2896000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       19
+      ],
+      "far_touch": [
+       2895000000,
+       6,
+       4
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359257,
+      "t_ms": 31.939,
+      "action": "A",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654034074,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2895000000,
+       1
+      ],
+      "near_best": [
+       2896000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       19
+      ],
+      "far_touch": [
+       2895000000,
+       7,
+       5
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359258,
+      "t_ms": 32.273,
+      "action": "A",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654034077,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2895000000,
+       1
+      ],
+      "near_best": [
+       2896000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       19
+      ],
+      "far_touch": [
+       2895000000,
+       8,
+       6
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359259,
+      "t_ms": 32.394,
+      "action": "A",
+      "side": "B",
+      "price": 2895000000,
+      "size": 3,
+      "order_id": 788654034078,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2895000000,
+       3
+      ],
+      "near_best": [
+       2896000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       19
+      ],
+      "far_touch": [
+       2895000000,
+       11,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359260,
+      "t_ms": 33.655,
+      "action": "C",
+      "side": "B",
+      "price": 2895000000,
+      "size": 2,
+      "order_id": 788654034056,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2895000000,
+       2
+      ],
+      "after": null,
+      "near_best": [
+       2896000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       19
+      ],
+      "far_touch": [
+       2895000000,
+       9,
+       6
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359263,
+      "t_ms": 35.118,
+      "action": "A",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654034094,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2895000000,
+       1
+      ],
+      "near_best": [
+       2896000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       18
+      ],
+      "far_touch": [
+       2895000000,
+       10,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359264,
+      "t_ms": 37.523,
+      "action": "C",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654034094,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2895000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2896000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       18
+      ],
+      "far_touch": [
+       2895000000,
+       9,
+       6
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359268,
+      "t_ms": 40.867,
+      "action": "T",
+      "side": "B",
+      "price": 2896000000,
+      "size": 2,
+      "order_id": 788654034118,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2896000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       18
+      ],
+      "far_touch": [
+       2895000000,
+       9,
+       6
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359269,
+      "t_ms": 40.867,
+      "action": "F",
+      "side": "A",
+      "price": 2896000000,
+      "size": 2,
+      "order_id": 788654033167,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2896000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       18
+      ],
+      "far_touch": [
+       2895000000,
+       9,
+       6
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359272,
+      "t_ms": 41.68,
+      "action": "A",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654034122,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2895000000,
+       1
+      ],
+      "near_best": [
+       2896000000,
+       2,
+       2
+      ],
+      "next_level": [
+       2897000000,
+       18
+      ],
+      "far_touch": [
+       2895000000,
+       10,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359273,
+      "t_ms": 42.174,
+      "action": "C",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788654033966,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2895000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2896000000,
+       2,
+       2
+      ],
+      "next_level": [
+       2897000000,
+       18
+      ],
+      "far_touch": [
+       2895000000,
+       9,
+       6
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359275,
+      "t_ms": 42.347,
+      "action": "T",
+      "side": "B",
+      "price": 2896000000,
+      "size": 4,
+      "order_id": 788654034127,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2896000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       18
+      ],
+      "far_touch": [
+       2895000000,
+       9,
+       6
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359276,
+      "t_ms": 42.347,
+      "action": "F",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788654033991,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2896000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       18
+      ],
+      "far_touch": [
+       2895000000,
+       9,
+       6
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359277,
+      "t_ms": 42.347,
+      "action": "F",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788654034067,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2896000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       18
+      ],
+      "far_touch": [
+       2895000000,
+       9,
+       6
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359278,
+      "t_ms": 42.347,
+      "action": "F",
+      "side": "A",
+      "price": 2896000000,
+      "size": 2,
+      "order_id": 788654034126,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2896000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       18
+      ],
+      "far_touch": [
+       2895000000,
+       9,
+       6
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359279,
+      "t_ms": 42.622,
+      "action": "A",
+      "side": "B",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788654034127,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2896000000,
+       1
+      ],
+      "near_best": [
+       2896000000,
+       4,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       18
+      ],
+      "far_touch": [
+       2896000000,
+       1,
+       1
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359285,
+      "t_ms": 42.927,
+      "action": "A",
+      "side": "B",
+      "price": 2896000000,
+      "size": 2,
+      "order_id": 788654034129,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2896000000,
+       2
+      ],
+      "near_best": [
+       2897000000,
+       17,
+       8
+      ],
+      "next_level": [
+       2898000000,
+       14
+      ],
+      "far_touch": [
+       2896000000,
+       3,
+       2
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359292,
+      "t_ms": 44.375,
+      "action": "C",
+      "side": "B",
+      "price": 2896000000,
+      "size": 2,
+      "order_id": 788654034129,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2896000000,
+       2
+      ],
+      "after": null,
+      "near_best": [
+       2897000000,
+       10,
+       7
+      ],
+      "next_level": [
+       2898000000,
+       14
+      ],
+      "far_touch": [
+       2896000000,
+       1,
+       1
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359299,
+      "t_ms": 46.167,
+      "action": "A",
+      "side": "B",
+      "price": 2896000000,
+      "size": 2,
+      "order_id": 788654034159,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2896000000,
+       2
+      ],
+      "near_best": [
+       2897000000,
+       9,
+       6
+      ],
+      "next_level": [
+       2898000000,
+       14
+      ],
+      "far_touch": [
+       2896000000,
+       2,
+       1
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359301,
+      "t_ms": 46.3,
+      "action": "A",
+      "side": "B",
+      "price": 2896000000,
+      "size": 2,
+      "order_id": 788654034160,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2896000000,
+       2
+      ],
+      "near_best": [
+       2897000000,
+       9,
+       6
+      ],
+      "next_level": [
+       2898000000,
+       14
+      ],
+      "far_touch": [
+       2896000000,
+       4,
+       2
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359303,
+      "t_ms": 46.98,
+      "action": "C",
+      "side": "B",
+      "price": 2896000000,
+      "size": 2,
+      "order_id": 788654034160,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2896000000,
+       2
+      ],
+      "after": null,
+      "near_best": [
+       2897000000,
+       9,
+       6
+      ],
+      "next_level": [
+       2898000000,
+       14
+      ],
+      "far_touch": [
+       2896000000,
+       2,
+       1
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359305,
+      "t_ms": 47.142,
+      "action": "T",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788654034167,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2897000000,
+       9,
+       6
+      ],
+      "next_level": [
+       2898000000,
+       14
+      ],
+      "far_touch": [
+       2896000000,
+       2,
+       1
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359306,
+      "t_ms": 47.142,
+      "action": "F",
+      "side": "B",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788654034159,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2897000000,
+       9,
+       6
+      ],
+      "next_level": [
+       2898000000,
+       14
+      ],
+      "far_touch": [
+       2896000000,
+       2,
+       1
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359307,
+      "t_ms": 47.281,
+      "action": "M",
+      "side": "B",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788654034159,
+      "flags_last": false,
+      "linked_fill_reduction": 1,
+      "before": [
+       "B",
+       2896000000,
+       2
+      ],
+      "after": [
+       "B",
+       2896000000,
+       1
+      ],
+      "near_best": [
+       2897000000,
+       9,
+       6
+      ],
+      "next_level": [
+       2898000000,
+       14
+      ],
+      "far_touch": [
+       2896000000,
+       1,
+       1
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359314,
+      "t_ms": 48.122,
+      "action": "A",
+      "side": "B",
+      "price": 2896000000,
+      "size": 2,
+      "order_id": 788654034178,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2896000000,
+       2
+      ],
+      "near_best": [
+       2897000000,
+       9,
+       6
+      ],
+      "next_level": [
+       2898000000,
+       14
+      ],
+      "far_touch": [
+       2896000000,
+       2,
+       1
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359316,
+      "t_ms": 48.253,
+      "action": "A",
+      "side": "B",
+      "price": 2896000000,
+      "size": 2,
+      "order_id": 788654034179,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2896000000,
+       2
+      ],
+      "near_best": [
+       2897000000,
+       9,
+       6
+      ],
+      "next_level": [
+       2898000000,
+       14
+      ],
+      "far_touch": [
+       2896000000,
+       4,
+       2
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359318,
+      "t_ms": 48.673,
+      "action": "A",
+      "side": "B",
+      "price": 2896000000,
+      "size": 2,
+      "order_id": 788654034185,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2896000000,
+       2
+      ],
+      "near_best": [
+       2897000000,
+       9,
+       6
+      ],
+      "next_level": [
+       2898000000,
+       14
+      ],
+      "far_touch": [
+       2896000000,
+       6,
+       3
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359319,
+      "t_ms": 50.469,
+      "action": "C",
+      "side": "B",
+      "price": 2896000000,
+      "size": 2,
+      "order_id": 788654034178,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2896000000,
+       2
+      ],
+      "after": null,
+      "near_best": [
+       2897000000,
+       9,
+       6
+      ],
+      "next_level": [
+       2898000000,
+       14
+      ],
+      "far_touch": [
+       2896000000,
+       4,
+       2
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359320,
+      "t_ms": 50.6,
+      "action": "C",
+      "side": "B",
+      "price": 2896000000,
+      "size": 2,
+      "order_id": 788654034185,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2896000000,
+       2
+      ],
+      "after": null,
+      "near_best": [
+       2897000000,
+       9,
+       6
+      ],
+      "next_level": [
+       2898000000,
+       14
+      ],
+      "far_touch": [
+       2896000000,
+       2,
+       1
+      ],
+      "marker": ""
+     }
+    ]
+   },
+   "recovered": {
+    "episode": {
+     "onset_group": 267317,
+     "side": "A",
+     "onset": "STANDING_BEST_SHRANK",
+     "onset_ns": 1696340410905641568,
+     "onset_cursor": 359720,
+     "original_price_raw": 2894000000,
+     "prior_touch": [
+      2894000000,
+      2,
+      2
+     ],
+     "other_touch": [
+      2893000000,
+      20,
+      10
+     ],
+     "next_gap_ticks": 1,
+     "book_next": "next_ge10",
+     "outcome": "SIZE_RECOVERED_AT_SAME_PRICE",
+     "end_ns": 1696340410910321092,
+     "end_cursor": 359727,
+     "ending_touch": [
+      2894000000,
+      2,
+      2
+     ],
+     "end_vs_entry": "AFTER_ENTRY"
+    },
+    "order": {
+     "order_id": 788654035110,
+     "origin": "older_resting",
+     "age_ms": 3.443,
+     "prior_onsets_by_order": 0,
+     "fate": "F",
+     "fate_delay_ms": 14725.468
+    },
+    "messages": [
+     {
+      "cursor": 359687,
+      "t_ms": -8.244,
+      "action": "C",
+      "side": "B",
+      "price": 2894000000,
+      "size": 2,
+      "order_id": 788654034865,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2894000000,
+       2
+      ],
+      "after": null,
+      "near_best": [
+       2895000000,
+       8,
+       5
+      ],
+      "next_level": [
+       2896000000,
+       10
+      ],
+      "far_touch": [
+       2894000000,
+       4,
+       3
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359691,
+      "t_ms": -7.493,
+      "action": "C",
+      "side": "B",
+      "price": 2894000000,
+      "size": 2,
+      "order_id": 788654034858,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2894000000,
+       2
+      ],
+      "after": null,
+      "near_best": [
+       2895000000,
+       10,
+       6
+      ],
+      "next_level": [
+       2896000000,
+       10
+      ],
+      "far_touch": [
+       2894000000,
+       2,
+       2
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359696,
+      "t_ms": -6.623,
+      "action": "C",
+      "side": "B",
+      "price": 2894000000,
+      "size": 1,
+      "order_id": 788654034863,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2894000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2895000000,
+       13,
+       7
+      ],
+      "next_level": [
+       2896000000,
+       10
+      ],
+      "far_touch": [
+       2894000000,
+       1,
+       1
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359700,
+      "t_ms": -6.453,
+      "action": "T",
+      "side": "A",
+      "price": 2894000000,
+      "size": 1,
+      "order_id": 788654035087,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2895000000,
+       14,
+       8
+      ],
+      "next_level": [
+       2896000000,
+       10
+      ],
+      "far_touch": [
+       2894000000,
+       1,
+       1
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359701,
+      "t_ms": -6.453,
+      "action": "F",
+      "side": "B",
+      "price": 2894000000,
+      "size": 1,
+      "order_id": 788654033095,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2895000000,
+       14,
+       8
+      ],
+      "next_level": [
+       2896000000,
+       10
+      ],
+      "far_touch": [
+       2894000000,
+       1,
+       1
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359704,
+      "t_ms": -6.114,
+      "action": "A",
+      "side": "A",
+      "price": 2894000000,
+      "size": 2,
+      "order_id": 788654035090,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "A",
+       2894000000,
+       2
+      ],
+      "near_best": [
+       2894000000,
+       2,
+       1
+      ],
+      "next_level": [
+       2895000000,
+       14
+      ],
+      "far_touch": [
+       2893000000,
+       23,
+       13
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359707,
+      "t_ms": -5.751,
+      "action": "C",
+      "side": "A",
+      "price": 2894000000,
+      "size": 2,
+      "order_id": 788654035090,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": [
+       "A",
+       2894000000,
+       2
+      ],
+      "after": null,
+      "near_best": [
+       2895000000,
+       13,
+       7
+      ],
+      "next_level": [
+       2896000000,
+       10
+      ],
+      "far_touch": [
+       2893000000,
+       23,
+       13
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359709,
+      "t_ms": -5.603,
+      "action": "C",
+      "side": "B",
+      "price": 2893000000,
+      "size": 1,
+      "order_id": 788654033820,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2893000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2895000000,
+       13,
+       7
+      ],
+      "next_level": [
+       2896000000,
+       10
+      ],
+      "far_touch": [
+       2893000000,
+       22,
+       12
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359710,
+      "t_ms": -5.406,
+      "action": "A",
+      "side": "A",
+      "price": 2894000000,
+      "size": 1,
+      "order_id": 788654035093,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "A",
+       2894000000,
+       1
+      ],
+      "near_best": [
+       2894000000,
+       1,
+       1
+      ],
+      "next_level": [
+       2895000000,
+       13
+      ],
+      "far_touch": [
+       2893000000,
+       22,
+       12
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359712,
+      "t_ms": -4.816,
+      "action": "C",
+      "side": "B",
+      "price": 2893000000,
+      "size": 1,
+      "order_id": 788654033851,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2893000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2894000000,
+       1,
+       1
+      ],
+      "next_level": [
+       2895000000,
+       13
+      ],
+      "far_touch": [
+       2893000000,
+       21,
+       11
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359713,
+      "t_ms": -3.777,
+      "action": "C",
+      "side": "B",
+      "price": 2893000000,
+      "size": 1,
+      "order_id": 788654033847,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2893000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2894000000,
+       1,
+       1
+      ],
+      "next_level": [
+       2895000000,
+       13
+      ],
+      "far_touch": [
+       2893000000,
+       20,
+       10
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359714,
+      "t_ms": -3.443,
+      "action": "A",
+      "side": "A",
+      "price": 2894000000,
+      "size": 1,
+      "order_id": 788654035110,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "A",
+       2894000000,
+       1
+      ],
+      "near_best": [
+       2894000000,
+       2,
+       2
+      ],
+      "next_level": [
+       2895000000,
+       13
+      ],
+      "far_touch": [
+       2893000000,
+       20,
+       10
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359717,
+      "t_ms": -0.187,
+      "action": "T",
+      "side": "B",
+      "price": 2894000000,
+      "size": 1,
+      "order_id": 788654035119,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2894000000,
+       2,
+       2
+      ],
+      "next_level": [
+       2895000000,
+       13
+      ],
+      "far_touch": [
+       2893000000,
+       20,
+       10
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359718,
+      "t_ms": -0.187,
+      "action": "F",
+      "side": "A",
+      "price": 2894000000,
+      "size": 1,
+      "order_id": 788654035093,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2894000000,
+       2,
+       2
+      ],
+      "next_level": [
+       2895000000,
+       13
+      ],
+      "far_touch": [
+       2893000000,
+       20,
+       10
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359719,
+      "t_ms": -0.017,
+      "action": "C",
+      "side": "A",
+      "price": 2894000000,
+      "size": 1,
+      "order_id": 788654035093,
+      "flags_last": false,
+      "linked_fill_reduction": 1,
+      "before": [
+       "A",
+       2894000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2894000000,
+       1,
+       1
+      ],
+      "next_level": [
+       2895000000,
+       13
+      ],
+      "far_touch": [
+       2893000000,
+       20,
+       10
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359720,
+      "t_ms": 0.0,
+      "action": "N",
+      "side": "N",
+      "price": 9223372036854775807,
+      "size": 0,
+      "order_id": 0,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2894000000,
+       1,
+       1
+      ],
+      "next_level": [
+       2895000000,
+       13
+      ],
+      "far_touch": [
+       2893000000,
+       20,
+       10
+      ],
+      "marker": "ONSET_CLOSE"
+     },
+     {
+      "cursor": 359723,
+      "t_ms": 2.596,
+      "action": "C",
+      "side": "B",
+      "price": 2893000000,
+      "size": 2,
+      "order_id": 788654034860,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2893000000,
+       2
+      ],
+      "after": null,
+      "near_best": [
+       2894000000,
+       1,
+       1
+      ],
+      "next_level": [
+       2895000000,
+       14
+      ],
+      "far_touch": [
+       2893000000,
+       18,
+       9
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359726,
+      "t_ms": 4.662,
+      "action": "A",
+      "side": "A",
+      "price": 2894000000,
+      "size": 1,
+      "order_id": 788654035139,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "A",
+       2894000000,
+       1
+      ],
+      "near_best": [
+       2894000000,
+       2,
+       2
+      ],
+      "next_level": [
+       2895000000,
+       14
+      ],
+      "far_touch": [
+       2893000000,
+       18,
+       9
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 359727,
+      "t_ms": 4.68,
+      "action": "N",
+      "side": "N",
+      "price": 9223372036854775807,
+      "size": 0,
+      "order_id": 0,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2894000000,
+       2,
+       2
+      ],
+      "next_level": [
+       2895000000,
+       14
+      ],
+      "far_touch": [
+       2893000000,
+       18,
+       9
+      ],
+      "marker": "END_CLOSE"
+     },
+     {
+      "cursor": 359731,
+      "t_ms": 21.722,
+      "action": "C",
+      "side": "A",
+      "price": 2894000000,
+      "size": 1,
+      "order_id": 788654035139,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": [
+       "A",
+       2894000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2894000000,
+       1,
+       1
+      ],
+      "next_level": [
+       2895000000,
+       15
+      ],
+      "far_touch": [
+       2893000000,
+       18,
+       9
+      ],
+      "marker": ""
+     }
+    ]
+   }
+  },
+  {
+   "kind": "new_best_fresh_add",
+   "retreated": {
+    "episode": {
+     "onset_group": 213470,
+     "side": "A",
+     "onset": "NEW_BEST",
+     "onset_ns": 1696338271170903373,
+     "onset_cursor": 285182,
+     "original_price_raw": 2896000000,
+     "prior_touch": [
+      2897000000,
+      12,
+      11
+     ],
+     "other_touch": [
+      2895000000,
+      10,
+      9
+     ],
+     "next_gap_ticks": 1,
+     "book_next": "next_ge10",
+     "outcome": "RETREATED",
+     "end_ns": 1696338271172290251,
+     "end_cursor": 285185,
+     "ending_touch": [
+      2897000000,
+      13,
+      12
+     ],
+     "end_vs_entry": "AFTER_ENTRY"
+    },
+    "order": {
+     "order_id": 788653810383,
+     "origin": "fresh_add",
+     "age_ms": 0.019,
+     "prior_onsets_by_order": 0,
+     "fate": "C",
+     "fate_delay_ms": 1.367
+    },
+    "messages": [
+     {
+      "cursor": 285159,
+      "t_ms": -4.582,
+      "action": "T",
+      "side": "N",
+      "price": 2896000000,
+      "size": 8,
+      "order_id": 0,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2897000000,
+       7,
+       7
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2896000000,
+       8,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285160,
+      "t_ms": -4.582,
+      "action": "F",
+      "side": "N",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810042,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2897000000,
+       7,
+       7
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2896000000,
+       8,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285161,
+      "t_ms": -4.582,
+      "action": "F",
+      "side": "N",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810064,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2897000000,
+       7,
+       7
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2896000000,
+       8,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285162,
+      "t_ms": -4.582,
+      "action": "F",
+      "side": "N",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810067,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2897000000,
+       7,
+       7
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2896000000,
+       8,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285163,
+      "t_ms": -4.582,
+      "action": "F",
+      "side": "N",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810074,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2897000000,
+       7,
+       7
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2896000000,
+       8,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285164,
+      "t_ms": -4.582,
+      "action": "F",
+      "side": "N",
+      "price": 2896000000,
+      "size": 2,
+      "order_id": 788653810147,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2897000000,
+       7,
+       7
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2896000000,
+       8,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285165,
+      "t_ms": -4.582,
+      "action": "F",
+      "side": "N",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810177,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2897000000,
+       7,
+       7
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2896000000,
+       8,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285166,
+      "t_ms": -4.582,
+      "action": "F",
+      "side": "N",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810227,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2897000000,
+       7,
+       7
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2896000000,
+       8,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285167,
+      "t_ms": -3.908,
+      "action": "C",
+      "side": "B",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810042,
+      "flags_last": false,
+      "linked_fill_reduction": 1,
+      "before": [
+       "B",
+       2896000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2897000000,
+       7,
+       7
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2896000000,
+       7,
+       6
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285168,
+      "t_ms": -3.908,
+      "action": "C",
+      "side": "B",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810064,
+      "flags_last": false,
+      "linked_fill_reduction": 1,
+      "before": [
+       "B",
+       2896000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2897000000,
+       7,
+       7
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2896000000,
+       6,
+       5
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285169,
+      "t_ms": -3.908,
+      "action": "C",
+      "side": "B",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810067,
+      "flags_last": false,
+      "linked_fill_reduction": 1,
+      "before": [
+       "B",
+       2896000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2897000000,
+       7,
+       7
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2896000000,
+       5,
+       4
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285170,
+      "t_ms": -3.908,
+      "action": "C",
+      "side": "B",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810074,
+      "flags_last": false,
+      "linked_fill_reduction": 1,
+      "before": [
+       "B",
+       2896000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2897000000,
+       7,
+       7
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2896000000,
+       4,
+       3
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285171,
+      "t_ms": -3.908,
+      "action": "C",
+      "side": "B",
+      "price": 2896000000,
+      "size": 2,
+      "order_id": 788653810147,
+      "flags_last": false,
+      "linked_fill_reduction": 2,
+      "before": [
+       "B",
+       2896000000,
+       2
+      ],
+      "after": null,
+      "near_best": [
+       2897000000,
+       7,
+       7
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2896000000,
+       2,
+       2
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285172,
+      "t_ms": -3.908,
+      "action": "C",
+      "side": "B",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810177,
+      "flags_last": false,
+      "linked_fill_reduction": 1,
+      "before": [
+       "B",
+       2896000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2897000000,
+       7,
+       7
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2896000000,
+       1,
+       1
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285177,
+      "t_ms": -2.147,
+      "action": "C",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788653810050,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2895000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2897000000,
+       8,
+       8
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2895000000,
+       10,
+       9
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285181,
+      "t_ms": -0.019,
+      "action": "A",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810383,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "A",
+       2896000000,
+       1
+      ],
+      "near_best": [
+       2896000000,
+       1,
+       1
+      ],
+      "next_level": [
+       2897000000,
+       12
+      ],
+      "far_touch": [
+       2895000000,
+       10,
+       9
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285182,
+      "t_ms": 0.0,
+      "action": "N",
+      "side": "N",
+      "price": 9223372036854775807,
+      "size": 0,
+      "order_id": 0,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2896000000,
+       1,
+       1
+      ],
+      "next_level": [
+       2897000000,
+       12
+      ],
+      "far_touch": [
+       2895000000,
+       10,
+       9
+      ],
+      "marker": "ONSET_CLOSE"
+     },
+     {
+      "cursor": 285184,
+      "t_ms": 1.367,
+      "action": "C",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810383,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": [
+       "A",
+       2896000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2897000000,
+       13,
+       12
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2895000000,
+       10,
+       9
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285185,
+      "t_ms": 1.387,
+      "action": "N",
+      "side": "N",
+      "price": 9223372036854775807,
+      "size": 0,
+      "order_id": 0,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2897000000,
+       13,
+       12
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2895000000,
+       10,
+       9
+      ],
+      "marker": "END_CLOSE"
+     },
+     {
+      "cursor": 285187,
+      "t_ms": 1.657,
+      "action": "A",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810393,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "A",
+       2896000000,
+       1
+      ],
+      "near_best": [
+       2896000000,
+       1,
+       1
+      ],
+      "next_level": [
+       2897000000,
+       13
+      ],
+      "far_touch": [
+       2895000000,
+       10,
+       9
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285192,
+      "t_ms": 6.535,
+      "action": "C",
+      "side": "B",
+      "price": 2895000000,
+      "size": 2,
+      "order_id": 788653810043,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2895000000,
+       2
+      ],
+      "after": null,
+      "near_best": [
+       2896000000,
+       1,
+       1
+      ],
+      "next_level": [
+       2897000000,
+       15
+      ],
+      "far_touch": [
+       2895000000,
+       8,
+       8
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285193,
+      "t_ms": 6.689,
+      "action": "C",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788653810073,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2895000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2896000000,
+       1,
+       1
+      ],
+      "next_level": [
+       2897000000,
+       15
+      ],
+      "far_touch": [
+       2895000000,
+       7,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285196,
+      "t_ms": 8.231,
+      "action": "A",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810425,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "A",
+       2896000000,
+       1
+      ],
+      "near_best": [
+       2896000000,
+       2,
+       2
+      ],
+      "next_level": [
+       2897000000,
+       14
+      ],
+      "far_touch": [
+       2895000000,
+       7,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285198,
+      "t_ms": 8.248,
+      "action": "A",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810426,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "A",
+       2896000000,
+       1
+      ],
+      "near_best": [
+       2896000000,
+       3,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       14
+      ],
+      "far_touch": [
+       2895000000,
+       7,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285201,
+      "t_ms": 8.811,
+      "action": "C",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788653810063,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2895000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2896000000,
+       3,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       13
+      ],
+      "far_touch": [
+       2895000000,
+       6,
+       6
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285202,
+      "t_ms": 9.181,
+      "action": "A",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810430,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "A",
+       2896000000,
+       1
+      ],
+      "near_best": [
+       2896000000,
+       4,
+       4
+      ],
+      "next_level": [
+       2897000000,
+       13
+      ],
+      "far_touch": [
+       2895000000,
+       6,
+       6
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285205,
+      "t_ms": 10.759,
+      "action": "C",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810430,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "A",
+       2896000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2896000000,
+       3,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       13
+      ],
+      "far_touch": [
+       2895000000,
+       6,
+       6
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285206,
+      "t_ms": 11.319,
+      "action": "A",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810436,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "A",
+       2896000000,
+       1
+      ],
+      "near_best": [
+       2896000000,
+       4,
+       4
+      ],
+      "next_level": [
+       2897000000,
+       13
+      ],
+      "far_touch": [
+       2895000000,
+       6,
+       6
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285207,
+      "t_ms": 12.631,
+      "action": "C",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810436,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "A",
+       2896000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2896000000,
+       3,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       13
+      ],
+      "far_touch": [
+       2895000000,
+       6,
+       6
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285208,
+      "t_ms": 12.768,
+      "action": "C",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810393,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "A",
+       2896000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2896000000,
+       2,
+       2
+      ],
+      "next_level": [
+       2897000000,
+       13
+      ],
+      "far_touch": [
+       2895000000,
+       6,
+       6
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285209,
+      "t_ms": 13.229,
+      "action": "A",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788653810448,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2895000000,
+       1
+      ],
+      "near_best": [
+       2896000000,
+       2,
+       2
+      ],
+      "next_level": [
+       2897000000,
+       13
+      ],
+      "far_touch": [
+       2895000000,
+       7,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285210,
+      "t_ms": 14.226,
+      "action": "T",
+      "side": "B",
+      "price": 2896000000,
+      "size": 2,
+      "order_id": 788653810459,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2896000000,
+       2,
+       2
+      ],
+      "next_level": [
+       2897000000,
+       13
+      ],
+      "far_touch": [
+       2895000000,
+       7,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285211,
+      "t_ms": 14.226,
+      "action": "F",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810425,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2896000000,
+       2,
+       2
+      ],
+      "next_level": [
+       2897000000,
+       13
+      ],
+      "far_touch": [
+       2895000000,
+       7,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285212,
+      "t_ms": 14.226,
+      "action": "F",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810426,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2896000000,
+       2,
+       2
+      ],
+      "next_level": [
+       2897000000,
+       13
+      ],
+      "far_touch": [
+       2895000000,
+       7,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285213,
+      "t_ms": 14.386,
+      "action": "C",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810425,
+      "flags_last": false,
+      "linked_fill_reduction": 1,
+      "before": [
+       "A",
+       2896000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2896000000,
+       1,
+       1
+      ],
+      "next_level": [
+       2897000000,
+       13
+      ],
+      "far_touch": [
+       2895000000,
+       7,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285214,
+      "t_ms": 14.386,
+      "action": "C",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810426,
+      "flags_last": false,
+      "linked_fill_reduction": 1,
+      "before": [
+       "A",
+       2896000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2897000000,
+       13,
+       12
+      ],
+      "next_level": [
+       2898000000,
+       25
+      ],
+      "far_touch": [
+       2895000000,
+       7,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285216,
+      "t_ms": 14.736,
+      "action": "A",
+      "side": "B",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810462,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2896000000,
+       1
+      ],
+      "near_best": [
+       2897000000,
+       13,
+       12
+      ],
+      "next_level": [
+       2898000000,
+       25
+      ],
+      "far_touch": [
+       2896000000,
+       1,
+       1
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285223,
+      "t_ms": 18.046,
+      "action": "T",
+      "side": "B",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810503,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2897000000,
+       13,
+       12
+      ],
+      "next_level": [
+       2898000000,
+       25
+      ],
+      "far_touch": [
+       2895000000,
+       8,
+       8
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285224,
+      "t_ms": 18.372,
+      "action": "A",
+      "side": "B",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810503,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2896000000,
+       1
+      ],
+      "near_best": [
+       2897000000,
+       13,
+       12
+      ],
+      "next_level": [
+       2898000000,
+       25
+      ],
+      "far_touch": [
+       2896000000,
+       1,
+       1
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285227,
+      "t_ms": 21.264,
+      "action": "A",
+      "side": "B",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810514,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2896000000,
+       1
+      ],
+      "near_best": [
+       2897000000,
+       13,
+       12
+      ],
+      "next_level": [
+       2898000000,
+       18
+      ],
+      "far_touch": [
+       2896000000,
+       2,
+       2
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285231,
+      "t_ms": 21.522,
+      "action": "C",
+      "side": "B",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810503,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2896000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2897000000,
+       13,
+       12
+      ],
+      "next_level": [
+       2898000000,
+       18
+      ],
+      "far_touch": [
+       2896000000,
+       1,
+       1
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285238,
+      "t_ms": 27.64,
+      "action": "A",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788653810535,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2895000000,
+       1
+      ],
+      "near_best": [
+       2897000000,
+       12,
+       11
+      ],
+      "next_level": [
+       2898000000,
+       18
+      ],
+      "far_touch": [
+       2895000000,
+       10,
+       10
+      ],
+      "marker": ""
+     }
+    ]
+   },
+   "recovered": {
+    "episode": {
+     "onset_group": 213474,
+     "side": "A",
+     "onset": "NEW_BEST",
+     "onset_ns": 1696338271172579870,
+     "onset_cursor": 285188,
+     "original_price_raw": 2896000000,
+     "prior_touch": [
+      2897000000,
+      13,
+      12
+     ],
+     "other_touch": [
+      2895000000,
+      10,
+      9
+     ],
+     "next_gap_ticks": 1,
+     "book_next": "next_ge10",
+     "outcome": "SIZE_RECOVERED_AT_SAME_PRICE",
+     "end_ns": 1696338271179151269,
+     "end_cursor": 285197,
+     "ending_touch": [
+      2896000000,
+      2,
+      2
+     ],
+     "end_vs_entry": "AFTER_ENTRY"
+    },
+    "order": {
+     "order_id": 788653810393,
+     "origin": "fresh_add",
+     "age_ms": 0.019,
+     "prior_onsets_by_order": 0,
+     "fate": "C",
+     "fate_delay_ms": 11.091
+    },
+    "messages": [
+     {
+      "cursor": 285159,
+      "t_ms": -6.258,
+      "action": "T",
+      "side": "N",
+      "price": 2896000000,
+      "size": 8,
+      "order_id": 0,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2897000000,
+       7,
+       7
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2896000000,
+       8,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285160,
+      "t_ms": -6.258,
+      "action": "F",
+      "side": "N",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810042,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2897000000,
+       7,
+       7
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2896000000,
+       8,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285161,
+      "t_ms": -6.258,
+      "action": "F",
+      "side": "N",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810064,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2897000000,
+       7,
+       7
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2896000000,
+       8,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285162,
+      "t_ms": -6.258,
+      "action": "F",
+      "side": "N",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810067,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2897000000,
+       7,
+       7
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2896000000,
+       8,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285163,
+      "t_ms": -6.258,
+      "action": "F",
+      "side": "N",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810074,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2897000000,
+       7,
+       7
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2896000000,
+       8,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285164,
+      "t_ms": -6.258,
+      "action": "F",
+      "side": "N",
+      "price": 2896000000,
+      "size": 2,
+      "order_id": 788653810147,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2897000000,
+       7,
+       7
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2896000000,
+       8,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285165,
+      "t_ms": -6.258,
+      "action": "F",
+      "side": "N",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810177,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2897000000,
+       7,
+       7
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2896000000,
+       8,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285166,
+      "t_ms": -6.258,
+      "action": "F",
+      "side": "N",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810227,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2897000000,
+       7,
+       7
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2896000000,
+       8,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285167,
+      "t_ms": -5.585,
+      "action": "C",
+      "side": "B",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810042,
+      "flags_last": false,
+      "linked_fill_reduction": 1,
+      "before": [
+       "B",
+       2896000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2897000000,
+       7,
+       7
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2896000000,
+       7,
+       6
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285168,
+      "t_ms": -5.585,
+      "action": "C",
+      "side": "B",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810064,
+      "flags_last": false,
+      "linked_fill_reduction": 1,
+      "before": [
+       "B",
+       2896000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2897000000,
+       7,
+       7
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2896000000,
+       6,
+       5
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285169,
+      "t_ms": -5.585,
+      "action": "C",
+      "side": "B",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810067,
+      "flags_last": false,
+      "linked_fill_reduction": 1,
+      "before": [
+       "B",
+       2896000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2897000000,
+       7,
+       7
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2896000000,
+       5,
+       4
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285170,
+      "t_ms": -5.585,
+      "action": "C",
+      "side": "B",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810074,
+      "flags_last": false,
+      "linked_fill_reduction": 1,
+      "before": [
+       "B",
+       2896000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2897000000,
+       7,
+       7
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2896000000,
+       4,
+       3
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285171,
+      "t_ms": -5.585,
+      "action": "C",
+      "side": "B",
+      "price": 2896000000,
+      "size": 2,
+      "order_id": 788653810147,
+      "flags_last": false,
+      "linked_fill_reduction": 2,
+      "before": [
+       "B",
+       2896000000,
+       2
+      ],
+      "after": null,
+      "near_best": [
+       2897000000,
+       7,
+       7
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2896000000,
+       2,
+       2
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285172,
+      "t_ms": -5.585,
+      "action": "C",
+      "side": "B",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810177,
+      "flags_last": false,
+      "linked_fill_reduction": 1,
+      "before": [
+       "B",
+       2896000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2897000000,
+       7,
+       7
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2896000000,
+       1,
+       1
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285177,
+      "t_ms": -3.823,
+      "action": "C",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788653810050,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2895000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2897000000,
+       8,
+       8
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2895000000,
+       10,
+       9
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285181,
+      "t_ms": -1.695,
+      "action": "A",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810383,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "A",
+       2896000000,
+       1
+      ],
+      "near_best": [
+       2896000000,
+       1,
+       1
+      ],
+      "next_level": [
+       2897000000,
+       12
+      ],
+      "far_touch": [
+       2895000000,
+       10,
+       9
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285184,
+      "t_ms": -0.31,
+      "action": "C",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810383,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": [
+       "A",
+       2896000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2897000000,
+       13,
+       12
+      ],
+      "next_level": [
+       2898000000,
+       15
+      ],
+      "far_touch": [
+       2895000000,
+       10,
+       9
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285187,
+      "t_ms": -0.019,
+      "action": "A",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810393,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "A",
+       2896000000,
+       1
+      ],
+      "near_best": [
+       2896000000,
+       1,
+       1
+      ],
+      "next_level": [
+       2897000000,
+       13
+      ],
+      "far_touch": [
+       2895000000,
+       10,
+       9
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285188,
+      "t_ms": 0.0,
+      "action": "N",
+      "side": "N",
+      "price": 9223372036854775807,
+      "size": 0,
+      "order_id": 0,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2896000000,
+       1,
+       1
+      ],
+      "next_level": [
+       2897000000,
+       13
+      ],
+      "far_touch": [
+       2895000000,
+       10,
+       9
+      ],
+      "marker": "ONSET_CLOSE"
+     },
+     {
+      "cursor": 285192,
+      "t_ms": 4.858,
+      "action": "C",
+      "side": "B",
+      "price": 2895000000,
+      "size": 2,
+      "order_id": 788653810043,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2895000000,
+       2
+      ],
+      "after": null,
+      "near_best": [
+       2896000000,
+       1,
+       1
+      ],
+      "next_level": [
+       2897000000,
+       15
+      ],
+      "far_touch": [
+       2895000000,
+       8,
+       8
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285193,
+      "t_ms": 5.013,
+      "action": "C",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788653810073,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2895000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2896000000,
+       1,
+       1
+      ],
+      "next_level": [
+       2897000000,
+       15
+      ],
+      "far_touch": [
+       2895000000,
+       7,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285196,
+      "t_ms": 6.555,
+      "action": "A",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810425,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "A",
+       2896000000,
+       1
+      ],
+      "near_best": [
+       2896000000,
+       2,
+       2
+      ],
+      "next_level": [
+       2897000000,
+       14
+      ],
+      "far_touch": [
+       2895000000,
+       7,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285197,
+      "t_ms": 6.571,
+      "action": "N",
+      "side": "N",
+      "price": 9223372036854775807,
+      "size": 0,
+      "order_id": 0,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2896000000,
+       2,
+       2
+      ],
+      "next_level": [
+       2897000000,
+       14
+      ],
+      "far_touch": [
+       2895000000,
+       7,
+       7
+      ],
+      "marker": "END_CLOSE"
+     },
+     {
+      "cursor": 285198,
+      "t_ms": 6.571,
+      "action": "A",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810426,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "A",
+       2896000000,
+       1
+      ],
+      "near_best": [
+       2896000000,
+       3,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       14
+      ],
+      "far_touch": [
+       2895000000,
+       7,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285201,
+      "t_ms": 7.134,
+      "action": "C",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788653810063,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2895000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2896000000,
+       3,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       13
+      ],
+      "far_touch": [
+       2895000000,
+       6,
+       6
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285202,
+      "t_ms": 7.505,
+      "action": "A",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810430,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "A",
+       2896000000,
+       1
+      ],
+      "near_best": [
+       2896000000,
+       4,
+       4
+      ],
+      "next_level": [
+       2897000000,
+       13
+      ],
+      "far_touch": [
+       2895000000,
+       6,
+       6
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285205,
+      "t_ms": 9.082,
+      "action": "C",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810430,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "A",
+       2896000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2896000000,
+       3,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       13
+      ],
+      "far_touch": [
+       2895000000,
+       6,
+       6
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285206,
+      "t_ms": 9.642,
+      "action": "A",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810436,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "A",
+       2896000000,
+       1
+      ],
+      "near_best": [
+       2896000000,
+       4,
+       4
+      ],
+      "next_level": [
+       2897000000,
+       13
+      ],
+      "far_touch": [
+       2895000000,
+       6,
+       6
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285207,
+      "t_ms": 10.955,
+      "action": "C",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810436,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "A",
+       2896000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2896000000,
+       3,
+       3
+      ],
+      "next_level": [
+       2897000000,
+       13
+      ],
+      "far_touch": [
+       2895000000,
+       6,
+       6
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285208,
+      "t_ms": 11.091,
+      "action": "C",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810393,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": [
+       "A",
+       2896000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2896000000,
+       2,
+       2
+      ],
+      "next_level": [
+       2897000000,
+       13
+      ],
+      "far_touch": [
+       2895000000,
+       6,
+       6
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285209,
+      "t_ms": 11.553,
+      "action": "A",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788653810448,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2895000000,
+       1
+      ],
+      "near_best": [
+       2896000000,
+       2,
+       2
+      ],
+      "next_level": [
+       2897000000,
+       13
+      ],
+      "far_touch": [
+       2895000000,
+       7,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285210,
+      "t_ms": 12.55,
+      "action": "T",
+      "side": "B",
+      "price": 2896000000,
+      "size": 2,
+      "order_id": 788653810459,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2896000000,
+       2,
+       2
+      ],
+      "next_level": [
+       2897000000,
+       13
+      ],
+      "far_touch": [
+       2895000000,
+       7,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285211,
+      "t_ms": 12.55,
+      "action": "F",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810425,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2896000000,
+       2,
+       2
+      ],
+      "next_level": [
+       2897000000,
+       13
+      ],
+      "far_touch": [
+       2895000000,
+       7,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285212,
+      "t_ms": 12.55,
+      "action": "F",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810426,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2896000000,
+       2,
+       2
+      ],
+      "next_level": [
+       2897000000,
+       13
+      ],
+      "far_touch": [
+       2895000000,
+       7,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285213,
+      "t_ms": 12.71,
+      "action": "C",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810425,
+      "flags_last": false,
+      "linked_fill_reduction": 1,
+      "before": [
+       "A",
+       2896000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2896000000,
+       1,
+       1
+      ],
+      "next_level": [
+       2897000000,
+       13
+      ],
+      "far_touch": [
+       2895000000,
+       7,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285214,
+      "t_ms": 12.71,
+      "action": "C",
+      "side": "A",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810426,
+      "flags_last": false,
+      "linked_fill_reduction": 1,
+      "before": [
+       "A",
+       2896000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2897000000,
+       13,
+       12
+      ],
+      "next_level": [
+       2898000000,
+       25
+      ],
+      "far_touch": [
+       2895000000,
+       7,
+       7
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285216,
+      "t_ms": 13.059,
+      "action": "A",
+      "side": "B",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810462,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2896000000,
+       1
+      ],
+      "near_best": [
+       2897000000,
+       13,
+       12
+      ],
+      "next_level": [
+       2898000000,
+       25
+      ],
+      "far_touch": [
+       2896000000,
+       1,
+       1
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285223,
+      "t_ms": 16.369,
+      "action": "T",
+      "side": "B",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810503,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": null,
+      "near_best": [
+       2897000000,
+       13,
+       12
+      ],
+      "next_level": [
+       2898000000,
+       25
+      ],
+      "far_touch": [
+       2895000000,
+       8,
+       8
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285224,
+      "t_ms": 16.695,
+      "action": "A",
+      "side": "B",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810503,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2896000000,
+       1
+      ],
+      "near_best": [
+       2897000000,
+       13,
+       12
+      ],
+      "next_level": [
+       2898000000,
+       25
+      ],
+      "far_touch": [
+       2896000000,
+       1,
+       1
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285227,
+      "t_ms": 19.587,
+      "action": "A",
+      "side": "B",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810514,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2896000000,
+       1
+      ],
+      "near_best": [
+       2897000000,
+       13,
+       12
+      ],
+      "next_level": [
+       2898000000,
+       18
+      ],
+      "far_touch": [
+       2896000000,
+       2,
+       2
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285231,
+      "t_ms": 19.846,
+      "action": "C",
+      "side": "B",
+      "price": 2896000000,
+      "size": 1,
+      "order_id": 788653810503,
+      "flags_last": false,
+      "linked_fill_reduction": 0,
+      "before": [
+       "B",
+       2896000000,
+       1
+      ],
+      "after": null,
+      "near_best": [
+       2897000000,
+       13,
+       12
+      ],
+      "next_level": [
+       2898000000,
+       18
+      ],
+      "far_touch": [
+       2896000000,
+       1,
+       1
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285238,
+      "t_ms": 25.963,
+      "action": "A",
+      "side": "B",
+      "price": 2895000000,
+      "size": 1,
+      "order_id": 788653810535,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2895000000,
+       1
+      ],
+      "near_best": [
+       2897000000,
+       12,
+       11
+      ],
+      "next_level": [
+       2898000000,
+       18
+      ],
+      "far_touch": [
+       2895000000,
+       10,
+       10
+      ],
+      "marker": ""
+     },
+     {
+      "cursor": 285247,
+      "t_ms": 55.899,
+      "action": "A",
+      "side": "B",
+      "price": 2895000000,
+      "size": 3,
+      "order_id": 788653810623,
+      "flags_last": true,
+      "linked_fill_reduction": 0,
+      "before": null,
+      "after": [
+       "B",
+       2895000000,
+       3
+      ],
+      "near_best": [
+       2897000000,
+       17,
+       11
+      ],
+      "next_level": [
+       2898000000,
+       18
+      ],
+      "far_touch": [
+       2895000000,
+       13,
+       11
+      ],
+      "marker": ""
+     }
+    ]
+   }
+  }
+ ]
+}
