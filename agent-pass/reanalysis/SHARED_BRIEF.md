@@ -15,6 +15,20 @@ Required evidence:
 
 Use the single canonical input manifest linked in INPUT_AUTHORITY.md. Refresh it after Ccode's final handoff; do not build a competing ledger or registry. It records each artifact's repository, immutable revision, path, role, population/date coverage, clock status and supersession relationship with measured or explicitly declared hashes/bytes. Byte-identical files have one active entry; duplicate ledger copies are aliases only, never alternate active ledgers. Different populations, changed observations and complementary views remain distinct. Account for all supplied data and data types in the coverage ledger, including informational material. Distinguish decision-time inputs from explanatory context, duplicate copies and unavailable sources; these roles do not excuse silently omitting data. Exclude either analyst's new reanalysis from the shared starting packet.
 
+## Nothing dropped: comprehensive discovery and understanding
+
+Latest user clarification: this is a comprehensive discovery and interpretation run, not a right/wrong or prove/disprove contest about the data. Every distinct supplied observation, data type, layer, aspect and relationship stays in the analysis and its coverage record. The objective is to understand what it measures, what it corresponds to, when and how it matters, and how it interacts with the rest.
+
+Do not discard evidence because it is small, weak on its own, inverse, differently shaped, rare, conflicting, inconvenient, unexplained or not yet useful to a trading rule. Keep patterns that appear inconsistent and examine their conditions and sequence. A relationship absent in one context remains a recorded finding about that context, not a reason to delete the input. Unresolved relationships and hypotheses remain visible with their evidence and open questions.
+
+Describe relationships and applicability in context rather than assigning data a pass/fail verdict. Assess the accuracy and limits of interpretations honestly, while retaining the observations regardless of which explanation fits. Apparent failures, disagreement and absence can themselves reveal market behavior. Do not replace comprehensive exploration with a search for evidence favoring a preferred model or strategy.
+
+Use the complete distinct-observation population for applicable summaries, with explicit denominators. Illustrative case selection is presentation only and never narrows the underlying analysis population. Every supplied source/type must have a traceable coverage entry; if something cannot yet be assessed, retain it, state exactly why and mark coverage incomplete rather than silently excluding it.
+
+Selecting inputs for one paper strategy does not remove any data from the overall analysis. Preserve complementary, contextual and currently unexplained information for other strategies and later interpretation. Readiness criteria apply to actions and implementations, not to whether observations deserve to remain.
+
+Duplicate cleanup removes only redundant copies/references to the same information. The canonical information, source coordinates, distinct population meanings, clocks and lineage remain. Correct demonstrable calculation or metadata errors transparently, retaining source provenance; do not misclassify genuine contrary observations as errors.
+
 ## Shared goals, independent analytical approach
 
 The shared brief defines the goals, complete evidence coverage, source/clock integrity and comparable deliverables. It does not prescribe identical hypotheses, feature groupings, analytical techniques, exploration order, weighting or conclusions. Each analyst should choose and explain their own approach, use their own judgment and pursue promising relationships beyond the examples listed here. The individual/group/whole and dipole reviews are coverage obligations, not a fixed theory of the market.
@@ -91,16 +105,16 @@ Provide concrete rule cards and machine-readable specifications for each support
 - Frozen version/configuration, a reproducible input-to-action trace, paper decision/order/fill/exit logging and review criteria. Log suppressed signals and reasons as well as trades; measure missed opportunities, false alarms, excursions, drawdown, duration and net results where defined.
 - Status: ready for a paper execution check, observation-only, or blocked, with the exact reason and next action. Do not call a written specification deployed or a replay a live paper run.
 
-Prioritize a small, interpretable set of strategies justified by the complete evidence review. All data remains within the analysis even if only some inputs earn a place in a strategy. Do not force a trading rule from unsupported evidence. The deadline means produce the best explicit paper candidates and an honest readiness list, not erase counterexamples or fabricate certainty.
+Prioritize a small, interpretable set of strategies justified by the complete evidence review. All data remains within the analysis; the inputs used by a particular strategy are a separate implementation choice, not a ranking of which data should survive. Do not force a trading rule from unsupported evidence. The deadline means produce the best explicit paper candidates and an honest readiness list, not erase counterexamples or fabricate certainty.
 
 For every gap, state what is missing, which conclusion or strategy it affects, why it matters, a concrete data/test/implementation idea, expected benefit and priority. Separate issues that prevent valid paper execution tonight from longer-term questions that can be investigated later. Do not undertake the full gap-filling program tonight. Prepare the paper handoff as part of this reanalysis; keep prospective results distinct from historical findings.
 
 ## Matching deliverables
 
 Write separate analyst-specific outputs without reading the other analyst's new report first:
-1. REPORT.md: independently chosen method and rationale, strongest supported findings, changes from previous conclusions, contradictions and practical limits.
-2. CLAIMS.csv: claim_id, question, statement, status (supported/mixed/unsupported/unresolved), conditions, source references, date/population, numerator/denominator when applicable, decision clock, endpoint, measured lead time if available, contrary/missed cases and limitations.
-3. CASES.csv: source-defined parent/event IDs, day/population, source revision/path/row, component references, observation/known-by/recognition/outcome clocks, explanation and whether the case supports or challenges a claim.
+1. REPORT.md: independently chosen method and rationale, comprehensive interpretation of observed relationships and conditions (including weak, inverse, conflicting and unresolved evidence), changes from previous conclusions and practical limits. Lead with useful findings without omitting the rest of the coverage.
+2. CLAIMS.csv: claim_id, question, interpretation, observed correspondence, applicability/conditions, contrary or absent correspondence, unresolved aspects, source references, date/population, numerator/denominator when applicable, decision clock, endpoint, measured lead time if available and limitations. These describe interpretations in context; they are not data acceptance/rejection labels. Retain every considered relationship, including those not observed in the current scope.
+3. CASES.csv: source-defined parent/event IDs, day/population, source revision/path/row, component references, observation/known-by/recognition/outcome clocks, observed sequence, its relationship to the interpretation, contrary or complementary behavior and what remains unexplained. Every case retains its place regardless of the conclusion.
 4. OPEN_QUESTIONS.md: ranked gaps, proposed remedies, affected claims/strategies, tonight-blocking versus deferred work, and the smallest discriminating test. Do not present speculative confidence percentages.
 5. RECEIPT.json: analyst, exact shared-brief and evidence-manifest commits, output locations and any unavailable required sources.
 6. COVERAGE.csv: every supplied source and substantive field/data type, interpretation, availability, individual/group/whole review references, duplicate lineage and explicit unassessable cases.
