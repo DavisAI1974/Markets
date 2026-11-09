@@ -22,12 +22,12 @@ Each date has 36 birth-path figures, split candidate/control1/control2 and SAME/
 
 ### Population and birth-aligned paths
 
-|      day | scope            |   candidates |   live |   finalization_only |   path_rows |   controls |   groups |   native_matches |   completed_group_missed |   completed_group_added |
-|---------:|:-----------------|-------------:|-------:|--------------------:|------------:|-----------:|---------:|-----------------:|-------------------------:|------------------------:|
-| 20231002 | partial_archived |          741 |    741 |                   0 |      254025 |       1482 |   600291 |              741 |                        5 |                       5 |
-| 20231003 | full_archived    |          833 |    832 |                   1 |      283542 |       1664 |   653912 |              833 |                        5 |                       5 |
-| 20231017 | partial_archived |          741 |    740 |                   1 |      253764 |       1480 |   635170 |              741 |                       11 |                      10 |
-| 20231018 | full_archived    |          863 |    863 |                   0 |      288144 |       1726 |   583688 |              863 |                       21 |                      24 |
+| day        | scope            | candidates   | live   | finalization_only   | path_rows   | controls   | groups   | native_matches   | completed_group_missed   | completed_group_added   |
+|:-----------|:-----------------|:-------------|:-------|:--------------------|:------------|:-----------|:---------|:-----------------|:-------------------------|:------------------------|
+| 2023-10-02 | partial_archived | 741          | 741    | 0                   | 254025      | 1482       | 600291   | 741              | 5                        | 5                       |
+| 2023-10-03 | full_archived    | 833          | 832    | 1                   | 283542      | 1664       | 653912   | 833              | 5                        | 5                       |
+| 2023-10-17 | partial_archived | 741          | 740    | 1                   | 253764      | 1480       | 635170   | 741              | 11                       | 10                      |
+| 2023-10-18 | full_archived    | 863          | 863    | 0                   | 288144      | 1726       | 583688   | 863              | 21                       | 24                      |
 
 The populations are the archived Native candidates, not the separate 839/857/830/890 full-session research detections. October 2 and 17 remain partial. October 3 and 17 each retain one finalization-only birth with no live recognition. Exactly 3,176 live candidate paths and 6,352 paired controls generate 1,079,475 path observations. The archived group source allows the 11 original October 18 seam exclusions to be retained as a separately labeled supplement; the original 59+793+11 coverage partition is unchanged.
 
@@ -39,16 +39,16 @@ There are 21 traced candidate/control members per date: an earliest candidate in
 
 ### Detector recovery and clocks
 
-|      day | variant         |   recorded |   recovered |   matched |   missed |   added |   nominal_exact |
-|---------:|:----------------|-----------:|------------:|----------:|---------:|--------:|----------------:|
-| 20231002 | completed_group |        741 |         741 |       736 |        5 |       5 |             735 |
-| 20231002 | native_action   |        741 |         741 |       741 |        0 |       0 |             741 |
-| 20231003 | completed_group |        833 |         833 |       828 |        5 |       5 |             827 |
-| 20231003 | native_action   |        833 |         833 |       833 |        0 |       0 |             833 |
-| 20231017 | completed_group |        741 |         740 |       730 |       11 |      10 |             728 |
-| 20231017 | native_action   |        741 |         741 |       741 |        0 |       0 |             741 |
-| 20231018 | completed_group |        863 |         866 |       842 |       21 |      24 |             840 |
-| 20231018 | native_action   |        863 |         863 |       863 |        0 |       0 |             863 |
+| day        | variant         | recorded   | recovered   | matched   | missed   | added   | nominal_exact   |
+|:-----------|:----------------|:-----------|:------------|:----------|:---------|:--------|:----------------|
+| 2023-10-02 | completed_group | 741        | 741         | 736       | 5        | 5       | 735             |
+| 2023-10-02 | native_action   | 741        | 741         | 741       | 0        | 0       | 741             |
+| 2023-10-03 | completed_group | 833        | 833         | 828       | 5        | 5       | 827             |
+| 2023-10-03 | native_action   | 833        | 833         | 833       | 0        | 0       | 833             |
+| 2023-10-17 | completed_group | 741        | 740         | 730       | 11       | 10      | 728             |
+| 2023-10-17 | native_action   | 741        | 741         | 741       | 0        | 0       | 741             |
+| 2023-10-18 | completed_group | 863        | 866         | 842       | 21       | 24      | 840             |
+| 2023-10-18 | native_action   | 863        | 863         | 863       | 0        | 0       | 863             |
 
 The recovered rule is a trailing finite-observation 85th percentile after the source's 900-second and 600-observation warmup, a plus/minus-five-second local maximum of absolute flow, and prominence against the original baseline median at birth minus 30 through minus 10. Qualifying peaks compete in a 45-second window. Highest prominence wins, magnitude breaks ties, and earliest observation resolves a complete tie. Nominal availability is window-open plus 50 seconds; the selected winner enforces a 45-second refractory. These are recovered detector parameters, not new research acceptance thresholds. The original baseline is reproduced only to audit the detector; it does not smooth the research paths.
 
@@ -58,24 +58,24 @@ For every one of the 3,178 births, nominal lag = 50 - (winning birth second - wi
 
 ### Structure without a preset cluster count
 
-|      day | representation   |   candidates |   complete |   undefined_rows |   groups_at_largest_gap |
-|---------:|:-----------------|-------------:|-----------:|-----------------:|------------------------:|
-| 20231002 | signed_ratio     |          741 |        177 |              564 |                     177 |
-| 20231002 | touch_lots       |          741 |        741 |                0 |                       2 |
-| 20231002 | quote_levels     |          741 |        741 |                0 |                       2 |
-| 20231002 | wire_trade_lots  |          741 |        741 |                0 |                       2 |
-| 20231003 | signed_ratio     |          832 |        209 |              623 |                       2 |
-| 20231003 | touch_lots       |          832 |        832 |                0 |                       2 |
-| 20231003 | quote_levels     |          832 |        832 |                0 |                       2 |
-| 20231003 | wire_trade_lots  |          832 |        832 |                0 |                       3 |
-| 20231017 | signed_ratio     |          740 |        159 |              581 |                     159 |
-| 20231017 | touch_lots       |          740 |        740 |                0 |                       2 |
-| 20231017 | quote_levels     |          740 |        740 |                0 |                       3 |
-| 20231017 | wire_trade_lots  |          740 |        740 |                0 |                       5 |
-| 20231018 | signed_ratio     |          852 |        185 |              667 |                     185 |
-| 20231018 | touch_lots       |          852 |        852 |                0 |                       4 |
-| 20231018 | quote_levels     |          852 |        852 |                0 |                       2 |
-| 20231018 | wire_trade_lots  |          852 |        852 |                0 |                       4 |
+| day        | representation   | candidates   | complete   | undefined_rows   | groups_at_largest_gap   |
+|:-----------|:-----------------|:-------------|:-----------|:-----------------|:------------------------|
+| 2023-10-02 | signed_ratio     | 741          | 177        | 564              | 177                     |
+| 2023-10-02 | touch_lots       | 741          | 741        | 0                | 2                       |
+| 2023-10-02 | quote_levels     | 741          | 741        | 0                | 2                       |
+| 2023-10-02 | wire_trade_lots  | 741          | 741        | 0                | 2                       |
+| 2023-10-03 | signed_ratio     | 832          | 209        | 623              | 2                       |
+| 2023-10-03 | touch_lots       | 832          | 832        | 0                | 2                       |
+| 2023-10-03 | quote_levels     | 832          | 832        | 0                | 2                       |
+| 2023-10-03 | wire_trade_lots  | 832          | 832        | 0                | 3                       |
+| 2023-10-17 | signed_ratio     | 740          | 159        | 581              | 159                     |
+| 2023-10-17 | touch_lots       | 740          | 740        | 0                | 2                       |
+| 2023-10-17 | quote_levels     | 740          | 740        | 0                | 3                       |
+| 2023-10-17 | wire_trade_lots  | 740          | 740        | 0                | 5                       |
+| 2023-10-18 | signed_ratio     | 852          | 185        | 667              | 185                     |
+| 2023-10-18 | touch_lots       | 852          | 852        | 0                | 4                       |
+| 2023-10-18 | quote_levels     | 852          | 852        | 0                | 2                       |
+| 2023-10-18 | wire_trade_lots  | 852          | 852        | 0                | 4                       |
 
 The representation preserves every integer-time coordinate from minus 60 through plus 5 seconds. Signed ratio, touch lots, quote levels and wire-trade lots are analyzed separately because their units differ. Cityblock distance is a sum of coordinate differences, with no standardization, phase warping or averaging of paths. Every pair distance and every single-linkage merge is retained. The displayed partition uses the largest gap between adjacent merge heights (including zero before the first merge); all other cuts remain in the merge table. Undefined ratio paths are retained as explicit availability patterns and are not imputed.
 
@@ -85,16 +85,16 @@ The 177/185/159 singleton partitions in three signed-ratio runs occur when the l
 
 All forms were recorded before their execution. Exact recurrence is distinguished from explanatory hypotheses. The complete candidate and both control residuals are in the operator tables. The table below reports counterexample counts / defined candidate rows, keeping SAME and FLIP separate. Flat quote outcomes count as a distinct observed sign; undefined inputs do not become zero residuals.
 
-|      day | orientation   | fixed_50s_nominal_lag   | flow_sign_determines_quote   | depth_sign_determines_quote   | monotone_magnitude_decay   | constant_signed_numerator   |
-|---------:|:--------------|:------------------------|:-----------------------------|:------------------------------|:---------------------------|:----------------------------|
-| 20231002 | FLIP          | 103/353                 | 201/353                      | 223/353                       | 200/353                    | 353/353                     |
-| 20231002 | SAME          | 112/387                 | 215/387                      | 235/387                       | 219/387                    | 387/387                     |
-| 20231003 | FLIP          | 122/383                 | 213/383                      | 225/383                       | 208/383                    | 383/383                     |
-| 20231003 | SAME          | 126/448                 | 288/448                      | 295/448                       | 229/448                    | 448/448                     |
-| 20231017 | FLIP          | 94/353                  | 193/353                      | 230/353                       | 189/353                    | 353/353                     |
-| 20231017 | SAME          | 100/386                 | 219/386                      | 255/386                       | 214/386                    | 386/386                     |
-| 20231018 | FLIP          | 131/390                 | 223/390                      | 209/390                       | 217/390                    | 390/390                     |
-| 20231018 | SAME          | 132/472                 | 257/472                      | 265/472                       | 246/472                    | 472/472                     |
+| day        | orientation   | fixed_50s_nominal_lag   | flow_sign_determines_quote   | depth_sign_determines_quote   | monotone_magnitude_decay   | constant_signed_numerator   |
+|:-----------|:--------------|:------------------------|:-----------------------------|:------------------------------|:---------------------------|:----------------------------|
+| 2023-10-02 | FLIP          | 103/353                 | 201/353                      | 223/353                       | 200/353                    | 353/353                     |
+| 2023-10-02 | SAME          | 112/387                 | 215/387                      | 235/387                       | 219/387                    | 387/387                     |
+| 2023-10-03 | FLIP          | 122/383                 | 213/383                      | 225/383                       | 208/383                    | 383/383                     |
+| 2023-10-03 | SAME          | 126/448                 | 288/448                      | 295/448                       | 229/448                    | 448/448                     |
+| 2023-10-17 | FLIP          | 94/353                  | 193/353                      | 230/353                       | 189/353                    | 353/353                     |
+| 2023-10-17 | SAME          | 100/386                 | 219/386                      | 255/386                       | 214/386                    | 386/386                     |
+| 2023-10-18 | FLIP          | 131/390                 | 223/390                      | 209/390                       | 217/390                    | 390/390                     |
+| 2023-10-18 | SAME          | 132/472                 | 257/472                      | 265/472                       | 246/472                    | 472/472                     |
 
 The signed-net rolling relation N(s)=N(s-1)+buy(s)-sell(s)-buy(s-20)+sell(s-20) has zero residual on every retained life transition, including both matched-control draws. This is an arithmetic identity of the 20-second construction, not an independently discovered market law. Fresh and expired buy/sell operands are retained separately.
 
@@ -102,12 +102,12 @@ The fixed-50-second lag assertion has the listed exceptions and is replaced, for
 
 ### Verification
 
-|        day |   candidates |   exact_live_recognition_clocks |   finalization_only |   path_rows |   matched_path_anchors_checked |   figure_panels |   life_transition_rows |
-|-----------:|-------------:|--------------------------------:|--------------------:|------------:|-------------------------------:|----------------:|-----------------------:|
-| 2.0231e+07 |          741 |                             741 |                   0 |      254025 |                           2223 |             342 |                  90556 |
-| 2.0231e+07 |          833 |                             832 |                   1 |      283542 |                           2496 |             342 |                 103968 |
-| 2.0231e+07 |          741 |                             740 |                   1 |      253764 |                           2220 |             342 |                  86559 |
-| 2.0231e+07 |          863 |                             863 |                   0 |      288144 |                           2589 |             342 |                 107181 |
+| day        | candidates   | exact_live_recognition_clocks   | finalization_only   | path_rows   | matched_path_anchors_checked   | figure_panels   | life_transition_rows   |
+|:-----------|:-------------|:--------------------------------|:--------------------|:------------|:-------------------------------|:----------------|:-----------------------|
+| 2023-10-02 | 741          | 741                             | 0                   | 254025      | 2223                           | 342             | 90556                  |
+| 2023-10-03 | 833          | 832                             | 1                   | 283542      | 2496                           | 342             | 103968                 |
+| 2023-10-17 | 741          | 740                             | 1                   | 253764      | 2220                           | 342             | 86559                  |
+| 2023-10-18 | 863          | 863                             | 0                   | 288144      | 2589                           | 342             | 107181                 |
 
 The original detector was independently checked on plateau, quiet and variable synthetic streams: 27/24/35 outputs agree in every operand and clock. All 2,473,061 saved groups reconcile to raw cursor/receive/F_LAST coordinates. Usable two-sided action-time books agree at 2,473,057 closes; four initial incomplete books remain outside that two-sided check. Figure reconciliation, unique coordinates, matching strata, undefined residuals, and life-transition partitions are asserted in `verify_all.py`. A read-only parent review independently confirmed operands, live clocks, nominal-lag identity, path row totals and case counts.
 

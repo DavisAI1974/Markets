@@ -92,3 +92,5 @@ C/D/E results and all limitations are in FINDINGS.md, generated from actual outp
 Commands for final checks: `part2.py 20231018 --operators-only`, `crossday.py`, `verify_all.py`, `report.py`. The operator-only run completed output writes then encountered an empty hierarchy-list print error; its print guard was corrected without rerunning completed calculations. Subsequent verification and report generation succeeded.
 
 Next: run Part 3 M1/M2 identically on all four archived dates, verify every event/disposition/figure denominator, finish workbook and publication inventory, update draft PR. Optional M3 remains unrun.
+
+Report rendering correction: pandas Markdown coercion displayed integer date labels in scientific notation. The report helper now writes exact YYYY-MM-DD strings with numeric re-parsing disabled. Read-back confirms the four dates remain distinct in every generated comparison table. Part 3 is actively running October 18 followed by October 2/3/17; core computation is complete.

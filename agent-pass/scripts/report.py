@@ -1,7 +1,11 @@
 """Generate data-first findings from saved rows; no means or fitted scoring."""
 from common import *
 DAYS=['20231002','20231003','20231017','20231018']
-def table(df):return df.to_markdown(index=False)
+def table(df):
+    view=df.copy()
+    if 'day' in view:
+        view['day']=pd.to_datetime(view.day.astype(str),format='%Y%m%d').dt.strftime('%Y-%m-%d')
+    return view.to_markdown(index=False,disable_numparse=True)
 def run():
     cross=pd.read_csv(ROOT/'tables/crossday-summary.csv');det=pd.concat([pd.read_csv(ROOT/f'tables/{d}-detector-summary.csv') for d in DAYS]);grp=pd.concat([pd.read_csv(ROOT/f'tables/{d}-grouping-counts.csv') for d in DAYS]);ops=pd.concat([pd.read_csv(ROOT/f'tables/{d}-operator-summary.csv') for d in DAYS]);ver=pd.read_csv(ROOT/'tables/verification-summary.csv')
     moon=all((ROOT/f'tables/{d}-moonshot-summary.csv').exists() for d in DAYS)
