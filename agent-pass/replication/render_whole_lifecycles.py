@@ -1,5 +1,6 @@
 """Printable whole lifecycle books and original render catalogue; audited inputs only."""
 import argparse,collections,html,io,json,math,os,pathlib,tempfile
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime,timezone
 import numpy as np
 import pyarrow.parquet as pq
@@ -8,7 +9,7 @@ from reportlab.lib.utils import ImageReader
 import fitz
 from finish_family_replication import get,jsonwrite,seal,READS,NREV,SNAP,BASE
 from event_common import Context,NS
-from audit_whole_lifecycles import Inputs
+from audit_whole_lifecycles import Inputs,csvbytes
 W,H=842,595
 COLORS=["#1261a0","#d75c23","#25854b","#8e44ad"]
 def stamp(ns):
@@ -184,17 +185,35 @@ def archive(out):
         name=pathlib.PurePosixPath(e["source"]).name
         group=name[:8] if name[:8] in ("20231002","20231003","20231017","20231018") else "cross-date"
         groups[group].append(e)
+    # Parallel independent reads; every original byte is verified before packaging.
+    with ThreadPoolExecutor(max_workers=8) as pool:list(pool.map(lambda e:I.raw(e["source"]),entries))
+    allids=set()
+    for day in ("20231002","20231003","20231017","20231018"):
+        allids.update(csvbytes(I.raw(f"agent-pass/tables/{day}-candidate-operands.csv")).candidate_id)
+    globaltables=[]
+    for e in I.man["entries"]:
+        src=e["source"]
+        if not src.startswith("agent-pass/tables/") or pathlib.PurePosixPath(src).name[:8] in ("20231002","20231003","20231017","20231018"):continue
+        if not src.endswith((".csv",".csv.gz")):continue
+        frame=csvbytes(I.raw(src),src.endswith(".gz"));refs=0
+        for col in ("candidate_id","left_candidate","right_candidate"):
+            if col in frame:
+                values=set(frame[col])-{""};assert values<=allids,(src,col,values-allids)
+                refs+=int((frame[col]!="").sum())
+        globaltables.append(dict(source=src,source_path=e["path"],sha256=e["sha256"],rows=len(frame),candidate_references_checked=refs,fields=list(frame.columns)))
+    jsonwrite(out/"cross-date-table-audit.json",dict(status="passed",tables=globaltables))
     index=[];books=[]
     for group,items in sorted(groups.items()):
         name=f"original-dipole-renders-{group}.pdf";pdf=out/name
         c=canvas.Canvas(str(pdf),pagesize=(W,H),pageCompression=1)
         for page,e in enumerate(sorted(items,key=lambda e:e["source"]),1):
             raw=I.raw(e["source"]);img=ImageReader(io.BytesIO(raw));iw,ih=img.getSize()
-            scale=min((W-40)/iw,(H-84)/ih);dw,dh=iw*scale,ih*scale
+            scale=(W-40)/iw;dw,dh=iw*scale,ih*scale
+            page_height=max(H,dh+84);c.setPageSize((W,page_height))
             title=pathlib.PurePosixPath(e["source"]).name
-            label(c,20,H-22,title,10)
-            label(c,20,H-36,"Original published render, unchanged. Individual source tables and figure reconciliation remain linked.",8)
-            c.drawImage(img,(W-dw)/2,42+(H-84-dh)/2,width=dw,height=dh)
+            label(c,20,page_height-22,title,10)
+            label(c,20,page_height-36,"Original published render, unchanged. Individual source tables and figure reconciliation remain linked.",8)
+            c.drawImage(img,(W-dw)/2,42+(page_height-84-dh)/2,width=dw,height=dh)
             source=f"https://github.com/DavisAI1974/markets-data/blob/{NREV}/{e['path']}"
             c.linkURL(source,(20,14,W-20,35),relative=0);label(c,20,23,"Open full-resolution source image | Snapshot "+NREV[:12]+" | Page "+str(page),8)
             c.showPage()
