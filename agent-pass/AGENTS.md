@@ -41,3 +41,7 @@ November 9 completion: the user's remaining-family-first instruction has been fu
 The user authorized running the three combined chronology, pressure/response, and large-move/recovery studies on all four dates, including October 18. The 99 layers and 13 external data points are deferred until the event evidence is pinned together. Retain separate event, receive, known-by and recognition clocks, source order, event types and populations.
 
 User correction: we do not need to preserve a mistake. Fix mistaken assumptions or calculations, replace the affected active result and summary, and make the corrected version authoritative. Do not keep known-wrong substitute analyses as competing findings. This differs from genuine contrary market observations, failed hypotheses and missing data, which remain real evidence. Preserve original source observations; no local-only storage rule or desktop calculation.
+
+## Whole lifecycles and render provenance
+
+User instruction, November 9: retain each individual trade, instance and event. A lifecycle stays one whole parent, even when windows, phases or measurements examine pieces. Every piece keeps its own clock/timestamps and IDs plus an explicit link to the whole. Preserve event, receive, known-by and recognition clocks without conflating them. Audit completeness, source coordinates and parent-child membership before printing renders. Missing observations and right-censoring remain explicit; do not invent a natural endpoint from an operational lifetime convention. Save corrected authoritative artifacts in GitHub.
