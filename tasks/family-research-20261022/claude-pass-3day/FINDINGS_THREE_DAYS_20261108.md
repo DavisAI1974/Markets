@@ -96,4 +96,6 @@ SPECULATIVE readings, to be tested rather than adopted:
 - Birth-aligned book and flow paths at one-second resolution (the full event-study form of the plan) are not built yet; the cohort tables here use the cutoffs only.
 - Results here are discovery on one day each. Same model, separately fitted.
 
+Data repository check: the sha256 of all six tapes analyzed here (Oct 1, 2, 3, 16, 17, 18) equals the corresponding tape entry in the MANIFEST.json of DavisAI1974/markets-data at commit 968fa11. The tape files were decoded from the earlier locations below; the loaders take the tape path as an argument, so a checkout at MARKETS_DATA_DIR gives the same inputs.
+
 Provenance: tapes at data commit 1d15dc6f (Oct 2, 3, 17, 18) and the codex branch (Oct 1, 16); branch `codex/ng-shadow-discovery-20261108`; code under `claude-pass-3day/`; tables under `claude-pass-3day/tables/dipole/<day>/`; figures under `claude-pass-3day/figures/<day>/` and `claude-pass-3day/crossday/`.
