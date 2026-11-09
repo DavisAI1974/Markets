@@ -1,0 +1,623 @@
+[
+ {
+  "day": "20231002",
+  "exhaustion_rows": 1678,
+  "modes": {
+   "day": 839,
+   "trailing": 839
+  },
+  "day_mode_rows": 839,
+  "seed_state": {
+   "P": 249,
+   "O": 235,
+   "S": 181,
+   "X": 174
+  },
+  "runway_s": {
+   "n": 839,
+   "min": 1.0,
+   "p10": 6.0,
+   "p25": 15.0,
+   "p50": 32.0,
+   "p75": 74.5,
+   "p90": 149.0,
+   "max": 505.0
+  },
+  "confirm_offset_s": {
+   "n": 839,
+   "min": 3.0,
+   "p10": 8.0,
+   "p25": 17.0,
+   "p50": 34.0,
+   "p75": 76.5,
+   "p90": 151.0,
+   "max": 507.0
+  },
+  "censored": 0,
+  "confirmed_before_info50": 522,
+  "remaining_runway_at_info50_s": {
+   "n": 839,
+   "min": -47.0,
+   "p10": -42.0,
+   "p25": -33.0,
+   "p50": -16.0,
+   "p75": 26.5,
+   "p90": 101.0,
+   "max": 457.0
+  },
+  "archived_recognition_present": 704,
+  "archived_recognition_offset_s": {
+   "n": 704,
+   "min": 7.0,
+   "p10": 34.0,
+   "p25": 51.0,
+   "p50": 52.0,
+   "p75": 57.0,
+   "p90": 70.0,
+   "max": 138.0
+  },
+  "move_t0_to_info50": {
+   "n": 839,
+   "up": 235,
+   "flat": 346,
+   "down": 258
+  },
+  "move_info50_plus30": {
+   "n": 838,
+   "up": 180,
+   "flat": 448,
+   "down": 210
+  },
+  "move_info50_plus60": {
+   "n": 838,
+   "up": 235,
+   "flat": 341,
+   "down": 262
+  },
+  "move_t0_to_confirm": {
+   "n": 839,
+   "up": 186,
+   "flat": 250,
+   "down": 403
+  },
+  "aftermath_cls_60": {
+   "chop": 557,
+   "continuation": 166,
+   "reversal": 115
+  },
+  "aftermath_cls_300": {
+   "chop": 338,
+   "continuation": 254,
+   "reversal": 242
+  },
+  "a_state": {
+   "A-persistent": 424,
+   "A-fast-collapse": 415
+  },
+  "plus60_d60": {
+   "n": 838,
+   "up": 256,
+   "flat": 327,
+   "down": 255
+  },
+  "plus60_d300": {
+   "n": 833,
+   "up": 349,
+   "flat": 118,
+   "down": 366
+  },
+  "plus60_d600": {
+   "n": 828,
+   "up": 371,
+   "flat": 83,
+   "down": 374
+  },
+  "known_d60": null,
+  "next_burst_state_hit": [
+   491,
+   838
+  ],
+  "chain_eligible": 404,
+  "chain_is_play": 8,
+  "chain_return_ticks_plays": {
+   "n": 8,
+   "up": 2,
+   "flat": 2,
+   "down": 4
+  },
+  "chain_reasons": {
+   "predecessors_not_knowable": 277,
+   "successor_before_confirmation": 256
+  },
+  "runway_with3t_s": {
+   "n": 782,
+   "min": 1.0,
+   "p10": 54.0,
+   "p25": 158.25,
+   "p50": 623.0,
+   "p75": 2806.75,
+   "p90": 15088.699999999992,
+   "max": 39043.0
+  },
+  "runway_with3t_censored": 57,
+  "runway_either3t_s": {
+   "n": 833,
+   "min": 1.0,
+   "p10": 25.0,
+   "p25": 67.0,
+   "p50": 180.0,
+   "p75": 445.0,
+   "p90": 922.0000000000014,
+   "max": 3994.0
+  },
+  "with3t_not_after_either3t": 391,
+  "n_runway": 839
+ },
+ {
+  "day": "20231003",
+  "exhaustion_rows": 1714,
+  "modes": {
+   "day": 857,
+   "trailing": 857
+  },
+  "day_mode_rows": 857,
+  "seed_state": {
+   "O": 246,
+   "P": 242,
+   "S": 197,
+   "X": 172
+  },
+  "runway_s": {
+   "n": 857,
+   "min": 1.0,
+   "p10": 6.0,
+   "p25": 15.0,
+   "p50": 31.0,
+   "p75": 72.0,
+   "p90": 158.0,
+   "max": 1048.0
+  },
+  "confirm_offset_s": {
+   "n": 857,
+   "min": 3.0,
+   "p10": 8.0,
+   "p25": 17.0,
+   "p50": 33.0,
+   "p75": 74.0,
+   "p90": 160.0,
+   "max": 1050.0
+  },
+  "censored": 0,
+  "confirmed_before_info50": 548,
+  "remaining_runway_at_info50_s": {
+   "n": 857,
+   "min": -47.0,
+   "p10": -42.0,
+   "p25": -33.0,
+   "p50": -17.0,
+   "p75": 24.0,
+   "p90": 110.0,
+   "max": 1000.0
+  },
+  "archived_recognition_present": 800,
+  "archived_recognition_offset_s": {
+   "n": 800,
+   "min": 7.0,
+   "p10": 30.0,
+   "p25": 51.0,
+   "p50": 52.0,
+   "p75": 57.0,
+   "p90": 65.0,
+   "max": 153.0
+  },
+  "move_t0_to_info50": {
+   "n": 857,
+   "up": 206,
+   "flat": 369,
+   "down": 282
+  },
+  "move_info50_plus30": {
+   "n": 857,
+   "up": 208,
+   "flat": 450,
+   "down": 199
+  },
+  "move_info50_plus60": {
+   "n": 857,
+   "up": 234,
+   "flat": 341,
+   "down": 282
+  },
+  "move_t0_to_confirm": {
+   "n": 857,
+   "up": 164,
+   "flat": 249,
+   "down": 444
+  },
+  "aftermath_cls_60": {
+   "chop": 628,
+   "continuation": 121,
+   "reversal": 108
+  },
+  "aftermath_cls_300": {
+   "chop": 383,
+   "continuation": 262,
+   "reversal": 210
+  },
+  "a_state": {
+   "A-fast-collapse": 458,
+   "A-persistent": 399
+  },
+  "plus60_d60": {
+   "n": 857,
+   "up": 249,
+   "flat": 333,
+   "down": 275
+  },
+  "plus60_d300": {
+   "n": 854,
+   "up": 353,
+   "flat": 148,
+   "down": 353
+  },
+  "plus60_d600": {
+   "n": 849,
+   "up": 389,
+   "flat": 98,
+   "down": 362
+  },
+  "known_d60": null,
+  "next_burst_state_hit": [
+   527,
+   856
+  ],
+  "chain_eligible": 415,
+  "chain_is_play": 6,
+  "chain_return_ticks_plays": {
+   "n": 6,
+   "up": 3,
+   "flat": 1,
+   "down": 2
+  },
+  "chain_reasons": {
+   "predecessors_not_knowable": 298,
+   "successor_before_confirmation": 242
+  },
+  "runway_with3t_s": {
+   "n": 787,
+   "min": 2.0,
+   "p10": 62.0,
+   "p25": 210.0,
+   "p50": 705.0,
+   "p75": 2283.0,
+   "p90": 7599.4,
+   "max": 22138.0
+  },
+  "runway_with3t_censored": 70,
+  "runway_either3t_s": {
+   "n": 857,
+   "min": 2.0,
+   "p10": 34.0,
+   "p25": 83.0,
+   "p50": 224.0,
+   "p75": 610.0,
+   "p90": 1417.1999999999998,
+   "max": 4695.0
+  },
+  "with3t_not_after_either3t": 403,
+  "n_runway": 857
+ },
+ {
+  "day": "20231017",
+  "exhaustion_rows": 1660,
+  "modes": {
+   "day": 830,
+   "trailing": 830
+  },
+  "day_mode_rows": 830,
+  "seed_state": {
+   "P": 268,
+   "O": 223,
+   "S": 182,
+   "X": 157
+  },
+  "runway_s": {
+   "n": 830,
+   "min": 1.0,
+   "p10": 6.0,
+   "p25": 18.0,
+   "p50": 36.0,
+   "p75": 84.0,
+   "p90": 174.0,
+   "max": 985.0
+  },
+  "confirm_offset_s": {
+   "n": 830,
+   "min": 3.0,
+   "p10": 8.0,
+   "p25": 20.0,
+   "p50": 38.0,
+   "p75": 86.0,
+   "p90": 176.0,
+   "max": 987.0
+  },
+  "censored": 0,
+  "confirmed_before_info50": 492,
+  "remaining_runway_at_info50_s": {
+   "n": 830,
+   "min": -47.0,
+   "p10": -42.0,
+   "p25": -30.0,
+   "p50": -12.0,
+   "p75": 36.0,
+   "p90": 126.0,
+   "max": 937.0
+  },
+  "archived_recognition_present": 691,
+  "archived_recognition_offset_s": {
+   "n": 691,
+   "min": 8.0,
+   "p10": 35.0,
+   "p25": 51.0,
+   "p50": 52.0,
+   "p75": 57.0,
+   "p90": 68.0,
+   "max": 157.0
+  },
+  "move_t0_to_info50": {
+   "n": 830,
+   "up": 224,
+   "flat": 349,
+   "down": 257
+  },
+  "move_info50_plus30": {
+   "n": 830,
+   "up": 211,
+   "flat": 404,
+   "down": 215
+  },
+  "move_info50_plus60": {
+   "n": 829,
+   "up": 235,
+   "flat": 303,
+   "down": 291
+  },
+  "move_t0_to_confirm": {
+   "n": 830,
+   "up": 200,
+   "flat": 234,
+   "down": 396
+  },
+  "aftermath_cls_60": {
+   "chop": 584,
+   "reversal": 125,
+   "continuation": 121
+  },
+  "aftermath_cls_300": {
+   "chop": 319,
+   "reversal": 277,
+   "continuation": 231
+  },
+  "a_state": {
+   "A-persistent": 430,
+   "A-fast-collapse": 400
+  },
+  "plus60_d60": {
+   "n": 829,
+   "up": 224,
+   "flat": 322,
+   "down": 283
+  },
+  "plus60_d300": {
+   "n": 826,
+   "up": 286,
+   "flat": 128,
+   "down": 412
+  },
+  "plus60_d600": {
+   "n": 821,
+   "up": 335,
+   "flat": 93,
+   "down": 393
+  },
+  "known_d60": null,
+  "next_burst_state_hit": [
+   492,
+   829
+  ],
+  "chain_eligible": 355,
+  "chain_is_play": 15,
+  "chain_return_ticks_plays": {
+   "n": 15,
+   "up": 7,
+   "flat": 3,
+   "down": 5
+  },
+  "chain_reasons": {
+   "predecessors_not_knowable": 284,
+   "successor_before_confirmation": 281
+  },
+  "runway_with3t_s": {
+   "n": 779,
+   "min": 1.0,
+   "p10": 49.60000000000002,
+   "p25": 162.5,
+   "p50": 691.0,
+   "p75": 2648.5,
+   "p90": 9879.600000000008,
+   "max": 38207.0
+  },
+  "runway_with3t_censored": 51,
+  "runway_either3t_s": {
+   "n": 830,
+   "min": 1.0,
+   "p10": 24.0,
+   "p25": 65.0,
+   "p50": 174.0,
+   "p75": 419.25,
+   "p90": 915.0000000000002,
+   "max": 2981.0
+  },
+  "with3t_not_after_either3t": 383,
+  "n_runway": 830
+ },
+ {
+  "day": "20231018",
+  "exhaustion_rows": 1780,
+  "modes": {
+   "day": 890,
+   "trailing": 890
+  },
+  "day_mode_rows": 890,
+  "seed_state": {
+   "P": 265,
+   "O": 251,
+   "S": 220,
+   "X": 154
+  },
+  "runway_s": {
+   "n": 890,
+   "min": 1.0,
+   "p10": 6.0,
+   "p25": 17.0,
+   "p50": 33.0,
+   "p75": 77.0,
+   "p90": 160.10000000000002,
+   "max": 673.0
+  },
+  "confirm_offset_s": {
+   "n": 890,
+   "min": 3.0,
+   "p10": 8.0,
+   "p25": 19.0,
+   "p50": 35.0,
+   "p75": 79.0,
+   "p90": 162.10000000000002,
+   "max": 675.0
+  },
+  "censored": 0,
+  "confirmed_before_info50": 556,
+  "remaining_runway_at_info50_s": {
+   "n": 890,
+   "min": -47.0,
+   "p10": -42.0,
+   "p25": -31.0,
+   "p50": -15.0,
+   "p75": 29.0,
+   "p90": 112.10000000000002,
+   "max": 625.0
+  },
+  "archived_recognition_present": 813,
+  "archived_recognition_offset_s": {
+   "n": 813,
+   "min": 7.0,
+   "p10": 28.0,
+   "p25": 51.0,
+   "p50": 51.0,
+   "p75": 55.0,
+   "p90": 60.0,
+   "max": 137.0
+  },
+  "move_t0_to_info50": {
+   "n": 890,
+   "up": 271,
+   "flat": 316,
+   "down": 303
+  },
+  "move_info50_plus30": {
+   "n": 889,
+   "up": 215,
+   "flat": 425,
+   "down": 249
+  },
+  "move_info50_plus60": {
+   "n": 889,
+   "up": 267,
+   "flat": 323,
+   "down": 299
+  },
+  "move_t0_to_confirm": {
+   "n": 890,
+   "up": 236,
+   "flat": 255,
+   "down": 399
+  },
+  "aftermath_cls_60": {
+   "chop": 565,
+   "reversal": 169,
+   "continuation": 155
+  },
+  "aftermath_cls_300": {
+   "continuation": 310,
+   "chop": 309,
+   "reversal": 266
+  },
+  "a_state": {
+   "A-persistent": 448,
+   "A-fast-collapse": 442
+  },
+  "plus60_d60": {
+   "n": 888,
+   "up": 271,
+   "flat": 319,
+   "down": 298
+  },
+  "plus60_d300": {
+   "n": 885,
+   "up": 381,
+   "flat": 122,
+   "down": 382
+  },
+  "plus60_d600": {
+   "n": 880,
+   "up": 400,
+   "flat": 70,
+   "down": 410
+  },
+  "known_d60": {
+   "n": 812,
+   "up": 247,
+   "flat": 292,
+   "down": 273
+  },
+  "next_burst_state_hit": [
+   546,
+   889
+  ],
+  "chain_eligible": 399,
+  "chain_is_play": 14,
+  "chain_return_ticks_plays": {
+   "n": 14,
+   "up": 4,
+   "flat": 5,
+   "down": 5
+  },
+  "chain_reasons": {
+   "predecessors_not_knowable": 325,
+   "successor_before_confirmation": 274
+  },
+  "runway_with3t_s": {
+   "n": 834,
+   "min": 1.0,
+   "p10": 43.30000000000001,
+   "p25": 132.0,
+   "p50": 423.5,
+   "p75": 1990.75,
+   "p90": 10655.30000000001,
+   "max": 39446.0
+  },
+  "runway_with3t_censored": 56,
+  "runway_either3t_s": {
+   "n": 889,
+   "min": 1.0,
+   "p10": 20.0,
+   "p25": 53.0,
+   "p50": 131.0,
+   "p75": 338.0,
+   "p90": 844.2,
+   "max": 3175.0
+  },
+  "with3t_not_after_either3t": 407,
+  "n_runway": 890
+ }
+]

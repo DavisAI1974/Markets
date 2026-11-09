@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "products": [
+    {
+      "id": "synthetic-table",
+      "path": "prepared.parquet",
+      "required": {
+        "contract": {
+          "sourceIdentity": "synthetic-input-v1",
+          "calculationIdentity": "synthetic-formula-v1",
+          "schemaIdentity": "synthetic-schema-v1",
+          "axisIdentity": "ordered-fixture-rows-v1",
+          "availabilityIdentity": "preserve-missing-values-v1",
+          "semantics": { "kind": "rolling", "lookbackRows": 2, "originRow": 0 }
+        },
+        "rows": [{ "start": 0, "end": 10 }],
+        "columns": ["value", "score"]
+      },
+      "available": [
+        {
+          "id": "synthetic-saved-prefix",
+          "contract": {
+            "sourceIdentity": "synthetic-input-v1",
+            "calculationIdentity": "synthetic-formula-v1",
+            "schemaIdentity": "synthetic-schema-v1",
+            "axisIdentity": "ordered-fixture-rows-v1",
+            "availabilityIdentity": "preserve-missing-values-v1",
+            "semantics": { "kind": "rolling", "lookbackRows": 2, "originRow": 0 }
+          },
+          "regions": [{ "rows": { "start": 0, "end": 7 }, "columns": ["value"] }]
+        }
+      ]
+    }
+  ],
+  "stages": [
+    { "id": "prepare", "calculation": { "path": "workflow.py", "name": "prepare" }, "outputs": ["synthetic-table"] },
+    { "id": "search", "calculation": { "path": "workflow.py", "name": "search" }, "dependsOn": ["prepare"], "inputs": ["synthetic-table"], "checkpointProducts": ["synthetic-table"] }
+  ],
+  "runtime": [
+    {
+      "id": "synthetic-before",
+      "stageId": "search",
+      "identity": { "sourceIdentity": "synthetic-input-v1", "calculationIdentity": "synthetic-formula-v1", "workloadIdentity": "10-job-fixture-v1", "environmentIdentity": "fixture-machine-v1", "metricScopeIdentity": "whole-process-normalized-cpu-v1" },
+      "accounting": "eligible=completed+remaining",
+      "counters": { "originalJobs": 10, "eligibleJobs": 10, "completedJobs": 10, "remainingJobs": 0, "pairComparisons": 90, "reads": 10 },
+      "metrics": { "elapsedSeconds": 4, "peakMemoryBytes": 1024 }
+    },
+    {
+      "id": "synthetic-after",
+      "baselineId": "synthetic-before",
+      "stageId": "search",
+      "identity": { "sourceIdentity": "synthetic-input-v1", "calculationIdentity": "synthetic-formula-v1", "workloadIdentity": "10-job-fixture-v1", "environmentIdentity": "fixture-machine-v1", "metricScopeIdentity": "whole-process-normalized-cpu-v1" },
+      "accounting": "eligible=completed+remaining",
+      "counters": { "originalJobs": 10, "eligibleJobs": 10, "completedJobs": 10, "remainingJobs": 0, "pairComparisons": 90, "reads": 1 },
+      "metrics": { "elapsedSeconds": 2, "peakMemoryBytes": 512 }
+    }
+  ]
+}

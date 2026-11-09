@@ -48,7 +48,7 @@ forecast blind -> merge -> refine -> converge -> the agent becomes the COACH cal
 rerouted git->S3, NWS-hourly RT collector built (need Greg's 3 GH secrets).
 The loop MACHINERY is BUILT + tested (`coach_replay.py` executable playbook, `forecast_harness.py` helpers,
 `FORECASTER_RUNBOOK_S93.md` the operating manual). **NEXT (S93) = RUN THE LOOP (brain -> forecast new group blind
--> overlay -> merge -> refine, walk the year); prove the plays net-of-fee (coach replay); the NYMEX-OPTIONS survey
+-> overlay -> merge -> refine, walk the year); prove the plays (coach replay; gross, no trade cost); the NYMEX-OPTIONS survey
 (Greg: the real trading vehicle for our NG-move edge, very soon); characterize NG Mondays; verify box year +
 reconcile + final Monday sweep; add GH secrets; rotate keys.**
 Detail: `SESSION_HANDOFF_2026-07-14_S92.md`, `KICKOFF_2026-07-15_S93.md`, `research/kalshi/FORECASTER_RUNBOOK_S93.md`.
@@ -75,6 +75,13 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
 ---
 
 ## The trading rules (load-bearing — Greg, S80-S82)
+
+- **TRADE COST IS NOT A MARKET CONDITION (Greg, 2026-11-08).** No fee, slippage, maker/taker offset or any
+  other execution assumption enters ANY research calculation, forecast or output. Fees on Kalshi are a
+  non-factor; the crypto-era fee-floor and net-of-cost rules below in the dipole section are RETIRED as
+  rules and kept only as history. `lag_join.py` reports the echo GROSS. Nothing from the crypto-era trade
+  strategies influences the NG program; only the dipole toolkit (imbalance read, pre-entry look-ahead window,
+  leakage gate) is carried over.
 
 - **EACH TRADE INDIVIDUALLY, never average.** No pooled hit-rate, no mean signed-bps, no averaged
   coefficient — every aggregate blurs away the per-trade fingerprint that IS the predictive content.
@@ -231,15 +238,14 @@ in the live doc. Full detail: `S36_NETCOST_BACKTEST_FINDINGS.md`, `SESSION_HANDO
   window/forward sweep + temporal OOS + detrended targets. `DEPLOY_VALIDATED=False`; never trade the
   directional `cell_signal` map. The DIVERGENCE/FLIP read is the robust edge; static `imb_level` is
   the detector (differential flows are not).
-- **Net-of-cost (S36b, per cell):** the 64% does NOT clear a 10bps round-trip pooled; the flow gate
-  adds ~+3bps/trade over blind trend-following and clears walk-forward-robustly only on specific cells
-  (btc_bybit sell/buy). Direction is the easy part — the edge is SIZE-vs-FEE (the same finding Kalshi
-  S81/S82 reproduced on a different market).
+- **Net-of-cost (S36b, per cell) — HISTORY ONLY, RETIRED AS A RULE (Greg, 2026-11-08):** the crypto-era
+  finding that the 64% did not clear a 10bps round-trip and that the edge was size-vs-fee. Trade cost is not
+  a market condition for the NG program; this bullet is kept as record, not as guidance.
 - **The architecture split:** DIPOLE = the FILTER (which turns are real) + fine-resolution
-  PRICE-REVERSAL = the TIMING (1-sec enters ~5–6bps off the true turn vs ~9–11 at 1-min). Fee-floor
-  rule: never trade a swing smaller than round-trip fee + 2× entry slippage (taker floor ~22bps;
-  resting a maker limit at the predicted turn drops it to ~4bps, with fill-risk). Per-cell regime
-  master-gate rescues bleeder cells; leave winning cells un-gated.
+  PRICE-REVERSAL = the TIMING (1-sec enters ~5–6bps off the true turn vs ~9–11 at 1-min). The old
+  fee-floor rule (round-trip fee + 2x slippage, taker floor ~22bps) is RETIRED (Greg, 2026-11-08): trade
+  cost is not a market condition. Per-cell regime master-gate rescues bleeder cells; leave winning cells
+  un-gated.
 - **The gated-swing stack (S37, `_info_dipole_gated_swing.py`):** timing (1-sec price-reversal) +
   filter (dipole divergence) + regime gate + maker floor, leakage-gated (PASS 6/6); PROVISIONAL 4/6
   cells clear on the single window — never size off one window.
@@ -287,7 +293,7 @@ Recent arc (compressed; full detail in each `SESSION_HANDOFF_*.md`):
   (gold 37/60, silver 26/54 sig, futures-lead, same as WTI/NG; cross-strike is NG-only) — collectors + XAU/XAG
   Pyth feeds wired, HH NGDQ6 feed confirmed correct. (3) Agents: NYMEX-products + Kalshi-ranking (KXGOLDD #1).
   Execution deferred to last (paper-trade Kalshi demo first). Open S92: verify the year landed clean, rotate
-  keys, migrate data git→S3, validate the lag net-of-fee at size. Detail: `SESSION_HANDOFF_2026-07-14_S91.md`.
+  keys, migrate data git→S3, validate the lag at size (gross). Detail: `SESSION_HANDOFF_2026-07-14_S91.md`.
 - **S90** — EVERYTHING TO AWS + a critical data-integrity fix. (1) Verifying the first S3 month exposed an
   80% loss: `batch_pull`'s flush gzipped each day BEFORE it was complete, so a later file's boundary rows
   overwrote it (only Fridays/last-day survived) — FIXED (hold latest-2 days unflushed; validated 32.8M/32.8M

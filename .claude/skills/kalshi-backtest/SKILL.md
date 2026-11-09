@@ -1,6 +1,6 @@
 ---
 name: kalshi-backtest
-description: The mandatory discipline for ANY Kalshi backtest, signal evaluation, or dataset build — leakage gate first, settle-window exclusion, per-cell never pooled, distributions and per-trade fingerprints never means, net-of-fee at maker AND taker. Use before building or judging any predictive result on Kalshi data.
+description: The mandatory discipline for ANY Kalshi backtest, signal evaluation, or dataset build — leakage gate first, settle-window exclusion, per-cell never pooled, distributions and per-trade fingerprints never means, no trade cost in any calculation. Use before building or judging any predictive result on Kalshi data.
 ---
 
 # Kalshi backtest discipline
@@ -39,12 +39,12 @@ These are Greg's load-bearing rules (S80–S82). A result that skips any step is
   FINGERPRINT (feature shares among winners minus base rate), per cell.
 - Any summary must preserve per-trade distinctiveness, never collapse it.
 
-## Rule 3 — net of fees, both legs
+## Rule 3 — no trade cost in any calculation (Greg, 2026-11-08)
 
-- Kalshi fee: `round_up(0.07 * C * P * (1-P))` per contract per taker leg. Score every result
-  at TAKER and at MAKER; a signal that only pays at maker carries fill-risk and must say so.
-- Direction is the easy part — the recurring finding (S81, S82) is the edge is SIZE-vs-FEE.
-  A hit-rate without a size-vs-toll distribution is not an edge.
+- Trade cost is not a market condition. No fee, slippage, maker/taker offset or other execution
+  assumption enters any backtest, forecast or output. Report moves GROSS, in $/c or cents per contract.
+- The old "net-of-fee at maker AND taker" rule and the crypto-era fee floor are retired; the S81/S82
+  size-vs-fee readouts are history, not guidance. A hit-rate still needs its SIZE distribution.
 
 ## Rule 4 — honesty of the readout
 

@@ -1,0 +1,14 @@
+point_id,name,use,series,tables
+1,cot.managed_money_net_pctile_1y,used,['cot.managed_money_net_pctile_1y'],['cot.023651']
+2,weather_forecast.forecast_gw_hdd,used,"['mos.GFS.gw_hdd_D', 'mos.NAM.gw_hdd_D', 'mos.GFS.gw_hdd_D1', 'mos.MEX.gw_hdd_D3']","['mos.gw_by_cycle', 'mos.raw']"
+3,cot.managed_money_net_chg_wow,used,['cot.managed_money_net_chg_wow'],['cot.023651']
+4,cot.managed_money_net_pctile_3y,used,['cot.managed_money_net_pctile_3y'],['cot.023651']
+5,grid_stack.bas.US48.wind_mwh,used,['eia930.US48.wind_mwh'],"['eia930.us48', 'eia930.hourly']"
+6,squeeze_watch.sessions_since_prompt_expiry,used,['calendar.sessions_since_prompt_expiry'],['calendar.sessions_since_prompt_expiry']
+7,grid_stack.bas.US48.est_gas_burn_bcfd,used,['eia930.US48.est_gas_burn_bcfd_rate'],"['eia930.us48', 'eia930.hourly']"
+8,cot.ice.ld1.managed_money_net_pctile_1y,used,['cot.ice.ld1.managed_money_net_pctile_1y'],['cot.023391']
+9,model_disagreement.summary.max_abs_spread_gw_hdd,used,['mos.max_abs_spread_gw_hdd'],['mos.disagreement_by_cycle']
+10,weather.gw_hdd (observed),used,"['weather.gw_hdd', 'weather.tmpf.ATL', 'weather.tmpf.AUS', 'weather.tmpf.BOS', 'weather.tmpf.DCA', 'weather.tmpf.DEN', 'weather.tmpf.DFW', 'weather.tmpf.DTW', 'weather.tmpf.IAH', 'weather.tmpf.LAX', 'weather.tmpf.MSP', 'weather.tmpf.NYC', 'weather.tmpf.ORD', 'weather.tmpf.PHL', 'weather.tmpf.PHX', 'weather.tmpf.SAT', 'weather.tmpf.SEA', 'weather.tmpf.SFO', 'weather.tmpf.STL']","['weather.gw_daily', 'weather.obs_hourly']"
+11,"EIA weekly storage (level, weekly change, vs 5-year)",used,"['storage.level_bcf', 'storage.weekly_chg_bcf', 'storage.vs_5yr_bcf']",['storage.weekly']
+12,storage estimate vs actual,used,"['storage.estimate_bcf', 'storage.actual_bcf', 'storage.surprise_bcf']","['storage.estimate', 'storage.estimate_captures', 'storage.weekly']"
+13,the futures curve shape,used,"['curve.settled.front', 'curve.settled.slope_1', 'curve.settled.slope_back', 'curve.settled.curvature', 'curve.settled.front_next_spread', 'curve.traded.front', 'curve.traded.c1', 'curve.traded.slope_1', 'curve.traded.slope_back', 'curve.traded.curvature', 'curve.traded.front_next_spread']","['curve.definitions', 'curve.statistics', 'curve.trades', 'curve.settled_shape', 'curve.traded_shape']"

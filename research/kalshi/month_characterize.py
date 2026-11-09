@@ -40,7 +40,7 @@ MULT = {"CL": 1000.0, "NG": 10000.0}          # contract size: CL 1000 bbl, NG 1
 # CHARACTERIZER move trigger — DECOUPLED from lag_join's TRADE trigger (Greg S88). For sampling the analog
 # library we want richer coverage, so NG is lowered to $0.015 ($150/c): its trade trigger ($0.03) starved
 # the intraday sample 50x vs CL (59 vs 2884 moves/month in the S88 validation). Trading keeps its own
-# fee-justified trigger; characterization samples smaller moves too. Overridable via --trig-cl/--trig-ng.
+# trade trigger; characterization samples smaller moves too. Overridable via --trig-cl/--trig-ng.
 TRIG = {"CL": 0.20, "NG": 0.015}
 CONFIRM_S = 5.0
 COOLDOWN_S = 180.0
