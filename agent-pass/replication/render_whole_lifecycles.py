@@ -34,27 +34,31 @@ def chart(c,rect,title,series,xrange,marks=()):
             xx,_=xy(t,low);c.setStrokeColor(color);c.setDash(2,2);c.line(xx,py,xx,py+ph);c.setDash()
     c.saveState();clip=c.beginPath();clip.rect(px,py,pw,ph);c.clipPath(clip,stroke=0,fill=0)
     for xs,ys,color,step in series:
-        c.setStrokeColor(color);c.setLineWidth(.7);p=c.beginPath();last=None;last_finite=None;count=0
+        c.setStrokeColor(color);c.setLineWidth(.7);p=c.beginPath();last=None;last_finite=None;count=0;segment_count=0;isolated=[]
         for t,v in zip(xs,ys):
             if v is None or not np.isfinite(v) or not np.isfinite(t):
-                last=None;continue
+                if segment_count==1:isolated.append(last)
+                last=None;segment_count=0;continue
             xx,yy=xy(float(t),float(v))
             if last is None:p.moveTo(xx,yy)
             else:
                 if step:p.lineTo(xx,last[1])
                 p.lineTo(xx,yy)
-            last=(xx,yy);last_finite=last;count+=1
+            last=(xx,yy);last_finite=last;count+=1;segment_count+=1
         c.drawPath(p)
-        if count==1:
-            c.setFillColor(color);c.circle(last_finite[0],last_finite[1],1.8,fill=1,stroke=0)
+        if segment_count==1:isolated.append(last)
+        for dot in isolated:
+            c.setFillColor(color);c.circle(dot[0],dot[1],1.5,fill=1,stroke=0)
     c.restoreState()
     if not vals:label(c,px+10,py+ph/2,"No observed values",9)
 def chart_tests():
     target=io.BytesIO();c=canvas.Canvas(target,pagesize=(W,H))
-    for values in ([None,1.,None],[1.,None,None],[None,None,None]):
-        chart(c,(30,30,350,200),"Gap regression",[(range(3),values,COLORS[0],False)],(0,2))
+    for values in ([None,1.,None],[1.,None,None],[None,None,None],[1.,None,2.,None]):
+        chart(c,(30,30,350,200),"Gap regression",[(range(len(values)),values,COLORS[0],False)],(0,len(values)-1))
         c.showPage()
-    c.save();d=fitz.open(stream=target.getvalue(),filetype="pdf");assert len(d)==3;d.close()
+    c.save();d=fitz.open(stream=target.getvalue(),filetype="pdf");assert len(d)==4
+    assert [sum(any(item[0]=="c" for item in draw["items"]) for draw in p.get_drawings()) for p in d]==[1,1,0,2]
+    d.close()
     print("PASS: isolated valid point followed by gaps and entirely missing series",flush=True)
 def preview(pdf,out,name,page=0):
     d=fitz.open(pdf);p=d[page];p.get_pixmap(matrix=fitz.Matrix(1.7,1.7),alpha=False).save(out/name)
