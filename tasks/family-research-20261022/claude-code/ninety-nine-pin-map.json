@@ -1,0 +1,862 @@
+{
+  "registry_sha256": "7ee754f1f9b080cdc5b7b68cf75829897d6216a1fadbb4b8a5ecd7b4f2133e06",
+  "registry_path": "artifacts/sqlite-triage/20261022/families/full-context-audit/canonical-99-registry.json",
+  "layers_used": [
+    14,
+    15,
+    29,
+    30,
+    31,
+    32,
+    35,
+    37,
+    39,
+    40,
+    42,
+    45,
+    48,
+    49,
+    50,
+    52,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    66,
+    73,
+    74,
+    75,
+    76,
+    79
+  ],
+  "field_map": [
+    {
+      "pattern": "^t0$",
+      "layers": [
+        {
+          "index": 56,
+          "layer_id": "legacy_per_second_roll20"
+        },
+        {
+          "index": 59,
+          "layer_id": "derived_roll20_and_dipole_state"
+        },
+        {
+          "index": 73,
+          "layer_id": "clock_receive_time"
+        }
+      ],
+      "clock_rule": "t0"
+    },
+    {
+      "pattern": "^polarity$",
+      "layers": [
+        {
+          "index": 59,
+          "layer_id": "derived_roll20_and_dipole_state"
+        }
+      ],
+      "clock_rule": "t0"
+    },
+    {
+      "pattern": "^(peak_abs|prominence|pre_arc_defined|zero_within_60)$",
+      "layers": [
+        {
+          "index": 59,
+          "layer_id": "derived_roll20_and_dipole_state"
+        },
+        {
+          "index": 56,
+          "layer_id": "legacy_per_second_roll20"
+        }
+      ],
+      "clock_rule": "t0"
+    },
+    {
+      "pattern": "^onset$",
+      "layers": [
+        {
+          "index": 59,
+          "layer_id": "derived_roll20_and_dipole_state"
+        },
+        {
+          "index": 76,
+          "layer_id": "clock_prospective_discovery_confirmation"
+        }
+      ],
+      "clock_rule": "onset"
+    },
+    {
+      "pattern": "^confirm$",
+      "layers": [
+        {
+          "index": 76,
+          "layer_id": "clock_prospective_discovery_confirmation"
+        }
+      ],
+      "clock_rule": "confirm"
+    },
+    {
+      "pattern": "^runway_s$",
+      "layers": [
+        {
+          "index": 59,
+          "layer_id": "derived_roll20_and_dipole_state"
+        },
+        {
+          "index": 76,
+          "layer_id": "clock_prospective_discovery_confirmation"
+        }
+      ],
+      "clock_rule": "onset"
+    },
+    {
+      "pattern": "^confirm_offset_s$",
+      "layers": [
+        {
+          "index": 76,
+          "layer_id": "clock_prospective_discovery_confirmation"
+        }
+      ],
+      "clock_rule": "confirm"
+    },
+    {
+      "pattern": "^(seed_state|late_pressure_41_60|late_volume)$",
+      "layers": [
+        {
+          "index": 61,
+          "layer_id": "derived_open_world_predecessor_state"
+        },
+        {
+          "index": 59,
+          "layer_id": "derived_roll20_and_dipole_state"
+        }
+      ],
+      "clock_rule": "seed_known_s"
+    },
+    {
+      "pattern": "^(prev3_states|prev4_states|prev_gap_s|same_as_prev|next_starts_before_confirm)$",
+      "layers": [
+        {
+          "index": 61,
+          "layer_id": "derived_open_world_predecessor_state"
+        }
+      ],
+      "clock_rule": "t0"
+    },
+    {
+      "pattern": "^info_horizon_local_s$",
+      "layers": [
+        {
+          "index": 75,
+          "layer_id": "clock_feature_availability"
+        }
+      ],
+      "clock_rule": "info_horizon_local_s"
+    },
+    {
+      "pattern": "^info_horizon_refractory_s$",
+      "layers": [
+        {
+          "index": 75,
+          "layer_id": "clock_feature_availability"
+        }
+      ],
+      "clock_rule": "info_horizon_refractory_s"
+    },
+    {
+      "pattern": "^archived_recognition_s$",
+      "layers": [
+        {
+          "index": 74,
+          "layer_id": "clock_event_known_by"
+        },
+        {
+          "index": 58,
+          "layer_id": "legacy_structure_observables"
+        }
+      ],
+      "clock_rule": "archived_recognition_s"
+    },
+    {
+      "pattern": "^archived_recognition_offset_s$",
+      "layers": [
+        {
+          "index": 74,
+          "layer_id": "clock_event_known_by"
+        }
+      ],
+      "clock_rule": "archived_recognition_s"
+    },
+    {
+      "pattern": "^archived_flow_state$",
+      "layers": [
+        {
+          "index": 58,
+          "layer_id": "legacy_structure_observables"
+        },
+        {
+          "index": 48,
+          "layer_id": "aggressor_and_native_signed_flow"
+        }
+      ],
+      "clock_rule": "archived_recognition_s"
+    },
+    {
+      "pattern": "^dip300_t0$|^dip300_vol_t0$",
+      "layers": [
+        {
+          "index": 48,
+          "layer_id": "aggressor_and_native_signed_flow"
+        },
+        {
+          "index": 55,
+          "layer_id": "legacy_native_signed_flow"
+        }
+      ],
+      "clock_rule": "t0"
+    },
+    {
+      "pattern": "^dip300_info50$|^dip300_vol_info50$|^dip300_imb$|^dip300_vol$",
+      "layers": [
+        {
+          "index": 48,
+          "layer_id": "aggressor_and_native_signed_flow"
+        },
+        {
+          "index": 55,
+          "layer_id": "legacy_native_signed_flow"
+        }
+      ],
+      "clock_rule": "info50_or_anchor"
+    },
+    {
+      "pattern": "^book_t0_aligned$",
+      "layers": [
+        {
+          "index": 45,
+          "layer_id": "spread_and_depth_imbalance"
+        },
+        {
+          "index": 57,
+          "layer_id": "legacy_book_imbalance"
+        }
+      ],
+      "clock_rule": "t0"
+    },
+    {
+      "pattern": "^(t10|t25|t50)$",
+      "layers": [
+        {
+          "index": 59,
+          "layer_id": "derived_roll20_and_dipole_state"
+        }
+      ],
+      "clock_rule": "t0"
+    },
+    {
+      "pattern": "^move_|^mid_move_|^aftermath$",
+      "layers": [
+        {
+          "index": 52,
+          "layer_id": "price_and_book_path"
+        },
+        {
+          "index": 79,
+          "layer_id": "later_outcome_reveal"
+        }
+      ],
+      "clock_rule": "outcome_from_t0"
+    },
+    {
+      "pattern": "^(seed_known_s|remaining_runway_at_info50_s|confirmed_before_info50|confirmed_before_seed_known|censored)$",
+      "layers": [
+        {
+          "index": 75,
+          "layer_id": "clock_feature_availability"
+        }
+      ],
+      "clock_rule": "t0"
+    },
+    {
+      "pattern": "^a_state$|^dist_fast$|^dist_persistent$|^proxy$",
+      "layers": [
+        {
+          "index": 15,
+          "layer_id": "learned_dipoles_and_geometry"
+        },
+        {
+          "index": 59,
+          "layer_id": "derived_roll20_and_dipole_state"
+        }
+      ],
+      "clock_rule": "anchor60"
+    },
+    {
+      "pattern": "^pre_family|^arc_",
+      "layers": [
+        {
+          "index": 14,
+          "layer_id": "learned_d_structures_and_families"
+        },
+        {
+          "index": 60,
+          "layer_id": "derived_d_family_geometry"
+        }
+      ],
+      "clock_rule": "t0"
+    },
+    {
+      "pattern": "^(price|mid)_(with|either)_\\d+t(_censored)?$",
+      "layers": [
+        {
+          "index": 52,
+          "layer_id": "price_and_book_path"
+        },
+        {
+          "index": 79,
+          "layer_id": "later_outcome_reveal"
+        }
+      ],
+      "clock_rule": "outcome_from_t0"
+    },
+    {
+      "pattern": "^censor_time$",
+      "layers": [
+        {
+          "index": 79,
+          "layer_id": "later_outcome_reveal"
+        }
+      ],
+      "clock_rule": "t0"
+    },
+    {
+      "pattern": "^(day_scale|scale_v2a|scale_v2b|activity_tercile_loo|v1|v2a|v2b|v3|realised_with)$",
+      "layers": [
+        {
+          "index": 59,
+          "layer_id": "derived_roll20_and_dipole_state"
+        },
+        {
+          "index": 66,
+          "layer_id": "derived_feature_availability_timestamps"
+        }
+      ],
+      "clock_rule": "anchor60"
+    },
+    {
+      "pattern": "^pre(300|60)_",
+      "layers": [
+        {
+          "index": 48,
+          "layer_id": "aggressor_and_native_signed_flow"
+        },
+        {
+          "index": 52,
+          "layer_id": "price_and_book_path"
+        }
+      ],
+      "clock_rule": "t0"
+    },
+    {
+      "pattern": "^pre_book_",
+      "layers": [
+        {
+          "index": 45,
+          "layer_id": "spread_and_depth_imbalance"
+        }
+      ],
+      "clock_rule": "t0"
+    },
+    {
+      "pattern": "^(plus60|known)_",
+      "layers": [
+        {
+          "index": 52,
+          "layer_id": "price_and_book_path"
+        },
+        {
+          "index": 48,
+          "layer_id": "aggressor_and_native_signed_flow"
+        },
+        {
+          "index": 45,
+          "layer_id": "spread_and_depth_imbalance"
+        },
+        {
+          "index": 79,
+          "layer_id": "later_outcome_reveal"
+        }
+      ],
+      "clock_rule": "anchor60"
+    },
+    {
+      "pattern": "^(t0_|plus60_)?(spread|toward_depth|away_depth|toward_touch|away_touch|toward_share)",
+      "layers": [
+        {
+          "index": 39,
+          "layer_id": "full_bid_ask_depth"
+        },
+        {
+          "index": 40,
+          "layer_id": "price_level_and_order_counts"
+        },
+        {
+          "index": 45,
+          "layer_id": "spread_and_depth_imbalance"
+        }
+      ],
+      "clock_rule": "anchor60"
+    },
+    {
+      "pattern": "^t0_to_60_",
+      "layers": [
+        {
+          "index": 49,
+          "layer_id": "depletion_and_replenishment"
+        },
+        {
+          "index": 50,
+          "layer_id": "resilience_and_recovery"
+        },
+        {
+          "index": 39,
+          "layer_id": "full_bid_ask_depth"
+        }
+      ],
+      "clock_rule": "anchor60"
+    },
+    {
+      "pattern": "^next_",
+      "layers": [
+        {
+          "index": 61,
+          "layer_id": "derived_open_world_predecessor_state"
+        },
+        {
+          "index": 79,
+          "layer_id": "later_outcome_reveal"
+        }
+      ],
+      "clock_rule": "next_t0"
+    },
+    {
+      "pattern": "^sources$",
+      "layers": [
+        {
+          "index": 48,
+          "layer_id": "aggressor_and_native_signed_flow"
+        },
+        {
+          "index": 45,
+          "layer_id": "spread_and_depth_imbalance"
+        },
+        {
+          "index": 40,
+          "layer_id": "price_level_and_order_counts"
+        },
+        {
+          "index": 61,
+          "layer_id": "derived_open_world_predecessor_state"
+        }
+      ],
+      "clock_rule": "anchor60"
+    },
+    {
+      "pattern": "^targets$|^return_ticks$",
+      "layers": [
+        {
+          "index": 79,
+          "layer_id": "later_outcome_reveal"
+        }
+      ],
+      "clock_rule": "anchor60"
+    },
+    {
+      "pattern": "^(eligible|reasons|prev4|is_play|expected_side|prev_seed|prev_a_state)$",
+      "layers": [
+        {
+          "index": 61,
+          "layer_id": "derived_open_world_predecessor_state"
+        }
+      ],
+      "clock_rule": "t0"
+    },
+    {
+      "pattern": "^(flow_state|touch_relation|recognition_delay_s)$",
+      "layers": [
+        {
+          "index": 48,
+          "layer_id": "aggressor_and_native_signed_flow"
+        },
+        {
+          "index": 40,
+          "layer_id": "price_level_and_order_counts"
+        },
+        {
+          "index": 74,
+          "layer_id": "clock_event_known_by"
+        }
+      ],
+      "clock_rule": "recognition_receive_ns"
+    },
+    {
+      "pattern": "^(recognition_receive_ns|recognition_cursor|recognition_group)$",
+      "layers": [
+        {
+          "index": 74,
+          "layer_id": "clock_event_known_by"
+        },
+        {
+          "index": 73,
+          "layer_id": "clock_receive_time"
+        },
+        {
+          "index": 58,
+          "layer_id": "legacy_structure_observables"
+        }
+      ],
+      "clock_rule": "recognition_receive_ns"
+    },
+    {
+      "pattern": "^(candidate_id|birth_second|orientation|birth_classified_lots|last_window_classified_lots|prebirth_depth_state|quote_move_by_recognition|realised_by_recognition_ticks_in_birth_direction)$",
+      "layers": [
+        {
+          "index": 58,
+          "layer_id": "legacy_structure_observables"
+        },
+        {
+          "index": 59,
+          "layer_id": "derived_roll20_and_dipole_state"
+        }
+      ],
+      "clock_rule": "birth_second"
+    },
+    {
+      "pattern": "^recognition_touch_relation$",
+      "layers": [
+        {
+          "index": 40,
+          "layer_id": "price_level_and_order_counts"
+        },
+        {
+          "index": 45,
+          "layer_id": "spread_and_depth_imbalance"
+        }
+      ],
+      "clock_rule": "recognition_receive_ns"
+    },
+    {
+      "pattern": "^move_ticks_after_recognition$|^moves$",
+      "layers": [
+        {
+          "index": 52,
+          "layer_id": "price_and_book_path"
+        },
+        {
+          "index": 79,
+          "layer_id": "later_outcome_reveal"
+        }
+      ],
+      "clock_rule": "recognition_receive_ns"
+    },
+    {
+      "pattern": "^onset_ns$|^onset_group$|^onset_cursor$|^onset_first_cursor$",
+      "layers": [
+        {
+          "index": 73,
+          "layer_id": "clock_receive_time"
+        },
+        {
+          "index": 29,
+          "layer_id": "raw_source_identity_provenance_clocks_integrity"
+        }
+      ],
+      "clock_rule": "onset_ns"
+    },
+    {
+      "pattern": "^(side|original_price_raw|prior_touch|other_touch|new_best_is_better)$",
+      "layers": [
+        {
+          "index": 40,
+          "layer_id": "price_level_and_order_counts"
+        },
+        {
+          "index": 49,
+          "layer_id": "depletion_and_replenishment"
+        }
+      ],
+      "clock_rule": "onset_ns"
+    },
+    {
+      "pattern": "^onset$",
+      "layers": [
+        {
+          "index": 40,
+          "layer_id": "price_level_and_order_counts"
+        },
+        {
+          "index": 49,
+          "layer_id": "depletion_and_replenishment"
+        }
+      ],
+      "clock_rule": "onset_ns"
+    },
+    {
+      "pattern": "^(end_ns|end_group|end_cursor|ending_touch|outcome|end_vs_entry|entry_group|end_ms)$",
+      "layers": [
+        {
+          "index": 50,
+          "layer_id": "resilience_and_recovery"
+        },
+        {
+          "index": 79,
+          "layer_id": "later_outcome_reveal"
+        },
+        {
+          "index": 74,
+          "layer_id": "clock_event_known_by"
+        }
+      ],
+      "clock_rule": "end_ns"
+    },
+    {
+      "pattern": "^(next_level|touch_check|next_gap_ticks|book_next|book_prior_orders)$",
+      "layers": [
+        {
+          "index": 39,
+          "layer_id": "full_bid_ask_depth"
+        },
+        {
+          "index": 40,
+          "layer_id": "price_level_and_order_counts"
+        }
+      ],
+      "clock_rule": "onset_ns"
+    },
+    {
+      "pattern": "^(additions|reprice_in|reprice_out|mutations_in_group)$",
+      "layers": [
+        {
+          "index": 30,
+          "layer_id": "order_lifecycle_adds"
+        },
+        {
+          "index": 32,
+          "layer_id": "order_lifecycle_modifies"
+        },
+        {
+          "index": 37,
+          "layer_id": "order_identity_transitions"
+        }
+      ],
+      "clock_rule": "onset_ns"
+    },
+    {
+      "pattern": "^reductions_fill_linked$",
+      "layers": [
+        {
+          "index": 35,
+          "layer_id": "order_lifecycle_fills"
+        },
+        {
+          "index": 31,
+          "layer_id": "order_lifecycle_cancels"
+        },
+        {
+          "index": 37,
+          "layer_id": "order_identity_transitions"
+        },
+        {
+          "index": 49,
+          "layer_id": "depletion_and_replenishment"
+        }
+      ],
+      "clock_rule": "onset_ns"
+    },
+    {
+      "pattern": "^reductions_unlinked$",
+      "layers": [
+        {
+          "index": 31,
+          "layer_id": "order_lifecycle_cancels"
+        },
+        {
+          "index": 49,
+          "layer_id": "depletion_and_replenishment"
+        }
+      ],
+      "clock_rule": "onset_ns"
+    },
+    {
+      "pattern": "^flow$",
+      "layers": [
+        {
+          "index": 35,
+          "layer_id": "order_lifecycle_fills"
+        },
+        {
+          "index": 31,
+          "layer_id": "order_lifecycle_cancels"
+        },
+        {
+          "index": 49,
+          "layer_id": "depletion_and_replenishment"
+        }
+      ],
+      "clock_rule": "onset_ns"
+    },
+    {
+      "pattern": "^(order_id|origin|prior_onsets_by_order)$",
+      "layers": [
+        {
+          "index": 37,
+          "layer_id": "order_identity_transitions"
+        },
+        {
+          "index": 30,
+          "layer_id": "order_lifecycle_adds"
+        },
+        {
+          "index": 32,
+          "layer_id": "order_lifecycle_modifies"
+        }
+      ],
+      "clock_rule": "onset_ns"
+    },
+    {
+      "pattern": "^age_ms$",
+      "layers": [
+        {
+          "index": 42,
+          "layer_id": "queue_age_and_survival"
+        }
+      ],
+      "clock_rule": "onset_ns"
+    },
+    {
+      "pattern": "^(fate|fate_delay_ms|fate_cursor)$",
+      "layers": [
+        {
+          "index": 31,
+          "layer_id": "order_lifecycle_cancels"
+        },
+        {
+          "index": 35,
+          "layer_id": "order_lifecycle_fills"
+        },
+        {
+          "index": 32,
+          "layer_id": "order_lifecycle_modifies"
+        },
+        {
+          "index": 79,
+          "layer_id": "later_outcome_reveal"
+        }
+      ],
+      "clock_rule": "fate"
+    },
+    {
+      "pattern": "^(family_id|instance|saved_match|chronological_quarter)$",
+      "layers": [
+        {
+          "index": 58,
+          "layer_id": "legacy_structure_observables"
+        },
+        {
+          "index": 14,
+          "layer_id": "learned_d_structures_and_families"
+        }
+      ],
+      "clock_rule": "start_recv_ns"
+    },
+    {
+      "pattern": "^(start_recv_ns|cutoff_ns|pre_close_cursor|pre_receive_ns|pre_cursor_agrees|pre_book_age_s)$",
+      "layers": [
+        {
+          "index": 74,
+          "layer_id": "clock_event_known_by"
+        },
+        {
+          "index": 73,
+          "layer_id": "clock_receive_time"
+        },
+        {
+          "index": 29,
+          "layer_id": "raw_source_identity_provenance_clocks_integrity"
+        }
+      ],
+      "clock_rule": "cutoff_ns"
+    },
+    {
+      "pattern": "^(pre_bid_raw|pre_ask_raw|pre_bid_size|pre_ask_size|spread_ticks|touch_sign)$",
+      "layers": [
+        {
+          "index": 40,
+          "layer_id": "price_level_and_order_counts"
+        },
+        {
+          "index": 45,
+          "layer_id": "spread_and_depth_imbalance"
+        }
+      ],
+      "clock_rule": "cutoff_ns"
+    },
+    {
+      "pattern": "^(buy|sell)(1|5|20|60)$|^d(1|5|20|60)$|^recent$",
+      "layers": [
+        {
+          "index": 48,
+          "layer_id": "aggressor_and_native_signed_flow"
+        }
+      ],
+      "clock_rule": "cutoff_ns"
+    },
+    {
+      "pattern": "^(bid_depth_full|ask_depth_full|depth_sign|near_depth_imbalance|near_sign)$",
+      "layers": [
+        {
+          "index": 39,
+          "layer_id": "full_bid_ask_depth"
+        },
+        {
+          "index": 45,
+          "layer_id": "spread_and_depth_imbalance"
+        }
+      ],
+      "clock_rule": "cutoff_ns"
+    },
+    {
+      "pattern": "^(move_ticks|prior_move_ticks)$",
+      "layers": [
+        {
+          "index": 52,
+          "layer_id": "price_and_book_path"
+        },
+        {
+          "index": 79,
+          "layer_id": "later_outcome_reveal"
+        }
+      ],
+      "clock_rule": "cutoff_ns"
+    },
+    {
+      "pattern": "^hour_utc$|^hour_class$|^vol_tercile$|^tercile$|^session$|^day0_epoch_s$|^mode$|^file$",
+      "layers": null,
+      "clock_rule": null
+    }
+  ],
+  "clock_kinds": [
+    "receive_second_bin (the replay's per-second bins are receive-clock seconds from the session origin)",
+    "receive_ns",
+    "known_by_receive_ns",
+    "known_by_cutoff_ns",
+    "availability_t0_plus_50",
+    "anchor_t0_plus_60",
+    "outcome_window_from_t0"
+  ],
+  "rule": "only row fields with a clock of their own are pinned; aggregates are never pinned; rows are never merged"
+}

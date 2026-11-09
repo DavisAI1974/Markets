@@ -1617,3 +1617,24 @@ row file on the branch is without an absolute clock, which was checked by readin
 one of them. The clocks remain distinct where the frozen contract distinguishes them: t0 (the local
 maximum), t0+5 (knowable), the archived recognition receive clock, the structural onset and confirmation,
 and the +60 state anchor each have their own field.
+
+## 24. The 99-layer pin ledger of my rows
+
+Every per-event row of this work is now pinned to the canonical 99-layer registry
+(`artifacts/sqlite-triage/20261022/families/full-context-audit/canonical-99-registry.json`, 18 groups,
+99 layers) by timestamp, with nothing removed or merged. `pin_rows_to_99.py` reads each row file of a
+session and writes one record per row: the original row verbatim, its natural ids (t0, candidate id, family
+id, onset group and side, order id), every absolute clock the row carries, its sources (the tape members
+with their commits and hashes, the exports with their hashes), and `pins`: one entry per measured field
+that corresponds to registry layers, naming the layer indices and ids, the field's value, the clock kind
+and the absolute clock the measurement was taken at. The clock kinds are kept distinct: receive-second bin
+(the replay's per-second bins), receive nanoseconds, known-by receive clock (archived recognitions, group
+closes), known-by cutoff, availability at t0+50, the +60 anchor, and the outcome window. Aggregates are never
+pinned; a median or an AUC has no clock and is not in the ledger. The field-to-layer map and the registry
+hash are in `ninety-nine-pin-map.json`; counts per layer and per file in `ninety-nine-pins-summary.json`.
+
+The four ledgers (25 to 32 MB each, 1.2 million rows in all, touching 29 layers from raw-source identity
+through the order lifecycle, the FIFO book, signed flow, the derived dipole state and predecessor seeds, the
+clocks, and the sealed later-outcome layer) are data, so they live in markets-data under
+`tasks/family-research-20261022/claude-code-pins/`, commit 158ae78, with manifest entries. No summary or
+render was pinned; those are views over these rows.

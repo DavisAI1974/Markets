@@ -1,0 +1,406 @@
+{
+  "oct02": {
+    "files": {
+      "exhaustion-clock-oct02-events.jsonl.gz": {
+        "rows": 1678,
+        "pins": 78056
+      },
+      "runway-duration-oct02-events.jsonl.gz": {
+        "rows": 839,
+        "pins": 29365
+      },
+      "frozen-a-classifier-oct02-events.jsonl.gz": {
+        "rows": 839,
+        "pins": 19297
+      },
+      "a-state-direction-knowable-oct02-events.jsonl.gz": {
+        "rows": 839,
+        "pins": 7551
+      },
+      "beyond-direction-prebirth-oct02-events.jsonl.gz": {
+        "rows": 839,
+        "pins": 46133
+      },
+      "other-things-oct02-events.jsonl.gz": {
+        "rows": 839,
+        "pins": 37585
+      },
+      "stack-direction-sources-oct02-events.jsonl.gz": {
+        "rows": 839,
+        "pins": 6712
+      },
+      "next-burst-forecast-oct02-events.jsonl.gz": {
+        "rows": 838,
+        "pins": 8380
+      },
+      "runway-clock-v2-oct02-events.jsonl.gz": {
+        "rows": 839,
+        "pins": 7551
+      },
+      "chain-play-filter-oct02-rows.jsonl.gz": {
+        "rows": 839,
+        "pins": 10907
+      },
+      "dipole-post-recognition-oct02-rows.jsonl.gz": {
+        "rows": 741,
+        "pins": 8892
+      },
+      "first-family-four-arm-oct02-events.jsonl.gz": {
+        "rows": 795,
+        "pins": 26235
+      },
+      "size-one-episodes-oct02.jsonl.gz": {
+        "rows": 22042,
+        "pins": 352672
+      },
+      "size-one-tape-oct02.jsonl.gz": {
+        "rows": 22042,
+        "pins": 286546
+      },
+      "size-one-orders-oct02.jsonl.gz": {
+        "rows": 22042,
+        "pins": 352672
+      },
+      "size-one-four-arm-oct02-rows.jsonl.gz": {
+        "rows": 22041,
+        "pins": 418779
+      }
+    },
+    "pins_by_layer": {
+      "14 learned_d_structures_and_families": 8214,
+      "15 learned_dipoles_and_geometry": 7550,
+      "29 raw_source_identity_provenance_clocks_integrity": 312559,
+      "30 order_lifecycle_adds": 154294,
+      "31 order_lifecycle_cancels": 132251,
+      "32 order_lifecycle_modifies": 220420,
+      "35 order_lifecycle_fills": 110209,
+      "37 order_identity_transitions": 176336,
+      "39 full_bid_ask_depth": 82684,
+      "40 price_level_and_order_counts": 341114,
+      "42 queue_age_and_survival": 22042,
+      "45 spread_and_depth_imbalance": 63056,
+      "48 aggressor_and_native_signed_flow": 76904,
+      "49 depletion_and_replenishment": 339014,
+      "50 resilience_and_recovery": 471265,
+      "52 price_and_book_path": 121428,
+      "55 legacy_native_signed_flow": 8390,
+      "56 legacy_per_second_roll20": 18457,
+      "57 legacy_book_imbalance": 1678,
+      "58 legacy_structure_observables": 13406,
+      "59 derived_roll20_and_dipole_state": 61299,
+      "60 derived_d_family_geometry": 5034,
+      "61 derived_open_world_predecessor_state": 26842,
+      "66 derived_feature_availability_timestamps": 6712,
+      "73 clock_receive_time": 323269,
+      "74 clock_event_known_by": 471889,
+      "75 clock_feature_availability": 11746,
+      "76 clock_prospective_discovery_confirmation": 8390,
+      "79 later_outcome_reveal": 650436
+    },
+    "rows": 98931,
+    "pins": 1697333
+  },
+  "oct03": {
+    "files": {
+      "exhaustion-clock-oct03-events.jsonl.gz": {
+        "rows": 1714,
+        "pins": 80216
+      },
+      "runway-duration-oct03-events.jsonl.gz": {
+        "rows": 857,
+        "pins": 29995
+      },
+      "frozen-a-classifier-oct03-events.jsonl.gz": {
+        "rows": 857,
+        "pins": 19711
+      },
+      "a-state-direction-knowable-oct03-events.jsonl.gz": {
+        "rows": 857,
+        "pins": 7713
+      },
+      "beyond-direction-prebirth-oct03-events.jsonl.gz": {
+        "rows": 857,
+        "pins": 47129
+      },
+      "other-things-oct03-events.jsonl.gz": {
+        "rows": 857,
+        "pins": 38455
+      },
+      "stack-direction-sources-oct03-events.jsonl.gz": {
+        "rows": 857,
+        "pins": 6856
+      },
+      "next-burst-forecast-oct03-events.jsonl.gz": {
+        "rows": 856,
+        "pins": 8560
+      },
+      "runway-clock-v2-oct03-events.jsonl.gz": {
+        "rows": 857,
+        "pins": 7713
+      },
+      "chain-play-filter-oct03-rows.jsonl.gz": {
+        "rows": 857,
+        "pins": 11141
+      },
+      "dipole-post-recognition-oct03-rows.jsonl.gz": {
+        "rows": 832,
+        "pins": 9984
+      },
+      "first-family-four-arm-oct03-events.jsonl.gz": {
+        "rows": 848,
+        "pins": 27984
+      },
+      "size-one-episodes-oct03.jsonl.gz": {
+        "rows": 24353,
+        "pins": 389648
+      },
+      "size-one-tape-oct03.jsonl.gz": {
+        "rows": 24353,
+        "pins": 316589
+      },
+      "size-one-orders-oct03.jsonl.gz": {
+        "rows": 24353,
+        "pins": 389633
+      },
+      "size-one-four-arm-oct03-rows.jsonl.gz": {
+        "rows": 24352,
+        "pins": 462688
+      }
+    },
+    "pins_by_layer": {
+      "14 learned_d_structures_and_families": 8534,
+      "15 learned_dipoles_and_geometry": 7712,
+      "29 raw_source_identity_provenance_clocks_integrity": 345178,
+      "30 order_lifecycle_adds": 170471,
+      "31 order_lifecycle_cancels": 146102,
+      "32 order_lifecycle_modifies": 243515,
+      "35 order_lifecycle_fills": 121749,
+      "37 order_identity_transitions": 194824,
+      "39 full_bid_ask_depth": 90152,
+      "40 price_level_and_order_counts": 376334,
+      "42 queue_age_and_survival": 24353,
+      "45 spread_and_depth_imbalance": 64907,
+      "48 aggressor_and_native_signed_flow": 79328,
+      "49 depletion_and_replenishment": 373859,
+      "50 resilience_and_recovery": 519976,
+      "52 price_and_book_path": 124139,
+      "55 legacy_native_signed_flow": 8570,
+      "56 legacy_per_second_roll20": 18853,
+      "57 legacy_book_imbalance": 1714,
+      "58 legacy_structure_observables": 14912,
+      "59 derived_roll20_and_dipole_state": 63215,
+      "60 derived_d_family_geometry": 5142,
+      "61 derived_open_world_predecessor_state": 27418,
+      "66 derived_feature_availability_timestamps": 6856,
+      "73 clock_receive_time": 356268,
+      "74 clock_event_known_by": 521342,
+      "75 clock_feature_availability": 11998,
+      "76 clock_prospective_discovery_confirmation": 8570,
+      "79 later_outcome_reveal": 708590
+    },
+    "rows": 108517,
+    "pins": 1854015
+  },
+  "oct17": {
+    "files": {
+      "exhaustion-clock-oct17-events.jsonl.gz": {
+        "rows": 1660,
+        "pins": 77186
+      },
+      "runway-duration-oct17-events.jsonl.gz": {
+        "rows": 830,
+        "pins": 29050
+      },
+      "frozen-a-classifier-oct17-events.jsonl.gz": {
+        "rows": 830,
+        "pins": 19090
+      },
+      "a-state-direction-knowable-oct17-events.jsonl.gz": {
+        "rows": 830,
+        "pins": 7470
+      },
+      "beyond-direction-prebirth-oct17-events.jsonl.gz": {
+        "rows": 830,
+        "pins": 45641
+      },
+      "other-things-oct17-events.jsonl.gz": {
+        "rows": 830,
+        "pins": 37220
+      },
+      "stack-direction-sources-oct17-events.jsonl.gz": {
+        "rows": 830,
+        "pins": 6640
+      },
+      "next-burst-forecast-oct17-events.jsonl.gz": {
+        "rows": 829,
+        "pins": 8290
+      },
+      "runway-clock-v2-oct17-events.jsonl.gz": {
+        "rows": 830,
+        "pins": 7470
+      },
+      "chain-play-filter-oct17-rows.jsonl.gz": {
+        "rows": 830,
+        "pins": 10790
+      },
+      "dipole-post-recognition-oct17-rows.jsonl.gz": {
+        "rows": 740,
+        "pins": 8880
+      },
+      "first-family-four-arm-oct17-events.jsonl.gz": {
+        "rows": 823,
+        "pins": 27159
+      },
+      "size-one-episodes-oct17.jsonl.gz": {
+        "rows": 27111,
+        "pins": 433776
+      },
+      "size-one-tape-oct17.jsonl.gz": {
+        "rows": 27111,
+        "pins": 352443
+      },
+      "size-one-orders-oct17.jsonl.gz": {
+        "rows": 27111,
+        "pins": 433776
+      },
+      "size-one-four-arm-oct17-rows.jsonl.gz": {
+        "rows": 27111,
+        "pins": 515109
+      }
+    },
+    "pins_by_layer": {
+      "14 learned_d_structures_and_families": 8272,
+      "15 learned_dipoles_and_geometry": 7469,
+      "29 raw_source_identity_provenance_clocks_integrity": 383669,
+      "30 order_lifecycle_adds": 189777,
+      "31 order_lifecycle_cancels": 162666,
+      "32 order_lifecycle_modifies": 271110,
+      "35 order_lifecycle_fills": 135555,
+      "37 order_identity_transitions": 216888,
+      "39 full_bid_ask_depth": 97898,
+      "40 price_level_and_order_counts": 417240,
+      "42 queue_age_and_survival": 27111,
+      "45 spread_and_depth_imbalance": 62790,
+      "48 aggressor_and_native_signed_flow": 76591,
+      "49 depletion_and_replenishment": 414965,
+      "50 resilience_and_recovery": 577631,
+      "52 price_and_book_path": 120203,
+      "55 legacy_native_signed_flow": 8300,
+      "56 legacy_per_second_roll20": 18259,
+      "57 legacy_book_imbalance": 1660,
+      "58 legacy_structure_observables": 13456,
+      "59 derived_roll20_and_dipole_state": 60697,
+      "60 derived_d_family_geometry": 4980,
+      "61 derived_open_world_predecessor_state": 26554,
+      "66 derived_feature_availability_timestamps": 6640,
+      "73 clock_receive_time": 394278,
+      "74 clock_event_known_by": 578430,
+      "75 clock_feature_availability": 11620,
+      "76 clock_prospective_discovery_confirmation": 8300,
+      "79 later_outcome_reveal": 770871
+    },
+    "rows": 119136,
+    "pins": 2019990
+  },
+  "oct18": {
+    "files": {
+      "exhaustion-clock-oct18-events.jsonl.gz": {
+        "rows": 1780,
+        "pins": 83198
+      },
+      "runway-duration-oct18-events.jsonl.gz": {
+        "rows": 890,
+        "pins": 31150
+      },
+      "frozen-a-classifier-oct18-events.jsonl.gz": {
+        "rows": 890,
+        "pins": 20470
+      },
+      "a-state-direction-knowable-oct18-events.jsonl.gz": {
+        "rows": 890,
+        "pins": 12888
+      },
+      "beyond-direction-prebirth-oct18-events.jsonl.gz": {
+        "rows": 890,
+        "pins": 67634
+      },
+      "other-things-oct18-events.jsonl.gz": {
+        "rows": 890,
+        "pins": 39900
+      },
+      "stack-direction-sources-oct18-events.jsonl.gz": {
+        "rows": 890,
+        "pins": 7120
+      },
+      "next-burst-forecast-oct18-events.jsonl.gz": {
+        "rows": 889,
+        "pins": 8890
+      },
+      "runway-clock-v2-oct18-events.jsonl.gz": {
+        "rows": 890,
+        "pins": 8010
+      },
+      "chain-play-filter-oct18-rows.jsonl.gz": {
+        "rows": 890,
+        "pins": 11570
+      },
+      "dipole-post-recognition-oct18-rows.jsonl.gz": {
+        "rows": 863,
+        "pins": 10356
+      },
+      "first-family-four-arm-oct18-events.jsonl.gz": {
+        "rows": 749,
+        "pins": 24717
+      },
+      "size-one-episodes-oct18.jsonl.gz": {
+        "rows": 27560,
+        "pins": 440960
+      },
+      "size-one-tape-oct18.jsonl.gz": {
+        "rows": 27560,
+        "pins": 358280
+      },
+      "size-one-orders-oct18.jsonl.gz": {
+        "rows": 27560,
+        "pins": 440939
+      },
+      "size-one-four-arm-oct18-rows.jsonl.gz": {
+        "rows": 27560,
+        "pins": 523640
+      }
+    },
+    "pins_by_layer": {
+      "14 learned_d_structures_and_families": 8336,
+      "15 learned_dipoles_and_geometry": 8009,
+      "29 raw_source_identity_provenance_clocks_integrity": 389585,
+      "30 order_lifecycle_adds": 192920,
+      "31 order_lifecycle_cancels": 165339,
+      "32 order_lifecycle_modifies": 275579,
+      "35 order_lifecycle_fills": 137779,
+      "37 order_identity_transitions": 220480,
+      "39 full_bid_ask_depth": 99775,
+      "40 price_level_and_order_counts": 424211,
+      "42 queue_age_and_survival": 27560,
+      "45 spread_and_depth_imbalance": 89630,
+      "48 aggressor_and_native_signed_flow": 104167,
+      "49 depletion_and_replenishment": 422300,
+      "50 resilience_and_recovery": 587660,
+      "52 price_and_book_path": 152320,
+      "55 legacy_native_signed_flow": 8900,
+      "56 legacy_per_second_roll20": 19579,
+      "57 legacy_book_imbalance": 1780,
+      "58 legacy_structure_observables": 14878,
+      "59 derived_roll20_and_dipole_state": 65641,
+      "60 derived_d_family_geometry": 5340,
+      "61 derived_open_world_predecessor_state": 28474,
+      "66 derived_feature_availability_timestamps": 7120,
+      "73 clock_receive_time": 401100,
+      "74 clock_event_known_by": 588346,
+      "75 clock_feature_availability": 12460,
+      "76 clock_prospective_discovery_confirmation": 8900,
+      "79 later_outcome_reveal": 813749
+    },
+    "rows": 121641,
+    "pins": 2089722
+  }
+}
