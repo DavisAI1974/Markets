@@ -249,3 +249,153 @@ Three local renders overlay the four SAME day curves for quote relocation, touch
 Input repository: [DavisAI1974/markets-data at 968fa113](https://github.com/DavisAI1974/markets-data/tree/968fa11324f66b70cd318140c51bf19e23f9ee4e). `MARKETS_DATA_DIR=E:/markets-data` is the configured local input root. The read-only audit verifies 25 declared SHA256 hashes; one null-hash entry remains unverified and three external archive references are not locally included. Nine inputs also match the exact pinned research cache bytes. Only byte-identical verified inputs are accepted; absent/unverified entries retain the pinned revision/cache fallback. No populations were exchanged or calculations restarted for routing.
 
 See [pending publication inventory](PENDING_PUBLICATION.md) for the local artifact inventory hash and handoff limits. The input repository does not establish an output destination.
+
+<!-- shape_forms:start -->
+
+## Additive shape forms and environment follow-up
+
+This follow-up preserves the completed research and the original SAME populations on October 2, 3, 17 and 18. October 18 is the pink curve throughout. All new CSVs and figures below are local-only; this Markdown section contains the current numerical findings for phone review. The separate parent tail audit retains its own provenance and identity comparisons.
+
+### Full observations before fitted descriptions
+
+Three compact `shape_forms-negative-focus-<definition>.png` renders isolate the circled negative portions. `shape_forms-sections-<definition>.png` shows the complete curve and its negative, exact-zero and positive sections without resetting ranks. `shape_forms-gaps-<definition>.png` shows every adjacent gap and change in that gap. `shape_forms-markers-<definition>.png` marks every local gap extremum and exact sign boundary while retaining every original point. Negative recognition-minus-event means the first event occurred AFTER recognition; sorted rank is not chronological order.
+
+| day        | definition               | rows   | negative   | zero   | positive   | unavailable   | largest_gap_s   | largest_gap_rank   |
+|:-----------|:-------------------------|:-------|:-----------|:-------|:-----------|:--------------|:----------------|:-------------------|
+| 2023-10-02 | quote_relocation         | 387    | 44         | 6      | 337        | 0             | 296.998         | 1                  |
+| 2023-10-02 | touch_size_change        | 387    | 6          | 4      | 377        | 0             | 16.3253         | 1                  |
+| 2023-10-02 | wire_aggressor_run_start | 387    | 107        | 9      | 271        | 0             | 77.5742         | 3                  |
+| 2023-10-03 | quote_relocation         | 449    | 88         | 8      | 352        | 1             | 190.535         | 1                  |
+| 2023-10-03 | touch_size_change        | 449    | 7          | 5      | 436        | 1             | 72.0231         | 1                  |
+| 2023-10-03 | wire_aggressor_run_start | 449    | 123        | 7      | 318        | 1             | 85.7316         | 5                  |
+| 2023-10-17 | quote_relocation         | 387    | 39         | 9      | 338        | 1             | 93.484          | 1                  |
+| 2023-10-17 | touch_size_change        | 387    | 7          | 6      | 373        | 1             | 32.7644         | 2                  |
+| 2023-10-17 | wire_aggressor_run_start | 387    | 102        | 7      | 277        | 1             | 80.7252         | 3                  |
+| 2023-10-18 | quote_relocation         | 472    | 43         | 4      | 425        | 0             | 136.356         | 1                  |
+| 2023-10-18 | touch_size_change        | 472    | 9          | 3      | 460        | 0             | 18.1874         | 5                  |
+| 2023-10-18 | wire_aggressor_run_start | 472    | 112        | 5      | 355        | 0             | 100.602         | 1                  |
+
+The observation table contains 5,085 birth-definition rows and 5,079 available values. The marker table retains all rows: 1,663 local gap maxima, 1,679 local gap minima and 42 section-boundary rows. Boundary rows include curve starts and transitions into unavailable-clock rows. Local extrema use the two immediate neighboring gaps and at least one strict inequality; no jump-size cutoff is applied. These numerous mathematical markers do not establish a unique set of natural market boundaries.
+
+### Fitting conventions and every residual
+
+Soft predictions and the candidate forms were recorded in PROGRESS.md before fitting. The forms are line a+b*r, logarithm a+b*log(r+c), shifted reciprocal a+b/(r+c), and vertically shifted exponential a+b*exp(-r/tau). r is the original zero-based observation rank. Each c/tau uses the declared rank-unit grid [0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]. For each grid point, a and b minimize the sum of absolute residuals; the smallest total within that form chooses its grid point, with grid order resolving ties. No form is selected as a winner.
+
+The finite grid is a fitting convention, not a discovered scale. A numerically constant basis (range below 1e-12) is recorded as unavailable for that grid point; it is not a market exclusion. All 1,920 grid attempts remain in `shape_forms-fit-grid.csv`. There are 192 source fits across four dates, three event definitions, four sections and four forms. Constant-zero sections do not identify a meaningful shift parameter; boundary grid choices and constant-response flags are explicit.
+
+`shape_forms-models.csv` retains every parameter. `shape_forms-fits-<definition>-<section>.png` shows each original observation, all four fitted descriptions, and every same-day residual. Cross-day residual matrices freeze each source fit and apply it at every target original rank; common axis scales are used within comparable figure rows/matrices. The original observations are never replaced by fitted values.
+
+Negative-section parameters follow. The shift column means c for log/reciprocal and tau for exponential; it is unused for a line. Display rounding is only in this Markdown table; full values remain in CSV.
+
+| source_day   | definition               | form                | a        | b        | shift       | grid_boundary   |
+|:-------------|:-------------------------|:--------------------|:---------|:---------|:------------|:----------------|
+| 2023-10-02   | quote_relocation         | line                | -55.3891 | 1.67329  | unavailable | False           |
+| 2023-10-02   | quote_relocation         | logarithm           | -121.147 | 34.5033  | 0.25        | True            |
+| 2023-10-02   | quote_relocation         | shifted_reciprocal  | 16.0593  | -610.588 | 1           | False           |
+| 2023-10-02   | quote_relocation         | shifted_exponential | -6.84351 | -587.685 | 2           | False           |
+| 2023-10-02   | touch_size_change        | line                | -8.74795 | 2.18535  | unavailable | False           |
+| 2023-10-02   | touch_size_change        | logarithm           | -10.5537 | 8.89725  | 0.25        | True            |
+| 2023-10-02   | touch_size_change        | shifted_reciprocal  | 2.85364  | -12.8708 | 0.5         | False           |
+| 2023-10-02   | touch_size_change        | shifted_exponential | 1.08437  | -23.9723 | 1           | False           |
+| 2023-10-02   | wire_aggressor_run_start | line                | -116.137 | 1.31043  | unavailable | False           |
+| 2023-10-02   | wire_aggressor_run_start | logarithm           | -302.062 | 67.1997  | 0.25        | True            |
+| 2023-10-02   | wire_aggressor_run_start | shifted_reciprocal  | 28.7213  | -3522.07 | 8           | False           |
+| 2023-10-02   | wire_aggressor_run_start | shifted_exponential | -13.1211 | -318.563 | 16          | False           |
+| 2023-10-03   | quote_relocation         | line                | -175.992 | 2.50043  | unavailable | False           |
+| 2023-10-03   | quote_relocation         | logarithm           | -456.227 | 106.384  | 0.25        | True            |
+| 2023-10-03   | quote_relocation         | shifted_reciprocal  | 83.9893  | -7943.59 | 16          | False           |
+| 2023-10-03   | quote_relocation         | shifted_exponential | -10.9933 | -406.592 | 16          | False           |
+| 2023-10-03   | touch_size_change        | line                | -48.1687 | 8.03937  | unavailable | False           |
+| 2023-10-03   | touch_size_change        | logarithm           | -63.0915 | 35.3899  | 0.25        | True            |
+| 2023-10-03   | touch_size_change        | shifted_reciprocal  | 2.56756  | -57.36   | 0.5         | False           |
+| 2023-10-03   | touch_size_change        | shifted_exponential | -6.01188 | -106.14  | 1           | False           |
+| 2023-10-03   | wire_aggressor_run_start | line                | -204.382 | 2.00696  | unavailable | False           |
+| 2023-10-03   | wire_aggressor_run_start | logarithm           | -592.357 | 127.651  | 0.5         | False           |
+| 2023-10-03   | wire_aggressor_run_start | shifted_reciprocal  | 48.0887  | -6880.48 | 8           | False           |
+| 2023-10-03   | wire_aggressor_run_start | shifted_exponential | -29.0153 | -629.143 | 16          | False           |
+| 2023-10-17   | quote_relocation         | line                | -89.0755 | 2.83781  | unavailable | False           |
+| 2023-10-17   | quote_relocation         | logarithm           | -163.174 | 46.3407  | 0.25        | True            |
+| 2023-10-17   | quote_relocation         | shifted_reciprocal  | 38.7937  | -1690.54 | 8           | False           |
+| 2023-10-17   | quote_relocation         | shifted_exponential | 16.8503  | -141.092 | 16          | False           |
+| 2023-10-17   | touch_size_change        | line                | -75.5131 | 13.4158  | unavailable | False           |
+| 2023-10-17   | touch_size_change        | logarithm           | -75.5131 | 38.613   | 1           | False           |
+| 2023-10-17   | touch_size_change        | shifted_reciprocal  | 49.716   | -500.917 | 4           | False           |
+| 2023-10-17   | touch_size_change        | shifted_exponential | 21.2051  | -96.7183 | 4           | False           |
+| 2023-10-17   | wire_aggressor_run_start | line                | -125.529 | 1.53046  | unavailable | False           |
+| 2023-10-17   | wire_aggressor_run_start | logarithm           | -358.434 | 80.6184  | 0.5         | False           |
+| 2023-10-17   | wire_aggressor_run_start | shifted_reciprocal  | 54.756   | -6126.07 | 16          | False           |
+| 2023-10-17   | wire_aggressor_run_start | shifted_exponential | 12.7875  | -251.042 | 32          | False           |
+| 2023-10-18   | quote_relocation         | line                | -78.0807 | 2.37884  | unavailable | False           |
+| 2023-10-18   | quote_relocation         | logarithm           | -176.133 | 50.2724  | 0.25        | True            |
+| 2023-10-18   | quote_relocation         | shifted_reciprocal  | 19.2108  | -825.768 | 2           | False           |
+| 2023-10-18   | quote_relocation         | shifted_exponential | 1.18988  | -227.127 | 8           | False           |
+| 2023-10-18   | touch_size_change        | line                | -50.0507 | 7.47872  | unavailable | False           |
+| 2023-10-18   | touch_size_change        | logarithm           | -224.253 | 82.7935  | 8           | False           |
+| 2023-10-18   | touch_size_change        | shifted_reciprocal  | 234.668  | -9153.8  | 32          | False           |
+| 2023-10-18   | touch_size_change        | shifted_exponential | 93.5064  | -144.894 | 16          | False           |
+| 2023-10-18   | wire_aggressor_run_start | line                | -174.309 | 1.95506  | unavailable | False           |
+| 2023-10-18   | wire_aggressor_run_start | logarithm           | -444.951 | 98.1145  | 1           | False           |
+| 2023-10-18   | wire_aggressor_run_start | shifted_reciprocal  | 62.3213  | -7500.73 | 16          | False           |
+| 2023-10-18   | wire_aggressor_run_start | shifted_exponential | 12.7138  | -319.987 | 32          | False           |
+
+The residual table contains 271,040 model/target rows, including same-day fits, frozen across-day applications, and all quote-to-run and quote-to-touch applications. There are 160 unavailable rows and 22,664 predictions outside the source section's observed rank interval. Outside-domain predictions remain in the table and are separately colored; they are extrapolations. Every residual is shown in the corresponding local fit or transfer matrix. Residual sign is predicted minus observed seconds.
+
+### Displaced quote curve compared with aggressor-run shapes
+
+All four quote source days are applied to all four aggressor-run target days at their original ranks. The October 3 quote negative section has 88 observations, while the aggressor-run negative sections have 107/123/102/112. This necessarily creates ranks outside the October 3 quote section; they are retained. The full `shape_forms-quote-to-run-*` matrices include every source, target, form and signed section. The following slice shows all four forms of that October 3 quote description, with the contrary residuals and domain limits intact:
+
+| target_day   | form                | rows   | within_source_domain   | outside_source_domain   | residual_min_s   | residual_max_s   |
+|:-------------|:--------------------|:-------|:-----------------------|:------------------------|:-----------------|:-----------------|
+| 2023-10-02   | line                | 107    | 88                     | 19                      | -32.5743         | 221.496          |
+| 2023-10-02   | logarithm           | 107    | 88                     | 19                      | -206.219         | 40.1405          |
+| 2023-10-02   | shifted_exponential | 107    | 88                     | 19                      | -91.1915         | 6.53387          |
+| 2023-10-02   | shifted_reciprocal  | 107    | 88                     | 19                      | -77.8352         | 18.8786          |
+| 2023-10-03   | line                | 123    | 88                     | 35                      | 21.2224          | 482.91           |
+| 2023-10-03   | logarithm           | 123    | 88                     | 35                      | 31.4729          | 242.406          |
+| 2023-10-03   | shifted_exponential | 123    | 88                     | 35                      | -11.2438         | 263.451          |
+| 2023-10-03   | shifted_reciprocal  | 123    | 88                     | 35                      | 23.4623          | 273.121          |
+| 2023-10-17   | line                | 102    | 88                     | 14                      | -28.515          | 238.322          |
+| 2023-10-17   | logarithm           | 102    | 88                     | 14                      | -189.393         | 35.0124          |
+| 2023-10-17   | shifted_exponential | 102    | 88                     | 14                      | -98.6619         | 14.3877          |
+| 2023-10-17   | shifted_reciprocal  | 102    | 88                     | 14                      | -84.205          | 16.0959          |
+| 2023-10-18   | line                | 112    | 88                     | 24                      | -1.76803         | 268.959          |
+| 2023-10-18   | logarithm           | 112    | 88                     | 24                      | -158.756         | 45.0323          |
+| 2023-10-18   | shifted_exponential | 112    | 88                     | 24                      | -55.9745         | 39.2487          |
+| 2023-10-18   | shifted_reciprocal  | 112    | 88                     | 24                      | -43.4866         | 32.466           |
+
+No translation, rank normalization, time warping or re-fit to the target aggressor curve is applied. A similar part of a sorted curve is not a match of event identities or chronology. The separate raw tail audit addresses those identities.
+
+### Existing environment and paired controls
+
+`shape_forms-environment-pairs.csv` retains 15,255 candidate-definition-kind rows, including both controls and unavailable finalization-only anchors. Exact candidate/control endpoints are computed from integer clocks, and the first subsequent structural event is looked up in the existing raw-derived event list. Source-environment fields retain the independently audited spread/activity buckets, trailing activity, quote change, and strict M2 action groups/quantities/orderings. `shape_forms-environment-contrasts.csv` contains all 10,170 paired control-minus-candidate timing contrasts. No new raw-event extraction or external 13-point join is introduced.
+
+The environment charts show each individual timing/quote observation colored by spread and each paired timing contrast colored by activity. The following counts keep the candidate negative-section targets fixed and carry their two matched controls with them. A control is counted as negative only if its own first event is after its paired endpoint. C/C1/C2 denotes candidate/control1/control2; quote-flat and wire-print counts use the same retained pairs. Wire prints here mean recorded buy/sell-side T messages; their absence is not a claim of no book activity.
+
+| day        | definition               | candidate_negative_targets   | control1_negative   | control2_negative   | flat_quote_C_C1_C2   | wire_prints_C_C1_C2   |
+|:-----------|:-------------------------|:-----------------------------|:--------------------|:--------------------|:---------------------|:----------------------|
+| 2023-10-02 | quote_relocation         | 44                           | 15                  | 16                  | 44/21/22             | 24/30/27              |
+| 2023-10-02 | touch_size_change        | 6                            | 1                   | 1                   | 5/2/4                | 0/4/4                 |
+| 2023-10-02 | wire_aggressor_run_start | 107                          | 59                  | 61                  | 52/53/44             | 68/53/58              |
+| 2023-10-03 | quote_relocation         | 88                           | 41                  | 42                  | 88/47/51             | 58/45/45              |
+| 2023-10-03 | touch_size_change        | 7                            | 1                   | 0                   | 7/3/2                | 0/3/4                 |
+| 2023-10-03 | wire_aggressor_run_start | 123                          | 74                  | 64                  | 83/64/63             | 82/56/60              |
+| 2023-10-17 | quote_relocation         | 39                           | 16                  | 17                  | 39/19/19             | 12/24/17              |
+| 2023-10-17 | touch_size_change        | 7                            | 0                   | 0                   | 7/4/5                | 0/4/2                 |
+| 2023-10-17 | wire_aggressor_run_start | 102                          | 49                  | 60                  | 53/48/52             | 59/57/51              |
+| 2023-10-18 | quote_relocation         | 43                           | 14                  | 19                  | 43/17/26             | 16/24/21              |
+| 2023-10-18 | touch_size_change        | 9                            | 2                   | 1                   | 9/4/5                | 0/5/4                 |
+| 2023-10-18 | wire_aggressor_run_start | 112                          | 69                  | 74                  | 55/68/69             | 68/48/41              |
+
+The complete section-by-kind-by-day counts, including positive, zero and unavailable targets, remain in `shape_forms-environment-section-counts.csv`. A negative quote-relocation lead constrains the quote path by definition; flat quotes in those rows are not an independently discovered mechanism. Other definitions and paired controls retain their contrary combinations. Matching strata do not make overlapping paths or reused controls independent observations.
+
+### SPECULATIVE interpretation and open targets
+
+SPECULATIVE: These shapes can serve as empirical targets for subsequent explanations of observable event timing and book behavior. The present algebra describes sorted distributions. It does not recover participant intent, a physical law, a unique mechanism, or the whole market environment. A proposed behavioral explanation still needs to reproduce the original event and quote paths across dates and both controls, including points its fitted curve does not describe.
+
+SPECULATIVE: A gap extremum or sign boundary could help select raw cases for tracing, but its rank position is not a time transition in one dipole. The full provenance, sign sections, parameter-grid boundary choices and out-of-source-domain residuals identify questions to investigate; they are not acceptance rules.
+
+The 13-external-point file remains a separate inventory with a different 749-family-start population. No relevance judgment, exclusion, or silent substitution into these 3,178 archived dipoles is made.
+
+This follow-up currently has 110 local figures with 1,904 panel/series reconciliation rows. Every row records input, plotted and unavailable/not-marked counts. Generated data remains local under the existing publication policy; code and Markdown only are pushed, and PR15 remains draft/unmerged.
+
+<!-- shape_forms:end -->

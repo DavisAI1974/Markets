@@ -2,9 +2,9 @@
 
 Research outputs are preserved locally under `E:\Markets-native-dipole-agent-pass\agent-pass`. Ccode owns the three-tier repository layout; its output destination paths and immutable-version conventions have not been supplied to this pass. The supplied markets-data repository is used only for verified inputs. No AWS/S3 or alternate output repository was used.
 
-- Generated local artifacts: 426 files, 192,278,300 bytes.
+- Generated local artifacts: 551 files, 232,390,109 bytes.
 - Local inventory: `agent-pass/cache/pending-publication-manifest.json`.
-- Inventory SHA256: `29f3fa41b87a81c1c18ad864a1cc0f924e5b89cc301d985009c24ee40df747fa`.
+- Inventory SHA256: `d896e1535383542ed4980fec139b2319e665688d005957265b0b124039d32738`.
 - Pinned source blobs in the inventory: 21; locally present: 21.
 - Sizes are measured only from present files. Missing local sources are explicit nulls, never zero; the inventory does not fetch Git objects.
 
