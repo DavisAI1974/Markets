@@ -16,12 +16,10 @@ SESSIONS = {
                   decisions=FR / "october18-touch-print-decisions.jsonl.gz", export_scope="full session"),
 }
 
-# The branch files above arrive with the next fetch; until then the same bytes (sha256-verified against the receipts)
-# sit in the session scratchpad, downloaded from the branch head 2f12d6d4 via raw.githubusercontent.com.
-SCRATCH = Path("/tmp/claude-0/-home-user-Markets/e6cffa19-4561-5119-b5f4-3474c12f9fe5/scratchpad/exports")
+# Every export resolves through data_locator (data-manifest.json): a MARKETS_DATA_DIR checkout of markets-data first,
+# then the scratchpad mirror, then the pinned Markets commit; sha256 verified on every read.
+import data_locator as _L
 for _tag, _s in SESSIONS.items():
     for _k in ("groups", "decisions"):
-        if not _s[_k].exists():
-            _alt = SCRATCH / _s["day"] / ("standalone-inputs/groups.jsonl.gz" if _k == "groups" else "standalone-decisions/decisions.jsonl.gz")
-            if _alt.exists():
-                _s[_k] = _alt
+        _rel = str(_s[_k].relative_to(ROOT))
+        _s[_k] = _L.local_path(_rel)

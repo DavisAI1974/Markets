@@ -1,0 +1,334 @@
+{
+  "schema": "markets.data_manifest.v1",
+  "built_from_markets_commit": "ac52a6ac59a9610aba031740bd29a93b2dcb614d",
+  "tape_commit": "1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202",
+  "prefix_commit": "603c4defcb28fbf66cb6afc8d7728b1d7b1ed268",
+  "data_repository": "DavisAI1974/markets-data (to be created)",
+  "entries": [
+    {
+      "tier": "tape",
+      "path": "data/nymex_mbo/ng_v0_oct2023/NG_v0_mbo_20231002.dbn.zst",
+      "bytes": 15818310,
+      "sha256": "4fd5fb8827e2ee560a9d938c54460f4a45d2569425157f910db06d4f55b7fe0d",
+      "markets_commit": "1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202",
+      "records": 813342,
+      "utc_day": "2023-10-02",
+      "markets_data_path": "data/nymex_mbo/ng_v0_oct2023/NG_v0_mbo_20231002.dbn.zst",
+      "note": "Databento GLBX.MDP3 NG.v.0 continuous mbo, one UTC day"
+    },
+    {
+      "tier": "tape",
+      "path": "data/nymex_mbo/ng_v0_oct2023/NG_v0_mbo_20231003.dbn.zst",
+      "bytes": 17118175,
+      "sha256": "8db4b0042d9324b299f616c5de5c6c66ff3bfa1d2a1288eb69cc575e7653c600",
+      "markets_commit": "1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202",
+      "records": 879077,
+      "utc_day": "2023-10-03",
+      "markets_data_path": "data/nymex_mbo/ng_v0_oct2023/NG_v0_mbo_20231003.dbn.zst",
+      "note": "Databento GLBX.MDP3 NG.v.0 continuous mbo, one UTC day"
+    },
+    {
+      "tier": "tape",
+      "path": "data/nymex_mbo/ng_v0_oct2023/NG_v0_mbo_20231017.dbn.zst",
+      "bytes": 16842309,
+      "sha256": "ce36e2ed242731698004cd83c1947365e8aac0e9dac939d271a8f22752bcca65",
+      "markets_commit": "1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202",
+      "records": 858976,
+      "utc_day": "2023-10-17",
+      "markets_data_path": "data/nymex_mbo/ng_v0_oct2023/NG_v0_mbo_20231017.dbn.zst",
+      "note": "Databento GLBX.MDP3 NG.v.0 continuous mbo, one UTC day"
+    },
+    {
+      "tier": "tape",
+      "path": "data/nymex_mbo/ng_v0_oct2023/NG_v0_mbo_20231018.dbn.zst",
+      "bytes": 15064243,
+      "sha256": "54b2b14c4762a7e4160cc00ce1e70504961ea4e6954e28866dd1bfbaa140f5d5",
+      "markets_commit": "1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202",
+      "records": 760803,
+      "utc_day": "2023-10-18",
+      "markets_data_path": "data/nymex_mbo/ng_v0_oct2023/NG_v0_mbo_20231018.dbn.zst",
+      "note": "Databento GLBX.MDP3 NG.v.0 continuous mbo, one UTC day"
+    },
+    {
+      "tier": "tape",
+      "path": "data/nymex_mbo/ng_v0_oct2023/NG_v0_mbo_20231001.dbn.zst",
+      "bytes": 257829,
+      "sha256": "4c0b3ebc07c3c46dceeba0e3d0a26693a42e320a413fe0109ed962a7a6f6bc78",
+      "markets_commit": "603c4defcb28fbf66cb6afc8d7728b1d7b1ed268",
+      "records": 12532,
+      "utc_day": "2023-10-01",
+      "markets_data_path": "data/nymex_mbo/ng_v0_oct2023/NG_v0_mbo_20231001.dbn.zst",
+      "note": "Databento GLBX.MDP3 NG.v.0 continuous mbo, one UTC day"
+    },
+    {
+      "tier": "tape",
+      "path": "data/nymex_mbo/ng_v0_oct2023/NG_v0_mbo_20231016.dbn.zst",
+      "bytes": 17931105,
+      "sha256": "c3b9a0390180fedd88a52a3fc49a5a0546b1aa275ba9ecbcfb2bd0403650835e",
+      "markets_commit": "603c4defcb28fbf66cb6afc8d7728b1d7b1ed268",
+      "records": 925662,
+      "utc_day": "2023-10-16",
+      "markets_data_path": "data/nymex_mbo/ng_v0_oct2023/NG_v0_mbo_20231016.dbn.zst",
+      "note": "Databento GLBX.MDP3 NG.v.0 continuous mbo, one UTC day"
+    },
+    {
+      "tier": "tape",
+      "path": "data/nymex_mbo/ng_v0_oct2023/MANIFEST.json",
+      "bytes": null,
+      "sha256": null,
+      "markets_commit": "603c4defcb28fbf66cb6afc8d7728b1d7b1ed268",
+      "markets_data_path": "data/nymex_mbo/ng_v0_oct2023/MANIFEST.json",
+      "note": "Databento pull manifest (six members)"
+    },
+    {
+      "tier": "export",
+      "path": "tasks/family-research-20261022/replay-artifacts/20231002/standalone-inputs/groups.jsonl.gz",
+      "bytes": 19758887,
+      "sha256": "ae0c8778503ebd1169b6f737b6992f8f9a006c65d26f13a75ee8bf51727029e3",
+      "markets_commit": "ac52a6ac59a9610aba031740bd29a93b2dcb614d",
+      "session": "20231002",
+      "receipt": "tasks/family-research-20261022/replay-artifacts/20231002/standalone-inputs/receipt.json",
+      "markets_data_path": "tasks/family-research-20261022/replay-artifacts/20231002/standalone-inputs/groups.jsonl.gz",
+      "scope": "PARTIAL_TRADE_DATE"
+    },
+    {
+      "tier": "export",
+      "path": "tasks/family-research-20261022/replay-artifacts/20231002/standalone-inputs/receipt.json",
+      "bytes": null,
+      "sha256": "b4d4ee8ca08246ba270984663866c1cbb395c2dbd33c3d768ab4b4191ddc866b",
+      "markets_commit": "ac52a6ac59a9610aba031740bd29a93b2dcb614d",
+      "session": "20231002",
+      "markets_data_path": "tasks/family-research-20261022/replay-artifacts/20231002/standalone-inputs/receipt.json",
+      "note": "receipt"
+    },
+    {
+      "tier": "export",
+      "path": "tasks/family-research-20261022/replay-artifacts/20231002/standalone-decisions/decisions.jsonl.gz",
+      "bytes": 5410554,
+      "sha256": "90726dff365b8710ddb155e47a22e8f96914159a92ad9cc5ace16d8d841dfe06",
+      "markets_commit": "ac52a6ac59a9610aba031740bd29a93b2dcb614d",
+      "session": "20231002",
+      "receipt": "tasks/family-research-20261022/replay-artifacts/20231002/standalone-decisions/receipt.json",
+      "markets_data_path": "tasks/family-research-20261022/replay-artifacts/20231002/standalone-decisions/decisions.jsonl.gz",
+      "scope": "partial"
+    },
+    {
+      "tier": "export",
+      "path": "tasks/family-research-20261022/replay-artifacts/20231002/standalone-decisions/receipt.json",
+      "bytes": null,
+      "sha256": "758a04087c4b2e7f3d4eb752d1a11e4acae7f40c01cbb7f3de2d04624b1df5c5",
+      "markets_commit": "ac52a6ac59a9610aba031740bd29a93b2dcb614d",
+      "session": "20231002",
+      "markets_data_path": "tasks/family-research-20261022/replay-artifacts/20231002/standalone-decisions/receipt.json",
+      "note": "receipt"
+    },
+    {
+      "tier": "export",
+      "path": "tasks/family-research-20261022/replay-artifacts/20231003/standalone-inputs/groups.jsonl.gz",
+      "bytes": 21484199,
+      "sha256": "1589974b8d6a3f70d8459ed764fac087c7395b13c8d1c9de4fe70d520f42a6ef",
+      "markets_commit": "ac52a6ac59a9610aba031740bd29a93b2dcb614d",
+      "session": "20231003",
+      "receipt": "tasks/family-research-20261022/replay-artifacts/20231003/standalone-inputs/receipt.json",
+      "markets_data_path": "tasks/family-research-20261022/replay-artifacts/20231003/standalone-inputs/groups.jsonl.gz",
+      "scope": "full session"
+    },
+    {
+      "tier": "export",
+      "path": "tasks/family-research-20261022/replay-artifacts/20231003/standalone-inputs/receipt.json",
+      "bytes": null,
+      "sha256": "c0176f7b897962844020513a9a6bade018c5660a91112da48ce2584d97d16603",
+      "markets_commit": "ac52a6ac59a9610aba031740bd29a93b2dcb614d",
+      "session": "20231003",
+      "markets_data_path": "tasks/family-research-20261022/replay-artifacts/20231003/standalone-inputs/receipt.json",
+      "note": "receipt"
+    },
+    {
+      "tier": "export",
+      "path": "tasks/family-research-20261022/replay-artifacts/20231003/standalone-decisions/decisions.jsonl.gz",
+      "bytes": 5751419,
+      "sha256": "ec7a227bb09fc97a54d20f51c4022a0cd02b19d04cd38e7491efd25310c73f66",
+      "markets_commit": "ac52a6ac59a9610aba031740bd29a93b2dcb614d",
+      "session": "20231003",
+      "receipt": "tasks/family-research-20261022/replay-artifacts/20231003/standalone-decisions/receipt.json",
+      "markets_data_path": "tasks/family-research-20261022/replay-artifacts/20231003/standalone-decisions/decisions.jsonl.gz",
+      "scope": "full"
+    },
+    {
+      "tier": "export",
+      "path": "tasks/family-research-20261022/replay-artifacts/20231003/standalone-decisions/receipt.json",
+      "bytes": null,
+      "sha256": "955907b69577f6afe42d536768f60f6d214f72bae8150324f51a10a0625f45a7",
+      "markets_commit": "ac52a6ac59a9610aba031740bd29a93b2dcb614d",
+      "session": "20231003",
+      "markets_data_path": "tasks/family-research-20261022/replay-artifacts/20231003/standalone-decisions/receipt.json",
+      "note": "receipt"
+    },
+    {
+      "tier": "export",
+      "path": "tasks/family-research-20261022/replay-artifacts/20231017/standalone-inputs/groups.jsonl.gz",
+      "bytes": 20408748,
+      "sha256": "30364aaecfbbe1f3d58c25e9b645ee240c299065bb46222bd6d3ca5a0f471c74",
+      "markets_commit": "ac52a6ac59a9610aba031740bd29a93b2dcb614d",
+      "session": "20231017",
+      "receipt": "tasks/family-research-20261022/replay-artifacts/20231017/standalone-inputs/receipt.json",
+      "markets_data_path": "tasks/family-research-20261022/replay-artifacts/20231017/standalone-inputs/groups.jsonl.gz",
+      "scope": "PARTIAL_TRADE_DATE"
+    },
+    {
+      "tier": "export",
+      "path": "tasks/family-research-20261022/replay-artifacts/20231017/standalone-inputs/receipt.json",
+      "bytes": null,
+      "sha256": "5acac8a31f2e306489c095d32d34f93849ff1a84b5c48a844d0863787d9caf98",
+      "markets_commit": "ac52a6ac59a9610aba031740bd29a93b2dcb614d",
+      "session": "20231017",
+      "markets_data_path": "tasks/family-research-20261022/replay-artifacts/20231017/standalone-inputs/receipt.json",
+      "note": "receipt"
+    },
+    {
+      "tier": "export",
+      "path": "tasks/family-research-20261022/replay-artifacts/20231017/standalone-decisions/decisions.jsonl.gz",
+      "bytes": 5159243,
+      "sha256": "234894cbf4aa021735a7f929602f71097b40644c4beb798289364c324a5c9e41",
+      "markets_commit": "ac52a6ac59a9610aba031740bd29a93b2dcb614d",
+      "session": "20231017",
+      "receipt": "tasks/family-research-20261022/replay-artifacts/20231017/standalone-decisions/receipt.json",
+      "markets_data_path": "tasks/family-research-20261022/replay-artifacts/20231017/standalone-decisions/decisions.jsonl.gz",
+      "scope": "partial"
+    },
+    {
+      "tier": "export",
+      "path": "tasks/family-research-20261022/replay-artifacts/20231017/standalone-decisions/receipt.json",
+      "bytes": null,
+      "sha256": "bcc676d5991a237cb3222bfe2d5ee0a95fec5b66f2f89ee9931429688589bac8",
+      "markets_commit": "ac52a6ac59a9610aba031740bd29a93b2dcb614d",
+      "session": "20231017",
+      "markets_data_path": "tasks/family-research-20261022/replay-artifacts/20231017/standalone-decisions/receipt.json",
+      "note": "receipt"
+    },
+    {
+      "tier": "export",
+      "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/october18-standalone-inputs/groups.jsonl.gz",
+      "bytes": 18751004,
+      "sha256": "f03255af6121568165843504965cf1ad2e482178ad9995e5727ef99336d90143",
+      "markets_commit": "ac52a6ac59a9610aba031740bd29a93b2dcb614d",
+      "session": "20231018",
+      "receipt": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/october18-standalone-inputs/receipt.json",
+      "markets_data_path": "tasks/family-research-20261022/replay-artifacts/20231018/standalone-inputs/groups.jsonl.gz",
+      "note": "October 18 export; relocated under replay-artifacts/20231018 in markets-data so the four sessions share one layout"
+    },
+    {
+      "tier": "export",
+      "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/october18-standalone-inputs/receipt.json",
+      "bytes": null,
+      "sha256": "4343ac37a2665e5bf86566e6679bddd904ed7e2e8f822d74795f510d89c7c621",
+      "markets_commit": "ac52a6ac59a9610aba031740bd29a93b2dcb614d",
+      "session": "20231018",
+      "markets_data_path": "tasks/family-research-20261022/replay-artifacts/20231018/standalone-inputs/receipt.json",
+      "note": "receipt"
+    },
+    {
+      "tier": "export",
+      "path": "tasks/family-research-20261022/october18-candidate-inputs.jsonl.gz",
+      "bytes": 127477,
+      "sha256": "9145da768edf19ffe5bc8068ae92d848099d151d903d3a923f6f8b940e480105",
+      "markets_commit": "ac52a6ac59a9610aba031740bd29a93b2dcb614d",
+      "session": "20231018",
+      "markets_data_path": "tasks/family-research-20261022/replay-artifacts/20231018/october18-candidate-inputs.jsonl.gz",
+      "note": "863 archived dipole recognitions reconstructed (b5f28bd)"
+    },
+    {
+      "tier": "export",
+      "path": "tasks/family-research-20261022/october18-candidate-input-summary.json",
+      "bytes": 3017,
+      "sha256": "ade1a33bc7ef3d1d21ab48dd7913719843bab454b0a35457d76312d7c9266cbe",
+      "markets_commit": "ac52a6ac59a9610aba031740bd29a93b2dcb614d",
+      "session": "20231018",
+      "markets_data_path": "tasks/family-research-20261022/replay-artifacts/20231018/october18-candidate-input-summary.json",
+      "note": "summary of the above"
+    },
+    {
+      "tier": "export",
+      "path": "tasks/family-research-20261022/october18-size-one-mechanisms.jsonl.gz",
+      "bytes": 113226,
+      "sha256": "0df161126ce8d04d3285f10c287ec3784bc49e426d48cb832dcec16ef4c4d71f",
+      "markets_commit": "ac52a6ac59a9610aba031740bd29a93b2dcb614d",
+      "session": "20231018",
+      "markets_data_path": "tasks/family-research-20261022/replay-artifacts/20231018/october18-size-one-mechanisms.jsonl.gz",
+      "note": "1,012 size-one episodes, 13:07 to 13:19 UTC window"
+    },
+    {
+      "tier": "export",
+      "path": "tasks/family-research-20261022/october18-touch-print-decisions.jsonl.gz",
+      "bytes": 4763930,
+      "sha256": "79c343c7d3914f00ca87ef18b20ee860576b75bd2bdca7edfc44011ba700d4b1",
+      "markets_commit": "ac52a6ac59a9610aba031740bd29a93b2dcb614d",
+      "session": "20231018",
+      "markets_data_path": "tasks/family-research-20261022/replay-artifacts/20231018/october18-touch-print-decisions.jsonl.gz",
+      "note": "sealed touch-print decisions, October 18"
+    },
+    {
+      "tier": "export",
+      "path": "tasks/family-research-20261022/october18-large-quote-moves.jsonl.gz",
+      "bytes": 35666,
+      "sha256": "805695ac1b3bf3a6bd9aa8dd092bb6314a9c2a197b2a2fc0f8aab532fd16d812",
+      "markets_commit": "ac52a6ac59a9610aba031740bd29a93b2dcb614d",
+      "session": "20231018",
+      "markets_data_path": "tasks/family-research-20261022/replay-artifacts/20231018/october18-large-quote-moves.jsonl.gz",
+      "note": "Codex large quote moves"
+    },
+    {
+      "tier": "archive",
+      "path": "tasks/family-research-20261022/replay-artifacts/20231002/root-frames/",
+      "bytes_uncompressed": 520064232895,
+      "spool_sha256": "d1801a98138551d75fa675d1153d616b0b81f65e5a42311d78ab46ea934f30a2",
+      "rows": 600291,
+      "parts": 211,
+      "parts_listing": "tasks/family-research-20261022/replay-artifacts/20231002/root-frames/SHA256SUMS",
+      "markets_commit": "ac52a6ac59a9610aba031740bd29a93b2dcb614d",
+      "session": "20231002",
+      "markets_data_path": null,
+      "target": "s3://bento-568968024170-us-east-2-an/root-frames/20231002/",
+      "note": "ROOT frame spool split into sub-100 MB parts; not for any git repository; verify parts against SHA256SUMS after the move"
+    },
+    {
+      "tier": "archive",
+      "path": "tasks/family-research-20261022/replay-artifacts/20231003/root-frames/",
+      "bytes_uncompressed": 572726375854,
+      "spool_sha256": "9320ab9c0bc71786458291d01758243842ca6ec9b29e3e6cc58073a44efe0cce",
+      "rows": 653912,
+      "parts": 236,
+      "parts_listing": "tasks/family-research-20261022/replay-artifacts/20231003/root-frames/SHA256SUMS",
+      "markets_commit": "ac52a6ac59a9610aba031740bd29a93b2dcb614d",
+      "session": "20231003",
+      "markets_data_path": null,
+      "target": "s3://bento-568968024170-us-east-2-an/root-frames/20231003/",
+      "note": "ROOT frame spool split into sub-100 MB parts; not for any git repository; verify parts against SHA256SUMS after the move"
+    },
+    {
+      "tier": "archive",
+      "path": "tasks/family-research-20261022/replay-artifacts/20231017/root-frames/",
+      "bytes_uncompressed": 581067333483,
+      "spool_sha256": "729dcd74f72124092c0c0816e69a05d137217f80369b424c552ef10783c5fcf8",
+      "rows": 635170,
+      "parts": 243,
+      "parts_listing": "tasks/family-research-20261022/replay-artifacts/20231017/root-frames/SHA256SUMS",
+      "markets_commit": "ac52a6ac59a9610aba031740bd29a93b2dcb614d",
+      "session": "20231017",
+      "markets_data_path": null,
+      "target": "s3://bento-568968024170-us-east-2-an/root-frames/20231017/",
+      "note": "ROOT frame spool split into sub-100 MB parts; not for any git repository; verify parts against SHA256SUMS after the move"
+    }
+  ],
+  "totals": {
+    "tape": {
+      "files": 7,
+      "bytes": 83031971
+    },
+    "export": {
+      "files": 19,
+      "bytes": 101767370
+    }
+  },
+  "archive_total_uncompressed_bytes": 1673857942232
+}

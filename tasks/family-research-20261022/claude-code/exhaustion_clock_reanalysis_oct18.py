@@ -39,6 +39,7 @@ import databento as db
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
 from audit_october18_touch_mechanisms import Book, F_LAST, INSTRUMENT, OCTOBER18_UTC_OFFSET, TAPE, TAPE_FILE, git_blob  # noqa: E402
+import data_locator  # noqa: E402
 
 NS = 1_000_000_000
 TICK = 1_000_000
@@ -95,7 +96,7 @@ def replay():
     members = tuple((TAPE_FILE.replace("20231018", d), off, commit or TAPE) for d, off, commit in CFG["members"])
     def records():
         for path, offset, commit in members:
-            for index, record in enumerate(db.DBNStore.from_bytes(git_blob(commit, path))):
+            for index, record in enumerate(db.DBNStore.from_bytes(data_locator.read_bytes(path))):  # sha256-verified, pinned in data-manifest.json
                 yield index + offset, record
     for cursor, record in records():
         if record.instrument_id != INSTRUMENT:

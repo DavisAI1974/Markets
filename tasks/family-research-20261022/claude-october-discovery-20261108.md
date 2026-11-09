@@ -1413,3 +1413,31 @@ consistent with section 11: by confirmation the burst's move is done.
 - The frozen SSOS play is negative on three of four sessions; the absorption read is not a filter for it.
 - Still open, as before: the Kalshi side for the lag stack, a fifth and sixth session for the clock's
   factors, and the 749 first-family population's cross-day form, whose definition is October 18's own.
+
+## 20. Splitting the data out of the code repository
+
+Greg's call after today's fetch stalls: the data goes to its own repository, `DavisAI1974/markets-data`,
+and the project's own rule (git is code, S3 is all data) is restored as far as the account allows. What
+exists on this branch now, all in `claude-code/`:
+
+- `build_data_manifest.py` writes `data-manifest.json`: 29 entries. Tape tier: the six Databento NG MBO
+  UTC-day members (83 MB, hashes from the Databento pull manifests, pinned at commits 1d15dc6f and
+  603c4def). Export tier: the four standalone group exports, three sealed decision files, their receipts,
+  and the October 18 candidate inputs, size-one ledger, touch-print decisions and large-quote moves (102 MB,
+  hashes from the receipts or computed from the committed blobs). Archive tier: the three ROOT frame
+  spools (1.67 TB uncompressed, 211 to 243 parts each, spool and part hashes from the published
+  `source.json` and `SHA256SUMS`), listed with S3 targets and not moved by git. Every markets-data path is
+  today's relative path, except the October 18 export, which moves under `replay-artifacts/20231018/` so
+  the four sessions share one layout.
+- `data_locator.py` resolves a manifest entry to bytes or a local path: a `MARKETS_DATA_DIR` checkout
+  first, then the session mirror, then the pinned Markets commit; sha256 verified on every read. All 25
+  hashed entries verify. My tape and export loaders now read through it; the October 18 recognition pass
+  re-run through the locator is byte-identical to the committed summary.
+- `stage_markets_data_repo.py <checkout>` fills a markets-data checkout from the pinned bytes, verifies
+  each copy, writes `MANIFEST.json` and a README, and prints the archive entries with their S3 targets.
+
+What stays as it is: the Markets history. No data commit is rewritten; every pin in the three reviews keeps
+resolving. What changes for the other two passes: no further data commits to Markets; read inputs through
+the manifest (path plus sha256), with `MARKETS_DATA_DIR` once the repository exists; record the
+markets-data commit in the date-table indexes instead of a Markets path; ROOT frame publication resumes to
+S3, not to git.

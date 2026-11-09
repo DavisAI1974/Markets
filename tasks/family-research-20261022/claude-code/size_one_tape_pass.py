@@ -23,6 +23,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE)); sys.path.insert(0, str(HERE.parent))
 from export_paths import SESSIONS  # noqa: E402
 from audit_october18_touch_mechanisms import Book, F_LAST, INSTRUMENT, TAPE, TAPE_FILE, git_blob  # noqa: E402
+import data_locator  # noqa: E402
 import exhaustion_clock_reanalysis_oct18 as X  # noqa: E402
 
 # export cursor = record index + offset, per member (day, offset, commit); October 18 from the audit script,
@@ -38,7 +39,7 @@ MEMBERS = {
 def records(members):
     for day, off, commit in members:
         path = TAPE_FILE.replace("20231018", day)
-        for i, r in enumerate(db.DBNStore.from_bytes(git_blob(commit, path))):
+        for i, r in enumerate(db.DBNStore.from_bytes(data_locator.read_bytes(path))):
             yield i + off, r
 
 
@@ -47,10 +48,10 @@ def detect_oct03(close_cursors):
     after the session open there) and continues into the October 3 member, exactly as October 18's cursor 0 is the first
     record at or after 21:00 UTC October 17 in the October 17 member (offset -841601, then +17375 for the 18 member)."""
     open_ns = 1696280400 * 1_000_000_000
-    m2 = list(db.DBNStore.from_bytes(git_blob(TAPE, TAPE_FILE.replace("20231018", "20231002"))))
+    m2 = list(db.DBNStore.from_bytes(data_locator.tape_bytes("20231002")))
     k = next(i for i, r in enumerate(m2) if r.ts_recv >= open_ns)
     members = [("20231002", -k, TAPE), ("20231003", len(m2) - k, TAPE)]
-    m3 = list(db.DBNStore.from_bytes(git_blob(TAPE, TAPE_FILE.replace("20231018", "20231003"))))
+    m3 = list(db.DBNStore.from_bytes(data_locator.tape_bytes("20231003")))
     want = sorted(close_cursors)
     hits = 0
     for c in want[:400] + want[-400:]:
