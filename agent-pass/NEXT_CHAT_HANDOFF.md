@@ -8,7 +8,11 @@ Track down the historical crypto dipole-dive and direction-specific pre-onset/ta
 
 User is phone-only. Continue autonomously; do not ask them to run terminal commands. No Copilot. Do not contact Claude Desktop or other people without explicit authorization.
 
-## Locations and status
+## GitHub locations and status
+
+Read [PUBLICATION.md](PUBLICATION.md) for verified immutable artifact links. The completed 593-file native dipole snapshot is in markets-data at 0487d83b1ddb1abe5e4cfae12e8b88797801f428. The source/hash verification included a fresh remote download. The new evidence ledger is appended to FINDINGS.md. Desktop added a chronological lean overlay at Markets commit 9622d038f; its source/denominator/control differences are now recorded. The user clarified that the 2,000-event historical image was averaged to display an observed recurring shape with modest variation; preserve that history, and recover the individual curves to measure it.
+
+The E-drive coordinates below identify historical migration sources only; do not use them as the continuing research environment.
 
 - Main working directory: E:/Markets. Preserve other sessions' work; do not switch/reset its branch.
 - Research worktree: E:/Markets-native-dipole-agent-pass.
@@ -16,9 +20,9 @@ User is phone-only. Continue autonomously; do not ask them to run terminal comma
 - Research agent Codex thread: 01a1be25-2ddc-7790-ade1-96d98bf4fb56, host local. Read status before assigning duplicate work.
 - Issue #14 and draft PR #15 in DavisAI1974/Markets. Do not merge or mark ready. The agent uses its direct Codex thread; no issue #13 comment is needed to rerun October 18.
 - Read agent-pass/PROGRESS.md and FINDINGS.md first. A-E and M1/M2 already cover October 2, 3, 17 and 18. Optional crypto M3 was not run.
-- Latest PROGRESS read in this turn says shape_forms follow-up is complete: 5,085 SAME birth-definition rows, 5,079 available values; 192 fitted descriptions, 271,040 residual rows including unavailable/domain exceptions; 15,255 candidate/control/event attachment rows. Overall 337 local PNGs and 4,628 reconciliation rows. These are recorded agent results, not newly independently reverified this turn.
+- Latest PROGRESS read in this turn says shape_forms follow-up is complete: 5,085 SAME birth-definition rows, 5,079 available values; 192 fitted descriptions, 271,040 residual rows including unavailable/domain exceptions; 15,255 candidate/control/event attachment rows. Overall 337 published PNGs and 4,628 reconciliation rows. These are recorded agent results, not newly independently reverified this turn.
 - Parent's proposed shape_tail_audit.py / shape-tail-* remains outstanding. Do not claim it has run.
-- Local tracked October 18 figures/tables are modified from earlier computation. Do not stage them or discard them.
+- The corrected October 18 figures/tables are preserved in the verified markets-data snapshot. The original Markets worktree modifications remain unstaged; do not discard them.
 
 ## Storage and analysis rules
 
@@ -70,4 +74,4 @@ Desktop's newer attachments: sibling directory c26d0635-8550-404e-bd11-cc18284e8
 4. Finish the outstanding parent tail/raw-record audit and review agent's shape_forms outputs. Keep fitted descriptions distinct from mechanisms.
 5. Assess existing paper-trading setup independently, including current runnable path, data/clock availability and logging. Confirm actual readiness from evidence; no promise of tonight's start based on these images, and no live-money actions.
 
-Suggested next-chat opening: Read E:/Markets-native-dipole-agent-pass/agent-pass/NEXT_CHAT_HANDOFF.md and continue. Track the recovered crypto dipole-dive and directional pre-onset/tail shapes back to their source, reconcile them against all four-day NG findings and Claude Desktop's results, and keep the existing paper-trading work moving. Preserve raw distributions and storage rules; no live trading or merge.
+Suggested next-chat opening: Read agent-pass/NEXT_CHAT_HANDOFF.md and PUBLICATION.md on GitHub branch codex/native-dipole-agent-pass-20261108 in DavisAI1974/Markets, with artifacts in DavisAI1974/markets-data, and continue on remote compute. Track the recovered crypto dipole-dive and directional pre-onset/tail shapes back to their source, reconcile them against all four-day NG findings and Claude Desktop's results, and keep the existing paper-trading work moving. Preserve raw distributions and storage rules; no live trading or merge.

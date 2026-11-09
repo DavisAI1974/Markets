@@ -10,17 +10,17 @@ Per date, use `tables/<date>-paths.csv.gz`, `-path-members.csv`, `-candidate-ope
 
 Every figure has a panel-level CSV reconciliation: `-figure-reconciliation.csv`, `-detector-figure-reconciliation.csv`, `-part2-figure-reconciliation.csv`, `-part3-figure-reconciliation.csv`, plus `crossday-figure-reconciliation.csv` and `crossday-moonshot-figure-reconciliation.csv`. Heat-strip reconciliation separates integer-second cells, fractional endpoints in companion plots, and undefined values. The original 852-candidate October 18 subset is used for its primary heat strips and hierarchy; the all-live cross-day plots and mechanism tables explicitly include the 11 seam supplements.
 
-![SAME day-by-day distributions](figures/crossday-SAME.png)
+![SAME day-by-day distributions](https://raw.githubusercontent.com/DavisAI1974/markets-data/0487d83b1ddb1abe5e4cfae12e8b88797801f428/tasks/family-research-20261022/native-dipole/20261108-33693e180/agent-pass/figures/crossday-SAME.png)
 
-![FLIP day-by-day distributions](figures/crossday-FLIP.png)
+![FLIP day-by-day distributions](https://raw.githubusercontent.com/DavisAI1974/markets-data/0487d83b1ddb1abe5e4cfae12e8b88797801f428/tasks/family-research-20261022/native-dipole/20261108-33693e180/agent-pass/figures/crossday-FLIP.png)
 
-![All October 18 lag observations](figures/20231018-lag-distributions.png)
+![All October 18 lag observations](https://raw.githubusercontent.com/DavisAI1974/markets-data/0487d83b1ddb1abe5e4cfae12e8b88797801f428/tasks/family-research-20261022/native-dipole/20261108-33693e180/agent-pass/figures/20231018-lag-distributions.png)
 
 Each date has 36 birth-path figures, split candidate/control1/control2 and SAME/FLIP/NO_PREDECESSOR. Quotes, touch sizes, adds/cancels/fills/modify sizes by wire side, wire aggressor lots, signed ratio and exact recognition endpoints have separate panels. Structure figures show all pair distances, all merges and all retained path coordinates. Operator figures show every residual, never a mean line. Figures allocate at least one native image pixel per heat-strip row; image viewer rescaling is separate from the source PNG.
 
 M1/M2 local tables: `-detector-free-events.csv.gz`, `-detector-free-nearest.csv`, `-detector-free-cases.csv`, `-detector-free-case-records.csv.gz`, `-lag-footprints.csv`, `-first-footprint-events.csv`, and `-cross-side-ordering.csv`. `-all-footprints-<orientation>.png` includes all 14 event/side types; `-moonshots-<orientation>.png` compares structural-event clocks and selected within-lag footprints.
 
-![October 18 SAME moonshot observations](figures/20231018-moonshots-SAME.png)
+![October 18 SAME moonshot observations](https://raw.githubusercontent.com/DavisAI1974/markets-data/0487d83b1ddb1abe5e4cfae12e8b88797801f428/tasks/family-research-20261022/native-dipole/20261108-33693e180/agent-pass/figures/20231018-moonshots-SAME.png)
 
 ## Confirmed measurements
 
@@ -399,3 +399,40 @@ The 13-external-point file remains a separate inventory with a different 749-fam
 This follow-up currently has 110 local figures with 1,904 panel/series reconciliation rows. Every row records input, plotted and unavailable/not-marked counts. Generated artifacts belong in markets-data under the current user instruction; PR15 remains draft/unmerged.
 
 <!-- shape_forms:end -->
+
+
+## Evidence reconciliation — GitHub continuation, 2026-11-08
+
+This section distinguishes independently inspected source definitions, saved measurements, the user's historical observations, and unresolved comparisons. No new market calculation was run on the desktop. Published artifact locations and verification are in [PUBLICATION.md](PUBLICATION.md).
+
+The user clarified that the historical crypto figure averaged roughly 2,000 events to display a shape they had found recurring with only modest variation. Preserve this as user-reported historical evidence. It is not dismissed as an averaging artifact. The original individual curves, event selection and generator have not yet been recovered, so the extent of individual variation has not been independently remeasured here.
+
+### Source ledger
+
+| Comparison | Agreement | Difference | Unresolved / next evidence |
+|---|---|---|---|
+| Historical 2,000-winner crypto plot versus Desktop's new NG lean | Both show organized flow change around the event; Desktop's four dated panels visibly repeat a prebirth ramp, event plateau and subsequent decline. The user's historical record reports recurring individual shapes before averaging. | Crypto screenshot is an averaged winner-conditioned, turn-aligned curve labelled flow lean and price upside in bps. Desktop is all-covered birth-polarity-oriented trailing-20-second flow, summarized by p25/p50/p75; midpoint is in ticks. Crypto has a sharp trough; sign-reversed NG has a flat extremum. Orientation alone does not make their full shapes identical. | Exact crypto event table, denominator, sign convention, window, turn rule and generator. No numerical cross-market equivalence or causal mechanism established. |
+| Desktop new NG lean versus our Native detector recovery | Event-centered one-sided flow and a 20-second-window structure are consistent with the recovered 20-second Native substrate. Native-action reconstruction recovers the saved births and recognition clocks. | Desktop uses completed-group reconstructed trade lots with wire-side/midpoint fallback; our exact detector recovery uses native action-time inputs. Summary quantiles are Desktop's existing artifacts, not replacements for our individual paths. | Match candidate IDs, clocks, trade-side attribution and window endpoints before testing equality. |
+| Recognition-minus-first-event overlays | Both passes find an Oct 3 quote-relocation difference and substantial recognition-delay structure. | Desktop all-covered counts 741/824/740/852 differ from our live 741/832/740/863 and SAME-only overlays 387/448/386/472. Desktop's aggressor event is first birth-direction lots, timestamped by the left endpoint of a one-second interval. Quote/size events are first integer boundaries different from the anchor's state; intrasecond changes that reverse can be missed. Our events retain structural-event clocks and wire-side run changes. | Exact key-by-key join remains outstanding. Desktop's KS distances and our original-rank comparisons answer different questions. |
+| Candidate coverage | Both retain archived denominators 741/833/741/863. | Desktop documents 8 additional Oct 3 seam/warm-up omissions, 11 Oct 18 seam/warm-up omissions, and the two finalization-only records. Our current pass retains those live seam candidates. | The omission categories are now documented in Desktop's source; exact omitted IDs/clock/book coverage still require a join. |
+| Old directional-shape code versus the five-coin screenshots | `shape_s71/fit_shapes.py` explicitly preserves four long/short and winner/loser cells and fits pre-fire and tail separately. | It fits mean arcs on normalized time; its listed coins are SOL/BTC/ETH/XRP. `arc_gate.py` uses averaged aligned arcs and its own smoothing/window choices. These sources are related historical work, not an exact match to the five-coin July 7 screenshots. | Exact screenshot generators and the common +20-second feature remain unresolved. Do not import those processing choices into the current raw-scale NG pass. |
+| Dipole-dive equation | `ng_dipole_runway_audit.py` directly defines directional onset minus directional current authority. | That source uses trailing 60-second flow and retrospective ZigZag leg labels, unlike the current 20-second birth detector. | It is a located equation, not proof that it generated the 2,000-winner screenshot. |
+
+### Desktop lean overlay: inspected commit and denominator corrections
+
+Source: [9622d038f, x09](https://github.com/DavisAI1974/Markets/blob/9622d038f/tasks/family-research-20261022/claude-pass-3day/x09_lean_around_birth.py), [x10 rendering](https://github.com/DavisAI1974/Markets/blob/9622d038f/tasks/family-research-20261022/claude-pass-3day/x10_lean_charts.py), and [the figure](https://github.com/DavisAI1974/Markets/blob/9622d038f/tasks/family-research-20261022/claude-pass-3day/crossday/es-lean-and-price-around-birth.png). Inspected the image, source, and saved CSV rows. This is a chronological birth-axis comparison, unlike our sorted-rank event-delay overlays. Lean uses 200 matched-control draws; the midpoint panels reuse 500 draws.
+
+- Definition: lean = (birth-direction lots minus opposite lots) / total lots in the trailing 20 seconds. No-lot windows are undefined. Quantiles and exact-one shares use defined windows only; share_defined is separately retained.
+- At boundary k=1, plus-one shares among defined windows are 0.997264 / 0.996287 / 0.983193 / 0.985419 for Oct 2/3/17/18. Defined shares of the complete covered cohorts are 0.986505 / 0.980583 / 0.964865 / 0.965962. Thus “98–99.7% of candidates” needs the nonempty-window qualifier. On Oct 18 the saved proportions correspond to 811 plus-one windows among 823 defined, out of 852 covered candidates.
+- The common cliff is between boundary k=20 and k=21 in these saved tables. On Oct 18 the median changes from 0.52 to 0.04, and the defined-window share from 0.815728 to 0.653756. This is aligned with birth-second lots leaving the trailing window. The changing defined population is part of the observation, not evidence that every individual's lean falls by the median difference.
+- Midpoint is polarity times (current midpoint minus that candidate's own anchor midpoint). Every valid path is zero at k=0 by construction. The plotted median remains zero while upper/lower percentile paths spread in both directions. Preserve the observed control differences away from the anchor; the V-shaped fan itself is not a median price reversal or proof of the same winner-conditioned crypto price-upside curve.
+- The prebirth ramp lies outside the displayed activity/spread-matched control bands. Those controls do not condition on passing the same one-sided-flow birth selection. Therefore the residual ramp after controlling for detector selection is unresolved; it is too strong to assert that the ramp cannot arise from that conditioning. The measured separation remains evidence to explain.
+- The old screenshot's late upturn near +60 seconds is absent from this NG median. Its cause remains unresolved until the original source/window/derivative endpoints are recovered. Do not label it an edge artifact without those checks.
+
+### Paper-trading readiness checkpoint
+
+[Existing paper handoff at 407a23379](https://github.com/DavisAI1974/Markets/blob/407a23379/tasks/family-research-20261022/codex-flow-book-discovery-20261108.md) retains 146 registry entries and 730 date-queue rows, with no performance-based exclusions. Its prospective trigger, side, order type, size, exit and simulator environment are explicitly unconfigured. Preserve those hypotheses and their contrary cases.
+
+Readiness is not established. No running remote feed, simulator instance, fresh clock or end-to-end paper ticket/log was verified in this continuation. The existing `research/kalshi/ng_paper_loop.py` is a separate daily Kalshi forecast-to-ledger skeleton; its existence does not show that the Native dipole hypotheses are wired into a paper runner. `frankie_paper_manifest.json` describes research papers, so its READY label is not trading readiness. No paper order or live-money action was submitted.
+
+The next operational check must identify the actual remote NG simulator route, verify live/replay input availability and clocks, bind the retained hypotheses without outcome-based filtering, and produce a receipted paper-only decision/fill/miss log. Do not substitute the early birth-aligned movement for a signal known at recognition; any earlier trigger needs its own known-by evidence.
