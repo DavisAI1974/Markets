@@ -24,6 +24,8 @@ for day in ("20231002","20231003","20231017","20231018"):
         if r["array_row"] is not None:
             assert int(z["row"][r["array_row"]])==r["input_row"]
             assert int(coverage[r["input_row"]]["rec_ns"])==r["recognition_ns"]
+        saved_rec=int(coverage[r["input_row"]]["rec_ns"])
+        assert r["recognition_ns"]==(saved_rec if saved_rec>0 else None)
         assert r["pre_cutoff_ns"]==r["birth_ns"]-1
         b=(d/r["file"]).read_bytes()
         assert hashlib.sha256(b).hexdigest()==r["sha256"]

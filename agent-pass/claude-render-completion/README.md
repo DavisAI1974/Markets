@@ -6,7 +6,7 @@ Saved `x13_life_paths.npz` files supply individual arrays; no raw producer or ma
 Original Claude code and data remain intact. New outputs belong in markets-data.
 
 The renderer preserves the six-panel structure, original array numbering, individual bar intervals, saved operands and original source bytes.
-Two candidates absent from saved arrays remain explicit pages; no quote/book path or recognition is invented.
+All 21 candidates absent from saved arrays remain explicit pages: 19 seam/warm-up omissions retain their original recognition clocks; two finalization-only records have no live recognition. No quote/book path is invented.
 The exact prebirth cutoff is birth boundary minus 1 ns, as defined by x03. Companion ratio and markers retain their own epoch-second labels.
 Recognition is read as an integer, never via floating-point CSV conversion.
 Unavailable array cells remain NaN with visible bottom ticks. Zero means an observed zero.

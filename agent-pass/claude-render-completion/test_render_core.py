@@ -17,6 +17,9 @@ class RenderContracts(unittest.TestCase):
     def test_unavailable_saved_cutoff_uses_labelled_axis_convention(self):
         self.assertEqual(prebirth_cutoff("-1",1697576378),1697576377999999999)
         self.assertEqual(prebirth_cutoff("1697576377999999999",1697576378),1697576377999999999)
+    def test_seam_omission_does_not_remove_recognition_permission(self):
+        labels=candidate_labels({"birth_second":1696291285,"available_second":1696291335})
+        self.assertTrue(labels["live_recognition_allowed"])
     def test_nanosecond_anchor(self):
         self.assertEqual(relative_seconds(1696197693000000000,1696197692999999999),1e-9)
     def test_missing_recognition(self):

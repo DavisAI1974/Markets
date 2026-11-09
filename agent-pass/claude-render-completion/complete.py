@@ -87,12 +87,12 @@ def render(day,shard,out):
         n=zi.get(rowidx);c=cov.get(rowidx,{})
         saved_pre=number(c.get("pre_ns"));pre=prebirth_cutoff(saved_pre,bs)
         assert pre==bs*10**9-1,(day,rowidx,pre,bs)
-        rec=number(c.get("rec_ns")) if n is not None else None
+        rec=number(c.get("rec_ns"))
         if not labels["live_recognition_allowed"] or (rec is not None and rec<=0):rec=None
         available=labels["available_second"]
         m=lifecycle_markers(sec,ratio,bs,pol);hi=m["window_end_s"];L=int((ks<=hi).sum())
         old=oldrecords.get(rowidx)
-        if old is not None and not any(b!=bs and -60<=b-bs<=hi for b in recovered_births):
+        if old is not None and old["recognition_ns"]==rec and not any(b!=bs and -60<=b-bs<=hi for b in recovered_births):
             assert sha(out/old["file"])==old["sha256"]
             old["reused_image"]=True;old.setdefault("render_code_revision","141d876541aae7e04e5de242d0af0a9e047228b9")
             records.append(old);counts.extend(oldcounts[rowidx]);clocks.append(oldclocks[cid])
@@ -159,7 +159,7 @@ def render(day,shard,out):
                 xx=kvals if j<2 else xb
                 if miss.any():ax[j].scatter(xx[miss],np.full(int(miss.sum()),.02),s=3,marker="|",color="#ae5c26",transform=ax[j].get_xaxis_transform())
         def fmt(v):return "not observed" if v is None else f"{v:+g}s"
-        note="saved array absent" if n is None else "saved array present"
+        note=("saved array absent: "+c.get("uncovered_reason","unspecified")) if n is None else "saved array present"
         tail="tail unresolved within companion coverage" if m["tail_unresolved"] else "flip and empty observed"
         partial="; partial archived coverage" if day in ("20231002","20231017") else ""
         title=f"{day} | {ordinal+1}/{len(order)} | {cid} | {'BUY' if pol>0 else 'SELL'}{partial}"
@@ -177,7 +177,7 @@ def render(day,shard,out):
         record=dict(day=day,ordinal=ordinal+1,candidate_id=cid,input_row=rowidx,array_row=n,file=filename,
             birth_ns=bs*10**9,pre_cutoff_ns=pre,pre_cutoff_origin="saved" if saved_pre is not None and saved_pre>=0 else "axis convention derived from explicit birth clock; no observed array",recognition_ns=rec,available_second=available,
             markers=m,detector_disposition=disposition.get(bs,"not present in saturated-second ledger"),
-            missing_array=n is None,sha256=sha(out/filename),weakening_rows=weakby.get(cid,[]),
+            missing_array=n is None,coverage_disposition=c.get("uncovered_reason",""),sha256=sha(out/filename),weakening_rows=weakby.get(cid,[]),
             source_revision=REV,render_code_revision=os.environ.get("CODE_REV"),reused_image=False,birth_clock_source=labels["birth_clock_source"],input_disposition=r.get("input_disposition"))
         records.append(record);counts.extend(candidate_counts)
         clocks.append(dict(candidate_id=cid,birth_ns=bs*10**9,pre_cutoff_ns=pre,recognition_ns=rec,
