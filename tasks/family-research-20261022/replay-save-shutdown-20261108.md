@@ -197,3 +197,12 @@ confirming both remote trees directly and checking that the previous
 publishers had exited, the remaining uploads started from the sealed
 archives at the recorded source paths. October 17's frame publisher
 and its queued successor were still active at this check.
+
+
+October 17's ROOT frame archive reached the shared branch in
+[84dd11f48](https://github.com/DavisAI1974/Markets/commit/84dd11f48b9b5fe3546d3d92811bf92fc2ea3d22).
+The remote tree contains all 243 frame parts, both indexes and the
+four standalone files. The queued successor rejected the older
+completion log format. Its upload started after confirming the remote
+tree directly and checking that the frame publisher had exited. All
+three remaining ROOT and Native archives are now in transfer.
