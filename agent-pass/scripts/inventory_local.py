@@ -20,7 +20,7 @@ p=ROOT/'cache/pending-publication-manifest.json';p.write_text(json.dumps(out,ind
 checksum=hashlib.sha256(p.read_bytes()).hexdigest()
 text=f'''# Pending artifact publication
 
-Research outputs are preserved locally under `{ROOT}`. Ccode owns the three-tier repository layout; its destination paths and immutable-version conventions have not been supplied to this pass. No AWS/S3 or alternate repository was used.
+Research outputs are preserved locally under `{ROOT}`. Ccode owns the three-tier repository layout; its output destination paths and immutable-version conventions have not been supplied to this pass. The supplied markets-data repository is used only for verified inputs. No AWS/S3 or alternate output repository was used.
 
 - Generated local artifacts: {len(entries)} files, {sum(e['bytes'] for e in entries):,} bytes.
 - Local inventory: `agent-pass/cache/pending-publication-manifest.json`.

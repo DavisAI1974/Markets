@@ -2,13 +2,13 @@
 
 ## Data first
 
-All generated artifacts are local under `E:/Markets-native-dipole-agent-pass/agent-pass/`. Publication to Ccode's three-tier repository layout is pending its configured destinations. No AWS/S3 is used. The two original October 18 data commits predate the storage change and are disclosed in PROGRESS.md; no later data or chart is committed to Markets. Links below describe local artifacts, not newly published repository files.
+All generated artifacts are local under `E:/Markets-native-dipole-agent-pass/agent-pass/`. Publication to Ccode's three-tier repository layout is pending its configured destinations. No AWS/S3 is used. The two original October 18 data commits predate the storage change and are disclosed in PROGRESS.md; no later data or chart is committed to Markets. All image links below are local-only; they will not display the final charts on GitHub until output publication is configured. The Markdown measurement tables are current and self-contained for phone review.
 
-[Review workbook](research-tables.xlsx). The workbook contains complete review tables; long per-second and pair-distance observations remain compressed CSV. Every path remains individually observable, with no smoothing, amplitude normalization or across-path average.
+Local-only workbook: `research-tables.xlsx` (the older GitHub copy predates final results). The workbook contains complete review tables; long per-second and pair-distance observations remain compressed CSV. Every path remains individually observable, with no smoothing, amplitude normalization or across-path average.
 
 Per date, use `tables/<date>-paths.csv.gz`, `-path-members.csv`, `-candidate-operands.csv`, `-cases.csv`, `-case-raw-records.csv.gz`, `-detector-all-comparisons.csv`, `-birth-differences-<variant>.csv`, `-lag-measurements.csv`, `-all-hierarchy-merges.csv`, `-pair-distances-<representation>.csv.gz`, `-grouping-members.csv`, `-operator-residuals.csv`, `-life-measurements.csv`, and `-life-paths.csv.gz`. All named missed/added and undefined rows are retained.
 
-Every figure has a panel-level CSV reconciliation: `-figure-reconciliation.csv`, `-detector-figure-reconciliation.csv`, `-part2-figure-reconciliation.csv`, `-part3-figure-reconciliation.csv` when available, plus `crossday-figure-reconciliation.csv`. Heat-strip reconciliation separates integer-second cells, fractional endpoints in companion plots, and undefined values. The original 852-candidate October 18 subset is used for its primary heat strips and hierarchy; the all-live cross-day plots and mechanism tables explicitly include the 11 seam supplements.
+Every figure has a panel-level CSV reconciliation: `-figure-reconciliation.csv`, `-detector-figure-reconciliation.csv`, `-part2-figure-reconciliation.csv`, `-part3-figure-reconciliation.csv`, plus `crossday-figure-reconciliation.csv` and `crossday-moonshot-figure-reconciliation.csv`. Heat-strip reconciliation separates integer-second cells, fractional endpoints in companion plots, and undefined values. The original 852-candidate October 18 subset is used for its primary heat strips and hierarchy; the all-live cross-day plots and mechanism tables explicitly include the 11 seam supplements.
 
 ![SAME day-by-day distributions](figures/crossday-SAME.png)
 
@@ -17,6 +17,10 @@ Every figure has a panel-level CSV reconciliation: `-figure-reconciliation.csv`,
 ![All October 18 lag observations](figures/20231018-lag-distributions.png)
 
 Each date has 36 birth-path figures, split candidate/control1/control2 and SAME/FLIP/NO_PREDECESSOR. Quotes, touch sizes, adds/cancels/fills/modify sizes by wire side, wire aggressor lots, signed ratio and exact recognition endpoints have separate panels. Structure figures show all pair distances, all merges and all retained path coordinates. Operator figures show every residual, never a mean line. Figures allocate at least one native image pixel per heat-strip row; image viewer rescaling is separate from the source PNG.
+
+M1/M2 local tables: `-detector-free-events.csv.gz`, `-detector-free-nearest.csv`, `-detector-free-cases.csv`, `-detector-free-case-records.csv.gz`, `-lag-footprints.csv`, `-first-footprint-events.csv`, and `-cross-side-ordering.csv`. `-all-footprints-<orientation>.png` includes all 14 event/side types; `-moonshots-<orientation>.png` compares structural-event clocks and selected within-lag footprints.
+
+![October 18 SAME moonshot observations](figures/20231018-moonshots-SAME.png)
 
 ## Confirmed measurements
 
@@ -104,16 +108,119 @@ The fixed-50-second lag assertion has the listed exceptions and is replaced, for
 
 | day        | candidates   | exact_live_recognition_clocks   | finalization_only   | path_rows   | matched_path_anchors_checked   | figure_panels   | life_transition_rows   |
 |:-----------|:-------------|:--------------------------------|:--------------------|:------------|:-------------------------------|:----------------|:-----------------------|
-| 2023-10-02 | 741          | 741                             | 0                   | 254025      | 2223                           | 342             | 90556                  |
-| 2023-10-03 | 833          | 832                             | 1                   | 283542      | 2496                           | 342             | 103968                 |
-| 2023-10-17 | 741          | 740                             | 1                   | 253764      | 2220                           | 342             | 86559                  |
-| 2023-10-18 | 863          | 863                             | 0                   | 288144      | 2589                           | 342             | 107181                 |
+| 2023-10-02 | 741          | 741                             | 0                   | 254025      | 2223                           | 504             | 90556                  |
+| 2023-10-03 | 833          | 832                             | 1                   | 283542      | 2496                           | 504             | 103968                 |
+| 2023-10-17 | 741          | 740                             | 1                   | 253764      | 2220                           | 504             | 86559                  |
+| 2023-10-18 | 863          | 863                             | 0                   | 288144      | 2589                           | 504             | 107181                 |
 
 The original detector was independently checked on plateau, quiet and variable synthetic streams: 27/24/35 outputs agree in every operand and clock. All 2,473,061 saved groups reconcile to raw cursor/receive/F_LAST coordinates. Usable two-sided action-time books agree at 2,473,057 closes; four initial incomplete books remain outside that two-sided check. Figure reconciliation, unique coordinates, matching strata, undefined residuals, and life-transition partitions are asserted in `verify_all.py`. A read-only parent review independently confirmed operands, live clocks, nominal-lag identity, path row totals and case counts.
 
-Part 3 has not yet run in this checkpoint; its code is prepared.
+## SPECULATIVE moonshots: measured results under declared definitions
+
+M1 definitions are discrete quote-price relocation, touch-size change, and a new wire-aggressor-side run. All are derived from raw messages/completed groups without consulting detector birth labels. They are three structural definitions, not an exhaustive or uniquely natural event taxonomy. Unknown-side trades break run continuity. Event time is the containing completed group; raw trade receive time is also retained.
+
+| day        | definition               | events   | unique_event_seconds   | births   | birth_seconds_with_event   | birth_seconds_without_event   | events_in_birth_seconds   | events_outside_birth_seconds   |
+|:-----------|:-------------------------|:---------|:-----------------------|:---------|:---------------------------|:------------------------------|:--------------------------|:-------------------------------|
+| 2023-10-02 | quote_relocation         | 33021    | 8622                   | 741      | 214                        | 527                           | 532                       | 32489                          |
+| 2023-10-02 | touch_size_change        | 266441   | 22595                  | 741      | 376                        | 365                           | 2471                      | 263970                         |
+| 2023-10-02 | wire_aggressor_run_start | 12360    | 6629                   | 741      | 140                        | 601                           | 143                       | 12217                          |
+| 2023-10-03 | quote_relocation         | 36098    | 9298                   | 833      | 185                        | 648                           | 441                       | 35657                          |
+| 2023-10-03 | touch_size_change        | 279342   | 24774                  | 833      | 430                        | 403                           | 2558                      | 276784                         |
+| 2023-10-03 | wire_aggressor_run_start | 13506    | 7308                   | 833      | 135                        | 698                           | 137                       | 13369                          |
+| 2023-10-17 | quote_relocation         | 36916    | 9421                   | 741      | 198                        | 543                           | 495                       | 36421                          |
+| 2023-10-17 | touch_size_change        | 261554   | 21437                  | 741      | 353                        | 388                           | 2074                      | 259480                         |
+| 2023-10-17 | wire_aggressor_run_start | 11346    | 6313                   | 741      | 128                        | 613                           | 129                       | 11217                          |
+| 2023-10-18 | quote_relocation         | 35636    | 9490                   | 863      | 251                        | 612                           | 746                       | 34890                          |
+| 2023-10-18 | touch_size_change        | 244757   | 28111                  | 863      | 437                        | 426                           | 3071                      | 241686                         |
+| 2023-10-18 | wire_aggressor_run_start | 10482    | 6041                   | 863      | 141                        | 722                           | 142                       | 10340                          |
+
+Comparison is exact containing-second intersection, not a fitted proximity tolerance. Every detector birth has nearest-before/nearest-after coordinates for each event definition, with missing boundaries retained. The detector-free event list contains many events outside birth seconds, and the detector has births without a same-second event under each selected definition. Earliest matched/unmatched raw cases are saved for every definition.
+
+A structural event can be observed at its first completed group, so that definition does not require the Native selection-window wait. This changes event identity: it does not reproduce the 3,178 selected Native births with an earlier lawful clock. The full positive/negative recognition-advantage distribution, including structural events after recognition, remains visible.
+
+M2 uses the strict interval [birth, recognition), excluding the recognition group itself. Endpoints use exact integer nanoseconds from candidate recognition; controls inherit that exact integer duration. M2 records the first within-lag group and total quantities for all 14 action/side and quote/size types, for every candidate and both controls. Absent events are explicit, not time zero. Cross-side tables preserve left-first, right-first, simultaneous-group-time, and one/both-absent orderings. These are retrospectively aligned footprints already occurring between birth and recognition, not a forecast or an identifiable incoming-birth precursor. Raw action-to-group attribution limits sub-group timing claims; no owner or intent attribution is made.
+
+The inclusive first calculation is preserved in `inclusive-legacy-<date>-*.csv`. Exact inclusive/strict quantities and endpoint-only dispositions are retained in `<date>-footprint-endpoint-audit.csv`. The primary tables, charts and cross-side orderings now consistently exclude recognition itself. The following rows count event types, not unique births:
+
+| day        | kind      | event_type_rows   | first_event_only_at_recognition   | event_types_with_endpoint_activity   | paths_with_endpoint_only_event   |
+|:-----------|:----------|:------------------|:----------------------------------|:-------------------------------------|:---------------------------------|
+| 2023-10-02 | candidate | 10374             | 133                               | 1463                                 | 84                               |
+| 2023-10-02 | control1  | 10374             | 0                                 | 0                                    | 0                                |
+| 2023-10-02 | control2  | 10374             | 0                                 | 0                                    | 0                                |
+| 2023-10-03 | candidate | 11648             | 157                               | 1590                                 | 94                               |
+| 2023-10-03 | control1  | 11648             | 0                                 | 0                                    | 0                                |
+| 2023-10-03 | control2  | 11648             | 0                                 | 0                                    | 0                                |
+| 2023-10-17 | candidate | 10360             | 148                               | 1438                                 | 75                               |
+| 2023-10-17 | control1  | 10360             | 0                                 | 0                                    | 0                                |
+| 2023-10-17 | control2  | 10360             | 0                                 | 0                                    | 0                                |
+| 2023-10-18 | candidate | 12082             | 105                               | 1635                                 | 63                               |
+| 2023-10-18 | control1  | 12082             | 0                                 | 0                                    | 0                                |
+| 2023-10-18 | control2  | 12082             | 0                                 | 0                                    | 0                                |
+
+Across all 14 measured event types, the candidate path counts are:
+
+| day        | live_paths   | with_any_strict_event   | without_any_strict_event   |
+|:-----------|:-------------|:------------------------|:---------------------------|
+| 2023-10-02 | 741          | 739                     | 2                          |
+| 2023-10-03 | 832          | 824                     | 8                          |
+| 2023-10-17 | 740          | 731                     | 9                          |
+| 2023-10-18 | 863          | 859                     | 4                          |
+
+Within-lag absence counts below follow the full distributions. SAME/FLIP are shown separately; NO_PREDECESSOR remains in all underlying tables and figures. A path without quote relocation can still contain size changes or order actions. A path without wire-side buy/sell prints is not evidence of no order-book activity.
+
+| day        | orientation   | kind      | paths   | no_quote_relocation   | no_buy_print   | no_sell_print   | no_wire_print   | neither_quote_nor_wire_print   |
+|:-----------|:--------------|:----------|:--------|:----------------------|:---------------|:----------------|:----------------|:-------------------------------|
+| 2023-10-02 | FLIP          | candidate | 353     | 41                    | 75             | 75              | 33              | 25                             |
+| 2023-10-02 | FLIP          | control1  | 353     | 84                    | 115            | 127             | 106             | 80                             |
+| 2023-10-02 | FLIP          | control2  | 353     | 108                   | 135            | 145             | 124             | 97                             |
+| 2023-10-02 | SAME          | candidate | 387     | 50                    | 79             | 114             | 43              | 26                             |
+| 2023-10-02 | SAME          | control1  | 387     | 116                   | 142            | 156             | 129             | 99                             |
+| 2023-10-02 | SAME          | control2  | 387     | 95                    | 136            | 156             | 126             | 83                             |
+| 2023-10-03 | FLIP          | candidate | 383     | 75                    | 92             | 84              | 35              | 29                             |
+| 2023-10-03 | FLIP          | control1  | 383     | 130                   | 148            | 150             | 141             | 116                            |
+| 2023-10-03 | FLIP          | control2  | 383     | 115                   | 148            | 151             | 139             | 109                            |
+| 2023-10-03 | SAME          | candidate | 448     | 96                    | 110            | 103             | 45              | 36                             |
+| 2023-10-03 | SAME          | control1  | 448     | 146                   | 179            | 190             | 168             | 136                            |
+| 2023-10-03 | SAME          | control2  | 448     | 152                   | 179            | 188             | 172             | 138                            |
+| 2023-10-17 | FLIP          | candidate | 353     | 41                    | 87             | 91              | 41              | 25                             |
+| 2023-10-17 | FLIP          | control1  | 353     | 103                   | 149            | 151             | 122             | 87                             |
+| 2023-10-17 | FLIP          | control2  | 353     | 102                   | 154            | 142             | 124             | 90                             |
+| 2023-10-17 | SAME          | candidate | 386     | 48                    | 97             | 89              | 49              | 34                             |
+| 2023-10-17 | SAME          | control1  | 386     | 98                    | 147            | 134             | 121             | 84                             |
+| 2023-10-17 | SAME          | control2  | 386     | 101                   | 157            | 131             | 117             | 81                             |
+| 2023-10-18 | FLIP          | candidate | 390     | 42                    | 94             | 91              | 35              | 25                             |
+| 2023-10-18 | FLIP          | control1  | 390     | 135                   | 160            | 169             | 150             | 119                            |
+| 2023-10-18 | FLIP          | control2  | 390     | 129                   | 157            | 154             | 141             | 111                            |
+| 2023-10-18 | SAME          | candidate | 472     | 47                    | 102            | 107             | 47              | 31                             |
+| 2023-10-18 | SAME          | control1  | 472     | 152                   | 182            | 197             | 169             | 130                            |
+| 2023-10-18 | SAME          | control2  | 472     | 163                   | 200            | 202             | 185             | 142                            |
+
+The exact first-event order, timestamps, quantities and all contrary/absent combinations are in the per-path tables. The data supports these observable intervals and orderings; it does not identify an incoming birth in advance or isolate a cause from the retrospective alignment.
+
+Cross-day moonshot figures `crossday-M1-<orientation>.png` and `crossday-M2-<orientation>-1/2.png` use identical y scales within each event row. Their additional 540 panels reconcile in `crossday-moonshot-figure-reconciliation.csv`.
+
+### Separating the clocks behind the similar shapes
+
+Local `clock-decomposition-<definition>-<orientation>.png` and `clock-decomposition-recognition_delay-<orientation>.png` show every event-wait and recognition-delay value separately for all four dates, with no rescaling or smoothing. The 12 figures have 48 reconciled series; the full observation table retains 9,534 rows (3,178 births times three definitions), including six unavailable live-clock pairs.
+
+For all 9,528 available pairs, exact integer nanoseconds verify: recognition minus event = (recognition minus birth) - (event minus birth). Thus each original M1 row includes the same candidate recognition-delay term. SAME recognition-delay curves have a central region around 50 seconds; the separate touch-size event-wait curves contain many events within the birth second and retain their longer waits in the tails. The table below follows these full distributions. Pearson values pair original recognition-minus-event with recognition-minus-birth by candidate, never by sorted chart rank.
+
+| day        | orientation   | births   | live_clock_pairs   | touch_event_in_birth_second   | quote_Pearson   | touch_Pearson   | run_Pearson   |
+|:-----------|:--------------|:---------|:-------------------|:------------------------------|:----------------|:----------------|:--------------|
+| 2023-10-02 | FLIP          | 353      | 353                | 182                           | 0.205598        | 0.72511         | 0.180679      |
+| 2023-10-02 | SAME          | 387      | 387                | 194                           | 0.272866        | 0.818346        | -0.00989      |
+| 2023-10-03 | FLIP          | 383      | 383                | 187                           | 0.14527         | 0.804678        | 0.243986      |
+| 2023-10-03 | SAME          | 449      | 448                | 242                           | 0.010776        | 0.785578        | -0.070335     |
+| 2023-10-17 | FLIP          | 353      | 353                | 170                           | 0.390079        | 0.779298        | 0.101422      |
+| 2023-10-17 | SAME          | 387      | 386                | 183                           | 0.271708        | 0.675844        | -0.115766     |
+| 2023-10-18 | FLIP          | 390      | 390                | 194                           | 0.472602        | 0.794728        | 0.176907      |
+| 2023-10-18 | SAME          | 472      | 472                | 242                           | 0.256409        | 0.714509        | 0.068723      |
+
+Birth-second event counts include finalization-only candidates when an event clock exists; Pearson uses only available live-clock pairs. All before/at/after-recognition counts, contrary timing combinations, and NO_PREDECESSOR rows remain in `clock-decomposition-summary.csv` and `clock-decomposition-observations.csv`.
 
 ## Interpretation (separate from measurements)
+
+SPECULATIVE: Similar central shapes partly reflect a shared recognition clock in the plotted difference. Different event waits contribute different tails. This descriptive decomposition and its Pearson pairings do not establish an independent common mechanism, causality or transferability.
 
 SPECULATIVE: A fixed selection window plus variable group arrivals explains the measured clock accounting. It does not establish that price or book state causes a dipole. The recovered Native source and completed-group source are alternative flow measurements and remain separate.
 
@@ -132,3 +239,13 @@ SPECULATIVE: The hierarchy currently describes representation-dependent similari
 - Optional M3 crypto comparison was not run; no crypto transfer result is claimed.
 
 All candidate forms, inverse paths, flat outcomes, undefined cases and recorded inputs remain available. Storage handoff is pending Ccode's actual configured layout; local artifacts will be routed by immutable versions and SHA256 once supplied. PR #15 remains draft and unmerged.
+
+## Requested shape overlays
+
+Three local renders overlay the four SAME day curves for quote relocation, touch-size change and aggressor-run starts: `shape-overlay-<definition>-SAME.png`. Each has four colored curves at the original values and ordered-observation ranks, with no normalization or smoothing. Each figure reconciles 1,695 input rows to 1,693 plotted points and two unavailable live clocks. The parent delivered these renders in chat. `shape-overlay-points.csv`, `shape-overlay-figure-reconciliation.csv` and source SHA256 provenance retain the exact plotted values. Sorted visual resemblance alone does not establish an independent common mechanism; the subsequent exact clock decomposition is reported separately above.
+
+## Input routing and local publication inventory
+
+Input repository: [DavisAI1974/markets-data at 968fa113](https://github.com/DavisAI1974/markets-data/tree/968fa11324f66b70cd318140c51bf19e23f9ee4e). `MARKETS_DATA_DIR=E:/markets-data` is the configured local input root. The read-only audit verifies 25 declared SHA256 hashes; one null-hash entry remains unverified and three external archive references are not locally included. Nine inputs also match the exact pinned research cache bytes. Only byte-identical verified inputs are accepted; absent/unverified entries retain the pinned revision/cache fallback. No populations were exchanged or calculations restarted for routing.
+
+See [pending publication inventory](PENDING_PUBLICATION.md) for the local artifact inventory hash and handoff limits. The input repository does not establish an output destination.

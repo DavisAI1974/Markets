@@ -1,6 +1,6 @@
 """Pinned-source readers. Only agent-pass is writable; caches are reproducible."""
 from pathlib import Path
-import subprocess, gzip, json, hashlib, io
+import subprocess, gzip, json, hashlib, io, os
 import numpy as np
 import pandas as pd
 ROOT=Path(__file__).resolve().parents[1]
@@ -9,11 +9,35 @@ REV='a1c4d6f32a03a21795f411e509f7fc77d479b3bb'
 TAPE='1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202'
 S=10**9
 for d in ('cache','tables','figures'): (ROOT/d).mkdir(exist_ok=True)
+def manifest_input(path, pinned_bytes):
+    """Accept an external input only when both its manifest and pinned bytes agree."""
+    directory=os.environ.get('MARKETS_DATA_DIR')
+    if not directory:return None
+    data_root=Path(directory).resolve(); manifest=data_root/'MANIFEST.json'
+    if not manifest.is_file():return None
+    entries=json.loads(manifest.read_text(encoding='utf-8')).get('entries',[])
+    matches=[e for e in entries if e.get('path')==path and e.get('markets_data_path')]
+    for e in matches:
+        expected=e.get('sha256')
+        if not expected:continue  # Null hashes remain unverified; use pinned fallback.
+        source=(data_root/e['markets_data_path']).resolve()
+        if not source.is_relative_to(data_root):raise ValueError('Manifest input escapes data root: '+path)
+        if not source.is_file():continue
+        data=source.read_bytes(); actual=hashlib.sha256(data).hexdigest()
+        if actual!=expected or (e.get('bytes') is not None and len(data)!=e['bytes']):
+            raise ValueError('External manifest hash/size mismatch: '+path)
+        if actual!=hashlib.sha256(pinned_bytes).hexdigest():
+            raise ValueError('External input differs from pinned research population: '+path)
+        return data
+    return None
+
 def blob(path, rev=REV):
     key=hashlib.sha256((rev+':'+path).encode()).hexdigest()
     f=ROOT/'cache'/key
     if not f.exists(): f.write_bytes(subprocess.check_output(['git','show',rev+':'+path]))
-    b=f.read_bytes()
+    pinned=f.read_bytes()
+    external=manifest_input(path,pinned)
+    b=pinned if external is None else external
     entry=dict(revision=rev,path=path,bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
     m=ROOT/'source-manifest.json'; entries=json.loads(m.read_text()) if m.exists() else []
     if entry not in entries: entries.append(entry); m.write_text(json.dumps(entries,indent=2)+'\n')

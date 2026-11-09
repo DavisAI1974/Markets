@@ -15,6 +15,8 @@ for(const table of input){
  for(let c=0;c<table.columns.length;c++){
   const key=table.columns[c], vals=table.rows.map(r=>r[c]);
   const col=sh.getRangeByIndexes(0,c,a.length,1);
+  const textWidth=Math.max(key.length,...vals.filter(v=>typeof v==='string').map(v=>v.length))+3;
+  col.format.columnWidth=Math.max(21,Math.min(70,textWidth));
   if(key.includes('candidate_id')) col.format.columnWidth=32;
   if(key.endsWith('_ns')) {col.format.columnWidth=31;col.setNumberFormat('@');}
   else if(key==='figure') col.format.columnWidth=61;

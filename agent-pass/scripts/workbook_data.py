@@ -2,7 +2,7 @@
 import sys,json,re
 from common import *
 files=sorted((ROOT/'tables').glob('*.csv'))
-selected=[p for p in files if any(s in p.name for s in ['candidate-operands','path-members','cases.csv','figure-reconciliation','detector-summary','lag-measurements','operator-summary','grouping-counts','moonshot-summary','crossday-summary'])]
+selected=[p for p in files if any(s in p.name for s in ['candidate-operands','path-members','cases.csv','figure-reconciliation','detector-summary','lag-measurements','operator-summary','grouping-counts','moonshot-summary','crossday-summary','footprint-endpoint-summary','footprint-absence-summary'])]
 groups={}
 for p in selected:
     cols=[c for c in pd.read_csv(p,nrows=0).columns if c.endswith('_ns')]
