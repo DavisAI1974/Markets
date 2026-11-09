@@ -1,0 +1,1193 @@
+{
+  "analyst": "Claude Code (Ccode)",
+  "written": "2026-11-09",
+  "brief": "agent-pass/reanalysis/SHARED_BRIEF.md at da0e2fc27350e791366eafa974e2bdb85e99460b, items 3 and 5",
+  "repositories": {
+    "three_day_suite": {
+      "repository": "DavisAI1974/Markets",
+      "branch": "claude/three-day-dipole-20261108",
+      "base_commit": "beb2104",
+      "head_commit": "59f92066984935ada5693ba91a9f04fa4f2248ef",
+      "folder": "tasks/family-research-20261022/claude-pass-3day/",
+      "files_changed_or_added": [
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/FINDINGS_TIER1_CROSSDAY_20261109.md",
+          "status": "added",
+          "bytes": 10845,
+          "sha256": "9a399052712b87835d8900f6508713c7203df3e0cd1f176417f46f24143abfe3"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/FINDINGS_TIER2_CROSSDAY_20261109.md",
+          "status": "added",
+          "bytes": 15514,
+          "sha256": "d825f2141de55c22b0c465b78284254e88f4fe8b41f41b6e1121f82f5ec10a99"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/HANDOFF_NEXT_SESSION_20261109.md",
+          "status": "modified",
+          "bytes": 10857,
+          "sha256": "bcac8c6f417b469239ade89f400f57cb5ad19018cd5380c5bd5aa7505b9213da"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/pairs_full/t2_pair_couplings_full_20231002.csv",
+          "status": "added",
+          "bytes": 569297,
+          "sha256": "ebfc3dadd47183f4d484ab8d6b70e7d1a8e68e8d3c9c06cd3e3f3aef7737ec06"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/pairs_full/t2_pair_couplings_full_20231003.csv",
+          "status": "added",
+          "bytes": 565625,
+          "sha256": "315ab579fa582ce617b9d3a8a99f85a4942eed75c80a52b7bfc7c708a419c4b4"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/pairs_full/t2_pair_couplings_full_20231017.csv",
+          "status": "added",
+          "bytes": 563913,
+          "sha256": "8bfb5c214eebb679a1d42fbe516ad263216c0c378087ddf76f0e7948bb481327"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/pairs_full/t2_pair_couplings_full_20231018.csv",
+          "status": "added",
+          "bytes": 541278,
+          "sha256": "71797c104e235399c9fc15e2c7bc0fafb18cb8e2bff45dea6aa24b09f9189fd5"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/t1x_cells_flow_pattern_x_depth_crossday.csv",
+          "status": "added",
+          "bytes": 42810,
+          "sha256": "b8e6a87a0c986cc930e57222e206d21536f2300477108c6d02e7c0e1b6a2172a"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/t1x_corners_flow_x_neardepth_crossday.csv",
+          "status": "added",
+          "bytes": 12178,
+          "sha256": "36ccaeaf756f8bbb823bd0a3ba6738523bdc7114cf4a9030a37c94e377a55b65"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/t1x_fourarm_crossday.csv",
+          "status": "added",
+          "bytes": 25067,
+          "sha256": "0fa0a8e9cb5d943cd4177c6a3eb9b1fa5c5d1f8785aa332ee6236707b44588fb"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/t1x_oriented_to_5s_flow_crossday.csv",
+          "status": "added",
+          "bytes": 3134,
+          "sha256": "81ccb4bc2fde963167727a0bbe6e86ce66b7e3ccbaf171c730bfd5826561bc98"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/t1x_receipt.csv",
+          "status": "added",
+          "bytes": 1886,
+          "sha256": "de60ef1a40221bb888124ec30d79db8d5830e4811dc32635856da63b1483368b"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/t1x_receipts.csv",
+          "status": "added",
+          "bytes": 1360,
+          "sha256": "60aa46249a3aba190c4de3f0ec0f3b585e6cbb452e580507a972bbaf5320946b"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/t1x_refill_by_fill_stratum_crossday.csv",
+          "status": "added",
+          "bytes": 3698,
+          "sha256": "507b1c9a198e50b8ae0ba1844b1381905aa7e29556941fcc1fbedc9bb57e2bf7"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/t1x_refill_spearman_crossday.csv",
+          "status": "added",
+          "bytes": 1185,
+          "sha256": "7f1f4c3d2d253033999b1574d88f4812530b27950e1662dc4f65ae35196c84fd"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/t1x_refill_terciles_crossday.csv",
+          "status": "added",
+          "bytes": 12049,
+          "sha256": "85fcb49434cecaf59b980c1ee2435f93da0071003c697849697ffa426ea470bd"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/t1x_stack_variants_crossday.csv",
+          "status": "added",
+          "bytes": 17494,
+          "sha256": "8ef693299119e35e1ad9a00ca4b1282d3a07c5168a14fc27b745e6fbf18bbce2"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/t2x-coupling-agreement-vs-shifted.png",
+          "status": "added",
+          "bytes": 120911,
+          "sha256": "cc5636b10983c5674a3e9ae9f05cae320d7cdcb8ca302ff70b25365794c5ac15"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/t2x-coupling-day-vs-oct18.png",
+          "status": "added",
+          "bytes": 202605,
+          "sha256": "d826d0a10df19cfc385d7a31e4f5a31407b5d533b8a0dd6d69e64bb6be1b7217"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/t2x-coupling-top-by-family.png",
+          "status": "added",
+          "bytes": 462591,
+          "sha256": "9483b911221b44b4a9024bbd97bca6c56b5f155070a2600ec4c0d55f3a9eca13"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/t2x-forward-stack.png",
+          "status": "added",
+          "bytes": 438642,
+          "sha256": "324aaf7e1540a5ea34721db977dc582d8f3444b83f3a8d160d9b98a85a633a3f"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/t2x-leadlag.png",
+          "status": "added",
+          "bytes": 163610,
+          "sha256": "4862f22d3c6028baa646074cefa1c894abb6be6fc2169820a3f6f284eba10f2f"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/t2x-pair-couplings-top-by-outcome.png",
+          "status": "added",
+          "bytes": 597183,
+          "sha256": "9e272d014edbe520a8b041e7394e9db9f8013b88b44ccd3bdc9bdcff1b0315a4"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/t2x-state-cells.png",
+          "status": "added",
+          "bytes": 406132,
+          "sha256": "78274fb8ab56e80840539e9a6fa4e5af8bf9be1db1e22bd87e7e6bc5df71e6cb"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/t2x_chart_reconciliation.csv",
+          "status": "added",
+          "bytes": 2210,
+          "sha256": "96bec57058db3a494c788bed7918bf3580db9d8528ad2cf2382037b330ffaee4"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/t2x_coupling_by_family_group.csv",
+          "status": "added",
+          "bytes": 1337,
+          "sha256": "edc68fe14db1c20e10aca3489c7aa2c92af193e9facb58ff101c72709016224a"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/t2x_coupling_crossday.csv",
+          "status": "added",
+          "bytes": 752462,
+          "sha256": "4f86c3dbcb071dab50ff3a5e9927f1f71631e9f6666b3a7cb11f823d06ff3bfb"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/t2x_coupling_shifted_reference.csv",
+          "status": "added",
+          "bytes": 2592,
+          "sha256": "2a960283504c61b91a153f5906c67ee5d2254560de710917910b79523d95a175"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/t2x_coupling_summary.csv",
+          "status": "added",
+          "bytes": 2543,
+          "sha256": "53f729c74b90391240507e230831bbed43639436dfa17ba703188b7a9fc7eb8e"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/t2x_forward_stack_features.csv",
+          "status": "added",
+          "bytes": 8747,
+          "sha256": "2f1f0f0a5f010ce30b0e72f3e9856cf0bb1c6bf694ba2eb9f617c1c9e29eb485"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/t2x_forward_stack_outcomes.csv",
+          "status": "added",
+          "bytes": 1922,
+          "sha256": "197a69f0d058d6418bd88a8b1118798f136a682c0002f7b83d4bd79d691379f5"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/t2x_forward_stack_paths.csv",
+          "status": "added",
+          "bytes": 6367,
+          "sha256": "91a407f90059537c05a350f064f239266456c1c883930e73eb016b77b8561c42"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/t2x_leadlag_crossday.csv",
+          "status": "added",
+          "bytes": 26003,
+          "sha256": "d569b9c725cf674d7fda5bc1a4785d098e3fe78abd09aad7cb681e67ef80c73b"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/t2x_pair_couplings_crossday.csv",
+          "status": "added",
+          "bytes": 170180,
+          "sha256": "12d055441b0a42b5037aceab1c3b290290bb9fc37636f7324f3a9ea1c128518f"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/t2x_pair_couplings_full_crossday.csv",
+          "status": "added",
+          "bytes": 1312105,
+          "sha256": "ae843ae404d2457699af9048c8a4f064a882013645b92ea46a905af00e94b832"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/t2x_pair_couplings_full_summary.csv",
+          "status": "added",
+          "bytes": 586,
+          "sha256": "f65adc4fe087ddbd7033240cd2e8e95328135f55deb81f2747b7e95b6cf3b396"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/t2x_receipt.csv",
+          "status": "added",
+          "bytes": 1857,
+          "sha256": "c708003d5cedb00c15f9dd44479091daf79013fa9f0b9cc721e81c3147b16a5a"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/crossday/t2x_state_cells_crossday.csv",
+          "status": "added",
+          "bytes": 14744,
+          "sha256": "a9e780e263d53735b3d875a5fce755bac4a91ad1bb44f8dc537c8797d4c18fa1"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231002/t1_cells_flow_pattern_x_depth.csv",
+          "status": "added",
+          "bytes": 12789,
+          "sha256": "247ffd3827efaf5c6f722df92351467cfe551c803bc2e51514420b65d42de5a8"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231002/t1_corners_flow_x_neardepth.csv",
+          "status": "added",
+          "bytes": 2590,
+          "sha256": "78338cceccd8050c6f8125db6be4943ec9b44203f9cb4280d29bdff4aff0fa6c"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231002/t1_family_master.csv",
+          "status": "added",
+          "bytes": 1069296,
+          "sha256": "6ecc571b6f7a65849c263ad0c29b2587080bad662325bad8a75de74399f1082f"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231002/t1_family_master_flags.csv",
+          "status": "added",
+          "bytes": 1082846,
+          "sha256": "fa54501627b061ebc6effb834e51f889bb293cb5c1f9dcf743bd076862715597"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231002/t1_fourarm_by_block.csv",
+          "status": "added",
+          "bytes": 31137,
+          "sha256": "9bd7011f12a0a81ce24d573089a37badb0988e360318dceb1f8a68f4223634e0"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231002/t1_fourarm_summary.csv",
+          "status": "added",
+          "bytes": 13600,
+          "sha256": "7ff0d7cad53f980a102c0419e738beb7335b81fe068f99776126363a140e4bcd"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231002/t1_oriented_to_5s_flow.csv",
+          "status": "added",
+          "bytes": 726,
+          "sha256": "9aa4667b607c246977793f64b4e66d46fa404ba5b0ad37630826565858e9666e"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231002/t1_receipt.json",
+          "status": "added",
+          "bytes": 1651,
+          "sha256": "cc278fd133dd5ea74676061fe31b688a4c536bf9ec4d0f5bcdedd14a09944e21"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231002/t1_refill_by_fill_stratum.csv",
+          "status": "added",
+          "bytes": 701,
+          "sha256": "31a22497864db9478f2e2b782a3352e22ff26d82010170c9bb9c37c09d89c05b"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231002/t1_refill_spearman.csv",
+          "status": "added",
+          "bytes": 388,
+          "sha256": "9cb1ef86aba2593c30f9d60ee662bb974682cbe86270c7534469052e52b641b8"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231002/t1_refill_terciles.csv",
+          "status": "added",
+          "bytes": 2711,
+          "sha256": "920e89cde9ef1703b5b61af41eb29be26fcee26e3ba2d80cad70bc19a6ceaebd"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231002/t1_stack_variants.csv",
+          "status": "added",
+          "bytes": 6968,
+          "sha256": "28111e0caf4a512b099b60e7cedf5ecd7bac559866632daec36cd9f41e18f1ee"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231003/t1_cells_flow_pattern_x_depth.csv",
+          "status": "added",
+          "bytes": 9722,
+          "sha256": "f7d54f308b3bb80230354d9045e03c5a7416f64bf80af446a19e46098651a8bf"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231003/t1_corners_flow_x_neardepth.csv",
+          "status": "added",
+          "bytes": 1902,
+          "sha256": "8f80603e0b78dd1a67cb4fa5b1d3e42a8180b89262e1340410f07c5e97be9e21"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231003/t1_family_master.csv",
+          "status": "added",
+          "bytes": 1119192,
+          "sha256": "7c1b8b890724c9e934816d39b4cc2aeef4f579a218cdac16abc99351d4565a1c"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231003/t1_family_master_flags.csv",
+          "status": "added",
+          "bytes": 1133730,
+          "sha256": "ea8b2c20c1964311438c08c12e01ea3f24b68abaf892adf74a05b3200c990462"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231003/t1_fourarm_by_block.csv",
+          "status": "added",
+          "bytes": 31083,
+          "sha256": "e3b2baa0161119305519dce398385843f2c67f5fe3a49edd1c84397901cc2921"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231003/t1_fourarm_summary.csv",
+          "status": "added",
+          "bytes": 13657,
+          "sha256": "0dce60a956b0de5b294615be74efd2852d333d7c028523c1dd73dcfc9a770873"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231003/t1_oriented_to_5s_flow.csv",
+          "status": "added",
+          "bytes": 699,
+          "sha256": "94798bcc62c5b30e0c5b6be9a94131e667a4a96306f93f1d8320cc5d72080123"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231003/t1_receipt.json",
+          "status": "added",
+          "bytes": 1644,
+          "sha256": "1b0d0b17feb7fe1804c78286c84e2d924df7525a79d25e673da23bbf96e7d9e0"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231003/t1_refill_by_fill_stratum.csv",
+          "status": "added",
+          "bytes": 605,
+          "sha256": "96d2140bde10ae1e3b2a8f4ba952f6d7b8f49df985d44260f18b2b0317be6d1c"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231003/t1_refill_spearman.csv",
+          "status": "added",
+          "bytes": 386,
+          "sha256": "3257d9b3dba375001004646e2194c513c21263702c2edd0a28b42de5b59f5d0b"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231003/t1_refill_terciles.csv",
+          "status": "added",
+          "bytes": 2765,
+          "sha256": "363f33c42bd226235673ba2d21d0e0d6e6f7c1370ad1643aff2cf180610e52f5"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231003/t1_stack_variants.csv",
+          "status": "added",
+          "bytes": 6622,
+          "sha256": "2622c341bcaf6060af2642fb18e6bab1e34262c5614d6ea9964d27ec38e59919"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231017/t1_cells_flow_pattern_x_depth.csv",
+          "status": "added",
+          "bytes": 13972,
+          "sha256": "1e1a662bbdb97f91db30415860b44157167fbcfc7ae2bb6cd2a9b2d7334e114a"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231017/t1_corners_flow_x_neardepth.csv",
+          "status": "added",
+          "bytes": 2326,
+          "sha256": "024f6eb56d62800996a0b7a5b7e0ab63b254377c1b436e0ad3a13d28daa4a79b"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231017/t1_family_master.csv",
+          "status": "added",
+          "bytes": 1106633,
+          "sha256": "3380e349bd6c20eedcc75175dbadb39fa191d068313e7fb987d6a5a5320649b0"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231017/t1_family_master_flags.csv",
+          "status": "added",
+          "bytes": 1120731,
+          "sha256": "579d5767223532e9b595649978817d63448a07b88ad4def73201152a1ad7b9c6"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231017/t1_fourarm_by_block.csv",
+          "status": "added",
+          "bytes": 31105,
+          "sha256": "e0590e2c7efc21a9c62e288bfca153ea133eba911d37ef4b09dacf11c71c2e20"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231017/t1_fourarm_summary.csv",
+          "status": "added",
+          "bytes": 13587,
+          "sha256": "f70490c092bbecb321eb84a069499f8f1ae9ca6c73e429747389508ee86bca09"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231017/t1_oriented_to_5s_flow.csv",
+          "status": "added",
+          "bytes": 743,
+          "sha256": "e08c09e3ef5e8a7622773ebbfd8c92f9b238c550978e2d9111e7952484ed3b85"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231017/t1_receipt.json",
+          "status": "added",
+          "bytes": 1652,
+          "sha256": "31f94dbfcd592da088ba74350099fb3be40fd2dcb669fafe606d401ebf12689e"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231017/t1_refill_by_fill_stratum.csv",
+          "status": "added",
+          "bytes": 636,
+          "sha256": "def5d63abc98304aca91a838740c410d0e8fede53cc22585b94268ce234f029d"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231017/t1_refill_spearman.csv",
+          "status": "added",
+          "bytes": 386,
+          "sha256": "c074d266a37e570f8270199b297e3f9b2495b691bc00a45a3338fcc59ca9e2aa"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231017/t1_refill_terciles.csv",
+          "status": "added",
+          "bytes": 2914,
+          "sha256": "1a086bdb9bebe201b2c3cfa094224a936424c3d075df175a2175790a04ca41f8"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231017/t1_stack_variants.csv",
+          "status": "added",
+          "bytes": 7051,
+          "sha256": "90c792257b6b6da979c838d542a6b68329289ce136262bfa241b102eebab7be9"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231018/t1_cells_flow_pattern_x_depth.csv",
+          "status": "added",
+          "bytes": 9401,
+          "sha256": "d9049a964a5992a6fda277b4263a1757388583727920c52c3742921d6446746c"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231018/t1_corners_flow_x_neardepth.csv",
+          "status": "added",
+          "bytes": 2012,
+          "sha256": "30ebd6ffa31249dfb7e3947d6ddc6a1bb3f006d39c8e76acd05420239cc2810e"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231018/t1_family_master.csv",
+          "status": "added",
+          "bytes": 1134408,
+          "sha256": "33039ce4f7135daba55d5feb0de24071c51dba0305bcca0d1448fb52074ae9f6"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231018/t1_family_master_flags.csv",
+          "status": "added",
+          "bytes": 1147414,
+          "sha256": "29f3993d902e58f27fa32b77831b6146aec3a6cdcabb4124eb5eed76942bfcd0"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231018/t1_fourarm_by_block.csv",
+          "status": "added",
+          "bytes": 31104,
+          "sha256": "3b22a1952165a7096ced5362e1b8f623a138e925ff15cb83928489f97765fc0b"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231018/t1_fourarm_summary.csv",
+          "status": "added",
+          "bytes": 13610,
+          "sha256": "75e251abb191e65c20cbe13a658421d00c1736e7b09c146f963e4b02e227a445"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231018/t1_oriented_to_5s_flow.csv",
+          "status": "added",
+          "bytes": 753,
+          "sha256": "6c8b880a7652a3a69da1fa842f93786c5ff7dadeb363b701c0df465c9c6ae585"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231018/t1_receipt.json",
+          "status": "added",
+          "bytes": 1451,
+          "sha256": "0a53203527849390485cde093160f7c18f03aebcd0a64c18ede8a0c3de953dfe"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231018/t1_refill_by_fill_stratum.csv",
+          "status": "added",
+          "bytes": 725,
+          "sha256": "e70eec475029aca394dd655f55c3a2b5c2413962006e6ba82659f033a0be1bc7"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231018/t1_refill_spearman.csv",
+          "status": "added",
+          "bytes": 383,
+          "sha256": "f5704555e811884aa52bbf54a0350f9982690c754d7d651b1f5f2efea3fd136d"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231018/t1_refill_terciles.csv",
+          "status": "added",
+          "bytes": 3031,
+          "sha256": "c30c911ea27c496956b4a47b86b81eee3b0c555df38dbfa466e1bf9f073d4988"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231018/t1_stack_variants.csv",
+          "status": "added",
+          "bytes": 5956,
+          "sha256": "335f817ecb5d90de6da215c9ff39dcf2bf6a5f851eab5bd25cc835c1b43b8ca7"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/x14_tier2_crossday.py",
+          "status": "added",
+          "bytes": 19985,
+          "sha256": "ab3f8afe5b8b5f2d90c7c832ff8ad7826655d45893605e2b95e7ffd355aae6a9"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/x15_tier2_crossday_charts.py",
+          "status": "added",
+          "bytes": 15384,
+          "sha256": "ac03fc015afc0c030f627e7132526e63dd5f84e32606a706565dc7b75d6b36e2"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/x16_tier2_shift_draws.py",
+          "status": "added",
+          "bytes": 2999,
+          "sha256": "8e25735d9df523bccfecbfaee102546de868f03c2b18484048bda143ad1ed839"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/x17_pair_couplings_full.py",
+          "status": "added",
+          "bytes": 4287,
+          "sha256": "8e1841cc596865ea9f34045b7cb017d238028c1e0702b7bda8ad2fa8be436f2d"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/x18_tier1_days.py",
+          "status": "added",
+          "bytes": 18044,
+          "sha256": "e19cc497d13c10c97d0dd20be555d4f1fafcdb0e4f55775b0c7e522e06e65c16"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-pass-3day/x19_tier1_crossday.py",
+          "status": "added",
+          "bytes": 7263,
+          "sha256": "900b79e34b3bd8b0afcc2da1563d7808d9675d630ee5f66e073e92c20885b9b2"
+        }
+      ]
+    },
+    "discovery_record": {
+      "repository": "DavisAI1974/Markets",
+      "branch": "codex/ng-shadow-discovery-20261108",
+      "base_commit": "de084f5",
+      "head_commit": "533d58ec0a54739cf453fca8c08f51629d44c7f2",
+      "files_changed_or_added": [
+        {
+          "path": "tasks/family-research-20261022/claude-code/HANDOFF_20261109.md",
+          "status": "modified",
+          "bytes": 4713,
+          "sha256": "3d978781cc3a7cd81a9a7a36b77b902b2f14f68d7f1b8f61540f28aecc335638"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-code/data-manifest.json",
+          "status": "modified",
+          "bytes": 34734,
+          "sha256": "4a9cd35d50cd64174ffa5f3521b8147e2bef9f9babfef262578403c65779805b"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-code/pin_tier1_rows_to_99.py",
+          "status": "added",
+          "bytes": 9050,
+          "sha256": "7e3435d0522889768ebe4af086bb231d82b666aa11991578d7108727d8fb51f7"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-october-discovery-20261108.md",
+          "status": "modified",
+          "bytes": 133879,
+          "sha256": "5914309ae8a40b6dd6b91d53f1dff94358d69cef72c1894b8de7662a561d1cd8"
+        },
+        {
+          "path": "tasks/family-research-20261022/october-discovery-log.md",
+          "status": "modified",
+          "bytes": 49734,
+          "sha256": "935a53199ba5001458e6d175a290ff29ba2363e42520c11ecdff7b0473318d1c"
+        }
+      ]
+    },
+    "data": {
+      "repository": "DavisAI1974/markets-data",
+      "branch": "main",
+      "base_commit": "993cf54",
+      "head_commit": "67b7a6afaaaa7bf77bb4048011b1da28af2875b1",
+      "files_changed_or_added": [
+        {
+          "path": "MANIFEST.json",
+          "status": "modified",
+          "bytes": 33941,
+          "sha256": "10ed226f89ed5f29ee3c5aaa9d00fc056c355b6efbc71bf5df75d2d7fc2bf3d9"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-code-pins/ninety-nine-pins-tier1-oct02.jsonl.gz",
+          "status": "added",
+          "bytes": 3552869,
+          "sha256": "e08ddb84fdcca441fe6c00d100c2a7a5d7bc7030632d872c62458b728817459c"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-code-pins/ninety-nine-pins-tier1-oct03.jsonl.gz",
+          "status": "added",
+          "bytes": 3736544,
+          "sha256": "e1ae859dda18993ffccf3ac5e562574e085e1665f44ea73e00c19e2ae3d1b53d"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-code-pins/ninety-nine-pins-tier1-oct17.jsonl.gz",
+          "status": "added",
+          "bytes": 3674276,
+          "sha256": "f0a58dd4e08c17046c9f35a5f9432b4e334390f47404b4ab6bf2a3e9f765e63f"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-code-pins/ninety-nine-pins-tier1-oct18.jsonl.gz",
+          "status": "added",
+          "bytes": 3468543,
+          "sha256": "5ad103811fe7b68d71da01ef302e3faeb22fcef2c4b9a3d4b8e8baadfb3e017f"
+        },
+        {
+          "path": "tasks/family-research-20261022/claude-code-pins/ninety-nine-pins-tier1-summary.json",
+          "status": "added",
+          "bytes": 12036,
+          "sha256": "3661c126e20c7c89bbaf10b08d4c8db5749d16c8b937fc93a40a26ad44985507"
+        }
+      ]
+    }
+  },
+  "what_the_suite_is": {
+    "tier2_side_by_side": "x14_tier2_crossday.py over the committed tables/<UTC member>/t2_*.csv (c14, c15, c16, c17, c18; same code on the four members); x16_tier2_shift_draws.py saves the c14 shifted-Y draws (seed 11, 20 of 300 shifts) for the day-by-day reference; x17_pair_couplings_full.py keeps every (x1, x2, y) of the c15 family; x15_tier2_crossday_charts.py draws seven figures with every plotted count asserted equal to its table rows. Write-up FINDINGS_TIER2_CROSSDAY_20261109.md.",
+    "tier1_on_actual_family_starts": "x18_tier1_days.py runs the Oct 18 Tier 1 chain (c02 outcomes, c06 family master with order-level windows, c07 cells and stack variants, c08 depth and corners, c10 refill at the side being hit, c11 four arms) unchanged in method on the per-date first-observed family index; x19_tier1_crossday.py puts the four sessions side by side. Write-up FINDINGS_TIER1_CROSSDAY_20261109.md. The Oct 18-only matched-50 pass (c09) is not run.",
+    "grids": "rebuilt in-session from the manifest-pinned tapes (c00 -> c03 -> c01b -> c12, unchanged code); every committed Tier 2 table reproduces (lead-lag, state cells, forward stack byte-identical; coupling rho to 1.1e-16 with identical n, chunks and line flags); the Tier 1 chain on Oct 18 reproduces every committed claude-pass/tables/t1_*.csv value for value."
+  },
+  "populations_by_session": {
+    "20231002": {
+      "members": [
+        "20231001",
+        "20231002"
+      ],
+      "family_index": {
+        "path": "family/index_20231002.csv",
+        "markets_data_commit": "7b50d634",
+        "sha256": "9e0ea6324e6408227602b7be6e13fc80bde0bb7767de8eaf86d581e62f64e5b1",
+        "run": "42566535537"
+      },
+      "families_in_index": 796,
+      "families_used": 795,
+      "excluded": {
+        "count": 1,
+        "instances": [
+          1
+        ],
+        "family_ids": [
+          "ow-b1ac3ad71e2f436a04a3"
+        ],
+        "start_utc": [
+          "2023-10-02T00:00:00+00:00"
+        ],
+        "reason": [
+          "index has no pre-event source cursor"
+        ]
+      },
+      "in_member_with_60s_records": 781,
+      "cutoff_rule": "start_recv_ns - 1 ns (index has no cutoff_ns)",
+      "session_groups": {
+        "prior_from_21utc": 9320,
+        "day_to_close": 600291,
+        "day_after_close_left_out": 3238,
+        "total": 609611,
+        "first_recv_utc": "2023-10-01 21:01:00.004344801+00:00",
+        "last_recv_utc": "2023-10-02 20:59:59.697648657+00:00"
+      },
+      "reconcile_60s_aggressor_lots": {
+        "buy": 744,
+        "sell": 752,
+        "of": 781
+      },
+      "censored_outcomes": {
+        "1": 0,
+        "5": 0,
+        "20": 0,
+        "60": 0,
+        "120": 0,
+        "300": 0,
+        "600": 0
+      },
+      "refill_sets": {
+        "in_member": 781,
+        "sell_hit_with_bid_fills": 360,
+        "buy_lift_with_ask_fills": 325
+      },
+      "t1_tables": {
+        "t1_cells_flow_pattern_x_depth.csv": 172,
+        "t1_corners_flow_x_neardepth.csv": 45,
+        "t1_family_master.csv": 795,
+        "t1_family_master_flags.csv": 795,
+        "t1_fourarm_by_block.csv": 160,
+        "t1_fourarm_summary.csv": 40,
+        "t1_oriented_to_5s_flow.csv": 15,
+        "t1_refill_by_fill_stratum.csv": 12,
+        "t1_refill_spearman.csv": 10,
+        "t1_refill_terciles.csv": 30,
+        "t1_stack_variants.csv": 70
+      },
+      "t2_tables": {
+        "t2_coupling_conditions.csv": 2669,
+        "t2_forward_stack.csv": 30,
+        "t2_leadlag_matrix.csv": 49,
+        "t2_pair_couplings_top400.csv": 400,
+        "t2_pair_couplings_top60.csv": 60,
+        "t2_state_cells.csv": 42
+      }
+    },
+    "20231003": {
+      "members": [
+        "20231002",
+        "20231003"
+      ],
+      "family_index": {
+        "path": "family/index_20231003.csv",
+        "markets_data_commit": "7b50d634",
+        "sha256": "5b6d655af9f2ebfe7c516c4344bfa534a122f4203138e29cfc3f5b9b75599443",
+        "run": "42566535537"
+      },
+      "families_in_index": 849,
+      "families_used": 848,
+      "excluded": {
+        "count": 1,
+        "instances": [
+          1
+        ],
+        "family_ids": [
+          "ow-c000bb50d0a1f985df55"
+        ],
+        "start_utc": [
+          "2023-10-02T21:00:00+00:00"
+        ],
+        "reason": [
+          "cutoff before first session group"
+        ]
+      },
+      "in_member_with_60s_records": 796,
+      "cutoff_rule": "start_recv_ns - 1 ns (index has no cutoff_ns)",
+      "session_groups": {
+        "prior_from_21utc": 3238,
+        "day_to_close": 650674,
+        "day_after_close_left_out": 2735,
+        "total": 653912,
+        "first_recv_utc": "2023-10-02 21:00:00.188871625+00:00",
+        "last_recv_utc": "2023-10-03 20:59:59.697962999+00:00"
+      },
+      "reconcile_60s_aggressor_lots": {
+        "buy": 749,
+        "sell": 742,
+        "of": 796
+      },
+      "censored_outcomes": {
+        "1": 0,
+        "5": 0,
+        "20": 0,
+        "60": 0,
+        "120": 1,
+        "300": 2,
+        "600": 2
+      },
+      "refill_sets": {
+        "in_member": 796,
+        "sell_hit_with_bid_fills": 345,
+        "buy_lift_with_ask_fills": 334
+      },
+      "t1_tables": {
+        "t1_cells_flow_pattern_x_depth.csv": 132,
+        "t1_corners_flow_x_neardepth.csv": 35,
+        "t1_family_master.csv": 848,
+        "t1_family_master_flags.csv": 848,
+        "t1_fourarm_by_block.csv": 160,
+        "t1_fourarm_summary.csv": 40,
+        "t1_oriented_to_5s_flow.csv": 15,
+        "t1_refill_by_fill_stratum.csv": 12,
+        "t1_refill_spearman.csv": 10,
+        "t1_refill_terciles.csv": 30,
+        "t1_stack_variants.csv": 70
+      },
+      "t2_tables": {
+        "t2_coupling_conditions.csv": 2669,
+        "t2_forward_stack.csv": 38,
+        "t2_leadlag_matrix.csv": 49,
+        "t2_pair_couplings_top400.csv": 400,
+        "t2_pair_couplings_top60.csv": 60,
+        "t2_state_cells.csv": 42
+      }
+    },
+    "20231017": {
+      "members": [
+        "20231016",
+        "20231017"
+      ],
+      "family_index": {
+        "path": "family/index_20231017.csv",
+        "markets_data_commit": "7b50d634",
+        "sha256": "b912a498099cc2094167741da07228eea29eacb1108c3d6876f0a79bdb707bef",
+        "run": "42566535537"
+      },
+      "families_in_index": 824,
+      "families_used": 823,
+      "excluded": {
+        "count": 1,
+        "instances": [
+          1
+        ],
+        "family_ids": [
+          "ow-a9ee37c37f1bc4cb9868"
+        ],
+        "start_utc": [
+          "2023-10-17T00:00:00+00:00"
+        ],
+        "reason": [
+          "index has no pre-event source cursor"
+        ]
+      },
+      "in_member_with_60s_records": 809,
+      "cutoff_rule": "start_recv_ns - 1 ns (index has no cutoff_ns)",
+      "session_groups": {
+        "prior_from_21utc": 3154,
+        "day_to_close": 635170,
+        "day_after_close_left_out": 14625,
+        "total": 638324,
+        "first_recv_utc": "2023-10-16 21:00:00.189890770+00:00",
+        "last_recv_utc": "2023-10-17 20:59:59.806587111+00:00"
+      },
+      "reconcile_60s_aggressor_lots": {
+        "buy": 770,
+        "sell": 774,
+        "of": 809
+      },
+      "censored_outcomes": {
+        "1": 0,
+        "5": 0,
+        "20": 0,
+        "60": 0,
+        "120": 1,
+        "300": 3,
+        "600": 3
+      },
+      "refill_sets": {
+        "in_member": 809,
+        "sell_hit_with_bid_fills": 332,
+        "buy_lift_with_ask_fills": 339
+      },
+      "t1_tables": {
+        "t1_cells_flow_pattern_x_depth.csv": 188,
+        "t1_corners_flow_x_neardepth.csv": 40,
+        "t1_family_master.csv": 823,
+        "t1_family_master_flags.csv": 823,
+        "t1_fourarm_by_block.csv": 160,
+        "t1_fourarm_summary.csv": 40,
+        "t1_oriented_to_5s_flow.csv": 15,
+        "t1_refill_by_fill_stratum.csv": 12,
+        "t1_refill_spearman.csv": 10,
+        "t1_refill_terciles.csv": 30,
+        "t1_stack_variants.csv": 70
+      },
+      "t2_tables": {
+        "t2_coupling_conditions.csv": 2669,
+        "t2_forward_stack.csv": 27,
+        "t2_leadlag_matrix.csv": 49,
+        "t2_pair_couplings_top400.csv": 400,
+        "t2_pair_couplings_top60.csv": 60,
+        "t2_state_cells.csv": 42
+      }
+    },
+    "20231018": {
+      "members": [
+        "20231017",
+        "20231018"
+      ],
+      "family_index": {
+        "path": "family/index_20231018.csv",
+        "markets_data_commit": "7b50d634",
+        "sha256": "769a390c6e7a80159669b50dc81a1a3fd0579509317362691e938bf13fec3ae8",
+        "run": "42566535537"
+      },
+      "families_in_index": 749,
+      "families_used": 749,
+      "excluded": {
+        "count": 0,
+        "instances": [],
+        "family_ids": [],
+        "start_utc": [],
+        "reason": []
+      },
+      "in_member_with_60s_records": 694,
+      "cutoff_rule": "index cutoff_ns",
+      "session_groups": {
+        "prior_from_21utc": 14625,
+        "day_to_close": 569063,
+        "day_after_close_left_out": 4235,
+        "total": 583688,
+        "first_recv_utc": "2023-10-17 21:00:00.191664816+00:00",
+        "last_recv_utc": "2023-10-18 20:59:59.696377528+00:00"
+      },
+      "reconcile_60s_aggressor_lots": {
+        "buy": 654,
+        "sell": 656,
+        "of": 694
+      },
+      "censored_outcomes": {
+        "1": 0,
+        "5": 0,
+        "20": 0,
+        "60": 0,
+        "120": 0,
+        "300": 4,
+        "600": 5
+      },
+      "refill_sets": {
+        "in_member": 694,
+        "sell_hit_with_bid_fills": 263,
+        "buy_lift_with_ask_fills": 279
+      },
+      "t1_tables": {
+        "t1_cells_flow_pattern_x_depth.csv": 124,
+        "t1_corners_flow_x_neardepth.csv": 35,
+        "t1_family_master.csv": 749,
+        "t1_family_master_flags.csv": 749,
+        "t1_fourarm_by_block.csv": 160,
+        "t1_fourarm_summary.csv": 40,
+        "t1_oriented_to_5s_flow.csv": 15,
+        "t1_refill_by_fill_stratum.csv": 12,
+        "t1_refill_spearman.csv": 10,
+        "t1_refill_terciles.csv": 30,
+        "t1_stack_variants.csv": 70
+      },
+      "t2_tables": {
+        "t2_coupling_conditions.csv": 2669,
+        "t2_forward_stack.csv": 31,
+        "t2_leadlag_matrix.csv": 49,
+        "t2_pair_couplings_top400.csv": 400,
+        "t2_pair_couplings_top60.csv": 60,
+        "t2_state_cells.csv": 42
+      }
+    }
+  },
+  "tier2_inputs": {
+    "grid_rows_after_closed_market_rows_out": {
+      "20231002": 26980,
+      "20231003": 26980,
+      "20231017": 26979,
+      "20231018": 26980
+    },
+    "condition_outcome_pairs": 2669,
+    "lead_lag_pairs": 49,
+    "state_cells": 42,
+    "pair_coupling_rows_full": {
+      "20231002": 5406,
+      "20231003": 5418,
+      "20231017": 5166,
+      "20231018": 5166
+    }
+  },
+  "crossday_tables": {
+    "t1x_cells_flow_pattern_x_depth_crossday.csv": 228,
+    "t1x_corners_flow_x_neardepth_crossday.csv": 45,
+    "t1x_fourarm_crossday.csv": 40,
+    "t1x_oriented_to_5s_flow_crossday.csv": 15,
+    "t1x_receipt.csv": 41,
+    "t1x_receipts.csv": 4,
+    "t1x_refill_by_fill_stratum_crossday.csv": 12,
+    "t1x_refill_spearman_crossday.csv": 10,
+    "t1x_refill_terciles_crossday.csv": 30,
+    "t1x_stack_variants_crossday.csv": 70,
+    "t2x_chart_reconciliation.csv": 27,
+    "t2x_coupling_by_family_group.csv": 30,
+    "t2x_coupling_crossday.csv": 2669,
+    "t2x_coupling_shifted_reference.csv": 20,
+    "t2x_coupling_summary.csv": 1,
+    "t2x_forward_stack_features.csv": 101,
+    "t2x_forward_stack_outcomes.csv": 7,
+    "t2x_forward_stack_paths.csv": 38,
+    "t2x_leadlag_crossday.csv": 49,
+    "t2x_pair_couplings_crossday.csv": 1102,
+    "t2x_pair_couplings_full_crossday.csv": 5166,
+    "t2x_pair_couplings_full_summary.csv": 1,
+    "t2x_receipt.csv": 40,
+    "t2x_state_cells_crossday.csv": 42
+  },
+  "pairs_full_tables": {
+    "t2_pair_couplings_full_20231002.csv": 5406,
+    "t2_pair_couplings_full_20231003.csv": 5418,
+    "t2_pair_couplings_full_20231017.csv": 5406,
+    "t2_pair_couplings_full_20231018.csv": 5166
+  },
+  "chart_reconciliation": {
+    "figures": 7,
+    "panels": 27,
+    "all_match": true
+  },
+  "oct18_reference": {
+    "original_tier1": "claude-pass/tables/t1_*.csv (12 files; 749 families; the matched-50 pass included); reproduced value for value by x18 on the rebuilt grids",
+    "original_tier2": "claude-pass/tables/t2_*.csv and tables/20231018_legacy/ (legacy mode: retained export groups, no closed-market exclusion, age_s and qage_s out of X; 2,635 pairs, 44 cells); the dense run used for the four-day comparison is tables/20231018/t2_*.csv (2,669 pairs, 42 cells); the reason is recorded in FINDINGS_TIER2_CROSSDAY_20261109.md section 1",
+    "regime_comparison": "claude-pass/tables/crossday/t4_*.csv (c19 to c23) already covered the four days and is unchanged",
+    "dipole_cohort": "claude-pass-3day/tables/dipole/<session>/t6_* and FINDINGS_THREE_DAYS_20261108.md (Desktop's pass), unchanged"
+  },
+  "clocks": {
+    "tier1_family_master": [
+      "start_recv_ns (family start receive clock, ns)",
+      "cutoff_ns = start_recv_ns - 1 ns (strict decision boundary; the Oct 18 ledger's own rule, 749 of 749)",
+      "ref_recv_ns (receive clock of the last group known by the cutoff: the reference midpoint and touch)",
+      "start_utc (ISO)",
+      "outcomes at start + h for h in 1, 5, 20, 60, 120, 300, 600 s from the last group known by then; grp_<h>s = -1 and chg NaN where the horizon passes the 21:00 UTC close",
+      "order-level windows end at cutoff (start - 1 ns) over the previous 1, 5, 20, 60 s; NaN where the window begins before the date member"
+    ],
+    "tier1_pin_ledgers": "every record carries start, cutoff and reference-group clocks as ns and UTC; pins carry known_by_cutoff_ns, known_by_receive_ns (reference group) or outcome_window_start_plus_<h>s",
+    "tier2_tables": "per UTC member; decisions every 3 s with features as of the cutoff and outcomes after it (c12); one-second series by receive second (c16, c17); closed-market rows and seconds left out (odcfg.closed_mask); the cross-day tables are aggregates with no clock of their own",
+    "session_scope": "session groups = prior member from 21:00 UTC to the date member's 21:00 UTC close; Oct 2 and Oct 17 are partial from the UTC snapshot (their family indexes begin at 00:00 UTC), Oct 3 and Oct 18 full sessions"
+  },
+  "time_sensitive_new_files": {
+    "per_event_rows": [
+      "tasks/family-research-20261022/claude-pass-3day/tables/20231002/t1_family_master.csv",
+      "tasks/family-research-20261022/claude-pass-3day/tables/20231003/t1_family_master.csv",
+      "tasks/family-research-20261022/claude-pass-3day/tables/20231017/t1_family_master.csv",
+      "tasks/family-research-20261022/claude-pass-3day/tables/20231018/t1_family_master.csv",
+      "tasks/family-research-20261022/claude-pass-3day/tables/20231002/t1_family_master_flags.csv",
+      "tasks/family-research-20261022/claude-pass-3day/tables/20231003/t1_family_master_flags.csv",
+      "tasks/family-research-20261022/claude-pass-3day/tables/20231017/t1_family_master_flags.csv",
+      "tasks/family-research-20261022/claude-pass-3day/tables/20231018/t1_family_master_flags.csv"
+    ],
+    "pinned_as": [
+      "tasks/family-research-20261022/claude-code-pins/ninety-nine-pins-tier1-oct02.jsonl.gz",
+      "tasks/family-research-20261022/claude-code-pins/ninety-nine-pins-tier1-oct03.jsonl.gz",
+      "tasks/family-research-20261022/claude-code-pins/ninety-nine-pins-tier1-oct17.jsonl.gz",
+      "tasks/family-research-20261022/claude-code-pins/ninety-nine-pins-tier1-oct18.jsonl.gz"
+    ],
+    "pin_summary": {
+      "oct02": {
+        "rows": 795,
+        "pins": 135945,
+        "fields_without_layer": [],
+        "pins_by_layer": {
+          "14 learned_d_structures_and_families": 2385,
+          "29 raw_source_identity_provenance_clocks_integrity": 10335,
+          "30 order_lifecycle_adds": 25440,
+          "31 order_lifecycle_cancels": 29415,
+          "32 order_lifecycle_modifies": 6360,
+          "34 order_lifecycle_trades": 18285,
+          "35 order_lifecycle_fills": 12720,
+          "37 order_identity_transitions": 6360,
+          "39 full_bid_ask_depth": 4770,
+          "40 price_level_and_order_counts": 17490,
+          "45 spread_and_depth_imbalance": 15105,
+          "48 aggressor_and_native_signed_flow": 25440,
+          "49 depletion_and_replenishment": 29415,
+          "50 resilience_and_recovery": 25440,
+          "52 price_and_book_path": 23850,
+          "58 legacy_structure_observables": 2385,
+          "73 clock_receive_time": 7950,
+          "74 clock_event_known_by": 7950,
+          "79 later_outcome_reveal": 16695
+        },
+        "output": "ninety-nine-pins-tier1-oct02.jsonl.gz",
+        "bytes": 3552869,
+        "sha256": "e08ddb84fdcca441fe6c00d100c2a7a5d7bc7030632d872c62458b728817459c"
+      },
+      "oct03": {
+        "rows": 848,
+        "pins": 145008,
+        "fields_without_layer": [],
+        "pins_by_layer": {
+          "14 learned_d_structures_and_families": 2544,
+          "29 raw_source_identity_provenance_clocks_integrity": 11024,
+          "30 order_lifecycle_adds": 27136,
+          "31 order_lifecycle_cancels": 31376,
+          "32 order_lifecycle_modifies": 6784,
+          "34 order_lifecycle_trades": 19504,
+          "35 order_lifecycle_fills": 13568,
+          "37 order_identity_transitions": 6784,
+          "39 full_bid_ask_depth": 5088,
+          "40 price_level_and_order_counts": 18656,
+          "45 spread_and_depth_imbalance": 16112,
+          "48 aggressor_and_native_signed_flow": 27136,
+          "49 depletion_and_replenishment": 31376,
+          "50 resilience_and_recovery": 27136,
+          "52 price_and_book_path": 25440,
+          "58 legacy_structure_observables": 2544,
+          "73 clock_receive_time": 8480,
+          "74 clock_event_known_by": 8480,
+          "79 later_outcome_reveal": 17808
+        },
+        "output": "ninety-nine-pins-tier1-oct03.jsonl.gz",
+        "bytes": 3736544,
+        "sha256": "e1ae859dda18993ffccf3ac5e562574e085e1665f44ea73e00c19e2ae3d1b53d"
+      },
+      "oct17": {
+        "rows": 823,
+        "pins": 140733,
+        "fields_without_layer": [],
+        "pins_by_layer": {
+          "14 learned_d_structures_and_families": 2469,
+          "29 raw_source_identity_provenance_clocks_integrity": 10699,
+          "30 order_lifecycle_adds": 26336,
+          "31 order_lifecycle_cancels": 30451,
+          "32 order_lifecycle_modifies": 6584,
+          "34 order_lifecycle_trades": 18929,
+          "35 order_lifecycle_fills": 13168,
+          "37 order_identity_transitions": 6584,
+          "39 full_bid_ask_depth": 4938,
+          "40 price_level_and_order_counts": 18106,
+          "45 spread_and_depth_imbalance": 15637,
+          "48 aggressor_and_native_signed_flow": 26336,
+          "49 depletion_and_replenishment": 30451,
+          "50 resilience_and_recovery": 26336,
+          "52 price_and_book_path": 24690,
+          "58 legacy_structure_observables": 2469,
+          "73 clock_receive_time": 8230,
+          "74 clock_event_known_by": 8230,
+          "79 later_outcome_reveal": 17283
+        },
+        "output": "ninety-nine-pins-tier1-oct17.jsonl.gz",
+        "bytes": 3674276,
+        "sha256": "f0a58dd4e08c17046c9f35a5f9432b4e334390f47404b4ab6bf2a3e9f765e63f"
+      },
+      "oct18": {
+        "rows": 749,
+        "pins": 133322,
+        "fields_without_layer": [],
+        "pins_by_layer": {
+          "14 learned_d_structures_and_families": 2247,
+          "29 raw_source_identity_provenance_clocks_integrity": 11984,
+          "30 order_lifecycle_adds": 23968,
+          "31 order_lifecycle_cancels": 27713,
+          "32 order_lifecycle_modifies": 5992,
+          "34 order_lifecycle_trades": 17227,
+          "35 order_lifecycle_fills": 11984,
+          "37 order_identity_transitions": 5992,
+          "39 full_bid_ask_depth": 4494,
+          "40 price_level_and_order_counts": 16478,
+          "45 spread_and_depth_imbalance": 14231,
+          "48 aggressor_and_native_signed_flow": 23968,
+          "49 depletion_and_replenishment": 27713,
+          "50 resilience_and_recovery": 23968,
+          "52 price_and_book_path": 25466,
+          "54 legacy_price": 2996,
+          "58 legacy_structure_observables": 2247,
+          "73 clock_receive_time": 9737,
+          "74 clock_event_known_by": 9737,
+          "79 later_outcome_reveal": 15729
+        },
+        "output": "ninety-nine-pins-tier1-oct18.jsonl.gz",
+        "bytes": 3468543,
+        "sha256": "5ad103811fe7b68d71da01ef302e3faeb22fcef2c4b9a3d4b8e8baadfb3e017f"
+      }
+    },
+    "registry_sha256_declared": "7ee754f1f9b080cdc5b7b68cf75829897d6216a1fadbb4b8a5ecd7b4f2133e06",
+    "aggregates_without_clock": "crossday/t2x_*.csv, crossday/t1x_*.csv, crossday/pairs_full/*.csv, tables/<session>/t1_cells*, t1_stack_variants, t1_corners*, t1_oriented*, t1_refill*, t1_fourarm* (summaries over the pinned rows; not pinned)"
+  },
+  "limitations": [
+    "Each day is one session of one instrument; nothing is pooled across days; counts of days are counts.",
+    "The Tier 2 cross-day reference distribution is 20 shifted-Y draws per day combined day by day; the regime comparison used the same count.",
+    "Pair couplings beyond the line are rare by construction (family-wise line over 40 shifts on every third pair, as c15 defined it).",
+    "Tier 1 order-level windows exist only for families inside the date member with a full window; the 60 s aggressor-lot reconciliation to the retained ROOT operands is 744/752, 749/742, 770/774, 654/656 of 781, 796, 809, 694 (the rest differ by the unknown-side lots the retained operands count differently; not examined further).",
+    "The session groups come from the rebuilt tapes, not the retained exports; on Oct 18 they reproduce the export-based tables exactly (583,688 groups).",
+    "Oct 2 and Oct 17 family indexes begin at the UTC snapshot; the prior evening of those sessions is in the group arrays (from the prefix members) but no family start of theirs falls in it.",
+    "No trade cost, fee, slippage or execution assumption anywhere; these are discovery readouts on already-studied days, not out-of-sample validation."
+  ],
+  "not_done_by_direction": [
+    "agreement/disagreement pass against the Codex and Desktop passes",
+    "the 99 and 13 crosswalk (Codex reconciles; one copy)",
+    "detector reverse-engineering (Desktop's 3C)",
+    "c13 and c14_deseason variants (superseded by c14 and c19)",
+    "Desktop's 3D issue-13 follow-up (drafted, unposted)"
+  ]
+}
