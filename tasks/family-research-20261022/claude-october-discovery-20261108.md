@@ -1638,3 +1638,51 @@ through the order lifecycle, the FIFO book, signed flow, the derived dipole stat
 clocks, and the sealed later-outcome layer) are data, so they live in markets-data under
 `tasks/family-research-20261022/claude-code-pins/`, commit 158ae78, with manifest entries. No summary or
 render was pinned; those are views over these rows.
+
+## 25. Ten cases through five coordinated views
+
+The per-event renders of section 24's rows. Ten individual events were chosen by stated rules across all
+four sessions, including failed and flat moves, and each is drawn through the same five views with the
+same ids and clocks: (1) the whole lifecycle, last price in ticks from the t0 price with the oriented roll-20
+lean, t0 minus 300 s to plus 600 s, with the knowable horizon (t0+5), structural onset, confirmation,
+archived recognition and seed-known clocks marked, and the neighbouring detector event; (2) fresh flow
+entering the 20 s window against flow expiring from it, per second; (3) the liquidity response, net adds
+minus cancels by side, executions by aggressor, ten-level depth and the best quotes; (4) the event sequence
+along the same lifecycle: other detector events, family starts, size-one onsets, touch-print decisions,
+prints by lot size; (5) continuation and exhaustion after confirmation: oriented price from the confirm
+price, pauses of 30 s or more, the first 3-tick excursion with and against, and sign changes. Under each
+case sits the table of pinned rows: the event row, the archived candidate with its recognition receive
+clock and cursor, the onset and confirmation clocks, the other detector events, the family starts, the
+touch-print candidates, the size-one onsets and the prints in the window, each with its id, its absolute
+clock and the row file it came from. Only id-and-timestamp rows are drawn; nothing on a sorted curve.
+
+`select_cases.py` picks the cases and writes `cases-10.json`; `case_tape_windows.py` replays the raw tape
+for each window (adds, cancels, modifies and fills by side per second, prints with receive nanoseconds and
+cursor, touch and depth snapshots); `case_context.py` joins the detector clocks, archived recognitions,
+family starts, size-one onsets and touch-print decisions in the window; `render_case_views.py` draws the
+page. The case rows are data and live in markets-data under `tasks/family-research-20261022/
+claude-code-cases/` (commit ea137b6, manifest entries with hashes; the renderer reads them back through
+`data_locator`). The page is `claude-code/renders/ng-case-views.html` with a PDF beside it; the composite
+and per-view PNGs are in the same markets-data folder under `renders/`.
+
+The ten cases (session second of t0, the detector's local maximum, and the UTC clock):
+
+| case | session | t0 | UTC | rule | state, seed | runway | recognised |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | Oct 18 | 70369 | 16:32:49 | largest oriented move by seed-known +300 s, US day | fast-collapse, S | 1 s | +8 s |
+| 2 | Oct 18 | 57586 | 12:59:46 | most negative oriented move by +300 s, US day | fast-collapse, X | 63 s | +51 s |
+| 3 | Oct 18 | 43914 | 09:11:54 | the S,S,O,S play entry with the most negative gross return | fast-collapse, O | 8 s | +25 s |
+| 4 | Oct 18 | 17330 | 01:48:50 | recognised before confirmation, longest runway | persistent, P | 673 s | +53 s |
+| 5 | Oct 17 | 59992 | 13:39:52 | largest oriented +300 s move in the 13:00 hour | persistent, O | 56 s | +51 s |
+| 6 | Oct 17 | 61497 | 14:04:57 | absorbed pair: next burst from the forecast side, price against it | persistent, P | 110 s | +51 s |
+| 7 | Oct 3 | 67166 | 15:39:26 | largest oriented +300 s move in the 15:00 hour | fast-collapse, S | 2 s | +51 s |
+| 8 | Oct 3 | 14033 | 00:53:53 | persistent, overnight, zero move at +60 and +300, lowest volume | persistent, P | 143 s | +51 s |
+| 9 | Oct 2 | 64190 | 14:49:50 | largest absolute oriented +300 s move in the 14:00 hour | fast-collapse, S | 3 s | +51 s |
+| 10 | Oct 2 | 61148 | 13:59:08 | moved with polarity by confirmation, then the other way by +300 | fast-collapse, S | 33 s | +51 s |
+
+Case 1 and case 10 are the same shape at confirmation (a fast-collapse S seed confirmed within seconds of
+t0) and go opposite ways by +300 s, which is the section 13 point drawn: the state names the activity and
+its persistence, not the direction. Cases 4, 6 and 8 show the persistent state's long runway with the
+archived recognition landing at +51 to +53 s, well before confirmation, which is the information horizon of
+section 16. Case 5 sits inside the October 17 13:00 UTC collapse hour where the October 18 cell lifts did
+not hold. These are descriptions of individual events, not a comparison with the other two passes.
