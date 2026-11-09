@@ -1,0 +1,281 @@
+{
+  "session": "oct02",
+  "events": 839,
+  "eligible_universe": 404,
+  "ineligible_reasons": {
+    "predecessors_not_knowable": 277,
+    "successor_before_confirmation": 256
+  },
+  "universe": {
+    "n": 404,
+    "mean": 0.173,
+    "median": 0.0,
+    "with_": 119,
+    "flat": 195,
+    "against": 90,
+    "with_share_nonflat": 0.569
+  },
+  "play": {
+    "frequency": 0.0173,
+    "n": 7,
+    "mean": -0.429,
+    "median": -1.0,
+    "with_": 1,
+    "flat": 2,
+    "against": 4,
+    "with_share_nonflat": 0.2
+  },
+  "play_rows": [
+    {
+      "t0": 33070,
+      "polarity": 1,
+      "return_ticks": -2.0,
+      "expected_side": 0,
+      "same_as_prev": 1
+    },
+    {
+      "t0": 56696,
+      "polarity": -1,
+      "return_ticks": -1.0,
+      "expected_side": 0,
+      "same_as_prev": 1
+    },
+    {
+      "t0": 60571,
+      "polarity": -1,
+      "return_ticks": 2.0,
+      "expected_side": 1,
+      "same_as_prev": 0
+    },
+    {
+      "t0": 68975,
+      "polarity": 1,
+      "return_ticks": -1.0,
+      "expected_side": 1,
+      "same_as_prev": 1
+    },
+    {
+      "t0": 74685,
+      "polarity": 1,
+      "return_ticks": 0.0,
+      "expected_side": 1,
+      "same_as_prev": 1
+    },
+    {
+      "t0": 76018,
+      "polarity": -1,
+      "return_ticks": -1.0,
+      "expected_side": 0,
+      "same_as_prev": 0
+    },
+    {
+      "t0": 83979,
+      "polarity": 1,
+      "return_ticks": 0.0,
+      "expected_side": 1,
+      "same_as_prev": 0
+    }
+  ],
+  "universe_by_expected_side": {
+    "1": {
+      "n": 202,
+      "mean": 0.119,
+      "median": 0.0,
+      "with_": 63,
+      "flat": 98,
+      "against": 41,
+      "with_share_nonflat": 0.606
+    },
+    "0": {
+      "n": 202,
+      "mean": 0.228,
+      "median": 0.0,
+      "with_": 56,
+      "flat": 97,
+      "against": 49,
+      "with_share_nonflat": 0.533
+    }
+  },
+  "universe_by_same_as_prev": {
+    "1": {
+      "n": 189,
+      "mean": 0.196,
+      "median": 0.0,
+      "with_": 61,
+      "flat": 80,
+      "against": 48,
+      "with_share_nonflat": 0.56
+    },
+    "0": {
+      "n": 215,
+      "mean": 0.153,
+      "median": 0.0,
+      "with_": 58,
+      "flat": 115,
+      "against": 42,
+      "with_share_nonflat": 0.58
+    }
+  },
+  "universe_by_prev_seed": {
+    "P": {
+      "n": 121,
+      "mean": -0.008,
+      "median": 0.0,
+      "with_": 26,
+      "flat": 71,
+      "against": 24,
+      "with_share_nonflat": 0.52
+    },
+    "S": {
+      "n": 100,
+      "mean": 0.31,
+      "median": 0.0,
+      "with_": 41,
+      "flat": 30,
+      "against": 29,
+      "with_share_nonflat": 0.586
+    },
+    "O": {
+      "n": 117,
+      "mean": 0.222,
+      "median": 0.0,
+      "with_": 38,
+      "flat": 51,
+      "against": 28,
+      "with_share_nonflat": 0.576
+    },
+    "X": {
+      "n": 66,
+      "mean": 0.212,
+      "median": 0.0,
+      "with_": 14,
+      "flat": 43,
+      "against": 9,
+      "with_share_nonflat": 0.609
+    }
+  },
+  "universe_by_prev_seed_x_same": {
+    "P|same=1": {
+      "n": 53,
+      "mean": -0.094,
+      "median": 0.0,
+      "with_": 15,
+      "flat": 26,
+      "against": 12,
+      "with_share_nonflat": 0.556
+    },
+    "P|same=0": {
+      "n": 68,
+      "mean": 0.059,
+      "median": 0.0,
+      "with_": 11,
+      "flat": 45,
+      "against": 12,
+      "with_share_nonflat": 0.478
+    },
+    "S|same=1": {
+      "n": 54,
+      "mean": 0.352,
+      "median": 0.0,
+      "with_": 20,
+      "flat": 16,
+      "against": 18,
+      "with_share_nonflat": 0.526
+    },
+    "S|same=0": {
+      "n": 46,
+      "mean": 0.261,
+      "median": 0.0,
+      "with_": 21,
+      "flat": 14,
+      "against": 11,
+      "with_share_nonflat": 0.656
+    },
+    "O|same=1": {
+      "n": 54,
+      "mean": 0.185,
+      "median": 0.0,
+      "with_": 20,
+      "flat": 18,
+      "against": 16,
+      "with_share_nonflat": 0.556
+    },
+    "O|same=0": {
+      "n": 63,
+      "mean": 0.254,
+      "median": 0.0,
+      "with_": 18,
+      "flat": 33,
+      "against": 12,
+      "with_share_nonflat": 0.6
+    },
+    "X|same=1": {
+      "n": 28,
+      "mean": 0.464,
+      "median": 0.0,
+      "with_": 6,
+      "flat": 20,
+      "against": 2,
+      "with_share_nonflat": 0.75
+    },
+    "X|same=0": {
+      "n": 38,
+      "mean": 0.026,
+      "median": 0.0,
+      "with_": 8,
+      "flat": 23,
+      "against": 7,
+      "with_share_nonflat": 0.533
+    }
+  },
+  "play_by_expected_side": {
+    "1": {
+      "n": 4,
+      "mean": 0.25,
+      "median": 0.0,
+      "with_": 1,
+      "flat": 2,
+      "against": 1,
+      "with_share_nonflat": 0.5
+    },
+    "0": {
+      "n": 3,
+      "mean": -1.333,
+      "median": -1.0,
+      "with_": 0,
+      "flat": 0,
+      "against": 3,
+      "with_share_nonflat": 0.0
+    }
+  },
+  "play_by_same_as_prev": {
+    "1": {
+      "n": 4,
+      "mean": -1.0,
+      "median": -1.0,
+      "with_": 0,
+      "flat": 1,
+      "against": 3,
+      "with_share_nonflat": 0.0
+    },
+    "0": {
+      "n": 3,
+      "mean": 0.333,
+      "median": 0.0,
+      "with_": 1,
+      "flat": 1,
+      "against": 1,
+      "with_share_nonflat": 0.5
+    }
+  },
+  "prev4_top": {
+    "PPPP": 12,
+    "OSOS": 11,
+    "PXPP": 10,
+    "OOSO": 10,
+    "SSSO": 9,
+    "OSSS": 8,
+    "SOSO": 8,
+    "SOSS": 8
+  }
+}

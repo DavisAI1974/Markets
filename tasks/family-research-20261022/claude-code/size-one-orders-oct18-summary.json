@@ -1,0 +1,380 @@
+{
+  "session": "oct18",
+  "episodes": 27560,
+  "with_order": 27560,
+  "errors": 0,
+  "NEW_BEST": {
+    "n": 16121,
+    "by_origin": {
+      "fresh_add": {
+        "n": 15068,
+        "retreat_share": 0.364,
+        "median_age_ms": 0.024,
+        "fate": {
+          "none_before_tape_end": 5,
+          "F": 8134,
+          "C": 6791,
+          "M_away": 136,
+          "M_size_up": 2
+        },
+        "median_fate_delay_ms": 11.055,
+        "cancelled_within_5ms": 0.189,
+        "filled_first": 0.54
+      },
+      "older_resting": {
+        "n": 247,
+        "retreat_share": 0.271,
+        "median_age_ms": 1963.989,
+        "fate": {
+          "C": 132,
+          "F": 109,
+          "M_away": 5,
+          "none_before_tape_end": 1
+        },
+        "median_fate_delay_ms": 22.5795,
+        "cancelled_within_5ms": 0.182,
+        "filled_first": 0.441
+      },
+      "repriced_in": {
+        "n": 803,
+        "retreat_share": 0.521,
+        "median_age_ms": 6886.354,
+        "fate": {
+          "F": 658,
+          "M_away": 115,
+          "C": 30
+        },
+        "median_fate_delay_ms": 5.812,
+        "cancelled_within_5ms": 0.004,
+        "filled_first": 0.819
+      },
+      "size_cut_in_place": {
+        "n": 3,
+        "retreat_share": 0.667,
+        "median_age_ms": 15144.98,
+        "fate": {
+          "C": 1,
+          "F": 2
+        },
+        "median_fate_delay_ms": 16.989,
+        "cancelled_within_5ms": 0.0,
+        "filled_first": 0.667
+      }
+    },
+    "by_age": {
+      "under_10ms": {
+        "n": 15188,
+        "retreat_share": 0.364,
+        "median_age_ms": 0.024,
+        "fate": {
+          "none_before_tape_end": 5,
+          "F": 8213,
+          "C": 6818,
+          "M_away": 150,
+          "M_size_up": 2
+        },
+        "median_fate_delay_ms": 11.085,
+        "cancelled_within_5ms": 0.188,
+        "filled_first": 0.541
+      },
+      "10ms_to_1s": {
+        "n": 210,
+        "retreat_share": 0.481,
+        "median_age_ms": 69.906,
+        "fate": {
+          "C": 40,
+          "F": 148,
+          "M_away": 22
+        },
+        "median_fate_delay_ms": 8.9445,
+        "cancelled_within_5ms": 0.033,
+        "filled_first": 0.705
+      },
+      "1s_to_60s": {
+        "n": 540,
+        "retreat_share": 0.5,
+        "median_age_ms": 9748.635999999999,
+        "fate": {
+          "C": 61,
+          "F": 409,
+          "none_before_tape_end": 1,
+          "M_away": 69
+        },
+        "median_fate_delay_ms": 6.871,
+        "cancelled_within_5ms": 0.043,
+        "filled_first": 0.757
+      },
+      "over_60s": {
+        "n": 183,
+        "retreat_share": 0.377,
+        "median_age_ms": 131937.906,
+        "fate": {
+          "F": 133,
+          "C": 35,
+          "M_away": 15
+        },
+        "median_fate_delay_ms": 96.209,
+        "cancelled_within_5ms": 0.055,
+        "filled_first": 0.727
+      }
+    },
+    "by_prior_onsets": {
+      "0": {
+        "n": 15812,
+        "retreat_share": 0.37,
+        "median_age_ms": 0.024,
+        "fate": {
+          "none_before_tape_end": 6,
+          "F": 8679,
+          "C": 6896,
+          "M_away": 229,
+          "M_size_up": 2
+        },
+        "median_fate_delay_ms": 10.8545,
+        "cancelled_within_5ms": 0.182,
+        "filled_first": 0.549
+      },
+      "1": {
+        "n": 197,
+        "retreat_share": 0.472,
+        "median_age_ms": 5557.004,
+        "fate": {
+          "C": 32,
+          "F": 141,
+          "M_away": 24
+        },
+        "median_fate_delay_ms": 10.548,
+        "cancelled_within_5ms": 0.041,
+        "filled_first": 0.716
+      },
+      "2": {
+        "n": 57,
+        "retreat_share": 0.386,
+        "median_age_ms": 21455.393,
+        "fate": {
+          "C": 10,
+          "F": 44,
+          "M_away": 3
+        },
+        "median_fate_delay_ms": 23.311,
+        "cancelled_within_5ms": 0.035,
+        "filled_first": 0.772
+      },
+      "3": {
+        "n": 55,
+        "retreat_share": 0.109,
+        "median_age_ms": 21135.36,
+        "fate": {
+          "F": 39,
+          "C": 16
+        },
+        "median_fate_delay_ms": 19.682,
+        "cancelled_within_5ms": 0.018,
+        "filled_first": 0.709
+      }
+    },
+    "repeat_order_ids": {
+      "orders_with_2plus_onsets": 185,
+      "share_of_onsets_from_repeat_orders": 0.027,
+      "top_order_onset_counts": [
+        20,
+        17,
+        6,
+        4,
+        4,
+        4,
+        3,
+        3,
+        3,
+        3
+      ]
+    },
+    "origin_x_fate": {
+      "fresh_add->none": 5,
+      "fresh_add->F": 8134,
+      "fresh_add->C": 6791,
+      "older_resting->C": 132,
+      "older_resting->F": 109,
+      "repriced_in->F": 658,
+      "fresh_add->M_away": 136,
+      "repriced_in->M_away": 115,
+      "older_resting->M_away": 5,
+      "older_resting->none": 1,
+      "repriced_in->C": 30,
+      "fresh_add->M_size_up": 2,
+      "size_cut_in_place->C": 1,
+      "size_cut_in_place->F": 2
+    }
+  },
+  "STANDING_BEST_SHRANK": {
+    "n": 11439,
+    "by_origin": {
+      "older_resting": {
+        "n": 10704,
+        "retreat_share": 0.577,
+        "median_age_ms": 272.2915,
+        "fate": {
+          "none_before_tape_end": 1,
+          "C": 4320,
+          "F": 6125,
+          "M_away": 258
+        },
+        "median_fate_delay_ms": 5.159,
+        "cancelled_within_5ms": 0.242,
+        "filled_first": 0.572
+      },
+      "size_cut_in_place": {
+        "n": 735,
+        "retreat_share": 0.717,
+        "median_age_ms": 567.898,
+        "fate": {
+          "F": 653,
+          "C": 78,
+          "M_size_up": 1,
+          "M_away": 3
+        },
+        "median_fate_delay_ms": 0.655,
+        "cancelled_within_5ms": 0.061,
+        "filled_first": 0.888
+      }
+    },
+    "by_age": {
+      "under_10ms": {
+        "n": 3794,
+        "retreat_share": 0.547,
+        "median_age_ms": 2.171,
+        "fate": {
+          "C": 1864,
+          "F": 1913,
+          "M_away": 17
+        },
+        "median_fate_delay_ms": 3.354,
+        "cancelled_within_5ms": 0.313,
+        "filled_first": 0.504
+      },
+      "10ms_to_1s": {
+        "n": 2678,
+        "retreat_share": 0.608,
+        "median_age_ms": 89.0145,
+        "fate": {
+          "C": 1061,
+          "F": 1580,
+          "M_away": 36,
+          "M_size_up": 1
+        },
+        "median_fate_delay_ms": 8.712,
+        "cancelled_within_5ms": 0.229,
+        "filled_first": 0.59
+      },
+      "1s_to_60s": {
+        "n": 3686,
+        "retreat_share": 0.644,
+        "median_age_ms": 6775.2685,
+        "fate": {
+          "C": 1079,
+          "F": 2456,
+          "M_away": 151
+        },
+        "median_fate_delay_ms": 3.674,
+        "cancelled_within_5ms": 0.165,
+        "filled_first": 0.666
+      },
+      "over_60s": {
+        "n": 1281,
+        "retreat_share": 0.492,
+        "median_age_ms": 205133.21,
+        "fate": {
+          "none_before_tape_end": 1,
+          "F": 829,
+          "M_away": 57,
+          "C": 394
+        },
+        "median_fate_delay_ms": 11.66,
+        "cancelled_within_5ms": 0.178,
+        "filled_first": 0.647
+      }
+    },
+    "by_prior_onsets": {
+      "0": {
+        "n": 7835,
+        "retreat_share": 0.671,
+        "median_age_ms": 215.473,
+        "fate": {
+          "none_before_tape_end": 1,
+          "C": 2988,
+          "F": 4683,
+          "M_away": 163
+        },
+        "median_fate_delay_ms": 2.1605,
+        "cancelled_within_5ms": 0.258,
+        "filled_first": 0.598
+      },
+      "1": {
+        "n": 2422,
+        "retreat_share": 0.494,
+        "median_age_ms": 41.4745,
+        "fate": {
+          "F": 1287,
+          "C": 1065,
+          "M_away": 69,
+          "M_size_up": 1
+        },
+        "median_fate_delay_ms": 31.323500000000003,
+        "cancelled_within_5ms": 0.222,
+        "filled_first": 0.531
+      },
+      "2": {
+        "n": 441,
+        "retreat_share": 0.381,
+        "median_age_ms": 1605.451,
+        "fate": {
+          "C": 173,
+          "F": 251,
+          "M_away": 17
+        },
+        "median_fate_delay_ms": 428.075,
+        "cancelled_within_5ms": 0.132,
+        "filled_first": 0.569
+      },
+      "3": {
+        "n": 741,
+        "retreat_share": 0.108,
+        "median_age_ms": 41572.19,
+        "fate": {
+          "F": 557,
+          "C": 172,
+          "M_away": 12
+        },
+        "median_fate_delay_ms": 20934.003,
+        "cancelled_within_5ms": 0.03,
+        "filled_first": 0.752
+      }
+    },
+    "repeat_order_ids": {
+      "orders_with_2plus_onsets": 964,
+      "share_of_onsets_from_repeat_orders": 0.247,
+      "top_order_onset_counts": [
+        57,
+        48,
+        46,
+        45,
+        32,
+        31,
+        31,
+        30,
+        27,
+        21
+      ]
+    },
+    "origin_x_fate": {
+      "older_resting->none": 1,
+      "older_resting->C": 4320,
+      "older_resting->F": 6125,
+      "older_resting->M_away": 258,
+      "size_cut_in_place->F": 653,
+      "size_cut_in_place->C": 78,
+      "size_cut_in_place->M_size_up": 1,
+      "size_cut_in_place->M_away": 3
+    }
+  }
+}

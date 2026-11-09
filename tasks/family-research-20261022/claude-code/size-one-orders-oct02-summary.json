@@ -1,0 +1,369 @@
+{
+  "session": "oct02",
+  "episodes": 22042,
+  "with_order": 22042,
+  "errors": 0,
+  "NEW_BEST": {
+    "n": 13059,
+    "by_origin": {
+      "fresh_add": {
+        "n": 12071,
+        "retreat_share": 0.368,
+        "median_age_ms": 0.023,
+        "fate": {
+          "F": 7447,
+          "C": 4464,
+          "M_away": 160
+        },
+        "median_fate_delay_ms": 9.255,
+        "cancelled_within_5ms": 0.156,
+        "filled_first": 0.617
+      },
+      "older_resting": {
+        "n": 148,
+        "retreat_share": 0.399,
+        "median_age_ms": 1496.885,
+        "fate": {
+          "C": 97,
+          "F": 43,
+          "M_away": 8
+        },
+        "median_fate_delay_ms": 8.086500000000001,
+        "cancelled_within_5ms": 0.311,
+        "filled_first": 0.291
+      },
+      "repriced_in": {
+        "n": 837,
+        "retreat_share": 0.566,
+        "median_age_ms": 7134.416,
+        "fate": {
+          "F": 719,
+          "M_away": 96,
+          "C": 21,
+          "M_size_up": 1
+        },
+        "median_fate_delay_ms": 4.404,
+        "cancelled_within_5ms": 0.005,
+        "filled_first": 0.859
+      },
+      "size_cut_in_place": {
+        "n": 3,
+        "retreat_share": 0.333,
+        "median_age_ms": 502.084,
+        "fate": {
+          "F": 2,
+          "C": 1
+        },
+        "median_fate_delay_ms": 143.207,
+        "cancelled_within_5ms": 0.0,
+        "filled_first": 0.667
+      }
+    },
+    "by_age": {
+      "under_10ms": {
+        "n": 12177,
+        "retreat_share": 0.369,
+        "median_age_ms": 0.023,
+        "fate": {
+          "F": 7507,
+          "C": 4496,
+          "M_away": 174
+        },
+        "median_fate_delay_ms": 9.155,
+        "cancelled_within_5ms": 0.156,
+        "filled_first": 0.616
+      },
+      "10ms_to_1s": {
+        "n": 161,
+        "retreat_share": 0.516,
+        "median_age_ms": 57.509,
+        "fate": {
+          "C": 27,
+          "F": 121,
+          "M_away": 13
+        },
+        "median_fate_delay_ms": 5.276,
+        "cancelled_within_5ms": 0.037,
+        "filled_first": 0.752
+      },
+      "1s_to_60s": {
+        "n": 524,
+        "retreat_share": 0.519,
+        "median_age_ms": 8741.3875,
+        "fate": {
+          "C": 43,
+          "F": 421,
+          "M_away": 59,
+          "M_size_up": 1
+        },
+        "median_fate_delay_ms": 5.3085,
+        "cancelled_within_5ms": 0.038,
+        "filled_first": 0.803
+      },
+      "over_60s": {
+        "n": 197,
+        "retreat_share": 0.64,
+        "median_age_ms": 111901.358,
+        "fate": {
+          "C": 17,
+          "F": 162,
+          "M_away": 18
+        },
+        "median_fate_delay_ms": 4.595,
+        "cancelled_within_5ms": 0.041,
+        "filled_first": 0.822
+      }
+    },
+    "by_prior_onsets": {
+      "0": {
+        "n": 12814,
+        "retreat_share": 0.376,
+        "median_age_ms": 0.023,
+        "fate": {
+          "F": 8036,
+          "C": 4546,
+          "M_away": 231,
+          "M_size_up": 1
+        },
+        "median_fate_delay_ms": 9.0,
+        "cancelled_within_5ms": 0.15,
+        "filled_first": 0.627
+      },
+      "1": {
+        "n": 198,
+        "retreat_share": 0.601,
+        "median_age_ms": 5240.5244999999995,
+        "fate": {
+          "F": 138,
+          "M_away": 25,
+          "C": 35
+        },
+        "median_fate_delay_ms": 4.4285,
+        "cancelled_within_5ms": 0.056,
+        "filled_first": 0.697
+      },
+      "2": {
+        "n": 35,
+        "retreat_share": 0.657,
+        "median_age_ms": 16553.879,
+        "fate": {
+          "F": 30,
+          "C": 2,
+          "M_away": 3
+        },
+        "median_fate_delay_ms": 3.289,
+        "cancelled_within_5ms": 0.0,
+        "filled_first": 0.857
+      },
+      "3": {
+        "n": 12,
+        "retreat_share": 0.583,
+        "median_age_ms": 810.932,
+        "fate": {
+          "F": 7,
+          "M_away": 5
+        },
+        "median_fate_delay_ms": 0.769,
+        "cancelled_within_5ms": 0.0,
+        "filled_first": 0.583
+      }
+    },
+    "repeat_order_ids": {
+      "orders_with_2plus_onsets": 174,
+      "share_of_onsets_from_repeat_orders": 0.029,
+      "top_order_onset_counts": [
+        9,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3
+      ]
+    },
+    "origin_x_fate": {
+      "fresh_add->F": 7447,
+      "fresh_add->C": 4464,
+      "older_resting->C": 97,
+      "repriced_in->F": 719,
+      "repriced_in->M_away": 96,
+      "older_resting->F": 43,
+      "fresh_add->M_away": 160,
+      "older_resting->M_away": 8,
+      "repriced_in->C": 21,
+      "size_cut_in_place->F": 2,
+      "repriced_in->M_size_up": 1,
+      "size_cut_in_place->C": 1
+    }
+  },
+  "STANDING_BEST_SHRANK": {
+    "n": 8983,
+    "by_origin": {
+      "older_resting": {
+        "n": 7842,
+        "retreat_share": 0.622,
+        "median_age_ms": 42.035,
+        "fate": {
+          "C": 2796,
+          "F": 4908,
+          "M_away": 138
+        },
+        "median_fate_delay_ms": 3.356,
+        "cancelled_within_5ms": 0.23,
+        "filled_first": 0.626
+      },
+      "size_cut_in_place": {
+        "n": 1141,
+        "retreat_share": 0.714,
+        "median_age_ms": 17.443,
+        "fate": {
+          "F": 923,
+          "C": 212,
+          "M_size_up": 1,
+          "M_away": 5
+        },
+        "median_fate_delay_ms": 0.627,
+        "cancelled_within_5ms": 0.147,
+        "filled_first": 0.809
+      }
+    },
+    "by_age": {
+      "under_10ms": {
+        "n": 3535,
+        "retreat_share": 0.597,
+        "median_age_ms": 2.167,
+        "fate": {
+          "F": 2057,
+          "C": 1456,
+          "M_away": 21,
+          "M_size_up": 1
+        },
+        "median_fate_delay_ms": 2.425,
+        "cancelled_within_5ms": 0.276,
+        "filled_first": 0.582
+      },
+      "10ms_to_1s": {
+        "n": 2256,
+        "retreat_share": 0.631,
+        "median_age_ms": 62.875,
+        "fate": {
+          "C": 735,
+          "F": 1483,
+          "M_away": 38
+        },
+        "median_fate_delay_ms": 3.959,
+        "cancelled_within_5ms": 0.205,
+        "filled_first": 0.657
+      },
+      "1s_to_60s": {
+        "n": 2503,
+        "retreat_share": 0.693,
+        "median_age_ms": 6283.126,
+        "fate": {
+          "F": 1832,
+          "C": 602,
+          "M_away": 69
+        },
+        "median_fate_delay_ms": 1.868,
+        "cancelled_within_5ms": 0.156,
+        "filled_first": 0.732
+      },
+      "over_60s": {
+        "n": 689,
+        "retreat_share": 0.614,
+        "median_age_ms": 180767.988,
+        "fate": {
+          "F": 459,
+          "C": 215,
+          "M_away": 15
+        },
+        "median_fate_delay_ms": 3.551,
+        "cancelled_within_5ms": 0.209,
+        "filled_first": 0.666
+      }
+    },
+    "by_prior_onsets": {
+      "0": {
+        "n": 6980,
+        "retreat_share": 0.687,
+        "median_age_ms": 26.71,
+        "fate": {
+          "F": 4525,
+          "C": 2352,
+          "M_away": 102,
+          "M_size_up": 1
+        },
+        "median_fate_delay_ms": 1.782,
+        "cancelled_within_5ms": 0.238,
+        "filled_first": 0.648
+      },
+      "1": {
+        "n": 1535,
+        "retreat_share": 0.5,
+        "median_age_ms": 36.175,
+        "fate": {
+          "C": 553,
+          "F": 951,
+          "M_away": 31
+        },
+        "median_fate_delay_ms": 15.018,
+        "cancelled_within_5ms": 0.182,
+        "filled_first": 0.62
+      },
+      "2": {
+        "n": 249,
+        "retreat_share": 0.365,
+        "median_age_ms": 1177.069,
+        "fate": {
+          "C": 65,
+          "M_away": 9,
+          "F": 175
+        },
+        "median_fate_delay_ms": 64.924,
+        "cancelled_within_5ms": 0.088,
+        "filled_first": 0.703
+      },
+      "3": {
+        "n": 219,
+        "retreat_share": 0.174,
+        "median_age_ms": 11263.225,
+        "fate": {
+          "C": 38,
+          "F": 180,
+          "M_away": 1
+        },
+        "median_fate_delay_ms": 17.508,
+        "cancelled_within_5ms": 0.041,
+        "filled_first": 0.822
+      }
+    },
+    "repeat_order_ids": {
+      "orders_with_2plus_onsets": 610,
+      "share_of_onsets_from_repeat_orders": 0.171,
+      "top_order_onset_counts": [
+        20,
+        16,
+        16,
+        11,
+        10,
+        10,
+        10,
+        10,
+        9,
+        8
+      ]
+    },
+    "origin_x_fate": {
+      "older_resting->C": 2796,
+      "older_resting->F": 4908,
+      "size_cut_in_place->F": 923,
+      "older_resting->M_away": 138,
+      "size_cut_in_place->C": 212,
+      "size_cut_in_place->M_size_up": 1,
+      "size_cut_in_place->M_away": 5
+    }
+  }
+}

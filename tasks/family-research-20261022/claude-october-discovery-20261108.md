@@ -1321,3 +1321,95 @@ does not yet aggregate.
 This closes the export-side gap listed in section 17.4: every October 18 export-side pass now has its
 four-session form except the 749 first-family population and the two order traces, whose definitions are
 October 18's own.
+
+## 19. The orders behind the one-lot bests, and the frozen SSOS play on four sessions
+
+### 19.1 Mechanical or behavioural: what the order ids say
+
+Section 18 asked whether a one-lot new best is a mechanical remainder or a behaviour. The MBO tape names
+every order, so `size_one_order_identity.py` records, for each of the 101,000 onsets, the one order at the
+touch at the onset close: how it got there in the onset group (a fresh add at that price, a reprice of an
+older order from another price, an older resting order left alone, or the survivor cutting its own size),
+its age, how many earlier onsets the same order id created, and its fate after the onset (the next message
+on that id and the delay). Outputs `size-one-orders-<tag>*`. Four sessions, October 18 / 17 / 3 / 2:
+
+**New-best onsets (16,121 / 16,119 / 14,892 / 13,059).**
+
+| origin of the one-lot order | share | retreat | filled first | cancelled within 5 ms | median fate delay |
+|---|---|---|---|---|---|
+| fresh add in the onset group (age 0.02 ms) | 0.93 to 0.94 | 0.36 / 0.37 / 0.42 / 0.37 | 0.54 / 0.56 / 0.65 / 0.62 | 0.19 / 0.19 / 0.16 / 0.16 | 9 to 11 ms |
+| older order repriced to the new best (median age 7 s) | 0.05 to 0.06 | 0.52 / 0.59 / 0.56 / 0.57 | 0.82 / 0.84 / 0.88 / 0.86 | 0.004 or less | 4 to 6 ms |
+| older resting order left as the new best | 0.01 | 0.27 / 0.33 / 0.29 / 0.40 | 0.44 / 0.42 / 0.45 / 0.29 | 0.15 to 0.31 | 8 to 30 ms |
+
+Order ids that create two or more new-best onsets in a session are 1.7 to 2.9 percent of new-best onsets
+(the busiest id made 20 on October 18, 9 or fewer elsewhere). A fresh one-lot new best is therefore a new
+order that is hit more often than it is pulled; one in six is pulled inside 5 ms, which is the ceiling on
+any probing story for this population. The repriced-in minority behaves differently and consistently: an
+older order stepping to a new best with one lot is filled 82 to 88 percent of the time within a few
+milliseconds and almost never cancelled; it is a price improver that gets taken, and its touch retreats
+more often than the fresh add's (because it was filled, not because it fled).
+
+**Standing-best-shrank onsets (11,439 / 10,992 / 9,461 / 8,983).**
+
+| origin | share | retreat | filled first | cancelled within 5 ms | median fate delay |
+|---|---|---|---|---|---|
+| older resting survivor (level eaten or cancelled around it) | 0.88 to 0.92 | 0.58 / 0.59 / 0.61 / 0.62 | 0.57 / 0.58 / 0.64 / 0.63 | 0.23 to 0.24 | 3 to 5 ms |
+| survivor cut its own size to one lot | 0.07 to 0.12 | 0.72 / 0.70 / 0.76 / 0.71 | 0.89 / 0.85 / 0.84 / 0.81 | 0.06 to 0.15 | 0.6 to 0.75 ms |
+
+| prior onsets by the same order id | share of standing onsets | retreat | filled first |
+|---|---|---|---|
+| 0 | 0.68 to 0.78 | 0.67 / 0.67 / 0.69 / 0.69 | 0.60 / 0.61 / 0.66 / 0.65 |
+| 1 | 0.17 to 0.21 | 0.49 / 0.46 / 0.47 / 0.50 | 0.53 / 0.55 / 0.61 / 0.62 |
+| 2 | 0.03 to 0.04 | 0.38 / 0.39 / 0.32 / 0.37 | 0.57 / 0.64 / 0.70 / 0.70 |
+| 3 or more | 0.02 to 0.06 | 0.11 / 0.20 / 0.17 / 0.17 | 0.75 / 0.79 / 0.79 / 0.82 |
+
+Here identity carries information on every day: 17 to 25 percent of standing-shrank onsets come from
+order ids that have been the one-lot survivor before (the busiest ids 20 to 57 times in a session), and
+the more often an order has already been eaten to one lot and come back, the less its remnant retreats
+(0.67 to 0.69 on a first appearance, 0.11 to 0.20 on a fourth or later) and the more it is filled rather
+than pulled. These are refreshing liquidity providers: a resting order that keeps re-growing at the same
+price after being consumed. The section 18 mechanism (fill-eaten standing levels retreat 73 percent) is
+the first-appearance case; the repeat-survivor case is its behavioural complement, and it is the one place
+in this work where who the order is, not only what happened to the level, predicts what the level does.
+
+### 19.2 The frozen SSOS play and the absorption filter at its horizon
+
+`chain_play_filter.py` reproduces NG_CHAIN_D4_SSOS_CONTINUATION_V1 as frozen: four predecessors' seed
+states S,S,O,S oldest to newest, each knowable before the current t0; endpoint confirmed by onset+5 or no
+entry; stand down if a successor starts before confirmation; enter with the current polarity at onset+5,
+exit at onset+30; gross return in ticks. P,O,X was killed on its held week and is not run. Eligible targets
+399 / 355 / 415 / 404 (the two gates each remove about a third of events: the immediate predecessor's seed
+is usually not yet known at t0 because the median gap is 72 s, and a successor often starts before
+confirmation).
+
+| session | play instances | frequency of eligible | gross return mean (ticks) | with / flat / against |
+|---|---|---|---|---|
+| Oct 18 | 10 | 0.025 | minus 0.30 | 2 / 3 / 5 |
+| Oct 17 | 10 | 0.028 | minus 0.30 | 5 / 2 / 3 |
+| Oct 3 | 3 | 0.007 | plus 0.67 | 1 / 1 / 1 |
+| Oct 2 | 7 | 0.017 | minus 0.43 | 1 / 2 / 4 |
+
+The frequency matches the frozen base (2.49 percent) on two sessions and is lower on the others; the
+return does not: the frozen base averaged plus 0.26 ticks and the held week plus 0.82, and these four
+sessions give 30 instances at minus 0.21 on average, 9 with, 8 flat, 13 against. Thirty instances is not a
+verdict, and whether October 2023 lies inside or outside the play's 54-week base is not recorded here; it
+is one more block in which the play did not pay, logged as such. The eligible universe itself is flat
+(0.51 to 0.57 with-share, means minus 0.02 to plus 0.17 ticks).
+
+**The absorption regularity does not transfer to the play's window.** Splitting every eligible entry by
+whether the current burst came from the side the previous event's state forecast: October 18 shows it
+(expected side 0.42 with-share and minus 0.27 ticks, unexpected side 0.62 and plus 0.25), October 17 does
+not (0.57 vs 0.54), October 3 weakly (0.49 vs 0.53), October 2 reverses (0.61 vs 0.53). Section 14.5's
+regularity was measured over the next burst's own window, t0 to confirmation, and it held on four days
+there; over onset+5 to onset+30 it is one day's. The absorption is in the burst, not after it, which is
+consistent with section 11: by confirmation the burst's move is done.
+
+### 19.3 Where this leaves the open questions
+
+- Mechanical versus behavioural, answered for the one-lot bests: fresh new bests are new orders that get
+  hit (mechanical, with a one-in-six fast-cancel minority); repriced-in new bests are price improvers that
+  get taken; repeat-survivor standing remnants are refreshing providers whose history predicts holding.
+  The last is the behavioural layer and it is readable from order ids alone.
+- The frozen SSOS play is negative on three of four sessions; the absorption read is not a filter for it.
+- Still open, as before: the Kalshi side for the lag stack, a fifth and sixth session for the clock's
+  factors, and the 749 first-family population's cross-day form, whose definition is October 18's own.

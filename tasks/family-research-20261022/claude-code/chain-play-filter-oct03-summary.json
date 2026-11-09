@@ -1,0 +1,253 @@
+{
+  "session": "oct03",
+  "events": 857,
+  "eligible_universe": 415,
+  "ineligible_reasons": {
+    "predecessors_not_knowable": 298,
+    "successor_before_confirmation": 242
+  },
+  "universe": {
+    "n": 415,
+    "mean": 0.053,
+    "median": 0.0,
+    "with_": 114,
+    "flat": 192,
+    "against": 109,
+    "with_share_nonflat": 0.511
+  },
+  "play": {
+    "frequency": 0.0072,
+    "n": 3,
+    "mean": 0.667,
+    "median": 0.0,
+    "with_": 1,
+    "flat": 1,
+    "against": 1,
+    "with_share_nonflat": 0.5
+  },
+  "play_rows": [
+    {
+      "t0": 64790,
+      "polarity": -1,
+      "return_ticks": -2.0,
+      "expected_side": 0,
+      "same_as_prev": 1
+    },
+    {
+      "t0": 68251,
+      "polarity": -1,
+      "return_ticks": 4.0,
+      "expected_side": 1,
+      "same_as_prev": 1
+    },
+    {
+      "t0": 81720,
+      "polarity": 1,
+      "return_ticks": 0.0,
+      "expected_side": 0,
+      "same_as_prev": 1
+    }
+  ],
+  "universe_by_expected_side": {
+    "1": {
+      "n": 229,
+      "mean": 0.079,
+      "median": 0.0,
+      "with_": 57,
+      "flat": 113,
+      "against": 59,
+      "with_share_nonflat": 0.491
+    },
+    "0": {
+      "n": 186,
+      "mean": 0.022,
+      "median": 0.0,
+      "with_": 57,
+      "flat": 79,
+      "against": 50,
+      "with_share_nonflat": 0.533
+    }
+  },
+  "universe_by_same_as_prev": {
+    "1": {
+      "n": 215,
+      "mean": 0.042,
+      "median": 0.0,
+      "with_": 57,
+      "flat": 98,
+      "against": 60,
+      "with_share_nonflat": 0.487
+    },
+    "0": {
+      "n": 200,
+      "mean": 0.065,
+      "median": 0.0,
+      "with_": 57,
+      "flat": 94,
+      "against": 49,
+      "with_share_nonflat": 0.538
+    }
+  },
+  "universe_by_prev_seed": {
+    "P": {
+      "n": 103,
+      "mean": 0.146,
+      "median": 0.0,
+      "with_": 22,
+      "flat": 63,
+      "against": 18,
+      "with_share_nonflat": 0.55
+    },
+    "S": {
+      "n": 110,
+      "mean": 0.0,
+      "median": 0.0,
+      "with_": 31,
+      "flat": 46,
+      "against": 33,
+      "with_share_nonflat": 0.484
+    },
+    "O": {
+      "n": 121,
+      "mean": -0.099,
+      "median": 0.0,
+      "with_": 37,
+      "flat": 40,
+      "against": 44,
+      "with_share_nonflat": 0.457
+    },
+    "X": {
+      "n": 81,
+      "mean": 0.235,
+      "median": 0.0,
+      "with_": 24,
+      "flat": 43,
+      "against": 14,
+      "with_share_nonflat": 0.632
+    }
+  },
+  "universe_by_prev_seed_x_same": {
+    "P|same=1": {
+      "n": 64,
+      "mean": 0.156,
+      "median": 0.0,
+      "with_": 14,
+      "flat": 37,
+      "against": 13,
+      "with_share_nonflat": 0.519
+    },
+    "P|same=0": {
+      "n": 39,
+      "mean": 0.128,
+      "median": 0.0,
+      "with_": 8,
+      "flat": 26,
+      "against": 5,
+      "with_share_nonflat": 0.615
+    },
+    "S|same=1": {
+      "n": 63,
+      "mean": 0.0,
+      "median": 0.0,
+      "with_": 17,
+      "flat": 29,
+      "against": 17,
+      "with_share_nonflat": 0.5
+    },
+    "S|same=0": {
+      "n": 47,
+      "mean": 0.0,
+      "median": 0.0,
+      "with_": 14,
+      "flat": 17,
+      "against": 16,
+      "with_share_nonflat": 0.467
+    },
+    "O|same=1": {
+      "n": 44,
+      "mean": -0.227,
+      "median": 0.0,
+      "with_": 12,
+      "flat": 11,
+      "against": 21,
+      "with_share_nonflat": 0.364
+    },
+    "O|same=0": {
+      "n": 77,
+      "mean": -0.026,
+      "median": 0.0,
+      "with_": 25,
+      "flat": 29,
+      "against": 23,
+      "with_share_nonflat": 0.521
+    },
+    "X|same=1": {
+      "n": 44,
+      "mean": 0.205,
+      "median": 0.0,
+      "with_": 14,
+      "flat": 21,
+      "against": 9,
+      "with_share_nonflat": 0.609
+    },
+    "X|same=0": {
+      "n": 37,
+      "mean": 0.27,
+      "median": 0.0,
+      "with_": 10,
+      "flat": 22,
+      "against": 5,
+      "with_share_nonflat": 0.667
+    }
+  },
+  "play_by_expected_side": {
+    "1": {
+      "n": 1,
+      "mean": 4.0,
+      "median": 4.0,
+      "with_": 1,
+      "flat": 0,
+      "against": 0,
+      "with_share_nonflat": 1.0
+    },
+    "0": {
+      "n": 2,
+      "mean": -1.0,
+      "median": -1.0,
+      "with_": 0,
+      "flat": 1,
+      "against": 1,
+      "with_share_nonflat": 0.0
+    }
+  },
+  "play_by_same_as_prev": {
+    "1": {
+      "n": 3,
+      "mean": 0.667,
+      "median": 0.0,
+      "with_": 1,
+      "flat": 1,
+      "against": 1,
+      "with_share_nonflat": 0.5
+    },
+    "0": {
+      "n": 0,
+      "mean": null,
+      "median": null,
+      "with_": 0,
+      "flat": 0,
+      "against": 0,
+      "with_share_nonflat": null
+    }
+  },
+  "prev4_top": {
+    "OOSO": 12,
+    "OSOS": 12,
+    "PPPP": 11,
+    "SOOS": 10,
+    "SOOO": 9,
+    "OOSS": 8,
+    "OOOS": 8,
+    "OSOO": 8
+  }
+}
