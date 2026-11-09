@@ -1,0 +1,50 @@
+[
+  {
+    "revision": "a1c4d6f32a03a21795f411e509f7fc77d479b3bb",
+    "path": "tasks/family-research-20261022/october18-candidate-inputs.jsonl.gz",
+    "bytes": 127477,
+    "sha256": "9145da768edf19ffe5bc8068ae92d848099d151d903d3a923f6f8b940e480105"
+  },
+  {
+    "revision": "a1c4d6f32a03a21795f411e509f7fc77d479b3bb",
+    "path": "tasks/family-research-20261022/claude-pass/tables/dipole/t6_cohort_coverage.csv",
+    "bytes": 46642,
+    "sha256": "683af6f6720a88cb0c4ec1be5747251f2ed94bbc6b0f73425fb0b491cf7ab6fa"
+  },
+  {
+    "revision": "b5f28bd57de5ed4ff889335edb9a33216b67eb6a",
+    "path": "research/kalshi/adaptive_wavepacket_20261108/markets_bridge/tasks/root-bounded-replay/retained/october18-standalone-inputs/groups.jsonl.gz",
+    "bytes": 18751004,
+    "sha256": "f03255af6121568165843504965cf1ad2e482178ad9995e5727ef99336d90143"
+  },
+  {
+    "revision": "1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202",
+    "path": "data/nymex_mbo/ng_v0_oct2023/NG_v0_mbo_20231017.dbn.zst",
+    "bytes": 16842309,
+    "sha256": "ce36e2ed242731698004cd83c1947365e8aac0e9dac939d271a8f22752bcca65"
+  },
+  {
+    "revision": "1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202",
+    "path": "data/nymex_mbo/ng_v0_oct2023/NG_v0_mbo_20231018.dbn.zst",
+    "bytes": 15064243,
+    "sha256": "54b2b14c4762a7e4160cc00ce1e70504961ea4e6954e28866dd1bfbaa140f5d5"
+  },
+  {
+    "revision": "a1c4d6f32a03a21795f411e509f7fc77d479b3bb",
+    "path": "tasks/family-research-20261022/research-atlas-v2/dipole-completed-group-flow.csv.gz",
+    "bytes": 412630,
+    "sha256": "cb96144d12bb70cb5972365435672d917d80490a031fee1db623281f007fcf43"
+  },
+  {
+    "revision": "d25fc3f7e59c2a1cb51ec943cd91ff34e176a72a",
+    "path": "artifacts/sqlite-triage/20261022/families/trade-lifecycle-targeted-v1/source-flow_substrate.jsonl.gz",
+    "bytes": 661866,
+    "sha256": "3d1a33d25503dafb2bd984061653ee754c36c692450547be71506561ee7edd9a"
+  },
+  {
+    "revision": "a1c4d6f32a03a21795f411e509f7fc77d479b3bb",
+    "path": "tasks/family-research-20261022/replay-comparison/sources/research-comparison-20231002/native-research-records.jsonl.gz",
+    "bytes": 3212217,
+    "sha256": "b51f459afba5e59a9d161108c564c393e5f28c1d8b18768c9ee837a90a78c714"
+  }
+]

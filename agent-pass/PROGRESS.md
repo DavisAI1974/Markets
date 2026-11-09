@@ -14,3 +14,23 @@
 - Row counts: not yet measured. The requested 863 births / 852 covered are to be reconciled against source data, not assumed.
 - Reading order and task phases: follow TASK.md and EXECUTION.md.
 - Next: read the required sources in order; begin Part 1A; write and inspect complete distributions and figure reconciliations before interpretation; commit and push progress.
+
+## Source reading and execution assumptions
+
+Read in required order: primer at 1ce1fd89; discovery log I-M and Handoff; c24a/a2/b/c/d; all 863 candidate rows and completed-group flow schema. Also read project AGENTS, chart-reading note, research memory and replay-comparison source coordinates. Applied git-workflow-and-versioning and spreadsheet skill for checkpoints and deliverables.
+
+Pinned source base is a1c4d6f32a03a21795f411e509f7fc77d479b3bb. Raw tape revision 1d15dc6f1b5bbb1fabb6389d18e8bedba2b77202 is reachable, as are saved October 18 groups at b5f28bd57 and additional groups at 2f12d6d47. No producer or infrastructure is needed. Large source/cache files will remain ignored under agent-pass/cache, with hashes and regeneration commands committed to avoid duplicating repository storage.
+
+Part 1A reading: retain the original 852-covered subset, plus the 11 original seam exclusions as a separately labeled supplement when the archived full-session group source covers them. Birth paths use exact integer-second cutoffs from -60 through recognition, plus the exact recognition close. No averages, smoothing or scaling of dipole values. Matched controls use same archived session, spread regime and trailing-trade-count activity quintile at strict prebirth; deterministic seeds and all control coordinates are retained. A second draw checks control-choice dependence. Calendar labels are provenance, never numeric features.
+
+Predictions recorded before computations: I think the saved detector uses delayed local extrema and plateau handling; let's see what the data says. I think natural path groupings may depend on representation; no cluster count will be stipulated. Operator forms to examine: constant recognition lag; signed rolling-flow update identity; flow sign determines quote-move sign; depth sign determines quote-move sign; rolling magnitude decays monotonically after birth. Each form will retain its individual residuals and exceptions. Moonshots will use discrete group quote changes and raw trade-side runs, with no claim that these exhaust all natural event definitions.
+
+Next: compute Part 1A paths, controls, raw case traces and chart reconciliation before writing interpretation.
+
+## Part 1A completed
+
+Commands: `python agent-pass/scripts/part1a.py 20231018`; `python agent-pass/scripts/verify_part1a.py`; `python agent-pass/scripts/workbook_data.py part1a`; bundled Node `agent-pass/scripts/workbook.mjs`. Generated 36 charts, 270 reconciled panel rows, 288,144 path rows, 863 candidate paths and 1,726 controls (1,532 distinct anchors). Original coverage 59+793+11=863 retained; primary chart population 852. All 863 prebirth and recognition quote checks agree. All 583,688 saved group closes match cursor/receive/F_LAST in 771,787 raw records. Cases retain all raw messages for each chosen path and both controls.
+
+Charts and CSV were built before FINDINGS measurements/interpretation. Inspected the FLIP quote heat strips visually. Spreadsheet bundled runtime is available; an E-drive junction was unsupported, so the builder uses createRequire anchored to the bundled Node runtime without modifying dependencies. Workbook contains exact review rows, with long paths in CSV.gz. No missing data source is being replaced by another population.
+
+Next: Part 1B detector recovery, complete added/missed birth lists, operands and three lag clocks. New artifacts only under agent-pass/.
