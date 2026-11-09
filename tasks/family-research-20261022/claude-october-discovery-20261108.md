@@ -1261,3 +1261,63 @@ the 2nd; it is not a property of NG's book in general.
   (saved screening ledger), the 1,012 size-one episodes (SQLite triage) and the 375 / 391 order traces.
   The size-one onsets could be derived from the groups on every day and validated against the October 18
   ledger; that is the next export-side job if the size-one four arms are wanted on four days.
+
+## 18. The size-one onsets on four sessions
+
+Section 4 studied 1,012 October 18 size-one onset episodes from the SQLite triage ledger. Greg asked for
+the same on four days. Three scripts do it: `size_one_from_groups.py` derives every size-one onset from a
+session's standalone group export (a touch side showing exactly one lot where the previous group close did
+not: NEW_BEST when the price changed, STANDING_BEST_SHRANK when it did not), with the first end (RETREATED,
+SIZE_RECOVERED_AT_SAME_PRICE, IMPROVED), the prior touch, and the 1 ms paper-entry timing;
+`size_one_tape_pass.py` replays the raw tape with the audit Book and records, at each onset's close, the next
+displayed level and the onset group's reductions at the standing price, fill-linked or not;
+`size_one_four_arm_days.py` mirrors section 4's arms. Outputs `size-one-episodes-<tag>*`,
+`size-one-tape-<tag>*`, `size-one-four-arm-<tag>-*`.
+
+**Validation.** The derivation finds all 1,012 ledger episodes and agrees with the ledger on onset type,
+outcome, end group and entry timing 1,012 of 1,012; the tape pass agrees on the next displayed level and
+the fill-linkage class 1,012 of 1,012; the Book's touch at every onset matches the export's (price, 1 lot,
+1 order) on all four sessions, 101,000 onsets, zero mismatches. The ledger turned out to be every size-one
+onset inside a 12-minute window, 13:07:15 to 13:19:08 UTC on October 18 (the per-minute counts match
+exactly); the full October 18 session has 27,560. Cursor mapping: the exports' cursor 0 is the first record
+at or after the session open inside the prior UTC member (October 18: October 17 member at minus 841,601
+then plus 17,375; October 3: October 2 member at minus 808,453 then plus 4,889), which is also why October
+3's export is session-complete while October 2's and 17's are not. Populations: 27,560 / 27,111 / 24,352 /
+22,041 onsets on October 18 / 17 / 3 / 2; the 13:00 hour alone 5,048 / 4,152 / 3,205 / 2,687.
+
+**The mechanism, four days, whole session.** Retreat share of all onsets in the cell (October 18 / 17 / 3 / 2):
+
+| cell | n (Oct 18) | retreat share | retreat share, still open at 1 ms entry |
+|---|---|---|---|
+| NEW_BEST, no reduction | 16,095 | 0.37 / 0.38 / 0.42 / 0.38 | 0.45 / 0.46 / 0.48 / 0.46 |
+| STANDING shrank, fill-linked reduction | 3,509 | 0.73 / 0.72 / 0.74 / 0.74 | 0.58 / 0.57 / 0.59 / 0.56 |
+| STANDING shrank, unlinked reduction | 7,820 | 0.52 / 0.53 / 0.53 / 0.56 | 0.46 / 0.46 / 0.49 / 0.49 |
+| STANDING shrank, prior touch had more than 2 orders | 663 | 0.76 / 0.79 / 0.79 / 0.81 | 0.58 / 0.65 / 0.65 / 0.61 |
+| STANDING shrank, prior touch had 2 or fewer | 10,776 | 0.58 / 0.58 / 0.61 / 0.62 | 0.49 / 0.48 / 0.51 / 0.51 |
+| NEW_BEST, next level under 10 lots | 9,691 | 0.39 / 0.42 / 0.46 / 0.42 | 0.46 / 0.49 / 0.50 / 0.47 |
+| NEW_BEST, next level 10 or more | 6,430 | 0.34 / 0.33 / 0.40 / 0.36 | 0.44 / 0.43 / 0.47 / 0.45 |
+| fill-linked x next under 10 (both arms) | 1,728 | 0.75 / 0.74 / 0.79 / 0.76 | 0.60 / 0.58 / 0.62 / 0.60 |
+
+The 13:00 hour gives the same ordering on every day with the same numbers to within a few points, and the
+October 18 ledger window reproduces section 4 exactly (fill-linked standing 0.78 of 133, new best with no
+reduction 0.32 of 601).
+
+**Reading.** (1) How a one-lot best arose is a four-day-stable predictor of what it does next: a standing
+level eaten down to one lot by fills retreats 72 to 74 percent of the time on every session, a fresh
+one-lot best price holds 58 to 64 percent. The sides agree, the days agree, the hour agrees with the
+session. (2) The arms stack as section 4 said: fill linkage is the flow arm and carries most of it; a
+crowded prior touch (more than two orders) sharpens the standing-shrank retreat to 76 to 81 percent; a thin
+next level adds 3 to 6 points to the new-best retreat and 2 to 5 to the fill-linked one. (3) The time scale
+is the problem it was on October 18: the median first end is 0.8 to 2.8 ms after the onset, 60 to 65
+percent of episodes are already resolved by the assumed 1 ms entry, and among those still open the retreat
+shares compress to 0.44 to 0.62. The information is real, mechanical (queue depletion at the touch), and
+largely consumed before anything a millisecond away can act on it. (4) No psychology is needed to read it:
+a fill-eaten one-lot remainder is the tail of a queue that was being consumed, and its owner cancels or is
+taken; a fresh one-lot new best is a probe that the next arrivals join or do not. The observable that would
+separate a behavioural story (probing, spoof-like placement) from the mechanical one is the identity and
+history of the order ids behind the new-best onsets across days, which the tape carries and this pass
+does not yet aggregate.
+
+This closes the export-side gap listed in section 17.4: every October 18 export-side pass now has its
+four-session form except the 749 first-family population and the two order traces, whose definitions are
+October 18's own.
