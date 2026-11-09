@@ -39,9 +39,10 @@ def main(directory,branch,prefix):
                 time.sleep(delay)
     receipt=json.loads((root/'RECOVERY_RECEIPT.json').read_text())
     allowed={'FRANKIE_MBO_BOOK_RECOVERY_V1':'completed_book_fifo_recovery',
-             'FRANKIE_NATIVE_LIFECYCLE_RECOVERY_V1':'complete_retained_lifecycle_ledger'}
+             'FRANKIE_NATIVE_LIFECYCLE_RECOVERY_V1':'complete_retained_lifecycle_ledger',
+             'FRANKIE_SECOND_SET_REPLAY_V1':'complete_second_set_replay'}
     assert receipt[allowed[receipt['schema']]]
-    if receipt['schema']=='FRANKIE_MBO_BOOK_RECOVERY_V1':
+    if receipt['schema'] in ('FRANKIE_MBO_BOOK_RECOVERY_V1','FRANKIE_SECOND_SET_REPLAY_V1'):
         assert receipt['expected_trades']==receipt['recovered_trades']
     manifest=json.loads((root/'MANIFEST.json').read_text())
     for entry in manifest['files']:
