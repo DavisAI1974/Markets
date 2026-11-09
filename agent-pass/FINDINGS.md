@@ -2,9 +2,9 @@
 
 ## Data first
 
-All generated artifacts are local under `E:/Markets-native-dipole-agent-pass/agent-pass/`. Publication to Ccode's three-tier repository layout is pending its configured destinations. No AWS/S3 is used. The two original October 18 data commits predate the storage change and are disclosed in PROGRESS.md; no later data or chart is committed to Markets. All image links below are local-only; they will not display the final charts on GitHub until output publication is configured. The Markdown measurement tables are current and self-contained for phone review.
+GitHub is the durable working source: code and findings in DavisAI1974/Markets; data, tables, renders, workbooks and provenance in DavisAI1974/markets-data. The user removed the local-only rule on 2026-11-08. See PUBLICATION.md for verified artifact destinations. No AWS/S3. Markdown measurement tables are self-contained for phone review.
 
-Local-only workbook: `research-tables.xlsx` (the older GitHub copy predates final results). The workbook contains complete review tables; long per-second and pair-distance observations remain compressed CSV. Every path remains individually observable, with no smoothing, amplitude normalization or across-path average.
+Review workbook: `research-tables.xlsx` (the older GitHub copy predates final results). The workbook contains complete review tables; long per-second and pair-distance observations remain compressed CSV. Every path remains individually observable, with no smoothing, amplitude normalization or across-path average.
 
 Per date, use `tables/<date>-paths.csv.gz`, `-path-members.csv`, `-candidate-operands.csv`, `-cases.csv`, `-case-raw-records.csv.gz`, `-detector-all-comparisons.csv`, `-birth-differences-<variant>.csv`, `-lag-measurements.csv`, `-all-hierarchy-merges.csv`, `-pair-distances-<representation>.csv.gz`, `-grouping-members.csv`, `-operator-residuals.csv`, `-life-measurements.csv`, and `-life-paths.csv.gz`. All named missed/added and undefined rows are retained.
 
@@ -238,7 +238,7 @@ SPECULATIVE: The hierarchy currently describes representation-dependent similari
 - Can partial October 2/17 populations be extended with comparable archived Native definitions, while retaining the current partial populations as their own results?
 - Optional M3 crypto comparison was not run; no crypto transfer result is claimed.
 
-All candidate forms, inverse paths, flat outcomes, undefined cases and recorded inputs remain available. Storage handoff is pending Ccode's actual configured layout; local artifacts will be routed by immutable versions and SHA256 once supplied. PR #15 remains draft and unmerged.
+All candidate forms, inverse paths, flat outcomes, undefined cases and recorded inputs remain available. Publish data, tables, renders and workbooks to markets-data under immutable versions with SHA256. PR #15 remains draft and unmerged.
 
 ## Requested shape overlays
 
@@ -248,13 +248,13 @@ Three local renders overlay the four SAME day curves for quote relocation, touch
 
 Input repository: [DavisAI1974/markets-data at 968fa113](https://github.com/DavisAI1974/markets-data/tree/968fa11324f66b70cd318140c51bf19e23f9ee4e). `MARKETS_DATA_DIR=E:/markets-data` is the configured local input root. The read-only audit verifies 25 declared SHA256 hashes; one null-hash entry remains unverified and three external archive references are not locally included. Nine inputs also match the exact pinned research cache bytes. Only byte-identical verified inputs are accepted; absent/unverified entries retain the pinned revision/cache fallback. No populations were exchanged or calculations restarted for routing.
 
-See [pending publication inventory](PENDING_PUBLICATION.md) for the local artifact inventory hash and handoff limits. The input repository does not establish an output destination.
+See [pending publication inventory](PENDING_PUBLICATION.md) for the local artifact inventory hash and handoff limits. The user explicitly designated markets-data for outputs as well as inputs.
 
 <!-- shape_forms:start -->
 
 ## Additive shape forms and environment follow-up
 
-This follow-up preserves the completed research and the original SAME populations on October 2, 3, 17 and 18. October 18 is the pink curve throughout. All new CSVs and figures below are local-only; this Markdown section contains the current numerical findings for phone review. The separate parent tail audit retains its own provenance and identity comparisons.
+This follow-up preserves the completed research and the original SAME populations on October 2, 3, 17 and 18. October 18 is the pink curve throughout. CSV and figure publication destinations are recorded in PUBLICATION.md; this section contains the current numerical findings for phone review. The separate parent tail audit retains its own provenance and identity comparisons.
 
 ### Full observations before fitted descriptions
 
@@ -396,6 +396,6 @@ SPECULATIVE: A gap extremum or sign boundary could help select raw cases for tra
 
 The 13-external-point file remains a separate inventory with a different 749-family-start population. No relevance judgment, exclusion, or silent substitution into these 3,178 archived dipoles is made.
 
-This follow-up currently has 110 local figures with 1,904 panel/series reconciliation rows. Every row records input, plotted and unavailable/not-marked counts. Generated data remains local under the existing publication policy; code and Markdown only are pushed, and PR15 remains draft/unmerged.
+This follow-up currently has 110 local figures with 1,904 panel/series reconciliation rows. Every row records input, plotted and unavailable/not-marked counts. Generated artifacts belong in markets-data under the current user instruction; PR15 remains draft/unmerged.
 
 <!-- shape_forms:end -->
