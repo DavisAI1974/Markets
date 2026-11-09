@@ -1,5 +1,5 @@
 {
- "version": "claude-paper-candidates-v0.2",
+ "version": "claude-paper-candidates-v0.3",
  "written": "2026-11-09",
  "platform": "Tradovate demo (user selection); best bid/ask + depth snapshots; no message-level order flow",
  "research_numbers": "gross; execution assumptions are paper-only settings to be logged, never applied to findings",
@@ -26,8 +26,8 @@
      "provenance": "EVIDENCE c-large-quote-events definition"
     },
     "extreme_wait_s": {
-     "value": 5,
-     "provenance": "EVIDENCE source first-5s extreme window"
+     "value": 1,
+     "provenance": "REVISED after robustness (M14): +1 s entry; +5 s misses 5/18/16/5 eventual returns"
     },
     "time_limit_s": {
      "value": 600,
@@ -68,7 +68,7 @@
    },
    "rules": {
     "setup": "Q0 = last midpoint before jump; trigger when |mid-Q0|>=2 ticks between consecutive quotes; d=sign",
-    "entry": "at trigger+5 s enter against d at the best quote on the joined side; record extreme E",
+    "entry": "at the first quote after the trigger (+1 s) enter against d at the best quote on the joined side; record the running extreme",
     "exit": "target Q0 touch or trigger+600 s",
     "stop": "mid beyond E by 3 ticks in direction d",
     "reversal": "none",
@@ -151,6 +151,60 @@
     "spread_entry_exit",
     "suppressed_signals_with_reason",
     "platform_vs_local_clock"
+   ],
+   "robustness": {
+    "time_limit_full_returns_60_120_300_600": {
+     "20231002": [
+      20,
+      24,
+      33,
+      35
+     ],
+     "20231003": [
+      37,
+      40,
+      44,
+      48
+     ],
+     "20231017": [
+      32,
+      35,
+      40,
+      42
+     ],
+     "20231018": [
+      21,
+      30,
+      39,
+      49
+     ]
+    },
+    "entry_delay_missed_returns_1s_5s_20s": {
+     "20231002": [
+      2,
+      5,
+      9
+     ],
+     "20231003": [
+      11,
+      18,
+      29
+     ],
+     "20231017": [
+      7,
+      16,
+      25
+     ],
+     "20231018": [
+      2,
+      5,
+      16
+     ]
+    }
+   },
+   "dipole_layers_used": [],
+   "complementary_inputs": [
+    "best bid/ask"
    ]
   },
   {
@@ -202,6 +256,138 @@
    "evidence": "CLAIMS X-4, X-6 (support); X-3, X-5 (negative results retained)",
    "rule": "log exits at first fresh_opposed_weakening or flow_vanished onset of the ridden dipole; evaluate oriented 5/20/60 s move per date",
    "not_claimed": "protective exit before an adverse move"
+  },
+  {
+   "id": "S7",
+   "name": "dipole_drive_ride_lookahead_clock",
+   "status": "observation_only_on_tradovate; ready_for_paper_execution_check_on_message_level_feed",
+   "blockers": [
+    "message-level prints and classification required (Tradovate lacks it)",
+    "earliest-knowable population (qualifying peaks) not priced in packet"
+   ],
+   "dipole_layers_used": [
+    "native fresh buy/sell lots",
+    "20 s rolling window",
+    "oriented ratio saturation",
+    "first fresh opposed lot (exhaustion onset)",
+    "majority flip"
+   ],
+   "complementary_inputs": [
+    "best bid/ask midpoint"
+   ],
+   "parameters": {
+    "entry_clock": {
+     "value": "birth second + 5 s",
+     "provenance": "PROVISIONAL (local-max confirmation per Ccode emulation)"
+    },
+    "exit": {
+     "value": "first fresh opposed lot else 60 s",
+     "provenance": "EVIDENCE LA-2"
+    },
+    "flip_overlay": {
+     "value": "reverse for 60 s when window majority-opposite",
+     "provenance": "EVIDENCE LA-3; PROVISIONAL as rule"
+    },
+    "size": {
+     "value": 1,
+     "provenance": "PROVISIONAL"
+    }
+   },
+   "evidence": {
+    "k5_to_exhaustion_up_flat_down": {
+     "20231002": [
+      244,
+      415,
+      82
+     ],
+     "20231003": [
+      229,
+      514,
+      81
+     ],
+     "20231017": [
+      243,
+      396,
+      101
+     ],
+     "20231018": [
+      297,
+      450,
+      105
+     ]
+    },
+    "after_exhaustion_60s_up_down": {
+     "20231002": [
+      265,
+      352
+     ],
+     "20231003": [
+      269,
+      374
+     ],
+     "20231017": [
+      253,
+      354
+     ],
+     "20231018": [
+      289,
+      423
+     ]
+    },
+    "after_flip_60s_with_flip_vs_against": {
+     "20231002": [
+      356,
+      245
+     ],
+     "20231003": [
+      401,
+      220
+     ],
+     "20231017": [
+      395,
+      199
+     ],
+     "20231018": [
+      457,
+      235
+     ]
+    },
+    "exit_rule_up_flat_down": {
+     "20231002": [
+      207,
+      454,
+      80
+     ],
+     "20231003": [
+      186,
+      561,
+      77
+     ],
+     "20231017": [
+      204,
+      447,
+      89
+     ],
+     "20231018": [
+      245,
+      502,
+      105
+     ]
+    },
+    "magnitude": "median 0, p75 0.5 tick, mean |ride| 0.30-0.47 tick",
+    "source": "tables/m16_lookahead_lifecycle.json"
+   },
+   "invalidation": "prospective with:against ratio of non-flat rides below 1.5:1 over the first 100 qualifying peaks, or post-exhaustion 60 s moves not against the direction",
+   "logging": [
+    "window saturation second",
+    "qualifying-peak confirmation second",
+    "entry quote",
+    "first fresh opposed lot second",
+    "exit quote",
+    "flip second",
+    "per-second lot classification rule",
+    "spread at entry/exit"
+   ]
   }
  ],
  "not_promoted": [

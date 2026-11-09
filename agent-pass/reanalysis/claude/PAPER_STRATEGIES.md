@@ -59,3 +59,33 @@ Tier 1 original stack (60+/5-/1- bid-heavy): reversed on Oct 3 (CONFLICTS C4). C
 Thesis (EVIDENCE, CLAIMS X-4, X-6; negative results X-3, X-5 retained). For a position held in a dipole's direction from any entry, the first fresh-opposed weakening or vanished-flow onset of that dipole marks the point after which later moves follow and oppose the direction in near-equal counts (expected further drive zero, median absolute 60 s move 0.5 to 1.5 ticks). Exiting there is justified as removing exposure without drive, not as avoiding a measured adverse move. Exiting at an "opposite" recognition is neutral versus holding; a dipole recognized inside a large-move fade does not reliably mark non-return.
 
 Rule to log (not trade). Inputs: live 20 s native buy/sell lots by completed second (message-level feed required; Tradovate does not supply it). Exit cue A: fresh opposed lots reduce |ratio| from 1 (fresh_opposed_weakening onset). Exit cue B: window total falls to zero (flow_vanished). Log the oriented 5/20/60 s move after each cue for positions held in paper by S2 or any other rule; evaluate per date, no pooling. Not applied to S2 tonight (S2 uses only best bid/ask).
+
+## S7 — Dipole drive ride at the look-ahead clock with exhaustion exit (status: OBSERVATION-ONLY on Tradovate; READY FOR A PAPER EXECUTION CHECK on a message-level feed)
+
+Dipole layers used: native fresh buy/sell lots per completed second, the 20 s rolling window, its oriented ratio; complementary input: none required (best bid/ask for the midpoint). Added after the user's look-ahead correction (REPORT section 12).
+
+Thesis (EVIDENCE, CLAIMS LA-1, LA-2, LA-4). When the 20 s aggressor window becomes fully one-sided and a qualifying peak is confirmed (+5 s), the midpoint moves with that direction about 3 to 1 until the first fresh opposed lot arrives (median 19 to 20 s after the birth second); after that lot the next 60 s moves against. Windows still one-sided at 60 s keep driving (51/20, 46/21, 48/20, 54/31).
+
+Inputs. Message-level prints classified against the preceding completed-group midpoint (the Native action-midpoint rule, CONFLICTS C1); per-second with/against lots; best bid/ask. Decision clock = completed second.
+
+Setup and entry. Window fully one-sided (|ratio| = 1) with total lots above the trailing 85th percentile baseline per the recovered detector (EVIDENCE for definition; PROVISIONAL as a live rule because the competition window is not waited for). Enter in the window direction at the first quote after k = +5 s (PROVISIONAL; the local-max confirmation clock). One position at a time.
+
+Exit (EVIDENCE). At the first completed second containing a fresh opposed lot (exhaustion onset), or at 60 s, whichever first. Do not wait for the operational end (third opposite second), which is 20 s later and gives the gain back.
+
+Flip overlay (EVIDENCE, CLAIM LA-3; PROVISIONAL as a rule). If the window turns majority-opposite (median 34 to 36 s after birth), reverse into the new direction for 60 s: after the flip the midpoint follows it 356/245, 401/220, 395/199, 457/235.
+
+Magnitudes and the honest caveat. Median ride 0 ticks, p75 0.5 tick, mean absolute 0.3 to 0.5 tick; moves of one tick or more with the direction 81/69/96/111 vs against 35/27/24/40. The spread is 1 to 2 ticks. By the house rule that comparison is for the paper log, not for these numbers; it is the first thing the log must measure.
+
+Population caveat. Evidence is on the recorded births (competition winners). A live rule acts on the first qualifying peak; Ccode's emulation puts that population at 803/843/800/863 with 675 to 700 exact matches to the recorded 741/832/740/863. Price paths for the extra peaks are not in the packet (OPEN_QUESTIONS 15); the first paper sessions must log them separately.
+
+Sizing, limits, data handling, logging: as S2, plus the per-second lot classification must be logged with its rule.
+
+Status. Tradovate supplies no message-level data, so S7 cannot run there. On a message-level feed (the Databento route used for the historical tape) it is the primary candidate for a paper execution check.
+
+## S2 amendment (robustness, REPORT section 13)
+
+Entry delay: enter at the first quote after the trigger (+1 s) instead of +5 s; at +5 s the rule already misses 5/18/16/5 of the eventual full returns (Oct 2/3/17/18), at +1 s only 2/11/7/2. Time limit: full returns at 60/120/300/600 s are 20/24/33/35, 37/40/44/48, 32/35/40/42, 21/30/39/49; 600 s stays. Dipole layers used: none. Complementary inputs: best bid/ask only.
+
+## Dipole layers used by each candidate
+
+S2 none; S1 flow state at emission (Native recognition clock); S3 none (thin touch, fresh wire flow); S4 none (touch queue); S5 weakening onsets (fresh opposed vs expiry, vanished/resumed); S6 fresh opposed / window empty; S7 fresh lots, 20 s window, ratio saturation, exhaustion onset, flip.

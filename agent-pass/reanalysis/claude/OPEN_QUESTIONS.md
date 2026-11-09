@@ -27,3 +27,10 @@ Ranked by effect on tonight's paper candidates first, then by effect on understa
 - Whether any decision-time feature separates the long-life tail of dipoles (remaining life p90 190-260 s) from the median case, beyond the flow state at emission.
 - Whether the pre-recognition drift (Oct 18: 382 with vs 278 against) is a selection artifact of the detector (controls matched on activity do not condition on the one-sided window) or a market move; both analysts' historical records leave this open.
 - Whether the 0.3 ms print-after-quote-change lead (M8-5) is one sweep or a reaction.
+
+## Added after the look-ahead correction
+
+15. **Price the earliest-knowable population.** The look-ahead ride (REPORT 12, S7) is measured on recorded births (competition winners). A live rule acts on the first qualifying peak; Ccode's emulation produced 803/843/800/863 peaks vs 741/832/740/863 recorded (675-700 exact matches) and the saturated-seconds ledgers list every candidate second with its disposition (`crossday/detector/ledger_saturated_seconds_<day>.csv`). Remedy: join the non-winner peaks to the native per-second paths and repeat m16 for them. Blocks S7 confidence, not S2.
+16. **Kalshi leg for the lag advantage.** The final packet has no Kalshi inputs for these dates, so the NYMEX-to-Kalshi lag cannot be measured here. Remedy: same-date Kalshi NG quotes joined on receive clocks (the repo's lag_join.py route), on dates where both legs exist.
+17. **Spread versus the ride.** The drive gain is 0.3-0.5 tick mean against a 1-2 tick spread; by the house rule this is a paper-log measurement, and it is the first thing the S7 log must report.
+18. **Flip second versus successor birth.** Whether the majority flip coincides with the FLIP-oriented successor's birth second is not joined; the join would tell whether the flip rule and the successor's drive are one trade.
