@@ -7,7 +7,8 @@ reports=[];preview=[]
 for day in ("20231002","20231003","20231017","20231018"):
     d=ROOT/day;src=d/"sources"
     rows=[json.loads(l) for l in gzip.decompress((src/"candidate-inputs.jsonl.gz").read_bytes()).splitlines()]
-    z=np.load(src/"x13_life_paths.npz",allow_pickle=False)
+    with np.load(src/"x13_life_paths.npz",allow_pickle=False) as archive:
+        z={name:archive[name] for name in archive.files}
     coverage={int(r["row"]):r for r in csv.DictReader((src/"coverage.csv").open())}
     records=sum([json.loads(p.read_text()) for p in sorted(d.glob("index-*.json"))],[])
     records.sort(key=lambda r:r["ordinal"])
