@@ -1,5 +1,5 @@
 """Study A: separate trade, family and dipole clocks linked by source coordinates."""
-import io,json
+import gzip,io,json
 from decimal import Decimal
 import numpy as np
 from finish_family_replication import get,jsonwrite,selected_source
@@ -76,23 +76,26 @@ def study(ctx):
             valid=j>=0 and k>=0 and ctx.valid[j] and ctx.seg[k]==ctx.seg[j]
             pre.append(dict(family_id=f["family_id"],start_ns=t,lookback_s=h,prior_clocks=ctx.point(k),last_pre_clocks=ctx.point(j),
                 available=bool(valid),midpoint_change_twice_raw=int(ctx.mid[j]-ctx.mid[k]) if valid else None))
-    ctx.save("a-family-firsts",[{k:v for k,v in f.items() if k!="descriptor"} for f in families])
+    ctx.save("a-family-firsts",[{k:(None if k=="pre_input_cursor" and v=="" else v) for k,v in f.items() if k!="descriptor"} for f in families])
     ctx.save("a-family-neighbors",neighbors);ctx.save("a-family-windows",windows);ctx.save("a-family-prechanges",pre)
     # Full occurrence ledger is preserved as its own input, not collapsed to starts.
     raw=get("markets-data",FREV,FROOT+f"/{ctx.day}/all-family-occurrences.csv.gz")
     (ctx.out/"a-all-family-occurrences.csv.gz").write_bytes(raw)
     candidates=native_table(ctx.day,"candidate-operands.csv").to_dict("records")
     life={r["candidate_id"]:r for r in native_table(ctx.day,"life-measurements.csv").to_dict("records") if r["kind"]=="candidate"}
+    path=BASE+("/october18-candidate-inputs.jsonl.gz" if ctx.day=="20231018" else f"/replay-comparison/{ctx.day}/candidate-inputs.jsonl.gz")
+    archived={c["candidate_id"]:c for c in map(json.loads,gzip.decompress(get("Markets",MREV,path)).splitlines())}
+    assert set(archived)=={r["candidate_id"] for r in candidates}
     dipoles=[];links=[]
     for r in candidates:
         cid=r["candidate_id"];birth=int(r["birth_second"])*NS
-        recognition=int(r["recognition_ns"]) if r["recognition_ns"] else None
-        live=recognition is not None
+        c=archived[cid];rg=c["recognition_group"]
+        recognition=c.get("recognition_receive_ns") if rg is not None else None
+        live=rg is not None
         # Finalization-only is determined by original export, never by nominal clock.
         if cid in ("dip-19633-1696366763","dip-19647-1697576378"):recognition=None;live=False
         end=int(Decimal(life[cid]["life_end_second"])*NS) if life[cid]["life_end_second"] else None
-        rg=int(np.searchsorted(ctx.t,recognition,side="left")) if live else None
-        if live:assert rg<len(ctx.t) and ctx.t[rg]==recognition
+        if live:assert rg<len(ctx.t) and ctx.t[rg]==recognition and ctx.c[rg]==c["recognition_cursor"]
         dipoles.append(dict(candidate_id=cid,birth_label_ns=birth,recognition_ns=recognition,
             recognition_clocks=ctx.point(rg) if live else None,live_recognition=live,
             lifetime_end_label_ns=end,lifetime_end_definition=life[cid]["disposition"],
