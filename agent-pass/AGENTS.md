@@ -27,3 +27,7 @@ At each observable stage, investigate:
 - Entry/hold/exit/change-of-direction timing evaluated with decision availability, execution delay and fill evidence separated from hindsight-optimal turning points. Perfect entry/exit is the user's aspiration, not an achieved result or an assumption in the measurements.
 
 Keep every hypothesis and unfavorable case in paper research. Report condition-specific individual outcomes and unresolved duration cases, including right-censored events. Support claims of earlier or more accurate recognition with measured lead time and an explicit comparison; do not assume access to other participants' information or certainty about future interruptions. No live-money execution is authorized by this research objective.
+
+## Four-date sequence
+
+Latest user instruction: finish the October 18 NG dipole analysis on October 2, 3 and 17 before assembling timestamped layers. The remaining continuous and primer extensions completed on GitHub; see FOUR_DAY_REPLICATION.md for exact scope and missing separate family populations. Next assemble our results against raw MBO clocks, then add the other researchers' work, and advance paper configuration. Stay on these four dates. Do not turn the historical crypto-source backlog into a prerequisite or restart desktop work.

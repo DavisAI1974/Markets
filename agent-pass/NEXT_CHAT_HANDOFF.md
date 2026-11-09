@@ -4,6 +4,8 @@ Updated 2026-11-08. Operational handoff, not a new findings report.
 
 ## User's current objective
 
+**Latest steering supersedes the historical crypto-first sequence below:** finish the same NG dipole analyses on October 2, 3 and 17 first. The remaining continuous precursor and primer extensions are now complete and verified in [FOUR_DAY_REPLICATION.md](FOUR_DAY_REPLICATION.md). Next is timestamp assembly of our retained results and raw MBO, then the other researchers' layers. Paper work follows; no claim of readiness or orders. Keep the separate missing family populations explicit.
+
 Track down the historical crypto dipole-dive and direction-specific pre-onset/tail renders. Compare them against the current NG findings and other completed research, explicitly reconciling evidence instead of treating each discovery in isolation. User sees a shared concept, not transferable numerical values or identical shapes. Preserve this as a hypothesis, not an established mechanism. User still intends paper trading tonight; this handoff does not establish that a paper-trading setup is ready or authorize live trading.
 
 User is phone-only. Continue autonomously; do not ask them to run terminal commands. No Copilot. Do not contact Claude Desktop or other people without explicit authorization.
@@ -66,7 +68,7 @@ Directory E:/Markets/.codex-remote-attachments/01a1bcd6-f9e5-7c30-b348-cc694f25b
 
 Desktop's newer attachments: sibling directory c26d0635-8550-404e-bd11-cc18284e8f8e, files 1-1000144716.png through 4-1000144719.png (first-event distributions, midpoint shares, aggressor lots, individual midpoint heatmaps).
 
-## Next work
+## Historical backlog — deferred by latest four-date priority
 
 1. Find exact generators/data/provenance for recovered crypto screenshots using their titles and labels, including turn selection, sign alignment, winner/loser conditioning, rolling windows, aggregation and the +20-second seam.
 2. Build an evidence ledger against current findings: observation, source, population, variable/units, anchor, direction/outcome conditioning, clock/window effects, controls, agreement/difference and unresolved question. Add to the single FINDINGS.md after artifacts, not a competing findings report.
@@ -74,4 +76,4 @@ Desktop's newer attachments: sibling directory c26d0635-8550-404e-bd11-cc18284e8
 4. Finish the outstanding parent tail/raw-record audit and review agent's shape_forms outputs. Keep fitted descriptions distinct from mechanisms.
 5. Assess existing paper-trading setup independently, including current runnable path, data/clock availability and logging. Confirm actual readiness from evidence; no promise of tonight's start based on these images, and no live-money actions.
 
-Suggested next-chat opening: Read agent-pass/NEXT_CHAT_HANDOFF.md and PUBLICATION.md on GitHub branch codex/native-dipole-agent-pass-20261108 in DavisAI1974/Markets, with artifacts in DavisAI1974/markets-data, and continue on remote compute. Track the recovered crypto dipole-dive and directional pre-onset/tail shapes back to their source, reconcile them against all four-day NG findings and Claude Desktop's results, and keep the existing paper-trading work moving. Preserve raw distributions and storage rules; no live trading or merge.
+Suggested next-chat opening: Read agent-pass/FOUR_DAY_REPLICATION.md, AGENTS.md and PUBLICATION.md on GitHub branch codex/native-dipole-agent-pass-20261108 in DavisAI1974/Markets. The missing continuous and primer NG extensions are published and verified in markets-data. Preserve the user's four-date scope: assemble our timestamped evidence next, then add other researchers' layers and advance paper setup. Keep missing family populations distinct; no desktop compute, AWS/S3, live-money trading or merge.
