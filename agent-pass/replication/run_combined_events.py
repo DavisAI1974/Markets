@@ -2,6 +2,8 @@
 import argparse,pathlib,tempfile
 from event_common import Context
 import event_chronology
+import event_pressure
+import event_moves
 
 def main():
     p=argparse.ArgumentParser();p.add_argument("--day",required=True);p.add_argument("--output",type=pathlib.Path,required=True)
@@ -9,6 +11,8 @@ def main():
     with tempfile.TemporaryDirectory() as t:
         ctx=Context(a.day,a.output,pathlib.Path(t))
         event_chronology.tests();event_chronology.study(ctx)
+        event_pressure.study(ctx)
+        event_moves.study(ctx)
         ctx.finish()
         print(ctx.summary,flush=True)
 if __name__=="__main__":main()

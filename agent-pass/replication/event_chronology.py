@@ -94,11 +94,13 @@ def study(ctx):
         live=rg is not None
         # Finalization-only is determined by original export, never by nominal clock.
         if cid in ("dip-19633-1696366763","dip-19647-1697576378"):recognition=None;live=False
-        end=int(Decimal(life[cid]["life_end_second"])*NS) if life[cid]["life_end_second"] else None
+        lr=life.get(cid)
+        if lr is None:assert not live
+        end=int(Decimal(lr["life_end_second"])*NS) if lr and lr["life_end_second"] else None
         if live:assert rg<len(ctx.t) and ctx.t[rg]==recognition and ctx.c[rg]==c["recognition_cursor"]
         dipoles.append(dict(candidate_id=cid,birth_label_ns=birth,recognition_ns=recognition,
             recognition_clocks=ctx.point(rg) if live else None,live_recognition=live,
-            lifetime_end_label_ns=end,lifetime_end_definition=life[cid]["disposition"],
+            lifetime_end_label_ns=end,lifetime_end_definition=lr["disposition"] if lr else "unavailable_finalization_only",
             end_label_is_not_full_path_availability=True,orientation=r["orientation"],polarity=int(r["polarity"])))
         if end is not None:
             lo=int(np.searchsorted(ctx.tt,birth,side="left"));hi=int(np.searchsorted(ctx.tt,end,side="right"))
