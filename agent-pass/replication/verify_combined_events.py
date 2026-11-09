@@ -10,8 +10,8 @@ from finish_family_replication import get,jsonwrite
 
 def run(ctx):
     root=ctx.out
-    signals=pd.read_parquet(root/"b-signals.parquet").to_dict("records")
-    episodes=pd.read_parquet(root/"b-quote-episodes.parquet").to_dict("records")
+    signals=pq.read_table(root/"b-signals.parquet").to_pylist()
+    episodes=pq.read_table(root/"b-quote-episodes.parquet").to_pylist()
     for s in signals:
         j=s["signal_group"];cl=s["signal_clocks"]
         assert cl["known_by_ns"]==ctx.t[j] and cl["close_cursor"]==ctx.c[j]
@@ -24,7 +24,7 @@ def run(ctx):
         if k is not None:
             assert k>j and ctx.seg[k]==ctx.seg[j]
             assert e["duration_known_by_ns"]==int(ctx.t[k]-ctx.t[j])
-    outcomes=pd.read_parquet(root/"b-delayed-outcomes.parquet").to_dict("records")
+    outcomes=pq.read_table(root/"b-delayed-outcomes.parquet").to_pylist()
     byid={s["event_id"]:s for s in signals}
     assert len(outcomes)==3*len(signals)
     for r in outcomes:
