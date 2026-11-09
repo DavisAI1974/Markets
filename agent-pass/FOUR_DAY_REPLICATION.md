@@ -1,5 +1,7 @@
 # Four-date replication status
 
+**November 9 update:** the remaining family four-arm/prebirth/primer scope is now complete on October 2, 3 and 17, with October 18 reference reproduction. See [FAMILY_REPLICATION.md](FAMILY_REPLICATION.md) for immutable outputs, populations, checks and comparison limits. This supersedes the missing-family status from the earlier dipole-only run below.
+
 ## Four-date replication completion — 2026-11-08 Eastern
 
 Latest user priority: finish October 2, 3 and 17 to the October 18 NG dipole analysis scope first. Assemble timestamped layers afterward, then add other researchers' work. Do not restart crypto-source exploration or paper infrastructure before finishing this replication.
@@ -16,7 +18,7 @@ Six unit tests passed. Before the other dates ran, October 18 reproduced all eig
 | Continuous completed-second precursor scan, all 10 predicates | Newly complete | Newly complete | Newly complete | Reproduced |
 | Primer next-price-change and 1ms–20s response grid on aggression-to-rest cases | Newly complete | Newly complete | Newly complete | Reproduced |
 | Primer dipole prebirth quote-age/control-reuse sensitivity | Newly complete | Newly complete | Newly complete | Reproduced |
-| Separate 749-family-start study and family primer subset | Missing comparable population | Missing comparable population | Missing comparable population | Existing reference |
+| Family four-arm study, prebirth controls and family primer | Complete: 796 families | Complete: 849 families | Complete: 824 families | Original 749 reproduced |
 
 | Date | Retained births | Observed seconds | Input-available seconds | Unique onset seconds |
 |---|---:|---:|---:|---:|
@@ -31,6 +33,6 @@ Evidence status, before assembling other layers:
 
 - **Agrees:** the same precursor categories occur on every date. Among births with a prior onset, median last lead is 12–13 seconds for step weakening, 19 seconds for fresh opposed weakening on all four dates, and 19–20 seconds for half-window weakening. These are descriptive onset-to-birth intervals, not simulated trade lead times or measurements of whole-path similarity.
 - **Differs:** onset counts, unlinked onset counts, and control sensitivities differ. For example, October 2's one-second prebirth displayed-lot contrast is negative across all matched pairs but positive when both quotes are at most one second old. October 17's 20-second contrast changes from positive to negative under that same fixed diagnostic. The original summary statistics are reproduced as diagnostics; individual input values and time paths are not rescaled.
-- **Unresolved:** the separate 749-family population, older targeted family/lifecycle overlaps, and original Family A runway identities are not supplied by these sealed dipole inputs. This run does not certify those broader studies as replicated. Exact duration/exhaustion strategy and paper execution remain unconfigured. The optional parent tail audit was a proposed additional study, not a completed October 18 module to copy.
+- **Unresolved:** the separate family four-arm/prebirth/primer inputs have since been recovered and completed (FAMILY_REPLICATION.md). Older targeted family/lifecycle overlaps and original Family A runway identities remain separate scopes; the dipole extension run does not certify those broader studies as replicated. Exact duration/exhaustion strategy and paper execution remain unconfigured. The optional parent tail audit was a proposed additional study, not a completed October 18 module to copy.
 
 No desktop computation, producer rerun, timestamp-layer assembly, external researcher merge, simulator execution or live order occurred in this replication. All ten precursor hypotheses and all existing 11 stack arms remain retained.

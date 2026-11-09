@@ -1,12 +1,12 @@
 # Research continuation: dipole shapes and evidence reconciliation
 
-Updated 2026-11-08. Operational handoff, not a new findings report.
+Updated 2026-11-09. Operational handoff, not a new findings report.
 
 ## User's current objective
 
-**November 9 correction:** the user said "Do the other stuff first." Finish the remaining family study before timestamp assembly or paper setup. See [FAMILY_REPLICATION.md](FAMILY_REPLICATION.md) for the active hosted run and exact completion state. This supersedes the earlier instruction below that assembly was next.
+**November 9 completion:** the user said "Do the other stuff first." The remaining family four-arm/prebirth/primer work is now complete on October 2, 3 and 17. October 18 reference results reproduce. See [FAMILY_REPLICATION.md](FAMILY_REPLICATION.md) for successful run 42566535537, immutable evidence and exact scope. Timestamp assembly and paper setup were held until this completion and have not yet begun.
 
-**Latest steering supersedes the historical crypto-first sequence below:** finish the same NG dipole analyses on October 2, 3 and 17 first. The remaining continuous precursor and primer extensions are now complete and verified in [FOUR_DAY_REPLICATION.md](FOUR_DAY_REPLICATION.md). Next is timestamp assembly of our retained results and raw MBO, then the other researchers' layers. Paper work follows; no claim of readiness or orders. Keep the separate missing family populations explicit.
+**Latest steering supersedes the historical crypto-first sequence below:** finish the same NG dipole analyses on October 2, 3 and 17 first. The remaining continuous precursor and primer extensions are now complete and verified in [FOUR_DAY_REPLICATION.md](FOUR_DAY_REPLICATION.md). Next is timestamp assembly of our retained results and raw MBO, then the other researchers' layers. Paper work follows; no claim of readiness or orders. Keep the selected-reference versus full-date family populations explicit.
 
 Track down the historical crypto dipole-dive and direction-specific pre-onset/tail renders. Compare them against the current NG findings and other completed research, explicitly reconciling evidence instead of treating each discovery in isolation. User sees a shared concept, not transferable numerical values or identical shapes. Preserve this as a hypothesis, not an established mechanism. User still intends paper trading tonight; this handoff does not establish that a paper-trading setup is ready or authorize live trading.
 
@@ -78,4 +78,4 @@ Desktop's newer attachments: sibling directory c26d0635-8550-404e-bd11-cc18284e8
 4. Finish the outstanding parent tail/raw-record audit and review agent's shape_forms outputs. Keep fitted descriptions distinct from mechanisms.
 5. Assess existing paper-trading setup independently, including current runnable path, data/clock availability and logging. Confirm actual readiness from evidence; no promise of tonight's start based on these images, and no live-money actions.
 
-Suggested next-chat opening: Read agent-pass/FOUR_DAY_REPLICATION.md, AGENTS.md and PUBLICATION.md on GitHub branch codex/native-dipole-agent-pass-20261108 in DavisAI1974/Markets. The missing continuous and primer NG extensions are published and verified in markets-data. Preserve the user's four-date scope: assemble our timestamped evidence next, then add other researchers' layers and advance paper setup. Keep missing family populations distinct; no desktop compute, AWS/S3, live-money trading or merge.
+Suggested next-chat opening: Read agent-pass/FOUR_DAY_REPLICATION.md, AGENTS.md and PUBLICATION.md on GitHub branch codex/native-dipole-agent-pass-20261108 in DavisAI1974/Markets. The missing continuous and primer NG extensions are published and verified in markets-data. Preserve the user's four-date scope: assemble our timestamped evidence next, then add other researchers' layers and advance paper setup. Read FAMILY_REPLICATION.md for the completed family scope and remaining separate legacy studies; no desktop compute, AWS/S3, live-money trading or merge.
