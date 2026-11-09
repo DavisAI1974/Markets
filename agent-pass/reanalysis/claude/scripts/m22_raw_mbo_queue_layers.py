@@ -9,7 +9,7 @@ TAPE = pathlib.Path("/tmp/claude-0/-home-user-Markets/9d08bbd8-e004-5d31-9253-a2
 import pathlib
 def run(day):
     df = pd.read_parquet(TAPE / f"mbo_{day}.parquet", columns=["ts_recv", "action", "side", "price", "size", "order_id"])
-    ts = df.ts_recv.values.astype("datetime64[ns]").astype("int64"); act = df.action.values; side = df.side.values; price = df.price.values; size = df.size.values.astype("int64"); oid = df.order_id.values
+    ts = df.ts_recv.values.astype("datetime64[ns]").astype("int64"); act = df.action.values; side = df.side.values; price = df.price.values; size = df["size"].values.astype("int64"); oid = df.order_id.values
     orders = {}            # oid -> [side, price_int, size, enter_ns]
     levels = {"B": collections.defaultdict(lambda: [0, 0, collections.deque()]), "A": collections.defaultdict(lambda: [0, 0, collections.deque()])}  # price_int -> [size, count, deque(oids)]
     def best(s):
