@@ -59,7 +59,8 @@ def main(out):
     declared=definitions["registry"]["canonical"]["sha256"]
     assert pinmap["registry_sha256"]==tier["registry_sha256"]==declared
     for item in pinmap["field_map"]+tier["field_map_added"]:
-        for l in item["layers"]:assert layers[l["index"]-1]["layer_id"]==l["layer_id"]
+        for l in item.get("layers") or []:assert layers[l["index"]-1]["layer_id"]==l["layer_id"]
+    definitions["unassigned_field_patterns"]=[item["pattern"] for item in pinmap["field_map"]+tier["field_map_added"] if not item.get("layers")]
     definitions["pin_map"]=pinmap_source;definitions["tier1_pin_summary"]=tier_source
     definitions["pin_map_hash_matches_registry_file_bytes"]=True
     definitions["hash_note"]="The registry's embedded registry_sha256 is a separate declared digest, not its complete-file byte SHA256. Ledger pin maps are checked against the complete-file digest."
