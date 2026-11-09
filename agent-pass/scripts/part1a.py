@@ -34,6 +34,37 @@ def prepare(day):
         return out
     return G,R,F,sample
 
+def render_paths(day,X,M,C):
+    # Exact per-row matrix; no interpolation/rescaling/row averaging. Final fractional endpoint separately plotted.
+    reconc=[]
+    for kind in M.kind.unique():
+      for ori in C.orientation.unique():
+        q=X[(X.kind==kind)&(X.orientation==ori)]
+        if day=='20231018': q=q[q.original_coverage!='none']
+        if not len(q):continue
+        for panel,fields in [('quotes',FIELDS[:4]),('actions',FIELDS[4:14]),('flow',['ratio'])]:
+            per_height=max(3,(q.candidate_id.nunique()+140)/130)
+            fig,axes=plt.subplots(len(fields),1,figsize=(12,per_height*len(fields)),squeeze=False)
+            for ax,col in zip(axes.flat,fields):
+                integral=q[np.isclose(q.relative_s%1,0,atol=1e-9)]
+                mat=integral.pivot(index='candidate_id',columns='relative_s',values=col)
+                expected=len(q); plotted=int(np.isfinite(mat.to_numpy()).sum());fraction=q[~q.index.isin(integral.index)]
+                missing=int(q[col].isna().sum());endpoints=int(fraction[col].notna().sum())
+                assert expected==plotted+endpoints+missing
+                im=ax.imshow(mat.to_numpy(),aspect='auto',interpolation='nearest',extent=[mat.columns.min()-.5,mat.columns.max()+.5,len(mat),0],cmap='coolwarm' if col=='ratio' else 'viridis')
+                ax.axvline(0,color='white',lw=.5);ax.set_ylabel('candidate row');ax.set_title(f'{col}: rows in {expected}; heat cells {plotted}; exact endpoints {endpoints}; undefined {missing}',loc='left');fig.colorbar(im,ax=ax,pad=.01)
+                reconc.append(dict(figure=f'{day}-{kind}-{ori}-{panel}.png',panel=col,rows_in=expected,points_plotted=plotted,endpoint_points_in_companion=endpoints,rows_excluded=missing,reason='undefined classified ratio or missing quote',candidate_rows=len(mat)))
+            axes[-1,0].set_xlabel('seconds from birth; white is unobserved/after recognition')
+            fig.suptitle(f'{day} {kind} {ori}: raw levels and lots; 852 subset on Oct 18',fontsize=10);fig.tight_layout(rect=(0,0,1,.96));fig.savefig(ROOT/'figures'/f'{day}-{kind}-{ori}-{panel}.png',dpi=130);plt.close(fig)
+        frac=q[~np.isclose(q.relative_s%1,0,atol=1e-9)]
+        fig,axes=plt.subplots(5,3,figsize=(13,12))
+        for ax,col in zip(axes.flat,FIELDS):
+            ok=frac[col].notna();ax.scatter(np.arange(len(frac))[ok],frac.loc[ok,col],s=3);ax.set_title(f'{col}: in {len(frac)}, points {ok.sum()}, undefined {(~ok).sum()}')
+            reconc.append(dict(figure=f'{day}-{kind}-{ori}-endpoints.png',panel=col,rows_in=len(frac),points_plotted=int(ok.sum()),endpoint_points_in_companion=0,rows_excluded=int((~ok).sum()),reason='undefined classified ratio or missing quote',candidate_rows=len(frac)))
+        fig.tight_layout();fig.savefig(ROOT/'figures'/f'{day}-{kind}-{ori}-endpoints.png',dpi=110);plt.close(fig)
+    save(pd.DataFrame(reconc),f'{day}-figure-reconciliation.csv')
+    return reconc
+
 def run(day):
     C,source=candidates(day);G,R,F,sample=prepare(day)
     gr=G.receive_ns.to_numpy(); start=(gr[0]//S+61)*S;end=(gr[-1]//S-200)*S
@@ -82,34 +113,7 @@ def run(day):
             meta.append(m)
     X=pd.concat(paths,ignore_index=True);M=pd.DataFrame(meta)
     save(C,f'{day}-candidate-operands.csv');save(M,f'{day}-path-members.csv');save(X,f'{day}-paths.csv.gz');save(pd.DataFrame(reasons,columns=['candidate_id','reason']),f'{day}-path-dispositions.csv')
-    # Exact per-row matrix; no interpolation/rescaling/row averaging. Final fractional endpoint separately plotted.
-    reconc=[]
-    for kind in M.kind.unique():
-      for ori in C.orientation.unique():
-        q=X[(X.kind==kind)&(X.orientation==ori)]
-        if day=='20231018': q=q[q.original_coverage!='none']
-        if not len(q):continue
-        for panel,fields in [('quotes',FIELDS[:4]),('actions',FIELDS[4:14]),('flow',['ratio'])]:
-            per_height=max(3,(q.candidate_id.nunique()+140)/130)
-            fig,axes=plt.subplots(len(fields),1,figsize=(12,per_height*len(fields)),squeeze=False)
-            for ax,col in zip(axes.flat,fields):
-                integral=q[np.isclose(q.relative_s%1,0,atol=1e-9)]
-                mat=integral.pivot(index='candidate_id',columns='relative_s',values=col)
-                expected=len(q); plotted=int(np.isfinite(mat.to_numpy()).sum());fraction=q[~q.index.isin(integral.index)]
-                missing=int(q[col].isna().sum());endpoints=int(fraction[col].notna().sum())
-                assert expected==plotted+endpoints+missing
-                im=ax.imshow(mat.to_numpy(),aspect='auto',interpolation='nearest',extent=[mat.columns.min()-.5,mat.columns.max()+.5,len(mat),0],cmap='coolwarm' if col=='ratio' else 'viridis')
-                ax.axvline(0,color='white',lw=.5);ax.set_ylabel('candidate row');ax.set_title(f'{col}: rows in {expected}; heat cells {plotted}; exact endpoints {endpoints}; undefined {missing}',loc='left');fig.colorbar(im,ax=ax,pad=.01)
-                reconc.append(dict(figure=f'{day}-{kind}-{ori}-{panel}.png',panel=col,rows_in=expected,points_plotted=plotted,endpoint_points_in_companion=endpoints,rows_excluded=missing,reason='undefined classified ratio or missing quote',candidate_rows=len(mat)))
-            axes[-1,0].set_xlabel('seconds from birth; white is unobserved/after recognition')
-            fig.suptitle(f'{day} {kind} {ori}: raw levels and lots; 852 subset on Oct 18',fontsize=10);fig.tight_layout();fig.savefig(ROOT/'figures'/f'{day}-{kind}-{ori}-{panel}.png',dpi=130);plt.close(fig)
-        frac=q[~np.isclose(q.relative_s%1,0,atol=1e-9)]
-        fig,axes=plt.subplots(5,3,figsize=(13,12))
-        for ax,col in zip(axes.flat,FIELDS):
-            ok=frac[col].notna();ax.scatter(np.arange(len(frac))[ok],frac.loc[ok,col],s=3);ax.set_title(f'{col}: in {len(frac)}, points {ok.sum()}, undefined {(~ok).sum()}')
-            reconc.append(dict(figure=f'{day}-{kind}-{ori}-endpoints.png',panel=col,rows_in=len(frac),points_plotted=int(ok.sum()),endpoint_points_in_companion=0,rows_excluded=int((~ok).sum()),reason='undefined classified ratio or missing quote',candidate_rows=len(frac)))
-        fig.tight_layout();fig.savefig(ROOT/'figures'/f'{day}-{kind}-{ori}-endpoints.png',dpi=110);plt.close(fig)
-    save(pd.DataFrame(reconc),f'{day}-figure-reconciliation.csv')
+    reconc=render_paths(day,X,M,C)
     # One raw-record trace per SAME/FLIP x observed alternative quote direction, for candidate and both paired controls.
     cases=[];traces=[]
     for (ori,move),sub in M[M.kind=='candidate'].groupby(['orientation','move_orientation']):

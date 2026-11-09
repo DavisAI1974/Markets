@@ -60,11 +60,12 @@ def run(day):
         for name,(st,sc,qty) in streams.items():
             a=np.searchsorted(st,start,'left');b=np.searchsorted(st,end,'right');has=b>a
             first=(int(st[a])-start)/S if has else np.nan
-            row[name+'_first_s']=first;row[name+'_groups']=b-a;row[name+'_lots_or_changes']=float(qty[a:b].sum())
+            row[name+'_first_s']=first;row[name+'_first_cursor']=int(sc[a]) if has else None;row[name+'_groups']=b-a;row[name+'_lots_or_changes']=float(qty[a:b].sum())
             ordered.append(dict(day=day,candidate_id=m.candidate_id,kind=m.kind,orientation=m.orientation,event=name,first_s=first,first_cursor=int(sc[a]) if has else None,first_ns=str(int(st[a])) if has else None,groups=b-a,lots_or_changes=float(qty[a:b].sum()),disposition='observed_within_lag' if has else 'absent_within_lag'))
         # Compare order of first cross-side and trade/book footprints; ties remain simultaneous groups.
         for relation,left,right in [('bid_vs_ask_quote','bid_quote','ask_quote'),('buy_vs_sell','T_B','T_A'),('bid_add_vs_bid_cancel','A_B','C_B'),('ask_add_vs_ask_cancel','A_A','C_A'),('buy_vs_ask_quote','T_B','ask_quote'),('sell_vs_bid_quote','T_A','bid_quote')]:
-            x,y=row[left+'_first_s'],row[right+'_first_s'];row[relation]=('both_absent' if np.isnan(x) and np.isnan(y) else 'left_absent' if np.isnan(x) else 'right_absent' if np.isnan(y) else 'same_group_time' if x==y else 'left_first' if x<y else 'right_first')
+            x,y=row[left+'_first_s'],row[right+'_first_s'];lc,rc=row[left+'_first_cursor'],row[right+'_first_cursor']
+            row[relation]=('both_absent' if np.isnan(x) and np.isnan(y) else 'left_absent' if np.isnan(x) else 'right_absent' if np.isnan(y) else ('same_group_time' if lc==rc else 'left_first_same_time' if lc<rc else 'right_first_same_time') if x==y else 'left_first' if x<y else 'right_first')
         foot.append(row)
     P=pd.DataFrame(foot);A=pd.DataFrame(ordered);save(P,f'{day}-lag-footprints.csv');save(A,f'{day}-first-footprint-events.csv')
     rel=['bid_vs_ask_quote','buy_vs_sell','bid_add_vs_bid_cancel','ask_add_vs_ask_cancel','buy_vs_ask_quote','sell_vs_bid_quote']

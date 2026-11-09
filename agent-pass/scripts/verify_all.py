@@ -38,8 +38,24 @@ for day in DAYS:
   assert (Z.rows_in==Z.points_plotted+Z.rows_excluded+extra).all(),f
   panels+=len(Z)
  L=pd.read_csv(ROOT/f'tables/{day}-life-measurements.csv');assert len(L)==len(M)
+ V=pd.read_csv(ROOT/f'tables/{day}-operator-residuals.csv');OS=pd.read_csv(ROOT/f'tables/{day}-operator-summary.csv');FR=pd.read_csv(ROOT/f'tables/{day}-part2-figure-reconciliation.csv')
+ assert V[V.disposition=='undefined'].residual.isna().all()
+ assert V[(V.disposition=='undefined')&(V.form=='monotone_magnitude_decay')].observed.isna().all()
+ for r in OS[OS.form!='signed_net_rolling_recurrence'].itertuples():
+  z=FR[(FR.figure==f'{day}-operators-{r.orientation}.png')&(FR.panel==r.form+' '+r.kind)]
+  assert len(z)==1
+  assert (int(z.rows_in.iloc[0]),int(z.points_plotted.iloc[0]),int(z.rows_excluded.iloc[0]))==(r.rows_in,r.defined,r.undefined)
  assert (L.finite_adjacent_pairs==L.magnitude_increases+L.magnitude_decreases+L.magnitude_unchanged).all()
  assert L[L.disposition=='undefined_anchor_direction'].life_seconds.isna().all()
- P=pd.read_csv(ROOT/f'tables/{day}-life-paths.csv.gz');assert np.allclose(P.net_recurrence_residual,0,rtol=0,atol=1e-12)
+ from part1b import native_flow
+ nf=native_flow(day).set_index('second');P=pd.read_csv(ROOT/f'tables/{day}-life-paths.csv.gz')
+ n= nf.roll_buy-nf.roll_sell
+ independent=n-n.shift(1)-(nf.buy-nf.sell)+(nf.buy-nf.sell).shift(20,fill_value=0)
+ assert np.allclose(P.net_recurrence_residual,independent.reindex(P.second),rtol=0,atol=1e-12)
+ joined=P.merge(M[['candidate_id','kind','anchor_ns']],on=['candidate_id','kind'],validate='many_to_one')
+ assert np.array_equal(joined.second,joined.anchor_ns//S+joined.relative_s)
+ for r in OS[OS.form=='signed_net_rolling_recurrence'].itertuples():
+  z=P[(P.kind==r.kind)&(P.orientation==r.orientation)]
+  assert len(z)==r.rows_in and int(z.net_recurrence_residual.abs().gt(1e-12).sum())==r.counterexamples
  results.append(dict(day=day,candidates=len(C),exact_live_recognition_clocks=live,finalization_only=len(C)-live,path_rows=len(X),matched_path_anchors_checked=len(M),figure_panels=panels,life_transition_rows=len(P)))
 print(pd.DataFrame(results).to_string(index=False));save(pd.DataFrame(results),'verification-summary.csv')

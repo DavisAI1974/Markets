@@ -22,7 +22,7 @@ for(const table of input){
   else col.setNumberFormat('0');
  }
  sh.freezePanes.freezeRows(1);sh.freezePanes.freezeColumns(2);
- sh.getRangeByIndexes(0,table.columns.length+1,1,1).values=[['Source: agent-pass/tables/'+table.file+'; pinned inputs in source-manifest.json']];
+ sh.getRangeByIndexes(0,table.columns.length+1,1,1).values=[['Source: agent-pass/tables/; '+(table.sources||[table.file]).join(', ')+'; pinned inputs in source-manifest.json']];
  sh.getRangeByIndexes(0,table.columns.length+1,1,1).format.columnWidth=100;
 }
 wb.recalculate();
