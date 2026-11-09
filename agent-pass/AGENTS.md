@@ -33,7 +33,7 @@ Keep every hypothesis and unfavorable case in paper research. Report condition-s
 Latest user instruction: finish the October 18 NG dipole analysis on October 2, 3 and 17 before assembling timestamped layers. The remaining continuous and primer extensions completed on GitHub; see FOUR_DAY_REPLICATION.md for exact scope. The remaining family four-arm/prebirth/primer scope is also complete; see FAMILY_REPLICATION.md. Next assemble our results against raw MBO clocks, then add the other researchers' work, and advance paper configuration. Stay on these four dates. Do not turn the historical crypto-source backlog into a prerequisite or restart desktop work.
 
 
-November 9 completion: the user's remaining-family-first instruction has been fulfilled for the four-arm family comparison, family prebirth controls and primer diagnostics on October 2/3/17. October 18 reference results reproduce. See FAMILY_REPLICATION.md for immutable receipts and population distinctions. Timestamp assembly and paper setup have not started; older 99-field/external-point and targeted lifecycle studies remain separate scopes.
+November 9 completion: the user's remaining-family-first instruction has been fulfilled for the four-arm family comparison, family prebirth controls and primer diagnostics on October 2/3/17. October 18 reference results reproduce. See FAMILY_REPLICATION.md for immutable receipts and population distinctions. The three combined studies and our source-clock joins are now complete on all four dates; see COMBINED_EVENT_STUDIES.md. Render/external-researcher attachment and paper setup remain next. Older 99-field/external-point and targeted lifecycle studies remain separate scopes.
 
 
 ## Current combined-study execution and corrections

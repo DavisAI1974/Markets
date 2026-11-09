@@ -54,4 +54,4 @@ Replace the substitute-based result files and their summaries with the corrected
 
 ## Current division of work
 
-Codex is running three combined timing/instance/event studies on all four dates, preserving individual events and separate event/receive/known-by/recognition clocks. The 99 layers and 13 external points are deferred by user instruction. Keep CCode's own analysis and results separate until the time/source reconciliation. GitHub is the working source/destination; no desktop computation, AWS/S3, live orders or merge.
+Codex completed and verified all three combined timing/instance/event studies on all four dates (see COMBINED_EVENT_STUDIES.md), preserving individual events and separate event/receive/known-by/recognition clocks. The 99 layers and 13 external points are deferred by user instruction. Keep CCode's own analysis and results separate until the time/source reconciliation. GitHub is the working source/destination; no desktop computation, AWS/S3, live orders or merge.
