@@ -75,8 +75,15 @@ def main(out):
             sources[coord(e)]=e
     assert len(catalogs)==553
     manifest=read(D,DATA_CURRENT,"MANIFEST.json")
-    for entry in manifest["entries"]:
+    unavailable=[]
+    for original_entry in manifest["entries"]:
+        entry=dict(original_entry)
+        if entry["path"].endswith("/"):
+            unavailable.append(dict(source_manifest_entry=entry,status="historical_archive_reference_not_an_available_file",action="do not fetch prohibited external storage; resolve from GitHub final handoff"))
+            continue
         path=entry.get("markets_data_path") or entry["path"]
+        if not entry.get("sha256") or entry.get("bytes") is None:
+            fetch(D,DATA_CURRENT,path);entry["sha256"]=READS[-1]["sha256"];entry["bytes"]=READS[-1]["bytes"]
         e=dict(repository=D,revision=DATA_CURRENT,path=path,sha256=entry["sha256"],bytes=entry["bytes"],
                collection="data_repository_manifest",day=entry.get("session") or entry.get("utc_day"),
                checksum_evidence="declared in immutable source MANIFEST.json; not newly rehashed here",
@@ -99,7 +106,7 @@ def main(out):
         registry_match=True,bindings_match=True,pin_map_match=True,registry_layers=99,bound_points=13,
         prior_clock_inventory_files=len(catalogs),source_coordinates=len(sources),unique_file_contents=len(groups),
         duplicate_file_aliases_removed=len(sources)-len(groups),duplicate_groups=len(duplicates),
-        annotation_ledger_contents=len(overlaps),physical_source_deletions=0,
+        annotation_ledger_contents=len(overlaps),physical_source_deletions=0,unavailable_archive_references=len(unavailable),
         remaining=["Ccode final completion handoff and changed-file list","Refresh this manifest against final revisions",
         "Resolve remaining row-level overlap from exact source coordinates before counting pooled observations",
         "Check clocks on new timed files","Explicit user instruction to begin reanalysis"],
@@ -111,6 +118,7 @@ def main(out):
         correction_precedence="use verified corrected horizon clocks from the bulk sidecars for the older Ccode inputs; original known-wrong stamps are not competing active definitions")
     write(out,"CANONICAL_INPUTS.json",packet);write(out,"DEFINITION_CHECK.json",definitions)
     write(out,"DUPLICATE_ALIASES.json",duplicates);write(out,"ANNOTATION_OVERLAPS.json",overlaps)
+    write(out,"UNAVAILABLE_REFERENCES.json",unavailable)
     write(out,"SUMMARY.json",summary);write(out,"SOURCES.json",READS)
     print(json.dumps(summary,indent=2))
 if __name__=="__main__":
