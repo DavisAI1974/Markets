@@ -4,8 +4,8 @@ For `agent-pass/reanalysis/SHARED_BRIEF.md at da0e2fc27350e791366eafa974e2bdb85e
 
 ## Where
 
-- **three_day_suite**: `DavisAI1974/Markets`, branch `claude/three-day-dipole-20261108`, base `beb2104` -> head `542f647`, folder `tasks/family-research-20261022/claude-pass-3day/`; 95 files changed or added (listed with bytes and sha256 in the JSON).
-- **discovery_record**: `DavisAI1974/Markets`, branch `codex/ng-shadow-discovery-20261108`, base `de084f5` -> head `1a534a1`; 5 files changed or added (listed with bytes and sha256 in the JSON).
+- **three_day_suite**: `DavisAI1974/Markets`, branch `claude/three-day-dipole-20261108`, base `beb2104` -> head `c375c36`, folder `tasks/family-research-20261022/claude-pass-3day/`; 95 files changed or added (listed with bytes and sha256 in the JSON).
+- **discovery_record**: `DavisAI1974/Markets`, branch `codex/ng-shadow-discovery-20261108`, base `de084f5` -> head `f1c7277`; 5 files changed or added (listed with bytes and sha256 in the JSON).
 - **data**: `DavisAI1974/markets-data`, branch `main`, base `993cf54` -> head `c01caaf`; 10 files changed or added (listed with bytes and sha256 in the JSON).
 
 ## Populations and run receipts

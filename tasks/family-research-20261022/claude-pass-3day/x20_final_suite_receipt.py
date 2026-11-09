@@ -22,7 +22,7 @@ S = ["20231002", "20231003", "20231017", "20231018"]
 sessions = {}
 for d in S:
     r = rd(P3 / f"tables/{d}/t1_receipt.json")
-    sessions[d] = dict(members=r["members"], family_index=dict(path=r["family_index"].split("/scratchpad/")[-1] if "scratchpad" in r["family_index"] else r["family_index"], markets_data_commit="7b50d634", sha256=r["family_index_sha256"], run="42566535537"),
+    sessions[d] = dict(members=r["members"], family_index=dict(path=r["family_index"], markets_data_commit=r.get("family_index_markets_data_commit", "7b50d634"), sha256=r["family_index_sha256"], run="42566535537"),
                        families_in_index=r["families"], families_used=r["families_used"], excluded=r["excluded_no_earlier_group"], in_member_with_60s_records=r["in_member"], cutoff_rule=r["cutoff_rule"],
                        session_groups=r["groups"], reconcile_60s_aggressor_lots=dict(buy=r["reconcile_buy_60s"], sell=r["reconcile_sell_60s"], of=r["of_in_member"]), censored_outcomes=r["censored_per_horizon"],
                        refill_sets=r["refill"], t1_tables={f: csv_rows(P3 / f"tables/{d}/{f}") for f in sorted(os.listdir(P3 / f"tables/{d}")) if f.startswith("t1_") and f.endswith(".csv")},

@@ -16,7 +16,7 @@ from fourarm import four_arms
 SESS = sys.argv[1]; assert SESS in SESS_TAPES; PRIOR, DAY = SESS_TAPES[SESS]
 IDX = os.environ['OD_FAMILY_INDEX']; TAB = f'{HERE}/tables/{SESS}'; os.makedirs(TAB, exist_ok=True)
 S = 10**9; TICK = 0.001; H = [1, 5, 20, 60, 120, 300, 600]
-receipt = dict(session=SESS, members=[PRIOR, DAY], family_index=IDX, family_index_sha256=hashlib.sha256(open(IDX, 'rb').read()).hexdigest())
+receipt = dict(session=SESS, members=[PRIOR, DAY], family_index=f'tasks/family-research-20261022/family-replication/run-42566535537-1/family-{DAY}/chronological-instance-index.csv', family_index_markets_data_commit='7b50d634', family_index_local_copy=IDX, family_index_sha256=hashlib.sha256(open(IDX, 'rb').read()).hexdigest())
 A = pd.read_csv(IDX); receipt['families'] = len(A)
 if 'cutoff_ns' not in A: A['cutoff_ns'] = A.start_recv_ns - 1; receipt['cutoff_rule'] = 'start_recv_ns - 1 ns (index has no cutoff_ns)'
 else: receipt['cutoff_rule'] = 'index cutoff_ns'; assert (A.start_recv_ns - A.cutoff_ns == 1).all()

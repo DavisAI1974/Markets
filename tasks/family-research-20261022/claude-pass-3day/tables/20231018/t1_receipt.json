@@ -4,7 +4,9 @@
   "20231017",
   "20231018"
  ],
- "family_index": "/tmp/claude-0/-home-user-Markets/bc691f30-868d-52b9-970a-629e12f705ec/scratchpad/family/index_20231018.csv",
+ "family_index": "tasks/family-research-20261022/family-replication/run-42566535537-1/family-20231018/chronological-instance-index.csv",
+ "family_index_markets_data_commit": "7b50d634",
+ "family_index_local_copy": "/tmp/claude-0/-home-user-Markets/bc691f30-868d-52b9-970a-629e12f705ec/scratchpad/family/index_20231018.csv",
  "family_index_sha256": "769a390c6e7a80159669b50dc81a1a3fd0579509317362691e938bf13fec3ae8",
  "families": 749,
  "cutoff_rule": "index cutoff_ns",

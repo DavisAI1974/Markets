@@ -7,20 +7,20 @@
       "repository": "DavisAI1974/Markets",
       "branch": "claude/three-day-dipole-20261108",
       "base_commit": "beb2104",
-      "head_commit": "542f64754162de63c332e51f11e5a103fdf6e0f2",
+      "head_commit": "c375c36923082add5ec6e56bfb9cbf850af98dce",
       "folder": "tasks/family-research-20261022/claude-pass-3day/",
       "files_changed_or_added": [
         {
           "path": "tasks/family-research-20261022/claude-pass-3day/CCODE_FINAL_SUITE_RECEIPT.json",
           "status": "added",
-          "bytes": 51226,
-          "sha256": "14a3619efb6e6d702bd73aecdedd927c9c68d1e41e32516279b3987e6b6a97e5"
+          "bytes": 52985,
+          "sha256": "e24bae794a3efea34382f4a6f55458b8418de75b4bb5f008d73d5f9603d85ddc"
         },
         {
           "path": "tasks/family-research-20261022/claude-pass-3day/CCODE_FINAL_SUITE_RECEIPT.md",
           "status": "added",
-          "bytes": 6076,
-          "sha256": "9f2b5309574402e2cbc486eaa6efff64f2253bb471911d41fb716811b6b6f8c8"
+          "bytes": 6077,
+          "sha256": "f7d192fa101cbe57faea13e9a71637e24b0c4ed4ef0da206257e99ff0a2d271b"
         },
         {
           "path": "tasks/family-research-20261022/claude-pass-3day/FINDINGS_TIER1_CROSSDAY_20261109.md",
@@ -295,8 +295,8 @@
         {
           "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231002/t1_receipt.json",
           "status": "added",
-          "bytes": 1651,
-          "sha256": "cc278fd133dd5ea74676061fe31b688a4c536bf9ec4d0f5bcdedd14a09944e21"
+          "bytes": 1848,
+          "sha256": "386a96418a6bd780efd471a7511409135d5bdb1284e8a21ce848506490bf66d5"
         },
         {
           "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231002/t1_refill_by_fill_stratum.csv",
@@ -367,8 +367,8 @@
         {
           "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231003/t1_receipt.json",
           "status": "added",
-          "bytes": 1644,
-          "sha256": "1b0d0b17feb7fe1804c78286c84e2d924df7525a79d25e673da23bbf96e7d9e0"
+          "bytes": 1841,
+          "sha256": "233197dd21713ec42e846ffcec96cf4ac473274d8004607b75f09f2c81ee9bfd"
         },
         {
           "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231003/t1_refill_by_fill_stratum.csv",
@@ -439,8 +439,8 @@
         {
           "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231017/t1_receipt.json",
           "status": "added",
-          "bytes": 1652,
-          "sha256": "31f94dbfcd592da088ba74350099fb3be40fd2dcb669fafe606d401ebf12689e"
+          "bytes": 1849,
+          "sha256": "40c50a5db1603ad6a825b5fb775694faf20269f98abb97be26b4914c0749a7e2"
         },
         {
           "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231017/t1_refill_by_fill_stratum.csv",
@@ -511,8 +511,8 @@
         {
           "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231018/t1_receipt.json",
           "status": "added",
-          "bytes": 1451,
-          "sha256": "0a53203527849390485cde093160f7c18f03aebcd0a64c18ede8a0c3de953dfe"
+          "bytes": 1648,
+          "sha256": "e10a0e9f92dadcbfd9cda4eb508cb4b22e688b56e396739fdec9386dd182b9b0"
         },
         {
           "path": "tasks/family-research-20261022/claude-pass-3day/tables/20231018/t1_refill_by_fill_stratum.csv",
@@ -565,8 +565,8 @@
         {
           "path": "tasks/family-research-20261022/claude-pass-3day/x18_tier1_days.py",
           "status": "added",
-          "bytes": 18044,
-          "sha256": "e19cc497d13c10c97d0dd20be555d4f1fafcdb0e4f55775b0c7e522e06e65c16"
+          "bytes": 18231,
+          "sha256": "a5b267a92d1379adc44238eaae1affde109f785d6a4f02ce7a1fca67bdbae555"
         },
         {
           "path": "tasks/family-research-20261022/claude-pass-3day/x19_tier1_crossday.py",
@@ -577,8 +577,8 @@
         {
           "path": "tasks/family-research-20261022/claude-pass-3day/x20_final_suite_receipt.py",
           "status": "added",
-          "bytes": 13770,
-          "sha256": "1612b7422277d3d9224f4f7e5d11e7b88faba5ae3be10e5b8440f0a3d4df7cd4"
+          "bytes": 13727,
+          "sha256": "87290b32c0c81f7cf628bd3970b314059b5dc0eaf9be53a24855d81acd3d1a4d"
         }
       ]
     },
@@ -586,7 +586,7 @@
       "repository": "DavisAI1974/Markets",
       "branch": "codex/ng-shadow-discovery-20261108",
       "base_commit": "de084f5",
-      "head_commit": "1a534a13d9f1b79af9e2fb9b54c6a097e1cad2c5",
+      "head_commit": "f1c7277d2d303cea190e710abc1589f597a1e31d",
       "files_changed_or_added": [
         {
           "path": "tasks/family-research-20261022/claude-code/HANDOFF_20261109.md",
@@ -597,8 +597,8 @@
         {
           "path": "tasks/family-research-20261022/claude-code/data-manifest.json",
           "status": "modified",
-          "bytes": 34734,
-          "sha256": "4a9cd35d50cd64174ffa5f3521b8147e2bef9f9babfef262578403c65779805b"
+          "bytes": 37694,
+          "sha256": "3cd2e96fe3f0206dc815b53a70f1c580eccad0dce9d572de3688b5eae73623d6"
         },
         {
           "path": "tasks/family-research-20261022/claude-code/pin_tier1_rows_to_99.py",
@@ -615,8 +615,8 @@
         {
           "path": "tasks/family-research-20261022/october-discovery-log.md",
           "status": "modified",
-          "bytes": 49734,
-          "sha256": "935a53199ba5001458e6d175a290ff29ba2363e42520c11ecdff7b0473318d1c"
+          "bytes": 49848,
+          "sha256": "dac2f30b40d37b8f47108b84899482fef553dcf7c4107f340a31c15e435a788a"
         }
       ]
     },
@@ -701,7 +701,7 @@
         "20231002"
       ],
       "family_index": {
-        "path": "family/index_20231002.csv",
+        "path": "tasks/family-research-20261022/family-replication/run-42566535537-1/family-20231002/chronological-instance-index.csv",
         "markets_data_commit": "7b50d634",
         "sha256": "9e0ea6324e6408227602b7be6e13fc80bde0bb7767de8eaf86d581e62f64e5b1",
         "run": "42566535537"
@@ -780,7 +780,7 @@
         "20231003"
       ],
       "family_index": {
-        "path": "family/index_20231003.csv",
+        "path": "tasks/family-research-20261022/family-replication/run-42566535537-1/family-20231003/chronological-instance-index.csv",
         "markets_data_commit": "7b50d634",
         "sha256": "5b6d655af9f2ebfe7c516c4344bfa534a122f4203138e29cfc3f5b9b75599443",
         "run": "42566535537"
@@ -859,7 +859,7 @@
         "20231017"
       ],
       "family_index": {
-        "path": "family/index_20231017.csv",
+        "path": "tasks/family-research-20261022/family-replication/run-42566535537-1/family-20231017/chronological-instance-index.csv",
         "markets_data_commit": "7b50d634",
         "sha256": "b912a498099cc2094167741da07228eea29eacb1108c3d6876f0a79bdb707bef",
         "run": "42566535537"
@@ -938,7 +938,7 @@
         "20231018"
       ],
       "family_index": {
-        "path": "family/index_20231018.csv",
+        "path": "tasks/family-research-20261022/family-replication/run-42566535537-1/family-20231018/chronological-instance-index.csv",
         "markets_data_commit": "7b50d634",
         "sha256": "769a390c6e7a80159669b50dc81a1a3fd0579509317362691e938bf13fec3ae8",
         "run": "42566535537"
