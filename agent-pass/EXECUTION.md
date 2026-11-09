@@ -1,0 +1,13 @@
+# Execution instructions
+
+The user replaced Copilot with a Codex agent. Execute this task directly; do not attempt to assign or launch Copilot. The references to Copilot in TASK.md are the original issue text.
+
+Work in phases and commit and push after each one, so progress survives if the session ends early. Order: Part 1A, Part 1B, then Part 2, then Part 3. Keep a running agent-pass/PROGRESS.md (what was run, row counts, what is next). If the data files or the commit 1ce1fd8 are not reachable from this environment, say so in PROGRESS.md and continue with what exists. You cannot ask me questions mid-run, so where the prompt is ambiguous, take the most literal reading, write down which reading you took, and keep going. Additive only: change nothing outside agent-pass/. Leave the pull request as a draft. Do not merge.
+
+Work only in E:/Markets-native-dipole-agent-pass on branch codex/native-dipole-agent-pass-20261108. All tracked additions and edits must stay under repository-root agent-pass/. Do not change any existing source or reviewer files. Use the supplied TASK.md as the research specification. The user authorizes execution, local computation, commits, pushes to this dedicated branch, and a draft PR; they retain merge authority.
+
+Base: codex/ng-shadow-discovery-20261108 at a1c4d6f32a03a21795f411e509f7fc77d479b3bb. Issue: https://github.com/DavisAI1974/Markets/issues/14. Commit 1ce1fd8 resolved locally to 1ce1fd89e9b3dec43e7fbb50abc3138415460c49 during setup. Follow the required read order before analysis. Existing AGENTS.md instructions may be read as context; the user's additive-only path and data-first instructions take precedence.
+
+This is a sparse worktree. Unchecked-out files are not evidence that sources are absent. Use git ls-tree and git show on the pinned revisions to access needed files. The multi-gigabyte replay archive parts are intentionally excluded from checkout. Extract needed inputs only into agent-pass/. Keep the original partial October 2/17 replay populations distinct from full-session research populations. Reuse completed outputs; the existing replay heartbeat owns bulk publication and pod shutdown. Do not start duplicate producers, exports, infrastructure, or monitors.
+
+Begin Part 1A and continue autonomously through all required phases. Do not stop after a plan, setup, or first commit. Update PROGRESS.md and push at each phase and useful intermediate checkpoint. Record ambiguities and unavailable sources, then continue with independent work. Keep all hypotheses and denominator dispositions. No merge or ready-for-review transition.
