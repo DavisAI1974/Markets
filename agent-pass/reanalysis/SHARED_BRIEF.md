@@ -1,6 +1,6 @@
 # Shared four-day reanalysis brief
 
-Status: PREPARATION ONLY. Do not begin reanalysis from this draft. Replace the pending inputs below with immutable completion receipts, then give both analysts the same commit of this file and evidence manifest. The user will launch both readings with the same instructions.
+Status: HOLD — do not begin reanalysis until the user explicitly says to start. Ccode still has work to finish. Registry reconciliation and duplicate cleanup are preparation only; completion of those checks or Ccode's run does not authorize analysis. Refresh final evidence receipts and give both analysts the same frozen manifest and this brief after the user's start instruction.
 
 ## Freeze the evidence
 
@@ -13,7 +13,15 @@ Required evidence:
 4. Broader source-row clock coverage: COMPLETE, workflow 42584823565 passed. DavisAI1974/markets-data at 9bfffd6d0b0679cccbbc7a1115ecd8d81d589a0d, tasks/family-research-20261022/all-row-clock-pins/run-42584823565-1. All 553 source files accounted for and all written rows read back. See SUMMARY.json and each shard's CATALOG.json; source counts overlap and are not unique event counts. Classify essential timed records, supporting information and historical/duplicate exports. The 553-file inventory is not 553 independent studies. Only an unresolved gap affecting a used observation should block a claim.
 5. Attach Ccode's new time-sensitive outputs after item 3 arrives. A completed pin pass against older inputs does not automatically cover his final new files.
 
-Create EVIDENCE_MANIFEST.json with each artifact's repository, immutable revision, path, role, population/date coverage, clock status and supersession relationship; use existing measured hashes/bytes when available. Account for all supplied data and data types in the coverage ledger, including informational material. Distinguish decision-time inputs from explanatory context, duplicate copies and unavailable sources; these roles do not excuse silently omitting data. Exclude either analyst's new reanalysis from the shared starting packet.
+Use the single canonical input manifest linked in INPUT_AUTHORITY.md. Refresh it after Ccode's final handoff; do not build a competing ledger or registry. It records each artifact's repository, immutable revision, path, role, population/date coverage, clock status and supersession relationship with measured or explicitly declared hashes/bytes. Byte-identical files have one active entry; duplicate ledger copies are aliases only, never alternate active ledgers. Different populations, changed observations and complementary views remain distinct. Account for all supplied data and data types in the coverage ledger, including informational material. Distinguish decision-time inputs from explanatory context, duplicate copies and unavailable sources; these roles do not excuse silently omitting data. Exclude either analyst's new reanalysis from the shared starting packet.
+
+## Shared goals, independent analytical approach
+
+The shared brief defines the goals, complete evidence coverage, source/clock integrity and comparable deliverables. It does not prescribe identical hypotheses, feature groupings, analytical techniques, exploration order, weighting or conclusions. Each analyst should choose and explain their own approach, use their own judgment and pursue promising relationships beyond the examples listed here. The individual/group/whole and dipole reviews are coverage obligations, not a fixed theory of the market.
+
+Both analysts receive the same frozen input manifest. Save independent findings, strategy candidates and a short method rationale before reading the other's new report. Existing historical findings remain available to both as common background. This aims to obtain complementary perspectives without cross-contaminating the new readings.
+
+Compare conclusions by evidence and decision usefulness. Different explanations may both fit different conditions; explicitly test whether they are compatible, redundant or contradictory. Neither different viewpoints nor agreement establishes correctness. Do not force consensus or average competing strategies into one rule. Preserve complementary supported strategies and unresolved disagreements with their conditions and failure cases. Analysis remains on hold until the user explicitly starts it.
 
 ## Identical task for each analyst
 
@@ -90,7 +98,7 @@ For every gap, state what is missing, which conclusion or strategy it affects, w
 ## Matching deliverables
 
 Write separate analyst-specific outputs without reading the other analyst's new report first:
-1. REPORT.md: strongest supported findings, changes from previous conclusions, contradictions and practical limits.
+1. REPORT.md: independently chosen method and rationale, strongest supported findings, changes from previous conclusions, contradictions and practical limits.
 2. CLAIMS.csv: claim_id, question, statement, status (supported/mixed/unsupported/unresolved), conditions, source references, date/population, numerator/denominator when applicable, decision clock, endpoint, measured lead time if available, contrary/missed cases and limitations.
 3. CASES.csv: source-defined parent/event IDs, day/population, source revision/path/row, component references, observation/known-by/recognition/outcome clocks, explanation and whether the case supports or challenges a claim.
 4. OPEN_QUESTIONS.md: ranked gaps, proposed remedies, affected claims/strategies, tonight-blocking versus deferred work, and the smallest discriminating test. Do not present speculative confidence percentages.
