@@ -68,7 +68,18 @@ def main(directory,branch,prefix):
         for i,item in enumerate(pool.map(blob,files),1):
             elements.append(item)
             if i%25==0:print('verified Git blobs',i,'of',len(files),flush=True)
-    child=api('POST','git/trees',{'tree':elements})
+    # This very large repository times out validating hundreds of new blob
+    # references in one tree request. Each update retains the previous tree.
+    child=None
+    for offset in range(0,len(elements),40):
+        payload={'tree':elements[offset:offset+40]}
+        if child:payload['base_tree']=child['sha']
+        child=api('POST','git/trees',payload)
+        print('verified tree entries',min(offset+40,len(elements)),flush=True)
+    listing=api('GET','git/trees/'+child['sha']+'?recursive=1')
+    assert not listing.get('truncated')
+    observed={entry['path']:entry['sha'] for entry in listing['tree'] if entry['type']=='blob'}
+    assert observed=={entry['path']:entry['sha'] for entry in elements}
     tree=api('POST','git/trees',{'base_tree':base,'tree':[dict(path=prefix,mode='040000',type='tree',sha=child['sha'])]})
     commit=api('POST','git/commits',{'message':f'data: preserve verified recovered inputs for {receipt["day"]} [skip ci]',
                                   'tree':tree['sha'],'parents':[head]})
