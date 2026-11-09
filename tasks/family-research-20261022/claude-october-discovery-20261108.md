@@ -1586,3 +1586,34 @@ property of NG's displayed book at family starts. The archived
 recognition clocks confirm the information horizon on four sessions rather than one. The population
 distinction the handoff draws (all first-observed structural ids per date, not a copied 749 whitelist)
 is preserved in the tables above and in `first-family-four-arm-<tag>-summary.json`.
+
+## 23. Separation and clocks: a statement for the merge
+
+Greg asked whether events, instances and lifecycles have been kept separate, and that anything without a
+clock be given one. The answer, checked against every row file on the branch:
+
+**Separation.** Every pass writes one row per event beside its summary, and no row is ever merged with
+another: the 890 / 830 / 857 / 839 frozen-detector events, the 863 / 740 / 832 / 741 archived recognitions,
+the 749 / 823 / 848 / 795 family starts, the 27,560 / 27,111 / 24,352 / 22,041 size-one episodes with their
+individual first ends, and the one order behind each of them all keep their own rows with their own
+identities (candidate id, family id, onset group and side, order id). Summaries are per session; no table
+pools the four days as its final word. The three places where numbers from more than one day enter one
+calculation are stated as such where they appear: the leave-one-day-out factors and bands of the clock
+(section 16, estimated on the other three days and applied to the fourth), the cross-day sign-agreement
+counts of the direction cells (section 15.3, a comparison of per-day tables, not a pooled table), and the
+thirty SSOS play instances reported pooled beside their per-day rows (section 19.2). Lifecycles are kept
+whole: a size-one episode's onset, first end and the survivor order's later fate are three clocks on one
+row, never collapsed into one outcome, and the episode that follows on the same level is its own row (the
+October 17 and October 2 pairs in 21.3 are two rows each, threaded by the order id).
+
+**Clocks.** The exhaustion, family, recognition and size-one row files always carried absolute clocks
+(t0_utc; start_recv_ns and cutoff_ns; recognition_receive_ns; onset_ns and end_ns with cursors). Eleven
+derived row files carried only the session-relative second or the onset group id. `attach_clocks.py`
+stamped every row of those files with the absolute epoch second and UTC string for each session-second
+field (t0, onset, confirm, next t0, seed-known, information horizons, archived recognition) and the session
+tag and origin, and joined onset_ns, onset_utc, end_ns and the cursors onto the size-one tape and order rows
+from their episode file. Nothing existing was changed or removed; the pass is idempotent. After it, no
+row file on the branch is without an absolute clock, which was checked by reading the first row of every
+one of them. The clocks remain distinct where the frozen contract distinguishes them: t0 (the local
+maximum), t0+5 (knowable), the archived recognition receive clock, the structural onset and confirmation,
+and the +60 state anchor each have their own field.
