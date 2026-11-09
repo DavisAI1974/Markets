@@ -94,6 +94,9 @@ def main(out):
             aliases=[e for e in sources.values() if e["repository"]==D and e["path"]==path and e["sha256"]==original.get("sha256")]
             assert aliases,("missing final reference",path)
             continue
+        if original.get("bytes") is None or not original.get("sha256"):
+            entry=measured((D,rev,path,meta));sources[coord(entry)]=entry
+            continue
         e=dict(repository=D,revision=rev,path=path,bytes=meta["size"],git_blob=meta["sha"],
                sha256=original["sha256"],role="pin_annotations_with_embedded_rows" if "/claude-code-pins/" in path and ".jsonl" in path else "source_data",
                collection="final_data_manifest",day=original.get("session") or original.get("utc_day"),
