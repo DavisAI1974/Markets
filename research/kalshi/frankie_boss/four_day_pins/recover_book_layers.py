@@ -53,7 +53,7 @@ class Shards:
         self.files = []
 
     def write(self, row):
-        if self.rows % self.limit == 0:
+        if self.stream is None or self.rows % self.limit == 0:
             self.close()
             self.path = self.root / f'{self.name}-{self.part:04d}.jsonl.gz'
             self.stream = gzip.GzipFile(filename=str(self.path), mode='wb', compresslevel=3, mtime=0)

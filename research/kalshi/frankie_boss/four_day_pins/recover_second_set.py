@@ -8,6 +8,7 @@ import hashlib
 import io
 import json
 from pathlib import Path
+import shutil
 import subprocess
 import time
 
@@ -20,7 +21,9 @@ from research.kalshi.frankie_boss.c15_teacher_r3 import CONTROL_COLUMNS, Journal
 from research.kalshi.frankie_boss.four_day_pins.recover_book_layers import (
     D, TRADE_REV, TRADE_ROOT, Shards, dump, fetch, READS,
 )
-from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import InstrumentBook, NormalizedMbo
+from research.kalshi.frankie_boss.mbo_resume_state import export_adapter_state, restore_adapter_state
+from research.kalshi.frankie_boss.parallel_teacher import _load_raw_state, _save_raw_state
+from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import InstrumentBook, NormalizedMbo, V4MboAdapter
 
 
 DAY = '20231002'
@@ -31,17 +34,23 @@ INSTRUMENT = 150611
 MESSAGE_FIELDS = tuple(field.name for field in fields(NormalizedMbo))
 
 
-def evidence(entries, samples, metrics, *, limit=None):
-    book = InstrumentBook(INSTRUMENT)
-    prefix = bytes.fromhex(MANIFEST_SHA256)
+def evidence(entries, samples, metrics, book, prefix, *, limit=None):
+    offset = 0
     for entry in entries:
+        if offset + entry['rows'] <= metrics['rows']:
+            offset += entry['rows']
+            continue
         data = fetch(D, REVISION, SOURCE + '/' + entry['path'])
         if len(data) != entry['bytes'] or hashlib.sha256(data).hexdigest() != entry['sha256']:
             raise ValueError(f"Input shard differs from pinned manifest: {entry['path']}")
         count = 0
         with gzip.GzipFile(fileobj=io.BytesIO(data)) as stream:
             for line in stream:
+                ordinal = offset + count
+                count += 1
                 cursor = metrics['rows']
+                if ordinal < cursor:
+                    continue
                 if limit is not None and cursor >= limit:
                     return
                 row = json.loads(line)
@@ -71,7 +80,6 @@ def evidence(entries, samples, metrics, *, limit=None):
                 group = metrics['groups'] if closed else None
                 metrics['groups'] += closed
                 metrics['rows'] += 1
-                count += 1
                 prefix = hashlib.sha256(prefix + line).digest()
                 # The teacher only uses receipt presence to identify a completed group.
                 # This is a reconstructed input, with a new hash chain over the pinned
@@ -85,9 +93,43 @@ def evidence(entries, samples, metrics, *, limit=None):
                            terminal_prefix_hash=prefix.hex())
         if count != entry['rows']:
             raise ValueError(f"Wrong row count in {entry['path']}: {count}")
+        offset += count
 
 
-def main(output, limit=None):
+def file_hash(path):
+    with path.open('rb') as stream:
+        return hashlib.file_digest(stream, 'sha256').hexdigest()
+
+
+def restore_checkpoint(directory, expected_sha256, root, identity, messages):
+    path = Path(directory) / 'CHECKPOINT.bin'
+    if file_hash(path) != expected_sha256:
+        raise ValueError('Checkpoint differs from the trusted artifact digest')
+    saved = _load_raw_state(path)
+    if saved['identity'] != identity:
+        raise ValueError('Checkpoint belongs to a different source or calculator revision')
+    for index, entry in enumerate(saved['files']):
+        expected_name = f'second-set-{index:04d}.jsonl.gz'
+        if entry['path'] != expected_name:
+            raise ValueError('Checkpoint shard names are out of order')
+        source = path.parent / expected_name
+        if source.stat().st_size != entry['bytes'] or file_hash(source) != entry['sha256']:
+            raise ValueError(f'Checkpoint output shard differs: {expected_name}')
+        shutil.copyfile(source, root / expected_name)
+    messages.files = saved['files']
+    messages.rows = sum(entry['rows'] for entry in messages.files)
+    messages.part = len(messages.files)
+    cursor = saved['metrics']['rows']
+    continuation = saved['continuation']
+    adapter = restore_adapter_state(saved['adapter'])
+    if (cursor != messages.rows or cursor != adapter.record_count
+            or cursor != continuation['control']['processed']
+            or cursor != continuation['raw']['next_cursor']):
+        raise ValueError('Checkpoint book, outputs and calculation state have different cursors')
+    return saved, adapter.books[INSTRUMENT]
+
+
+def main(output, limit=None, max_seconds=None, resume_from=None, resume_sha256=None):
     start = time.monotonic()
     root = Path(output)
     root.mkdir(parents=True, exist_ok=False)
@@ -106,17 +148,33 @@ def main(output, limit=None):
 
     teacher = JournalTeacherR3({INSTRUMENT: 1_000_000}, normalizer=IdentityNormalizerR3((INSTRUMENT,)))
     teacher_changes.install_binding()
+    code = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+    identity = dict(day=DAY, source=MANIFEST_SHA256, calculator_commit=code, teacher_binding=teacher.binding)
     states = [Counter() for _ in CONTROL_COLUMNS]
     metrics = Counter()
+    book = InstrumentBook(INSTRUMENT)
+    prefix = bytes.fromhex(MANIFEST_SHA256)
     messages = Shards(root, 'second-set', 25_000)
+    continuation = {} if max_seconds is not None or resume_from is not None else None
+    last_group = None
+    if resume_from is not None:
+        saved, book = restore_checkpoint(resume_from, resume_sha256, root, identity, messages)
+        states, metrics, continuation = saved['states'], saved['metrics'], saved['continuation']
+        prefix = bytes.fromhex(saved['prefix'])
+        last_group = metrics['rows'] - 1
+        READS.extend(saved['reads'])
+    first_cursor = metrics['rows']
+    replay_started = time.monotonic()
+    stop_at = None if max_seconds is None else start + max_seconds
+    checkpoint_prefix = None
     teacher_changes.apply()
     try:
         pending_trades = []
-        last_group = None
         for event, control, raw in _paired_raw(teacher.control, teacher.raw_teacher,
-                                               evidence(entries, samples, metrics, limit=limit),
+                                               evidence(entries, samples, metrics, book, prefix, limit=limit),
                                                as_of=original['last_ts_recv_ns'],
-                                               source_manifest_hash=MANIFEST_SHA256):
+                                               source_manifest_hash=MANIFEST_SHA256,
+                                               continuation=continuation):
             cursor = event['cursor']
             normalized = event['normalized']
             columns = control[:7] + raw['columns'] + control[13:]
@@ -150,26 +208,48 @@ def main(output, limit=None):
             if group is not None:
                 last_group = cursor
                 pending_trades.clear()
-            if (cursor + 1) % 25_000 == 0:
-                print(f'{DAY}: {cursor + 1:,} messages, {metrics["trades"]:,} trades, '
-                      f'{time.monotonic() - start:.0f}s', flush=True)
+                if stop_at is not None and time.monotonic() >= stop_at and metrics['rows'] < original['records']:
+                    checkpoint_prefix = event['terminal_prefix_hash']
+                    break
+            segment_rows = cursor + 1 - first_cursor
+            if segment_rows == 2_000 or segment_rows % 25_000 == 0:
+                elapsed = time.monotonic() - replay_started
+                rate = segment_rows / elapsed
+                eta = (original['records'] - cursor - 1) / rate
+                print(f'{DAY}: {cursor + 1:,}/{original["records"]:,} messages, {rate:.1f}/s, '
+                      f'estimated {eta / 3600:.2f}h remaining', flush=True)
     finally:
         teacher_changes.restore()
         messages.close()
 
-    if limit is None and (metrics['rows'], metrics['groups'], metrics['trades'],
+    complete = limit is None and checkpoint_prefix is None
+    if complete and (metrics['rows'], metrics['groups'], metrics['trades'],
                           metrics['closed_trades'], metrics['book_samples']) != (
                               original['records'], original['completed_groups'], len(trades),
                               len(trades), len(samples)):
         raise ValueError(f'Full archived scope did not reconcile: {metrics}')
+    checkpoint_sha256 = None
+    if checkpoint_prefix is not None:
+        adapter = V4MboAdapter()
+        adapter.books[INSTRUMENT] = book
+        adapter.record_count = metrics['rows']
+        adapter.completed_event_group_count = metrics['groups']
+        checkpoint_path = root / 'CHECKPOINT.bin'
+        _save_raw_state(checkpoint_path, dict(
+            identity=identity, adapter=export_adapter_state(adapter), continuation=continuation,
+            prefix=checkpoint_prefix, states=states, metrics=metrics, files=messages.files, reads=READS))
+        checkpoint_sha256 = file_hash(checkpoint_path)
+        print(f'Saved at message {metrics["rows"]:,}. Resume at cursor {metrics["rows"]}. '
+              f'Checkpoint SHA-256 {checkpoint_sha256}', flush=True)
     dump(root / 'MANIFEST.json', dict(columns=CONTROL_COLUMNS, files=messages.files))
     dump(root / 'SOURCE_PINS.json', READS)
     dump(root / 'RECOVERY_RECEIPT.json', dict(
-        schema='FRANKIE_SECOND_SET_REPLAY_V1', day=DAY, complete_second_set_replay=limit is None,
+        schema='FRANKIE_SECOND_SET_REPLAY_V1', day=DAY, complete_second_set_replay=complete,
+        checkpoint_sha256=checkpoint_sha256,
         scope=original['scope'], expected_trades=len(trades), recovered_trades=metrics['trades'],
         metrics=dict(metrics), state_counts=dict(zip(CONTROL_COLUMNS, states)),
         source_manifest_sha256=MANIFEST_SHA256, source_revision=REVISION,
-        calculator_commit=subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
+        calculator_commit=code,
         teacher_changes_sha256=teacher_changes.CHANGES_SHA256, teacher_binding=teacher.binding,
         output_kind='recomputed raw components with original teacher equations',
         complete_all_layers=False, wall_seconds=round(time.monotonic() - start, 2)))
@@ -180,7 +260,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('output')
     parser.add_argument('--limit', type=int, help='Bounded replay check, ineligible for publication')
+    parser.add_argument('--max-seconds', type=float, help='Save at the next closed group after this wall time')
+    parser.add_argument('--resume-from', help='Local directory of a trusted checkpoint artifact')
+    parser.add_argument('--resume-sha256', help='Checkpoint SHA-256 from the trusted runner log')
     args = parser.parse_args()
     if args.limit is not None and args.limit < 1:
         parser.error('--limit must be positive')
-    main(args.output, args.limit)
+    if args.max_seconds is not None and args.max_seconds <= 0:
+        parser.error('--max-seconds must be positive')
+    if bool(args.resume_from) != bool(args.resume_sha256):
+        parser.error('resume requires both the artifact directory and its trusted SHA-256')
+    main(args.output, args.limit, args.max_seconds, args.resume_from, args.resume_sha256)
