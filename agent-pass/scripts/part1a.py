@@ -90,7 +90,8 @@ def run(day):
         if day=='20231018': q=q[q.original_coverage!='none']
         if not len(q):continue
         for panel,fields in [('quotes',FIELDS[:4]),('actions',FIELDS[4:14]),('flow',['ratio'])]:
-            fig,axes=plt.subplots(len(fields),1,figsize=(12, max(3,2.5*len(fields))),squeeze=False)
+            per_height=max(3,(q.candidate_id.nunique()+140)/130)
+            fig,axes=plt.subplots(len(fields),1,figsize=(12,per_height*len(fields)),squeeze=False)
             for ax,col in zip(axes.flat,fields):
                 integral=q[np.isclose(q.relative_s%1,0,atol=1e-9)]
                 mat=integral.pivot(index='candidate_id',columns='relative_s',values=col)

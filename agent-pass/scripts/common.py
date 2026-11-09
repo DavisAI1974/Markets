@@ -25,7 +25,7 @@ def records(path,rev=REV):
     return [json.loads(x) for x in b.splitlines()]
 def csv(path,rev=REV):
     b=blob(path,rev)
-    return pd.read_csv(io.BytesIO(gzip.decompress(b) if path.endswith('.gz') else b))
+    return pd.read_csv(io.BytesIO(gzip.decompress(b) if path.endswith('.gz') else b),float_precision='round_trip')
 def save(df,name):
     f=ROOT/'tables'/name
     df.to_csv(f,index=False,**({'compression':{'method':'gzip','mtime':0}} if name.endswith('.gz') else {}))
@@ -38,7 +38,7 @@ def candidates(day):
         op=r['recorded_operands']; birth=r.get('birth_second',r.get('original_episode',{}).get('birth_recv_ns',0)//S)
         pol=op.get('polarity',0)
         ori=r.get('recognition_orientation','NO_PREDECESSOR' if prev is None else 'SAME' if pol==prev else 'FLIP')
-        out.append(dict(day=day,candidate_id=r['candidate_id'],birth_second=birth,recognition_ns=r.get('recognition_receive_ns'),available_second=r.get('available_second'),polarity=pol,orientation=ori,original_coverage=(str(covered.iloc[i].tape) if covered is not None else 'archived'),flow_state=r.get('birth_to_emission_flow_state'),quote_move=r.get('quote_move_relative_to_birth_polarity'),**{k:v for k,v in op.items() if k in ['baseline','threshold','prominence','magnitude','observations_behind_threshold','searched_span_seconds','window_truncated']}))
+        out.append(dict(day=day,candidate_id=r['candidate_id'],birth_second=birth,recognition_ns=r.get('recognition_receive_ns'),available_second=r.get('available_second',op.get('available_second')),polarity=pol,orientation=ori,original_coverage=(str(covered.iloc[i].tape) if covered is not None else 'archived'),flow_state=r.get('birth_to_emission_flow_state'),quote_move=r.get('quote_move_relative_to_birth_polarity'),**{k:v for k,v in op.items() if k in ['baseline','threshold','prominence','magnitude','observations_behind_threshold','searched_span_seconds','window_truncated']}))
         prev=pol
     frame=pd.DataFrame(out)
     frame['recognition_ns']=pd.array([r['recognition_ns'] for r in out],dtype='Int64')

@@ -9,7 +9,7 @@ plt.rcParams.update({'font.size':8})
 
 def native_flow(day):
     f=ROOT/'cache'/f'native-flow-{day}.csv.gz'
-    if f.exists(): return pd.read_csv(f)
+    if f.exists(): return pd.read_csv(f,float_precision='round_trip')
     import databento as db
     G=groups(day); F=flow(day); seconds=F.second.to_numpy(); buy=np.zeros(len(F));sell=buy.copy();unknown=buy.copy()
     gc=G.cursor.to_numpy();gt=G.receive_ns.to_numpy();gb=G.bid_raw.to_numpy();ga=G.ask_raw.to_numpy();gbs=G.bid_size.to_numpy();gas=G.ask_size.to_numpy();good=G.good.to_numpy();maxcursor=int(gc[-1])

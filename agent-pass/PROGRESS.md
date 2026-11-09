@@ -54,3 +54,15 @@ Already published before the change:
 - `50e04fce5`: Part 1B, `agent-pass/tables/20231018-*` detector comparisons, missed/added lists, detected births, per-second dispositions, lag rows and detector figure reconciliation; `agent-pass/figures/20231018-lag-distributions.png`; updated workbook and source manifest.
 
 Both pushes succeeded with GitHub's repository-size warning. The index and unpublished commit range were inspected on receipt of the policy; the index is empty and no unpublished commit exists. Current generated-data changes will remain unstaged. The still-running October replication writes exclusively under agent-pass/ and will not publish artifacts. Inventory will use only local file/blob sizes, never missing-as-zero. Pending destination coordinates and immutable manifest will be linked when supplied.
+
+## Storage plan correction
+
+Latest user correction supersedes the prior S3 plan: AWS/S3 cannot be used now. Ccode owns creation of a three-tier repository layout. Do not create a competing layout or assume tier names. Generated artifacts remain local, with no new data committed to Markets. Code/documentation checkpoints continue. Actual Ccode destinations and immutable provenance/hash conventions will be adopted only when supplied. The earlier already-published artifacts remain disclosed above; published history is unchanged.
+
+## Part 2 running checkpoint
+
+All four A/B replications have completed once. Archived populations are 741/833/741/863; live recognitions 741/832/740/863. Native action-time reconstruction recovers every birth and nominal time; the two finalization-only records now take their actual recorded nominal availability from the operand object, never a substitute live group. Completed-group missed/added counts are 5/5, 5/5, 11/10 and 21/24. All six operand comparisons and live-clock checks are being checked across days.
+
+C/D first computations also ran on all four dates. Each path representation is unscaled and keeps its individual time coordinates. Pairwise distances, every single-linkage merge, largest-gap membership and missing-coordinate patterns are saved locally. The largest-gap partition is explicitly a descriptive convention, not proof of one natural cluster count. Operational lifetime ends at the third consecutive opposite-sign second, or is right-censored at tape end. Undefined anchor flow has no lifetime; it is not a zero-second event. Five proposed relations plus the signed-net rolling recurrence have every candidate/control residual retained.
+
+A final rendering/numerical-precision refresh is running before the Part 2 commit: full PNGs now allocate enough vertical pixels to every candidate heat-strip row; round-trip CSV parsing preserves written floating operands; undefined control lifetimes are blank instead of zero. Commands: for each archived date, `part1a.py`, `part2.py`, then `crossday.py`. The original calculation was not duplicated while active; this refresh follows its completion and addresses the observed rendering/missing-value issues. No new generated artifact is staged. Part 3 code is prepared but will run after Part 2 checks/checkpoint.
