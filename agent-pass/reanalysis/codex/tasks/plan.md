@@ -15,8 +15,12 @@ Method choice: observable-sequence and incremental-information review. Interpret
 
 Scope addition: explicitly trace price → subsequent orders/liquidity/flow/activity → subsequent price, alongside behavior → price. Distinguish mechanical same-group effects, later responses and shared causes; document where existing evidence cannot identify causation. Reflect this in report, claims, cases, coverage and dipole review.
 
-## Delivered independent artifacts
+## Saved interim artifacts — broad interpretation incomplete
 
 Report and paper specifications saved at Markets 864a9fa1b98c3e8ee446a3bb30068ea4fbbe5a5f. Final data at markets-data 8c761b486d4a9910d77eedad83ae23078c971bee, tasks/family-research-20261022/codex-independent-analysis/run-42599646462-1; hosted verification run 42599646462 passed. README.md and RECEIPT.json provide the complete artifact index.
 
 All 1,296 active contents are accounted for; 209,020 saved comparison/summary rows and all 170 price-as-input coupling rows remain in the ledgers. Detailed semantics remain pending for 43,406 flattened paths (including nested keys and metadata); original images retain explicit visual-review limits and three unavailable archive references remain. These are disclosed limits, not discarded observations or assertions of complete understanding. Paper configurations are not deployed. No reconciliation or joint synthesis follows this delivery.
+
+## Current outstanding work after breadth correction
+
+The user reiterated that this is the broad analysis. Source accounting and file delivery do not complete that task. Resolve substantive field meanings and individual/group/whole relationships from original definitions; review distinct supplied visuals with source rows; retain existing dipole look-ahead and recover its specific unresolved later NG lineage; assess other price influences and two-way feedback across the complete evidence. Keep unmeasured causal effects and future prospective tests distinct from unfinished interpretation of material already available. Update claims and coverage with actual evidence as work proceeds. Final reports remain separate, without reconciliation.

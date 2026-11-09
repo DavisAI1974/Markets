@@ -77,3 +77,7 @@ User addition: analyze how price affects subsequent market behavior, as well as 
 ## Separate final reports — explicit November 9 correction
 
 The user reiterated that Codex and Ccode must not reconcile their reports after completion. Each delivers their full independent analysis and artifacts. No joint synthesis or automatic cross-report comparison. This supersedes older instructions to reconcile; source-data conflicts within each report still require analysis.
+
+## Broad analysis remains the assignment — November 9
+
+Dipole look-ahead and price→behavior feedback are parts of the complete analysis, not a narrowed scope. Each analyst independently interprets the full evidence, including all other price influences and interactions. Inventory/hash verification and broad field categories alone do not establish completed interpretation. Available substantive material left uninterpreted remains outstanding work, not automatic deferral. Preserve the source-defined continuous timing and runway work separately from direction nowcasts and detector delays. Follow the breadth clarification in reanalysis/SHARED_BRIEF.md. Reports remain independent; no reconciliation.

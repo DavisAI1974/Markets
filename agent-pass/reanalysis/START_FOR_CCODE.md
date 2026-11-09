@@ -13,3 +13,5 @@ The final packet includes the historical discovery record at f1c7277, suite/rece
 Keep work and artifacts in GitHub. No desktop research computation, AWS/S3, live-money trading or PR15 merge.
 
 Additional shared requirement: analyze both directions—behavior preceding price changes and price changes followed by market behavior. Examine the feedback sequence, subsequent flow/book/liquidity responses, adverse and absent responses, and distinguish mechanical/simultaneous changes from later participant actions. Apply the price-as-input section of SHARED_BRIEF.md. The evidence packet remains unchanged; record this updated brief commit.
+
+Latest scope clarification: this remains the broad analysis of all supplied evidence. Include the existing dipole look-ahead work explicitly, alongside every other market influence and price feedback. Separate prospective transition warning, structural runway, direction nowcast, recognition delay and cross-market lag. Follow the breadth section of SHARED_BRIEF.md; source accounting alone does not complete interpretation. Do not narrow your work to dipole, timing, microstructure or strategy-ready inputs. Do not reconcile reports.

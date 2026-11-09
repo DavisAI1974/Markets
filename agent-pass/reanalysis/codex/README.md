@@ -1,5 +1,7 @@
 # Codex independent report
 
+**Status: interim; the broad analysis is not complete.** Saved source accounting and initial findings are available below. Detailed interpretation of substantive fields, distinct visual evidence and the specific timing lineage remain outstanding. Dipole look-ahead is explicitly included alongside the full set of supplied market influences. Earlier delivery wording referred to files being saved, not completion of this assignment.
+
 The report and supporting artifacts are saved separately from Ccode's work. There is no reconciliation, joint synthesis or automatic cross-report comparison. Both use the same frozen evidence and both analyze behavior→price and price→subsequent market behavior.
 
 Read [REPORT.md](REPORT.md), then [PAPER_STRATEGIES.md](PAPER_STRATEGIES.md), [PAPER_READINESS.md](PAPER_READINESS.md) and [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md). [RECEIPT.json](RECEIPT.json) pins the shared brief, evidence, code, report and data revisions.
