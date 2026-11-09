@@ -1,0 +1,5 @@
+day,births,series_seconds,seconds_abs_ratio_1,runs,births_on_onset,births_not_on_onset,onsets_that_are_births,onsets_not_births,runs_containing_a_birth,runs_containing_more_than_one_birth
+20231002,741,75600,14157,1185,495,246,495,690,737,4
+20231003,832,82800,16734,1321,562,270,562,759,827,4
+20231017,740,75600,13808,1187,515,225,515,672,732,6
+20231018,863,82800,16689,1377,583,280,583,794,855,5
