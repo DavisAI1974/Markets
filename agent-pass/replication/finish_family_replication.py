@@ -157,6 +157,12 @@ def install_modules(work):
     (work/"research_atlas_primer.py").write_bytes(get("Markets","c4ca63f2816a50e051f70f6219f2378bd9530777",
                                                     "agent-pass/replication/research_atlas_primer.py"))
 
+def primer_input(frame):
+    # CSV blanks represent absent history; preserve those cases in the full study.
+    result=frame.copy()
+    result["pre_group"]=result["pre_group"].map(lambda v: np.nan if v=="" else v)
+    return result
+
 def apply_family(groups,index,out,day,reference=False):
     import flow_book_discovery as fb
     import research_atlas as atlas
@@ -195,7 +201,12 @@ def apply_family(groups,index,out,day,reference=False):
     primer.OUT=atlas_folder;primer.HERE=out;primer.rows=rows;primer.GROUPS=fb.GROUPS
     path=BASE+("/research-atlas-v2/" if day=="20231018" else f"/replay-comparison/{day}/research-atlas-v2/")
     (atlas_folder/"aggression-to-rest-events.csv").write_bytes(get("Markets",MREV,path+"aggression-to-rest-events.csv"))
-    primer.main(family=frame,sensitivity_populations=[("family_start","total1")])
+    primer_frame=primer_input(frame)
+    assert len(primer_frame)==len(frame)
+    primer.main(family=primer_frame,sensitivity_populations=[("family_start","total1")])
+    writecsv(atlas_folder/"primer-family-anchor-dispositions.csv",pd.DataFrame({
+        "instance":frame.instance,"family_id":frame.family_id,
+        "disposition":["no_strict_pre_group" if pd.isna(v) else "anchor_available" for v in primer_frame.pre_group]}))
     (atlas_folder/"aggression-to-rest-events.csv").unlink()
     for name in ("prebirth-method.json","primer-application-method.json"):
         p=atlas_folder/name;m=json.loads(p.read_text())
@@ -222,6 +233,7 @@ def apply_family(groups,index,out,day,reference=False):
         assert int(r.source_known_by_ns)<int(r.decision_ns)<int(r.birth_ns)
     receipt=dict(day=day,families=len(frame),four_arm_eligible=int(frame.four_arm_eligible.sum()),
                  model_fits=len(metrics),prebirth_case_rows=len(cases),checks="passed",
+                 primer_missing_prior=int(primer_frame.pre_group.isna().sum()),
                  cohorts=frame.cohort.value_counts().to_dict(),scope="reference749" if reference else "all observed date-specific structural families")
     jsonwrite(out/"analysis-receipt.json",receipt)
     print(json.dumps(receipt),flush=True)
@@ -339,9 +351,53 @@ def preflight(out):
         apply_family(groups,index,out/"20231018-reference","20231018",reference=True)
     jsonwrite(out/"input-manifest.json",READS);seal(out)
 
+
+RECOVERY_REV="54e1b1be98ae6defff25ccfe7e1c3498e8f569f9"
+RECOVERY_PATH=BASE+"/family-replication/run-42564821790-1"
+
+def resume(day,out):
+    operators();tests()
+    sample=pd.DataFrame({"pre_group":["",0,12,np.nan]})
+    converted=primer_input(sample)
+    assert converted.pre_group.isna().tolist()==[True,False,False,True]
+    assert converted.pre_group.iloc[1:3].tolist()==[0,12]
+    assert sample.pre_group.iloc[0]==""
+    groups=inputs(day)
+    out.mkdir(parents=True)
+    reference=day=="20231018"
+    if reference:
+        raw=get("Markets",MREV,FAM+"/instance-market-review-20261023/chronological-instance-index.csv")
+        (out/"chronological-instance-index.csv").write_bytes(raw)
+    else:
+        for name in ("chronological-instance-index.csv","strict-pre-root-source-coordinates.json","source-receipt.json"):
+            (out/name).write_bytes(get("markets-data",RECOVERY_REV,RECOVERY_PATH+f"/family-{day}/"+name))
+        receipt=json.loads((out/"source-receipt.json").read_text())
+        original=json.loads(get("Markets",MREV,BASE+f"/replay-artifacts/{day}/root-frames/source.json"))
+        assert receipt["source"]==original
+        assert receipt["observed_uncompressed_sha256"]==original["sha256"]
+        assert receipt["observed_bytes"]==original["bytes"]
+        assert receipt["observed_rows"]==original["count"]==len(groups)
+        sums=get("Markets",MREV,BASE+f"/replay-artifacts/{day}/root-frames/SHA256SUMS").decode().splitlines()
+        assert receipt["verified_parts"]==len(sums)
+    index=pd.read_csv(out/"chronological-instance-index.csv",dtype=str,keep_default_na=False).to_dict("records")
+    if not reference:assert len(index)==receipt["all_families_retained"]
+    with tempfile.TemporaryDirectory() as tmp:
+        install_modules(pathlib.Path(tmp));apply_family(groups,index,out,day,reference=reference)
+    if reference:
+        for name in ("primer-spread-event-outcomes.csv.gz","primer-spread-event-summary.csv","primer-prebirth-sensitivity.csv"):
+            expected=table(get("markets-data",RECOVERY_REV,RECOVERY_PATH+"/family-preflight/20231018-reference/research-atlas-v2/"+name),name.endswith(".gz"))
+            actual=pd.read_csv(out/"research-atlas-v2"/name)
+            pd.testing.assert_frame_equal(actual,expected,check_dtype=False,rtol=1e-10,atol=1e-12)
+        jsonwrite(out/"primer-reference-reproduction.json",dict(passed=True,tables=3))
+    jsonwrite(out/"recovery-provenance.json",dict(prior_run=42564821790,prior_data_revision=RECOVERY_REV,
+        reason="Primer expected NaN for absent pre_group; CSV adapter supplied empty string. Preserve missing cases and explicitly record primer disposition.",
+        full_archive_reused=not reference,all_prior_extraction_receipts_preserved=not reference))
+    jsonwrite(out/"input-manifest.json",READS);seal(out)
+
 if __name__=="__main__":
-    p=argparse.ArgumentParser();p.add_argument("mode",choices=["preflight","extract"])
+    p=argparse.ArgumentParser();p.add_argument("mode",choices=["preflight","extract","resume"])
     p.add_argument("--day");p.add_argument("--populations",type=pathlib.Path)
     p.add_argument("--output",required=True,type=pathlib.Path);a=p.parse_args()
     if a.mode=="preflight":preflight(a.output)
-    else:extract(a.day,a.populations,a.output)
+    elif a.mode=="extract":extract(a.day,a.populations,a.output)
+    else:resume(a.day,a.output)
