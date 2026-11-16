@@ -29,7 +29,8 @@ import zipfile
 from collections import defaultdict
 from pathlib import Path
 
-from root.calendar import EASTERN, eastern, eastern_text, parse_trade_day, to_ns, trade_day_bounds
+from root.calendar import (EASTERN, OPEN_EASTERN, eastern, eastern_text, parse_trade_day, to_ns,
+                           trade_day_bounds)
 
 # ---------------------------------------------------------------- declared constants (root/DECLARED_CONSTANTS.md)
 TRADE_DAYS = ('2023-10-02', '2023-10-03', '2023-10-17', '2023-10-18')
@@ -104,6 +105,13 @@ STORAGE_HISTORY_SHEET = 'html_report_history'
 STORAGE_CHANGES_SHEET = 'weekly_net_changes'
 ESTIMATE_MISSING = ('the street estimate is on saved web pages (web.archive.org), which the cloud environment cannot '
                     'reach; left for the later update (SPEC-outside.md, kept simple)')
+
+
+def rows_end(trade_day: dt.date) -> int:
+    """The end of the rows written for a trade day: 6 pm Eastern on its date, the end of the 5 pm to 6 pm stretch that
+    follows it. The tables hold every value known before this moment and nothing from after it; a row received at or
+    after it is refused by the pinning (root.pin), never given a stale value."""
+    return to_ns(eastern(trade_day, OPEN_EASTERN))
 
 
 def clock_day_of(stored: str) -> dt.date:
@@ -294,7 +302,7 @@ def weighted(values: dict) -> tuple:
     return sum(CITY_SHARE[c] * v for c, v in present.items()) / total, total
 
 
-def forecasts(src: Sources, trade_days, last_halt: int):
+def forecasts(src: Sources, trade_days, cut: int):
     from zoneinfo import ZoneInfo
     central = ZoneInfo(FORECAST_TZ)
     city_rows, columns = [], None
@@ -304,7 +312,7 @@ def forecasts(src: Sources, trade_days, last_halt: int):
             columns = list(rows[0].keys())
         for r in rows:
             known = utc_ns(r['runtime'], '%Y-%m-%d %H:%M:%S') + FORECAST_LAG_NS
-            if known >= last_halt:
+            if known >= cut:
                 continue
             city_rows.append(known_cols(known) + [r.get(c, '') for c in columns] + [stored])
             tmp = number(r.get('tmp'))
@@ -323,17 +331,20 @@ def forecasts(src: Sources, trade_days, last_halt: int):
         known = utc_ns(runtime, '%Y-%m-%d %H:%M:%S') + FORECAST_LAG_NS
         targets = sorted({central_date(ft) for fc in cities.values() for ft in fc})
         for target in targets:
-            hdd, cdd = {}, {}
+            hdd, cdd, high_low = {}, {}, {}
             for city, fc in cities.items():
                 temps = [t for ft, t in fc.items() if central_date(ft) == target]
                 if len(temps) >= FORECAST_MIN_TEMPS[model]:
                     hdd[city], cdd[city] = degree_days((max(temps) + min(temps)) / HIGH_LOW_MIDPOINT)
+                    high_low[city] = (max(temps), min(temps))
             gw_hdd, cover = weighted(hdd)
             if gw_hdd is None:
                 continue
             gw_cdd, _ = weighted(cdd)
             missing = sorted(c for c in CITY_WEIGHTS if c not in hdd)
-            by_run[(model, runtime, target)] = (round(gw_hdd, 3), hdd)
+            by_run[(model, runtime, target)] = (round(gw_hdd, 3), hdd, ';'.join(
+                f'{c}|{cell(high_low[c][0])}|{cell(high_low[c][1])}|{cell(round(hdd[c], 2))}'
+                for c in CITY_WEIGHTS if c in hdd))
             gw_rows.append(known_cols(known) + [model, runtime, target.isoformat(), round(gw_hdd, 3),
                                                 round(gw_cdd, 3), len([c for c in hdd if c in CITY_WEIGHTS]),
                                                 round(cover, 4), ' '.join(missing)])
@@ -347,12 +358,13 @@ def forecasts(src: Sources, trade_days, last_halt: int):
                       and utc_ns(rt, '%Y-%m-%d %H:%M:%S') + FORECAST_LAG_NS < opens]
             if not chosen:
                 on_row.append(known_cols(opens) + [day.isoformat(), f'{model} D+{horizon}', model, horizon,
-                                                   target.isoformat(), None, None,
+                                                   target.isoformat(), None, None, None,
                                                    'no run with this target was known before the trade day opened'])
                 continue
             rt = max(chosen)
             on_row.append(known_cols(opens) + [day.isoformat(), f'{model} D+{horizon}', model, horizon,
-                                               target.isoformat(), rt, by_run[(model, rt, target)][0], ''])
+                                               target.isoformat(), rt, by_run[(model, rt, target)][0],
+                                               by_run[(model, rt, target)][2], ''])
         shared = sorted({rt for (m, rt, t) in by_run if m == 'GFS'} & {rt for (m, rt, t) in by_run if m == 'NAM'})
         for rt in shared:
             known = utc_ns(rt, '%Y-%m-%d %H:%M:%S') + FORECAST_LAG_NS
@@ -387,8 +399,8 @@ def readings(src: Sources, stored: str):
     return header, [dict(zip(header, r)) for r in reader]
 
 
-def weather(src: Sources, trade_days, last_halt: int):
-    spans = [(trade_day_bounds(d)[0] - READINGS_LOOKBACK_NS, trade_day_bounds(d)[1]) for d in trade_days]
+def weather(src: Sources, trade_days, cut: int):
+    spans = [(trade_day_bounds(d)[0] - READINGS_LOOKBACK_NS, rows_end(d)) for d in trade_days]
     reading_rows, header = [], None
     for city in list(CITY_WEIGHTS) + list(UNWEIGHTED_CITIES):
         stored = f'raw/weather_obs/asos_{city}_20230901_20231101.tsv.gz'
@@ -405,18 +417,21 @@ def weather(src: Sources, trade_days, last_halt: int):
     g = GAS_DAYS_FROM
     while True:
         end = to_ns(eastern(g + dt.timedelta(days=1), GAS_DAY_START_EASTERN))
-        if end + READING_LAG_NS >= last_halt:
+        if end + READING_LAG_NS >= cut:
             break
         gas_days.append(g)
         g += dt.timedelta(days=1)
 
     per_city = {}
-    city_rows = []
+    city_rows, hourly_rows = [], []
     for city in list(CITY_WEIGHTS) + list(UNWEIGHTED_CITIES):
         stored = f'raw/weather_obs/asos_{city}_routine_20230901_20231101.tsv.gz'
         _, rows = readings(src, stored)
         stamped = sorted(((utc_ns(r['valid'], '%Y-%m-%d %H:%M'), r) for r in rows), key=lambda x: x[0])
         times = [t for t, _ in stamped]
+        for t, r in stamped:
+            if any(lo <= t and t + READING_LAG_NS < hi for lo, hi in spans):
+                hourly_rows.append(known_cols(t + READING_LAG_NS) + [city, r['valid'], number(r['tmpf']), stored])
         for g in gas_days:
             lo = to_ns(eastern(g, GAS_DAY_START_EASTERN))
             hi = to_ns(eastern(g + dt.timedelta(days=1), GAS_DAY_START_EASTERN))
@@ -452,18 +467,19 @@ def weather(src: Sources, trade_days, last_halt: int):
             None if figures['rain'] is None else round(figures['rain'], 4),
             None if figures['wind'] is None else round(figures['wind'], 2)] + carry + [
             len(present), round(coverage, 4), ' '.join(c for c in CITY_WEIGHTS if c not in present)])
-    return dict(header=header, readings=reading_rows, city=city_rows, day=day_rows)
+    hourly_rows.sort(key=lambda x: (x[0], x[2]))
+    return dict(header=header, readings=reading_rows, city=city_rows, day=day_rows, hourly=hourly_rows)
 
 
 # ---------------------------------------------------------------- X05, X07: wind and gas burned for power
-def grid(src: Sources, last_halt: int):
+def grid(src: Sources, cut: int):
     every, us48 = [], defaultdict(dict)
     for stored in src.listed('raw/eia930/api/'):
         page = json.loads(src.text(stored))['response']['data']
         route = 'fuel-type-data' if 'fuel-type-data' in stored else 'region-data'
         for r in page:
             known = utc_ns(r['period'], '%Y-%m-%dT%H') + GRID_LAG_NS
-            if known >= last_halt:
+            if known >= cut:
                 continue
             kind = r.get('fueltype') or r.get('type')
             every.append(known_cols(known) + [r['period'], r['respondent'], route, kind,
@@ -536,7 +552,7 @@ def curve_shape(prices: dict, by_expiry: list, symbols: dict, t: int):
             round(round(front, 4) - round(c1, 4), 4), regime, len(closes)]
 
 
-def curve(src: Sources, last_halt: int):
+def curve(src: Sources, cut: int):
     import databento as db
     import warnings
     warnings.filterwarnings('ignore', module='databento')
@@ -552,14 +568,14 @@ def curve(src: Sources, last_halt: int):
         for r in a:
             defs.append((int(r['ts_recv']), int(r['instrument_id']), r['raw_symbol'].decode(),
                          r['instrument_class'].decode(), int(r['expiration']), stored))
-    defs = sorted(d for d in defs if d[0] < last_halt)
+    defs = sorted(d for d in defs if d[0] < cut)
     def_rows = [known_cols(d[0]) + list(d[1:]) for d in defs]
 
     stats, trades = [], []
     for stored, a in records('statistics'):
         for r in a:
             t = int(r['ts_recv'])
-            if t >= last_halt:
+            if t >= cut:
                 continue
             p = int(r['price'])
             stats.append((t, int(r['ts_event']), int(r['ts_ref']), int(r['instrument_id']), int(r['stat_type']),
@@ -568,7 +584,7 @@ def curve(src: Sources, last_halt: int):
     for stored, a in records('trades'):
         for r in a:
             t = int(r['ts_recv'])
-            if t >= last_halt:
+            if t >= cut:
                 continue
             p = int(r['price'])
             trades.append((t, int(r['ts_event']), int(r['instrument_id']),
@@ -654,7 +670,7 @@ ESTIMATE_COLUMNS = ['known_from_ns', 'known_from_eastern', 'known_from_basis', '
                     'estimate_bcf', 'actual_change_from_first_prints_bcf', 'surprise_bcf', 'estimate_missing_reason']
 
 
-def storage(src: Sources, last_halt: int) -> dict:
+def storage(src: Sources, cut: int) -> dict:
     """X11 and X12. Fix 1: the level is the EIA's original estimate before any revision (revisions.xls holds it for
     every week from 2015-06-19). The change on the week is this week's first print minus the week before's first
     print; it is not called "as printed", because in the week after a revision the printed change used the revised
@@ -695,7 +711,7 @@ def storage(src: Sources, last_halt: int) -> dict:
     weekly, estimate, change_differs = [], [], []
     for week in sorted(first):
         known = storage_release(week)
-        if known >= last_halt:
+        if known >= cut:
             continue
         row, prev = first[week], first.get(week - dt.timedelta(days=DAYS_PER_WEEK))
         level = row['total']
@@ -774,6 +790,7 @@ EMPTY_REASONS = {
     'forecast_on_row.csv': 'empty_reason is empty when the figure was made',
     'weather_readings.csv.gz': 'the station did not report that field in that reading (as served)',
     'weather_gas_day_city.csv': 'weight: the city carries no weight (AUS, SAT); a figure: no reading of it that gas day',
+    'weather_hourly_city.csv': 'the routine hourly reading carries no temperature (as served)',
     'weather_gas_day.csv': 'cities_missing is empty when no city is missing; carry-over: before the first gas day made',
     'grid_hourly_all.csv.gz': 'the EIA gives no value for that hour (as served)',
     'curve_definitions.csv.gz': '', 'curve_statistics.csv.gz': 'price: the statistic has no price (a quantity only); '
@@ -790,14 +807,14 @@ EMPTY_REASONS = {
 def build(src_folder: Path, out: Path, trade_days=TRADE_DAYS) -> dict:
     src = Sources(src_folder)
     days = [parse_trade_day(d) for d in trade_days]
-    last_halt = max(trade_day_bounds(d)[1] for d in days)
+    cut = max(rows_end(d) for d in days)
     out.mkdir(parents=True, exist_ok=True)
     tables, empty = [], []
 
-    pos = [r for r in positioning(src) if r[0] < last_halt]
+    pos = [r for r in positioning(src) if r[0] < cut]
     tables.append(write_table(out, 'positioning.csv', POSITIONING_COLUMNS, pos))
 
-    fc = forecasts(src, days, last_halt)
+    fc = forecasts(src, days, cut)
     tables.append(write_table(out, 'forecast_city_runs.csv',
                               ['known_from_ns', 'known_from_eastern'] + fc['columns'] + ['source_file'], fc['city'],
                               zipped=True))
@@ -805,14 +822,14 @@ def build(src_folder: Path, out: Path, trade_days=TRADE_DAYS) -> dict:
                               ['known_from_ns', 'known_from_eastern', 'model', 'runtime_utc', 'target_date_central',
                                'gw_hdd', 'gw_cdd', 'cities', 'weight_covered', 'cities_missing'], fc['gw']))
     on_cols = ['known_from_ns', 'known_from_eastern', 'trade_day', 'figure', 'model', 'horizon_days',
-               'target_date_central', 'runtime_utc_used', 'gw_hdd', 'empty_reason']
+               'target_date_central', 'runtime_utc_used', 'gw_hdd', 'cities_high_low_hdd', 'empty_reason']
     tables.append(write_table(out, 'forecast_on_row.csv', on_cols, fc['on_row']))
     tables.append(write_table(out, 'forecast_disagreement.csv',
                               ['known_from_ns', 'known_from_eastern', 'trade_day', 'runtime_utc',
                                'max_abs_spread_gw_hdd', 'at_horizon_days', 'spreads_by_horizon',
                                'used_on_rows'], fc['disagreement']))
 
-    wx = weather(src, days, last_halt)
+    wx = weather(src, days, cut)
     tables.append(write_table(out, 'weather_readings.csv',
                               ['known_from_ns', 'known_from_eastern'] + wx['header'] + ['source_file'],
                               wx['readings'], zipped=True))
@@ -824,8 +841,10 @@ def build(src_folder: Path, out: Path, trade_days=TRADE_DAYS) -> dict:
                 'gw_wind_knots'] + [f'gw_hdd_{k}_gas_days_before' for k in range(1, CARRY_OVER_GAS_DAYS + 1)] + [
                 'cities_present', 'weight_covered', 'cities_missing']
     tables.append(write_table(out, 'weather_gas_day.csv', day_cols, wx['day']))
+    tables.append(write_table(out, 'weather_hourly_city.csv', ['known_from_ns', 'known_from_eastern', 'city', 'valid',
+                                                               'tmpf', 'source_file'], wx['hourly']))
 
-    gr = grid(src, last_halt)
+    gr = grid(src, cut)
     tables.append(write_table(out, 'grid_hourly_all.csv',
                               ['known_from_ns', 'known_from_eastern', 'period_utc', 'respondent', 'table',
                                'fuel_or_type', 'name', 'value', 'units', 'source_file'], gr['every'], zipped=True))
@@ -836,7 +855,7 @@ def build(src_folder: Path, out: Path, trade_days=TRADE_DAYS) -> dict:
                                                   'sessions_since_front_expiry', 'last_expired_symbol',
                                                   'last_expiry_date'], expiry(days)))
 
-    cv = curve(src, last_halt)
+    cv = curve(src, cut)
     tables.append(write_table(out, 'curve_definitions.csv', ['known_from_ns', 'known_from_eastern', 'instrument_id',
                                                              'raw_symbol', 'instrument_class', 'expiration_ns',
                                                              'source_file'], cv['definitions'], zipped=True))
@@ -850,7 +869,7 @@ def build(src_folder: Path, out: Path, trade_days=TRADE_DAYS) -> dict:
     tables.append(write_table(out, 'curve_settled_shape.csv', SHAPE_COLUMNS, cv['settled']))
     tables.append(write_table(out, 'curve_traded_shape.csv', SHAPE_COLUMNS, cv['traded'], zipped=True))
 
-    st = storage(src, last_halt)
+    st = storage(src, cut)
     tables.append(write_table(out, 'storage_weekly.csv', STORAGE_COLUMNS, st['weekly']))
     tables.append(write_table(out, 'storage_estimate.csv', ESTIMATE_COLUMNS, st['estimate']))
 
@@ -861,8 +880,9 @@ def build(src_folder: Path, out: Path, trade_days=TRADE_DAYS) -> dict:
     receipt = dict(
         what='ROOT outside part: the 13 outside data points as tables, each row with the time its value became known',
         specification='SPEC-outside.md (approved 2026-11-16)', trade_days=list(trade_days),
-        last_halt_ns=last_halt, last_halt_eastern=eastern_text(last_halt),
-        rule_for_rows='only values known before the last trade day halts; the source files hold the rest',
+        cut_ns=cut, cut_eastern=eastern_text(cut),
+        rule_for_rows='only values known before 6 pm Eastern on the last trade day (the end of the last written row); '
+                      'the pinning refuses a row received at or after it; the source files hold the rest',
         inputs=sorted({(r['stored'], r['sha256']) for r in src.read_log}), tables=tables, empty=empty,
         storage_checks=dict(
             history_file_equals_api_series_weeks=st['api_weeks_compared'],

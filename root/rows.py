@@ -1,8 +1,10 @@
-"""ROOT `rows`: the one pass. One row per tick, one column per field, sections A to F of SPEC-root.md.
+"""ROOT `rows`: the one pass. One row per tick, one column per field, sections A to G of SPEC-root.md.
 
 Specification: SPEC-root.md (approved by Greg, 2026-11-16), part `rows`. The tape is walked once from the week's
 Sunday start-up; one book is carried for the whole week. Every tick is applied to the book. For a written tick its
 row is made in that same step from what the tape and the book say at that tick; nothing from a later tick is used.
+Section G (the 13 outside data points) is pinned in that same step by `root.pin`, from the row's own received time and
+trade-day label.
 Warm-up and shelved ticks only move the book: no row, no figure, nothing kept from them but the book itself.
 
 Columns are fields; rows are ticks (Greg). A field that does not apply to a tick is EMPTY on that row (None): never
@@ -18,7 +20,7 @@ import bisect
 import collections
 import datetime as dt
 
-from root import tape
+from root import pin, tape
 from root.book import ADD, ASK, BID, CANCEL, FILL, MODIFY, Book, compare_with_restatement
 from root.calendar import (HALT_EASTERN, OPEN_EASTERN, SETTLE_FROM_EASTERN, SETTLE_TO_EASTERN, STARTUP, STRETCH,
                            TRADE_DAY, eastern, to_ns, trade_day_bounds, week_sunday)
@@ -148,6 +150,7 @@ COLUMNS += [
     ('E. Change-of-state marks', 'front_of_line_changed', 'Yes when the order at the front of a line this tick acted '
      'on is a different order afterwards (a new level\'s first order and an emptied level count).'),
 ]
+COLUMNS += [(section, name, what) for section, name, what, _ in pin.COLUMNS]
 NAMES = [name for _, name, _ in COLUMNS]
 NO_LEFT = tuple(None for name in NAMES if name.startswith('left_'))
 NO_TOUCHED = tuple(None for name in NAMES if name.startswith('touched_line_'))
@@ -179,8 +182,9 @@ class Walk:
     in COLUMNS order. While it is being iterated `book` is the book exactly as it stands after the row just given.
     `on_last_written(book, position)` is called once, with the book as it stands after the last written row."""
 
-    def __init__(self, week, trade_day: dt.date, on_last_written=None, built=tape.BUILT_TRADE_DAYS):
+    def __init__(self, week, trade_day: dt.date, on_last_written=None, built=tape.BUILT_TRADE_DAYS, pins=None):
         self.week, self.trade_day, self.on_last_written, self.built = week, trade_day, on_last_written, built
+        self.pins = pins if pins is not None else pin.Pins()
         self.book = Book()
         self.restatements, self.compared, self.stats = [], [], {}
 
@@ -188,9 +192,9 @@ class Walk:
         return _rows(self)
 
 
-def build(week, trade_day: dt.date, stats: dict | None = None, built=tape.BUILT_TRADE_DAYS):
+def build(week, trade_day: dt.date, stats: dict | None = None, built=tape.BUILT_TRADE_DAYS, pins=None):
     """The rows of one trade day's box (see Walk). `stats`, when given, receives the counts of the walk."""
-    walk = Walk(week, trade_day, built=built)
+    walk = Walk(week, trade_day, built=built, pins=pins)
     yield from walk
     if stats is not None:
         stats.update(walk.stats)
@@ -198,7 +202,7 @@ def build(week, trade_day: dt.date, stats: dict | None = None, built=tape.BUILT_
 
 def _rows(walk: Walk):
     week, trade_day, built = walk.week, walk.trade_day, walk.built
-    book = walk.book
+    book, pinned = walk.book, walk.pins.at
     last_bit = tape.flag_bits()['F_LAST']
     snap_bit = tape.flag_bits()['F_SNAPSHOT']
     lo, hi = written_span(trade_day)
@@ -360,6 +364,7 @@ def _rows(walk: Walk):
                     bid_before if bid_after != bid_before else None, bid_after if bid_after != bid_before else None,
                     ask_before if ask_after != ask_before else None, ask_after if ask_after != ask_before else None,
                     appeared, emptied, front_changed]
+            row += pinned(tr, day_text if opens <= te < halts else None)
             counts['written'] += 1
             counts[what] += 1
             last_written = pos

@@ -13,7 +13,7 @@ import os
 from pathlib import Path
 
 from root.calendar import parse_trade_day
-from root import checks, store, tape
+from root import checks, pin, store, tape
 from root.book import check_book
 from root.tape import check_week
 
@@ -36,6 +36,7 @@ def main():
     bd.add_argument('trade_day')
     bd.add_argument('--tape', type=Path, default=DEFAULT_TAPE)
     bd.add_argument('--out', type=Path, required=True, help='output folder (in markets-data, never in Markets)')
+    bd.add_argument('--outside', type=Path, default=pin.DEFAULT_TABLES, help='the made outside tables (section G)')
     pb = sub.add_parser('playback', help='the playback check: rows do not change when the tape is cut')
     pb.add_argument('trade_day')
     pb.add_argument('--tape', type=Path, default=DEFAULT_TAPE)
@@ -43,14 +44,15 @@ def main():
     a = ap.parse_args()
     if a.command == 'build':
         day = parse_trade_day(a.trade_day)
-        receipt = store.build(a.tape, day, a.out, checker=checks.RowChecker(day))
+        receipt = store.build(a.tape, day, a.out, checker=checks.RowChecker(day), outside_tables=a.outside)
         size = lambda files: round(sum(f['bytes'] for f in files) / BYTES_PER_MEGABYTE, 1)
         print(json.dumps(dict(trade_day=receipt['trade_day'], rows=receipt['rows'], columns=receipt['columns'],
                               row_megabytes=size(receipt['row_files']),
                               book_pictures_at_trades=receipt['book_pictures_at_trades'],
                               book_picture_megabytes=size(receipt['book_picture_files']),
                               checks_passed=bool(receipt['checks']['rows']['passed'] and
-                                                 receipt['checks']['accounted']['passed']),
+                                                 receipt['checks']['accounted']['passed'] and
+                                                 receipt['checks']['outside_pinned']['passed']),
                               seconds=receipt['seconds']), indent=1))
     if a.command == 'playback':
         day = parse_trade_day(a.trade_day)

@@ -73,10 +73,10 @@ def test_a_withheld_file_is_refused(tmp_path):
         outside.Sources(tmp_path).bytes('raw/cot/fut_disagg_txt_2023.zip')
 
 
-def test_nothing_known_after_the_last_halt(made):
+def test_nothing_known_after_the_cut(made):
     folder, receipt, _ = made
     for t in receipt['tables']:
-        assert all(int(r['known_from_ns']) < receipt['last_halt_ns'] for r in table(folder, t['table'])), t['table']
+        assert all(int(r['known_from_ns']) < receipt['cut_ns'] for r in table(folder, t['table'])), t['table']
 
 
 def test_positioning_matches_the_cftc_file(made):

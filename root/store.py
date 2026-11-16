@@ -18,6 +18,7 @@ import json
 from pathlib import Path
 
 from root import checks
+from root import pin
 from root import rows as rows_part
 from root import tape
 from root.book import ADD, ASK, BID, TRADE
@@ -26,7 +27,7 @@ ROWS_PER_PART = 2 ** 18            # rows per stored part file: keeps every file
 PICTURE_ROWS_PER_PART = 2 ** 22    # book-picture rows per stored part file (they compress far more than rows)
 ZSTD_LEVEL = 9                     # compression of the stored files; the content is unchanged
 TEXT = {'action', 'side', 'row_label', 'trade_day', 'raw_file', 'raw_file_fingerprint', 'contract', 'what_happened',
-        'irregular', 'touched_line'}
+        'irregular', 'touched_line'} | pin.TEXT
 YES_NO = {'ends_exchange_event', 'in_settlement_window', 'entered_before_written_record', 'rested_is_at_least',
           'best_bid_front_is_at_least', 'best_ask_front_is_at_least', 'level_appeared', 'level_emptied',
           'front_of_line_changed'}
@@ -41,9 +42,10 @@ RESTATEMENT_COLUMNS = ['raw_file', 'record_in_file', 'exchange_time_ns', 'receiv
                        'price', 'size', 'order_number', 'flags', 'sequence_number', 'our_book_has_this_order_the_same']
 
 
-def schema(columns, text, yes_no):
+def schema(columns, text, yes_no, decimal=frozenset()):
     import pyarrow as pa
-    return pa.schema([(c, pa.string() if c in text else pa.bool_() if c in yes_no else pa.int64()) for c in columns])
+    return pa.schema([(c, pa.string() if c in text else pa.bool_() if c in yes_no else pa.float64() if c in decimal
+                       else pa.int64()) for c in columns])
 
 
 class Parts:
@@ -98,15 +100,18 @@ def picture(book, position: int, why: str, out: Parts) -> dict:
     return fresh
 
 
-def build(tape_folder: Path, trade_day: dt.date, out: Path, checker=None) -> dict:
+def build(tape_folder: Path, trade_day: dt.date, out: Path, checker=None, outside_tables: Path = pin.DEFAULT_TABLES
+          ) -> dict:
     """One trade day: walk its week once and write the rows, the book pictures, the restatement table and the
-    receipt into `out`. `checker`, when given, sees every row (root.checks)."""
+    receipt into `out`. `checker`, when given, sees every row (root.checks). `outside_tables` is the folder of the
+    made outside tables that section G is pinned from."""
     import time
     started = time.monotonic()
     out.mkdir(parents=True, exist_ok=True)
     week = tape.read_week(tape_folder, trade_day)
     day = f'{trade_day:%Y%m%d}'
-    row_parts = Parts(out, f'rows-{day}', schema(rows_part.NAMES, TEXT, YES_NO), ROWS_PER_PART)
+    row_parts = Parts(out, f'rows-{day}', schema(rows_part.NAMES, TEXT, YES_NO, pin.DECIMALS), ROWS_PER_PART)
+    pins = pin.Pins(outside_tables)
     pic_parts = Parts(out, f'book-pictures-{day}', schema(PICTURE_COLUMNS, PICTURE_TEXT, PICTURE_YES_NO),
                       PICTURE_ROWS_PER_PART)
     I = rows_part.INDEX
@@ -118,7 +123,7 @@ def build(tape_folder: Path, trade_day: dt.date, out: Path, checker=None) -> dic
         pictures['last_written_row'] = dict(position=position,
                                             orders=orders_in(picture(book, position, AT_LAST_ROW, pic_parts)))
 
-    walk = rows_part.Walk(week, trade_day, on_last_written=at_last)
+    walk = rows_part.Walk(week, trade_day, on_last_written=at_last, pins=pins)
     last_row_position = None
     for row in walk:
         position = row[I['position_on_tape']]
@@ -160,11 +165,13 @@ def build(tape_folder: Path, trade_day: dt.date, out: Path, checker=None) -> dic
         raise checks.CheckFailed(f'the carried book differs from the vendor restatement: {walk.compared}')
     if not pictures['adds_up']:
         raise checks.CheckFailed('the running whole-book figures differ from a fresh count at a trade')
+    outside_pinned = checks.pinned([out / f['file'] for f in row_parts.files], outside_tables)
     receipt = dict(
         what='ROOT build of one trade day: rows, book pictures, vendor restatements',
         specification='SPEC-root.md (approved 2026-11-16)', trade_day=trade_day.isoformat(),
         inputs=[dict(file=f.name, sha256=f.sha256, records=len(f.records), vendor_restatement_records=f.vendor_snapshot)
                 for f in week],
+        outside_tables=[dict(table=name, sha256=sha) for name, sha in sorted(pins.tables_read.items())],
         columns=len(rows_part.NAMES), rows=row_parts.written, row_files=row_parts.files,
         book_picture_rows=pic_parts.written, book_pictures_at_trades=pictures['trade'],
         book_picture_at_first_written_row=pictures.get('first_written_row'),
@@ -177,6 +184,7 @@ def build(tape_folder: Path, trade_day: dt.date, out: Path, checker=None) -> dic
                                                                                          walk.compared)],
                     book_adds_up_at_every_trade=pictures['adds_up'],
                     rows=(checker.result() if checker is not None else None),
+                    outside_pinned=outside_pinned,
                     accounted=(checks.accounted(week, trade_day, walk.stats, checker.result())
                                if checker is not None else None)),
         empty_fields='stored as empty (null): never 0, never blank text; a calculation skips them',

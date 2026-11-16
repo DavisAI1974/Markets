@@ -62,6 +62,14 @@ the end.
 | `FIVE_YEAR_PRIOR_YEARS` | 5 | The five-year comparison uses the same ISO week in each of the five prior calendar years, and is empty unless all five exist, as in the original's fallback. |
 | `STORAGE_TOTAL`, `STORAGE_WEEK`, `STORAGE_REGIONS`, `STORAGE_NOTE`, `STORAGE_HISTORY_SHEET`, `STORAGE_CHANGES_SHEET` | labels | The EIA workbooks' own column and sheet labels; columns are found by label, never by position. |
 
+## `root/pin.py` (section G: the outside figures on every row)
+
+No number is written into it. Its choices are labels: `NYMEX_GAS` and `ICE_HENRY_HUB` (the CFTC contract codes of the
+original, 023651 and 023391), `FORECAST_FIGURES` (the four forecast figures of `FORECAST_ON_ROW`), and the column
+lists `AS_OF` (latest value known at or before the row's received time) and `PER_TRADE_DAY` (on every row of the
+trade day, empty on a row of no trade day). The times a value becomes known are the ones declared for
+`root/outside.py`.
+
 ## `root/tape.py`
 
 | Constant | Value | Why |
@@ -77,6 +85,12 @@ the end.
 | `ROWS_PER_PART` | 2^18 | Rows per stored part file, so every file stays far below GitHub's 100 MB file limit. Storage only; no row is dropped or merged. |
 | `PICTURE_ROWS_PER_PART` | 2^22 | Book-picture rows per stored part file. Storage only. |
 | `ZSTD_LEVEL` | 9 | Compression of the stored files; the content is unchanged. |
+
+## `root/checks.py`
+
+| Constant | Value | Why |
+|---|---|---|
+| `HALVE` | 2 | The playback check cuts the tape inside an exchange event at the middle trade message that does not end its event. It only chooses where a check cuts; no row or figure depends on it. |
 
 ## `root/run.py`
 

@@ -7,7 +7,10 @@ from __future__ import annotations
 
 import datetime as dt
 import hashlib
+import json
+from pathlib import Path
 
+from root import pin
 from root import rows as R
 from root import tape
 from root.book import TRADE
@@ -19,6 +22,7 @@ ORDER_FIELDS = ('order_size_before', 'order_size_after', 'orders_ahead_before', 
                 'rested_exchange_ns', 'rested_is_at_least', 'entered_before_written_record')
 ENDINGS = (R.LEFT_BY_CANCEL, R.LEFT_BY_FILL)
 FIRST = object()
+HALVE = 2                          # the playback cut inside an exchange event is taken at the middle such trade
 
 
 class CheckFailed(AssertionError):
@@ -165,7 +169,7 @@ def playback(week, trade_day: dt.date) -> list:
                 cuts[name] = (k, int(hit[0]) + 1)
         inside = ((t['action'] == TRADE) & (te >= opens) & (te < halts) & ((t['flags'] & last_bit) == 0)).nonzero()[0]
         if 'inside an exchange event' not in cuts and len(inside):
-            cuts['inside an exchange event'] = (k, int(inside[len(inside) // 2]) + 1)
+            cuts['inside an exchange event'] = (k, int(inside[len(inside) // HALVE]) + 1)
     cuts['across the vendor file boundary'] = (len(week) - 1, 1)
     wanted = {}
     for name, (k, kept) in cuts.items():
@@ -205,3 +209,59 @@ def playback(week, trade_day: dt.date) -> list:
         need((digest, count) == (want_digest, want_count), 'playback differs at the cut', names)
         results.append(dict(cut=' and '.join(names), raw_file=f.name, rows_compared=count, identical=True))
     return results
+
+
+def pinned(row_files, tables_folder) -> dict:
+    """Criterion 7, read back from the STORED rows and the made outside tables, by a whole-column lookup that does not
+    use the pinning code's own per-row lookup: on every row, each outside figure became known at or before the row's
+    received time and is the latest such value; the once-per-trade-day figures are those of the row's own trade day,
+    known from its open, and empty on a row of no trade day. Every row and every section G column is compared."""
+    import numpy as np
+    import pyarrow as pa
+    import pyarrow.compute as pc
+    import pyarrow.parquet as pq
+    folder = Path(tables_folder)
+    receipt = json.loads((folder / 'RECEIPT.json').read_text())
+    prints = {t['table']: t['sha256'] for t in receipt['tables']}
+    stored = pa.concat_tables([pq.read_table(f) for f in row_files])
+    received = stored.column('received_time_ns').to_numpy()
+    need(int(received.max()) < receipt['cut_ns'], 'a row was received after everything the outside tables hold')
+    kinds = {pin.WHOLE: pa.int64(), pin.DECIMAL: pa.float64(), pin.WORDS: pa.string()}
+    tables, empty_rows = {}, {}
+
+    def table(name):
+        if name not in tables:
+            tables[name] = pin.read_table(folder, name, prints[name])
+        return tables[name]
+
+    def same(column, expected):
+        need(stored.column(column).combine_chunks().equals(expected), 'section G differs from the tables in', column)
+        empty_rows[column] = stored.column(column).null_count
+
+    for g in pin.AS_OF:
+        rows = pin.chosen(table(g['table']), g['where'])
+        known = np.array([int(r['known_from_ns']) for r in rows], dtype=np.int64)
+        need(bool((np.diff(known) >= 0).all()), g['table'], 'is not in the order its values became known')
+        latest = np.searchsorted(known, received, side='right') - 1     # the last value known at or before the row
+        take = pa.array(latest, mask=latest < 0)                         # empty where nothing was known yet
+        same(g['known'], pa.array(known).take(take))
+        for name, col, kind, _ in g['fields']:
+            same(name, pa.array([pin.convert(r[col], kind) for r in rows], type=kinds[kind]).take(take))
+
+    days = stored.column('trade_day').combine_chunks()
+    names = sorted(pc.unique(days.drop_null()).to_pylist())
+    which = pc.index_in(days, value_set=pa.array(names, type=pa.string()))
+    opens = {r['trade_day']: int(r['known_from_ns']) for r in table('expiry.csv')}
+    same(pin.DAY_KNOWN, pa.array([opens[d] for d in names], type=pa.int64()).take(which))
+    known_at = stored.column(pin.DAY_KNOWN).combine_chunks().fill_null(0).to_numpy()
+    need(bool((known_at <= received).all()), 'a once-per-trade-day figure is on a row received before its open')
+    for g in pin.PER_TRADE_DAY:
+        by_day = {r['trade_day']: r for r in pin.chosen(table(g['table']), g['where'])}
+        need(all(int(by_day[d]['known_from_ns']) <= opens[d] for d in names), g['table'], 'was not known at the open')
+        for name, col, kind, _ in g['fields']:
+            same(name, pa.array([pin.convert(by_day[d][col], kind) for d in names], type=kinds[kind]).take(which))
+    need(set(empty_rows) == set(pin.NAMES), 'a section G column was not compared')
+    return dict(passed=True, rows_compared=stored.num_rows, columns_compared=len(empty_rows),
+                rows_of_no_trade_day=days.null_count, trade_days_on_the_rows=names,
+                tables_hold_everything_known_before=receipt['cut_eastern'],
+                rows_where_a_column_is_empty={c: n for c, n in empty_rows.items() if n})
