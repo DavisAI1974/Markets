@@ -37,6 +37,7 @@ LEFT_BY_FILL = 'left by fill'
 NO_CHANGE = 'no change'
 CLEARED = 'book cleared'
 NOT_APPLIED = 'not applied'
+NO_ORDERS = 'no orders'       # the touched line when this tick emptied it: a value in words, never blank text
 
 COLUMNS = [
     # (section, column, what it is)
@@ -136,7 +137,8 @@ COLUMNS += [
      'price it joined).'),
     ('D. The book at this tick', 'touched_line', 'The full line at that price after this tick, front first: each '
      'order as order number|size|first entered exchange|first entered received|took place exchange|took place '
-     'received|marks (w = carried over the weekend, b = entered before the written record), orders separated by ;'),
+     'received|marks (w = carried over the weekend, b = entered before the written record), orders separated by ; '
+     'When this tick emptied the line, the words "no orders".'),
     ('D. The book at this tick', 'touched_line_size_before', 'Total size in that line just before.'),
     ('D. The book at this tick', 'touched_line_size_after', 'Total size in that line just after.'),
     ('D. The book at this tick', 'touched_line_orders_before', 'Number of orders in that line just before.'),
@@ -335,7 +337,7 @@ def _rows(walk: Walk):
             elif o is not None:
                 line = sides[home_side].lines.get(home_price)
                 touched_price = home_price
-                touched_text = line_text(line) if line else ''
+                touched_text = line_text(line) if line else NO_ORDERS
                 touched = (home_before[0], line.size if line else 0, home_before[1], len(line.orders) if line else 0)
                 emptied = line is None
                 front_changed = (next(iter(line.orders)) if line else None) != home_front

@@ -92,6 +92,13 @@ trade day, empty on a row of no trade day). The times a value becomes known are 
 |---|---|---|
 | `HALVE` | 2 | The playback check cuts the tape inside an exchange event at the middle trade message that does not end its event. It only chooses where a check cuts; no row or figure depends on it. |
 
+## `root/sheet.py`
+
+| Constant | Value | Why |
+|---|---|---|
+| `EXCEL_EXACT_WHOLE_NUMBER` | 2^53 | Excel holds a whole number exactly only below this. A larger one (the tape's "no price" value) is written as text, digit for digit. Times in nanoseconds and order numbers are always written as text. |
+| `EXCEL_ROWS` | 2^20 | The most rows one Excel sheet holds; a trade day with more is refused, never cut. |
+
 ## `root/run.py`
 
 | Constant | Value | Why |

@@ -72,7 +72,7 @@ class RowChecker:
             need(r[I['left_price']] is None and r[I['left_line_size_before']] is None, 'a left line at', pos)
         text = r[I['touched_line']]
         if text is not None:
-            sizes = [int(part.split('|')[1]) for part in text.split(';')] if text else []
+            sizes = [] if text == R.NO_ORDERS else [int(part.split('|')[1]) for part in text.split(';')]
             need(sum(sizes) == r[I['touched_line_size_after']] and len(sizes) == r[I['touched_line_orders_after']],
                  'the line on the row does not add up at', pos)
         for side in ('bid', 'ask'):
