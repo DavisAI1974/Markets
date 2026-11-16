@@ -14,6 +14,17 @@ Read `CLAUDE.md` first; it is the project's instruction file for every agent, no
 - The repo reached about 5.9 GB because `artifacts/` and `tasks/` were pushed here after this rule
   was given, and GitHub now warns it is near its size quota.
 
+## Four trade days only (Greg, 2026-11-16)
+
+**ROOT rebuild: only ticks inside trade days Oct 2, 3, 17 and 18, 2023 (18:00 ET to 17:00 ET) enter any
+calculation that feeds research, analysis or trade strategies.**
+
+- Data from outside them may be used for one thing: seating the order book so it is complete on the four
+  trade days. Nothing else, and nothing is commingled.
+- Any other use of data from outside the four trade days is put to Greg first, before it is built.
+- In code: calculations receive ticks only through `root/tape.py` `for_calculations()`, live in `root/calcs/`,
+  and never read the tape themselves. Full wording is in `CLAUDE.md` under "The trading rules".
+
 ## Other standing rules
 
 - Trunk: `claude/kalshi-s79-kickoff-ij8t9o`. Check `git log --oneline -1` first (stale-tip trap).
