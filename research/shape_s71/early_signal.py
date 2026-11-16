@@ -37,9 +37,6 @@ Measured, out-of-sample, on the resting book (data/<coin>-book, ~40h/coin):
         BTC 57% / ETH 55% OOS directional hit @15s   -> HIGH weight
         SOL flat (~37%, book uninformative)          -> ZERO the book here
         XRP / DOGE ~coin-flip accuracy, big gross     -> LOW weight, stack only
-  * Net-of-cost: alive only at the 0% maker floor; the ride-to-reversal exit
-    (wide ~30 bps trailing stop, ~10 min holds) was the first net-positive config
-    (+7.4 bps/trade @ 0% maker, +5.4 @ 2 bps taker) on the BTC window.
 
 IMPORTANT SCOPE
 ---------------
@@ -81,9 +78,6 @@ DIRECTION_SIGN       = +1      # +1: bid-heavy book -> LONG (fit on Coinbase BTC
                                # RE-FIT PER VENUE x CELL: the sign can differ on Kraken
                                # (different queue dynamics). To fit: on a train window,
                                # sgn = +1 if mean(sign(imb_t) * ret_{t->t+60s}) >= 0 else -1.
-# exit-side reference constants (not used for entry; documented for the caller)
-TRAIL_BPS_DEFAULT    = 30.0    # ride-to-reversal trailing stop that was net-positive
-MAX_HOLD_S_DEFAULT   = 600     # hard cap on hold if no reversal
 BEST_HORIZON_S       = 60      # the horizon where the signal was fattest
 
 

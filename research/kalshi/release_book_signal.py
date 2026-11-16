@@ -52,7 +52,7 @@ from datetime import datetime, timezone
 
 import numpy as np
 
-# --- repo wiring (script-style imports, matching book_swing_kraken.py) ---------------------
+# --- repo wiring (script-style imports) ---------------------
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _ROOT = os.path.abspath(os.path.join(_HERE, "..", ".."))
 sys.path.insert(0, os.path.join(_ROOT, "research", "shape_s71"))

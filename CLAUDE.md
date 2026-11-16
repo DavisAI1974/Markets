@@ -87,12 +87,17 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
   `markets-data` `tasks/family-research-20261022/research-union-current/trade-day-rebuild-20261116/`). Any
   exception needs a specific reason, written down next to the thing that differs.
 
-- **TRADE COST IS NOT A MARKET CONDITION (Greg, 2026-11-08).** No fee, slippage, maker/taker offset or any
-  other execution assumption enters ANY research calculation, forecast or output. Fees on Kalshi are a
-  non-factor; the crypto-era fee-floor and net-of-cost rules below in the dipole section are RETIRED as
-  rules and kept only as history. `lag_join.py` reports the echo GROSS. Nothing from the crypto-era trade
-  strategies influences the NG program; only the dipole toolkit (imbalance read, pre-entry look-ahead window,
-  leakage gate) is carried over.
+- **TRADE COST IS NOT A MARKET CONDITION (Greg, 2026-11-08).** No fee, slippage, maker or taker offset, fill
+  model or any other execution assumption enters ANY research calculation, forecast or output. Research numbers
+  are GROSS.
+
+- **NO BITCOIN-ERA RULES. KALSHI RULES START FRESH, FOR KALSHI ONLY (Greg, 2026-11-16).** Every trade rule that
+  came over from the crypto work is removed, together with the code that factored it in: fee floors, net-of-cost
+  gates, maker and taker fill assumptions, slippage, bps cost thresholds and crypto-venue strategy rules. Do not
+  reintroduce any of them, and do not copy one out of old code, an old handoff or the archive. Whatever execution
+  or cost rules Kalshi needs will be worked out new, from Kalshi itself, and will apply to Kalshi only. None is
+  written yet, so none is assumed. The only things kept from the crypto era are measurement tools: the dipole
+  read (imbalance, divergence, exhaustion), the pre-entry look-ahead window and the leakage gate.
 
 - **EACH TRADE INDIVIDUALLY, never average.** No pooled hit-rate, no mean signed-bps, no averaged
   coefficient — every aggregate blurs away the per-trade fingerprint that IS the predictive content.
@@ -218,8 +223,8 @@ we periodically pull back out. All portable numpy; validated per-cell.
   (`build_centroids`/`project`; H_a/H_b = projections on win/lose centroids — centroid-based, NOT bins).
 - **`odcore/null_extract.py` / `coupling_scanner.py` / `symbolic.py` (PySR) / `validation.py` /
   `sizing.py` / `stacking.py` / `generators.py`** — coupling discriminator, tautology-killing
-  circular-shift null, symbolic regression, the walk-forward net-of-cost promotion gate, OD-native
-  sizing, stacking.
+  circular-shift null, symbolic regression, walk-forward splits (the cost-charging promotion gate was
+  removed 2026-11-16), OD-native sizing, stacking.
 - **Crypto data history** (for reaching back): `data/*-bins`, `data/*-book`, `data/*-kraken-book`,
   `data/perp-history` branches — 5 coins × 3 venues 1s bins + L2 books. Collector workflows were
   deleted from the trunk end-S82 (runner hog); the code is recoverable via git history if collection
@@ -249,17 +254,8 @@ in the live doc. Full detail: `S36_NETCOST_BACKTEST_FINDINGS.md`, `SESSION_HANDO
   window/forward sweep + temporal OOS + detrended targets. `DEPLOY_VALIDATED=False`; never trade the
   directional `cell_signal` map. The DIVERGENCE/FLIP read is the robust edge; static `imb_level` is
   the detector (differential flows are not).
-- **Net-of-cost (S36b, per cell) — HISTORY ONLY, RETIRED AS A RULE (Greg, 2026-11-08):** the crypto-era
-  finding that the 64% did not clear a 10bps round-trip and that the edge was size-vs-fee. Trade cost is not
-  a market condition for the NG program; this bullet is kept as record, not as guidance.
 - **The architecture split:** DIPOLE = the FILTER (which turns are real) + fine-resolution
-  PRICE-REVERSAL = the TIMING (1-sec enters ~5–6bps off the true turn vs ~9–11 at 1-min). The old
-  fee-floor rule (round-trip fee + 2x slippage, taker floor ~22bps) is RETIRED (Greg, 2026-11-08): trade
-  cost is not a market condition. Per-cell regime master-gate rescues bleeder cells; leave winning cells
-  un-gated.
-- **The gated-swing stack (S37, `_info_dipole_gated_swing.py`):** timing (1-sec price-reversal) +
-  filter (dipole divergence) + regime gate + maker floor, leakage-gated (PASS 6/6); PROVISIONAL 4/6
-  cells clear on the single window — never size off one window.
+  PRICE-REVERSAL = the TIMING (1-sec enters ~5–6bps off the true turn vs ~9–11 at 1-min).
 - **The centroid-dipole lineage (S33–S35):** the real markets dipole is CENTROID-based, not bins —
   H_a/H_b = projections of a trade's 128-dim OD `operator_coefficients` on win/lose centroids; per-cell
   exact coeffs + the distinctive-fingerprint program (`bucket-distinctiveness-is-the-goal`: predict
@@ -346,7 +342,7 @@ Recent arc (compressed; full detail in each `SESSION_HANDOFF_*.md`):
 - **S85** — Databento LIVE (key set, `pip install databento` 0.81). `event_move_baseline.py` BUILT + run
   on 12 NG + 12 CL real release windows (leakage PASS, `definition`-schema $10/tick): per-contract
   HOLD-TIME map (NG 60s=66% of move front-loaded; CL slower, 60s=27%, longer hold gets the rest — both
-  kept, EV-net-of-fee is the gate). Futures move = the ceiling; lag join next. `databento_backfill.py`
+  kept). Futures move = the ceiling; lag join next. `databento_backfill.py`
   hardened (defs mode + point-in-time tick store, volume roll `.v.0`, retry/backoff). Schema decision =
   MBP-10 (depth, ~$130/yr both, ~$5 over credit; MBO off). Tape persisted on `data/nymex-ticks`
   (session-start restores it). Detail: `SESSION_HANDOFF_2026-07-12_S85.md`, `EVENT_MOVE_FINDINGS_S85.md`.
@@ -358,8 +354,8 @@ Recent arc (compressed; full detail in each `SESSION_HANDOFF_*.md`):
   pre-processes on the ingest side → must be reworked to read the RAW tape. NEXT = the durable raw-ingestion
   workflow. Detail: `SESSION_HANDOFF_2026-07-13_S88.md`, `KICKOFF_2026-07-14_S89.md`.
 - **S87** — BUILT P3: `lag_join.py` lag-join engine (release + `--intraday`), NYMEX-driven entry/hold/exit,
-  trend-hold dollar trailing stop, maker vs taker net-of-fee. PROVISIONAL but pays (CL/NG both positive
-  gated; intraday 06-17 trend-hold −115c→+202c maker; leans on maker fill, tiny-n). Designed the intraday
+  trend-hold dollar trailing stop (its fee, slippage and maker/taker terms were removed 2026-11-16; it now
+  reports gross moves only). PROVISIONAL, tiny-n. Designed the intraday
   PATH FORECASTER as a stacked hold-length signal (`FORECAST_AGENT_DESIGN_S87.md` Greg's spec +
   `PATH_FORECAST_RESEARCH_S87.md` cited methods). Databento pull infra (`batch_pull`, `pull_year_mbp10.py`);
   1-yr continuous MBP-10 pull = pay-once to `data/nymex-ticks:nymex_cont/` = the forecaster's analog library
@@ -367,8 +363,8 @@ Recent arc (compressed; full detail in each `SESSION_HANDOFF_*.md`):
 
 S86 priorities (see `KICKOFF_2026-07-12_S86.md`): (1) extend writer+baseline to consume MBP-10 DEPTH
 (run-length/exhaustion read), then batch the full-year MBP-10 (watch disk); (2) historical surprise join
-(EIA actuals + consensus) for the surprise-cell split; (3) the lag join = Kalshi echo net-of-fee vs the
-futures move (realized-EV); (4) standing: NGDQ6 fix, weather forecaster scoring, Pyth live lag.
+(EIA actuals + consensus) for the surprise-cell split; (3) the lag join = Kalshi echo vs the
+futures move (gross); (4) standing: NGDQ6 fix, weather forecaster scoring, Pyth live lag.
 
 ---
 

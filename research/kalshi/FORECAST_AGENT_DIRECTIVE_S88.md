@@ -11,8 +11,8 @@ and the S87 design differ, the design is the intent and this is the how. Nothing
 ## 1. The job (Greg's core loop — unchanged)
 
 Turn our pieces into a forecast of the intraday NYMEX (canary) TRADE-CURVE shape, per commodity, and use
-real-time-vs-forecast tracking as the HOLD-LENGTH signal (ride the long legs, cut the chop — fees force
-selectivity, the forecast is the selector). The agent OWNS figuring out how the pieces combine; it is not
+real-time-vs-forecast tracking as the HOLD-LENGTH signal (ride the long legs, cut the chop; the forecast
+is the selector). The agent OWNS figuring out how the pieces combine; it is not
 handed weights. The method:
 
 1. Get a DIVERSE sample of past days (calm, trending, whipsaw, release, geopolitical, each season).
@@ -171,7 +171,7 @@ Build a gas-demand temperature feed as a piece AND the NG conditioning axis. Two
    + shape + continuation rate; the "forecast" = the cell's realized forward distribution. THE baseline.
 2. **Event-time anchor + residual-z / shape-corr tracking overlay (#3+#5+tracking)** — operationalize the
    hold-time map as the hold-vs-exit rule (HOLD while residual inside band AND shape-corr positive; EXIT on
-   first band-breach or corr sign-flip). Measured as a net-of-fee EV DELTA vs fixed-hold, per cell.
+   first band-breach or corr sign-flip). Measured as a gross DELTA vs fixed-hold, per cell.
 3. **GBT continuation classifier (#4)** — nonlinear stack of tick+book+exogenous; target = P(continuation),
    NEVER price. Feature importances for falsification.
 4. **Rolling FPCA (#3, Jasiak)** — principled probabilistic anchor; adopt ONLY if it beats the bucket
@@ -186,7 +186,7 @@ Each fancier method must beat the bucket table OOS per cell or it is not kept.
 
 - The RT-vs-forecast tracking error becomes the HOLD-LENGTH modulator in `research/kalshi/lag_join.py`
   (the S87 trade engine). It replaces/augments the fixed dollar trailing stop.
-- **Payoff is measured as a net-of-fee EV DELTA vs the fixed-hold baseline, per cell — at MAKER AND TAKER.
+- **Payoff is measured as a gross DELTA vs the fixed-hold baseline, per cell.
   NOT claimed as standalone directional alpha.** The anchor carries the skill; tracking-error is
   variance-reduction / risk-control (fewer round-trips held into reversals).
 
@@ -211,7 +211,7 @@ Each fancier method must beat the bucket table OOS per cell or it is not kept.
 - Leakage-gated (`odcore/leakage.py`) before anything runs; blind = chronological date-cut (sec 3).
 - Exclude the settle window; forward outcomes bounded by the daily-settle exclusion.
 - Per-cell distributions + per-trade fingerprints, NEVER a pooled mean. A pooled number is a footnote only.
-- Net-of-fee at MAKER AND TAKER; a maker-only edge carries fill-risk and must say so.
+- No trade cost in any calculation: no fee, slippage, maker or taker assumption, or fill model.
 - Zero synthetic data. Provisional-until-live.
 - FILE DISCIPLINE — extend live files (e.g. `lag_join.py`, `event_move_baseline.py`) with a flag/mode; only
   new-file if none exists. Check `KALSHI_TRADING.md` before creating any file.

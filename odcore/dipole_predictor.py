@@ -24,9 +24,8 @@ descriptive operator-matrix fit; it is NOT the predictor.
 
 Reference coeffs the construction should reproduce: a=0.007, b=-0.093, c=1.309, R^2 0.943
 (chemistry-tier; INFO-044). RESULT DISCIPLINE: a high algebraic R^2 is a STRUCTURAL property
-of projecting onto in-sample centroids, NOT a net-of-cost edge. The directional / combined
-predictor must clear odcore/validation.py (net>0 after fees+slip, walk-forward, tautology z)
-before any promotion. S20/S21: the predictor loses net-of-cost on the unblocked pieces.
+of projecting onto in-sample centroids, NOT an edge. The directional / combined predictor is
+checked on walk-forward folds (odcore/validation.py) before any promotion.
 """
 
 from __future__ import annotations
@@ -121,8 +120,8 @@ def algebraic_dipole_over_trades(C: np.ndarray, labels: np.ndarray) -> TradeDipo
 
     C: (n_trades, d) per-trade coefficient vectors. labels: >0 win, <=0 lose.
     NOTE: in-sample centroids reproduce the ORIGINAL's report. For an honest predictor use
-    walk-forward centroids (fit on the train fold only; project the test fold) and validate
-    via odcore/validation.py. In-sample R^2 here is a STRUCTURAL check, not an edge.
+    walk-forward centroids (fit on the train fold only; project the test fold; splits in
+    odcore/validation.py). In-sample R^2 here is a STRUCTURAL check, not an edge.
     """
     C = np.asarray(C, dtype=float)
     labels = np.asarray(labels)

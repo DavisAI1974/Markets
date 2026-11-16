@@ -8,7 +8,7 @@ import numpy as np
 
 from odcore.info_dipole import divergence
 from odcore.leakage import assert_no_leakage
-from _info_dipole_swing_backtest import load_series
+from _series_tools import load_series
 
 W = 900.0
 

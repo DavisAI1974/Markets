@@ -1,8 +1,7 @@
 """
 kalshi_collector.py — public-API snapshot collector for Kalshi prediction markets.
 
-S78 Kalshi pivot, Step 1 (KALSHI_BUILD_SCOPE.md). The crypto book-swing edge was a
-fee-floor microstructure signal; Kalshi fits the stack better (direct news->outcome
+S78 Kalshi pivot, Step 1 (KALSHI_BUILD_SCOPE.md). Kalshi fits the stack (direct news->outcome
 coupling, wide books, Greg's energy/macro/weather domain edge). This collector is the
 shared prerequisite for BOTH downstream threads:
 

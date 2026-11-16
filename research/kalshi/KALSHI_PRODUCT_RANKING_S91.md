@@ -1,16 +1,17 @@
 # KALSHI PRODUCT RANKING — per-day FIT to our two live edges (S91, 2026-07-13)
 
+> Edited 2026-11-16 (Greg): the fee axis, the fee table and the maker-order guidance were removed from this
+> survey. They were bitcoin-era rules carried onto Kalshi. Kalshi rules start fresh, for Kalshi only, and
+> none is written yet. The order of the ranking below was set with that axis in it and has not been redone.
+
 Ranked, per-cell analysis of Kalshi's currently-tradeable catalog against our two live Kalshi edges.
-No pooled scores — every product is scored per-cell on the five axes and net-of-fee at **both** maker
-and taker. All series/volume/depth/rules numbers below were pulled LIVE from the Kalshi public API
+No pooled scores — every product is scored per-cell on four axes. All series/volume/depth/rules numbers below were pulled LIVE from the Kalshi public API
 (`api.elections.kalshi.com/trade-api/v2`) on 2026-07-13; external structure/liquidity claims are cited.
 
 ## Our two edges (restated from the repo, so the fit test is explicit)
 1. **Futures→Kalshi LAG** (`LAG_EXPLOIT_FINDINGS_S81.md`, `NYMEX_CANARY_NOTES_S84.md`): NYMEX/ICE moves
    first, Kalshi reprices seconds-to-a-minute later (futures lead, Kalshi never leads — S80 19/19).
-   Direction is easy and **sharpens with move size** (0.55 at $0.05–0.10 → 0.77 at $0.40+). Binding
-   constraint = **move-size vs fee**, not direction; net-positive proven when gated to *lagging contract
-   × big futures move* (+91¢/26 trades over 5 WTI days). Sub-minute (our Pyth / raw MBP-10 tick tape)
+   Direction is easy and **sharpens with move size** (0.55 at $0.05–0.10 → 0.77 at $0.40+). Sub-minute (our Pyth / raw MBP-10 tick tape)
    turns it from rare into frequent. Needs: a liquid futures underlying we can tape + a deep intraday
    Kalshi book.
 2. **Weather-distribution** (`WEATHER_BASELINE_S82.md`, `WEATHER_REGIME_FINDINGS_S84.md`, S90 handoff):
@@ -18,18 +19,7 @@ and taker. All series/volume/depth/rules numbers below were pulled LIVE from the
    OD temp forecaster hands a full residual distribution; we buy the 1–3 buckets the market centered
    away from. S90 update: the OD edge is **BROAD** (everyday few-degree miss — winter DJF +21%, mid-error
    2–5°F days the largest cell +21%, all leads f048–f120 +7–9%), not just frontal-transition days.
-   Binding constraint = **thin book depth**, not fee.
-
-## Fee reference (net-of-fee at maker AND taker) — Kalshi fee schedule, July 2026
-Taker fee per contract = `ceil(0.07 × P × (1−P) × 100)/100`; **maker fee = 25% of taker**
-([Kalshi fee schedule](https://kalshi.com/docs/kalshi-fee-schedule.pdf),
-[pm.wiki](https://pm.wiki/learn/kalshi-fees-explained)). So per side:
-- Near mid (P=0.50): taker **1.75¢**, maker **~0.44¢**. Round-trip taker ~3.5¢, maker ~0.9¢.
-- Tail bucket (P=0.10): taker **0.63¢**, maker **~0.16¢**. This is why the weather tail-bucket trade is
-  fee-cheap and the near-money lag trade is fee-bound — and why our fee-floor rule (rest a **maker**
-  limit at the predicted turn) is load-bearing: it cuts the cost 4× on both edges.
-
----
+   Binding constraint = **thin book depth**.
 
 ## LIVE catalog scan — what actually exists and trades (API, 2026-07-13)
 
@@ -64,10 +54,10 @@ separate release/consensus thread.
 
 ---
 
-## RANKING — per-cell, on the five axes
+## RANKING — per-cell, on four axes
 
 Axes: (a) which edge, (b) opportunities/day, (c) book depth & achievable size, (d) directness of the
-leading signal we already collect, (e) fee vs typical edge. Reported per-cell; never a pooled score.
+leading signal we already collect. Reported per-cell; never a pooled score.
 
 ### #1 — KXWTI (WTI crude daily) · EDGE: futures→Kalshi LAG
 - **(a) Edge:** LAG. The purest instance of our proven S81 result — the +91¢/26 backtest WAS on KXWTI.
@@ -81,15 +71,12 @@ leading signal we already collect, (e) fee vs typical edge. Reported per-cell; n
   decay). Highest genuine intraday opportunity count of the energy set.
 - **(c) Capacity:** Deepest energy book — **14.8k yes / 12.1k no** resting on the ATM strike, OI 291k,
   vol_24h 111k. You can size the lag trade here without moving the book. Best capacity of any LAG cell.
-- **(e) Fee vs edge:** Near-money strikes sit at P≈0.5 → taker 1.75¢/side (3.5¢ RT), maker ~0.44¢/side.
-  Gated to ≥$0.40 futures moves the reprice is ~4.5¢ → clears taker; **work it maker** to clear
-  comfortably and lift the small-move sub-gate.
 - **Caveat:** [botforkalshi/kalshiview](https://www.botforkalshi.com/blog/how-to-trade-oil-on-kalshi)
   note "no microsecond race to the *settlement* print" — true, and irrelevant: our edge is the **intraday
   repricing lag** (measured, seconds-to-a-minute), not the settlement race.
 - **Next build step:** point the S87 `lag_join.py` at the live Pyth WTI stream + the KXWTI intraday book
-  bins (`kalshi_collector.py` already watches KXWTI); run the rolling per-contract lag classifier live,
-  fire maker limits gated to big moves. Everything exists — this is a wiring + live-canary step.
+  bins (`kalshi_collector.py` already watches KXWTI); run the rolling per-contract lag classifier live.
+  Everything exists — this is a wiring + live-canary step.
 
 ### #2 — KXHIGHNY (NYC daily high temp) · EDGE: weather-distribution
 - **(a) Edge:** Weather-distribution — the flagship cell. NY is the **transition-rich** book: biggest
@@ -101,13 +88,10 @@ leading signal we already collect, (e) fee vs typical edge. Reported per-cell; n
 - **(b) Opportunities/day:** One 6-bucket ladder per day, and the edge shows in the **aggregate of ~8–20
   lines/day across cities** — NY is the anchor line. Daily cadence, every day.
 - **(c) Capacity (BINDING):** Good top-line liquidity (vol_24h 116k, OI 78k) but **per-strike book is
-  thin** (sampled ATM strike 616 yes / 2330 no). Depth — not fee — caps size; keep lines small, spread
+  thin** (sampled ATM strike 616 yes / 2330 no). Depth caps size; keep lines small, spread
   across buckets/cities. This matches the S90 read exactly.
-- **(e) Fee vs edge:** The buckets we buy are the **cheap under-weighted tails** (P≈0.10–0.25) → taker
-  0.6–1.6¢, maker ~0.15–0.4¢. Fee is negligible; a called few-degree miss pays 4–8× the fee
-  (`KXHIGHNY-26JUN29` worked example: +$87 on a 12¢ entry). Best fee-vs-edge of any cell.
 - **Next build step:** wire the `(value,sigma)→bucket-prob` bridge to score tomorrow's NY ladder per-cell
-  vs the live market (`weather_regime_score.py` drop-in), net-of-fee, on the WHIFF/mid-error cells only;
+  vs the live market (`weather_regime_score.py` drop-in), on the WHIFF/mid-error cells only;
   needs a sample of the forecaster's per-day emit. Confirm the exact settlement station per city first.
 
 ### #3 — KXNATGASD (Henry Hub natural gas daily) · EDGE: LAG + settlement-oracle (uniquely ours)
@@ -124,8 +108,6 @@ leading signal we already collect, (e) fee vs typical edge. Reported per-cell; n
   high-conviction window.
 - **(c) Capacity:** Moderate — 6.3k/7.1k ATM depth, vol_24h 53k, OI 29k. Two-sided (unlike Brent). Sizeable
   but below WTI.
-- **(e) Fee vs edge:** Same near-money fee as WTI; the settlement-oracle edge, when it fires, is large
-  (Kalshi pays off the Pyth number regardless of CME) and effectively fee-insensitive.
 - **Caveat / next build step:** the Pyth NGDQ6 **live** feed is still the known-bogus id
   (`pyth_collector.py` FEEDS) — **fix it** (a valid Pyth NG feed exists since Kalshi settles off it). Then
   run the CME−Pyth 5PM-window divergence monitor + the standard lag join. This is the highest-leverage
@@ -140,7 +122,6 @@ leading signal we already collect, (e) fee vs typical edge. Reported per-cell; n
   opportunity count to WTI on the settle-window and catalyst days.
 - **(c) Capacity:** vol_24h 150k, OI 85k, but the sampled ATM book was **one-sided** (13.1k yes / 0.7k no)
   — achievable size is direction-dependent; check both sides before sizing.
-- **(e) Fee vs edge:** Identical near-money fee profile; work maker.
 - **Next build step:** close the Brent historical-tick gap (Databento ICE or `BZ=F`), then reuse the WTI
   lag-join wiring verbatim (Brent is a drop-in second energy cell). Lower priority than NG because NG
   brings a data moat + a second edge; Brent is "more of the WTI edge."
@@ -163,7 +144,6 @@ leading signal we already collect, (e) fee vs typical edge. Reported per-cell; n
   the thin-per-book constraint.
 - **(c) Capacity (BINDING):** thin per-strike everywhere except LAX; breadth-across-cities is how we get
   size without moving any one book.
-- **(e) Fee vs edge:** tail-bucket cheap (maker ~0.15–0.4¢), same as #2.
 - **Next build step:** run the per-cell weather scorer across all cities in one daily pass; deploy only on
   the non-route-away cells (skip easy ≤2°F days → raw, <32°F & 50–70°F → climo, per the S90 routing);
   report the edge **distribution across lines**, never a pooled Brier. Add `KXLOWT*` as a parallel surface.
@@ -174,9 +154,8 @@ leading signal we already collect, (e) fee vs typical edge. Reported per-cell; n
 - **KXBTCD / KXETHD (crypto daily+hourly):** by far the deepest books on Kalshi (BTC vol_24h **3.16M**,
   OI 1.78M; ETH 104k). Two things make them a *future* lane rather than top-5: (1) crypto price markets
   are hyper-efficient and 24/7 → the lag is thinner and the competition fiercer than energy; (2) they map
-  natively to our **OD crypto toolkit** (`odcore/info_dipole.py` divergence/exhaustion, the gated-swing
-  stack) — the right way in is the OD filter/timing split, not the raw energy-lag join. High capacity if
-  we can find a per-cell lag that clears fee. Worth a dedicated probe after the energy lag is live.
+  natively to our **OD crypto toolkit** (`odcore/info_dipole.py` divergence/exhaustion) — the right way in is the OD filter/timing split, not the raw energy-lag join. High capacity if
+  we can find a per-cell lag. Worth a dedicated probe after the energy lag is live.
 - **KXNASDAQ100 (index range):** NQ-future underlying, **very deep book** (102k/106k), but index markets
   are efficient → small lag. A capacity-rich, low-edge cell; revisit only if the sub-minute tick edge
   proves out on a faster underlying.
@@ -185,17 +164,14 @@ leading signal we already collect, (e) fee vs typical edge. Reported per-cell; n
 
 ## Discipline notes (carried from the skills / repo rules)
 - Every cell above is a hypothesis until it clears the `kalshi-backtest` gate: **leakage gate first**,
-  settle-window excluded, per-cell never pooled, distributions/fingerprints not means, net-of-fee at
-  **maker AND taker**. The rankings are *fit*, not validated edge.
-- LAG cells (WTI/NG/Brent) share one binding constraint (**size vs fee** → work maker, gate on move size);
-  weather cells share the other (**thin depth** → small lines, breadth across cities). The two edges are
+  settle-window excluded, per-cell never pooled, distributions/fingerprints not means, no trade
+  cost in any calculation. The rankings are *fit*, not validated edge.
+- Weather cells share one binding constraint (**thin depth** → small lines, breadth across cities). The two edges are
   capacity-complementary — energy gives depth, weather gives breadth.
 - Settlement-source split matters for endgame execution: WTI = ICE official settle @14:30 ET; NG + Brent =
   **Pyth** 1-min candle @5PM EDT (the settlement-oracle second edge lives on the Pyth-settled pair).
 
 Sources: live Kalshi API `api.elections.kalshi.com/trade-api/v2` (series/markets/orderbook, 2026-07-13);
-[Kalshi fee schedule PDF](https://kalshi.com/docs/kalshi-fee-schedule.pdf);
-[pm.wiki Kalshi fees](https://pm.wiki/learn/kalshi-fees-explained);
 [how to trade oil on Kalshi](https://www.botforkalshi.com/blog/how-to-trade-oil-on-kalshi);
 [Kalshi weather markets help](https://help.kalshi.com/en/articles/13823837-weather-markets);
 [Kalshi daily temperature category](https://kalshi.com/category/climate/daily-temperature);
@@ -209,7 +185,7 @@ repo: `LAG_EXPLOIT_FINDINGS_S81.md`, `LEVEL_HIT_FINDINGS_S82.md`, `WEATHER_BASEL
 **Scope:** the best ADDITIONAL Kalshi series to run our two proven edges on — pure trade-depth expansion,
 NOT novel-edge hunting. **Excludes what we already trade** (WTI/NG energy-lag; KXHIGH* high-temp).
 Ranked by **profitability × speed-to-live**, where "profitable" = biggest edge-per-trade **on a book deep
-enough to size** (the honest constraint: direction is easy, size-vs-fee / thin-book is the wall). All
+enough to size** (the honest constraint: direction is easy, the thin book is the wall). All
 volume/OI/depth/rules pulled LIVE from the Kalshi public API on **2026-07-13**; the `_fp`/`_dollars` field
 schema is current. Two edges restated: **A = futures→Kalshi LAG + info-dipole** (any market repricing off a
 fast tapeable underlying); **B = weather-distribution ladder** (OD temp forecaster + NWS).
@@ -234,7 +210,7 @@ thin lag (honorable mention). Macro prints (CPI/NFP) = release events, not a lag
 ### #1 — KXGOLDD (Gold daily) · EDGE A (LAG + settlement-oracle) — **TOP PICK**
 1. **Live/capacity:** vol_24h **193k**, OI **117k** — **deeper than KXWTI itself (116k)** and the richest
    non-excluded LAG book on the board; ATM depth ~200–600 contracts/side (on par with the energy cells we
-   already size in). Real capacity to work maker limits without moving the book.
+   already size in). Real capacity without moving the book.
 2. **Edge fit (clean):** extends **A verbatim on a bigger book**. Gold binaries are re-quoted off the futures
    by a handful of MMs (same commodity inefficiency energy has), and — decisively — KXGOLDD settles on the
    **identical "Pyth 1-min candle @5PM EDT"** mechanic as KXNATGASD, so BOTH proven pieces reuse as-is: the
@@ -242,10 +218,8 @@ thin lag (honorable mention). Macro prints (CPI/NFP) = release events, not a lag
 3. **Feed:** already ours / free. Underlying tape = COMEX **GC** via the existing Databento GLBX machinery
    (~$60–130/yr); the settle source itself = **Pyth XAU/USD** (feed id `765d2ba9…`, free live SSE) — we can
    tape the *exact* number Kalshi resolves on, no acquisition needed.
-4. **Binding constraint + honest edge-vs-fee:** same size-vs-fee wall as WTI — near-money P≈0.5 → taker
-   1.75¢/side, so gate to big moves (gold's fat CPI/Fed/DXY/geopolitical days give ≥$3–5 candle moves that
-   clear the 3.5¢ RT taker; work **maker** ~0.44¢/side to lift the small-move sub-gate). Big-move days cluster
-   on known macro catalysts = reliable, not random.
+4. **Binding constraint:** big-move days (gold's CPI/Fed/DXY/geopolitical days give ≥$3–5 candle moves)
+   cluster on known macro catalysts = reliable, not random.
 5. **First build step:** add `GC` to the GLBX pull list; point `pyth_collector.py` FEEDS at XAU/USD; add
    KXGOLDD to the `kalshi_collector.py` watchlist; run `lag_join` + the 5PM CME−Pyth divergence monitor against
    KXGOLDD intraday bins. Pure wiring — no new machinery.
@@ -253,11 +227,10 @@ thin lag (honorable mention). Macro prints (CPI/NFP) = release events, not a lag
 ### #2 — KXSILVERD (Silver daily) · EDGE A (LAG + settlement-oracle)
 1. **Live/capacity:** vol_24h **121k** (≈ WTI); depth a notch below gold but sizeable.
 2. **Edge fit:** drop-in second metal cell — same Pyth-candle-@5PM settle, same lag-join. Silver is **more
-   volatile than gold** → bigger candle moves clear the fee *more often* (better small-move economics), at
+   volatile than gold** → bigger candle moves, at
    slightly thinner depth. Au+Ag is the commodity analog of the WTI+Brent energy pair.
 3. **Feed:** COMEX **SI** (GLBX, cheap) + Pyth **XAG/USD** (free) = settle source.
-4. **Constraint/edge-vs-fee:** thinner book than gold caps top-end size; higher vol means more qualifying
-   moves — net favorable per-trade once gold's wiring exists.
+4. **Constraint:** thinner book than gold caps top-end size; higher vol means more qualifying moves.
 5. **First build step:** after #1 lands, add `SI` + XAG/USD to the same pull/collector lists; reuse gold's
    lag-join + divergence monitor verbatim.
 
@@ -271,25 +244,25 @@ thin lag (honorable mention). Macro prints (CPI/NFP) = release events, not a lag
    Resolved: use **CME BZ** (Brent Crude Last-Day Financial, financially settled to ICE Brent) which trades on
    **GLBX** → pullable from our existing Databento machinery, no ICE dataset licence needed. Live canary =
    Pyth BRENTU6 (free).
-4. **Constraint/edge-vs-fee:** same near-money fee as WTI; work maker. One-sided book is the real watch-item.
+4. **Constraint:** the one-sided book is the real watch-item.
 5. **First build step:** add `BZ` to the GLBX pull list, backfill a validation window, reuse WTI lag-join.
 
 ### #4 — KXBTCD / KXETHD (crypto hourly+daily) · EDGE A via the **OD toolkit** (capacity monster)
 1. **Live/capacity:** BTC vol_24h **2.55M**, OI **1.54M** — by far the **deepest book on Kalshi** (ATM 1326/225);
-   ETH 72k. If any per-cell edge clears fee, the depth means the **most absolute $** of anything here.
+   ETH 72k. If a per-cell edge exists, the depth means the **most absolute $** of anything here.
 2. **Edge fit — native to our OD stack:** settles on CF Benchmarks **BRTI/ERTI 60-sec average** = a
    settlement-oracle endgame (known final-minute convergence). Crypto is exactly what the info-dipole /
-   gated-swing thread was built and validated on (BTC/ETH/SOL cells in CLAUDE.md). Right entry is the **OD
+   thread was built on (BTC/ETH/SOL cells in CLAUDE.md). Right entry is the **OD
    filter/timing split** (dipole = which reversals are real; 1-sec price = timing) + the 60-sec-avg endgame —
    **NOT** the naive energy-lag join.
 3. **Feed:** Pyth **BTC/ETH USD** (free live) + CME BTC/ETH (GLBX). No acquisition.
 4. **Binding constraint (honest):** hyper-efficient, 24/7, bot-dense → **per-trade lag edge is thin and
-   competition fierce; the raw lag likely will NOT clear fee.** This is why it's #4 not #1 despite unmatched
+   competition fierce.** This is why it's #4 not #1 despite unmatched
    capacity — the edge-per-trade is *unproven* here. It earns its slot only if an OD-filtered per-cell signal
-   clears the `kalshi-backtest` gate net-of-fee.
-5. **First build step:** re-point the `odcore` info-dipole/gated-swing stack + leakage gate at the live Pyth
-   BTC feed vs the KXBTCD hourly book; probe per-cell (hour-of-day × side) for a dipole-filtered timing edge
-   that clears maker fee — before any raw lag join.
+   clears the `kalshi-backtest` gate.
+5. **First build step:** re-point the `odcore` info-dipole read + leakage gate at the live Pyth
+   BTC feed vs the KXBTCD hourly book; probe per-cell (hour-of-day × side) for a dipole-filtered timing edge,
+   before any raw lag join.
 
 ### #5 — KXLOWTNYC + KXLOW* breadth (daily **low** temp) · EDGE B (weather-distribution)
 1. **Live/capacity:** vol_24h ~19.5k NYC, OI 18.7k — **thin per-strike** (same weather depth wall as highs);
@@ -298,12 +271,11 @@ thin lag (honorable mention). Macro prints (CPI/NFP) = release events, not a lag
    temp forecaster + NWS hourly + `weather_regime_score` bridge) — just the daily **low** instead of the high.
    Doubles the surface the one forecaster fans out over at **zero marginal ingest**.
 3. **Feed:** already have it (NWS raw hourly `nws_temp_feed.py`; forecaster is Greg's OD spec). No acquisition.
-4. **Constraint/edge-vs-fee:** tail buckets are fee-cheap (maker ~0.15–0.4¢), so fee is a non-issue; the wall
-   is **thin depth**. Honest caveat: overnight **lows are more persistence-dominated** than highs (less frontal
+4. **Constraint:** the wall is **thin depth**. Honest caveat: overnight **lows are more persistence-dominated** than highs (less frontal
    transition room) → expect a **thinner edge than KXHIGH**; deploy only on the interior-bucket swing cells the
    forecaster flags, never blind. Ranks #5 = fastest EDGE-B add but lowest $-ceiling of the five.
 5. **First build step:** run the per-cell weather scorer on KXLOW* cities in the same daily pass as KXHIGH
-   (confirm each low's settlement station first), score net-of-fee, report the edge distribution across lines.
+   (confirm each low's settlement station first), report the edge distribution across lines.
 
 ### #1 PICK & why it's the fastest path to real NET profit
 **KXGOLDD (Gold daily).** It is the single highest-leverage-per-effort add: it reuses **both** proven pieces

@@ -17,5 +17,5 @@ Machine-readable knowledge the forecast/coach agents LOAD as context and APPLY. 
 
 ## The guard (non-negotiable)
 GENERAL rules with mechanism + n, never memorized days. Skill is judged on days NEVER touched in any pass
-(true HOLDOUT) + forward-live - not on the training year. Every play is provisional-until-live: clears the
-size-vs-fee wall + paper-trades on Kalshi demo before real orders. The coach adapts WITHIN bounded risk.
+(true HOLDOUT) + forward-live - not on the training year. Every play is provisional-until-live: paper-trades
+on Kalshi demo before real orders. The coach adapts WITHIN bounded risk.

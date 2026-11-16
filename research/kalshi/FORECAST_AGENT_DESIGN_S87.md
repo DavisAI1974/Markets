@@ -7,7 +7,7 @@ The forecast lives on the NYMEX canary; it is a STACKED hold-length / continuati
 
 ## The job (Greg)
 Turn our pieces into a forecast of the intraday TRADE CURVE (the NYMEX path shape), and use RT-vs-forecast
-tracking as the hold-length signal (ride the long legs, cut the chop — fees force selectivity, the forecast
+tracking as the hold-length signal (ride the long legs, cut the chop; the forecast
 is the selector). The agent OWNS figuring out how the pieces combine; it is not handed weights.
 
 ## Structure — score SEPARATELY, never pool across type/location (Greg, load-bearing)
@@ -58,10 +58,10 @@ flow exhaustion, depth run-length, pre-release/coiled volume, herd breadth.
 ## Discipline (inherited, non-negotiable)
 - Leakage-gated (`odcore/leakage.py`): the blind forecast uses ONLY decision-time-available state; normalize
   on decision-time data only (the common silent leak).
-- Per-cell distributions, never a pooled mean; net-of-fee at maker AND taker; exclude the settle window.
+- Per-cell distributions, never a pooled mean; no trade cost in any calculation; exclude the settle window.
 - Multiple-testing honesty: many pieces x cells -> use PBO/deflated-Sharpe, report specifications tried.
 - The forecast is a HOLD-LENGTH / CONTINUATION overlay on catalyst-justified trades; its payoff is measured
-  as a net-of-fee EV DELTA vs a fixed-hold baseline, per cell — not claimed as standalone alpha.
+  as a gross DELTA vs a fixed-hold baseline, per cell — not claimed as standalone alpha.
 - Weather forecaster stays Greg's spec (HANDS OFF); weather enters here only as a conditioning driver.
 
 ## Reference / cross-check data (Greg S87 — coarser than our tick data, but tracks the pieces well)

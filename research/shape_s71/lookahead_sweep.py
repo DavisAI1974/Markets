@@ -5,7 +5,7 @@ sweeps `es.fit_direction_sign` horizon per coin on the Kraken book to locate eac
 the forward horizon where a strong book lean best predicts the price move (max forward |bps| with a
 reliable hit-rate). Honest OOS check: fit the sign on TRAIN (first 60%), confirm TEST (last 40%) picks
 the SAME sign and stays positive — a look-ahead only counts if train/test agree. Live code only
-(reuses book_swing_kraken.series_1s + es.fit_direction_sign; no reimplementation).
+(uses es.fit_direction_sign and the 1 s book series reader below).
 
     python3 lookahead_sweep.py [coin ...]      # default: all 21
 """
@@ -17,7 +17,21 @@ if "matplotlib" not in sys.modules:
     _p = types.ModuleType("matplotlib.pyplot"); _p.__getattr__ = lambda n: (lambda *a, **k: None)
     _m.pyplot = _p; sys.modules["matplotlib"] = _m; sys.modules["matplotlib.pyplot"] = _p
 import early_signal as es
-from book_swing_kraken import series_1s
+
+
+def series_1s(path, k=es.DEFAULT_K, stride=10):
+    imb, mid = [], []
+    with open(path) as f:
+        for i, line in enumerate(f):
+            if i % stride:
+                continue
+            r = json.loads(line); m = float(r["mid"])
+            bids = [[m + float(o), float(s)] for o, s in r["bids"][:k]]
+            asks = [[m + float(o), float(s)] for o, s in r["asks"][:k]]
+            bk = es.book_imbalance(bids, asks, k, m)
+            imb.append(bk["imb"] if bk["ok"] else 0.0); mid.append(m)
+    return np.array(imb), np.array(mid)
+
 
 HORIZONS = (1, 2, 5, 10, 15, 30, 60, 120, 300)   # grid steps == seconds (1s grid)
 MINCONV = 0.5                                     # strong leans only (the tradeable book)

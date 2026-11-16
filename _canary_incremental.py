@@ -8,7 +8,7 @@ import time
 import numpy as np
 
 from odcore.incremental import RollingFlow
-from _info_dipole_swing_backtest import load_series
+from _series_tools import load_series
 
 W = 300.0
 

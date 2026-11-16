@@ -1,11 +1,10 @@
 # KALSHI BUILD SCOPE — concrete (S77 → S78 kickoff)
 
 > Branch: `claude/book-swing-s77-kraken-meomsh`. Written 2026-07-11.
-> The premise (established this session): the crypto book-swing edge is a **fee-floor microstructure signal**
-> whose dollar ceiling is capital + a maker-fee regime we don't control. Kalshi is a better *fit* for the stack
+> The premise (established this session): Kalshi is a better *fit* for the stack
 > we already built because (a) **news→outcome coupling is direct and causal** on event contracts (vs weak/noisy
 > on BTC), (b) it's **CFTC-regulated, all 50 US states, real REST+WS API**, (c) the book is **wide-spread and
-> far less HFT-competed**, so a maker edge isn't instantly arbed, and (d) Greg's **energy/macro/weather domain
+> far less HFT-competed**, and (d) Greg's **energy/macro/weather domain
 > knowledge is a genuine information edge** on the specific contracts, which it never was on BTC.
 > Four pieces already exist and port over: (1) the news pipeline, (2) the order-book/microstructure signal
 > (`early_signal.py`), (3) the OD regime/flow layer (`odcore/`), (4) Greg's domain edge. This scopes wiring
@@ -76,8 +75,8 @@ Two independent validations, same tools as crypto, run on the collected Kalshi b
   per horizon per category. **Decision gate:** does a tagged EIA/CPI/FOMC event move its contract's probability
   beyond the placebo baseline (the `min_signed_bps_edge_vs_placebo` / `min_hit_rate` thresholds)? On event
   contracts this should be *far* cleaner than BTC — that's the whole thesis, and this is the test of it.
-- **Book-imbalance→turn:** run `early_signal.fit_direction_sign()` + the ride-to-reversal on the probability
-  series (train/test split like `realistic_fill.py`). Does the Kalshi book lean into a probability turn the way
+- **Book-imbalance→turn:** run `early_signal.fit_direction_sign()` on the probability
+  series (train/test split). Does the Kalshi book lean into a probability turn the way
   the crypto book leans into a price turn? Report per-contract $/settlement and hit-rate.
 - Both feed a `build_news_policy_from_coupling.py` run → a **Kalshi policy.json** (which contracts to trade,
   which news categories are tradeable shocks, confirmation gates).
@@ -86,23 +85,23 @@ Two independent validations, same tools as crypto, run on the collected Kalshi b
 - If coupling clears the gate: stand up a **paper loop** (Kalshi has a **demo environment** —
   `demo-api.elections.kalshi.com` — with a funded paper account and the same API) exactly like the Hummingbot
   sanity check, and watch fills on real contracts.
-- Structure the economics: Kalshi **maker fees ≈ 25% of taker** (and many contracts have promo/zero maker
-  windows), settlement is binary at 0 or 100¢, so the edge is **holding a mispriced probability to resolution**,
-  not scalping spread — a fundamentally different (and capital-friendlier) P&L than crypto MM.
+- Settlement is binary at 0 or 100¢, so the edge is **holding a mispriced probability to resolution**,
+  not scalping spread. Kalshi execution and cost rules are not written yet; they start fresh, for Kalshi
+  only (Greg, 2026-11-16).
 
 ---
 
 ## ADVANTAGES vs CRYPTO (why this fits)
 - **Direct causal coupling:** an EIA storage number *is* the input to the "nat-gas price above X" contract. The
   news→outcome link we struggled to find on BTC is structural here.
-- **Wide spreads, less HFT:** a maker edge survives longer; we're not racing colocated bots.
+- **Wide spreads, less HFT:** we're not racing colocated bots.
 - **Domain edge is real:** Greg's energy-trading background prices EIA/weather contracts better than the crowd.
-- **Regulated + all-50-states + real API:** no venue-access or fee-tier games; no $250M-AMV Coinbase dance.
+- **Regulated + all-50-states + real API:** no venue-access games.
 
 ## CAUTIONS (put in the plan up front)
 - **Thin liquidity / capacity:** many contracts are $-thousands deep — same capital ceiling shape as thin crypto
   books, but here the answer is *breadth* (many contracts) not *depth*.
-- **News-jump / gap risk:** a scheduled print gaps the probability discontinuously — resting makers get run over.
+- **News-jump / gap risk:** a scheduled print gaps the probability discontinuously — resting orders get run over.
   The policy's `PAUSE_NEW_ENTRIES` shock logic exists precisely for this; wire it to the release calendar.
 - **Settlement timing / holding cost:** capital is locked until resolution (hours→months). Model annualized
   return, not $/hr — the crypto $/hr frame does not transfer.

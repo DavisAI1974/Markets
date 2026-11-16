@@ -26,7 +26,7 @@ The preferred operator is whichever has the highest rolling sharpe at last
 update. If sharpe is non-positive across all generators, preferred is None
 (meaning "sit out for this source").
 
-Updated by adaptive_backtester.py when --persist-registry is passed.
+Was updated by the adaptive backtester (removed 2026-11-16).
 Read by signal generators to attach a "this signal came from operator X"
 note to each emitted signal.
 """

@@ -141,7 +141,7 @@ def divergence(buy_vol, sell_vol, price_drift: float) -> dict | None:
     > with-trend+weakening 52% > with-trend+strengthening 49% (= healthiest trend, 51% continuation).
 
     Per cell, never pooled to deploy (DEPLOY_VALIDATED note applies -- thin 2-day/1-min data; confirm on
-    1-sec multi-regime history + net-of-cost). Maps to the 5-state frame (flow-opposed/collapsing =
+    1-sec multi-regime history). Maps to the 5-state frame (flow-opposed/collapsing =
     reversal/transition; flow-confirmed/strengthening = CHANNELED/CASCADE continuation).
 
     price_drift: recent price change over the same pre-entry window (close[-1]-close[0]).

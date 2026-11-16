@@ -35,8 +35,8 @@ All warm-season (12 days), per-event, exemplar-cited. NOT yet winter-tested.
   This is the tape reader the whole program runs on.
 - `research/kalshi/knowledge/ng_brain.json` (+ README) — the machine brain. Plays are numeric + status-tagged.
 - `research/kalshi/coach_replay.py` — **the executable playbook backtest** (the rigid baseline the adaptive coach
-  must beat). Applies the plays per leg net-of-fee, per-event, no pooling. `--selftest` PASS. Canary-side +
-  INDICATIVE capture proxy for now (real fill model = a JOB below).
+  must beat). Applies the plays per leg, GROSS, per-event, no pooling. `--selftest` PASS. Canary-side +
+  INDICATIVE capture proxy.
 - `research/kalshi/forecast_harness.py` — turn-key loop helpers: `decision-state` (blind-safe state for a group),
   `overlay` (guess-vs-actual render), `brain-show`. `--selftest` PASS.
 - `scratchpad/ng_group2_decision_state.json` — the next 12 blind days' decision-state, staged.
@@ -66,17 +66,17 @@ Repeat this cycle, walking forward through the year; each pass the brain grows:
    or an EC2 box runs (a)-(d) autonomously — REQUIRES durable creds (the GH secrets / box config), not
    session-pasted.
 
-## 4. JOB 2 — the coach replay / net-of-fee edge (the money test)
-`python research/kalshi/coach_replay.py --days D1,D2,...` applies the plays leg-by-leg and reports per-event net.
-S93 work: (i) replace the INDICATIVE capture proxy with a real fill/slippage model; (ii) add the venue —
-Kalshi echo via the lag (`lag_join.py`) AND/OR NYMEX options (section 6); (iii) net-of-fee at SIZE is the gate.
-This tells us whether the coach's plays actually make money before we hand it the wheel.
+## 4. JOB 2 — the coach replay (gross, per event)
+`python research/kalshi/coach_replay.py --days D1,D2,...` applies the plays leg-by-leg and reports per-event gross.
+S93 work: add the venue, Kalshi echo via the lag (`lag_join.py`) AND/OR NYMEX options (section 6).
+No fee, slippage or fill model enters the replay (Greg, 2026-11-08 and 2026-11-16). Kalshi execution and
+cost rules are not written yet; they start fresh, for Kalshi only.
 
 ## 5. THE GUARD (non-negotiable — what keeps the coach honest)
 - **General rules, never memorized days.** Blind-refine can slide into memorizing the training days (looks
   perfect, worthless live). The brain must be patterns + mechanism + n. Judge skill on a **TRUE HOLDOUT** (days
   never touched in any pass) + **forward-live** — not the training year.
-- **Provisional-until-live.** Every play clears the size-vs-fee wall + paper-trades on Kalshi demo before real
+- **Provisional-until-live.** Every play paper-trades on Kalshi demo before real
   orders. The coach adapts WITHIN bounded risk caps (the "rules of the game" Greg will hand it).
 - **Per-event, never pool-as-verdict.** An extreme rate is a LEAD; individual numbers pinpoint the WHEN.
 
@@ -113,6 +113,6 @@ exit) · WINTER/backwardation regime (the decisive OOS test) · direction data (
 day-ahead/spot pipeline noms, overnight-lean) · the NYMEX-options vehicle (section 6).
 
 ---
-**One-line for S93:** run the loop (build the year of blind forecasts, grow the brain), prove the plays net-of-fee
-(coach replay), start the NYMEX-options vehicle survey — all under the guard (general rules, true holdout,
+**One-line for S93:** run the loop (build the year of blind forecasts, grow the brain), prove the plays
+(coach replay, gross), start the NYMEX-options vehicle survey — all under the guard (general rules, true holdout,
 provisional-until-live).

@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from _info_dipole_swing_backtest import load_series, zigzag
+from _series_tools import load_series, zigzag
 
 R_BPS = 5.0                 # confirm a turn once price reverses this many bps off the extreme, then enter
 SWING_THETA = 0.0020        # what counts as a real swing turn (20 bps) for the true-pivot set
