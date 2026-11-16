@@ -214,6 +214,40 @@ def for_calculations(week: list[WeekFile], built=BUILT_TRADE_DAYS):
             yield f_index, r_index, record
 
 
+STORED_ROWS = 'rows-{day}-part*.parquet'            # the stored rows files of one trade day, in row order
+ROW_POSITION, ROW_EXCHANGE_TIME = 'position_on_tape', 'exchange_time_ns'
+
+
+def stored_row_files(rows_folder: Path, trade_day: dt.date) -> list:
+    """The stored rows files of one trade day, in row order. Refuses when there are none."""
+    files = sorted(Path(rows_folder).glob(STORED_ROWS.format(day=f'{trade_day:%Y%m%d}')))
+    if not files:
+        raise FileNotFoundError(f'no stored rows of trade day {trade_day} in {rows_folder}')
+    return files
+
+
+def rows_for_calculations(rows_folder: Path, trade_day: dt.date, columns, built=BUILT_TRADE_DAYS):
+    """The ONE gate through which a calculation receives STORED ROWS (what each tick did to the book is on the row,
+    not on the raw tape record). Yields (position on the tape, the row's values in `columns` order) for the rows of
+    that trade day only, decided by the same `calculation_eligible` on the row's exchange time as
+    `for_calculations()`: so it passes exactly the same ticks. The rows of the 5 pm to 6 pm stretches and of the
+    Sunday start-up never come through. A calculation must never open a stored file itself."""
+    import pyarrow.parquet as pq
+    last = None
+    for path in stored_row_files(rows_folder, trade_day):
+        table = pq.read_table(path, columns=[ROW_POSITION, ROW_EXCHANGE_TIME, *columns])
+        position = table.column(ROW_POSITION).to_pylist()
+        exchange = table.column(ROW_EXCHANGE_TIME).to_pylist()
+        values = [table.column(name).to_pylist() for name in columns]
+        del table
+        for k, (at, moment) in enumerate(zip(position, exchange)):
+            if last is not None and at <= last:
+                raise ValueError(f'{path.name}: the stored rows are out of tape order at position {at}')
+            last = at
+            if calculation_eligible(moment, built) and label(moment)[1] == trade_day:
+                yield at, tuple(column[k] for column in values)
+
+
 def position_base(week: list[WeekFile]) -> list:
     """For each file of the week, the number to add to a record's index in that file to get the tick's position on
     the tape for the week (the same numbering as the rows: ticks only, from the week's first tick)."""

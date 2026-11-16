@@ -8,8 +8,12 @@ changes a row. Its output is written as its own files, so nothing already stored
 - `calc-<name>-<table>-<trade day>-partNNN.parquet`: a table the calculation keeps beside the rows (for example the
   facts about peaks, each with the tick at which it became known);
 - `CALC-<name>-<trade day>.json`: counts, fingerprints of the inputs and outputs, and the result of its checks.
-Only the ticks of the trade day itself are calculated on (through `tape.for_calculations()`); the rows of the
-5 pm to 6 pm stretches and of the Sunday start-up keep empty cells. Output goes to markets-data, never Markets.
+Only the ticks of the trade day itself are calculated on; the rows of the 5 pm to 6 pm stretches and of the Sunday
+start-up keep empty cells. A calculation receives its ticks through one of the two gates of `root/tape.py`, which
+pass exactly the same ticks: `for_calculations()` gives the raw tape record, `rows_for_calculations()` gives the
+stored row (what the tick did to the book is on the row). A calculation that names stored columns in `READS` gets
+the rows; the runner then proves, on every run, that the rows gate passed the same positions as the tape gate.
+Output goes to markets-data, never Markets.
 
     python3 -m root.run calc flow_peak 20231002 --rows <stored rows folder> --out <folder>
 """
@@ -22,12 +26,14 @@ import json
 from pathlib import Path
 
 from root import checks, store, tape
-from root.calcs import flow_peak, peak_story
+from root.calcs import book_totals, flow_peak, peak_story, quote_runs
 from root.calendar import label
 
-CALCS = {'flow_peak': flow_peak, 'peak_story': peak_story}
+CALCS = {'flow_peak': flow_peak, 'peak_story': peak_story, 'book_totals': book_totals, 'quote_runs': quote_runs}
 LAID_OUT = {'flow_peak': 'markets-data STEP1_STEP2_LAYOUTS.md, piece 1 (Greg, 2026-11-16)',
-            'peak_story': 'markets-data STEP1_STEP2_LAYOUTS.md, piece 2 as revised (Greg, 2026-11-16)'}
+            'peak_story': 'markets-data STEP1_STEP2_LAYOUTS.md, piece 2 as revised (Greg, 2026-11-16)',
+            'book_totals': 'markets-data STEP2_PLAN.md, piece C (Greg, 2026-11-16)',
+            'quote_runs': 'markets-data STEP2_PLAN.md, piece I, the quote\'s own runs (Greg, 2026-11-16)'}
 POSITION = 'position_on_tape'
 
 
@@ -37,6 +43,23 @@ def gated(week, trade_day: dt.date):
     for f_index, r_index, record in tape.for_calculations(week):
         if label(int(record['ts_event']))[1] == trade_day:
             yield base[f_index] + r_index, record
+
+
+def stream(calc, week, trade_day: dt.date, rows_folder: Path):
+    """The ticks of the trade day as the calculation reads them: the stored rows when it names columns in `READS`,
+    the raw tape records otherwise. Either way through a gate of `root/tape.py`."""
+    if hasattr(calc, 'READS'):
+        return tape.rows_for_calculations(rows_folder, trade_day, calc.READS)
+    return gated(week, trade_day)
+
+
+def same_ticks(week, trade_day: dt.date, full: list) -> dict:
+    """The rows gate against the tape gate: the positions calculated on are exactly the trade day's ticks."""
+    through_tape = [position for position, _ in gated(week, trade_day)]
+    checks.need([position for position, _ in full] == through_tape,
+                'the rows gate did not pass exactly the ticks that tape.for_calculations() passes')
+    return dict(passed=True, ticks=len(through_tape),
+                what='the stored-rows gate passed exactly the positions of tape.for_calculations() for this trade day')
 
 
 def compute(calc, ticks) -> tuple:
@@ -50,7 +73,7 @@ def known_by(tables: dict, position) -> dict:
             if name in checks.KNOWN_AT_A_TICK}
 
 
-def playback(name: str, week, trade_day: dt.date, full: list, tables: dict) -> list:
+def playback(name: str, week, trade_day: dt.date, full: list, tables: dict, rows_folder: Path = None) -> list:
     """The playback check for a calculation: with the tape cut off at a tick, every value and every fact known up
     to that tick is the same as in the full run."""
     index = {position: k for k, (position, _) in enumerate(full)}
@@ -58,7 +81,8 @@ def playback(name: str, week, trade_day: dt.date, full: list, tables: dict) -> l
     cuts.update({why: index[position] + 1 for why, position in checks.playback_cuts(name, full, tables).items()})
     out = []
     for why, cut in cuts.items():
-        again, counts, again_tables = compute(CALCS[name], itertools.islice(gated(week, trade_day), cut))
+        again, counts, again_tables = compute(CALCS[name], itertools.islice(
+            stream(CALCS[name], week, trade_day, rows_folder), cut))
         last = full[cut - 1][0]
         checks.need(again == full[:cut], f'playback of {name} cut at {why}: a value up to the cut differs')
         checks.need(known_by(again_tables, last) == known_by(tables, last),
@@ -86,11 +110,10 @@ def run(tape_folder: Path, trade_day: dt.date, rows_folder: Path, out: Path, nam
     calc = CALCS[name]
     day = f'{trade_day:%Y%m%d}'
     out.mkdir(parents=True, exist_ok=True)
-    row_files = sorted(Path(rows_folder).glob(f'rows-{day}-part*.parquet'))
-    if not row_files:
-        raise FileNotFoundError(f'no stored rows of trade day {trade_day} in {rows_folder}')
+    row_files = tape.stored_row_files(rows_folder, trade_day)
     week = tape.read_week(tape_folder, trade_day)
-    full, counts, tables = compute(calc, gated(week, trade_day))
+    full, counts, tables = compute(calc, stream(calc, week, trade_day, rows_folder))
+    gate = same_ticks(week, trade_day, full) if hasattr(calc, 'READS') else None
     table_schema = store.schema([POSITION] + calc.NAMES, calc.TEXT, calc.YES_NO, calc.DECIMALS)
     empty = tuple(None for _ in calc.NAMES)
     files, k = [], 0
@@ -128,7 +151,8 @@ def run(tape_folder: Path, trade_day: dt.date, rows_folder: Path, out: Path, nam
         tables={t: dict(columns=calc.TABLES[t][0], lines=sum(f['rows'] for f in fs), files=fs)
                 for t, fs in table_files.items()},
         ticks_calculated_on=len(full), rows=sum(f['rows'] for f in files), counts=counts, files=files,
-        checks=dict(recount=recount, playback=playback(name, week, trade_day, full, tables)),
+        checks=dict(recount=recount, playback=playback(name, week, trade_day, full, tables, rows_folder),
+                    **({'rows_gate': gate} if gate else {})),
         empty_cells='stored as empty (null): never 0, never blank text; a calculation skips them',
         seconds=round(time.monotonic() - started, 1))
     (out / f'CALC-{name}-{day}.json').write_text(json.dumps(receipt, indent=1) + '\n')

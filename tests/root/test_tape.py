@@ -2,6 +2,7 @@
 import datetime as dt
 import json
 import os
+import re
 import shutil
 from pathlib import Path
 
@@ -16,6 +17,7 @@ TAPE = DATA / 'data' / 'nymex_mbo' / 'ng_v0_oct2023'
 pytestmark = pytest.mark.skipif(not (TAPE / 'MANIFEST.json').exists(),
                                 reason=f'the raw tape is not at {TAPE}; set MARKETS_DATA')
 DAYS = [dt.date(2023, 10, d) for d in (2, 3, 17, 18)]
+ROWS = Path(os.environ.get('ROOT_ROWS', REPO.parent))      # the folder that holds rows-<trade day>/ (markets-data)
 
 
 @pytest.fixture(scope='module')
@@ -118,10 +120,32 @@ def test_only_the_four_trade_days_reach_a_calculation():
 def test_calculation_code_cannot_read_the_tape_itself():
     """Calculations live in root/calcs/ and receive ticks only through tape.for_calculations(). A calculation file
     that names the raw readers fails here, so nothing outside the four trade days can reach one by accident."""
-    forbidden = ('DBNStore', 'read_week', 'TapeFolder', '.ticks(', 'tape.ticks', '.records', 'dbn.zst')
+    forbidden = ('DBNStore', 'read_week', 'TapeFolder', '.ticks(', 'tape.ticks', '.records', 'dbn.zst',
+                 # nor may one open a stored file itself: the stored rows come through tape.rows_for_calculations()
+                 'parquet', 'pyarrow', 'read_table', 'stored_row_files', 'glob', 'Path', 'read_text', 'read_bytes')
+    opens_a_file = re.compile(r'(?<![\w.])open\(')                  # the built-in open(, not a name ending in open
     for path in sorted((REPO / 'root' / 'calcs').glob('**/*.py')):
         text = path.read_text()
-        found = [w for w in forbidden if w in text]
-        assert not found, f'{path.relative_to(REPO)} reads the tape itself ({found}); use tape.for_calculations()'
+        found = [w for w in forbidden if w in text] + opens_a_file.findall(text)
+        assert not found, (f'{path.relative_to(REPO)} reads the tape or a stored file itself ({found}); use '
+                           f'tape.for_calculations() or tape.rows_for_calculations()')
     gate = (REPO / 'root' / 'tape.py').read_text()
-    assert 'def for_calculations' in gate and 'calculation_eligible' in gate
+    assert 'def for_calculations' in gate and 'def rows_for_calculations' in gate
+    assert gate.count('calculation_eligible(') >= 3          # its definition, and once inside each gate
+
+
+def test_the_rows_gate_passes_exactly_the_ticks_the_tape_gate_passes():
+    """A calculation that reads the stored rows gets them through tape.rows_for_calculations(). For every trade day
+    whose stored rows are at hand it passes exactly the positions tape.for_calculations() passes for that trade
+    day: no row of a 5 pm to 6 pm stretch, of the Sunday start-up or of another trade day, and none missing."""
+    import pytest
+    held = [d for d in DAYS if (ROWS / f'rows-{d:%Y%m%d}').is_dir()]
+    if not held:
+        pytest.skip(f'no stored rows under {ROWS} (set ROOT_ROWS to the folder that holds rows-<trade day>/)')
+    for day in held:
+        week = tape.read_week(TAPE, day)
+        base = tape.position_base(week)
+        through_tape = [base[f] + r for f, r, record in tape.for_calculations(week)
+                        if label(int(record['ts_event']))[1] == day]
+        through_rows = [position for position, _ in tape.rows_for_calculations(ROWS / f'rows-{day:%Y%m%d}', day, [])]
+        assert through_rows and through_rows == through_tape

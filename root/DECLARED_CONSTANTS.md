@@ -36,6 +36,35 @@ No number is written into it: Greg ruled no fixed marks. Its named values are wo
 | `BUILD_UP`, `NEW_LOW`, `REACHED_ZERO`, `CAME_BACK`, `BEATEN`, `KINDS` | build-up, new low, reached zero, came back, beaten | The kinds of moment in a peak's story. Kinds of moment, not kinds of peak. |
 | `I_HIGH` | a position | Where the tick of the high sits among the flow calculation's values. |
 
+## `root/calcs/book_totals.py` (part 2, Step 2 piece C; laid out and approved in markets-data `STEP2_PLAN.md`)
+
+No number is written into it. Its named values are words only.
+
+| Constant | Value | Why |
+|---|---|---|
+| `READS` | stored row columns | The columns of the stored rows the calculation is handed through `tape.rows_for_calculations()`. |
+| `FILL`, `BID`, `ASK`, `SIDES` | F, B, A | The tape's codes for a fill message and for the side of a resting order, as the rows store them. |
+| `CHANGES` | the words of `root/rows.py` | Everything a tick can do to an order. A row outside them, other than "no change", stops the run. |
+| `FIGURES`, `KEYS` | added, pulled, filled, moved and their parts | The running totals kept for each side. |
+
+## `root/calcs/quote_runs.py` (part 2, Step 2 piece I, the quote's own runs; laid out and approved in `STEP2_PLAN.md`)
+
+No number is written into it: Greg ruled no fixed marks, so a run has no minimum length and no minimum size.
+
+| Constant | Value | Why |
+|---|---|---|
+| `READS` | stored row columns | The received time, the best bid and the best ask. The marks of a best price moving are left to the check. |
+| `BEST_BID`, `BEST_ASK`, `QUOTES` | best bid, best ask | The two prices followed, each on its own. |
+| `UP`, `DOWN` | up, down | Which way a run goes, read off the prices. |
+| `STARTED`, `FURTHER`, `STEP_BACK`, `KINDS` | run started, new furthest price, first step back | The kinds of moment in a run. Kinds of moment, not kinds of run. |
+
+## `root/tape.py`, the stored-rows gate
+
+| Constant | Value | Why |
+|---|---|---|
+| `STORED_ROWS` | rows-<trade day>-part*.parquet | The names of the stored rows files of one trade day. |
+| `ROW_POSITION`, `ROW_EXCHANGE_TIME` | position_on_tape, exchange_time_ns | The two columns the gate itself reads: the place on the tape, and the exchange time the gate decides by. |
+
 ## `root/outside.py` (SPEC-outside.md; "as in the original" means Markets 7f34afa)
 
 | Constant | Value | Why |

@@ -98,9 +98,12 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
   ONE thing: seating the order book so the book on the four trade days is complete. The stretches and the Sunday
   start-up before Oct 2 keep their marked rows; nothing is calculated on them. **Any other use of data from outside
   the four trade days is put to Greg FIRST, before it is built.** Nothing is commingled; anything ever made from the
-  warm-up data goes in its own output, apart. Enforced in code: `root/tape.py` `for_calculations()` is the only way
-  a calculation receives ticks; calculation modules live in `root/calcs/` and may not read the tape themselves
-  (`tests/root/test_tape.py`). The 13 outside data points are the published figures Greg approved in
+  warm-up data goes in its own output, apart. Enforced in code: a calculation receives ticks only through the two
+  gates of `root/tape.py`, which use the same `calculation_eligible` and pass exactly the same ticks:
+  `for_calculations()` hands it the raw tape record, `rows_for_calculations()` hands it the stored row (what a tick
+  did to the book is on the row). Calculation modules live in `root/calcs/` and may not read the tape or open a
+  stored file themselves (`tests/root/test_tape.py`); the runner proves on every run that the rows gate passed the
+  tape gate's positions. The 13 outside data points are the published figures Greg approved in
   `SPEC-outside.md`; no new outside input is added without asking him. Greg, same day: a trade may continue into the
   days beyond the four; nothing is built for that now ("we'll cross that bridge if we come to it"), and when it comes
   up it is put to him first.
