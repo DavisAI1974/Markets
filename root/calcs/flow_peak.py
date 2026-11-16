@@ -8,8 +8,8 @@ What it works out, on every tick of a trade day:
 - bought, sold and no-side size traded in the last 20 seconds (the tape's own trade side; a trade the tape gives no
   side for is counted on its own and is in neither figure);
 - the flow: bought minus sold, over bought plus sold. Empty when nothing with a side traded in those 20 seconds.
-And on the row where a peak becomes known (the first tick at which the size of the flow has come off its high, or
-the flow has gone empty): the peak's side and size, the tick of its high, where it stands among the flow so far in
+And on the row where a peak becomes known (the first tick at which the flow has come off its high: it is smaller,
+or it has changed side, or it has gone empty): the peak's side and size, the tick of its high, where it stands among the flow so far in
 the trade day, how long it had been the highest, and the time since the peak before. Nothing is written back onto
 an earlier row, and no peak is held back by a level, a neighbourhood or a gap: those are figures on the row.
 
@@ -51,6 +51,7 @@ TEXT = {'peak_side'}
 YES_NO = {'peak_highest_since_open'}
 DECIMALS = {'flow_20s', 'peak_size', 'peak_standing_so_far'}
 NO_PEAK = tuple(None for name in NAMES if name.startswith('peak_'))
+TABLES = {}                                            # this calculation keeps no table beside the rows
 
 
 class Standing:
@@ -85,7 +86,8 @@ class FlowPeak:
         self.standing = Standing()
         self.larger = []                               # sizes still unbeaten, each with when it last ended
         self.first_flow_at = None
-        self.last_reading = None                       # the size read at the tick before
+        self.last_reading = None                       # the size read at the tick before,
+        self.last_side = None                          # and its side: 1 bought more, -1 sold more, 0 level
         self.high = None                               # a high not yet come off: (size, side, position, received,
         self.previous_high_at = None                   # highest for, highest since open)
         self.last_received = None
@@ -145,18 +147,20 @@ class FlowPeak:
         self.counts['ticks'] += 1
 
         reading, peak = self.size, NO_PEAK
+        side_now = (self.bought > self.sold) - (self.bought < self.sold)
         if reading is None:
             if self.high is not None:
                 peak = self._known(received)
         else:
             self.counts['ticks with a flow'] += 1
-            if self.last_reading is None or reading > self.last_reading:
+            same_side = self.last_reading is not None and side_now == self.last_side
+            if self.high is not None and (not same_side or reading < self.last_reading):
+                peak = self._known(received)             # it has come off: lower, or the flow has changed side
+            if reading and (not same_side or reading > self.last_reading):
                 beaten = self.larger[-2][1] if len(self.larger) > 1 else None
                 self.high = (reading, BUY_TEXT if self.bought > self.sold else SELL_TEXT, position, received,
                              received - (self.first_flow_at if beaten is None else beaten), beaten is None)
-            elif reading < self.last_reading and self.high is not None:
-                peak = self._known(received)
-        self.last_reading = reading
+        self.last_reading, self.last_side = reading, side_now
         total = self.bought + self.sold
         flow = (self.bought - self.sold) / total if total else None
         return (self.bought, self.sold, self.no_side, flow) + peak
@@ -182,9 +186,10 @@ class FlowPeak:
                     different_sizes_of_flow=len(self.standing.sizes))
 
 
-def calculate(ticks, counts: dict | None = None):
+def calculate(ticks, counts: dict | None = None, tables: dict | None = None):
     """(position, values in NAMES order) for every tick of ONE trade day. `ticks` gives (position, record) in tape
-    order and must come from `tape.for_calculations()`. `counts`, when given, receives the counts of the run."""
+    order and must come from `tape.for_calculations()`. `counts`, when given, receives the counts of the run. This
+    calculation keeps no table beside the rows, so `tables` is left as it is."""
     calc = FlowPeak()
     for position, record in ticks:
         yield position, calc.tick(position, int(record['ts_recv']), bytes(record['action']), bytes(record['side']),

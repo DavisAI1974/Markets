@@ -5,6 +5,7 @@ except where the criterion itself is about the whole record (one history per ord
 """
 from __future__ import annotations
 
+import collections
 import datetime as dt
 import hashlib
 import json
@@ -267,7 +268,7 @@ def pinned(row_files, tables_folder) -> dict:
                 rows_where_a_column_is_empty={c: n for c, n in empty_rows.items() if n})
 
 
-def flow_peak(row_files, calc_files, trade_day: dt.date) -> dict:
+def flow_peak(row_files, calc_files, trade_day: dt.date, table_files=None, rows_folder=None) -> dict:
     """The check of the calculation `flow_peak`: every one of its columns worked out again from the stored rows by a
     whole-column method that shares nothing with the tick-by-tick code, and compared on every row. The traded sizes
     come from running totals; the peaks from the runs of equal flow; a peak's standing and how long it had been the
@@ -313,12 +314,16 @@ def flow_peak(row_files, calc_files, trade_day: dt.date) -> dict:
     flow = [(int(b) - int(s)) / int(t) if t else None for b, s, t in zip(bought, sold, both)]
     need(got['flow_20s'].tolist() == flow, 'flow_20s differs from the recount')
 
-    # the peaks, from the runs of equal flow: a run is a high when the flow rose into it and falls or empties after it
+    # the peaks, from the runs of equal flow: a run is a high when the flow rose into it (from a smaller size, from
+    # the other side, or from no flow) and after it the flow is smaller, on the other side, or gone
     a, t = np.abs(bought - sold), both
-    starts = np.flatnonzero(np.concatenate(([True], (a[1:] * t[:-1] != a[:-1] * t[1:]) | ((t[1:] > 0) != (t[:-1] > 0)))))
-    ra, rt = a[starts], t[starts]
-    rose = (rt > 0) & np.concatenate(([True], (rt[:-1] == 0) | (ra[1:] * rt[:-1] > ra[:-1] * rt[1:])))
-    fell = np.concatenate(((rt[1:] == 0) | (ra[1:] * rt[:-1] < ra[:-1] * rt[1:]), [False]))
+    g = np.sign(bought - sold)
+    starts = np.flatnonzero(np.concatenate(([True], (a[1:] * t[:-1] != a[:-1] * t[1:]) | (g[1:] != g[:-1]) |
+                                            ((t[1:] > 0) != (t[:-1] > 0)))))
+    ra, rt, rg = a[starts], t[starts], g[starts]
+    rose = (ra > 0) & np.concatenate(([True], (rt[:-1] == 0) | (rg[1:] != rg[:-1]) |
+                                      (ra[1:] * rt[:-1] > ra[:-1] * rt[1:])))
+    fell = np.concatenate(((rt[1:] == 0) | (rg[1:] != rg[:-1]) | (ra[1:] * rt[:-1] < ra[:-1] * rt[1:]), [False]))
     runs = np.flatnonzero(rose & fell)
     high, known = starts[runs], starts[runs + 1]
     known_rows = np.flatnonzero(np.array([v is not None for v in got['peak_high_position']]))
@@ -375,3 +380,153 @@ def flow_peak(row_files, calc_files, trade_day: dt.date) -> dict:
                 rows_of_no_trade_day_all_empty=int((~in_day).sum()), peaks_compared=int(len(known)),
                 moments_the_flow_changed=int(len(seg)),
                 method='whole-column recount from the stored rows; shares no code with the tick-by-tick calculation')
+
+
+def peak_story(row_files, calc_files, trade_day: dt.date, table_files=None, rows_folder=None) -> dict:
+    """The check of the calculation `peak_story`: every fact worked out again, peak by peak, from the stored rows
+    and the already checked flow columns, by looking ahead along whole columns (the calculation itself only ever
+    looks at the tick in front of it). The two must give the same facts, in the same order, with the same values;
+    the same count on every row; and the same peaks still open at the last tick."""
+    import numpy as np
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    from fractions import Fraction
+    from root.calcs import flow_peak as F
+    from root.calcs import peak_story as P
+    from root.calendar import TRADE_DAY
+    day = f'{trade_day:%Y%m%d}'
+    rows = pa.concat_tables([pq.read_table(f, columns=['position_on_tape', 'received_time_ns', 'action', 'price',
+                                                       'row_label', 'trade_day']) for f in row_files])
+    flow_files = sorted(Path(rows_folder).glob(f'calc-flow_peak-{day}-part*.parquet'))
+    need(len(flow_files) == len(row_files), 'the stored flow columns (calculation flow_peak) are not beside the rows')
+    flow = pa.concat_tables([pq.read_table(f, columns=['position_on_tape', 'flow_bought_20s', 'flow_sold_20s',
+                                                       'peak_high_position']) for f in flow_files])
+    calc = pa.concat_tables([pq.read_table(f) for f in calc_files])
+    need(rows.column('position_on_tape').equals(calc.column('position_on_tape')) and
+         rows.column('position_on_tape').equals(flow.column('position_on_tape')), 'positions differ from the rows')
+    text = lambda name: np.array(rows.column(name).to_pylist(), dtype=object)
+    in_day = (text('row_label') == TRADE_DAY) & (text('trade_day') == trade_day.isoformat())
+    known_count = np.array(calc.column('peak_facts_known').to_pylist(), dtype=object)
+    need(all(v is None for v in known_count[~in_day]), 'peak_facts_known is filled on a row of no trade day')
+    d = np.flatnonzero(in_day)
+    n = len(d)
+    position = rows.column('position_on_tape').to_numpy()[d]
+    r = rows.column('received_time_ns').to_numpy()[d]
+    trade = text('action')[d] == F.TRADE.decode()
+    price = rows.column('price').to_numpy()[d].astype(np.int64)
+    bought = np.array(flow.column('flow_bought_20s').to_pylist(), dtype=object)[d].astype(np.int64)
+    sold = np.array(flow.column('flow_sold_20s').to_pylist(), dtype=object)[d].astype(np.int64)
+    high_position = np.array(flow.column('peak_high_position').to_pylist(), dtype=object)[d]
+    known = np.flatnonzero(np.array([v is not None for v in high_position]))
+    high = np.searchsorted(position, high_position[known].astype(np.int64))
+    need(position[high].tolist() == high_position[known].tolist(), 'a high names a tick with no row')
+    diff, total = bought - sold, bought + sold
+    last_trade = np.maximum.accumulate(np.where(trade, np.arange(n), -1))
+    price_now = [None if k < 0 else int(price[k]) for k in last_trade.tolist()]
+    least, most = np.iinfo(np.int64).min, np.iinfo(np.int64).max
+    up, down = np.where(trade, price, least), np.where(trade, price, most)
+    at_zero = {s: np.flatnonzero((total == 0) | (s * diff <= 0)) for s in (1, -1)}
+    on_side = {s: np.flatnonzero((total > 0) & (s * diff > 0)) for s in (1, -1)}
+    names = P.FACT_NAMES
+    at = {name: k for k, name in enumerate(names)}
+
+    def first_at_or_after(where, start):
+        k = np.searchsorted(where, start)
+        return int(where[k]) if k < len(where) else n
+
+    expected, still_open, before = [], [], -1
+    for h, k in zip(high.tolist(), known.tolist()):
+        s = 1 if diff[h] > 0 else -1
+        va, vt = int(abs(diff[h])), int(total[h])
+        zero = first_at_or_after(at_zero[s], h + 1)
+        num, den = (s * diff[h + 1:zero]).astype(np.int64), total[h + 1:zero]
+        over = np.flatnonzero(num * vt > va * den)
+        beaten = h + 1 + int(over[0]) if len(over) else None
+        stop = beaten if beaten is not None else zero
+        ratio = num[:stop - h - 1] / den[:stop - h - 1]
+        floor = np.minimum.accumulate(np.concatenate(([va / vt], ratio)))
+        lows = (h + 1 + np.flatnonzero(ratio < floor[:-1])).tolist()
+        share = lambda i: None if total[i] == 0 else Fraction(int(s * diff[i]) * vt, int(total[i]) * va)
+        moments = [(i, P.NEW_LOW) for i in lows]
+        back = None
+        if beaten is not None:
+            moments.append((beaten, P.BEATEN))
+        elif zero < n:
+            moments.append((zero, P.REACHED_ZERO))
+            back = first_at_or_after(on_side[s], zero + 1)
+            if back < n:
+                moments.append((back, P.CAME_BACK))
+        end = max([k] + [i for i, _ in moments])
+        top = np.maximum.accumulate(up[h:end + 1])
+        bottom = np.minimum.accumulate(down[h:end + 1])
+
+        def line(i, kind):
+            row = [None] * len(names)
+            row[at['known_position']], row[at['known_received_time_ns']] = int(position[i]), int(r[i])
+            row[at['peak_high_position']], row[at['fact']] = int(position[h]), kind
+            row[at['since_high_ns']] = int(r[i] - r[h])
+            row[at['price_at_high']], row[at['price_now']] = price_now[h], price_now[i]
+            row[at['highest_price_since_high']] = None if top[i - h] == least else int(top[i - h])
+            row[at['lowest_price_since_high']] = None if bottom[i - h] == most else int(bottom[i - h])
+            return row
+        row = line(k, P.BUILD_UP)
+        if h > before + 1:
+            span = slice(before + 1, h)
+            on_its_side = s * np.where(total[span] > 0, diff[span] / np.maximum(total[span], 1), 0.0)
+            low = before + 1 + int(np.flatnonzero(on_its_side == on_its_side.min())[-1])
+            row[at['low_position']] = int(position[low])
+            row[at['low_size']] = None if total[low] == 0 else abs(int(diff[low]) / int(total[low]))
+            row[at['low_flow']] = None if total[low] == 0 else int(diff[low]) / int(total[low])
+            row[at['low_to_high_ns']], row[at['low_price']] = int(r[h] - r[low]), price_now[low]
+        expected.append((int(position[k]), 0, int(position[h]), tuple(row)))
+        lowest = Fraction(1)
+        for i, kind in moments:
+            row, here = line(i, kind), share(i)
+            row[at['share_of_peak_left']] = None if here is None else float(here)
+            if kind == P.NEW_LOW:
+                lowest = here
+            if kind != P.CAME_BACK:
+                row[at['lowest_share_so_far']] = float(lowest)
+            else:
+                row[at['away_ns']] = int(r[i] - r[zero])
+                seen_up, seen_down = up[zero:i + 1].max(), down[zero:i + 1].min()
+                row[at['highest_price_since_zero']] = None if seen_up == least else int(seen_up)
+                row[at['lowest_price_since_zero']] = None if seen_down == most else int(seen_down)
+            expected.append((int(position[i]), 1, int(position[h]), tuple(row)))
+        if beaten is None and (zero >= n or back >= n):
+            still_open.append((int(position[h]), zero < n, float(lowest)))
+        before = h
+    expected = [row for _, _, _, row in sorted(expected, key=lambda e: e[:3])]
+    facts = pa.concat_tables([pq.read_table(f) for f in table_files['facts']])
+    got = list(zip(*[facts.column(name).to_pylist() for name in names]))
+    for a, b in zip(got, expected):
+        need(a == b, f'a fact differs from the recount: stored {dict(zip(names, a))}, recount {dict(zip(names, b))}')
+    need(len(got) == len(expected), f'{len(got)} facts stored, {len(expected)} in the recount')
+    per_row = collections.Counter(row[at['known_position']] for row in expected)
+    need(known_count[d].tolist() == [per_row.get(int(p), 0) for p in position],
+         'the count of facts known on a row differs from the recount')
+    left = pa.concat_tables([pq.read_table(f) for f in table_files['open-at-the-end']])
+    need(sorted(zip(*[left.column(c).to_pylist() for c in P.OPEN_COLUMNS])) == sorted(still_open),
+         'the peaks still open at the last tick differ from the recount')
+    kinds = collections.Counter(row[at['fact']] for row in expected)
+    return dict(passed=True, peaks=int(len(known)), facts_compared=len(expected), facts_by_kind=dict(kinds),
+                most_facts_on_one_tick=max(per_row.values()) if per_row else 0,
+                peaks_still_open_at_the_last_tick=len(still_open),
+                method='every fact found again by looking ahead along whole columns of the stored rows; shares no '
+                       'code with the tick-by-tick calculation')
+
+
+KNOWN_AT_A_TICK = {'facts'}            # the tables whose lines each carry the tick at which they became known
+CALC_CHECKS = {'flow_peak': flow_peak, 'peak_story': peak_story}
+
+
+def playback_cuts(name: str, full: list, tables: dict) -> dict:
+    """Where, besides the middle tick, a calculation's playback is cut: a tick chosen to fall inside something
+    still unfolding. Given as {why: the position of the last tick given}."""
+    if name == 'flow_peak':
+        from root.calcs import flow_peak as F
+        at = F.NAMES.index('peak_high_position')
+        highs = [values[at] for _, values in full if values[at] is not None]
+        return {'the high of the middle peak': highs[len(highs) // HALVE]} if highs else {}
+    facts = tables.get('facts', [])
+    return {'the tick the middle fact became known': facts[len(facts) // HALVE][0]} if facts else {}

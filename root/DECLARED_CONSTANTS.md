@@ -27,6 +27,15 @@ the end.
 | `TRADE`, `BUY`, `SELL` | T, B, A | The tape's own codes for a trade and for the side of the aggressor. |
 | `BUY_TEXT`, `SELL_TEXT` | buy, sell | How a peak's side is written. |
 
+## `root/calcs/peak_story.py` (part 2, piece 2; laid out and approved in markets-data `STEP1_STEP2_LAYOUTS.md`)
+
+No number is written into it: Greg ruled no fixed marks. Its named values are words only.
+
+| Constant | Value | Why |
+|---|---|---|
+| `BUILD_UP`, `NEW_LOW`, `REACHED_ZERO`, `CAME_BACK`, `BEATEN`, `KINDS` | build-up, new low, reached zero, came back, beaten | The kinds of moment in a peak's story. Kinds of moment, not kinds of peak. |
+| `I_HIGH` | a position | Where the tick of the high sits among the flow calculation's values. |
+
 ## `root/outside.py` (SPEC-outside.md; "as in the original" means Markets 7f34afa)
 
 | Constant | Value | Why |

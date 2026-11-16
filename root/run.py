@@ -53,7 +53,9 @@ def main():
         receipt = part2.run(a.tape, parse_trade_day(a.trade_day), a.rows, a.out, a.name)
         print(json.dumps(dict(calculation=a.name, trade_day=receipt['trade_day'], rows=receipt['rows'],
                               ticks_calculated_on=receipt['ticks_calculated_on'], counts=receipt['counts'],
-                              megabytes=round(sum(f['bytes'] for f in receipt['files']) / BYTES_PER_MEGABYTE, 1),
+                              megabytes=round(sum(f['bytes'] for f in receipt['files'] + [f for t in receipt['tables'].values()
+                                                                              for f in t['files']]) / BYTES_PER_MEGABYTE, 1),
+                              tables={t: v['lines'] for t, v in receipt['tables'].items()},
                               recount=receipt['checks']['recount'], playback=receipt['checks']['playback'],
                               seconds=receipt['seconds']), indent=1))
     if a.command == 'build':
