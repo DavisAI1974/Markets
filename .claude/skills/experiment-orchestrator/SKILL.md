@@ -30,7 +30,7 @@ the never-bend rules. Read its sections 0, 3, 5 and 7 first. They all apply here
 | 5 | series | one causal time axis per day from the journal + calc JSON | NOT built |
 | 6 | search | series x transforms x lags x cells x conditions x targets | NOT built (start from the joined-teacher builder, dfe08ca7) |
 | 7 | survivors | symbolic regression (`odcore/symbolic.py`) | NOT built |
-| 8 | confirmation | frozen survivor list on confirmation days, per cell, net of fees maker AND taker | NOT built |
+| 8 | confirmation | frozen survivor list on confirmation days, per cell, GROSS (no trade cost; Greg 2026-11-08) | NOT built |
 | C | classroom arm | teacher + `prepare_integrated_cycle` (no scientific dialogue) + principal classroom stage | reuses the full run; waits on r10 showing the plan classroom end to end |
 
 ## 2. Build order - each step on Greg's go

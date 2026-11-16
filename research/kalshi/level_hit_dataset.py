@@ -23,7 +23,7 @@ One row per level-hit event on the real WTI trade tape (kalshi_history.py output
   OUTCOME (forward from the hit, trailing exit = score_hold philosophy, bounded by the settle guard):
     continued   : reached L+dir before L-dir?  (the level-continuation label)
     run_length  : furthest level count reached in dir before the first one-level pullback.
-    net_cents   : trailing-exit P&L net of that strike's REAL Kalshi fee + entry slippage.
+    net_cents   : trailing-exit P&L (fee retired, Greg 2026-11-08: always 0; entry slippage term kept as book crossing).
     resolution  : 'target' | 'reversal' | 'censored' (walk hit the settle/horizon cap unresolved).
 
 Discipline: leakage gate BEFORE any distribution (odcore.leakage.assert_no_leakage on the context
@@ -179,11 +179,10 @@ def tod_band(hour: int) -> str:
     return "off_hours"
 
 
-# ---- Kalshi fee ------------------------------------------------------------------------------
-def kalshi_fee_cents(price_cents: float, contracts: float = 1.0) -> float:
-    """Kalshi trading fee = round_up(0.07 * C * P * (1-P)) in dollars -> cents. P in [0,1]."""
-    p = min(max(price_cents / 100.0, 0.0), 1.0)
-    return math.ceil(0.07 * contracts * p * (1 - p) * 100) / 1.0   # cents (per contract)
+# ---- Kalshi fee: RETIRED (Greg 2026-11-08) --------------------------------------------------
+def kalshi_fee_cents(p: float) -> float:
+    """RETIRED: trade cost is not a market condition. Always 0 cents; `fee_cents` fields stay 0."""
+    return 0.0
 
 
 # ---- outcome (forward trailing walk) ----------------------------------------------------------

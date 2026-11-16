@@ -18,8 +18,9 @@ surprise sign/magnitude + microstructure; temp/curve/weekday collapse at n=12 an
 Temp regime + curve regime are attached as CONDITIONING tags (not split into the key at n=12); they become
 key dimensions once the continuous-year library gives cross-season analogs.
 
-OUTPUT is the CANARY (futures) forward-path forecast — the CEILING, NOT Kalshi P&L. Net-of-fee EV is
-measured downstream where this feeds the hold-length overlay in lag_join.py (directive sec 8).
+OUTPUT is the CANARY (futures) forward-path forecast — the CEILING, NOT Kalshi P&L. The echo is measured
+downstream, GROSS (no trade cost, Greg 2026-11-08), where this feeds the hold-length overlay in lag_join.py
+(directive sec 8).
 
 DISCIPLINE: per-cell distributions never a pooled mean; $/contract never bps; leakage-safe (cell features
 are decision-time-available: pre-release surprise/volume + the initial-push imbalance that sizes the HOLD,

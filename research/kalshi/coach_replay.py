@@ -2,7 +2,7 @@
 coach_replay.py — deterministic backtest of the ng_brain.json PLAYBOOK on the NG canary tape (S92 build).
 
 This is the RIGID, mechanical baseline of the coach's plays — the thing the future ADAPTIVE agent-coach must
-beat. It reads the plays out of knowledge/ng_brain.json and applies them per leg, NET-OF-FEE, PER EVENT, with
+beat. It reads the plays out of knowledge/ng_brain.json and applies them per leg, GROSS (no trade cost), PER EVENT, with
 NO POOLING as the verdict (per-leg rows + a per-day roll-up that is a sum of individual trades, never a mean
 that hides the fingerprint).
 
@@ -16,7 +16,7 @@ HONEST SCOPE / ASSUMPTIONS (explicit — refine next session with a real fill mo
     echo (fire on the lag) and the NYMEX-OPTIONS vehicle are the next layers (see FORECASTER_RUNBOOK_S93.md).
   - Coarse capture proxy off characterize_day OUTCOMES (peak_usd, retention, dir) — NOT a tick-by-tick fill
     sim. A right-direction trade captures ~ retention*peak_usd (rode the leg, kept the retention fraction);
-    a wrong-direction trade loses ~ peak_usd (long into the opposite move). Round-trip fee FEE_RT per contract.
+    a wrong-direction trade loses ~ peak_usd (long into the opposite move). No fee: FEE_RT is 0 (Greg 2026-11-08).
     The number is INDICATIVE (sizes the edge), NOT a validated P&L. The real fill/slippage model is JOB for S93.
   - Only |dip|>=DIP_STRONG legs are traded (the play's own gate). 1 contract/leg.
 
@@ -32,7 +32,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import month_characterize as mc                                # the full-toolbox per-leg characterizer
 
 BRAIN = os.path.join(os.path.dirname(os.path.abspath(__file__)), "knowledge", "ng_brain.json")
-FEE_RT = 5.0            # $/contract round-trip on the NG canary (conservative; refine per venue next session)
+FEE_RT = 0.0            # RETIRED (Greg 2026-11-08): trade cost is not a market condition; replay is GROSS
 
 
 def _thresholds(brain: dict) -> dict:
@@ -120,7 +120,7 @@ def main() -> int:
     if not a.days:
         ap.error("need --days or --selftest")
     brain = json.load(open(a.brain))
-    print(f"[coach_replay] INDICATIVE canary-side replay (fee ${FEE_RT} rt/contract; NOT a validated fill P&L)")
+    print(f"[coach_replay] INDICATIVE canary-side replay (GROSS, no trade cost; NOT a validated fill P&L)")
     for day in a.days.split(","):
         d = replay_day(day, brain, source=a.source)
         print(f"\n=== NG {day}: {d['n_trades']} trades, {d['n_correct']} correct-dir, "

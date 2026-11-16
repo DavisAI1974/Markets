@@ -1,5 +1,10 @@
 """
-lag_join.py — the FUTURES->KALSHI lag join (realized-EV of the echo, net-of-fee), two modes.
+lag_join.py — the FUTURES->KALSHI lag join (the realized echo move, GROSS), two modes.
+
+TRADE COST IS NOT A MARKET CONDITION (Greg, 2026-11-08). No fee, slippage, maker offset or any other
+execution assumption enters any calculation here. The echo is measured as the Kalshi price move itself,
+in cents per contract, entry at the stale mark, exit at the mark (or at the favorable extreme when the echo
+made a wave). The old fee/slippage terms were removed; cfg keys slip/maker_off are accepted and ignored.
 
 Thesis (Greg, S84/S87): NYMEX is the CANARY, Kalshi the DELAYED follower. The front-month future moves
 first; the Kalshi daily-settle market (KXWTI / KXNATGASD, "will the close be above $X") reprices seconds-
@@ -19,15 +24,13 @@ Trade model (Greg S87, both modes):
   * STAND-BACK if Kalshi already moved with NYMEX before entry (caught up on its own -> no stale edge).
   * HOLD via a NYMEX DOLLAR TRAILING STOP (reverse_usd): ride through consistent movement / Kalshi whipsaw,
     exit only when the canary retraces reverse_usd from its favorable extreme (a real trend reversal). A
-    fraction-of-run stop churns the fee on a trending day; the $-trailing stop rides the trend.
-  * EXIT = MAKER "best number" (sell at the trend top into the still-buying herd, ~0 fee; fills only if the
-    echo made a wave) vs the pure-TAKER floor (cross the spread). Report both, net-of-fee.
+    fraction-of-run stop churns on a trending day; the $-trailing stop rides the trend.
+  * EXIT readouts: at the favorable Kalshi EXTREME (only if the echo made a wave >= min_wave) vs at the
+    mark when the trailing stop fires. Report both, gross, in cents per contract.
 
 Discipline (kalshi-backtest): leakage-safe by construction (entry = canary direction + stale Kalshi mark,
 both strictly <= entry; the trailing-stop exit is the forward outcome); settle-window bound; per-cell
-never pooled; DISTRIBUTIONS not means; net-of-fee at taker AND (optimistic) maker. Zero synthetic.
-
-Fee: fee_cents(P) = ceil(7*P*(1-P)), P=yes/100 (== round_up(0.07*C*P*(1-P)) per taker leg).
+never pooled; DISTRIBUTIONS not means; no trade cost anywhere. Zero synthetic.
 
 Usage:
     python research/kalshi/lag_join.py --selftest
@@ -82,7 +85,13 @@ def _iso_to_ts(s):
 
 
 def fee_cents(price_cents: float) -> int:
-    """Kalshi taker fee per contract in CENTS: ceil(7*P*(1-P)), P=price/100. Max ~2c at the 50c ATM."""
+    """RETIRED (Greg, 2026-11-08): trade cost is not a market condition. Always 0; kept so old callers
+    and receipts that reference the name keep working without reintroducing a cost."""
+    return 0
+
+
+def _legacy_fee_cents(price_cents: float) -> int:
+    """The old Kalshi taker-fee formula, kept for the historical record only; never called."""
     P = max(0.0, min(1.0, price_cents / 100.0))
     return math.ceil(7.0 * P * (1.0 - P) - 1e-9)
 
@@ -183,19 +192,20 @@ def scan_moves(fts, fp, trig_usd, confirm_s, cooldown_s, max_events=1000):
 # ---- the shared trade engine -----------------------------------------------------------------------
 def simulate_trade(root, fts, fp, kts, kyes, ei, s, cfg, settle_bound):
     """One echo trade: taker entry at the stale Kalshi mark, stand-back guard, NYMEX $-trailing-stop hold,
-    maker-best-number / taker-floor exit, net-of-fee. Returns the trade core dict or None."""
+    exit at the mark or at the favorable extreme, GROSS (no cost of any kind). Returns the trade core
+    dict or None. Keys pnl_taker / pnl_maker are kept for downstream readers: pnl_taker = exit at the
+    mark when the stop fires; pnl_maker = exit at the favorable extreme when the echo made a wave."""
     t_entry = float(fts[ei])
     entry_mark = price_at(kts, kyes, t_entry)
     if entry_mark is None or entry_mark < 3 or entry_mark > 97:      # need a live, tradeable ATM
         return None
-    slip, maker_off, min_wave = cfg["slip"], cfg["maker_off"], cfg["min_wave"]
+    min_wave = cfg["min_wave"]                                       # slip / maker_off ignored (no cost)
     rev = cfg["reverse_usd"][root]
     # STAND-BACK: skip if Kalshi already moved in the NYMEX direction before entry (caught up on its own).
     kref = price_at(kts, kyes, t_entry - cfg["look_back"])
     if kref is not None and s * (entry_mark - kref) >= cfg["stale_cap"]:
         return None
-    entry_px = entry_mark + s * slip                                # taker entry, adverse
-    entry_fee = fee_cents(entry_px)
+    entry_px = entry_mark                                           # entry at the stale mark, gross
 
     # NYMEX DOLLAR TRAILING-STOP hold: ride the trend; exit on a reverse_usd retrace from the extreme.
     n = len(fp)
@@ -221,11 +231,10 @@ def simulate_trade(root, fts, fp, kts, kyes, ei, s, cfg, settle_bound):
     if exit_mark is None:
         return None
     wave = s * (ext - entry_mark)                                   # favorable Kalshi carry (c)
-    taker_exit = exit_mark - s * slip
-    pnl_taker = s * (taker_exit - entry_px) - entry_fee - fee_cents(taker_exit)
+    pnl_taker = s * (exit_mark - entry_px)                         # gross move to the stop-fire mark
     if wave >= min_wave:
         maker_filled = 1
-        pnl_maker = s * ((ext - s * maker_off) - entry_px) - entry_fee - 0
+        pnl_maker = s * (ext - entry_px)                           # gross move to the favorable extreme
     else:
         maker_filled = 0
         pnl_maker = pnl_taker
@@ -353,11 +362,11 @@ def _cfg_from_args(args):
             "settle_buffer": args.settle_buffer}
 
 
-# ---- selftest (leakage closure + fee math; tiny constructed arrays, no synthetic trades) -----------
+# ---- selftest (leakage closure; tiny constructed arrays, no synthetic trades) ----------------------
 def selftest():
     ok = True
-    assert fee_cents(50) == 2 and fee_cents(90) == 1 and fee_cents(100) == 0 and fee_cents(0) == 0
-    print("  ok  fee_cents: 50c->2c, 90c->1c, edges->0")
+    assert fee_cents(50) == 0 and fee_cents(0) == 0
+    print("  ok  no trade cost: fee_cents is 0 everywhere")
     ts = np.arange(20, dtype=float)
     p = 100.0 + np.cumsum(np.ones(20))
     z = np.zeros(20)
@@ -445,7 +454,7 @@ def main():
     print(f"\nLAG JOIN (release) — {len(rows)} echo trades  (trigger CL=${args.trigger_cl:.2f} "
           f"NG=${args.trigger_ng:.3f}, reverse-stop CL=${args.reverse_cl:.2f} NG=${args.reverse_ng:.3f}; "
           f"ENTRY+HOLD+EXIT all NYMEX-driven, $/c)")
-    print("net-of-fee CENTS/contract; ENTRY taker; EXIT maker-best-number-w-taker-fallback vs pure-taker floor")
+    print("GROSS CENTS/contract (no trade cost); pnl_taker = exit at stop-fire mark; pnl_maker = exit at favorable extreme when wave >= min_wave")
     report(rows, ["root"], "per contract")
     report(rows, ["root", "scell"], "per contract x surprise cell")
     report(rows, ["root", "coiled"], "per contract x coiled/primed gate")
