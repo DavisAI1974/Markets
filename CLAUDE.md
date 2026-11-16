@@ -76,6 +76,17 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
 
 ## The trading rules (load-bearing — Greg, S80-S82)
 
+- **TRADE DAY ONLY, NEVER A CLOCK DAY (Greg, 2026-11-16).** A TRADE DAY is the CME session: 17:00 ET the evening
+  before (the daily halt; trading resumes 18:00 ET) to 17:00 ET on the named date, so trade day Wednesday starts
+  Tuesday evening. Everything we build, label and analyze is cut on the trade day. Never write a bare "day" or a
+  bare date: say "trade day" or "UTC clock day". The UTC clock day (00:00-24:00 UTC) exists only because the
+  vendor cuts raw tape files that way; midnight UTC is 20:00 ET (EDT), two hours INTO the trade day. Download
+  whichever UTC clock-day files are needed to cover a trade day completely, then shelve (keep, do not use) the
+  hours that belong to a different trade day. Carry the order book straight through 00:00 UTC: applying the
+  snapshot that opens each raw file restarts every resting order's age at 20:00 ET (found and fixed 2026-11-16,
+  `markets-data` `tasks/family-research-20261022/research-union-current/trade-day-rebuild-20261116/`). Any
+  exception needs a specific reason, written down next to the thing that differs.
+
 - **EACH TRADE INDIVIDUALLY, never average.** No pooled hit-rate, no mean signed-bps, no averaged
   coefficient — every aggregate blurs away the per-trade fingerprint that IS the predictive content.
   Characterize the DISTRIBUTION + the per-trade fingerprint; never lead with the mean.
