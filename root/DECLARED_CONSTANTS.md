@@ -54,6 +54,10 @@ the end.
 | `SETTLEMENT_STAT_TYPE` | 3 | The vendor's code for a settlement price. |
 | `CURVE_MONTHS` | 12 | The curve shape is taken over the 12 nearest months that have a price, as in the original. |
 | `SHAPE_NEEDS_MONTHS` | 2 | No shape without the front two months; the middle rank is the count halved, as in the original. |
+| `STORAGE_RELEASE_EASTERN` | 10:30 am | The weekly storage report comes out Thursday 10:30 am Eastern (rule, as in the original). |
+| `STORAGE_RELEASE_DAYS_AFTER_WEEK` | 6 | That Thursday is 6 days after the week ending Friday, as in the original. |
+| `FIVE_YEAR_PRIOR_YEARS` | 5 | The five-year comparison uses the same ISO week in each of the five prior calendar years, and is empty unless all five exist, as in the original's fallback. |
+| `STORAGE_TOTAL`, `STORAGE_WEEK`, `STORAGE_REGIONS`, `STORAGE_NOTE`, `STORAGE_HISTORY_SHEET`, `STORAGE_CHANGES_SHEET` | labels | The EIA workbooks' own column and sheet labels; columns are found by label, never by position. |
 
 ## Functions whose numbers are calendar facts
 

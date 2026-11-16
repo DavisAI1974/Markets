@@ -218,3 +218,72 @@ def test_no_hidden_numbers():
             if set(funcs) & exempt_functions:
                 continue
             raise AssertionError(f'{path}:{node.lineno}: the number {node.value} is not declared')
+
+
+# ---------------------------------------------------------------- X11, X12: storage
+def test_storage_first_print_on_the_two_reports_the_trade_days_use(made):
+    folder, _, _ = made
+    rows = {r['week_ending']: r for r in table(folder, 'storage_weekly.csv')}
+    assert (rows['2023-09-22']['level_first_print_bcf'], rows['2023-09-22']['change_from_first_prints_bcf'],
+            rows['2023-09-22']['known_from_eastern']) == ('3359.0', '90.0', '2023-09-28T10:30:00-04:00')
+    assert (rows['2023-10-06']['level_first_print_bcf'], rows['2023-10-06']['change_from_first_prints_bcf'],
+            rows['2023-10-06']['known_from_eastern']) == ('3529.0', '84.0', '2023-10-12T10:30:00-04:00')
+
+
+def test_storage_level_is_the_first_print_not_the_revised_one(made):
+    """Fix 1: the week ending 2023-01-20 was first printed at 2,729 and later revised to 2,734."""
+    folder, _, _ = made
+    src = outside.Sources(SRC)
+    mode, sheets = outside.xls_sheets(src, 'raw/storage/ngshistory.xls')
+    head, cols = outside.labelled(sheets[outside.STORAGE_HISTORY_SHEET], outside.STORAGE_WEEK)
+    history = {w: v[cols[outside.STORAGE_TOTAL]]
+               for w, v in outside.dated_rows(sheets[outside.STORAGE_HISTORY_SHEET], mode, head)}
+    rows = {r['week_ending']: r for r in table(folder, 'storage_weekly.csv')}
+    assert history[dt.date(2023, 1, 20)] == 2734.0
+    assert rows['2023-01-20']['level_first_print_bcf'] == '2729.0'
+
+
+def test_storage_five_year_rule_as_in_the_original(made):
+    folder, _, _ = made
+    rows = table(folder, 'storage_weekly.csv')
+    for r in rows:
+        listed = [float(x.split(': ')[1]) for x in r['same_week_prior_5y_levels'].split('; ')] \
+            if r['same_week_prior_5y_levels'] else []
+        if r['vs_5yr_bcf']:
+            assert len(listed) == outside.FIVE_YEAR_PRIOR_YEARS
+            assert float(r['vs_5yr_bcf']) == round(float(r['level_first_print_bcf']) - sum(listed) / len(listed), 1)
+        else:
+            assert len(listed) < outside.FIVE_YEAR_PRIOR_YEARS, r['week_ending']
+    sep22 = next(r for r in rows if r['week_ending'] == '2023-09-22')
+    assert [int(x.split(':')[0]) for x in sep22['same_week_prior_5y_levels'].split('; ')] == [2018, 2019, 2020, 2021,
+                                                                                               2022]
+
+
+def test_storage_change_differs_from_the_eia_figure_only_after_a_revision(made):
+    _, receipt, _ = made
+    checks = receipt['storage_checks']
+    assert checks['history_file_equals_api_series_weeks'] == 480
+    differs = {d['week_ending']: d for d in checks['change_from_first_prints_differs_from_eia_current_net_change']}
+    assert (differs['2023-01-27']['change_from_first_prints_bcf'],
+            differs['2023-01-27']['eia_current_net_change_bcf']) == (-146.0, -151.0)
+    assert not {'2023-09-15', '2023-09-22', '2023-09-29', '2023-10-06'} & set(differs)
+
+
+def test_storage_estimate_is_empty_with_its_reason(made):
+    folder, _, _ = made
+    weekly = {r['week_ending']: r['change_from_first_prints_bcf'] for r in table(folder, 'storage_weekly.csv')}
+    for r in table(folder, 'storage_estimate.csv'):
+        assert r['estimate_bcf'] == '' and r['surprise_bcf'] == '' and r['estimate_missing_reason']
+        assert r['actual_change_from_first_prints_bcf'] == weekly[r['week_ending']]
+
+
+def test_storage_report_each_trade_day_carries(made):
+    folder, _, _ = made
+    rows = table(folder, 'storage_weekly.csv')
+    known = sorted((int(r['known_from_ns']), r['week_ending']) for r in rows)
+    expected = {'2023-10-02': '2023-09-22', '2023-10-03': '2023-09-22', '2023-10-17': '2023-10-06',
+                '2023-10-18': '2023-10-06'}
+    for day, week in expected.items():
+        opens, halts = trade_day_bounds(dt.date.fromisoformat(day))
+        assert [w for t, w in known if t <= opens][-1] == week
+        assert not [w for t, w in known if opens < t <= halts]

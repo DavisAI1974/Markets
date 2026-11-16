@@ -91,6 +91,20 @@ OUTRIGHT = re.compile(r'^NG[FGHJKMNQUVXZ]\d{1,2}$')
 SHAPE_NEEDS_MONTHS = 2                                 # forward_curve: no shape without the front two months
 TWO_DIGIT_YEAR = 100
 
+# Storage (frankie_day_external.py storage / estimate; fix 1 and fix 2).
+STORAGE_RELEASE_EASTERN = dt.time(10, 30)              # the weekly storage report: Thursday 10:30 am Eastern (rule)
+STORAGE_RELEASE_DAYS_AFTER_WEEK = 6                    # the Thursday after the week ending Friday
+FIVE_YEAR_PRIOR_YEARS = 5                              # the same week in each of the five prior calendar years
+STORAGE_TOTAL = 'Total Lower 48'                       # the column labels read from the EIA workbooks
+STORAGE_WEEK = 'Week ending'
+STORAGE_REGIONS = ('East Region', 'Midwest Region', 'Mountain Region', 'Pacific Region', 'South Central Region',
+                   'Salt', 'NonSalt')
+STORAGE_NOTE = 'Explanation'
+STORAGE_HISTORY_SHEET = 'html_report_history'
+STORAGE_CHANGES_SHEET = 'weekly_net_changes'
+ESTIMATE_MISSING = ('the street estimate is on saved web pages (web.archive.org), which the cloud environment cannot '
+                    'reach; left for the later update (SPEC-outside.md, kept simple)')
+
 
 def clock_day_of(stored: str) -> dt.date:
     return dt.datetime.strptime(stored.rsplit('_', 1)[1][:8], '%Y%m%d').date()
@@ -598,8 +612,116 @@ def curve(src: Sources, last_halt: int):
     return dict(definitions=def_rows, statistics=stat_rows, trades=trade_rows, settled=settled, traded=traded)
 
 
+# ---------------------------------------------------------------- X11, X12: storage (fix 1, fix 2, fix 4)
+def xls_sheets(src: Sources, stored: str):
+    """The sheets of an EIA .xls workbook, read from the fingerprint-checked bytes, with the book's date mode."""
+    import xlrd
+    book = xlrd.open_workbook(file_contents=src.bytes(stored))
+    return book.datemode, {s.name: s for s in book.sheets()}
+
+
+def labelled(sheet, label: str) -> tuple[int, dict]:
+    """The row that carries `label`, and every column label of that row (columns are found by label, not position)."""
+    for r in range(sheet.nrows):
+        values = [str(v).strip() for v in sheet.row_values(r)]
+        if label in values:
+            return r, {v: c for c, v in enumerate(values) if v}
+    raise ValueError(f'sheet {sheet.name!r} has no row labelled {label!r}')
+
+
+def dated_rows(sheet, datemode: int, after: int):
+    """(week ending, row values) for each row below `after` that carries a date cell (the week-ending date)."""
+    import xlrd
+    for r in range(after + 1, sheet.nrows):
+        cells = sheet.row(r)
+        for c in cells:
+            if c.ctype == xlrd.XL_CELL_DATE:
+                yield xlrd.xldate_as_datetime(c.value, datemode).date(), sheet.row_values(r)
+                break
+
+
+def storage_release(week: dt.date) -> int:
+    """frankie_day_external storage: Thursday 10:30 am Eastern after the week ending. A rule, not a record."""
+    return to_ns(eastern(week + dt.timedelta(days=STORAGE_RELEASE_DAYS_AFTER_WEEK), STORAGE_RELEASE_EASTERN))
+
+
+STORAGE_COLUMNS = (['known_from_ns', 'known_from_eastern', 'known_from_basis', 'week_ending',
+                    'level_first_print_bcf', 'change_from_first_prints_bcf', 'vs_5yr_bcf', 'vs_5yr_rule',
+                    'same_week_prior_5y_levels'] +
+                   [f'first_print_{r.lower().replace(" ", "_")}_bcf' for r in STORAGE_REGIONS] +
+                   ['eia_note', 'source_file'])
+ESTIMATE_COLUMNS = ['known_from_ns', 'known_from_eastern', 'known_from_basis', 'print_date', 'week_ending',
+                    'estimate_bcf', 'actual_change_from_first_prints_bcf', 'surprise_bcf', 'estimate_missing_reason']
+
+
+def storage(src: Sources, last_halt: int) -> dict:
+    """X11 and X12. Fix 1: the level is the EIA's original estimate before any revision (revisions.xls holds it for
+    every week from 2015-06-19). The change on the week is this week's first print minus the week before's first
+    print; it is not called "as printed", because in the week after a revision the printed change used the revised
+    figure. The five-year comparison keeps the original's fallback exactly: the level minus the mean of the same ISO
+    week number in each of the five prior calendar years, from the EIA history file, all five listed beside it, and
+    empty unless all five exist. Fix 2: the street estimate stays empty with its reason (kept simple)."""
+    rev_file, hist_file = 'raw/storage/revisions.xls', 'raw/storage/ngshistory.xls'
+    api_files = src.listed('raw/storage/api/')
+    mode, sheets = xls_sheets(src, rev_file)
+    first = {}
+    for sheet in sheets.values():
+        try:
+            head, cols = labelled(sheet, STORAGE_WEEK)
+        except ValueError:
+            continue
+        for week, v in dated_rows(sheet, mode, head):
+            first[week] = dict(total=number(v[cols[STORAGE_TOTAL]]),
+                               regions=[number(v[cols[r]]) for r in STORAGE_REGIONS],
+                               note=str(v[cols[STORAGE_NOTE]]).strip() or None)
+    if not first:
+        raise ValueError(f'{rev_file} holds no week of first prints')
+
+    mode, sheets = xls_sheets(src, hist_file)
+    head, cols = labelled(sheets[STORAGE_HISTORY_SHEET], STORAGE_WEEK)
+    history = {w: number(v[cols[STORAGE_TOTAL]]) for w, v in dated_rows(sheets[STORAGE_HISTORY_SHEET], mode, head)}
+    head, cols = labelled(sheets[STORAGE_CHANGES_SHEET], STORAGE_TOTAL)
+    eia_change = {w: number(v[cols[STORAGE_TOTAL]]) for w, v in dated_rows(sheets[STORAGE_CHANGES_SHEET], mode, head)}
+
+    # The original read the same levels from the EIA API series; the spec reads the history file. They must agree.
+    api = {}
+    for stored in api_files:
+        for r in json.loads(src.text(stored))['response']['data']:
+            api[dt.date.fromisoformat(r['period'])] = number(r['value'])
+    differ = sorted(w.isoformat() for w in set(api) & set(history) if api[w] != history[w])
+    if differ:
+        raise ValueError(f'the EIA history file and the API series disagree on {len(differ)} weeks, first {differ[:3]}')
+
+    weekly, estimate, change_differs = [], [], []
+    for week in sorted(first):
+        known = storage_release(week)
+        if known >= last_halt:
+            continue
+        row, prev = first[week], first.get(week - dt.timedelta(days=DAYS_PER_WEEK))
+        level = row['total']
+        change = None if prev is None or level is None or prev['total'] is None else level - prev['total']
+        iso = week.isocalendar()[1]
+        prior = sorted((w.year, v) for w, v in history.items()
+                       if w.isocalendar()[1] == iso and week.year - FIVE_YEAR_PRIOR_YEARS <= w.year < week.year)
+        whole = len(prior) == FIVE_YEAR_PRIOR_YEARS and level is not None and all(v is not None for _, v in prior)
+        vs5 = round(level - sum(v for _, v in prior) / len(prior), 1) if whole else None
+        listed = '; '.join(f'{y}: {v:g}' for y, v in prior) or None
+        basis = 'rule: Thursday after the week ending, 10:30 Eastern'
+        weekly.append(known_cols(known) + [basis, week.isoformat(), level, change, vs5,
+                                           'fallback: same ISO week, five prior calendar years, EIA history file',
+                                           listed] + row['regions'] + [row['note'], rev_file])
+        thursday = week + dt.timedelta(days=STORAGE_RELEASE_DAYS_AFTER_WEEK)
+        estimate.append(known_cols(known) + [basis, thursday.isoformat(), week.isoformat(), None, change, None,
+                                             ESTIMATE_MISSING])
+        if change is not None and eia_change.get(week) is not None and change != eia_change[week]:
+            change_differs.append(dict(week_ending=week.isoformat(), change_from_first_prints_bcf=change,
+                                       eia_current_net_change_bcf=eia_change[week]))
+    return dict(weekly=weekly, estimate=estimate, change_differs=change_differs,
+                api_weeks_compared=len(set(api) & set(history)), source_files=[rev_file, hist_file] + api_files)
+
+
 # ---------------------------------------------------------------- writing
-SHAPE_COLUMNS = ['known_from_ns', 'known_from_eastern', 'front_symbol', 'next_symbol', 'front', 'next', 'far_rank',
+SHAPE_COLUMNS =['known_from_ns', 'known_from_eastern', 'front_symbol', 'next_symbol', 'front', 'next', 'far_rank',
                  'far', 'slope_to_next', 'slope_to_far', 'curvature', 'front_minus_next', 'regime', 'months_priced']
 
 
@@ -657,6 +779,11 @@ EMPTY_REASONS = {
     'curve_definitions.csv.gz': '', 'curve_statistics.csv.gz': 'price: the statistic has no price (a quantity only); '
                                                                 'raw_symbol: no definition known for that instrument',
     'curve_trades.csv.gz': 'raw_symbol: no definition known for that instrument',
+    'storage_weekly.csv': 'change: no first print for the week before (the first prints start 2015-06-19); vs_5yr and '
+                          'the prior levels: fewer than five prior calendar years carry that ISO week number (week 53); '
+                          'eia_note: the EIA wrote no note for that week',
+    'storage_estimate.csv': 'estimate and surprise: the street estimate is not held (estimate_missing_reason); actual: '
+                            'no first print for the week before',
 }
 
 
@@ -723,6 +850,10 @@ def build(src_folder: Path, out: Path, trade_days=TRADE_DAYS) -> dict:
     tables.append(write_table(out, 'curve_settled_shape.csv', SHAPE_COLUMNS, cv['settled']))
     tables.append(write_table(out, 'curve_traded_shape.csv', SHAPE_COLUMNS, cv['traded'], zipped=True))
 
+    st = storage(src, last_halt)
+    tables.append(write_table(out, 'storage_weekly.csv', STORAGE_COLUMNS, st['weekly']))
+    tables.append(write_table(out, 'storage_estimate.csv', ESTIMATE_COLUMNS, st['estimate']))
+
     for t in tables:
         cells = empty_cells(out, t['table'])
         if cells:
@@ -733,8 +864,12 @@ def build(src_folder: Path, out: Path, trade_days=TRADE_DAYS) -> dict:
         last_halt_ns=last_halt, last_halt_eastern=eastern_text(last_halt),
         rule_for_rows='only values known before the last trade day halts; the source files hold the rest',
         inputs=sorted({(r['stored'], r['sha256']) for r in src.read_log}), tables=tables, empty=empty,
-        not_made=[dict(points='X11, X12', reason='storage tables wait for Greg\'s word on adding a reader for the '
-                       'EIA .xls files (SPEC-outside.md asks first)')])
+        storage_checks=dict(
+            history_file_equals_api_series_weeks=st['api_weeks_compared'],
+            change_from_first_prints_differs_from_eia_current_net_change=st['change_differs'],
+            note='the EIA current net change is a later figure and is not put on any row; a difference is the week '
+                 'after a revision, when the printed change used the revised level of the week before'),
+        not_made=[dict(points='X12 street estimate', reason=ESTIMATE_MISSING)])
     receipt['inputs'] = [dict(stored=s, sha256=h) for s, h in receipt['inputs']]
     (out / 'RECEIPT.json').write_text(json.dumps(receipt, indent=1) + '\n')
     return receipt
@@ -750,6 +885,8 @@ WORKBOOK_SHEETS = (   # (sheet, table, what it is); the larger tables stay as fi
     ('Grid US48', 'grid_us48.csv', 'X05, X07: US48 wind and the gas-burn estimate, by hour'),
     ('Expiry', 'expiry.csv', 'X06: sessions since the front contract expired'),
     ('Curve settled', 'curve_settled_shape.csv', 'X13: the curve shape from settlement prices'),
+    ('Storage', 'storage_weekly.csv', 'X11: weekly storage as first printed, with the regions underneath (fix 1)'),
+    ('Storage estimate', 'storage_estimate.csv', 'X12: estimate against actual; the estimate is not held yet'),
 )
 
 
@@ -765,7 +902,7 @@ def write_workbook(out: Path, receipt: dict) -> Path:
             ['Specification: SPEC-outside.md (approved 2026-11-16). Values only up to the halt of the last trade day.'],
             ['An empty cell is a value the source does not have. Nothing is estimated or filled in.'],
             ['Every cell is written as text, exactly as in the table files, so long numbers keep every digit.'],
-            ['Storage (X11) and the storage estimate (X12) are not made yet; see RECEIPT.json.'],
+            ['The street estimate of storage (X12) is not held yet; its column is empty with the reason.'],
             [],
             ['Sheet', 'Table file', 'What it is']):
         first.append(line)
