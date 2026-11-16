@@ -105,6 +105,13 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
   days beyond the four; nothing is built for that now ("we'll cross that bridge if we come to it"), and when it comes
   up it is put to him first.
 
+- **BAD OR INCOMPLETE DATA THAT WILL NOT BE USED IS NOT SAVED (Greg, 2026-11-16).** Data that is wrong, or
+  incomplete, and will not be used is not kept: not in git, not on a branch, not beside the good data "just in
+  case". An output that fails its check is not pushed. When a rebuild replaces something, the old one goes in the
+  same change. A session's scratch work stays out of git. This is about which outputs are kept; it does not change
+  "we don't drop any data", which is about ticks and rows inside a build. Deleting something already saved still
+  goes to Greg first, with what it is and why it exists.
+
 - **TRADE COST IS NOT A MARKET CONDITION (Greg, 2026-11-08).** No fee, slippage, maker or taker offset, fill
   model or any other execution assumption enters ANY research calculation, forecast or output. Research numbers
   are GROSS.
