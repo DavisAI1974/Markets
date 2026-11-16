@@ -4,8 +4,8 @@ Cited literature survey (S87) for building an INTRADAY NYMEX-path forecast used 
 continuation signal (NOT standalone alpha; NOT gospel). The forecast lives entirely on the NYMEX canary
 (Databento CL/NG); Kalshi is only the execution/echo side. The analog library + microstructure features
 both come off the one MBP-10 feed. All of this must still pass `odcore/leakage.py`, exclude the settle
-window, be scored PER CELL as distributions (never a pooled mean), and be judged net-of-fee (maker AND
-taker). Full agent transcript is not stored; this is the synthesis.
+window, be scored PER CELL as distributions (never a pooled mean), with no trade cost in any
+calculation. Full agent transcript is not stored; this is the synthesis.
 
 ## The honest verdict (the framing that makes this worth building)
 Intraday price LEVEL is near-unpredictable. But path SHAPE, continuation-vs-reversal, and
@@ -47,7 +47,7 @@ The forecast predicts CONTINUATION / HOLD-LENGTH, never price.
 4. **Gradient-boosted CONTINUATION classifier.** Target = P(move continues >= X for >= T s); features = our
    tick/book (OFI, depth run-length, exhaustion, pre-release volume) + exogenous (surprise, degree-days,
    regime). Cheap, nonlinear, gives feature importances for falsification. Predict continuation/hold-length,
-   NEVER price. Walk-forward, per cell, net-of-fee.
+   NEVER price. Walk-forward, per cell.
 5. **Intraday seasonal PROFILE (the anchor generator / band).** The U-shape vol/volume profile is highly
    predictable (calendar effect); the DYNAMIC deviation is the uncertainty. De-seasonalize BEFORE any
    z-score (failing to biases spot-vol). Our pre-release-volume "coiled" detector is already a
@@ -65,16 +65,13 @@ to the matched prototype. HOLD while residual is inside the band AND shape-corr 
 tracking = has legs -> ride the long leg / trail wide); EXIT on first band-breach or corr sign-flip
 (diverging = the analog thesis is void). This is a FORECAST-CONDITIONED exit replacing/augmenting the fixed
 dollar trailing stop. **Honesty: the ANCHOR carries the skill; tracking-error is a variance-reduction /
-risk-control overlay — its benefit is fewer round-trips held into reversals = improved net-of-fee EV per
-trade, measured as a DELTA vs a fixed-hold baseline, per cell, NOT new directional alpha.** (Priors, not
+risk-control overlay — its benefit is fewer round-trips held into reversals,
+measured as a gross DELTA vs a fixed-hold baseline, per cell, NOT new directional alpha.** (Priors, not
 evidence: optimal trailing-stop control arXiv 1701.03960; ATR dynamic stops.)
 
 ## Traps to bake into the eval (all consistent with our standing rules)
 - **Data-snooping / multiple testing:** we test many cells x features -> false positives guaranteed. Use
   PBO/CSCV + a DEFLATED Sharpe and REPORT the number of specifications tried (Bailey/Lopez de Prado; surmount).
-- **Transaction costs erase thin edges:** a 1-2% R^2 path signal is often below the round-trip fee -> this
-  MUST be a hold-length overlay on catalyst-justified trades, never a standalone entry (our S81/S82/S36b
-  "edge is size-vs-fee" is the same result the literature keeps hitting).
 - **Look-ahead in normalization/registration:** de-seasonalizing or z-scoring with full-day stats is the
   commonest silent leak; normalize on decision-time-available data only; run through `odcore/leakage.py`.
 - **Regime shift:** analog pools / FPCA bases fit across regimes mix incompatible dynamics; condition on
@@ -84,12 +81,12 @@ evidence: optimal trailing-stop control arXiv 1701.03960; ATR dynamic stops.)
 1. **Bucket continuation table** (#1) — the honest baseline; extends our per-cell S85 hold-time map. Needs the
    full-year MBP-10 library (the analog database).
 2. **Event-time registered expected-path anchor + residual-z / shape-corr tracking overlay** (#3+#5+tracking)
-   — operationalizes the hold-time map as the hold-vs-exit rule; measured as a net-of-fee EV delta vs
+   — operationalizes the hold-time map as the hold-vs-exit rule; measured as a gross delta vs
    fixed-hold, per cell.
 3. **GBT continuation classifier** (#4) — nonlinear stack of tick+book+exogenous; predict continuation, not price.
 4. **Rolling FPCA** (#3, Jasiak) — principled probabilistic anchor; only if it beats the bucket baseline OOS.
 5. **HMM chop gate** (#6) — suppress the signal in chop; EV gate only.
 
-Cross-cutting: leakage-gated, settle-excluded, per-cell distributions, net-of-fee maker AND taker, and the
+Cross-cutting: leakage-gated, settle-excluded, per-cell distributions, no trade cost, and the
 whole thing is a HOLD-LENGTH / CONTINUATION overlay on catalyst-justified trades — which is both what the
 architecture calls for and what the honest skill evidence supports.

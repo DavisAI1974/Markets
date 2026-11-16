@@ -27,16 +27,13 @@ pooled median time-to-peak (NG ~12min, CL ~22min) HIDES it; the per-event fast w
   sometimes large; they just DEVELOP over ~20 min. The tell: 06-17 CL caught $290 in 60s but the full move
   was **$2,640 (341 bps)** built over 17 minutes. So CL's lag-scalp is a LONGER scalp, and its 60s window
   still throws p90 $509 / max $700 on the bigger days. Kept, on a longer hold.
-- **Frequency is not the gate; EV-net-of-fee is.** A smaller/less-frequent capture is still harvested if
-  it clears the Kalshi toll (0.07*C*P*(1-P) per taker leg). "I'll take 27% any day" = positive-EV is the
-  filter, not how often it fires. Same size-vs-fee finding as S81/S82, now on the canary tape.
 - Matches the S79 EVENT_WEIGHT_STUDY: NG=F is the heaviest, fastest energy reactor (z=5.2); crude is
   diffuse/pre-empted by the Tuesday API report -> slower intraday development. Independent confirmation.
 
 ## Honest caveats (provisional)
 
 1. **Futures move != Kalshi P&L.** These $ are per-NYMEX-contract, the CEILING. The realized capture is
-   the KALSHI echo of this move, net of fee, and only the fraction Kalshi reprices in our hold -> the
+   the KALSHI echo of this move, and only the fraction Kalshi reprices in our hold -> the
    **lag join** (next step) measures it. Futures $ != Kalshi $ (binary moves in probability space; the
    conversion depends on strike moneyness + time-to-settle; the SIZE in bps is what carries over).
 2. **surprise=unknown for all events** — the historical consensus/actual join isn't wired (consensus.jsonl
@@ -61,5 +58,5 @@ pooled median time-to-peak (NG ~12min, CL ~22min) HIDES it; the per-event fast w
    EVERY day, not just Thu) + all ~52 releases/yr per contract for real per-cell N.
 3. **Historical surprise join** (EIA actuals + consensus) -> the surprise-cell split (this is where CL's
    big-day fires show up).
-4. **The lag join** -> Kalshi echo net-of-fee vs the futures move: the actual capture, per hold-time, per
-   contract. Turns this ceiling into realized-EV.
+4. **The lag join** -> Kalshi echo vs the futures move (gross), per hold-time, per
+   contract.

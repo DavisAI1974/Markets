@@ -108,7 +108,7 @@ durable data still on branches: `data/kalshi-bins`, `data/pyth-ticks` (Pyth, non
 - `kalshi_collector.py` — added METALS (`KXGOLDD`, `KXSILVERD`) to the watchlist.
 - `pyth_collector.py` — added Pyth `XAU`/`XAG` spot feeds (gold/silver settle number + fast underlying).
 - `research/kalshi/GOLD_SILVER_LAG_FINDINGS_S91.md` — gold/silver depth-add: LAG confirmed (free Pyth), cross-strike NG-only.
-- `research/kalshi/NYMEX_PRODUCTS_SURVEY_S91.md` + `KALSHI_PRODUCT_RANKING_S91.md` — the two S91 agent surveys (KXGOLDD #1).
+- `research/kalshi/KALSHI_PRODUCT_RANKING_S91.md` — the S91 product survey (KXGOLDD #1); its fee axis was removed 2026-11-16.
 
 **S90 code changes (detail in `SESSION_HANDOFF_2026-07-13_S90.md`):**
 - `databento_backfill.py` — FIXED the flush bug (80% loss; hold-days-until-complete); `_download_decode_flush`
@@ -154,7 +154,7 @@ durable data still on branches: `data/kalshi-bins`, `data/pyth-ticks` (Pyth, non
 | file | what it does |
 |------|--------------|
 | `research/kalshi/event_move_baseline.py` | **[S85]** Per-EVENT move MAGNITUDE + DURATION on the true-tick futures tape (the NYMEX canary), per surprise-cell. Anchors a strictly-pre-release baseline, measures the forward peak in TICKS/$/bps (tick size POINT-IN-TIME from the `definition` store, source aggregated per-event) + duration (time_to_peak, sustain_s, retention → run/blip/fade) + the **FAST (60s) window** (`--fast`): the sub-minute lag-scalp ceiling (fast_bps/$/capture, peaked_fast). Distributions not means, per-cell, leakage-gated. Expectation-setting, sizes the hold time. `--selftest` PASS. RAN on 12 NG + 12 CL real release windows (S85). |
-| `research/kalshi/EVENT_MOVE_FINDINGS_S85.md` | **[S85]** First real result: per-contract HOLD-TIME map. NG front-loaded (60s captures 66% of the move, ~$310/contract); CL slower (60s=27%, a longer hold gets the rest — e.g. $2,640 built over 17min). Both KEPT, different hold windows; EV-net-of-fee is the gate not frequency. Futures move = the CEILING, not Kalshi P&L (lag join next). Cost map + MBP-10 schema decision. |
+| `research/kalshi/EVENT_MOVE_FINDINGS_S85.md` | **[S85]** First real result: per-contract HOLD-TIME map. NG front-loaded (60s captures 66% of the move, ~$310/contract); CL slower (60s=27%, a longer hold gets the rest — e.g. $2,640 built over 17min). Both KEPT, different hold windows. Futures move = the CEILING, not Kalshi P&L (lag join next). Cost map + MBP-10 schema decision. |
 | `research/kalshi/event_move_baseline.py --depth` | **[S86]** MBP-10 depth read: per-event resting-book imbalance at R (pre-event, leakage-gated) + at the initial push (`aligned_imb_push`, `exhaustion`, `far_thinning`), contrasted against run length. `load_tape_depth`/`depth_features`/`_depth_summary`. `--selftest` PASS (depth math + leakage). Consumes `data/nymex_mbp10/`. |
 | `research/kalshi/DEPTH_RUNLENGTH_FINDINGS_S86.md` | **[S86]** Book run-length read on the canary (24 windows, leakage PASS 12/12). Logged per-cell correlation of push-book one-sidedness vs run length: **NG −0.17, CL +0.52** (opposite-signed). Provisional, n=12, Apr-Jul window only (seasonality confound — no generalization). `aligned_imb_push` = candidate hold-time signal for the lag join. |
 | `research/kalshi/EVENT_STATE_DESIGN_S86.md` | **[S86]** Design sketch (Greg's driver model): events stack on prior + anticipated state. Three pillars (news / storage / market-capacity), shared drivers with per-market/per-period weights, weather split (NG temps-demand / CL adverse-supply), news in three tenses + persistent geopolitical regime, storage = physical confirmation node, human/emotion = herd run, pre-release volume = first buildable primed detector. Eyeball-validated (06-17 = Hormuz crisis). |
@@ -164,13 +164,11 @@ durable data still on branches: `data/kalshi-bins`, `data/pyth-ticks` (Pyth, non
 |------|--------------|
 | `research/kalshi/futures_kalshi_lag.py` | Per-contract futures→Kalshi lead-lag (S19 operator + time-slide null). Result: futures lead, Kalshi never leads; ~half of contracts reprice a full minute late. |
 | `research/kalshi/lag_exploit_backtest.py` | **[S81]** Turns the measured lag into a per-trade GROSS backtest (no fee, spread toll, slippage or maker/taker assumption; the spread is recorded as an observation only). Modes: `futures` (no cost gate) and `crossstrike`. `score_hold` = fire-quick-then-hold trailing exit. Per-trade, per-cell, no averaging. |
-| `research/kalshi/LAG_EXPLOIT_FINDINGS_S81.md` | **[S81]** The lag findings: direction predictable (sharpens with move size, 0.77 on big moves), real but rare at 1-min → needs sub-minute (Pyth). |
 
 ### Level-hit continuation thread (S82) — the per-trade continuation predictor
 | file | what it does |
 |------|--------------|
 | `research/kalshi/level_hit_dataset.py` | **[S82]** The per-trade LEVEL-HIT dataset: one row per 1¢ level transition — pre-hit context {moneyness, side, velocity, herd/whale, exhaustion, tod, release} + forward trailing-exit outcome {continued, big-run, gross cents; no trade cost}. Per-cell (moneyness×side×velocity×release), distributions not means, leakage-gated. → `data/level_hits_*.json` (local). |
-| `research/kalshi/LEVEL_HIT_FINDINGS_S82.md` | **[S82]** Findings: level-hits mean-revert at 1¢ (cont 0.38); the internal flow context is a weak predictor → the edge is EXTERNAL (futures lag). Next: join Pyth futures move onto each level-hit. |
 
 ### Release / book signals
 | file | what it does |
@@ -238,7 +236,10 @@ not on the live path).
 
 ### Superseded approaches (concept-level, files may still carry a current piece)
 - **Pooled hit-rate / averaged-signal evaluation** — superseded by the S80 EACH-TRADE-INDIVIDUALLY /
-  per-cell rule. Any surviving code (e.g. the first pass in `release_signal_history.py`) is kept only
-  for its still-current parts (settle filter, leakage gate).
+  per-cell rule. The pooled pass in `release_signal_history.py` was removed 2026-11-16; it now writes one
+  record per read.
+- **Kalshi cost rules** (net-of-fee at maker and taker, the size-vs-fee wall, the spread toll) — removed
+  2026-11-16 with the documents that were built on them (`LAG_EXPLOIT_FINDINGS_S81.md`,
+  `LEVEL_HIT_FINDINGS_S82.md`, `NYMEX_PRODUCTS_SURVEY_S91.md`). Kalshi rules start fresh, for Kalshi only.
 - **Precise surprise→move regression** — deliberately NOT built (null); replaced by the merged
   architecture (release = catalyst/coarse size; book imbalance + exhaustion = direction/magnitude).

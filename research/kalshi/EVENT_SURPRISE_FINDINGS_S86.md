@@ -65,7 +65,7 @@ miss|small — and the surprise-magnitude / move-size relation is opposite-signe
    automatically when present.
 4. **n=12 per contract; sub-cells are n=3-5.** Small-n logs, not validated edges. The full-year pull
    (~52/contract, all seasons) is what tests whether the surprise-cell relation is stable.
-5. These are FUTURES (canary) moves = the ceiling; the Kalshi echo net-of-fee is the lag join (P3).
+5. These are FUTURES (canary) moves = the ceiling; the Kalshi echo is the lag join (P3), gross.
 
 ## Data / repro
 
@@ -84,4 +84,4 @@ miss|small — and the surprise-magnitude / move-size relation is opposite-signe
   auto-prefers it (surprise_source=consensus) — re-runs the split against the real desk number.
 - **Full-year pull (all seasons):** re-run the surprise split with ~52 releases/contract to test whether
   the logged NG/CL relations are stable or seasonal/condition-dependent.
-- **Lag join (P3):** carry the surprise cell onto the Kalshi echo net-of-fee measurement, per cell.
+- **Lag join (P3):** carry the surprise cell onto the Kalshi echo measurement, per cell.

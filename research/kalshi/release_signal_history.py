@@ -137,7 +137,7 @@ def signal_at(i, ts, p, bv, sv, window: int = 20):
 
 def read(ts, p, bv, sv, i, window, horizon_bins, move_thresh=1.0):
     """A directional call is only scorable when price actually MOVES over the horizon (>= move_thresh
-    cents); flat-forward windows leave `hit=None` (excluded from the hit rate, not counted a miss)."""
+    cents); flat-forward windows leave `hit=None` (left unscored, not counted a miss)."""
     lo = max(0, i - window + 1)
     if i - lo + 1 < 6 or i + horizon_bins >= len(p):
         return None
@@ -198,45 +198,27 @@ def eval_event(series, event, cfg) -> dict | None:
             "n_contracts": len(by_tk), "event_recs": ev_recs, "placebo_recs": pl_recs}
 
 
-def _rate(recs):
-    scored = [r for r in recs if r.get("hit") is not None]
-    return (round(sum(r["hit"] for r in scored) / len(scored), 3), len(scored)) if scored else (None, 0)
-
-
 def run(series, cfg) -> dict:
+    """One record per read, per event. No pooled rate, no average: each read is reported individually
+    (the pooled hit-rate pass was removed 2026-11-16)."""
     events = sorted({os.path.basename(p).replace("_trades.jsonl", "")
                      for p in glob.glob(os.path.join(STORE, series, "*_trades.jsonl"))})
     if not events:
         return {"series": series, "status": "NO_DATA",
                 "msg": f"no pulled trades in {os.path.join(STORE, series)} — run kalshi_history.py --all first"}
-    ev_all, pl_all, per_event = [], [], []
+    per_event = []
     for e in events:
         res = eval_event(series, e, cfg)
         if res is None:
             continue
-        ev_all += res["event_recs"]; pl_all += res["placebo_recs"]
-        ehr, en = _rate(res["event_recs"])
         per_event.append({"event": e, "date": res["date"], "is_release": res["is_release"],
-                          "event_hit": ehr, "event_n": en})
+                          "event_recs": res["event_recs"], "placebo_recs": res["placebo_recs"]})
     # leakage gate on one real binned contract
     leak = _leakage_check(series, events, cfg)
-    ev_hr, ev_n = _rate(ev_all)
-    pl_hr, pl_n = _rate(pl_all)
     return {"series": series, "status": "OK", "n_events": len(per_event),
             "leakage_pass": leak,
             "release_events": sum(1 for pe in per_event if pe["is_release"]),
-            "event": {"hit_rate": ev_hr, "n": ev_n},
-            "placebo": {"hit_rate": pl_hr, "n": pl_n},
-            "edge_vs_placebo": (None if (ev_hr is None or pl_hr is None) else round(ev_hr - pl_hr, 3)),
-            "exhaustion_fade": _fade_report(ev_all + pl_all),
             "per_event": per_event}
-
-
-def _fade_report(recs):
-    """Does exhaustion call the fade? Split hit-rate by exhausting vs not (fade = lower continuation)."""
-    ex = [r for r in recs if r["exhausting"]]; nx = [r for r in recs if not r["exhausting"]]
-    return {"exhausting": {"continuation_hit": _rate(ex)[0], "n": len(ex)},
-            "not_exhausting": {"continuation_hit": _rate(nx)[0], "n": len(nx)}}
 
 
 def _leakage_check(series, events, cfg) -> bool:
@@ -294,13 +276,12 @@ def main() -> None:
         return
     print(f"[{res['series']}] events={res['n_events']} (release={res['release_events']}) "
           f"leakage_pass={res['leakage_pass']}")
-    print(f"  RELEASE  hit={res['event']['hit_rate']} (n={res['event']['n']})")
-    print(f"  PLACEBO  hit={res['placebo']['hit_rate']} (n={res['placebo']['n']})")
-    print(f"  EDGE vs placebo = {res['edge_vs_placebo']}")
-    f = res["exhaustion_fade"]
-    print(f"  FADE: exhausting continuation={f['exhausting']['continuation_hit']} (n={f['exhausting']['n']}) "
-          f"vs not-exhausting={f['not_exhausting']['continuation_hit']} (n={f['not_exhausting']['n']})")
-    print("  provisional — per-contract, placebo-baselined; never size off one window.")
+    for pe in res["per_event"]:
+        print(f"  {pe['event']}  {pe['date']}  {'RELEASE' if pe['is_release'] else 'placebo-day'}  "
+              f"release reads={len(pe['event_recs'])}  placebo reads={len(pe['placebo_recs'])}")
+        for r in pe["event_recs"]:
+            print(f"    {r['ticker']:>28}  dir={r['direction']:+d}  conv={r['conv']:.4f}  "
+                  f"exhausting={r['exhausting']}  fwd={r['fwd']:+.3f}c  hit={r['hit']}")
 
 
 if __name__ == "__main__":

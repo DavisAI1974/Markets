@@ -82,5 +82,5 @@ CONFOUNDED, see caveat; lean on `aligned_imb_push`.)
 2. **Surprise-cell split** (S86 #2, done): does the book correlation differ by beat/miss x big/small?
    See EVENT_SURPRISE_FINDINGS_S86.md.
 3. **Lag join** (S86 #3): feed `aligned_imb_push` as a candidate hold-time signal into the Kalshi echo
-   net-of-fee measurement, per cell.
+   measurement, per cell.
 </invoke>

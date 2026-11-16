@@ -94,7 +94,7 @@ ARE the room. Never size off these medians.
   ridge (thin). Report "room on {interior-bucket x warming-spike}, none on {open-tail}", never a
   pooled or per-cell mean.
 - Next scoreboard build (needs the forecaster's per-day output): score the ">3°F over upper bound ->
-  buy top/interior YES" rule per-day, NET-OF-KALSHI-FEE, so we see the dollar capture on the days it
+  buy top/interior YES" rule per-day, gross, so we see the dollar capture on the days it
   fires, not just Brier. Blocked only on a sample of the forecaster's predicted highs.
 
 ## Caveats (Result Discipline)
