@@ -25,8 +25,8 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from root.calendar import (OPEN_EASTERN, HALT_EASTERN, STARTUP, clock_days_needed, eastern, label, to_ns,
-                           week_sunday)
+from root.calendar import (OPEN_EASTERN, HALT_EASTERN, STARTUP, TRADE_DAY, clock_days_needed, eastern, label,
+                           to_ns, week_sunday)
 
 TICK = 'tick'
 VENDOR_SNAPSHOT = 'vendor snapshot'
@@ -192,3 +192,23 @@ def check_week(folder: Path, trade_day: dt.date) -> dict:
                                  'a first file that does not open with an unflagged clear',
                                  'a flagged record after the opening block', 'more than one contract in a week'],
                 seconds=round(time.monotonic() - started, 1))
+
+
+# ---------------------------------------------------------------- the only way into a calculation (Greg, 2026-11-16)
+BUILT_TRADE_DAYS = frozenset(dt.date(2023, 10, d) for d in (2, 3, 17, 18))
+
+
+def calculation_eligible(exchange_ns: int, built=BUILT_TRADE_DAYS) -> bool:
+    """True only for a tick inside one of the four built trade days (6 pm to 5 pm Eastern). Greg: "none of the hours
+    outside of the 4 trade days are used in our calculations." The 5 pm to 6 pm stretches and the Sunday start-up keep
+    their marked rows but are never calculated on; warm-up and shelved ticks only build the book."""
+    tag, day = label(exchange_ns)
+    return tag == TRADE_DAY and day in built
+
+
+def for_calculations(week: list[WeekFile], built=BUILT_TRADE_DAYS):
+    """The ONE gate through which any calculation receives ticks. Yields (file index, record index, record) for
+    calculation-eligible ticks only. A calculation must never iterate `ticks()` or the raw files itself."""
+    for f_index, r_index, record, kind in ticks(week):
+        if kind == TICK and calculation_eligible(int(record['ts_event']), built):
+            yield f_index, r_index, record

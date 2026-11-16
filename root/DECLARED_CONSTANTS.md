@@ -62,6 +62,14 @@ the end.
 | `FIVE_YEAR_PRIOR_YEARS` | 5 | The five-year comparison uses the same ISO week in each of the five prior calendar years, and is empty unless all five exist, as in the original's fallback. |
 | `STORAGE_TOTAL`, `STORAGE_WEEK`, `STORAGE_REGIONS`, `STORAGE_NOTE`, `STORAGE_HISTORY_SHEET`, `STORAGE_CHANGES_SHEET` | labels | The EIA workbooks' own column and sheet labels; columns are found by label, never by position. |
 
+## `root/tape.py`
+
+| Constant | Value | Why |
+|---|---|---|
+| `BUILT_TRADE_DAYS` | Oct 2, 3, 17, 18, 2023 | The only trade days whose ticks may enter a calculation (Greg: none of the hours outside the four trade days are used in calculations). |
+| `CLEAR` | R | The tape's action code for a clear. |
+| `TICK`, `VENDOR_SNAPSHOT` | labels | What a record is. |
+
 ## Functions whose numbers are calendar facts
 
 - `us_federal_holidays`, `nth`, `observed`: the dates of the US federal holidays (months, days, which Monday or

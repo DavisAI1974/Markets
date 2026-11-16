@@ -93,3 +93,35 @@ def test_a_changed_fingerprint_is_refused(tmp_path):
     copy_tape(tmp_path, change_sha='NG_v0_mbo_20231017.dbn.zst')
     with pytest.raises(ValueError, match='NG_v0_mbo_20231017.*fingerprint'):
         tape.read_week(tmp_path, dt.date(2023, 10, 18))
+
+
+def test_only_the_four_trade_days_reach_a_calculation():
+    """Greg: none of the hours outside the 4 trade days are used in calculations. Every tick that passes the gate is
+    inside one of the four trade days (6 pm to 5 pm Eastern); every trade-day tick of the four passes; nothing else."""
+    from root.calendar import TRADE_DAY, trade_day_bounds
+    for day in DAYS:
+        week = tape.read_week(TAPE, day)
+        passed = [int(r['ts_event']) for _, _, r in tape.for_calculations(week)]
+        spans = [trade_day_bounds(d) for d in tape.BUILT_TRADE_DAYS]
+        assert passed and all(any(o <= t < h for o, h in spans) for t in passed)
+        expected = sum(1 for _, _, r, kind in tape.ticks(week) if kind == tape.TICK and
+                       label(int(r['ts_event']))[0] == TRADE_DAY and label(int(r['ts_event']))[1] in tape.BUILT_TRADE_DAYS)
+        assert len(passed) == expected
+        rejected = {label(int(r['ts_event']))[0] if label(int(r['ts_event']))[0] != TRADE_DAY else
+                    str(label(int(r['ts_event']))[1]) for _, _, r, kind in tape.ticks(week)
+                    if kind == tape.TICK and not tape.calculation_eligible(int(r['ts_event']))}
+        assert not rejected & {str(d) for d in tape.BUILT_TRADE_DAYS}
+    week2 = tape.read_week(TAPE, dt.date(2023, 10, 17))
+    assert not any(label(int(r['ts_event']))[1] == dt.date(2023, 10, 16) for _, _, r in tape.for_calculations(week2))
+
+
+def test_calculation_code_cannot_read_the_tape_itself():
+    """Calculations live in root/calcs/ and receive ticks only through tape.for_calculations(). A calculation file
+    that names the raw readers fails here, so nothing outside the four trade days can reach one by accident."""
+    forbidden = ('DBNStore', 'read_week', 'TapeFolder', '.ticks(', 'tape.ticks', '.records', 'dbn.zst')
+    for path in sorted((REPO / 'root' / 'calcs').glob('**/*.py')):
+        text = path.read_text()
+        found = [w for w in forbidden if w in text]
+        assert not found, f'{path.relative_to(REPO)} reads the tape itself ({found}); use tape.for_calculations()'
+    gate = (REPO / 'root' / 'tape.py').read_text()
+    assert 'def for_calculations' in gate and 'calculation_eligible' in gate
