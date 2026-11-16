@@ -26,7 +26,7 @@ Reading is free. Acting is not.
 | Free NG collectors | `free_ng_collectors.yml` | cron, dispatch, push, pull_request | Research inputs only - no execution authority from these feeds |
 | Cost guard | `aws_idle_instance_guard.yml` | cron every 6 h, dispatch | Stops EC2 idle six hours unless tagged `KeepRunning=true`. Manual dispatch is a dry run unless `stop` is true |
 | CI | `ng_live_build_ci.yml`, `frankie_box_codecs_ci.yml`, `frankie_cycle_identity_ci.yml`, `frankie_host_scripts_ci.yml` | push and/or pull_request | Billed on every qualifying push - hence `[skip ci]` |
-| Frankie box | `frankie_box_run.yml`, `frankie_box_control.yml`, `frankie_box_fetch_response.yml` | dispatch only | `frankie_box_run.yml` sends one committed script from `deploy/aws/box/` over SSM |
+| Frankie box | `frankie_box_run.yml`, `frankie_box_control.yml`, `frankie_box_fetch_response.yml` | dispatch only | `frankie_box_run.yml` sends one committed script from `deploy/aws/box/` over SSM. That folder lives on the Frankie run branch, not the trunk: dispatch from the run branch |
 | Frankie host | `frankie_host_*.yml` | dispatch only | Cycle status, reports, probes, supersede and record steps |
 | Frankie pod and retained | `frankie_pod_control.yml`, `frankie_pod_prepare.yml`, `frankie_retained_*.yml`, `frankie_serverless_reading.yml`, `frankie_runpod_key_to_ssm.yml` | dispatch (two retained ones also on push) | Pods bill by the hour |
 

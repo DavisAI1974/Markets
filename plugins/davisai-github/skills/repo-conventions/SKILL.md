@@ -61,7 +61,6 @@ tick tape lives in S3, not in either repository.
   carries `[skip ci]`.
 - The subject says what was preserved or changed and why it matters, not which tool did it.
 - No emojis or special symbols in commits, PR text, issues or any pushed document.
-- No model identifiers in commits, PR titles or bodies, or code comments.
 
 ## What never goes into git
 
