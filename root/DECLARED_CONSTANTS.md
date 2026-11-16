@@ -70,6 +70,20 @@ the end.
 | `CLEAR` | R | The tape's action code for a clear. |
 | `TICK`, `VENDOR_SNAPSHOT` | labels | What a record is. |
 
+## `root/store.py`
+
+| Constant | Value | Why |
+|---|---|---|
+| `ROWS_PER_PART` | 2^18 | Rows per stored part file, so every file stays far below GitHub's 100 MB file limit. Storage only; no row is dropped or merged. |
+| `PICTURE_ROWS_PER_PART` | 2^22 | Book-picture rows per stored part file. Storage only. |
+| `ZSTD_LEVEL` | 9 | Compression of the stored files; the content is unchanged. |
+
+## `root/run.py`
+
+| Constant | Value | Why |
+|---|---|---|
+| `BYTES_PER_MEGABYTE` | 2^20 | Unit conversion for the sizes printed after a build. |
+
 ## Functions whose numbers are calendar facts
 
 - `us_federal_holidays`, `nth`, `observed`: the dates of the US federal holidays (months, days, which Monday or

@@ -2,6 +2,8 @@
 
     python3 -m root.run check-week 20231002 [--tape <markets-data>/data/nymex_mbo/ng_v0_oct2023] [--out <dir>]
     python3 -m root.run check-book 20231002 [--tape ...] [--out <dir>]
+    python3 -m root.run build 20231002 --out <markets-data folder> [--tape ...]
+    python3 -m root.run playback 20231002 [--tape ...] [--out <dir>]
 """
 from __future__ import annotations
 
@@ -11,9 +13,11 @@ import os
 from pathlib import Path
 
 from root.calendar import parse_trade_day
+from root import checks, store, tape
 from root.book import check_book
 from root.tape import check_week
 
+BYTES_PER_MEGABYTE = 2 ** 20
 DEFAULT_TAPE = Path(os.environ.get('MARKETS_DATA', '../markets-data')) / 'data' / 'nymex_mbo' / 'ng_v0_oct2023'
 
 
@@ -28,7 +32,34 @@ def main():
     cb.add_argument('trade_day')
     cb.add_argument('--tape', type=Path, default=DEFAULT_TAPE)
     cb.add_argument('--out', type=Path, help='folder for the record (markets-data receipts/)')
+    bd = sub.add_parser('build', help='one trade day: rows, book pictures, restatement table, receipt')
+    bd.add_argument('trade_day')
+    bd.add_argument('--tape', type=Path, default=DEFAULT_TAPE)
+    bd.add_argument('--out', type=Path, required=True, help='output folder (in markets-data, never in Markets)')
+    pb = sub.add_parser('playback', help='the playback check: rows do not change when the tape is cut')
+    pb.add_argument('trade_day')
+    pb.add_argument('--tape', type=Path, default=DEFAULT_TAPE)
+    pb.add_argument('--out', type=Path, help='folder for the record')
     a = ap.parse_args()
+    if a.command == 'build':
+        day = parse_trade_day(a.trade_day)
+        receipt = store.build(a.tape, day, a.out, checker=checks.RowChecker(day))
+        size = lambda files: round(sum(f['bytes'] for f in files) / BYTES_PER_MEGABYTE, 1)
+        print(json.dumps(dict(trade_day=receipt['trade_day'], rows=receipt['rows'], columns=receipt['columns'],
+                              row_megabytes=size(receipt['row_files']),
+                              book_pictures_at_trades=receipt['book_pictures_at_trades'],
+                              book_picture_megabytes=size(receipt['book_picture_files']),
+                              checks_passed=bool(receipt['checks']['rows']['passed'] and
+                                                 receipt['checks']['accounted']['passed']),
+                              seconds=receipt['seconds']), indent=1))
+    if a.command == 'playback':
+        day = parse_trade_day(a.trade_day)
+        result = dict(what='ROOT playback check (criterion 8)', trade_day=day.isoformat(),
+                      cuts=checks.playback(tape.read_week(a.tape, day), day))
+        if a.out:
+            a.out.mkdir(parents=True, exist_ok=True)
+            (a.out / f'playback-{day:%Y%m%d}.json').write_text(json.dumps(result, indent=1) + '\n')
+        print(json.dumps(result, indent=1))
     if a.command == 'check-book':
         day = parse_trade_day(a.trade_day)
         record = check_book(a.tape, day)

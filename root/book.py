@@ -140,6 +140,12 @@ class Book:
                     self._resize(o, size)
         elif action == FILL:
             self.filled_in_event[order_id] = self.filled_in_event.get(order_id, 0) + size
+            o = self.orders.get(order_id)
+            if o is None:
+                notes.append('a fill for an order the book does not know')
+            else:                                  # a fill names the order: a step of its life; the book is unchanged
+                o.steps += 1
+                o.previous_pos = pos
         elif action == tape.CLEAR:
             self.orders = {}
             self.sides = {BID: Side(), ASK: Side()}
@@ -179,7 +185,7 @@ class Book:
         return out
 
 
-def compare_with_restatement(book: Book, records) -> dict:
+def compare_with_restatement(book: Book, records, detail: bool = False):
     """Criterion 3: our carried book against the vendor's restatement at the opening of a raw file. The same orders,
     sides, prices and sizes; the same order in every line; and the restatement's time for each order equal to the
     exchange time at which we say that order last took its place. The restatement is never applied."""
@@ -199,6 +205,8 @@ def compare_with_restatement(book: Book, records) -> dict:
                   side_price_or_size_differs=len(differing), place_time_differs=len(times),
                   lines_in_a_different_order=len(order))
     result['equal'] = not (result['only_in_restatement'] or result['only_in_our_book'] or differing or times or order)
+    if detail:          # also the order numbers our book holds exactly as restated (side, price, size, place time)
+        return result, {oid for oid in set(ours) & set(theirs) if ours[oid] == theirs[oid]}
     return result
 
 
