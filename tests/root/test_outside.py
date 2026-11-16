@@ -43,6 +43,12 @@ def test_same_result_twice(made):
     assert [(t['table'], t['sha256']) for t in a['tables']] == [(t['table'], t['sha256']) for t in b['tables']]
 
 
+def test_every_empty_cell_has_a_reason(made):
+    _, receipt, _ = made
+    for e in receipt['empty']:
+        assert e['reason'], e['table']
+
+
 def test_every_input_matches_its_fingerprint(made):
     _, receipt, _ = made
     manifest = {f['stored']: f['stored_sha256'] for f in json.loads((SRC / 'MANIFEST.json').read_text())['files']}
@@ -170,10 +176,14 @@ def test_curve_front_trades_equal_the_order_tape(made):
 def test_settled_shape_at_each_open_is_the_previous_settlement(made):
     folder, _, _ = made
     rows = table(folder, 'curve_settled_shape.csv')
+    stats = table(folder, 'curve_statistics.csv.gz')
     for day in outside.TRADE_DAYS:
         opens, _ = trade_day_bounds(dt.date.fromisoformat(day))
         known = [r for r in rows if int(r['known_from_ns']) < opens]
         assert known and known[-1]['front_symbol'] == 'NGX3'
+        settles = [s for s in stats if s['raw_symbol'] == 'NGX3' and s['stat_type'] == '3' and s['price']
+                   and int(s['known_from_ns']) < opens]
+        assert float(known[-1]['front']) == round(float(settles[-1]['price']), 4)
 
 
 def test_no_hidden_numbers():
