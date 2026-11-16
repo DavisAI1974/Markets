@@ -69,5 +69,8 @@
   "enabledPlugins": {
     "agent-skills@addy-agent-skills": true
   },
-  "enabledMcpjsonServers": ["codebase-memory-mcp"]
+  "enabledMcpjsonServers": [
+    "codebase-memory-mcp"
+  ],
+  "advisorModel": "fable"
 }
