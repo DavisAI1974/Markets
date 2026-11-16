@@ -25,3 +25,28 @@ def test_the_five_to_six_stretch_belongs_to_no_trade_day():
 
 def test_parse_trade_day():
     assert parse_trade_day('20231017') == parse_trade_day('2023-10-17') == dt.date(2023, 10, 17)
+
+
+from root.calendar import STARTUP, STRETCH, TRADE_DAY, clock_days_needed, label, week_sunday
+
+
+def et(*a):
+    from root.calendar import EASTERN
+    return to_ns(dt.datetime(*a, tzinfo=EASTERN))
+
+
+def test_labels_by_exchange_time():
+    assert label(et(2023, 10, 1, 8, 0, 4)) == (STARTUP, None)            # the Sunday re-listing, 8 am Sunday
+    assert label(et(2023, 10, 1, 17, 30)) == (STRETCH, None)             # Sunday 5:30 pm
+    assert label(et(2023, 10, 1, 18, 0)) == (TRADE_DAY, dt.date(2023, 10, 2))
+    assert label(et(2023, 10, 1, 20, 0)) == (TRADE_DAY, dt.date(2023, 10, 2))   # midnight UTC is inside it
+    assert label(et(2023, 10, 2, 16, 59, 59)) == (TRADE_DAY, dt.date(2023, 10, 2))
+    assert label(et(2023, 10, 2, 17, 0)) == (STRETCH, None)
+    assert label(et(2023, 10, 3, 19, 0)) == (TRADE_DAY, dt.date(2023, 10, 4))
+
+
+def test_week_and_files_of_each_trade_day():
+    assert week_sunday(dt.date(2023, 10, 2)) == week_sunday(dt.date(2023, 10, 3)) == dt.date(2023, 10, 1)
+    assert week_sunday(dt.date(2023, 10, 18)) == dt.date(2023, 10, 15)
+    assert clock_days_needed(dt.date(2023, 10, 2)) == [dt.date(2023, 10, 1), dt.date(2023, 10, 2)]
+    assert clock_days_needed(dt.date(2023, 10, 18)) == [dt.date(2023, 10, d) for d in (15, 16, 17, 18)]

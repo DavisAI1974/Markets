@@ -187,13 +187,13 @@ def test_settled_shape_at_each_open_is_the_previous_settlement(made):
 
 
 def test_no_hidden_numbers():
-    """Every number written into the outside and calendar code is a declared constant, a position in a record, a
+    """Every number written into any ROOT module (every root/*.py) is a declared constant, a position in a record, a
     rounding width, or a calendar fact inside the functions named in root/DECLARED_CONSTANTS.md."""
     declared = (REPO / 'root' / 'DECLARED_CONSTANTS.md').read_text()
     exempt_functions = {'us_federal_holidays', 'nth', 'observed', 'to_ns'}
     for name in exempt_functions:
         assert f'`{name}`' in declared
-    for path in ('root/calendar.py', 'root/outside.py'):
+    for path in sorted(str(f.relative_to(REPO)) for f in (REPO / 'root').glob('*.py')):
         tree = ast.parse((REPO / path).read_text())
         parents = {c: n for n in ast.walk(tree) for c in ast.iter_child_nodes(n)}
         for node in ast.walk(tree):

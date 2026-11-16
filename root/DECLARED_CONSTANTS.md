@@ -14,6 +14,9 @@ the end.
 | `HALT_EASTERN` | 5:00 pm | A trade day halts 5 pm Eastern on the named date. |
 | `SETTLE_FROM_EASTERN`, `SETTLE_TO_EASTERN` | 2:28 pm, 2:30 pm | The NYMEX natural gas settlement window. |
 | `NS_PER_SECOND` | 10^9 | Unit conversion. |
+| `TRADE_DAY`, `STRETCH`, `STARTUP` | labels | The three labels a written row can carry (SPEC-root.md section B). |
+| `SUNDAY` | 6 | Weekday number of Sunday (Monday = 0): the week's start-up day. |
+| `FIRST_TRADE_WEEKDAY`, `LAST_TRADE_WEEKDAY` | 0, 4 | Trade days are Monday to Friday. |
 
 ## `root/outside.py` (SPEC-outside.md; "as in the original" means Markets 7f34afa)
 

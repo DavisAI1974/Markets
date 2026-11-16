@@ -49,3 +49,44 @@ def parse_trade_day(text: str) -> dt.date:
     """A trade day written YYYYMMDD or YYYY-MM-DD."""
     text = text.replace('-', '')
     return dt.date(int(text[:4]), int(text[4:6]), int(text[6:8]))
+
+
+# ---------------------------------------------------------------- labels, the week, the files a trade day needs
+TRADE_DAY = 'trade day'
+STRETCH = '5 pm to 6 pm stretch'
+STARTUP = 'Sunday start-up'
+SUNDAY = 6                               # weekday number of Sunday (Monday = 0)
+FIRST_TRADE_WEEKDAY, LAST_TRADE_WEEKDAY = 0, 4    # trade days are Monday to Friday
+
+
+def label(exchange_ns: int) -> tuple[str, dt.date | None]:
+    """The label of a moment, decided by exchange time (SPEC-root.md assumption 1): (trade day, its date), the 5 pm
+    to 6 pm stretch (None), or the exchange's Sunday start-up before 5 pm Sunday (None). Refuses a moment that would
+    belong to a Saturday or Sunday trade day: there are none."""
+    moment = dt.datetime.fromtimestamp(exchange_ns // NS_PER_SECOND, tz=dt.timezone.utc).astimezone(EASTERN)
+    moment = moment.replace(microsecond=0)
+    wall = moment.timetz().replace(tzinfo=None)
+    if HALT_EASTERN <= wall < OPEN_EASTERN:
+        return STRETCH, None
+    if moment.weekday() == SUNDAY and wall < HALT_EASTERN:
+        return STARTUP, None
+    day = moment.date() + dt.timedelta(days=1) if wall >= OPEN_EASTERN else moment.date()
+    if not FIRST_TRADE_WEEKDAY <= day.weekday() <= LAST_TRADE_WEEKDAY:
+        raise ValueError(f'{moment.isoformat()} would belong to trade day {day}, which is not a weekday')
+    return TRADE_DAY, day
+
+
+def week_sunday(trade_day: dt.date) -> dt.date:
+    """The Sunday whose start-up opens the week of a trade day (the book is the week, seated at that start-up)."""
+    if not FIRST_TRADE_WEEKDAY <= trade_day.weekday() <= LAST_TRADE_WEEKDAY:
+        raise ValueError(f'{trade_day} is not a trade day')
+    return trade_day - dt.timedelta(days=trade_day.weekday() + 1)
+
+
+def clock_days_needed(trade_day: dt.date) -> list[dt.date]:
+    """The UTC clock days whose raw files a trade day needs: from its week's Sunday through the UTC clock day that
+    holds 6 pm Eastern on the trade day's date (the end of the stretch after it)."""
+    start = week_sunday(trade_day)
+    end_ns = to_ns(eastern(trade_day, OPEN_EASTERN))
+    end = dt.datetime.fromtimestamp(end_ns // NS_PER_SECOND, tz=dt.timezone.utc).date()
+    return [start + dt.timedelta(days=k) for k in range((end - start).days + 1)]
