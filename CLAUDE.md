@@ -94,9 +94,10 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
 - **NO BITCOIN-ERA RULES. KALSHI RULES START FRESH, FOR KALSHI ONLY (Greg, 2026-11-16).** Every trade rule that
   came over from the crypto work is removed, together with the code that factored it in: fee floors, net-of-cost
   gates, maker and taker fill assumptions, slippage, bps cost thresholds and crypto-venue strategy rules. Do not
-  reintroduce any of them, and do not copy one out of old code, an old handoff or the archive. Whatever execution
-  or cost rules Kalshi needs will be worked out new, from Kalshi itself, and will apply to Kalshi only. None is
-  written yet, so none is assumed. The only things kept from the crypto era are measurement tools: the dipole
+  reintroduce any of them, and do not copy one out of old code, an old handoff or the archive. The dead and
+  old Kalshi rules went the same way (2026-11-16): net-of-fee at maker and taker, the size-vs-fee wall, the
+  spread toll and pooled hit-rate evaluation. Whatever execution or cost rules Kalshi needs will be worked
+  out new, from Kalshi itself, and will apply to Kalshi only. None is written yet, so none is assumed. The only things kept from the crypto era are measurement tools: the dipole
   read (imbalance, divergence, exhaustion), the pre-entry look-ahead window and the leakage gate.
 
 - **EACH TRADE INDIVIDUALLY, never average.** No pooled hit-rate, no mean signed-bps, no averaged
@@ -360,11 +361,6 @@ Recent arc (compressed; full detail in each `SESSION_HANDOFF_*.md`):
   `PATH_FORECAST_RESEARCH_S87.md` cited methods). Databento pull infra (`batch_pull`, `pull_year_mbp10.py`);
   1-yr continuous MBP-10 pull = pay-once to `data/nymex-ticks:nymex_cont/` = the forecaster's analog library
   (2-yr to S3 at go-live). Detail: `SESSION_HANDOFF_2026-07-13_S87.md`.
-
-S86 priorities (see `KICKOFF_2026-07-12_S86.md`): (1) extend writer+baseline to consume MBP-10 DEPTH
-(run-length/exhaustion read), then batch the full-year MBP-10 (watch disk); (2) historical surprise join
-(EIA actuals + consensus) for the surprise-cell split; (3) the lag join = Kalshi echo vs the
-futures move (gross); (4) standing: NGDQ6 fix, weather forecaster scoring, Pyth live lag.
 
 ---
 

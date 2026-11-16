@@ -1,7 +1,7 @@
 """
 pyth_collector.py — sub-second tick collector for the NYMEX/ICE futures Kalshi settles on, via Pyth Hermes.
 
-The S81 finding: futures LEAD Kalshi and the lag edge is real but small at 1-min resolution
+Futures LEAD Kalshi and the lag edge is real but small at 1-min resolution
 (median reprice ~1c). The edge lives BELOW one minute — to see the intra-minute
 NYMEX move and capture the FULL reprice before it decays, we need the real tick feed. Pyth is Kalshi's own
 settlement source (Henry Hub NG, WTI, Brent), sub-second, public (no key), and reachable through the proxy.

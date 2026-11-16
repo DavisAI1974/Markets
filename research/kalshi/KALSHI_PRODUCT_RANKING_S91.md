@@ -9,7 +9,7 @@ No pooled scores — every product is scored per-cell on four axes. All series/v
 (`api.elections.kalshi.com/trade-api/v2`) on 2026-07-13; external structure/liquidity claims are cited.
 
 ## Our two edges (restated from the repo, so the fit test is explicit)
-1. **Futures→Kalshi LAG** (`LAG_EXPLOIT_FINDINGS_S81.md`, `NYMEX_CANARY_NOTES_S84.md`): NYMEX/ICE moves
+1. **Futures→Kalshi LAG** (`NYMEX_CANARY_NOTES_S84.md`): NYMEX/ICE moves
    first, Kalshi reprices seconds-to-a-minute later (futures lead, Kalshi never leads — S80 19/19).
    Direction is easy and **sharpens with move size** (0.55 at $0.05–0.10 → 0.77 at $0.40+). Sub-minute (our Pyth / raw MBP-10 tick tape)
    turns it from rare into frequent. Needs: a liquid futures underlying we can tape + a deep intraday
@@ -175,7 +175,7 @@ Sources: live Kalshi API `api.elections.kalshi.com/trade-api/v2` (series/markets
 [how to trade oil on Kalshi](https://www.botforkalshi.com/blog/how-to-trade-oil-on-kalshi);
 [Kalshi weather markets help](https://help.kalshi.com/en/articles/13823837-weather-markets);
 [Kalshi daily temperature category](https://kalshi.com/category/climate/daily-temperature);
-repo: `LAG_EXPLOIT_FINDINGS_S81.md`, `LEVEL_HIT_FINDINGS_S82.md`, `WEATHER_BASELINE_S82.md`,
+repo: `WEATHER_BASELINE_S82.md`,
 `WEATHER_REGIME_FINDINGS_S84.md`, `NYMEX_CANARY_NOTES_S84.md`, `SESSION_HANDOFF_2026-07-13_S90.md`.
 
 ---
@@ -288,5 +288,5 @@ if the OD filter earns it; KXLOW (#5) is the free EDGE-B breadth double.
 
 Sources (S91 append): live Kalshi API `api.elections.kalshi.com/trade-api/v2` markets/series/rules
 (2026-07-13); Pyth Hermes `hermes.pyth.network` (XAU/USD `765d2ba9…`, XAG/USD, BTC/ETH feeds); repo
-`LAG_EXPLOIT_FINDINGS_S81.md`, `LEVEL_HIT_FINDINGS_S82.md`, `NYMEX_CANARY_NOTES_S84.md` (S87 settlement-source
+`NYMEX_CANARY_NOTES_S84.md` (S87 settlement-source
 + Pyth-oracle sections), `WEATHER_REGIME_FINDINGS_S84.md`, `KALSHI_TRADING.md` (GLBX pull machinery / cost).

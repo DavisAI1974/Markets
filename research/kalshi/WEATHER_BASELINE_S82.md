@@ -66,8 +66,7 @@ that leans on it) is weakest — never in the pooled mean.
   \|Δ\|~5°F, volatile) are different markets; a blended Brier is meaningless.
 - **Synoptic season** — spring/fall frontal season vs a stable summer ridge (the same per-regime logic the
   natgas degree-day study used; do NOT pool across the calendar).
-- **Bucket moneyness** — center-of-ladder (near-ATM) vs open-ended tail bucket (`>=86`): different edge,
-  different fee, different fill.
+- **Bucket moneyness** — center-of-ladder (near-ATM) vs open-ended tail bucket (`>=86`): different edge.
 - **Swing direction** — warming vs cooling transition may score differently; keep them separate until the
   data says they don't.
 
@@ -99,27 +98,23 @@ Illustrative morning prices (¢ = implied prob) vs an OD forecast that called th
 
 **The trade:** buy 100 contracts of the `>=86` YES at 12¢.
 - Entry cost: 100 × $0.12 = **$12.00**
-- Fee (Kalshi: `round_up(0.07 × C × P × (1−P))`): 0.07 × 100 × 0.12 × 0.88 = $0.74
-- Total out: **$12.74**
 
 **If it wins (it did — realized 88 ≥ 86):** each contract pays $1.00 → 100 × $1 = **$100.00**.
-- Net profit = $100.00 − $12.74 = **+$87.26** on the trade.
+- Gross = $100.00 − $12.00 = **+$88.00** on the trade.
 
 **If it had lost (e.g. realized 84, mid-ladder):** `>=86` resolves NO → contracts pay $0 → lose the
-**$12.74** stake (max loss = stake; fully collateralized, no margin call).
+**$12.00** stake (max loss = stake; fully collateralized, no margin call).
 
 **Why it's +EV to do repeatedly (the real point — not the one lucky win):** at the forecast's fair prob
-0.40, expected value per contract = 0.40 × $1 − $0.12 entry − ~$0.007 fee ≈ **+$0.27/contract**. The edge is
+0.40, expected value per contract = 0.40 × $1 − $0.12 entry = **+$0.28/contract**. The edge is
 buying the bucket the market under-weighted because it centered the ladder too cool. This is the
 transition-day edge from the baseline read: the market (and persistence) both under-weighted the top bucket
 on a hot-spike day; a forecaster that called the spike captures `>=86` cheaply.
 
-**Trader economics recap:** profit/contract = (settlement − entry price) − fee, ×$1. Kalshi is a
+**Trader economics recap:** gross per contract = (settlement − entry price), ×$1. Kalshi is a
 CFTC-regulated exchange (central limit order book); you trade against other participants/market-makers, not
-the house — which is why a real outcome-forecast edge survives (Kalshi's revenue is the trading FEE +
-float, not a counterparty vig). You can exit before settlement by selling back into the book. For weather:
-small, same-day, breadth-of-cities bets; the binding cost is usually the bid-ask spread (fee is tiny at the
-low-priced tail buckets); the binding requirement is a distribution that beats the market's already-sharp
+the house. You can exit before settlement by selling back into the book. For weather:
+small, same-day, breadth-of-cities bets; the binding requirement is a distribution that beats the market's already-sharp
 implied ladder on the transition days.
 
 ## Reproduce

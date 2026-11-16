@@ -16,7 +16,7 @@ The new session should:
 1. Understand what DavisAI Markets is and how the live, fundamental, signal, UI, and execution layers fit together.
 2. Audit the blind forecaster for leakage, reproducibility, calibration, and seasonal logic.
 3. Preserve the existing signal authority instead of creating parallel or competing forecasts.
-4. Keep all event-contract execution in SHADOW until venue data, settlement logic, fees, fills, and forward-live gates are complete.
+4. Keep all event-contract execution in SHADOW until venue data, settlement logic and forward-live gates are complete.
 
 ---
 
@@ -36,7 +36,7 @@ The platform is not intended to be a generic chart dashboard. Its operating sequ
 3. Combine live microstructure with decision-time fundamental and seasonal state.
 4. Convert the expected underlying distribution into contract-specific settlement probabilities.
 5. Compare fair probability with the event-contract bid/ask.
-6. Trade only when the edge survives fees, fill probability, latency, executable size, exact-definition matching, and risk gates.
+6. Trade only when the edge survives exact-definition matching and risk gates. Kalshi execution and cost rules are not written yet; they start fresh, for Kalshi only (Greg, 2026-11-16).
 
 ### Venue and brokerage context
 
@@ -105,7 +105,6 @@ Still missing or SHADOW:
 - CME hourly settlement-window VWAP engine.
 - Strike-by-strike probability model.
 - Underlying-to-event repricing-lag measurement.
-- CME fee, fill, executable-size, and slippage model.
 - CME order routing.
 
 ---
@@ -148,7 +147,6 @@ Longer-term cards should include:
 - Event-contract follower bid/ask.
 - Edge clock.
 - Gross edge.
-- Maker, taker, and likely net edge.
 - Residual edge after observed repricing.
 - Pipeline latency.
 - Signed flow.
@@ -631,8 +629,7 @@ Score separately:
 - No memorized-day rules in the brain.
 - Per-event analysis; do not use pooling as the final verdict.
 - True holdout and forward-live are the actual skill tests.
-- Maker and taker economics must both be modeled.
-- Fees, slippage, fill probability, and executable size must be included.
+- No trade cost in any research calculation (Greg, 2026-11-08). Kalshi rules start fresh, for Kalshi only (Greg, 2026-11-16).
 - No event-contract execution until the exact settlement definition and venue book are connected.
 - Missing data must remain visibly flagged.
 - No parallel daylight, solar, nuclear, or power-burn signal when the existing projection can be enriched.

@@ -6,12 +6,8 @@ lag-join + settlement-oracle pipelines reuse verbatim. Two edges tested, both FR
 
 ## 1. Cross-strike (Kalshi-internal) — WEAK on metals (an NG thing)
 `lag_exploit_backtest --mode crossstrike`, 5 days each, leakage PASS, real lead-lag present.
-Net-of-toll (h2), per-cell:
-- **NG (baseline):** down-triggered ITM/ATM/OTM/deepITM pay +1.6..+3.3c mean, 51-64% win.
-- **Gold:** only ITM(65-85)|dn (+0.76c, 41% win) + deepITM|dn (+0.16c) scrape positive; most cells bleed.
-- **Silver:** only deepITM|dn (+0.92c, 32% win) positive; almost everything bleeds.
-Low win rates (32-41%) on the metals "winners" -> +mean rides rare fat tails, fragile. Per per-cell
-rule: cross-strike WORKS ON NG, NOT metals. Caveats: trade-reconstructed quote, 5 warm-season days.
+The per-cell numbers recorded here were net of the spread toll, which was removed from the program
+(2026-11-16). They are not kept. Rerun gross if the cross-strike read is wanted again.
 
 ## 2. Futures->Kalshi look-ahead LAG — CONFIRMED on both (the real edge)
 `futures_kalshi_lag.py` (S19 cross-cov lead-lag + 200x time-slide null), leading feed = FREE Pyth
@@ -29,8 +25,7 @@ tick tape only sharpens it.
 
 ## Verdict
 Gold/silver's PRIMARY edge (the lag) transfers cleanly from WTI/NG -> both are valid depth-adds. The
-cross-strike (secondary) edge does not transfer. Remaining validation = the same one every lag faces:
-does it clear NET-OF-FEE at tradeable SIZE (the size-vs-fee wall) at sub-minute resolution -> needs the
+cross-strike (secondary) edge does not transfer. Remaining validation: the lag at sub-minute resolution -> needs the
 tick tape (free 1-sec Pyth first; paid COMEX GC/SI to nail it). Feeds now collected: Pyth XAU/XAG live
 (pyth_collector) + KXGOLDD/KXSILVERD books (kalshi_collector).
 

@@ -69,7 +69,7 @@ steps need an LLM, and they're provider-agnostic. Agent-brain options, pick next
   (NO tape peeking) -> `forecast_harness.py overlay` (score vs S3 tape) -> merge lessons into the brain -> commit.
 
 ## RULES (unchanged): each event individually, NEVER pool-as-final; per-cell; distributions not means; leakage
-gate + blind wall; net-of-fee maker AND taker; exclude settle window; zero synthetic; provisional-until-live;
+gate + blind wall; no trade cost in any calculation; exclude settle window; zero synthetic; provisional-until-live;
 git = CODE, S3 = ALL DATA; NG and WTI kept SEPARATE; weather forecaster HANDS OFF; keys are SECRETS (ROTATE — now
 also in `/etc/markets/coach.env` on the box + `scratchpad/aws.env` this session).
 
