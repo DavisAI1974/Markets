@@ -28,7 +28,7 @@ redispatch a cancelled run, never power-cycle the box without his word.
    `research/kalshi/frankie_boss/artifacts/Frankie_BOSS_Build_Plan_R4_20260921.xlsx` (openpyxl;
    sheets Build Plans, Components, Gates) - a Granite role or component not in it is not wired.
 3. Treat as HISTORICAL (contradicted by later rules): `CLAUDE_CYCLE0_EXECUTION_HANDOFF_20260923.md`,
-   `CODEX_HANDOFF_20260923_*`. `CLEANUP_RUNBOOK.md` is a crypto runbook, unrelated. The
+   `CODEX_HANDOFF_20260923_*`. `CLEANUP_RUNBOOK.md` was a crypto runbook, now on branch `archive/crypto`. The
    `day_pipeline.py` / `frankie_journal_stack.yml` / Windows host `i-0e90ee6110ef609aa` chain in
    CLAUDE.md is a different path from the one the Monday run used - do not run it blindly.
 

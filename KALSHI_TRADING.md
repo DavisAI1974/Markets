@@ -191,7 +191,7 @@ durable data still on branches: `data/kalshi-bins`, `data/pyth-ticks` (Pyth, non
 | file | what it is |
 |------|-----------|
 | `KALSHI_TRADING.md` | This index. |
-| `CLAUDE.md` | The lean live operating doc (S83 split; the pre-split OD/crypto/physics master is archived verbatim in `CLAUDE_ARCHIVE_OD.md`). |
+| `CLAUDE.md` | The lean live operating doc (S83 split; the pre-split OD/crypto/physics master is archived verbatim in `CLAUDE_ARCHIVE_OD.md` on branch `archive/crypto`, with the other crypto files). |
 | `KALSHI_BUILD_SCOPE.md` | The Kalshi build scope / thesis. |
 | `research/kalshi/FORECAST_AGENT_DESIGN_S87.md` | **[S87]** Greg's spec for the path-forecasting agent (the job, structure, self-improving method). |
 | `research/kalshi/PATH_FORECAST_RESEARCH_S87.md` | **[S87]** Cited methods survey for the NYMEX hold-length signal (bucket-continuation baseline first, then event-time anchor + tracking, GBT, FPCA, HMM gate). |
