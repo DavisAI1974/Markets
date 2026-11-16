@@ -49,9 +49,11 @@ def test_a_book_picture_at_every_trade_and_at_the_first_and_last_row(built):
     import pyarrow.parquet as pq
     folder, receipt, _ = built
     assert receipt['book_pictures_at_trades'] == receipt['checks']['rows']['trade_rows']
-    first = pq.read_table(folder / receipt['book_picture_files'][0]['file'], columns=['why']).to_pydict()['why']
+    # trade day Oct 2 is the week's first: its first written row is the exchange's clear, so that picture is empty
+    assert receipt['book_picture_at_first_written_row']['orders'] == 0
     last = pq.read_table(folder / receipt['book_picture_files'][-1]['file'], columns=['why']).to_pydict()['why']
-    assert first[0] == store.AT_FIRST_ROW and last[-1] == store.AT_LAST_ROW
+    assert last[-1] == store.AT_LAST_ROW and receipt['book_picture_at_last_written_row']['orders'] == last.count(
+        store.AT_LAST_ROW) > 0
     assert receipt['checks']['book_adds_up_at_every_trade']
 
 

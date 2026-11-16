@@ -111,13 +111,20 @@ def build(tape_folder: Path, trade_day: dt.date, out: Path, checker=None) -> dic
                       PICTURE_ROWS_PER_PART)
     I = rows_part.INDEX
     pictures = dict(trade=0, adds_up=True)
-    walk = rows_part.Walk(week, trade_day,
-                          on_last_written=lambda book, position: picture(book, position, AT_LAST_ROW, pic_parts))
+    def orders_in(fresh):
+        return sum(side['orders'] for side in fresh.values())
+
+    def at_last(book, position):
+        pictures['last_written_row'] = dict(position=position,
+                                            orders=orders_in(picture(book, position, AT_LAST_ROW, pic_parts)))
+
+    walk = rows_part.Walk(week, trade_day, on_last_written=at_last)
     last_row_position = None
     for row in walk:
         position = row[I['position_on_tape']]
-        if last_row_position is None:
-            picture(walk.book, position, AT_FIRST_ROW, pic_parts)
+        if last_row_position is None:      # on the week's first trade day this row is the exchange's clear: 0 orders
+            pictures['first_written_row'] = dict(
+                position=position, orders=orders_in(picture(walk.book, position, AT_FIRST_ROW, pic_parts)))
         if row[I['action']] == TRADE.decode():
             fresh = picture(walk.book, position, AT_TRADE, pic_parts)
             pictures['trade'] += 1
@@ -160,6 +167,8 @@ def build(tape_folder: Path, trade_day: dt.date, out: Path, checker=None) -> dic
                 for f in week],
         columns=len(rows_part.NAMES), rows=row_parts.written, row_files=row_parts.files,
         book_picture_rows=pic_parts.written, book_pictures_at_trades=pictures['trade'],
+        book_picture_at_first_written_row=pictures.get('first_written_row'),
+        book_picture_at_last_written_row=pictures.get('last_written_row'),
         book_picture_files=pic_parts.files,
         vendor_restatement_file=dict(file=r_name, rows=len(restated[0]), bytes=len(r_raw),
                                      sha256=hashlib.sha256(r_raw).hexdigest()),
