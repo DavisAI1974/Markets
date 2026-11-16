@@ -22,14 +22,25 @@ git -C code rev-parse HEAD > "$WORK/out/CODE_COMMIT"
 git -C rows rev-parse HEAD > "$WORK/out/ROWS_COMMIT"
 cd "$WORK/code"
 : > "$WORK/out/STATUS"
+# Every calculation is its own helper, started at the same time and pinned to its own CPU (Greg, 2026-11-16:
+# "make sure the helpers are pinned to cpus so it isn't just one running by itself"). The CPUs are the ones this
+# container is allowed, taken in order; with more helpers than CPUs the list is gone round again.
+CPUS=$(python3 -c "import os; print(' '.join(str(c) for c in sorted(os.sched_getaffinity(0))))")
+COUNT=$(echo $CPUS | wc -w)
+K=0
 for CALC in "$@"; do
-    if MARKETS_DATA="$WORK/data" python3 -m root.run calc "$CALC" "$DAY" --rows "$WORK/rows" --out "$WORK/out" \
-            > "$WORK/out/$CALC.log" 2>&1; then
-        echo "$CALC passed" >> "$WORK/out/STATUS"
-    else
-        echo "$CALC FAILED" >> "$WORK/out/STATUS"
-    fi
+    CPU=$(echo $CPUS | cut -d' ' -f$((K % COUNT + 1)))
+    (
+        if MARKETS_DATA="$WORK/data" taskset -c "$CPU" python3 -m root.run calc "$CALC" "$DAY" \
+                --rows "$WORK/rows" --out "$WORK/out" > "$WORK/out/$CALC.log" 2>&1; then
+            echo "$CALC passed on CPU $CPU" >> "$WORK/out/STATUS"
+        else
+            echo "$CALC FAILED on CPU $CPU" >> "$WORK/out/STATUS"
+        fi
+    ) &
+    K=$((K + 1))
 done
+wait
 echo finished >> "$WORK/out/STATUS"
 cd "$WORK/out"
 exec python3 -m http.server 8000 --bind 0.0.0.0
