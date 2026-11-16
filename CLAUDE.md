@@ -66,7 +66,7 @@ Detail: `SESSION_HANDOFF_2026-07-14_S92.md`, `KICKOFF_2026-07-15_S93.md`, `resea
 DavisAI Markets. The live product is **Kalshi prediction-market trading** (weather / macro / energy /
 electricity event contracts). Crypto (the OD "info-dipole" / order-flow toolkit) was the proving ground
 and is now history — the session-by-session record + the earlier OD/physics research lives in
-`CLAUDE_ARCHIVE_OD.md` (nothing deleted; see Archive pointer). The operator toolkit that came out of it
+`CLAUDE_ARCHIVE_OD.md` on branch `archive/crypto` (see Archive pointer). The operator toolkit that came out of it
 is LIVE and documented below (see "OD toolkit") — it is the engine the Kalshi lag / signal work runs on,
 and we regularly reach back into it for pieces.
 
@@ -203,7 +203,7 @@ SessionStart hook. `using-agent-skills` is the router. Proven on Codex; Greg: "a
 
 ---
 
-## OD toolkit (live — we reach back into this; provenance in `CLAUDE_ARCHIVE_OD.md`)
+## OD toolkit (live — we reach back into this; provenance in `CLAUDE_ARCHIVE_OD.md` on branch `archive/crypto`)
 
 The operator tools built in the crypto era (S20–S37) that the Kalshi pipeline runs on, plus the pieces
 we periodically pull back out. All portable numpy; validated per-cell.
@@ -241,7 +241,7 @@ not just in the archive.
 The information dipole (davisai.ai/dipole) is our directional/flow tool; Greg: the trend-following /
 flow read may be one of our biggest edges, usable across the WHOLE platform — which is why this stays
 in the live doc. Full detail: `S36_NETCOST_BACKTEST_FINDINGS.md`, `SESSION_HANDOFF_2026-06-22_S36.md` /
-`_S36b` / `_S37`, and `CLAUDE_ARCHIVE_OD.md`.
+`_S36b` / `_S37`, and `CLAUDE_ARCHIVE_OD.md`, all on branch `archive/crypto`.
 
 - **The core read (S36, 2 factors, stack monotonically):** markets are follow-the-leader (a trend = a
   flow) until the leader exhausts → new leader, usually opposite; the edge is detecting the changeover.
@@ -368,9 +368,17 @@ Recent arc (compressed; full detail in each `SESSION_HANDOFF_*.md`):
 
 The full OD / info-dipole crypto research (S20–S37) and the earlier Information-Layer / four-forces /
 gravity-time physics research (S3–S25, the INFO-0xx ledger, capability demos) live VERBATIM in
-`CLAUDE_ARCHIVE_OD.md`. Nothing was deleted — it was moved out of the always-loaded context because it
-is history, not the live Kalshi operating surface. Consult it only if a question reaches back into the
-OD toolkit's provenance.
+`CLAUDE_ARCHIVE_OD.md`, which is on branch **`archive/crypto`**. Consult it only if a question reaches back
+into the OD toolkit's provenance.
+
+**Crypto files live on branch `archive/crypto` (Greg, 2026-11-16).** That branch is a full snapshot of the
+trunk at `676322d`. The crypto-only files were then removed from the trunk and the research branch: the
+exchange collectors, the crypto research scripts and their result files, `backend/`, `frontend/`,
+`discord_bot/`, `fingerprint_dataset/`, `vendored_build_kit/`, the crypto-era documents and the S20 to S38
+kickoffs and handoffs. Kept on the trunk because live code uses them or Greg said so: `odcore/` whole (with
+`tests/` and `scripts/`), `research/shape_s71/early_signal.py`, and the news pipeline with
+`regime_classifier.py`, `phase1_5_evaluator.py` and `markets_adapter.py`. New crypto work, if any, goes on
+that branch, not the trunk.
 
 ---
 
