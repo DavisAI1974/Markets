@@ -212,3 +212,8 @@ def for_calculations(week: list[WeekFile], built=BUILT_TRADE_DAYS):
     for f_index, r_index, record, kind in ticks(week):
         if kind == TICK and calculation_eligible(int(record['ts_event']), built):
             yield f_index, r_index, record
+
+
+def columns(records) -> dict:
+    """Every field of a block of records as plain lists (one pass over a file is far faster on lists)."""
+    return {name: records[name].tolist() for name in records.dtype.names}

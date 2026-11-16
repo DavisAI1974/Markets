@@ -1,6 +1,7 @@
 """ROOT command line (SPEC-root.md "Commands"). Only the parts built so far are here.
 
     python3 -m root.run check-week 20231002 [--tape <markets-data>/data/nymex_mbo/ng_v0_oct2023] [--out <dir>]
+    python3 -m root.run check-book 20231002 [--tape ...] [--out <dir>]
 """
 from __future__ import annotations
 
@@ -10,6 +11,7 @@ import os
 from pathlib import Path
 
 from root.calendar import parse_trade_day
+from root.book import check_book
 from root.tape import check_week
 
 DEFAULT_TAPE = Path(os.environ.get('MARKETS_DATA', '../markets-data')) / 'data' / 'nymex_mbo' / 'ng_v0_oct2023'
@@ -22,7 +24,22 @@ def main():
     cw.add_argument('trade_day')
     cw.add_argument('--tape', type=Path, default=DEFAULT_TAPE)
     cw.add_argument('--out', type=Path, help='folder for the receipt (markets-data receipts/)')
+    cb = sub.add_parser('check-book', help='the carried book against the vendor restatement; the book adds up')
+    cb.add_argument('trade_day')
+    cb.add_argument('--tape', type=Path, default=DEFAULT_TAPE)
+    cb.add_argument('--out', type=Path, help='folder for the record (markets-data receipts/)')
     a = ap.parse_args()
+    if a.command == 'check-book':
+        day = parse_trade_day(a.trade_day)
+        record = check_book(a.tape, day)
+        if a.out:
+            a.out.mkdir(parents=True, exist_ok=True)
+            (a.out / f'check-book-{day:%Y%m%d}.json').write_text(json.dumps(record, indent=1) + '\n')
+        print(json.dumps({k: record[k] for k in ('trade_day', 'all_equal', 'all_add_up', 'irregular',
+                                                 'orders_resting_at_the_end', 'seconds')}, indent=1))
+        for c in record['book_equals_restatement']:
+            print(c['file'], 'equal' if c['equal'] else 'DIFFERS', c['orders_in_restatement'], 'orders')
+        print('trades checked', record['whole_book_figures'][-1]['trades_checked'])
     if a.command == 'check-week':
         day = parse_trade_day(a.trade_day)
         receipt = check_week(a.tape, day)
