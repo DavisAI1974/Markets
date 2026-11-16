@@ -23,7 +23,8 @@ One row per level-hit event on the real WTI trade tape (kalshi_history.py output
   OUTCOME (forward from the hit, trailing exit = score_hold philosophy, bounded by the settle guard):
     continued   : reached L+dir before L-dir?  (the level-continuation label)
     run_length  : furthest level count reached in dir before the first one-level pullback.
-    net_cents   : trailing-exit P&L (fee retired, Greg 2026-11-08: always 0; entry slippage term kept as book crossing).
+    gross_cents : trailing-exit cents captured, GROSS. No fee, no slippage, no maker or taker assumption:
+                  trade cost is not a market condition (Greg 2026-11-08; slippage term removed 2026-11-16).
     resolution  : 'target' | 'reversal' | 'censored' (walk hit the settle/horizon cap unresolved).
 
 Discipline: leakage gate BEFORE any distribution (odcore.leakage.assert_no_leakage on the context
@@ -179,20 +180,14 @@ def tod_band(hour: int) -> str:
     return "off_hours"
 
 
-# ---- Kalshi fee: RETIRED (Greg 2026-11-08) --------------------------------------------------
-def kalshi_fee_cents(p: float) -> float:
-    """RETIRED: trade cost is not a market condition. Always 0 cents; `fee_cents` fields stay 0."""
-    return 0.0
-
-
 # ---- outcome (forward trailing walk) ----------------------------------------------------------
-def outcome_from(i, ts, p, dir_, cap_ts, entry_slip: float, max_forward_s: float):
+def outcome_from(i, ts, p, dir_, cap_ts, max_forward_s: float):
     """Continuation label + trailing-exit P&L from the hit at trade i in direction dir_ (+1 up / -1 down).
 
     LABEL   continued = price reached L+dir (the next level) BEFORE L-dir (reversal below entry) — Greg's
             level-continuation unit, independent of where the trailing exit lands.
     RUN     run_length = furthest level progress in dir reached (the running extreme).
-    P&L     trailing exit one level back off the running extreme; net = captured - slip - fee.
+    P&L     trailing exit one level back off the running extreme; gross cents captured, no trade cost.
     Bounded by the settle cap and max_forward_s (else 'censored')."""
     L = round(float(p[i]))
     extreme = 0                       # furthest level progress in dir (>=0)
@@ -227,11 +222,8 @@ def outcome_from(i, ts, p, dir_, cap_ts, entry_slip: float, max_forward_s: float
     else:
         resolution = "censored"; exit_prog = 0
     gross = exit_prog * 1.0                                       # cents captured (1 cent / level)
-    fee = kalshi_fee_cents(float(p[i]))
-    net = round(gross - entry_slip - fee, 3)                      # taker entry (cross the spread)
-    net_maker = round(gross - fee, 3)                             # maker entry (rest at the level; S81: toll ~halves)
     return {"continued": int(target_first), "run_length": int(extreme), "resolution": resolution,
-            "net_cents": net, "net_maker": net_maker, "fee_cents": round(fee, 3)}
+            "gross_cents": round(gross, 3)}
 
 
 # ---- per-event event extraction ----------------------------------------------------------------
@@ -266,7 +258,7 @@ def events_for(series, event, cfg):
             ctx = context_at(i, ts, p, bv, sv, W)
             if ctx is None:
                 continue
-            out = outcome_from(i, ts, p, dir_, cap_ts, cfg["entry_slip"], cfg["max_forward_s"])
+            out = outcome_from(i, ts, p, dir_, cap_ts, cfg["max_forward_s"])
             if out["resolution"] == "censored" and out["run_length"] == 0:
                 continue                                         # never resolved, no info
             hour = datetime.fromtimestamp(ts[i], timezone.utc).hour
@@ -287,8 +279,7 @@ def events_for(series, event, cfg):
                 "n_clips": ctx["n_clips"], "max_clip_frac": ctx["max_clip_frac"],
                 # outcome
                 "continued": out["continued"], "run_length": out["run_length"],
-                "resolution": out["resolution"], "net_cents": out["net_cents"],
-                "net_maker": out["net_maker"], "fee_cents": out["fee_cents"],
+                "resolution": out["resolution"], "gross_cents": out["gross_cents"],
             })
     return rows
 
@@ -321,8 +312,7 @@ def _dist(rows):
         return None
     cont = np.array([r["continued"] for r in rows], float)
     runs = np.array([r["run_length"] for r in rows], float)
-    nets = np.array([r["net_cents"] for r in rows], float)
-    netm = np.array([r["net_maker"] for r in rows], float)
+    gross = np.array([r["gross_cents"] for r in rows], float)
     res = defaultdict(int)
     for r in rows:
         res[r["resolution"]] += 1
@@ -332,14 +322,11 @@ def _dist(rows):
         "big_run_rate": round(float((runs >= 2).mean()), 3),      # >= 2 levels = the paying tail
         "run_len": {"p25": float(np.percentile(runs, 25)), "med": float(np.median(runs)),
                      "p75": float(np.percentile(runs, 75)), "max": float(runs.max())},
-        "net_cents": {"p10": round(float(np.percentile(nets, 10)), 2),
-                       "med": round(float(np.median(nets)), 2),
-                       "mean": round(float(nets.mean()), 3),
-                       "p90": round(float(np.percentile(nets, 90)), 2),
-                       "pos_frac": round(float((nets > 0).mean()), 3)},
-        "net_maker": {"med": round(float(np.median(netm)), 2),
-                       "mean": round(float(netm.mean()), 3),
-                       "pos_frac": round(float((netm > 0).mean()), 3)},
+        "gross_cents": {"p10": round(float(np.percentile(gross, 10)), 2),
+                         "med": round(float(np.median(gross)), 2),
+                         "mean": round(float(gross.mean()), 3),
+                         "p90": round(float(np.percentile(gross, 90)), 2),
+                         "pos_frac": round(float((gross > 0).mean()), 3)},
         "resolution": dict(res),
     }
 
@@ -355,7 +342,7 @@ def winner_fingerprint(rows, big_run: int = 2):
     """What context PRECEDES a BIG continuation (run_length >= big_run — Greg's 'continuation big/small')?
 
     The money is in the multi-level run, not the 1-level poke (`continued`); a poke that round-trips at the
-    trailing stop still loses the toll. So the fingerprint targets the big-run tail: for each context value,
+    trailing stop captures nothing. So the fingerprint targets the big-run tail: for each context value,
     the lift = its share among big-run winners minus its base share. Distributions, not a model."""
     won = [r for r in rows if r["run_length"] >= big_run]
     lost = [r for r in rows if r["run_length"] < big_run]
@@ -397,14 +384,13 @@ def build(series, cfg):
         if len(rows) < cfg["min_cell"]:
             continue
         cells[k] = {"dist": _dist(rows), "fingerprint": winner_fingerprint(rows, cfg["big_run"])}
-    # winner cells: highest maker-net pos_frac among reported cells (where continuation actually pays)
+    # winner cells: highest gross pos_frac among reported cells (where continuation actually captured cents)
     winners = sorted(
         ({"cell": k, "n": c["dist"]["n"], "continue_rate": c["dist"]["continue_rate"],
-          "net_taker_pos": c["dist"]["net_cents"]["pos_frac"],
-          "net_maker_pos": c["dist"]["net_maker"]["pos_frac"],
-          "net_maker_mean": c["dist"]["net_maker"]["mean"]}
+          "gross_pos": c["dist"]["gross_cents"]["pos_frac"],
+          "gross_mean": c["dist"]["gross_cents"]["mean"]}
          for k, c in cells.items()),
-        key=lambda x: -x["net_maker_pos"])[:12]
+        key=lambda x: -x["gross_pos"])[:12]
     return {
         "series": series, "status": "OK",
         "n_events": len(events), "n_level_hits": len(all_rows),
@@ -424,7 +410,6 @@ def main():
     ap.add_argument("--min-trades", type=int, default=100, help="min trades/contract to include")
     ap.add_argument("--min-cell", type=int, default=30, help="min level-hits to report a cell")
     ap.add_argument("--big-run", type=int, default=2, help="run_length threshold for a 'big' continuation")
-    ap.add_argument("--entry-slip", type=float, default=1.0, help="entry slippage (cents, cross the spread)")
     ap.add_argument("--max-forward-s", type=float, default=1800.0, help="max forward walk (s)")
     ap.add_argument("--settle-guard-s", type=float, default=1800.0, help="exclusion band before daily settle")
     ap.add_argument("--release-win-s", type=float, default=3600.0, help="+/- release flag window (s)")
@@ -433,7 +418,7 @@ def main():
     args = ap.parse_args()
     cfg = {"window": args.window, "min_trades": args.min_trades, "min_cell": args.min_cell,
            "big_run": args.big_run,
-           "entry_slip": args.entry_slip, "max_forward_s": args.max_forward_s,
+           "max_forward_s": args.max_forward_s,
            "settle_guard_s": args.settle_guard_s, "release_win_s": args.release_win_s,
            "settle": SETTLE_UTC.get(args.series, (21, 0)),
            "release": RELEASE.get(args.series, (14, 30, 2))}
@@ -448,20 +433,19 @@ def main():
     print(f"[{res['series']}] level_hits={res['n_level_hits']} over {res['n_events']} events  "
           f"leakage_pass={res['leakage_pass']} (fails={res['leakage_fails']})")
     print(f"  OVERALL continue_rate={o['continue_rate']}  run_len med={o['run_len']['med']} "
-          f"p75={o['run_len']['p75']}  net_cents med={o['net_cents']['med']} mean={o['net_cents']['mean']} "
-          f"pos_frac={o['net_cents']['pos_frac']}")
+          f"p75={o['run_len']['p75']}  gross_cents med={o['gross_cents']['med']} mean={o['gross_cents']['mean']} "
+          f"pos_frac={o['gross_cents']['pos_frac']}")
     print(f"  cells reported (>= {args.min_cell}): {res['n_cells_reported']}")
-    print("  WINNER CELLS (by maker-net pos_frac):")
+    print("  WINNER CELLS (by gross pos_frac; no trade cost):")
     for w in res["winner_cells"][:8]:
         print(f"    {w['cell']:<34} n={w['n']:<5} cont={w['continue_rate']:.3f} "
-              f"taker_pos={w['net_taker_pos']:.3f} maker_pos={w['net_maker_pos']:.3f} "
-              f"maker_mean={w['net_maker_mean']:+.2f}")
+              f"gross_pos={w['gross_pos']:.3f} gross_mean={w['gross_mean']:+.2f}")
     shown = 0
     for k, c in res["cells"].items():
         d = c["dist"]
         print(f"\n  CELL {k}  n={d['n']}  cont={d['continue_rate']}  big={d['big_run_rate']}  "
-              f"run p75={d['run_len']['p75']}  maker mean={d['net_maker']['mean']} "
-              f"pos={d['net_maker']['pos_frac']}")
+              f"run p75={d['run_len']['p75']}  gross mean={d['gross_cents']['mean']} "
+              f"pos={d['gross_cents']['pos_frac']}")
         if c["fingerprint"] and shown < args.top_fingerprints:
             for feat, vals in c["fingerprint"].items():
                 best = sorted(vals.items(), key=lambda kv: -kv[1]["lift"])[0]
