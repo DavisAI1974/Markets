@@ -90,6 +90,20 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
   `markets-data` `tasks/family-research-20261022/research-union-current/trade-day-rebuild-20261116/`). Any
   exception needs a specific reason, written down next to the thing that differs.
 
+- **ONLY THE FOUR TRADE DAYS ENTER A CALCULATION (Greg, 2026-11-16, said several times).** Scope: the ROOT rebuild,
+  trade days Oct 2, 3, 17 and 18, 2023. Only ticks inside those four trade days (18:00 ET to 17:00 ET) are used in
+  any calculation that feeds research, analysis or trade strategies. Data from outside them (the Sunday start-ups,
+  trade day Mon Oct 16, the 17:00 to 18:00 ET stretches, the evening hours after a built trade day) may be used for
+  ONE thing: seating the order book so the book on the four trade days is complete. The stretches and the Sunday
+  start-up before Oct 2 keep their marked rows; nothing is calculated on them. **Any other use of data from outside
+  the four trade days is put to Greg FIRST, before it is built.** Nothing is commingled; anything ever made from the
+  warm-up data goes in its own output, apart. Enforced in code: `root/tape.py` `for_calculations()` is the only way
+  a calculation receives ticks; calculation modules live in `root/calcs/` and may not read the tape themselves
+  (`tests/root/test_tape.py`). The 13 outside data points are the published figures Greg approved in
+  `SPEC-outside.md`; no new outside input is added without asking him. Greg, same day: a trade may continue into the
+  days beyond the four; nothing is built for that now ("we'll cross that bridge if we come to it"), and when it comes
+  up it is put to him first.
+
 - **TRADE COST IS NOT A MARKET CONDITION (Greg, 2026-11-08).** No fee, slippage, maker or taker offset, fill
   model or any other execution assumption enters ANY research calculation, forecast or output. Research numbers
   are GROSS.
@@ -171,6 +185,14 @@ SessionStart hook. `using-agent-skills` is the router. Proven on Codex; Greg: "a
 
 ## Branch & data discipline (READ — recurring trap)
 
+- **MARKETS IS CODE ONLY. DATA AND RESULTS GO TO `DavisAI1974/markets-data` (Greg, repeated 2026-11-16).**
+  Every data file, table, workbook, CSV/parquet/gz/tar part, render, export, receipt bundle, research result,
+  handoff evidence and task output is committed to `markets-data` (index: its `MARKET_DATA_INDEX.md`), never to
+  this repo. Raw tick tape goes to S3. Markets holds code, workflows, skills and the short state docs only. It
+  reached ~5.9 GB because `artifacts/` and `tasks/` were pushed here (Oct 22 - Nov 7) after Greg said to stop;
+  GitHub now warns the repo is near its size quota. `artifacts/` and `tasks/` are gitignored: never `git add -f`
+  them. If a script writes output under this repo, point it at a markets-data checkout or S3 instead.
+
 - **The stale-tip trap:** the harness often cuts a fresh session branch from a stale old tip (the known
   bad one is **S70 `3c70ff5`**). ALWAYS run `git log --oneline -1` first. If the tip is old, you are NOT
   on the real work.
@@ -202,6 +224,10 @@ SessionStart hook. `using-agent-skills` is the router. Proven on Codex; Greg: "a
   (read-only account inspection). The Frankie role agents live on `ccr-d2f8f826-iefeah-frankie`.
 - **`.claude/skills/`** — session rituals: `kalshi-session-start` (branch/data/accrual checks),
   `kalshi-backtest` (the mandatory evaluation discipline), `kalshi-roll` (Pyth front-month roll).
+  GitHub house rules: `repo-conventions` (branches, commits, `[skip ci]`), `actions-operations` (workflow
+  map + HOLD on dispatch), `pr-and-review` (PR body + review checklist), and `/actions-health`
+  (`.claude/commands/`). These are copies of the skills in `plugins/davisai-github/` (the customized
+  GitHub plugin, which only loads locally): edit both together.
 - Shared: `news_ingest_rss.py`, `news_coupling_research.py`, `regime_classifier.py`.
 
 ---

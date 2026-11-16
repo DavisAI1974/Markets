@@ -64,10 +64,17 @@
         "repo": "addyosmani/agent-skills",
         "ref": "0.6.8"
       }
+    },
+    "davisai": {
+      "source": {
+        "source": "directory",
+        "path": "."
+      }
     }
   },
   "enabledPlugins": {
-    "agent-skills@addy-agent-skills": true
+    "agent-skills@addy-agent-skills": true,
+    "davisai-github@davisai": true
   },
   "enabledMcpjsonServers": [
     "codebase-memory-mcp"

@@ -1,0 +1,8 @@
+{
+  "name": "davisai-github",
+  "version": "1.0.0",
+  "description": "GitHub for DavisAI Markets: the official GitHub MCP server (with the Actions toolset enabled) plus the house rules for the Markets and markets-data repositories - trunk and data branches, commit style, the HOLD rule on workflow dispatch, and PR review against the research discipline.",
+  "author": {
+    "name": "DavisAI (customized from the official GitHub plugin)"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "davisai",
+  "owner": { "name": "DavisAI" },
+  "plugins": [
+    {
+      "name": "davisai-github",
+      "source": "./plugins/davisai-github",
+      "description": "GitHub MCP plus the DavisAI Markets and markets-data house rules."
+    }
+  ]
+}

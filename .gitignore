@@ -102,3 +102,8 @@ data/nws_temp/
 data/nymex_curve/
 data/forecast/
 data/nymex_analog/
+
+# DATA AND RESULTS GO TO DavisAI1974/markets-data, NOT HERE (Greg, 2026-11-16).
+# Markets is code only. Never `git add -f` these.
+artifacts/
+tasks/
