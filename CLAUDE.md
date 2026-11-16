@@ -202,6 +202,10 @@ SessionStart hook. `using-agent-skills` is the router. Proven on Codex; Greg: "a
   (read-only account inspection). The Frankie role agents live on `ccr-d2f8f826-iefeah-frankie`.
 - **`.claude/skills/`** — session rituals: `kalshi-session-start` (branch/data/accrual checks),
   `kalshi-backtest` (the mandatory evaluation discipline), `kalshi-roll` (Pyth front-month roll).
+  GitHub house rules: `repo-conventions` (branches, commits, `[skip ci]`), `actions-operations` (workflow
+  map + HOLD on dispatch), `pr-and-review` (PR body + review checklist), and `/actions-health`
+  (`.claude/commands/`). These are copies of the skills in `plugins/davisai-github/` (the customized
+  GitHub plugin, which only loads locally): edit both together.
 - Shared: `news_ingest_rss.py`, `news_coupling_research.py`, `regime_classifier.py`.
 
 ---
