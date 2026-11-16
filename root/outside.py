@@ -560,8 +560,8 @@ def curve(src: Sources, last_halt: int):
             trades.append((t, int(r['ts_event']), int(r['instrument_id']),
                            None if p == UNDEFINED_PRICE else p / PRICE_SCALE, int(r['size']), r['side'].decode(),
                            stored))
-    stats.sort(key=lambda x: (x[0], x[3], x[4]))
-    trades.sort(key=lambda x: (x[0], x[2]))
+    stats.sort(key=lambda x: x[0])                    # a stable sort: records sharing a time keep the tape's order
+    trades.sort(key=lambda x: x[0])
 
     def walk(events, keep):
         """Definitions and price events in time order: a month counts once its definition is known. Prices start
@@ -631,9 +631,33 @@ def write_table(out: Path, name: str, columns: list, rows: list, zipped: bool = 
     return dict(table=name, rows=len(rows), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
 
 
-def empty_count(rows, columns, which) -> int:
-    idx = [columns.index(c) for c in which]
-    return sum(1 for r in rows for i in idx if r[i] is None)
+def empty_cells(folder: Path, table: str) -> dict:
+    """Empty cells per column of a written table (criterion 2: every empty value is counted and explained)."""
+    raw = (folder / table).read_bytes()
+    text = (gzip.decompress(raw) if table.endswith('.gz') else raw).decode()
+    reader = csv.reader(io.StringIO(text))
+    header = next(reader)
+    counts = [0] * len(header)
+    for r in reader:
+        for i, v in enumerate(r):
+            counts[i] += v == ''
+    return {c: n for c, n in zip(header, counts) if n}
+
+
+EMPTY_REASONS = {
+    'positioning.csv': 'standing: the window holds fewer reports than the minimum (45 for one year, 140 for three); '
+                       'change on the week: no report 5 to 10 days earlier',
+    'forecast_city_runs.csv.gz': 'the forecast product does not give that figure for that hour (as served)',
+    'forecast_gas_weighted.csv': 'cities_missing is empty when no city is missing',
+    'forecast_on_row.csv': 'empty_reason is empty when the figure was made',
+    'weather_readings.csv.gz': 'the station did not report that field in that reading (as served)',
+    'weather_gas_day_city.csv': 'weight: the city carries no weight (AUS, SAT); a figure: no reading of it that gas day',
+    'weather_gas_day.csv': 'cities_missing is empty when no city is missing; carry-over: before the first gas day made',
+    'grid_hourly_all.csv.gz': 'the EIA gives no value for that hour (as served)',
+    'curve_definitions.csv.gz': '', 'curve_statistics.csv.gz': 'price: the statistic has no price (a quantity only); '
+                                                                'raw_symbol: no definition known for that instrument',
+    'curve_trades.csv.gz': 'raw_symbol: no definition known for that instrument',
+}
 
 
 def build(src_folder: Path, out: Path, trade_days=TRADE_DAYS) -> dict:
@@ -645,9 +669,6 @@ def build(src_folder: Path, out: Path, trade_days=TRADE_DAYS) -> dict:
 
     pos = [r for r in positioning(src) if r[0] < last_halt]
     tables.append(write_table(out, 'positioning.csv', POSITIONING_COLUMNS, pos))
-    empty.append(dict(table='positioning.csv', reason='standing left empty while the window holds fewer reports '
-                      'than the minimum (45 for one year, 140 for three)',
-                      cells=empty_count(pos, POSITIONING_COLUMNS, ['standing_1y', 'standing_3y'])))
 
     fc = forecasts(src, days, last_halt)
     tables.append(write_table(out, 'forecast_city_runs.csv',
@@ -702,6 +723,10 @@ def build(src_folder: Path, out: Path, trade_days=TRADE_DAYS) -> dict:
     tables.append(write_table(out, 'curve_settled_shape.csv', SHAPE_COLUMNS, cv['settled']))
     tables.append(write_table(out, 'curve_traded_shape.csv', SHAPE_COLUMNS, cv['traded'], zipped=True))
 
+    for t in tables:
+        cells = empty_cells(out, t['table'])
+        if cells:
+            empty.append(dict(table=t['table'], cells_by_column=cells, reason=EMPTY_REASONS.get(t['table'], '')))
     receipt = dict(
         what='ROOT outside part: the 13 outside data points as tables, each row with the time its value became known',
         specification='SPEC-outside.md (approved 2026-11-16)', trade_days=list(trade_days),
@@ -739,6 +764,7 @@ def write_workbook(out: Path, receipt: dict) -> Path:
              'latest one known by that tick.'],
             ['Specification: SPEC-outside.md (approved 2026-11-16). Values only up to the halt of the last trade day.'],
             ['An empty cell is a value the source does not have. Nothing is estimated or filled in.'],
+            ['Every cell is written as text, exactly as in the table files, so long numbers keep every digit.'],
             ['Storage (X11) and the storage estimate (X12) are not made yet; see RECEIPT.json.'],
             [],
             ['Sheet', 'Table file', 'What it is']):
