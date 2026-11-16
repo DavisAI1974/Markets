@@ -1,0 +1,514 @@
+{
+ "20231002": {
+  "A_large_moves": {
+   "all": {
+    "n": 46,
+    "returned": 35,
+    "not_returned": 11,
+    "return_time_p50": 37.76510409
+   },
+   "dipole_with_move_recognized_before_return": {
+    "n": 20,
+    "returned": 13,
+    "not_returned": 7,
+    "return_time_p50": 109.179285651
+   },
+   "no_dipole_with_move": {
+    "n": 26,
+    "returned": 22,
+    "not_returned": 4,
+    "return_time_p50": 29.7589381165
+   },
+   "dipole_against_move_recognized": {
+    "n": 12,
+    "returned": 5,
+    "not_returned": 7,
+    "return_time_p50": 189.916151637
+   },
+   "no_dipole_against": {
+    "n": 34,
+    "returned": 30,
+    "not_returned": 4,
+    "return_time_p50": 36.919484083
+   },
+   "dipole_with_move_born_in_prior_60s": {
+    "n": 11,
+    "returned": 9,
+    "not_returned": 2,
+    "return_time_p50": 37.724669136
+   }
+  },
+  "B_hold_after_recognition_by_flow_state": {
+   "balanced_at_emission": {
+    "n": 25,
+    "adverse_60": 9,
+    "favourable_60": 8,
+    "adverse_300": 13,
+    "favourable_300": 12,
+    "adverse_300_ge2ticks": 7,
+    "favourable_300_ge2ticks": 8,
+    "ended_before": 11
+   },
+   "opposite_direction_at_emission": {
+    "n": 181,
+    "adverse_60": 69,
+    "favourable_60": 78,
+    "adverse_300": 79,
+    "favourable_300": 84,
+    "adverse_300_ge2ticks": 48,
+    "favourable_300_ge2ticks": 60,
+    "ended_before": 171
+   },
+   "same_direction_at_emission": {
+    "n": 213,
+    "adverse_60": 95,
+    "favourable_60": 80,
+    "adverse_300": 100,
+    "favourable_300": 104,
+    "adverse_300_ge2ticks": 69,
+    "favourable_300_ge2ticks": 64,
+    "ended_before": 109
+   },
+   "undefined_at_emission": {
+    "n": 322,
+    "adverse_60": 113,
+    "favourable_60": 98,
+    "adverse_300": 157,
+    "favourable_300": 137,
+    "adverse_300_ge2ticks": 68,
+    "favourable_300_ge2ticks": 82,
+    "ended_before": 92
+   }
+  },
+  "C_ccode_by_seed": {
+   "O": {
+    "n": 235,
+    "confirmed_before_info50": 196,
+    "move_info50_plus60_up": 72,
+    "move_info50_plus60_down": 92,
+    "aftermath300": {
+     "chop": 90,
+     "reversal": 78,
+     "continuation": 62
+    }
+   },
+   "P": {
+    "n": 249,
+    "confirmed_before_info50": 0,
+    "move_info50_plus60_up": 59,
+    "move_info50_plus60_down": 62,
+    "aftermath300": {
+     "chop": 122,
+     "continuation": 69,
+     "reversal": 58
+    }
+   },
+   "S": {
+    "n": 181,
+    "confirmed_before_info50": 170,
+    "move_info50_plus60_up": 70,
+    "move_info50_plus60_down": 62,
+    "aftermath300": {
+     "continuation": 80,
+     "chop": 54,
+     "reversal": 47
+    }
+   },
+   "X": {
+    "n": 174,
+    "confirmed_before_info50": 156,
+    "move_info50_plus60_up": 34,
+    "move_info50_plus60_down": 46,
+    "aftermath300": {
+     "chop": 72,
+     "reversal": 59,
+     "continuation": 43
+    }
+   }
+  }
+ },
+ "20231003": {
+  "A_large_moves": {
+   "all": {
+    "n": 58,
+    "returned": 48,
+    "not_returned": 10,
+    "return_time_p50": 9.302266911
+   },
+   "dipole_with_move_recognized_before_return": {
+    "n": 16,
+    "returned": 7,
+    "not_returned": 9,
+    "return_time_p50": 160.569782215
+   },
+   "no_dipole_with_move": {
+    "n": 42,
+    "returned": 41,
+    "not_returned": 1,
+    "return_time_p50": 7.048859206
+   },
+   "dipole_against_move_recognized": {
+    "n": 17,
+    "returned": 8,
+    "not_returned": 9,
+    "return_time_p50": 273.4847830705
+   },
+   "no_dipole_against": {
+    "n": 41,
+    "returned": 40,
+    "not_returned": 1,
+    "return_time_p50": 6.481539441500001
+   },
+   "dipole_with_move_born_in_prior_60s": {
+    "n": 14,
+    "returned": 9,
+    "not_returned": 5,
+    "return_time_p50": 40.254988297
+   }
+  },
+  "B_hold_after_recognition_by_flow_state": {
+   "balanced_at_emission": {
+    "n": 26,
+    "adverse_60": 8,
+    "favourable_60": 12,
+    "adverse_300": 12,
+    "favourable_300": 14,
+    "adverse_300_ge2ticks": 6,
+    "favourable_300_ge2ticks": 11,
+    "ended_before": 16
+   },
+   "opposite_direction_at_emission": {
+    "n": 208,
+    "adverse_60": 88,
+    "favourable_60": 70,
+    "adverse_300": 86,
+    "favourable_300": 100,
+    "adverse_300_ge2ticks": 57,
+    "favourable_300_ge2ticks": 62,
+    "ended_before": 200
+   },
+   "same_direction_at_emission": {
+    "n": 257,
+    "adverse_60": 88,
+    "favourable_60": 108,
+    "adverse_300": 109,
+    "favourable_300": 122,
+    "adverse_300_ge2ticks": 64,
+    "favourable_300_ge2ticks": 81,
+    "ended_before": 131
+   },
+   "undefined_at_emission": {
+    "n": 341,
+    "adverse_60": 86,
+    "favourable_60": 112,
+    "adverse_300": 134,
+    "favourable_300": 143,
+    "adverse_300_ge2ticks": 56,
+    "favourable_300_ge2ticks": 57,
+    "ended_before": 109
+   }
+  },
+  "C_ccode_by_seed": {
+   "O": {
+    "n": 246,
+    "confirmed_before_info50": 204,
+    "move_info50_plus60_up": 67,
+    "move_info50_plus60_down": 103,
+    "aftermath300": {
+     "chop": 101,
+     "reversal": 73,
+     "continuation": 70
+    }
+   },
+   "P": {
+    "n": 242,
+    "confirmed_before_info50": 0,
+    "move_info50_plus60_up": 46,
+    "move_info50_plus60_down": 61,
+    "aftermath300": {
+     "chop": 137,
+     "continuation": 59,
+     "reversal": 46
+    }
+   },
+   "S": {
+    "n": 197,
+    "confirmed_before_info50": 188,
+    "move_info50_plus60_up": 72,
+    "move_info50_plus60_down": 71,
+    "aftermath300": {
+     "continuation": 78,
+     "chop": 65,
+     "reversal": 54
+    }
+   },
+   "X": {
+    "n": 172,
+    "confirmed_before_info50": 156,
+    "move_info50_plus60_up": 49,
+    "move_info50_plus60_down": 47,
+    "aftermath300": {
+     "chop": 80,
+     "continuation": 55,
+     "reversal": 37
+    }
+   }
+  }
+ },
+ "20231017": {
+  "A_large_moves": {
+   "all": {
+    "n": 57,
+    "returned": 42,
+    "not_returned": 15,
+    "return_time_p50": 14.164221487999999
+   },
+   "dipole_with_move_recognized_before_return": {
+    "n": 20,
+    "returned": 7,
+    "not_returned": 13,
+    "return_time_p50": 273.888826108
+   },
+   "no_dipole_with_move": {
+    "n": 37,
+    "returned": 35,
+    "not_returned": 2,
+    "return_time_p50": 7.467679554
+   },
+   "dipole_against_move_recognized": {
+    "n": 19,
+    "returned": 7,
+    "not_returned": 12,
+    "return_time_p50": 273.888826108
+   },
+   "no_dipole_against": {
+    "n": 38,
+    "returned": 35,
+    "not_returned": 3,
+    "return_time_p50": 7.467679554
+   },
+   "dipole_with_move_born_in_prior_60s": {
+    "n": 11,
+    "returned": 9,
+    "not_returned": 2,
+    "return_time_p50": 14.232959522
+   }
+  },
+  "B_hold_after_recognition_by_flow_state": {
+   "balanced_at_emission": {
+    "n": 18,
+    "adverse_60": 6,
+    "favourable_60": 7,
+    "adverse_300": 9,
+    "favourable_300": 7,
+    "adverse_300_ge2ticks": 8,
+    "favourable_300_ge2ticks": 4,
+    "ended_before": 8
+   },
+   "opposite_direction_at_emission": {
+    "n": 158,
+    "adverse_60": 73,
+    "favourable_60": 59,
+    "adverse_300": 83,
+    "favourable_300": 64,
+    "adverse_300_ge2ticks": 57,
+    "favourable_300_ge2ticks": 44,
+    "ended_before": 152
+   },
+   "same_direction_at_emission": {
+    "n": 217,
+    "adverse_60": 91,
+    "favourable_60": 85,
+    "adverse_300": 105,
+    "favourable_300": 93,
+    "adverse_300_ge2ticks": 76,
+    "favourable_300_ge2ticks": 71,
+    "ended_before": 110
+   },
+   "undefined_at_emission": {
+    "n": 347,
+    "adverse_60": 111,
+    "favourable_60": 107,
+    "adverse_300": 170,
+    "favourable_300": 129,
+    "adverse_300_ge2ticks": 93,
+    "favourable_300_ge2ticks": 79,
+    "ended_before": 113
+   }
+  },
+  "C_ccode_by_seed": {
+   "O": {
+    "n": 223,
+    "confirmed_before_info50": 179,
+    "move_info50_plus60_up": 66,
+    "move_info50_plus60_down": 113,
+    "aftermath300": {
+     "reversal": 88,
+     "chop": 76,
+     "continuation": 57
+    }
+   },
+   "P": {
+    "n": 268,
+    "confirmed_before_info50": 0,
+    "move_info50_plus60_up": 60,
+    "move_info50_plus60_down": 67,
+    "aftermath300": {
+     "chop": 120,
+     "reversal": 82,
+     "continuation": 66
+    }
+   },
+   "S": {
+    "n": 182,
+    "confirmed_before_info50": 166,
+    "move_info50_plus60_up": 76,
+    "move_info50_plus60_down": 68,
+    "aftermath300": {
+     "continuation": 73,
+     "reversal": 57,
+     "chop": 51
+    }
+   },
+   "X": {
+    "n": 157,
+    "confirmed_before_info50": 147,
+    "move_info50_plus60_up": 33,
+    "move_info50_plus60_down": 43,
+    "aftermath300": {
+     "chop": 72,
+     "reversal": 50,
+     "continuation": 35
+    }
+   }
+  }
+ },
+ "20231018": {
+  "A_large_moves": {
+   "all": {
+    "n": 64,
+    "returned": 49,
+    "not_returned": 15,
+    "return_time_p50": 84.153511837
+   },
+   "dipole_with_move_recognized_before_return": {
+    "n": 29,
+    "returned": 14,
+    "not_returned": 15,
+    "return_time_p50": 309.005079229
+   },
+   "no_dipole_with_move": {
+    "n": 35,
+    "returned": 35,
+    "not_returned": 0,
+    "return_time_p50": 32.340502285
+   },
+   "dipole_against_move_recognized": {
+    "n": 33,
+    "returned": 19,
+    "not_returned": 14,
+    "return_time_p50": 211.500739749
+   },
+   "no_dipole_against": {
+    "n": 31,
+    "returned": 30,
+    "not_returned": 1,
+    "return_time_p50": 25.1445667425
+   },
+   "dipole_with_move_born_in_prior_60s": {
+    "n": 17,
+    "returned": 14,
+    "not_returned": 3,
+    "return_time_p50": 110.328721452
+   }
+  },
+  "B_hold_after_recognition_by_flow_state": {
+   "balanced_at_emission": {
+    "n": 26,
+    "adverse_60": 11,
+    "favourable_60": 12,
+    "adverse_300": 7,
+    "favourable_300": 18,
+    "adverse_300_ge2ticks": 4,
+    "favourable_300_ge2ticks": 11,
+    "ended_before": 16
+   },
+   "opposite_direction_at_emission": {
+    "n": 217,
+    "adverse_60": 101,
+    "favourable_60": 80,
+    "adverse_300": 94,
+    "favourable_300": 105,
+    "adverse_300_ge2ticks": 74,
+    "favourable_300_ge2ticks": 77,
+    "ended_before": 201
+   },
+   "same_direction_at_emission": {
+    "n": 275,
+    "adverse_60": 120,
+    "favourable_60": 112,
+    "adverse_300": 123,
+    "favourable_300": 134,
+    "adverse_300_ge2ticks": 91,
+    "favourable_300_ge2ticks": 84,
+    "ended_before": 127
+   },
+   "undefined_at_emission": {
+    "n": 345,
+    "adverse_60": 122,
+    "favourable_60": 116,
+    "adverse_300": 138,
+    "favourable_300": 166,
+    "adverse_300_ge2ticks": 76,
+    "favourable_300_ge2ticks": 85,
+    "ended_before": 88
+   }
+  },
+  "C_ccode_by_seed": {
+   "O": {
+    "n": 251,
+    "confirmed_before_info50": 211,
+    "move_info50_plus60_up": 70,
+    "move_info50_plus60_down": 113,
+    "aftermath300": {
+     "reversal": 104,
+     "continuation": 74,
+     "chop": 71
+    }
+   },
+   "P": {
+    "n": 265,
+    "confirmed_before_info50": 0,
+    "move_info50_plus60_up": 63,
+    "move_info50_plus60_down": 63,
+    "aftermath300": {
+     "chop": 119,
+     "continuation": 85,
+     "reversal": 60
+    }
+   },
+   "S": {
+    "n": 220,
+    "confirmed_before_info50": 203,
+    "move_info50_plus60_up": 91,
+    "move_info50_plus60_down": 72,
+    "aftermath300": {
+     "continuation": 97,
+     "reversal": 61,
+     "chop": 60
+    }
+   },
+   "X": {
+    "n": 154,
+    "confirmed_before_info50": 142,
+    "move_info50_plus60_up": 43,
+    "move_info50_plus60_down": 51,
+    "aftermath300": {
+     "chop": 59,
+     "continuation": 54,
+     "reversal": 41
+    }
+   }
+  }
+ }
+}

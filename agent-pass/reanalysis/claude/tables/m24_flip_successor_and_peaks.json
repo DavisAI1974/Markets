@@ -1,0 +1,456 @@
+{
+ "per_date": {
+  "20231002": {
+   "A_flip_vs_successor": {
+    "candidates": 741,
+    "next_birth_is_FLIP": 353,
+    "next_birth_is_SAME": 387,
+    "flip_second_minus_next_FLIP_birth_s": {
+     "p10": -94.0,
+     "p25": -62.0,
+     "p50": -32.0,
+     "p75": 0.0,
+     "p90": 0.0
+    },
+    "flip_within_5s_of_FLIP_birth": 107,
+    "flip_before_FLIP_birth": 245,
+    "flip_after_FLIP_birth": 1
+   },
+   "B_earliest_knowable_population": {
+    "clusters": 803,
+    "recorded_winners": 739,
+    "non_recorded": 64,
+    "all_clusters": {
+     "ride_to_exhaustion": {
+      "n": 790,
+      "up": 191,
+      "flat": 385,
+      "down": 214,
+      "p50": 0.0
+     },
+     "r20": {
+      "n": 803,
+      "up": 201,
+      "flat": 402,
+      "down": 200,
+      "p50": 0.0
+     },
+     "r60": {
+      "n": 803,
+      "up": 320,
+      "flat": 195,
+      "down": 288,
+      "p50": 0.0
+     },
+     "r300": {
+      "n": 803,
+      "up": 404,
+      "flat": 55,
+      "down": 344,
+      "p50": 0.4999999999997229
+     },
+     "k_opposed_p50": 16.0
+    },
+    "recorded_only": {
+     "ride_to_exhaustion": {
+      "n": 727,
+      "up": 177,
+      "flat": 355,
+      "down": 195,
+      "p50": 0.0
+     },
+     "r20": {
+      "n": 739,
+      "up": 186,
+      "flat": 370,
+      "down": 183,
+      "p50": 0.0
+     },
+     "r60": {
+      "n": 739,
+      "up": 302,
+      "flat": 175,
+      "down": 262,
+      "p50": 0.0
+     },
+     "r300": {
+      "n": 739,
+      "up": 378,
+      "flat": 52,
+      "down": 309,
+      "p50": 0.4999999999997229
+     }
+    },
+    "non_recorded_only": {
+     "ride_to_exhaustion": {
+      "n": 63,
+      "up": 14,
+      "flat": 30,
+      "down": 19,
+      "p50": 0.0
+     },
+     "r20": {
+      "n": 64,
+      "up": 15,
+      "flat": 32,
+      "down": 17,
+      "p50": 0.0
+     },
+     "r60": {
+      "n": 64,
+      "up": 18,
+      "flat": 20,
+      "down": 26,
+      "p50": 0.0
+     },
+     "r300": {
+      "n": 64,
+      "up": 26,
+      "flat": 3,
+      "down": 35,
+      "p50": -0.4999999999997229
+     }
+    }
+   }
+  },
+  "20231003": {
+   "A_flip_vs_successor": {
+    "candidates": 824,
+    "next_birth_is_FLIP": 380,
+    "next_birth_is_SAME": 444,
+    "flip_second_minus_next_FLIP_birth_s": {
+     "p10": -96.2,
+     "p25": -64.0,
+     "p50": -35.5,
+     "p75": -5.75,
+     "p90": 0.0
+    },
+    "flip_within_5s_of_FLIP_birth": 92,
+    "flip_before_FLIP_birth": 285,
+    "flip_after_FLIP_birth": 3
+   },
+   "B_earliest_knowable_population": {
+    "clusters": 844,
+    "recorded_winners": 766,
+    "non_recorded": 78,
+    "all_clusters": {
+     "ride_to_exhaustion": {
+      "n": 828,
+      "up": 202,
+      "flat": 428,
+      "down": 198,
+      "p50": 0.0
+     },
+     "r20": {
+      "n": 844,
+      "up": 194,
+      "flat": 451,
+      "down": 199,
+      "p50": 0.0
+     },
+     "r60": {
+      "n": 844,
+      "up": 289,
+      "flat": 256,
+      "down": 299,
+      "p50": 0.0
+     },
+     "r300": {
+      "n": 844,
+      "up": 383,
+      "flat": 76,
+      "down": 385,
+      "p50": 0.0
+     },
+     "k_opposed_p50": 16.0
+    },
+    "recorded_only": {
+     "ride_to_exhaustion": {
+      "n": 750,
+      "up": 183,
+      "flat": 390,
+      "down": 177,
+      "p50": 0.0
+     },
+     "r20": {
+      "n": 766,
+      "up": 176,
+      "flat": 410,
+      "down": 180,
+      "p50": 0.0
+     },
+     "r60": {
+      "n": 766,
+      "up": 265,
+      "flat": 240,
+      "down": 261,
+      "p50": 0.0
+     },
+     "r300": {
+      "n": 766,
+      "up": 354,
+      "flat": 67,
+      "down": 345,
+      "p50": 0.0
+     }
+    },
+    "non_recorded_only": {
+     "ride_to_exhaustion": {
+      "n": 78,
+      "up": 19,
+      "flat": 38,
+      "down": 21,
+      "p50": 0.0
+     },
+     "r20": {
+      "n": 78,
+      "up": 18,
+      "flat": 41,
+      "down": 19,
+      "p50": 0.0
+     },
+     "r60": {
+      "n": 78,
+      "up": 24,
+      "flat": 16,
+      "down": 38,
+      "p50": 0.0
+     },
+     "r300": {
+      "n": 78,
+      "up": 29,
+      "flat": 9,
+      "down": 40,
+      "p50": -0.4999999999997229
+     }
+    }
+   }
+  },
+  "20231017": {
+   "A_flip_vs_successor": {
+    "candidates": 740,
+    "next_birth_is_FLIP": 353,
+    "next_birth_is_SAME": 387,
+    "flip_second_minus_next_FLIP_birth_s": {
+     "p10": -120.6,
+     "p25": -66.0,
+     "p50": -23.0,
+     "p75": 0.0,
+     "p90": 0.0
+    },
+    "flip_within_5s_of_FLIP_birth": 110,
+    "flip_before_FLIP_birth": 239,
+    "flip_after_FLIP_birth": 4
+   },
+   "B_earliest_knowable_population": {
+    "clusters": 801,
+    "recorded_winners": 728,
+    "non_recorded": 73,
+    "all_clusters": {
+     "ride_to_exhaustion": {
+      "n": 793,
+      "up": 205,
+      "flat": 374,
+      "down": 214,
+      "p50": 0.0
+     },
+     "r20": {
+      "n": 801,
+      "up": 195,
+      "flat": 409,
+      "down": 197,
+      "p50": 0.0
+     },
+     "r60": {
+      "n": 801,
+      "up": 289,
+      "flat": 234,
+      "down": 278,
+      "p50": 0.0
+     },
+     "r300": {
+      "n": 801,
+      "up": 324,
+      "flat": 75,
+      "down": 402,
+      "p50": -0.4999999999997229
+     },
+     "k_opposed_p50": 17.0
+    },
+    "recorded_only": {
+     "ride_to_exhaustion": {
+      "n": 720,
+      "up": 190,
+      "flat": 339,
+      "down": 191,
+      "p50": 0.0
+     },
+     "r20": {
+      "n": 728,
+      "up": 180,
+      "flat": 368,
+      "down": 180,
+      "p50": 0.0
+     },
+     "r60": {
+      "n": 728,
+      "up": 261,
+      "flat": 215,
+      "down": 252,
+      "p50": 0.0
+     },
+     "r300": {
+      "n": 728,
+      "up": 298,
+      "flat": 72,
+      "down": 358,
+      "p50": 0.0
+     }
+    },
+    "non_recorded_only": {
+     "ride_to_exhaustion": {
+      "n": 73,
+      "up": 15,
+      "flat": 35,
+      "down": 23,
+      "p50": 0.0
+     },
+     "r20": {
+      "n": 73,
+      "up": 15,
+      "flat": 41,
+      "down": 17,
+      "p50": 0.0
+     },
+     "r60": {
+      "n": 73,
+      "up": 28,
+      "flat": 19,
+      "down": 26,
+      "p50": 0.0
+     },
+     "r300": {
+      "n": 73,
+      "up": 26,
+      "flat": 3,
+      "down": 44,
+      "p50": -0.9999999999998899
+     }
+    }
+   }
+  },
+  "20231018": {
+   "A_flip_vs_successor": {
+    "candidates": 852,
+    "next_birth_is_FLIP": 388,
+    "next_birth_is_SAME": 463,
+    "flip_second_minus_next_FLIP_birth_s": {
+     "p10": -114.3,
+     "p25": -69.25,
+     "p50": -39.0,
+     "p75": -3.0,
+     "p90": 0.0
+    },
+    "flip_within_5s_of_FLIP_birth": 99,
+    "flip_before_FLIP_birth": 281,
+    "flip_after_FLIP_birth": 8
+   },
+   "B_earliest_knowable_population": {
+    "clusters": 864,
+    "recorded_winners": 777,
+    "non_recorded": 87,
+    "all_clusters": {
+     "ride_to_exhaustion": {
+      "n": 846,
+      "up": 209,
+      "flat": 399,
+      "down": 238,
+      "p50": 0.0
+     },
+     "r20": {
+      "n": 864,
+      "up": 249,
+      "flat": 379,
+      "down": 236,
+      "p50": 0.0
+     },
+     "r60": {
+      "n": 864,
+      "up": 335,
+      "flat": 199,
+      "down": 330,
+      "p50": 0.0
+     },
+     "r300": {
+      "n": 864,
+      "up": 388,
+      "flat": 63,
+      "down": 413,
+      "p50": 0.0
+     },
+     "k_opposed_p50": 15.0
+    },
+    "recorded_only": {
+     "ride_to_exhaustion": {
+      "n": 759,
+      "up": 181,
+      "flat": 362,
+      "down": 216,
+      "p50": 0.0
+     },
+     "r20": {
+      "n": 777,
+      "up": 217,
+      "flat": 341,
+      "down": 219,
+      "p50": 0.0
+     },
+     "r60": {
+      "n": 777,
+      "up": 296,
+      "flat": 180,
+      "down": 301,
+      "p50": 0.0
+     },
+     "r300": {
+      "n": 777,
+      "up": 352,
+      "flat": 59,
+      "down": 366,
+      "p50": 0.0
+     }
+    },
+    "non_recorded_only": {
+     "ride_to_exhaustion": {
+      "n": 87,
+      "up": 28,
+      "flat": 37,
+      "down": 22,
+      "p50": 0.0
+     },
+     "r20": {
+      "n": 87,
+      "up": 32,
+      "flat": 38,
+      "down": 17,
+      "p50": 0.0
+     },
+     "r60": {
+      "n": 87,
+      "up": 39,
+      "flat": 19,
+      "down": 29,
+      "p50": 0.0
+     },
+     "r300": {
+      "n": 87,
+      "up": 36,
+      "flat": 4,
+      "down": 47,
+      "p50": -0.9999999999994458
+     }
+    }
+   }
+  }
+ }
+}
