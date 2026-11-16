@@ -16,8 +16,11 @@ this file when they disagree - say so rather than picking silently.
 | `DavisAI1974/Markets` | Application and research code, runbooks, workflows, research artifacts | `CLAUDE.md`, then the newest `SESSION_HANDOFF_*.md` / `KICKOFF_*.md`, then `KALSHI_TRADING.md` |
 | `DavisAI1974/markets-data` | Market data, tables, workbooks, renders, provenance manifests | `MARKET_DATA_INDEX.md` (default branch `main`) |
 
-Code goes to Markets. Data navigation and published results go to markets-data. The raw NYMEX
-tick tape lives in S3, not in either repository.
+**Markets is code only. All data and results go to markets-data (Greg, 2026-11-16).** Every data
+file, table, workbook, CSV/parquet/gz/tar part, render, export, receipt bundle, research result,
+handoff evidence and task output is committed to markets-data, never to Markets. Raw NYMEX tick tape
+lives in S3. In Markets, `artifacts/` and `tasks/` are gitignored: never `git add -f` them. Before
+any commit to Markets, check the staged files: if anything is data, move it to markets-data.
 
 ## Branches (Markets)
 

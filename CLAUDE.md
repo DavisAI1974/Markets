@@ -171,6 +171,14 @@ SessionStart hook. `using-agent-skills` is the router. Proven on Codex; Greg: "a
 
 ## Branch & data discipline (READ — recurring trap)
 
+- **MARKETS IS CODE ONLY. DATA AND RESULTS GO TO `DavisAI1974/markets-data` (Greg, repeated 2026-11-16).**
+  Every data file, table, workbook, CSV/parquet/gz/tar part, render, export, receipt bundle, research result,
+  handoff evidence and task output is committed to `markets-data` (index: its `MARKET_DATA_INDEX.md`), never to
+  this repo. Raw tick tape goes to S3. Markets holds code, workflows, skills and the short state docs only. It
+  reached ~5.9 GB because `artifacts/` and `tasks/` were pushed here (Oct 22 - Nov 7) after Greg said to stop;
+  GitHub now warns the repo is near its size quota. `artifacts/` and `tasks/` are gitignored: never `git add -f`
+  them. If a script writes output under this repo, point it at a markets-data checkout or S3 instead.
+
 - **The stale-tip trap:** the harness often cuts a fresh session branch from a stale old tip (the known
   bad one is **S70 `3c70ff5`**). ALWAYS run `git log --oneline -1` first. If the tip is old, you are NOT
   on the real work.
