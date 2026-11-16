@@ -52,26 +52,6 @@ def detect_flips(lean: np.ndarray, reversal: float):
     return flips, pos
 
 
-def backtest_swings(mid: np.ndarray, flips, fee_bps: float):
-    """Flip-at-each-turn swing P&L, net of a per-swing round-trip fee. Returns dict of stats."""
-    if len(flips) < 2:
-        return dict(n=0, net=0.0, mean=0.0, pos_frac=0.0, lag_bps=0.0, gross=0.0)
-    pnl = []; lag = []
-    for k in range(len(flips) - 1):
-        ci, pv, side = flips[k]; nci = flips[k + 1][0]
-        if mid[ci] <= 0 or mid[nci] <= 0:
-            continue
-        gross = side * np.log(mid[nci] / mid[ci]) * 1e4      # ride to the next opposite turn
-        pnl.append(gross - fee_bps)
-        if mid[pv] > 0:
-            lag.append(abs(np.log(mid[ci] / mid[pv]) * 1e4))  # bps entered PAST the true pivot
-    pnl = np.array(pnl)
-    return dict(n=len(pnl), net=float(pnl.sum()), mean=float(pnl.mean()) if len(pnl) else 0.0,
-                pos_frac=float((pnl > 0).mean()) if len(pnl) else 0.0,
-                lag_bps=float(np.mean(lag)) if lag else 0.0,
-                gross=float((pnl + fee_bps).mean()) if len(pnl) else 0.0)
-
-
 def make_signal_at(W: int, reversal: float):
     """signal_at(i, ts, p, bv, sv) -> current side as of i (for odcore.leakage; recomputes causally)."""
     def signal_at(i, ts, p, bv, sv):

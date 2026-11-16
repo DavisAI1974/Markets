@@ -6,7 +6,7 @@
     "purpose": "The machine BRAIN the forecast/coach agents load as context and apply. Human-readable view lives in ../NG_BEHAVIOR_KNOWLEDGE.md. Each pass MERGES (refine confidence + add plays); nothing is overwritten blindly.",
     "guard": "GENERAL rules with mechanism + n only - never memorized specific days. Skill is judged on days NEVER touched in any pass (true holdout) + forward-live, not on the training year. A coach that curve-fits noise loses money adaptively; a coach matching the live moment to general patterns adapts correctly.",
     "regime_scope": "12 warm-season days (Jul-Sep 2025), contango-flat. Winter/backwardation + Mondays NOT yet in-sample.",
-    "risk_gate": "Every play is provisional-until-live: must clear the size-vs-fee wall and paper-trade on Kalshi demo before real orders. The coach adapts WITHIN bounded risk caps."
+    "risk_gate": "Every play is provisional-until-live: must paper-trade on Kalshi demo before real orders. The coach adapts WITHIN bounded risk caps."
   },
 
   "plays": [

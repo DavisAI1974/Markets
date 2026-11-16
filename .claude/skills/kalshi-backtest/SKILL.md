@@ -43,13 +43,15 @@ These are Greg's load-bearing rules (S80–S82). A result that skips any step is
 
 - Trade cost is not a market condition. No fee, slippage, maker/taker offset or other execution
   assumption enters any backtest, forecast or output. Report moves GROSS, in $/c or cents per contract.
-- The old "net-of-fee at maker AND taker" rule and the crypto-era fee floor are retired; the S81/S82
-  size-vs-fee readouts are history, not guidance. A hit-rate still needs its SIZE distribution.
+- No bitcoin-era trade rule is carried forward (Greg, 2026-11-16): no fee floor, net-of-cost gate,
+  maker or taker fill assumption, slippage or bps cost threshold, and the code that applied them is
+  removed. Kalshi rules start fresh, for Kalshi only; none is written yet, so none is assumed.
+  A hit-rate still needs its SIZE distribution.
 
 ## Rule 4 — honesty of the readout
 
 - Zero synthetic data, ever. Provisional-until-live — a backtest edge is a hypothesis.
-- A clean negative that sharpens the program (e.g. S82: "no cell pays at maker") is a real
+- A clean negative that sharpens the program (a result that rules a reading out) is a real
   deliverable; write it up in a `*_FINDINGS_*.md` under `research/kalshi/` and index it in
   `KALSHI_TRADING.md`.
 - Weather: the FORECASTER is Greg's spec — HANDS OFF. We only score, through

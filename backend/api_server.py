@@ -135,7 +135,7 @@ class SignalEvent:
     outcome_status: str = "pending"      # pending | resolved | abandoned
     outcome_exit_price: float = 0.0
     outcome_resolved_utc: float = 0.0
-    outcome_realized_bps: float = 0.0    # signed return in bps after fees
+    outcome_realized_bps: float = 0.0    # signed return in bps (gross)
 
 
 # ---------------------------------------------------------------------------
@@ -362,10 +362,9 @@ class SignalStore:
             self.last_chunk_id_per_source[(asset, venue)] = latest_chunk.chunk_id
 
     async def resolve_pending_outcomes(self, hold_minutes: int = 30,
-                                         abandon_after_minutes: int = 120,
-                                         fee_bps_round_trip: float = 50.0):
+                                         abandon_after_minutes: int = 120):
         """For each pending signal whose hold window has elapsed, fetch the
-        current price for its (asset, venue) and compute realized P&L.
+        current price for its (asset, venue) and compute the realized gross move.
 
         Called every poll cycle. Idempotent: skips already-resolved signals.
         """
@@ -396,7 +395,7 @@ class SignalStore:
             if sig.entry_price > 0 and sig.expected_direction != 0:
                 import math as _math
                 signed_log_ret = sig.expected_direction * _math.log(latest_price / sig.entry_price)
-                bps = signed_log_ret * 10000.0 - fee_bps_round_trip
+                bps = signed_log_ret * 10000.0
                 sig.outcome_realized_bps = float(bps)
                 sig.outcome_exit_price = latest_price
                 sig.outcome_resolved_utc = now
@@ -474,7 +473,7 @@ async def _polling_loop():
     while True:
         await store.poll_all()
         await store.resolve_pending_outcomes(
-            hold_minutes=30, abandon_after_minutes=120, fee_bps_round_trip=50.0,
+            hold_minutes=30, abandon_after_minutes=120,
         )
         # Refresh the OD coupling layer off-thread (compute is heavy and self-gated to
         # REFRESH_INTERVAL_S, so most poll cycles are a no-op). Never blocks the event loop.
