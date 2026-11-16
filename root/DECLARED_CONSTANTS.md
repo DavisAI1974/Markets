@@ -58,6 +58,17 @@ No number is written into it: Greg ruled no fixed marks, so a run has no minimum
 | `UP`, `DOWN` | up, down | Which way a run goes, read off the prices. |
 | `STARTED`, `FURTHER`, `STEP_BACK`, `KINDS` | run started, new furthest price, first step back | The kinds of moment in a run. Kinds of moment, not kinds of run. |
 
+## `root/calcs/peak_links.py` and `root/calcs/open_stories.py` (part 2, Step 2 pieces A and B; `STEP2_PLAN.md`)
+
+No number is written into either: no minimum gap between peaks, no cap on how many are followed.
+
+| Constant | Value | Why |
+|---|---|---|
+| `KNOWN`, `ENDED`, `KINDS` | peak known, story ended | The two kinds of moment a link fact is recorded at. |
+| `NO_SAME`, `NO_OTHER` | words | Why a link is empty: no earlier peak on that side in the trade day (a link never crosses 6 pm). |
+| `I_SIDE`, `I_SIZE`, `I_HIGH_AT`, `F_KIND`, `F_PEAK`, `F_PRICE` | positions | Where a value sits among the values of pieces 1 and 2. |
+| `SIDES`, `FIGURES` | buy, sell; the five figures of the state | The columns of the state at each tick. |
+
 ## `root/tape.py`, the stored-rows gate
 
 | Constant | Value | Why |

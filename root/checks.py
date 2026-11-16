@@ -732,9 +732,177 @@ def quote_runs(row_files, calc_files, trade_day: dt.date, table_files=None, rows
                        'columns; the calculation reads the best-price columns and never the marks')
 
 
+def _peaks_as_stored(rows_folder, trade_day: dt.date, positions):
+    """The peaks of a trade day read from the stored (and already checked) outputs of pieces 1 and 2, in the order
+    they became known: for each, the row it became known on, its high, side, size, the time and price of its high,
+    and the rows on which its story reached zero and ended (None where it did not) with how it ended."""
+    import numpy as np
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    from root.calcs import peak_story as P
+    day = f'{trade_day:%Y%m%d}'
+    flow_files = sorted(Path(rows_folder).glob(f'calc-flow_peak-{day}-part*.parquet'))
+    fact_files = sorted(Path(rows_folder).glob(f'calc-peak_story-facts-{day}-part*.parquet'))
+    need(flow_files and fact_files, 'the stored outputs of flow_peak and peak_story are not beside the rows')
+    flow = pa.concat_tables([pq.read_table(f, columns=['position_on_tape', 'peak_side', 'peak_size',
+                                                       'peak_high_position', 'peak_high_received_time_ns'])
+                             for f in flow_files]).to_pydict()
+    facts = pa.concat_tables([pq.read_table(f, columns=['known_position', 'peak_high_position', 'fact',
+                                                        'price_at_high']) for f in fact_files]).to_pydict()
+    row_of = {int(p): k for k, p in enumerate(positions)}
+    price, zero, end = {}, {}, {}
+    for at, high, kind, at_high in zip(facts['known_position'], facts['peak_high_position'], facts['fact'],
+                                       facts['price_at_high']):
+        if kind == P.BUILD_UP:
+            price[high] = at_high
+        elif kind == P.REACHED_ZERO:
+            zero[high] = row_of[at]
+        elif kind in (P.CAME_BACK, P.BEATEN):
+            end[high] = (row_of[at], kind)
+    peaks = [dict(known=row_of[at], high=high, side=side, size=size, high_at=high_at, price=price[high],
+                  zero=zero.get(high), end=end.get(high, (None, None))[0], how=end.get(high, (None, None))[1])
+             for at, high, side, size, high_at in zip(flow['position_on_tape'], flow['peak_high_position'],
+                                                      flow['peak_side'], flow['peak_size'],
+                                                      flow['peak_high_received_time_ns']) if high is not None]
+    need(len(peaks) == len(price), 'the stored peaks and the stored build-up facts are not the same peaks')
+    return peaks
+
+
+def peak_links(row_files, calc_files, trade_day: dt.date, table_files=None, rows_folder=None) -> dict:
+    """The check of the calculation `peak_links`: every link worked out again from the stored outputs of pieces 1
+    and 2 as whole tables (the calculation follows the peaks tick by tick and reads no stored file): which peaks
+    came before each one, whether their stories had ended by then, and how many peaks became known inside each
+    story. The facts, the count on every row and the peaks still open at the last tick must all be equal."""
+    import numpy as np
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    from root.calcs import peak_links as L
+    rows, calc = _stored(row_files, calc_files, ['received_time_ns'])
+    text = lambda name: np.array(rows.column(name).to_pylist(), dtype=object)
+    in_day = (text('row_label') == TRADE_DAY) & (text('trade_day') == trade_day.isoformat())
+    count = np.array(calc.column('peak_link_facts_known').to_pylist(), dtype=object)
+    need(all(v is None for v in count[~in_day]), 'peak_link_facts_known is filled on a row of no trade day')
+    d = np.flatnonzero(in_day)
+    position = rows.column('position_on_tape').to_numpy()[d]
+    r = rows.column('received_time_ns').to_numpy()[d]
+    peaks = _peaks_as_stored(rows_folder, trade_day, position)
+    known = np.array([p['known'] for p in peaks])
+    need((np.diff(known) > 0).all(), 'two peaks became known on one tick')
+    names = L.FACT_NAMES
+    expected, still_open, last, most = [], [], {}, 0
+
+    def line(kind, p, row):
+        out = dict.fromkeys(names)
+        out.update(known_position=int(position[row]), known_received_time_ns=int(r[row]),
+                   peak_high_position=p['high'], fact=kind, side=p['side'], price_at_high=p['price'])
+        return out
+    for j, p in enumerate(peaks):
+        out, missing = line(L.KNOWN, p, p['known']), []
+        other = [side for side in last if side != p['side']]
+        for key, earlier, why in (('same_side', last.get(p['side']), L.NO_SAME),
+                                  ('other_side', last[other[0]] if other else None, L.NO_OTHER)):
+            if earlier is None:
+                missing.append(why)
+                continue
+            out[f'{key}_high_position'] = earlier['high']
+            out[f'{key}_high_to_high_ns'] = p['high_at'] - earlier['high_at']
+            out[f'{key}_price_at_high'] = earlier['price']
+            out[f'{key}_story_open'] = earlier['end'] is None or earlier['end'] > p['known']
+        if j:
+            out.update(before_high_position=peaks[j - 1]['high'], before_same_side=peaks[j - 1]['side'] == p['side'])
+        out['no_link_because'] = '; '.join(missing) if missing else None
+        expected.append((p['known'], 1, j, tuple(out[name] for name in names)))
+        last[p['side']] = p
+        # the peaks that became known after this one and before its story ended (not on the tick it ended)
+        until = len(d) if p['end'] is None else p['end']
+        later = int(np.searchsorted(known, until, side='left')) - (j + 1)
+        first = peaks[j + 1]['high'] if later else None
+        if p['end'] is None:
+            still_open.append((p['high'], later, first))
+        else:
+            out = line(L.ENDED, p, p['end'])
+            out.update(ended_by=p['how'], later_peaks_while_open=later, first_later_high_position=first)
+            expected.append((p['end'], 0, j, tuple(out[name] for name in names)))
+            most = max(most, later)
+    expected = [row for _, _, _, row in sorted(expected, key=lambda e: e[:3])]
+    facts = pa.concat_tables([pq.read_table(f) for f in table_files['facts']])
+    stored = list(zip(*[facts.column(name).to_pylist() for name in names]))
+    for a, b in zip(stored, expected):
+        need(a == b, f'a fact differs from the recount: stored {dict(zip(names, a))}, recount {dict(zip(names, b))}')
+    need(len(stored) == len(expected), f'{len(stored)} facts stored, {len(expected)} in the recount')
+    per_row = collections.Counter(row[0] for row in expected)
+    need(count[d].tolist() == [per_row.get(int(p), 0) for p in position],
+         'the count of facts known on a row differs from the recount')
+    left = pa.concat_tables([pq.read_table(f) for f in table_files['open-at-the-end']])
+    need(sorted(zip(*[left.column(c).to_pylist() for c in L.OPEN_COLUMNS])) == sorted(still_open),
+         'the peaks still open at the last tick differ from the recount')
+    at = {name: k for k, name in enumerate(names)}
+    known_lines = [row for row in expected if row[at['fact']] == L.KNOWN]
+    return dict(passed=True, peaks=len(peaks), facts_compared=len(expected),
+                peak_before_on_the_same_side=sum(1 for row in known_lines if row[at['before_same_side']]),
+                peak_before_on_the_other_side=sum(1 for row in known_lines if row[at['before_same_side']] is False),
+                peaks_known_while_the_peak_before_was_still_open=sum(
+                    1 for j, p in enumerate(peaks) if j and (peaks[j - 1]['end'] is None or
+                                                             peaks[j - 1]['end'] > p['known'])),
+                stories_with_a_later_peak_inside=sum(1 for row in expected if row[at['later_peaks_while_open']]),
+                most_later_peaks_while_one_story_was_open=most,
+                peaks_still_open_at_the_last_tick=len(still_open),
+                method='every link worked out again from the stored outputs of pieces 1 and 2 as whole tables; '
+                       'shares no code with the tick-by-tick calculation')
+
+
+def open_stories(row_files, calc_files, trade_day: dt.date, table_files=None, rows_folder=None) -> dict:
+    """The check of the calculation `open_stories`: every column worked out again from the stored outputs of
+    pieces 1 and 2. Each peak's story is a stretch of rows (from the row it became known on to the row before the
+    one it ended on); the counts are running sums of where stretches start and stop, and the oldest, newest and
+    largest open peak are found by laying the stretches over the rows in order."""
+    import numpy as np
+    from root.calcs import open_stories as O
+    rows, calc = _stored(row_files, calc_files, [])
+    text = lambda name: np.array(rows.column(name).to_pylist(), dtype=object)
+    in_day = (text('row_label') == TRADE_DAY) & (text('trade_day') == trade_day.isoformat())
+    got = {name: np.array(calc.column(name).to_pylist(), dtype=object) for name in O.NAMES}
+    for name in O.NAMES:
+        need(all(v is None for v in got[name][~in_day]), f'{name} is filled on a row of no trade day')
+    d = np.flatnonzero(in_day)
+    n = len(d)
+    position = rows.column('position_on_tape').to_numpy()[d]
+    peaks = _peaks_as_stored(rows_folder, trade_day, position)
+    most = {}
+    for side in O.SIDES:
+        mine = [p for p in peaks if p['side'] == side]
+        step, past = np.zeros(n + 1, np.int64), np.zeros(n + 1, np.int64)
+        for p in mine:
+            until = n if p['end'] is None else p['end']
+            step[p['known']] += 1
+            step[until] -= 1
+            if p['zero'] is not None:
+                past[p['zero']] += 1
+                past[until] -= 1
+        counted = np.cumsum(step)[:n]
+        need(got[f'{side}_open_stories'][d].tolist() == counted.tolist(), f'{side}_open_stories differs')
+        need(got[f'{side}_open_stories_past_zero'][d].tolist() == np.cumsum(past)[:n].tolist(),
+             f'{side}_open_stories_past_zero differs')
+        most[side] = int(counted.max()) if n else 0
+        # laid over the rows in order, the last one laid on a row is the one that shows there
+        for key, order in (('oldest', sorted(mine, key=lambda p: -p['known'])),
+                           ('newest', sorted(mine, key=lambda p: p['known'])),
+                           ('largest', sorted(mine, key=lambda p: (p['size'], -p['known'])))):
+            shows = np.full(n, -1, np.int64)
+            for p in order:
+                shows[p['known']:n if p['end'] is None else p['end']] = p['high']
+            need(got[f'{side}_{key}_open_high_position'][d].tolist() == [None if v < 0 else v for v in shows.tolist()],
+                 f'{side}_{key}_open_high_position differs from the recount')
+    return dict(passed=True, trade_day_rows=n, rows_of_no_trade_day_all_empty=int((~in_day).sum()),
+                columns_compared=len(O.NAMES), peaks=len(peaks),
+                most_stories_open_at_one_tick=most,
+                method='each story laid over the rows as a stretch, from the stored outputs of pieces 1 and 2; '
+                       'shares no code with the tick-by-tick calculation')
+
+
 KNOWN_AT_A_TICK = {'facts'}            # the tables whose lines each carry the tick at which they became known
 CALC_CHECKS = {'flow_peak': flow_peak, 'peak_story': peak_story, 'book_totals': book_totals,
-               'quote_runs': quote_runs}
+               'quote_runs': quote_runs, 'peak_links': peak_links, 'open_stories': open_stories}
 
 
 def playback_cuts(name: str, full: list, tables: dict) -> dict:
@@ -751,6 +919,11 @@ def playback_cuts(name: str, full: list, tables: dict) -> dict:
         shown = [k for k in range(1, len(full)) if any(full[k][1][c] != full[k - 1][1][c] for c in columns)]
         return ({'inside an exchange event, after a fill message and before the row where the book shows it':
                  full[shown[len(shown) // HALVE] - 1][0]} if shown else {})
+    if name == 'open_stories':
+        from root.calcs import open_stories as O
+        step = len(O.FIGURES)
+        open_now = [sum(values[k * step] for k in range(len(O.SIDES))) for _, values in full]
+        return {'the tick with the most stories open': full[open_now.index(max(open_now))][0]} if full else {}
     facts = tables.get('facts', [])
     if name == 'quote_runs':
         from root.calcs import quote_runs as Q
