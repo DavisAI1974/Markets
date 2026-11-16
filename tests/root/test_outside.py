@@ -193,7 +193,7 @@ def test_no_hidden_numbers():
     exempt_functions = {'us_federal_holidays', 'nth', 'observed', 'to_ns'}
     for name in exempt_functions:
         assert f'`{name}`' in declared
-    for path in sorted(str(f.relative_to(REPO)) for f in (REPO / 'root').glob('*.py')):
+    for path in sorted(str(f.relative_to(REPO)) for f in (REPO / 'root').glob('**/*.py')):
         tree = ast.parse((REPO / path).read_text())
         parents = {c: n for n in ast.walk(tree) for c in ast.iter_child_nodes(n)}
         for node in ast.walk(tree):

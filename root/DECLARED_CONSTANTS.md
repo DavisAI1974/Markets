@@ -18,6 +18,15 @@ the end.
 | `SUNDAY` | 6 | Weekday number of Sunday (Monday = 0): the week's start-up day. |
 | `FIRST_TRADE_WEEKDAY`, `LAST_TRADE_WEEKDAY` | 0, 4 | Trade days are Monday to Friday. |
 
+## `root/calcs/flow_peak.py` (part 2, piece 1; laid out and approved in markets-data `STEP1_STEP2_LAYOUTS.md`)
+
+| Constant | Value | Why |
+|---|---|---|
+| `FLOW_SPAN_SECONDS` | 20 | The span of the trade flow, as in the original Step 1 detector. It is the definition of the flow and the one averaging Greg confirmed as his exception; the single trades stay on their own rows. |
+| `FLOW_SPAN_NS` | 20 seconds in nanoseconds | Unit conversion of the above. |
+| `TRADE`, `BUY`, `SELL` | T, B, A | The tape's own codes for a trade and for the side of the aggressor. |
+| `BUY_TEXT`, `SELL_TEXT` | buy, sell | How a peak's side is written. |
+
 ## `root/outside.py` (SPEC-outside.md; "as in the original" means Markets 7f34afa)
 
 | Constant | Value | Why |

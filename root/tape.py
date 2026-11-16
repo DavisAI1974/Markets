@@ -214,6 +214,16 @@ def for_calculations(week: list[WeekFile], built=BUILT_TRADE_DAYS):
             yield f_index, r_index, record
 
 
+def position_base(week: list[WeekFile]) -> list:
+    """For each file of the week, the number to add to a record's index in that file to get the tick's position on
+    the tape for the week (the same numbering as the rows: ticks only, from the week's first tick)."""
+    out, ticks_before = [], 0
+    for f in week:
+        out.append(ticks_before - f.vendor_snapshot)
+        ticks_before += len(f.records) - f.vendor_snapshot
+    return out
+
+
 def columns(records) -> dict:
     """Every field of a block of records as plain lists (one pass over a file is far faster on lists)."""
     return {name: records[name].tolist() for name in records.dtype.names}

@@ -265,3 +265,113 @@ def pinned(row_files, tables_folder) -> dict:
                 rows_of_no_trade_day=days.null_count, trade_days_on_the_rows=names,
                 tables_hold_everything_known_before=receipt['cut_eastern'],
                 rows_where_a_column_is_empty={c: n for c, n in empty_rows.items() if n})
+
+
+def flow_peak(row_files, calc_files, trade_day: dt.date) -> dict:
+    """The check of the calculation `flow_peak`: every one of its columns worked out again from the stored rows by a
+    whole-column method that shares nothing with the tick-by-tick code, and compared on every row. The traded sizes
+    come from running totals; the peaks from the runs of equal flow; a peak's standing and how long it had been the
+    highest from the full list of moments at which the flow changed (trades arriving and trades turning 20 seconds
+    old). Rows of no trade day must hold empty cells."""
+    import numpy as np
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    from root.calcs import flow_peak as F
+    from root.calendar import TRADE_DAY
+    span = F.FLOW_SPAN_NS
+    rows = pa.concat_tables([pq.read_table(f, columns=['position_on_tape', 'received_time_ns', 'action', 'side',
+                                                       'size', 'row_label', 'trade_day']) for f in row_files])
+    calc = pa.concat_tables([pq.read_table(f) for f in calc_files])
+    need(rows.num_rows == calc.num_rows, 'the calculation files and the row files hold different numbers of rows')
+    need(rows.column('position_on_tape').equals(calc.column('position_on_tape')), 'positions differ from the rows')
+    text = lambda name: np.array(rows.column(name).to_pylist(), dtype=object)
+    in_day = (text('row_label') == TRADE_DAY) & (text('trade_day') == trade_day.isoformat())
+    got = {name: np.array(calc.column(name).to_pylist(), dtype=object) for name in F.NAMES}
+    for name in F.NAMES:
+        need(all(v is None for v in got[name][~in_day]), f'{name} is filled on a row of no trade day')
+    d = np.flatnonzero(in_day)
+    got = {name: values[d] for name, values in got.items()}
+    position = rows.column('position_on_tape').to_numpy()[d]
+    r = rows.column('received_time_ns').to_numpy()[d]
+    need(bool(np.all(np.diff(r) >= 0)), 'the received time goes backwards inside the trade day')
+    trade = text('action')[d] == F.TRADE.decode()
+    side = text('side')[d]
+    size = rows.column('size').to_numpy()[d].astype(np.int64)
+
+    # the traded sizes of the last 20 seconds, from running totals
+    first_inside = np.searchsorted(r, r - span, side='right')
+
+    def last_20s(mask):
+        running = np.cumsum(np.where(mask, size, 0))
+        return running - np.concatenate(([0], running))[first_inside], running
+    bought, bought_running = last_20s(trade & (side == F.BUY.decode()))
+    sold, sold_running = last_20s(trade & (side == F.SELL.decode()))
+    no_side, _ = last_20s(trade & (side != F.BUY.decode()) & (side != F.SELL.decode()))
+    for name, expected in (('flow_bought_20s', bought), ('flow_sold_20s', sold), ('flow_no_side_20s', no_side)):
+        need(got[name].tolist() == expected.tolist(), f'{name} differs from the recount')
+    both = bought + sold
+    flow = [(int(b) - int(s)) / int(t) if t else None for b, s, t in zip(bought, sold, both)]
+    need(got['flow_20s'].tolist() == flow, 'flow_20s differs from the recount')
+
+    # the peaks, from the runs of equal flow: a run is a high when the flow rose into it and falls or empties after it
+    a, t = np.abs(bought - sold), both
+    starts = np.flatnonzero(np.concatenate(([True], (a[1:] * t[:-1] != a[:-1] * t[1:]) | ((t[1:] > 0) != (t[:-1] > 0)))))
+    ra, rt = a[starts], t[starts]
+    rose = (rt > 0) & np.concatenate(([True], (rt[:-1] == 0) | (ra[1:] * rt[:-1] > ra[:-1] * rt[1:])))
+    fell = np.concatenate(((rt[1:] == 0) | (ra[1:] * rt[:-1] < ra[:-1] * rt[1:]), [False]))
+    runs = np.flatnonzero(rose & fell)
+    high, known = starts[runs], starts[runs + 1]
+    known_rows = np.flatnonzero(np.array([v is not None for v in got['peak_high_position']]))
+    need(known_rows.tolist() == known.tolist(), 'the rows where a peak becomes known differ from the recount')
+    for name in F.NAMES:
+        if name.startswith('peak_') and name not in ('peak_highest_since_open', 'peak_since_previous_peak_ns'):
+            unknown = np.ones(len(d), bool)
+            unknown[known] = False
+            need(all(v is None for v in got[name][unknown]), f'{name} is filled on a row where no peak became known')
+    need(got['peak_high_position'][known].tolist() == position[high].tolist(), 'the tick of the high differs')
+    need(got['peak_high_received_time_ns'][known].tolist() == r[high].tolist(), 'the time of the high differs')
+    need(got['peak_side'][known].tolist() == [F.BUY_TEXT if b > s else F.SELL_TEXT
+                                              for b, s in zip(bought[high], sold[high])], 'the side of a peak differs')
+    need(got['peak_size'][known].tolist() == [int(x) / int(y) for x, y in zip(a[high], t[high])],
+         'the size of a peak differs')
+    gaps = [None] + np.diff(r[high]).tolist() if len(high) else []
+    need(got['peak_since_previous_peak_ns'][known].tolist() == gaps, 'the time since the peak before differs')
+
+    # every moment the flow changed: each tick, and each moment between ticks at which a trade turned 20 seconds old
+    left = np.unique(r[trade] + span)
+    left = left[(left < r[-1]) & ~np.isin(left, r)]
+    row_at = np.searchsorted(r, left, side='right') - 1
+    gone = np.searchsorted(r, left - span, side='right')
+    left_b = bought_running[row_at] - np.concatenate(([0], bought_running))[gone]
+    left_s = sold_running[row_at] - np.concatenate(([0], sold_running))[gone]
+    when = np.concatenate((r, left))
+    order = np.argsort(when, kind='stable')
+    when = when[order]
+    sa = np.concatenate((a, np.abs(left_b - left_s)))[order]
+    st = np.concatenate((t, left_b + left_s))[order]
+    state_of_row = np.empty(len(when), np.int64)
+    state_of_row[order] = np.arange(len(when))
+    state_of_row = state_of_row[:len(r)]
+    seg = np.flatnonzero(np.concatenate(([True], (sa[1:] * st[:-1] != sa[:-1] * st[1:]) | ((st[1:] > 0) != (st[:-1] > 0)))))
+    seg_of_state = np.cumsum(np.concatenate(([True], (sa[1:] * st[:-1] != sa[:-1] * st[1:]) |
+                                             ((st[1:] > 0) != (st[:-1] > 0))))) - 1
+    ga, gt, begins = sa[seg], st[seg], when[seg]
+    ends = np.concatenate((begins[1:], [when[-1]]))
+    first_flow_at = int(begins[np.flatnonzero(gt > 0)[0]]) if (gt > 0).any() else None
+    standing, highest_for, since_open = [], [], []
+    for h, k in zip(high.tolist(), known.tolist()):
+        va, vt, at = int(a[h]), int(t[h]), int(r[k])
+        lasted = np.clip(np.minimum(ends, at) - begins, 0, None)
+        total = int(lasted[gt > 0].sum())
+        standing.append(int(lasted[(gt > 0) & (ga * vt < va * gt)].sum()) / total if total else None)
+        own = int(seg_of_state[state_of_row[h]])
+        larger = np.flatnonzero((gt[:own] > 0) & (ga[:own] * vt > va * gt[:own]))
+        since_open.append(len(larger) == 0)
+        highest_for.append(int(r[h]) - (first_flow_at if len(larger) == 0 else int(ends[larger[-1]])))
+    need(got['peak_standing_so_far'][known].tolist() == standing, 'the standing of a peak differs from the recount')
+    need(got['peak_highest_for_ns'][known].tolist() == highest_for, 'how long a peak had been the highest differs')
+    need(got['peak_highest_since_open'][known].tolist() == since_open, 'highest since the open differs')
+    return dict(passed=True, rows_compared=int(rows.num_rows), trade_day_rows=int(len(d)),
+                rows_of_no_trade_day_all_empty=int((~in_day).sum()), peaks_compared=int(len(known)),
+                moments_the_flow_changed=int(len(seg)),
+                method='whole-column recount from the stored rows; shares no code with the tick-by-tick calculation')

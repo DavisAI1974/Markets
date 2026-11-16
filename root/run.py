@@ -4,6 +4,7 @@
     python3 -m root.run check-book 20231002 [--tape ...] [--out <dir>]
     python3 -m root.run build 20231002 --out <markets-data folder> [--tape ...]
     python3 -m root.run playback 20231002 [--tape ...] [--out <dir>]
+    python3 -m root.run calc flow_peak 20231002 --rows <stored rows folder> --out <markets-data folder> [--tape ...]
 """
 from __future__ import annotations
 
@@ -13,7 +14,7 @@ import os
 from pathlib import Path
 
 from root.calendar import parse_trade_day
-from root import checks, pin, store, tape
+from root import checks, part2, pin, store, tape
 from root.book import check_book
 from root.tape import check_week
 
@@ -41,7 +42,20 @@ def main():
     pb.add_argument('trade_day')
     pb.add_argument('--tape', type=Path, default=DEFAULT_TAPE)
     pb.add_argument('--out', type=Path, help='folder for the record')
+    ca = sub.add_parser('calc', help='part 2: one calculation on one trade day, its columns beside the stored rows')
+    ca.add_argument('name', choices=sorted(part2.CALCS))
+    ca.add_argument('trade_day')
+    ca.add_argument('--tape', type=Path, default=DEFAULT_TAPE)
+    ca.add_argument('--rows', type=Path, required=True, help='the folder of the stored rows of that trade day')
+    ca.add_argument('--out', type=Path, required=True, help='output folder (in markets-data, never in Markets)')
     a = ap.parse_args()
+    if a.command == 'calc':
+        receipt = part2.run(a.tape, parse_trade_day(a.trade_day), a.rows, a.out, a.name)
+        print(json.dumps(dict(calculation=a.name, trade_day=receipt['trade_day'], rows=receipt['rows'],
+                              ticks_calculated_on=receipt['ticks_calculated_on'], counts=receipt['counts'],
+                              megabytes=round(sum(f['bytes'] for f in receipt['files']) / BYTES_PER_MEGABYTE, 1),
+                              recount=receipt['checks']['recount'], playback=receipt['checks']['playback'],
+                              seconds=receipt['seconds']), indent=1))
     if a.command == 'build':
         day = parse_trade_day(a.trade_day)
         receipt = store.build(a.tape, day, a.out, checker=checks.RowChecker(day), outside_tables=a.outside)
