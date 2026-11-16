@@ -86,8 +86,9 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
   vendor cuts raw tape files that way; midnight UTC is 20:00 ET (EDT), two hours INTO the trade day. Download
   whichever UTC clock-day files are needed to cover a trade day completely, then shelve (keep, do not use) the
   hours that belong to a different trade day. Carry the order book straight through 00:00 UTC: applying the
-  snapshot that opens each raw file restarts every resting order's age at 20:00 ET (found and fixed 2026-11-16,
-  `markets-data` `tasks/family-research-20261022/research-union-current/trade-day-rebuild-20261116/`). Any
+  snapshot that opens each raw file restarts every resting order's age at 20:00 ET (found and fixed 2026-11-16;
+  carried by `root/book.py`, which never applies a vendor snapshot after the week's start; record in `markets-data`
+  `tasks/family-research-20261022/research-union-current/resting-order-age-20261116/`). Any
   exception needs a specific reason, written down next to the thing that differs.
 
 - **ONLY THE FOUR TRADE DAYS ENTER A CALCULATION (Greg, 2026-11-16, said several times).** Scope: the ROOT rebuild,
