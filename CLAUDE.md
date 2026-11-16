@@ -76,9 +76,12 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
 
 ## The trading rules (load-bearing — Greg, S80-S82)
 
-- **TRADE DAY ONLY, NEVER A CLOCK DAY (Greg, 2026-11-16).** A TRADE DAY is the CME session: 17:00 ET the evening
-  before (the daily halt; trading resumes 18:00 ET) to 17:00 ET on the named date, so trade day Wednesday starts
-  Tuesday evening. Everything we build, label and analyze is cut on the trade day. Never write a bare "day" or a
+- **TRADE DAY ONLY, NEVER A CLOCK DAY (Greg, 2026-11-16).** A TRADE DAY runs from 18:00 ET the evening before to
+  17:00 ET on the named date, so trade day Wednesday is 18:00 ET Tuesday to 17:00 ET Wednesday. The hour from
+  17:00 to 18:00 ET (the daily halt) is its own marked stretch and belongs to neither trade day: no trades happen
+  in it, but its messages are kept and the order book processes them. The order book is the WEEK, not the day: it
+  is seated at the exchange's Sunday start-up and carried straight through to Friday, and the only restart is the
+  exchange's own on Sunday. Everything we build, label and analyze is cut on the trade day. Never write a bare "day" or a
   bare date: say "trade day" or "UTC clock day". The UTC clock day (00:00-24:00 UTC) exists only because the
   vendor cuts raw tape files that way; midnight UTC is 20:00 ET (EDT), two hours INTO the trade day. Download
   whichever UTC clock-day files are needed to cover a trade day completely, then shelve (keep, do not use) the
