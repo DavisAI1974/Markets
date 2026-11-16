@@ -90,6 +90,20 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
   `markets-data` `tasks/family-research-20261022/research-union-current/trade-day-rebuild-20261116/`). Any
   exception needs a specific reason, written down next to the thing that differs.
 
+- **ONLY THE FOUR TRADE DAYS ENTER A CALCULATION (Greg, 2026-11-16, said several times).** Scope: the ROOT rebuild,
+  trade days Oct 2, 3, 17 and 18, 2023. Only ticks inside those four trade days (18:00 ET to 17:00 ET) are used in
+  any calculation that feeds research, analysis or trade strategies. Data from outside them (the Sunday start-ups,
+  trade day Mon Oct 16, the 17:00 to 18:00 ET stretches, the evening hours after a built trade day) may be used for
+  ONE thing: seating the order book so the book on the four trade days is complete. The stretches and the Sunday
+  start-up before Oct 2 keep their marked rows; nothing is calculated on them. **Any other use of data from outside
+  the four trade days is put to Greg FIRST, before it is built.** Nothing is commingled; anything ever made from the
+  warm-up data goes in its own output, apart. Enforced in code: `root/tape.py` `for_calculations()` is the only way
+  a calculation receives ticks; calculation modules live in `root/calcs/` and may not read the tape themselves
+  (`tests/root/test_tape.py`). The 13 outside data points are the published figures Greg approved in
+  `SPEC-outside.md`; no new outside input is added without asking him. Greg, same day: a trade may continue into the
+  days beyond the four; nothing is built for that now ("we'll cross that bridge if we come to it"), and when it comes
+  up it is put to him first.
+
 - **TRADE COST IS NOT A MARKET CONDITION (Greg, 2026-11-08).** No fee, slippage, maker or taker offset, fill
   model or any other execution assumption enters ANY research calculation, forecast or output. Research numbers
   are GROSS.
