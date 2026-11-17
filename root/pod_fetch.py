@@ -37,11 +37,11 @@ def fetch(base: str, day: str, commit: str, into: Path, names: list) -> dict:
     if ran != commit:
         raise SystemExit(f'the pod last ran commit {ran}, not {commit}')
     if any(name not in NO_STORED_ROWS for name in names):          # the models read no stored rows: they rebuild their peak
-        rows_here = subprocess.run(['git', '-C', str(into), 'rev-parse', 'HEAD'], capture_output=True, text=True,
-                                   check=True).stdout.strip()        # lines through the tape gate
+        history = subprocess.run(['git', '-C', str(into), 'rev-list', 'HEAD'], capture_output=True, text=True,
+                                 check=True).stdout.split()          # lines through the tape gate
         rows_there = get(base, 'ROWS_COMMIT').decode().strip()
-        if rows_there != rows_here:
-            raise SystemExit(f'the pod ran on stored rows {rows_there}; the local copy is {rows_here}')
+        if rows_there not in history:                  # the local branch may have moved on by outputs stored since
+            raise SystemExit(f'the pod ran on stored rows {rows_there}, which is not in the local branch')
     status = get(base, 'STATUS').decode()
     out = {}
     for name in names:
