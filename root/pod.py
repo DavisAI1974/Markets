@@ -17,7 +17,7 @@ What is different from the first launcher (`pod_run.sh`, which this replaces):
           ways                                   the chain links in six ways, peak by peak (root/chain_ways.py)
           legs                                   the trade legs of 6 pm to 8 pm on Oct 2 and Oct 17 (root/trade_legs.py)
           rebuild                                the rows built again with the outside tables as they stand, then
-                                                 outside_changes beside them (the only calculation that reads them);
+                                                 flow_peak and outside_changes beside them (the changed pieces);
                                                  the unchanged calculations are not run again (Greg: no tests except
                                                  on changed pieces)
 """
@@ -41,8 +41,11 @@ OUT, CODE, DATA, ROWS = WORK / 'out', WORK / 'code', WORK / 'data', WORK / 'rows
 GITHUB = 'https://github.com/DavisAI1974'
 DATA_BRANCH, TAPE = 'ccr-349e2ffe-07p8od', 'data/nymex_mbo/ng_v0_oct2023'
 OUTSIDE = 'data/outside/ng_oct2023/made'               # the made outside tables the rows pin (section G)
-KEPT_BESIDE = ('calc-flow_peak-', 'calc-peak_story-', 'calc-quote_runs-')   # unchanged outputs outside_changes'
-#                                                        check reads beside the rows
+KEPT_BESIDE = ('calc-peak_story-', 'calc-quote_runs-')   # unchanged outputs outside_changes' check reads beside
+#                                                          the rows
+REBUILT = ('flow_peak', 'outside_changes')             # the calculations that changed (Greg: no tests except on
+#                                                        changed pieces): the peaks without their ranked column, and
+#                                                        the outside changes beside the rebuilt rows
 LIBRARIES = ['databento==0.90.0', 'pyarrow==26.0.1', 'numpy==2.5.5']
 CALCULATIONS = ('refills', 'sweeps', 'chain_peaks', 'quote_peaks', 'outside_changes', 'together')   # what a pod
 #                                                      may be asked to run
@@ -99,10 +102,15 @@ def run(day: str, commit: str, job: str):
             for kept in sorted(ROWS.iterdir()):
                 if kept.name.startswith(KEPT_BESIDE):
                     shutil.copy2(kept, OUT / kept.name)
-            started = [('outside_changes', cpus[0], subprocess.Popen(
-                [sys.executable, '-m', 'root.run', 'calc', 'outside_changes', day, '--rows', str(OUT), '--out',
-                 str(OUT)], cwd=CODE, env=environment, stdout=open(OUT / 'outside_changes.log', 'w'),
-                stderr=subprocess.STDOUT, preexec_fn=functools.partial(os.sched_setaffinity, 0, {cpus[0]})))]
+            for name in REBUILT:                       # the changed pieces, in order: each reads the one before
+                done = subprocess.run(
+                    [sys.executable, '-m', 'root.run', 'calc', name, day, '--rows', str(OUT), '--out', str(OUT)],
+                    cwd=CODE, env=environment, stdout=open(OUT / f'{name}.log', 'w'), stderr=subprocess.STDOUT,
+                    preexec_fn=functools.partial(os.sched_setaffinity, 0, {cpus[0]}))
+                say(f'{name} {"passed" if done.returncode == 0 else "FAILED"} on CPU {cpus[0]} at {commit}')
+                if done.returncode:
+                    break
+            started = []
         elif job in ROW_JOBS:
             module = ROW_JOBS[job]
             started = [(module, cpus[0], subprocess.Popen(
