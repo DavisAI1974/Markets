@@ -52,7 +52,12 @@ OLD_FOLDER = ('tasks/family-research-20261022/claude-independent-research-202611
 OLD_SHA256 = {'20231002': dict(legs='af766f0bf330ef9d8d23e7453ddae5260c87adf18ac244de50b99fdfc03f0896',
                                trades='a10f5928b0df415260bd93a1bf4475abf1aa6be1c49776553c1a5be80805f243'),
               '20231017': dict(legs='4710ae6660e82c2a29fb60d12e725f901bbdffdc0bbabfc4dd31b3196f89e3f1',
-                               trades='e9be9e78167e719a8b2070a041da297fe8f1aec5e98a9baa74a06341e0601854')}
+                               trades='e9be9e78167e719a8b2070a041da297fe8f1aec5e98a9baa74a06341e0601854'),
+              # the two trade days whose earlier record starts at 6 pm (read by the check of `leg_peaks`)
+              '20231003': dict(legs='fcf15d94b62d94a03c120f11ff8b3015846adcb0c1af725e2cc644bf782a91fb',
+                               trades='02c01d9bd080c89a34e0915a53221ebf6e92dbc8bad27211abe8cb6fec37dc5b'),
+              '20231018': dict(legs='e2dbb0cb31ba8c64e52329f019deac366990702bd012a6dd33ac79fdcdaa5065',
+                               trades='eb274a3e9d81c1589a1038a96b6097f9f6dac2ef34f1ef9407d522d532696977')}
 RAW = 'https://raw.githubusercontent.com/DavisAI1974/{repo}/{commit}/{path}'
 AGENT = 'curl/8'
 READS = ['action', 'side', 'price', 'size', 'order_number', 'exchange_time_ns', 'received_time_ns',

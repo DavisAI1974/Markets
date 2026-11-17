@@ -26,14 +26,14 @@ import json
 from pathlib import Path
 
 from root import checks, store, tape
-from root.calcs import (book_totals, chain_peaks, flow_peak, open_stories, outside_changes, peak_links, peak_story,
-                        quote_peaks, quote_runs, refills, sweeps, together)
+from root.calcs import (book_totals, chain_peaks, flow_peak, leg_peaks, open_stories, outside_changes, peak_links,
+                        peak_story, quote_peaks, quote_runs, refills, resting, sweeps, together, turn_peaks)
 from root.calendar import label
 
 CALCS = {'flow_peak': flow_peak, 'peak_story': peak_story, 'book_totals': book_totals, 'quote_runs': quote_runs,
          'peak_links': peak_links, 'open_stories': open_stories, 'refills': refills, 'sweeps': sweeps,
          'chain_peaks': chain_peaks, 'quote_peaks': quote_peaks, 'outside_changes': outside_changes,
-         'together': together}
+         'together': together, 'leg_peaks': leg_peaks, 'resting': resting, 'turn_peaks': turn_peaks}
 LAID_OUT = {'flow_peak': 'markets-data STEP1_STEP2_LAYOUTS.md, piece 1 (Greg, 2026-11-16)',
             'peak_story': 'markets-data STEP1_STEP2_LAYOUTS.md, piece 2 as revised (Greg, 2026-11-16)',
             'book_totals': 'markets-data STEP2_PLAN.md, piece C (Greg, 2026-11-16)',
@@ -46,7 +46,12 @@ LAID_OUT = {'flow_peak': 'markets-data STEP1_STEP2_LAYOUTS.md, piece 1 (Greg, 20
                            '2026-11-16): the per-peak lines the models read',
             'quote_peaks': 'markets-data STEP2_PLAN.md, piece I, the lines that name peaks (Greg, 2026-11-16)',
             'outside_changes': 'markets-data STEP1_STEP2_LAYOUTS.md, addition O ("Try them all", Greg, 2026-11-16)',
-            'together': 'markets-data STEP1_STEP2_LAYOUTS.md, addition N ("Try them all", Greg, 2026-11-16)'}
+            'together': 'markets-data STEP1_STEP2_LAYOUTS.md, addition N ("Try them all", Greg, 2026-11-16)',
+            'leg_peaks': 'markets-data STEP2_PLAN.md, piece I, the print legs beside the peaks (Greg, 2026-11-16; '
+                         'his go 2026-11-17)',
+            'resting': 'markets-data STEP2_PLAN.md, piece K ("Yes to k", Greg, 2026-11-16; his go 2026-11-17)',
+            'turn_peaks': 'Greg, 2026-11-17: "We need to calc this without the window and find the peak number"; '
+                          '"do that extra along with the others"'}
 POSITION = 'position_on_tape'
 
 

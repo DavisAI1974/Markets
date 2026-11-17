@@ -1476,11 +1476,427 @@ def together(row_files, calc_files, trade_day: dt.date, table_files=None, rows_f
                        'calculation')
 
 
-KNOWN_AT_A_TICK = {'facts', 'before'}            # the tables whose lines each carry the tick at which they became known
+def leg_peaks(row_files, calc_files, trade_day: dt.date, table_files=None, rows_folder=None) -> dict:
+    """The check of the calculation `leg_peaks`: the trade legs made again by the earlier work's own two rule
+    functions (loaded from their commit, unchanged) over the whole list of the trade day's prints, every moment of
+    every leg placed from that, and the peaks in play at each from the stored outputs of pieces 1 and 2 as whole
+    tables. Then the earlier record itself: every earlier trade is the tape's trade at the same place, and every
+    earlier leg comes out again (on trade days Oct 2 and Oct 17 the earlier record starts at 8 pm, so its first leg,
+    cut there, is left out). The calculation follows the prints one at a time."""
+    import io
+    import numpy as np
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    from root import trade_legs as TL
+    from root.calcs import leg_peaks as LP
+    day = f'{trade_day:%Y%m%d}'
+    rows, calc = _stored(row_files, calc_files, ['received_time_ns', 'exchange_time_ns', 'action', 'price'])
+    text = lambda name: np.array(rows.column(name).to_pylist(), dtype=object)
+    in_day = (text('row_label') == TRADE_DAY) & (text('trade_day') == trade_day.isoformat())
+    stored = {name: np.array(calc.column(name).to_pylist(), dtype=object) for name in LP.NAMES}
+    for name in LP.NAMES:
+        need(all(v is None for v in stored[name][~in_day]), f'{name} is filled on a row of no trade day')
+    d = np.flatnonzero(in_day)
+    peaks_at, _, position, r = _in_play_as_stored(rows_folder, trade_day, rows, d)
+    action, price, exchange = text('action')[d], text('price')[d], text('exchange_time_ns')[d]
+    prints = [k for k in range(len(d)) if action[k] == LP.TRADE]          # the rows of the trade day's prints
+    prices = [int(price[k]) for k in prints]
+    rule = TL.old_rule()
+    stretches, _ = rule['price_stretches'](prices)
+    legs, _ = rule['print_legs'](stretches)
+    at = lambda stretch: prints[stretches[stretch]['first_trade_ordinal']]   # the row of a stretch's first print
+    expected, in_progress = [], {}
+
+    def line(leg, kind, row, to_price, steps, last=None, back=None):
+        first = at(leg['first_stretch_ordinal'])
+        start = stretches[leg['first_stretch_ordinal']]['price_raw']
+        expected.append((int(position[row]), int(r[row]), kind, leg['leg_ordinal'],
+                         LP.UP if leg['step_sign'] > 0 else LP.DOWN, int(position[first]), int(r[first]), start,
+                         to_price, steps, to_price - start, int(r[row] - r[first]), last, back) + peaks_at(row))
+        if kind != LP.ENDED:
+            in_progress[row] = expected[-1]
+    for leg in legs:
+        lo, hi = leg['first_stretch_ordinal'], leg['last_stretch_ordinal']
+        for s in range(lo + 1, hi + 1):
+            line(leg, LP.STARTED if s == lo + 1 else LP.FURTHER, at(s), stretches[s]['price_raw'], s - lo)
+        if hi + 1 < len(stretches):
+            last = int(position[prints[stretches[hi]['last_trade_ordinal']]])
+            line(leg, LP.ENDED, at(hi + 1), stretches[hi]['price_raw'], hi - lo, last,
+                 stretches[hi + 1]['price_raw'] - stretches[hi]['price_raw'])
+    _facts_equal(table_files['facts'], LP.FACT_NAMES, expected)
+    f = {name: k for k, name in enumerate(LP.FACT_NAMES)}
+    per_row = collections.Counter(row[0] for row in expected)
+    now, want = LP.NO_LEG, {name: [] for name in LP.NAMES}
+    for k in range(len(d)):
+        if k in in_progress:
+            fact = in_progress[k]
+            now = tuple(fact[f[name]] for name in ('leg_number', 'direction', 'leg_first_trade_position',
+                                                    'leg_start_price', 'price', 'steps'))
+        for name, value in zip(LP.NAMES, now + (per_row.get(int(position[k]), 0),)):
+            want[name].append(value)
+    for name in LP.NAMES:
+        need(stored[name][d].tolist() == want[name], f'{name} differs from the recount along the whole column')
+    going = pa.concat_tables([pq.read_table(file) for file in table_files['open-at-the-end']])
+    need([tuple(row[c] for c in LP.OPEN_COLUMNS) for row in going.to_pylist()] ==
+         ([now] if legs else []), 'the leg still going at the last tick differs from the recount')
+
+    # the earlier record: its trades are the tape's, and its legs come out again
+    old = {name: pq.read_table(io.BytesIO(TL.fetch('markets-data', TL.OLD_COMMIT, TL.OLD_FOLDER.format(day=day) +
+                                                   f'/a-{what}.parquet', TL.OLD_SHA256[day][name]))).to_pylist()
+           for name, what in (('trades', 'trades'), ('legs', 'print-legs'))}
+    seam = TL.OLD_START_NS.get(day)
+    before = 0 if seam is None else sum(1 for k in prints if r[k] < seam)
+    need(len(prints) - before == len(old['trades']),
+         f'{len(prints) - before} prints from the start of the earlier record; it holds {len(old["trades"])}')
+    for k, was in enumerate(old['trades']):
+        row = prints[before + k]
+        need((int(exchange[row]), int(r[row]), int(price[row])) == (was['event_ns'], was['receive_ns'],
+                                                                   was['price_raw']),
+             f'earlier trade {k} is not the tape\'s print at the same place')
+    mine = {(stretches[leg['first_stretch_ordinal']]['first_trade_ordinal'],
+             stretches[leg['last_stretch_ordinal']]['last_trade_ordinal'], leg['step_sign']): leg['leg_ordinal']
+            for leg in legs}
+    shifts = set()
+    for was in old['legs'][0 if seam is None else 1:]:
+        key = (was['first_trade'] + before, was['last_trade'] + before, was['step_sign'])
+        need(key in mine, f'earlier leg {was["leg_ordinal"]} does not come out again')
+        need(prices[key[1]] - prices[key[0]] == was['raw_price_change'],
+             f'earlier leg {was["leg_ordinal"]}: the price change differs')
+        shifts.add(mine[key] - was['leg_ordinal'])
+    need(len(shifts) == 1, f'the earlier leg numbers do not differ from these by one fixed count: {sorted(shifts)}')
+    return dict(passed=True, trade_day_rows=len(d), prints=len(prints), stretches=len(stretches), legs=len(legs),
+                facts_compared=len(expected),
+                facts_by_kind=dict(collections.Counter(row[f['fact']] for row in expected)),
+                facts_with_a_rise_under_way=sum(1 for row in expected if row[f['rise_side']] is not None),
+                earlier_record=dict(commit=TL.OLD_COMMIT, folder=TL.OLD_FOLDER.format(day=day),
+                                    sha256=TL.OLD_SHA256[day], trades_compared=len(old['trades']),
+                                    legs_compared=len(old['legs']) - (0 if seam is None else 1),
+                                    starts='6 pm Eastern, the open of the trade day' if seam is None else
+                                    '8 pm Eastern (00:00 UTC); its first leg is cut there and is left out',
+                                    prints_before_it_starts=before,
+                                    an_earlier_leg_number_is_this_leg_number_minus=shifts.pop()),
+                method='the legs made again by the earlier rule functions over the whole list of prints, each '
+                       'moment placed from that; the peaks in play from the stored outputs of pieces 1 and 2 as '
+                       'whole tables; every earlier trade and leg found again. Shares no code with the '
+                       'print-by-print calculation')
+
+
+def _moves_as_stored(rows_folder, trade_day: dt.date, position, prints, prices):
+    """The three moves in price followed with no window, as whole lists: the trade legs (made by the earlier
+    work's rule functions over the whole list of prints) and the runs of the best bid and of the best ask (the
+    stored, already checked facts of `quote_runs`). For each move, its instances in order, each a dict: start
+    (the label), direction, steps [(row, price)] with the row each step became known on (the first is where the
+    move starts to be the one in progress), end (row, price) or None, and for a leg the rows of its moments."""
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    from root import trade_legs as TL
+    from root.calcs import leg_peaks as LP
+    from root.calcs import quote_runs as Q
+    row_of = {int(p): k for k, p in enumerate(position)}
+    stretches, _ = TL.old_rule()['price_stretches'](prices)
+    legs, _ = TL.old_rule()['print_legs'](stretches)
+    at = lambda stretch: prints[stretches[stretch]['first_trade_ordinal']]
+    out = {'trade leg': []}
+    for leg in legs:
+        lo, hi = leg['first_stretch_ordinal'], leg['last_stretch_ordinal']
+        out['trade leg'].append(dict(
+            start=int(position[at(lo)]), direction=LP.UP if leg['step_sign'] > 0 else LP.DOWN,
+            steps=[(at(s), stretches[s]['price_raw']) for s in range(lo + 1, hi + 1)],
+            end=(at(hi + 1), stretches[hi]['price_raw']) if hi + 1 < len(stretches) else None))
+    files = sorted(Path(rows_folder).glob(f'calc-quote_runs-facts-{trade_day:%Y%m%d}-part*.parquet'))
+    need(files, 'the stored facts of the quote\'s runs are not beside the rows')
+    keys = ['known_position', 'quote', 'run_start_position', 'fact', 'direction', 'furthest_price']
+    facts = pa.concat_tables([pq.read_table(f, columns=keys) for f in files])
+    going = {}
+    for known, quote, start, kind, direction, furthest in zip(*[facts.column(c).to_pylist() for c in keys]):
+        move = f'run of the {quote}'
+        if kind == Q.STARTED:
+            going[quote] = dict(start=start, direction=direction, steps=[], end=None)
+            out.setdefault(move, []).append(going[quote])
+        if kind == Q.STEP_BACK:
+            going[quote]['end'] = (row_of[known], furthest)
+        else:
+            going[quote]['steps'].append((row_of[known], furthest))
+    for move in ('run of the best bid', 'run of the best ask'):
+        out.setdefault(move, [])
+    return out
+
+
+def resting(row_files, calc_files, trade_day: dt.date, table_files=None, rows_folder=None) -> dict:
+    """The check of the calculation `resting`. Every order's whole life is laid out from the rows as one table
+    (where it joined or that it was carried in, every step, where it left). The orders resting at an earlier turn
+    are those whose life spans that row; what had become of them by a later turn is read off each one's life
+    table. The turns come from the stored outputs of piece 2 and the quote's runs and from the trade legs made by
+    the earlier rule. The orders with no row all trade day (carried in and never touched) must be the same number
+    and size on each side at every turn. The calculation follows the book forward, one tick at a time."""
+    import numpy as np
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    from root.calcs import leg_peaks as LP
+    from root.calcs import quote_runs as Q
+    from root.calcs import resting as K
+    columns = ['received_time_ns', 'action', 'side', 'price', 'best_bid', 'best_ask', 'order_number',
+               'what_happened', 'order_size_before', 'order_size_after', 'touched_price', 'left_price',
+               'orders_ahead_before', 'size_ahead_before', 'touched_line', 'exchange_event'] + K.BOOK
+    rows, calc = _stored(row_files, calc_files, columns)
+    text = lambda name: np.array(rows.column(name).to_pylist(), dtype=object)
+    in_day = (text('row_label') == TRADE_DAY) & (text('trade_day') == trade_day.isoformat())
+    stored = {name: np.array(calc.column(name).to_pylist(), dtype=object) for name in K.NAMES}
+    for name in K.NAMES:
+        need(all(v is None for v in stored[name][~in_day]), f'{name} is filled on a row of no trade day')
+    d = np.flatnonzero(in_day)
+    col = {name: text(name)[d] for name in columns}
+    position = np.array(rows.column('position_on_tape').to_pylist(), dtype=np.int64)[d]
+    r = col['received_time_ns'].astype(np.int64)
+    row_of = {int(p): k for k, p in enumerate(position)}
+
+    # every order's life, as one table sorted by order and then by row
+    what = col['what_happened']
+    e = np.flatnonzero(np.isin(what, K.STEPS))
+    number, inverse = np.unique(col['order_number'][e].astype(np.int64), return_inverse=True)
+    by = np.argsort(inverse, kind='stable')
+    so, se, sw = inverse[by], e[by], what[e][by]
+    whole = lambda name: np.array([0 if v is None else v for v in col[name][se]], dtype=np.int64)
+    before, after, at_price, left_price = (whole(name) for name in ('order_size_before', 'order_size_after',
+                                                                    'touched_price', 'left_price'))
+    orders = np.arange(len(number))
+    first, last = np.searchsorted(so, orders), np.searchsorted(so, orders, side='right') - 1
+    joined, fill = sw == R.JOINED, np.isin(sw, K.FILLS)
+    delta = np.where(joined, 0, before - after)
+    moved = sw == R.LOST_PLACE_PRICE
+    running = {}
+    for key, change in (('filled', np.where(fill, delta, 0)), ('pulled', np.where(~fill & (delta > 0), delta, 0)),
+                        ('added', np.where(~fill & (delta < 0), -delta, 0)), ('moved', moved.astype(np.int64))):
+        total = np.cumsum(change)
+        running[key] = total - (total[first] - change[first])[so]
+    carried = ~joined[first]
+    starts = np.where(carried, -1, se[first])
+    left = np.isin(sw[last], K.LEAVES)
+    ends = np.where(left, se[last], len(d))
+    left_by_fill = sw[last] == R.LEFT_BY_FILL
+    size_first = np.where(carried, before[first], 0)
+    price_first = np.where(moved[first], left_price[first], at_price[first])
+    side_of = np.array([K.SIDES[s] for s in col['side'][se][first]], dtype=object)
+    wide = len(d) + 1
+    life_key = so.astype(np.int64) * wide + se
+
+    def standing(which, row):
+        """Each of those orders as it stood once a row was done: size, price, and its running figures."""
+        at = np.searchsorted(life_key, which.astype(np.int64) * wide + row, side='right') - 1
+        has = at >= first[which]
+        at = np.clip(at, 0, None)
+        out = dict(size=np.where(has, after[at], size_first[which]),
+                   price=np.where(has, at_price[at], price_first[which]))
+        out.update({key: np.where(has, running[key][at], 0) for key in running})
+        return out
+    book = {side: [col[name].astype(np.int64) for name in (f'{side}_orders', f'{side}_total_size',
+                                                           f'best_{side}_orders', f'best_{side}_size')]
+            for side in K.SIDES.values()}
+    best = {'bid': col['best_bid'], 'ask': col['best_ask']}
+    held, never = {}, {}
+
+    def at_turn(row):
+        if row not in held:
+            there = np.flatnonzero((starts <= row) & (ends > row))
+            then = standing(there, row)
+            held[row] = {}
+            for side in K.SIDES.values():
+                mine = side_of[there] == side
+                which, size, price = there[mine], then['size'][mine], then['price'][mine]
+                unseen = (int(book[side][0][row]) - len(which), int(book[side][1][row]) - int(size.sum()))
+                need(never.setdefault(side, unseen) == unseen,
+                     f'the {side} orders with no row all trade day are {never[side]} (orders, size) at one turn '
+                     f'and {unseen} at row {row}')
+                held[row][side] = (which, {key: value[mine] for key, value in then.items()},
+                                   price == best[side][row])
+        return held[row]
+
+    def figures(early, late):
+        out = ()
+        for side in K.SIDES.values():
+            which, then, at_best = at_turn(early)[side]
+            now, rests = standing(which, late), ends[which] > late
+            for scope, pick, (orders_there, size_there) in (
+                    (K.WHOLE, np.ones(len(which), dtype=bool), (book[side][0][early], book[side][1][early])),
+                    (K.BEST, at_best, (book[side][2][early], book[side][3][early]))):
+                size = then['size'][pick]
+                unseen, unseen_size = int(orders_there) - int(pick.sum()), int(size_there) - int(size.sum())
+                need(unseen >= 0 and unseen_size >= 0, f'more orders followed than the row holds at row {early}')
+                still = rests & pick
+                gone = ~rests & pick
+                change = {key: (now[key] - then[key])[pick] for key in running}
+                out += (int(orders_there), int(size_there), int(carried[which][pick].sum()) + unseen,
+                        int(still.sum()) + unseen, int(now['size'][still].sum()) + unseen_size,
+                        int((gone & left_by_fill[which]).sum()), int((gone & ~left_by_fill[which]).sum()),
+                        int((change['filled'] > 0).sum()), int(change['filled'].sum()),
+                        int((change['pulled'] > 0).sum()), int(change['pulled'].sum()),
+                        int(change['added'].sum()), int((change['moved'] > 0).sum()))
+        return out
+
+    # the later turns, each naming its earlier turn, in the calculation's order within a tick
+    day = f'{trade_day:%Y%m%d}'
+    story_files = sorted(Path(rows_folder).glob(f'calc-peak_story-facts-{day}-part*.parquet'))
+    run_files = sorted(Path(rows_folder).glob(f'calc-quote_runs-facts-{day}-part*.parquet'))
+    need(story_files and run_files, 'the stored facts of piece 2 and of the quote\'s runs are not beside the rows')
+    story = pa.concat_tables([pq.read_table(f, columns=['known_position', 'fact', 'peak_high_position'])
+                              for f in story_files])
+    runs = pa.concat_tables([pq.read_table(f, columns=['known_position', 'quote', 'fact', 'run_start_position'])
+                             for f in run_files])
+    turns = [(row_of[known], 0, K.PEAK, kind, row_of[high]) for known, kind, high in
+             zip(*[story.column(c).to_pylist() for c in ('known_position', 'fact', 'peak_high_position')])]
+    turns += [(row_of[known], 1, K.RUN[quote], kind, row_of[start]) for known, quote, kind, start in
+              zip(*[runs.column(c).to_pylist() for c in ('known_position', 'quote', 'fact', 'run_start_position')])
+              if kind != Q.STARTED]
+    prints = [k for k in range(len(d)) if col['action'][k] == LP.TRADE]
+    for leg in _moves_as_stored(rows_folder, trade_day, position, prints,
+                                [int(col['price'][k]) for k in prints])['trade leg']:
+        early = row_of[leg['start']]
+        turns += [(row, 2, K.LEG, LP.STARTED if k == 0 else LP.FURTHER, early)
+                  for k, (row, _) in enumerate(leg['steps'])]
+        if leg['end'] is not None:
+            turns.append((leg['end'][0], 2, K.LEG, LP.ENDED, early))
+    order = sorted(range(len(turns)), key=lambda k: (turns[k][0], turns[k][1], k))
+    expected = []
+    for k in order:
+        late, _, about, kind, early = turns[k]
+        expected.append((int(position[late]), int(r[late]), about, kind, int(position[early]), int(r[early]),
+                         int(r[late] - r[early]), best['bid'][early], best['ask'][early]) + figures(early, late))
+    _facts_equal(table_files['facts'], K.FACT_NAMES, expected)
+    ahead = []
+    for k in np.flatnonzero(np.isin(what, K.FILLS)):
+        if col['orders_ahead_before'][k]:
+            line = col['touched_line'][k]
+            front = [] if line == R.NO_ORDERS or not line else [entry.split('|')[0] for entry in line.split(';')]
+            front = front[:col['orders_ahead_before'][k]]
+            ahead.append((int(position[k]), int(r[k]), col['exchange_event'][k], col['order_number'][k],
+                          K.SIDES[col['side'][k]], col['touched_price'][k], what[k],
+                          col['order_size_before'][k] - col['order_size_after'][k], col['orders_ahead_before'][k],
+                          col['size_ahead_before'][k], ';'.join(front), len(front)))
+    _facts_equal(table_files['ahead'], K.AHEAD_NAMES, ahead, what='ahead line')
+    for name, lines in (('resting_facts_known', expected), ('ahead_of_a_fill_known', ahead)):
+        per_row = collections.Counter(line[0] for line in lines)
+        need(stored[name][d].tolist() == [per_row.get(int(p), 0) for p in position],
+             f'{name} differs from the recount along the whole column')
+    f = {name: k for k, name in enumerate(K.FACT_NAMES)}
+    return dict(passed=True, trade_day_rows=len(d), orders_with_a_row=len(number),
+                orders_carried_in_with_a_row=int(carried.sum()),
+                orders_with_no_row_all_trade_day={side: dict(orders=v[0], size=v[1]) for side, v in never.items()},
+                earlier_turns=len(held), lines_compared=len(expected),
+                lines_by_what_the_turn_belongs_to=dict(collections.Counter(line[f['about']] for line in expected)),
+                ahead_of_a_fill_lines_compared=len(ahead),
+                ahead_lines_naming_every_order_ahead=sum(1 for line in ahead if line[-1] == line[-4]),
+                method='every order\'s life laid out as one table from the rows; the orders at a turn are those '
+                       'whose life spans its row, and what became of them is read off each life table; the turns '
+                       'from the stored outputs of piece 2 and the quote\'s runs and the legs by the earlier rule. '
+                       'Shares no code with the tick-by-tick calculation')
+
+
+def turn_peaks(row_files, calc_files, trade_day: dt.date, table_files=None, rows_folder=None) -> dict:
+    """The check of the calculation `turn_peaks`. The runs of trades on one side are cut from the whole column of
+    trade sides; the 20-second peaks are the stored ones of piece 1; the moves in price are whole lists (the legs
+    by the earlier rule, the quote's runs from their stored facts). For every peak, the move in progress at its
+    high is found by where the high falls among the rows the moves started on, and its steps are counted from its
+    own list. The calculation follows all of it forward, one tick at a time."""
+    import bisect
+    import numpy as np
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    from root.calcs import leg_peaks as LP
+    from root.calcs import turn_peaks as T
+    rows, calc = _stored(row_files, calc_files, ['received_time_ns', 'action', 'side', 'size', 'price'])
+    text = lambda name: np.array(rows.column(name).to_pylist(), dtype=object)
+    in_day = (text('row_label') == TRADE_DAY) & (text('trade_day') == trade_day.isoformat())
+    stored = {name: np.array(calc.column(name).to_pylist(), dtype=object) for name in T.NAMES}
+    for name in T.NAMES:
+        need(all(v is None for v in stored[name][~in_day]), f'{name} is filled on a row of no trade day')
+    d = np.flatnonzero(in_day)
+    position = np.array(rows.column('position_on_tape').to_pylist(), dtype=np.int64)[d]
+    r = np.array(rows.column('received_time_ns').to_pylist(), dtype=np.int64)[d]
+    action, side, size, price = (text(name)[d] for name in ('action', 'side', 'size', 'price'))
+    row_of = {int(p): k for k, p in enumerate(position)}
+    prints = [k for k in range(len(d)) if action[k] == LP.TRADE]
+    moves = _moves_as_stored(rows_folder, trade_day, position, prints, [int(price[k]) for k in prints])
+    began = {move: [inst['steps'][0][0] for inst in instances] for move, instances in moves.items()}
+    last_print = lambda row: int(price[prints[bisect.bisect_right(prints, row) - 1]])
+
+    # the peaks of both kinds: (the row known on, kind, side, the row of the high, number, trades, first trade)
+    peaks = [(p['known'], T.WINDOW, p['side'], row_of[p['high']], p['size'], None, None)
+             for p in _peaks_as_stored(rows_folder, trade_day, position)]
+    sided = [k for k in prints if side[k] in T.SIDE]
+    cuts = [0] + [j for j in range(1, len(sided)) if side[sided[j]] != side[sided[j - 1]]] + [len(sided)]
+    for a, b, c in zip(cuts, cuts[1:], cuts[2:] + [None]):
+        if b < len(sided):                             # a run that a trade on the other side ended
+            peaks.append((sided[b], T.NO_WINDOW, T.SIDE[side[sided[a]]], sided[b - 1],
+                          float(sum(int(size[k]) for k in sided[a:b])), b - a, int(position[sided[a]])))
+    lines, waiting = [], []
+    rank, kinds = {move: k for k, move in enumerate(T.MOVES)}, {T.WINDOW: 1, T.NO_WINDOW: 2}
+    for known, kind, peak_side, high, number, trades, first in peaks:
+        base = (kind, None, peak_side, int(position[high]), int(r[high]), number, trades, first, last_print(high))
+        lines.append(((known, kinds[kind], 0, 0, 0), (int(position[known]), int(r[known])) + base[:1] + (T.KNOWN,)
+                      + base[2:] + (last_print(known), int(r[known] - r[high])) + (None,) * 9))
+        for move in T.MOVES:
+            k = bisect.bisect_right(began[move], high) - 1
+            if k < 0:
+                continue
+            inst = moves[move][k]
+            at_high = bisect.bisect_right([row for row, _ in inst['steps']], high)
+            if inst['end'] is None:
+                waiting.append((kind, peak_side, int(position[high]), move, inst['start'], at_high))
+                continue
+            ended, end_price = inst['end']
+            when = max(known, ended)
+            key = (when, kinds[kind], 1, rank[move], 0) if ended <= known else (when, 0, rank[move], known,
+                                                                                kinds[kind])
+            lines.append((key, (int(position[when]), int(r[when]), kind, T.ENDED[move]) + base[2:] + (
+                None, int(r[when] - r[high]), inst['direction'], inst['start'], inst['steps'][at_high - 1][1],
+                at_high, len(inst['steps']), len(inst['steps']) - at_high, end_price, int(position[ended]),
+                int(r[ended]))))
+    expected = [line for _, line in sorted(lines, key=lambda pair: pair[0])]
+    _facts_equal(table_files['facts'], T.FACT_NAMES, expected)
+    going = pa.concat_tables([pq.read_table(file) for file in table_files['open-at-the-end']])
+    need(sorted(tuple(row[c] for c in T.OPEN_COLUMNS) for row in going.to_pylist()) == sorted(waiting),
+         'the peaks waiting on a move still going at the last tick differ from the recount')
+    per_row = collections.Counter(line[0] for line in expected)
+    want = {name: [None] * len(d) for name in T.NAMES[:-1]}
+    no_side = np.cumsum([int(size[k]) if action[k] == LP.TRADE and side[k] not in T.SIDE else 0
+                         for k in range(len(d))])
+    for a, b in zip(cuts, cuts[1:]):
+        total = 0
+        for j in range(a, b):
+            total += int(size[sided[j]])
+            upto = sided[j + 1] if j + 1 < len(sided) else len(d)
+            for k in range(sided[j], upto):
+                for name, value in zip(T.NAMES, (T.SIDE[side[sided[a]]], total, j - a + 1, int(position[sided[a]]),
+                                                 int(no_side[k] - no_side[sided[a]]))):
+                    want[name][k] = value
+    for name in T.NAMES[:-1]:
+        need(stored[name][d].tolist() == want[name], f'{name} differs from the recount along the whole column')
+    need(stored[T.NAMES[-1]][d].tolist() == [per_row.get(int(p), 0) for p in position],
+         'the count of facts known on a row differs from the recount')
+    f = {name: k for k, name in enumerate(T.FACT_NAMES)}
+    ends = [line for line in expected if line[f['fact']] != T.KNOWN]
+    return dict(passed=True, trade_day_rows=len(d), prints=len(prints),
+                peaks={kind: sum(1 for p in peaks if p[1] == kind) for kind in T.KINDS},
+                lines_compared=len(expected), lines_waiting_at_the_last_tick=len(waiting),
+                moves_ended_with_no_step_after_the_high={
+                    f'{kind}: {fact}': sum(1 for line in ends if line[f['peak_kind']] == kind and
+                                           line[f['fact']] == fact and line[f['move_steps_after_high']] == 0)
+                    for kind in T.KINDS for fact in T.ENDED.values()},
+                moves_ended_in_all={
+                    f'{kind}: {fact}': sum(1 for line in ends if line[f['peak_kind']] == kind and
+                                           line[f['fact']] == fact) for kind in T.KINDS for fact in T.ENDED.values()},
+                method='the runs of trades on one side cut from the whole column of trade sides; the 20-second '
+                       'peaks as stored by piece 1; the move in progress at each high found among whole lists of '
+                       'the legs (earlier rule) and the quote\'s runs (stored facts). Shares no code with the '
+                       'tick-by-tick calculation')
+
+
+KNOWN_AT_A_TICK = {'facts', 'before', 'ahead'}            # the tables whose lines each carry the tick at which they became known
 CALC_CHECKS = {'flow_peak': flow_peak, 'peak_story': peak_story, 'book_totals': book_totals,
                'quote_runs': quote_runs, 'peak_links': peak_links, 'open_stories': open_stories,
                'refills': refills, 'sweeps': sweeps, 'chain_peaks': chain_peaks,
-               'quote_peaks': quote_peaks, 'outside_changes': outside_changes, 'together': together}
+               'quote_peaks': quote_peaks, 'outside_changes': outside_changes, 'together': together,
+               'leg_peaks': leg_peaks, 'resting': resting, 'turn_peaks': turn_peaks}
 
 
 def playback_cuts(name: str, full: list, tables: dict) -> dict:
