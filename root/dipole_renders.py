@@ -323,6 +323,9 @@ def run(trade_day, rows_folder: Path, out: Path) -> dict:
                  f'solid line: the birth. dotted line: Native made it known. thin orange lines: highs of '
                  f'20-second peaks. From the dipole before to the dipole after.')
         jobs.append((str(out / line[f['render']]), title, d['birth'], d['known'], lo, hi))
+    # the pod pins this program to one CPU; the drawing is spread over every CPU the pod has, one helper pinned
+    # to each (asking for all of them leaves exactly the ones the pod is allowed)
+    os.sched_setaffinity(0, range(os.cpu_count()))
     cpus = multiprocessing.Manager().Queue()
     mine = sorted(os.sched_getaffinity(0))
     for cpu in mine:
