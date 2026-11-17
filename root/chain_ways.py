@@ -74,7 +74,12 @@ NEXT_SETTING = {CM.RIDGE: lambda s: s * 10, CM.NEIGHBOURS: lambda s: s * 2, CM.T
 FIRST_LIST = {CM.RIDGE: CM.RIDGE_GRID, CM.NEIGHBOURS: CM.NEIGHBOUR_GRID, CM.TREES: CM.LEAF_GRID}
 PREDICT_SLICE = 256                                     # rows a nearest-neighbours predict takes at once
 CHECK_STEPS = chain_peaks.STEPS_BACK                    # the steps the before lines of chain_peaks hold
+CLOSEST = 'closest single peak'                          # the individual way: one match, nothing blended
+ALL_MODELS = CM.MODELS + (CLOSEST,)
+MATCH_SLICE = 8                                         # scored peaks compared with every teaching peak at once
+MATCH_TOLERANCE = 1e-5                                  # the loop adds in full precision, the slices in 4-byte numbers
 LINE_NAMES = ['peak_high_position', 'peak_story_ended_position', 'way', 'model', 'peaks_given', 'setting',
+              'matched_trade_day', 'matched_peak_high_position', 'match_distance', 'matches_tied',
               'error_mean'] + [f'error_{name}' for name in NINE]
 _D = {}                                                 # trade day -> Ways; set before the helpers are started
 
@@ -165,10 +170,41 @@ def _standardised(teach: list, scored: str, way: int, given: int):
     return x, y, x_new, y_new, rows
 
 
+def closest(way: int, given: int, teach: tuple, scored: str) -> dict:
+    """The individual way (Greg, 2026-11-17: "Average and individual ... just add the individual part"): for each
+    scored peak, the single teaching peak whose inputs are closest, nothing blended and no setting chosen. Each input
+    is put on one footing by its rank among the teaching peaks (its place in their order, over their number);
+    closeness is the sum of the rank differences. Every teaching peak at the closest distance gets its own line."""
+    import numpy as np
+    x, y, x_new, y_new, rows = _standardised(list(teach), scored, way, given)
+    ids = [(day, _D[day].high[k]) for day in teach for k in _D[day].fixed_set(way).tolist()]
+    checks.need(len(ids) == len(y), 'the teaching peaks and their names are not in the same order')
+    order = np.sort(x, axis=0)
+    rank = lambda a: np.column_stack([np.searchsorted(order[:, j], a[:, j], side='left') for j in range(a.shape[1])]
+                                     ).astype(np.float32) / len(x)
+    taught, new = rank(x), rank(x_new)
+    lines = []
+    for start in range(0, len(new), MATCH_SLICE):
+        distance = np.abs(new[start:start + MATCH_SLICE, None, :] - taught[None, :, :]).sum(axis=2)
+        for i, row in enumerate(distance):
+            tied = np.flatnonzero(row == row.min())
+            for m in tied.tolist():
+                lines.append((start + i, ids[m][0], int(ids[m][1]), float(row[m]), len(tied),
+                              np.square(y_new[start + i] - y[m])))
+    first = [sum(abs(float(p) - float(q)) for p, q in zip(new[0], t)) for t in taught]      # the check, by a loop
+    best = min(first)
+    checks.need({ids[m][1] for m, v in enumerate(first) if abs(v - best) <= MATCH_TOLERANCE * max(best, 1)} >=
+                {line[2] for line in lines if line[0] == 0}, f'way {way} given {given}: the closest match differs')
+    print(f'way {way} {CLOSEST} given {given}: {len(lines)} lines for {len(new)} peaks', flush=True)
+    return dict(way=way, model=CLOSEST, given=given, rows=rows, setting=None, tried={}, taught_on=len(y), lines=lines)
+
+
 def way_model(way: int, model: str, given: int, teach: tuple, scored: str) -> dict:
     """One way, one model, `given` earlier peaks: the setting chosen inside the teaching trade days by leaving each
     out in turn, the list carried on while the best is its last; then taught on all three and scored."""
     import numpy as np
+    if model == CLOSEST:
+        return closest(way, given, teach, scored)
     x, y, x_new, y_new, rows = _standardised(list(teach), scored, way, given)
     out = dict(way=way, model=model, given=given, rows=rows, setting=None, tried={}, taught_on=len(y))
     if not x.shape[1]:                                 # nothing given: the teaching trade days' mean
@@ -253,7 +289,7 @@ def _cost(way: int, model: str, given: int) -> float:
     """A rough order of the work a fit takes, only to start the longest first: the inputs it is given."""
     w = WAYS[way]
     inputs = (2 if w['own'] else 0) + (min(given, 1) if w['kind'] == ALONE else given) * (10 if w['own'] else 9)
-    return inputs * {CM.TREES: 3.0, CM.NEIGHBOURS: 2.0, CM.RIDGE: 0.1}[model]
+    return inputs * {CM.TREES: 3.0, CM.NEIGHBOURS: 2.0, CLOSEST: 1.0, CM.RIDGE: 0.1}[model]
 
 
 def run(tape_folder: Path, scored_day: dt.date, out: Path) -> dict:
@@ -271,8 +307,9 @@ def run(tape_folder: Path, scored_day: dt.date, out: Path) -> dict:
     _D.update({day: Ways(lines[day]) for day in lines})
     the_check = {day: earlier_as_written(day, lines[day]) for day in sorted(lines)}
     jobs = [('way model', way, model, given, teach, scored) for way, w in WAYS.items()
-            for given in range(w['depth'] + 1) for model in CM.MODELS
-            if given or w['own'] or model == CM.RIDGE]           # with nothing given the mean needs no model
+            for given in range(w['depth'] + 1) for model in ALL_MODELS
+            if given or w['own'] or model == CM.RIDGE]           # with nothing given the mean needs no model, and
+    #                                                              the individual way has nothing to match on
     jobs.sort(key=lambda j: -_cost(j[1], j[2], j[3]))        # the longest pieces first
     fitted = CM.on_pinned_helpers(jobs)
     at = {(job[1], job[2], job[3]): value for job, (_, _, value) in fitted.items()}
@@ -280,6 +317,16 @@ def run(tape_folder: Path, scored_day: dt.date, out: Path) -> dict:
     files, receipt_ways = {}, {}
     for way, w in WAYS.items():
         table = []
+        for given in range(w['depth'] + 1):
+            fit = at.get((way, CLOSEST, given))
+            for place, name, high, distance, tied, errors in (fit['lines'] if fit else []):
+                k = int(fit['rows'][place])
+                row = dict.fromkeys(LINE_NAMES)
+                row.update(peak_high_position=me.high[k], peak_story_ended_position=me.ended[k], way=way, model=CLOSEST,
+                           peaks_given=given, matched_trade_day=name, matched_peak_high_position=high,
+                           match_distance=distance, matches_tied=tied, error_mean=float(errors.mean()))
+                row.update({f'error_{n}': float(errors[f]) for f, n in enumerate(w['target'])})
+                table.append(tuple(row[n] for n in LINE_NAMES))
         for model in CM.MODELS:
             for given in range(w['depth'] + 1):
                 fit = at.get((way, model, given)) or at[(way, CM.RIDGE, given)]   # the mean, shared by the models
@@ -291,8 +338,8 @@ def run(tape_folder: Path, scored_day: dt.date, out: Path) -> dict:
                                error_mean=float(errors.mean()))
                     row.update({f'error_{name}': float(errors[f]) for f, name in enumerate(w['target'])})
                     table.append(tuple(row[name] for name in LINE_NAMES))
-        floats = set(LINE_NAMES[LINE_NAMES.index('setting'):])
-        schema = store.schema(LINE_NAMES, {'model'}, set(), floats)
+        floats = {'setting', 'match_distance', 'error_mean'} | {n for n in LINE_NAMES if n.startswith('error_')}
+        schema = store.schema(LINE_NAMES, {'model', 'matched_trade_day'}, set(), floats)
         schema = pa.schema([pa.field(f.name, pa.float32()) if f.name.startswith('error_') and f.name != 'error_mean'
                             else f for f in schema])
         stem = f'chain-way{way}-to{w["depth"]}-{scored}'
@@ -307,9 +354,10 @@ def run(tape_folder: Path, scored_day: dt.date, out: Path) -> dict:
             fits=[dict(model=v['model'], peaks_given=v['given'], setting=CM._number(v['setting']),
                        tried=v['tried'], chosen_at_the_end_of_the_list=v.get('chosen_at_the_end_of_the_list'),
                        list_ended_because=v.get('list_ended_because'), peaks_taught_on=v['taught_on'],
-                       peaks_scored=len(v['rows']), mean_squared_error=float(v['squared_error'].mean()),
+                       peaks_scored=len(v['rows']), match_lines=len(v['lines']) if 'lines' in v else None,
+                       mean_squared_error=float(v['squared_error'].mean()) if 'squared_error' in v else None,
                        ridge_closed_form_furthest_apart=v.get('ridge_closed_form_furthest_apart'))
-                  for (wy, _, _), v in sorted(at.items(), key=lambda e: (CM.MODELS.index(e[0][1]), e[0][2]))
+                  for (wy, _, _), v in sorted(at.items(), key=lambda e: (ALL_MODELS.index(e[0][1]), e[0][2]))
                   if wy == way])
     receipt = dict(
         what='ROOT part 2: the chain link models in six ways, one trade day scored by models taught on the other '

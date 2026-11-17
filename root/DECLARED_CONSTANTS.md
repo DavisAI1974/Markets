@@ -136,7 +136,10 @@ its lines.
 | `FIRST_LIST`, `NEXT_SETTING` | the original's lists; ridge times 10, neighbours and leaf times 2 | Where the choice of a setting starts, and how the list is carried on while the best is its last. No end is picked: it stops when the best is inside the list, or when no further step exists (neighbours above the peaks taught on, a leaf above half of them). |
 | `PREDICT_SLICE` | 256 | Rows a nearest-neighbours predict takes at once. Memory only: the values are the same as one predict of every row. |
 | `CHECK_STEPS` | `chain_peaks.STEPS_BACK` (6) | How many steps of the before lines `chain_peaks` writes, which the check compares with the earlier peaks worked out here. |
-| `_cost` weights | 3, 2, 0.1 | Only the order the fits are started in (the longest first). No value depends on it. |
+| `CLOSEST`, `ALL_MODELS` | closest single peak; the three averaging models and it | The individual way beside the averaging models (Greg, 2026-11-17: "Average and individual"). One match per peak, ties each their own line; nothing blended; no setting. |
+| `MATCH_SLICE` | 8 | Scored peaks compared with every teaching peak at once. Memory only. |
+| `MATCH_TOLERANCE` | 1e-5 | How far the check's full-precision sum may sit from the 4-byte sum of the slices. Only the check uses it. |
+| `_cost` weights | 3, 2, 1, 0.1 | Only the order the fits are started in (the longest first). No value depends on it. |
 
 ## `root/trade_legs.py` (the missing two hours of the trade legs; Greg, 2026-11-17: "Then change it ... Finish the data")
 
