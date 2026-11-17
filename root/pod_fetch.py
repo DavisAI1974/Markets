@@ -19,6 +19,7 @@ import urllib.request
 from pathlib import Path
 
 MODELS = 'models'
+RUNS = {'models': ('chain_models', 'CHAIN-MODELS-{day}.json'), 'ways': ('chain_ways', 'CHAIN-WAYS-{day}.json')}
 AGENT = 'curl/8'                                       # the pods' web front refuses the library's own name
 BYTES_PER_MEGABYTE = 2 ** 20
 
@@ -33,7 +34,7 @@ def fetch(base: str, day: str, commit: str, into: Path, names: list) -> dict:
     ran = get(base, 'CODE_COMMIT').decode().strip()
     if ran != commit:
         raise SystemExit(f'the pod last ran commit {ran}, not {commit}')
-    if any(name != MODELS for name in names):          # the models read no stored rows: they rebuild their peak
+    if any(name not in RUNS for name in names):          # the models read no stored rows: they rebuild their peak
         rows_here = subprocess.run(['git', '-C', str(into), 'rev-parse', 'HEAD'], capture_output=True, text=True,
                                    check=True).stdout.strip()        # lines through the tape gate
         rows_there = get(base, 'ROWS_COMMIT').decode().strip()
@@ -42,13 +43,14 @@ def fetch(base: str, day: str, commit: str, into: Path, names: list) -> dict:
     status = get(base, 'STATUS').decode()
     out = {}
     for name in names:
-        ran_as = 'chain_models' if name == MODELS else name
+        ran_as = RUNS[name][0] if name in RUNS else name
         if f'{ran_as} passed' not in status or f'{ran_as} FAILED' in status.split(f'{ran_as} passed')[-1]:
             raise SystemExit(f'{name}: the pod does not say it passed (or it failed after it last passed)')
-        receipt_name = f'CHAIN-MODELS-{day}.json' if name == MODELS else f'CALC-{name}-{day}.json'
+        receipt_name = RUNS[name][1].format(day=day) if name in RUNS else f'CALC-{name}-{day}.json'
         raw = get(base, receipt_name)
         receipt = json.loads(raw)
-        listed = list(receipt['files']) + [f for t in receipt.get('tables', {}).values() for f in t['files']]
+        listed = (list(receipt.get('files', [])) + [f for t in receipt.get('tables', {}).values() for f in t['files']]
+                  + [f for w in receipt.get('ways', {}).values() for f in w['files']])
         held = {}
         for f in listed:
             held[f['file']] = get(base, f['file'])

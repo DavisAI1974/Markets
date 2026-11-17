@@ -127,6 +127,16 @@ its lines.
 | `AS_IS`, `LOG`, `YES_NO`, `TICKS`, `FIGURES`, `FIGURE_NAMES` | words | The ten figures of what a peak did and how each enters a model (Claude's calls, stated to Greg). |
 | `TOO_FEW`, `EMPTY_FIGURE`, `STILL_OPEN` | words | Why a peak has empty values at a step. |
 
+## `root/chain_ways.py` (the chain link models in six ways; Greg, 2026-11-16: "take the chains as far as they will go")
+
+| Constant | Value | Why |
+|---|---|---|
+| `WAYS` | six ways: chain or each alone; all, own side or other side; nine figures or the seven after; 24 or 48 | The six ways named to Greg. The depths are how far each is run now, not caps: a way whose gain has not gone by its last step is run deeper as a new set, written beside, its depth in its file names. |
+| `NINE`, `AFTER` | the nine figures never empty; the seven of what a peak did after it became known | What is predicted. The time from the low to the high is left out (empty on 32 to 42 peaks a trade day). |
+| `FIRST_LIST`, `NEXT_SETTING` | the original's lists; ridge times 10, neighbours and leaf times 2 | Where the choice of a setting starts, and how the list is carried on while the best is its last. No end is picked: it stops when the best is inside the list, or when no further step exists (neighbours above the peaks taught on, a leaf above half of them). |
+| `CHECK_STEPS` | `chain_peaks.STEPS_BACK` (6) | How many steps of the before lines `chain_peaks` writes, which the check compares with the earlier peaks worked out here. |
+| `_cost` weights | 3, 2, 0.1 | Only the order the fits are started in (the longest first). No value depends on it. |
+
 ## `root/tape.py`, the stored-rows gate
 
 | Constant | Value | Why |
@@ -220,6 +230,7 @@ trade day, empty on a row of no trade day). The times a value becomes known are 
 | `COMMIT` | 40 hex digits | The shape of a commit name; a run is refused without one. |
 | `ONE_THREAD` | 1 | Each helper runs one thread. |
 | `ACCEPTED`, `REFUSED`, `BUSY` | 202, 403, 409 | The web answers of the pod's run address. |
+| `MODEL_JOBS`, `RUNS` | models, ways | The model runs a pod may be asked for, and each one's receipt. |
 | `MODELS`, `BYTES_PER_MEGABYTE` | models; 2^20 | The name of the models run; unit conversion for a printed size. |
 
 ## `root/sheet.py`
