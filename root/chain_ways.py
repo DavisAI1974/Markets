@@ -19,8 +19,8 @@ peak on the other three trade days whose inputs are closest to this peak's. Ever
 distance gets its own line. Each line names the matched peak (its trade day and the tick of its high), how close it
 was, and for each figure this peak's value, the match's value and the difference, in the figure's own units. Nothing
 is chosen by a setting and nothing is averaged. To put inputs of different units on one footing, each input is
-replaced by its rank among the teaching peaks (its place in their order over their number); closeness is the sum of
-the rank differences. Whether one more earlier peak brought a closer match is read peak by peak, figure by figure,
+replaced by its rank among the teaching peaks (its place in their order, a whole number); closeness is the sum of the
+rank differences, exact in whole numbers (written over the number of teaching peaks). Whether one more earlier peak brought a closer match is read peak by peak, figure by figure,
 from neighbouring lines.
 
 What is shared with the earlier build: the earlier peaks worked out to any depth from the peak lines by the rule of
@@ -65,7 +65,6 @@ WAYS = {1: dict(kind=CHAIN, earlier=ALL, target=NINE, own=False, depth=24),
         5: dict(kind=CHAIN, earlier=OWN, target=NINE, own=False, depth=24),
         6: dict(kind=CHAIN, earlier=OTHER, target=NINE, own=False, depth=24)}
 MATCH_SLICE = 8                                         # scored peaks compared with every teaching peak at once
-MATCH_TOLERANCE = 1e-5                                  # the check adds in full precision, the slices in 4-byte numbers
 CHECK_STEPS = chain_peaks.STEPS_BACK                    # the steps the before lines of chain_peaks hold
 LINE_NAMES = (['peak_high_position', 'peak_story_ended_position', 'way', 'peaks_given', 'matched_trade_day',
                'matched_peak_high_position', 'match_distance', 'matches_tied']
@@ -144,8 +143,8 @@ def closest(way: int, given: int, teach: tuple, scored: str) -> dict:
     ids = [(day, int(_D[day].high[k])) for day in teach for k in _D[day].sets[way].tolist()]
     checks.need(len(ids) == len(y) and x.shape[1] > 0 and len(y_new), f'way {way} given {given}: nothing to match')
     order = np.sort(x, axis=0)
-    rank = lambda a: (np.column_stack([np.searchsorted(order[:, j], a[:, j], side='left') for j in range(a.shape[1])])
-                      .astype(np.float32) / len(x))
+    rank = lambda a: np.column_stack([np.searchsorted(order[:, j], a[:, j], side='left')
+                                      for j in range(a.shape[1])]).astype(np.int64)
     taught, new = rank(x), rank(x_new)
     lines = []
     for start in range(0, len(new), MATCH_SLICE):
@@ -153,10 +152,10 @@ def closest(way: int, given: int, teach: tuple, scored: str) -> dict:
         for i, row in enumerate(distance):
             tied = np.flatnonzero(row == row.min()).tolist()
             for m in tied:
-                lines.append((start + i, ids[m][0], ids[m][1], float(row[m]), len(tied), y_new[start + i], y[m]))
-    first = [sum(abs(float(p) - float(q)) for p, q in zip(new[0], t)) for t in taught]
-    best = min(first)
-    checks.need({ids[m][1] for m, v in enumerate(first) if abs(v - best) <= MATCH_TOLERANCE * max(best, 1)} >=
+                lines.append((start + i, ids[m][0], ids[m][1], float(row[m]) / len(x), len(tied), y_new[start + i],
+                              y[m]))
+    first = [sum(abs(int(p) - int(q)) for p, q in zip(new[0], t)) for t in taught]       # the check, by a loop
+    checks.need({ids[m][1] for m, v in enumerate(first) if v == min(first)} ==
                 {line[2] for line in lines if line[0] == 0}, f'way {way} given {given}: the closest match differs')
     print(f'way {way} given {given}: {len(lines)} lines for {len(new)} peaks', flush=True)
     return dict(way=way, given=given, rows=rows, taught_on=len(y), lines=lines)

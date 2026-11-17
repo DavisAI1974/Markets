@@ -119,7 +119,6 @@ The averaging chain link models were removed on Greg's word (2026-11-17), with t
 | `chain_common.TICK_PRICE_UNITS` | 1,000,000 | One tick of the contract ($0.001) in the tape's price units. |
 | `chain_common.HELPER_POLL_SECONDS` | 5 | How often the runner looks whether a helper has died. No value depends on it. |
 | `MATCH_SLICE` | 8 | Scored peaks compared with every teaching peak at once. Memory only. |
-| `MATCH_TOLERANCE` | 1e-5 | How far the check's full-precision sum may sit from the 4-byte sum. Only the check uses it. |
 | `CHECK_STEPS` | `chain_peaks.STEPS_BACK` (6) | How many steps of the before lines of `chain_peaks` the check compares. |
 
 ## `root/trade_legs.py` (the missing two hours of the trade legs; Greg, 2026-11-17: "Then change it ... Finish the data")
