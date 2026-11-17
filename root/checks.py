@@ -271,7 +271,7 @@ def pinned(row_files, tables_folder) -> dict:
 def flow_peak(row_files, calc_files, trade_day: dt.date, table_files=None, rows_folder=None) -> dict:
     """The check of the calculation `flow_peak`: every one of its columns worked out again from the stored rows by a
     whole-column method that shares nothing with the tick-by-tick code, and compared on every row. The traded sizes
-    come from running totals; the peaks from the runs of equal flow; a peak's standing and how long it had been the
+    come from running totals; the peaks from the runs of equal flow; how long a peak had been the
     highest from the full list of moments at which the flow changed (trades arriving and trades turning 20 seconds
     old). Rows of no trade day must hold empty cells."""
     import numpy as np
@@ -363,17 +363,13 @@ def flow_peak(row_files, calc_files, trade_day: dt.date, table_files=None, rows_
     ga, gt, begins = sa[seg], st[seg], when[seg]
     ends = np.concatenate((begins[1:], [when[-1]]))
     first_flow_at = int(begins[np.flatnonzero(gt > 0)[0]]) if (gt > 0).any() else None
-    standing, highest_for, since_open = [], [], []
+    highest_for, since_open = [], []
     for h, k in zip(high.tolist(), known.tolist()):
         va, vt, at = int(a[h]), int(t[h]), int(r[k])
-        lasted = np.clip(np.minimum(ends, at) - begins, 0, None)
-        total = int(lasted[gt > 0].sum())
-        standing.append(int(lasted[(gt > 0) & (ga * vt < va * gt)].sum()) / total if total else None)
         own = int(seg_of_state[state_of_row[h]])
         larger = np.flatnonzero((gt[:own] > 0) & (ga[:own] * vt > va * gt[:own]))
         since_open.append(len(larger) == 0)
         highest_for.append(int(r[h]) - (first_flow_at if len(larger) == 0 else int(ends[larger[-1]])))
-    need(got['peak_standing_so_far'][known].tolist() == standing, 'the standing of a peak differs from the recount')
     need(got['peak_highest_for_ns'][known].tolist() == highest_for, 'how long a peak had been the highest differs')
     need(got['peak_highest_since_open'][known].tolist() == since_open, 'highest since the open differs')
     return dict(passed=True, rows_compared=int(rows.num_rows), trade_day_rows=int(len(d)),

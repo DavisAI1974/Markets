@@ -19,7 +19,6 @@ The 20-second roll is the one averaging Greg confirmed as his exception; the sin
 """
 from __future__ import annotations
 
-import bisect
 import collections
 from fractions import Fraction
 
@@ -39,8 +38,6 @@ COLUMNS = [
     ('peak_size', 'The size of the flow at the high (0 to 1).'),
     ('peak_high_position', 'The tick of the high: its position on the tape. A label only.'),
     ('peak_high_received_time_ns', 'When the tick of the high was received.'),
-    ('peak_standing_so_far', 'The share of the time so far in this trade day, while there was a flow, that the flow '
-     'was smaller than this peak.'),
     ('peak_highest_for_ns', 'At the high: how long since the flow was last larger than this. When it never was in '
      'this trade day, the time since the first trade of the trade day.'),
     ('peak_highest_since_open', 'Yes when the flow was never larger than this earlier in the trade day.'),
@@ -49,30 +46,9 @@ COLUMNS = [
 NAMES = [name for name, _ in COLUMNS]
 TEXT = {'peak_side'}
 YES_NO = {'peak_highest_since_open'}
-DECIMALS = {'flow_20s', 'peak_size', 'peak_standing_so_far'}
+DECIMALS = {'flow_20s', 'peak_size'}
 NO_PEAK = tuple(None for name in NAMES if name.startswith('peak_'))
 TABLES = {}                                            # this calculation keeps no table beside the rows
-
-
-class Standing:
-    """How long the flow has stood at each size so far in the trade day, exactly, in nanoseconds."""
-
-    def __init__(self):
-        self.sizes, self.time, self.total = [], [], 0
-
-    def add(self, size: Fraction, ns: int):
-        if ns <= 0:
-            return
-        k = bisect.bisect_left(self.sizes, size)
-        if k < len(self.sizes) and self.sizes[k] == size:
-            self.time[k] += ns
-        else:
-            self.sizes.insert(k, size)
-            self.time.insert(k, ns)
-        self.total += ns
-
-    def below(self, size: Fraction) -> int:
-        return sum(self.time[:bisect.bisect_left(self.sizes, size)])
 
 
 class FlowPeak:
@@ -83,7 +59,6 @@ class FlowPeak:
         self.bought = self.sold = self.no_side = 0
         self.size = None                               # the size of the flow as it stands; None when there is none
         self.since = None                              # when it took that size
-        self.standing = Standing()
         self.larger = []                               # sizes still unbeaten, each with when it last ended
         self.first_flow_at = None
         self.last_reading = None                       # the size read at the tick before,
@@ -100,7 +75,6 @@ class FlowPeak:
         if size == self.size:
             return
         if self.size is not None:
-            self.standing.add(self.size, at - self.since)
             self.larger[-1][1] = at
         if size is not None:
             while self.larger and self.larger[-1][0] <= size:
@@ -166,24 +140,18 @@ class FlowPeak:
         return (self.bought, self.sold, self.no_side, flow) + peak
 
     def _known(self, now: int) -> tuple:
-        """The flow has come off its high: the peak is known now, and is written on this tick's row. Its standing
-        counts all the time up to now, the stretch still running included."""
+        """The flow has come off its high: the peak is known now, and is written on this tick's row."""
         size, side, position, received, highest_for, since_open = self.high
         if not size:
             raise ValueError(f'a high of no flow at position {position}: not a peak')
         self.high = None
         self.counts['peaks'] += 1
-        running = now - self.since if self.size is not None else 0
-        total = self.standing.total + running
-        below = self.standing.below(size) + (running if self.size is not None and self.size < size else 0)
-        standing = below / total if total else None
         gap = None if self.previous_high_at is None else received - self.previous_high_at
         self.previous_high_at = received
-        return side, float(size), position, received, standing, highest_for, since_open, gap
+        return side, float(size), position, received, highest_for, since_open, gap
 
     def result(self) -> dict:
-        return dict(self.counts, high_still_standing_at_the_last_tick=self.high is not None,
-                    different_sizes_of_flow=len(self.standing.sizes))
+        return dict(self.counts, high_still_standing_at_the_last_tick=self.high is not None)
 
 
 def calculate(ticks, counts: dict | None = None, tables: dict | None = None):

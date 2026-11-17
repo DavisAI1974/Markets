@@ -16,8 +16,8 @@ its file names.
 
 The individual way (Claude's call, stated to Greg): for each peak and each number of earlier peaks given, the single
 peak on the other three trade days whose inputs are closest to this peak's. Every teaching peak at the closest
-distance gets its own line. Each line names the matched peak (its trade day and the tick of its high), how close it
-was, and for each figure this peak's value, the match's value and the difference, in the figure's own units. Nothing
+distance gets its own line. Each line names the matched peak (its trade day and the tick of its high), how many tied,
+and for each figure this peak's value, the match's value and the difference, in the figure's own units. Nothing
 is chosen by a setting and nothing is averaged. To put inputs of different units on one footing, each input is
 replaced by its rank among the teaching peaks (its place in their order, a whole number); closeness is the sum of the
 rank differences, exact in whole numbers (written over the number of teaching peaks). Whether one more earlier peak brought a closer match is read peak by peak, figure by figure,
@@ -67,7 +67,7 @@ WAYS = {1: dict(kind=CHAIN, earlier=ALL, target=NINE, own=False, depth=24),
 MATCH_SLICE = 8                                         # scored peaks compared with every teaching peak at once
 CHECK_STEPS = chain_peaks.STEPS_BACK                    # the steps the before lines of chain_peaks hold
 LINE_NAMES = (['peak_high_position', 'peak_story_ended_position', 'way', 'peaks_given', 'matched_trade_day',
-               'matched_peak_high_position', 'match_distance', 'matches_tied']
+               'matched_peak_high_position', 'matches_tied']
               + [f'{what}_{name}' for name in NINE for what in ('own', 'match', 'difference')])
 _D = {}                                                 # trade day -> Ways; set before the helpers are started
 
@@ -212,7 +212,7 @@ def run(tape_folder: Path, scored_day: dt.date, out: Path) -> dict:
     at = {(job[1], job[2]): value for job, (_, _, value) in done.items()}
     me = _D[scored]
     schema = pa.schema([(n, pa.string() if n == 'matched_trade_day' else
-                         pa.float64() if n == 'match_distance' or n.split('_')[0] in ('own', 'match', 'difference')
+                         pa.float64() if n.split('_')[0] in ('own', 'match', 'difference')
                          else pa.int64()) for n in LINE_NAMES])
     files, receipt_ways = {}, {}
     for way, w in WAYS.items():
@@ -224,7 +224,7 @@ def run(tape_folder: Path, scored_day: dt.date, out: Path) -> dict:
                 row = dict.fromkeys(LINE_NAMES)
                 row.update(peak_high_position=me.high[k], peak_story_ended_position=me.ended[k], way=way,
                            peaks_given=given, matched_trade_day=name, matched_peak_high_position=high,
-                           match_distance=distance, matches_tied=tied)
+                           matches_tied=tied)
                 for f, figure in enumerate(w['target']):
                     row.update({f'own_{figure}': float(own[f]), f'match_{figure}': float(match[f]),
                                 f'difference_{figure}': float(match[f] - own[f])})
@@ -248,7 +248,9 @@ def run(tape_folder: Path, scored_day: dt.date, out: Path) -> dict:
                             'on a tick row.',
         inputs={day: lines[day]['inputs'] for day in lines},
         figures=[dict(figure=name, enters_as=dict(C.FIGURES)[name]) for name in NINE],
-        footing='each input replaced by its rank among the teaching peaks; closeness = the sum of rank differences',
+        footing='to find the match, each input is replaced by its place in order among the teaching peaks and the '
+                'places compared; those places are used only to find the match and are never saved (Greg, '
+                '2026-11-17: strip the ranks from the output data)',
         libraries=dict(python=platform.python_version(), numpy=np.__version__), columns=LINE_NAMES,
         ways=receipt_ways,
         helpers=dict(threads_each=1, pinned=True,
