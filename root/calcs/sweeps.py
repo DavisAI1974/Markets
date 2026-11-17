@@ -14,7 +14,9 @@ Three kinds of FACT, each at the tick it becomes known:
 - `quote touched or crossed`: the first tick at which the best ask is at or below the best bid.
 - `quote parted`: the first tick after that at which they are apart again, with how long it lasted, how many
   ticks, and the lowest the gap went.
-A touch or cross still standing at the last tick is listed in its own small file.
+A touch or cross still standing at the last tick is listed in its own small file. One already standing at the
+first tick of the trade day began before the trade day: its facts say so, and its length is counted from the first
+tick only, because nothing from before the trade day enters a calculation.
 
 Claude's calls in the build, stated to Greg (his to correct):
 - The exchange's own marks define an event. On the four trade days every event with a trade ends on the tick that
@@ -71,10 +73,13 @@ FACT_COLUMNS = [
     ('lasted_ns', 'On quote parted: from that tick to this one.'),
     ('ticks_lasted', 'On quote parted: how many ticks the quote stayed touching or crossed.'),
     ('lowest_gap', 'On quote parted: the lowest the gap went while it lasted.'),
+    ('standing_at_first_tick', 'On quote touched or crossed, and on quote parted: yes when the quote was already '
+     'touching or crossed at the first tick of the trade day. It began before the trade day, so how long it lasted '
+     'and how many ticks are counted from the first tick only.'),
 ]
 FACT_NAMES = [name for name, _ in FACT_COLUMNS]
 FACT_TEXT = {'fact', 'aggressor_sides'}
-FACT_YES_NO = {'best_bid_moved', 'best_ask_moved'}
+FACT_YES_NO = {'best_bid_moved', 'best_ask_moved', 'standing_at_first_tick'}
 OPEN_COLUMNS = ['touched_position', 'ticks_so_far', 'lowest_gap']
 TABLES = {'facts': (FACT_NAMES, FACT_TEXT, FACT_YES_NO, set()), 'open-at-the-end': (OPEN_COLUMNS, set(), set(), set())}
 
@@ -96,7 +101,8 @@ class Sweeps:
 
     def __init__(self):
         self.event = None
-        self.touch = None                              # while touching or crossed: [position, received, ticks, lowest]
+        self.touch = None                              # while touching or crossed: [position, received, ticks, lowest,
+        self.started = False                           # standing at the first tick]; and whether a tick has come
         self.counts = dict.fromkeys(KINDS, 0)
         self.most_levels = 0
 
@@ -148,16 +154,19 @@ class Sweeps:
             self.event = None
         if gap <= 0:
             if self.touch is None:
-                self.touch = [position, received, 1, gap]
-                facts.append(tuple(self._line(TOUCHED, position, received, gap)[name] for name in FACT_NAMES))
+                self.touch = [position, received, 1, gap, not self.started]
+                row = self._line(TOUCHED, position, received, gap)
+                row.update(standing_at_first_tick=not self.started)
+                facts.append(tuple(row[name] for name in FACT_NAMES))
             else:
                 self.touch[2], self.touch[3] = self.touch[2] + 1, min(self.touch[3], gap)
         elif self.touch is not None:
             row = self._line(PARTED, position, received, gap)
             row.update(touched_position=self.touch[0], lasted_ns=received - self.touch[1], ticks_lasted=self.touch[2],
-                       lowest_gap=self.touch[3])
+                       lowest_gap=self.touch[3], standing_at_first_tick=self.touch[-1])
             facts.append(tuple(row[name] for name in FACT_NAMES))
             self.touch = None
+        self.started = True
         return (len(facts),), facts
 
     def still_touching(self) -> list:

@@ -1101,12 +1101,14 @@ def sweeps(row_files, calc_files, trade_day: dt.date, table_files=None, rows_fol
     was = np.concatenate(([False], at_or_through[:-1]))
     began, parted = np.flatnonzero(at_or_through & ~was), np.flatnonzero(~at_or_through & was)
     for i in began.tolist():
-        expected.append((i, 1, tuple(line(S.TOUCHED, i)[name] for name in names)))
+        row = line(S.TOUCHED, i)
+        row.update(standing_at_first_tick=not i)       # row 0 is the first tick of the trade day
+        expected.append((i, 1, tuple(row[name] for name in names)))
     for i, since in zip(parted.tolist(), began.tolist()):
         need(since < i, 'the quote parted before it touched')
         row = line(S.PARTED, i)
         row.update(touched_position=int(position[since]), lasted_ns=int(received[i] - received[since]),
-                   ticks_lasted=i - since, lowest_gap=int(gap[since:i].min()))
+                   ticks_lasted=i - since, lowest_gap=int(gap[since:i].min()), standing_at_first_tick=not since)
         expected.append((i, 1, tuple(row[name] for name in names)))
     still = ([(int(position[began[-1]]), n - int(began[-1]), int(gap[began[-1]:].min()))]
              if n and at_or_through[-1] else [])
