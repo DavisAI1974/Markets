@@ -26,15 +26,12 @@ import json
 import os
 from pathlib import Path
 
-from root.outside import CITY_WEIGHTS, UNWEIGHTED_CITIES
+from root.outside import CITY_WEIGHTS, FORECAST_POINTS, UNWEIGHTED_CITIES
 
 SECTION = 'G. The 13 outside data points'
 WHOLE, DECIMAL, WORDS = 'whole number', 'decimal', 'text'
 DEFAULT_TABLES = Path(os.environ.get('MARKETS_DATA', '../markets-data')) / 'data' / 'outside' / 'ng_oct2023' / 'made'
 NYMEX_GAS, ICE_HENRY_HUB = '023651', '023391'       # CFTC contract codes, as in the original (labels, not numbers)
-FORECAST_FIGURES = (('GFS D+0', 'gfs_today'), ('NAM D+0', 'nam_today'), ('GFS D+1', 'gfs_next_day'),
-                    ('MEX D+3', 'extended_gfs_three_days_on'))
-USED = 'yes'
 
 
 def _positioning(point: str, name: str, code: str, three_year: bool) -> dict:
@@ -43,17 +40,11 @@ def _positioning(point: str, name: str, code: str, three_year: bool) -> dict:
         (f'{point}_{name}_funds_long', 'managed_money_long', WHOLE, 'Managed-money long contracts, as published.'),
         (f'{point}_{name}_funds_short', 'managed_money_short', WHOLE, 'Managed-money short contracts, as published.'),
         (f'{point}_{name}_funds_net', 'managed_money_net', WHOLE, 'Long minus short.'),
-        (f'{point}_{name}_net_standing_1y', 'standing_1y', DECIMAL, 'Where this net stands among the reports of the '
-         'last year, in percent.'),
-        (f'{point}_{name}_reports_in_1y', 'reports_in_1y', WHOLE, 'How many reports that one-year standing rests on.'),
     ]
     if three_year:
         fields += [
             ('x03_nymex_net_change_on_week', 'net_change_on_week', WHOLE, 'This report\'s net minus the report '
              'before.'),
-            ('x04_nymex_net_standing_3y', 'standing_3y', DECIMAL, 'Where this net stands among the reports of the last '
-             'three years, in percent.'),
-            ('x04_nymex_reports_in_3y', 'reports_in_3y', WHOLE, 'How many reports that three-year standing rests on.'),
         ]
     return dict(table='positioning.csv', where=('contract_code', code), known=f'{point}_{name}_known_from_ns',
                 fields=fields)
@@ -89,20 +80,22 @@ AS_OF = [
         ('x07_gas_burn_estimate_bcfd', 'est_gas_burn_bcfd_rate', DECIMAL, 'Gas burned for power, estimated from the '
          'gas generation of that hour as a daily rate (an estimate; the conversion is declared).'),
     ]),
-    dict(table='weather_gas_day.csv', where=None, known='x10_gas_day_known_from_ns', fields=[
-        ('x10_gas_day', 'gas_day', WORDS, 'The latest finished gas day (10 am Eastern to 10 am Eastern), by the date '
-         'it starts.'),
-        ('x10_gas_weighted_hdd', 'gw_hdd', DECIMAL, 'Observed gas-weighted heating degree days of that gas day.'),
-        ('x10_gas_weighted_cdd', 'gw_cdd', DECIMAL, 'Observed gas-weighted cooling degree days of that gas day.'),
-        ('x10_gas_weighted_precip_in', 'gw_precip_in', DECIMAL, 'Gas-weighted precipitation of that gas day, inches.'),
-        ('x10_gas_weighted_wind_knots', 'gw_wind_knots', DECIMAL, 'Gas-weighted wind speed of that gas day, knots.'),
-        ('x10_hdd_one_gas_day_before', 'gw_hdd_1_gas_days_before', DECIMAL, 'Carry-over: the heating degree days of '
-         'the gas day before.'),
-        ('x10_hdd_two_gas_days_before', 'gw_hdd_2_gas_days_before', DECIMAL, 'Carry-over: the heating degree days '
-         'two gas days before.'),
-        ('x10_cities_present', 'cities_present', WHOLE, 'How many of the 16 weighted cities had readings.'),
+    dict(table='weather_hourly_weighted.csv', where=None, known='x10_weighted_known_from_ns', fields=[
+        ('x10_gw_temp_f', 'gw_tmp_f', DECIMAL, 'The 16 weighted cities\' latest routine hourly temperatures weighted '
+         'together (the weights spread over the cities present), Fahrenheit. Made at every new reading; nothing is '
+         'averaged over time.'),
+        ('x10_gw_heating_degrees_f', 'gw_heating_degrees_f', DECIMAL, 'How far that weighted temperature sits below '
+         '65 F (zero when it is not below).'),
+        ('x10_gw_cooling_degrees_f', 'gw_cooling_degrees_f', DECIMAL, 'How far it sits above 65 F (zero when not '
+         'above).'),
+        ('x10_gw_wind_knots', 'gw_wind_knots', DECIMAL, 'The cities\' latest hourly wind speeds weighted, knots.'),
+        ('x10_gw_precip_in', 'gw_precip_in', DECIMAL, 'The cities\' latest hourly precipitation weighted, inches.'),
+        ('x10_cities_present', 'cities_present', WHOLE, 'How many of the 16 weighted cities have a temperature reading '
+         'so far.'),
         ('x10_weight_covered', 'weight_covered', DECIMAL, 'The share of the weights those cities carry.'),
-        ('x10_cities_missing', 'cities_missing', WORDS, 'The weighted cities with no reading that gas day.'),
+        ('x10_cities_missing', 'cities_missing', WORDS, 'The weighted cities with no temperature reading so far.'),
+        ('x10_oldest_temperature_reading', 'oldest_temperature_reading', WORDS, 'The time of the oldest of those '
+         'latest readings (UTC, as served), so a stale city shows.'),
     ]),
     dict(table='storage_weekly.csv', where=None, known='x11_storage_known_from_ns', fields=[
         ('x11_storage_week_ending', 'week_ending', WORDS, 'The week the storage report on this row is for.'),
@@ -110,10 +103,6 @@ AS_OF = [
          'billion cubic feet.'),
         ('x11_storage_change_bcf', 'change_from_first_prints_bcf', DECIMAL, 'This first print minus the first print '
          'of the week before.'),
-        ('x11_storage_vs_5yr_bcf', 'vs_5yr_bcf', DECIMAL, 'The level minus the mean of the same week in the five '
-         'years before.'),
-        ('x11_storage_vs_5yr_rule', 'vs_5yr_rule', WORDS, 'Which rule made the five-year comparison.'),
-        ('x11_storage_prior_5y_levels', 'same_week_prior_5y_levels', WORDS, 'The five prior-year levels it used.'),
     ]),
     dict(table='storage_estimate.csv', where=None, known='x12_estimate_known_from_ns', fields=[
         ('x12_estimate_week_ending', 'week_ending', WORDS, 'The week the estimate row is for.'),
@@ -129,11 +118,31 @@ AS_OF = [
 AS_OF += [dict(table='weather_hourly_city.csv', where=('city', city), known=f'x10_temp_{city.lower()}_known_from_ns',
                fields=[(f'x10_temp_f_{city.lower()}', 'tmpf', DECIMAL, f'The latest routine hourly temperature '
                         f'reading for {city}, Fahrenheit. It holds until the next reading is known; a missing hour '
-                        f'stays missing, so check the known-from time beside it.')])
+                        f'stays missing, so check the known-from time beside it.'),
+                       (f'x10_wind_knots_{city.lower()}', 'sknt', DECIMAL, f'Its wind speed in that reading, knots.'),
+                       (f'x10_precip_in_{city.lower()}', 'p01i', DECIMAL, f'Its precipitation in the hour of that '
+                        f'reading, inches (a trace counts 0.001).')])
           for city in list(CITY_WEIGHTS) + list(UNWEIGHTED_CITIES)]
+# The forecasts, every run as known at the tick (Greg, 2026-11-17: hour by hour, no high-low midpoint): for each model,
+# the latest run's forecast hours, the cities weighted at each.
+AS_OF += [dict(table=f'forecast_on_row_{model.lower()}.csv', where=None, known=f'x02_{model.lower()}_known_from_ns',
+               fields=[(f'x02_{model.lower()}_run_utc', 'runtime_utc', WORDS, f'The {model} run on this row.')] +
+               [field for k in range(1, points + 1) for field in (
+                   (f'x02_{model.lower()}_hour_{k}_utc', f'ftime_utc_{k}', WORDS, f'That run\'s forecast hour {k} '
+                    f'(UTC).'),
+                   (f'x02_{model.lower()}_hour_{k}_gw_temp_f', f'gw_tmp_f_{k}', DECIMAL, f'The weighted forecast '
+                    f'temperature at forecast hour {k}, Fahrenheit.'))])
+          for model, points in FORECAST_POINTS.items()]
+AS_OF += [dict(table='forecast_gap_gfs_nam.csv', where=None, known='x09_known_from_ns',
+               fields=[('x09_run_utc', 'runtime_utc', WORDS, 'The run GFS and NAM share on this row.')] +
+               [field for k in range(1, FORECAST_POINTS['GFS'] + 1) for field in (
+                   (f'x09_hour_{k}_utc', f'ftime_utc_{k}', WORDS, f'GFS forecast hour {k} of that run (UTC).'),
+                   (f'x09_hour_{k}_gfs_minus_nam_f', f'gfs_minus_nam_f_{k}', DECIMAL, f'GFS minus NAM at that hour, '
+                    f'weighted on the cities both have, Fahrenheit.'),
+                   (f'x09_hour_{k}_cities', f'cities_{k}', WHOLE, 'How many cities both have.'))])]
 
 # Figures made once per trade day: on every row of that trade day, empty on a row of no trade day.
-DAY_KNOWN = 'x02_x06_x09_known_from_ns'
+DAY_KNOWN = 'x06_known_from_ns'
 PER_TRADE_DAY = [
     dict(table='expiry.csv', where=None, pick=None, fields=[
         ('x06_sessions_since_front_expiry', 'sessions_since_front_expiry', WHOLE, 'Trading sessions since the front '
@@ -141,33 +150,15 @@ PER_TRADE_DAY = [
         ('x06_last_expired_symbol', 'last_expired_symbol', WORDS, 'The contract that last expired.'),
         ('x06_last_expiry_date', 'last_expiry_date', WORDS, 'The date it expired.'),
     ]),
-    dict(table='forecast_disagreement.csv', where=('used_on_rows', USED), pick=None, fields=[
-        ('x09_models_run_utc', 'runtime_utc', WORDS, 'The model run (shared by GFS and NAM) the disagreement is '
-         'taken from: the last one known before the trade day opened.'),
-        ('x09_models_largest_gap_hdd', 'max_abs_spread_gw_hdd', DECIMAL, 'The largest gap between GFS and NAM in '
-         'gas-weighted heating degree days over the days forecast.'),
-        ('x09_models_gap_at_days_ahead', 'at_horizon_days', WHOLE, 'How many days ahead that largest gap is.'),
-        ('x09_models_gap_by_days_ahead', 'spreads_by_horizon', WORDS, 'Every gap underneath: [days ahead, GFS minus '
-         'NAM, cities].'),
-    ]),
 ]
-PER_TRADE_DAY += [dict(table='forecast_on_row.csv', where=('figure', figure), pick=figure, fields=[
-    (f'x02_forecast_{name}_hdd', 'gw_hdd', DECIMAL, f'Forecast gas-weighted heating degree days, {figure} (model and '
-     f'days ahead of the trade day\'s date), from the last run known before the trade day opened.'),
-    (f'x02_forecast_{name}_run_utc', 'runtime_utc_used', WORDS, 'The model run it came from.'),
-    (f'x02_forecast_{name}_cities', 'cities_high_low_hdd', WORDS, 'Underneath: each city as city|forecast '
-     'high|forecast low|heating degree days, cities separated by ;'),
-    (f'x02_forecast_{name}_empty_reason', 'empty_reason', WORDS, 'Why the figure is empty, when it is.'),
-]) for figure, name in FORECAST_FIGURES]
 
 COLUMNS = []
 for _g in AS_OF:
     COLUMNS.append((SECTION, _g['known'], 'When the figures beside it became known (UTC nanoseconds): at or before '
                     'this row\'s received time.', WHOLE))
     COLUMNS += [(SECTION, name, what, kind) for name, _, kind, what in _g['fields']]
-COLUMNS.append((SECTION, DAY_KNOWN, 'When the once-per-trade-day figures (forecast, disagreement between models, '
-                'sessions since expiry) became known: the open of this row\'s trade day. Empty with them on a row '
-                'of no trade day.', WHOLE))
+COLUMNS.append((SECTION, DAY_KNOWN, 'When the once-per-trade-day figures (sessions since expiry) became known: the '
+                'open of this row\'s trade day. Empty with them on a row of no trade day.', WHOLE))
 for _g in PER_TRADE_DAY:
     COLUMNS += [(SECTION, name, what, kind) for name, _, kind, what in _g['fields']]
 NAMES = [name for _, name, _, _ in COLUMNS]

@@ -9,6 +9,12 @@ nanoseconds; `known_from_eastern` is the same time written in Eastern time, a la
 the tick rows is done later from these same tables: at a tick, the latest row known at or before the tick's received
 time. Nothing is estimated or filled in: a value that cannot be made is empty and its reason is in the receipt.
 
+Changed 2026-11-17 on Greg's word ("take out all.of the other averages"; "ZERO WINDOWS"; "The temp changes are what
+drive market price in rt markets!! We have hourly temps available for each day. Use them"): no fund standing over a
+window; no gas-day temperature, degree day, wind or rain figure (the gas day is a label on each reading); no forecast
+high-low midpoint (every run, every forecast hour); the storage five-year comparison stays in its table as
+information only and never goes on a row or into a calculation.
+
 Inputs: the source folder `data/outside/ng_oct2023/` of markets-data, every file checked against its MANIFEST.json
 fingerprint before it is read.
 
@@ -34,7 +40,8 @@ from root.calendar import (EASTERN, OPEN_EASTERN, eastern, eastern_text, parse_t
 
 # ---------------------------------------------------------------- declared constants (root/DECLARED_CONSTANTS.md)
 TRADE_DAYS = ('2023-10-02', '2023-10-03', '2023-10-17', '2023-10-18')
-NS_PER_MINUTE = 60 * 10 ** 9
+NS_PER_SECOND = 10 ** 9
+NS_PER_MINUTE = 60 * NS_PER_SECOND
 DAYS_PER_WEEK = 7
 MONTHS_PER_YEAR = 12
 FRIDAY, SATURDAY, SUNDAY = 4, 5, 6                     # weekday numbers (Monday = 0)
@@ -43,11 +50,7 @@ NS_PER_HOUR = 60 * NS_PER_MINUTE
 
 # Positioning (cot_feed.py).
 POSITIONING_CODES = ('023651', '023391', '023392', '0233AG', '0233AH')
-WINDOW_1Y_DAYS, MIN_REPORTS_1Y = 365, 45
-WINDOW_3Y_DAYS, MIN_REPORTS_3Y = 1095, 140
 WEEK_STEP_MIN_DAYS, WEEK_STEP_MAX_DAYS = 5, 10        # the change on the week only against a normal weekly step
-PERCENT = 100.0
-TIE_WEIGHT = 0.5                                       # cot_feed: a tie in the window counts half
 FEDERAL_HOLIDAY_JUNETEENTH_FROM = 2021                 # Juneteenth is a federal holiday from 2021
 POSITIONING_RELEASE_EASTERN = dt.time(15, 30)          # Friday after the report date, 3:30 pm Eastern
 
@@ -59,18 +62,13 @@ TOTAL_RAW_WEIGHT = sum(CITY_WEIGHTS.values())
 CITY_SHARE = {c: w / TOTAL_RAW_WEIGHT for c, w in CITY_WEIGHTS.items()}    # nws_temp_feed.station_weights: sum to 1
 UNWEIGHTED_CITIES = ('AUS', 'SAT')
 DEGREE_DAY_BASE_F = 65.0
-HIGH_LOW_MIDPOINT = 2.0                                # the original forecast day temperature: (high + low) / 2
 READING_LAG_NS = 10 * NS_PER_MINUTE                    # a station reading is public 10 minutes after its time
 READINGS_LOOKBACK_NS = 72 * NS_PER_HOUR                # readings kept from 72 hours before each trade day opens
 GAS_DAY_START_EASTERN = dt.time(10, 0)                 # fix 3: the gas day runs 10 am Eastern to 10 am Eastern
-CARRY_OVER_GAS_DAYS = 2                                # fix 3: heating degree days of each of the two gas days before
-GAS_DAYS_FROM = dt.date(2023, 9, 20)                   # gas days made: from here (carry-over for Oct 2 needs Sep 29)
 TRACE_PRECIP_IN = 0.001                                # a trace of rain counts 0.001 inch, as nws_temp_feed
 FORECAST_TZ = 'America/Chicago'                        # the original forecast describes the calendar date in Central
 FORECAST_LAG_NS = int(4.5 * NS_PER_HOUR)               # a model run is public 4.5 hours after it starts
-FORECAST_MIN_TEMPS = {'GFS': 5, 'NAM': 5, 'MEX': 2}    # forecast temperatures needed inside a date to use it
-FORECAST_ON_ROW = (('GFS', 0), ('NAM', 0), ('GFS', 1), ('MEX', 3))   # the four forecast figures of the original
-DISAGREEMENT_HORIZONS = 8                              # target dates D .. D+7
+FORECAST_POINTS = {'GFS': 21, 'NAM': 21, 'MEX': 15}   # forecast hours each model's run gives (product facts; checked)
 
 # Grid (grid_stack / frankie_day_external.py).
 GRID_LAG_NS = 2 * NS_PER_HOUR                          # an hour's figure is public 2 hours after its stamp
@@ -223,17 +221,9 @@ def positioning_release(report_date: dt.date) -> dt.datetime:
     return eastern(pub, POSITIONING_RELEASE_EASTERN)
 
 
-def standing(value, window) -> float:
-    """cot_feed._percentile_of: where a value stands in its window, 0 to 100, ties counted half."""
-    below = sum(1 for w in window if w < value)
-    equal = sum(1 for w in window if w == value)
-    return PERCENT * (below + TIE_WEIGHT * equal) / len(window)
-
-
 POSITIONING_COLUMNS = ['known_from_ns', 'known_from_eastern', 'known_from_basis', 'contract_code', 'market_name',
                        'report_date', 'open_interest', 'managed_money_long', 'managed_money_short',
-                       'managed_money_net', 'net_change_on_week', 'standing_1y', 'reports_in_1y',
-                       'standing_3y', 'reports_in_3y', 'source_file']
+                       'managed_money_net', 'net_change_on_week', 'source_file']
 
 
 def positioning(src: Sources) -> list[list]:
@@ -267,17 +257,10 @@ def positioning(src: Sources) -> list[list]:
                 prev_net = None if prev['long'] is None or prev['short'] is None else prev['long'] - prev['short']
                 if prev_net is not None and WEEK_STEP_MIN_DAYS <= (day - prev_day).days <= WEEK_STEP_MAX_DAYS:
                     change = net - prev_net
-            stand = []
-            for days, minimum in ((WINDOW_1Y_DAYS, MIN_REPORTS_1Y), (WINDOW_3Y_DAYS, MIN_REPORTS_3Y)):
-                start = day - dt.timedelta(days=days)
-                window = [w['long'] - w['short'] for d, w in series[:i + 1]
-                          if start <= d <= day and w['long'] is not None and w['short'] is not None]
-                value = None if net is None or len(window) < minimum else round(standing(net, window), 2)
-                stand += [value, len(window)]
             known = to_ns(positioning_release(day))
             out.append(known_cols(known) + ['rule: Friday after the report date 15:30 Eastern, holiday-shifted',
                                             code, r['name'], day.isoformat(), r['oi'], r['long'], r['short'], net,
-                                            change] + stand + [r['stored']])
+                                            change, r['stored']])
     return out
 
 
@@ -303,10 +286,13 @@ def weighted(values: dict) -> tuple:
 
 
 def forecasts(src: Sources, trade_days, cut: int):
-    from zoneinfo import ZoneInfo
-    central = ZoneInfo(FORECAST_TZ)
+    """Every model run, hour by hour (Greg, 2026-11-17: no averaged temperatures; "We have hourly temps available for
+    each day. Use them"). For each run and each forecast hour it gives, the cities' forecast temperatures weighted
+    together (the weights spread over the cities present). No high, no low, no midpoint. A run is known 4.5 hours after
+    it starts; every run is kept, and the rows show the latest run as known at their tick, so each new run shows at
+    its own tick."""
     city_rows, columns = [], None
-    runs = defaultdict(dict)          # (model, runtime) -> {city: {ftime: tmp}}
+    runs = defaultdict(dict)          # (model, runtime) -> {ftime: {city: tmp}}
     for stored, model, rows in forecast_files(src):
         if rows and columns is None:
             columns = list(rows[0].keys())
@@ -315,80 +301,45 @@ def forecasts(src: Sources, trade_days, cut: int):
             if known >= cut:
                 continue
             city_rows.append(known_cols(known) + [r.get(c, '') for c in columns] + [stored])
+            runs[(model, r['runtime'])].setdefault(r['ftime'], {})
             tmp = number(r.get('tmp'))
             if tmp is not None:
-                runs[(model, r['runtime'])].setdefault(r['station'][1:], {})[r['ftime']] = tmp
+                runs[(model, r['runtime'])][r['ftime']][r['station'][1:]] = tmp
     col = {c: len(KNOWN_COLUMNS) + i for i, c in enumerate(columns)}
     city_rows.sort(key=lambda x: (x[0], x[col['model']], x[col['station']], x[col['ftime']]))
 
-    def central_date(ftime):
-        return dt.datetime.strptime(ftime, '%Y-%m-%d %H:%M:%S').replace(tzinfo=dt.timezone.utc).astimezone(
-            central).date()
-
-    by_run = {}                       # (model, runtime, target date) -> (gw_hdd, gw_cdd, cities, coverage, missing, hdd by city)
-    gw_rows = []
-    for (model, runtime), cities in sorted(runs.items()):
+    hourly, wide = [], {model: [] for model in FORECAST_POINTS}
+    weighted_at = {}                  # (model, runtime, ftime) -> {city: tmp} of the weighted cities
+    for (model, runtime), points in sorted(runs.items()):
         known = utc_ns(runtime, '%Y-%m-%d %H:%M:%S') + FORECAST_LAG_NS
-        targets = sorted({central_date(ft) for fc in cities.values() for ft in fc})
-        for target in targets:
-            hdd, cdd, high_low = {}, {}, {}
-            for city, fc in cities.items():
-                temps = [t for ft, t in fc.items() if central_date(ft) == target]
-                if len(temps) >= FORECAST_MIN_TEMPS[model]:
-                    hdd[city], cdd[city] = degree_days((max(temps) + min(temps)) / HIGH_LOW_MIDPOINT)
-                    high_low[city] = (max(temps), min(temps))
-            gw_hdd, cover = weighted(hdd)
-            if gw_hdd is None:
-                continue
-            gw_cdd, _ = weighted(cdd)
-            missing = sorted(c for c in CITY_WEIGHTS if c not in hdd)
-            by_run[(model, runtime, target)] = (round(gw_hdd, 3), hdd, ';'.join(
-                f'{c}|{cell(high_low[c][0])}|{cell(high_low[c][1])}|{cell(round(hdd[c], 2))}'
-                for c in CITY_WEIGHTS if c in hdd))
-            gw_rows.append(known_cols(known) + [model, runtime, target.isoformat(), round(gw_hdd, 3),
-                                                round(gw_cdd, 3), len([c for c in hdd if c in CITY_WEIGHTS]),
-                                                round(cover, 4), ' '.join(missing)])
+        ftimes = sorted(points)
+        if len(ftimes) != FORECAST_POINTS[model]:
+            raise ValueError(f'{model} run {runtime} gives {len(ftimes)} forecast hours, not {FORECAST_POINTS[model]}')
+        line = known_cols(known) + [runtime]
+        for k, ftime in enumerate(ftimes, 1):
+            temps = {c: t for c, t in points[ftime].items() if c in CITY_SHARE}
+            weighted_at[(model, runtime, ftime)] = temps
+            gw, cover = weighted(temps)
+            missing = sorted(c for c in CITY_WEIGHTS if c not in temps)
+            hourly.append(known_cols(known) + [model, runtime, k, ftime, None if gw is None else round(gw, 3),
+                                               len(temps), round(cover, 4), ' '.join(missing)])
+            line += [ftime, None if gw is None else round(gw, 3)]
+        wide[model].append(line)
 
-    on_row, disagreement = [], []
-    for day in trade_days:
-        opens, _ = trade_day_bounds(day)
-        for model, horizon in FORECAST_ON_ROW:
-            target = day + dt.timedelta(days=horizon)
-            chosen = [rt for (m, rt, t) in by_run if m == model and t == target
-                      and utc_ns(rt, '%Y-%m-%d %H:%M:%S') + FORECAST_LAG_NS < opens]
-            if not chosen:
-                on_row.append(known_cols(opens) + [day.isoformat(), f'{model} D+{horizon}', model, horizon,
-                                                   target.isoformat(), None, None, None,
-                                                   'no run with this target was known before the trade day opened'])
-                continue
-            rt = max(chosen)
-            on_row.append(known_cols(opens) + [day.isoformat(), f'{model} D+{horizon}', model, horizon,
-                                               target.isoformat(), rt, by_run[(model, rt, target)][0],
-                                               by_run[(model, rt, target)][2], ''])
-        shared = sorted({rt for (m, rt, t) in by_run if m == 'GFS'} & {rt for (m, rt, t) in by_run if m == 'NAM'})
-        for rt in shared:
-            known = utc_ns(rt, '%Y-%m-%d %H:%M:%S') + FORECAST_LAG_NS
-            spreads = []
-            for h in range(DISAGREEMENT_HORIZONS):
-                target = day + dt.timedelta(days=h)
-                a, b = by_run.get(('GFS', rt, target)), by_run.get(('NAM', rt, target))
-                if not a or not b:
-                    continue
-                common = sorted(c for c in a[1] if c in b[1] and c in CITY_SHARE)
-                total = sum(CITY_SHARE[c] for c in common)
-                if total <= 0:
-                    continue
-                ga = sum(CITY_SHARE[c] * a[1][c] for c in common) / total
-                gb = sum(CITY_SHARE[c] * b[1][c] for c in common) / total
-                spreads.append((h, round(ga - gb, 3), len(common)))
-            if spreads:
-                top = max(spreads, key=lambda x: abs(x[1]))
-                disagreement.append(known_cols(known) + [day.isoformat(), rt, abs(top[1]), top[0],
-                                                         json.dumps(spreads), False])
-        before = [r for r in disagreement if r[2] == day.isoformat() and r[0] < opens]
-        if before:
-            max(before, key=lambda r: r[0])[-1] = True
-    return dict(columns=columns, city=city_rows, gw=gw_rows, on_row=on_row, disagreement=disagreement)
+    gaps = []                         # GFS minus NAM, forecast hour by forecast hour, on the cities both have
+    shared = sorted({rt for (m, rt) in runs if m == 'GFS'} & {rt for (m, rt) in runs if m == 'NAM'})
+    for runtime in shared:
+        known = utc_ns(runtime, '%Y-%m-%d %H:%M:%S') + FORECAST_LAG_NS
+        line = known_cols(known) + [runtime]
+        for ftime in sorted(runs[('GFS', runtime)]):
+            a = weighted_at[('GFS', runtime, ftime)]
+            b = weighted_at.get(('NAM', runtime, ftime), {})
+            common = {c for c in a if c in b}
+            ga, _ = weighted({c: a[c] for c in common})
+            gb, _ = weighted({c: b[c] for c in common})
+            line += [ftime, None if ga is None or gb is None else round(ga - gb, 3), len(common)]
+        gaps.append(line)
+    return dict(columns=columns, city=city_rows, hourly=hourly, wide=wide, gaps=gaps)
 
 
 # ---------------------------------------------------------------- X10: observed weather (fix 3)
@@ -399,7 +350,21 @@ def readings(src: Sources, stored: str):
     return header, [dict(zip(header, r)) for r in reader]
 
 
+def gas_day_of(valid_ns: int) -> str:
+    """The gas day a reading belongs to, by the date it starts (10 am Eastern to 10 am Eastern). A label only (Greg,
+    2026-11-17: the gas day is kept as a descriptor; no gas-day temperature is made or used)."""
+    from zoneinfo import ZoneInfo
+    local = dt.datetime.fromtimestamp(valid_ns // NS_PER_SECOND, tz=ZoneInfo('America/New_York'))
+    start = local.date() if local.time() >= GAS_DAY_START_EASTERN else local.date() - dt.timedelta(days=1)
+    return start.isoformat()
+
+
 def weather(src: Sources, trade_days, cut: int):
+    """Observed weather hour by hour (Greg, 2026-11-17: "The temp changes are what drive market price in rt
+    markets!! We have hourly temps available for each day. Use them"). Every reading is kept; each city's routine
+    hourly reading (temperature, wind, precipitation) is written as it was reported, with the gas day as a label; and
+    at every time a new routine reading becomes known, the cities' latest readings weighted together, with the heating
+    and cooling degrees of that weighted temperature (from 65 F). Nothing is averaged over time."""
     spans = [(trade_day_bounds(d)[0] - READINGS_LOOKBACK_NS, rows_end(d)) for d in trade_days]
     reading_rows, header = [], None
     for city in list(CITY_WEIGHTS) + list(UNWEIGHTED_CITIES):
@@ -413,62 +378,44 @@ def weather(src: Sources, trade_days, cut: int):
                 reading_rows.append(known_cols(known) + [r.get(c, '') for c in header] + [stored])
     reading_rows.sort(key=lambda x: (x[0], x[2]))
 
-    gas_days = []
-    g = GAS_DAYS_FROM
-    while True:
-        end = to_ns(eastern(g + dt.timedelta(days=1), GAS_DAY_START_EASTERN))
-        if end + READING_LAG_NS >= cut:
-            break
-        gas_days.append(g)
-        g += dt.timedelta(days=1)
-
-    per_city = {}
-    city_rows, hourly_rows = [], []
+    hourly_rows, events = [], []
     for city in list(CITY_WEIGHTS) + list(UNWEIGHTED_CITIES):
         stored = f'raw/weather_obs/asos_{city}_routine_20230901_20231101.tsv.gz'
         _, rows = readings(src, stored)
-        stamped = sorted(((utc_ns(r['valid'], '%Y-%m-%d %H:%M'), r) for r in rows), key=lambda x: x[0])
-        times = [t for t, _ in stamped]
-        for t, r in stamped:
-            if any(lo <= t and t + READING_LAG_NS < hi for lo, hi in spans):
-                hourly_rows.append(known_cols(t + READING_LAG_NS) + [city, r['valid'], number(r['tmpf']), stored])
-        for g in gas_days:
-            lo = to_ns(eastern(g, GAS_DAY_START_EASTERN))
-            hi = to_ns(eastern(g + dt.timedelta(days=1), GAS_DAY_START_EASTERN))
-            inside = [r for _, r in stamped[bisect.bisect_left(times, lo):bisect.bisect_left(times, hi)]]
-            temps = [x for x in (number(r['tmpf']) for r in inside) if x is not None]
-            winds = [x for x in (number(r['sknt']) for r in inside) if x is not None]
-            rain = [TRACE_PRECIP_IN if r['p01i'].strip() == 'T' else number(r['p01i']) for r in inside]
-            rain = [x for x in rain if x is not None]
-            mean = None if not temps else sum(temps) / len(temps)
-            hdd, cdd = (None, None) if mean is None else degree_days(mean)
-            wind = None if not winds else sum(winds) / len(winds)
-            per_city[(city, g)] = dict(hdd=hdd, cdd=cdd, wind=wind, rain=sum(rain) if rain else None)
-            city_rows.append(known_cols(hi + READING_LAG_NS) + [
-                g.isoformat(), city, None if city not in CITY_SHARE else round(CITY_SHARE[city], 6), len(inside),
-                len(temps),
-                None if mean is None else round(mean, 2), None if hdd is None else round(hdd, 2),
-                None if cdd is None else round(cdd, 2), None if wind is None else round(wind, 2),
-                None if not rain else round(sum(rain), 3), stored])
-
-    day_rows, by_day = [], {}
-    for g in gas_days:
-        hi = to_ns(eastern(g + dt.timedelta(days=1), GAS_DAY_START_EASTERN))
-        figures = {}
-        for key in ('hdd', 'cdd', 'wind', 'rain'):
-            figures[key], cover = weighted({c: per_city[(c, g)][key] for c in CITY_WEIGHTS})
-            if key == 'hdd':
-                coverage = cover
-        present = [c for c in CITY_WEIGHTS if per_city[(c, g)]['hdd'] is not None]
-        by_day[g] = None if figures['hdd'] is None else round(figures['hdd'], 3)
-        carry = [by_day.get(g - dt.timedelta(days=k)) for k in range(1, CARRY_OVER_GAS_DAYS + 1)]
-        day_rows.append(known_cols(hi + READING_LAG_NS) + [
-            g.isoformat(), by_day[g], None if figures['cdd'] is None else round(figures['cdd'], 3),
-            None if figures['rain'] is None else round(figures['rain'], 4),
-            None if figures['wind'] is None else round(figures['wind'], 2)] + carry + [
-            len(present), round(coverage, 4), ' '.join(c for c in CITY_WEIGHTS if c not in present)])
+        for r in rows:
+            t = utc_ns(r['valid'], '%Y-%m-%d %H:%M')
+            if not any(lo <= t and t + READING_LAG_NS < hi for lo, hi in spans):
+                continue
+            rain = TRACE_PRECIP_IN if r['p01i'].strip() == 'T' else number(r['p01i'])
+            values = dict(tmpf=number(r['tmpf']), sknt=number(r['sknt']), p01i=rain)
+            hourly_rows.append(known_cols(t + READING_LAG_NS) + [city, r['valid'], gas_day_of(t), values['tmpf'],
+                                                                 values['sknt'], values['p01i'], stored])
+            if city in CITY_SHARE:
+                events.append((t + READING_LAG_NS, city, r['valid'], values))
     hourly_rows.sort(key=lambda x: (x[0], x[2]))
-    return dict(header=header, readings=reading_rows, city=city_rows, day=day_rows, hourly=hourly_rows)
+
+    events.sort(key=lambda e: (e[0], e[1]))
+    latest = {key: {} for key in ('tmpf', 'sknt', 'p01i')}      # field -> city -> (value, the reading's time)
+    weighted_rows = []
+    for k, (known, city, valid, values) in enumerate(events):
+        for key, value in values.items():
+            if value is not None:
+                latest[key][city] = (value, valid)
+        if k + 1 < len(events) and events[k + 1][0] == known:
+            continue                                            # every reading known at this time first
+        gw = {}
+        for key in latest:
+            gw[key], _ = weighted({c: v for c, (v, _) in latest[key].items()})
+        temps = latest['tmpf']
+        _, cover = weighted({c: v for c, (v, _) in temps.items()})
+        heating, cooling = (None, None) if gw['tmpf'] is None else degree_days(gw['tmpf'])
+        weighted_rows.append(known_cols(known) + [
+            None if gw['tmpf'] is None else round(gw['tmpf'], 3), None if heating is None else round(heating, 3),
+            None if cooling is None else round(cooling, 3), None if gw['sknt'] is None else round(gw['sknt'], 3),
+            None if gw['p01i'] is None else round(gw['p01i'], 4), len(temps), round(cover, 4),
+            ' '.join(c for c in CITY_WEIGHTS if c not in temps),
+            min((v for _, v in temps.values()), default=None)])
+    return dict(header=header, readings=reading_rows, hourly=hourly_rows, weighted=weighted_rows)
 
 
 # ---------------------------------------------------------------- X05, X07: wind and gas burned for power
@@ -783,20 +730,21 @@ def empty_cells(folder: Path, table: str) -> dict:
 
 
 EMPTY_REASONS = {
-    'positioning.csv': 'standing: the window holds fewer reports than the minimum (45 for one year, 140 for three); '
-                       'change on the week: no report 5 to 10 days earlier',
+    'positioning.csv': 'change on the week: no report 5 to 10 days earlier',
     'forecast_city_runs.csv.gz': 'the forecast product does not give that figure for that hour (as served)',
-    'forecast_gas_weighted.csv': 'cities_missing is empty when no city is missing',
-    'forecast_on_row.csv': 'empty_reason is empty when the figure was made',
+    'forecast_hourly.csv': 'cities_missing is empty when no city is missing; gw_tmp_f: no weighted city has a forecast '
+                           'temperature at that hour',
+    'forecast_gap_gfs_nam.csv': 'the gap: NAM gives no forecast at that hour, or no city is in both',
     'weather_readings.csv.gz': 'the station did not report that field in that reading (as served)',
-    'weather_gas_day_city.csv': 'weight: the city carries no weight (AUS, SAT); a figure: no reading of it that gas day',
-    'weather_hourly_city.csv': 'the routine hourly reading carries no temperature (as served)',
-    'weather_gas_day.csv': 'cities_missing is empty when no city is missing; carry-over: before the first gas day made',
+    'weather_hourly_city.csv': 'the routine hourly reading carries no temperature, wind or precipitation (as served)',
+    'weather_hourly_weighted.csv': 'cities_missing is empty when no city is missing; a figure: no weighted city has '
+                                   'reported it yet in the span',
     'grid_hourly_all.csv.gz': 'the EIA gives no value for that hour (as served)',
     'curve_definitions.csv.gz': '', 'curve_statistics.csv.gz': 'price: the statistic has no price (a quantity only); '
                                                                 'raw_symbol: no definition known for that instrument',
     'curve_trades.csv.gz': 'raw_symbol: no definition known for that instrument',
     'storage_weekly.csv': 'change: no first print for the week before (the first prints start 2015-06-19); vs_5yr and '
+                          '(INFORMATION ONLY, never on the rows or in a calculation: Greg 2026-11-17) '
                           'the prior levels: fewer than five prior calendar years carry that ISO week number (week 53); '
                           'eia_note: the EIA wrote no note for that week',
     'storage_estimate.csv': 'estimate and surprise: the street estimate is not held (estimate_missing_reason); actual: '
@@ -818,31 +766,30 @@ def build(src_folder: Path, out: Path, trade_days=TRADE_DAYS) -> dict:
     tables.append(write_table(out, 'forecast_city_runs.csv',
                               ['known_from_ns', 'known_from_eastern'] + fc['columns'] + ['source_file'], fc['city'],
                               zipped=True))
-    tables.append(write_table(out, 'forecast_gas_weighted.csv',
-                              ['known_from_ns', 'known_from_eastern', 'model', 'runtime_utc', 'target_date_central',
-                               'gw_hdd', 'gw_cdd', 'cities', 'weight_covered', 'cities_missing'], fc['gw']))
-    on_cols = ['known_from_ns', 'known_from_eastern', 'trade_day', 'figure', 'model', 'horizon_days',
-               'target_date_central', 'runtime_utc_used', 'gw_hdd', 'cities_high_low_hdd', 'empty_reason']
-    tables.append(write_table(out, 'forecast_on_row.csv', on_cols, fc['on_row']))
-    tables.append(write_table(out, 'forecast_disagreement.csv',
-                              ['known_from_ns', 'known_from_eastern', 'trade_day', 'runtime_utc',
-                               'max_abs_spread_gw_hdd', 'at_horizon_days', 'spreads_by_horizon',
-                               'used_on_rows'], fc['disagreement']))
+    tables.append(write_table(out, 'forecast_hourly.csv',
+                              ['known_from_ns', 'known_from_eastern', 'model', 'runtime_utc', 'point', 'ftime_utc',
+                               'gw_tmp_f', 'cities', 'weight_covered', 'cities_missing'], fc['hourly']))
+    for model, points in FORECAST_POINTS.items():
+        tables.append(write_table(out, f'forecast_on_row_{model.lower()}.csv',
+                                  ['known_from_ns', 'known_from_eastern', 'runtime_utc'] +
+                                  [f'{what}_{k}' for k in range(1, points + 1) for what in ('ftime_utc', 'gw_tmp_f')],
+                                  fc['wide'][model]))
+    tables.append(write_table(out, 'forecast_gap_gfs_nam.csv',
+                              ['known_from_ns', 'known_from_eastern', 'runtime_utc'] +
+                              [f'{what}_{k}' for k in range(1, FORECAST_POINTS['GFS'] + 1)
+                               for what in ('ftime_utc', 'gfs_minus_nam_f', 'cities')], fc['gaps']))
 
     wx = weather(src, days, cut)
     tables.append(write_table(out, 'weather_readings.csv',
                               ['known_from_ns', 'known_from_eastern'] + wx['header'] + ['source_file'],
                               wx['readings'], zipped=True))
-    city_cols = ['known_from_ns', 'known_from_eastern', 'gas_day', 'city', 'weight', 'routine_readings',
-                 'readings_with_temperature', 'mean_temperature_f', 'hdd', 'cdd', 'mean_wind_knots', 'precip_in',
-                 'source_file']
-    tables.append(write_table(out, 'weather_gas_day_city.csv', city_cols, wx['city']))
-    day_cols = ['known_from_ns', 'known_from_eastern', 'gas_day', 'gw_hdd', 'gw_cdd', 'gw_precip_in',
-                'gw_wind_knots'] + [f'gw_hdd_{k}_gas_days_before' for k in range(1, CARRY_OVER_GAS_DAYS + 1)] + [
-                'cities_present', 'weight_covered', 'cities_missing']
-    tables.append(write_table(out, 'weather_gas_day.csv', day_cols, wx['day']))
     tables.append(write_table(out, 'weather_hourly_city.csv', ['known_from_ns', 'known_from_eastern', 'city', 'valid',
-                                                               'tmpf', 'source_file'], wx['hourly']))
+                                                               'gas_day', 'tmpf', 'sknt', 'p01i', 'source_file'],
+                              wx['hourly']))
+    tables.append(write_table(out, 'weather_hourly_weighted.csv',
+                              ['known_from_ns', 'known_from_eastern', 'gw_tmp_f', 'gw_heating_degrees_f',
+                               'gw_cooling_degrees_f', 'gw_wind_knots', 'gw_precip_in', 'cities_present',
+                               'weight_covered', 'cities_missing', 'oldest_temperature_reading'], wx['weighted']))
 
     gr = grid(src, cut)
     tables.append(write_table(out, 'grid_hourly_all.csv',
@@ -897,11 +844,13 @@ def build(src_folder: Path, out: Path, trade_days=TRADE_DAYS) -> dict:
 
 WORKBOOK_SHEETS = (   # (sheet, table, what it is); the larger tables stay as files only, named on the first sheet
     ('Positioning', 'positioning.csv', 'X01, X03, X04, X08: managed-money positioning, every weekly report'),
-    ('Forecast on row', 'forecast_on_row.csv', 'X02: the four forecast figures each trade day shows (kept simple)'),
-    ('Forecast runs', 'forecast_gas_weighted.csv', 'X02: every model run, gas-weighted, by target date'),
-    ('Disagreement', 'forecast_disagreement.csv', 'X09: GFS minus NAM per shared run; the one used is marked'),
-    ('Weather gas day', 'weather_gas_day.csv', 'X10: observed gas-weighted figures per gas day (fix 3)'),
-    ('Weather by city', 'weather_gas_day_city.csv', 'X10 underneath: each city per gas day'),
+    ('Forecast hourly', 'forecast_hourly.csv', 'X02: every model run, each forecast hour, cities weighted'),
+    ('Forecast GFS', 'forecast_on_row_gfs.csv', 'X02: each GFS run as the rows show it, hour by hour'),
+    ('Forecast NAM', 'forecast_on_row_nam.csv', 'X02: each NAM run as the rows show it, hour by hour'),
+    ('Forecast MEX', 'forecast_on_row_mex.csv', 'X02: each extended GFS run as the rows show it, hour by hour'),
+    ('GFS minus NAM', 'forecast_gap_gfs_nam.csv', 'X09: GFS minus NAM per shared run, hour by hour'),
+    ('Weather weighted', 'weather_hourly_weighted.csv', 'X10: the cities\' latest hourly readings weighted, at '
+     'every new reading'),
     ('Grid US48', 'grid_us48.csv', 'X05, X07: US48 wind and the gas-burn estimate, by hour'),
     ('Expiry', 'expiry.csv', 'X06: sessions since the front contract expired'),
     ('Curve settled', 'curve_settled_shape.csv', 'X13: the curve shape from settlement prices'),
