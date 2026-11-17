@@ -81,6 +81,13 @@ gets a fact, so nothing is picked by a size, a count or a number of price levels
 | `CHANGES` | the words of `root/rows.py` | What a tick can do to an order already resting. |
 | `EVENT`, `TOUCHED`, `PARTED`, `KINDS` | trade event, quote touched or crossed, quote parted | The kinds of moment a sweep fact is recorded at. |
 
+## `root/calcs/chain_peaks.py` (part 2, the chain link models, first part; `STEP1_STEP2_LAYOUTS.md`, piece 4)
+
+| Constant | Value | Why |
+|---|---|---|
+| `STEPS_BACK` | 6 | How many steps back are written out as before lines now: the first six, as put to Greg ("the first six steps back are run and shown to Greg; how much further is settled with him"). It is not a cap on the chain: every peak line carries the tick the peak became known and the tick its story ended, so any further step follows by the same rule. |
+| `I_SIDE`, `I_SIZE`, `I_HIGH`, `I_HIGH_AT`, `F` | positions | Where a value sits among the values of pieces 1 and 2. |
+
 ## `root/tape.py`, the stored-rows gate
 
 | Constant | Value | Why |

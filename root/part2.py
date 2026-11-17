@@ -26,11 +26,13 @@ import json
 from pathlib import Path
 
 from root import checks, store, tape
-from root.calcs import book_totals, flow_peak, open_stories, peak_links, peak_story, quote_runs, refills, sweeps
+from root.calcs import (book_totals, chain_peaks, flow_peak, open_stories, peak_links, peak_story, quote_runs,
+                        refills, sweeps)
 from root.calendar import label
 
 CALCS = {'flow_peak': flow_peak, 'peak_story': peak_story, 'book_totals': book_totals, 'quote_runs': quote_runs,
-         'peak_links': peak_links, 'open_stories': open_stories, 'refills': refills, 'sweeps': sweeps}
+         'peak_links': peak_links, 'open_stories': open_stories, 'refills': refills, 'sweeps': sweeps,
+         'chain_peaks': chain_peaks}
 LAID_OUT = {'flow_peak': 'markets-data STEP1_STEP2_LAYOUTS.md, piece 1 (Greg, 2026-11-16)',
             'peak_story': 'markets-data STEP1_STEP2_LAYOUTS.md, piece 2 as revised (Greg, 2026-11-16)',
             'book_totals': 'markets-data STEP2_PLAN.md, piece C (Greg, 2026-11-16)',
@@ -38,7 +40,9 @@ LAID_OUT = {'flow_peak': 'markets-data STEP1_STEP2_LAYOUTS.md, piece 1 (Greg, 20
             'peak_links': 'markets-data STEP2_PLAN.md, piece A (Greg, 2026-11-16)',
             'open_stories': 'markets-data STEP2_PLAN.md, piece B (Greg, 2026-11-16)',
             'refills': 'markets-data STEP1_STEP2_LAYOUTS.md, addition L ("Try them all", Greg, 2026-11-16)',
-            'sweeps': 'markets-data STEP1_STEP2_LAYOUTS.md, addition M ("Try them all", Greg, 2026-11-16)'}
+            'sweeps': 'markets-data STEP1_STEP2_LAYOUTS.md, addition M ("Try them all", Greg, 2026-11-16)',
+            'chain_peaks': 'markets-data STEP1_STEP2_LAYOUTS.md, piece 4, the chain link models ("Do it", Greg, '
+                           '2026-11-16): the per-peak lines the models read'}
 POSITION = 'position_on_tape'
 
 

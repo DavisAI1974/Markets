@@ -1136,10 +1136,133 @@ def sweeps(row_files, calc_files, trade_day: dt.date, table_files=None, rows_fol
                        'tick-by-tick calculation')
 
 
-KNOWN_AT_A_TICK = {'facts'}            # the tables whose lines each carry the tick at which they became known
+def chain_peaks(row_files, calc_files, trade_day: dt.date, table_files=None, rows_folder=None) -> dict:
+    """The check of the calculation `chain_peaks`: every peak line and every before line worked out again from the
+    stored (and already checked) outputs of pieces 1, 2 and A as whole tables. The calculation follows the peaks
+    tick by tick and reads no stored file. How far a peak faded while it was away is taken here from piece 1's
+    bought and sold columns over the stretch of rows from reaching zero to coming back; the ended peaks before a
+    peak by walking back through the peaks in the order they became known."""
+    import numpy as np
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    from fractions import Fraction
+    from root.calcs import chain_peaks as C
+    from root.calcs import flow_peak as FP
+    from root.calcs import peak_links as L
+    from root.calcs import peak_story as P
+    rows, calc = _stored(row_files, calc_files, ['received_time_ns'])
+    text = lambda name: np.array(rows.column(name).to_pylist(), dtype=object)
+    in_day = (text('row_label') == TRADE_DAY) & (text('trade_day') == trade_day.isoformat())
+    got = {name: np.array(calc.column(name).to_pylist(), dtype=object) for name in C.NAMES}
+    for name in C.NAMES:
+        need(all(v is None for v in got[name][~in_day]), f'{name} is filled on a row of no trade day')
+    d = np.flatnonzero(in_day)
+    position = rows.column('position_on_tape').to_numpy()[d]
+    r = rows.column('received_time_ns').to_numpy()[d]
+    row_of = {int(p): k for k, p in enumerate(position)}
+    peaks = _peaks_as_stored(rows_folder, trade_day, position)
+    day = f'{trade_day:%Y%m%d}'
+
+    def beside(stem, columns):
+        files = sorted(Path(rows_folder).glob(f'{stem}-{day}-part*.parquet'))
+        need(files, f'the stored {stem} files are not beside the rows')
+        return pa.concat_tables([pq.read_table(f, columns=columns) for f in files])
+    flow = beside('calc-flow_peak', ['position_on_tape', 'flow_bought_20s', 'flow_sold_20s'])
+    need(flow.column('position_on_tape').to_pylist() == rows.column('position_on_tape').to_pylist(),
+         'the stored flow is not on the same rows')
+    bought, sold = (np.array(flow.column(c).to_pylist(), dtype=object)[d].astype(np.int64)
+                    for c in ('flow_bought_20s', 'flow_sold_20s'))
+    total = bought + sold
+    signed = np.where(total > 0, (bought - sold) / np.where(total > 0, total, 1), 0)   # no flow counts as zero
+    exact = lambda k: Fraction(int(bought[k] - sold[k]), int(total[k])) if total[k] else Fraction(0)
+
+    story = {}                                         # piece 2's facts, gathered per peak
+    facts = beside('calc-peak_story-facts', ['peak_high_position', 'fact', 'since_high_ns', 'lowest_share_so_far',
+                                             'low_to_high_ns', 'price_now', 'highest_price_since_high',
+                                             'lowest_price_since_high']).to_pylist()
+    for fact in facts:
+        mine = story.setdefault(fact['peak_high_position'], dict(steps=0))
+        if fact['fact'] == P.BUILD_UP:
+            mine['low_to_high'] = fact['low_to_high_ns']
+        elif fact['fact'] == P.NEW_LOW:
+            mine['steps'] += 1
+        elif fact['fact'] in (P.CAME_BACK, P.BEATEN):
+            mine['end'] = fact
+    links = {fact['peak_high_position']: fact for fact in beside(
+        'calc-peak_links-facts', ['peak_high_position', 'fact', 'before_high_position',
+                                  'before_same_side']).to_pylist() if fact['fact'] == L.KNOWN}
+    need(len(links) == len(peaks), 'the stored links and the stored peaks are not the same peaks')
+
+    ends = np.sort(np.array([p['end'] for p in peaks if p['end'] is not None], dtype=np.int64))
+    lines, before, still_open, empty = [], [], [], collections.Counter()
+    for j, p in enumerate(peaks):
+        known = p['known']
+        earlier, k = [], j - 1                         # walk back through the peaks in the order they became known
+        while k >= 0 and len(earlier) < C.STEPS_BACK:
+            if peaks[k]['end'] is not None and peaks[k]['end'] <= known:
+                earlier.append(peaks[k])
+            k -= 1
+        for step, q in enumerate(earlier, 1):
+            before.append((int(position[known]), int(r[known]), p['high'], step, q['high'],
+                           int(position[q['known']]), int(position[q['end']])))
+        if p['end'] is None:
+            still_open.append((p['high'], int(position[known])))
+            continue
+        mine, forward = story[p['high']], 1 if p['side'] == FP.BUY_TEXT else -1
+        end = mine['end']
+        if p['how'] == P.CAME_BACK:                    # the lowest row of the stretch it was away, exactly
+            away = forward * signed[p['zero']:p['end']]
+            high_row = row_of[p['high']]
+            lowest = float(forward * exact(p['zero'] + int(np.argmin(away))) / abs(exact(high_row)))
+        else:
+            lowest = end['lowest_share_so_far']
+        at_high, top, bottom = p['price'], end['highest_price_since_high'], end['lowest_price_since_high']
+        move = up = down = None
+        if at_high is not None:
+            up = max([at_high] + ([] if top is None else [top])) - at_high
+            down = at_high - min([at_high] + ([] if bottom is None else [bottom]))
+            move = forward * (end['price_now'] - at_high)
+        out = dict.fromkeys(C.FACT_NAMES)
+        out.update(known_position=int(position[p['end']]), known_received_time_ns=int(r[p['end']]),
+                   peak_high_position=p['high'], peak_high_received_time_ns=p['high_at'],
+                   peak_known_position=int(position[known]), peak_known_received_time_ns=int(r[known]),
+                   side=p['side'], size=p['size'], low_to_high_ns=mine.get('low_to_high'), ended_by=p['how'],
+                   high_to_end_ns=end['since_high_ns'], lowest_share=lowest, steps_down=mine['steps'],
+                   price_at_high=at_high, price_at_end=end['price_now'], highest_price_since_high=top,
+                   lowest_price_since_high=bottom, price_move_with_side=move,
+                   furthest_price_with_side=up if forward > 0 else down,
+                   furthest_price_against_side=down if forward > 0 else up,
+                   before_high_position=links[p['high']]['before_high_position'],
+                   same_side_as_peak_before=links[p['high']]['before_same_side'],
+                   ended_peaks_before=int(np.searchsorted(ends, known, side='right')))
+        for name in C.FACT_NAMES:
+            empty[name] += out[name] is None
+        lines.append((p['end'], known, tuple(out[name] for name in C.FACT_NAMES)))
+    lines = [line for _, _, line in sorted(lines, key=lambda e: e[:2])]
+    _facts_equal(table_files['facts'], C.FACT_NAMES, lines, 'peak line')
+    _facts_equal(table_files['before'], C.BEFORE_NAMES, before, 'before line')
+    for name, known_lines in (('chain_peak_lines_known', lines), ('chain_before_lines_known', before)):
+        per_row = collections.Counter(line[0] for line in known_lines)
+        need(got[name][d].tolist() == [per_row.get(int(p), 0) for p in position],
+             f'{name} differs from the recount')
+    left = pa.concat_tables([pq.read_table(f) for f in table_files['open-at-the-end']])
+    need(sorted(zip(*[left.column(c).to_pylist() for c in C.OPEN_COLUMNS])) == sorted(still_open),
+         'the peaks still open at the last tick differ from the recount')
+    how = collections.Counter(line[C.FACT_NAMES.index('ended_by')] for line in lines)
+    return dict(passed=True, peaks=len(peaks), peak_lines_compared=len(lines), before_lines_compared=len(before),
+                ended_by=dict(sorted(how.items())), peaks_still_open_at_the_last_tick=len(still_open),
+                empty_cells_by_column={name: int(count) for name, count in empty.items() if count},
+                peak_lines_with_fewer_ended_peaks_before_than_steps_written=sum(
+                    1 for line in lines if line[C.FACT_NAMES.index('ended_peaks_before')] < C.STEPS_BACK),
+                method='every line worked out again from the stored outputs of pieces 1, 2 and A as whole tables; '
+                       'the fade while away from the bought and sold columns; the ended peaks before by walking '
+                       'back. Shares no code with the tick-by-tick calculation')
+
+
+KNOWN_AT_A_TICK = {'facts', 'before'}            # the tables whose lines each carry the tick at which they became known
 CALC_CHECKS = {'flow_peak': flow_peak, 'peak_story': peak_story, 'book_totals': book_totals,
                'quote_runs': quote_runs, 'peak_links': peak_links, 'open_stories': open_stories,
-               'refills': refills, 'sweeps': sweeps}
+               'refills': refills, 'sweeps': sweeps, 'chain_peaks': chain_peaks}
 
 
 def playback_cuts(name: str, full: list, tables: dict) -> dict:
@@ -1181,6 +1304,11 @@ def playback_cuts(name: str, full: list, tables: dict) -> dict:
         if touching:
             cuts['while the quote is touching or crossed'] = touching[len(touching) // HALVE]
         return cuts
+    if name == 'chain_peaks':
+        from root.calcs import chain_peaks as C
+        became_known = [fact[C.FACT_NAMES.index('peak_known_position')] for fact in facts]
+        return ({'the tick a peak became known, its story still open': became_known[len(became_known) // HALVE]}
+                if became_known else {})
     if name == 'quote_runs':
         from root.calcs import quote_runs as Q
         at = Q.FACT_NAMES.index('fact')
