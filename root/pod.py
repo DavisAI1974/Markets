@@ -47,10 +47,13 @@ REBUILT = ('flow_peak', 'outside_changes')             # the calculations that c
 #                                                        changed pieces): the peaks without their ranked column, and
 #                                                        the outside changes beside the rebuilt rows
 LIBRARIES = ['databento==0.90.0', 'pyarrow==26.0.1', 'numpy==2.5.5']
-CALCULATIONS = ('refills', 'sweeps', 'chain_peaks', 'quote_peaks', 'outside_changes', 'together')   # what a pod
+CALCULATIONS = ('refills', 'sweeps', 'chain_peaks', 'quote_peaks', 'outside_changes', 'together', 'leg_peaks',
+                'resting', 'turn_peaks')              # what a pod
 #                                                      may be asked to run
 MODEL_JOBS = {'ways': 'chain_ways'}                   # runs that rebuild their peak lines and pin their own helpers
-ROW_JOBS = {'legs': 'trade_legs'}                      # whole-trade-day programs that read the stored rows
+ROW_JOBS = {'legs': 'trade_legs',                      # whole-trade-day programs that read the stored rows
+            'dipole': 'dipole_peaks'}                  # (a calc job may name them beside its calculations, so
+#                                                        everything starts together, each on its own CPU)
 COMMIT = re.compile(r'[0-9a-f]{40}')
 ONE_THREAD = {name: '1' for name in ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS')}
 ACCEPTED, REFUSED, BUSY = 202, 403, 409
@@ -121,8 +124,12 @@ def run(day: str, commit: str, job: str):
             started = []                               # each pinned to its own CPU
             for k, name in enumerate(job.split(':')[1].split(',')):
                 cpu = cpus[k % len(cpus)]
+                module = ROW_JOBS.get(name)
+                command = ([sys.executable, '-m', 'root.run', 'calc', name] if module is None else
+                           [sys.executable, '-m', f'root.{module}'])
+                name = module or name
                 started.append((name, cpu, subprocess.Popen(
-                    [sys.executable, '-m', 'root.run', 'calc', name, day, '--rows', str(ROWS), '--out', str(OUT)],
+                    command + [day, '--rows', str(ROWS), '--out', str(OUT)],
                     cwd=CODE, env=environment, stdout=open(OUT / f'{name}.log', 'w'), stderr=subprocess.STDOUT,
                     preexec_fn=functools.partial(os.sched_setaffinity, 0, {cpu}))))
         for name, cpu, process in started:
@@ -139,7 +146,8 @@ def allowed(job: str) -> bool:
     if job in MODEL_JOBS or job in ROW_JOBS or job == 'rebuild':
         return True
     kind, _, names = job.partition(':')
-    return kind == 'calc' and bool(names) and all(name in CALCULATIONS for name in names.split(','))
+    return kind == 'calc' and bool(names) and all(name in CALCULATIONS or name in ROW_JOBS
+                                                  for name in names.split(','))
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
