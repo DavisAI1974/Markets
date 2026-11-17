@@ -181,7 +181,8 @@ def dipoles(lines: list) -> list:
             d.update(polarity=candidate['polarity'], magnitude=candidate.get('magnitude'))   # closing line
     for d in by_id.values():
         checks.need('birth' in d, f'{d["id"]}: a closing line with no recognized line')
-    return sorted(out, key=lambda entry: entry[0])     # a stable sort: lines written at one time keep their order
+    # Native wrote some closing lines at the same instant as the recognized line: the recognized line goes first
+    return sorted(out, key=lambda entry: (entry[0], entry[1] != RECOGNIZED))
 
 
 def follow(ticks, events: list, opens: int, halts: int, record_starts: int) -> tuple:
