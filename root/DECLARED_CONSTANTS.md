@@ -69,6 +69,18 @@ No number is written into either: no minimum gap between peaks, no cap on how ma
 | `I_SIDE`, `I_SIZE`, `I_HIGH_AT`, `F_KIND`, `F_PEAK`, `F_PRICE` | positions | Where a value sits among the values of pieces 1 and 2. |
 | `SIDES`, `FIGURES` | buy, sell; the five figures of the state | The columns of the state at each tick. |
 
+## `root/calcs/refills.py` and `root/calcs/sweeps.py` (part 2, additions L and M; `STEP1_STEP2_LAYOUTS.md`)
+
+No number is written into either: every row with size put back gets a fact and every exchange event with a trade
+gets a fact, so nothing is picked by a size, a count or a number of price levels.
+
+| Constant | Value | Why |
+|---|---|---|
+| `READS` | stored row columns | The columns of the stored rows each is handed through `tape.rows_for_calculations()`. |
+| `FILL`, `TRADE`, `BUY`, `SELL`, `SIDES` | F, T, B, A | The tape's codes for a fill message, a trade, and a side, as the rows store them. |
+| `CHANGES` | the words of `root/rows.py` | What a tick can do to an order already resting. |
+| `EVENT`, `TOUCHED`, `PARTED`, `KINDS` | trade event, quote touched or crossed, quote parted | The kinds of moment a sweep fact is recorded at. |
+
 ## `root/tape.py`, the stored-rows gate
 
 | Constant | Value | Why |

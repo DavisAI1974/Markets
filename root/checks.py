@@ -900,9 +900,246 @@ def open_stories(row_files, calc_files, trade_day: dt.date, table_files=None, ro
                        'shares no code with the tick-by-tick calculation')
 
 
+def _facts_equal(table_files, names, expected, what='fact'):
+    """The stored lines of a table against the recount: the same lines, in the same order, with the same values."""
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    table = pa.concat_tables([pq.read_table(f) for f in table_files])
+    stored = list(zip(*[table.column(name).to_pylist() for name in names]))
+    for a, b in zip(stored, expected):
+        need(a == b, f'a {what} differs from the recount: stored {dict(zip(names, a))}, recount {dict(zip(names, b))}')
+    need(len(stored) == len(expected), f'{len(stored)} {what}s stored, {len(expected)} in the recount')
+
+
+def refills(row_files, calc_files, trade_day: dt.date, table_files=None, rows_folder=None) -> dict:
+    """The check of the calculation `refills` (addition L), along whole columns:
+    1. every fact found again: the fill messages of each exchange event are gathered first and each laid on its
+       order's row (the calculation meets them tick by tick), and the figures an order carries "so far" are
+       running sums taken after sorting the filled rows by order;
+    2. the size put back, added up for each side, equals the last value of that side's `refilled` running total in
+       the stored (and already checked) book totals."""
+    import numpy as np
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    from root.calcs import refills as L
+    rows, calc = _stored(row_files, calc_files, list(L.READS))
+    text = lambda name: np.array(rows.column(name).to_pylist(), dtype=object)
+    in_day = (text('row_label') == TRADE_DAY) & (text('trade_day') == trade_day.isoformat())
+    count = np.array(calc.column('refill_facts_known').to_pylist(), dtype=object)
+    need(all(v is None for v in count[~in_day]), 'refill_facts_known is filled on a row of no trade day')
+    d = np.flatnonzero(in_day)
+    n = len(d)
+    as_is = lambda name: text(name)[d]                                 # empty stays empty
+    number = lambda name: np.array([-1 if v is None else v for v in as_is(name)], dtype=np.int64)
+    position = rows.column('position_on_tape').to_numpy()[d]
+    action, side, what = as_is('action'), as_is('side'), as_is('what_happened')
+    received, size, order, event = (number(c) for c in ('received_time_ns', 'size', 'order_number', 'exchange_event'))
+    before, after = number('order_size_before'), number('order_size_after')
+    resting = np.isin(what, L.CHANGES)
+
+    # the fills of each exchange event, gathered first; then each laid on its order's first row after them
+    filled_by, last_fill = {}, {}
+    for i in np.flatnonzero(action == L.FILL).tolist():
+        key = (int(event[i]), int(order[i]))
+        filled_by[key] = filled_by.get(key, 0) + int(size[i])
+        last_fill[key] = i
+    fill, shown = np.zeros(n, np.int64), set()
+    for i in np.flatnonzero(resting).tolist():
+        key = (int(event[i]), int(order[i]))
+        if key in filled_by and key not in shown and i > last_fill[key]:
+            fill[i] = filled_by[key]
+            shown.add(key)
+    waiting = len(filled_by) - len(shown)
+
+    back = after - (before - fill)                                     # what the row shows above what the fill left
+    moved = what == R.LOST_PLACE_PRICE
+    is_fact = (fill > 0) & ((back > 0) | moved)
+    put_back = np.where(fill > 0, np.minimum(np.clip(back, 0, None), fill), 0)
+
+    # an order's figures so far: the filled rows sorted by order (tape order kept inside an order), running sums
+    filled_rows = np.flatnonzero(fill > 0)
+    by_order = filled_rows[np.argsort(order[filled_rows], kind='stable')]
+    filled_so_far, times = np.zeros(n, np.int64), np.zeros(n, np.int64)
+    if len(by_order):
+        first_of_order = np.concatenate(([True], order[by_order][1:] != order[by_order][:-1]))
+        group_start = np.flatnonzero(first_of_order)[np.cumsum(first_of_order) - 1]
+
+        def running(values):
+            total = np.cumsum(values)
+            return total - np.where(group_start > 0, total[group_start - 1], 0)
+        filled_so_far[by_order] = running(fill[by_order])
+        times[by_order] = running((back[by_order] > 0).astype(np.int64))
+
+    names = L.FACT_NAMES
+    touched, left, levels = as_is('touched_price'), as_is('left_price'), as_is('levels_from_best')
+    entered = [as_is(c) for c in ('first_entered_exchange_time_ns', 'first_entered_received_time_ns',
+                                  'entered_before_written_record')]
+    expected, by_side = [], dict.fromkeys(L.SIDES.values(), 0)
+    for i in np.flatnonzero(is_fact).tolist():
+        row = dict.fromkeys(names)
+        row.update(known_position=int(position[i]), known_received_time_ns=int(received[i]),
+                   order_number=int(order[i]), fact=what[i], side=L.SIDES[side[i]],
+                   price=left[i] if moved[i] else touched[i], price_after=touched[i], levels_from_best=levels[i],
+                   size_filled=int(fill[i]), size_before=int(before[i]), size_after=int(after[i]),
+                   size_put_back=int(put_back[i]), same_size_or_larger=bool(after[i] >= before[i]),
+                   times_put_back_so_far=int(times[i]), size_filled_so_far=int(filled_so_far[i]),
+                   first_entered_exchange_time_ns=entered[0][i], first_entered_received_time_ns=entered[1][i],
+                   entered_before_written_record=entered[2][i])
+        by_side[L.SIDES[side[i]]] += int(put_back[i])
+        expected.append(tuple(row[name] for name in names))
+    _facts_equal(table_files['facts'], names, expected)
+    per_row = collections.Counter(row[0] for row in expected)
+    need(count[d].tolist() == [per_row.get(int(p), 0) for p in position],
+         'the count of facts known on a row differs from the recount')
+
+    # the stored book totals: each side's size put back so far, at the last tick of the trade day
+    total_files = sorted(Path(rows_folder).glob(f'calc-book_totals-{trade_day:%Y%m%d}-part*.parquet'))
+    need(total_files, 'the stored book totals are not beside the rows')
+    totals = pa.concat_tables([pq.read_table(f, columns=['position_on_tape'] + [f'{name}_refilled'
+                                                                              for name in L.SIDES.values()])
+                               for f in total_files])
+    need(totals.column('position_on_tape').to_pylist() == rows.column('position_on_tape').to_pylist(),
+         'the stored book totals are not on the same rows')
+    in_totals = {name: totals.column(f'{name}_refilled')[int(d[-1])].as_py() for name in L.SIDES.values()}
+    for name in L.SIDES.values():
+        need(in_totals[name] == by_side[name], f'the {name} size put back ({by_side[name]}) is not the refilled '
+                                              f'total of the stored book totals ({in_totals[name]})')
+    at = {name: k for k, name in enumerate(names)}
+    kinds = collections.Counter(row[at['fact']] for row in expected)
+    per_order = collections.Counter(row[at['order_number']] for row in expected if row[at['size_put_back']])
+    return dict(passed=True, trade_day_rows=n, rows_of_no_trade_day_all_empty=int((~in_day).sum()),
+                facts_compared=len(expected), facts_by_what_happened=dict(sorted(kinds.items())),
+                facts_with_size_put_back=sum(1 for row in expected if row[at['size_put_back']]),
+                facts_same_size_or_larger=sum(1 for row in expected if row[at['same_size_or_larger']]),
+                orders_with_size_put_back=len(per_order),
+                most_times_on_one_order=max(per_order.values()) if per_order else 0,
+                size_put_back=by_side, refilled_in_the_stored_book_totals=in_totals,
+                fills_waiting_for_their_row_at_the_last_tick=waiting,
+                method='the fill messages of each exchange event gathered first and laid on the rows; the figures '
+                       'so far by sorting the filled rows by order; the size put back against the stored book '
+                       'totals. Shares no code with the tick-by-tick calculation')
+
+
+def sweeps(row_files, calc_files, trade_day: dt.date, table_files=None, rows_folder=None) -> dict:
+    """The check of the calculation `sweeps` (addition M), along whole columns:
+    1. the rows are grouped by the exchange event label; every group that holds a trade must end on the tick with
+       the exchange's end mark and carry no end mark before it; its figures are taken from the group as a whole
+       (the calculation builds them tick by tick), and "a best price moved" from the best-price columns either
+       side of the group (the calculation reads the marks of a best price moving);
+    2. the touches from where the stored gap goes to zero or below and where it comes back above."""
+    import numpy as np
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    from root.calcs import sweeps as S
+    from root.outside import UNDEFINED_PRICE
+    rows, calc = _stored(row_files, calc_files, ['received_time_ns', 'action', 'side', 'price', 'size',
+                                                 'order_number', 'exchange_event', 'ends_exchange_event',
+                                                 'best_bid', 'best_ask', 'gap'])
+    text = lambda name: np.array(rows.column(name).to_pylist(), dtype=object)
+    in_day = (text('row_label') == TRADE_DAY) & (text('trade_day') == trade_day.isoformat())
+    count = np.array(calc.column('sweep_facts_known').to_pylist(), dtype=object)
+    need(all(v is None for v in count[~in_day]), 'sweep_facts_known is filled on a row of no trade day')
+    d = np.flatnonzero(in_day)
+    n = len(d)
+    need(bool((np.diff(d) == 1).all()), 'the rows of the trade day are not one unbroken stretch')
+    best_all = {name: text(name) for name in ('best_bid', 'best_ask')}
+    for name in ('best_bid', 'best_ask', 'gap'):
+        need(all(v is not None for v in text(name)[d]), f'{name} is empty on a row of the trade day')
+    whole = lambda name: np.array(text(name)[d].tolist(), dtype=np.int64)
+    position = rows.column('position_on_tape').to_numpy()[d]
+    action, side = text('action')[d], text('side')[d]
+    received, price, size, order, event = (whole(c) for c in ('received_time_ns', 'price', 'size', 'order_number',
+                                                              'exchange_event'))
+    ends = np.array(text('ends_exchange_event')[d].tolist(), dtype=bool)
+    best = {name: whole(name) for name in ('best_bid', 'best_ask')}
+    gap = whole('gap')
+    is_trade, is_fill = action == S.TRADE, action == S.FILL
+    names = S.FACT_NAMES
+
+    def line(kind, i):
+        row = dict.fromkeys(names)
+        row.update(known_position=int(position[i]), known_received_time_ns=int(received[i]), fact=kind,
+                   gap_now=int(gap[i]))
+        return row
+    expected = []                                      # (row, order on the tick, the line)
+    starts = np.flatnonzero(np.concatenate(([True], event[1:] != event[:-1])))
+    stops = np.concatenate((starts[1:], [n]))
+    with_trade = np.flatnonzero(np.add.reduceat(is_trade.astype(np.int64), starts) > 0)
+    no_fill = several_sides = most_levels = 0
+    for g in with_trade.tolist():
+        a, b = int(starts[g]), int(stops[g])
+        need(bool(ends[b - 1]) and not ends[a:b - 1].any(),
+             f'the exchange event at position {int(event[a])} holds a trade and does not end on its one end mark')
+        t, f = a + np.flatnonzero(is_trade[a:b]), a + np.flatnonzero(is_fill[a:b])
+        sides = ''.join(dict.fromkeys(side[t].tolist()))
+        by = {code: int(size[t][side[t] == code].sum()) for code in (S.BUY, S.SELL)}
+        traded = int(size[t].sum())
+        row = line(S.EVENT, b - 1)
+        row.update(event_position=int(event[a]), first_trade_position=int(position[t[0]]),
+                   first_trade_received_time_ns=int(received[t[0]]),
+                   since_first_trade_ns=int(received[b - 1] - received[t[0]]), ticks_in_event=b - a,
+                   aggressor_sides=sides, trades=len(t), size_traded=traded, size_bought=by[S.BUY],
+                   size_sold=by[S.SELL], size_no_side=traded - by[S.BUY] - by[S.SELL],
+                   first_trade_price=int(price[t[0]]), last_trade_price=int(price[t[-1]]), fill_messages=len(f),
+                   orders_filled=len(set(order[f].tolist())), size_of_fills=int(size[f].sum()),
+                   price_levels_filled=len(set(price[f].tolist())),
+                   first_fill_price=int(price[f[0]]) if len(f) else None,
+                   last_fill_price=int(price[f[-1]]) if len(f) else None)
+        for name in ('best_bid', 'best_ask'):
+            just_before = best_all[name][d[a] - 1] if d[a] else None
+            need(just_before is not None, f'no {name} on the row before the exchange event at {int(event[a])}')
+            along = np.concatenate(([just_before], best[name][a:b])).astype(np.int64)
+            row.update({f'{name}_moved': bool((along[1:] != along[:-1]).any()), f'{name}_before': int(just_before),
+                        f'{name}_after': int(best[name][b - 1])})
+        expected.append((b - 1, 0, tuple(row[name] for name in names)))
+        no_fill += not len(f)
+        several_sides += len(sides) > 1
+        most_levels = max(most_levels, row['price_levels_filled'])
+
+    # the quote touching or crossing: where the gap goes to zero or below, and where it comes back above
+    at_or_through = gap <= 0
+    was = np.concatenate(([False], at_or_through[:-1]))
+    began, parted = np.flatnonzero(at_or_through & ~was), np.flatnonzero(~at_or_through & was)
+    for i in began.tolist():
+        expected.append((i, 1, tuple(line(S.TOUCHED, i)[name] for name in names)))
+    for i, since in zip(parted.tolist(), began.tolist()):
+        need(since < i, 'the quote parted before it touched')
+        row = line(S.PARTED, i)
+        row.update(touched_position=int(position[since]), lasted_ns=int(received[i] - received[since]),
+                   ticks_lasted=i - since, lowest_gap=int(gap[since:i].min()))
+        expected.append((i, 1, tuple(row[name] for name in names)))
+    still = ([(int(position[began[-1]]), n - int(began[-1]), int(gap[began[-1]:].min()))]
+             if n and at_or_through[-1] else [])
+    expected = [row for _, _, row in sorted(expected, key=lambda e: e[:2])]
+    _facts_equal(table_files['facts'], names, expected)
+    per_row = collections.Counter(row[0] for row in expected)
+    need(count[d].tolist() == [per_row.get(int(p), 0) for p in position],
+         'the count of facts known on a row differs from the recount')
+    left = pa.concat_tables([pq.read_table(f) for f in table_files['open-at-the-end']])
+    need(sorted(zip(*[left.column(c).to_pylist() for c in S.OPEN_COLUMNS])) == still,
+         'the touch still standing at the last tick differs from the recount')
+    kinds = collections.Counter(row[names.index('fact')] for row in expected)
+    return dict(passed=True, trade_day_rows=n, rows_of_no_trade_day_all_empty=int((~in_day).sum()),
+                facts_compared=len(expected), facts_by_kind=dict(sorted(kinds.items())),
+                most_facts_on_one_tick=max(per_row.values()) if per_row else 0,
+                trade_events_with_no_fill_message=int(no_fill),
+                trade_events_with_more_than_one_trade_side=int(several_sides),
+                most_price_levels_filled_in_one_event=int(most_levels),
+                ticks_with_the_quote_touching_or_crossed=int(at_or_through.sum()),
+                touching_or_crossed_at_the_last_tick=len(still),
+                touching_or_crossed_at_the_first_tick=bool(n and at_or_through[0]),
+                first_tick_is_inside_an_event_that_began_before_the_trade_day=bool(n and event[0] != position[0]),
+                trade_or_fill_rows_with_the_tapes_no_price_value=int(((is_trade | is_fill) &
+                                                                      (price == UNDEFINED_PRICE)).sum()),
+                method='the rows grouped by exchange event and each group taken as a whole; a best price moving '
+                       'from the best-price columns; the touches from the stored gap. Shares no code with the '
+                       'tick-by-tick calculation')
+
+
 KNOWN_AT_A_TICK = {'facts'}            # the tables whose lines each carry the tick at which they became known
 CALC_CHECKS = {'flow_peak': flow_peak, 'peak_story': peak_story, 'book_totals': book_totals,
-               'quote_runs': quote_runs, 'peak_links': peak_links, 'open_stories': open_stories}
+               'quote_runs': quote_runs, 'peak_links': peak_links, 'open_stories': open_stories,
+               'refills': refills, 'sweeps': sweeps}
 
 
 def playback_cuts(name: str, full: list, tables: dict) -> dict:
@@ -925,6 +1162,25 @@ def playback_cuts(name: str, full: list, tables: dict) -> dict:
         open_now = [sum(values[k * step] for k in range(len(O.SIDES))) for _, values in full]
         return {'the tick with the most stories open': full[open_now.index(max(open_now))][0]} if full else {}
     facts = tables.get('facts', [])
+    if name == 'refills':                              # the tick before the order's own row is still inside the
+        if not facts:                                  # exchange event that filled it: its fill is waiting
+            return {}
+        positions = [position for position, _ in full]
+        shown = positions.index(facts[len(facts) // HALVE][0])
+        return ({'inside an exchange event, after a fill message and before the row where the book shows it':
+                 positions[shown - 1]} if shown else {})
+    if name == 'sweeps':
+        from root.calcs import sweeps as S
+        kind, known = S.FACT_NAMES.index('fact'), S.FACT_NAMES.index('known_position')
+        first_trade, touched = S.FACT_NAMES.index('first_trade_position'), S.FACT_NAMES.index('touched_position')
+        unfolding = [fact[first_trade] for fact in facts if fact[kind] == S.EVENT and fact[first_trade] != fact[known]]
+        touching = [fact[touched] for fact in facts if fact[kind] == S.PARTED]
+        cuts = {}
+        if unfolding:
+            cuts['inside an exchange event, on its first trade and before its end mark'] = unfolding[len(unfolding) // HALVE]
+        if touching:
+            cuts['while the quote is touching or crossed'] = touching[len(touching) // HALVE]
+        return cuts
     if name == 'quote_runs':
         from root.calcs import quote_runs as Q
         at = Q.FACT_NAMES.index('fact')
