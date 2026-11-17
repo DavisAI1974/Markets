@@ -107,39 +107,20 @@ its lines.
 | `STEPS_BACK` | 6 | How many steps back are written out as before lines now: the first six, as put to Greg ("the first six steps back are run and shown to Greg; how much further is settled with him"). It is not a cap on the chain: every peak line carries the tick the peak became known and the tick its story ended, so any further step follows by the same rule. |
 | `I_SIDE`, `I_SIZE`, `I_HIGH`, `I_HIGH_AT`, `F` | positions | Where a value sits among the values of pieces 1 and 2. |
 
-## `root/chain_models.py` (part 2, the chain link models, second part; `STEP1_STEP2_LAYOUTS.md`, piece 4)
+## `root/chain_ways.py` and `root/chain_common.py` (the chain links in six ways, peak by peak; nothing averaged)
 
-"As in the original" means the programs of 2026-08-17 on Markets branch `chatgpt/ng-exhaustion-chain-phase2-20260817`.
-
-| Constant | Value | Why |
-|---|---|---|
-| `THREADS` | the three thread settings | Each helper runs one thread, so that eight pinned helpers are eight CPUs at work. |
-| `RIDGE`, `NEIGHBOURS`, `TREES`, `MODELS` | names | The three models, as in the original. |
-| `RIDGE_GRID` | 0.1, 1, 10, 100, 1000 | The ridge settings tried, as in the original. |
-| `NEIGHBOUR_GRID` | 10, 20, 40, 80, 160 | The numbers of nearest neighbours tried (weighted by distance), as in the original. |
-| `LEAF_GRID` | 10, 20, 40, 80 | The smallest leaf sizes tried for extra trees, as in the original. |
-| `TREE_COUNT`, `TREE_COUNT_CHOOSING` | 140, 50 | Trees in a scoring forest and in a forest grown while choosing a setting. The original programs disagree (180/60, 140/50, 100/40, 80/30); these are the ones of its "known at the time" pilot, the nearest precedent (Claude's call, stated to Greg). |
-| `SEED` | 20260817 | The original's seed for extra trees. |
-| `TICK_PRICE_UNITS` | 1,000,000 | One tick of the natural gas contract ($0.001) in the tape's price units (billionths of a dollar). The original took price moves in ticks before arcsinh. |
-| `RIDGE_RECOUNT_TOLERANCE` | 1e-8 | How far the closed-form ridge may sit from the library's on any standardised prediction. It only judges a check; no value depends on it. |
-| `HELPER_POLL_SECONDS` | 5 | How often the runner looks whether a helper has died. No value depends on it. |
-| `STEPS` | `chain_peaks.STEPS_BACK` | The steps back the models are run for: the first six, shown to Greg before going further. |
-| `AS_IS`, `LOG`, `YES_NO`, `TICKS`, `FIGURES`, `FIGURE_NAMES` | words | The ten figures of what a peak did and how each enters a model (Claude's calls, stated to Greg). |
-| `TOO_FEW`, `EMPTY_FIGURE`, `STILL_OPEN` | words | Why a peak has empty values at a step. |
-
-## `root/chain_ways.py` (the chain link models in six ways; Greg, 2026-11-16: "take the chains as far as they will go")
+The averaging chain link models were removed on Greg's word (2026-11-17), with their stored results.
 
 | Constant | Value | Why |
 |---|---|---|
-| `WAYS` | six ways: chain or each alone; all, own side or other side; nine figures or the seven after; 24 or 48 | The six ways named to Greg. The depths are how far each is run now, not caps: a way whose gain has not gone by its last step is run deeper as a new set, written beside, its depth in its file names. |
-| `NINE`, `AFTER` | the nine figures never empty; the seven of what a peak did after it became known | What is predicted. The time from the low to the high is left out (empty on 32 to 42 peaks a trade day). |
-| `FIRST_LIST`, `NEXT_SETTING` | the original's lists; ridge times 10, neighbours and leaf times 2 | Where the choice of a setting starts, and how the list is carried on while the best is its last. No end is picked: it stops when the best is inside the list, or when no further step exists (neighbours above the peaks taught on, a leaf above half of them). |
-| `PREDICT_SLICE` | 256 | Rows a nearest-neighbours predict takes at once. Memory only: the values are the same as one predict of every row. |
-| `CHECK_STEPS` | `chain_peaks.STEPS_BACK` (6) | How many steps of the before lines `chain_peaks` writes, which the check compares with the earlier peaks worked out here. |
-| `CLOSEST`, `ALL_MODELS` | closest single peak; the three averaging models and it | The individual way beside the averaging models (Greg, 2026-11-17: "Average and individual"). One match per peak, ties each their own line; nothing blended; no setting. |
+| `WAYS` | six ways: chain or each alone; all, own side or other side; nine figures or the seven after; 24 or 48 | The six ways named to Greg. The depths are how far each is run now, not caps: a deeper run is a new set, written beside, its depth in its file names. |
+| `NINE`, `AFTER` | the nine figures never empty; the seven of what a peak did after it became known | What each line is about. The time from the low to the high is left out (empty on 32 to 42 peaks a trade day). |
+| `chain_common.FIGURES` | as it is; log(1 + value); 1 or 0; arcsinh of ticks | How each figure enters: lengths of time and the count of steps down as log(1 + value), price moves in ticks through arcsinh, a yes or no as 1 or 0. |
+| `chain_common.TICK_PRICE_UNITS` | 1,000,000 | One tick of the contract ($0.001) in the tape's price units. |
+| `chain_common.HELPER_POLL_SECONDS` | 5 | How often the runner looks whether a helper has died. No value depends on it. |
 | `MATCH_SLICE` | 8 | Scored peaks compared with every teaching peak at once. Memory only. |
-| `MATCH_TOLERANCE` | 1e-5 | How far the check's full-precision sum may sit from the 4-byte sum of the slices. Only the check uses it. |
-| `_cost` weights | 3, 2, 1, 0.1 | Only the order the fits are started in (the longest first). No value depends on it. |
+| `MATCH_TOLERANCE` | 1e-5 | How far the check's full-precision sum may sit from the 4-byte sum. Only the check uses it. |
+| `CHECK_STEPS` | `chain_peaks.STEPS_BACK` (6) | How many steps of the before lines of `chain_peaks` the check compares. |
 
 ## `root/trade_legs.py` (the missing two hours of the trade legs; Greg, 2026-11-17: "Then change it ... Finish the data")
 
@@ -239,12 +220,12 @@ trade day, empty on a row of no trade day). The times a value becomes known are 
 | `PORT` | 8000 | The port a pod serves its output folder on. |
 | `WORK`, `OUT`, `CODE`, `DATA`, `ROWS` | folders | Where a pod keeps the code, the tape, the stored rows and its output. |
 | `GITHUB`, `DATA_BRANCH`, `TAPE` | names | The two public repositories and where the raw tape sits in markets-data. |
-| `LIBRARIES`, `MODEL_LIBRARIES` | pinned versions | The libraries a pod installs, each at one named version, so two pods make the same files. scikit-learn and scipy are installed only when the models are asked for. |
+| `LIBRARIES` | pinned versions | The libraries a pod installs, each at one named version, so two pods make the same files. |
 | `CALCULATIONS` | refills, sweeps, chain_peaks, quote_peaks, outside_changes, together | What a pod may be asked to run. |
 | `COMMIT` | 40 hex digits | The shape of a commit name; a run is refused without one. |
 | `ONE_THREAD` | 1 | Each helper runs one thread. |
 | `ACCEPTED`, `REFUSED`, `BUSY` | 202, 403, 409 | The web answers of the pod's run address. |
-| `MODEL_JOBS`, `ROW_JOBS`, `RUNS`, `NO_STORED_ROWS` | models, ways; legs | The model runs and the whole-trade-day programs a pod may be asked for, each one's receipt, and which read no stored rows. |
+| `MODEL_JOBS`, `ROW_JOBS`, `RUNS`, `NO_STORED_ROWS` | ways; legs | The model runs and the whole-trade-day programs a pod may be asked for, each one's receipt, and which read no stored rows. |
 | `MODELS`, `BYTES_PER_MEGABYTE` | models; 2^20 | The name of the models run; unit conversion for a printed size. |
 
 ## `root/sheet.py`

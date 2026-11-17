@@ -14,8 +14,7 @@ What is different from the first launcher (`pod_run.sh`, which this replaces):
 
     python3 pod.py <trade day YYYYMMDD> <Markets branch> [<commit> <job>]
     job:  calc:<calculation>,<calculation>,...   each its own helper, started together, each pinned to its own CPU
-          models                                 the chain link models for this trade day (pins its own helpers)
-          ways                                   the chain link models in six ways (root/chain_ways.py)
+          ways                                   the chain links in six ways, peak by peak (root/chain_ways.py)
           legs                                   the trade legs of 6 pm to 8 pm on Oct 2 and Oct 17 (root/trade_legs.py)
 """
 from __future__ import annotations
@@ -37,10 +36,9 @@ OUT, CODE, DATA, ROWS = WORK / 'out', WORK / 'code', WORK / 'data', WORK / 'rows
 GITHUB = 'https://github.com/DavisAI1974'
 DATA_BRANCH, TAPE = 'ccr-349e2ffe-07p8od', 'data/nymex_mbo/ng_v0_oct2023'
 LIBRARIES = ['databento==0.90.0', 'pyarrow==26.0.1', 'numpy==2.5.5']
-MODEL_LIBRARIES = ['scikit-learn==1.9.1', 'scipy==1.18.1']   # installed only when the models are asked for
 CALCULATIONS = ('refills', 'sweeps', 'chain_peaks', 'quote_peaks', 'outside_changes', 'together')   # what a pod
 #                                                      may be asked to run
-MODEL_JOBS = {'models': 'chain_models', 'ways': 'chain_ways'}   # the model runs a pod may be asked for
+MODEL_JOBS = {'ways': 'chain_ways'}                   # runs that rebuild their peak lines and pin their own helpers
 ROW_JOBS = {'legs': 'trade_legs'}                      # whole-trade-day programs that read the stored rows
 COMMIT = re.compile(r'[0-9a-f]{40}')
 ONE_THREAD = {name: '1' for name in ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS')}
@@ -82,7 +80,6 @@ def run(day: str, commit: str, job: str):
         environment = dict(os.environ, MARKETS_DATA=str(DATA), **ONE_THREAD)
         cpus = sorted(os.sched_getaffinity(0))
         if job in MODEL_JOBS:
-            sh(sys.executable, '-m', 'pip', 'install', '-q', *MODEL_LIBRARIES, log='runs.log')
             module = MODEL_JOBS[job]
             started = [(module, None, subprocess.Popen(
                 [sys.executable, '-m', f'root.{module}', day, '--out', str(OUT)], cwd=CODE, env=environment,

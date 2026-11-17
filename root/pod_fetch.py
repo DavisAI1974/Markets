@@ -1,13 +1,13 @@
 """ROOT part 2: fetch what a pod made, and prove it before it is stored (the session's side of `root/pod.py`).
 
-For each named calculation (or the chain link models) of one trade day: the receipt is fetched from the pod, then
+For each named calculation (or the chain ways, or the trade legs) of one trade day: the receipt is fetched from the pod, then
 every file the receipt lists, and each file's size and fingerprint are compared with the receipt's. The pod must
 have run the expected code commit on the same stored rows as the local copy. Only then are the files written into
 the local folder of that trade day's `root-rows` branch. A file that differs stops everything and nothing of that
 calculation is kept (Greg: bad or incomplete data is not saved).
 
     python3 -m root.pod_fetch https://<pod id>-8000.proxy.runpod.net 20231002 <commit> --into <rows folder> \
-        refills sweeps chain_peaks [models]
+        refills sweeps chain_peaks [ways] [legs]
 """
 from __future__ import annotations
 
@@ -18,10 +18,8 @@ import subprocess
 import urllib.request
 from pathlib import Path
 
-MODELS = 'models'
-RUNS = {'models': ('chain_models', 'CHAIN-MODELS-{day}.json'), 'ways': ('chain_ways', 'CHAIN-WAYS-{day}.json'),
-        'legs': ('trade_legs', 'TRADE-LEGS-{day}.json')}
-NO_STORED_ROWS = {'models', 'ways'}                    # these rebuild their peak lines through the tape gate
+RUNS = {'ways': ('chain_ways', 'CHAIN-WAYS-{day}.json'), 'legs': ('trade_legs', 'TRADE-LEGS-{day}.json')}
+NO_STORED_ROWS = {'ways'}                              # it rebuilds its peak lines through the tape gate
 AGENT = 'curl/8'                                       # the pods' web front refuses the library's own name
 BYTES_PER_MEGABYTE = 2 ** 20
 
@@ -36,7 +34,7 @@ def fetch(base: str, day: str, commit: str, into: Path, names: list) -> dict:
     ran = get(base, 'CODE_COMMIT').decode().strip()
     if ran != commit:
         raise SystemExit(f'the pod last ran commit {ran}, not {commit}')
-    if any(name not in NO_STORED_ROWS for name in names):          # the models read no stored rows: they rebuild their peak
+    if any(name not in NO_STORED_ROWS for name in names):          # the ways read no stored rows: they rebuild their peak
         history = subprocess.run(['git', '-C', str(into), 'rev-list', 'HEAD'], capture_output=True, text=True,
                                  check=True).stdout.split()          # lines through the tape gate
         rows_there = get(base, 'ROWS_COMMIT').decode().strip()
