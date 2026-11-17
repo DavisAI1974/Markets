@@ -19,11 +19,13 @@ import urllib.request
 from pathlib import Path
 
 MODELS = 'models'
+AGENT = 'curl/8'                                       # the pods' web front refuses the library's own name
 BYTES_PER_MEGABYTE = 2 ** 20
 
 
 def get(base: str, name: str) -> bytes:
-    with urllib.request.urlopen(f'{base.rstrip("/")}/{name}') as answer:
+    ask = urllib.request.Request(f'{base.rstrip("/")}/{name}', headers={'User-Agent': AGENT})
+    with urllib.request.urlopen(ask) as answer:
         return answer.read()
 
 
