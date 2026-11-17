@@ -6,7 +6,7 @@
     python3 -m root.run playback 20231002 [--tape ...] [--out <dir>]
     python3 -m root.run calc flow_peak 20231002 --rows <stored rows folder> --out <markets-data folder> [--tape ...]
         (calculations: flow_peak, peak_story, book_totals, quote_runs, peak_links, open_stories, refills, sweeps,
-         chain_peaks)
+         chain_peaks, quote_peaks, outside_changes, together)
 """
 from __future__ import annotations
 

@@ -235,7 +235,7 @@ def rows_for_calculations(rows_folder: Path, trade_day: dt.date, columns, built=
     import pyarrow.parquet as pq
     last = None
     for path in stored_row_files(rows_folder, trade_day):
-        table = pq.read_table(path, columns=[ROW_POSITION, ROW_EXCHANGE_TIME, *columns])
+        table = pq.read_table(path, columns=list(dict.fromkeys([ROW_POSITION, ROW_EXCHANGE_TIME, *columns])))
         position = table.column(ROW_POSITION).to_pylist()
         exchange = table.column(ROW_EXCHANGE_TIME).to_pylist()
         values = [table.column(name).to_pylist() for name in columns]

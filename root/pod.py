@@ -36,7 +36,8 @@ GITHUB = 'https://github.com/DavisAI1974'
 DATA_BRANCH, TAPE = 'ccr-349e2ffe-07p8od', 'data/nymex_mbo/ng_v0_oct2023'
 LIBRARIES = ['databento==0.90.0', 'pyarrow==26.0.1', 'numpy==2.5.5']
 MODEL_LIBRARIES = ['scikit-learn==1.9.1', 'scipy==1.18.1']   # installed only when the models are asked for
-CALCULATIONS = ('refills', 'sweeps', 'chain_peaks')    # what a pod may be asked to run
+CALCULATIONS = ('refills', 'sweeps', 'chain_peaks', 'quote_peaks', 'outside_changes', 'together')   # what a pod
+#                                                      may be asked to run
 COMMIT = re.compile(r'[0-9a-f]{40}')
 ONE_THREAD = {name: '1' for name in ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS')}
 ACCEPTED, REFUSED, BUSY = 202, 403, 409

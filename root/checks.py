@@ -1261,10 +1261,230 @@ def chain_peaks(row_files, calc_files, trade_day: dt.date, table_files=None, row
                        'back. Shares no code with the tick-by-tick calculation')
 
 
+def _in_play_as_stored(rows_folder, trade_day: dt.date, rows, d):
+    """What was in play at a row, worked out from the stored (and already checked) outputs of pieces 1, 2 and the
+    quote's runs as whole tables: gives `peaks_at(row)` and `runs_at(row)`, each in the order `in_play` writes.
+    The rise under way is found along piece 1's bought and sold columns; a peak's place by where its row falls
+    among the rows the peaks became known on."""
+    import numpy as np
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    from root.calcs import flow_peak as FP
+    from root.calcs import in_play as IP
+    day = f'{trade_day:%Y%m%d}'
+    position = rows.column('position_on_tape').to_numpy()[d]
+    r = rows.column('received_time_ns').to_numpy()[d]
+
+    def beside(stem, columns):
+        files = sorted(Path(rows_folder).glob(f'{stem}-{day}-part*.parquet'))
+        need(files, f'the stored {stem} files are not beside the rows')
+        table = pa.concat_tables([pq.read_table(f, columns=['position_on_tape'] + columns) for f in files])
+        need(table.column('position_on_tape').to_pylist() == rows.column('position_on_tape').to_pylist(),
+             f'the stored {stem} is not on the same rows')
+        return table
+    flow = beside('calc-flow_peak', ['flow_bought_20s', 'flow_sold_20s'])
+    bought, sold = (np.array(flow.column(c).to_pylist(), dtype=object)[d].astype(np.int64)
+                    for c in ('flow_bought_20s', 'flow_sold_20s'))
+    total = bought + sold
+    has = total > 0
+    size = np.where(has, np.abs(bought - sold) / np.where(has, total, 1), 0)
+    side = np.sign(bought - sold)
+    had = np.concatenate(([False], has[:-1]))
+    same = had & (side == np.concatenate(([0], side[:-1])))
+    before = np.concatenate(([0], size[:-1]))
+    rises = has & (size > 0) & (~same | (size > before))             # a high is set at this row
+    comes_off = ~has | ~same | (size < before)                       # a standing high would come off here
+    marked = np.where(rises | comes_off, np.arange(len(d)), -1)
+    last = np.maximum.accumulate(marked)                             # the last row at which either happened
+    standing = (last >= 0) & rises[np.clip(last, 0, None)]
+    runs = beside('calc-quote_runs', list(IP.RUN_NAMES))
+    run_columns = [runs.column(name).to_pylist() for name in IP.RUN_NAMES]
+    peaks = _peaks_as_stored(rows_folder, trade_day, position)
+    by_side = {name: [p for p in peaks if p['side'] == name] for name in IP.SIDES}
+    known = {name: np.array([p['known'] for p in by_side[name]], dtype=np.int64) for name in IP.SIDES}
+
+    def peaks_at(row: int) -> tuple:
+        out = ()
+        for name in IP.SIDES:
+            k = int(np.searchsorted(known[name], row, side='right')) - 1
+            if k < 0:
+                out += (None, None, None)
+                continue
+            p = by_side[name][k]
+            story = (IP.ENDED if p['end'] is not None and p['end'] <= row else
+                     IP.PAST_ZERO if p['zero'] is not None and p['zero'] <= row else IP.OPEN)
+            out += (p['high'], int(r[row]) - p['high_at'], story)
+        if not standing[row]:
+            return out + (None, None, None)
+        high = int(last[row])
+        return out + (FP.BUY_TEXT if side[high] > 0 else FP.SELL_TEXT, int(position[high]), int(r[row] - r[high]))
+
+    def runs_at(row: int) -> tuple:
+        return tuple(column[int(d[row])] for column in run_columns)
+    return peaks_at, runs_at, position, r
+
+
+def quote_peaks(row_files, calc_files, trade_day: dt.date, table_files=None, rows_folder=None) -> dict:
+    """The check of the calculation `quote_peaks`: for every stored fact about a run of the quote, the peaks in
+    play at its tick worked out again from the stored outputs of pieces 1 and 2 as whole tables. The calculation
+    follows the peaks and the quote tick by tick."""
+    import numpy as np
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    from root.calcs import quote_peaks as QP
+    rows, calc = _stored(row_files, calc_files, ['received_time_ns'])
+    text = lambda name: np.array(rows.column(name).to_pylist(), dtype=object)
+    in_day = (text('row_label') == TRADE_DAY) & (text('trade_day') == trade_day.isoformat())
+    count = np.array(calc.column('quote_peak_facts_known').to_pylist(), dtype=object)
+    need(all(v is None for v in count[~in_day]), 'quote_peak_facts_known is filled on a row of no trade day')
+    d = np.flatnonzero(in_day)
+    peaks_at, _, position, _ = _in_play_as_stored(rows_folder, trade_day, rows, d)
+    row_of = {int(p): k for k, p in enumerate(position)}
+    files = sorted(Path(rows_folder).glob(f'calc-quote_runs-facts-{trade_day:%Y%m%d}-part*.parquet'))
+    need(files, 'the stored facts of the quote\'s runs are not beside the rows')
+    turns = pa.concat_tables([pq.read_table(f, columns=QP.RUN_KEYS) for f in files])
+    expected = [turn + peaks_at(row_of[turn[0]]) for turn in zip(*[turns.column(c).to_pylist() for c in QP.RUN_KEYS])]
+    _facts_equal(table_files['facts'], QP.FACT_NAMES, expected)
+    per_row = collections.Counter(row[0] for row in expected)
+    need(count[d].tolist() == [per_row.get(int(p), 0) for p in position],
+         'the count of facts known on a row differs from the recount')
+    at = {name: k for k, name in enumerate(QP.FACT_NAMES)}
+    return dict(passed=True, trade_day_rows=len(d), facts_compared=len(expected),
+                turns_with_a_rise_under_way=sum(1 for row in expected if row[at['rise_side']] is not None),
+                turns_by_where_the_buy_peak_story_stood=dict(collections.Counter(
+                    str(row[at['buy_peak_story']]) for row in expected)),
+                turns_by_where_the_sell_peak_story_stood=dict(collections.Counter(
+                    str(row[at['sell_peak_story']]) for row in expected)),
+                method='the peaks in play at every stored turn of the quote worked out again from the stored '
+                       'outputs of pieces 1 and 2 as whole tables; shares no code with the tick-by-tick calculation')
+
+
+def outside_changes(row_files, calc_files, trade_day: dt.date, table_files=None, rows_folder=None) -> dict:
+    """The check of the calculation `outside_changes`: every change found again by laying each outside column
+    against itself moved down one row, along the whole column; what was in play at that row from the stored
+    outputs of pieces 1 and 2 and from the run in progress that `quote_runs` stored on the row."""
+    import numpy as np
+    import pyarrow.compute as pc
+    from root.calcs import outside_changes as O
+    rows, calc = _stored(row_files, calc_files, ['received_time_ns'] + O.OUTSIDE)
+    text = lambda name: np.array(rows.column(name).to_pylist(), dtype=object)
+    in_day = (text('row_label') == TRADE_DAY) & (text('trade_day') == trade_day.isoformat())
+    count = np.array(calc.column('outside_change_facts_known').to_pylist(), dtype=object)
+    need(all(v is None for v in count[~in_day]), 'outside_change_facts_known is filled on a row of no trade day')
+    d = np.flatnonzero(in_day)
+    need(bool((np.diff(d) == 1).all()), 'the rows of the trade day are not one unbroken stretch')
+    peaks_at, runs_at, position, r = _in_play_as_stored(rows_folder, trade_day, rows, d)
+    words = lambda v: None if v is None else repr(v) if isinstance(v, float) else str(v)
+    found = []                                         # (row in the trade day, place of the column, the line)
+    for place, name in enumerate(O.OUTSIDE):
+        column = rows.column(name).combine_chunks().slice(int(d[0]), len(d))
+        now, was = column.slice(1), column.slice(0, len(d) - 1)
+        differs = pc.or_(pc.fill_null(pc.not_equal(now, was), False), pc.xor(pc.is_null(now), pc.is_null(was)))
+        known = rows.column(O.KNOWN_FROM[name]).combine_chunks().slice(int(d[0]), len(d))
+        for k in (np.flatnonzero(differs.to_numpy(zero_copy_only=False)) + 1).tolist():
+            found.append((k, place, (int(position[k]), int(r[k]), name, O.KIND.get(name, O.TIME),
+                                     words(column[k - 1].as_py()), words(column[k].as_py()), known[k].as_py())))
+    found.sort(key=lambda e: e[:2])
+    in_play_at = {}
+    expected = []
+    for k, _, line in found:
+        if k not in in_play_at:
+            in_play_at[k] = peaks_at(k) + runs_at(k)
+        expected.append(line + in_play_at[k])
+    _facts_equal(table_files['facts'], O.FACT_NAMES, expected)
+    per_row = collections.Counter(row[0] for row in expected)
+    need(count[d].tolist() == [per_row.get(int(p), 0) for p in position],
+         'the count of facts known on a row differs from the recount')
+    by_figure = collections.Counter(row[O.FACT_NAMES.index('figure')] for row in expected)
+    return dict(passed=True, trade_day_rows=len(d), facts_compared=len(expected), ticks_with_a_change=len(in_play_at),
+                facts_by_figure=dict(sorted(by_figure.items())), outside_columns_followed=len(O.OUTSIDE),
+                method='each outside column laid against itself one row down, along the whole column; what was in '
+                       'play from the stored outputs of pieces 1, 2 and the quote\'s runs. Shares no code with '
+                       'the tick-by-tick calculation')
+
+
+def together(row_files, calc_files, trade_day: dt.date, table_files=None, rows_folder=None) -> dict:
+    """The check of the calculation `together` (addition N): for every row, the next row with a later exchange
+    time is found along the whole column; orders that entered (or left) at one exchange time and share that next
+    row are one set. The calculation keeps the instants still waiting as it goes."""
+    import numpy as np
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    from root.calcs import together as T
+    rows, calc = _stored(row_files, calc_files, list(T.READS))
+    text = lambda name: np.array(rows.column(name).to_pylist(), dtype=object)
+    in_day = (text('row_label') == TRADE_DAY) & (text('trade_day') == trade_day.isoformat())
+    count = np.array(calc.column('together_lines_known').to_pylist(), dtype=object)
+    need(all(v is None for v in count[~in_day]), 'together_lines_known is filled on a row of no trade day')
+    d = np.flatnonzero(in_day)
+    n = len(d)
+    position = rows.column('position_on_tape').to_numpy()[d]
+    moment = rows.column('exchange_time_ns').to_numpy()[d]
+    r = rows.column('received_time_ns').to_numpy()[d]
+    what, side, order = text('what_happened')[d], text('side')[d], text('order_number')[d]
+    before, after, price = text('order_size_before')[d], text('order_size_after')[d], text('touched_price')[d]
+    later = np.full(n, -1, dtype=np.int64)             # for every row: the next row with a later exchange time
+    waiting = []
+    for k, t in enumerate(moment.tolist()):
+        while waiting and waiting[-1][0] < t:
+            later[waiting.pop()[1]] = k
+        waiting.append((t, k))
+    entered_at = {order[k]: int(moment[k]) for k in np.flatnonzero(what == R.JOINED).tolist()}
+    sets = {}
+    for kind, members in ((T.ENTERED, np.flatnonzero(what == R.JOINED)),
+                          (T.LEFT, np.flatnonzero(np.isin(what, T.LEAVING)))):
+        for k in members.tolist():
+            sets.setdefault((int(later[k]), int(moment[k]), T.KINDS.index(kind)), []).append(k)
+    expected, still, largest, how = [], [], collections.Counter(), collections.Counter()
+    for (known, at, kind_place), members in sorted(sets.items()):
+        if len(members) < T.SET_FROM:
+            continue
+        kind = T.KINDS[kind_place]
+        if known < 0:
+            still += [(kind, at, int(position[k]), order[k]) for k in members]
+            continue
+        sizes = [after[k] if kind == T.ENTERED else before[k] for k in members]
+        entries = [entered_at.get(order[k]) if kind == T.LEFT else None for k in members]
+        largest[kind] = max(largest[kind], len(members))
+        for k, mine, entry in zip(members, sizes, entries):
+            row = dict.fromkeys(T.FACT_NAMES)
+            row.update(known_position=int(position[known]), known_received_time_ns=int(r[known]), fact=kind,
+                       set_exchange_time_ns=at, orders_in_set=len(members), size_of_set=sum(sizes),
+                       order_position=int(position[k]), order_received_time_ns=int(r[k]), order_number=order[k],
+                       side=T.SIDES.get(side[k]), price=price[k], size=mine)
+            if kind == T.LEFT:
+                row.update(how_left=what[k], entered_in_this_trade_day=entry is not None,
+                           entered_exchange_time_ns=entry,
+                           others_that_entered_with_it=None if entry is None else entries.count(entry) - 1)
+                how[what[k]] += 1
+            expected.append(tuple(row[name] for name in T.FACT_NAMES))
+    _facts_equal(table_files['facts'], T.FACT_NAMES, expected, 'line')
+    per_row = collections.Counter(row[0] for row in expected)
+    need(count[d].tolist() == [per_row.get(int(p), 0) for p in position],
+         'the count of lines known on a row differs from the recount')
+    left = pa.concat_tables([pq.read_table(f) for f in table_files['open-at-the-end']])
+    need(sorted(zip(*[left.column(c).to_pylist() for c in T.OPEN_COLUMNS])) == sorted(still),
+         'the sets still waiting at the last tick differ from the recount')
+    at = {name: k for k, name in enumerate(T.FACT_NAMES)}
+    kinds = collections.Counter(row[at['fact']] for row in expected)
+    with_it = sum(1 for row in expected if row[at['others_that_entered_with_it']])
+    return dict(passed=True, trade_day_rows=n, lines_compared=len(expected), lines_by_kind=dict(kinds),
+                sets_by_kind=dict(collections.Counter(T.KINDS[k[2]] for k, m in sets.items()
+                                                      if len(m) >= T.SET_FROM and k[0] >= 0)),
+                largest_set_by_kind=dict(largest), lines_left_together_by_how=dict(how),
+                lines_left_together_whose_order_entered_with_another_of_the_set=with_it,
+                lines_of_sets_still_waiting_at_the_last_tick=len(still),
+                rows_whose_exchange_time_is_earlier_than_the_row_before=int((np.diff(moment) < 0).sum()),
+                method='for every row the next row with a later exchange time, along the whole column; the sets by '
+                       'gathering the orders of one instant that share it. Shares no code with the tick-by-tick '
+                       'calculation')
+
+
 KNOWN_AT_A_TICK = {'facts', 'before'}            # the tables whose lines each carry the tick at which they became known
 CALC_CHECKS = {'flow_peak': flow_peak, 'peak_story': peak_story, 'book_totals': book_totals,
                'quote_runs': quote_runs, 'peak_links': peak_links, 'open_stories': open_stories,
-               'refills': refills, 'sweeps': sweeps, 'chain_peaks': chain_peaks}
+               'refills': refills, 'sweeps': sweeps, 'chain_peaks': chain_peaks,
+               'quote_peaks': quote_peaks, 'outside_changes': outside_changes, 'together': together}
 
 
 def playback_cuts(name: str, full: list, tables: dict) -> dict:
