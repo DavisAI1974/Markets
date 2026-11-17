@@ -88,6 +88,26 @@ gets a fact, so nothing is picked by a size, a count or a number of price levels
 | `STEPS_BACK` | 6 | How many steps back are written out as before lines now: the first six, as put to Greg ("the first six steps back are run and shown to Greg; how much further is settled with him"). It is not a cap on the chain: every peak line carries the tick the peak became known and the tick its story ended, so any further step follows by the same rule. |
 | `I_SIDE`, `I_SIZE`, `I_HIGH`, `I_HIGH_AT`, `F` | positions | Where a value sits among the values of pieces 1 and 2. |
 
+## `root/chain_models.py` (part 2, the chain link models, second part; `STEP1_STEP2_LAYOUTS.md`, piece 4)
+
+"As in the original" means the programs of 2026-08-17 on Markets branch `chatgpt/ng-exhaustion-chain-phase2-20260817`.
+
+| Constant | Value | Why |
+|---|---|---|
+| `THREADS` | the three thread settings | Each helper runs one thread, so that eight pinned helpers are eight CPUs at work. |
+| `RIDGE`, `NEIGHBOURS`, `TREES`, `MODELS` | names | The three models, as in the original. |
+| `RIDGE_GRID` | 0.1, 1, 10, 100, 1000 | The ridge settings tried, as in the original. |
+| `NEIGHBOUR_GRID` | 10, 20, 40, 80, 160 | The numbers of nearest neighbours tried (weighted by distance), as in the original. |
+| `LEAF_GRID` | 10, 20, 40, 80 | The smallest leaf sizes tried for extra trees, as in the original. |
+| `TREE_COUNT`, `TREE_COUNT_CHOOSING` | 140, 50 | Trees in a scoring forest and in a forest grown while choosing a setting. The original programs disagree (180/60, 140/50, 100/40, 80/30); these are the ones of its "known at the time" pilot, the nearest precedent (Claude's call, stated to Greg). |
+| `SEED` | 20260817 | The original's seed for extra trees. |
+| `TICK_PRICE_UNITS` | 1,000,000 | One tick of the natural gas contract ($0.001) in the tape's price units (billionths of a dollar). The original took price moves in ticks before arcsinh. |
+| `RIDGE_RECOUNT_TOLERANCE` | 1e-8 | How far the closed-form ridge may sit from the library's on any standardised prediction. It only judges a check; no value depends on it. |
+| `HELPER_POLL_SECONDS` | 5 | How often the runner looks whether a helper has died. No value depends on it. |
+| `STEPS` | `chain_peaks.STEPS_BACK` | The steps back the models are run for: the first six, shown to Greg before going further. |
+| `AS_IS`, `LOG`, `YES_NO`, `TICKS`, `FIGURES`, `FIGURE_NAMES` | words | The ten figures of what a peak did and how each enters a model (Claude's calls, stated to Greg). |
+| `TOO_FEW`, `EMPTY_FIGURE`, `STILL_OPEN` | words | Why a peak has empty values at a step. |
+
 ## `root/tape.py`, the stored-rows gate
 
 | Constant | Value | Why |
