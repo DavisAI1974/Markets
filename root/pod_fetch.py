@@ -19,7 +19,9 @@ import urllib.request
 from pathlib import Path
 
 MODELS = 'models'
-RUNS = {'models': ('chain_models', 'CHAIN-MODELS-{day}.json'), 'ways': ('chain_ways', 'CHAIN-WAYS-{day}.json')}
+RUNS = {'models': ('chain_models', 'CHAIN-MODELS-{day}.json'), 'ways': ('chain_ways', 'CHAIN-WAYS-{day}.json'),
+        'legs': ('trade_legs', 'TRADE-LEGS-{day}.json')}
+NO_STORED_ROWS = {'models', 'ways'}                    # these rebuild their peak lines through the tape gate
 AGENT = 'curl/8'                                       # the pods' web front refuses the library's own name
 BYTES_PER_MEGABYTE = 2 ** 20
 
@@ -34,7 +36,7 @@ def fetch(base: str, day: str, commit: str, into: Path, names: list) -> dict:
     ran = get(base, 'CODE_COMMIT').decode().strip()
     if ran != commit:
         raise SystemExit(f'the pod last ran commit {ran}, not {commit}')
-    if any(name not in RUNS for name in names):          # the models read no stored rows: they rebuild their peak
+    if any(name not in NO_STORED_ROWS for name in names):          # the models read no stored rows: they rebuild their peak
         rows_here = subprocess.run(['git', '-C', str(into), 'rev-parse', 'HEAD'], capture_output=True, text=True,
                                    check=True).stdout.strip()        # lines through the tape gate
         rows_there = get(base, 'ROWS_COMMIT').decode().strip()

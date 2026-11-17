@@ -138,6 +138,16 @@ its lines.
 | `CHECK_STEPS` | `chain_peaks.STEPS_BACK` (6) | How many steps of the before lines `chain_peaks` writes, which the check compares with the earlier peaks worked out here. |
 | `_cost` weights | 3, 2, 0.1 | Only the order the fits are started in (the longest first). No value depends on it. |
 
+## `root/trade_legs.py` (the missing two hours of the trade legs; Greg, 2026-11-17: "Then change it ... Finish the data")
+
+| Constant | Value | Why |
+|---|---|---|
+| `RULE_COMMIT`, `RULE_FILE`, `RULE_SHA256` | Markets `0408df44`, `continue_trade_chronology.py`, its fingerprint | Where the old rule is taken from, byte for byte. |
+| `OLD_COMMIT`, `OLD_FOLDER`, `OLD_SHA256` | markets-data `main` `15fbf2a`, run 42571551209's folder, fingerprints | The old legs and trades the check compares with. |
+| `OLD_START_NS` | 00:00 UTC of Oct 2 and Oct 17 | Where the old record starts (8 pm Eastern). Only splits what is new from what the old record holds. |
+| `READS`, `TRADE` | stored row columns; T | What the program reads through the rows gate, and the tape's code for a trade. |
+| `ENDPOINT` | the old record's own words | Written on each leg as the old record writes it. |
+
 ## `root/tape.py`, the stored-rows gate
 
 | Constant | Value | Why |
@@ -231,7 +241,7 @@ trade day, empty on a row of no trade day). The times a value becomes known are 
 | `COMMIT` | 40 hex digits | The shape of a commit name; a run is refused without one. |
 | `ONE_THREAD` | 1 | Each helper runs one thread. |
 | `ACCEPTED`, `REFUSED`, `BUSY` | 202, 403, 409 | The web answers of the pod's run address. |
-| `MODEL_JOBS`, `RUNS` | models, ways | The model runs a pod may be asked for, and each one's receipt. |
+| `MODEL_JOBS`, `ROW_JOBS`, `RUNS`, `NO_STORED_ROWS` | models, ways; legs | The model runs and the whole-trade-day programs a pod may be asked for, each one's receipt, and which read no stored rows. |
 | `MODELS`, `BYTES_PER_MEGABYTE` | models; 2^20 | The name of the models run; unit conversion for a printed size. |
 
 ## `root/sheet.py`
