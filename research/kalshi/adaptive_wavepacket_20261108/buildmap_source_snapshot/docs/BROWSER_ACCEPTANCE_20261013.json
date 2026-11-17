@@ -1,0 +1,144 @@
+{
+  "checkedAt": "2026-10-14T01:59:27.943Z",
+  "revision": "953bf3737425fc89c69f2daca5e744d8865886fd",
+  "checks": [
+    {
+      "name": "Live dogfood map loads six cards, free views and no live states"
+    },
+    {
+      "name": "Fit map contains full graph in desktop viewport",
+      "width": 875,
+      "height": 825,
+      "sw": 875,
+      "sh": 825
+    },
+    {
+      "name": "Assigned-file search, Enter, card focus, scrolling and complete inspector"
+    },
+    {
+      "name": "Guide reads current dogfood JavaScript functions and returns to the free evidence inspector"
+    },
+    {
+      "name": "Filtered cards leave native Tab navigation; Escape clears search"
+    },
+    {
+      "name": "Free goal walkthrough beside graph, highlights, samples, first gap and destination"
+    },
+    {
+      "name": "Wider free walkthrough, inspect step and return"
+    },
+    {
+      "name": "390px map and goal controls accessible, no page-width overflow",
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "name": "Captured Guide explanations render in the self-contained export"
+    },
+    {
+      "name": "Captured detailed task supports manual copy and refuses current working-tree comparison"
+    },
+    {
+      "name": "Self-contained export renders and navigates with no API/assets/polling requests"
+    },
+    {
+      "name": "Larger-map gap selection reveals a piece and its evidence review"
+    },
+    {
+      "name": "Fixture finding, evidence review and native clipboard attempt",
+      "clipboardStatus": "Select and copy the brief in the open task panel. Automatic copying is unavailable in this browser."
+    },
+    {
+      "name": "Permission-granted clipboard copies exact task brief"
+    },
+    {
+      "name": "Clipboard unavailable opens and selects complete manual brief"
+    },
+    {
+      "name": "30-piece larger fixture fit, assigned-path search, distant-card scroll and focus"
+    },
+    {
+      "name": "Guide shows argument expressions and opens/focuses a resolved same-file function"
+    },
+    {
+      "name": "Guide retains expanded function and keyboard focus after an unrelated refresh"
+    },
+    {
+      "name": "Guide refresh discards changed-source expansion, discloses unresolved targets and fits 390px"
+    },
+    {
+      "name": "Guide task draft retains wording and text selection through source refresh"
+    },
+    {
+      "name": "Reviewed function task has explicit support scope, escaped wording, exact clipboard and free-map return"
+    },
+    {
+      "name": "Guide compares actual inside/outside source changes without evaluating criteria and fits 390px"
+    },
+    {
+      "name": "Guide change review refuses a failed fresh read and recovers against its original baseline"
+    },
+    {
+      "name": "Reviewed scope lights the final box and opens its checked walkthrough"
+    },
+    {
+      "name": "Source edit refresh retains selected-card keyboard focus and invalidates completion"
+    },
+    {
+      "name": "Deleted declared source becomes planned and missing without losing selection"
+    },
+    {
+      "name": "Guide reports missing declared source without inventing a function explanation"
+    },
+    {
+      "name": "HTTP refresh failure retains last snapshot and recovers"
+    },
+    {
+      "name": "Initial API failure reports retry and recovers"
+    },
+    {
+      "name": "No uncaught page JavaScript errors"
+    }
+  ],
+  "errors": [],
+  "browser": "153.0.8010.0",
+  "node": "v24.19.0",
+  "sourceHashes": {
+    "public/index.html": "20e9ab4121d19083448a277f874fd6c87577fdfae8d5e9227e4b830f5d26e490",
+    "public/app.js": "8bab767b806cf3e5009a8bad404f8cf75740e7316726569028bc4fb6934a660e",
+    "public/styles.css": "83f60ea3f7e94802771d1b509e48fa46538c4d60518819e0e1c3159df448632f",
+    "public/guide-tasks.js": "934a2da0836700a4e05375f0aceb6ec9daebb49d1c2497b1da4081fe2de8b62d"
+  },
+  "result": "passed",
+  "revisionContext": "Parent HEAD at observation; task/review source, checks and corrected declaration scope are identified by actual hashes below.",
+  "checkedWorkingTree": {
+    "public/guide-tasks.js": "934a2da0836700a4e05375f0aceb6ec9daebb49d1c2497b1da4081fe2de8b62d",
+    "public/app.js": "8bab767b806cf3e5009a8bad404f8cf75740e7316726569028bc4fb6934a660e",
+    "public/index.html": "20e9ab4121d19083448a277f874fd6c87577fdfae8d5e9227e4b830f5d26e490",
+    "public/styles.css": "83f60ea3f7e94802771d1b509e48fa46538c4d60518819e0e1c3159df448632f",
+    "src/server.js": "e8d4c059f4ee4be7a9bc23ceab6e7a9d6879c10a93361a2037c11f40496c07d3",
+    "src/export.js": "5722354aa43df21e6ce95f162c35d3b27946efd2ec0b743682bfa5e5e5964773",
+    "tests/guide-tasks.test.js": "feaef9914800538b75b5de1bdfa88e96802e03d498d5ad29bda93e67bac091ec",
+    "tests/ui.test.js": "180598d11184ecaae6e0294a99e70293fd133be6cae704785bf6065609153ceb",
+    "tests/server.test.js": "27a29c1cd6062246c96aa1a8b0b4f6aa13710782b90dd8cf8a32a8baf9a16c47",
+    "tests/export.test.js": "18bd90c2e1f0b1dc1ff1ea5b5b4044c1929dfb693d17bf526d4db35c04a0cdac",
+    ".buildmap/browser-check.mjs": "9d10d576107a34397458c36494ece6d27d0d1bdca4a367f5adc549b68ff7e013",
+    ".buildmap/project.json": "ffa06b3568fa78f1ed3ff5d78929479b102bfcb0cd66929cf92e0f32893dd019"
+  },
+  "inputHashes": {
+    ".buildmap/browser-check.mjs": "9d10d576107a34397458c36494ece6d27d0d1bdca4a367f5adc549b68ff7e013",
+    ".buildmap/project.json": "ffa06b3568fa78f1ed3ff5d78929479b102bfcb0cd66929cf92e0f32893dd019",
+    "src/server.js": "e8d4c059f4ee4be7a9bc23ceab6e7a9d6879c10a93361a2037c11f40496c07d3",
+    "src/export.js": "5722354aa43df21e6ce95f162c35d3b27946efd2ec0b743682bfa5e5e5964773",
+    "src/scan.js": "d2da920c3158a67e18f37c5d7fec476e2e908f9b4e00c05fc6a368ff7e6fe12b",
+    "src/intent.js": "ed8a702617ac58366c32aa74c5c9789379ce380178d6410cc413826488a75786",
+    "src/imports.js": "6d197fea7e8073cd348281746e09fae32893982163d2fdde0838a5311765f770",
+    "src/javascript.js": "739de66bf8e2ccfa0c147ea779a162ee3afc32fc415b3febeb865d185fead020",
+    "src/outcomes.js": "b1182d6fa8fe129a446d8b19d6f16313f48aabb91a9e96252183abc4ca1e3017",
+    "package.json": "cabf922a14a035bbc4fa5e2242d1dfae074a7040f63e5eef0748f10c30360fb1",
+    "package-lock.json": "e11bc34bd02afb530112c7573725f792b67b8922256fd2b73f3e78e7800fde8f",
+    "src/code-guide.js": "c597447859a517ca24a5c5d340cab784d434d8b8b2f9d38d9ddce4014eb8b632"
+  },
+  "scope": "Prior 25 free/Guide cases plus five reviewed-task and current local snapshot comparison cases. Acceptance criteria are not automatically evaluated, source is not executed and no agent attribution is established.",
+  "transport": "Direct permitted loopback HTTP. Shared helper bundled into in-memory exports with no asset/API/polling requests. No HTML preview artifact, tunnel or cloud-file navigation."
+}

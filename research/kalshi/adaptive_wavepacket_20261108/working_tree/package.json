@@ -1,0 +1,21 @@
+{
+  "name": "buildmap",
+  "version": "0.1.0",
+  "description": "A living visual map of what your software is, what each piece does, what's actually connected, and how close you are to the finished system.",
+  "type": "module",
+  "bin": {
+    "buildmap": "src/cli.js"
+  },
+  "scripts": {
+    "dev": "node src/dev.js",
+    "start": "node src/cli.js .",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "acorn": "8.19.0"
+  }
+}

@@ -86,8 +86,9 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
   vendor cuts raw tape files that way; midnight UTC is 20:00 ET (EDT), two hours INTO the trade day. Download
   whichever UTC clock-day files are needed to cover a trade day completely, then shelve (keep, do not use) the
   hours that belong to a different trade day. Carry the order book straight through 00:00 UTC: applying the
-  snapshot that opens each raw file restarts every resting order's age at 20:00 ET (found and fixed 2026-11-16,
-  `markets-data` `tasks/family-research-20261022/research-union-current/trade-day-rebuild-20261116/`). Any
+  snapshot that opens each raw file restarts every resting order's age at 20:00 ET (found and fixed 2026-11-16;
+  carried by `root/book.py`, which never applies a vendor snapshot after the week's start; record in `markets-data`
+  `tasks/family-research-20261022/research-union-current/resting-order-age-20261116/`). Any
   exception needs a specific reason, written down next to the thing that differs.
 
 - **ONLY THE FOUR TRADE DAYS ENTER A CALCULATION (Greg, 2026-11-16, said several times).** Scope: the ROOT rebuild,
@@ -97,12 +98,22 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
   ONE thing: seating the order book so the book on the four trade days is complete. The stretches and the Sunday
   start-up before Oct 2 keep their marked rows; nothing is calculated on them. **Any other use of data from outside
   the four trade days is put to Greg FIRST, before it is built.** Nothing is commingled; anything ever made from the
-  warm-up data goes in its own output, apart. Enforced in code: `root/tape.py` `for_calculations()` is the only way
-  a calculation receives ticks; calculation modules live in `root/calcs/` and may not read the tape themselves
-  (`tests/root/test_tape.py`). The 13 outside data points are the published figures Greg approved in
+  warm-up data goes in its own output, apart. Enforced in code: a calculation receives ticks only through the two
+  gates of `root/tape.py`, which use the same `calculation_eligible` and pass exactly the same ticks:
+  `for_calculations()` hands it the raw tape record, `rows_for_calculations()` hands it the stored row (what a tick
+  did to the book is on the row). Calculation modules live in `root/calcs/` and may not read the tape or open a
+  stored file themselves (`tests/root/test_tape.py`); the runner proves on every run that the rows gate passed the
+  tape gate's positions. The 13 outside data points are the published figures Greg approved in
   `SPEC-outside.md`; no new outside input is added without asking him. Greg, same day: a trade may continue into the
   days beyond the four; nothing is built for that now ("we'll cross that bridge if we come to it"), and when it comes
   up it is put to him first.
+
+- **BAD OR INCOMPLETE DATA THAT WILL NOT BE USED IS NOT SAVED (Greg, 2026-11-16).** Data that is wrong, or
+  incomplete, and will not be used is not kept: not in git, not on a branch, not beside the good data "just in
+  case". An output that fails its check is not pushed. When a rebuild replaces something, the old one goes in the
+  same change. A session's scratch work stays out of git. This is about which outputs are kept; it does not change
+  "we don't drop any data", which is about ticks and rows inside a build. Deleting something already saved still
+  goes to Greg first, with what it is and why it exists.
 
 - **TRADE COST IS NOT A MARKET CONDITION (Greg, 2026-11-08).** No fee, slippage, maker or taker offset, fill
   model or any other execution assumption enters ANY research calculation, forecast or output. Research numbers

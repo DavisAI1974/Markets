@@ -1,0 +1,149 @@
+{
+ "analyst": "Claude Code (Ccode) \u2014 independent reanalysis, no reconciliation with Codex by user instruction",
+ "written_utc": "2026-11-09 (rerun v2)",
+ "shared_brief_commit": {
+  "repository": "DavisAI1974/Markets",
+  "branch": "codex/lifecycle-data-links-20261109",
+  "commit": "2781ad1d79d18152557a6c0dc119343877396702",
+  "paths": [
+   "agent-pass/reanalysis/SHARED_BRIEF.md",
+   "agent-pass/reanalysis/INPUT_AUTHORITY.md",
+   "agent-pass/AGENTS.md",
+   "agent-pass/reanalysis/START_FOR_CCODE.md"
+  ],
+  "note": "includes the November 9 price-as-input / two-way feedback addition",
+  "latest_brief_revision": "c67483435d1cbf0467c8afdb5bc02a330cf2f35a (breadth and look-ahead clarification, no reconciliation)",
+  "commit_history_recorded": [
+   "2781ad1",
+   "64f5993",
+   "c674834"
+  ]
+ },
+ "handoff_commit_named_by_user": "43aa3ec3a925d27d805eb69320c8fdd68fe0e6d0",
+ "evidence_manifest": {
+  "repository": "DavisAI1974/markets-data",
+  "revision": "e7b1c4acac2e37205cdb9ce1c53829b6ca30f4ee",
+  "directory": "tasks/family-research-20261022/shared-reanalysis-inputs/final-42593665910-1",
+  "status": "FROZEN_USER_START_AUTHORIZED",
+  "source_coordinates": 1459,
+  "unique_file_contents": 1296,
+  "final_source_files_measured": 813,
+  "prior_distinct_contents_preserved": 590,
+  "unavailable_archive_references": 3
+ },
+ "final_source_positions": {
+  "discovery": "DavisAI1974/Markets@f1c7277d2d303cea190e710abc1589f597a1e31d",
+  "suite": "DavisAI1974/Markets@3d0b06aa29781d5e39cc3eb45c6d09e174f195a2",
+  "data": "DavisAI1974/markets-data@c01caaf4f327e8fdff21e4e8b9c5153aba8604a8",
+  "precision_generator": "DavisAI1974/Markets@418462afeaf0f14aa8129f6f4d02c3867d772fd0",
+  "corrected_tier1_packet": "DavisAI1974/markets-data@36658bb5f15cad3a0dfea0201bff2cfe4acbf47e",
+  "codex_agent_pass": "DavisAI1974/Markets@43aa3ec3a925d27d805eb69320c8fdd68fe0e6d0"
+ },
+ "collections_materialized": {
+  "lifecycle": "markets-data@2f1c3c72 lifecycle-data-links/run-42583801329-1",
+  "native": "markets-data@0487d83 native-dipole/20261108-33693e180",
+  "events": "markets-data@87dc338 combined-events/run-42571551209-1",
+  "family": "markets-data@7b50d63 family-replication/run-42566535537-1",
+  "continuous": "markets-data@71240aa four-day-extensions/run-42563528655-1",
+  "whole": "markets-data@9e3365f whole-lifecycles/run-42573465249-1",
+  "tier1_corrected": "markets-data@c6e99f4 claude-code-pins/precision-fix-42592319662-1",
+  "rowclock": "markets-data@9bfffd6d all-row-clock-pins/run-42584823565-1",
+  "ccode_per_event": "Markets@24da878 (+f1c7277) tasks/family-research-20261022/claude-code/*",
+  "suite_tables": "Markets@3d0b06a claude-pass-3day/{tables,crossday}, claude-pass/tables",
+  "final_additions_downloaded": 361,
+  "final_additions_skipped_non_data": 264
+ },
+ "verification": {
+  "markets_repo_files": "SHA256 and byte count checked against manifest on download (160 Markets inputs: 158 ok; CCODE_FINAL_SUITE_RECEIPT.json/.md differ by design: the receipt describes its pre-generation parent, as the freeze notes)",
+  "markets_data_files": "read from a blobless clone by immutable revision; Git object identity",
+  "tier1": "corrected ledgers at c6e99f4 only; rounded copies not read"
+ },
+ "unavailable_required_sources": [
+  "Three ROOT frame archive directories (Oct 2, 3, 17) referenced in the data manifest are not in any Git repository and the S3 target is out of scope; retained in COVERAGE.csv as unavailable",
+  "Tier 2 per-3-second grid rows themselves are not in the packet (only couplings/cells/lead-lag outputs); price-level paths after recognition are reconstructed from prints (a-trades) and Ccode's post-recognition rows",
+  "Codex's new reanalysis: not read (user instruction: two separate reports)"
+ ],
+ "outputs": {
+  "root": "agent-pass/reanalysis/claude/",
+  "files": [
+   "REPORT.md",
+   "CLAIMS.csv",
+   "CASES.csv",
+   "OPEN_QUESTIONS.md",
+   "RECEIPT.json",
+   "COVERAGE.csv",
+   "CONFLICTS.csv",
+   "PAPER_STRATEGIES.md",
+   "PAPER_STRATEGIES.json",
+   "DIPOLE_LAYER_MAP.csv",
+   "PAPER_READINESS.md",
+   "scripts/*.py",
+   "tables/*",
+   "FIELD_INTERPRETATION.csv",
+   "tables/m16*",
+   "tables/m17*",
+   "tables/m18*",
+   "tables/m19*",
+   "tables/m20*"
+  ],
+  "REPORT_v1_superseded.md": "first pass, superseded",
+  "DIRECTION_MEMORY.md": "reconstructed direction and failure list"
+ },
+ "execution": {
+  "where": "claude.ai cloud container (GitHub-hosted inputs; no desktop computation, no AWS/S3, no live orders, no PR15 merge)",
+  "reruns_of_completed_suites": "none; existing tables and underlying records read only",
+  "new_computations": "per-date conditional distributions from existing records (scripts/m*.py)"
+ },
+ "branch": {
+  "repository": "DavisAI1974/Markets",
+  "branch": "research/markets-adaptive-wavepacket-migration-20261108"
+ },
+ "rerun_v2": {
+  "date_utc": "2026-11-09",
+  "reason": "first pass measured the dipole from the recognition clock, did not decode the raw tapes, and measured the look-ahead ride to the START of the exhaustion second",
+  "raw_tapes_decoded": {
+   "source": "markets-data@c01caaf4f327e8fdff21e4e8b9c5153aba8604a8 NG_v0_mbo_<day>.dbn.zst",
+   "days": [
+    "20231001",
+    "20231002",
+    "20231003",
+    "20231016",
+    "20231017",
+    "20231018"
+   ],
+   "records": [
+    12532,
+    813342,
+    879077,
+    925662,
+    858976,
+    760803
+   ],
+   "verification": "sha256 and record counts match the manifest; replay midpoint equals x13 life paths at k=+5 in 848/852 Oct 18 candidates (corr 0.999)"
+  },
+  "new_scripts": [
+   "m16b_exhaustion_convention.py",
+   "m22_raw_mbo_queue_layers.py",
+   "m23_raw_mbo_joins.py",
+   "m24_flip_successor_and_peaks.py",
+   "m25_v2_layer_summary.py",
+   "m26_v2_headline_cells.py",
+   "patch_m13_v2.py"
+  ],
+  "modified_scripts": [
+   "m16_lookahead_lifecycle.py (m_exh_end)",
+   "m17_combined_layers.py (ride_exh_end outcome; operands column dedupe; prov_candidate_id mapping)",
+   "m20_trade_environment.py (ride_end cells)",
+   "m23_raw_mbo_joins.py (ride_exh_end)",
+   "m13_all_claims.py (convention-aware conclusions)"
+  ],
+  "superseded": "REPORT_v1_superseded.md (first pass kept verbatim)",
+  "claims_rows": 3942,
+  "withdrawn": [
+   "S7 drive ride and flip overlay (first pass)",
+   "S7 amendment (quiet births)",
+   "REPORT v1 section 12 drive/after-exhaustion/after-flip direction statements"
+  ],
+  "no_reconciliation": "Codex's report and conclusions were not read for this rerun"
+ }
+}

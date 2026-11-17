@@ -1,0 +1,78 @@
+{
+ "dispositions": {
+  "registry_context_only_no_measured_render_field": 82,
+  "linked_observed_fields_subset": 17
+ },
+ "layers_with_fields": [
+  [
+   "raw_source_identity_provenance_clocks_integrity",
+   3
+  ],
+  [
+   "order_lifecycle_adds",
+   6
+  ],
+  [
+   "order_lifecycle_cancels",
+   6
+  ],
+  [
+   "order_lifecycle_modifies",
+   2
+  ],
+  [
+   "order_lifecycle_fills",
+   4
+  ],
+  [
+   "full_bid_ask_depth",
+   4
+  ],
+  [
+   "price_level_and_order_counts",
+   2
+  ],
+  [
+   "spread_and_depth_imbalance",
+   1
+  ],
+  [
+   "aggressor_and_native_signed_flow",
+   3
+  ],
+  [
+   "price_and_book_path",
+   2
+  ],
+  [
+   "missingness_and_integrity_flags",
+   3
+  ],
+  [
+   "derived_roll20_and_dipole_state",
+   3
+  ],
+  [
+   "derived_feature_availability_timestamps",
+   1
+  ],
+  [
+   "clock_event_time",
+   3
+  ],
+  [
+   "clock_receive_time",
+   3
+  ],
+  [
+   "clock_event_known_by",
+   4
+  ],
+  [
+   "clock_prospective_discovery_confirmation",
+   2
+  ]
+ ],
+ "changed_within_session": 0,
+ "series": 48
+}

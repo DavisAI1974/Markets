@@ -1,0 +1,310 @@
+[
+ {
+  "day": "20231002",
+  "candidates": 741,
+  "live_recognition": 741,
+  "finalization_only": 0,
+  "endpoint_opposite_hold3": 741,
+  "endpoint_censored": 0,
+  "ended_before_recognition": 383,
+  "share_ended_before_recognition": 0.517,
+  "life_span_s": {
+   "n": 741,
+   "min": 3.0,
+   "p10": 10.0,
+   "p25": 21.0,
+   "p50": 42.0,
+   "p75": 92.0,
+   "p90": 186.0,
+   "max": 630.0
+  },
+  "remaining_after_recog_s": {
+   "n": 358,
+   "min": 0.429636608,
+   "p10": 6.526576844800002,
+   "p25": 19.190578879999997,
+   "p50": 43.449325439999996,
+   "p75": 106.990059136,
+   "p90": 207.14148997120003,
+   "max": 575.3141312
+  },
+  "recognition_lag_s": {
+   "n": 741,
+   "min": 7.108676309,
+   "p10": 29.709941399,
+   "p25": 51.016906994,
+   "p50": 52.121223697,
+   "p75": 57.130831661,
+   "p90": 69.389827773,
+   "max": 138.814864468
+  },
+  "realised_by_recog_ticks": {
+   "n": 741,
+   "up": 0,
+   "flat": 741,
+   "down": 0
+  },
+  "print_move_60s": {
+   "n": 741,
+   "up": 223,
+   "flat": 272,
+   "down": 246
+  },
+  "cc_move_60": {
+   "n": 740,
+   "up": 264,
+   "flat": 190,
+   "down": 286
+  },
+  "cc_move_300": {
+   "n": 737,
+   "up": 337,
+   "flat": 51,
+   "down": 349
+  },
+  "print_move_300s": {
+   "n": 741,
+   "up": 305,
+   "flat": 113,
+   "down": 323
+  },
+  "print_move_600s": {
+   "n": 741,
+   "up": 337,
+   "flat": 74,
+   "down": 330
+  },
+  "agree_sign_cc_vs_print_60": 330
+ },
+ {
+  "day": "20231003",
+  "candidates": 833,
+  "live_recognition": 832,
+  "finalization_only": 1,
+  "endpoint_opposite_hold3": 833,
+  "endpoint_censored": 0,
+  "ended_before_recognition": 456,
+  "share_ended_before_recognition": 0.548,
+  "life_span_s": {
+   "n": 833,
+   "min": 3.0,
+   "p10": 9.0,
+   "p25": 19.0,
+   "p50": 38.0,
+   "p75": 84.0,
+   "p90": 186.80000000000007,
+   "max": 1066.0
+  },
+  "remaining_after_recog_s": {
+   "n": 376,
+   "min": 0.909402368,
+   "p10": 6.8223504639999994,
+   "p25": 17.162190975999998,
+   "p50": 44.566108928,
+   "p75": 115.794517376,
+   "p90": 260.176329856,
+   "max": 1007.04342016
+  },
+  "recognition_lag_s": {
+   "n": 832,
+   "min": 7.24617383,
+   "p10": 27.8743565171,
+   "p25": 51.00618051125,
+   "p50": 52.1558353695,
+   "p75": 57.074290647750004,
+   "p90": 65.2335508811,
+   "max": 153.367433617
+  },
+  "realised_by_recog_ticks": {
+   "n": 832,
+   "up": 0,
+   "flat": 832,
+   "down": 0
+  },
+  "print_move_60s": {
+   "n": 832,
+   "up": 225,
+   "flat": 307,
+   "down": 300
+  },
+  "cc_move_60": {
+   "n": 832,
+   "up": 302,
+   "flat": 260,
+   "down": 270
+  },
+  "cc_move_300": {
+   "n": 830,
+   "up": 379,
+   "flat": 110,
+   "down": 341
+  },
+  "print_move_300s": {
+   "n": 832,
+   "up": 333,
+   "flat": 137,
+   "down": 362
+  },
+  "print_move_600s": {
+   "n": 832,
+   "up": 365,
+   "flat": 98,
+   "down": 369
+  },
+  "agree_sign_cc_vs_print_60": 371
+ },
+ {
+  "day": "20231017",
+  "candidates": 741,
+  "live_recognition": 740,
+  "finalization_only": 1,
+  "endpoint_opposite_hold3": 740,
+  "endpoint_censored": 1,
+  "ended_before_recognition": 383,
+  "share_ended_before_recognition": 0.518,
+  "life_span_s": {
+   "n": 741,
+   "min": 3.0,
+   "p10": 10.0,
+   "p25": 21.0,
+   "p50": 41.0,
+   "p75": 91.0,
+   "p90": 178.0,
+   "max": 564.0
+  },
+  "remaining_after_recog_s": {
+   "n": 357,
+   "min": 1.95888512,
+   "p10": 7.8085387264,
+   "p25": 16.005268992,
+   "p50": 45.501019392,
+   "p75": 109.467506432,
+   "p90": 187.72200207360015,
+   "max": 496.783378944
+  },
+  "recognition_lag_s": {
+   "n": 740,
+   "min": 8.000508209,
+   "p10": 29.661772805800002,
+   "p25": 51.027754493,
+   "p50": 52.271845993,
+   "p75": 56.69676953675,
+   "p90": 67.36579384350001,
+   "max": 157.8228609
+  },
+  "realised_by_recog_ticks": {
+   "n": 740,
+   "up": 0,
+   "flat": 740,
+   "down": 0
+  },
+  "print_move_60s": {
+   "n": 740,
+   "up": 237,
+   "flat": 239,
+   "down": 264
+  },
+  "cc_move_60": {
+   "n": 740,
+   "up": 258,
+   "flat": 201,
+   "down": 281
+  },
+  "cc_move_300": {
+   "n": 736,
+   "up": 293,
+   "flat": 76,
+   "down": 367
+  },
+  "print_move_300s": {
+   "n": 740,
+   "up": 280,
+   "flat": 107,
+   "down": 353
+  },
+  "print_move_600s": {
+   "n": 740,
+   "up": 316,
+   "flat": 68,
+   "down": 356
+  },
+  "agree_sign_cc_vs_print_60": 348
+ },
+ {
+  "day": "20231018",
+  "candidates": 863,
+  "live_recognition": 863,
+  "finalization_only": 0,
+  "endpoint_opposite_hold3": 863,
+  "endpoint_censored": 0,
+  "ended_before_recognition": 432,
+  "share_ended_before_recognition": 0.501,
+  "life_span_s": {
+   "n": 863,
+   "min": 3.0,
+   "p10": 10.200000000000003,
+   "p25": 22.0,
+   "p50": 43.0,
+   "p75": 98.5,
+   "p90": 199.80000000000007,
+   "max": 740.0
+  },
+  "remaining_after_recog_s": {
+   "n": 431,
+   "min": 0.22294016,
+   "p10": 6.810599936,
+   "p25": 19.724587008,
+   "p50": 51.13840256,
+   "p75": 123.42485708800001,
+   "p90": 244.033022208,
+   "max": 678.26406144
+  },
+  "recognition_lag_s": {
+   "n": 863,
+   "min": 7.059875101,
+   "p10": 25.0168592182,
+   "p25": 50.880414363499995,
+   "p50": 51.673379197,
+   "p75": 54.970089545,
+   "p90": 60.88531643200001,
+   "max": 137.367893996
+  },
+  "realised_by_recog_ticks": {
+   "n": 863,
+   "up": 382,
+   "flat": 203,
+   "down": 278
+  },
+  "print_move_60s": {
+   "n": 863,
+   "up": 260,
+   "flat": 296,
+   "down": 307
+  },
+  "cc_move_60": {
+   "n": 862,
+   "up": 320,
+   "flat": 188,
+   "down": 354
+  },
+  "cc_move_300": {
+   "n": 858,
+   "up": 423,
+   "flat": 73,
+   "down": 362
+  },
+  "print_move_300s": {
+   "n": 863,
+   "up": 354,
+   "flat": 127,
+   "down": 382
+  },
+  "print_move_600s": {
+   "n": 863,
+   "up": 391,
+   "flat": 53,
+   "down": 419
+  },
+  "agree_sign_cc_vs_print_60": 384
+ }
+]

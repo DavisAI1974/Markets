@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BuildMap</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <div class="brand">BuildMap <span>v0.1</span></div>
+      <div id="projectName" class="project-name">Loading project…</div>
+      <div id="projectSource" class="project-source"></div>
+    </div>
+    <div class="top-actions">
+      <span id="mode" class="mode"></span>
+      <span id="refreshStatus" role="status">Connecting…</span>
+      <button id="fitButton" type="button" aria-pressed="false">Fit map</button>
+      <button id="sizeButton" type="button" aria-pressed="true">Actual size</button>
+    </div>
+  </header>
+
+  <nav class="view-switch" aria-label="BuildMap views">
+    <button id="mapViewButton" type="button" aria-pressed="true" aria-controls="workspace">Map <span>Free</span></button>
+    <button id="walkthroughViewButton" type="button" aria-pressed="false" aria-controls="workspace">Walkthrough <span>Free</span></button>
+    <button id="workflowViewButton" type="button" aria-pressed="false" aria-controls="workspace">Calculations &amp; risks <span>Guide</span></button>
+    <button id="guideTaskButton" type="button" hidden>Guide task</button>
+    <span id="viewDescription">Explore the whole build.</span>
+  </nav>
+
+  <section id="missionPanel" class="mission-panel">
+    <div class="mission-copy">
+      <div class="eyebrow">WHY THIS SYSTEM EXISTS</div>
+      <p id="mission">Reading available intent…</p>
+      <div id="intentSource" class="intent-source"></div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-label"><span title="Weighted state index; not percent complete or a probability of correctness">Evidence index</span><strong id="progressText">0%</strong></div>
+      <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+      <div id="stateCounts" class="state-counts"></div>
+    </div>
+  </section>
+
+  <section id="walkthroughSummary" class="walkthrough-summary" hidden>
+    <div class="eyebrow">WALKTHROUGH · FREE</div>
+    <h1>Follow your goal through the build</h1>
+    <p>See what each step should achieve, what happened in the recorded example, and where the journey still needs work.</p>
+  </section>
+
+  <main id="workspace" class="workspace">
+    <aside class="rail">
+      <div id="mapSidebar">
+      <label class="search-label" for="search">Find a piece</label>
+      <input id="search" type="search" placeholder="scanner, API, queue…" autocomplete="off" />
+      <section id="searchPanel" class="search-panel" aria-label="Search results" hidden>
+        <p id="searchStatus" role="status"></p>
+        <div id="searchResults"></div>
+        <button id="moreResults" type="button" hidden>Show all matches</button>
+      </section>
+      <div class="legend" id="legend"></div>
+      <div class="edge-key"><span>Solid → observed source dependency</span><span>Dashed → declared dependency</span><span>Green → contribution to mission</span></div>
+      </div>
+      <section id="outcomesPanel" class="outcomes-panel" aria-label="Outcome walkthroughs">
+        <h2>Your goals</h2>
+        <p id="outcomeHint"></p>
+        <div id="outcomes"></div>
+        <button id="clearOutcome" type="button" hidden>Back to map</button>
+      </section>
+      <section class="gaps-panel" aria-label="Build gaps"><h2 id="gapHeading">Next gaps</h2><div id="gaps"></div><button id="moreGaps" type="button" hidden>Show all gaps</button></section>
+      <div id="evidenceRule" class="rail-note">
+        <strong>Evidence rule</strong>
+        <p>A file can light up as coded or connected automatically. Computing, verified, and live require explicit evidence.</p>
+      </div>
+    </aside>
+
+    <section id="mapShell" class="map-shell" aria-label="Living software map">
+      <div id="mapViewport" class="map-viewport">
+        <div id="mapSizer"><div id="mapCanvas" class="map-canvas">
+          <svg id="edgeLayer" class="edge-layer" aria-hidden="true"></svg>
+          <div id="nodeLayer" class="node-layer"></div>
+        </div></div>
+      </div>
+      <div id="emptyState" class="empty-state" hidden>
+        <strong>No code yet — that’s okay.</strong>
+        <p>Describe your project with <code>node src/cli.js PATH --init</code>, then add planned pieces with <code>node src/cli.js PATH --piece</code>, replacing PATH with your local project folder. A README or new source files also work. BuildMap will grow with the project.</p>
+      </div>
+    </section>
+
+    <aside id="detail" class="detail" aria-live="polite">
+      <div class="detail-placeholder">
+        <div class="eyebrow">PIECE INSPECTOR</div>
+        <h2>Click a piece</h2>
+        <p>See what it does, how it connects, and how it moves the system toward its goal.</p>
+      </div>
+    </aside>
+  </main>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

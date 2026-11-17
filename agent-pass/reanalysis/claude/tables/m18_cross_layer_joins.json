@@ -1,0 +1,1198 @@
+{
+ "20231002": {
+  "day": "20231002",
+  "size_one_signals": 22042,
+  "by_dipole_state": {
+   "60-300s": {
+    "n": 8190,
+    "retreated": 3888,
+    "share": 0.475
+   },
+   ">300s": {
+    "n": 4433,
+    "retreated": 2197,
+    "share": 0.496
+   },
+   "no_dipole": {
+    "n": 97,
+    "retreated": 49,
+    "share": 0.505
+   },
+   "recognized<=60s": {
+    "n": 9322,
+    "retreated": 4529,
+    "share": 0.486
+   }
+  },
+  "by_dipole_direction": {
+   "attacks": {
+    "n": 10752,
+    "retreated": 5142,
+    "share": 0.478
+   },
+   "defends": {
+    "n": 11193,
+    "retreated": 5472,
+    "share": 0.489
+   },
+   "none": {
+    "n": 97,
+    "retreated": 49,
+    "share": 0.505
+   }
+  },
+  "by_dipole_direction_recent": {
+   "attacks": {
+    "n": 4512,
+    "retreated": 2221,
+    "share": 0.492
+   },
+   "defends": {
+    "n": 4810,
+    "retreated": 2308,
+    "share": 0.48
+   }
+  },
+  "by_dipole_alive_direction": {
+   "alive|attacks": {
+    "n": 994,
+    "retreated": 503,
+    "share": 0.506
+   },
+   "alive|defends": {
+    "n": 1017,
+    "retreated": 509,
+    "share": 0.5
+   },
+   "ended|attacks": {
+    "n": 9758,
+    "retreated": 4639,
+    "share": 0.475
+   },
+   "ended|defends": {
+    "n": 10176,
+    "retreated": 4963,
+    "share": 0.488
+   },
+   "none|none": {
+    "n": 97,
+    "retreated": 49,
+    "share": 0.505
+   }
+  },
+  "by_fresh_flow_label": {
+   "aligned": {
+    "n": 8485,
+    "retreated": 4765,
+    "share": 0.562
+   },
+   "flat": {
+    "n": 611,
+    "retreated": 344,
+    "share": 0.563
+   },
+   "opposed": {
+    "n": 9984,
+    "retreated": 4162,
+    "share": 0.417
+   },
+   "undefined": {
+    "n": 2962,
+    "retreated": 1392,
+    "share": 0.47
+   }
+  },
+  "by_touch_label": {
+   "aligned": {
+    "n": 21263,
+    "retreated": 10284,
+    "share": 0.484
+   },
+   "flat": {
+    "n": 779,
+    "retreated": 379,
+    "share": 0.487
+   }
+  },
+  "by_gap_trend": {
+   "insufficient_history": {
+    "n": 1,
+    "retreated": 1,
+    "share": 1.0
+   },
+   "narrowing": {
+    "n": 10462,
+    "retreated": 5130,
+    "share": 0.49
+   },
+   "widening": {
+    "n": 11579,
+    "retreated": 5532,
+    "share": 0.478
+   }
+  },
+  "by_family_occurrence": {
+   "first": {
+    "n": 116,
+    "retreated": 50,
+    "share": 0.431
+   },
+   "2-5": {
+    "n": 145,
+    "retreated": 76,
+    "share": 0.524
+   },
+   ">5": {
+    "n": 21781,
+    "retreated": 10537,
+    "share": 0.484
+   }
+  },
+  "three_way_flow_touch_dipole": {
+   "aligned|aligned|attacks": {
+    "n": 4072,
+    "retreated": 2259,
+    "share": 0.555
+   },
+   "aligned|aligned|defends": {
+    "n": 4088,
+    "retreated": 2331,
+    "share": 0.57
+   },
+   "aligned|flat|attacks": {
+    "n": 161,
+    "retreated": 90,
+    "share": 0.559
+   },
+   "aligned|flat|defends": {
+    "n": 129,
+    "retreated": 64,
+    "share": 0.496
+   },
+   "flat|aligned|attacks": {
+    "n": 272,
+    "retreated": 156,
+    "share": 0.574
+   },
+   "flat|aligned|defends": {
+    "n": 309,
+    "retreated": 172,
+    "share": 0.557
+   },
+   "opposed|aligned|attacks": {
+    "n": 4661,
+    "retreated": 1910,
+    "share": 0.41
+   },
+   "opposed|aligned|defends": {
+    "n": 4984,
+    "retreated": 2119,
+    "share": 0.425
+   },
+   "opposed|flat|attacks": {
+    "n": 129,
+    "retreated": 55,
+    "share": 0.426
+   },
+   "opposed|flat|defends": {
+    "n": 167,
+    "retreated": 59,
+    "share": 0.353
+   },
+   "undefined|aligned|attacks": {
+    "n": 1363,
+    "retreated": 617,
+    "share": 0.453
+   },
+   "undefined|aligned|defends": {
+    "n": 1426,
+    "retreated": 675,
+    "share": 0.473
+   }
+  },
+  "three_way_onset_flow_dipole": {
+   "new_best|aligned|attacks": {
+    "n": 1984,
+    "retreated": 872,
+    "share": 0.44
+   },
+   "new_best|aligned|defends": {
+    "n": 1928,
+    "retreated": 883,
+    "share": 0.458
+   },
+   "new_best|flat|attacks": {
+    "n": 171,
+    "retreated": 79,
+    "share": 0.462
+   },
+   "new_best|flat|defends": {
+    "n": 175,
+    "retreated": 75,
+    "share": 0.429
+   },
+   "new_best|opposed|attacks": {
+    "n": 3244,
+    "retreated": 1044,
+    "share": 0.322
+   },
+   "new_best|opposed|defends": {
+    "n": 3467,
+    "retreated": 1186,
+    "share": 0.342
+   },
+   "new_best|undefined|attacks": {
+    "n": 962,
+    "retreated": 360,
+    "share": 0.374
+   },
+   "new_best|undefined|defends": {
+    "n": 1063,
+    "retreated": 444,
+    "share": 0.418
+   },
+   "standing_best_shrank|aligned|attacks": {
+    "n": 2249,
+    "retreated": 1477,
+    "share": 0.657
+   },
+   "standing_best_shrank|aligned|defends": {
+    "n": 2289,
+    "retreated": 1512,
+    "share": 0.661
+   },
+   "standing_best_shrank|flat|attacks": {
+    "n": 116,
+    "retreated": 84,
+    "share": 0.724
+   },
+   "standing_best_shrank|flat|defends": {
+    "n": 147,
+    "retreated": 104,
+    "share": 0.707
+   },
+   "standing_best_shrank|opposed|attacks": {
+    "n": 1546,
+    "retreated": 921,
+    "share": 0.596
+   },
+   "standing_best_shrank|opposed|defends": {
+    "n": 1684,
+    "retreated": 992,
+    "share": 0.589
+   },
+   "standing_best_shrank|undefined|attacks": {
+    "n": 480,
+    "retreated": 305,
+    "share": 0.635
+   },
+   "standing_best_shrank|undefined|defends": {
+    "n": 440,
+    "retreated": 276,
+    "share": 0.627
+   }
+  }
+ },
+ "20231003": {
+  "day": "20231003",
+  "size_one_signals": 24349,
+  "by_dipole_state": {
+   "60-300s": {
+    "n": 8863,
+    "retreated": 4414,
+    "share": 0.498
+   },
+   ">300s": {
+    "n": 5015,
+    "retreated": 2444,
+    "share": 0.487
+   },
+   "no_dipole": {
+    "n": 98,
+    "retreated": 43,
+    "share": 0.439
+   },
+   "recognized<=60s": {
+    "n": 10373,
+    "retreated": 5286,
+    "share": 0.51
+   }
+  },
+  "by_dipole_direction": {
+   "attacks": {
+    "n": 11958,
+    "retreated": 5985,
+    "share": 0.501
+   },
+   "defends": {
+    "n": 12293,
+    "retreated": 6159,
+    "share": 0.501
+   },
+   "none": {
+    "n": 98,
+    "retreated": 43,
+    "share": 0.439
+   }
+  },
+  "by_dipole_direction_recent": {
+   "attacks": {
+    "n": 5243,
+    "retreated": 2661,
+    "share": 0.508
+   },
+   "defends": {
+    "n": 5130,
+    "retreated": 2625,
+    "share": 0.512
+   }
+  },
+  "by_dipole_alive_direction": {
+   "alive|attacks": {
+    "n": 1017,
+    "retreated": 521,
+    "share": 0.512
+   },
+   "alive|defends": {
+    "n": 1034,
+    "retreated": 541,
+    "share": 0.523
+   },
+   "ended|attacks": {
+    "n": 10941,
+    "retreated": 5464,
+    "share": 0.499
+   },
+   "ended|defends": {
+    "n": 11259,
+    "retreated": 5618,
+    "share": 0.499
+   },
+   "none|none": {
+    "n": 98,
+    "retreated": 43,
+    "share": 0.439
+   }
+  },
+  "by_fresh_flow_label": {
+   "aligned": {
+    "n": 9481,
+    "retreated": 5409,
+    "share": 0.571
+   },
+   "flat": {
+    "n": 760,
+    "retreated": 371,
+    "share": 0.488
+   },
+   "opposed": {
+    "n": 11208,
+    "retreated": 5000,
+    "share": 0.446
+   },
+   "undefined": {
+    "n": 2900,
+    "retreated": 1407,
+    "share": 0.485
+   }
+  },
+  "by_touch_label": {
+   "aligned": {
+    "n": 23410,
+    "retreated": 11739,
+    "share": 0.501
+   },
+   "flat": {
+    "n": 939,
+    "retreated": 448,
+    "share": 0.477
+   }
+  },
+  "by_gap_trend": {
+   "insufficient_history": {
+    "n": 3,
+    "retreated": 1,
+    "share": 0.333
+   },
+   "narrowing": {
+    "n": 11681,
+    "retreated": 5836,
+    "share": 0.5
+   },
+   "widening": {
+    "n": 12665,
+    "retreated": 6350,
+    "share": 0.501
+   }
+  },
+  "by_family_occurrence": {
+   "first": {
+    "n": 125,
+    "retreated": 64,
+    "share": 0.512
+   },
+   "2-5": {
+    "n": 183,
+    "retreated": 99,
+    "share": 0.541
+   },
+   ">5": {
+    "n": 24041,
+    "retreated": 12024,
+    "share": 0.5
+   }
+  },
+  "three_way_flow_touch_dipole": {
+   "aligned|aligned|attacks": {
+    "n": 4370,
+    "retreated": 2510,
+    "share": 0.574
+   },
+   "aligned|aligned|defends": {
+    "n": 4723,
+    "retreated": 2693,
+    "share": 0.57
+   },
+   "aligned|flat|attacks": {
+    "n": 175,
+    "retreated": 92,
+    "share": 0.526
+   },
+   "aligned|flat|defends": {
+    "n": 179,
+    "retreated": 91,
+    "share": 0.508
+   },
+   "flat|aligned|attacks": {
+    "n": 355,
+    "retreated": 156,
+    "share": 0.439
+   },
+   "flat|aligned|defends": {
+    "n": 352,
+    "retreated": 192,
+    "share": 0.545
+   },
+   "opposed|aligned|attacks": {
+    "n": 5397,
+    "retreated": 2428,
+    "share": 0.45
+   },
+   "opposed|aligned|defends": {
+    "n": 5393,
+    "retreated": 2395,
+    "share": 0.444
+   },
+   "opposed|flat|attacks": {
+    "n": 210,
+    "retreated": 91,
+    "share": 0.433
+   },
+   "opposed|flat|defends": {
+    "n": 177,
+    "retreated": 76,
+    "share": 0.429
+   },
+   "undefined|aligned|attacks": {
+    "n": 1369,
+    "retreated": 669,
+    "share": 0.489
+   },
+   "undefined|aligned|defends": {
+    "n": 1377,
+    "retreated": 664,
+    "share": 0.482
+   }
+  },
+  "three_way_onset_flow_dipole": {
+   "new_best|aligned|attacks": {
+    "n": 2253,
+    "retreated": 1072,
+    "share": 0.476
+   },
+   "new_best|aligned|defends": {
+    "n": 2434,
+    "retreated": 1174,
+    "share": 0.482
+   },
+   "new_best|flat|attacks": {
+    "n": 232,
+    "retreated": 93,
+    "share": 0.401
+   },
+   "new_best|flat|defends": {
+    "n": 217,
+    "retreated": 107,
+    "share": 0.493
+   },
+   "new_best|opposed|attacks": {
+    "n": 3864,
+    "retreated": 1495,
+    "share": 0.387
+   },
+   "new_best|opposed|defends": {
+    "n": 3778,
+    "retreated": 1436,
+    "share": 0.38
+   },
+   "new_best|undefined|attacks": {
+    "n": 1032,
+    "retreated": 450,
+    "share": 0.436
+   },
+   "new_best|undefined|defends": {
+    "n": 1016,
+    "retreated": 435,
+    "share": 0.428
+   },
+   "standing_best_shrank|aligned|attacks": {
+    "n": 2292,
+    "retreated": 1530,
+    "share": 0.668
+   },
+   "standing_best_shrank|aligned|defends": {
+    "n": 2468,
+    "retreated": 1610,
+    "share": 0.652
+   },
+   "standing_best_shrank|flat|attacks": {
+    "n": 146,
+    "retreated": 74,
+    "share": 0.507
+   },
+   "standing_best_shrank|flat|defends": {
+    "n": 159,
+    "retreated": 96,
+    "share": 0.604
+   },
+   "standing_best_shrank|opposed|attacks": {
+    "n": 1743,
+    "retreated": 1024,
+    "share": 0.587
+   },
+   "standing_best_shrank|opposed|defends": {
+    "n": 1792,
+    "retreated": 1035,
+    "share": 0.578
+   },
+   "standing_best_shrank|undefined|attacks": {
+    "n": 396,
+    "retreated": 247,
+    "share": 0.624
+   },
+   "standing_best_shrank|undefined|defends": {
+    "n": 429,
+    "retreated": 266,
+    "share": 0.62
+   }
+  }
+ },
+ "20231017": {
+  "day": "20231017",
+  "size_one_signals": 27111,
+  "by_dipole_state": {
+   "60-300s": {
+    "n": 11148,
+    "retreated": 5074,
+    "share": 0.455
+   },
+   ">300s": {
+    "n": 4074,
+    "retreated": 1844,
+    "share": 0.453
+   },
+   "no_dipole": {
+    "n": 101,
+    "retreated": 54,
+    "share": 0.535
+   },
+   "recognized<=60s": {
+    "n": 11788,
+    "retreated": 5633,
+    "share": 0.478
+   }
+  },
+  "by_dipole_direction": {
+   "attacks": {
+    "n": 13811,
+    "retreated": 6398,
+    "share": 0.463
+   },
+   "defends": {
+    "n": 13199,
+    "retreated": 6153,
+    "share": 0.466
+   },
+   "none": {
+    "n": 101,
+    "retreated": 54,
+    "share": 0.535
+   }
+  },
+  "by_dipole_direction_recent": {
+   "attacks": {
+    "n": 6068,
+    "retreated": 2915,
+    "share": 0.48
+   },
+   "defends": {
+    "n": 5720,
+    "retreated": 2718,
+    "share": 0.475
+   }
+  },
+  "by_dipole_alive_direction": {
+   "alive|attacks": {
+    "n": 1188,
+    "retreated": 585,
+    "share": 0.492
+   },
+   "alive|defends": {
+    "n": 1224,
+    "retreated": 589,
+    "share": 0.481
+   },
+   "ended|attacks": {
+    "n": 12623,
+    "retreated": 5813,
+    "share": 0.461
+   },
+   "ended|defends": {
+    "n": 11975,
+    "retreated": 5564,
+    "share": 0.465
+   },
+   "none|none": {
+    "n": 101,
+    "retreated": 54,
+    "share": 0.535
+   }
+  },
+  "by_fresh_flow_label": {
+   "aligned": {
+    "n": 10005,
+    "retreated": 5505,
+    "share": 0.55
+   },
+   "flat": {
+    "n": 837,
+    "retreated": 430,
+    "share": 0.514
+   },
+   "opposed": {
+    "n": 12156,
+    "retreated": 4816,
+    "share": 0.396
+   },
+   "undefined": {
+    "n": 4113,
+    "retreated": 1854,
+    "share": 0.451
+   }
+  },
+  "by_touch_label": {
+   "aligned": {
+    "n": 25897,
+    "retreated": 11979,
+    "share": 0.463
+   },
+   "flat": {
+    "n": 1214,
+    "retreated": 626,
+    "share": 0.516
+   }
+  },
+  "by_gap_trend": {
+   "insufficient_history": {
+    "n": 2,
+    "retreated": 2,
+    "share": 1.0
+   },
+   "narrowing": {
+    "n": 12717,
+    "retreated": 5921,
+    "share": 0.466
+   },
+   "widening": {
+    "n": 14392,
+    "retreated": 6682,
+    "share": 0.464
+   }
+  },
+  "by_family_occurrence": {
+   "first": {
+    "n": 139,
+    "retreated": 72,
+    "share": 0.518
+   },
+   "2-5": {
+    "n": 178,
+    "retreated": 111,
+    "share": 0.624
+   },
+   ">5": {
+    "n": 26794,
+    "retreated": 12422,
+    "share": 0.464
+   }
+  },
+  "three_way_flow_touch_dipole": {
+   "aligned|aligned|attacks": {
+    "n": 4700,
+    "retreated": 2607,
+    "share": 0.555
+   },
+   "aligned|aligned|defends": {
+    "n": 4831,
+    "retreated": 2623,
+    "share": 0.543
+   },
+   "aligned|flat|attacks": {
+    "n": 199,
+    "retreated": 119,
+    "share": 0.598
+   },
+   "aligned|flat|defends": {
+    "n": 249,
+    "retreated": 138,
+    "share": 0.554
+   },
+   "flat|aligned|attacks": {
+    "n": 369,
+    "retreated": 188,
+    "share": 0.509
+   },
+   "flat|aligned|defends": {
+    "n": 417,
+    "retreated": 210,
+    "share": 0.504
+   },
+   "opposed|aligned|attacks": {
+    "n": 6152,
+    "retreated": 2427,
+    "share": 0.395
+   },
+   "opposed|aligned|defends": {
+    "n": 5528,
+    "retreated": 2195,
+    "share": 0.397
+   },
+   "opposed|flat|attacks": {
+    "n": 236,
+    "retreated": 96,
+    "share": 0.407
+   },
+   "opposed|flat|defends": {
+    "n": 208,
+    "retreated": 84,
+    "share": 0.404
+   },
+   "undefined|aligned|attacks": {
+    "n": 2021,
+    "retreated": 880,
+    "share": 0.435
+   },
+   "undefined|aligned|defends": {
+    "n": 1789,
+    "retreated": 803,
+    "share": 0.449
+   },
+   "undefined|flat|attacks": {
+    "n": 111,
+    "retreated": 63,
+    "share": 0.568
+   },
+   "undefined|flat|defends": {
+    "n": 149,
+    "retreated": 86,
+    "share": 0.577
+   }
+  },
+  "three_way_onset_flow_dipole": {
+   "new_best|aligned|attacks": {
+    "n": 2322,
+    "retreated": 1066,
+    "share": 0.459
+   },
+   "new_best|aligned|defends": {
+    "n": 2521,
+    "retreated": 1102,
+    "share": 0.437
+   },
+   "new_best|flat|attacks": {
+    "n": 229,
+    "retreated": 104,
+    "share": 0.454
+   },
+   "new_best|flat|defends": {
+    "n": 253,
+    "retreated": 111,
+    "share": 0.439
+   },
+   "new_best|opposed|attacks": {
+    "n": 4305,
+    "retreated": 1395,
+    "share": 0.324
+   },
+   "new_best|opposed|defends": {
+    "n": 3901,
+    "retreated": 1314,
+    "share": 0.337
+   },
+   "new_best|undefined|attacks": {
+    "n": 1302,
+    "retreated": 487,
+    "share": 0.374
+   },
+   "new_best|undefined|defends": {
+    "n": 1217,
+    "retreated": 437,
+    "share": 0.359
+   },
+   "standing_best_shrank|aligned|attacks": {
+    "n": 2577,
+    "retreated": 1660,
+    "share": 0.644
+   },
+   "standing_best_shrank|aligned|defends": {
+    "n": 2559,
+    "retreated": 1659,
+    "share": 0.648
+   },
+   "standing_best_shrank|flat|attacks": {
+    "n": 163,
+    "retreated": 102,
+    "share": 0.626
+   },
+   "standing_best_shrank|flat|defends": {
+    "n": 192,
+    "retreated": 113,
+    "share": 0.589
+   },
+   "standing_best_shrank|opposed|attacks": {
+    "n": 2083,
+    "retreated": 1128,
+    "share": 0.542
+   },
+   "standing_best_shrank|opposed|defends": {
+    "n": 1835,
+    "retreated": 965,
+    "share": 0.526
+   },
+   "standing_best_shrank|undefined|attacks": {
+    "n": 830,
+    "retreated": 456,
+    "share": 0.549
+   },
+   "standing_best_shrank|undefined|defends": {
+    "n": 721,
+    "retreated": 452,
+    "share": 0.627
+   }
+  }
+ },
+ "20231018": {
+  "day": "20231018",
+  "size_one_signals": 27551,
+  "by_dipole_state": {
+   "60-300s": {
+    "n": 11754,
+    "retreated": 5354,
+    "share": 0.456
+   },
+   ">300s": {
+    "n": 2269,
+    "retreated": 1016,
+    "share": 0.448
+   },
+   "no_dipole": {
+    "n": 176,
+    "retreated": 65,
+    "share": 0.369
+   },
+   "recognized<=60s": {
+    "n": 13352,
+    "retreated": 6242,
+    "share": 0.467
+   }
+  },
+  "by_dipole_direction": {
+   "attacks": {
+    "n": 13516,
+    "retreated": 6166,
+    "share": 0.456
+   },
+   "defends": {
+    "n": 13859,
+    "retreated": 6446,
+    "share": 0.465
+   },
+   "none": {
+    "n": 176,
+    "retreated": 65,
+    "share": 0.369
+   }
+  },
+  "by_dipole_direction_recent": {
+   "attacks": {
+    "n": 6595,
+    "retreated": 3050,
+    "share": 0.462
+   },
+   "defends": {
+    "n": 6757,
+    "retreated": 3192,
+    "share": 0.472
+   }
+  },
+  "by_dipole_alive_direction": {
+   "alive|attacks": {
+    "n": 1678,
+    "retreated": 741,
+    "share": 0.442
+   },
+   "alive|defends": {
+    "n": 1535,
+    "retreated": 722,
+    "share": 0.47
+   },
+   "ended|attacks": {
+    "n": 11838,
+    "retreated": 5425,
+    "share": 0.458
+   },
+   "ended|defends": {
+    "n": 12324,
+    "retreated": 5724,
+    "share": 0.464
+   },
+   "none|none": {
+    "n": 176,
+    "retreated": 65,
+    "share": 0.369
+   }
+  },
+  "by_fresh_flow_label": {
+   "aligned": {
+    "n": 9911,
+    "retreated": 5510,
+    "share": 0.556
+   },
+   "flat": {
+    "n": 738,
+    "retreated": 369,
+    "share": 0.5
+   },
+   "opposed": {
+    "n": 11775,
+    "retreated": 4737,
+    "share": 0.402
+   },
+   "undefined": {
+    "n": 5127,
+    "retreated": 2061,
+    "share": 0.402
+   }
+  },
+  "by_touch_label": {
+   "aligned": {
+    "n": 26129,
+    "retreated": 12008,
+    "share": 0.46
+   },
+   "flat": {
+    "n": 1422,
+    "retreated": 669,
+    "share": 0.47
+   }
+  },
+  "by_gap_trend": {
+   "insufficient_history": {
+    "n": 55,
+    "retreated": 13,
+    "share": 0.236
+   },
+   "narrowing": {
+    "n": 13166,
+    "retreated": 6086,
+    "share": 0.462
+   },
+   "widening": {
+    "n": 14330,
+    "retreated": 6578,
+    "share": 0.459
+   }
+  },
+  "by_family_occurrence": {
+   "first": {
+    "n": 109,
+    "retreated": 47,
+    "share": 0.431
+   },
+   "2-5": {
+    "n": 174,
+    "retreated": 88,
+    "share": 0.506
+   },
+   ">5": {
+    "n": 27268,
+    "retreated": 12542,
+    "share": 0.46
+   }
+  },
+  "three_way_flow_touch_dipole": {
+   "aligned|aligned|attacks": {
+    "n": 4728,
+    "retreated": 2600,
+    "share": 0.55
+   },
+   "aligned|aligned|defends": {
+    "n": 4660,
+    "retreated": 2623,
+    "share": 0.563
+   },
+   "aligned|flat|attacks": {
+    "n": 252,
+    "retreated": 132,
+    "share": 0.524
+   },
+   "aligned|flat|defends": {
+    "n": 219,
+    "retreated": 131,
+    "share": 0.598
+   },
+   "flat|aligned|attacks": {
+    "n": 338,
+    "retreated": 173,
+    "share": 0.512
+   },
+   "flat|aligned|defends": {
+    "n": 359,
+    "retreated": 181,
+    "share": 0.504
+   },
+   "opposed|aligned|attacks": {
+    "n": 5325,
+    "retreated": 2106,
+    "share": 0.395
+   },
+   "opposed|aligned|defends": {
+    "n": 5840,
+    "retreated": 2388,
+    "share": 0.409
+   },
+   "opposed|flat|attacks": {
+    "n": 269,
+    "retreated": 104,
+    "share": 0.387
+   },
+   "opposed|flat|defends": {
+    "n": 286,
+    "retreated": 118,
+    "share": 0.413
+   },
+   "undefined|aligned|attacks": {
+    "n": 2460,
+    "retreated": 981,
+    "share": 0.399
+   },
+   "undefined|aligned|defends": {
+    "n": 2276,
+    "retreated": 903,
+    "share": 0.397
+   },
+   "undefined|flat|attacks": {
+    "n": 124,
+    "retreated": 64,
+    "share": 0.516
+   },
+   "undefined|flat|defends": {
+    "n": 207,
+    "retreated": 97,
+    "share": 0.469
+   }
+  },
+  "three_way_onset_flow_dipole": {
+   "new_best|aligned|attacks": {
+    "n": 2352,
+    "retreated": 1080,
+    "share": 0.459
+   },
+   "new_best|aligned|defends": {
+    "n": 2317,
+    "retreated": 1037,
+    "share": 0.448
+   },
+   "new_best|flat|attacks": {
+    "n": 207,
+    "retreated": 88,
+    "share": 0.425
+   },
+   "new_best|flat|defends": {
+    "n": 214,
+    "retreated": 94,
+    "share": 0.439
+   },
+   "new_best|opposed|attacks": {
+    "n": 3830,
+    "retreated": 1219,
+    "share": 0.318
+   },
+   "new_best|opposed|defends": {
+    "n": 4193,
+    "retreated": 1403,
+    "share": 0.335
+   },
+   "new_best|undefined|attacks": {
+    "n": 1498,
+    "retreated": 551,
+    "share": 0.368
+   },
+   "new_best|undefined|defends": {
+    "n": 1392,
+    "retreated": 454,
+    "share": 0.326
+   },
+   "standing_best_shrank|aligned|attacks": {
+    "n": 2628,
+    "retreated": 1652,
+    "share": 0.629
+   },
+   "standing_best_shrank|aligned|defends": {
+    "n": 2562,
+    "retreated": 1717,
+    "share": 0.67
+   },
+   "standing_best_shrank|flat|attacks": {
+    "n": 151,
+    "retreated": 91,
+    "share": 0.603
+   },
+   "standing_best_shrank|flat|defends": {
+    "n": 157,
+    "retreated": 92,
+    "share": 0.586
+   },
+   "standing_best_shrank|opposed|attacks": {
+    "n": 1764,
+    "retreated": 991,
+    "share": 0.562
+   },
+   "standing_best_shrank|opposed|defends": {
+    "n": 1933,
+    "retreated": 1103,
+    "share": 0.571
+   },
+   "standing_best_shrank|undefined|attacks": {
+    "n": 1086,
+    "retreated": 494,
+    "share": 0.455
+   },
+   "standing_best_shrank|undefined|defends": {
+    "n": 1091,
+    "retreated": 546,
+    "share": 0.5
+   }
+  }
+ }
+}

@@ -1,0 +1,41 @@
+name: Adaptive locality optional BuildMap inspection trial
+
+on:
+  push:
+    branches:
+      - feat/adaptive-locality-engine-20261108
+    paths:
+      - 'adaptive_locality/buildmap_trial.py'
+      - 'adaptive_locality/geometry_probe.py'
+      - 'adaptive_locality/geometry_validation.py'
+      - 'adaptive_locality/research_holds.py'
+      - 'tests/adaptive-locality-buildmap-trial.test.js'
+      - '.github/workflows/adaptive-locality-buildmap-trial.yml'
+  pull_request:
+    paths:
+      - 'adaptive_locality/buildmap_trial.py'
+      - 'adaptive_locality/geometry_probe.py'
+      - 'adaptive_locality/geometry_validation.py'
+      - 'adaptive_locality/research_holds.py'
+      - 'tests/adaptive-locality-buildmap-trial.test.js'
+      - '.github/workflows/adaptive-locality-buildmap-trial.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  scratch-inspection:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install existing pinned BuildMap static-reader dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Scan disposable source copy only
+        run: node --test tests/adaptive-locality-buildmap-trial.test.js

@@ -1,0 +1,1080 @@
+{
+  "schema": 1,
+  "source_repository": "DavisAI1974/BuildMap",
+  "source_commit": "8b4295dcb4044a6e4df4b7dbad897a81348fe6e2",
+  "destination_repository": "DavisAI1974/Markets",
+  "destination_branch": "research/markets-adaptive-wavepacket-migration-20261108",
+  "source_total_files": 133,
+  "exact_matched_count": 133,
+  "pending_count": 0,
+  "sha_mismatch_count": 0,
+  "generated_state": "ALL_133_SOURCE_BLOBS_EXACT_MATCH_PENDING_OWNER_MIGRATION_COMPLETE_DECLARATION",
+  "scope_note": "Byte-for-byte original Git blob identity in nested Markets snapshot; not independent scientific validation.",
+  "files": [
+    {
+      "source_path": ".buildmap/browser-check.mjs",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/.buildmap/browser-check.mjs",
+      "size_bytes": 23172,
+      "source_blob_sha": "3f8faaedcce30930af3f7099713514fdc831545d",
+      "destination_blob_sha": "3f8faaedcce30930af3f7099713514fdc831545d",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": ".buildmap/evidence.json",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/.buildmap/evidence.json",
+      "size_bytes": 46428,
+      "source_blob_sha": "75b26b2a6b8c3244dd60ddba52364d0f2431bf09",
+      "destination_blob_sha": "75b26b2a6b8c3244dd60ddba52364d0f2431bf09",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": ".buildmap/project.json",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/.buildmap/project.json",
+      "size_bytes": 7416,
+      "source_blob_sha": "2bd4638c0c0a62ccf73324780e1ab4a6552a0e3f",
+      "destination_blob_sha": "2bd4638c0c0a62ccf73324780e1ab4a6552a0e3f",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": ".buildmap/record-mvp-example.mjs",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/.buildmap/record-mvp-example.mjs",
+      "size_bytes": 11712,
+      "source_blob_sha": "8cac3b63d08dedaa230eb6eef6563290e82f44f6",
+      "destination_blob_sha": "8cac3b63d08dedaa230eb6eef6563290e82f44f6",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": ".buildmap/workflow-browser-check.mjs",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/.buildmap/workflow-browser-check.mjs",
+      "size_bytes": 12133,
+      "source_blob_sha": "532d4e45e2c705227e4d61dcc67aa4877108c92b",
+      "destination_blob_sha": "532d4e45e2c705227e4d61dcc67aa4877108c92b",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": ".github/workflows/adaptive-locality-buildmap-trial.yml",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/.github/workflows/adaptive-locality-buildmap-trial.yml",
+      "size_bytes": 1361,
+      "source_blob_sha": "200aa6af0d4240998df1f5e39b02518e591f8b8c",
+      "destination_blob_sha": "200aa6af0d4240998df1f5e39b02518e591f8b8c",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": ".github/workflows/adaptive-locality.yml",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/.github/workflows/adaptive-locality.yml",
+      "size_bytes": 766,
+      "source_blob_sha": "e35a43dda2fdbc25e02874aa44a987cc24b3aec1",
+      "destination_blob_sha": "e35a43dda2fdbc25e02874aa44a987cc24b3aec1",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": ".gitignore",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/.gitignore",
+      "size_bytes": 14,
+      "source_blob_sha": "c2658d7d1b31848c3b71960543cb0368e56cd4c7",
+      "destination_blob_sha": "c2658d7d1b31848c3b71960543cb0368e56cd4c7",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "BUILD_GAPS.md",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/BUILD_GAPS.md",
+      "size_bytes": 13284,
+      "source_blob_sha": "68957863d3663592cc96e95fb4c21b9b4ebfa22b",
+      "destination_blob_sha": "68957863d3663592cc96e95fb4c21b9b4ebfa22b",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "GPT6_REVIEW_HANDOFF.md",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/GPT6_REVIEW_HANDOFF.md",
+      "size_bytes": 6228,
+      "source_blob_sha": "751926bd4c79c81f43dec90f74318d94d6475c8f",
+      "destination_blob_sha": "751926bd4c79c81f43dec90f74318d94d6475c8f",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "LICENSE",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/LICENSE",
+      "size_bytes": 1072,
+      "source_blob_sha": "7d3aaab5c8023d5fbd2cf05b886385d77d35d2b2",
+      "destination_blob_sha": "7d3aaab5c8023d5fbd2cf05b886385d77d35d2b2",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "NEXT_CHAT_HANDOFF.md",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/NEXT_CHAT_HANDOFF.md",
+      "size_bytes": 41515,
+      "source_blob_sha": "de34ab263411b55b1fee0f0961aae97fa43fdcb4",
+      "destination_blob_sha": "de34ab263411b55b1fee0f0961aae97fa43fdcb4",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "README.md",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/README.md",
+      "size_bytes": 61029,
+      "source_blob_sha": "cdb32217fc84b9ddea665c9a96df3d51ca8d721f",
+      "destination_blob_sha": "cdb32217fc84b9ddea665c9a96df3d51ca8d721f",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "REVIEW_NOTES.md",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/REVIEW_NOTES.md",
+      "size_bytes": 41080,
+      "source_blob_sha": "7ec38379dc72a8606fdddcf3627ba3c5a7293a1e",
+      "destination_blob_sha": "7ec38379dc72a8606fdddcf3627ba3c5a7293a1e",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "adaptive_locality/README.md",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/adaptive_locality/README.md",
+      "size_bytes": 23817,
+      "source_blob_sha": "71e19f49469b13918eb12d1ad5114a0ef9f2db66",
+      "destination_blob_sha": "71e19f49469b13918eb12d1ad5114a0ef9f2db66",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "adaptive_locality/__init__.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/adaptive_locality/__init__.py",
+      "size_bytes": 602,
+      "source_blob_sha": "1e1d98c1193bd0b1542f6a35c84e272643c09ba9",
+      "destination_blob_sha": "1e1d98c1193bd0b1542f6a35c84e272643c09ba9",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "adaptive_locality/adapters.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/adaptive_locality/adapters.py",
+      "size_bytes": 2616,
+      "source_blob_sha": "5599743de3350a9e9c3cae2a0498d5720921b10a",
+      "destination_blob_sha": "5599743de3350a9e9c3cae2a0498d5720921b10a",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "adaptive_locality/advanced.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/adaptive_locality/advanced.py",
+      "size_bytes": 6993,
+      "source_blob_sha": "f20c73786f0296b45b10af27797a6409483c9ff4",
+      "destination_blob_sha": "f20c73786f0296b45b10af27797a6409483c9ff4",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "adaptive_locality/benchmark.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/adaptive_locality/benchmark.py",
+      "size_bytes": 3180,
+      "source_blob_sha": "c83a4d7a4c38f395e6a270b907b8c46fa45609c4",
+      "destination_blob_sha": "c83a4d7a4c38f395e6a270b907b8c46fa45609c4",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "adaptive_locality/boundary_validation.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/adaptive_locality/boundary_validation.py",
+      "size_bytes": 1365,
+      "source_blob_sha": "450b8695f5ae3d0aa0a1ef9730c4cb6837c0ff25",
+      "destination_blob_sha": "450b8695f5ae3d0aa0a1ef9730c4cb6837c0ff25",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "adaptive_locality/buildmap_trial.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/adaptive_locality/buildmap_trial.py",
+      "size_bytes": 5077,
+      "source_blob_sha": "6270c58e645bfa687cc17021d4733b00c2da47e7",
+      "destination_blob_sha": "6270c58e645bfa687cc17021d4733b00c2da47e7",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "adaptive_locality/checkpoints.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/adaptive_locality/checkpoints.py",
+      "size_bytes": 2207,
+      "source_blob_sha": "624b015f4d5c9d89ee01d8138c7169f7c5121ce1",
+      "destination_blob_sha": "624b015f4d5c9d89ee01d8138c7169f7c5121ce1",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "adaptive_locality/cli.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/adaptive_locality/cli.py",
+      "size_bytes": 1396,
+      "source_blob_sha": "3c36aebdd4b7582c116533d8b89f6a3dcda08672",
+      "destination_blob_sha": "3c36aebdd4b7582c116533d8b89f6a3dcda08672",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "adaptive_locality/contracts.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/adaptive_locality/contracts.py",
+      "size_bytes": 3044,
+      "source_blob_sha": "85f6acfce242093907f20a3fbc9df7e2f1674881",
+      "destination_blob_sha": "85f6acfce242093907f20a3fbc9df7e2f1674881",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "adaptive_locality/core.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/adaptive_locality/core.py",
+      "size_bytes": 10190,
+      "source_blob_sha": "473668f2effadb8794a34a3ae22af29758a7e217",
+      "destination_blob_sha": "473668f2effadb8794a34a3ae22af29758a7e217",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "adaptive_locality/coupling.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/adaptive_locality/coupling.py",
+      "size_bytes": 14219,
+      "source_blob_sha": "621d37aad643aca337256e44f259b3968d64dfe5",
+      "destination_blob_sha": "621d37aad643aca337256e44f259b3968d64dfe5",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "adaptive_locality/disk_index.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/adaptive_locality/disk_index.py",
+      "size_bytes": 9813,
+      "source_blob_sha": "a51fc5627343ea992edd3ae8318014e9311148bc",
+      "destination_blob_sha": "a51fc5627343ea992edd3ae8318014e9311148bc",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "adaptive_locality/durable_queue.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/adaptive_locality/durable_queue.py",
+      "size_bytes": 7376,
+      "source_blob_sha": "093a0c4f0834a1fa4f20f40118e4d06190a9fc5f",
+      "destination_blob_sha": "093a0c4f0834a1fa4f20f40118e4d06190a9fc5f",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "adaptive_locality/experiments.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/adaptive_locality/experiments.py",
+      "size_bytes": 1867,
+      "source_blob_sha": "72cefbbcb31dc618030acc17c43f0615b046ae77",
+      "destination_blob_sha": "72cefbbcb31dc618030acc17c43f0615b046ae77",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "adaptive_locality/geometry_probe.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/adaptive_locality/geometry_probe.py",
+      "size_bytes": 13499,
+      "source_blob_sha": "42a535b5c8c0a6b0054133cf812fa056976705be",
+      "destination_blob_sha": "42a535b5c8c0a6b0054133cf812fa056976705be",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "adaptive_locality/geometry_validation.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/adaptive_locality/geometry_validation.py",
+      "size_bytes": 12389,
+      "source_blob_sha": "b97aa4b2906a16c8e5ad098776b38610fa1093d5",
+      "destination_blob_sha": "b97aa4b2906a16c8e5ad098776b38610fa1093d5",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "adaptive_locality/graph_boundary.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/adaptive_locality/graph_boundary.py",
+      "size_bytes": 3281,
+      "source_blob_sha": "cd806218cbf5b0e44462cde8b2d9769b24be0c57",
+      "destination_blob_sha": "cd806218cbf5b0e44462cde8b2d9769b24be0c57",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "adaptive_locality/grouping.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/adaptive_locality/grouping.py",
+      "size_bytes": 7130,
+      "source_blob_sha": "2c5f95cccb686021db1def758433c9347c17dc5d",
+      "destination_blob_sha": "2c5f95cccb686021db1def758433c9347c17dc5d",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "adaptive_locality/index.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/adaptive_locality/index.py",
+      "size_bytes": 5835,
+      "source_blob_sha": "7b9b93c59e887dc5b8111f19ca130e871e798c1b",
+      "destination_blob_sha": "7b9b93c59e887dc5b8111f19ca130e871e798c1b",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "adaptive_locality/information.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/adaptive_locality/information.py",
+      "size_bytes": 7998,
+      "source_blob_sha": "7ac739920438d0c594b7dd216c7888459ebce1e2",
+      "destination_blob_sha": "7ac739920438d0c594b7dd216c7888459ebce1e2",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "adaptive_locality/ledger.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/adaptive_locality/ledger.py",
+      "size_bytes": 2707,
+      "source_blob_sha": "2c4a294a3aeeefb3dbd0bf2d74e842c49b6d3960",
+      "destination_blob_sha": "2c4a294a3aeeefb3dbd0bf2d74e842c49b6d3960",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "adaptive_locality/level2_coupling.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/adaptive_locality/level2_coupling.py",
+      "size_bytes": 10363,
+      "source_blob_sha": "a46e80d75aa90bfeceeab859540d5c40471f78df",
+      "destination_blob_sha": "a46e80d75aa90bfeceeab859540d5c40471f78df",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "adaptive_locality/outliers.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/adaptive_locality/outliers.py",
+      "size_bytes": 7397,
+      "source_blob_sha": "5873b5ed5fea1ecb330421cc629f4df82d7e8b5e",
+      "destination_blob_sha": "5873b5ed5fea1ecb330421cc629f4df82d7e8b5e",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "adaptive_locality/queue.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/adaptive_locality/queue.py",
+      "size_bytes": 2918,
+      "source_blob_sha": "048a632c4e46b614046d6373c483c4766d75c209",
+      "destination_blob_sha": "048a632c4e46b614046d6373c483c4766d75c209",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "adaptive_locality/research_gates.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/adaptive_locality/research_gates.py",
+      "size_bytes": 4569,
+      "source_blob_sha": "8966a14258d5f749b26af14f8e9b9d0bb962ad6b",
+      "destination_blob_sha": "8966a14258d5f749b26af14f8e9b9d0bb962ad6b",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "adaptive_locality/research_holds.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/adaptive_locality/research_holds.py",
+      "size_bytes": 36074,
+      "source_blob_sha": "a5070f36af730f2e17d874463f5b2e2b13bfdaf4",
+      "destination_blob_sha": "a5070f36af730f2e17d874463f5b2e2b13bfdaf4",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "adaptive_locality/result_cache.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/adaptive_locality/result_cache.py",
+      "size_bytes": 2270,
+      "source_blob_sha": "23ee118ce8c6aed12993b02d6bbd72072556b77a",
+      "destination_blob_sha": "23ee118ce8c6aed12993b02d6bbd72072556b77a",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "adaptive_locality/review_cli.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/adaptive_locality/review_cli.py",
+      "size_bytes": 3677,
+      "source_blob_sha": "1856952e71016186500b8cf2da422a9140c626b6",
+      "destination_blob_sha": "1856952e71016186500b8cf2da422a9140c626b6",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "adaptive_locality/standalone_review.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/adaptive_locality/standalone_review.py",
+      "size_bytes": 7077,
+      "source_blob_sha": "8246f8843f1a9d290305e85c9abaf12ffead93e5",
+      "destination_blob_sha": "8246f8843f1a9d290305e85c9abaf12ffead93e5",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "adaptive_locality/visualization.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/adaptive_locality/visualization.py",
+      "size_bytes": 16351,
+      "source_blob_sha": "32e37eaa6463a910ec881ceca9365cacba229847",
+      "destination_blob_sha": "32e37eaa6463a910ec881ceca9365cacba229847",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "docs/ACCEPTANCE_20261031.md",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/docs/ACCEPTANCE_20261031.md",
+      "size_bytes": 3732,
+      "source_blob_sha": "949d00bd5523648faffa9a1daa00dedf505de636",
+      "destination_blob_sha": "949d00bd5523648faffa9a1daa00dedf505de636",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "docs/ADAPTIVE_LOCALITY_ARCHITECTURE_BUILD_PLAN_20261108.md",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/docs/ADAPTIVE_LOCALITY_ARCHITECTURE_BUILD_PLAN_20261108.md",
+      "size_bytes": 16424,
+      "source_blob_sha": "44760f4af2e4f99b439a170fccde7252e672e7f1",
+      "destination_blob_sha": "44760f4af2e4f99b439a170fccde7252e672e7f1",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "docs/ADAPTIVE_LOCALITY_CLAUDE_CODE_REVIEW_HANDOFF_20261108.md",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/docs/ADAPTIVE_LOCALITY_CLAUDE_CODE_REVIEW_HANDOFF_20261108.md",
+      "size_bytes": 13923,
+      "source_blob_sha": "ce8a629e4c23bc0bcbad0566488e2c1261ffcf09",
+      "destination_blob_sha": "ce8a629e4c23bc0bcbad0566488e2c1261ffcf09",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "docs/ADAPTIVE_LOCALITY_COUPLING_GEOMETRY_HANDOFF_20261108.md",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/docs/ADAPTIVE_LOCALITY_COUPLING_GEOMETRY_HANDOFF_20261108.md",
+      "size_bytes": 11214,
+      "source_blob_sha": "d759c88d9450b4608d271f6bc3d005173b2e0a51",
+      "destination_blob_sha": "d759c88d9450b4608d271f6bc3d005173b2e0a51",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "docs/ADAPTIVE_LOCALITY_IMPLEMENTATION_STATUS_20261108.md",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/docs/ADAPTIVE_LOCALITY_IMPLEMENTATION_STATUS_20261108.md",
+      "size_bytes": 8697,
+      "source_blob_sha": "f391416937e2bb7de322e5cedb6b49866937ddd1",
+      "destination_blob_sha": "f391416937e2bb7de322e5cedb6b49866937ddd1",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "docs/ADAPTIVE_LOCALITY_INDEPENDENT_DIAGNOSTICS_20261108.md",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/docs/ADAPTIVE_LOCALITY_INDEPENDENT_DIAGNOSTICS_20261108.md",
+      "size_bytes": 10629,
+      "source_blob_sha": "e26ef3cdb0bc369abbecc84998101d28d0012590",
+      "destination_blob_sha": "e26ef3cdb0bc369abbecc84998101d28d0012590",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "docs/ADAPTIVE_LOCALITY_NEXT_CHAT_DROPIN_20261108.md",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/docs/ADAPTIVE_LOCALITY_NEXT_CHAT_DROPIN_20261108.md",
+      "size_bytes": 6005,
+      "source_blob_sha": "b434cae0b427e92f5d102a0f23c5df61157aa346",
+      "destination_blob_sha": "b434cae0b427e92f5d102a0f23c5df61157aa346",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "docs/ADAPTIVE_LOCALITY_NEXT_CHAT_HANDOFF_20261108.md",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/docs/ADAPTIVE_LOCALITY_NEXT_CHAT_HANDOFF_20261108.md",
+      "size_bytes": 11726,
+      "source_blob_sha": "c2bcfd925f4afc580292c40a8f3ccb09e7246073",
+      "destination_blob_sha": "c2bcfd925f4afc580292c40a8f3ccb09e7246073",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "docs/ADAPTIVE_LOCALITY_SCIENCE_CONTEXT_REGISTER_20261108.md",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/docs/ADAPTIVE_LOCALITY_SCIENCE_CONTEXT_REGISTER_20261108.md",
+      "size_bytes": 17511,
+      "source_blob_sha": "f7bb3c66de88d92a5f1e8d0e41d720828eaa0620",
+      "destination_blob_sha": "f7bb3c66de88d92a5f1e8d0e41d720828eaa0620",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "docs/ADAPTIVE_LOCALITY_STANDALONE_ACCEPTANCE_20261108.md",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/docs/ADAPTIVE_LOCALITY_STANDALONE_ACCEPTANCE_20261108.md",
+      "size_bytes": 10849,
+      "source_blob_sha": "0276d2f1fce053702c2dd336ddfe9eed56b52f28",
+      "destination_blob_sha": "0276d2f1fce053702c2dd336ddfe9eed56b52f28",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "docs/BROWSER_ACCEPTANCE_20261013.json",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/docs/BROWSER_ACCEPTANCE_20261013.json",
+      "size_bytes": 6741,
+      "source_blob_sha": "6028da4418c67cd3da5b67f5480d33e698932649",
+      "destination_blob_sha": "6028da4418c67cd3da5b67f5480d33e698932649",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "docs/BROWSER_ACCEPTANCE_20261013.md",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/docs/BROWSER_ACCEPTANCE_20261013.md",
+      "size_bytes": 6732,
+      "source_blob_sha": "6f695d0f340aed07293c42023b907dd0cd33c76b",
+      "destination_blob_sha": "6f695d0f340aed07293c42023b907dd0cd33c76b",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "docs/BUILDMAP_COMPETITIVE_STRATEGY_HANDOFF_20261013.md",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/docs/BUILDMAP_COMPETITIVE_STRATEGY_HANDOFF_20261013.md",
+      "size_bytes": 7353,
+      "source_blob_sha": "f0e295800acf313091d8f9f075cdc609fd09b8ba",
+      "destination_blob_sha": "f0e295800acf313091d8f9f075cdc609fd09b8ba",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "docs/COMPLETION_GUIDE_20261031.md",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/docs/COMPLETION_GUIDE_20261031.md",
+      "size_bytes": 8927,
+      "source_blob_sha": "a8275ea9dae05d262d697621bbb3b80ff2b4f015",
+      "destination_blob_sha": "a8275ea9dae05d262d697621bbb3b80ff2b4f015",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "docs/COMPLETION_PLAN_20261031.md",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/docs/COMPLETION_PLAN_20261031.md",
+      "size_bytes": 1935,
+      "source_blob_sha": "daf8cbc8b817f6239925ed2abd88a389aaee977a",
+      "destination_blob_sha": "daf8cbc8b817f6239925ed2abd88a389aaee977a",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "docs/EXTEND_PIECE_REVIEW_20261013.md",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/docs/EXTEND_PIECE_REVIEW_20261013.md",
+      "size_bytes": 4175,
+      "source_blob_sha": "99e4f0b1f727740d4993b201911d519276f22ebc",
+      "destination_blob_sha": "99e4f0b1f727740d4993b201911d519276f22ebc",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "docs/FINALIZATION_CHECKLIST_20261031.md",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/docs/FINALIZATION_CHECKLIST_20261031.md",
+      "size_bytes": 4874,
+      "source_blob_sha": "77c5d341eccf84a3497cce5541f882b6f717b790",
+      "destination_blob_sha": "77c5d341eccf84a3497cce5541f882b6f717b790",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "docs/GUIDE_CODE_READING_20261013.md",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/docs/GUIDE_CODE_READING_20261013.md",
+      "size_bytes": 6273,
+      "source_blob_sha": "64a887cad4ef8c39d30d3c118c5ed14bc52ccac8",
+      "destination_blob_sha": "64a887cad4ef8c39d30d3c118c5ed14bc52ccac8",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "docs/GUIDE_TASK_REVIEW_20261013.md",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/docs/GUIDE_TASK_REVIEW_20261013.md",
+      "size_bytes": 6367,
+      "source_blob_sha": "00f5ed7dd0f72ee76f1406c7b6c18b17ec68dfb7",
+      "destination_blob_sha": "00f5ed7dd0f72ee76f1406c7b6c18b17ec68dfb7",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "docs/MVP_COMPLETION_20261013.json",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/docs/MVP_COMPLETION_20261013.json",
+      "size_bytes": 3676,
+      "source_blob_sha": "1f3338d7ccea9ae51840a016913988a8db00ad79",
+      "destination_blob_sha": "1f3338d7ccea9ae51840a016913988a8db00ad79",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "docs/MVP_COMPLETION_20261013.md",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/docs/MVP_COMPLETION_20261013.md",
+      "size_bytes": 5326,
+      "source_blob_sha": "9135d6290916f63ae360d319031b99624a18be78",
+      "destination_blob_sha": "9135d6290916f63ae360d319031b99624a18be78",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "docs/REVIEW_RESUME_20261021.md",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/docs/REVIEW_RESUME_20261021.md",
+      "size_bytes": 5682,
+      "source_blob_sha": "51516c69d4dca5148a8c0b606e333d55a293b2b2",
+      "destination_blob_sha": "51516c69d4dca5148a8c0b606e333d55a293b2b2",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "docs/ROADMAP_COMPLETION_LEDGER.md",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/docs/ROADMAP_COMPLETION_LEDGER.md",
+      "size_bytes": 2291,
+      "source_blob_sha": "ff665e7a101c8c764bf3f73615844b6f9464b86c",
+      "destination_blob_sha": "ff665e7a101c8c764bf3f73615844b6f9464b86c",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "docs/ROADMAP_REVIEW_20261021.md",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/docs/ROADMAP_REVIEW_20261021.md",
+      "size_bytes": 13286,
+      "source_blob_sha": "f0a4f23368fe4c3148f42d01ae1de4de5dbeab80",
+      "destination_blob_sha": "f0a4f23368fe4c3148f42d01ae1de4de5dbeab80",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "docs/RUNTIME_OBSERVATION.md",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/docs/RUNTIME_OBSERVATION.md",
+      "size_bytes": 7784,
+      "source_blob_sha": "d2034959d550e3c321b54ff3ae205e299892d4fb",
+      "destination_blob_sha": "d2034959d550e3c321b54ff3ae205e299892d4fb",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "docs/SLAYER_RENDERING_REVIEW_20261108.md",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/docs/SLAYER_RENDERING_REVIEW_20261108.md",
+      "size_bytes": 6079,
+      "source_blob_sha": "d51959d1412f52a14ffa2e77f8c1b86d42bc89db",
+      "destination_blob_sha": "d51959d1412f52a14ffa2e77f8c1b86d42bc89db",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "docs/WORKFLOW_REVIEW.md",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/docs/WORKFLOW_REVIEW.md",
+      "size_bytes": 12249,
+      "source_blob_sha": "e37d7c592ae9e74db07460edb1fff499789651d9",
+      "destination_blob_sha": "e37d7c592ae9e74db07460edb1fff499789651d9",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "docs/reports/BuildMap_Work_Completed_Remaining_and_Additions_20261021.docx",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/docs/reports/BuildMap_Work_Completed_Remaining_and_Additions_20261021.docx",
+      "size_bytes": 43549,
+      "source_blob_sha": "f5c9b474c2bee3a3d97a76e1d836b828b597b088",
+      "destination_blob_sha": "f5c9b474c2bee3a3d97a76e1d836b828b597b088",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "docs/reports/BuildMap_Work_Completed_Remaining_and_Additions_20261021.pdf",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/docs/reports/BuildMap_Work_Completed_Remaining_and_Additions_20261021.pdf",
+      "size_bytes": 42743,
+      "source_blob_sha": "18c7e60928244408768e6bd2a76a1673d2c2b236",
+      "destination_blob_sha": "18c7e60928244408768e6bd2a76a1673d2c2b236",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "package-lock.json",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/package-lock.json",
+      "size_bytes": 753,
+      "source_blob_sha": "ad33030671e742013a5b47655499260c22f1650e",
+      "destination_blob_sha": "ad33030671e742013a5b47655499260c22f1650e",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "package.json",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/package.json",
+      "size_bytes": 489,
+      "source_blob_sha": "ecd60b6733ab5aaf0cbbaa1b70c291e138983fe7",
+      "destination_blob_sha": "ecd60b6733ab5aaf0cbbaa1b70c291e138983fe7",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "public/app.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/public/app.js",
+      "size_bytes": 121477,
+      "source_blob_sha": "c79706e45ab255502e3c3073b64786d8f0b13f06",
+      "destination_blob_sha": "c79706e45ab255502e3c3073b64786d8f0b13f06",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "public/guide-tasks.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/public/guide-tasks.js",
+      "size_bytes": 12995,
+      "source_blob_sha": "f897d0caf2467f00f1868e67fbce3c0a8275e714",
+      "destination_blob_sha": "f897d0caf2467f00f1868e67fbce3c0a8275e714",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "public/index.html",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/public/index.html",
+      "size_bytes": 5007,
+      "source_blob_sha": "3398e973da1f063c23862859eb4750f4259086be",
+      "destination_blob_sha": "3398e973da1f063c23862859eb4750f4259086be",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "public/styles.css",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/public/styles.css",
+      "size_bytes": 16103,
+      "source_blob_sha": "98a31f3dc48e1b49571f3e206b5f778889f97594",
+      "destination_blob_sha": "98a31f3dc48e1b49571f3e206b5f778889f97594",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "src/cli.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/src/cli.js",
+      "size_bytes": 13770,
+      "source_blob_sha": "f46d5ba9db014a48269ffe7a2a2f1472ab25127e",
+      "destination_blob_sha": "f46d5ba9db014a48269ffe7a2a2f1472ab25127e",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "src/code-guide.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/src/code-guide.js",
+      "size_bytes": 8422,
+      "source_blob_sha": "a79c703345ebfcbaf4f9a1b37fcd7760ab352b4e",
+      "destination_blob_sha": "a79c703345ebfcbaf4f9a1b37fcd7760ab352b4e",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "src/collected-runs.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/src/collected-runs.js",
+      "size_bytes": 19782,
+      "source_blob_sha": "bce7a73d0574100ee734db9aa9e307f3dbf4b434",
+      "destination_blob_sha": "bce7a73d0574100ee734db9aa9e307f3dbf4b434",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "src/dev.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/src/dev.js",
+      "size_bytes": 479,
+      "source_blob_sha": "f672a2685c121a82dfe541343a26129c8559f0d2",
+      "destination_blob_sha": "f672a2685c121a82dfe541343a26129c8559f0d2",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "src/export.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/src/export.js",
+      "size_bytes": 1279,
+      "source_blob_sha": "a80771f271e00ad8f3c09dba04a0b1930e2bd4a8",
+      "destination_blob_sha": "a80771f271e00ad8f3c09dba04a0b1930e2bd4a8",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "src/imports.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/src/imports.js",
+      "size_bytes": 4411,
+      "source_blob_sha": "e964f0a9618849024cd31b07d7a14eacc9956030",
+      "destination_blob_sha": "e964f0a9618849024cd31b07d7a14eacc9956030",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "src/intent.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/src/intent.js",
+      "size_bytes": 2785,
+      "source_blob_sha": "8ea6bfeb5b42440ca4ba8192b7800eb636ec6454",
+      "destination_blob_sha": "8ea6bfeb5b42440ca4ba8192b7800eb636ec6454",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "src/javascript-workflow.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/src/javascript-workflow.js",
+      "size_bytes": 5874,
+      "source_blob_sha": "670393b870174f656e7214f196d929a23d79cc62",
+      "destination_blob_sha": "670393b870174f656e7214f196d929a23d79cc62",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "src/javascript.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/src/javascript.js",
+      "size_bytes": 10267,
+      "source_blob_sha": "76dcce5cdc2bdde3ba788a32e1d0411652a3a67f",
+      "destination_blob_sha": "76dcce5cdc2bdde3ba788a32e1d0411652a3a67f",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "src/measurements.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/src/measurements.js",
+      "size_bytes": 4111,
+      "source_blob_sha": "75dd2c0bf4e05775256bf85f4411d0ffb91de49e",
+      "destination_blob_sha": "75dd2c0bf4e05775256bf85f4411d0ffb91de49e",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "src/outcomes.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/src/outcomes.js",
+      "size_bytes": 11832,
+      "source_blob_sha": "54c1dd169ec9030c4697d2a73ccdf26a24197071",
+      "destination_blob_sha": "54c1dd169ec9030c4697d2a73ccdf26a24197071",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "src/python-analyzer.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/src/python-analyzer.py",
+      "size_bytes": 31868,
+      "source_blob_sha": "1d7e498aa7a75ee69489adb27996d3761686523b",
+      "destination_blob_sha": "1d7e498aa7a75ee69489adb27996d3761686523b",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "src/python-observer.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/src/python-observer.py",
+      "size_bytes": 16730,
+      "source_blob_sha": "8b3b24a5a86a85fc29ba2a08bae9e05ade713e7a",
+      "destination_blob_sha": "8b3b24a5a86a85fc29ba2a08bae9e05ade713e7a",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "src/review-evidence.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/src/review-evidence.js",
+      "size_bytes": 27129,
+      "source_blob_sha": "62bb9e3828460131974c1a6773a6cf414e523fee",
+      "destination_blob_sha": "62bb9e3828460131974c1a6773a6cf414e523fee",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "src/scan.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/src/scan.js",
+      "size_bytes": 36142,
+      "source_blob_sha": "cf89d8e2bcceebade559e0913e935c0cb7c08501",
+      "destination_blob_sha": "cf89d8e2bcceebade559e0913e935c0cb7c08501",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "src/server.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/src/server.js",
+      "size_bytes": 2201,
+      "source_blob_sha": "ab56e1333b8dace1fdc95165ea3a09397c760480",
+      "destination_blob_sha": "ab56e1333b8dace1fdc95165ea3a09397c760480",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "src/setup.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/src/setup.js",
+      "size_bytes": 19214,
+      "source_blob_sha": "4db24c1a3dee7a8755f5357e36927f5b4f7648d9",
+      "destination_blob_sha": "4db24c1a3dee7a8755f5357e36927f5b4f7648d9",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "src/workflow-explain.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/src/workflow-explain.js",
+      "size_bytes": 13456,
+      "source_blob_sha": "b1478f0bd8a9b1cd5e1bbc1a67a954a38e99cbc6",
+      "destination_blob_sha": "b1478f0bd8a9b1cd5e1bbc1a67a954a38e99cbc6",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "src/workflow-risk.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/src/workflow-risk.js",
+      "size_bytes": 4974,
+      "source_blob_sha": "e8de24d85355a9bb1dbd5fcabe8400c02428f923",
+      "destination_blob_sha": "e8de24d85355a9bb1dbd5fcabe8400c02428f923",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "src/workflow.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/src/workflow.js",
+      "size_bytes": 17709,
+      "source_blob_sha": "0bff39af3e62f587519931b26ef8e548f6c4601e",
+      "destination_blob_sha": "0bff39af3e62f587519931b26ef8e548f6c4601e",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/adaptive-locality-buildmap-trial.test.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/adaptive-locality-buildmap-trial.test.js",
+      "size_bytes": 3856,
+      "source_blob_sha": "9ae8173adf6b8a996aa94967a4de9c28dc83f40b",
+      "destination_blob_sha": "9ae8173adf6b8a996aa94967a4de9c28dc83f40b",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/collected-runs.test.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/collected-runs.test.js",
+      "size_bytes": 10027,
+      "source_blob_sha": "0a067e7958885bb23042d4f68d653ae155c9ab4a",
+      "destination_blob_sha": "0a067e7958885bb23042d4f68d653ae155c9ab4a",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/completion.test.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/completion.test.js",
+      "size_bytes": 16824,
+      "source_blob_sha": "7b39c7afee5aad22c59341129d51d90b005ae24a",
+      "destination_blob_sha": "7b39c7afee5aad22c59341129d51d90b005ae24a",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/export.test.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/export.test.js",
+      "size_bytes": 2002,
+      "source_blob_sha": "eb32ba5fc8b5944ec90bc9723cb985da40119644",
+      "destination_blob_sha": "eb32ba5fc8b5944ec90bc9723cb985da40119644",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/fixtures/workflow-analysis.json",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/fixtures/workflow-analysis.json",
+      "size_bytes": 2734,
+      "source_blob_sha": "0b74df4f88ca3e50d5b63ee39dc25d2a1683a3fc",
+      "destination_blob_sha": "0b74df4f88ca3e50d5b63ee39dc25d2a1683a3fc",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/fixtures/workflow-pipeline.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/fixtures/workflow-pipeline.py",
+      "size_bytes": 1569,
+      "source_blob_sha": "5ff29c381999527ab88c98a84f54cb2133a63df7",
+      "destination_blob_sha": "5ff29c381999527ab88c98a84f54cb2133a63df7",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/guide-tasks.test.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/guide-tasks.test.js",
+      "size_bytes": 7004,
+      "source_blob_sha": "74f981ce17de868a24e00682eadb7fa6ca46eb24",
+      "destination_blob_sha": "74f981ce17de868a24e00682eadb7fa6ca46eb24",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/intent.test.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/intent.test.js",
+      "size_bytes": 2336,
+      "source_blob_sha": "61e3d6139f66f26165cddec493359cdba85a60b7",
+      "destination_blob_sha": "61e3d6139f66f26165cddec493359cdba85a60b7",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/inventory.test.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/inventory.test.js",
+      "size_bytes": 3361,
+      "source_blob_sha": "e18d5f19bf18805c0cfc2ef5e8d7a0f381e13e2f",
+      "destination_blob_sha": "e18d5f19bf18805c0cfc2ef5e8d7a0f381e13e2f",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/outcomes.test.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/outcomes.test.js",
+      "size_bytes": 14948,
+      "source_blob_sha": "e2d3c0e71fec8ff518c12854a5e2eb9e2eca7793",
+      "destination_blob_sha": "e2d3c0e71fec8ff518c12854a5e2eb9e2eca7793",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/recovery-extension.test.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/recovery-extension.test.js",
+      "size_bytes": 6139,
+      "source_blob_sha": "0beb4ae28257548c41592623dcc5ed3a66ad42ba",
+      "destination_blob_sha": "0beb4ae28257548c41592623dcc5ed3a66ad42ba",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/review-evidence.test.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/review-evidence.test.js",
+      "size_bytes": 15517,
+      "source_blob_sha": "a9f873c732293c223eb98e389e98520f397b71af",
+      "destination_blob_sha": "a9f873c732293c223eb98e389e98520f397b71af",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/scan.test.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/scan.test.js",
+      "size_bytes": 37478,
+      "source_blob_sha": "c118f5cfba4896f466137cb28375b0a226c11235",
+      "destination_blob_sha": "c118f5cfba4896f466137cb28375b0a226c11235",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/server.test.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/server.test.js",
+      "size_bytes": 37967,
+      "source_blob_sha": "89efd3bbd781698cee83862ba12980e67c574bea",
+      "destination_blob_sha": "89efd3bbd781698cee83862ba12980e67c574bea",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/test_adaptive_locality.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/test_adaptive_locality.py",
+      "size_bytes": 3323,
+      "source_blob_sha": "dae5477354ecf10c1e9711fb832db99996a65223",
+      "destination_blob_sha": "dae5477354ecf10c1e9711fb832db99996a65223",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/test_adaptive_locality_advanced.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/test_adaptive_locality_advanced.py",
+      "size_bytes": 3021,
+      "source_blob_sha": "04d15a1615acd2d4f6c29e7a9340548cda047b28",
+      "destination_blob_sha": "04d15a1615acd2d4f6c29e7a9340548cda047b28",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/test_adaptive_locality_archive_first.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/test_adaptive_locality_archive_first.py",
+      "size_bytes": 6885,
+      "source_blob_sha": "3715a48db0b2b36b5ce0d98228df1d967e4e85bd",
+      "destination_blob_sha": "3715a48db0b2b36b5ce0d98228df1d967e4e85bd",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/test_adaptive_locality_coupling.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/test_adaptive_locality_coupling.py",
+      "size_bytes": 8283,
+      "source_blob_sha": "9b28b8ef8a3157a4b7b7c9881f33d8bf6095ee5b",
+      "destination_blob_sha": "9b28b8ef8a3157a4b7b7c9881f33d8bf6095ee5b",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/test_adaptive_locality_full_raw_coupling.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/test_adaptive_locality_full_raw_coupling.py",
+      "size_bytes": 8604,
+      "source_blob_sha": "8955b6893a3f11e5100874ddcbeaa02d29b5ceae",
+      "destination_blob_sha": "8955b6893a3f11e5100874ddcbeaa02d29b5ceae",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/test_adaptive_locality_geometry.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/test_adaptive_locality_geometry.py",
+      "size_bytes": 3912,
+      "source_blob_sha": "e2b89f5cd119d5608af9b7e903e29aa809b47a5e",
+      "destination_blob_sha": "e2b89f5cd119d5608af9b7e903e29aa809b47a5e",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/test_adaptive_locality_geometry_controls.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/test_adaptive_locality_geometry_controls.py",
+      "size_bytes": 7279,
+      "source_blob_sha": "c870ba1474408f0dc20b482bb119636199d8da1d",
+      "destination_blob_sha": "c870ba1474408f0dc20b482bb119636199d8da1d",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/test_adaptive_locality_geometry_validation.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/test_adaptive_locality_geometry_validation.py",
+      "size_bytes": 10240,
+      "source_blob_sha": "14213bbda7b14e91bc2faa89c7c011f77a6b229e",
+      "destination_blob_sha": "14213bbda7b14e91bc2faa89c7c011f77a6b229e",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/test_adaptive_locality_graph_queue.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/test_adaptive_locality_graph_queue.py",
+      "size_bytes": 1783,
+      "source_blob_sha": "8a0273268b8e1083c3c53d3584015e29a97fe754",
+      "destination_blob_sha": "8a0273268b8e1083c3c53d3584015e29a97fe754",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/test_adaptive_locality_independent.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/test_adaptive_locality_independent.py",
+      "size_bytes": 8854,
+      "source_blob_sha": "b0f9cf0fcf3d9f8d464e789d730748fd9be6e5b6",
+      "destination_blob_sha": "b0f9cf0fcf3d9f8d464e789d730748fd9be6e5b6",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/test_adaptive_locality_level2_coupling.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/test_adaptive_locality_level2_coupling.py",
+      "size_bytes": 6719,
+      "source_blob_sha": "ab9c4a726e294bac66b7d9dfa45755e746ebc8ad",
+      "destination_blob_sha": "ab9c4a726e294bac66b7d9dfa45755e746ebc8ad",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/test_adaptive_locality_numeric_disk.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/test_adaptive_locality_numeric_disk.py",
+      "size_bytes": 7088,
+      "source_blob_sha": "8c645c9cdd5702306de219fb693d1f033a05fea7",
+      "destination_blob_sha": "8c645c9cdd5702306de219fb693d1f033a05fea7",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/test_adaptive_locality_registry_integrity.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/test_adaptive_locality_registry_integrity.py",
+      "size_bytes": 3804,
+      "source_blob_sha": "cf1be5195ba2ab0d402f22c84ed5e2d4f4f135bf",
+      "destination_blob_sha": "cf1be5195ba2ab0d402f22c84ed5e2d4f4f135bf",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/test_adaptive_locality_research_holds.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/test_adaptive_locality_research_holds.py",
+      "size_bytes": 6582,
+      "source_blob_sha": "c4cc5393a1120b8701d27d711331f0e095269f21",
+      "destination_blob_sha": "c4cc5393a1120b8701d27d711331f0e095269f21",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/test_adaptive_locality_review_policy.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/test_adaptive_locality_review_policy.py",
+      "size_bytes": 3442,
+      "source_blob_sha": "501bde5d20e7dc20fd439cb78f150743017e1a2c",
+      "destination_blob_sha": "501bde5d20e7dc20fd439cb78f150743017e1a2c",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/test_adaptive_locality_unverified_gates.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/test_adaptive_locality_unverified_gates.py",
+      "size_bytes": 4389,
+      "source_blob_sha": "04bceed2ffd322bba407032135b4f0cf4535114c",
+      "destination_blob_sha": "04bceed2ffd322bba407032135b4f0cf4535114c",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/test_adaptive_locality_visualization.py",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/test_adaptive_locality_visualization.py",
+      "size_bytes": 5347,
+      "source_blob_sha": "2814f2f1952342874eea035bcbb8357f57d570c3",
+      "destination_blob_sha": "2814f2f1952342874eea035bcbb8357f57d570c3",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/ui.test.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/ui.test.js",
+      "size_bytes": 83224,
+      "source_blob_sha": "b9ae720b05fe700f1ac3a1a588b07b1d9b5fce03",
+      "destination_blob_sha": "b9ae720b05fe700f1ac3a1a588b07b1d9b5fce03",
+      "status": "EXACT_MATCH"
+    },
+    {
+      "source_path": "tests/workflow.test.js",
+      "destination_path": "research/kalshi/adaptive_wavepacket_20261108/buildmap_source_snapshot/tests/workflow.test.js",
+      "size_bytes": 22686,
+      "source_blob_sha": "a2e4a0ae2ea8224abe72cc7f02dde7460cbc491e",
+      "destination_blob_sha": "a2e4a0ae2ea8224abe72cc7f02dde7460cbc491e",
+      "status": "EXACT_MATCH"
+    }
+  ],
+  "binary_reports_note": "2026-11-08: the two binary reports were copied byte-for-byte from the pinned BuildMap commit via git blob extraction and verified against source_blob_sha. Completion declaration remains the owner call."
+}

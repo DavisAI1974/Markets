@@ -1,0 +1,510 @@
+[
+ {
+  "day": "20231002",
+  "large_moves": 46,
+  "up": 23,
+  "down": 23,
+  "jump_ticks": {
+   "n": 46,
+   "min": 2.0,
+   "p10": 2.0,
+   "p25": 2.0,
+   "p50": 2.0,
+   "p75": 2.5,
+   "p90": 3.75,
+   "max": 6.0
+  },
+  "extreme5s_ticks": {
+   "n": 46,
+   "min": 2.0,
+   "p10": 2.5,
+   "p25": 3.0,
+   "p50": 4.0,
+   "p75": 5.0,
+   "p90": 6.0,
+   "max": 7.5
+  },
+  "full_recovered": 35,
+  "half_recovered": 41,
+  "full_not_observed_within_600s": 11,
+  "window_incomplete": 0,
+  "full_recovery_s": {
+   "n": 35,
+   "min": 0.008196959,
+   "p10": 2.2198740988,
+   "p25": 18.7952792615,
+   "p50": 37.76510409,
+   "p75": 141.49120691500002,
+   "p90": 202.9685933686,
+   "max": 456.136906675
+  },
+  "half_recovery_s": {
+   "n": 41,
+   "min": 0.008196959,
+   "p10": 0.031151852,
+   "p25": 0.169934219,
+   "p50": 6.313275498,
+   "p75": 26.284414738,
+   "p90": 71.778531591,
+   "max": 292.524520712
+  },
+  "resp5_continuation": 14,
+  "resp5_flat": 6,
+  "resp5_reversal": 15,
+  "resp20_continuation": 15,
+  "resp20_flat": 1,
+  "resp20_reversal": 15,
+  "with_prior_signal": 44,
+  "full_rec_given_prior_agree_majority": 15,
+  "n_prior_agree_majority": 23,
+  "full_rec_given_prior_disagree_majority": 19,
+  "n_prior_disagree_majority": 21,
+  "full_rec_by_size": {
+   "-8": [
+    1,
+    2
+   ],
+   "-7": [
+    0,
+    1
+   ],
+   "-6": [
+    1,
+    3
+   ],
+   "-5": [
+    5,
+    7
+   ],
+   "-4": [
+    8,
+    10
+   ],
+   "4": [
+    12,
+    15
+   ],
+   "5": [
+    4,
+    4
+   ],
+   "6": [
+    1,
+    1
+   ],
+   "8": [
+    3,
+    3
+   ]
+  },
+  "full_rec_by_printcount": {
+   "0": [
+    1,
+    1
+   ],
+   "1-2": [
+    24,
+    30
+   ],
+   "3-5": [
+    5,
+    9
+   ],
+   "6+": [
+    5,
+    6
+   ]
+  },
+  "full_rec_by_first_disjoint": {
+   "False": [
+    9,
+    11
+   ],
+   "True": [
+    26,
+    35
+   ]
+  }
+ },
+ {
+  "day": "20231003",
+  "large_moves": 58,
+  "up": 28,
+  "down": 30,
+  "jump_ticks": {
+   "n": 58,
+   "min": 2.0,
+   "p10": 2.0,
+   "p25": 2.0,
+   "p50": 2.0,
+   "p75": 2.5,
+   "p90": 3.150000000000002,
+   "max": 7.0
+  },
+  "extreme5s_ticks": {
+   "n": 58,
+   "min": 2.0,
+   "p10": 2.0,
+   "p25": 2.0,
+   "p50": 3.0,
+   "p75": 4.0,
+   "p90": 7.0,
+   "max": 12.0
+  },
+  "full_recovered": 48,
+  "half_recovered": 57,
+  "full_not_observed_within_600s": 10,
+  "window_incomplete": 0,
+  "full_recovery_s": {
+   "n": 48,
+   "min": 0.019102922,
+   "p10": 0.0881986081,
+   "p25": 1.917584945,
+   "p50": 9.302266911,
+   "p75": 47.47494810675,
+   "p90": 237.14391889470005,
+   "max": 595.71538447
+  },
+  "half_recovery_s": {
+   "n": 57,
+   "min": 0.002932523,
+   "p10": 0.009654749,
+   "p25": 0.033684696,
+   "p50": 0.181485181,
+   "p75": 8.062718996,
+   "p90": 62.80020252939998,
+   "max": 371.657797031
+  },
+  "resp5_continuation": 22,
+  "resp5_flat": 7,
+  "resp5_reversal": 18,
+  "resp20_continuation": 16,
+  "resp20_flat": 3,
+  "resp20_reversal": 20,
+  "with_prior_signal": 55,
+  "full_rec_given_prior_agree_majority": 21,
+  "n_prior_agree_majority": 24,
+  "full_rec_given_prior_disagree_majority": 26,
+  "n_prior_disagree_majority": 31,
+  "full_rec_by_size": {
+   "-14": [
+    1,
+    1
+   ],
+   "-8": [
+    0,
+    1
+   ],
+   "-7": [
+    1,
+    1
+   ],
+   "-6": [
+    2,
+    2
+   ],
+   "-5": [
+    7,
+    7
+   ],
+   "-4": [
+    13,
+    18
+   ],
+   "4": [
+    14,
+    17
+   ],
+   "5": [
+    6,
+    6
+   ],
+   "6": [
+    2,
+    2
+   ],
+   "7": [
+    0,
+    1
+   ],
+   "8": [
+    2,
+    2
+   ]
+  },
+  "full_rec_by_printcount": {
+   "1-2": [
+    36,
+    43
+   ],
+   "3-5": [
+    9,
+    11
+   ],
+   "6+": [
+    3,
+    4
+   ]
+  },
+  "full_rec_by_first_disjoint": {
+   "False": [
+    13,
+    16
+   ],
+   "True": [
+    35,
+    42
+   ]
+  }
+ },
+ {
+  "day": "20231017",
+  "large_moves": 57,
+  "up": 33,
+  "down": 24,
+  "jump_ticks": {
+   "n": 57,
+   "min": 2.0,
+   "p10": 2.0,
+   "p25": 2.0,
+   "p50": 2.0,
+   "p75": 2.5,
+   "p90": 3.0,
+   "max": 6.0
+  },
+  "extreme5s_ticks": {
+   "n": 57,
+   "min": 2.0,
+   "p10": 2.0,
+   "p25": 2.0,
+   "p50": 3.0,
+   "p75": 4.0,
+   "p90": 5.0,
+   "max": 12.0
+  },
+  "full_recovered": 42,
+  "half_recovered": 48,
+  "full_not_observed_within_600s": 15,
+  "window_incomplete": 1,
+  "full_recovery_s": {
+   "n": 42,
+   "min": 0.001163955,
+   "p10": 0.13074545900000004,
+   "p25": 3.06125342475,
+   "p50": 14.164221487999999,
+   "p75": 44.953678755,
+   "p90": 254.45859269529996,
+   "max": 591.797207694
+  },
+  "half_recovery_s": {
+   "n": 48,
+   "min": 0.000176563,
+   "p10": 0.007655208700000001,
+   "p25": 0.0172833435,
+   "p50": 0.58452872,
+   "p75": 10.362277493,
+   "p90": 131.74198359560012,
+   "max": 275.388979962
+  },
+  "resp5_continuation": 26,
+  "resp5_flat": 8,
+  "resp5_reversal": 18,
+  "resp20_continuation": 17,
+  "resp20_flat": 5,
+  "resp20_reversal": 18,
+  "with_prior_signal": 54,
+  "full_rec_given_prior_agree_majority": 19,
+  "n_prior_agree_majority": 23,
+  "full_rec_given_prior_disagree_majority": 21,
+  "n_prior_disagree_majority": 31,
+  "full_rec_by_size": {
+   "-8": [
+    2,
+    2
+   ],
+   "-6": [
+    1,
+    1
+   ],
+   "-5": [
+    2,
+    4
+   ],
+   "-4": [
+    13,
+    17
+   ],
+   "4": [
+    18,
+    23
+   ],
+   "5": [
+    3,
+    5
+   ],
+   "6": [
+    2,
+    3
+   ],
+   "8": [
+    1,
+    2
+   ]
+  },
+  "full_rec_by_printcount": {
+   "0": [
+    1,
+    2
+   ],
+   "1-2": [
+    29,
+    39
+   ],
+   "3-5": [
+    6,
+    8
+   ],
+   "6+": [
+    6,
+    8
+   ]
+  },
+  "full_rec_by_first_disjoint": {
+   "False": [
+    3,
+    4
+   ],
+   "True": [
+    39,
+    53
+   ]
+  }
+ },
+ {
+  "day": "20231018",
+  "large_moves": 64,
+  "up": 34,
+  "down": 30,
+  "jump_ticks": {
+   "n": 64,
+   "min": 2.0,
+   "p10": 2.0,
+   "p25": 2.0,
+   "p50": 2.0,
+   "p75": 2.625,
+   "p90": 3.5,
+   "max": 5.0
+  },
+  "extreme5s_ticks": {
+   "n": 64,
+   "min": 2.0,
+   "p10": 2.5,
+   "p25": 3.0,
+   "p50": 4.5,
+   "p75": 5.5,
+   "p90": 7.850000000000001,
+   "max": 11.0
+  },
+  "full_recovered": 49,
+  "half_recovered": 53,
+  "full_not_observed_within_600s": 15,
+  "window_incomplete": 1,
+  "full_recovery_s": {
+   "n": 49,
+   "min": 0.006244425,
+   "p10": 5.252963447200002,
+   "p25": 13.465965655,
+   "p50": 84.153511837,
+   "p75": 201.647122425,
+   "p90": 341.31273140420006,
+   "max": 586.584235087
+  },
+  "half_recovery_s": {
+   "n": 53,
+   "min": 0.005327692,
+   "p10": 0.0784256192,
+   "p25": 2.956436486,
+   "p50": 11.979315351,
+   "p75": 85.96466865,
+   "p90": 181.28216328440007,
+   "max": 425.456076204
+  },
+  "resp5_continuation": 22,
+  "resp5_flat": 9,
+  "resp5_reversal": 23,
+  "resp20_continuation": 20,
+  "resp20_flat": 3,
+  "resp20_reversal": 28,
+  "with_prior_signal": 62,
+  "full_rec_given_prior_agree_majority": 22,
+  "n_prior_agree_majority": 30,
+  "full_rec_given_prior_disagree_majority": 25,
+  "n_prior_disagree_majority": 32,
+  "full_rec_by_size": {
+   "-8": [
+    1,
+    1
+   ],
+   "-7": [
+    1,
+    1
+   ],
+   "-6": [
+    3,
+    5
+   ],
+   "-5": [
+    2,
+    3
+   ],
+   "-4": [
+    17,
+    20
+   ],
+   "4": [
+    12,
+    18
+   ],
+   "5": [
+    7,
+    7
+   ],
+   "6": [
+    2,
+    2
+   ],
+   "7": [
+    2,
+    3
+   ],
+   "8": [
+    2,
+    4
+   ]
+  },
+  "full_rec_by_printcount": {
+   "1-2": [
+    33,
+    36
+   ],
+   "3-5": [
+    14,
+    23
+   ],
+   "6+": [
+    2,
+    5
+   ]
+  },
+  "full_rec_by_first_disjoint": {
+   "False": [
+    4,
+    7
+   ],
+   "True": [
+    45,
+    57
+   ]
+  }
+ }
+]

@@ -1,0 +1,47 @@
+{
+  "recordedAt": "2026-10-14T02:02:05.408Z",
+  "browser": "153.0.8010.0",
+  "node": "v24.19.0",
+  "outcomeStatus": "verified",
+  "completionStatus": "verified",
+  "missionState": "planned",
+  "live": 0,
+  "sourceHashes": {
+    "src/intent.js": "ed8a702617ac58366c32aa74c5c9789379ce380178d6410cc413826488a75786",
+    "src/scan.js": "d2da920c3158a67e18f37c5d7fec476e2e908f9b4e00c05fc6a368ff7e6fe12b",
+    "src/imports.js": "6d197fea7e8073cd348281746e09fae32893982163d2fdde0838a5311765f770",
+    "src/javascript.js": "739de66bf8e2ccfa0c147ea779a162ee3afc32fc415b3febeb865d185fead020",
+    "src/outcomes.js": "b1182d6fa8fe129a446d8b19d6f16313f48aabb91a9e96252183abc4ca1e3017",
+    "src/code-guide.js": "c597447859a517ca24a5c5d340cab784d434d8b8b2f9d38d9ddce4014eb8b632",
+    "src/server.js": "e8d4c059f4ee4be7a9bc23ceab6e7a9d6879c10a93361a2037c11f40496c07d3",
+    "src/cli.js": "4b9493b80f4aa25851273e7d485de3df06d1e2936968a09bc96daaf8b351c25d",
+    "src/export.js": "5722354aa43df21e6ce95f162c35d3b27946efd2ec0b743682bfa5e5e5964773",
+    "src/setup.js": "d68a2c0c802f494577e3e5f671efe1dab56d0a60867415594b5c2fea55eaa53a",
+    "public/index.html": "20e9ab4121d19083448a277f874fd6c87577fdfae8d5e9227e4b830f5d26e490",
+    "public/app.js": "8bab767b806cf3e5009a8bad404f8cf75740e7316726569028bc4fb6934a660e",
+    "public/styles.css": "83f60ea3f7e94802771d1b509e48fa46538c4d60518819e0e1c3159df448632f",
+    "public/guide-tasks.js": "934a2da0836700a4e05375f0aceb6ec9daebb49d1c2497b1da4081fe2de8b62d",
+    "tests/scan.test.js": "0f3899963d1994e6c5cc3f374c8f9d40d44f0d4dfbdc006f774249b63a5d3402",
+    "tests/intent.test.js": "b0f3b5c2c5dd3b70e179fd437b1844023bac3348756f874a0fad3ad87bea592a",
+    "tests/server.test.js": "27a29c1cd6062246c96aa1a8b0b4f6aa13710782b90dd8cf8a32a8baf9a16c47",
+    "tests/ui.test.js": "180598d11184ecaae6e0294a99e70293fd133be6cae704785bf6065609153ceb",
+    "tests/export.test.js": "18bd90c2e1f0b1dc1ff1ea5b5b4044c1929dfb693d17bf526d4db35c04a0cdac",
+    "tests/inventory.test.js": "a0b48f13951b41f35e9f3f6d72ac1660e86225887713f98ff371b8c024c83af7",
+    "tests/outcomes.test.js": "98bbf9eaac1cfb676b6e17a7790505ae1f3c5a7e1fe18c45c031e2b9eac44b1f",
+    "tests/guide-tasks.test.js": "feaef9914800538b75b5de1bdfa88e96802e03d498d5ad29bda93e67bac091ec"
+  },
+  "inputHashes": {
+    ".buildmap/project.json": "ffa06b3568fa78f1ed3ff5d78929479b102bfcb0cd66929cf92e0f32893dd019",
+    ".buildmap/record-mvp-example.mjs": "467933064c258f8dc38c331ca93453c980a85053ec76c1618cb88ba160aafa38",
+    ".buildmap/browser-check.mjs": "9d10d576107a34397458c36494ece6d27d0d1bdca4a367f5adc549b68ff7e013",
+    "package.json": "cabf922a14a035bbc4fa5e2242d1dfae074a7040f63e5eef0748f10c30360fb1",
+    "package-lock.json": "e11bc34bd02afb530112c7573725f792b67b8922256fd2b73f3e78e7800fde8f"
+  },
+  "checks": [
+    "Complete real four-step selected-field example",
+    "Current explicit completion review",
+    "Live final-box refresh and goal link",
+    "390px in-memory export completion and goal link"
+  ],
+  "scope": "A current local intent-to-scan-to-HTTP-to-browser example passed. Selected input/output fields were captured from real calls and browser DOM reads. ReadIntent and scanning read the same manifest; HTTP and browser responses matched the scanner fingerprint and selected fields. The browser located the visualizer, checked its purpose/files/evidence headings, and read the free goal steps, existing reported samples, next review point and intended destination. These are automated visibility/content checks, not a human comprehension study, an instrumented execution trace, independent receipt authentication, exhaustive accessibility/device coverage or live deployment."
+}
