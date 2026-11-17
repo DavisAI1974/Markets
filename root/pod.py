@@ -46,13 +46,14 @@ KEPT_BESIDE = ('calc-peak_story-', 'calc-quote_runs-')   # unchanged outputs out
 REBUILT = ('flow_peak', 'outside_changes')             # the calculations that changed (Greg: no tests except on
 #                                                        changed pieces): the peaks without their ranked column, and
 #                                                        the outside changes beside the rebuilt rows
-LIBRARIES = ['databento==0.90.0', 'pyarrow==26.0.1', 'numpy==2.5.5']
+LIBRARIES = ['databento==0.90.0', 'pyarrow==26.0.1', 'numpy==2.5.5', 'matplotlib']   # matplotlib for the renders
 CALCULATIONS = ('refills', 'sweeps', 'chain_peaks', 'quote_peaks', 'outside_changes', 'together', 'leg_peaks',
                 'resting', 'turn_peaks', 'move_steps')   # what a pod
 #                                                      may be asked to run
 MODEL_JOBS = {'ways': 'chain_ways'}                   # runs that rebuild their peak lines and pin their own helpers
 ROW_JOBS = {'legs': 'trade_legs',                      # whole-trade-day programs that read the stored rows
-            'dipole': 'dipole_peaks'}                  # (a calc job may name them beside its calculations, so
+            'dipole': 'dipole_peaks', 'renders': 'dipole_renders'}   # (a calc job may name them beside its
+#                                                        calculations, so
 #                                                        everything starts together, each on its own CPU)
 COMMIT = re.compile(r'[0-9a-f]{40}')
 ONE_THREAD = {name: '1' for name in ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS')}
