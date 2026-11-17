@@ -189,6 +189,20 @@ trade day, empty on a row of no trade day). The times a value becomes known are 
 |---|---|---|
 | `HALVE` | 2 | The playback check cuts the tape inside an exchange event at the middle trade message that does not end its event. It only chooses where a check cuts; no row or figure depends on it. |
 
+## `root/pod.py` and `root/pod_fetch.py` (the pod launch path; no market value depends on any of these)
+
+| Constant | Value | Why |
+|---|---|---|
+| `PORT` | 8000 | The port a pod serves its output folder on. |
+| `WORK`, `OUT`, `CODE`, `DATA`, `ROWS` | folders | Where a pod keeps the code, the tape, the stored rows and its output. |
+| `GITHUB`, `DATA_BRANCH`, `TAPE` | names | The two public repositories and where the raw tape sits in markets-data. |
+| `LIBRARIES`, `MODEL_LIBRARIES` | pinned versions | The libraries a pod installs, each at one named version, so two pods make the same files. scikit-learn and scipy are installed only when the models are asked for. |
+| `CALCULATIONS` | refills, sweeps, chain_peaks | What a pod may be asked to run. |
+| `COMMIT` | 40 hex digits | The shape of a commit name; a run is refused without one. |
+| `ONE_THREAD` | 1 | Each helper runs one thread. |
+| `ACCEPTED`, `REFUSED`, `BUSY` | 202, 403, 409 | The web answers of the pod's run address. |
+| `MODELS`, `BYTES_PER_MEGABYTE` | models; 2^20 | The name of the models run; unit conversion for a printed size. |
+
 ## `root/sheet.py`
 
 | Constant | Value | Why |
