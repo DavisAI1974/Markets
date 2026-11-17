@@ -18,7 +18,8 @@ import subprocess
 import urllib.request
 from pathlib import Path
 
-RUNS = {'ways': ('chain_ways', 'CHAIN-WAYS-{day}.json'), 'legs': ('trade_legs', 'TRADE-LEGS-{day}.json')}
+RUNS = {'ways': ('chain_ways', 'CHAIN-WAYS-{day}.json'), 'legs': ('trade_legs', 'TRADE-LEGS-{day}.json'),
+        'build': ('build', 'RECEIPT.json')}
 NO_STORED_ROWS = {'ways'}                              # it rebuilds its peak lines through the tape gate
 AGENT = 'curl/8'                                       # the pods' web front refuses the library's own name
 BYTES_PER_MEGABYTE = 2 ** 20
@@ -34,7 +35,7 @@ def fetch(base: str, day: str, commit: str, into: Path, names: list) -> dict:
     ran = get(base, 'CODE_COMMIT').decode().strip()
     if ran != commit:
         raise SystemExit(f'the pod last ran commit {ran}, not {commit}')
-    if any(name not in NO_STORED_ROWS for name in names):          # the ways read no stored rows: they rebuild their peak
+    if 'build' not in names and any(name not in NO_STORED_ROWS for name in names):   # a rebuild makes new rows          # the ways read no stored rows: they rebuild their peak
         history = subprocess.run(['git', '-C', str(into), 'rev-list', 'HEAD'], capture_output=True, text=True,
                                  check=True).stdout.split()          # lines through the tape gate
         rows_there = get(base, 'ROWS_COMMIT').decode().strip()
@@ -50,7 +51,9 @@ def fetch(base: str, day: str, commit: str, into: Path, names: list) -> dict:
         raw = get(base, receipt_name)
         receipt = json.loads(raw)
         listed = (list(receipt.get('files', [])) + [f for t in receipt.get('tables', {}).values() for f in t['files']]
-                  + [f for w in receipt.get('ways', {}).values() for f in w['files']])
+                  + [f for w in receipt.get('ways', {}).values() for f in w['files']]
+                  + list(receipt.get('row_files', [])) + list(receipt.get('book_picture_files', []))
+                  + ([receipt['vendor_restatement_file']] if 'vendor_restatement_file' in receipt else []))
         held = {}
         for f in listed:
             held[f['file']] = get(base, f['file'])

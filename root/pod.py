@@ -16,6 +16,10 @@ What is different from the first launcher (`pod_run.sh`, which this replaces):
     job:  calc:<calculation>,<calculation>,...   each its own helper, started together, each pinned to its own CPU
           ways                                   the chain links in six ways, peak by peak (root/chain_ways.py)
           legs                                   the trade legs of 6 pm to 8 pm on Oct 2 and Oct 17 (root/trade_legs.py)
+          rebuild                                the rows built again with the outside tables as they stand, then
+                                                 outside_changes beside them (the only calculation that reads them);
+                                                 the unchanged calculations are not run again (Greg: no tests except
+                                                 on changed pieces)
 """
 from __future__ import annotations
 
@@ -24,6 +28,7 @@ import hmac
 import http.server
 import os
 import re
+import shutil
 import subprocess
 import sys
 import threading
@@ -35,6 +40,9 @@ WORK = Path('/root/work')
 OUT, CODE, DATA, ROWS = WORK / 'out', WORK / 'code', WORK / 'data', WORK / 'rows'
 GITHUB = 'https://github.com/DavisAI1974'
 DATA_BRANCH, TAPE = 'ccr-349e2ffe-07p8od', 'data/nymex_mbo/ng_v0_oct2023'
+OUTSIDE = 'data/outside/ng_oct2023/made'               # the made outside tables the rows pin (section G)
+KEPT_BESIDE = ('calc-flow_peak-', 'calc-peak_story-', 'calc-quote_runs-')   # unchanged outputs outside_changes'
+#                                                        check reads beside the rows
 LIBRARIES = ['databento==0.90.0', 'pyarrow==26.0.1', 'numpy==2.5.5']
 CALCULATIONS = ('refills', 'sweeps', 'chain_peaks', 'quote_peaks', 'outside_changes', 'together')   # what a pod
 #                                                      may be asked to run
@@ -63,7 +71,7 @@ def set_up(day: str):
     sh(sys.executable, '-m', 'pip', 'install', '-q', *LIBRARIES, log='setup.log')
     sh('git', 'clone', '-q', '--depth', '1', '--filter=blob:none', '--sparse', '--branch', DATA_BRANCH,
        f'{GITHUB}/markets-data', str(DATA), log='setup.log')
-    sh('git', '-C', str(DATA), 'sparse-checkout', 'set', TAPE, log='setup.log')
+    sh('git', '-C', str(DATA), 'sparse-checkout', 'set', TAPE, OUTSIDE, log='setup.log')
     sh('git', 'clone', '-q', '--depth', '1', '--single-branch', '--branch', f'root-rows-{day}',
        f'{GITHUB}/markets-data', str(ROWS), log='setup.log')
     (OUT / 'ROWS_COMMIT').write_text(subprocess.run(['git', '-C', str(ROWS), 'rev-parse', 'HEAD'],
@@ -84,6 +92,17 @@ def run(day: str, commit: str, job: str):
             started = [(module, None, subprocess.Popen(
                 [sys.executable, '-m', f'root.{module}', day, '--out', str(OUT)], cwd=CODE, env=environment,
                 stdout=open(OUT / f'{module}.log', 'w'), stderr=subprocess.STDOUT))]
+        elif job == 'rebuild':
+            sh(sys.executable, '-m', 'root.run', 'build', day, '--tape', str(DATA / TAPE), '--out', str(OUT),
+               '--outside', str(DATA / OUTSIDE), cwd=CODE, log='build.log')
+            say(f'build passed at {commit}')
+            for kept in sorted(ROWS.iterdir()):
+                if kept.name.startswith(KEPT_BESIDE):
+                    shutil.copy2(kept, OUT / kept.name)
+            started = [('outside_changes', cpus[0], subprocess.Popen(
+                [sys.executable, '-m', 'root.run', 'calc', 'outside_changes', day, '--rows', str(OUT), '--out',
+                 str(OUT)], cwd=CODE, env=environment, stdout=open(OUT / 'outside_changes.log', 'w'),
+                stderr=subprocess.STDOUT, preexec_fn=functools.partial(os.sched_setaffinity, 0, {cpus[0]})))]
         elif job in ROW_JOBS:
             module = ROW_JOBS[job]
             started = [(module, cpus[0], subprocess.Popen(
@@ -109,7 +128,7 @@ def run(day: str, commit: str, job: str):
 
 
 def allowed(job: str) -> bool:
-    if job in MODEL_JOBS or job in ROW_JOBS:
+    if job in MODEL_JOBS or job in ROW_JOBS or job == 'rebuild':
         return True
     kind, _, names = job.partition(':')
     return kind == 'calc' and bool(names) and all(name in CALCULATIONS for name in names.split(','))
