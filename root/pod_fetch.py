@@ -15,6 +15,7 @@ import argparse
 import hashlib
 import json
 import subprocess
+import time
 import urllib.request
 from pathlib import Path
 
@@ -24,12 +25,21 @@ RUNS = {'ways': ('chain_ways', 'CHAIN-WAYS-{day}.json'), 'legs': ('trade_legs', 
 NO_STORED_ROWS = {'ways'}                              # it rebuilds its peak lines through the tape gate
 AGENT = 'curl/8'                                       # the pods' web front refuses the library's own name
 BYTES_PER_MEGABYTE = 2 ** 20
+TRIES = 5                                              # a dropped connection is tried again this many times
 
 
 def get(base: str, name: str) -> bytes:
-    ask = urllib.request.Request(f'{base.rstrip("/")}/{name}', headers={'User-Agent': AGENT})
-    with urllib.request.urlopen(ask) as answer:
-        return answer.read()
+    """One file from the pod. A dropped connection is tried again a few times; the file is still compared with
+    its receipt afterwards, so a retry cannot let a wrong file through."""
+    for attempt in range(TRIES):
+        try:
+            ask = urllib.request.Request(f'{base.rstrip("/")}/{name}', headers={'User-Agent': AGENT})
+            with urllib.request.urlopen(ask, timeout=120) as answer:
+                return answer.read()
+        except OSError:
+            if attempt + 1 == TRIES:
+                raise
+            time.sleep(2 ** attempt)
 
 
 def fetch(base: str, day: str, commit: str, into: Path, names: list) -> dict:
