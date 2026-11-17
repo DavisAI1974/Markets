@@ -81,6 +81,25 @@ gets a fact, so nothing is picked by a size, a count or a number of price levels
 | `CHANGES` | the words of `root/rows.py` | What a tick can do to an order already resting. |
 | `EVENT`, `TOUCHED`, `PARTED`, `KINDS` | trade event, quote touched or crossed, quote parted | The kinds of moment a sweep fact is recorded at. |
 
+## `root/calcs/in_play.py`, `quote_peaks.py`, `outside_changes.py` and `together.py` (part 2, the rest of piece I, additions O and N)
+
+`in_play` is a helper that writes no file: it follows the peaks and the quote's runs from the stored rows and says
+how they stand once a tick is done. No number in any of the four picks anything: every turn of a run of the quote
+gets a fact, every change of an outside column gets a fact, and every set of orders sharing an exchange time gets
+its lines.
+
+| Constant | Value | Why |
+|---|---|---|
+| `in_play.READS`, `quote_peaks.READS` | stored row columns | The columns of the stored rows handed through `tape.rows_for_calculations()`. |
+| `in_play.OPEN`, `PAST_ZERO`, `ENDED` | open, past zero, ended | The words for where one peak's story stands at one tick, read once the tick is done. Not kinds of peak. |
+| `in_play.HIGH_SIDE`, `HIGH_POSITION`, `HIGH_AT` | 1, 2, 3 | Where the side, the tick and the time sit in the flow calculation's standing high. Places in a record, not market values. |
+| `quote_peaks.RUN_KEYS` | five column names | The columns of a quote-run fact carried onto the line beside the peaks in play. |
+| `together.SET_FROM` | 2 | A set is two or more orders sharing one exchange time to the nanosecond. One order alone shares nothing, so this is what "together" means, not a picked size. |
+| `together.ENTERED`, `LEFT`, `KINDS`, `LEAVING`, `SIDES` | entered together, left together; the words of `root/rows.py`; bid, ask | The kinds of set and how an order left. |
+| `outside_changes.GROUPS`, `OUTSIDE`, `KIND`, `KNOWN_FROM` | from `root/pin.py` `AS_OF` | The outside columns followed (only those pinned "as known at the tick"; the once-a-trade-day figures cannot change inside a trade day), each with its kind and its own "known from" column. |
+| `outside_changes.TIME` | time in nanoseconds | The kind written for a "known from" column. |
+| `outside_changes.FIRST_OUTSIDE` | the length of `in_play.READS` | Where the outside columns start in a row as read. A place, not a market value. |
+
 ## `root/calcs/chain_peaks.py` (part 2, the chain link models, first part; `STEP1_STEP2_LAYOUTS.md`, piece 4)
 
 | Constant | Value | Why |
@@ -197,7 +216,7 @@ trade day, empty on a row of no trade day). The times a value becomes known are 
 | `WORK`, `OUT`, `CODE`, `DATA`, `ROWS` | folders | Where a pod keeps the code, the tape, the stored rows and its output. |
 | `GITHUB`, `DATA_BRANCH`, `TAPE` | names | The two public repositories and where the raw tape sits in markets-data. |
 | `LIBRARIES`, `MODEL_LIBRARIES` | pinned versions | The libraries a pod installs, each at one named version, so two pods make the same files. scikit-learn and scipy are installed only when the models are asked for. |
-| `CALCULATIONS` | refills, sweeps, chain_peaks | What a pod may be asked to run. |
+| `CALCULATIONS` | refills, sweeps, chain_peaks, quote_peaks, outside_changes, together | What a pod may be asked to run. |
 | `COMMIT` | 40 hex digits | The shape of a commit name; a run is refused without one. |
 | `ONE_THREAD` | 1 | Each helper runs one thread. |
 | `ACCEPTED`, `REFUSED`, `BUSY` | 202, 403, 409 | The web answers of the pod's run address. |
