@@ -10,7 +10,9 @@ in that row. The fact names the order (a label only) and carries the row's own w
 size raised, price changed, shrank by fill, left by fill), the size the fill took, the sizes before and after, the
 size put back, whether the order is the same size or larger than before (the layout's "refill"), how many times
 size has been put back on this order so far in the trade day, the total filled on it so far, and when it first
-entered. The rule for size put back is the one `book_totals` uses, so the two reconcile exactly.
+entered. The size put back is the figure `book_totals` calls `refilled`: what the row shows above what the fill
+left, and never more than the fill took (an order raised beyond its old size at the same tick added the rest; both
+sizes are on the line). So the facts of a side add up to that side's `refilled` total exactly.
 
 Claude's calls in the build, stated to Greg (his to correct):
 - Every row with size put back gets a fact, also where the order ends smaller than it began or leaves (a fill
@@ -49,7 +51,8 @@ FACT_COLUMNS = [
     ('size_filled', 'The size the fill messages of this exchange event took from the order.'),
     ('size_before', 'The order\'s size just before this tick.'),
     ('size_after', 'The order\'s size just after this tick.'),
-    ('size_put_back', 'The size put back: its size after, less what was left of it after the fill.'),
+    ('size_put_back', 'The size put back: its size after, less what was left of it after the fill, and never more '
+     'than the fill took. The same figure as `refilled` in the book totals.'),
     ('same_size_or_larger', 'Yes when the order is the same size as before the fill, or larger.'),
     ('times_put_back_so_far', 'How many times size has been put back on this order so far in the trade day, this '
      'one included.'),
@@ -94,7 +97,7 @@ class Refills:
         row.update(known_position=position, known_received_time_ns=received, order_number=order, fact=what,
                    side=SIDES[side], price=left if what == R.LOST_PLACE_PRICE else touched, price_after=touched,
                    levels_from_best=levels, size_filled=fill, size_before=before, size_after=after,
-                   size_put_back=max(back, 0), same_size_or_larger=after >= before,
+                   size_put_back=min(max(back, 0), fill), same_size_or_larger=after >= before,
                    times_put_back_so_far=self.times.get(order, 0), size_filled_so_far=self.filled[order],
                    first_entered_exchange_time_ns=entered_exchange, first_entered_received_time_ns=entered_received,
                    entered_before_written_record=entered_before)
