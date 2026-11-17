@@ -48,7 +48,7 @@ REBUILT = ('flow_peak', 'outside_changes')             # the calculations that c
 #                                                        the outside changes beside the rebuilt rows
 LIBRARIES = ['databento==0.90.0', 'pyarrow==26.0.1', 'numpy==2.5.5']
 CALCULATIONS = ('refills', 'sweeps', 'chain_peaks', 'quote_peaks', 'outside_changes', 'together', 'leg_peaks',
-                'resting', 'turn_peaks')              # what a pod
+                'resting', 'turn_peaks', 'move_steps')   # what a pod
 #                                                      may be asked to run
 MODEL_JOBS = {'ways': 'chain_ways'}                   # runs that rebuild their peak lines and pin their own helpers
 ROW_JOBS = {'legs': 'trade_legs',                      # whole-trade-day programs that read the stored rows

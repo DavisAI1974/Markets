@@ -1891,12 +1891,70 @@ def turn_peaks(row_files, calc_files, trade_day: dt.date, table_files=None, rows
                        'tick-by-tick calculation')
 
 
+def move_steps(row_files, calc_files, trade_day: dt.date, table_files=None, rows_folder=None) -> dict:
+    """The check of the calculation `move_steps`: the moves as whole lists (the legs by the earlier rule, the
+    quote's runs from their stored facts); what was in play at each step read off whole stored columns: the
+    20-second flow from piece 1's stored columns, the run of trades on one side from the stored columns of
+    `turn_peaks`, the book from the rows, the peaks from the stored outputs of pieces 1 and 2."""
+    import numpy as np
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    from root.calcs import leg_peaks as LP
+    from root.calcs import move_steps as M
+    rows, calc = _stored(row_files, calc_files, ['received_time_ns', 'action', 'price', 'best_bid', 'best_ask'] + M.BOOK)
+    text = lambda name: np.array(rows.column(name).to_pylist(), dtype=object)
+    in_day = (text('row_label') == TRADE_DAY) & (text('trade_day') == trade_day.isoformat())
+    count = np.array(calc.column(M.NAMES[0]).to_pylist(), dtype=object)
+    need(all(v is None for v in count[~in_day]), f'{M.NAMES[0]} is filled on a row of no trade day')
+    d = np.flatnonzero(in_day)
+    peaks_at, _, position, r = _in_play_as_stored(rows_folder, trade_day, rows, d)
+    col = {name: text(name)[d] for name in ['action', 'price', 'best_bid', 'best_ask'] + M.BOOK}
+    day = f'{trade_day:%Y%m%d}'
+
+    def beside(stem, columns):
+        files = sorted(Path(rows_folder).glob(f'{stem}-{day}-part*.parquet'))
+        need(files, f'the stored {stem} files are not beside the rows')
+        table = pa.concat_tables([pq.read_table(f, columns=['position_on_tape'] + columns) for f in files])
+        need(table.column('position_on_tape').to_pylist() == rows.column('position_on_tape').to_pylist(),
+             f'the stored {stem} is not on the same rows')
+        return [np.array(table.column(c).to_pylist(), dtype=object)[d] for c in columns]
+    flow = beside('calc-flow_peak', ['flow_bought_20s', 'flow_sold_20s'])
+    run = beside('calc-turn_peaks', ['run_side', 'run_size', 'run_trades'])
+    prints = [k for k in range(len(d)) if col['action'][k] == LP.TRADE]
+    moves = _moves_as_stored(rows_folder, trade_day, position, prints, [int(col['price'][k]) for k in prints])
+    after = {M.RUN['best bid']: col['best_bid'], M.RUN['best ask']: col['best_ask'], M.LEG: col['price']}
+    lines = []
+    for rank, move in enumerate(list(M.RUN.values()) + [M.LEG]):
+        for inst in moves[move]:
+            moments = [(row, M.STEP, k + 1, price, None, None) for k, (row, price) in enumerate(inst['steps'])]
+            if inst['end'] is not None:
+                row, price = inst['end']
+                moments.append((row, M.ENDED, None, price, len(inst['steps']), after[move][row] - price))
+            for row, kind, step, price, in_all, back in moments:
+                lines.append(((row, rank, len(lines)), (
+                    int(position[row]), int(r[row]), move, kind, inst['start'], inst['direction'], step, price,
+                    in_all, back, flow[0][row], flow[1][row], run[0][row], run[1][row], run[2][row],
+                    col['best_bid'][row], col['best_ask'][row]) + tuple(col[name][row] for name in M.BOOK)
+                    + peaks_at(row)))
+    expected = [line for _, line in sorted(lines, key=lambda pair: pair[0])]
+    _facts_equal(table_files['facts'], M.FACT_NAMES, expected)
+    per_row = collections.Counter(line[0] for line in expected)
+    need(count[d].tolist() == [per_row.get(int(p), 0) for p in position],
+         'the count of lines known on a row differs from the recount')
+    return dict(passed=True, trade_day_rows=len(d), lines_compared=len(expected),
+                lines_by_move_and_kind=dict(collections.Counter(f'{line[2]}: {line[3]}' for line in expected)),
+                method='the moves as whole lists (legs by the earlier rule, the quote\'s runs from their stored '
+                       'facts); what was in play read off whole stored columns of flow_peak, turn_peaks and the '
+                       'rows, and the peaks from the stored outputs of pieces 1 and 2. Shares no code with the '
+                       'tick-by-tick calculation')
+
+
 KNOWN_AT_A_TICK = {'facts', 'before', 'ahead'}            # the tables whose lines each carry the tick at which they became known
 CALC_CHECKS = {'flow_peak': flow_peak, 'peak_story': peak_story, 'book_totals': book_totals,
                'quote_runs': quote_runs, 'peak_links': peak_links, 'open_stories': open_stories,
                'refills': refills, 'sweeps': sweeps, 'chain_peaks': chain_peaks,
                'quote_peaks': quote_peaks, 'outside_changes': outside_changes, 'together': together,
-               'leg_peaks': leg_peaks, 'resting': resting, 'turn_peaks': turn_peaks}
+               'leg_peaks': leg_peaks, 'resting': resting, 'turn_peaks': turn_peaks, 'move_steps': move_steps}
 
 
 def playback_cuts(name: str, full: list, tables: dict) -> dict:

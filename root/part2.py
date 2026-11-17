@@ -26,14 +26,15 @@ import json
 from pathlib import Path
 
 from root import checks, store, tape
-from root.calcs import (book_totals, chain_peaks, flow_peak, leg_peaks, open_stories, outside_changes, peak_links,
-                        peak_story, quote_peaks, quote_runs, refills, resting, sweeps, together, turn_peaks)
+from root.calcs import (book_totals, chain_peaks, flow_peak, leg_peaks, move_steps, open_stories, outside_changes,
+                        peak_links, peak_story, quote_peaks, quote_runs, refills, resting, sweeps, together,
+                        turn_peaks)
 from root.calendar import label
 
 CALCS = {'flow_peak': flow_peak, 'peak_story': peak_story, 'book_totals': book_totals, 'quote_runs': quote_runs,
          'peak_links': peak_links, 'open_stories': open_stories, 'refills': refills, 'sweeps': sweeps,
          'chain_peaks': chain_peaks, 'quote_peaks': quote_peaks, 'outside_changes': outside_changes,
-         'together': together, 'leg_peaks': leg_peaks, 'resting': resting, 'turn_peaks': turn_peaks}
+         'together': together, 'leg_peaks': leg_peaks, 'resting': resting, 'turn_peaks': turn_peaks, 'move_steps': move_steps}
 LAID_OUT = {'flow_peak': 'markets-data STEP1_STEP2_LAYOUTS.md, piece 1 (Greg, 2026-11-16)',
             'peak_story': 'markets-data STEP1_STEP2_LAYOUTS.md, piece 2 as revised (Greg, 2026-11-16)',
             'book_totals': 'markets-data STEP2_PLAN.md, piece C (Greg, 2026-11-16)',
@@ -51,7 +52,9 @@ LAID_OUT = {'flow_peak': 'markets-data STEP1_STEP2_LAYOUTS.md, piece 1 (Greg, 20
                          'his go 2026-11-17)',
             'resting': 'markets-data STEP2_PLAN.md, piece K ("Yes to k", Greg, 2026-11-16; his go 2026-11-17)',
             'turn_peaks': 'Greg, 2026-11-17: "We need to calc this without the window and find the peak number"; '
-                          '"do that extra along with the others"'}
+                          '"do that extra along with the others"',
+            'move_steps': 'Greg, 2026-11-17: "I\'ll let you pick one other calc ... that you feel will have the biggest '
+                          'impact for your strategies"; Claude\'s pick, stated to him'}
 POSITION = 'position_on_tape'
 
 
