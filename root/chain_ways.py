@@ -72,6 +72,7 @@ WAYS = {1: dict(kind=CHAIN, earlier=ALL, target=NINE, own=False, depth=24),
         6: dict(kind=CHAIN, earlier=OTHER, target=NINE, own=False, depth=24)}
 NEXT_SETTING = {CM.RIDGE: lambda s: s * 10, CM.NEIGHBOURS: lambda s: s * 2, CM.TREES: lambda s: s * 2}
 FIRST_LIST = {CM.RIDGE: CM.RIDGE_GRID, CM.NEIGHBOURS: CM.NEIGHBOUR_GRID, CM.TREES: CM.LEAF_GRID}
+PREDICT_SLICE = 256                                     # rows a nearest-neighbours predict takes at once
 CHECK_STEPS = chain_peaks.STEPS_BACK                    # the steps the before lines of chain_peaks hold
 LINE_NAMES = ['peak_high_position', 'peak_story_ended_position', 'way', 'model', 'peaks_given', 'setting',
               'error_mean'] + [f'error_{name}' for name in NINE]
@@ -178,7 +179,7 @@ def way_model(way: int, model: str, given: int, teach: tuple, scored: str) -> di
     k = 0
     while k < len(settings):
         setting = settings[k]
-        errors = [float(np.square(b_new - CM._fit(model, setting, a, b, True).predict(a_new)).mean())
+        errors = [float(np.square(b_new - _predict(model, CM._fit(model, setting, a, b, True), a_new)).mean())
                   for a, b, a_new, b_new, _ in folds]
         out['tried'][repr(setting)] = errors
         if best is None or np.mean(errors) < best[0]:   # the first on a tie, as the original
@@ -195,12 +196,13 @@ def way_model(way: int, model: str, given: int, teach: tuple, scored: str) -> di
                 settings.append(type(setting)(following))
     out['setting'] = best[1]
     out['chosen_at_the_end_of_the_list'] = best[1] == settings[-1]
-    predicted = CM._fit(model, best[1], x, y, False).predict(x_new)
+    predicted = _predict(model, CM._fit(model, best[1], x, y, False), x_new)
     if model == CM.RIDGE:
         apart = float(np.abs(predicted - CM._ridge_again(best[1], x, y, x_new)).max())
         checks.need(apart <= CM.RIDGE_RECOUNT_TOLERANCE, f'way {way} ridge given {given}: closed form {apart} apart')
         out['ridge_closed_form_furthest_apart'] = apart
     out['squared_error'] = np.square(y_new - predicted)
+    print(f'way {way} {model} given {given}: setting {best[1]} after {len(settings)} tried', flush=True)
     return out
 
 
@@ -232,6 +234,16 @@ def earlier_as_written(day: str, lines: dict) -> dict:
                 what='the earlier peaks worked out to any depth agree with chain_peaks\' before lines for the first '
                      'six steps; every earlier peak ended at or before its peak became known; own and other side '
                      'hold only peaks of that side')
+
+
+def _predict(model: str, fitted, x):
+    """The predictions, made a slice of rows at a time for nearest neighbours: the same values, with the memory
+    of one slice (the neighbours of every row times the nine figures would not fit at once once the list of
+    settings is carried on toward the number of peaks taught on)."""
+    import numpy as np
+    if model != CM.NEIGHBOURS or len(x) <= PREDICT_SLICE:
+        return fitted.predict(x)
+    return np.vstack([fitted.predict(x[start:start + PREDICT_SLICE]) for start in range(0, len(x), PREDICT_SLICE)])
 
 
 CM._JOBS['way model'] = way_model

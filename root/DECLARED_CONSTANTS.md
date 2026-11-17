@@ -134,6 +134,7 @@ its lines.
 | `WAYS` | six ways: chain or each alone; all, own side or other side; nine figures or the seven after; 24 or 48 | The six ways named to Greg. The depths are how far each is run now, not caps: a way whose gain has not gone by its last step is run deeper as a new set, written beside, its depth in its file names. |
 | `NINE`, `AFTER` | the nine figures never empty; the seven of what a peak did after it became known | What is predicted. The time from the low to the high is left out (empty on 32 to 42 peaks a trade day). |
 | `FIRST_LIST`, `NEXT_SETTING` | the original's lists; ridge times 10, neighbours and leaf times 2 | Where the choice of a setting starts, and how the list is carried on while the best is its last. No end is picked: it stops when the best is inside the list, or when no further step exists (neighbours above the peaks taught on, a leaf above half of them). |
+| `PREDICT_SLICE` | 256 | Rows a nearest-neighbours predict takes at once. Memory only: the values are the same as one predict of every row. |
 | `CHECK_STEPS` | `chain_peaks.STEPS_BACK` (6) | How many steps of the before lines `chain_peaks` writes, which the check compares with the earlier peaks worked out here. |
 | `_cost` weights | 3, 2, 0.1 | Only the order the fits are started in (the longest first). No value depends on it. |
 
