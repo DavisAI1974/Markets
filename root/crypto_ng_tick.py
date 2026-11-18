@@ -209,7 +209,12 @@ def against_stored_flow(rows_folder: Path, day: str, position: np.ndarray, recei
     columns = ['position_on_tape', 'flow_bought_20s', 'flow_sold_20s']
     stored = [np.concatenate([pq.read_table(path, columns=[c]).column(c).to_numpy() for path in files])
               for c in columns]
-    checks.need(np.array_equal(stored[0], position), 'the stored flow is not on the same ticks as the rows')
+    at = np.searchsorted(stored[0], position)          # the stored flow has a line for every stored row, those of
+    #                                                    the 5 pm to 6 pm stretch included; ours are the trade day's
+    checks.need(bool(np.all(at < len(stored[0]))) and np.array_equal(stored[0][np.minimum(at, len(stored[0]) - 1)],
+                                                                     position),
+                'a tick of the trade day has no line in the stored flow')
+    stored = [column[at] for column in stored]
     cb = np.concatenate([[0], np.cumsum(np.where(s_buy, s_size, 0))])
     cs = np.concatenate([[0], np.cumsum(np.where(s_buy, 0, s_size))])
     through = np.cumsum(sided)                         # the sided trades up to and including each tick
