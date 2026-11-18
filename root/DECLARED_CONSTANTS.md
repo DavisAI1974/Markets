@@ -244,30 +244,30 @@ trade day, empty on a row of no trade day). The times a value becomes known are 
   Thursday), used only by the positioning release rule.
 - `to_ns`: seconds in a day, nanoseconds in a microsecond, and the 1970 epoch.
 
-## `root/crypto_ng_exhaustion.py` (the crypto and ng exhaustion render; Greg, 2026-11-18: "exactly like the old calc")
+## `root/crypto_ng_tick.py` (the crypto and ng exhaustion calculation AT THE TICK; Greg, 2026-11-18: "Definitely run it on nano ticks")
 
-REFUSED AS IT STANDS (Greg, 2026-11-18): it puts the trades on a grid of tenths of a second. It does not run
-(`REFUSED`); it is to be written again at the tick. The table below describes the refused file.
+It replaces `root/crypto_ng_exhaustion.py`, the refused job that put the trades on a grid of tenths of a second
+(removed in the same change: "We don't keep wrong data"). No grid of any size is in it.
 
-Every number of the CALCULATION is the July crypto script's own and lives in `crypto_ng/ng.py` and
-`crypto_ng/program/` (outside ROOT; see `crypto_ng/PROVENANCE.md`): 10 cells a second, 45 seconds before and 60
-after, the 20-second line, the 600-cell lean, the natural gas row. The numbers below are unit conversions, the
-tape's codes and drawing sizes.
+Every number of the CALCULATION is the July crypto script's own and lives outside ROOT, in `crypto_ng/ng.py` and
+`crypto_ng/program/` (see `crypto_ng/PROVENANCE.md`); `crypto_ng/tick.py` reads those numbers on the clock: the
+20-second line, the turn finder's 60-second lean (its 600 cells of a tenth), the turn amount 0.10, the 30-second
+wait (its 300 cells), 45 seconds before and 60 after. The numbers below are unit conversions, the tape's codes and
+drawing sizes.
 
 | Constant | Value | Why |
 |---|---|---|
 | `READS` | stored row columns | What the job is handed through `tape.rows_for_calculations()`. |
 | `TRADE`, `BUY`, `SELL` | T, B, A | The tape's codes, as the rows store them. |
-| `REFUSED` | words | Why the file stops at once. |
-| `CELL_NS`, `SPAN_CELLS` | a tenth of a second in nanoseconds; 200 | Unit conversions of the July script's own figures (10 cells a second; 20 seconds). |
 | `PRICE_UNIT` | 10^9 | The tape's prices are in billionths of a dollar. |
 | `HALVE` | 2 | A mid price is halfway between the best bid and the best ask. |
-| `PROGRAM`, `PROGRAM_FILES` | paths | The four files of the crypto program, fingerprinted in every receipt. |
+| `PROGRAM`, `PROGRAM_FILES`, `RULES_FILE` | paths | The four files of the July program and the file of its rules on the clock, fingerprinted in every receipt. |
 | `SIDE_TEXT` | buy, sell | How the program's +1 and -1 are written. |
+| `RECEIVED`, `LEFT` | words | The two things that change a line: a trade is received; trades leave the span at a moment with no tick. |
 | `CLOCK` | a position | Where the hour, minute and second sit in an Eastern time text. |
 | `GRAPH_INCHES`, `LEGEND_AT`, `DPI`, `FLOW_LIMIT`, `BIG`, `SMALL`, `LINE`, `THIN`, `FAINT` | drawing sizes | Drawing only: the size of one trade's own graph (Greg, 2026-11-18: one graph per render), sharpness, the edge of the flow graph, letter sizes, line widths, the grid. |
 | `TRADE_DIGITS` | 5 | How many digits a trade's number takes in its picture's name. |
-| `CURVE_POINTS` | 4000 | Drawing only: how finely a smooth curve is drawn when a trade's line is asked for as a curve. |
+| `CURVE_POINTS` | 4000 | Drawing only: how finely a smooth curve is drawn when a trade's line is drawn as a curve. |
 
 ## `root/tick_renders.py` (the three renders at the tick and the stacked pairs; Greg, 2026-11-18)
 

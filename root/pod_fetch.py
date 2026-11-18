@@ -22,9 +22,9 @@ from pathlib import Path
 RUNS = {'ways': ('chain_ways', 'CHAIN-WAYS-{day}.json'), 'legs': ('trade_legs', 'TRADE-LEGS-{day}.json'),
         'build': ('build', 'RECEIPT.json'), 'dipole': ('dipole_peaks', 'DIPOLE-PEAKS-{day}.json'),
         'renders': ('dipole_renders', 'DIPOLE-RENDERS-{day}.json'),
-        'crypto_ng': ('crypto_ng_exhaustion', 'CRYPTO-NG-EXHAUSTION-{day}.json'),
+        'crypto_ng_tick': ('crypto_ng_tick', 'CRYPTO-NG-TICK-{day}.json'),
         'ticks': ('tick_renders', 'TICK-RENDERS-{day}.json'),
-        'crypto_ng_print': ('crypto_ng_print', 'CRYPTO-NG-RENDER-{day}.json')}
+        'crypto_ng_tick_print': ('crypto_ng_tick_print', 'CRYPTO-NG-TICK-PRINT-{day}.json')}
 NO_STORED_ROWS = {'ways'}                              # it rebuilds its peak lines through the tape gate
 AGENT = 'curl/8'                                       # the pods' web front refuses the library's own name
 BYTES_PER_MEGABYTE = 2 ** 20

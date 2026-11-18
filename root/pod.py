@@ -16,10 +16,12 @@ What is different from the first launcher (`pod_run.sh`, which this replaces):
     job:  calc:<calculation>,<calculation>,...   each its own helper, started together, each pinned to its own CPU
           ways                                   the chain links in six ways, peak by peak (root/chain_ways.py)
           legs                                   the trade legs of 6 pm to 8 pm on Oct 2 and Oct 17 (root/trade_legs.py)
-          moment:<received ns>                   one trade's own exhaustion graph, printed from the stored arcs of the
-                                                 crypto_ng data run: the trade under way at that moment
-          trade:<number>                         the same for a trade named by its number
-          curve:<number>                         the same, the line drawn as a smooth curve (drawing only)
+          crypto_ng_tick                         the crypto and ng exhaustion calculation at the tick (the data run)
+          moment:<received ns>                   one trade's own exhaustion graph, printed from the stored line of the
+                                                 crypto_ng_tick data run (as steps and as a smooth curve, drawing
+                                                 only): the program's trade under way at that moment
+          trade:<number>                         the same for a trade of the program named by its number
+          tape:<position on tape>                the same for one trade on the tape
           rebuild                                the rows built again with the outside tables as they stand, then
                                                  flow_peak and outside_changes beside them (the changed pieces);
                                                  the unchanged calculations are not run again (Greg: no tests except
@@ -58,14 +60,13 @@ CALCULATIONS = ('refills', 'sweeps', 'chain_peaks', 'quote_peaks', 'outside_chan
 MODEL_JOBS = {'ways': 'chain_ways'}                   # runs that rebuild their peak lines and pin their own helpers
 ROW_JOBS = {'legs': 'trade_legs',                      # whole-trade-day programs that read the stored rows
             'dipole': 'dipole_peaks', 'renders': 'dipole_renders',
-            'crypto_ng': 'crypto_ng_exhaustion',       # the crypto and ng exhaustion render. REFUSED as it stands
-#                                                        (a grid of tenths of a second): it stops at once until it
-#                                                        is written again at the tick (Greg, 2026-11-18)
+            'crypto_ng_tick': 'crypto_ng_tick',        # the crypto and ng exhaustion calculation at the tick:
+#                                                        every trade at its own nanosecond, no grid (Greg, 2026-11-18)
             'ticks': 'tick_renders'}                   # the three renders at the tick and the stacked pairs
 #                                                        (a calc job may name them beside its
 #                                                        calculations, so
 #                                                        everything starts together, each on its own CPU)
-PRINT_ONE = re.compile(r'(moment|trade|curve):([0-9]+)')     # print one trade's exhaustion graph from the stored arcs
+PRINT_ONE = re.compile(r'(moment|trade|tape):([0-9]+)')      # print one trade's exhaustion graph from the stored line
 COMMIT = re.compile(r'[0-9a-f]{40}')
 ONE_THREAD = {name: '1' for name in ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS')}
 ACCEPTED, REFUSED, BUSY = 202, 403, 409
@@ -128,9 +129,9 @@ def run(day: str, commit: str, job: str):
             started = []
         elif PRINT_ONE.fullmatch(job):
             how, which = PRINT_ONE.fullmatch(job).groups()
-            started = [('crypto_ng_print', cpus[0], subprocess.Popen(
-                [sys.executable, '-m', 'root.crypto_ng_exhaustion', day, '--rows', str(ROWS), '--out', str(OUT),
-                 f'--{how}', which], cwd=CODE, env=environment, stdout=open(OUT / 'crypto_ng_print.log', 'w'),
+            started = [('crypto_ng_tick_print', cpus[0], subprocess.Popen(
+                [sys.executable, '-m', 'root.crypto_ng_tick', day, '--rows', str(ROWS), '--out', str(OUT),
+                 f'--{how}', which], cwd=CODE, env=environment, stdout=open(OUT / 'crypto_ng_tick_print.log', 'w'),
                 stderr=subprocess.STDOUT, preexec_fn=functools.partial(os.sched_setaffinity, 0, {cpus[0]})))]
         elif job in ROW_JOBS:
             module = ROW_JOBS[job]
