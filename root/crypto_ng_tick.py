@@ -46,11 +46,13 @@ The ticks reach this only through `tape.rows_for_calculations()`: the four trade
         trade then: the next trade to start), from the stored line; nothing is worked out again
     ... --trade <number>            the same for a trade of the program named by its number
     ... --tape <position on tape>   the same for one trade on the tape: 45 seconds before it to 60 after
+    ... --stretch <from ns>-<to ns> the 20-second line over one stretch of the trade day, on the Eastern clock
 """
 from __future__ import annotations
 
 import argparse
 import collections
+import datetime as dt
 import hashlib
 import json
 import time
@@ -60,7 +62,7 @@ import numpy as np
 
 from crypto_ng import tick
 from root import checks, store, tape
-from root.calendar import NS_PER_SECOND, eastern_text, parse_trade_day, trade_day_bounds
+from root.calendar import EASTERN, NS_PER_SECOND, eastern_text, parse_trade_day, trade_day_bounds
 
 READS = ['received_time_ns', 'action', 'side', 'size', 'price', 'best_bid', 'best_ask']
 TRADE, BUY, SELL = 'T', 'B', 'A'                       # the tape's codes, as the rows store them
@@ -487,6 +489,97 @@ def draw(path: Path, title: str, x: np.ndarray, y: np.ndarray, marks: list, curv
     return dict(file=path.name, bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
 
 
+def clock(ns):
+    return dt.datetime.fromtimestamp(ns / NS_PER_SECOND, EASTERN).replace(tzinfo=None)
+
+
+def draw_stretch(path: Path, title: str, x_ns: np.ndarray, y: np.ndarray, starts: list, ends: list, curve: bool) -> dict:
+    """One stretch of the trade day, one graph: the 20-second line as it is (buying up, selling down) on the
+    Eastern clock, with where each trade of the program started and ended."""
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    figure, axis = plt.subplots(figsize=GRAPH_INCHES)
+    empty = np.isnan(y)
+    since = (x_ns - x_ns[0]).astype(float)
+    if curve:                                          # drawing only: a shape-keeping curve through the line's own
+        from scipy.interpolate import PchipInterpolator   # points; no value moves; the line itself moves in steps
+        last = np.append(np.diff(since) > 0, True) & ~empty
+        runs = np.split(np.flatnonzero(last), np.flatnonzero(np.diff(np.cumsum(empty)[last]) > 0) + 1)
+        for k, run_ in enumerate(runs):
+            if len(run_) > 1:
+                fine = np.linspace(since[run_[0]], since[run_[-1]], CURVE_POINTS)
+                axis.plot([clock(int(x_ns[0]) + int(v)) for v in fine], PchipInterpolator(since[run_], y[run_])(fine),
+                          color='#1f618d', lw=LINE, label=None if k else
+                          'the 20-second flow, DRAWN SMOOTH (the line itself moves in steps)')
+            axis.scatter([clock(int(v)) for v in x_ns[run_]], y[run_], s=SMALL, color='#1f618d')
+    else:
+        axis.step([clock(int(v)) for v in x_ns], y, where='post', color='#1f618d', lw=LINE, label='the 20-second flow')
+    if empty.any():
+        axis.step([clock(int(v)) for v in x_ns], np.where(empty, 0.0, np.nan), where='post', color='gray', ls=':',
+                  lw=LINE, label='nothing traded in these 20 seconds (the July line reads 0 here)')
+    for k, at in enumerate(starts):
+        axis.axvline(clock(at), color='black', ls='--', lw=THIN,
+                     label=None if k else 'a trade of the program starts (it was filled)')
+    for k, at in enumerate(ends):
+        axis.axvline(clock(at), color='#b03a2e', ls=':', lw=THIN, label=None if k else 'a trade of the program ends')
+    axis.axhline(0, color='gray', lw=THIN)
+    axis.set_ylim(-FLOW_LIMIT, FLOW_LIMIT)
+    axis.set_xlabel('Eastern time (the received clock)')
+    axis.set_ylabel('flow (+1 all buying, -1 all selling)')
+    axis.set_title(title, fontsize=BIG)
+    axis.legend(fontsize=SMALL, loc='upper center', bbox_to_anchor=LEGEND_AT)
+    axis.grid(alpha=FAINT)
+    figure.autofmt_xdate()
+    figure.savefig(path, dpi=DPI, bbox_inches='tight')
+    plt.close(figure)
+    raw = path.read_bytes()
+    return dict(file=path.name, bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+
+
+def print_stretch(trade_day, out: Path, first: int, last: int) -> dict:
+    """The 20-second line over one stretch of the trade day, printed twice (steps; a smooth curve, drawing only)
+    from the stored line of the data run: one graph, on the Eastern clock, the line as it is (not turned to any
+    trade's side), with every trade of the program that touches the stretch marked where it started and ended."""
+    import pyarrow.parquet as pq
+    day = f'{trade_day:%Y%m%d}'
+    checks.need(first < last, 'the stretch ends before it starts')
+    line = pq.read_table(out / f'crypto-ng-tick-line-20s-{day}.parquet', columns=['moment_received_ns', 'flow'])
+    moments = line.column('moment_received_ns').to_numpy()
+    values = np.array([np.nan if v is None else v for v in line.column('flow').to_pylist()], float)
+    a = max(int(np.searchsorted(moments, first, 'right')) - 1, 0)       # the read standing at the left edge
+    b = int(np.searchsorted(moments, last, 'right'))
+    checks.need(b > a, 'the stored line has no read inside this stretch')
+    x = np.r_[np.maximum(moments[a:b], first), last]
+    y = np.r_[values[a:b], values[b - 1]]
+    if moments[a] > first:                             # no read yet at the left edge: nothing had traded
+        x, y = np.r_[first, x], np.r_[np.nan, y]
+    trades = pq.read_table(out / f'crypto-ng-tick-program-trades-{day}.parquet').to_pylist()
+    touching = [t for t in trades if t['onset_received_ns'] <= last
+                and (t['end_received_ns'] is None or t['end_received_ns'] >= first)]
+    starts = [t['onset_received_ns'] for t in touching if first <= t['onset_received_ns'] <= last]
+    ends = [t['end_received_ns'] for t in touching if t['end_received_ns'] is not None
+            and first <= t['end_received_ns'] <= last]
+    title = (f'Crypto and ng program at the tick, natural gas. Trade day {trade_day:%a %b %d, %Y}.\nTHE EXHAUSTION LINE '
+             f'(the 20-second flow) from {clock_text(first)} to {clock_text(last)} Eastern.\n'
+             f'{len(touching)} trade(s) of the program touch this stretch. Nothing averaged. Every trade at its own '
+             f'nanosecond.')
+    stem = f'{day}-stretch-{first}-{last}'
+    files = [draw_stretch(out / f'crypto-ng-tick-exhaustion-{stem}-{how}.png', title, x, y, starts, ends, how == 'curve')
+             for how in ('steps', 'curve')]
+    receipt = dict(what='The 20-second exhaustion line over one stretch of the trade day, printed twice from the '
+                        'stored line of the data run: as the steps it moves in, and as a smooth curve through its '
+                        'own points (drawing only)',
+                   asked='Greg, 2026-11-18: "We were looking at one particular trade leg 2 session ago, pull those '
+                         'renders. Look at the last renders I asked about just for that trade leg"',
+                   trade_day=trade_day.isoformat(),
+                   stretch=dict(first_received_ns=int(first), last_received_ns=int(last),
+                                first_eastern=clock_text(first), last_eastern=clock_text(last), reads_drawn=int(b - a)),
+                   trades_of_the_program_touching_it=[t['trade'] for t in touching], files=files)
+    (out / f'CRYPTO-NG-TICK-PRINT-{day}.json').write_text(json.dumps(receipt, indent=1) + '\n')
+    return receipt
+
+
 def print_one(trade_day, out: Path, moment=None, trade=None, tape_position=None) -> dict:
     """One trade's own exhaustion graph, printed twice (steps; a smooth curve, drawing only) from what the data
     run stored in `out`. A trade of the program is named by its number or by a moment on the received clock (the
@@ -583,7 +676,12 @@ def main():
     ap.add_argument('--moment', type=int, help='print the graph of the program\'s trade under way at this received ns')
     ap.add_argument('--trade', type=int, help='print the graph of the program\'s trade with this number')
     ap.add_argument('--tape', type=int, help='print the graph of the trade on the tape at this position')
+    ap.add_argument('--stretch', help='print the 20-second line over a stretch: <from ns>-<to ns> on the received clock')
     a = ap.parse_args()
+    if a.stretch is not None:
+        first, last = (int(v) for v in a.stretch.split('-'))
+        print(json.dumps(print_stretch(parse_trade_day(a.trade_day), a.out, first, last), indent=1))
+        return
     if a.moment is not None or a.trade is not None or a.tape is not None:
         print(json.dumps(print_one(parse_trade_day(a.trade_day), a.out, a.moment, a.trade, a.tape), indent=1))
         return

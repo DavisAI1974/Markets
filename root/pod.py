@@ -22,6 +22,7 @@ What is different from the first launcher (`pod_run.sh`, which this replaces):
                                                  only): the program's trade under way at that moment
           trade:<number>                         the same for a trade of the program named by its number
           tape:<position on tape>                the same for one trade on the tape
+          stretch:<from ns>-<to ns>              the 20-second line over one stretch of the trade day
           rebuild                                the rows built again with the outside tables as they stand, then
                                                  flow_peak and outside_changes beside them (the changed pieces);
                                                  the unchanged calculations are not run again (Greg: no tests except
@@ -66,7 +67,7 @@ ROW_JOBS = {'legs': 'trade_legs',                      # whole-trade-day program
 #                                                        (a calc job may name them beside its
 #                                                        calculations, so
 #                                                        everything starts together, each on its own CPU)
-PRINT_ONE = re.compile(r'(moment|trade|tape):([0-9]+)')      # print one trade's exhaustion graph from the stored line
+PRINT_ONE = re.compile(r'(moment|trade|tape|stretch):([0-9]+(?:-[0-9]+)?)')   # print one graph from the stored line
 COMMIT = re.compile(r'[0-9a-f]{40}')
 ONE_THREAD = {name: '1' for name in ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS')}
 ACCEPTED, REFUSED, BUSY = 202, 403, 409
