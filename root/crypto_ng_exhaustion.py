@@ -162,12 +162,61 @@ def grid(t: dict, opens: int) -> dict:
     both = ~np.isnan(bid) & ~np.isnan(ask)             # the collector wrote a record only with both sides standing
     checks.need(bool(both.any()), 'no tick of the trade day has both a best bid and a best ask')
     last = lambda x: ng.last_in(n, cell[both], x[both])
-    return dict(n=n, cell=cell, received=received, trade=trade, side=side, size=size,
+    own = np.zeros(n, bool)
+    own[cell[both]] = True                             # the tenths of a second holding a book value of their own
+    return dict(n=n, cell=cell, received=received, trade=trade, side=side, size=size, own=own,
+                ticks_with_one_side_of_the_book_empty=int((~both).sum()),
                 buy=summed(trade & (side == BUY)), sell=summed(trade & (side == SELL)),
                 no_side=summed(trade & (side != BUY) & (side != SELL)),
                 trades=np.bincount(cell[trade], minlength=n),
                 mid=last((bid + ask) / HALVE / PRICE_UNIT), spread=last((ask - bid) / PRICE_UNIT),
                 bid_size=last(number(t['best_bid_size'])), ask_size=last(number(t['best_ask_size'])))
+
+
+def inputs_handed(g: dict) -> list:
+    """What the program was handed, input by input, and how much of each was really on our tape (Greg, 2026-11-18:
+    "It's one thing to match file sizes but it's another check to make sure we have the data the files are
+    calling"). The sizes on the grid are proved equal to the tape's own totals; a book figure is counted by
+    whether a tenth of a second holds a value of its own, one carried forward, or one filled back from the first."""
+    buy_side, sell_side = g['trade'] & (g['side'] == BUY), g['trade'] & (g['side'] == SELL)
+    checks.need(g['buy'].sum() == g['size'][buy_side].sum() and g['sell'].sum() == g['size'][sell_side].sum(),
+                'the size bought or sold on the grid is not the size on the tape')
+    first = int(np.argmax(g['own']))
+    book = dict(tenths_of_a_second_with_a_value_of_their_own=int(g['own'].sum()),
+                tenths_of_a_second_carrying_the_value_before=int(g['n'] - g['own'].sum() - first),
+                tenths_of_a_second_before_the_first_value_filled_back_from_it=first)
+    sized = lambda which, grid: dict(trades_on_the_tape=int(which.sum()), size_on_the_tape=int(g['size'][which].sum()),
+                                     size_on_the_grid=int(grid.sum()),
+                                     tenths_of_a_second_with_some=int((grid > 0).sum()))
+    return [
+        dict(input='buy', what='size bought by aggressors in each tenth of a second',
+             crypto_had_it_from='Kraken trades, by the taker side Kraken gives',
+             we_have_it_from='every trade on the tape with the tape\'s own aggressor side B', **sized(buy_side, g['buy'])),
+        dict(input='sell', what='size sold by aggressors in each tenth of a second',
+             crypto_had_it_from='Kraken trades, by the taker side Kraken gives',
+             we_have_it_from='every trade on the tape with the tape\'s own aggressor side A', **sized(sell_side, g['sell'])),
+        dict(input='mid', what='the mid price', crypto_had_it_from='Kraken\'s best bid and best ask',
+             we_have_it_from='the best bid and best ask on every stored row', **book),
+        dict(input='half_spread_bps', what='half the middle value of spread over mid, every 50th tenth of a second',
+             crypto_had_it_from='the same figure of Kraken\'s records', we_have_it_from='the same best bid and best ask',
+             **book),
+        dict(input='best_bid_sz, best_ask_sz', what='the size at the best bid and at the best ask',
+             crypto_had_it_from='the first of Kraken\'s ten book levels',
+             we_have_it_from='the size at the best prices on every stored row',
+             note='handed to the program and never used on this path (it is filled first in line)', **book),
+        dict(input='the ten book levels a side', what='the sizes at the ten prices nearest the mid',
+             crypto_had_it_from='Kraken\'s records',
+             we_have_it_from='NOT ON OUR ROWS (they hold the best prices and the whole-book totals)',
+             note='not an input of this calculation: the July script loads them and does not use them. We hold '
+                  'every order, so they can be built if a later piece calls for them'),
+        dict(input='a trade with no side', what='a trade the tape gives no aggressor side for',
+             crypto_had_it_from='did not occur: Kraken gives a side for every trade',
+             we_have_it_from='the tape; in neither bought nor sold',
+             trades_on_the_tape=int((g['trade'] & ~buy_side & ~sell_side).sum()),
+             size_on_the_tape=int(g['no_side'].sum())),
+        dict(input='the book', what='ticks on which one side of the book stood empty (no mid can be read there)',
+             ticks=g['ticks_with_one_side_of_the_book_empty']),
+    ]
 
 
 def recount(g: dict, opens: int, imb: np.ndarray):
@@ -331,6 +380,7 @@ def run(trade_day, rows_folder: Path, out: Path) -> dict:
                      natural_gas_row=dataclasses.asdict(ng.NG), half_spread_bps=hs,
                      turn_finder_lean_tenths_of_a_second=ng.WFLIP, line_tenths_of_a_second=SPAN_CELLS,
                      arc_seconds_before_and_after=[ng.PRE_SEC, ng.POST_SEC]),
+        inputs_the_program_was_handed=inputs_handed(g),
         grid_columns=[dict(column=c, what=w) for c, w in GRID_COLUMNS],
         trade_columns=[dict(column=c, what=w) for c, w in TRADE_COLUMNS],
         counts=dict(
