@@ -19,8 +19,9 @@ WHAT IT MAKES, for one trade day:
    by the July rules. Each trade's start, end, side and length; nothing averaged, no kind put on a trade.
 4. EVERY TRADE ON THE TAPE, each on its own line: where it sits on the 20-second line (the line just before it and
    at it), and the trade of the program under way at it. So any single trade's own exhaustion line, a trade of
-   the program or a trade of the tape, is a cut of the one line around that trade, from as far before it to as
-   far after it as is wanted: nothing is cut off at 45 and 60 seconds in the data.
+   the program or a trade of the tape, is a cut of the one line around that trade: nothing is cut off in the data.
+5. EVERY HUMP OF THE 20-SECOND LINE, each on its own line: when it began and ended (the line's own moments), the
+   trades on the tape inside it, what the trade price did across it, and the trade legs under way during it.
 
 LEFT OUT ON GREG'S WORD (2026-11-18): the winner and loser labels; the average line of each kind; the short or
 long split. NOT WRITTEN: the program's divergence read beside each trade (`dipole_class`, `rev_conv`): it was
@@ -31,6 +32,7 @@ WHAT IS WRITTEN (all for observation and verification only; never a signal, neve
 - `crypto-ng-tick-turns-<trade day>.parquet`: every turn found and what became of it. Nothing filtered.
 - `crypto-ng-tick-program-trades-<trade day>.parquet`: one line per trade of the program.
 - `crypto-ng-tick-tape-trades-<trade day>.parquet`: one line per trade on the tape.
+- `crypto-ng-tick-humps-<trade day>.parquet`: one line per hump of the 20-second line.
 - `CRYPTO-NG-TICK-COUNT-<trade day>.json`: written FIRST, as soon as the trades are made: how many trades get a line.
 - `CRYPTO-NG-TICK-<trade day>.json`: the receipt: counts, the rules, the inputs, the checks, every file's fingerprint.
 - NO PICTURE IN THE DATA RUN. A trade's own graph is printed afterwards from the stored line: one picture for one
@@ -45,8 +47,16 @@ The ticks reach this only through `tape.rows_for_calculations()`: the four trade
         prints the graph of the program's trade under way at that moment on the received clock (when it held no
         trade then: the next trade to start), from the stored line; nothing is worked out again
     ... --trade <number>            the same for a trade of the program named by its number
-    ... --tape <position on tape>   the same for one trade on the tape: 45 seconds before it to 60 after
-    ... --stretch <from ns>-<to ns> the 20-second line over one stretch of the trade day, on the Eastern clock
+    ... --tape <position on tape>   the same for one trade on the tape
+    ... --stretch <from ns>-<to ns> the 20-second line around one stretch of the trade day, on the Eastern clock
+
+WHERE A PICTURE STARTS AND ENDS (Greg, 2026-11-18: "we need to fix our run code so we don't have the hard coded
+beginning and end times because it truncates our data. We need the data to be telling us what those times are"):
+the line itself says. A HUMP is the time the 20-second line stays on one side of zero: it begins the moment the
+line comes onto that side and ends the moment it next stands at zero, is empty, or has crossed. A picture holds,
+whole, every hump the event touches. No number of seconds, no typed clock time and no count of trades sets an
+edge. Every hump of the trade day is also written on its own line (`crypto-ng-tick-humps-<trade day>.parquet`),
+with the trades and the trade legs it covers.
 """
 from __future__ import annotations
 
@@ -74,6 +84,7 @@ RECEIVED, LEFT = 'a trade was received', 'trades left the span at a moment with 
 CLOCK = slice(11, 19)                                  # the hour, minute and second inside an Eastern time text
 GRAPH_INCHES = (7.2, 5.4)                              # drawing only: one trade's own graph, to be read on a phone
 LEGEND_AT = (0.5, -0.16)                               # drawing only: the key sits under the graph, off the line
+LEGEND_LOW = (0.5, -0.3)                               # the same under a graph whose time labels are tilted
 DPI = 100
 FLOW_LIMIT = 1.08                                      # the flow runs from -1 to 1; the graph shows a little more
 BIG, SMALL, LINE, THIN, FAINT = 10, 8, 1.4, 0.8, 0.25  # drawing only: two letter sizes, two line widths, the grid
@@ -131,8 +142,7 @@ TRADE_COLUMNS = [
     ('program_dive_depth', 'Written by the program beside each trade: the size of the 60-second lean at its furthest.'),
     ('program_lean_flip', 'Written by the program: the lean at the turn, measured with the trade before.'),
     ('program_lean_close', 'Written by the program: the lean at the end, measured with this trade.'),
-    ('seconds_from_the_open_to_the_onset', 'How long after the open of the trade day the onset came. When it is '
-     'under 45 the line before the onset is shorter than 45 seconds; nothing is left out for it.'),
+    ('seconds_from_the_open_to_the_onset', 'How long after the open of the trade day the onset came.'),
 ]
 TAPE_COLUMNS = [
     ('position_on_tape', 'The trade: its position on the tape. A label only.'),
@@ -150,6 +160,33 @@ TAPE_COLUMNS = [
     ('starts_program_trade', 'The trade of the program this trade started (it filled it). Empty otherwise.'),
     ('ends_program_trade', 'The trade of the program this trade ended. Empty otherwise.'),
 ]
+HUMP_COLUMNS = [
+    ('hump', 'The number of this hump of the 20-second line, in order through the trade day. A label only.'),
+    ('side', 'buy or sell: the side of zero the line stays on through this hump.'),
+    ('began_received_ns', 'When it began: the moment the line came onto this side.'),
+    ('how_it_began', 'What the line was just before: empty (nothing traded in the 20 seconds), at zero, or on the '
+     'other side.'),
+    ('ended_received_ns', 'When it ended: the moment the line next stood at zero, was empty, or had crossed. Empty '
+     'when it was still on this side at the end of the trade day.'),
+    ('how_it_ended', 'What the line did there: went empty, came to zero, or crossed to the other side.'),
+    ('length_seconds', 'From its beginning to its end, in seconds. Empty when it had not ended.'),
+    ('furthest_flow', 'The furthest the line stood from zero during it (above zero buying, below selling).'),
+    ('furthest_received_ns', 'The moment it first stood there.'),
+    ('trades_inside', 'How many trades on the tape were received from its beginning up to its end.'),
+    ('first_trade_position', 'The first of them: its position on the tape. Empty when there is none.'),
+    ('last_trade_position', 'The last of them.'),
+    ('first_trade_price', 'The price of the first of them, in dollars.'),
+    ('last_trade_price', 'The price of the last of them.'),
+    ('highest_trade_price', 'The highest price traded inside it.'),
+    ('lowest_trade_price', 'The lowest price traded inside it.'),
+    ('first_trade_leg', 'The stored trade leg under way at its first trade: its number.'),
+    ('last_trade_leg', 'The stored trade leg under way at its last trade.'),
+    ('trade_legs_under_way', 'How many different stored trade legs were under way at its trades.'),
+]
+BEFORE = {None: 'the line was empty before (nothing had traded in the 20 seconds)', 0: 'the line stood at zero before'}
+AFTER = {None: 'the line went empty (20 seconds with no trade)', 0: 'the line came to zero'}
+CROSSED_IN, CROSSED_OUT = 'the line crossed from the other side', 'the line crossed to the other side'
+STILL_ON = 'still on this side at the end of the trade day'
 names_of = lambda columns: [name for name, _ in columns]
 
 
@@ -189,6 +226,83 @@ def save(out: Path, name: str, columns: dict, text=()) -> dict:
     pq.write_table(table, out / name, compression='zstd', compression_level=store.ZSTD_LEVEL)
     raw = (out / name).read_bytes()
     return dict(file=name, rows=table.num_rows, bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+
+
+def sides_of(values) -> np.ndarray:
+    """Which side of zero the line stands on after each read: +1 buying, -1 selling, 0 at zero or empty."""
+    return np.where(np.isnan(values), 0, np.sign(values)).astype(int)
+
+
+def whole_humps(moments: np.ndarray, values: np.ndarray, first: int, last: int, opens: int, closes: int) -> tuple:
+    """Where a picture starts and ends, said by the line itself: every hump of the 20-second line that the event
+    (from `first` to `last`) touches, whole. The left edge is the moment the hump standing just before the event
+    began; the right edge is the moment the hump standing as it ends is over. Where the line stands at zero or is
+    empty at an edge of the event there is no hump to follow, and that edge is the event's own."""
+    side = sides_of(values)
+    a = int(np.searchsorted(moments, first, 'left')) - 1       # the read standing just before the event starts
+    b = int(np.searchsorted(moments, last, 'right')) - 1       # the read standing as it ends
+    left, right = first, last
+    if a >= 0 and side[a]:
+        while a > 0 and side[a - 1] == side[a]:
+            a -= 1
+        left = int(moments[a])
+    if b >= 0 and side[b]:
+        while b + 1 < len(side) and side[b + 1] == side[b]:
+            b += 1
+        right = int(moments[b + 1]) if b + 1 < len(side) else closes
+    return max(left, opens), min(right, closes)
+
+
+def legs_under_way(rows_folder: Path, day: str, position: np.ndarray) -> list:
+    """The stored trade leg under way on each tick (`leg_peaks`), lined up by position on the tape."""
+    import pyarrow.parquet as pq
+    files = sorted(Path(rows_folder).glob(f'calc-leg_peaks-{day}-part*.parquet'))
+    checks.need(files, 'the stored trade legs (leg_peaks) are not beside the rows')
+    at, leg = [], []
+    for path in files:
+        table = pq.read_table(path, columns=['position_on_tape', 'leg_number'])
+        at += table.column('position_on_tape').to_pylist()
+        leg += table.column('leg_number').to_pylist()
+    where = np.searchsorted(np.array(at, np.int64), position)
+    checks.need(bool(np.all(where < len(at))) and np.array_equal(np.array(at, np.int64)[np.minimum(where, len(at) - 1)],
+                                                                 position),
+                'a tick of the trade day has no line in the stored trade legs')
+    return [leg[k] for k in where.tolist()]
+
+
+def humps_table(r20: dict, flow: np.ndarray, quiet: np.ndarray, t_recv: np.ndarray, t_position: np.ndarray,
+                t_price: np.ndarray, t_leg: list) -> tuple:
+    """Every hump of the 20-second line, each on its own line, and the count of trades the humps and the
+    stretches between them hold (it must be every trade received from the first read on)."""
+    values = np.where(quiet, np.nan, flow)
+    side, moment = sides_of(values), r20['moment']
+    state = lambda k: None if quiet[k] else int(side[k])          # empty, at zero (0), or a side
+    lines, held, k = [], 0, 0
+    while k < len(side):
+        j = k
+        while j + 1 < len(side) and side[j + 1] == side[k]:
+            j += 1
+        began = int(moment[k])
+        ended = int(moment[j + 1]) if j + 1 < len(side) else None
+        lo = int(np.searchsorted(t_recv, began, 'left'))
+        hi = int(np.searchsorted(t_recv, ended, 'left')) if ended is not None else len(t_recv)
+        held += hi - lo
+        if side[k]:
+            before = state(k - 1) if k else None
+            after = state(j + 1) if ended is not None else STILL_ON
+            far = k + int(np.argmax(np.abs(flow[k:j + 1])))
+            legs = [t_leg[i] for i in range(lo, hi) if t_leg[i] is not None]
+            some = hi > lo
+            lines.append((
+                len(lines), SIDE_TEXT[int(side[k])], began, BEFORE.get(before, CROSSED_IN), ended,
+                after if after == STILL_ON else AFTER.get(after, CROSSED_OUT),
+                None if ended is None else (ended - began) / NS_PER_SECOND, float(flow[far]), int(moment[far]), hi - lo,
+                int(t_position[lo]) if some else None, int(t_position[hi - 1]) if some else None,
+                float(t_price[lo]) if some else None, float(t_price[hi - 1]) if some else None,
+                float(t_price[lo:hi].max()) if some else None, float(t_price[lo:hi].min()) if some else None,
+                legs[0] if legs else None, legs[-1] if legs else None, len(set(legs))))
+        k = j + 1
+    return lines, held
 
 
 def line_table(r: dict, flow: np.ndarray, quiet: np.ndarray, sided_position: np.ndarray) -> dict:
@@ -377,6 +491,24 @@ def run(trade_day, rows_folder: Path, out: Path) -> dict:
     files.append(save(out, f'crypto-ng-tick-tape-trades-{day}.parquet', dict(zip(
         names_of(TAPE_COLUMNS), map(list, zip(*tape_lines)))), {'side'}))
 
+    # every hump of the 20-second line, each on its own line
+    t_recv, t_position = received[rows_trade], position[rows_trade]
+    t_price = np.array([t['price'][row] / PRICE_UNIT for row in rows_trade.tolist()], float)
+    leg_on_tick = legs_under_way(rows_folder, day, position)
+    t_leg = [leg_on_tick[row] for row in rows_trade.tolist()]
+    hump_lines, held = humps_table(r20, flow, quiet20, t_recv, t_position, t_price, t_leg)
+    before_the_first_read = int(np.searchsorted(t_recv, int(r20['moment'][0]), 'left')) if len(flow) else len(t_recv)
+    checks.need(held + before_the_first_read == len(t_recv),
+                'the humps and the stretches between them do not hold every trade on the tape')
+    check['the_humps_hold_every_trade'] = dict(
+        passed=True, trades=int(len(t_recv)), trades_before_the_first_read_of_the_line=before_the_first_read,
+        what='the humps of the 20-second line and the stretches between them (the line at zero or empty), laid end '
+             'to end, hold every trade on the tape received from the line\'s first read on, each once')
+    files.append(save(out, f'crypto-ng-tick-humps-{day}.parquet', dict(zip(
+        names_of(HUMP_COLUMNS), map(list, zip(*hump_lines)) if hump_lines else [[] for _ in HUMP_COLUMNS])),
+        {'side', 'how_it_began', 'how_it_ended'}))
+    I = {name: k for k, name in enumerate(names_of(HUMP_COLUMNS))}
+
     no_side = trade & ~sided
     marked_left = [c for c, _, _ in found if r60['trade'][c] == tick.NONE]
     receipt = dict(
@@ -403,7 +535,11 @@ def run(trade_day, rows_folder: Path, out: Path) -> dict:
                        'per moment; trades leaving at the nanosecond a trade is received leave first and are read '
                        'with it)',
             the_start='the turn finder starts at the open of the trade day, where nothing has traded and the July '
-                      'rule reads 0'),
+                      'rule reads 0',
+            a_hump='the time the 20-second line stays on one side of zero: it begins the moment the line comes onto '
+                   'that side and ends the moment it next stands at zero, is empty, or has crossed. Its two ends '
+                   'are the line\'s own moments; no number of ours sets them. A picture holds, whole, every hump '
+                   'the event touches'),
         inputs=[
             dict(input='buy', what='every trade on the tape with the tape\'s own aggressor side B, each at its own '
                                    'nanosecond', trades=int(s_buy.sum()), size=int(s_size[s_buy].sum())),
@@ -423,7 +559,8 @@ def run(trade_day, rows_folder: Path, out: Path) -> dict:
         columns=dict(line=[dict(column=c, what=w) for c, w in LINE_COLUMNS],
                      turns=[dict(column=c, what=w) for c, w in TURN_COLUMNS],
                      program_trades=[dict(column=c, what=w) for c, w in TRADE_COLUMNS],
-                     tape_trades=[dict(column=c, what=w) for c, w in TAPE_COLUMNS]),
+                     tape_trades=[dict(column=c, what=w) for c, w in TAPE_COLUMNS],
+                     humps=[dict(column=c, what=w) for c, w in HUMP_COLUMNS]),
         counts=dict(
             ticks=int(len(position)), trades_on_the_tape=int(trade.sum()), trades_with_a_side=int(sided.sum()),
             trades_the_tape_gives_no_side_for=int(no_side.sum()),
@@ -436,8 +573,11 @@ def run(trade_day, rows_folder: Path, out: Path) -> dict:
             what_became_of_the_turns=dict(collections.Counter(fate)),
             trades_of_the_program=len(made),
             how_they_ended=dict(collections.Counter(leg['ended'] for leg in made)),
-            trades_of_the_program_starting_inside_the_first_45_seconds=sum(
-                1 for leg in made if leg['onset_ns'] - opens < tick.PRE_NS),
+            humps_of_the_20_second_line=len(hump_lines),
+            humps_holding_no_trade=sum(1 for h in hump_lines if not h[I['trades_inside']]),
+            humps_holding_one_trade=sum(1 for h in hump_lines if h[I['trades_inside']] == 1),
+            humps_holding_more_than_one_trade=sum(1 for h in hump_lines if h[I['trades_inside']] > 1),
+            humps_with_more_than_one_trade_leg_under_way=sum(1 for h in hump_lines if h[I['trade_legs_under_way']] > 1),
             pictures_in_this_run=0),
         built_in='Every onset is a trade against the trade\'s own side (the program is filled by the next trade on '
                  'the other side), so the line steps against the trade at the onset and steps back exactly 20 '
@@ -528,7 +668,7 @@ def draw_stretch(path: Path, title: str, x_ns: np.ndarray, y: np.ndarray, starts
     axis.set_xlabel('Eastern time (the received clock)')
     axis.set_ylabel('flow (+1 all buying, -1 all selling)')
     axis.set_title(title, fontsize=BIG)
-    axis.legend(fontsize=SMALL, loc='upper center', bbox_to_anchor=LEGEND_AT)
+    axis.legend(fontsize=SMALL, loc='upper center', bbox_to_anchor=LEGEND_LOW)
     axis.grid(alpha=FAINT)
     figure.autofmt_xdate()
     figure.savefig(path, dpi=DPI, bbox_inches='tight')
@@ -547,6 +687,9 @@ def print_stretch(trade_day, out: Path, first: int, last: int) -> dict:
     line = pq.read_table(out / f'crypto-ng-tick-line-20s-{day}.parquet', columns=['moment_received_ns', 'flow'])
     moments = line.column('moment_received_ns').to_numpy()
     values = np.array([np.nan if v is None else v for v in line.column('flow').to_pylist()], float)
+    opens, closes = trade_day_bounds(trade_day)
+    asked = (first, last)
+    first, last = whole_humps(moments, values, first, last, opens, closes)   # the line itself sets the two edges
     a = max(int(np.searchsorted(moments, first, 'right')) - 1, 0)       # the read standing at the left edge
     b = int(np.searchsorted(moments, last, 'right'))
     checks.need(b > a, 'the stored line has no read inside this stretch')
@@ -561,10 +704,10 @@ def print_stretch(trade_day, out: Path, first: int, last: int) -> dict:
     ends = [t['end_received_ns'] for t in touching if t['end_received_ns'] is not None
             and first <= t['end_received_ns'] <= last]
     title = (f'Crypto and ng program at the tick, natural gas. Trade day {trade_day:%a %b %d, %Y}.\nTHE EXHAUSTION LINE '
-             f'(the 20-second flow) from {clock_text(first)} to {clock_text(last)} Eastern.\n'
-             f'{len(touching)} trade(s) of the program touch this stretch. Nothing averaged. Every trade at its own '
-             f'nanosecond.')
-    stem = f'{day}-stretch-{first}-{last}'
+             f'(the 20-second flow) around {clock_text(asked[0])} to {clock_text(asked[-1])} Eastern.\nEvery hump of '
+             f'the line that stretch touches, whole: {clock_text(first)} to {clock_text(last)}.\n'
+             f'The line itself sets the two edges. Nothing averaged. Every trade at its own nanosecond.')
+    stem = f'{day}-stretch-{asked[0]}-{asked[-1]}'
     files = [draw_stretch(out / f'crypto-ng-tick-exhaustion-{stem}-{how}.png', title, x, y, starts, ends, how == 'curve')
              for how in ('steps', 'curve')]
     receipt = dict(what='The 20-second exhaustion line over one stretch of the trade day, printed twice from the '
@@ -573,6 +716,8 @@ def print_stretch(trade_day, out: Path, first: int, last: int) -> dict:
                    asked='Greg, 2026-11-18: "We were looking at one particular trade leg 2 session ago, pull those '
                          'renders. Look at the last renders I asked about just for that trade leg"',
                    trade_day=trade_day.isoformat(),
+                   asked_for=dict(first_received_ns=int(asked[0]), last_received_ns=int(asked[-1])),
+                   edges='set by the line itself: every hump of the 20-second line the asked stretch touches, whole',
                    stretch=dict(first_received_ns=int(first), last_received_ns=int(last),
                                 first_eastern=clock_text(first), last_eastern=clock_text(last), reads_drawn=int(b - a)),
                    trades_of_the_program_touching_it=[t['trade'] for t in touching], files=files)
@@ -583,11 +728,11 @@ def print_stretch(trade_day, out: Path, first: int, last: int) -> dict:
 def print_one(trade_day, out: Path, moment=None, trade=None, tape_position=None) -> dict:
     """One trade's own exhaustion graph, printed twice (steps; a smooth curve, drawing only) from what the data
     run stored in `out`. A trade of the program is named by its number or by a moment on the received clock (the
-    trade under way then; when the program held none, the next to start). Its stretch (Greg, 2026-11-18: "We also
-    want to be measuring exhaustion prior to trade start and after trade ends"; "It looks like we are truncating
-    the exhaustion data in the render at the start and end"): from the start of the trade before it to the end of
-    the trade after it, and never less than 45 seconds before its start and 60 seconds after its END. A trade of
-    the tape is named by its position: 45 seconds before it to 60 seconds after it."""
+    trade under way then; when the program held none, the next to start). A trade of the tape is named by its
+    position. Where the picture starts and ends (Greg, 2026-11-18: "We also want to be measuring exhaustion prior
+    to trade start and after trade ends"; "we don't have the hard coded beginning and end times because it
+    truncates our data. We need the data to be telling us what those times are"): the line itself says. The
+    picture holds, whole, every hump of the 20-second line the trade touches (`whole_humps`)."""
     import pyarrow.parquet as pq
     day = f'{trade_day:%Y%m%d}'
     opens, closes = trade_day_bounds(trade_day)
@@ -601,11 +746,10 @@ def print_one(trade_day, out: Path, moment=None, trade=None, tape_position=None)
         chosen, why = named[0], 'a trade on the tape, named by its position'
         checks.need(chosen['side'] is not None, 'the tape gives this trade no side: its line cannot be turned to it')
         start = end = chosen['received_time_ns']
-        first, last = start - tick.PRE_NS, end + tick.POST_NS
         stem = f'{day}-tape-{tape_position}'
         head = (f'Trade on the tape at position {tape_position}: a {chosen["side"]} of {chosen["size"]} at '
-                f'{chosen["price"]}.\nReceived {clock_text(start)} Eastern.\nThe 20-second line from 45 s '
-                f'before it to 60 s after it.')
+                f'{chosen["price"]}.\nReceived {clock_text(start)} Eastern.\nEvery hump of the 20-second line it '
+                f'touches, whole: the line itself sets the two edges.')
         marks = [(0.0, 'black', '--', 'the trade (0)')]
     else:
         trades = pq.read_table(out / f'crypto-ng-tick-program-trades-{day}.parquet').to_pylist()
@@ -622,20 +766,15 @@ def print_one(trade_day, out: Path, moment=None, trade=None, tape_position=None)
             checks.need(named, f'the program made no trade numbered {trade} on this trade day')
             chosen, why = named[0], 'named by its number'
         start, end = chosen['onset_received_ns'], still(chosen)
-        before = [t for t in trades if t['trade'] == chosen['trade'] - 1]
-        after = [t for t in trades if t['trade'] == chosen['trade'] + 1]
-        first = min([start - tick.PRE_NS] + [t['onset_received_ns'] for t in before])
-        last = max([end + tick.POST_NS] + [still(t) for t in after])
         stem = f'{day}-trade-{chosen["trade"]:0{TRADE_DIGITS}d}'
         lasted = 'still open at the last tick' if chosen['length_seconds'] is None \
             else f'lasted {chosen["length_seconds"]:,.3f} s'
         head = (f'Trade {chosen["trade"]} of the program: its {chosen["side"]}. Started '
-                f'{clock_text(start)} Eastern; {lasted}.\nIts own exhaustion line, from the start of the '
-                f'trade before it to the end of the trade after it\n(never less than 45 s before its start and '
-                f'60 s after its end).')
+                f'{clock_text(start)} Eastern; {lasted}.\nEvery hump of the 20-second line it touches, whole:\n'
+                f'the line itself sets the two edges.')
         marks = [(0.0, 'black', '--', 'the trade starts (0): it was filled'),
                  ((end - start) / NS_PER_SECOND, '#b03a2e', ':', 'where this trade ended')]
-    first, last = max(first, opens), min(last, closes)
+    first, last = whole_humps(moments, values, start, end, opens, closes)   # the line itself sets the two edges
     a = max(int(np.searchsorted(moments, first, 'right')) - 1, 0)       # the read standing at the left edge
     b = int(np.searchsorted(moments, last, 'right'))
     checks.need(b > a, 'the stored line has no read inside this stretch')
@@ -659,6 +798,7 @@ def print_one(trade_day, out: Path, moment=None, trade=None, tape_position=None)
                    trade_day=trade_day.isoformat(),
                    asked_for=dict(moment_received_ns=moment, trade=trade, position_on_tape=tape_position),
                    chosen=why, trade=chosen,
+                   edges='set by the line itself: every hump of the 20-second line the trade touches, whole',
                    stretch=dict(first_received_ns=int(first), last_received_ns=int(last),
                                 first_eastern=eastern_text(int(first)), last_eastern=eastern_text(int(last)),
                                 seconds_before_the_start=(start - first) / NS_PER_SECOND,

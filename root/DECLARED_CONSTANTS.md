@@ -249,8 +249,9 @@ trade day, empty on a row of no trade day). The times a value becomes known are 
 Every trade is taken at the nanosecond it was received; nothing is put on a time grid of any size.
 
 Every number of the CALCULATION is the July crypto calculation's own and lives outside ROOT, in `crypto_ng/tick.py`,
-in seconds: the 20-second line, the turn finder's 60-second lean, the turn amount 0.10, the 30-second wait, 45
-seconds before and 60 after. The numbers below are unit conversions, the tape's codes and drawing sizes.
+in seconds: the 20-second line, the turn finder's 60-second lean, the turn amount 0.10, the 30-second wait. No
+number sets where a picture starts or ends: the line itself does (`whole_humps`). The numbers below are unit
+conversions, the tape's codes and drawing sizes.
 
 | Constant | Value | Why |
 |---|---|---|
@@ -261,6 +262,8 @@ seconds before and 60 after. The numbers below are unit conversions, the tape's 
 | `RULES_FILE` | a path | The file of the rules, fingerprinted in every receipt. |
 | `SIDE_TEXT` | buy, sell | How the program's +1 and -1 are written. |
 | `RECEIVED`, `LEFT` | words | The two things that change a line: a trade is received; trades leave the span at a moment with no tick. |
+| `BEFORE`, `AFTER`, `CROSSED_IN`, `CROSSED_OUT`, `STILL_ON` | words | How a hump of the 20-second line began and ended: the line was empty, at zero, or on the other side. |
+| `LEGEND_LOW` | a drawing size | Drawing only: where the key sits under a graph whose time labels are tilted. |
 | `CLOCK` | a position | Where the hour, minute and second sit in an Eastern time text. |
 | `GRAPH_INCHES`, `LEGEND_AT`, `DPI`, `FLOW_LIMIT`, `BIG`, `SMALL`, `LINE`, `THIN`, `FAINT` | drawing sizes | Drawing only: the size of one trade's own graph (Greg, 2026-11-18: one graph per render), sharpness, the edge of the flow graph, letter sizes, line widths, the grid. |
 | `TRADE_DIGITS` | 5 | How many digits a trade's number takes in its picture's name. |

@@ -17,7 +17,9 @@ THE RULES (the July ones; the original files stay where they were made, Markets 
 - IT ENDS when the next turn is filled (that fill starts the next trade). When the next turn is not filled: at the
   first trade on the other side within a wait of 30 seconds, or after the wait but before the turn after; else
   when the wait runs out, 30 seconds after the turn, at no tick.
-- A PICTURE shows at least 45 seconds before a trade and 60 seconds after it.
+- NO PICTURE EDGE IS A NUMBER OF OURS. The July pictures ran from 45 seconds before a trade to 60 after; here a
+  picture starts and ends where the line itself says (Greg, 2026-11-18: "We need the data to be telling us what
+  those times are"): `root/crypto_ng_tick.py`, `whole_humps`.
 - The natural gas settings are the plain ones of the July list (its row for sol): no early entry, no stop.
 
 A line is READ: after every trade with a side is received (one read per trade, in tape order, also when several
@@ -38,9 +40,7 @@ import numpy as np
 
 NS = 10 ** 9
 LINE_SECONDS, LEAN_SECONDS, WAIT_SECONDS = 20, 60, 30  # the exhaustion line; the turn finder's lean; the wait
-PRE_SECONDS, POST_SECONDS = 45, 60                     # the least a picture shows before and after a trade
 LINE_NS, LEAN_NS, WAIT_NS = LINE_SECONDS * NS, LEAN_SECONDS * NS, WAIT_SECONDS * NS
-PRE_NS, POST_NS = PRE_SECONDS * NS, POST_SECONDS * NS
 TURN = 0.10                                            # how far the lean comes back before a turn is marked
 IMPROVE_BPS = 0.5                                      # the program's close, improved by this, on one of its exits
 MAKER_FEE_BPS, TAKER_FEE_BPS = 0.0, 5.0                # the program's own fee settings (observation columns only)
@@ -49,8 +49,7 @@ BPS = 1e4
 NONE = -1                                              # "no trade here" in a column of trade numbers
 SETTINGS = dict(line_seconds=LINE_SECONDS, turn_finder_lean_seconds=LEAN_SECONDS, turn_amount=TURN,
                 wait_seconds=WAIT_SECONDS, close_improved_by_bps=IMPROVE_BPS, maker_fee_bps=MAKER_FEE_BPS,
-                taker_fee_bps=TAKER_FEE_BPS, early_entry=None, stop=None, first_in_line=True,
-                a_picture_shows_at_least_seconds_before_and_after=[PRE_SECONDS, POST_SECONDS])
+                taker_fee_bps=TAKER_FEE_BPS, early_entry=None, stop=None, first_in_line=True)
 
 # how a trade of the program ended (the branches of the July trade maker, in its order)
 END_NEXT_TURN = 'the next turn was filled: that fill ended this trade and started the next'
