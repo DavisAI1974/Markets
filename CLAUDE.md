@@ -108,6 +108,14 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
   days beyond the four; nothing is built for that now ("we'll cross that bridge if we come to it"), and when it comes
   up it is put to him first.
 
+- **EVERY CALCULATION IS MADE AT THE TICK, TIMED TO THE NANOSECOND (Greg, 2026-11-18: "Definitely run it on nano
+  ticks. .1 is losing too much data"; "We've gone over numerous times").** Rows are ticks; nothing is put on a grid
+  of tenths of a second, seconds or any other size before it is calculated on. A span of time a calculation is
+  allowed (the 20 seconds of the exhaustion calculation) is read on the clock at each tick's own nanosecond, never
+  by counting cells. This holds for anything brought over from older work, crypto included: where an old step
+  would collapse ticks, say so to Greg and do it at the tick. Data made on a grid is wrong data and is deleted
+  ("We don't keep wrong data"). Before a run, say how many trades it will make a line for.
+
 - **BAD OR INCOMPLETE DATA THAT WILL NOT BE USED IS NOT SAVED (Greg, 2026-11-16).** Data that is wrong, or
   incomplete, and will not be used is not kept: not in git, not on a branch, not beside the good data "just in
   case". An output that fails its check is not pushed. When a rebuild replaces something, the old one goes in the
