@@ -74,7 +74,8 @@ PROGRAM = Path(ng.__file__).parent / 'program'
 PROGRAM_FILES = ('flip_detector.py', 'swing_maker.py', 'info_dipole.py', 'platform.py')
 SIDE_TEXT = {1: 'buy', -1: 'sell'}                     # the program's +1 (it bought) and -1 (it sold)
 CLOCK = slice(11, 19)                                  # the hour, minute and second inside an Eastern time text
-GRAPH_INCHES = (7.2, 4.5)                              # drawing only: one trade's own graph, to be read on a phone
+GRAPH_INCHES = (7.2, 5.4)                              # drawing only: one trade's own graph, to be read on a phone
+LEGEND_AT = (0.5, -0.16)                               # drawing only: the key sits under the graph, off the line
 DPI = 100
 FLOW_LIMIT = 1.08                                      # the flow runs from -1 to 1; the graph shows a little more
 BIG, SMALL, LINE, THIN, FAINT = 10, 8, 1.4, 0.8, 0.25  # drawing only: two letter sizes, two line widths, the grid
@@ -292,10 +293,9 @@ def draw_trade(job) -> tuple:
     axis.set_xlabel('seconds relative to onset (t=0)')
     axis.set_ylabel('flow (up = with the trade)')
     axis.set_title(title, fontsize=BIG)
-    axis.legend(fontsize=SMALL, loc='lower left')
+    axis.legend(fontsize=SMALL, loc='upper center', bbox_to_anchor=LEGEND_AT)
     axis.grid(alpha=FAINT)
-    figure.tight_layout()
-    figure.savefig(path, dpi=DPI)
+    figure.savefig(path, dpi=DPI, bbox_inches='tight')
     plt.close(figure)
     raw = Path(path).read_bytes()
     return Path(path).name, len(raw), hashlib.sha256(raw).hexdigest()
@@ -399,7 +399,9 @@ def run(trade_day, rows_folder: Path, out: Path) -> dict:
             program_exits_it_did_not_count_as_filled_at_its_quote=int(res.n_taker_closes) if res.legs else 0,
             pictures_in_this_run=0),
         built_in='Every onset holds a trade against the trade\'s own side (the program is filled by the next trade '
-                 'on the other side), so every arc steps down at 0 and back up 20 seconds later. A turn is marked '
+                 'on the other side). When that is all the onset\'s tenth of a second holds, the arc steps down at '
+                 '0 and back up 20 seconds later; when the same tenth also holds trades with the trade\'s side, the '
+                 'step can go either way. A turn is marked '
                  'only after recent trading has moved the trade\'s way, so the rise into 0 is partly made by how '
                  'the trades are chosen. On thin tape a turn can be marked when old trades drop out of the 60 '
                  'seconds with nothing new traded: counted above, nothing filtered.',
@@ -432,9 +434,9 @@ def print_one(trade_day, out: Path, moment=None, trade=None) -> dict:
     arcs = pq.read_table(out / f'crypto-ng-arcs-{day}.parquet', filters=[('trade', '=', chosen['trade'])]).to_pylist()
     checks.need(len(arcs) == 1, f'trade {chosen["trade"]}: its stored arc was not found')
     name = f'crypto-ng-exhaustion-{day}-trade-{chosen["trade"]:0{TRADE_DIGITS}d}.png'
-    title = (f'Crypto and ng program, natural gas, trade day {trade_day:%a %b %d, %Y}. Trade {chosen["trade"]}: the '
-             f'program\'s {chosen["side"]},\nonset {eastern_text(chosen["onset_received_ns"])[CLOCK]} Eastern, lasted '
-             f'{chosen["length_seconds"]:,.1f} s. Its own exhaustion arc; nothing averaged.')
+    title = (f'Crypto and ng program, natural gas. Trade day {trade_day:%a %b %d, %Y}.\nTrade {chosen["trade"]}: the '
+             f'program\'s {chosen["side"]}. Onset {eastern_text(chosen["onset_received_ns"])[CLOCK]} Eastern. Lasted '
+             f'{chosen["length_seconds"]:,.1f} s.\nIts own exhaustion arc. Nothing averaged.')
     _, size, sha = draw_trade((str(out / name), title, np.array(arcs[0]['arc_with_trade_flow']),
                                chosen['length_seconds']))
     receipt = dict(what='One trade\'s own exhaustion graph, printed from the stored arcs of the data run',
