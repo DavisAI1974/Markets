@@ -58,7 +58,9 @@ CALCULATIONS = ('refills', 'sweeps', 'chain_peaks', 'quote_peaks', 'outside_chan
 MODEL_JOBS = {'ways': 'chain_ways'}                   # runs that rebuild their peak lines and pin their own helpers
 ROW_JOBS = {'legs': 'trade_legs',                      # whole-trade-day programs that read the stored rows
             'dipole': 'dipole_peaks', 'renders': 'dipole_renders',
-            'crypto_ng': 'crypto_ng_exhaustion',       # the crypto and ng program's exhaustion render
+            'crypto_ng': 'crypto_ng_exhaustion',       # the crypto and ng exhaustion render. REFUSED as it stands
+#                                                        (a grid of tenths of a second): it stops at once until it
+#                                                        is written again at the tick (Greg, 2026-11-18)
             'ticks': 'tick_renders'}                   # the three renders at the tick and the stacked pairs
 #                                                        (a calc job may name them beside its
 #                                                        calculations, so

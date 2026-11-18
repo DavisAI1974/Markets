@@ -22,6 +22,12 @@ wait, the fee settings and every other crypto trade rule inside these files appl
 else. Nothing here may be imported by the Kalshi work, by ROOT's calculations or by a strategy. The trades it
 makes are "the crypto and ng program's trades": not paper trades, not trade legs.
 
+NANO TICKS (Greg, 2026-11-18, after the first run): "Definitely run it on nano ticks. .1 is losing too much data".
+The July program walks a grid of tenths of a second; that grid is NOT allowed on our tape. The first natural gas
+run used it (`root/crypto_ng_exhaustion.py`), was refused, and its outputs were deleted. The program here stays as
+the July record; running it at the tick means writing its rules again on the clock (each trade at its own
+nanosecond, its 600 cells as 60 seconds, its 300 cells as 30 seconds), laid out to Greg first.
+
 Left out of the crypto calculation on Greg's word (2026-11-18): the winner and loser labels; the average line of
 each kind; the short or long split. Every trade is kept and drawn on its own.
 """

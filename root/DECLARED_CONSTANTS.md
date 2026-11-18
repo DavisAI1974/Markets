@@ -246,6 +246,9 @@ trade day, empty on a row of no trade day). The times a value becomes known are 
 
 ## `root/crypto_ng_exhaustion.py` (the crypto and ng exhaustion render; Greg, 2026-11-18: "exactly like the old calc")
 
+REFUSED AS IT STANDS (Greg, 2026-11-18): it puts the trades on a grid of tenths of a second. It does not run
+(`REFUSED`); it is to be written again at the tick. The table below describes the refused file.
+
 Every number of the CALCULATION is the July crypto script's own and lives in `crypto_ng/ng.py` and
 `crypto_ng/program/` (outside ROOT; see `crypto_ng/PROVENANCE.md`): 10 cells a second, 45 seconds before and 60
 after, the 20-second line, the 600-cell lean, the natural gas row. The numbers below are unit conversions, the
@@ -255,6 +258,7 @@ tape's codes and drawing sizes.
 |---|---|---|
 | `READS` | stored row columns | What the job is handed through `tape.rows_for_calculations()`. |
 | `TRADE`, `BUY`, `SELL` | T, B, A | The tape's codes, as the rows store them. |
+| `REFUSED` | words | Why the file stops at once. |
 | `CELL_NS`, `SPAN_CELLS` | a tenth of a second in nanoseconds; 200 | Unit conversions of the July script's own figures (10 cells a second; 20 seconds). |
 | `PRICE_UNIT` | 10^9 | The tape's prices are in billionths of a dollar. |
 | `HALVE` | 2 | A mid price is halfway between the best bid and the best ask. |

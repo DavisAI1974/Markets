@@ -1,5 +1,13 @@
 """ROOT: the natural gas exhaustion render, made the way the crypto one was made (the "crypto and ng" program).
 
+REFUSED AS IT STANDS (Greg, 2026-11-18, after its first run): "Definitely run it on nano ticks. .1 is losing too much
+data"; "Delete .1 outputs and renders. We don't keep wrong data"; "We've gone over numerous times". This file puts the
+trades on a GRID OF TENTHS OF A SECOND, as the Kraken collector did. That collapses the ticks and is not allowed.
+Its outputs were deleted and none is stored. IT DOES NOT RUN: `run()` and `print_one()` stop at once. It is kept
+only as the record of the July steps, to be written again AT THE TICK (every trade at its own nanosecond, every
+span read on the clock) and laid out to Greg before anything is run. What the first run did and why it was wrong
+is in markets-data `NEXT_SESSION_HANDOFF_20261118P.md`.
+
 Greg, 2026-11-18: "Whatever crypto did to generate those renders do that. If one of the calcs was a 20 sec. Use it
 just like crypto did ... I want everything in our new exhaustion calc to be exactly like the old calc"; "The only
 difference between the two should be that was crypto and we're doing ng"; "Bring back the program and just
@@ -70,6 +78,8 @@ from root.calendar import NS_PER_SECOND, eastern_text, parse_trade_day, trade_da
 
 READS = ['received_time_ns', 'action', 'side', 'size', 'best_bid', 'best_ask', 'best_bid_size', 'best_ask_size']
 TRADE, BUY, SELL = 'T', 'B', 'A'                       # the tape's codes, as the rows store them
+REFUSED = ('the grid of tenths of a second is refused (Greg, 2026-11-18: "Definitely run it on nano ticks. .1 is '
+           'losing too much data"); this calculation is to be written again at the tick before it runs')
 CELL_NS = NS_PER_SECOND // ng.CPS                      # one tenth of a second
 SPAN_CELLS = ng.SMOOTH_SEC * ng.CPS                    # the 20-second line: 200 tenths
 PRICE_UNIT = 10 ** 9                                   # the tape's prices are in billionths of a dollar
@@ -323,6 +333,7 @@ def save(out: Path, name: str, columns: dict, types: dict) -> dict:
 
 
 def run(trade_day, rows_folder: Path, out: Path) -> dict:
+    raise checks.CheckFailed(REFUSED)
     import pyarrow as pa
     started = time.monotonic()
     day = f'{trade_day:%Y%m%d}'
@@ -435,6 +446,7 @@ def print_one(trade_day, out: Path, moment=None, trade=None, curve=False) -> dic
     45 seconds before its onset and 60 seconds after its END (the July script's own two numbers), so the crypto
     stretch is always inside the picture. The line is read from the stored grid, which holds it at every tenth of a second
     of the whole trade day; a stretch that would reach past an edge of the trade day stops at the edge."""
+    raise checks.CheckFailed(REFUSED)
     import pyarrow.parquet as pq
     day = f'{trade_day:%Y%m%d}'
     trades = pq.read_table(out / f'crypto-ng-program-trades-{day}.parquet').to_pylist()
