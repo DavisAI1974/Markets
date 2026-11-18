@@ -19,6 +19,7 @@ What is different from the first launcher (`pod_run.sh`, which this replaces):
           moment:<received ns>                   one trade's own exhaustion graph, printed from the stored arcs of the
                                                  crypto_ng data run: the trade under way at that moment
           trade:<number>                         the same for a trade named by its number
+          curve:<number>                         the same, the line drawn as a smooth curve (drawing only)
           rebuild                                the rows built again with the outside tables as they stand, then
                                                  flow_peak and outside_changes beside them (the changed pieces);
                                                  the unchanged calculations are not run again (Greg: no tests except
@@ -62,7 +63,7 @@ ROW_JOBS = {'legs': 'trade_legs',                      # whole-trade-day program
 #                                                        (a calc job may name them beside its
 #                                                        calculations, so
 #                                                        everything starts together, each on its own CPU)
-PRINT_ONE = re.compile(r'(moment|trade):([0-9]+)')     # print one trade's exhaustion graph from the stored arcs
+PRINT_ONE = re.compile(r'(moment|trade|curve):([0-9]+)')     # print one trade's exhaustion graph from the stored arcs
 COMMIT = re.compile(r'[0-9a-f]{40}')
 ONE_THREAD = {name: '1' for name in ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS')}
 ACCEPTED, REFUSED, BUSY = 202, 403, 409

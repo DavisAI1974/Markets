@@ -83,6 +83,7 @@ LEGEND_AT = (0.5, -0.16)                               # drawing only: the key s
 DPI = 100
 FLOW_LIMIT = 1.08                                      # the flow runs from -1 to 1; the graph shows a little more
 BIG, SMALL, LINE, THIN, FAINT = 10, 8, 1.4, 0.8, 0.25  # drawing only: two letter sizes, two line widths, the grid
+CURVE_POINTS = 4000                                    # drawing only: how finely a smooth curve is drawn
 TRADE_DIGITS = 5                                       # a trade's number in its picture's name, written 00000
 
 GRID_COLUMNS = [
@@ -286,9 +287,17 @@ def draw_trade(job) -> tuple:
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
-    path, title, x, line, to_end = job
+    path, title, x, line, to_end, curve = job
     figure, axis = plt.subplots(figsize=GRAPH_INCHES)
-    axis.plot(x, line, color='#1f618d', lw=LINE, label='the 20-second flow, turned to the trade\'s side')
+    if curve:                                          # drawing only: a shape-keeping curve through the points at
+        from scipy.interpolate import PchipInterpolator   # which the line changes (and its two ends); no value moves
+        at = np.flatnonzero(np.r_[True, line[1:] != line[:-1]])
+        at = np.union1d(at, [len(line) - 1])
+        fine = np.linspace(x[0], x[-1], CURVE_POINTS)
+        axis.plot(fine, PchipInterpolator(x[at], line[at])(fine), color='#1f618d', lw=LINE,
+                  label='the 20-second flow, turned to the trade\'s side, DRAWN SMOOTH (the line itself moves in steps)')
+    else:
+        axis.plot(x, line, color='#1f618d', lw=LINE, label='the 20-second flow, turned to the trade\'s side')
     axis.axvline(0, color='black', ls='--', lw=THIN, label='the onset (the trade starts: it was filled)')
     axis.axvline(to_end, color='#b03a2e', ls=':', lw=LINE, label='where this trade ended')
     axis.axhline(0, color='gray', lw=THIN)
@@ -414,7 +423,7 @@ def run(trade_day, rows_folder: Path, out: Path) -> dict:
     return receipt
 
 
-def print_one(trade_day, out: Path, moment=None, trade=None) -> dict:
+def print_one(trade_day, out: Path, moment=None, trade=None, curve=False) -> dict:
     """One trade's own exhaustion graph, printed from what the data run stored in `out`. The trade is named by its
     number, or by a moment on the received clock: the trade under way then (onset at or before it, end after it);
     when the program held no trade at that moment, the next trade to start.
@@ -450,13 +459,15 @@ def print_one(trade_day, out: Path, moment=None, trade=None) -> dict:
     last = min(max([end + ng.POST] + [t['end_cell'] for t in after]), len(flow) - 1)
     sign = 1 if chosen['side'] == SIDE_TEXT[1] else -1
     x = (np.arange(first, last + 1) - onset) / ng.CPS
-    name = f'crypto-ng-exhaustion-{day}-trade-{chosen["trade"]:0{TRADE_DIGITS}d}.png'
+    stem = f'{day}-trade-{chosen["trade"]:0{TRADE_DIGITS}d}' + ('-curve' if curve else '')
+    name = f'crypto-ng-exhaustion-{stem}.png'
     title = (f'Crypto and ng program, natural gas. Trade day {trade_day:%a %b %d, %Y}.\nTrade {chosen["trade"]}: the '
              f'program\'s {chosen["side"]}. Onset {eastern_text(chosen["onset_received_ns"])[CLOCK]} Eastern. Lasted '
              f'{chosen["length_seconds"]:,.1f} s.\nIts own exhaustion line, from the start of the trade before it to '
              f'the end of the trade after it\n(never less than 45 s before its start and 60 s after its end). Nothing '
              f'averaged.')
-    _, size, sha = draw_trade((str(out / name), title, x, sign * flow[first:last + 1], chosen['length_seconds']))
+    _, size, sha = draw_trade((str(out / name), title, x, sign * flow[first:last + 1], chosen['length_seconds'],
+                               curve))
     receipt = dict(what='One trade\'s own exhaustion graph, printed from the stored grid of the data run',
                    asked='Greg, 2026-11-18: "Each trade should have its own exhaustion graph. No more than one graph '
                          'per render"; "We also want to be measuring exhaustion prior to trade start and after trade '
@@ -475,9 +486,10 @@ def print_one(trade_day, out: Path, moment=None, trade=None) -> dict:
                                 what='from the onset of the trade before to the end of the trade after, and never '
                                      'less than 45 seconds before the onset and 60 seconds after the end (the July '
                                      'script\'s own two numbers); stopped at an edge of the trade day'),
+                   drawn='a smooth curve through the points at which the line changes: drawing only, no value is '
+                         'changed; the line itself moves in steps' if curve else 'the line as it is: steps',
                    files=[dict(file=name, bytes=size, sha256=sha)])
-    (out / f'CRYPTO-NG-RENDER-{day}-trade-{chosen["trade"]:0{TRADE_DIGITS}d}.json').write_text(
-        json.dumps(receipt, indent=1) + '\n')
+    (out / f'CRYPTO-NG-RENDER-{stem}.json').write_text(json.dumps(receipt, indent=1) + '\n')
     return receipt
 
 
@@ -488,9 +500,11 @@ def main():
     ap.add_argument('--out', type=Path, required=True)
     ap.add_argument('--moment', type=int, help='print the graph of the trade under way at this received time (ns)')
     ap.add_argument('--trade', type=int, help='print the graph of the trade with this number')
+    ap.add_argument('--curve', type=int, help='the same, with the line drawn as a smooth curve (drawing only)')
     a = ap.parse_args()
-    if a.moment is not None or a.trade is not None:
-        print(json.dumps(print_one(parse_trade_day(a.trade_day), a.out, a.moment, a.trade), indent=1))
+    if a.moment is not None or a.trade is not None or a.curve is not None:
+        print(json.dumps(print_one(parse_trade_day(a.trade_day), a.out, a.moment,
+                                   a.trade if a.curve is None else a.curve, a.curve is not None), indent=1))
         return
     receipt = run(parse_trade_day(a.trade_day), a.rows, a.out)
     print(json.dumps({k: receipt[k] for k in ('trade_day', 'counts', 'checks', 'seconds')}, indent=1))

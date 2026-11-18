@@ -263,6 +263,7 @@ tape's codes and drawing sizes.
 | `CLOCK` | a position | Where the hour, minute and second sit in an Eastern time text. |
 | `GRAPH_INCHES`, `LEGEND_AT`, `DPI`, `FLOW_LIMIT`, `BIG`, `SMALL`, `LINE`, `THIN`, `FAINT` | drawing sizes | Drawing only: the size of one trade's own graph (Greg, 2026-11-18: one graph per render), sharpness, the edge of the flow graph, letter sizes, line widths, the grid. |
 | `TRADE_DIGITS` | 5 | How many digits a trade's number takes in its picture's name. |
+| `CURVE_POINTS` | 4000 | Drawing only: how finely a smooth curve is drawn when a trade's line is asked for as a curve. |
 
 ## `root/tick_renders.py` (the three renders at the tick and the stacked pairs; Greg, 2026-11-18)
 
