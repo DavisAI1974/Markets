@@ -32,9 +32,12 @@ WHAT IS WRITTEN (all for observation and verification only; never a signal, neve
 - `crypto-ng-arcs-<trade day>.parquet`: every trade's own arc, 1,051 readings.
 - NO PICTURE IN THE DATA RUN (Greg, 2026-11-18: "Run the entire trade day amount of trades but individually ...
   That is initial data output run. Once its done then we print exhaustion render for the one trade"). A picture
-  is printed afterwards from the stored arcs, for the trade asked for: ONE PICTURE FOR ONE TRADE, ONE GRAPH IN IT
+  is printed afterwards from the stored grid, for the trade asked for: ONE PICTURE FOR ONE TRADE, ONE GRAPH IN IT
   ("Each trade should have its own exhaustion graph. No more than one graph per render"), named
-  `crypto-ng-exhaustion-<trade day>-trade-NNNNN.png`.
+  `crypto-ng-exhaustion-<trade day>-trade-NNNNN.png`. It runs from 45 seconds before the trade starts, through
+  its whole life, to 60 seconds after it ends ("We also want to be measuring exhaustion prior to trade start and
+  after trade ends"; "Part of exhaustion research is to see if there are prebirth signals"). The line itself is
+  stored for the ENTIRE trade day, every tenth of a second, in the grid file.
 - `CRYPTO-NG-EXHAUSTION-<trade day>.json`: the receipt: counts, the row used, the program's fingerprints, the
   checks, every file's fingerprint.
 
@@ -44,7 +47,8 @@ The ticks reach this only through `tape.rows_for_calculations()`: the four trade
         the data run: every trade of the trade day, each worked out and stored on its own; no picture
     python3 -m root.crypto_ng_exhaustion 20231002 --rows <...> --out <folder of the data run> --moment <ns>
         prints the one graph of the program's trade that was under way at that moment on the received clock
-        (when it held no trade then: the next trade to start), from the stored arcs; nothing is worked out again
+        (when it held no trade then: the next trade to start), from the stored grid: 45 seconds before the trade
+        starts to 60 seconds after it ends; nothing is worked out again
     python3 -m root.crypto_ng_exhaustion 20231002 --rows <...> --out <folder of the data run> --trade <number>
         the same for a trade named by its number
 """
@@ -277,17 +281,16 @@ def against_stored_flow(rows_folder: Path, day: str, t: dict, g: dict, opens: in
 
 
 def draw_trade(job) -> tuple:
-    """One trade, one picture, one graph: `job` is (file path, title, the arc, seconds from the onset to the end)."""
+    """One trade, one picture, one graph: `job` is (file path, title, seconds from the onset, the line turned to
+    the trade's side, seconds from the onset to the end)."""
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
-    path, title, arc, to_end = job
-    x = (np.arange(ng.PRE + ng.POST + 1) - ng.PRE) / ng.CPS
+    path, title, x, line, to_end = job
     figure, axis = plt.subplots(figsize=GRAPH_INCHES)
-    axis.plot(x, arc, color='#1f618d', lw=LINE, label='the 20-second flow, turned to the trade\'s side')
-    axis.axvline(0, color='black', ls='--', lw=THIN, label='the onset (the trade was filled)')
-    if to_end <= ng.POST_SEC:
-        axis.axvline(to_end, color='#b03a2e', ls=':', lw=LINE, label='where this trade ended')
+    axis.plot(x, line, color='#1f618d', lw=LINE, label='the 20-second flow, turned to the trade\'s side')
+    axis.axvline(0, color='black', ls='--', lw=THIN, label='the onset (the trade starts: it was filled)')
+    axis.axvline(to_end, color='#b03a2e', ls=':', lw=LINE, label='where this trade ended')
     axis.axhline(0, color='gray', lw=THIN)
     axis.set_ylim(-FLOW_LIMIT, FLOW_LIMIT)
     axis.set_xlabel('seconds relative to onset (t=0)')
@@ -414,8 +417,14 @@ def run(trade_day, rows_folder: Path, out: Path) -> dict:
 def print_one(trade_day, out: Path, moment=None, trade=None) -> dict:
     """One trade's own exhaustion graph, printed from what the data run stored in `out`. The trade is named by its
     number, or by a moment on the received clock: the trade under way then (onset at or before it, end after it);
-    when the program held no trade at that moment, the next trade to start. A trade with no stored arc cannot be
-    printed and the run says so."""
+    when the program held no trade at that moment, the next trade to start.
+
+    The stretch drawn (Greg, 2026-11-18: "We also want to be measuring exhaustion prior to trade start and after
+    trade ends"; "Part of exhaustion research is to see if there are prebirth signals"): from 45 seconds before the
+    trade's onset, through its whole life, to 60 seconds after its END. The 45 and the 60 are the July script's own
+    two numbers; the 60 is counted from the end, so the crypto stretch (45 before the onset to 60 after it) is
+    always inside the picture. The line is read from the stored grid, which holds it at every tenth of a second
+    of the whole trade day; a stretch that would reach past an edge of the trade day stops at the edge."""
     import pyarrow.parquet as pq
     day = f'{trade_day:%Y%m%d}'
     trades = pq.read_table(out / f'crypto-ng-program-trades-{day}.parquet').to_pylist()
@@ -430,25 +439,37 @@ def print_one(trade_day, out: Path, moment=None, trade=None) -> dict:
         named = [t for t in trades if t['trade'] == trade]
         checks.need(named, f'the program made no trade numbered {trade} on this trade day')
         chosen, why = named[0], 'named by its number'
-    checks.need(chosen['arc_stored'], f'trade {chosen["trade"]} has no stored arc: its 105 seconds do not fit')
-    arcs = pq.read_table(out / f'crypto-ng-arcs-{day}.parquet', filters=[('trade', '=', chosen['trade'])]).to_pylist()
-    checks.need(len(arcs) == 1, f'trade {chosen["trade"]}: its stored arc was not found')
+    grid_table = pq.read_table(out / f'crypto-ng-grid-{day}.parquet', columns=['cell', 'flow_20s_crypto'])
+    flow = grid_table.column('flow_20s_crypto').to_numpy()
+    checks.need(grid_table.column('cell').to_numpy()[-1] == len(flow) - 1, 'the stored grid is not one line per tenth')
+    onset, end = chosen['onset_cell'], chosen['end_cell']
+    first, last = max(onset - ng.PRE, 0), min(end + ng.POST, len(flow) - 1)
+    sign = 1 if chosen['side'] == SIDE_TEXT[1] else -1
+    x = (np.arange(first, last + 1) - onset) / ng.CPS
     name = f'crypto-ng-exhaustion-{day}-trade-{chosen["trade"]:0{TRADE_DIGITS}d}.png'
     title = (f'Crypto and ng program, natural gas. Trade day {trade_day:%a %b %d, %Y}.\nTrade {chosen["trade"]}: the '
              f'program\'s {chosen["side"]}. Onset {eastern_text(chosen["onset_received_ns"])[CLOCK]} Eastern. Lasted '
-             f'{chosen["length_seconds"]:,.1f} s.\nIts own exhaustion arc. Nothing averaged.')
-    _, size, sha = draw_trade((str(out / name), title, np.array(arcs[0]['arc_with_trade_flow']),
-                               chosen['length_seconds']))
-    receipt = dict(what='One trade\'s own exhaustion graph, printed from the stored arcs of the data run',
+             f'{chosen["length_seconds"]:,.1f} s.\nIts own exhaustion line, from 45 s before it starts to 60 s after '
+             f'it ends. Nothing averaged.')
+    _, size, sha = draw_trade((str(out / name), title, x, sign * flow[first:last + 1], chosen['length_seconds']))
+    receipt = dict(what='One trade\'s own exhaustion graph, printed from the stored grid of the data run',
                    asked='Greg, 2026-11-18: "Each trade should have its own exhaustion graph. No more than one graph '
-                         'per render"',
+                         'per render"; "We also want to be measuring exhaustion prior to trade start and after trade '
+                         'ends"',
                    trade_day=trade_day.isoformat(), asked_for=dict(moment_received_ns=moment, trade=trade),
-                   chosen=why, trade={k: chosen[k] for k in ('trade', 'side', 'onset_received_ns', 'end_received_ns',
+                   chosen=why, trade={k: chosen[k] for k in ('trade', 'side', 'onset_cell', 'end_cell',
+                                                            'onset_received_ns', 'end_received_ns',
                                                             'length_seconds')},
                    onset_eastern=eastern_text(chosen['onset_received_ns']),
                    end_eastern=eastern_text(chosen['end_received_ns']),
+                   stretch=dict(first_cell=int(first), last_cell=int(last),
+                                seconds_before_the_onset=float((onset - first) / ng.CPS),
+                                seconds_after_the_end=float((last - end) / ng.CPS),
+                                what='45 seconds before the onset to 60 seconds after the end (the July script\'s '
+                                     'own two numbers), stopped at an edge of the trade day'),
                    files=[dict(file=name, bytes=size, sha256=sha)])
-    (out / f'CRYPTO-NG-RENDER-{day}.json').write_text(json.dumps(receipt, indent=1) + '\n')
+    (out / f'CRYPTO-NG-RENDER-{day}-trade-{chosen["trade"]:0{TRADE_DIGITS}d}.json').write_text(
+        json.dumps(receipt, indent=1) + '\n')
     return receipt
 
 
