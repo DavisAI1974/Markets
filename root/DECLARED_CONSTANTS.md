@@ -261,9 +261,8 @@ tape's codes and drawing sizes.
 | `PROGRAM`, `PROGRAM_FILES` | paths | The four files of the crypto program, fingerprinted in every receipt. |
 | `SIDE_TEXT` | buy, sell | How the program's +1 and -1 are written. |
 | `CLOCK` | a position | Where the hour, minute and second sit in an Eastern time text. |
-| `PANELS_ACROSS`, `PANELS_DOWN`, `PAGE_INCHES` | 5, 8, 12 by 16 | Drawing only: one page holds 40 arcs. |
-| `STRIP_WIDTH_INCHES`, `STRIP_INCHES_PER_TRADE`, `STRIP_LEAST_INCHES` | 9, 0.012, 6 | Drawing only: the size of the picture holding every trade at once. |
-| `DPI`, `FLOW_LIMIT`, `SMALL`, `TINY`, `THIN`, `HAIR`, `FAINT`, `TITLE_ROOM`, `SHEETS_AT_ONCE` | drawing sizes | Drawing only: sharpness, the edge of the flow graph, letter sizes, line widths, the grid, room for the title, pages handed to a helper at once. |
+| `GRAPH_INCHES`, `DPI`, `FLOW_LIMIT`, `BIG`, `SMALL`, `LINE`, `THIN`, `FAINT`, `GRAPHS_AT_ONCE` | drawing sizes | Drawing only: the size of one trade's own graph (Greg, 2026-11-18: one graph per render), sharpness, the edge of the flow graph, letter sizes, line widths, the grid, pictures handed to a helper at once. |
+| `TRADE_DIGITS` | 5 | How many digits a trade's number takes in its picture's name. |
 
 ## `root/tick_renders.py` (the three renders at the tick and the stacked pairs; Greg, 2026-11-18)
 

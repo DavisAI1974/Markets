@@ -30,10 +30,8 @@ WHAT IS WRITTEN (all for observation and verification only; never a signal, neve
 - `crypto-ng-program-trades-<trade day>.parquet`: one line per trade of the program, with every column the
   program itself writes (named `program_...`), its onset, its end, its length, and where its arc is drawn.
 - `crypto-ng-arcs-<trade day>.parquet`: every trade's own arc, 1,051 readings.
-- pictures: every trade's own arc as its own small panel, 40 to a page, in the order the trades happened; and
-  every trade of the trade day at once, one thin strip per trade coloured by its flow, drawn in the order they
-  happened and again in the order of each trade's own length (an ordering by a measure, made after the run from
-  the stored number: no dividing line, no label).
+- pictures: ONE PICTURE FOR EACH TRADE, ONE GRAPH IN IT (Greg, 2026-11-18: "Each trade should have its own
+  exhaustion graph. No more than one graph per render"): that trade's own arc, nothing else on it.
 - `CRYPTO-NG-EXHAUSTION-<trade day>.json`: the receipt: counts, the row used, the program's fingerprints, the
   checks, every file's fingerprint.
 
@@ -69,14 +67,12 @@ PROGRAM = Path(ng.__file__).parent / 'program'
 PROGRAM_FILES = ('flip_detector.py', 'swing_maker.py', 'info_dipole.py', 'platform.py')
 SIDE_TEXT = {1: 'buy', -1: 'sell'}                     # the program's +1 (it bought) and -1 (it sold)
 CLOCK = slice(11, 19)                                  # the hour, minute and second inside an Eastern time text
-PANELS_ACROSS, PANELS_DOWN = 5, 8                      # one page of arcs: 40 small panels
-PAGE_INCHES = (12, 16)
-STRIP_WIDTH_INCHES, STRIP_INCHES_PER_TRADE, STRIP_LEAST_INCHES = 9, 0.012, 6
+GRAPH_INCHES = (7.2, 4.5)                              # drawing only: one trade's own graph, to be read on a phone
 DPI = 100
 FLOW_LIMIT = 1.08                                      # the flow runs from -1 to 1; the graph shows a little more
-SMALL, TINY, THIN, HAIR, FAINT = 9, 5.5, 0.8, 0.4, 0.25   # drawing only: two letter sizes, two line widths, a grid
-TITLE_ROOM = 0.975
-SHEETS_AT_ONCE = 2
+BIG, SMALL, LINE, THIN, FAINT = 10, 8, 1.4, 0.8, 0.25  # drawing only: two letter sizes, two line widths, the grid
+TRADE_DIGITS = 5                                       # a trade's number in its picture's name, written 00000
+GRAPHS_AT_ONCE = 16
 
 GRID_COLUMNS = [
     ('cell', 'The tenth of a second, counted from the open of the trade day (0 is the first).'),
@@ -123,8 +119,7 @@ TRADE_COLUMNS = [
     ('program_rev_conv', 'Written by the program: the figure that read gives.'),
     ('arc_stored', 'Yes when the 45 seconds before and the 60 after fit inside the trade day, so the arc exists.'),
     ('arc_has_nothing_traded', 'Yes when some tenth of a second of the arc had nothing traded in its 20 seconds.'),
-    ('arc_sheet', 'The picture this trade\'s arc is drawn on.'),
-    ('arc_panel', 'Its panel on that picture, counted along the rows from the top left.'),
+    ('render', 'This trade\'s own exhaustion graph: one picture, one graph.'),
 ]
 GRID_NAMES, TRADE_NAMES = [n for n, _ in GRID_COLUMNS], [n for n, _ in TRADE_COLUMNS]
 
@@ -226,59 +221,30 @@ def against_stored_flow(rows_folder: Path, day: str, t: dict, g: dict, opens: in
                      'tenth of a second against the grid, wherever both hold the same trades')
 
 
-def draw_sheet(job) -> tuple:
-    """One page of arcs: `job` is (file path, title, panels); a panel is (the arc, seconds to the end, label)."""
+def draw_trade(job) -> tuple:
+    """One trade, one picture, one graph: `job` is (file path, title, the arc, seconds from the onset to the end)."""
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
-    path, title, panels = job
+    path, title, arc, to_end = job
     x = (np.arange(ng.PRE + ng.POST + 1) - ng.PRE) / ng.CPS
-    figure, axes = plt.subplots(PANELS_DOWN, PANELS_ACROSS, figsize=PAGE_INCHES, sharex=True, sharey=True)
-    for axis, panel in zip(axes.flat, panels + [None] * (PANELS_DOWN * PANELS_ACROSS - len(panels))):
-        axis.tick_params(labelsize=TINY, length=HALVE)
-        if panel is None:
-            axis.axis('off')
-            continue
-        arc, to_end, label = panel
-        axis.plot(x, arc, color='#1f618d', lw=THIN)
-        axis.axhline(0, color='0.7', lw=HAIR)
-        axis.axvline(0, color='black', lw=THIN)
-        if to_end <= ng.POST_SEC:
-            axis.axvline(to_end, color='#b03a2e', lw=THIN, ls=':')
-        axis.set_ylim(-FLOW_LIMIT, FLOW_LIMIT)
-        axis.set_title(label, fontsize=TINY, pad=HALVE)
-        axis.grid(alpha=FAINT)
-    figure.suptitle(title, fontsize=SMALL)
-    figure.tight_layout(rect=(0, 0, 1, TITLE_ROOM))
+    figure, axis = plt.subplots(figsize=GRAPH_INCHES)
+    axis.plot(x, arc, color='#1f618d', lw=LINE, label='the 20-second flow, turned to the trade\'s side')
+    axis.axvline(0, color='black', ls='--', lw=THIN, label='the onset (the trade was filled)')
+    if to_end <= ng.POST_SEC:
+        axis.axvline(to_end, color='#b03a2e', ls=':', lw=LINE, label='where this trade ended')
+    axis.axhline(0, color='gray', lw=THIN)
+    axis.set_ylim(-FLOW_LIMIT, FLOW_LIMIT)
+    axis.set_xlabel('seconds relative to onset (t=0)')
+    axis.set_ylabel('flow (up = with the trade)')
+    axis.set_title(title, fontsize=BIG)
+    axis.legend(fontsize=SMALL, loc='lower left')
+    axis.grid(alpha=FAINT)
+    figure.tight_layout()
     figure.savefig(path, dpi=DPI)
     plt.close(figure)
     raw = Path(path).read_bytes()
     return Path(path).name, len(raw), hashlib.sha256(raw).hexdigest()
-
-
-def draw_strips(path: Path, title: str, arcs: np.ndarray, to_end: list) -> tuple:
-    """Every trade at once: one thin strip per trade, coloured by its own flow; nothing is combined."""
-    import matplotlib
-    matplotlib.use('Agg')
-    import matplotlib.pyplot as plt
-    figure, axis = plt.subplots(figsize=(STRIP_WIDTH_INCHES, max(STRIP_LEAST_INCHES,
-                                                                 STRIP_INCHES_PER_TRADE * len(arcs))))
-    shown = axis.imshow(arcs, aspect='auto', cmap='RdBu', vmin=-1, vmax=1, interpolation='nearest',
-                        extent=(-ng.PRE_SEC, ng.POST_SEC, len(arcs), 0))
-    inside = [(seconds, k) for k, seconds in enumerate(to_end) if seconds <= ng.POST_SEC]
-    axis.scatter([s for s, _ in inside], [k + 1 / HALVE for _, k in inside], s=SMALL, color='black', marker='|',
-                 label='where that trade ended (when inside the 60 seconds)')
-    axis.axvline(0, color='black', lw=THIN)
-    axis.set_xlabel('seconds from the onset (0 = the trade was filled)')
-    axis.set_ylabel('one strip per trade')
-    axis.legend(loc='lower left', fontsize=TINY)
-    figure.colorbar(shown, ax=axis, label='20-second flow, turned to the trade\'s side (blue with it, red against)')
-    axis.set_title(title, fontsize=SMALL)
-    figure.tight_layout()
-    figure.savefig(path, dpi=DPI)
-    plt.close(figure)
-    raw = path.read_bytes()
-    return path.name, len(raw), hashlib.sha256(raw).hexdigest()
 
 
 def helper(cpus):
@@ -327,7 +293,6 @@ def run(trade_day, rows_folder: Path, out: Path) -> dict:
         else:
             kept.append(k)
             arcs.append(arc)
-        place = len(kept) - 1
         lines.append((
             k, SIDE_TEXT[int(leg.side)], int(leg.flip_idx), end_of(leg.flip_idx), pivot.get(int(leg.flip_idx)), o,
             end_of(o), c, end_of(c), (c - o) / ng.CPS, float(leg.open_px), float(leg.close_px),
@@ -335,9 +300,8 @@ def run(trade_day, rows_folder: Path, out: Path) -> dict:
             bool(leg.lean_exit), bool(leg.stop_exit), d['dive_depth'], d['lean_flip'], d['lean_close'],
             d['dipole_class'], d['rev_conv'], arc is not None,
             None if arc is None else bool(quiet[o - ng.PRE:o + ng.POST + 1].any()),
-            None if arc is None else f'crypto-ng-arcs-{day}-{place // (PANELS_ACROSS * PANELS_DOWN):03d}.png',
-            None if arc is None else place % (PANELS_ACROSS * PANELS_DOWN) + 1))
-    text = {'side', 'program_dipole_class', 'arc_sheet'}
+            None if arc is None else f'crypto-ng-exhaustion-{day}-trade-{k:0{TRADE_DIGITS}d}.png'))
+    text = {'side', 'program_dipole_class', 'render'}
     files.append(save(out, f'crypto-ng-program-trades-{day}.parquet',
                       dict(zip(TRADE_NAMES, map(list, zip(*lines)) if lines else [[] for _ in TRADE_NAMES])),
                       {name: pa.string() for name in text}))
@@ -349,36 +313,19 @@ def run(trade_day, rows_folder: Path, out: Path) -> dict:
         arc_nothing_traded=[quiet[lines[k][f['onset_cell']] - ng.PRE:lines[k][f['onset_cell']] + ng.POST + 1].tolist()
                             for k in kept]), {}))
 
-    per_page = PANELS_ACROSS * PANELS_DOWN
-    panels = [(arcs[j], lines[k][f['length_seconds']],
-               f'{eastern_text(lines[k][f["onset_received_ns"]])[CLOCK]} {lines[k][f["side"]]}, lasted '
-               f'{lines[k][f["length_seconds"]]:.1f} s') for j, k in enumerate(kept)]
-    head = (f'CRYPTO AND NG program, natural gas, trade day {trade_day.isoformat()}: the exhaustion arc of every '
-            f'trade, each on its own, in the order they happened. Nothing is averaged, nothing is left out.\n'
-            f'Blue: the 20-second flow (bought minus sold over bought plus sold, tenths of a second), turned so '
-            f'"with the trade" is up, from 45 seconds before the onset to 60 after. Black line: the onset. '
-            f'Dotted red: where the trade ended.\nLabel: time of the onset (Eastern), the side the program took, '
-            f'how long the trade lasted. Page ')
-    jobs = [(str(out / f'crypto-ng-arcs-{day}-{p // per_page:03d}.png'), head + f'{p // per_page + 1}.',
-             panels[p:p + per_page]) for p in range(0, len(panels), per_page)]
+    name_of_day = f'{trade_day:%a %b %d, %Y}'
+    jobs = [(str(out / lines[k][f['render']]),
+             f'Crypto and ng program, natural gas, trade day {name_of_day}. Trade {k}: the program\'s '
+             f'{lines[k][f["side"]]},\nonset {eastern_text(lines[k][f["onset_received_ns"]])[CLOCK]} Eastern, lasted '
+             f'{lines[k][f["length_seconds"]]:,.1f} s. Its own exhaustion arc; nothing averaged.',
+             arcs[j], lines[k][f['length_seconds']]) for j, k in enumerate(kept)]
     os.sched_setaffinity(0, range(os.cpu_count()))     # the pod pins this program to one CPU; the drawing is
     cpus = multiprocessing.Manager().Queue()           # spread over every CPU the pod allows, one helper on each
     mine = sorted(os.sched_getaffinity(0))
     for cpu in mine:
         cpus.put(cpu)
     with multiprocessing.Pool(len(mine), initializer=helper, initargs=(cpus,)) as pool:
-        drawn = pool.map(draw_sheet, jobs, chunksize=SHEETS_AT_ONCE)
-    if kept:
-        matrix, lengths = np.array(arcs), [lines[k][f['length_seconds']] for k in kept]
-        both = (f'CRYPTO AND NG program, natural gas, trade day {trade_day.isoformat()}: all {len(kept)} trades at '
-                f'once, one strip each. Nothing is averaged.\n')
-        drawn.append(draw_strips(out / f'crypto-ng-all-trades-in-time-order-{day}.png',
-                                 both + 'Top to bottom: the order the trades happened.', matrix, lengths))
-        order = sorted(range(len(kept)), key=lambda j: (lengths[j], j))
-        drawn.append(draw_strips(out / f'crypto-ng-all-trades-in-order-of-length-{day}.png',
-                                 both + 'Top to bottom: the order of each trade\'s own length, shortest first. An '
-                                 'ordering made after the run from the stored number: no dividing line, no label.',
-                                 matrix[order], [lengths[j] for j in order]))
+        drawn = pool.map(draw_trade, jobs, chunksize=GRAPHS_AT_ONCE)
     files += [dict(file=name, bytes=size, sha256=sha) for name, size, sha in drawn]
 
     sided = g['trade'] & ((g['side'] == BUY) | (g['side'] == SELL))
@@ -389,6 +336,8 @@ def run(trade_day, rows_folder: Path, out: Path) -> dict:
         use='OBSERVATION AND VERIFICATION ONLY. Never a signal, never an input to another calculation.',
         left_out_on_his_word=['the winner and loser labels', 'the average line of each kind',
                               'the short or long split (each trade\'s length is a stored number, no label)'],
+        pictures='Greg, 2026-11-18: "Each trade should have its own exhaustion graph. No more than one graph per '
+                 'render". One picture for each trade, one graph in it. No picture holds more than one trade.',
         trade_day=trade_day.isoformat(),
         program=dict(source='DavisAI1974/Markets 75b15fa10193fab218b6469e5e5f0f49359880e1 (2026-07-07)',
                      git_blob_ids={name: blob((PROGRAM / name).read_bytes()) for name in PROGRAM_FILES},
@@ -411,7 +360,7 @@ def run(trade_day, rows_folder: Path, out: Path) -> dict:
             program_trades_with_no_arc=dict(left_out),
             arcs_holding_a_stretch_where_nothing_traded=sum(1 for line in lines if line[f['arc_has_nothing_traded']]),
             program_exits_it_did_not_count_as_filled_at_its_quote=int(res.n_taker_closes) if res.legs else 0,
-            arc_pages=len(jobs)),
+            exhaustion_graphs_one_for_each_trade=len(jobs)),
         built_in='Every onset holds a trade against the trade\'s own side (the program is filled by the next trade '
                  'on the other side), so every arc steps down at 0 and back up 20 seconds later. A turn is marked '
                  'only after recent trading has moved the trade\'s way, so the rise into 0 is partly made by how '
