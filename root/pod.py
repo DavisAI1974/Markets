@@ -46,13 +46,17 @@ KEPT_BESIDE = ('calc-peak_story-', 'calc-quote_runs-')   # unchanged outputs out
 REBUILT = ('flow_peak', 'outside_changes')             # the calculations that changed (Greg: no tests except on
 #                                                        changed pieces): the peaks without their ranked column, and
 #                                                        the outside changes beside the rebuilt rows
-LIBRARIES = ['databento==0.90.0', 'pyarrow==26.0.1', 'numpy==2.5.5', 'matplotlib']   # matplotlib for the renders
+LIBRARIES = ['databento==0.90.0', 'pyarrow==26.0.1', 'numpy==2.5.5', 'matplotlib', 'scipy']   # matplotlib for the
+#                                                        renders, scipy for the smooth trade price curve
 CALCULATIONS = ('refills', 'sweeps', 'chain_peaks', 'quote_peaks', 'outside_changes', 'together', 'leg_peaks',
                 'resting', 'turn_peaks', 'move_steps')   # what a pod
 #                                                      may be asked to run
 MODEL_JOBS = {'ways': 'chain_ways'}                   # runs that rebuild their peak lines and pin their own helpers
 ROW_JOBS = {'legs': 'trade_legs',                      # whole-trade-day programs that read the stored rows
-            'dipole': 'dipole_peaks', 'renders': 'dipole_renders'}   # (a calc job may name them beside its
+            'dipole': 'dipole_peaks', 'renders': 'dipole_renders',
+            'crypto_ng': 'crypto_ng_exhaustion',       # the crypto and ng program's exhaustion render
+            'ticks': 'tick_renders'}                   # the three renders at the tick and the stacked pairs
+#                                                        (a calc job may name them beside its
 #                                                        calculations, so
 #                                                        everything starts together, each on its own CPU)
 COMMIT = re.compile(r'[0-9a-f]{40}')

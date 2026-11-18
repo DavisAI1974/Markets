@@ -243,3 +243,39 @@ trade day, empty on a row of no trade day). The times a value becomes known are 
 - `us_federal_holidays`, `nth`, `observed`: the dates of the US federal holidays (months, days, which Monday or
   Thursday), used only by the positioning release rule.
 - `to_ns`: seconds in a day, nanoseconds in a microsecond, and the 1970 epoch.
+
+## `root/crypto_ng_exhaustion.py` (the crypto and ng exhaustion render; Greg, 2026-11-18: "exactly like the old calc")
+
+Every number of the CALCULATION is the July crypto script's own and lives in `crypto_ng/ng.py` and
+`crypto_ng/program/` (outside ROOT; see `crypto_ng/PROVENANCE.md`): 10 cells a second, 45 seconds before and 60
+after, the 20-second line, the 600-cell lean, the natural gas row. The numbers below are unit conversions, the
+tape's codes and drawing sizes.
+
+| Constant | Value | Why |
+|---|---|---|
+| `READS` | stored row columns | What the job is handed through `tape.rows_for_calculations()`. |
+| `TRADE`, `BUY`, `SELL` | T, B, A | The tape's codes, as the rows store them. |
+| `CELL_NS`, `SPAN_CELLS` | a tenth of a second in nanoseconds; 200 | Unit conversions of the July script's own figures (10 cells a second; 20 seconds). |
+| `PRICE_UNIT` | 10^9 | The tape's prices are in billionths of a dollar. |
+| `HALVE` | 2 | A mid price is halfway between the best bid and the best ask. |
+| `PROGRAM`, `PROGRAM_FILES` | paths | The four files of the crypto program, fingerprinted in every receipt. |
+| `SIDE_TEXT` | buy, sell | How the program's +1 and -1 are written. |
+| `CLOCK` | a position | Where the hour, minute and second sit in an Eastern time text. |
+| `PANELS_ACROSS`, `PANELS_DOWN`, `PAGE_INCHES` | 5, 8, 12 by 16 | Drawing only: one page holds 40 arcs. |
+| `STRIP_WIDTH_INCHES`, `STRIP_INCHES_PER_TRADE`, `STRIP_LEAST_INCHES` | 9, 0.012, 6 | Drawing only: the size of the picture holding every trade at once. |
+| `DPI`, `FLOW_LIMIT`, `SMALL`, `TINY`, `THIN`, `HAIR`, `FAINT`, `TITLE_ROOM`, `SHEETS_AT_ONCE` | drawing sizes | Drawing only: sharpness, the edge of the flow graph, letter sizes, line widths, the grid, room for the title, pages handed to a helper at once. |
+
+## `root/tick_renders.py` (the three renders at the tick and the stacked pairs; Greg, 2026-11-18)
+
+No number enters a calculation: the dipole and the exhaustion at the tick have no window, no level and no count.
+
+| Constant | Value | Why |
+|---|---|---|
+| `READS` | stored row columns | What the job is handed through `tape.rows_for_calculations()`. |
+| `TRADE`, `SIDE` | T; buy, sell | The tape's code for a trade, and how a side is written. |
+| `PRICE_UNIT` | 10^9 | The tape's prices are in billionths of a dollar. |
+| `TRADES_PER_PICTURE` | 600 | How many trades one picture of the three renders holds. A choice of drawing (Claude's call, stated to Greg: as in the sample he looked at); the pictures run end to end, so no trade is left out. |
+| `CURVE_POINTS` | 4000 | Drawing only: how finely the smooth curve is drawn. |
+| `CLOCK` | a position | Where the hour, minute and second sit in an Eastern time text. |
+| `THREE_INCHES`, `PAIR_INCHES`, `DPI`, `LEAN_LIMIT`, `BIG`, `SMALL`, `TINY`, `DOT`, `HIGH_DOT`, `LINE`, `THIN`, `FAINT`, `SHADE`, `GAP`, `TITLE_AT`, `TILT`, `PICTURES_AT_ONCE`, `THREE_GRAPHS`, `PAIR_GRAPHS`, `ON_TOP` | drawing sizes | Drawing only: picture sizes, sharpness, the edge of the dipole graph, letter and dot sizes, line widths, the grid, shading, spacing, the tilt of the time labels, pictures handed to a helper at once, graphs in a picture. |
+

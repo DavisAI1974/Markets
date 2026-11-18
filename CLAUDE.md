@@ -127,6 +127,13 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
   spread toll and pooled hit-rate evaluation. Whatever execution or cost rules Kalshi needs will be worked
   out new, from Kalshi itself, and will apply to Kalshi only. None is written yet, so none is assumed. The only things kept from the crypto era are measurement tools: the dipole
   read (imbalance, divergence, exhaustion), the pre-entry look-ahead window and the leakage gate.
+  **ONE EXCEPTION, on Greg's explicit word (2026-11-18): the `crypto_ng/` package, named "crypto and ng".** It holds
+  the crypto trading program of 2026-07-07 (Markets `75b15fa`) byte for byte, brought back to make the natural gas
+  exhaustion render exactly the way the crypto one was made ("Bring back the program and just designate it crypto
+  and ng so we know what it is at a later date"). Its outputs are for OBSERVATION AND VERIFICATION ONLY and go
+  into the Excel sheet under that name. Its fill rule, wait and fee settings apply inside that package and nowhere
+  else; nothing in it may be imported by a calculation, a strategy or the Kalshi work, and no winner or loser label
+  is made from it. Do not delete it as a violation and do not copy from it.
 
 - **EACH TRADE INDIVIDUALLY, never average.** No pooled hit-rate, no mean signed-bps, no averaged
   coefficient — every aggregate blurs away the per-trade fingerprint that IS the predictive content.
