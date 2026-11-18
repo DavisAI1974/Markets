@@ -280,6 +280,14 @@ No number enters it: a run of trades and a stretch of the dipole each begin and 
 | `PRICE_UNIT` | 10^9 | The tape's prices are in billionths of a dollar. |
 | `BEFORE`, `AFTER`, `CROSSED_IN`, `CROSSED_OUT`, `LAST` | words | How a stretch of the dipole began and ended: the dipole was empty, at zero, or on the other side. |
 
+## `root/four_graphs.py` (one event, four graphs on one clock; Greg, 2026-11-18)
+
+Nothing is worked out in it: stored values are drawn. Its other drawing sizes are those of `root/tick_renders.py`.
+
+| Constant | Value | Why |
+|---|---|---|
+| `FOUR_INCHES`, `FOUR_GRAPHS` | drawing sizes | Drawing only: the size of the picture and the number of graphs in it. |
+
 ## `root/tick_renders.py` (the three renders at the tick and the stacked pairs; Greg, 2026-11-18)
 
 No number enters a calculation: the dipole and the exhaustion at the tick have no window, no level and no count.
