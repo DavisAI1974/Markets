@@ -109,12 +109,13 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
   up it is put to him first.
 
 - **EVERY CALCULATION IS MADE AT THE TICK, TIMED TO THE NANOSECOND (Greg, 2026-11-18: "Definitely run it on nano
-  ticks. .1 is losing too much data"; "We've gone over numerous times").** Rows are ticks; nothing is put on a grid
-  of tenths of a second, seconds or any other size before it is calculated on. A span of time a calculation is
-  allowed (the 20 seconds of the exhaustion calculation) is read on the clock at each tick's own nanosecond, never
-  by counting cells. This holds for anything brought over from older work, crypto included: where an old step
-  would collapse ticks, say so to Greg and do it at the tick. Data made on a grid is wrong data and is deleted
-  ("We don't keep wrong data"). Before a run, say how many trades it will make a line for.
+  ticks"; "We've gone over numerous times").** Rows are ticks; nothing is put on a time grid of any size before it
+  is calculated on. A span of time a calculation is allowed (the 20 seconds of the exhaustion calculation) is read
+  at each tick's own nanosecond. This holds for anything brought over from older work, crypto included: where an
+  old step would collapse ticks, say so to Greg and do it at the tick. Code and data made on a time grid are
+  deleted, and so is every mention of such a grid as a time ("We don't keep wrong data"). No made-up numbers are
+  used in a session, not even to check code: a new calculation is checked on real tape. Before a run, say how
+  many trades it will make a line for.
 
 - **BAD OR INCOMPLETE DATA THAT WILL NOT BE USED IS NOT SAVED (Greg, 2026-11-16).** Data that is wrong, or
   incomplete, and will not be used is not kept: not in git, not on a branch, not beside the good data "just in
@@ -136,12 +137,13 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
   out new, from Kalshi itself, and will apply to Kalshi only. None is written yet, so none is assumed. The only things kept from the crypto era are measurement tools: the dipole
   read (imbalance, divergence, exhaustion), the pre-entry look-ahead window and the leakage gate.
   **ONE EXCEPTION, on Greg's explicit word (2026-11-18): the `crypto_ng/` package, named "crypto and ng".** It holds
-  the crypto trading program of 2026-07-07 (Markets `75b15fa`) byte for byte, brought back to make the natural gas
-  exhaustion render exactly the way the crypto one was made ("Bring back the program and just designate it crypto
-  and ng so we know what it is at a later date"). Its outputs are for OBSERVATION AND VERIFICATION ONLY and go
-  into the Excel sheet under that name. Its fill rule, wait and fee settings apply inside that package and nowhere
-  else; nothing in it may be imported by a calculation, a strategy or the Kalshi work, and no winner or loser label
-  is made from it. Do not delete it as a violation and do not copy from it.
+  the rules and numbers of the crypto exhaustion calculation of 2026-07-07 (the original files stay on Markets
+  `75b15fa`), written at the nanosecond, to make the natural gas exhaustion calculation exactly the way the crypto
+  one was made ("Bring back the program and just designate it crypto and ng so we know what it is at a later
+  date"). Its outputs are for OBSERVATION AND VERIFICATION ONLY and go into the Excel sheet under that name. Its
+  fill rule, wait and fee settings apply inside that package and nowhere else; nothing in it may be imported by a
+  calculation, a strategy or the Kalshi work, and no winner or loser label is made from it. Do not delete it as a
+  violation and do not copy from it.
 
 - **EACH TRADE INDIVIDUALLY, never average.** No pooled hit-rate, no mean signed-bps, no averaged
   coefficient — every aggregate blurs away the per-trade fingerprint that IS the predictive content.

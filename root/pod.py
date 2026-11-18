@@ -61,7 +61,7 @@ MODEL_JOBS = {'ways': 'chain_ways'}                   # runs that rebuild their 
 ROW_JOBS = {'legs': 'trade_legs',                      # whole-trade-day programs that read the stored rows
             'dipole': 'dipole_peaks', 'renders': 'dipole_renders',
             'crypto_ng_tick': 'crypto_ng_tick',        # the crypto and ng exhaustion calculation at the tick:
-#                                                        every trade at its own nanosecond, no grid (Greg, 2026-11-18)
+#                                                        every trade at its own nanosecond (Greg, 2026-11-18)
             'ticks': 'tick_renders'}                   # the three renders at the tick and the stacked pairs
 #                                                        (a calc job may name them beside its
 #                                                        calculations, so

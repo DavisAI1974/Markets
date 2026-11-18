@@ -244,16 +244,13 @@ trade day, empty on a row of no trade day). The times a value becomes known are 
   Thursday), used only by the positioning release rule.
 - `to_ns`: seconds in a day, nanoseconds in a microsecond, and the 1970 epoch.
 
-## `root/crypto_ng_tick.py` (the crypto and ng exhaustion calculation AT THE TICK; Greg, 2026-11-18: "Definitely run it on nano ticks")
+## `root/crypto_ng_tick.py` (the crypto and ng exhaustion calculation at the tick; Greg, 2026-11-18: "Definitely run it on nano ticks")
 
-It replaces `root/crypto_ng_exhaustion.py`, the refused job that put the trades on a grid of tenths of a second
-(removed in the same change: "We don't keep wrong data"). No grid of any size is in it.
+Every trade is taken at the nanosecond it was received; nothing is put on a time grid of any size.
 
-Every number of the CALCULATION is the July crypto script's own and lives outside ROOT, in `crypto_ng/ng.py` and
-`crypto_ng/program/` (see `crypto_ng/PROVENANCE.md`); `crypto_ng/tick.py` reads those numbers on the clock: the
-20-second line, the turn finder's 60-second lean (its 600 cells of a tenth), the turn amount 0.10, the 30-second
-wait (its 300 cells), 45 seconds before and 60 after. The numbers below are unit conversions, the tape's codes and
-drawing sizes.
+Every number of the CALCULATION is the July crypto calculation's own and lives outside ROOT, in `crypto_ng/tick.py`,
+in seconds: the 20-second line, the turn finder's 60-second lean, the turn amount 0.10, the 30-second wait, 45
+seconds before and 60 after. The numbers below are unit conversions, the tape's codes and drawing sizes.
 
 | Constant | Value | Why |
 |---|---|---|
@@ -261,7 +258,7 @@ drawing sizes.
 | `TRADE`, `BUY`, `SELL` | T, B, A | The tape's codes, as the rows store them. |
 | `PRICE_UNIT` | 10^9 | The tape's prices are in billionths of a dollar. |
 | `HALVE` | 2 | A mid price is halfway between the best bid and the best ask. |
-| `PROGRAM`, `PROGRAM_FILES`, `RULES_FILE` | paths | The four files of the July program and the file of its rules on the clock, fingerprinted in every receipt. |
+| `RULES_FILE` | a path | The file of the rules, fingerprinted in every receipt. |
 | `SIDE_TEXT` | buy, sell | How the program's +1 and -1 are written. |
 | `RECEIVED`, `LEFT` | words | The two things that change a line: a trade is received; trades leave the span at a moment with no tick. |
 | `CLOCK` | a position | Where the hour, minute and second sit in an Eastern time text. |

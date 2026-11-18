@@ -3,13 +3,12 @@
 Greg, 2026-11-18: "Whatever crypto did to generate those renders do that. If one of the calcs was a 20 sec. Use it
 just like crypto did ... I want everything in our new exhaustion calc to be exactly like the old calc"; "The only
 difference between the two should be that was crypto and we're doing ng"; "Bring back the program and just
-designate it crypto and ng ... observation or verification purpose only"; then, after the first run: "Definitely
-run it on nano ticks. .1 is losing too much data"; "Delete .1 outputs and renders. We don't keep wrong data";
+designate it crypto and ng ... observation or verification purpose only"; "Definitely run it on nano ticks";
 "We have to rerun the exhaustion data on the pods first".
 
-This replaces the refused job that put the trades on a grid of tenths of a second. Nothing here is on a grid:
-every trade enters each line at the nanosecond it was received and leaves it exactly 20 (or 60) seconds later.
-The rules and their numbers are the July ones, read on the clock (`crypto_ng/tick.py` says how, rule by rule).
+Every trade enters each line at the nanosecond it was received and leaves it exactly 20 (or 60) seconds later.
+Nothing is put on a time grid of any size. The rules and their numbers are the July ones, written at the
+nanosecond (`crypto_ng/tick.py` states them, rule by rule).
 
 WHAT IT MAKES, for one trade day:
 1. THE 20-SECOND LINE (the exhaustion line), for the WHOLE trade day: bought minus sold over bought plus sold, over
@@ -24,9 +23,8 @@ WHAT IT MAKES, for one trade day:
    far after it as is wanted: nothing is cut off at 45 and 60 seconds in the data.
 
 LEFT OUT ON GREG'S WORD (2026-11-18): the winner and loser labels; the average line of each kind; the short or
-long split. NOT WRITTEN AT THE TICK: the program's divergence read beside each trade (`dipole_class`, `rev_conv`):
-it is worked out on halves of a list of cells, it was never used on this path (the entry gate is off), and no
-cell exists here.
+long split. NOT WRITTEN: the program's divergence read beside each trade (`dipole_class`, `rev_conv`): it was
+never used on this path (the entry gate is off), and its July form is not a calculation at the tick.
 
 WHAT IS WRITTEN (all for observation and verification only; never a signal, never an input):
 - `crypto-ng-tick-line-20s-<trade day>.parquet`, `crypto-ng-tick-lean-60s-<trade day>.parquet`: one line per read.
@@ -53,7 +51,6 @@ from __future__ import annotations
 
 import argparse
 import collections
-import dataclasses
 import hashlib
 import json
 import time
@@ -61,7 +58,7 @@ from pathlib import Path
 
 import numpy as np
 
-from crypto_ng import ng, tick
+from crypto_ng import tick
 from root import checks, store, tape
 from root.calendar import NS_PER_SECOND, eastern_text, parse_trade_day, trade_day_bounds
 
@@ -69,8 +66,6 @@ READS = ['received_time_ns', 'action', 'side', 'size', 'price', 'best_bid', 'bes
 TRADE, BUY, SELL = 'T', 'B', 'A'                       # the tape's codes, as the rows store them
 PRICE_UNIT = 10 ** 9                                   # the tape's prices are in billionths of a dollar
 HALVE = 2                                              # a mid price is halfway between the best bid and best ask
-PROGRAM = Path(ng.__file__).parent / 'program'
-PROGRAM_FILES = ('flip_detector.py', 'swing_maker.py', 'info_dipole.py', 'platform.py')
 RULES_FILE = Path(tick.__file__)
 SIDE_TEXT = {1: 'buy', -1: 'sell'}                     # the program's +1 (it bought) and -1 (it sold)
 RECEIVED, LEFT = 'a trade was received', 'trades left the span at a moment with no tick'
@@ -180,7 +175,7 @@ def number(values) -> np.ndarray:
 
 
 def or_empty(value):
-    """A value for a stored cell: empty, never a not-a-number and never 0, when there is none."""
+    """A stored value: empty, never a not-a-number and never 0, when there is none."""
     return None if value is None or (isinstance(value, float) and np.isnan(value)) else value
 
 
@@ -282,7 +277,7 @@ def run(trade_day, rows_folder: Path, out: Path) -> dict:
     mid_own = (bid + ask) / HALVE / PRICE_UNIT
     last_both = np.maximum.accumulate(np.where(both, np.arange(len(both)), -1))   # the latest tick with both sides
     mid = np.where(last_both >= 0, mid_own[np.maximum(last_both, 0)], np.nan)
-    hs = ng.half_spread_bps(mid_own[both], ((ask - bid) / PRICE_UNIT)[both])
+    hs = tick.half_spread_bps(mid_own[both], ((ask - bid) / PRICE_UNIT)[both])
     mid_at_moment = lambda ns: float(mid[np.searchsorted(received, ns, 'right') - 1]) \
         if np.searchsorted(received, ns, 'right') else float('nan')
     mid_at_trade = lambda j: float(mid[rows_sided[j]])
@@ -378,37 +373,29 @@ def run(trade_day, rows_folder: Path, out: Path) -> dict:
     marked_left = [c for c, _, _ in found if r60['trade'][c] == tick.NONE]
     receipt = dict(
         what='The natural gas exhaustion calculation of the crypto and ng program, made at the tick: every trade '
-             'at its own nanosecond, no grid of any size',
+             'at its own nanosecond',
         asked='Greg, 2026-11-18: "I want everything in our new exhaustion calc to be exactly like the old calc"; '
-              '"Definitely run it on nano ticks. .1 is losing too much data"; "We have to rerun the exhaustion data '
-              'on the pods first"',
+              '"Definitely run it on nano ticks"; "We have to rerun the exhaustion data on the pods first"',
         use='OBSERVATION AND VERIFICATION ONLY. Never a signal, never an input to another calculation.',
         left_out_on_his_word=['the winner and loser labels', 'the average line of each kind',
                               'the short or long split (each trade\'s length is a stored number, no label)'],
-        not_written_at_the_tick=['the program\'s divergence read beside each trade (dipole_class, rev_conv): it is '
-                                 'worked out on halves of a list of cells; it was never used on this path'],
+        not_written=['the program\'s divergence read beside each trade (dipole_class, rev_conv): it was never used '
+                     'on this path, and its July form is not a calculation at the tick'],
         trade_day=trade_day.isoformat(),
         rules=dict(
-            source='DavisAI1974/Markets 75b15fa10193fab218b6469e5e5f0f49359880e1 (2026-07-07), read on the clock',
-            july_program_git_blob_ids={name: blob((PROGRAM / name).read_bytes()) for name in PROGRAM_FILES},
-            rules_on_the_clock_git_blob_id=blob(RULES_FILE.read_bytes()),
-            natural_gas_row=dataclasses.asdict(ng.NG), half_spread_bps=hs,
-            the_line_seconds=tick.LINE_NS // NS_PER_SECOND, the_turn_finder_lean_seconds=tick.LEAN_NS // NS_PER_SECOND,
-            the_wait_seconds=tick.WAIT_NS // NS_PER_SECOND,
-            a_picture_shows_at_least_seconds_before_and_after=[ng.PRE_SEC, ng.POST_SEC],
-            what_stays='every rule and every number of the July calculation',
-            what_changes='no cells: a trade enters each line at the nanosecond it was received and leaves it '
-                         'exactly 20 (or 60) seconds later; the turn finder (the July function itself) is walked '
-                         'over every moment the 60-second lean changes; the wait is 30 seconds on the clock',
+            source='the rules of the July 2026 crypto calculation (DavisAI1974/Markets '
+                   '75b15fa10193fab218b6469e5e5f0f49359880e1), written at the nanosecond',
+            rules_file_git_blob_id=blob(RULES_FILE.read_bytes()),
+            natural_gas_settings=tick.SETTINGS, half_spread_bps=hs,
+            how_time_is_read='a trade enters each line at the nanosecond it was received and leaves it exactly 20 '
+                             '(or 60) seconds later; the turn finder is walked over every moment the 60-second lean '
+                             'changes; the wait is 30 seconds',
             read_order='a line is read after every sided trade is received (one read per trade, in tape order, '
                        'also when several share a nanosecond) and at every moment trades leave the span (one read '
                        'per moment; trades leaving at the nanosecond a trade is received leave first and are read '
                        'with it)',
             the_start='the turn finder starts at the open of the trade day, where nothing has traded and the July '
-                      'rule reads 0',
-            said_plainly='this is the July rules on our clock, not the July code run byte for byte; its trades are '
-                         'not the trades a grid run makes, because a grid nets everything inside a tenth of a '
-                         'second into one reading'),
+                      'rule reads 0'),
         inputs=[
             dict(input='buy', what='every trade on the tape with the tape\'s own aggressor side B, each at its own '
                                    'nanosecond', trades=int(s_buy.sum()), size=int(s_size[s_buy].sum())),
@@ -422,7 +409,7 @@ def run(trade_day, rows_folder: Path, out: Path) -> dict:
                                    'program\'s own price columns; no line, turn or trade of the program reads it',
                  ticks_with_both_sides_standing=int(both.sum()), ticks_with_one_side_empty=int((~both).sum())),
             dict(input='half_spread_bps', what='half the middle value of spread over mid, every 50th tick with both '
-                                               'sides standing (the July figure, read on ticks). Used only for the '
+                                               'sides standing (the July figure). Used only for the '
                                                'program\'s own price columns'),
         ],
         columns=dict(line=[dict(column=c, what=w) for c, w in LINE_COLUMNS],
@@ -560,7 +547,7 @@ def print_one(trade_day, out: Path, moment=None, trade=None, tape_position=None)
         x, y = np.r_[float(first - start), x], np.r_[np.nan, y]
     x = x / NS_PER_SECOND
     title = (f'Crypto and ng program at the tick, natural gas. Trade day {trade_day:%a %b %d, %Y}.\n{head}\n'
-             f'Nothing averaged. No grid: every trade at its own nanosecond.')
+             f'Nothing averaged. Every trade at its own nanosecond.')
     files = [draw(out / f'crypto-ng-tick-exhaustion-{stem}-{how}.png', title, x, y, marks, how == 'curve')
              for how in ('steps', 'curve')]
     receipt = dict(what='One trade\'s own exhaustion graph, printed twice from the stored 20-second line of the '
