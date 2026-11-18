@@ -260,8 +260,9 @@ def run(trade_day, rows_folder: Path, out: Path) -> dict:
     t = read(rows_folder, trade_day)
     position = np.array(t['position'], np.int64)
     received = np.array(t['received_time_ns'], np.int64)
-    checks.need(len(received) and received[0] >= opens and received[-1] < closes,
-                'a tick was received outside the trade day')
+    checks.need(len(received) and received[0] >= opens, 'a tick was received before the open of the trade day')
+    until = max(closes, int(received[-1]) + 1)         # the line is read to the end of the trade day (a last tick
+    #                                                    can be received a moment after the halt it was sent before)
     checks.need(bool(np.all(np.diff(received) >= 0)), 'the received time goes backwards: no span can be read on it')
     action, side = np.array(t['action'], object), np.array(t['side'], object)
     size = number(t['size'])
@@ -282,8 +283,8 @@ def run(trade_day, rows_folder: Path, out: Path) -> dict:
         if np.searchsorted(received, ns, 'right') else float('nan')
     mid_at_trade = lambda j: float(mid[rows_sided[j]])
 
-    r20 = tick.reads(s_recv, s_buy, s_size, tick.LINE_NS, closes)
-    r60 = tick.reads(s_recv, s_buy, s_size, tick.LEAN_NS, closes)
+    r20 = tick.reads(s_recv, s_buy, s_size, tick.LINE_NS, until)
+    r60 = tick.reads(s_recv, s_buy, s_size, tick.LEAN_NS, until)
     flow, quiet20 = tick.line(r20['bought'], r20['sold'])
     lean, quiet60 = tick.line(r60['bought'], r60['sold'])
     mid_at_read = lambda c: mid_at_trade(r60['trade'][c]) if r60['trade'][c] != tick.NONE \
