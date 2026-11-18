@@ -420,10 +420,11 @@ def print_one(trade_day, out: Path, moment=None, trade=None) -> dict:
     when the program held no trade at that moment, the next trade to start.
 
     The stretch drawn (Greg, 2026-11-18: "We also want to be measuring exhaustion prior to trade start and after
-    trade ends"; "Part of exhaustion research is to see if there are prebirth signals"): from 45 seconds before the
-    trade's onset, through its whole life, to 60 seconds after its END. The 45 and the 60 are the July script's own
-    two numbers; the 60 is counted from the end, so the crypto stretch (45 before the onset to 60 after it) is
-    always inside the picture. The line is read from the stored grid, which holds it at every tenth of a second
+    trade ends"; "Part of exhaustion research is to see if there are prebirth signals"; "It looks like we are
+    truncating the exhaustion data in the render at the start and end"): from the onset of the trade before it,
+    through its whole life, to the end of the trade after it, so the market sets the stretch; and never less than
+    45 seconds before its onset and 60 seconds after its END (the July script's own two numbers), so the crypto
+    stretch is always inside the picture. The line is read from the stored grid, which holds it at every tenth of a second
     of the whole trade day; a stretch that would reach past an edge of the trade day stops at the edge."""
     import pyarrow.parquet as pq
     day = f'{trade_day:%Y%m%d}'
@@ -443,14 +444,18 @@ def print_one(trade_day, out: Path, moment=None, trade=None) -> dict:
     flow = grid_table.column('flow_20s_crypto').to_numpy()
     checks.need(grid_table.column('cell').to_numpy()[-1] == len(flow) - 1, 'the stored grid is not one line per tenth')
     onset, end = chosen['onset_cell'], chosen['end_cell']
-    first, last = max(onset - ng.PRE, 0), min(end + ng.POST, len(flow) - 1)
+    before = [t for t in trades if t['trade'] == chosen['trade'] - 1]
+    after = [t for t in trades if t['trade'] == chosen['trade'] + 1]
+    first = max(min([onset - ng.PRE] + [t['onset_cell'] for t in before]), 0)
+    last = min(max([end + ng.POST] + [t['end_cell'] for t in after]), len(flow) - 1)
     sign = 1 if chosen['side'] == SIDE_TEXT[1] else -1
     x = (np.arange(first, last + 1) - onset) / ng.CPS
     name = f'crypto-ng-exhaustion-{day}-trade-{chosen["trade"]:0{TRADE_DIGITS}d}.png'
     title = (f'Crypto and ng program, natural gas. Trade day {trade_day:%a %b %d, %Y}.\nTrade {chosen["trade"]}: the '
              f'program\'s {chosen["side"]}. Onset {eastern_text(chosen["onset_received_ns"])[CLOCK]} Eastern. Lasted '
-             f'{chosen["length_seconds"]:,.1f} s.\nIts own exhaustion line, from 45 s before it starts to 60 s after '
-             f'it ends. Nothing averaged.')
+             f'{chosen["length_seconds"]:,.1f} s.\nIts own exhaustion line, from the start of the trade before it to '
+             f'the end of the trade after it\n(never less than 45 s before its start and 60 s after its end). Nothing '
+             f'averaged.')
     _, size, sha = draw_trade((str(out / name), title, x, sign * flow[first:last + 1], chosen['length_seconds']))
     receipt = dict(what='One trade\'s own exhaustion graph, printed from the stored grid of the data run',
                    asked='Greg, 2026-11-18: "Each trade should have its own exhaustion graph. No more than one graph '
@@ -465,8 +470,11 @@ def print_one(trade_day, out: Path, moment=None, trade=None) -> dict:
                    stretch=dict(first_cell=int(first), last_cell=int(last),
                                 seconds_before_the_onset=float((onset - first) / ng.CPS),
                                 seconds_after_the_end=float((last - end) / ng.CPS),
-                                what='45 seconds before the onset to 60 seconds after the end (the July script\'s '
-                                     'own two numbers), stopped at an edge of the trade day'),
+                                trade_before=before[0]['trade'] if before else None,
+                                trade_after=after[0]['trade'] if after else None,
+                                what='from the onset of the trade before to the end of the trade after, and never '
+                                     'less than 45 seconds before the onset and 60 seconds after the end (the July '
+                                     'script\'s own two numbers); stopped at an edge of the trade day'),
                    files=[dict(file=name, bytes=size, sha256=sha)])
     (out / f'CRYPTO-NG-RENDER-{day}-trade-{chosen["trade"]:0{TRADE_DIGITS}d}.json').write_text(
         json.dumps(receipt, indent=1) + '\n')
