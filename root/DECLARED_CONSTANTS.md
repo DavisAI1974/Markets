@@ -269,6 +269,17 @@ conversions, the tape's codes and drawing sizes.
 | `TRADE_DIGITS` | 5 | How many digits a trade's number takes in its picture's name. |
 | `CURVE_POINTS` | 4000 | Drawing only: how finely a smooth curve is drawn when a trade's line is drawn as a curve. |
 
+## `root/continuing.py` (which exhaustions and dipoles at the tick continue over more than one trade; Greg, 2026-11-18)
+
+No number enters it: a run of trades and a stretch of the dipole each begin and end where the data says.
+
+| Constant | Value | Why |
+|---|---|---|
+| `READS` | stored row columns | What the job is handed through `tape.rows_for_calculations()`. |
+| `TRADE`, `SIDE`, `SIDE_OF` | T; buy, sell | The tape's code for a trade, and how a side is written. |
+| `PRICE_UNIT` | 10^9 | The tape's prices are in billionths of a dollar. |
+| `BEFORE`, `AFTER`, `CROSSED_IN`, `CROSSED_OUT`, `LAST` | words | How a stretch of the dipole began and ended: the dipole was empty, at zero, or on the other side. |
+
 ## `root/tick_renders.py` (the three renders at the tick and the stacked pairs; Greg, 2026-11-18)
 
 No number enters a calculation: the dipole and the exhaustion at the tick have no window, no level and no count.

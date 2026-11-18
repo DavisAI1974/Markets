@@ -23,6 +23,7 @@ RUNS = {'ways': ('chain_ways', 'CHAIN-WAYS-{day}.json'), 'legs': ('trade_legs', 
         'build': ('build', 'RECEIPT.json'), 'dipole': ('dipole_peaks', 'DIPOLE-PEAKS-{day}.json'),
         'renders': ('dipole_renders', 'DIPOLE-RENDERS-{day}.json'),
         'crypto_ng_tick': ('crypto_ng_tick', 'CRYPTO-NG-TICK-{day}.json'),
+        'continuing': ('continuing', 'CONTINUING-{day}.json'),
         'ticks': ('tick_renders', 'TICK-RENDERS-{day}.json'),
         'crypto_ng_tick_print': ('crypto_ng_tick_print', 'CRYPTO-NG-TICK-PRINT-{day}.json')}
 NO_STORED_ROWS = {'ways'}                              # it rebuilds its peak lines through the tape gate

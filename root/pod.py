@@ -63,6 +63,8 @@ ROW_JOBS = {'legs': 'trade_legs',                      # whole-trade-day program
             'dipole': 'dipole_peaks', 'renders': 'dipole_renders',
             'crypto_ng_tick': 'crypto_ng_tick',        # the crypto and ng exhaustion calculation at the tick:
 #                                                        every trade at its own nanosecond (Greg, 2026-11-18)
+            'continuing': 'continuing',                # the runs of trades and the dipole stretches that continue
+#                                                        over more than one trade (Greg, 2026-11-18)
             'ticks': 'tick_renders'}                   # the three renders at the tick and the stacked pairs
 #                                                        (a calc job may name them beside its
 #                                                        calculations, so
