@@ -16,6 +16,9 @@ What is different from the first launcher (`pod_run.sh`, which this replaces):
     job:  calc:<calculation>,<calculation>,...   each its own helper, started together, each pinned to its own CPU
           ways                                   the chain links in six ways, peak by peak (root/chain_ways.py)
           legs                                   the trade legs of 6 pm to 8 pm on Oct 2 and Oct 17 (root/trade_legs.py)
+          moment:<received ns>                   one trade's own exhaustion graph, printed from the stored arcs of the
+                                                 crypto_ng data run: the trade under way at that moment
+          trade:<number>                         the same for a trade named by its number
           rebuild                                the rows built again with the outside tables as they stand, then
                                                  flow_peak and outside_changes beside them (the changed pieces);
                                                  the unchanged calculations are not run again (Greg: no tests except
@@ -59,6 +62,7 @@ ROW_JOBS = {'legs': 'trade_legs',                      # whole-trade-day program
 #                                                        (a calc job may name them beside its
 #                                                        calculations, so
 #                                                        everything starts together, each on its own CPU)
+PRINT_ONE = re.compile(r'(moment|trade):([0-9]+)')     # print one trade's exhaustion graph from the stored arcs
 COMMIT = re.compile(r'[0-9a-f]{40}')
 ONE_THREAD = {name: '1' for name in ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS')}
 ACCEPTED, REFUSED, BUSY = 202, 403, 409
@@ -119,6 +123,12 @@ def run(day: str, commit: str, job: str):
                 if done.returncode:
                     break
             started = []
+        elif PRINT_ONE.fullmatch(job):
+            how, which = PRINT_ONE.fullmatch(job).groups()
+            started = [('crypto_ng_print', cpus[0], subprocess.Popen(
+                [sys.executable, '-m', 'root.crypto_ng_exhaustion', day, '--rows', str(ROWS), '--out', str(OUT),
+                 f'--{how}', which], cwd=CODE, env=environment, stdout=open(OUT / 'crypto_ng_print.log', 'w'),
+                stderr=subprocess.STDOUT, preexec_fn=functools.partial(os.sched_setaffinity, 0, {cpus[0]})))]
         elif job in ROW_JOBS:
             module = ROW_JOBS[job]
             started = [(module, cpus[0], subprocess.Popen(
@@ -148,7 +158,7 @@ def run(day: str, commit: str, job: str):
 
 
 def allowed(job: str) -> bool:
-    if job in MODEL_JOBS or job in ROW_JOBS or job == 'rebuild':
+    if job in MODEL_JOBS or job in ROW_JOBS or job == 'rebuild' or PRINT_ONE.fullmatch(job):
         return True
     kind, _, names = job.partition(':')
     return kind == 'calc' and bool(names) and all(name in CALCULATIONS or name in ROW_JOBS

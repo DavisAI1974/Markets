@@ -30,14 +30,23 @@ WHAT IS WRITTEN (all for observation and verification only; never a signal, neve
 - `crypto-ng-program-trades-<trade day>.parquet`: one line per trade of the program, with every column the
   program itself writes (named `program_...`), its onset, its end, its length, and where its arc is drawn.
 - `crypto-ng-arcs-<trade day>.parquet`: every trade's own arc, 1,051 readings.
-- pictures: ONE PICTURE FOR EACH TRADE, ONE GRAPH IN IT (Greg, 2026-11-18: "Each trade should have its own
-  exhaustion graph. No more than one graph per render"): that trade's own arc, nothing else on it.
+- NO PICTURE IN THE DATA RUN (Greg, 2026-11-18: "Run the entire trade day amount of trades but individually ...
+  That is initial data output run. Once its done then we print exhaustion render for the one trade"). A picture
+  is printed afterwards from the stored arcs, for the trade asked for: ONE PICTURE FOR ONE TRADE, ONE GRAPH IN IT
+  ("Each trade should have its own exhaustion graph. No more than one graph per render"), named
+  `crypto-ng-exhaustion-<trade day>-trade-NNNNN.png`.
 - `CRYPTO-NG-EXHAUSTION-<trade day>.json`: the receipt: counts, the row used, the program's fingerprints, the
   checks, every file's fingerprint.
 
 The ticks reach this only through `tape.rows_for_calculations()`: the four trade days, nothing from outside them.
 
     python3 -m root.crypto_ng_exhaustion 20231002 --rows <stored rows folder> --out <folder>
+        the data run: every trade of the trade day, each worked out and stored on its own; no picture
+    python3 -m root.crypto_ng_exhaustion 20231002 --rows <...> --out <folder of the data run> --moment <ns>
+        prints the one graph of the program's trade that was under way at that moment on the received clock
+        (when it held no trade then: the next trade to start), from the stored arcs; nothing is worked out again
+    python3 -m root.crypto_ng_exhaustion 20231002 --rows <...> --out <folder of the data run> --trade <number>
+        the same for a trade named by its number
 """
 from __future__ import annotations
 
@@ -46,8 +55,6 @@ import collections
 import dataclasses
 import hashlib
 import json
-import multiprocessing
-import os
 import time
 from pathlib import Path
 
@@ -72,7 +79,6 @@ DPI = 100
 FLOW_LIMIT = 1.08                                      # the flow runs from -1 to 1; the graph shows a little more
 BIG, SMALL, LINE, THIN, FAINT = 10, 8, 1.4, 0.8, 0.25  # drawing only: two letter sizes, two line widths, the grid
 TRADE_DIGITS = 5                                       # a trade's number in its picture's name, written 00000
-GRAPHS_AT_ONCE = 16
 
 GRID_COLUMNS = [
     ('cell', 'The tenth of a second, counted from the open of the trade day (0 is the first).'),
@@ -119,7 +125,6 @@ TRADE_COLUMNS = [
     ('program_rev_conv', 'Written by the program: the figure that read gives.'),
     ('arc_stored', 'Yes when the 45 seconds before and the 60 after fit inside the trade day, so the arc exists.'),
     ('arc_has_nothing_traded', 'Yes when some tenth of a second of the arc had nothing traded in its 20 seconds.'),
-    ('render', 'This trade\'s own exhaustion graph: one picture, one graph.'),
 ]
 GRID_NAMES, TRADE_NAMES = [n for n, _ in GRID_COLUMNS], [n for n, _ in TRADE_COLUMNS]
 
@@ -247,10 +252,6 @@ def draw_trade(job) -> tuple:
     return Path(path).name, len(raw), hashlib.sha256(raw).hexdigest()
 
 
-def helper(cpus):
-    os.sched_setaffinity(0, {cpus.get()})              # each drawing helper on its own CPU
-
-
 def save(out: Path, name: str, columns: dict, types: dict) -> dict:
     import pyarrow as pa
     import pyarrow.parquet as pq
@@ -299,9 +300,8 @@ def run(trade_day, rows_folder: Path, out: Path) -> dict:
             bool(leg.close_maker), float(leg.gross_bps), float(leg.net_bps), float(leg.swing_bps), float(leg.size),
             bool(leg.lean_exit), bool(leg.stop_exit), d['dive_depth'], d['lean_flip'], d['lean_close'],
             d['dipole_class'], d['rev_conv'], arc is not None,
-            None if arc is None else bool(quiet[o - ng.PRE:o + ng.POST + 1].any()),
-            None if arc is None else f'crypto-ng-exhaustion-{day}-trade-{k:0{TRADE_DIGITS}d}.png'))
-    text = {'side', 'program_dipole_class', 'render'}
+            None if arc is None else bool(quiet[o - ng.PRE:o + ng.POST + 1].any())))
+    text = {'side', 'program_dipole_class'}
     files.append(save(out, f'crypto-ng-program-trades-{day}.parquet',
                       dict(zip(TRADE_NAMES, map(list, zip(*lines)) if lines else [[] for _ in TRADE_NAMES])),
                       {name: pa.string() for name in text}))
@@ -313,21 +313,6 @@ def run(trade_day, rows_folder: Path, out: Path) -> dict:
         arc_nothing_traded=[quiet[lines[k][f['onset_cell']] - ng.PRE:lines[k][f['onset_cell']] + ng.POST + 1].tolist()
                             for k in kept]), {}))
 
-    name_of_day = f'{trade_day:%a %b %d, %Y}'
-    jobs = [(str(out / lines[k][f['render']]),
-             f'Crypto and ng program, natural gas, trade day {name_of_day}. Trade {k}: the program\'s '
-             f'{lines[k][f["side"]]},\nonset {eastern_text(lines[k][f["onset_received_ns"]])[CLOCK]} Eastern, lasted '
-             f'{lines[k][f["length_seconds"]]:,.1f} s. Its own exhaustion arc; nothing averaged.',
-             arcs[j], lines[k][f['length_seconds']]) for j, k in enumerate(kept)]
-    os.sched_setaffinity(0, range(os.cpu_count()))     # the pod pins this program to one CPU; the drawing is
-    cpus = multiprocessing.Manager().Queue()           # spread over every CPU the pod allows, one helper on each
-    mine = sorted(os.sched_getaffinity(0))
-    for cpu in mine:
-        cpus.put(cpu)
-    with multiprocessing.Pool(len(mine), initializer=helper, initargs=(cpus,)) as pool:
-        drawn = pool.map(draw_trade, jobs, chunksize=GRAPHS_AT_ONCE)
-    files += [dict(file=name, bytes=size, sha256=sha) for name, size, sha in drawn]
-
     sided = g['trade'] & ((g['side'] == BUY) | (g['side'] == SELL))
     receipt = dict(
         what='The natural gas exhaustion render made the way the crypto one was made: the crypto and ng program',
@@ -336,8 +321,10 @@ def run(trade_day, rows_folder: Path, out: Path) -> dict:
         use='OBSERVATION AND VERIFICATION ONLY. Never a signal, never an input to another calculation.',
         left_out_on_his_word=['the winner and loser labels', 'the average line of each kind',
                               'the short or long split (each trade\'s length is a stored number, no label)'],
-        pictures='Greg, 2026-11-18: "Each trade should have its own exhaustion graph. No more than one graph per '
-                 'render". One picture for each trade, one graph in it. No picture holds more than one trade.',
+        pictures='None in this run (Greg, 2026-11-18: "That is initial data output run"). A trade\'s graph is printed '
+                 'afterwards from the stored arcs: one picture for one trade, one graph in it ("Each trade should '
+                 'have its own exhaustion graph. No more than one graph per render"), named '
+                 'crypto-ng-exhaustion-<trade day>-trade-NNNNN.png.',
         trade_day=trade_day.isoformat(),
         program=dict(source='DavisAI1974/Markets 75b15fa10193fab218b6469e5e5f0f49359880e1 (2026-07-07)',
                      git_blob_ids={name: blob((PROGRAM / name).read_bytes()) for name in PROGRAM_FILES},
@@ -360,7 +347,7 @@ def run(trade_day, rows_folder: Path, out: Path) -> dict:
             program_trades_with_no_arc=dict(left_out),
             arcs_holding_a_stretch_where_nothing_traded=sum(1 for line in lines if line[f['arc_has_nothing_traded']]),
             program_exits_it_did_not_count_as_filled_at_its_quote=int(res.n_taker_closes) if res.legs else 0,
-            exhaustion_graphs_one_for_each_trade=len(jobs)),
+            pictures_in_this_run=0),
         built_in='Every onset holds a trade against the trade\'s own side (the program is filled by the next trade '
                  'on the other side), so every arc steps down at 0 and back up 20 seconds later. A turn is marked '
                  'only after recent trading has moved the trade\'s way, so the rise into 0 is partly made by how '
@@ -372,12 +359,58 @@ def run(trade_day, rows_folder: Path, out: Path) -> dict:
     return receipt
 
 
+def print_one(trade_day, out: Path, moment=None, trade=None) -> dict:
+    """One trade's own exhaustion graph, printed from what the data run stored in `out`. The trade is named by its
+    number, or by a moment on the received clock: the trade under way then (onset at or before it, end after it);
+    when the program held no trade at that moment, the next trade to start. A trade with no stored arc cannot be
+    printed and the run says so."""
+    import pyarrow.parquet as pq
+    day = f'{trade_day:%Y%m%d}'
+    trades = pq.read_table(out / f'crypto-ng-program-trades-{day}.parquet').to_pylist()
+    checks.need(trades, 'the data run stored no trade of the program for this trade day')
+    if trade is None:
+        under_way = [t for t in trades if t['onset_received_ns'] <= moment < t['end_received_ns']]
+        later = [t for t in trades if t['onset_received_ns'] > moment]
+        checks.need(under_way or later, 'no trade of the program was under way at that moment and none started after')
+        chosen, why = ((under_way[0], 'the trade under way at that moment') if under_way else
+                       (later[0], 'the program held no trade at that moment: the next trade to start'))
+    else:
+        named = [t for t in trades if t['trade'] == trade]
+        checks.need(named, f'the program made no trade numbered {trade} on this trade day')
+        chosen, why = named[0], 'named by its number'
+    checks.need(chosen['arc_stored'], f'trade {chosen["trade"]} has no stored arc: its 105 seconds do not fit')
+    arcs = pq.read_table(out / f'crypto-ng-arcs-{day}.parquet', filters=[('trade', '=', chosen['trade'])]).to_pylist()
+    checks.need(len(arcs) == 1, f'trade {chosen["trade"]}: its stored arc was not found')
+    name = f'crypto-ng-exhaustion-{day}-trade-{chosen["trade"]:0{TRADE_DIGITS}d}.png'
+    title = (f'Crypto and ng program, natural gas, trade day {trade_day:%a %b %d, %Y}. Trade {chosen["trade"]}: the '
+             f'program\'s {chosen["side"]},\nonset {eastern_text(chosen["onset_received_ns"])[CLOCK]} Eastern, lasted '
+             f'{chosen["length_seconds"]:,.1f} s. Its own exhaustion arc; nothing averaged.')
+    _, size, sha = draw_trade((str(out / name), title, np.array(arcs[0]['arc_with_trade_flow']),
+                               chosen['length_seconds']))
+    receipt = dict(what='One trade\'s own exhaustion graph, printed from the stored arcs of the data run',
+                   asked='Greg, 2026-11-18: "Each trade should have its own exhaustion graph. No more than one graph '
+                         'per render"',
+                   trade_day=trade_day.isoformat(), asked_for=dict(moment_received_ns=moment, trade=trade),
+                   chosen=why, trade={k: chosen[k] for k in ('trade', 'side', 'onset_received_ns', 'end_received_ns',
+                                                            'length_seconds')},
+                   onset_eastern=eastern_text(chosen['onset_received_ns']),
+                   end_eastern=eastern_text(chosen['end_received_ns']),
+                   files=[dict(file=name, bytes=size, sha256=sha)])
+    (out / f'CRYPTO-NG-RENDER-{day}.json').write_text(json.dumps(receipt, indent=1) + '\n')
+    return receipt
+
+
 def main():
     ap = argparse.ArgumentParser(description='The natural gas exhaustion render, the crypto and ng program')
     ap.add_argument('trade_day')
     ap.add_argument('--rows', type=Path, required=True)
     ap.add_argument('--out', type=Path, required=True)
+    ap.add_argument('--moment', type=int, help='print the graph of the trade under way at this received time (ns)')
+    ap.add_argument('--trade', type=int, help='print the graph of the trade with this number')
     a = ap.parse_args()
+    if a.moment is not None or a.trade is not None:
+        print(json.dumps(print_one(parse_trade_day(a.trade_day), a.out, a.moment, a.trade), indent=1))
+        return
     receipt = run(parse_trade_day(a.trade_day), a.rows, a.out)
     print(json.dumps({k: receipt[k] for k in ('trade_day', 'counts', 'checks', 'seconds')}, indent=1))
 
