@@ -8,7 +8,7 @@ predetermined values".
 
 ONE PICTURE PER TRADE LEG (the stored trade legs of `leg_peaks`: the trade price curve cut into its own moves), three
 separate graphs on one clock of real timestamps:
-1. THE TRADE PRICE CURVE: the price of every trade, drawn smooth through them (drawing only; every trade is a dot).
+1. THE TRADE PRICE: the price of every trade, a dot each, joined in the order they printed. Nothing is smoothed.
 2. THE DIPOLE, the crypto formula (`_dipole_price_overlay.py`, Markets `75b15fa`): bought minus sold over bought plus
    sold, over the trades of the last 60 seconds, turned to the trade's side.
 3. THE EXHAUSTION, the crypto formula (`research/shape_s71/regroup2.py`, the same commit): the same figure over the
@@ -82,7 +82,6 @@ ROOM = 0.08                                            # drawing only: the share
 BIG, SMALL, TINY, DOT = 11, 8, 7, 5                    # drawing only: letter and dot sizes
 LINE, THIN, FAINT, SHADE = 1.4, 0.8, 0.25, 0.4         # drawing only: line widths, the grid, the shaded trade leg
 GAP, TITLE_AT, TILT, ON_TOP = 0.3, 0.985, 30, 3        # drawing only (the gap leaves room for a two-line graph title)
-CURVE_POINTS = 4000                                    # drawing only: how finely the smooth price curve is drawn
 PICTURES_AT_ONCE = 4                                   # pictures handed to a drawing helper at once
 FACTS = ['fact', 'leg_number', 'direction', 'steps', 'leg_first_trade_position', 'leg_first_trade_received_time_ns',
          'leg_last_trade_position', 'known_position', 'known_received_time_ns', 'leg_start_price', 'price']
@@ -177,18 +176,14 @@ def helper(cpus, work):
     WORK.update(work)
 
 
-def smooth(axis, times, prices):
-    """The trade price curve: a dot on every trade, and a shape-keeping curve through the last trade of each
-    instant (it does not swing past the points). Drawing only: nothing is averaged."""
-    from scipy.interpolate import PchipInterpolator
-    since = np.asarray(times, np.int64) - int(times[0])    # nanoseconds from the first trade: exact as decimals
-    prices = np.asarray(prices, float)
-    last = np.append(np.diff(since) > 0, True)
-    if last.sum() > 1:
-        fine = np.linspace(0, float(since[-1]), CURVE_POINTS)
-        axis.plot([clock(int(times[0]) + v) for v in fine],
-                  PchipInterpolator(since[last].astype(float), prices[last])(fine), color='#b03a2e', lw=LINE)
-    axis.scatter([clock(int(v)) for v in times], prices, s=DOT, color='#17202a', zorder=ON_TOP)
+def price_line(axis, times, prices):
+    """The trade price as it printed: a dot on every trade, joined in tape order by straight lines. Nothing is
+    drawn that did not trade: no smoothing, no bend between two trades (Greg, 2026-11-23: "the price curves don't
+    look right"; the smooth curve drew arcs where nothing traded and left dots hanging off it where one order
+    traded at several prices at one instant)."""
+    at = [clock(int(v)) for v in times]
+    axis.plot(at, prices, color='#b03a2e', lw=LINE)
+    axis.scatter(at, prices, s=DOT, color='#17202a', zorder=ON_TOP)
     axis.set_ylabel('trade price, dollars')
 
 
@@ -223,8 +218,8 @@ def draw_one(job) -> dict:
     turn, with_it = SIDE[direction]
     a, b = int(np.searchsorted(w['time'], first, 'left')), int(np.searchsorted(w['time'], last, 'right'))
     figure, axes = plt.subplots(GRAPHS, 1, figsize=INCHES, sharex=True, gridspec_kw={'hspace': GAP})
-    smooth(axes[0], w['time'][a:b], w['price'][a:b])
-    axes[0].set_title('1. THE TRADE PRICE CURVE, drawn smooth: through every trade, nothing averaged', loc='left',
+    price_line(axes[0], w['time'][a:b], w['price'][a:b])
+    axes[0].set_title('1. THE TRADE PRICE: every trade a dot, joined in the order they printed', loc='left',
                       fontsize=BIG)
     for number, (name, (_, seconds)) in enumerate(LINES.items(), start=GRAPHS - len(LINES)):
         axis = axes[number]

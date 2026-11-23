@@ -283,7 +283,7 @@ or ends: the trade legs and the humps of the two stored lines do.
 | `PRICE_UNIT` | 10^9 | The tape's prices are in billionths of a dollar. |
 | `BYTES_PER_MEGABYTE` | 2^20 | Unit conversion, for the size of the pictures written in the receipt. |
 | `ROOM` | 0.08 | Drawing only: the share of a line's own range left clear above and below it. The scale of the dipole and the exhaustion graphs is set by the line itself in each picture (Greg, 2026-11-23: smaller scales for the y axis); no value is changed. |
-| `INCHES`, `GRAPHS`, `DPI`, `LEAN_LIMIT`, `BIG`, `SMALL`, `TINY`, `DOT`, `LINE`, `THIN`, `FAINT`, `SHADE`, `GAP`, `TITLE_AT`, `TILT`, `ON_TOP`, `CURVE_POINTS`, `PICTURES_AT_ONCE` | drawing sizes | Drawing only: the picture's size and the number of graphs in it, sharpness, the edge of the line graphs, letter and dot sizes, line widths, the grid, the shading, spacing, the tilt of the time labels, how finely the smooth price curve is drawn, pictures handed to a helper at once. |
+| `INCHES`, `GRAPHS`, `DPI`, `LEAN_LIMIT`, `BIG`, `SMALL`, `TINY`, `DOT`, `LINE`, `THIN`, `FAINT`, `SHADE`, `GAP`, `TITLE_AT`, `TILT`, `ON_TOP`, `PICTURES_AT_ONCE` | drawing sizes | Drawing only: the picture's size and the number of graphs in it, sharpness, the edge of the line graphs, letter and dot sizes, line widths, the grid, the shading, spacing, the tilt of the time labels, pictures handed to a helper at once. |
 | `FACTS`, `INDEX_COLUMNS`, `INDEX_NAMES` | column names | The stored facts read about a trade leg, and the columns of the index table. |
 | `WORK` | empty | What each drawing helper holds once it is started. |
 
