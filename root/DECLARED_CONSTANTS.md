@@ -361,3 +361,13 @@ Nothing new is calculated on the tape: every look-up of the two research tables 
 | `SIGN` | +1, -1 | A buying hump stands above zero, a selling hump below. |
 | `LINES`, `LINE_READS`, `RECEIVED`, `BUY`, `SELL`, `QUOTE`, `MOVES`, `MARKS`, `HUMPS` | names | The two stored lines and their columns, the stored words, and the columns read from the rows and from the two research tables. |
 | `COLUMNS`, `NAMES` | column names | The columns of the listed first steps. |
+
+## `root/research_excel.py` (the research threads put into the trade day sheets; Greg, 2026-11-23: "make columns for each new research question and fill in data pinned to timestamp")
+
+Nothing is worked out: stored values are written into sheets and read back.
+
+| Constant | Value | Why |
+|---|---|---|
+| `NANO_DIGITS` | 9 | A nanosecond inside a second, written 000000000 in the Eastern time added for reading. |
+| `LEFT_OUT` | three column names | The stored columns of the run of trades under way at a first step: left out of the sheets on Greg's yes. |
+| `PINNED`, `TABLES`, `WHICH`, `QUESTIONS`, `READ_ME` | names and words | The timestamp each row is pinned to, the two stored tables, the research question each column is listed under, and the lines added to the read-me page. |
