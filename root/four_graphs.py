@@ -34,8 +34,7 @@ FOUR_INCHES = (7.2, 14.5)                              # drawing only: four grap
 FOUR_GRAPHS = 4
 
 
-def draw(path: Path, title: str, t: dict, line_at: np.ndarray, line: np.ndarray, mark=None) -> dict:
-    """`mark`, when given, is called with the four graphs once they are drawn, to mark an event on them."""
+def draw(path: Path, title: str, t: dict, line_at: np.ndarray, line: np.ndarray) -> dict:
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
@@ -66,8 +65,6 @@ def draw(path: Path, title: str, t: dict, line_at: np.ndarray, line: np.ndarray,
     flow.set_ylabel('bought minus sold over both\n(+1 all buying, -1 all selling)')
     flow.set_title('4. THE EXHAUSTION LINE: the 20-second flow, at every moment it changes', loc='left',
                    fontsize=TR.BIG)
-    if mark is not None:
-        mark(axes)
     for axis in axes:
         axis.grid(alpha=TR.FAINT)
         axis.tick_params(labelsize=TR.SMALL)

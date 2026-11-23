@@ -291,8 +291,8 @@ Nothing is worked out in it: stored values are drawn. Its other drawing sizes ar
 ## `root/leg_renders.py` (one picture for every trade leg; Greg, 2026-11-23)
 
 Nothing is worked out in it: stored values are drawn. No number sets where a picture starts or ends: the trade leg
-before, the trade leg after and the stored runs, stretches and humps they touch do. Its drawing sizes are those of
-`root/four_graphs.py` and `root/tick_renders.py`.
+before, the trade leg after and the stored runs of trades and dipole stretches they touch do. Its drawing sizes are
+those of `root/tick_renders.py` (the three renders).
 
 | Constant | Value | Why |
 |---|---|---|

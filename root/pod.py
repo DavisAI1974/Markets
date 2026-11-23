@@ -23,8 +23,9 @@ What is different from the first launcher (`pod_run.sh`, which this replaces):
           trade:<number>                         the same for a trade of the program named by its number
           tape:<position on tape>                the same for one trade on the tape
           stretch:<from ns>-<to ns>              the 20-second line over one stretch of the trade day
-          leg_renders                            one picture for every trade leg of the trade day: four graphs on
-                                                 one clock, the trade leg marked, with what came before and after
+          leg_renders                            one picture for every trade leg of the trade day: the three
+                                                 renders on one clock, the trade leg marked, with what came before
+                                                 and after
           leg_renders:<from ns>-<to ns>          the same for the trade legs whose first trade is inside the stretch
           rebuild                                the rows built again with the outside tables as they stand, then
                                                  flow_peak and outside_changes beside them (the changed pieces);
