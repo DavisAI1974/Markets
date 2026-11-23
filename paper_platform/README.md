@@ -23,4 +23,3 @@ The proposed host is Render using `paper_platform/render.yaml`. The proposed pho
 ## Local verification
 
 Set `MARKETS_DATA` to a checkout containing `data/nymex_mbo/ng_v0_oct2023/MANIFEST.json` and its purchased files. Run `python -B -m pytest -p no:cacheprovider paper_platform`. The tests check field preservation, the Sunday-to-Monday boundary, the signed-trade flow calculations, the physically truncated tape prefix and the HTML/event API using a real decision. These tests do not authorize a platform run.
-

@@ -3,4 +3,3 @@ databento==0.81.0
 databento-dbn==0.62.0
 numpy==2.3.5
 requests>=2.32.4,<3
-

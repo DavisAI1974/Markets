@@ -11,4 +11,3 @@ services:
         sync: false
       - key: PAPER_RELAY_TOKEN
         sync: false
-

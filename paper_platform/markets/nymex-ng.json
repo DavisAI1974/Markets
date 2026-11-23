@@ -12,4 +12,3 @@
   "adapter": "nymex-ng",
   "rules": ["CL01","CL02","CL03","CL04","CL05","CL06","CL07","CL08","CL09","CL10","CL11","CL12","CL13","CL14","CL15","CX01","CX02","CX03","CX04","CX05","CX06","CX07","CX08","CX09","CX10","CX11","CX12","CX13","CX14","CX15"]
 }
-

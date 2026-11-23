@@ -67,4 +67,3 @@ jobs:
           PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
           PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
         run: python -B -m paper_platform.run --greg-go --data purchased-inputs --market "$MARKET" --trade-day "$TRADE_DAY" --message-budget "$MESSAGE_BUDGET" --event-budget "$EVENT_BUDGET"
-
