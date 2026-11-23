@@ -42,6 +42,11 @@ held by him for the later stage); the orders standing at EVERY level of a move, 
 fill, and Codex's information measure (each would be a new calculation: the last one also needs one-second bins).
 NO WINDOW, NO LABEL, NO AVERAGE, NO MIDPOINT, NOTHING RANKED. Nothing crosses from one trade day to another.
 
+EVERY STORED LINE IS READ BY PLACE ON THE TAPE, NEVER BY TIME ALONE (corrected 2026-11-23). The first run took "the
+last read at or before the tick's nanosecond"; several trades can share a nanosecond, so that read stood on trades
+that came after the tick. `root/research_trace.py` traced it: every first step whose two exhaustion figures
+differed is equal once read by place. A read now holds nothing that came after its tick on the tape.
+
     python3 -m root.research_threads 20231017 --rows <folder of the trade day's stored files> --out <folder>
 """
 from __future__ import annotations
@@ -93,7 +98,8 @@ MOVE_COLUMNS = [
 ] + [(f'{name}_at_first_step', f'As stored on its first step line, once that tick was done: {name}'
       + (' (dollars).' if name in PRICES else '.')) for name in AT_STEP] + [
     ('exhaustion_20s_at_first_step', 'THE EXHAUSTION LINE at its first step: bought minus sold over bought plus sold, '
-     'the trades of the last 20 seconds, the stored line as it stood at that nanosecond. Above zero buying, below '
+     'the trades of the last 20 seconds, the stored line as it stood AT THAT TICK (read by place on the tape: no '
+     'trade that came after the tick is in it, also when it shares the tick\'s nanosecond). Above zero buying, below '
      'zero selling. Empty where nothing with a side had traded in the span.'),
     ('dipole_60s_at_first_step', 'THE DIPOLE LINE at its first step: the same figure over the last 60 seconds.'),
     ('best_bid_at_end', 'The best bid once its ending tick was done, in dollars.'),
@@ -113,7 +119,9 @@ HUMP_ADDED = [
     ('began_position', 'The trade it began on: its position on the tape. Empty when it began with no tick.'),
     ('ended_on', 'The same for the read at which it ended. Empty when it had not ended.'),
 ] + [(f'{what}_at_{mark}', f'{words} as it stood at the moment the hump {said}'
-      + (', in dollars: once the last tick received by then was done.' if what != 'dipole_60s' else '.'))
+      + (', in dollars: once the tick of that read was done (when the read is trades leaving the span: once the '
+         'last tick received before that moment was done).' if what != 'dipole_60s'
+         else ', read by place on the tape: no trade that came after that read is in it.'))
      for mark, said in (('began', 'began'), ('furthest', 'first stood at its furthest'), ('ended', 'ended'))
      for what, words in (('best_bid', 'The best bid'), ('best_ask', 'The best offer'),
                          ('dipole_60s', 'The dipole line (60 seconds)'))] + [
@@ -146,9 +154,19 @@ def parts(rows_folder: Path, stem: str, columns=None) -> dict:
     return dict(held)
 
 
-def standing(moments: np.ndarray, at: int) -> int:
-    """The line's read standing at a moment: the last one made at or before it (below zero: none yet)."""
-    return int(np.searchsorted(moments, at, 'right')) - 1
+def standing(line: dict, at: int, position) -> int:
+    """The read of a stored line standing AT A TICK: the last one made before the tick's nanosecond, or at it and not
+    after the tick on the tape (trades leaving at a nanosecond leave first; a trade's read counts when its place on
+    the tape is at or before the tick's). With no tick (`position` empty: a moment trades left the span) only
+    trades leaving at that nanosecond count. Below zero: none yet. NEVER BY TIME ALONE: several trades can share a
+    nanosecond, and the last read at that nanosecond stands on trades that came after the tick (traced by
+    `root/research_trace.py`, 2026-11-23)."""
+    a, b = int(np.searchsorted(line['moments'], at, 'left')), int(np.searchsorted(line['moments'], at, 'right'))
+    k = a - 1
+    for r in range(a, b):
+        if line['what'][r] != TRADE_READ or (position is not None and line['position'][r] <= position):
+            k = r
+    return k
 
 
 def the_lines(rows_folder: Path, day: str) -> dict:
@@ -162,10 +180,10 @@ def the_lines(rows_folder: Path, day: str) -> dict:
     return out
 
 
-def line_at(line: dict, at):
+def line_at(line: dict, at, position):
     if at is None:
         return None
-    k = standing(line['moments'], at)
+    k = standing(line, at, position)
     return line['flow'][k] if k >= 0 else None
 
 
@@ -189,11 +207,12 @@ def the_quote(rows_folder: Path, trade_day) -> dict:
     return q
 
 
-def quote_at(q: dict, at):
-    """The best bid and the best offer standing at a moment: once the last tick received by then was done."""
+def quote_at(q: dict, row_of: dict, at, position):
+    """The best bid and the best offer standing at a tick: once that tick was done. With no tick (a moment trades
+    left the span): once the last tick received before that moment was done."""
     if at is None:
         return None, None
-    k = int(np.searchsorted(q['received'], at, 'right')) - 1
+    k = row_of[position] if position is not None else int(np.searchsorted(q['received'], at, 'left')) - 1
     return (dollars(q['bid'][k]), dollars(q['ask'][k])) if k >= 0 else (None, None)
 
 
@@ -232,7 +251,7 @@ def the_moves(rows_folder: Path, day: str, lines: dict, q: dict) -> tuple:
         for name in AT_STEP:
             line[f'{name}_at_first_step'] = dollars(f[name][a]) if name in PRICES else f[name][a]
         for name, stored_line in lines.items():
-            line[f'{name}_at_first_step'] = line_at(stored_line, f['known_received_time_ns'][a])
+            line[f'{name}_at_first_step'] = line_at(stored_line, f['known_received_time_ns'][a], f['known_position'][a])
         bought, sold, ours = f['flow_bought_20s'][a], f['flow_sold_20s'][a], line['exhaustion_20s_at_first_step']
         if not bought and not sold:
             agree['both empty' if ours is None else 'the step line holds no flow, the stored line does'] += 1
@@ -246,7 +265,7 @@ def the_moves(rows_folder: Path, day: str, lines: dict, q: dict) -> tuple:
                         given_back=dollars(f['given_back'][z]), best_bid_at_end=dollars(f['best_bid'][z]),
                         best_ask_at_end=dollars(f['best_ask'][z]))
             for name, stored_line in lines.items():
-                line[f'{name}_at_end'] = line_at(stored_line, f['known_received_time_ns'][z])
+                line[f'{name}_at_end'] = line_at(stored_line, f['known_received_time_ns'][z], f['known_position'][z])
         if kind == LEG:
             checks.need(start in place, f'{key}: its first trade is not a tick of the trade day')
             line['best_bid_at_first_trade'] = dollars(q['bid'][place[start]])
@@ -294,14 +313,22 @@ def the_humps(rows_folder: Path, day: str, lines: dict, q: dict) -> tuple:
         checks.need(first is not None, f'hump {got["hump"]}: no read of the stored line begins it')
         on_a_trade = line['what'][first] == TRADE_READ
         got.update(began_on=line['what'][first], began_position=line['position'][first] if on_a_trade else None)
+        own = dict(began=first)                        # the read of the stored line each of its moments is
         if ended is not None:
             a, b = int(np.searchsorted(line['moments'], ended, 'left')), int(np.searchsorted(line['moments'], ended, 'right'))
             last = next((k for k in range(a, b) if line['flow'][k] is None or line['flow'][k] * sign[side] <= 0), None)
             checks.need(last is not None, f'hump {got["hump"]}: no read of the stored line ends it')
             got['ended_on'] = line['what'][last]
-        for mark, column in MARKS.items():
-            got[f'best_bid_at_{mark}'], got[f'best_ask_at_{mark}'] = quote_at(q, got[column])
-            got[f'dipole_60s_at_{mark}'] = line_at(lean, got[column])
+            own['ended'] = last
+        a, b = (int(np.searchsorted(line['moments'], got['furthest_received_ns'], edge)) for edge in ('left', 'right'))
+        far = next((k for k in range(max(a, first), b) if line['flow'][k] == got['furthest_flow']), None)
+        checks.need(far is not None, f'hump {got["hump"]}: no read of the stored line is its furthest')
+        own['furthest'] = far
+        for mark, column in MARKS.items():              # each read by place on the tape, never by time alone
+            r = own.get(mark)
+            place = line['position'][r] if r is not None and line['what'][r] == TRADE_READ else None
+            got[f'best_bid_at_{mark}'], got[f'best_ask_at_{mark}'] = quote_at(q, row_of, got[column], place)
+            got[f'dipole_60s_at_{mark}'] = line_at(lean, got[column], place)
         # the place on the tape the hump began at: its own trade, or the last tick received before its moment
         p0 = got['began_position'] if on_a_trade else \
             (int(q['position'][k]) if (k := int(np.searchsorted(q['received'], began, 'left')) - 1) >= 0 else -1)
@@ -447,7 +474,8 @@ def run(trade_day, rows_folder: Path, out: Path) -> dict:
                          'count; no step is stored twice and no move ends twice; every trade leg\'s first trade is a '
                          'tick of the trade day; the stored lines and the rows are in time order; every hump is begun '
                          'and ended by a read of the stored line; no move or hump ends before it begins; a hump\'s '
-                         'last tick before it is before its next tick after it'),
+                         'last tick before it is before its next tick after it; every moment of a hump is a '
+                         'read of the stored line, and every stored line is read by place on the tape'),
         files=files, seconds=round(time.monotonic() - started, 1))
     (out / f'RESEARCH-THREADS-{day}.json').write_text(json.dumps(receipt, indent=1) + '\n')
     return receipt
