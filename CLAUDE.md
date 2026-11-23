@@ -154,9 +154,13 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
   the DIPOLE line is that figure over the last 60 seconds (crypto: `_dipole_price_overlay.py` on the same commit,
   `W = 60`; ours: the same line the turn finder reads, stored as `crypto-ng-tick-lean-60s-<trade day>.parquet`).
   "Ticked by nano" means the TIME each read is made at, never a new formula. Any other line called dipole or
-  exhaustion (the run of trades under way against the run before it, in `root/tick_renders.py`, is Claude's own
-  and was never approved as a calculation) is named as what it is, is never drawn in their place, and is put to
-  Greg before it is built. What was left out of the crypto work on his word stays out: winner and loser, the
+  exhaustion is named as what it is, is never drawn in their place, and is put to Greg before it is built.
+  Claude's own versions of the twelfth session (the run of trades under way against the run before it; "the
+  dipole at the tick", "the exhaustion at the tick") were never approved as a calculation: their programs
+  (`root/tick_renders.py`, `root/continuing.py`, `root/four_graphs.py`) and everything stored from them were
+  deleted on his word ("Delete anything that you ran your way") and are not to be made again. NO HARD CODED START
+  OR STOP for a graph: the crypto pictures' 45 and 60 seconds are not carried; the dipole and the exhaustion start
+  and stop where the data says (a hump: the time a line stays on one side of zero). What was left out of the crypto work on his word stays out: winner and loser, the
   average line, the short or long split.
 
 - **EACH TRADE INDIVIDUALLY, never average.** No pooled hit-rate, no mean signed-bps, no averaged

@@ -1,41 +1,44 @@
-"""ROOT: one picture for every trade leg, with the dipole and the exhaustion before, through and after it.
+"""ROOT: one picture for every trade leg: its price, with the crypto DIPOLE line and the crypto EXHAUSTION line.
 
 Greg, 2026-11-23: "I want every trade leg compared against the exhaustion and the dipole. And show the prebirths for
-the dipole and exhaustion before the trade starts"; "Those 3 renders I mean. Per trade". Before it (2026-11-18): "we
-need to get the individual trade renders. we decided that the full day doesn't really tell us much when done on one
-render".
+the dipole and exhaustion before the trade starts"; "We should not be reinventing the wheel! The instructions should
+have been explicit to follow the crypto formulas"; "I want the other 2 graphs exactly like they were in crypto. And no
+hardcoded start and stop time for graphs. Dipole and exhaustion start and stop by when the data says and not our
+predetermined values".
 
-ONE PICTURE PER TRADE LEG (the stored trade legs of `leg_peaks`: the trade price curve cut into its own moves), each
-his THREE RENDERS (`root/tick_renders.py`) as three separate graphs on one clock of real timestamps, no window
-anywhere:
-1. the trade price curve; 2. the dipole at the tick; 3. the exhaustion at the tick.
+ONE PICTURE PER TRADE LEG (the stored trade legs of `leg_peaks`: the trade price curve cut into its own moves), three
+separate graphs on one clock of real timestamps:
+1. THE TRADE PRICE CURVE: the price of every trade, drawn smooth through them (drawing only; every trade is a dot).
+2. THE DIPOLE, the crypto formula (`_dipole_price_overlay.py`, Markets `75b15fa`): bought minus sold over bought plus
+   sold, over the trades of the last 60 seconds, turned to the trade's side.
+3. THE EXHAUSTION, the crypto formula (`research/shape_s71/regroup2.py`, the same commit): the same figure over the
+   last 20 seconds, turned to the trade's side.
+Both lines are READ FROM WHAT IS STORED: the crypto and ng calculation made them at the nanosecond with the July
+rules (`crypto_ng/tick.py`; `crypto-ng-tick/crypto-ng-tick-lean-60s-*` and `crypto-ng-tick-line-20s-*`). Nothing is
+worked out here and no other line is drawn under these two names. "Turned to the trade's side" is the crypto step:
+for a trade leg up the line is as stored (above zero is buying), for a trade leg down it is turned over (above zero
+is selling), so above zero always reads "with this trade leg". A line is empty where nothing traded in its span.
+
+WHAT IS NOT CARRIED FROM THE CRYPTO PICTURES, each on Greg's word: the average over many trades and the winner label;
+the cut at 45 or 60 seconds each side; the time grid. One trade leg at a time, every read at its own nanosecond.
+
+WHERE A PICTURE STARTS AND ENDS is said by the data; no number of seconds, typed clock time or count of trades:
+- the trade leg sets the frame: from the first trade of the trade leg two before (Greg, 2026-11-23: "Go two trade
+  legs back") to the last trade of the trade leg after;
+- the dipole and the exhaustion then say where it starts and stops: a HUMP is the time a line stays on one side of
+  zero (`whole_humps`), and every hump of either line that the frame touches is in the picture whole.
+The receipt names every trade leg whose picture starts at its own first trade (no lead-in).
+
 The trade leg is marked on all three graphs: its own life shaded (first trade to last trade), a line at the print
 where it first became known (its first step) and a line at the print that showed it had ended (the step back).
-
-WHERE A PICTURE STARTS AND ENDS is said by the data (Greg, 2026-11-18: "We need the data to be telling us what those
-times are"); no number of seconds, typed clock time or count of trades is in it:
-- it starts at the first trade of the trade leg TWO BEFORE this one (Greg, 2026-11-23: "Go two trade legs back"; one
-  back could leave a few seconds and a single trade), so what the dipole and the exhaustion did before the trade
-  leg began (the prebirth) is in the picture;
-- it ends at the last trade of the trade leg AFTER this one;
-- both edges are then moved outward so that nothing they touch is cut: the run of trades on one side (the
-  exhaustion at the tick) and the stretch of the dipole standing there, as stored in `continuing/`, are in the
-  picture whole.
-The first trade leg of a trade day has no trade leg before it, the second has one, and the last has none after it; a trade leg still
-going at the last trade runs to the last trade. The receipt names every trade leg whose picture starts at its own
-first trade (no lead-in).
-
-Nothing is worked out here: every value drawn is read from an output already stored for the trade day. Nothing is
-averaged, ranked, typed or labelled. The index table holds, for every trade leg, its own stored facts and the two
-edges of its picture.
+Nothing is averaged, ranked, typed or labelled.
 
 WHAT IS WRITTEN:
 - `LEG-RENDERS-COUNT-<trade day>.json`: first, before anything is drawn: how many trade legs the trade day holds
   and how many pictures this run draws.
 - `leg-render-<trade day>-<leg number>.png`: one picture per trade leg.
 - `leg-renders-index-<trade day>.parquet`: one line per trade leg of the trade day.
-- `LEG-RENDERS-<trade day>.json`: the receipt: the counts, the checks, the size of the pictures, every file's
-  fingerprint.
+- `LEG-RENDERS-<trade day>.json`: the receipt.
 
     python3 -m root.leg_renders 20231017 --rows <folder of the trade day's stored files> --out <folder> \
         [--stretch <from ns>-<to ns> | --random <how many>] [--keep-cpus]
@@ -59,14 +62,25 @@ from pathlib import Path
 import numpy as np
 
 from root import checks, store
-from root import tick_renders as TR
 from root.calcs import leg_peaks as LP
-from root.calendar import NS_PER_SECOND, parse_trade_day
-from root.crypto_ng_tick import clock, clock_text
+from root.calendar import NS_PER_SECOND, parse_trade_day, trade_day_bounds
+from root.crypto_ng_tick import clock, clock_text, whole_humps
 
 LEG_DIGITS = 5                                         # a trade leg's number in its picture's name, written 00000
-LEGS_BACK = 2                                          # Greg, 2026-11-23: a picture starts two trade legs back
+LEGS_BACK = 2                                          # Greg, 2026-11-23: a picture's frame starts two trade legs back
 BYTES_PER_MEGABYTE = 2 ** 20
+PRICE_UNIT = 10 ** 9                                   # the tape's prices are in billionths of a dollar
+LINES = dict(dipole=('crypto-ng-tick-lean-60s', 60), exhaustion=('crypto-ng-tick-line-20s', 20))   # the stored line
+#                                                        each graph reads, and its span in seconds (a label here:
+#                                                        the span is in the stored line, `crypto_ng/tick.py`)
+SIDE = {LP.UP: (1, 'buying'), LP.DOWN: (-1, 'selling')}   # the crypto turn to the trade's side
+INCHES, GRAPHS, DPI = (7.2, 11.5), 3, 110              # drawing only: to be read on a phone
+LEAN_LIMIT = 1.05                                      # the lines run from -1 to 1; the graph shows a little more
+BIG, SMALL, TINY, DOT = 11, 8, 7, 5                    # drawing only: letter and dot sizes
+LINE, THIN, FAINT, SHADE = 1.4, 0.8, 0.25, 0.4         # drawing only: line widths, the grid, the shaded trade leg
+GAP, TITLE_AT, TILT, ON_TOP = 0.17, 0.985, 30, 3       # drawing only
+CURVE_POINTS = 4000                                    # drawing only: how finely the smooth price curve is drawn
+PICTURES_AT_ONCE = 4                                   # pictures handed to a drawing helper at once
 FACTS = ['fact', 'leg_number', 'direction', 'steps', 'leg_first_trade_position', 'leg_first_trade_received_time_ns',
          'leg_last_trade_position', 'known_position', 'known_received_time_ns', 'leg_start_price', 'price']
 INDEX_COLUMNS = [
@@ -103,28 +117,18 @@ def stored(rows_folder: Path, day: str) -> dict:
     """Everything a picture is drawn from, as stored for the trade day. Nothing is worked out."""
     tick = rows_folder / 'crypto-ng-tick'
     trades = table(tick / f'crypto-ng-tick-tape-trades-{day}.parquet', ['position_on_tape', 'received_time_ns', 'price'])
-    ticks = table(rows_folder / 'tick-renders' / f'tick-dipole-{day}.parquet',
-                  ['position_on_tape', 'dipole_at_tick', 'exhaustion_at_tick', 'run_high'])
     position = np.array(trades['position_on_tape'], np.int64)
     at = np.array(trades['received_time_ns'], np.int64)
     checks.need(len(at) and bool(np.all(np.diff(at) >= 0)) and bool(np.all(np.diff(position) > 0)),
                 'the stored trades on the tape are not in tape order')
-    tick_position = np.array(ticks['position_on_tape'], np.int64)
-    where = np.minimum(np.searchsorted(tick_position, position), len(tick_position) - 1)
-    checks.need(np.array_equal(tick_position[where], position),
-                'a trade on the tape has no line in the stored dipole at the tick')
-    empty = lambda values: np.array([np.nan if values[k] is None else values[k] for k in where.tolist()], float)
-    spans = {}
-    for name in ('runs', 'dipole'):                    # each run of trades and each stretch of the dipole, as stored
-        held = table(rows_folder / 'continuing' / f'continuing-{name}-{day}.parquet',
-                     ['began_received_ns', 'ended_received_ns'])
-        began, ended = np.array(held['began_received_ns'], np.int64), np.array(held['ended_received_ns'], np.int64)
-        checks.need(bool(np.all(np.diff(began) >= 0)) and bool(np.all(ended >= began)),
-                    f'the stored {name} of the search are not in order')
-        spans[name] = (began, ended)
-    return dict(position=position, time=at, price=np.array(trades['price'], float), dipole=empty(ticks['dipole_at_tick']),
-                exhaustion=empty(ticks['exhaustion_at_tick']), high=[bool(ticks['run_high'][k]) for k in where.tolist()],
-                spans=spans)
+    s = dict(position=position, time=at, price=np.array(trades['price'], float))
+    for name, (file, _) in LINES.items():              # the two crypto lines, each at every moment it changes
+        line = table(tick / f'{file}-{day}.parquet', ['moment_received_ns', 'flow'])
+        moments = np.array(line['moment_received_ns'], np.int64)
+        checks.need(len(moments) and bool(np.all(np.diff(moments) >= 0)), f'the stored {file} is not in time order')
+        s[name + '_at'] = moments
+        s[name] = np.array([np.nan if v is None else v for v in line['flow']], float)
+    return s
 
 
 def legs_as_stored(rows_folder: Path, day: str) -> list:
@@ -144,35 +148,23 @@ def legs_as_stored(rows_folder: Path, day: str) -> list:
                 leg.update(steps=fact['steps'], last=fact['leg_last_trade_position'], ended_known=fact['known_position'],
                            ended_known_at=fact['known_received_time_ns'], end_price=fact['price'])
     numbers = sorted(legs)
-    checks.need(all('first' in legs[n] for n in numbers), 'a stored trade leg has no "leg started" fact')
+    checks.need(all('first' in legs[n] and legs[n]['direction'] in SIDE for n in numbers),
+                'a stored trade leg has no "leg started" fact, or no direction')
     checks.need(numbers == list(range(numbers[0], numbers[0] + len(numbers))), 'the stored trade legs skip a number')
     checks.need(all('last' in legs[n] for n in numbers[:-1]), 'a trade leg before the last one never ended')
     return [legs[n] for n in numbers]
 
 
-def standing(span: tuple, moment: int) -> tuple:
-    """The stored run (or stretch) the moment falls inside: where it began and where it ended. The moment itself,
-    twice, when none holds it."""
-    began, ended = span
-    k = int(np.searchsorted(began, moment, 'right')) - 1
-    if k < 0 or ended[k] < moment:
-        return moment, moment
-    last = int(ended[k])
-    while k > 0 and ended[k - 1] >= moment:            # several trades received at one nanosecond: the earliest
-        k -= 1
-    return int(began[k]), last
-
-
-def edges(legs: list, k: int, s: dict) -> tuple:
-    """Where the picture of trade leg `k` starts and ends: from the first trade of the trade leg two before to the
-    last trade of the trade leg after, moved outward so no run of trades or stretch of the dipole it touches is cut."""
+def edges(legs: list, k: int, s: dict, opens: int, closes: int) -> tuple:
+    """Where the picture of trade leg `k` starts and ends. The frame: the first trade of the trade leg two before to
+    the last trade of the trade leg after. Then the two lines say where it starts and stops: every hump of the
+    dipole line and of the exhaustion line that the frame touches is in the picture whole."""
     leg = legs[k]
     left = legs[max(k - LEGS_BACK, 0)]['first_at']
     after = legs[k + 1] if k + 1 < len(legs) else leg
     right = after['last_at'] if 'last_at' in after else int(s['time'][-1])
-    for span in s['spans'].values():
-        left, right = min(left, standing(span, left)[0]), max(right, standing(span, right)[1])
-    return int(left), int(right)
+    reach = [whole_humps(s[name + '_at'], s[name], int(left), int(right), opens, closes) for name in LINES]
+    return min(first for first, _ in reach), max(last for _, last in reach)
 
 
 def helper(cpus, work):
@@ -180,52 +172,67 @@ def helper(cpus, work):
     WORK.update(work)
 
 
+def smooth(axis, times, prices):
+    """The trade price curve: a dot on every trade, and a shape-keeping curve through the last trade of each
+    instant (it does not swing past the points). Drawing only: nothing is averaged."""
+    from scipy.interpolate import PchipInterpolator
+    since = np.asarray(times, np.int64) - int(times[0])    # nanoseconds from the first trade: exact as decimals
+    prices = np.asarray(prices, float)
+    last = np.append(np.diff(since) > 0, True)
+    if last.sum() > 1:
+        fine = np.linspace(0, float(since[-1]), CURVE_POINTS)
+        axis.plot([clock(int(times[0]) + v) for v in fine],
+                  PchipInterpolator(since[last].astype(float), prices[last])(fine), color='#b03a2e', lw=LINE)
+    axis.scatter([clock(int(v)) for v in times], prices, s=DOT, color='#17202a', zorder=ON_TOP)
+    axis.set_ylabel('trade price, dollars')
+
+
+def cut(moments: np.ndarray, values: np.ndarray, first: int, last: int) -> tuple:
+    """A stored line between the picture's two edges: the read standing at the left edge, every read inside, and
+    the last one held to the right edge (the line holds its value until its next read)."""
+    a = max(int(np.searchsorted(moments, first, 'right')) - 1, 0)
+    b = max(int(np.searchsorted(moments, last, 'right')), a + 1)
+    return np.r_[np.maximum(moments[a:b], first), last], np.r_[values[a:b], values[b - 1]]
+
+
 def draw_one(job) -> dict:
-    """One trade leg's picture: the three renders, the trade leg marked on each. `job` is (file path, title, the
-    picture's two edges, the leg's first and last trade, the print where it became known, the print that showed it
-    had ended or None)."""
+    """One trade leg's picture. `job` is (file path, title, the picture's two edges, the leg's first and last trade,
+    the print where it became known, the print that showed it had ended or None, the leg's direction)."""
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
-    path, title, first, last, leg_from, leg_to, known_at, ended_at = job
+    path, title, first, last, leg_from, leg_to, known_at, ended_at, direction = job
     w = WORK
+    turn, with_it = SIDE[direction]
     a, b = int(np.searchsorted(w['time'], first, 'left')), int(np.searchsorted(w['time'], last, 'right'))
-    x = [clock(int(v)) for v in w['time'][a:b]]
-    figure, axes = plt.subplots(TR.THREE_GRAPHS, 1, figsize=TR.THREE_INCHES, sharex=True,
-                                gridspec_kw={'hspace': TR.GAP})
-    price, dipole, exhaustion = axes
-    TR.smooth(price, w['time'][a:b], w['price'][a:b])
-    price.set_title('1. THE TRADE PRICE CURVE, drawn smooth: through every trade, nothing averaged', loc='left',
-                    fontsize=TR.BIG)
-    dipole.step(x, w['dipole'][a:b], where='post', color='#1f618d', lw=1)
-    dipole.axhline(0, color='#aab7b8', lw=TR.THIN)
-    dipole.set_ylim(-TR.LEAN_LIMIT, TR.LEAN_LIMIT)
-    dipole.set_ylabel('buying against selling\n(+1 all buying, -1 all selling)')
-    dipole.set_title('2. THE DIPOLE, at the tick: the run of trades under way against the run before it', loc='left',
-                     fontsize=TR.BIG)
-    exhaustion.step(x, w['exhaustion'][a:b], where='post', color='#17202a', lw=1)
-    highs = [k for k in range(a, b) if w['high'][k]]
-    exhaustion.scatter([clock(int(w['time'][k])) for k in highs], [w['exhaustion'][k] for k in highs], s=TR.HIGH_DOT,
-                       color='#ca6f1e', zorder=TR.ON_TOP, label='the high of a run (its last trade)')
-    exhaustion.axhline(0, color='#aab7b8', lw=TR.THIN)
-    exhaustion.set_ylabel('lots in the run\n(buying up, selling down)')
-    exhaustion.set_title('3. THE EXHAUSTION, at the tick: each run of trades on one side, built trade by trade',
-                         loc='left', fontsize=TR.BIG)
+    figure, axes = plt.subplots(GRAPHS, 1, figsize=INCHES, sharex=True, gridspec_kw={'hspace': GAP})
+    smooth(axes[0], w['time'][a:b], w['price'][a:b])
+    axes[0].set_title('1. THE TRADE PRICE CURVE, drawn smooth: through every trade, nothing averaged', loc='left',
+                      fontsize=BIG)
+    for number, (name, (_, seconds)) in enumerate(LINES.items(), start=GRAPHS - len(LINES)):
+        axis = axes[number]
+        at, values = cut(w[name + '_at'], w[name], first, last)
+        axis.step([clock(int(v)) for v in at], turn * values, where='post', color='#1f618d', lw=1)
+        axis.axhline(0, color='#aab7b8', lw=THIN)
+        axis.set_ylim(-LEAN_LIMIT, LEAN_LIMIT)
+        axis.set_ylabel(f'turned to this trade leg\'s side\n(+1 all {with_it}, with it; -1 all against)')
+        axis.set_title(f'{number + 1}. THE {name.upper()}, the crypto formula: bought minus sold over\nbought plus '
+                       f'sold, the trades of the last {seconds} seconds', loc='left', fontsize=BIG)
     for axis in axes:
-        axis.axvspan(clock(leg_from), clock(leg_to), color='#f9e79f', alpha=TR.SHADE,
+        axis.axvspan(clock(leg_from), clock(leg_to), color='#f9e79f', alpha=SHADE,
                      label='this trade leg (first trade to last)')
-        axis.axvline(clock(known_at), color='#1e8449', lw=TR.THIN, ls='--',
+        axis.axvline(clock(known_at), color='#1e8449', lw=THIN, ls='--',
                      label='the print where it became known (its first step)')
         if ended_at is not None:
-            axis.axvline(clock(ended_at), color='#922b21', lw=TR.THIN, ls=':',
+            axis.axvline(clock(ended_at), color='#922b21', lw=THIN, ls=':',
                          label='the print that showed it had ended (the step back)')
-        axis.grid(alpha=TR.FAINT)
-        axis.tick_params(labelsize=TR.SMALL)
-    exhaustion.legend(fontsize=TR.TINY, loc='best')
-    exhaustion.set_xlabel('Eastern time (the received clock)')
-    figure.suptitle(title, fontsize=TR.BIG - 1, y=TR.TITLE_AT)
-    figure.autofmt_xdate(rotation=TR.TILT)
-    figure.savefig(path, dpi=TR.DPI, bbox_inches='tight')
+        axis.grid(alpha=FAINT)
+        axis.tick_params(labelsize=SMALL)
+    axes[0].legend(fontsize=TINY, loc='best')
+    axes[-1].set_xlabel('Eastern time (the received clock)')
+    figure.suptitle(title, fontsize=BIG - 1, y=TITLE_AT)
+    figure.autofmt_xdate(rotation=TILT)
+    figure.savefig(path, dpi=DPI, bbox_inches='tight')
     plt.close(figure)
     raw = Path(path).read_bytes()
     return dict(file=Path(path).name, bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
@@ -237,6 +244,7 @@ def run(trade_day, rows_folder: Path, out: Path, stretch=None, pick=None, keep_c
     started = time.monotonic()
     day = f'{trade_day:%Y%m%d}'
     out.mkdir(parents=True, exist_ok=True)
+    opens, closes = trade_day_bounds(trade_day)
     s = stored(rows_folder, day)
     legs = legs_as_stored(rows_folder, day)
 
@@ -250,10 +258,6 @@ def run(trade_day, rows_folder: Path, out: Path, stretch=None, pick=None, keep_c
             leg['last_at'] = int(s['time'][place[leg['last']]])
             checks.need(leg['first_at'] <= leg['known_at'] and leg['first_at'] <= leg['last_at'] <= leg['ended_known_at'],
                         f'trade leg {leg["number"]}: its stored moments are out of order')
-    counted_before = [json.loads(p.read_text())['counts']['trade_legs']
-                      for p in sorted(rows_folder.rglob(f'TICK-RENDERS-{day}.json'))]
-    checks.need(all(n == len(legs) for n in counted_before),
-                f'{len(legs)} trade legs here, {counted_before} in the stored receipt of the tick renders')
 
     asked = [k for k, leg in enumerate(legs) if stretch is None or stretch[0] <= leg['first_at'] <= stretch[1]]
     checks.need(asked, 'no trade leg has its first trade inside the stretch asked for')
@@ -269,10 +273,10 @@ def run(trade_day, rows_folder: Path, out: Path, stretch=None, pick=None, keep_c
     (out / f'LEG-RENDERS-COUNT-{day}.json').write_text(json.dumps(count, indent=1) + '\n')
 
     name_of_day = f'Trade day {trade_day:%a %b %d, %Y}'
-    dollars = lambda price: None if price is None else price / TR.PRICE_UNIT
+    dollars = lambda price: None if price is None else price / PRICE_UNIT
     jobs, lines, no_lead_in, wanted = [], [], [], set(asked)
     for k, leg in enumerate(legs):
-        first, last = edges(legs, k, s)
+        first, last = edges(legs, k, s, opens, closes)
         leg_to = leg.get('last_at', int(s['time'][-1]))
         checks.need(first <= leg['first_at'] and leg_to <= last,
                     f'trade leg {leg["number"]}: its picture does not hold it whole')
@@ -288,10 +292,11 @@ def run(trade_day, rows_folder: Path, out: Path, stretch=None, pick=None, keep_c
                          f'{name_of_day}. Trade leg {leg["number"]}: {leg["direction"]}, {went}.\n'
                          f'The trade leg (shaded): {clock_text(leg["first_at"])} to {clock_text(leg_to)} Eastern.\n'
                          f'Drawn: {clock_text(first)} to {clock_text(last)}, {inside} trades.\n'
-                         f'It starts at the first trade of the trade leg two before and ends at the last trade of the\n'
-                         f'trade leg after; every run of trades and dipole stretch it touches is whole.\n'
-                         f'Nothing averaged. Every trade at its own nanosecond.',
-                         first, last, leg['first_at'], leg_to, leg['known_at'], leg.get('ended_known_at')))
+                         f'It runs from two trade legs before to the trade leg after, and the dipole and the\n'
+                         f'exhaustion set where it starts and stops: every hump of either line is whole.\n'
+                         f'Nothing averaged. Every read at its own nanosecond.',
+                         first, last, leg['first_at'], leg_to, leg['known_at'], leg.get('ended_known_at'),
+                         leg['direction']))
         lines.append((leg['number'], leg['direction'], leg.get('steps'), dollars(leg['start_price']),
                       dollars(leg.get('end_price')), leg['first'], leg['first_at'], leg['known'], leg['known_at'],
                       leg.get('last'), leg.get('last_at'), leg.get('ended_known'), leg.get('ended_known_at'),
@@ -303,9 +308,9 @@ def run(trade_day, rows_folder: Path, out: Path, stretch=None, pick=None, keep_c
     mine = sorted(os.sched_getaffinity(0))
     for cpu in mine:
         cpus.put(cpu)
-    work = {name: s[name] for name in ('time', 'price', 'dipole', 'exhaustion', 'high')}
+    work = {name: s[name] for name in ('time', 'price', *LINES, *(name + '_at' for name in LINES))}
     with multiprocessing.Pool(len(mine), initializer=helper, initargs=(cpus, work)) as pool:
-        drawn = pool.map(draw_one, jobs, chunksize=TR.PICTURES_AT_ONCE)
+        drawn = pool.map(draw_one, jobs, chunksize=PICTURES_AT_ONCE)
     checks.need(len(drawn) == len(asked) == len({f['file'] for f in drawn}),
                 'not every trade leg asked for was drawn exactly once')
 
@@ -316,15 +321,21 @@ def run(trade_day, rows_folder: Path, out: Path, stretch=None, pick=None, keep_c
     raw = (out / index_name).read_bytes()
     picture_bytes = sum(f['bytes'] for f in drawn)
     receipt = dict(
-        what='One picture for every trade leg: his three renders (the trade price curve, the dipole at the tick, the '
-             'exhaustion at the tick) on one clock, the trade leg marked on all three, with what came before it and '
-             'after it',
+        what='One picture for every trade leg: the trade price curve, the crypto dipole line (60 seconds) and the '
+             'crypto exhaustion line (20 seconds) on one clock, both turned to the trade leg\'s side, the trade leg '
+             'marked on all three, with what came before it and after it',
         asked='Greg, 2026-11-23: "I want every trade leg compared against the exhaustion and the dipole. And show '
-              'the prebirths for the dipole and exhaustion before the trade starts"; "Those 3 renders I mean. Per '
-              'trade"',
+              'the prebirths for the dipole and exhaustion before the trade starts"; "I want the other 2 graphs '
+              'exactly like they were in crypto. And no hardcoded start and stop time for graphs. Dipole and '
+              'exhaustion start and stop by when the data says and not our predetermined values"',
         trade_day=trade_day.isoformat(),
-        edges='set by the data: from the first trade of the trade leg two before to the last trade of the trade leg '
-              'after, moved outward so no run of trades or stretch of the dipole it touches is cut',
+        the_two_lines={name: dict(read_from=f'crypto-ng-tick/{file}-{day}.parquet', span_seconds=seconds,
+                                  formula='bought minus sold over bought plus sold, over the trades received in '
+                                          'the span, read at the nanosecond; turned to the trade leg\'s side')
+                       for name, (file, seconds) in LINES.items()},
+        edges='set by the data: the frame runs from the first trade of the trade leg two before to the last trade '
+              'of the trade leg after; every hump of the dipole line and of the exhaustion line that the frame '
+              'touches is in the picture whole (a hump is the time a line stays on one side of zero)',
         index_columns=[dict(column=c, what=w) for c, w in INDEX_COLUMNS],
         counts=dict(count, pictures_drawn=len(drawn), picture_bytes=picture_bytes,
                     picture_megabytes=round(picture_bytes / BYTES_PER_MEGABYTE, 1),
@@ -335,13 +346,11 @@ def run(trade_day, rows_folder: Path, out: Path, stretch=None, pick=None, keep_c
         trade_legs_with_no_lead_in=no_lead_in,
         checks=dict(passed=True,
                     what='every trade leg sits on trades the stored tape holds, with the stored time; its stored '
-                         'moments are in order; the count of trade legs is the one in the stored receipt of the tick '
-                         'renders; every picture holds its trade leg whole; every trade leg asked for was drawn '
-                         'exactly once',
-                    stored_receipts_compared=len(counted_before)),
-        read_from=[f'calc-leg_peaks-facts-{day}-part*.parquet', f'tick-renders/tick-dipole-{day}.parquet',
-                   f'crypto-ng-tick/crypto-ng-tick-tape-trades-{day}.parquet',
-                   f'continuing/continuing-runs-{day}.parquet', f'continuing/continuing-dipole-{day}.parquet'],
+                         'moments are in order; both stored lines are in time order; every picture holds its trade '
+                         'leg whole; every trade leg asked for was drawn exactly once'),
+        read_from=[f'calc-leg_peaks-facts-{day}-part*.parquet',
+                   f'crypto-ng-tick/crypto-ng-tick-tape-trades-{day}.parquet'] +
+                  [f'crypto-ng-tick/{file}-{day}.parquet' for file, _ in LINES.values()],
         nothing_applied='Nothing is worked out, averaged, ranked, typed or labelled: stored values, drawn.',
         files=[dict(file=index_name, rows=index.num_rows, bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())] + drawn,
         seconds=round(time.monotonic() - started, 1))
@@ -350,7 +359,7 @@ def run(trade_day, rows_folder: Path, out: Path, stretch=None, pick=None, keep_c
 
 
 def main():
-    ap = argparse.ArgumentParser(description='One picture for every trade leg, the three renders on one clock')
+    ap = argparse.ArgumentParser(description='One picture for every trade leg: price, crypto dipole, crypto exhaustion')
     ap.add_argument('trade_day')
     ap.add_argument('--rows', type=Path, required=True)
     ap.add_argument('--out', type=Path, required=True)

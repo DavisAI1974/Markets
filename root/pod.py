@@ -23,9 +23,8 @@ What is different from the first launcher (`pod_run.sh`, which this replaces):
           trade:<number>                         the same for a trade of the program named by its number
           tape:<position on tape>                the same for one trade on the tape
           stretch:<from ns>-<to ns>              the 20-second line over one stretch of the trade day
-          leg_renders                            one picture for every trade leg of the trade day: the three
-                                                 renders on one clock, the trade leg marked, with what came before
-                                                 and after
+          leg_renders                            one picture for every trade leg of the trade day: its price, the
+                                                 crypto dipole line and the crypto exhaustion line on one clock
           leg_renders:<from ns>-<to ns>          the same for the trade legs whose first trade is inside the stretch
           rebuild                                the rows built again with the outside tables as they stand, then
                                                  flow_peak and outside_changes beside them (the changed pieces);
@@ -67,10 +66,7 @@ ROW_JOBS = {'legs': 'trade_legs',                      # whole-trade-day program
             'dipole': 'dipole_peaks', 'renders': 'dipole_renders',
             'crypto_ng_tick': 'crypto_ng_tick',        # the crypto and ng exhaustion calculation at the tick:
 #                                                        every trade at its own nanosecond (Greg, 2026-11-18)
-            'continuing': 'continuing',                # the runs of trades and the dipole stretches that continue
-#                                                        over more than one trade (Greg, 2026-11-18)
-            'leg_renders': 'leg_renders',              # one picture for every trade leg (Greg, 2026-11-23)
-            'ticks': 'tick_renders'}                   # the three renders at the tick and the stacked pairs
+            'leg_renders': 'leg_renders'}              # one picture for every trade leg (Greg, 2026-11-23)
 #                                                        (a calc job may name them beside its
 #                                                        calculations, so
 #                                                        everything starts together, each on its own CPU)
