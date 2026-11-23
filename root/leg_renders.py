@@ -227,7 +227,7 @@ def draw_one(job) -> dict:
         axis.step([clock(int(v)) for v in at], turn * values, where='post', color='#1f618d', lw=1)
         axis.axhline(0, color='#aab7b8', lw=THIN)
         axis.set_ylim(*scale(turn * values))
-        axis.set_ylabel(f'turned to this trade leg\'s side\n(above zero {with_it}, with it; scale set by the line)')
+        axis.set_ylabel(f'above zero: {with_it}\n(with this trade leg)')
         axis.set_title(f'{number + 1}. THE {name.upper()}, the crypto formula: bought minus sold over\nbought plus '
                        f'sold, the trades of the last {seconds} seconds', loc='left', fontsize=BIG)
     for axis in axes:
