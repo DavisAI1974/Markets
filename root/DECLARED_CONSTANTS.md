@@ -318,3 +318,16 @@ Nothing is worked out: stored values are written into sheets and read back.
 | `SIDES` | buy: start, end; sell: end, start | Where a trade was bought and where it was sold: a buy is bought at its start and sold at its end, a sell the other way round. |
 | `CLOSE` | 1e-12 | Excel keeps a decimal to about 15 digits: how near a decimal read back from the file must be to the stored one. A check only. |
 | `ADDED`, `READ_ME` | words | The columns added beside the stored ones (the Eastern time for reading, the stored 20-second exhaustion line at the trade's start, the bought and sold price from the tape, the picture) and the lines of the read-me page. |
+
+## `root/research_threads.py` (the earlier research threads read again on the rebuilt data; Greg, 2026-11-23)
+
+Nothing new is calculated on the tape: stored lines are laid side by side at moments the data sets, and counted.
+
+| Constant | Value | Why |
+|---|---|---|
+| `LEG`, `RUNS`, `STEP`, `ENDED`, `UP`, `BUY`, `SELL`, `TRADE_READ` | words | The stored tables' own words: the three moves `move_steps` follows, its two kinds of line, a move going up, the two sides, and the stored line's word for a read made at a trade. |
+| `FIRST`, `SECOND`, `THIRD` | 1, 2, 3 | A move's first, second and third step: which stored step line is read (the first: when the move could first be known), and the counts "took a second step", "took a third step". Counts of the market's own steps, not a time. |
+| `CLOSE` | 1e-9 | A check only: how near the stored exhaustion line must be to the figure made from the step line's own 20-second flow to be counted "equal". Both counts are written; nothing is decided by it. |
+| `LINES` | two stored file names | The natural gas exhaustion line (20 seconds) and dipole line (60 seconds), made with the crypto formulas and stored by the crypto and ng run. Read, never made again. |
+| `READS`, `AT_STEP`, `PRICES`, `LEVEL`, `NEXT`, `MARKS` | column names | The columns read from the stored rows (through the rows gate), from a stored step line, from the stored resting line, and the names of what is looked for before and after a hump begins and at its three moments. |
+| `MOVE_COLUMNS`, `MOVE_NAMES`, `HUMP_ADDED`, `HUMP_NAMES`, `TEXT`, `YES_NO` | column names | The columns of the two tables and which of them hold words or yes and no. |

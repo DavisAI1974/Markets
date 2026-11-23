@@ -29,7 +29,8 @@ for i in "${!DAYS[@]}"; do
       git clone -q --depth 1 --filter=blob:none --no-checkout --single-branch --branch "root-rows-$d" "$GITHUB/markets-data" "$WORK/rows/$d" &&
       git -C "$WORK/rows/$d" sparse-checkout set --no-cone "/calc-leg_peaks-facts-*" "/rows-$d-part*" \
         "/crypto-ng-tick/crypto-ng-tick-tape-trades-*" "/crypto-ng-tick/crypto-ng-tick-line-20s-*" \
-        "/crypto-ng-tick/crypto-ng-tick-lean-60s-*" "/crypto-ng-tick/crypto-ng-tick-program-trades-*" &&
+        "/crypto-ng-tick/crypto-ng-tick-lean-60s-*" "/crypto-ng-tick/crypto-ng-tick-program-trades-*" \
+        "/crypto-ng-tick/crypto-ng-tick-humps-*" "/calc-move_steps-facts-*" "/calc-resting-facts-*" &&
       git -C "$WORK/rows/$d" checkout -q "root-rows-$d"
     } >> "$OUT/d$d/setup.log" 2>&1 || { echo "FAILED in the set-up: the stored files of trade day $d" >> "$OUT/d$d/STATUS"; exit 1; }
     git -C "$WORK/rows/$d" rev-parse HEAD > "$OUT/d$d/ROWS_COMMIT"
