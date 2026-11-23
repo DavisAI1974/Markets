@@ -287,3 +287,16 @@ or ends: the trade legs and the humps of the two stored lines do.
 | `FACTS`, `INDEX_COLUMNS`, `INDEX_NAMES` | column names | The stored facts read about a trade leg, and the columns of the index table. |
 | `WORK` | empty | What each drawing helper holds once it is started. |
 
+## `root/trade_renders.py` (one picture for every trade of the crypto and ng program, set up as the crypto pictures were; Greg, 2026-11-23)
+
+Nothing sets where a picture starts or ends but the program's own trades and the humps of the two stored lines. Its
+drawing sizes, the two stored lines and their spans are those of `root/leg_renders.py`.
+
+| Constant | Value | Why |
+|---|---|---|
+| `TRADE_DIGITS` | 5 | How many digits a trade's number takes in its picture's name. |
+| `TRADES_BACK` | 2 | A picture's frame starts at the start of the trade two before (Greg, 2026-11-23: "2 trades back is great"). A count of the program's own trades; not a time. |
+| `BPS` | 10^4 | Hundredths of a percent: the unit of the crypto picture's price line (`_dipole_price_overlay.py`, Markets `75b15fa`). Unit conversion. |
+| `SIDE` | buy: +1, buying; sell: -1, selling | The crypto step of turning a line to the trade's side. |
+| `READS`, `TRADES`, `INDEX_COLUMNS`, `INDEX_NAMES` | column names | The columns of the stored rows the mid price is read from (through the rows gate), of the stored trades of the program, and of the index table. |
+| `WORK` | empty | What each drawing helper holds once it is started. |
