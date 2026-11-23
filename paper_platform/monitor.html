@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>$title · Paper trading</title>
+<style>
+:root{color-scheme:dark;font:16px/1.5 Inter,system-ui,sans-serif;background:#10191c;color:#edf1ee}
+*{box-sizing:border-box}body{max-width:58rem;margin:2rem auto;padding:0 1rem}h1{font-size:clamp(1.6rem,5vw,2.8rem);margin:0}
+p{margin:.35rem 0}article{padding:1rem 0;border-bottom:1px solid #344146}small{display:block;color:#b5c6c5;overflow-wrap:anywhere}
+select,button{font:inherit;padding:.35rem;background:#1b292a;color:#fff;border:1px solid #70817b;border-radius:.3rem}
+form{display:flex;gap:.7rem;align-items:end;flex-wrap:wrap;margin:1rem 0}label{display:grid;font-size:.9rem}#status{color:#9ce6ba}
+.spec{white-space:pre-wrap;color:#ccdad7}summary{cursor:pointer}
+</style></head><body>
+<header><small>$venue · $asset · Paper trading</small><h1>$title</h1><p id="status" role="status">$status</p></header>
+<form method="get" $hide_filters><label>Market<select name="market">$markets</select></label><label>Strategy<select name="rule">$rules</select></label><button>Show</button></form>
+$definition
+<section id="events" data-stream="$stream" aria-label="Trading events">$cards</section>
+<script>
+const list=document.querySelector('#events'),statusLine=document.querySelector('#status');
+if(list.dataset.stream){
+  const stream=new EventSource(list.dataset.stream);
+  stream.onmessage=({data})=>{const row=JSON.parse(data);list.insertAdjacentHTML('afterbegin',row.html);statusLine.textContent=row.status};
+  stream.addEventListener('finished',()=>stream.close());
+  stream.onerror=()=>{statusLine.textContent='Reconnecting…'};
+}
+</script></body></html>

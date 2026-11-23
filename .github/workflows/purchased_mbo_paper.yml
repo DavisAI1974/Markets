@@ -1,0 +1,70 @@
+name: Purchased NG MBO paper replay
+on:
+  workflow_dispatch:
+    inputs:
+      greg_go:
+        description: Start this paper session
+        type: boolean
+        required: true
+        default: false
+      trade_day:
+        description: Named Eastern trade day (YYYY-MM-DD)
+        required: true
+        type: string
+      market:
+        description: Registered instrument profile
+        required: true
+        type: string
+        default: nymex-ng
+      message_budget:
+        description: Maximum source messages, including Sunday seating records
+        required: true
+        type: string
+      event_budget:
+        description: Maximum ordinary journal events
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  paper:
+    if: ${{ inputs.greg_go && github.actor == 'DavisAI1974' && github.triggering_actor == 'DavisAI1974' && github.run_attempt == 1 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+          sparse-checkout: |
+            crypto_ng
+            root
+            paper_platform
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: DavisAI1974/markets-data
+          ref: 46199c5f4af03fde341535a7aff6a0396300cc73
+          path: purchased-inputs
+          persist-credentials: false
+          sparse-checkout: |
+            data/nymex_mbo/ng_v0_oct2023
+            paper-trading
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - run: python -m pip install -r paper_platform/requirements.txt
+      - name: Replay purchased data on the recorded clock
+        env:
+          TRADE_DAY: ${{ inputs.trade_day }}
+          MARKET: ${{ inputs.market }}
+          MESSAGE_BUDGET: ${{ inputs.message_budget }}
+          EVENT_BUDGET: ${{ inputs.event_budget }}
+          PAPER_RELAY_URL: ${{ vars.PAPER_RELAY_URL }}
+          PAPER_RELAY_TOKEN: ${{ secrets.PAPER_RELAY_TOKEN }}
+          MARKETS_DATA_TOKEN: ${{ secrets.MARKETS_DATA_TOKEN }}
+          PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
+          PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
+        run: python -B -m paper_platform.run --greg-go --data purchased-inputs --market "$MARKET" --trade-day "$TRADE_DAY" --message-budget "$MESSAGE_BUDGET" --event-budget "$EVENT_BUDGET"
+
