@@ -17,12 +17,14 @@ THE SET-UP IS THE CRYPTO ONE (Markets `75b15fa`: `_dipole_price_overlay.py`, `re
 - THE EXHAUSTION is the July 7 line: the same figure over the last 20 seconds, turned to the trade's side.
 The two lines are READ FROM WHAT IS STORED (`crypto-ng-tick-lean-60s-*`, `crypto-ng-tick-line-20s-*`); the mid is
 read from the stored rows through the rows gate. "Turned to the trade's side": above zero always reads "with this
-trade". Three separate graphs on the one clock.
+trade". Five separate graphs on the one clock: the three lines, then the two rates.
 
 WHAT IS NOT CARRIED, each on Greg's word: the average of many trades; the winner and loser labels; the short or long
 split; the cut at 45 or 60 seconds each side; the time grid. One trade at a time.
-NOT DRAWN YET: the crypto picture's two rate lines (how fast the dipole and the price change). They were worked out
-per second on an averaged line; how a rate is read at the nanosecond on one trade is put to Greg first.
+THE TWO RATE LINES of the crypto dipole picture (how fast the dipole and the price change) are read PER TICK, not per
+second (Greg, 2026-11-23: "instead of per sec, we are doing per tick like price"): the dipole's rate is its change at
+each of its own reads, and the price's rate is the change of the mid at each tick it moves. Each is drawn as a
+stroke at the nanosecond of that tick, in its own graph. Nothing else is worked out here.
 
 NO DESIGNATED START OR STOP. The frame runs from the start of the trade two before (Greg, 2026-11-23: "2 trades back
 is great") to the end of the trade after; then the dipole and the exhaustion say where the picture starts and
@@ -58,8 +60,10 @@ from root.crypto_ng_tick import HALVE, clock_text, number, whole_humps
 
 TRADE_DIGITS = 5                                       # a trade's number in its picture's name, written 00000
 TRADES_BACK = 2                                        # Greg, 2026-11-23: a picture's frame starts two trades back
+GRAPHS, INCHES = 5, (7.2, 18.0)                        # drawing only: the three lines and the two rates, for a phone
 BPS = 10 ** 4                                          # hundredths of a percent, the crypto picture's price unit
 SIDE = dict(buy=(1, 'buying'), sell=(-1, 'selling'))   # the crypto turn to the trade's side
+RATES = ('dipole', 'price')                            # the crypto picture's two rate lines, in its order
 READS = ['received_time_ns', 'best_bid', 'best_ask']
 TRADES = ['trade', 'side', 'turn_received_ns', 'onset_position_on_tape', 'onset_received_ns', 'ended',
           'end_received_ns', 'length_seconds']
@@ -136,24 +140,38 @@ def draw_one(job) -> dict:
     w = WORK
     turn, with_it = SIDE[side]
     seconds = lambda moments: (np.asarray(moments, np.int64) - start) / NS_PER_SECOND   # the clock: from the start
-    figure, axes = plt.subplots(LR.GRAPHS, 1, figsize=LR.INCHES, sharex=True, gridspec_kw={'hspace': LR.GAP})
+    figure, axes = plt.subplots(GRAPHS, 1, figsize=INCHES, sharex=True, gridspec_kw={'hspace': LR.GAP})
     at, values = LR.cut(w['mid_at'], w['mid'], first, last)
     price = turn * (values - level) / level * BPS
+    rates = {'price': (at, price)}                     # each line as drawn, for its change tick by tick
     axes[0].step(seconds(at), price, where='post', color='#17202a', lw=LR.LINE)
     axes[0].axhline(0, color='#aab7b8', lw=LR.THIN)
     axes[0].set_ylim(*LR.scale(price))
     axes[0].set_ylabel('hundredths of a percent\n(above zero: with this trade)')
     axes[0].set_title('1. THE PRICE, as in crypto: the mid price, from where it stood\nat the trade\'s start, turned '
                       'to the trade\'s side', loc='left', fontsize=LR.BIG)
-    for number_of, (name, (_, span)) in enumerate(LR.LINES.items(), start=LR.GRAPHS - len(LR.LINES)):
+    for number_of, (name, (_, span)) in enumerate(LR.LINES.items(), start=1):
         axis = axes[number_of]
         at, values = LR.cut(w[name + '_at'], w[name], first, last)
+        rates[name] = (at, turn * values)
         axis.step(seconds(at), turn * values, where='post', color='#1f618d', lw=1)
         axis.axhline(0, color='#aab7b8', lw=LR.THIN)
         axis.set_ylim(*LR.scale(turn * values))
         axis.set_ylabel(f'above zero: {with_it}\n(with this trade)')
         axis.set_title(f'{number_of + 1}. THE {name.upper()}, the crypto formula: bought minus sold over\nbought plus '
                        f'sold, the trades of the last {span} seconds', loc='left', fontsize=LR.BIG)
+    for axis, name, colour, what in zip(axes[len(LR.LINES) + 1:], RATES, ('#6c3483', '#1e8449'), (
+            'its change at each read (a trade received, or old trades leaving)',
+            'the change of the mid price at each tick it moves')):
+        at, values = rates[name]
+        at, values = at[:-1], values[:-1]              # the reads themselves (the last point only holds the line)
+        change = np.diff(values)
+        axis.vlines(seconds(at[1:]), 0, change, color=colour, lw=LR.THIN)
+        axis.axhline(0, color='#aab7b8', lw=LR.THIN)
+        axis.set_ylim(*LR.scale(change))
+        axis.set_ylabel('change at the tick\n(above zero: with this trade)')
+        axis.set_title(f'{list(axes).index(axis) + 1}. HOW FAST THE {name.upper()} CHANGES, per tick:\n{what}', loc='left',
+                       fontsize=LR.BIG)
     for axis in axes:
         axis.axvspan(0, float(seconds(end)), color='#f9e79f', alpha=LR.SHADE, label='this trade (start to end)')
         axis.axvline(0, color='#1e8449', lw=LR.THIN, ls='--', label='the trade starts (zero on the clock)')
@@ -251,6 +269,8 @@ def run(trade_day, rows_folder: Path, out: Path, pick=None, keep_cpus=False) -> 
             price='the mid price (halfway between the best bid and the best ask on the stored rows, through the rows '
                   'gate), its change from where it stood at the trade\'s start, in hundredths of a percent, turned '
                   'to the trade\'s side',
+            rates='per tick, not per second: the dipole line\'s change at each of its own reads, and the mid '
+                  'price\'s change at each tick it moves, each drawn as a stroke at that tick',
             **{name: dict(read_from=f'crypto-ng-tick/{file}-{day}.parquet', span_seconds=span,
                           formula='bought minus sold over bought plus sold, over the trades received in the span, '
                                   'read at the nanosecond; turned to the trade\'s side')

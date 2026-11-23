@@ -296,6 +296,8 @@ drawing sizes, the two stored lines and their spans are those of `root/leg_rende
 |---|---|---|
 | `TRADE_DIGITS` | 5 | How many digits a trade's number takes in its picture's name. |
 | `TRADES_BACK` | 2 | A picture's frame starts at the start of the trade two before (Greg, 2026-11-23: "2 trades back is great"). A count of the program's own trades; not a time. |
+| `GRAPHS`, `INCHES` | 5; drawing size | Drawing only: the three lines and the two rate lines, each its own graph, sized for a phone. |
+| `RATES` | dipole, price | The crypto picture's two rate lines. Each is read PER TICK (Greg, 2026-11-23: "instead of per sec, we are doing per tick like price"): the line's change at each of its own reads. No span of time enters it. |
 | `BPS` | 10^4 | Hundredths of a percent: the unit of the crypto picture's price line (`_dipole_price_overlay.py`, Markets `75b15fa`). Unit conversion. |
 | `SIDE` | buy: +1, buying; sell: -1, selling | The crypto step of turning a line to the trade's side. |
 | `READS`, `TRADES`, `INDEX_COLUMNS`, `INDEX_NAMES` | column names | The columns of the stored rows the mid price is read from (through the rows gate), of the stored trades of the program, and of the index table. |
