@@ -14,13 +14,14 @@ where it first became known (its first step) and a line at the print that showed
 
 WHERE A PICTURE STARTS AND ENDS is said by the data (Greg, 2026-11-18: "We need the data to be telling us what those
 times are"); no number of seconds, typed clock time or count of trades is in it:
-- it starts at the first trade of the trade leg BEFORE this one, so what the dipole and the exhaustion did before
-  the trade leg began (the prebirth) is always in the picture;
+- it starts at the first trade of the trade leg TWO BEFORE this one (Greg, 2026-11-23: "Go two trade legs back"; one
+  back could leave a few seconds and a single trade), so what the dipole and the exhaustion did before the trade
+  leg began (the prebirth) is in the picture;
 - it ends at the last trade of the trade leg AFTER this one;
 - both edges are then moved outward so that nothing they touch is cut: the run of trades on one side (the
   exhaustion at the tick) and the stretch of the dipole standing there, as stored in `continuing/`, are in the
   picture whole.
-The first trade leg of a trade day has no trade leg before it and the last has none after it; a trade leg still
+The first trade leg of a trade day has no trade leg before it, the second has one, and the last has none after it; a trade leg still
 going at the last trade runs to the last trade. The receipt names every trade leg whose picture starts at its own
 first trade (no lead-in).
 
@@ -64,6 +65,7 @@ from root.calendar import NS_PER_SECOND, parse_trade_day
 from root.crypto_ng_tick import clock, clock_text
 
 LEG_DIGITS = 5                                         # a trade leg's number in its picture's name, written 00000
+LEGS_BACK = 2                                          # Greg, 2026-11-23: a picture starts two trade legs back
 BYTES_PER_MEGABYTE = 2 ** 20
 FACTS = ['fact', 'leg_number', 'direction', 'steps', 'leg_first_trade_position', 'leg_first_trade_received_time_ns',
          'leg_last_trade_position', 'known_position', 'known_received_time_ns', 'leg_start_price', 'price']
@@ -162,10 +164,10 @@ def standing(span: tuple, moment: int) -> tuple:
 
 
 def edges(legs: list, k: int, s: dict) -> tuple:
-    """Where the picture of trade leg `k` starts and ends: from the first trade of the trade leg before to the last
-    trade of the trade leg after, moved outward so no run of trades or stretch of the dipole it touches is cut."""
+    """Where the picture of trade leg `k` starts and ends: from the first trade of the trade leg two before to the
+    last trade of the trade leg after, moved outward so no run of trades or stretch of the dipole it touches is cut."""
     leg = legs[k]
-    left = legs[k - 1]['first_at'] if k else leg['first_at']
+    left = legs[max(k - LEGS_BACK, 0)]['first_at']
     after = legs[k + 1] if k + 1 < len(legs) else leg
     right = after['last_at'] if 'last_at' in after else int(s['time'][-1])
     for span in s['spans'].values():
@@ -286,7 +288,7 @@ def run(trade_day, rows_folder: Path, out: Path, stretch=None, pick=None, keep_c
                          f'{name_of_day}. Trade leg {leg["number"]}: {leg["direction"]}, {went}.\n'
                          f'The trade leg (shaded): {clock_text(leg["first_at"])} to {clock_text(leg_to)} Eastern.\n'
                          f'Drawn: {clock_text(first)} to {clock_text(last)}, {inside} trades.\n'
-                         f'It starts at the first trade of the trade leg before and ends at the last trade of the\n'
+                         f'It starts at the first trade of the trade leg two before and ends at the last trade of the\n'
                          f'trade leg after; every run of trades and dipole stretch it touches is whole.\n'
                          f'Nothing averaged. Every trade at its own nanosecond.',
                          first, last, leg['first_at'], leg_to, leg['known_at'], leg.get('ended_known_at')))
@@ -321,7 +323,7 @@ def run(trade_day, rows_folder: Path, out: Path, stretch=None, pick=None, keep_c
               'the prebirths for the dipole and exhaustion before the trade starts"; "Those 3 renders I mean. Per '
               'trade"',
         trade_day=trade_day.isoformat(),
-        edges='set by the data: from the first trade of the trade leg before to the last trade of the trade leg '
+        edges='set by the data: from the first trade of the trade leg two before to the last trade of the trade leg '
               'after, moved outward so no run of trades or stretch of the dipole it touches is cut',
         index_columns=[dict(column=c, what=w) for c, w in INDEX_COLUMNS],
         counts=dict(count, pictures_drawn=len(drawn), picture_bytes=picture_bytes,

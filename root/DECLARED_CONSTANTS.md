@@ -290,13 +290,14 @@ Nothing is worked out in it: stored values are drawn. Its other drawing sizes ar
 
 ## `root/leg_renders.py` (one picture for every trade leg; Greg, 2026-11-23)
 
-Nothing is worked out in it: stored values are drawn. No number sets where a picture starts or ends: the trade leg
-before, the trade leg after and the stored runs of trades and dipole stretches they touch do. Its drawing sizes are
+Nothing is worked out in it: stored values are drawn. No number of seconds or of trades sets where a picture starts or ends: the trade leg
+two before, the trade leg after and the stored runs of trades and dipole stretches they touch do. Its drawing sizes are
 those of `root/tick_renders.py` (the three renders).
 
 | Constant | Value | Why |
 |---|---|---|
 | `LEG_DIGITS` | 5 | How many digits a trade leg's number takes in its picture's name. |
+| `LEGS_BACK` | 2 | A picture starts at the first trade of the trade leg two before (Greg, 2026-11-23: "Go two trade legs back"). A count of trade legs, which the data makes; not a time or a count of trades. |
 | `BYTES_PER_MEGABYTE` | 2^20 | Unit conversion, for the size of the pictures written in the receipt. |
 | `FACTS`, `INDEX_COLUMNS`, `INDEX_NAMES` | column names | The stored facts read about a trade leg, and the columns of the index table. |
 | `WORK` | empty | What each drawing helper holds once it is started. |
