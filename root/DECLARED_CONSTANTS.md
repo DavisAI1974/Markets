@@ -304,3 +304,17 @@ drawing sizes, the two stored lines and their spans are those of `root/leg_rende
 | `SIDE` | buy: +1, buying; sell: -1, selling | The crypto step of turning a line to the trade's side. |
 | `READS`, `TRADES`, `INDEX_COLUMNS`, `INDEX_NAMES` | column names | The columns of the stored rows the best bid and the best ask are read from (through the rows gate; the mid price made from them is drawn in the last graph only and never stored), of the stored trades of the program, and of the index table. |
 | `WORK` | empty | What each drawing helper holds once it is started. |
+
+## `root/crypto_ng_excel.py` (the trade day sheets of `ROOT_dipoles_pinned.xlsx` brought up to date; Greg, 2026-11-18 and 2026-11-23)
+
+Nothing is worked out: stored values are written into sheets and read back.
+
+| Constant | Value | Why |
+|---|---|---|
+| `DAYS` | the four trade days | Oct 2, 3, 17 and 18, 2023: the only trade days a sheet is written for. |
+| `LEFT_OUT` | six column names | The columns of the stored program trades that do NOT go into a sheet until Greg says: the five made from the mid price (his word of 2026-11-23: nothing of the mid in a sheet) and the program's fee mark. |
+| `PAGE_COLUMNS` | sheet, panel | The two columns of the peaks sheets that named a page of exhaustion pictures; the pages were deleted on his word on 2026-11-18, so the columns are taken out. |
+| `PICTURES`, `LINK` | two folder names; a web address | Where a trade's picture is stored on its trade day's branch (the newest first), and the address a picture opens at. |
+| `SIDES` | buy: start, end; sell: end, start | Where a trade was bought and where it was sold: a buy is bought at its start and sold at its end, a sell the other way round. |
+| `CLOSE` | 1e-12 | Excel keeps a decimal to about 15 digits: how near a decimal read back from the file must be to the stored one. A check only. |
+| `ADDED`, `READ_ME` | words | The columns added beside the stored ones (the Eastern time for reading, the stored 20-second exhaustion line at the trade's start, the bought and sold price from the tape, the picture) and the lines of the read-me page. |
