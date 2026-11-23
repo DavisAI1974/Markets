@@ -66,7 +66,9 @@ def fetch(base: str, day: str, commit: str, into: Path, names: list) -> dict:
         receipt_name = RUNS[name][1].format(day=day) if name in RUNS else f'CALC-{name}-{day}.json'
         raw = get(base, receipt_name)
         receipt = json.loads(raw)
-        listed = (list(receipt.get('files', [])) + [f for t in receipt.get('tables', {}).values() for f in t['files']]
+        # a receipt's `tables` holds files for a calculation; the research threads receipt holds column lists there
+        listed = (list(receipt.get('files', []))
+                  + [f for t in receipt.get('tables', {}).values() if isinstance(t, dict) for f in t['files']]
                   + [f for w in receipt.get('ways', {}).values() for f in w['files']]
                   + list(receipt.get('row_files', [])) + list(receipt.get('book_picture_files', []))
                   + ([receipt['vendor_restatement_file']] if 'vendor_restatement_file' in receipt else []))
