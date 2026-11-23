@@ -67,6 +67,9 @@ ROUNDING = 1e-12                                       # Codex's own: shared inf
 PIECE_DIGITS = 2                                       # a piece's number in its column name, written 01 to 20
 OPERATOR_FILE = Path(info_dipole.__file__)
 CODEX_PINNED_OPERATOR = 'c04751cbe5f92952e33328f6c04fcae6392e05e5'   # the git blob Codex's program loaded
+OPERATOR_BLOB = '6a62f4d7491c02bee3af840ad7f736453fff892a'           # the operator file this may run on: the one
+# compared, in the session of 2026-11-23, with the copy Codex pinned (one phrase of a comment differs; the three
+# formula functions and the smallest number are the same lines) and with its first version of 2026-06-22
 FIGURES = [
     ('imb_level', 'The operator\'s first figure: bought minus sold over bought plus sold, over the twenty pieces. '
      'Checked equal to the stored exhaustion line at every read.'),
@@ -130,6 +133,8 @@ def run(trade_day, rows_folder: Path, out: Path) -> dict:
     started = time.monotonic()
     day = f'{trade_day:%Y%m%d}'
     out.mkdir(parents=True, exist_ok=True)
+    checks.need(blob(OPERATOR_FILE.read_bytes()) == OPERATOR_BLOB,
+                'odcore/info_dipole.py is not the operator file that was compared with the copy Codex pinned')
     t, line = the_trades(rows_folder, trade_day), the_line(rows_folder, day)
     n, reads = len(t['position']), len(line['read'])
     table = {name: [] for name in NAMES}
@@ -206,6 +211,12 @@ def run(trade_day, rows_folder: Path, out: Path) -> dict:
         the_operator=dict(file='odcore/info_dipole.py', git_blob_id=blob(OPERATOR_FILE.read_bytes()),
                           called='signed_flow_features(bought, sold) and mutual_info(bought, sold), unchanged',
                           codex_pinned_git_blob_id=CODEX_PINNED_OPERATOR,
+                          compared='the job refuses any operator file but this one. Compared in the session of '
+                                   '2026-11-23: against the copy Codex pinned, one phrase of a comment differs; the '
+                                   'functions shannon, mutual_info and signed_flow_features and the smallest number '
+                                   'are the same lines, and the same lines as the first version of 2026-06-22 '
+                                   '(Markets 21ec02f). NOT compared: the original dipole scripts outside this '
+                                   'repository.',
                           codex_program='markets-data codex/research-union-four-days-20261109, '
                                         'reanalysis-20261109/analyze.py (read for its code; no result carried)'),
         how_the_pieces_are_cut=dict(
@@ -225,7 +236,7 @@ def run(trade_day, rows_folder: Path, out: Path) -> dict:
                          'read is less than 20 seconds old; at every read the twenty bought pieces add up to the '
                          'stored bought and the twenty sold pieces to the stored sold; the operator gives nothing '
                          'exactly where the stored line says nothing traded; the first figure equals the stored '
-                         'exhaustion line at every read; every trade with a side is in a read'),
+                         'exhaustion line at every read; every trade with a side is in a read; the operator file is the one that was compared with the copy Codex pinned'),
         files=files, seconds=round(time.monotonic() - started, 1))
     (out / f'INFO-MEASURE-{day}.json').write_text(json.dumps(receipt, indent=1) + '\n')
     return receipt

@@ -345,6 +345,7 @@ The formula is the crypto information dipole operator's own (`odcore/info_dipole
 | `CLOSE` | 1e-9 | A check only: how near the operator's first figure must be to the stored exhaustion line. |
 | `PIECE_DIGITS` | 2 | A piece's number in its column name, written 01 to 20. |
 | `CODEX_PINNED_OPERATOR` | a git blob id | The copy of the operator Codex's program loaded, written into the receipt beside the id of the file called here. |
+| `OPERATOR_BLOB` | a git blob id | The one operator file the job may run on: today's `odcore/info_dipole.py`, compared in the session of 2026-11-23 with the copy Codex pinned and with its first version. The job refuses any other. |
 | `READS`, `TRADE`, `BUY`, `SELL`, `RECEIVED`, `LINE_FILE`, `LINE_READS`, `OPERATOR_FILE` | names | The columns read through the rows gate, the tape's codes for a trade and its side, the stored line's word for a read made at a trade, the stored exhaustion line and its columns, the operator's file. |
 | `FIGURES`, `COLUMNS`, `NAMES`, `TEXT` | column names | The operator's five figures and the columns of the stored table. |
 
