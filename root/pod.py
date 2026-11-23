@@ -23,6 +23,9 @@ What is different from the first launcher (`pod_run.sh`, which this replaces):
           trade:<number>                         the same for a trade of the program named by its number
           tape:<position on tape>                the same for one trade on the tape
           stretch:<from ns>-<to ns>              the 20-second line over one stretch of the trade day
+          leg_renders                            one picture for every trade leg of the trade day: four graphs on
+                                                 one clock, the trade leg marked, with what came before and after
+          leg_renders:<from ns>-<to ns>          the same for the trade legs whose first trade is inside the stretch
           rebuild                                the rows built again with the outside tables as they stand, then
                                                  flow_peak and outside_changes beside them (the changed pieces);
                                                  the unchanged calculations are not run again (Greg: no tests except
@@ -65,11 +68,13 @@ ROW_JOBS = {'legs': 'trade_legs',                      # whole-trade-day program
 #                                                        every trade at its own nanosecond (Greg, 2026-11-18)
             'continuing': 'continuing',                # the runs of trades and the dipole stretches that continue
 #                                                        over more than one trade (Greg, 2026-11-18)
+            'leg_renders': 'leg_renders',              # one picture for every trade leg (Greg, 2026-11-23)
             'ticks': 'tick_renders'}                   # the three renders at the tick and the stacked pairs
 #                                                        (a calc job may name them beside its
 #                                                        calculations, so
 #                                                        everything starts together, each on its own CPU)
 PRINT_ONE = re.compile(r'(moment|trade|tape|stretch):([0-9]+(?:-[0-9]+)?)')   # print one graph from the stored line
+LEGS_IN = re.compile(r'leg_renders:([0-9]+-[0-9]+)')   # the trade leg pictures of one stretch only (a first look)
 COMMIT = re.compile(r'[0-9a-f]{40}')
 ONE_THREAD = {name: '1' for name in ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS')}
 ACCEPTED, REFUSED, BUSY = 202, 403, 409
@@ -136,6 +141,12 @@ def run(day: str, commit: str, job: str):
                 [sys.executable, '-m', 'root.crypto_ng_tick', day, '--rows', str(ROWS), '--out', str(OUT),
                  f'--{how}', which], cwd=CODE, env=environment, stdout=open(OUT / 'crypto_ng_tick_print.log', 'w'),
                 stderr=subprocess.STDOUT, preexec_fn=functools.partial(os.sched_setaffinity, 0, {cpus[0]})))]
+        elif LEGS_IN.fullmatch(job):
+            started = [('leg_renders', cpus[0], subprocess.Popen(
+                [sys.executable, '-m', 'root.leg_renders', day, '--rows', str(ROWS), '--out', str(OUT), '--stretch',
+                 LEGS_IN.fullmatch(job).group(1)], cwd=CODE, env=environment,
+                stdout=open(OUT / 'leg_renders.log', 'w'), stderr=subprocess.STDOUT,
+                preexec_fn=functools.partial(os.sched_setaffinity, 0, {cpus[0]})))]
         elif job in ROW_JOBS:
             module = ROW_JOBS[job]
             started = [(module, cpus[0], subprocess.Popen(
@@ -165,7 +176,8 @@ def run(day: str, commit: str, job: str):
 
 
 def allowed(job: str) -> bool:
-    if job in MODEL_JOBS or job in ROW_JOBS or job == 'rebuild' or PRINT_ONE.fullmatch(job):
+    if (job in MODEL_JOBS or job in ROW_JOBS or job == 'rebuild' or PRINT_ONE.fullmatch(job)
+            or LEGS_IN.fullmatch(job)):
         return True
     kind, _, names = job.partition(':')
     return kind == 'calc' and bool(names) and all(name in CALCULATIONS or name in ROW_JOBS

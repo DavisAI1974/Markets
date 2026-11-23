@@ -288,6 +288,19 @@ Nothing is worked out in it: stored values are drawn. Its other drawing sizes ar
 |---|---|---|
 | `FOUR_INCHES`, `FOUR_GRAPHS` | drawing sizes | Drawing only: the size of the picture and the number of graphs in it. |
 
+## `root/leg_renders.py` (one picture for every trade leg; Greg, 2026-11-23)
+
+Nothing is worked out in it: stored values are drawn. No number sets where a picture starts or ends: the trade leg
+before, the trade leg after and the stored runs, stretches and humps they touch do. Its drawing sizes are those of
+`root/four_graphs.py` and `root/tick_renders.py`.
+
+| Constant | Value | Why |
+|---|---|---|
+| `LEG_DIGITS` | 5 | How many digits a trade leg's number takes in its picture's name. |
+| `BYTES_PER_MEGABYTE` | 2^20 | Unit conversion, for the size of the pictures written in the receipt. |
+| `FACTS`, `INDEX_COLUMNS`, `INDEX_NAMES` | column names | The stored facts read about a trade leg, and the columns of the index table. |
+| `WORK` | empty | What each drawing helper holds once it is started. |
+
 ## `root/tick_renders.py` (the three renders at the tick and the stacked pairs; Greg, 2026-11-18)
 
 No number enters a calculation: the dipole and the exhaustion at the tick have no window, no level and no count.
