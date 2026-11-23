@@ -1,5 +1,25 @@
 # CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-14, Session 93)
 
+## Agent roles (Greg, 2026-11-23)
+
+Four subagents in `.claude/agents/`. The main session routes work to them:
+
+- **scout (Haiku)** - every locate/search/read-the-docs job: where code lives, what calls what,
+  which handoff or runbook covers a topic, what a MANIFEST.json entry says. Returns exact pointers,
+  every hit; in extraction mode, source-tagged claim JSON for the graph. Does not interpret results.
+- **builder (Sonnet)** - implements a settled plan and runs tests. Shows the diff before writing.
+  Stops after the second failure of the same test and hands back.
+- **reviewer (Opus)** - called on: a plan touching root/calcs, the tape, causal prefixes,
+  leakage, the teacher, Granite or BOSS contracts; any step that failed twice; the final diff
+  before it goes to Greg or Codex. Read-only.
+- **frankie-performance-auditor (Sonnet)** (Codex, b0e5546; Sonnet and no-AWS edit 2026-11-23) -
+  read-only runtime/cost audit of a named Frankie workflow: RunPod Pod, GitHub runner and model
+  API token spend. AWS is not available.
+
+The main session does not grep or bulk-read files itself when the scout can. Interpretation of
+results stays in the main session and with Greg. Codex review and Greg's merge authority are
+unchanged.
+
 ## FRANKIE / BOSS standing rules (Greg, 2026-09-16) -- MEMORY, read before touching Granite or the native context
 
 - **The Granite 4,096-token context is RETIRED. Remove `4096` from ALL Granite-related code**: the `service_context` /
