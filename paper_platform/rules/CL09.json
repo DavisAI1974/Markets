@@ -1,0 +1,8 @@
+{
+  "id": "CL09",
+  "family": "CL",
+  "role": "entry",
+  "source": "https://github.com/DavisAI1974/markets-data/blob/46199c5f4af03fde341535a7aff6a0396300cc73/tasks/family-research-20261022/research-union-current/strategy-20261123-claude/VERSIONS.md",
+  "evidence": "https://github.com/DavisAI1974/markets-data/blob/46199c5f4af03fde341535a7aff6a0396300cc73/tasks/family-research-20261022/research-union-current/strategy-20261123-claude/EVIDENCE.md",
+  "specification": "## CL09 (v2). The first step made by a cancel\n\n- WHEN: the first step of a move.\n- TRIGGER: the best offer steps UP (a run starts) because the order whose leaving moved it was CANCELLED, with no\n  trade in that exchange event. (Mirror: the best bid steps DOWN on a cancel.)\n- DECIDED AT: the end of that exchange event. No trade if the run has already stepped back or stepped again by\n  then.\n- SIDE: SELL for the best offer up. BUY for the best bid down. (Against the step.)\n- CLOSES WHEN RIGHT: at the run's first step back.\n- CLOSES WHEN WRONG: at the run's second step.\n- OPENS AGAIN: at the next run's start.\n- READS: the rows, `calc-sweeps-facts`, `calc-together-facts`, `calc-quote_runs-facts`.\n- BEHIND IT: no count at the first step. Finding 4 (a level only pulled leads on least often) and finding 1 (most\n  runs end at one step), carried one step earlier."
+}

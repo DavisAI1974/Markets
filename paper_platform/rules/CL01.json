@@ -1,0 +1,8 @@
+{
+  "id": "CL01",
+  "family": "CL",
+  "role": "entry",
+  "source": "https://github.com/DavisAI1974/markets-data/blob/46199c5f4af03fde341535a7aff6a0396300cc73/tasks/family-research-20261022/research-union-current/strategy-20261123-claude/VERSIONS.md",
+  "evidence": "https://github.com/DavisAI1974/markets-data/blob/46199c5f4af03fde341535a7aff6a0396300cc73/tasks/family-research-20261022/research-union-current/strategy-20261123-claude/EVIDENCE.md",
+  "specification": "## CL01 (v2). The eaten level\n\n- WHEN: a move is deciding whether to take another step.\n- TRIGGER: a run of the best offer UP takes its second step, and every order that stood at its first level left by\n  being FILLED. (Mirror: a run of the best bid DOWN, the same.)\n- DECIDED AT: the end of the exchange event that holds the second step. No trade if the run has already stepped\n  back by then.\n- SIDE: BUY for the best offer up. SELL for the best bid down.\n- CLOSES: at the run's first step back. RIGHT if the run took a third step first, in a later exchange event; WRONG\n  if the step back came first.\n- OPENS AGAIN: at the next run's second step.\n- READS: `calc-quote_runs-facts`, `calc-resting-facts`.\n- BEHIND IT: counted (the paper's finding 4)."
+}

@@ -1,0 +1,22 @@
+{
+  "id": "CX12",
+  "family": "CX",
+  "role": "manager",
+  "source": "https://github.com/DavisAI1974/markets-data/blob/ad10921479e49678dd228b0f6b144dca3e610a0d/tasks/family-research-20261022/research-union-current/strategy-20261123-codex/VERSIONS.md",
+  "evidence": "https://github.com/DavisAI1974/markets-data/blob/ad10921479e49678dd228b0f6b144dca3e610a0d/tasks/family-research-20261022/research-union-current/strategy-20261123-codex/EVIDENCE.md",
+  "specification": "## CX12 · Stay in a downward position when a buyer tests a lower offer\n\n**Arm.** A downward paper position is open and dipole is negative. **At q.** Dipole stays negative. The offer falls, the bid is unchanged and a reported buyer pays that lower offer. Maintain the existing position.\n\n**Manage.** Withdraw the hold and issue an exit on the first offer above q’s offer or dipole at or above zero. A fresh position can arm again.\n\n**Why.** A higher print can still be a purchase at a lower asking price. This manages the offer capping the trade.",
+  "direction": "sell",
+  "confirm_all": [
+    "p.dipole < 0",
+    "q.dipole < 0",
+    "q.ask < p.ask",
+    "q.bid == p.bid",
+    "q.aggressor == B",
+    "q.price == q.ask"
+  ],
+  "close_any": [
+    "t.ask > q.ask",
+    "t.dipole >= 0"
+  ],
+  "when_confirmed": "hold"
+}

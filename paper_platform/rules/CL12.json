@@ -1,0 +1,8 @@
+{
+  "id": "CL12",
+  "family": "CL",
+  "role": "entry",
+  "source": "https://github.com/DavisAI1974/markets-data/blob/46199c5f4af03fde341535a7aff6a0396300cc73/tasks/family-research-20261022/research-union-current/strategy-20261123-claude/VERSIONS.md",
+  "evidence": "https://github.com/DavisAI1974/markets-data/blob/46199c5f4af03fde341535a7aff6a0396300cc73/tasks/family-research-20261022/research-union-current/strategy-20261123-claude/EVIDENCE.md",
+  "specification": "## CL12 (v2). The reloaded level\n\n- WHEN: the middle of a move, into the turn.\n- TRIGGER: an order at the best offer is traded against and straight after shows the same size or more (size was\n  put back). The FIRST time on that order. (Mirror: an order at the best bid.)\n- DECIDED AT: the end of that exchange event. No trade if that order has already left by then.\n- SIDE: SELL when an offer is reloaded. BUY when a bid is. (Against the push.)\n- CLOSES WHEN RIGHT: at the first step AWAY from that level by either quote (down for a reloaded offer).\n- CLOSES WHEN WRONG: when that order leaves by fill, or the level empties and the quote steps through it.\n- CLOSES, NEITHER: when that order is cancelled (the one reloading has gone).\n- OPENS AGAIN: at the first reload on another order.\n- READS: `calc-refills-facts`, the rows.\n- BEHIND IT: no count."
+}

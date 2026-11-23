@@ -1,0 +1,8 @@
+{
+  "id": "CL04",
+  "family": "CL",
+  "role": "entry",
+  "source": "https://github.com/DavisAI1974/markets-data/blob/46199c5f4af03fde341535a7aff6a0396300cc73/tasks/family-research-20261022/research-union-current/strategy-20261123-claude/VERSIONS.md",
+  "evidence": "https://github.com/DavisAI1974/markets-data/blob/46199c5f4af03fde341535a7aff6a0396300cc73/tasks/family-research-20261022/research-union-current/strategy-20261123-claude/EVIDENCE.md",
+  "specification": "## CL04 (v2). A level that has only been eaten, before it gives\n\n- WHEN: before the move.\n- TRIGGER: since the best offer took its present price, size has been FILLED there and none has been pulled, added\n  or moved. (Mirror: the best bid.)\n- DECIDED AT: the end of the first exchange event in which that holds. No trade if the level has already given way\n  or the state is already broken at that tick.\n- SIDE: BUY when the best offer is being eaten. SELL when the best bid is.\n- CLOSES WHEN WRONG: before the level gives, at the first tick size is pulled, added or moved at that price, or a\n  better quote steps in front of it.\n- CLOSES WHEN RIGHT: the level gives (the quote steps away): the trade is HELD, and closes at that run's first step\n  back.\n- OPENS AGAIN: when that quote next takes a new price.\n- READS: `calc-book_totals`, the rows' marks of the quote moving, `calc-quote_runs-facts`.\n- BEHIND IT: no count. Nothing has yet been read before a first step."
+}

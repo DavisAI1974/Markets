@@ -1,0 +1,20 @@
+{
+  "id": "CX09",
+  "family": "CX",
+  "role": "entry",
+  "source": "https://github.com/DavisAI1974/markets-data/blob/ad10921479e49678dd228b0f6b144dca3e610a0d/tasks/family-research-20261022/research-union-current/strategy-20261123-codex/VERSIONS.md",
+  "evidence": "https://github.com/DavisAI1974/markets-data/blob/ad10921479e49678dd228b0f6b144dca3e610a0d/tasks/family-research-20261022/research-union-current/strategy-20261123-codex/EVIDENCE.md",
+  "specification": "## CX09 · Reverse down from a stationary offer\n\n**Arm.** The print is at the best offer and exhaustion is positive. **At q.** The offer is unchanged, the next print is lower and the bid has fallen. Open downward.\n\n**Manage.** Close on the first print at or above p’s print or the first bid above q’s bid.\n\n**Why.** A print can drop from the offer to the bid with neither quote moving. A falling bid distinguishes this reversal proposal.",
+  "direction": "sell",
+  "confirm_all": [
+    "p.price == p.ask",
+    "p.exhaustion > 0",
+    "q.ask == p.ask",
+    "q.price < p.price",
+    "q.bid < p.bid"
+  ],
+  "close_any": [
+    "t.price >= p.price",
+    "t.bid > q.bid"
+  ]
+}

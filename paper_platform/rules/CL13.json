@@ -1,0 +1,8 @@
+{
+  "id": "CL13",
+  "family": "CL",
+  "role": "entry",
+  "source": "https://github.com/DavisAI1974/markets-data/blob/46199c5f4af03fde341535a7aff6a0396300cc73/tasks/family-research-20261022/research-union-current/strategy-20261123-claude/VERSIONS.md",
+  "evidence": "https://github.com/DavisAI1974/markets-data/blob/46199c5f4af03fde341535a7aff6a0396300cc73/tasks/family-research-20261022/research-union-current/strategy-20261123-claude/EVIDENCE.md",
+  "specification": "## CL13 (v2). Paying up through more than one level\n\n- WHEN: the middle of a move.\n- TRIGGER: one exchange event holds a trade that fills through MORE THAN ONE price level, with one aggressor side.\n- DECIDED AT: the tick with that event's end mark.\n- SIDE: BUY when a buyer paid up. SELL when a seller did.\n- CLOSES: at the first step back of the quote that was swept. RIGHT if that quote stepped further first, in a\n  later exchange event; WRONG if the step back came first.\n- OPENS AGAIN: at the next such event.\n- READS: `calc-sweeps-facts`, `calc-quote_runs-facts`.\n- BEHIND IT: no count."
+}

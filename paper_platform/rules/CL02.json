@@ -1,0 +1,8 @@
+{
+  "id": "CL02",
+  "family": "CL",
+  "role": "entry",
+  "source": "https://github.com/DavisAI1974/markets-data/blob/46199c5f4af03fde341535a7aff6a0396300cc73/tasks/family-research-20261022/research-union-current/strategy-20261123-claude/VERSIONS.md",
+  "evidence": "https://github.com/DavisAI1974/markets-data/blob/46199c5f4af03fde341535a7aff6a0396300cc73/tasks/family-research-20261022/research-union-current/strategy-20261123-claude/EVIDENCE.md",
+  "specification": "## CL02 (v2). The abandoned level\n\n- WHEN: the same moment as CL01.\n- TRIGGER: a run of the best offer UP takes its second step, and every order that stood at its first level was\n  PULLED, none filled. (Mirror: a run of the best bid DOWN.)\n- DECIDED AT: the end of the exchange event that holds the second step. No trade if the run has already stepped\n  back or taken a third step by then.\n- SIDE: SELL for the best offer up. BUY for the best bid down. (Against the run.)\n- CLOSES WHEN RIGHT: at the run's first step back.\n- CLOSES WHEN WRONG: at the run's third step.\n- OPENS AGAIN: at the next run's second step.\n- READS: as CL01.\n- BEHIND IT: counted (the paper's finding 4)."
+}

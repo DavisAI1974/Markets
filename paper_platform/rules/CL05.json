@@ -1,0 +1,8 @@
+{
+  "id": "CL05",
+  "family": "CL",
+  "role": "entry",
+  "source": "https://github.com/DavisAI1974/markets-data/blob/46199c5f4af03fde341535a7aff6a0396300cc73/tasks/family-research-20261022/research-union-current/strategy-20261123-claude/VERSIONS.md",
+  "evidence": "https://github.com/DavisAI1974/markets-data/blob/46199c5f4af03fde341535a7aff6a0396300cc73/tasks/family-research-20261022/research-union-current/strategy-20261123-claude/EVIDENCE.md",
+  "specification": "## CL05 (v2). A trade leg's first step with the exhaustion line on its side\n\n- WHEN: the first step of a move in the prints.\n- TRIGGER: a trade leg makes its first step (the print that steps away), AND at that tick at least one of the two\n  quotes is no longer where it stood at the leg's first trade (so it is not the print going back and forth between\n  the bid and the offer), AND the exhaustion line is on the leg's side.\n- DECIDED AT: the end of the exchange event of that print. No trade if the leg has already ended by then.\n- SIDE: BUY for a leg up. SELL for a leg down.\n- CLOSES: at the print that ends the leg. RIGHT if the leg took a second step first; WRONG if it ended first.\n- OPENS AGAIN: at the next trade leg's first step.\n- READS: `calc-leg_peaks-facts`, `calc-research_columns` (`exhaustion_20s`), the rows.\n- BEHIND IT: counted for the line (the paper's finding 3); it read the other way for legs up on trade day Oct 3.\n  The condition on the quotes at the first step is not counted."
+}
