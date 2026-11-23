@@ -43,7 +43,12 @@ pictures this run draws), `trade-render-<trade day>-<trade number>.png`, `trade-
 (one line per trade of the program), `TRADE-RENDERS-<trade day>.json` (the receipt).
 
     python3 -m root.trade_renders 20231017 --rows <folder of the trade day's stored files> --out <folder> \
-        [--random <how many>] [--keep-cpus]
+        [--random <how many> | --only <trade day>:<trade number> ...] [--quotes] [--keep-cpus]
+
+`--quotes` adds THE BEST BID and THE BEST OFFER, each its own graph under the price (Greg, 2026-11-23: "separate best
+bid and offer price curves by tick during the trade period ... I want to see the flow up and down ... make these
+curves rounded instead of straight lines unless price isn't changing then it would be straight"). A test of an idea
+of his, on trades he names or Claude picks: nothing is worked out, the stored quote is drawn.
 """
 from __future__ import annotations
 
@@ -67,6 +72,9 @@ TRADES_BACK = 2                                        # Greg, 2026-11-23: a pic
 GRAPHS, INCHES = 5, (7.2, 18.0)                        # drawing only: the three lines and the two rates, for a phone
 SIDE = dict(buy=(1, 'buying'), sell=(-1, 'selling'))   # the crypto turn to the trade's side
 RATES = ('dipole', 'price')                            # the crypto picture's two rate lines, in its order
+QUOTES = dict(bid=('best bid', '#1f618d'), ask=('best offer', '#b03a2e'))   # Greg's idea of 2026-11-23: each its own graph
+PAIR = ('one', 'other')                                # a curve needs two points
+CURVE_POINTS = 4000                                    # drawing only: how finely a rounded curve is drawn
 READS = ['received_time_ns', 'best_bid', 'best_ask']
 TRADES = ['trade', 'side', 'turn_received_ns', 'onset_position_on_tape', 'onset_received_ns', 'ended',
           'end_position_on_tape', 'end_received_ns', 'length_seconds']
@@ -92,9 +100,14 @@ INDEX_NAMES = [name for name, _ in INDEX_COLUMNS]
 WORK = {}
 
 
-def mids(rows_folder: Path, trade_day) -> tuple:
-    """The mid price at every moment it changes: halfway between the best bid and the best ask, read from the
-    stored rows through the rows gate, in dollars. Held from the last tick that had both."""
+def quotes(rows_folder: Path, trade_day) -> dict:
+    """What the stored rows hold of the quote, through the rows gate, in dollars:
+    - the MID price at every moment it changes (halfway between the best bid and the best ask, held from the last
+      tick that had both);
+    - the BEST BID and the BEST ASK, each as the points a rounded curve is drawn through: for every stretch a
+      price stands unchanged, its first tick and its last tick. Between the two the price is not changing and the
+      curve is a straight line; from the last tick of one price to the first tick of the next it is rounded.
+      Where several ticks share one nanosecond the last of them is taken."""
     held = {name: [] for name in READS}
     for _, row in tape.rows_for_calculations(rows_folder, trade_day, READS):
         for name, value in zip(READS, row):
@@ -106,7 +119,16 @@ def mids(rows_folder: Path, trade_day) -> tuple:
     checks.need(bool(both.any()), 'no tick of the trade day has both a best bid and a best ask')
     mid, at = ((bid + ask) / HALVE / LR.PRICE_UNIT)[both], received[both]
     changed = np.append(True, np.diff(mid) != 0)
-    return at[changed], mid[changed]
+    out = dict(mid_at=at[changed], mid=mid[changed])
+    for name, price in (('bid', bid), ('ask', ask)):
+        there = ~np.isnan(price)
+        t, v = received[there], price[there] / LR.PRICE_UNIT
+        last_of_instant = np.append(t[1:] != t[:-1], True)
+        t, v = t[last_of_instant], v[last_of_instant]
+        starts = np.append(True, v[1:] != v[:-1])      # the first tick of each stretch at one price
+        ends = np.append(starts[1:], True)             # and its last tick
+        out[name + '_at'], out[name] = t[starts | ends], v[starts | ends]
+    return out
 
 
 def trades_as_stored(rows_folder: Path, day: str) -> list:
@@ -138,42 +160,70 @@ def helper(cpus, work):
     WORK.update(work)
 
 
+def rounded(axis, seconds, knots_at: np.ndarray, knots: np.ndarray, first: int, last: int, colour: str):
+    """A best price as a rounded curve between the picture's two edges: straight where the price is not changing,
+    rounded from one price to the next (a shape-keeping curve: it never swings past a price that stood)."""
+    from scipy.interpolate import PchipInterpolator
+    a = max(int(np.searchsorted(knots_at, first, 'right')) - 1, 0)
+    b = min(int(np.searchsorted(knots_at, last, 'left')) + 1, len(knots_at))
+    x, y = knots_at[a:b], knots[a:b]
+    if len(x) < len(PAIR):                             # one price through the whole picture, or none at all
+        axis.plot(seconds([first, last]), [y[0], y[0]] if len(x) else [np.nan, np.nan], color=colour, lw=LR.LINE)
+        return
+    left, right = max(first, int(x[0])), min(last, int(x[-1]))
+    inside = x[(x >= left) & (x <= right)]
+    grid = np.union1d(np.linspace(left, right, CURVE_POINTS).astype(np.int64), inside)
+    curve = PchipInterpolator((x - x[0]).astype(float), y)((grid - x[0]).astype(float))
+    axis.plot(seconds(grid), curve, color=colour, lw=LR.LINE)
+
+
 def draw_one(job) -> dict:
     """One trade's picture. `job` is (file path, title, the picture's two edges, the trade's start, its end, the
     moment its turn was marked, its side, the price of its point at the start, the price of its point at the end
-    or None)."""
+    or None, whether the best bid and the best ask are drawn)."""
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
-    path, title, first, last, start, end, turn_at, side, start_price, end_price = job
+    path, title, first, last, start, end, turn_at, side, start_price, end_price, with_quotes = job
     w = WORK
     turn, with_it = SIDE[side]
     seconds = lambda moments: (np.asarray(moments, np.int64) - start) / NS_PER_SECOND   # the clock: from the start
-    figure, axes = plt.subplots(GRAPHS, 1, figsize=INCHES, sharex=True, gridspec_kw={'hspace': LR.GAP})
+    names = ['price'] + (list(QUOTES) if with_quotes else []) + list(LR.LINES) + [name + ' rate' for name in RATES]
+    figure, axes = plt.subplots(len(names), 1, figsize=(INCHES[0], INCHES[1] * len(names) / GRAPHS), sharex=True,
+                                gridspec_kw={'hspace': LR.GAP})
+    graph = dict(zip(names, axes))
+    head = lambda name, text: graph[name].set_title(f'{names.index(name) + 1}. {text}', loc='left', fontsize=LR.BIG)
+
     at, price = LR.cut(w['mid_at'], w['mid'], first, last)
     rates = {'price': (at, price)}                     # each line as drawn, for its change tick by tick
-    axes[0].step(seconds(at), price, where='post', color='#17202a', lw=LR.LINE)
+    graph['price'].step(seconds(at), price, where='post', color='#17202a', lw=LR.LINE)
     for did, moment, where in zip(POINTS[side], (start, end), (start_price, end_price)):
         if where is not None:
             shape, colour = MARKS[did]
-            axes[0].scatter([float(seconds(moment))], [where], marker=shape, s=POINT, color=colour, zorder=LR.ON_TOP,
-                            label=f'{did} at {where:.3f}')
-    axes[0].set_ylabel('mid price, dollars')
-    axes[0].set_title('1. THE PRICE: the mid price, with the trade\'s two points:\nwhere it was bought and where '
-                      'it was sold', loc='left', fontsize=LR.BIG)
-    for number_of, (name, (_, span)) in enumerate(LR.LINES.items(), start=1):
-        axis = axes[number_of]
+            graph['price'].scatter([float(seconds(moment))], [where], marker=shape, s=POINT, color=colour,
+                                   zorder=LR.ON_TOP, label=f'{did} at {where:.3f}')
+    graph['price'].set_ylabel('mid price, dollars')
+    head('price', 'THE PRICE: the mid price, with the trade\'s two points:\nwhere it was bought and where it was sold')
+    if with_quotes:
+        for name, (words, colour) in QUOTES.items():
+            rounded(graph[name], seconds, w[name + '_at'], w[name], first, last, colour)
+            graph[name].set_ylabel(f'{words}, dollars')
+            head(name, f'THE {words.upper()}, by tick: rounded from one price to the next,\nstraight where the '
+                       f'price is not changing')
+    for name, (_, span) in LR.LINES.items():
+        axis = graph[name]
         at, values = LR.cut(w[name + '_at'], w[name], first, last)
         rates[name] = (at, turn * values)
         axis.step(seconds(at), turn * values, where='post', color='#1f618d', lw=1)
         axis.axhline(0, color='#aab7b8', lw=LR.THIN)
         axis.set_ylim(*LR.scale(turn * values))
         axis.set_ylabel(f'above zero: {with_it}\n(with this trade)')
-        axis.set_title(f'{number_of + 1}. THE {name.upper()}, the crypto formula: bought minus sold over\nbought plus '
-                       f'sold, the trades of the last {span} seconds', loc='left', fontsize=LR.BIG)
-    for axis, name, colour, what in zip(axes[len(LR.LINES) + 1:], RATES, ('#6c3483', '#1e8449'), (
+        head(name, f'THE {name.upper()}, the crypto formula: bought minus sold over\nbought plus sold, the trades of '
+                   f'the last {span} seconds')
+    for name, colour, what in zip(RATES, ('#6c3483', '#1e8449'), (
             'its change at each read (a trade received, or old trades leaving)',
             'the change of the mid price at each tick it moves')):
+        axis = graph[name + ' rate']
         at, values = rates[name]
         at, values = at[:-1], values[:-1]              # the reads themselves (the last point only holds the line)
         change = np.diff(values)
@@ -182,8 +232,7 @@ def draw_one(job) -> dict:
         axis.set_ylim(*LR.scale(change))
         axis.set_ylabel('change at the tick\n(above zero: with this trade)' if name in LR.LINES else
                         'change at the tick, dollars\n(above zero: the price went up)')
-        axis.set_title(f'{list(axes).index(axis) + 1}. HOW FAST THE {name.upper()} CHANGES, per tick:\n{what}', loc='left',
-                       fontsize=LR.BIG)
+        head(name + ' rate', f'HOW FAST THE {name.upper()} CHANGES, per tick:\n{what}')
     for axis in axes[1:]:                              # the price graph carries only its two points
         axis.axvspan(0, float(seconds(end)), color='#f9e79f', alpha=LR.SHADE, label='this trade (start to end)')
         axis.axvline(0, color='#1e8449', lw=LR.THIN, ls='--', label='the trade starts (zero on the clock)')
@@ -192,7 +241,7 @@ def draw_one(job) -> dict:
     for axis in axes:
         axis.grid(alpha=LR.FAINT)
         axis.tick_params(labelsize=LR.SMALL)
-    axes[0].legend(fontsize=LR.SMALL, loc='best')
+    graph['price'].legend(fontsize=LR.SMALL, loc='best')
     axes[1].legend(fontsize=LR.TINY, loc='best')
     axes[-1].set_xlabel('seconds from the trade\'s start (each read at its own nanosecond)')
     figure.suptitle(title, fontsize=LR.BIG - 1, y=LR.TITLE_AT)
@@ -202,7 +251,7 @@ def draw_one(job) -> dict:
     return dict(file=Path(path).name, bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
 
 
-def run(trade_day, rows_folder: Path, out: Path, pick=None, keep_cpus=False) -> dict:
+def run(trade_day, rows_folder: Path, out: Path, pick=None, keep_cpus=False, only=None, with_quotes=False) -> dict:
     import pyarrow as pa
     import pyarrow.parquet as pq
     started = time.monotonic()
@@ -210,16 +259,22 @@ def run(trade_day, rows_folder: Path, out: Path, pick=None, keep_cpus=False) -> 
     out.mkdir(parents=True, exist_ok=True)
     opens, closes = trade_day_bounds(trade_day)
     s = LR.stored(rows_folder, day)                    # the two stored crypto lines (and the trades on the tape)
-    s['mid_at'], s['mid'] = mids(rows_folder, trade_day)
+    s.update(quotes(rows_folder, trade_day))
     trades = trades_as_stored(rows_folder, day)
     last_tick = int(max(s['time'][-1], s['mid_at'][-1]))
 
     asked = list(range(len(trades)))
     if pick is not None:                               # a pick at random, the same one every time it is run
         asked = sorted(np.random.default_rng(int(day)).choice(asked, size=min(pick, len(asked)), replace=False).tolist())
+    if only is not None:                               # the trades named, by their own numbers
+        number_of = {t['trade']: k for k, t in enumerate(trades)}
+        checks.need(only and all(n in number_of for n in only), f'a trade asked for by number is not a trade of {day}')
+        asked = sorted(number_of[n] for n in only)
     count = dict(trade_day=trade_day.isoformat(), trades_of_the_program_in_the_trade_day=len(trades),
                  pictures_this_run_draws=len(asked), trades_on_the_tape=len(s['time']),
-                 drawn='every trade of the program' if pick is None else
+                 best_bid_and_best_ask_drawn=with_quotes,
+                 drawn=f'the trades asked for by number: {[trades[k]["trade"] for k in asked]}' if only is not None else
+                       'every trade of the program' if pick is None else
                        f'{len(asked)} trades of the program picked at random by the computer (seeded with the trade '
                        f'day\'s own number, {int(day)}, so the same pick comes out again): '
                        f'{[trades[k]["trade"] for k in asked]}')
@@ -257,7 +312,8 @@ def run(trade_day, rows_folder: Path, out: Path, pick=None, keep_cpus=False) -> 
                          f'It runs from two trades before to the trade after, and the dipole and the\n'
                          f'exhaustion set where it starts and stops: every hump of either line is whole.\n'
                          f'Nothing averaged. Every read at its own nanosecond.',
-                         first, last, start, end, t['turn_received_ns'], t['side'], start_price, end_price))
+                         first, last, start, end, t['turn_received_ns'], t['side'], start_price, end_price,
+                         with_quotes))
         lines.append((t['trade'], t['side'], t['turn_received_ns'], start, t['end_received_ns'], t['ended'],
                       t['length_seconds'], start_price, end_price, first, last, name))
 
@@ -267,7 +323,8 @@ def run(trade_day, rows_folder: Path, out: Path, pick=None, keep_cpus=False) -> 
     mine = sorted(os.sched_getaffinity(0))
     for cpu in mine:
         cpus.put(cpu)
-    work = {name: s[name] for name in ('mid_at', 'mid', *LR.LINES, *(name + '_at' for name in LR.LINES))}
+    work = {name: s[name] for name in ('mid_at', 'mid', *LR.LINES, *(name + '_at' for name in LR.LINES), *QUOTES,
+                                       *(name + '_at' for name in QUOTES))}
     with multiprocessing.Pool(len(mine), initializer=helper, initargs=(cpus, work)) as pool:
         drawn = pool.map(draw_one, jobs, chunksize=LR.PICTURES_AT_ONCE)
     checks.need(len(drawn) == len(asked) == len({f['file'] for f in drawn}),
@@ -293,6 +350,12 @@ def run(trade_day, rows_folder: Path, out: Path, pick=None, keep_cpus=False) -> 
                   'gate), in dollars, not turned; on it two points, where the trade was bought and where it was '
                   'sold, each at the price of the trade on the tape that filled it there (the mid standing then '
                   'when it ended at no tick)',
+            best_bid_and_best_ask='drawn in this run' if with_quotes else 'not drawn in this run',
+            best_bid_and_best_ask_how='each its own graph, by tick, from the stored rows through the rows gate, in '
+                                      'dollars: a rounded curve (shape-keeping, drawing only) through the first and '
+                                      'the last tick of every stretch the price stands unchanged, so it is a '
+                                      'straight line where the price is not changing and rounded from one price to '
+                                      'the next; no value is changed and nothing is averaged',
             rates='per tick, not per second: the dipole line\'s change at each of its own reads, and the mid '
                   'price\'s change at each tick it moves, each drawn as a stroke at that tick',
             **{name: dict(read_from=f'crypto-ng-tick/{file}-{day}.parquet', span_seconds=span,
@@ -330,9 +393,13 @@ def main():
     ap.add_argument('--rows', type=Path, required=True)
     ap.add_argument('--out', type=Path, required=True)
     ap.add_argument('--random', type=int, help='draw this many trades, picked at random from the trade day')
+    ap.add_argument('--only', action='append', help='<trade day>:<trade number>; may be given more than once. Draw '
+                    'only the trades named for this trade day')
+    ap.add_argument('--quotes', action='store_true', help='add the best bid and the best ask, each its own graph')
     ap.add_argument('--keep-cpus', action='store_true', help='draw on the CPUs this program was pinned to')
     a = ap.parse_args()
-    receipt = run(parse_trade_day(a.trade_day), a.rows, a.out, a.random, a.keep_cpus)
+    only = None if a.only is None else [int(n) for day, n in (text.split(':') for text in a.only) if day == a.trade_day]
+    receipt = run(parse_trade_day(a.trade_day), a.rows, a.out, a.random, a.keep_cpus, only, a.quotes)
     print(json.dumps({k: receipt[k] for k in ('trade_day', 'counts', 'checks', 'seconds')}, indent=1))
 
 

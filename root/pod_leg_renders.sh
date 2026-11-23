@@ -10,7 +10,7 @@
 set -u
 COMMIT=$1; MODULE=$2; shift 2
 WORK=/root/work; OUT=$WORK/out; CODE=$WORK/code; GITHUB=https://github.com/DavisAI1974
-DAYS=(20231002 20231003 20231017 20231018)
+DAYS=(${DAYS:-20231002 20231003 20231017 20231018})   # all four trade days, or the ones named in DAYS
 say() { echo "$1" >> "$OUT/STATUS"; }
 
 pip install -q pyarrow==26.0.1 numpy==2.5.5 matplotlib scipy >> "$OUT/setup.log" 2>&1 || { say 'FAILED in the set-up: the libraries'; exit 1; }
