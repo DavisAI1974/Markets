@@ -162,7 +162,11 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
   (`root/tick_renders.py`, `root/continuing.py`, `root/four_graphs.py`) and everything stored from them were
   deleted on his word ("Delete anything that you ran your way") and are not to be made again. NO HARD CODED START
   OR STOP for a graph: the crypto pictures' 45 and 60 seconds are not carried; the dipole and the exhaustion start
-  and stop where the data says (a hump: the time a line stays on one side of zero). What was left out of the crypto work on his word stays out: winner and loser, the
+  and stop where the data says (a hump: the time a line stays on one side of zero).
+  THE EXCEL SHEETS take dipole and exhaustion from the crypto calculation only (Greg, 2026-11-23: "make sure your
+  new calcs don't end up on the excel sheet. We only want the crypto calc styles as the source of output for
+  exhaustion and dipole to put on excel sheets"). No figure of Claude's goes into a sheet under those names or
+  beside them. What was left out of the crypto work on his word stays out: winner and loser, the
   average line, the short or long split.
 
 - **EACH TRADE INDIVIDUALLY, never average.** No pooled hit-rate, no mean signed-bps, no averaged
