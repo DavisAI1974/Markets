@@ -370,4 +370,6 @@ Nothing is worked out: stored values are written into sheets and read back.
 |---|---|---|
 | `NANO_DIGITS` | 9 | A nanosecond inside a second, written 000000000 in the Eastern time added for reading. |
 | `LEFT_OUT` | three column names | The stored columns of the run of trades under way at a first step: left out of the sheets on Greg's yes. |
+| `SIGN` | +1, -1 | A buying hump stands above zero, a selling hump below: used to find the read of the stored line a hump's moment is. |
+| `LINE_FILE`, `MEASURE_FILE`, `MOMENTS`, `MEASURE`, `DIVISION`, `MEASURE_QUESTION` | names and words | The stored exhaustion line and the stored information measure, the moments of a line the measure is looked up at, its columns as named in the sheets, and the mark for a ratio made by the division. |
 | `PINNED`, `TABLES`, `WHICH`, `QUESTIONS`, `READ_ME` | names and words | The timestamp each row is pinned to, the two stored tables, the research question each column is listed under, and the lines added to the read-me page. |

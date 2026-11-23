@@ -32,7 +32,7 @@ from openpyxl import load_workbook
 
 from root.calendar import EASTERN, NS_PER_SECOND
 from root.crypto_ng_excel import DAYS, label, links_of, same, values
-from root.research_threads import HUMP_ADDED, HUMP_COLUMNS, MOVE_COLUMNS
+from root.research_threads import HUMP_ADDED, HUMP_COLUMNS, MOVE_COLUMNS, TRADE_READ, standing
 
 LEFT_OUT = ['run_side_at_first_step', 'run_size_at_first_step', 'run_trades_at_first_step']   # the run of trades
 NANO_DIGITS = 9                                        # a nanosecond inside a second, written 000000000
@@ -42,6 +42,31 @@ PINNED = dict(moves=('first_step_received_ns', 'first_step_eastern',
               humps=('began_received_ns', 'began_eastern',
                      'Added here for reading: the Eastern date and time it began, to the nanosecond. The row is '
                      'pinned to began_received_ns.'))
+LINE_FILE, MEASURE_FILE = 'crypto-ng-tick-line-20s', 'info-measure'   # the stored exhaustion line; the stored measure
+SIGN = dict(buy=1, sell=-1)                            # a buying hump stands above zero, a selling hump below
+MOMENTS = dict(moves=['first_step', 'end'], humps=['began', 'furthest', 'ended'])   # where the measure is read
+MEASURE = [
+    ('info_ratio', 'C_signed', 'THE INFORMATION RATIO (the operator\'s C_signed): the mean of the entropy of the '
+     'twenty bought pieces and the entropy of the twenty sold pieces, over the information the two lists share, '
+     'signed by the side that leads. HUGE WHERE info_ratio_made_by_division IS TRUE: do not read its size there.'),
+    ('info_ratio_log', 'log_signed_C', 'Codex\'s form of the ratio: its sign times the logarithm of one plus its size.'),
+    ('info_shared', 'mi_level', 'The information the twenty bought pieces and the twenty sold pieces share (the '
+     'bottom of the ratio). Zero where all the trading of the 20 seconds is on one side.'),
+    ('info_entropy_lean', 'ent_dipole', 'The operator\'s ent_dipole: the entropy of the bought pieces minus the '
+     'entropy of the sold pieces, over their sum.'),
+    ('info_flow', 'mi_flow', 'The operator\'s mi_flow: the shared information of the later ten pieces minus that of '
+     'the earlier ten, signed by the side that leads.'),
+    ('info_lean_change', 'imb_flow', 'The operator\'s imb_flow: bought minus sold over bought plus sold of the later '
+     'ten seconds, minus the same of the earlier ten.'),
+    ('info_pieces_with_a_trade', 'pieces_with_a_trade', 'How many of the twenty one-second pieces hold any trade '
+     'with a side. A figure standing on one or two pieces stands on very little.'),
+]
+DIVISION = ('info_ratio_made_by_division', 'TRUE where the two lists share exactly nothing (all the trading of the 20 '
+            'seconds is on one side): there the ratio is a number over the operator\'s smallest number, made by the '
+            'division and not by the market. FALSE otherwise. Empty where nothing with a side traded.')
+MEASURE_QUESTION = ('Codex\'s question: are large information ratios real, or made by thin trading? THE INFORMATION '
+                    'MEASURE: the crypto information dipole operator on twenty one-second pieces counted back from '
+                    'the read. NOT the dipole and NOT the exhaustion. Not yet compared with the original equations.')
 TABLES = dict(moves=('research-moves', MOVE_COLUMNS), humps=('research-humps', list(HUMP_COLUMNS) + HUMP_ADDED))
 WHICH = 'Which line this is, and its timestamp'
 QUESTIONS = dict(moves=[
@@ -91,6 +116,13 @@ READ_ME = [
     'their own column.',
     'Left out of the "moves" sheets until Greg says: ' + ', '.join(LEFT_OUT) + ' (the run of trades under way at a '
     'first step). Yes or no cells are written TRUE or FALSE.',
+    'THE INFORMATION MEASURE (added 2026-11-23; Greg: "If we can use the codex info now then do it"). The columns '
+    'named info_... in the "moves" and "humps" sheets are Codex\'s information measure: the crypto information '
+    'dipole operator (odcore/info_dipole.py, called unchanged) on twenty one-second pieces of bought and sold size '
+    'counted back from the read, looked up from info-measure/info-measure-<trade day>.parquet at the same tick as '
+    'the exhaustion beside it. It is NOT the dipole and NOT the exhaustion. WHERE info_ratio_made_by_division IS '
+    'TRUE the ratio is made by the division (all the trading of the 20 seconds was on one side) and its size says '
+    'nothing. Not yet compared with the original dipole equations (set aside for further research).',
 ]
 
 
@@ -103,6 +135,10 @@ def laid_out(kind: str) -> tuple:
     """The columns of one kind of sheet in the order written, each with its question and what it holds."""
     described = dict(TABLES[kind][1])
     stamp, added, added_what = PINNED[kind]
+    extra = [(f'{name}_at_{mark}', f'At its {mark.replace("_", " ")}, read at that tick (the read of the stored '
+              f'exhaustion line standing there, by place on the tape). {what}')
+             for mark in MOMENTS[kind] for name, what in [(n, w) for n, _, w in MEASURE] + [DIVISION]]
+    described.update(extra)
     named = {name for _, names in QUESTIONS[kind] if not isinstance(names, str) for name in names}
     out = []
     for question, names in QUESTIONS[kind]:
@@ -112,9 +148,60 @@ def laid_out(kind: str) -> tuple:
             out.append((question, name, described[name]))
             if name == stamp:
                 out.append((question, added, added_what))
+    out += [(MEASURE_QUESTION, name, what) for name, what in extra]
     written = [name for _, name, _ in out if name != added]
     assert len(written) == len(set(written)) and set(written) == set(described) - set(LEFT_OUT), \
         (kind, 'a stored column is under no question, or under two')
+    return out
+
+
+def measure_at(checkout: Path, day: str, kind: str, stored: dict) -> dict:
+    """The stored information measure looked up at each line's moments: at the read of the stored exhaustion line
+    standing at that tick, found by place on the tape. A look-up of stored values; nothing is worked out."""
+    import numpy as np
+    line = pq.read_table(checkout / 'crypto-ng-tick' / f'{LINE_FILE}-{day}.parquet',
+                         columns=['moment_received_ns', 'what', 'position_on_tape', 'flow']).to_pydict()
+    line = dict(moments=np.array(line['moment_received_ns'], np.int64), what=line['what'],
+                position=line['position_on_tape'], flow=line['flow'])
+    measure = pq.read_table(checkout / 'info-measure' / f'{MEASURE_FILE}-{day}.parquet',
+                            columns=['read'] + [name for _, name, _ in MEASURE]).to_pydict()
+    assert measure['read'] == list(range(len(line['flow']))), (day, 'the measure is not one line per read of the line')
+    count = len(next(iter(stored.values())))
+    out = {f'{name}_at_{mark}': [None] * count for mark in MOMENTS[kind] for name in [n for n, _, _ in MEASURE] + [DIVISION[0]]}
+
+    def at_moment(at: int, fits) -> int:
+        a, b = (int(np.searchsorted(line['moments'], at, edge)) for edge in ('left', 'right'))
+        return next((r for r in range(a, b) if fits(r)), None)
+
+    for k in range(count):
+        reads = {}
+        if kind == 'moves':
+            for mark, when, where in (('first_step', 'first_step_received_ns', 'first_step_position'),
+                                      ('end', 'end_received_ns', 'end_position')):
+                if stored[when][k] is not None:
+                    reads[mark] = standing(line, stored[when][k], stored[where][k])
+                    value = line['flow'][reads[mark]] if reads[mark] >= 0 else None
+                    assert same(value, stored[f'exhaustion_20s_at_{mark}'][k]) if value is not None else \
+                        stored[f'exhaustion_20s_at_{mark}'][k] is None, (day, kind, k, mark, 'not the read the table used')
+        else:
+            sign = SIGN[stored['side'][k]]
+            first = at_moment(stored['began_received_ns'][k],
+                              lambda r: line['flow'][r] is not None and line['flow'][r] * sign > 0)
+            reads['began'] = first
+            reads['furthest'] = at_moment(stored['furthest_received_ns'][k],
+                                          lambda r: r >= first and line['flow'][r] == stored['furthest_flow'][k])
+            if stored['ended_received_ns'][k] is not None:
+                reads['ended'] = at_moment(stored['ended_received_ns'][k],
+                                           lambda r: line['flow'][r] is None or line['flow'][r] * sign <= 0)
+            assert all(r is not None for r in reads.values()), (day, kind, k, 'a moment of a hump is no read of the line')
+            assert (line['position'][first] if line['what'][first] == TRADE_READ else None) == stored['began_position'][k]
+        for mark, r in reads.items():
+            if r is None or r < 0:
+                continue
+            for name, source, _ in MEASURE:
+                out[f'{name}_at_{mark}'][k] = measure[source][r]
+            shared = measure['mi_level'][r]
+            out[f'{DIVISION[0]}_at_{mark}'][k] = None if shared is None else shared == 0
     return out
 
 
@@ -122,6 +209,7 @@ def lines_of(checkout: Path, day: str, kind: str) -> tuple:
     stem, _ = TABLES[kind]
     stamp, added, _ = PINNED[kind]
     stored = pq.read_table(checkout / 'research-threads' / f'{stem}-{day}.parquet').to_pydict()
+    stored.update(measure_at(checkout, day, kind, stored))
     header = [name for _, name, _ in laid_out(kind)]
     count = len(stored[stamp])
     lines = []
@@ -147,7 +235,8 @@ def main():
         place = book.worksheets.index(book[f'crypto and ng {label(day)}'])
         for kind in TABLES:
             title = f'{kind} {label(day)}'
-            assert title not in before, (title, 'is already in the file')
+            if title in before:                        # written again whole when it is already there
+                book.remove(book[title])
             header, lines = lines_of(checkouts / day, day, kind)
             place += 1
             sheet = book.create_sheet(title, place)
@@ -157,15 +246,17 @@ def main():
             wanted[title] = [header] + lines
     page = [['sheet', 'research question', 'column', 'what it holds']] + [
         [f'{kind} <trade day>', question, name, what] for kind in TABLES for question, name, what in laid_out(kind)]
-    assert 'RESEARCH COLUMNS' not in before, 'RESEARCH COLUMNS is already in the file'
+    if 'RESEARCH COLUMNS' in before:
+        book.remove(book['RESEARCH COLUMNS'])
     columns = book.create_sheet('RESEARCH COLUMNS', book.worksheets.index(book['READ ME']) + 1)
     for line in page:
         columns.append(line)
     wanted['RESEARCH COLUMNS'] = page
     first = book['READ ME']
-    for line in READ_ME:
+    new = [line for line in READ_ME if [line] not in before['READ ME']]   # a line already there is not added twice
+    for line in new:
         first.append([line])
-    wanted['READ ME'] = before['READ ME'] + [[line] for line in READ_ME]
+    wanted['READ ME'] = before['READ ME'] + [[line] for line in new]
     book.save(book_path)
     del book, sheet, columns, first                    # the file as written is read back on its own
 
