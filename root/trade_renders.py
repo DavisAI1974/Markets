@@ -10,14 +10,18 @@ THE SET-UP IS THE CRYPTO ONE (Markets `75b15fa`: `_dipole_price_overlay.py`, `re
   `crypto-ng-tick/crypto-ng-tick-program-trades-*`): what the crypto exhaustion graphs were drawn around.
 - ZERO on the clock is THE TRADE'S START (its onset), as in those graphs. The clock is in seconds from it; each read
   is still placed at its own nanosecond. The title gives the Eastern time.
-- THE PRICE is the crypto picture's black line: the MID price (halfway between the best bid and the best ask), as
-  its change from where it stood at the trade's start, in hundredths of a percent, turned to the trade's side.
+- THE PRICE is the MID price (halfway between the best bid and the best ask, the crypto picture's price), in
+  dollars as it stood, with TWO POINTS on it and nothing else (Greg, 2026-11-23: "Just show price graph with 2
+  points: bought and sold"): where the trade was bought and where it was sold. A buy is bought at its start and
+  sold at its end; a sell is sold at its start and bought at its end. Each point sits at the price of the trade on
+  the tape that filled it there (at the mid standing then, when the trade ended at no tick).
 - THE DIPOLE is the crypto picture's orange line: bought minus sold over bought plus sold over the trades of the
   last 60 seconds, turned to the trade's side.
 - THE EXHAUSTION is the July 7 line: the same figure over the last 20 seconds, turned to the trade's side.
 The two lines are READ FROM WHAT IS STORED (`crypto-ng-tick-lean-60s-*`, `crypto-ng-tick-line-20s-*`); the mid is
-read from the stored rows through the rows gate. "Turned to the trade's side": above zero always reads "with this
-trade". Five separate graphs on the one clock: the three lines, then the two rates.
+read from the stored rows through the rows gate. The dipole and the exhaustion are "turned to the trade's side":
+above zero reads "with this trade". The price is not turned. Five separate graphs on the one clock: the three
+lines, then the two rates.
 
 WHAT IS NOT CARRIED, each on Greg's word: the average of many trades; the winner and loser labels; the short or long
 split; the cut at 45 or 60 seconds each side; the time grid. One trade at a time.
@@ -31,8 +35,8 @@ is great") to the end of the trade after; then the dipole and the exhaustion say
 stops: every hump of either line that the frame touches (the time a line stays on one side of zero) is in the
 picture whole, so each line is on the page from where it began to show.
 
-The trade is marked on all three graphs: its own life shaded (start to end), a line at zero, and a line at the turn
-the program marked before it. Nothing is averaged, ranked, typed or labelled. OBSERVATION ONLY.
+The trade is marked on the four graphs under the price: its own life shaded (start to end), a line at zero, and a
+line at the turn the program marked before it. The price graph carries only its two points. Nothing is averaged, ranked, typed or labelled. OBSERVATION ONLY.
 
 WHAT IS WRITTEN: `TRADE-RENDERS-COUNT-<trade day>.json` (first: how many trades the trade day holds and how many
 pictures this run draws), `trade-render-<trade day>-<trade number>.png`, `trade-renders-index-<trade day>.parquet`
@@ -61,12 +65,14 @@ from root.crypto_ng_tick import HALVE, clock_text, number, whole_humps
 TRADE_DIGITS = 5                                       # a trade's number in its picture's name, written 00000
 TRADES_BACK = 2                                        # Greg, 2026-11-23: a picture's frame starts two trades back
 GRAPHS, INCHES = 5, (7.2, 18.0)                        # drawing only: the three lines and the two rates, for a phone
-BPS = 10 ** 4                                          # hundredths of a percent, the crypto picture's price unit
 SIDE = dict(buy=(1, 'buying'), sell=(-1, 'selling'))   # the crypto turn to the trade's side
 RATES = ('dipole', 'price')                            # the crypto picture's two rate lines, in its order
 READS = ['received_time_ns', 'best_bid', 'best_ask']
 TRADES = ['trade', 'side', 'turn_received_ns', 'onset_position_on_tape', 'onset_received_ns', 'ended',
-          'end_received_ns', 'length_seconds']
+          'end_position_on_tape', 'end_received_ns', 'length_seconds']
+POINTS = dict(buy=('bought', 'sold'), sell=('sold', 'bought'))   # what the trade did at its start and at its end
+MARKS = dict(bought=('^', '#1e8449'), sold=('v', '#922b21'))     # drawing only: the two points
+POINT = 60                                             # drawing only: the size of a point
 INDEX_COLUMNS = [
     ('trade', 'The trade of the crypto and ng program, in the order they started. A label only.'),
     ('side', 'buy or sell: the side the program took.'),
@@ -75,7 +81,9 @@ INDEX_COLUMNS = [
     ('end_received_ns', 'When it ended. Empty when it was still open at the last tick of the trade day.'),
     ('ended', 'How it ended, in the words of the July rule that ended it.'),
     ('length_seconds', 'From its start to its end, in seconds.'),
-    ('mid_at_the_start', 'The mid price standing as it started, in dollars: the level its price line is measured from.'),
+    ('start_price', 'The price of the point at its start, in dollars: the trade on the tape that filled it.'),
+    ('end_price', 'The price of the point at its end, in dollars: the trade on the tape that ended it, or the mid '
+     'price standing then when it ended at no tick. Empty when it was still open.'),
     ('picture_first_ns', 'Where its picture starts, set by the data.'),
     ('picture_last_ns', 'Where its picture ends, set by the data.'),
     ('render', 'The picture drawn for it in this run. Empty when this run did not draw it.'),
@@ -132,24 +140,27 @@ def helper(cpus, work):
 
 def draw_one(job) -> dict:
     """One trade's picture. `job` is (file path, title, the picture's two edges, the trade's start, its end, the
-    moment its turn was marked, its side, the mid standing as it started)."""
+    moment its turn was marked, its side, the price of its point at the start, the price of its point at the end
+    or None)."""
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
-    path, title, first, last, start, end, turn_at, side, level = job
+    path, title, first, last, start, end, turn_at, side, start_price, end_price = job
     w = WORK
     turn, with_it = SIDE[side]
     seconds = lambda moments: (np.asarray(moments, np.int64) - start) / NS_PER_SECOND   # the clock: from the start
     figure, axes = plt.subplots(GRAPHS, 1, figsize=INCHES, sharex=True, gridspec_kw={'hspace': LR.GAP})
-    at, values = LR.cut(w['mid_at'], w['mid'], first, last)
-    price = turn * (values - level) / level * BPS
+    at, price = LR.cut(w['mid_at'], w['mid'], first, last)
     rates = {'price': (at, price)}                     # each line as drawn, for its change tick by tick
     axes[0].step(seconds(at), price, where='post', color='#17202a', lw=LR.LINE)
-    axes[0].axhline(0, color='#aab7b8', lw=LR.THIN)
-    axes[0].set_ylim(*LR.scale(price))
-    axes[0].set_ylabel('hundredths of a percent\n(above zero: with this trade)')
-    axes[0].set_title('1. THE PRICE, as in crypto: the mid price, from where it stood\nat the trade\'s start, turned '
-                      'to the trade\'s side', loc='left', fontsize=LR.BIG)
+    for did, moment, where in zip(POINTS[side], (start, end), (start_price, end_price)):
+        if where is not None:
+            shape, colour = MARKS[did]
+            axes[0].scatter([float(seconds(moment))], [where], marker=shape, s=POINT, color=colour, zorder=LR.ON_TOP,
+                            label=f'{did} at {where:.3f}')
+    axes[0].set_ylabel('mid price, dollars')
+    axes[0].set_title('1. THE PRICE: the mid price, with the trade\'s two points:\nwhere it was bought and where '
+                      'it was sold', loc='left', fontsize=LR.BIG)
     for number_of, (name, (_, span)) in enumerate(LR.LINES.items(), start=1):
         axis = axes[number_of]
         at, values = LR.cut(w[name + '_at'], w[name], first, last)
@@ -169,17 +180,20 @@ def draw_one(job) -> dict:
         axis.vlines(seconds(at[1:]), 0, change, color=colour, lw=LR.THIN)
         axis.axhline(0, color='#aab7b8', lw=LR.THIN)
         axis.set_ylim(*LR.scale(change))
-        axis.set_ylabel('change at the tick\n(above zero: with this trade)')
+        axis.set_ylabel('change at the tick\n(above zero: with this trade)' if name in LR.LINES else
+                        'change at the tick, dollars\n(above zero: the price went up)')
         axis.set_title(f'{list(axes).index(axis) + 1}. HOW FAST THE {name.upper()} CHANGES, per tick:\n{what}', loc='left',
                        fontsize=LR.BIG)
-    for axis in axes:
+    for axis in axes[1:]:                              # the price graph carries only its two points
         axis.axvspan(0, float(seconds(end)), color='#f9e79f', alpha=LR.SHADE, label='this trade (start to end)')
         axis.axvline(0, color='#1e8449', lw=LR.THIN, ls='--', label='the trade starts (zero on the clock)')
         axis.axvline(float(seconds(turn_at)), color='#922b21', lw=LR.THIN, ls=':',
                      label='the turn the program marked before it')
+    for axis in axes:
         axis.grid(alpha=LR.FAINT)
         axis.tick_params(labelsize=LR.SMALL)
-    axes[0].legend(fontsize=LR.TINY, loc='best')
+    axes[0].legend(fontsize=LR.SMALL, loc='best')
+    axes[1].legend(fontsize=LR.TINY, loc='best')
     axes[-1].set_xlabel('seconds from the trade\'s start (each read at its own nanosecond)')
     figure.suptitle(title, fontsize=LR.BIG - 1, y=LR.TITLE_AT)
     figure.savefig(path, dpi=LR.DPI, bbox_inches='tight')
@@ -213,14 +227,23 @@ def run(trade_day, rows_folder: Path, out: Path, pick=None, keep_cpus=False) -> 
 
     name_of_day = f'Trade day {trade_day:%a %b %d, %Y}'
     jobs, lines, no_lead_in, wanted = [], [], [], set(asked)
+    place = {int(p): k for k, p in enumerate(s['position'].tolist())}
     for k, t in enumerate(trades):
         start = t['onset_received_ns']
         end = t['end_received_ns'] if t['end_received_ns'] is not None else last_tick
         first, last = edges(trades, k, s, last_tick, opens, closes)
         checks.need(first <= start and end <= last, f'trade {t["trade"]}: its picture does not hold it whole')
-        standing = int(np.searchsorted(s['mid_at'], start, 'right')) - 1
-        checks.need(standing >= 0, f'trade {t["trade"]}: no mid price stood as it started')
-        level = float(s['mid'][standing])
+        checks.need(t['onset_position_on_tape'] in place, f'trade {t["trade"]}: its start is not a trade on the stored tape')
+        start_price = float(s['price'][place[t['onset_position_on_tape']]])
+        end_price = None
+        if t['end_received_ns'] is not None:
+            if t['end_position_on_tape'] is not None:
+                checks.need(t['end_position_on_tape'] in place, f'trade {t["trade"]}: its end is not a trade on the stored tape')
+                end_price = float(s['price'][place[t['end_position_on_tape']]])
+            else:                                      # it ended at no tick: the mid price standing then
+                standing = int(np.searchsorted(s['mid_at'], end, 'right')) - 1
+                checks.need(standing >= 0, f'trade {t["trade"]}: no mid price stood as it ended')
+                end_price = float(s['mid'][standing])
         if first == start:
             no_lead_in.append(t['trade'])
         name = f'trade-render-{day}-{t["trade"]:0{TRADE_DIGITS}d}.png' if k in wanted else None
@@ -229,14 +252,14 @@ def run(trade_day, rows_folder: Path, out: Path, pick=None, keep_cpus=False) -> 
                     else 'still open at the last tick')
             jobs.append((str(out / name),
                          f'{name_of_day}. Trade {t["trade"]} of the crypto and ng program: {t["side"]}, {went}.\n'
-                         f'It starts {clock_text(start)} Eastern (zero on the clock); mid price there {level:.4f}.\n'
+                         f'It starts {clock_text(start)} Eastern (zero on the clock).\n'
                          f'Drawn: {(first - start) / NS_PER_SECOND:,.3f} s to {(last - start) / NS_PER_SECOND:,.3f} s.\n'
                          f'It runs from two trades before to the trade after, and the dipole and the\n'
                          f'exhaustion set where it starts and stops: every hump of either line is whole.\n'
                          f'Nothing averaged. Every read at its own nanosecond.',
-                         first, last, start, end, t['turn_received_ns'], t['side'], level))
+                         first, last, start, end, t['turn_received_ns'], t['side'], start_price, end_price))
         lines.append((t['trade'], t['side'], t['turn_received_ns'], start, t['end_received_ns'], t['ended'],
-                      t['length_seconds'], level, first, last, name))
+                      t['length_seconds'], start_price, end_price, first, last, name))
 
     if not keep_cpus:                                  # the pod pins this program to one CPU; the drawing is
         os.sched_setaffinity(0, range(os.cpu_count()))   # spread over every CPU the pod allows, one helper on each
@@ -258,8 +281,8 @@ def run(trade_day, rows_folder: Path, out: Path, pick=None, keep_cpus=False) -> 
     picture_bytes = sum(f['bytes'] for f in drawn)
     receipt = dict(
         what='One picture for every trade of the crypto and ng program, set up as the crypto pictures were: zero at '
-             'the trade\'s start; the mid price from where it stood there; the crypto dipole line (60 seconds); the '
-             'crypto exhaustion line (20 seconds); all turned to the trade\'s side',
+             'the trade\'s start; the mid price in dollars with the trade\'s two points, bought and sold; the crypto '
+             'dipole line (60 seconds) and the crypto exhaustion line (20 seconds), turned to the trade\'s side',
         asked='Greg, 2026-11-23: "Yes I want the prebirths laid out. Not worried about the 2000 averaging. I just want '
               'to make sure we are setting them up the same. Show each individual trade and their prebirths like this '
               'without designated start times for dipole and exhaustion. Their start times are when they start '
@@ -267,8 +290,9 @@ def run(trade_day, rows_folder: Path, out: Path, pick=None, keep_cpus=False) -> 
         trade_day=trade_day.isoformat(),
         the_lines=dict(
             price='the mid price (halfway between the best bid and the best ask on the stored rows, through the rows '
-                  'gate), its change from where it stood at the trade\'s start, in hundredths of a percent, turned '
-                  'to the trade\'s side',
+                  'gate), in dollars, not turned; on it two points, where the trade was bought and where it was '
+                  'sold, each at the price of the trade on the tape that filled it there (the mid standing then '
+                  'when it ended at no tick)',
             rates='per tick, not per second: the dipole line\'s change at each of its own reads, and the mid '
                   'price\'s change at each tick it moves, each drawn as a stroke at that tick',
             **{name: dict(read_from=f'crypto-ng-tick/{file}-{day}.parquet', span_seconds=span,
@@ -287,9 +311,9 @@ def run(trade_day, rows_folder: Path, out: Path, pick=None, keep_cpus=False) -> 
         trades_with_no_lead_in=no_lead_in,
         checks=dict(passed=True,
                     what='the stored trades of the program are in the order they started and none ends before it '
-                         'starts; both stored lines and the mid price are in time order; a mid price stood as every '
-                         'trade started; every picture holds its trade whole; every trade asked for was drawn '
-                         'exactly once'),
+                         'starts; both stored lines and the mid price are in time order; every trade\'s start (and '
+                         'its end, where it ended on a trade) is a trade the stored tape holds; every picture holds '
+                         'its trade whole; every trade asked for was drawn exactly once'),
         read_from=[f'crypto-ng-tick/crypto-ng-tick-program-trades-{day}.parquet', f'rows-{day}-part*.parquet',
                    f'crypto-ng-tick/crypto-ng-tick-tape-trades-{day}.parquet'] +
                   [f'crypto-ng-tick/{file}-{day}.parquet' for file, _ in LR.LINES.values()],
