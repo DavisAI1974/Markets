@@ -14,7 +14,7 @@ WORK=/root/work; OUT=$WORK/out; CODE=$WORK/code; GITHUB=https://github.com/Davis
 DAYS=(${DAYS:-20231002 20231003 20231017 20231018})   # all four trade days, or the ones named in DAYS
 say() { echo "$1" >> "$OUT/STATUS"; }
 
-pip install -q pyarrow==26.0.1 numpy==2.5.5 matplotlib scipy >> "$OUT/setup.log" 2>&1 || { say 'FAILED in the set-up: the libraries'; exit 1; }
+pip install -q pyarrow==26.0.1 numpy==2.5.5 matplotlib scipy openpyxl >> "$OUT/setup.log" 2>&1 || { say 'FAILED in the set-up: the libraries'; exit 1; }
 git -C "$CODE" fetch -q --depth 1 origin "$COMMIT" >> "$OUT/setup.log" 2>&1 && git -C "$CODE" checkout -q "$COMMIT" >> "$OUT/setup.log" 2>&1 \
   || { say "FAILED in the set-up: the code at $COMMIT"; exit 1; }
 CPUS=($(python3 -c "import os; print(*sorted(os.sched_getaffinity(0)))"))
@@ -32,7 +32,7 @@ for i in "${!DAYS[@]}"; do
         "/crypto-ng-tick/crypto-ng-tick-tape-trades-*" "/crypto-ng-tick/crypto-ng-tick-line-20s-*" \
         "/crypto-ng-tick/crypto-ng-tick-lean-60s-*" "/crypto-ng-tick/crypto-ng-tick-program-trades-*" \
         "/crypto-ng-tick/crypto-ng-tick-humps-*" "/calc-move_steps-facts-*" "/calc-resting-facts-*" \
-        "/research-threads/*" &&
+        "/research-threads/*" "/info-measure/*" &&
       git -C "$WORK/rows/$d" checkout -q "root-rows-$d"
     } >> "$OUT/d$d/setup.log" 2>&1 || { echo "FAILED in the set-up: the stored files of trade day $d" >> "$OUT/d$d/STATUS"; exit 1; }
     git -C "$WORK/rows/$d" rev-parse HEAD > "$OUT/d$d/ROWS_COMMIT"

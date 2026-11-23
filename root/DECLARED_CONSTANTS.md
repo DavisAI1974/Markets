@@ -383,3 +383,12 @@ Nothing is worked out: stored values are written, or looked up at a tick by plac
 | `FIRST_DATA_ROW` | 2 | A sheet's first row is its header; its data starts on the second. Used to find a picture link's cell. |
 | `FRAME` | E2 | Drawing only: the header row and the four key columns stay in view when the sheet is scrolled. |
 | `KEY`, `TRADE`, `STORED`, `OLD`, `WORDS`, `RECORD`, `READ_ME` | names and words | The four key columns of a row, the columns of the trade block and the stored columns they come from, the earlier sheets taken into the trade day sheet, the words for what sits on a row, and the read-me page. |
+
+## `root/research_columns.py` (the research columns on the every-tick table; Greg, 2026-11-23: "Put the research columns on the every tick tables ... Just update what already exists")
+
+Nothing new is calculated on the tape: stored values are looked up at each tick by place on the tape, or set on the tick they belong to.
+
+| Constant | Value | Why |
+|---|---|---|
+| `CLOSE` | 1e-9 | A check only: how near the exhaustion line at a trade must be to that trade's own stored read. |
+| `NAME`, `LINES`, `KINDS`, `BETWEEN`, `COUNT`, `JOIN`, `AT_TICK` | names and words | The calculation's name in its file names, the two stored lines, the block of columns each kind of move goes in, the block and the count for a hump that began with no tick, the mark between a block's name and a column's, and the columns set on every tick. |
