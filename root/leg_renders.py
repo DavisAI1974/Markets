@@ -164,7 +164,9 @@ def edges(legs: list, k: int, s: dict, opens: int, closes: int) -> tuple:
     after = legs[k + 1] if k + 1 < len(legs) else leg
     right = after['last_at'] if 'last_at' in after else int(s['time'][-1])
     reach = [whole_humps(s[name + '_at'], s[name], int(left), int(right), opens, closes) for name in LINES]
-    return min(first for first, _ in reach), max(last for _, last in reach)
+    return min([int(left)] + [first for first, _ in reach]), max([int(right)] + [last for _, last in reach])   # the
+#                                                        humps only widen the frame (a trade received a moment
+#                                                        after the halt stays in its picture)
 
 
 def helper(cpus, work):

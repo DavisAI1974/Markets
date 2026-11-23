@@ -153,6 +153,8 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
   `75b15fa`; ours: `crypto_ng/tick.py`, stored as `crypto-ng-tick/crypto-ng-tick-line-20s-<trade day>.parquet`);
   the DIPOLE line is that figure over the last 60 seconds (crypto: `_dipole_price_overlay.py` on the same commit,
   `W = 60`; ours: the same line the turn finder reads, stored as `crypto-ng-tick-lean-60s-<trade day>.parquet`).
+  The 20 and the 60 seconds are READ FROM THOSE SCRIPTS by Claude, not numbers Greg gave: his word is "exactly like
+  they were in crypto", and which crypto picture is "the dipole" is his to confirm.
   "Ticked by nano" means the TIME each read is made at, never a new formula. Any other line called dipole or
   exhaustion is named as what it is, is never drawn in their place, and is put to Greg before it is built.
   Claude's own versions of the twelfth session (the run of trades under way against the run before it; "the
