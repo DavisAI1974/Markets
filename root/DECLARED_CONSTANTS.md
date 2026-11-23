@@ -373,3 +373,13 @@ Nothing is worked out: stored values are written into sheets and read back.
 | `SIGN` | +1, -1 | A buying hump stands above zero, a selling hump below: used to find the read of the stored line a hump's moment is. |
 | `LINE_FILE`, `MEASURE_FILE`, `MOMENTS`, `MEASURE`, `DIVISION`, `MEASURE_QUESTION` | names and words | The stored exhaustion line and the stored information measure, the moments of a line the measure is looked up at, its columns as named in the sheets, and the mark for a ratio made by the division. |
 | `PINNED`, `TABLES`, `WHICH`, `QUESTIONS`, `READ_ME` | names and words | The timestamp each row is pinned to, the two stored tables, the research question each column is listed under, and the lines added to the read-me page. |
+
+## `root/trade_day_sheet.py` (one sheet for each trade day; Greg, 2026-11-23: "Keep the trade day data on one sheet. Can't we make additional columns instead of new sheets?")
+
+Nothing is worked out: stored values are written, or looked up at a tick by place on the tape, and read back.
+
+| Constant | Value | Why |
+|---|---|---|
+| `FIRST_DATA_ROW` | 2 | A sheet's first row is its header; its data starts on the second. Used to find a picture link's cell. |
+| `FRAME` | E2 | Drawing only: the header row and the four key columns stay in view when the sheet is scrolled. |
+| `KEY`, `TRADE`, `STORED`, `OLD`, `WORDS`, `RECORD`, `READ_ME` | names and words | The four key columns of a row, the columns of the trade block and the stored columns they come from, the earlier sheets taken into the trade day sheet, the words for what sits on a row, and the read-me page. |
