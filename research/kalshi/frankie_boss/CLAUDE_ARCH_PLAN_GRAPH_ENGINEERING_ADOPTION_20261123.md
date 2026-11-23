@@ -12,7 +12,10 @@ real constraint, handled by routing work to Sonnet and Haiku. AWS is not availab
   build, and see what happens before anything in Frankie changes. Until stages 2 and 4 exist,
   the Stage 7 record lives as append-only JSONL in markets-data; it is loaded into the experiment
   DAG and the graph when those are built.
-- FILED FOR LATER DECISIONS: stages 1 to 6 and stage 8. They are here so Code has them when Greg
+- ALSO NOW: stage 1 (the four agents and the CLAUDE.md roles section) is committed so Codex's
+  read-only auditor and verifier tasks run with the new roster (Greg: where they touch each
+  other, they run with the new changes). See `CODEX_PROMPT_AMENDMENTS_20261123.md`.
+- FILED FOR LATER DECISIONS: stages 2 to 6 and stage 8. They are here so Code has them when Greg
   decides. Nothing in them is built or switched on until he says so. Frankie is unchanged.
 
 ## Scope of the overrule (what changes, what does not)
@@ -96,6 +99,14 @@ Storage: versioned JSONL in markets-data (`graph/nodes/*.jsonl`, `graph/edges/*.
 MANIFEST.json entries), loaded into a NetworkX MultiDiGraph for queries. SQLite index if queries
 get slow.
 
+4a-bis. One register, not two. Codex's plan
+`research/kalshi/FRANKIE_INDEPENDENT_SCIENTIFIC_VERIFIER_PLAN.md` (commit 79517f6) defines claim,
+check, verdict and adverse-evidence contracts. If both go ahead, those contracts are the field
+definitions for this graph's Claim and Evaluation nodes and their edges (a claim revision is a
+REVISES edge, a refutation a CONTRADICTS edge, a superseded claim keeps SUPERSEDES and stays
+addressable), and its claim lineage is the stage-2 DAG. The verifier is a consumer of this graph,
+not a second ledger.
+
 4b. Ingest, cheapest path first:
 - Deterministic (no model): calc outputs, renders and MANIFEST.json entries in markets-data
   become CalcOutput, Render and Source nodes; events and peaks from the detector outputs become
@@ -110,6 +121,8 @@ get slow.
 4c. Grounding check. The reviewer (and any evaluator) checks a claim against graph edges and
 returns structured feedback when a supporting path is missing:
 `{"decision": "revise", "claim": ..., "reason": ..., "required_evidence": [...]}`.
+This is the same mechanism as the check register in Codex's verifier plan: one
+implementation, run by the reviewer agent as the verifier's independent reviewer.
 Open item for Greg: whether Granite's B2 shadow-critic role takes on this check for Frankie's
 own claims (it fits "a logic helper for Frankie", but Granite's role was set by Greg on
 2026-09-29 and is not among the overruled items).

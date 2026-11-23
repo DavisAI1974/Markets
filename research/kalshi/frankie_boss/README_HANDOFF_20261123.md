@@ -10,18 +10,23 @@ From: Claude (architect, chat). To: Claude Code ("code"). Owner and merge author
    options. This is Stage 7 of the plan. Starting the runner needs Greg's go. Market feed for
    signals: tastytrade's production quote stream for now (Greg), on a data-only credential;
    orders go only to the sandbox.
-2. Frankie does not change yet. Everything else in the plan is filed for when Greg decides.
-3. AWS is not available. Nothing new uses S3, EC2, SSM, Bedrock, SageMaker or boto3.
+2. Commit stage 1 now (the four agent files and the CLAUDE.md patch), then run Codex's read-only
+   auditor and verifier tasks with them, per `CODEX_PROMPT_AMENDMENTS_20261123.md`: where Codex's
+   work and this plan touch, they run as one system.
+3. Frankie does not change yet. Stages 2 to 6 and 8 are filed for when Greg decides.
+4. AWS is not available. Nothing new uses S3, EC2, SSM, Bedrock, SageMaker or boto3.
 
 ## Files
 
 | File | Goes to | Status |
 |---|---|---|
 | `CLAUDE_ARCH_PLAN_GRAPH_ENGINEERING_ADOPTION_20261123.md` | Markets, `research/kalshi/frankie_boss/` | Full plan, stages 1 to 8. Stage 7 is current work; the rest is filed |
-| `.claude/agents/scout.md` | Markets, `.claude/agents/` | Stage 1, ready, filed |
-| `.claude/agents/builder.md` | Markets, `.claude/agents/` | Stage 1, ready, filed |
-| `.claude/agents/reviewer.md` | Markets, `.claude/agents/` | Stage 1, ready, filed |
-| `CLAUDE.md.patch` | Markets, applied to `CLAUDE.md` | Stage 1 roles section; applies cleanly to trunk tip 012586b |
+| `.claude/agents/scout.md` | Markets, `.claude/agents/` | Stage 1, commit now |
+| `.claude/agents/builder.md` | Markets, `.claude/agents/` | Stage 1, commit now |
+| `.claude/agents/reviewer.md` | Markets, `.claude/agents/` | Stage 1, commit now |
+| `.claude/agents/frankie-performance-auditor.md` | Markets, `.claude/agents/`, over Codex's b0e5546 version | Updated by Greg's direction 2026-11-23: Sonnet, no AWS. Commit now |
+| `CLAUDE.md.patch` | Markets, applied to `CLAUDE.md` | Stage 1 roles section (scout, builder, reviewer, plus Codex's frankie-performance-auditor); applies cleanly to trunk tip 79517f6 |
+| `CODEX_PROMPT_AMENDMENTS_20261123.md` | With Codex's auditor/verifier prompt | Changes so that prompt lines up with this plan, no AWS, and the undecided S3 bucket |
 
 ## The plan, stage by stage
 
