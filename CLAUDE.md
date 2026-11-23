@@ -167,6 +167,11 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
   AMENDED 2026-11-23 (the next rule but one): the two LINES it makes on the natural gas tape, the dipole and the
   exhaustion, are strategy inputs. "Observation and verification only" still holds for the program's own trades,
   its price and result figures and its fee marks.
+  AMENDED AGAIN 2026-11-23 (Greg: "Yes to all four", the second of four points put to him on the paper runner):
+  the paper runner (`strategies/paper/`) may CALL the two line functions `crypto_ng.tick.reads` and
+  `crypto_ng.tick.line` exactly as they are, so the live lines are the same formula and not a reinvention. Nothing
+  else of the package is imported, and nothing of it is copied. Record: markets-data
+  `paper-trading-20261123/RUNNER_PLAN_20261123.md`, point G2.
 
 - **DIPOLE AND EXHAUSTION MEAN THE CRYPTO FORMULAS. DO NOT REINVENT THEM (Greg, 2026-11-23: "We should not be
   reinventing the wheel! The instructions should have been explicit to follow the crypto formulas. That's why we
