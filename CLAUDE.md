@@ -145,6 +145,20 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
   calculation, a strategy or the Kalshi work, and no winner or loser label is made from it. Do not delete it as a
   violation and do not copy from it.
 
+- **DIPOLE AND EXHAUSTION MEAN THE CRYPTO FORMULAS. DO NOT REINVENT THEM (Greg, 2026-11-23: "We should not be
+  reinventing the wheel! The instructions should have been explicit to follow the crypto formulas. That's why we
+  brought that part back").** Scope: the ROOT rebuild's renders and outputs. Both are ONE figure, bought minus sold
+  over bought plus sold, over the trades received in a span of time, read at the nanosecond:
+  the EXHAUSTION line is that figure over the last 20 seconds (crypto: `research/shape_s71/regroup2.py`, Markets
+  `75b15fa`; ours: `crypto_ng/tick.py`, stored as `crypto-ng-tick/crypto-ng-tick-line-20s-<trade day>.parquet`);
+  the DIPOLE line is that figure over the last 60 seconds (crypto: `_dipole_price_overlay.py` on the same commit,
+  `W = 60`; ours: the same line the turn finder reads, stored as `crypto-ng-tick-lean-60s-<trade day>.parquet`).
+  "Ticked by nano" means the TIME each read is made at, never a new formula. Any other line called dipole or
+  exhaustion (the run of trades under way against the run before it, in `root/tick_renders.py`, is Claude's own
+  and was never approved as a calculation) is named as what it is, is never drawn in their place, and is put to
+  Greg before it is built. What was left out of the crypto work on his word stays out: winner and loser, the
+  average line, the short or long split.
+
 - **EACH TRADE INDIVIDUALLY, never average.** No pooled hit-rate, no mean signed-bps, no averaged
   coefficient — every aggregate blurs away the per-trade fingerprint that IS the predictive content.
   Characterize the DISTRIBUTION + the per-trade fingerprint; never lead with the mean.
