@@ -35,10 +35,13 @@ WHAT IS WRITTEN:
   fingerprint.
 
     python3 -m root.leg_renders 20231017 --rows <folder of the trade day's stored files> --out <folder> \
-        [--stretch <from ns>-<to ns>]
+        [--stretch <from ns>-<to ns> | --random <how many>] [--keep-cpus]
 
-`--stretch` draws only the trade legs whose first trade was received inside it (a first look before a whole trade
-day is drawn). It chooses WHICH trade legs are drawn, never where a picture starts or ends.
+`--stretch` draws only the trade legs whose first trade was received inside it. `--random` draws that many trade legs
+picked at random from the whole trade day (Greg, 2026-11-23: "just pick 10 random ones per day ... to start"); the
+pick is the computer's, seeded with the trade day's own number so the same pick comes out again, and the receipt
+names it. Either one chooses WHICH trade legs are drawn, never where a picture starts or ends. `--keep-cpus` draws on
+the CPUs this program was pinned to (several trade days on one pod, each on its own CPUs).
 """
 from __future__ import annotations
 
@@ -203,7 +206,7 @@ def draw_one(job) -> dict:
     return four_graphs.draw(Path(path), title, t, line_at, line, mark=mark)
 
 
-def run(trade_day, rows_folder: Path, out: Path, stretch=None) -> dict:
+def run(trade_day, rows_folder: Path, out: Path, stretch=None, pick=None, keep_cpus=False) -> dict:
     import pyarrow as pa
     import pyarrow.parquet as pq
     started = time.monotonic()
@@ -230,11 +233,15 @@ def run(trade_day, rows_folder: Path, out: Path, stretch=None) -> dict:
 
     asked = [k for k, leg in enumerate(legs) if stretch is None or stretch[0] <= leg['first_at'] <= stretch[1]]
     checks.need(asked, 'no trade leg has its first trade inside the stretch asked for')
+    if pick is not None:                               # a pick at random, the same one every time it is run
+        asked = sorted(np.random.default_rng(int(day)).choice(asked, size=min(pick, len(asked)), replace=False).tolist())
     count = dict(trade_day=trade_day.isoformat(), trade_legs_in_the_trade_day=len(legs), pictures_this_run_draws=len(asked),
                  trades_on_the_tape=len(s['time']),
-                 drawn='every trade leg of the trade day' if stretch is None else
-                       f'the trade legs whose first trade was received from {clock_text(stretch[0])} to '
-                       f'{clock_text(stretch[1])} Eastern')
+                 drawn=('every trade leg of the trade day' if stretch is None else
+                        f'the trade legs whose first trade was received from {clock_text(stretch[0])} to '
+                        f'{clock_text(stretch[1])} Eastern') if pick is None else
+                       f'{len(asked)} trade legs picked at random by the computer (seeded with the trade day\'s own '
+                       f'number, {int(day)}, so the same pick comes out again): {[legs[k]["number"] for k in asked]}')
     (out / f'LEG-RENDERS-COUNT-{day}.json').write_text(json.dumps(count, indent=1) + '\n')
 
     name_of_day = f'Trade day {trade_day:%a %b %d, %Y}'
@@ -266,8 +273,9 @@ def run(trade_day, rows_folder: Path, out: Path, stretch=None) -> dict:
                       leg.get('last'), leg.get('last_at'), leg.get('ended_known'), leg.get('ended_known_at'),
                       first, last, inside, name))
 
-    os.sched_setaffinity(0, range(os.cpu_count()))     # the pod pins this program to one CPU; the drawing is
-    cpus = multiprocessing.Manager().Queue()           # spread over every CPU the pod allows, one helper on each
+    if not keep_cpus:                                  # the pod pins this program to one CPU; the drawing is
+        os.sched_setaffinity(0, range(os.cpu_count()))   # spread over every CPU the pod allows, one helper on each
+    cpus = multiprocessing.Manager().Queue()
     mine = sorted(os.sched_getaffinity(0))
     for cpu in mine:
         cpus.put(cpu)
@@ -324,9 +332,11 @@ def main():
     ap.add_argument('--rows', type=Path, required=True)
     ap.add_argument('--out', type=Path, required=True)
     ap.add_argument('--stretch', help='<from ns>-<to ns>: draw only the trade legs whose first trade is inside it')
+    ap.add_argument('--random', type=int, help='draw this many trade legs, picked at random from the trade day')
+    ap.add_argument('--keep-cpus', action='store_true', help='draw on the CPUs this program was pinned to')
     a = ap.parse_args()
     stretch = tuple(int(v) for v in a.stretch.split('-')) if a.stretch else None
-    receipt = run(parse_trade_day(a.trade_day), a.rows, a.out, stretch)
+    receipt = run(parse_trade_day(a.trade_day), a.rows, a.out, stretch, a.random, a.keep_cpus)
     print(json.dumps({k: receipt[k] for k in ('trade_day', 'counts', 'checks', 'seconds')}, indent=1))
 
 
