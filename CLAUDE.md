@@ -144,6 +144,9 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
   fill rule, wait and fee settings apply inside that package and nowhere else; nothing in it may be imported by a
   calculation, a strategy or the Kalshi work, and no winner or loser label is made from it. Do not delete it as a
   violation and do not copy from it.
+  AMENDED 2026-11-23 (the next rule but one): the two LINES it makes on the natural gas tape, the dipole and the
+  exhaustion, are strategy inputs. "Observation and verification only" still holds for the program's own trades,
+  its price and result figures and its fee marks.
 
 - **DIPOLE AND EXHAUSTION MEAN THE CRYPTO FORMULAS. DO NOT REINVENT THEM (Greg, 2026-11-23: "We should not be
   reinventing the wheel! The instructions should have been explicit to follow the crypto formulas. That's why we
@@ -168,6 +171,21 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
   exhaustion and dipole to put on excel sheets"). No figure of Claude's goes into a sheet under those names or
   beside them. What was left out of the crypto work on his word stays out: winner and loser, the
   average line, the short or long split.
+
+- **THE NATURAL GAS DIPOLE AND EXHAUSTION ARE USED FOR STRATEGY. CRYPTO DATA IS NOT IN OUR ANALYSIS OR ON THE EXCEL
+  SHEETS (Greg, 2026-11-23: "The crypto data is not to be in our analysis or on excel sheets. The ng version of
+  these absolutely should be used for strategy").** Scope: the ROOT rebuild. The dipole line (60 seconds) and the
+  exhaustion line (20 seconds) made on the NATURAL GAS tape with the crypto formulas (stored as
+  `crypto-ng-tick-lean-60s-<trade day>.parquet` and `crypto-ng-tick-line-20s-<trade day>.parquet`, and the humps
+  of the 20-second line) ARE inputs to the strategy analysis and go into the Excel sheets. They are natural gas
+  data: every value in them is made from natural gas trades. CRYPTO DATA is anything measured on a crypto market
+  (prices, trades, results, the saved crypto arcs, the values and averages of the crypto pictures): none of it
+  enters an analysis, a strategy or a sheet. The crypto work gives the FORMULAS and nothing else. Claude's
+  reading, stated to him, his to correct: the crypto and ng PROGRAM'S OWN TRADES (where it gets in and out) are
+  made with settings that were tuned coin by coin on crypto results (the turn amount, the 30-second wait, the
+  fees), so they, its price and result figures and its fee marks stay observation and verification only and are
+  not a strategy input unless he says. The leakage gate still comes before any backtest; both lines read only
+  trades already received at each nanosecond.
 
 - **EACH TRADE INDIVIDUALLY, never average.** No pooled hit-rate, no mean signed-bps, no averaged
   coefficient — every aggregate blurs away the per-trade fingerprint that IS the predictive content.
