@@ -216,7 +216,7 @@ def one_day(book, folder: Path, day: str, peaks_folder: Path) -> tuple:
 
 def described(day_header: list) -> list:
     """The COLUMNS page: every column, its block, the research question it belongs to and what it holds."""
-    what = {name: ('', text) for name, text in KEY}
+    what = {name: ('The timestamp every row is pinned to', text) for name, text in KEY}
     for name, text in TRADE:
         what[f'trade.{name}'] = ('The trade price curve, and the natural gas exhaustion and dipole at every trade', text)
     for name, _, text in list(MEASURE) + [(DIVISION[0], None, DIVISION[1])]:
