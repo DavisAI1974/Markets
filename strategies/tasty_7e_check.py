@@ -10,6 +10,7 @@ Sub-commands (run one at a time):
   sandbox-lookup   token, accounts, products, NG futures, NG option chain
   sandbox-order    dry-run, and with --submit a real sandbox order and its polling
   prod-stream      production READ-ONLY market data: futures lookup, quote token, DXLink stream
+  sandbox-stream   the same stream step signed in to the SANDBOX (its own quote token and DXLink URL)
 
 Everything seen is written append-only as JSONL into --out (a markets-data folder,
 never inside the Markets repo), plus a receipt. Credentials come only from environment
@@ -659,6 +660,7 @@ ASKED = {
     "sandbox-lookup": "Does the sandbox list natural gas futures and their options (accounts, products, NG futures, NG option chain)?",
     "sandbox-order": "Does a natural gas future order get accepted and fill in the sandbox (dry-run, and with --submit the order and its polling)?",
     "prod-stream": "What event types, field names, values and time fields does the production DXLink feed send for the chosen natural gas streamer symbols?",
+    "sandbox-stream": "What event types, field names, values and time fields does the DXLink feed the SANDBOX hands out send for the chosen natural gas streamer symbols?",
 }
 
 
@@ -707,11 +709,17 @@ def build_parser():
     o.add_argument("--cancel-if-open", action="store_true", help="after the last poll, cancel the order if not known to be terminal")
 
     p = sub.add_parser("prod-stream", parents=[common], help="production READ-ONLY: futures lookup, quote token, DXLink stream")
+    ps = sub.add_parser("sandbox-stream", parents=[common], help="sandbox: futures lookup, the sandbox's own quote token, DXLink stream")
+    for q in (p, ps):
+        _stream_args(q)
+    return ap, o, p
+
+
+def _stream_args(p):
     p.add_argument("--streamer-symbol", action="append",
                    help="DXLink symbol to subscribe (repeatable). Without it only the futures lookup is made and the stream is not opened")
     p.add_argument("--messages", type=pos_int, help="stop after this many received messages (handshake messages included)")
     p.add_argument("--seconds", type=pos_float, help="stop this long after the clock starts, which is BEFORE the connection is made (connect and handshake included)")
-    return ap, o, p
 
 
 def finish(ctx, args, start_ns, stopped):
@@ -724,7 +732,7 @@ def finish(ctx, args, start_ns, stopped):
         problems.append(f"closing record: {e}")
     if ctx.get("stats") is not None:
         try:
-            write_text_file(ctx, f"prod-stream-{ctx['stamp']}-summary.json",
+            write_text_file(ctx, f"{args.cmd}-{ctx['stamp']}-summary.json",
                             json.dumps(summarize(ctx["stats"]), indent=2, sort_keys=True) + "\n")
         except Exception as e:
             problems.append(f"summary not written: {type(e).__name__}: {e}")
@@ -781,8 +789,8 @@ def main():
             o.error("--gtc-date must be a real date as yyyy-mm-dd")
         if args.submit and (args.poll_count is None or args.poll_seconds is None or args.max_pages is None):
             o.error("--submit requires --poll-count, --poll-seconds and --max-pages")
-    if args.cmd == "prod-stream" and args.streamer_symbol and not (args.messages or args.seconds):
-        p.error("with --streamer-symbol, one of --messages or --seconds is required")
+    if args.cmd in ("prod-stream", "sandbox-stream") and args.streamer_symbol and not (args.messages or args.seconds):
+        (p if args.cmd == "prod-stream" else ap).error("with --streamer-symbol, one of --messages or --seconds is required")
 
     out = check_out_dir(args.out)
     env = "prod" if args.cmd == "prod-stream" else "sandbox"
@@ -792,7 +800,8 @@ def main():
     start_ns = time.time_ns()
     ctx = {"env": env, "creds": creds, "token": None, "out": out, "stamp": stamp(start_ns),
            "files": [], "rec": None, "failed": []}
-    fn = {"sandbox-lookup": cmd_sandbox_lookup, "sandbox-order": cmd_sandbox_order, "prod-stream": cmd_prod_stream}[args.cmd]
+    fn = {"sandbox-lookup": cmd_sandbox_lookup, "sandbox-order": cmd_sandbox_order, "prod-stream": cmd_prod_stream,
+          "sandbox-stream": cmd_prod_stream}[args.cmd]   # same step; main() sets the sandbox sign-in for it
     stopped, code = "completed", 0
     try:
         ctx["rec"] = Recorder(ctx, f"{args.cmd}-{ctx['stamp']}.jsonl")
