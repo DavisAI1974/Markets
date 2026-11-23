@@ -7,6 +7,7 @@
 # the address <pod>/d<trade day>).
 #
 #   bash root/pod_leg_renders.sh <code commit> <leg_renders | trade_renders> [what it is asked for, e.g. --random 10]
+#   bash root/pod_leg_renders.sh <code commit> info_measure,research_trace     (several programs, one after another)
 set -u
 COMMIT=$1; MODULE=$2; shift 2
 WORK=/root/work; OUT=$WORK/out; CODE=$WORK/code; GITHUB=https://github.com/DavisAI1974
@@ -30,17 +31,20 @@ for i in "${!DAYS[@]}"; do
       git -C "$WORK/rows/$d" sparse-checkout set --no-cone "/calc-leg_peaks-facts-*" "/rows-$d-part*" \
         "/crypto-ng-tick/crypto-ng-tick-tape-trades-*" "/crypto-ng-tick/crypto-ng-tick-line-20s-*" \
         "/crypto-ng-tick/crypto-ng-tick-lean-60s-*" "/crypto-ng-tick/crypto-ng-tick-program-trades-*" \
-        "/crypto-ng-tick/crypto-ng-tick-humps-*" "/calc-move_steps-facts-*" "/calc-resting-facts-*" &&
+        "/crypto-ng-tick/crypto-ng-tick-humps-*" "/calc-move_steps-facts-*" "/calc-resting-facts-*" \
+        "/research-threads/*" &&
       git -C "$WORK/rows/$d" checkout -q "root-rows-$d"
     } >> "$OUT/d$d/setup.log" 2>&1 || { echo "FAILED in the set-up: the stored files of trade day $d" >> "$OUT/d$d/STATUS"; exit 1; }
     git -C "$WORK/rows/$d" rev-parse HEAD > "$OUT/d$d/ROWS_COMMIT"
     echo "$COMMIT" > "$OUT/d$d/CODE_COMMIT"
     cd "$CODE"
-    if OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 taskset -c "$mine" \
-        python3 -m "root.$MODULE" "$d" --rows "$WORK/rows/$d" --out "$OUT/d$d" --keep-cpus "$@" > "$OUT/d$d/$MODULE.log" 2>&1
-    then echo "$MODULE passed on CPUs $mine at $COMMIT" >> "$OUT/d$d/STATUS"
-    else echo "$MODULE FAILED on CPUs $mine at $COMMIT" >> "$OUT/d$d/STATUS"
-    fi
+    for m in ${MODULE//,/ }; do                        # one program, or several named with commas, one after another
+      if OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 taskset -c "$mine" \
+          python3 -m "root.$m" "$d" --rows "$WORK/rows/$d" --out "$OUT/d$d" --keep-cpus "$@" > "$OUT/d$d/$m.log" 2>&1
+      then echo "$m passed on CPUs $mine at $COMMIT" >> "$OUT/d$d/STATUS"
+      else echo "$m FAILED on CPUs $mine at $COMMIT" >> "$OUT/d$d/STATUS"
+      fi
+    done
   ) &
 done
 wait

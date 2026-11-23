@@ -331,3 +331,32 @@ Nothing new is calculated on the tape: stored lines are laid side by side at mom
 | `LINES` | two stored file names | The natural gas exhaustion line (20 seconds) and dipole line (60 seconds), made with the crypto formulas and stored by the crypto and ng run. Read, never made again. |
 | `READS`, `AT_STEP`, `PRICES`, `LEVEL`, `NEXT`, `MARKS` | column names | The columns read from the stored rows (through the rows gate), from a stored step line, from the stored resting line, and the names of what is looked for before and after a hump begins and at its three moments. |
 | `MOVE_COLUMNS`, `MOVE_NAMES`, `HUMP_ADDED`, `HUMP_NAMES`, `TEXT`, `YES_NO` | column names | The columns of the two tables and which of them hold words or yes and no. |
+
+## `root/info_measure.py` (the information measure, made from our ticks; Greg, 2026-11-23: "I mean tick values to get to a second or whatever timeframe we need to get to")
+
+The formula is the crypto information dipole operator's own (`odcore/info_dipole.py`), called unchanged, as Codex's reanalysis called it. Only the inputs are made here.
+
+| Constant | Value | Why |
+|---|---|---|
+| `PIECES` | 20 | Codex's own: the operator is given twenty pieces of bought and sold size. |
+| `PIECE_NS` | one second in nanoseconds | Codex's own: each piece is one second long. Here it is counted back from each read's own nanosecond, never cut on the clock. |
+| `SPAN_NS` | 20 seconds in nanoseconds | The twenty pieces together: the same 20 seconds as the stored exhaustion line, so the first figure can be checked against it at every read. |
+| `ROUNDING` | 1e-12 | Codex's own: shared information smaller than this is rounding in the last digits. Used only to name a count; the exact zero is counted apart. |
+| `CLOSE` | 1e-9 | A check only: how near the operator's first figure must be to the stored exhaustion line. |
+| `PIECE_DIGITS` | 2 | A piece's number in its column name, written 01 to 20. |
+| `CODEX_PINNED_OPERATOR` | a git blob id | The copy of the operator Codex's program loaded, written into the receipt beside the id of the file called here. |
+| `READS`, `TRADE`, `BUY`, `SELL`, `RECEIVED`, `LINE_FILE`, `LINE_READS`, `OPERATOR_FILE` | names | The columns read through the rows gate, the tape's codes for a trade and its side, the stored line's word for a read made at a trade, the stored exhaustion line and its columns, the operator's file. |
+| `FIGURES`, `COLUMNS`, `NAMES`, `TEXT` | column names | The operator's five figures and the columns of the stored table. |
+
+## `root/research_trace.py` (why the stored exhaustion line and a step line's own flow differ at some first steps; seventeenth session, 2026-11-23)
+
+Nothing new is calculated on the tape: every look-up of the two research tables is made a second way, by place on the tape, and compared.
+
+| Constant | Value | Why |
+|---|---|---|
+| `STEP`, `FIRST` | step, 1 | The stored step line of a move's first step. |
+| `CLOSE` | 1e-9 | A check only: how near two readings must be to be counted equal. The same as in `root/research_threads.py`. |
+| `PRICE_UNIT` | 10^9 | The tape's prices are in billionths of a dollar. |
+| `SIGN` | +1, -1 | A buying hump stands above zero, a selling hump below. |
+| `LINES`, `LINE_READS`, `RECEIVED`, `BUY`, `SELL`, `QUOTE`, `MOVES`, `MARKS`, `HUMPS` | names | The two stored lines and their columns, the stored words, and the columns read from the rows and from the two research tables. |
+| `COLUMNS`, `NAMES` | column names | The columns of the listed first steps. |

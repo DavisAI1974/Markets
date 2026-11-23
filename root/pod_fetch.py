@@ -26,6 +26,8 @@ RUNS = {'ways': ('chain_ways', 'CHAIN-WAYS-{day}.json'), 'legs': ('trade_legs', 
         'leg_renders': ('leg_renders', 'LEG-RENDERS-{day}.json'),
         'trade_renders': ('trade_renders', 'TRADE-RENDERS-{day}.json'),
         'research_threads': ('research_threads', 'RESEARCH-THREADS-{day}.json'),
+        'info_measure': ('info_measure', 'INFO-MEASURE-{day}.json'),
+        'research_trace': ('research_trace', 'RESEARCH-TRACE-{day}.json'),
         'crypto_ng_tick_print': ('crypto_ng_tick_print', 'CRYPTO-NG-TICK-PRINT-{day}.json')}
 NO_STORED_ROWS = {'ways'}                              # it rebuilds its peak lines through the tape gate
 AGENT = 'curl/8'                                       # the pods' web front refuses the library's own name
