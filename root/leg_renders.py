@@ -75,7 +75,10 @@ LINES = dict(dipole=('crypto-ng-tick-lean-60s', 60), exhaustion=('crypto-ng-tick
 #                                                        the span is in the stored line, `crypto_ng/tick.py`)
 SIDE = {LP.UP: (1, 'buying'), LP.DOWN: (-1, 'selling')}   # the crypto turn to the trade's side
 INCHES, GRAPHS, DPI = (7.2, 11.5), 3, 110              # drawing only: to be read on a phone
-LEAN_LIMIT = 1.05                                      # the lines run from -1 to 1; the graph shows a little more
+LEAN_LIMIT = 1.05                                      # the lines run from -1 to 1: the scale of a graph whose
+#                                                        line is empty or at zero through the whole picture
+ROOM = 0.08                                            # drawing only: the share of a line's own range left clear
+#                                                        above and below it
 BIG, SMALL, TINY, DOT = 11, 8, 7, 5                    # drawing only: letter and dot sizes
 LINE, THIN, FAINT, SHADE = 1.4, 0.8, 0.25, 0.4         # drawing only: line widths, the grid, the shaded trade leg
 GAP, TITLE_AT, TILT, ON_TOP = 0.3, 0.985, 30, 3        # drawing only (the gap leaves room for a two-line graph title)
@@ -197,6 +200,18 @@ def cut(moments: np.ndarray, values: np.ndarray, first: int, last: int) -> tuple
     return np.r_[np.maximum(moments[a:b], first), last], np.r_[values[a:b], values[b - 1]]
 
 
+def scale(values: np.ndarray) -> tuple:
+    """The scale of a line's graph, set by the line itself (Greg, 2026-11-23: "We're going to have to use smaller
+    scales for y axis on dipole and exhaustion"): from the lowest to the highest the line stands in this picture,
+    zero always in sight, a little room above and below. Drawing only: no value is changed."""
+    there = values[~np.isnan(values)]
+    low, high = min(float(there.min()), 0) if len(there) else 0, max(float(there.max()), 0) if len(there) else 0
+    if low == high:
+        return -LEAN_LIMIT, LEAN_LIMIT
+    room = (high - low) * ROOM
+    return low - room, high + room
+
+
 def draw_one(job) -> dict:
     """One trade leg's picture. `job` is (file path, title, the picture's two edges, the leg's first and last trade,
     the print where it became known, the print that showed it had ended or None, the leg's direction)."""
@@ -216,8 +231,8 @@ def draw_one(job) -> dict:
         at, values = cut(w[name + '_at'], w[name], first, last)
         axis.step([clock(int(v)) for v in at], turn * values, where='post', color='#1f618d', lw=1)
         axis.axhline(0, color='#aab7b8', lw=THIN)
-        axis.set_ylim(-LEAN_LIMIT, LEAN_LIMIT)
-        axis.set_ylabel(f'turned to this trade leg\'s side\n(+1 all {with_it}, with it; -1 all against)')
+        axis.set_ylim(*scale(turn * values))
+        axis.set_ylabel(f'turned to this trade leg\'s side\n(above zero {with_it}, with it; scale set by the line)')
         axis.set_title(f'{number + 1}. THE {name.upper()}, the crypto formula: bought minus sold over\nbought plus '
                        f'sold, the trades of the last {seconds} seconds', loc='left', fontsize=BIG)
     for axis in axes:
