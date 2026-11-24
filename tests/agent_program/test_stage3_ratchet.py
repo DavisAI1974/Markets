@@ -271,3 +271,97 @@ def test_command_line(tmp_path, root, clone):
     rep = json.loads(r.stdout)
     assert len(rep["trials"]) == 2 and rep["kept"] == rep["trials"]
     assert len(ExpDag(root, exp_dir=tmp_path / "exp").latest()) == 2
+
+
+# ---- the guard and the report (review of 2026-11-24: F10.1 to F10.4) ---------------------------------------
+class WithExtra:
+    """A proposer that applies a real commit (ReplayCommits) and then does one more thing to the worktree."""
+
+    def __init__(self, inner, extra=None, raises_first=None):
+        self.inner, self.extra, self.raises_first, self.calls = inner, extra, raises_first, 0
+
+    def unresolved(self):
+        return self.inner.unresolved()
+
+    def __call__(self, wt, n, history):
+        self.calls += 1
+        if self.raises_first and self.calls == 1:
+            raise self.raises_first
+        got = self.inner(wt, n, history)
+        if got and self.extra and self.calls == 1:
+            self.extra(Path(wt))
+        return got
+
+
+def run_with(tmp_path, root, clone, proposer, **over):
+    text = "---\n" + yaml.safe_dump(control(clone, **over)) + "---\nnotes\n"
+    p = tmp_path / "program.md"
+    p.write_text(text)
+    rep = run_loop(p, proposer, scratch=tmp_path / "scratch", data_root=root, exp_dir=tmp_path / "experiments")
+    return rep, ExpDag(root, exp_dir=tmp_path / "experiments"), tmp_path / "scratch/tasty-checks/worktree"
+
+
+def test_a_new_ignored_file_is_a_change_outside_mutable_and_is_cleaned_between_trials(tmp_path, root, clone):
+    """F10.1. The platform's .gitignore ignores .venv/: a file a proposer writes there is read by the run command
+    like any other, so the trial is not run (crash, "touched <file>") and the file is gone for the next trial."""
+    def write_ignored(wt):
+        (wt / ".venv").mkdir(exist_ok=True)
+        (wt / ".venv" / "settings.txt").write_text("a file git ignores\n")
+    assert sh(clone, "git", "check-ignore", ".venv/settings.txt") == ".venv/settings.txt"
+    rep, dag, wt = run_with(tmp_path, root, clone, WithExtra(ReplayCommits(clone, [C_CODE, C_DOCS]), write_ignored))
+    t0, t1, t2 = rep["trials"]
+    assert trial(dag, t1)["status"] == "crash" and ".venv/settings.txt" in trial(dag, t1)["note"]
+    assert trial(dag, t1)["note"].startswith("touched ") and trial(dag, t1)["metrics"] == []     # not run
+    assert not (wt / ".venv" / "settings.txt").exists()                  # cleaned, ignored files too
+    assert trial(dag, t2)["status"] == "reverted" and trial(dag, t2)["metrics"]   # the next trial ran, clean
+    assert sh(wt, "git", "status", "--porcelain", "--ignored") == ""
+
+
+def test_a_proposer_that_raises_is_a_recorded_crash_and_the_loop_goes_on(tmp_path, root, clone):
+    """F10.3. Any exception from a proposer ends that trial as a crash with its text; the worktree is back on
+    the last kept commit; the loop's report is returned."""
+    rep, dag, wt = run_with(tmp_path, root, clone,
+                            WithExtra(ReplayCommits(clone, [C_CODE]), raises_first=RuntimeError("the model went away")))
+    t0, t1, t2 = rep["trials"]
+    assert trial(dag, t1)["status"] == "crash" and "RuntimeError: the model went away" in trial(dag, t1)["note"]
+    assert trial(dag, t2)["status"] == "kept" and rep["stopped_because"] == "the proposer has nothing more to try"
+    assert sh(wt, "git", "status", "--porcelain") == ""
+
+
+def test_the_report_is_returned_and_written_when_the_loop_itself_fails(tmp_path, root, clone):
+    """F10.3: a proposer that hands back something the loop cannot use (no hypothesis) is not a proposer
+    failure: the loop stops, says so, the worktree is put back, and the report is written to escalate_file."""
+    class Bad:
+        def __call__(self, wt, n, history):
+            return {"agent_run": None}
+    rep, dag, wt = run_with(tmp_path, root, clone, Bad(), escalate_file=str(tmp_path / "esc.json"))
+    assert rep["stopped_because"].startswith("the loop itself stopped: KeyError")
+    assert [e["condition"] for e in rep["escalations"]] == ["the loop stopped on an exception"]
+    assert json.loads((tmp_path / "esc.json").read_text())["stopped_because"] == rep["stopped_because"]
+    assert rep["trials"] and sh(wt, "git", "status", "--porcelain") == ""
+
+
+def test_a_crashed_trial_keeps_every_attempt_and_the_figures_that_were_parsed(tmp_path, root, clone):
+    """F10.4. environment.attempts is a list: one entry an attempt (exit code, timed out, what was parsed)."""
+    budget = {k: None for k in prog.BUDGET_KEYS}
+    budget["max_retries"] = 2
+    run = {"command": "python3 -c 'import sys; print(\"7 passed\"); sys.exit(3)'", "env": {"RATCHET_CHECK": "ratchet-secret-value"}}
+    rep, dag, _ = run_with(tmp_path, root, clone, ReplayCommits(clone, [C_CODE]), budget=budget, run=run)
+    t = trial(dag, rep["trials"][0])
+    assert t["status"] == "crash"
+    env = t["environment"] if isinstance(t["environment"], dict) else json.loads(t["environment"])
+    assert [a["exit_code"] for a in env["attempts"]] == [3, 3, 3] and [a["timed_out"] for a in env["attempts"]] == [False] * 3
+    assert all(a["parsed"] == {"checks_passed": 7} for a in env["attempts"])
+    assert [m["value"] for m in t["metrics"]] == [7]                     # the figure that was parsed is kept
+    assert all(f"attempt {i}" in t["note"] for i in (1, 2, 3))           # the note of EVERY attempt
+    # F10.2: the command and the NAMES of the environment variables are in the record, never their values
+    assert env["run_command"] == run["command"] and env["env_names"] == ["RATCHET_CHECK"]
+    assert "ratchet-secret-value" not in json.dumps(env)
+
+
+def test_the_limit_of_the_guard_is_written_in_the_loop_and_in_the_control_file_template():
+    from tools.ratchet import loop
+    for text in (loop.__doc__, template_text()):
+        assert "does not cover what the run command" in " ".join(text.lower().split()) or \
+               "not what the run command" in " ".join(text.lower().split())
+    assert "only read and print" in " ".join(loop.__doc__.split()) and "only read and print" in template_text()

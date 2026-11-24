@@ -145,3 +145,87 @@ def test_the_same_words_said_in_two_files_make_one_line_that_cites_both(graph):
     assert len(shown) == 1 and len(folded) == len(same) - 1
     line = next(l for l in out["text"].splitlines() if f"c:{shown[0].split(':', 1)[1]}" in l)
     assert "also" in line and all(store.node(f)["attrs"]["source"].rsplit("/", 1)[-1] in line for f in folded)
+
+
+def test_a_fold_joins_only_the_same_kind_and_speaker_from_two_files_and_never_chains(graph):
+    """F7.5. Read off the real build: every line that stands for others folds in claims of the same kind and
+    speaker, each of a different file, and no group holds two claims of one file. Each folded claim is cited
+    by file:line and by id."""
+    store, dirs = graph
+    out = context.build(store, None, budget_tokens=200000, dirs=dirs)
+    assert out["folded"]
+    cited = {}
+    for l in out["text"].splitlines():
+        m = re.search(r"\[c:([0-9a-f]{12}) \|", l)
+        if m:
+            cited[m.group(1)] = re.findall(r"also (\S+:\d+) \(c:([0-9a-f]{12})\)", l)
+    seen = []
+    for head, also in cited.items():
+        h = store.node("claim:" + head)["attrs"]
+        files = [h["source"]]
+        for where, oid in also:
+            o = store.node("claim:" + oid)["attrs"]
+            seen.append("claim:" + oid)
+            assert (o["statement_kind"], o.get("said_by")) == (h["statement_kind"], h.get("said_by"))
+            assert where == f"{o['source'].rsplit('/', 1)[-1]}:{o['line_start']}"
+            files.append(o["source"])
+        assert len(files) == len(set(files))                 # never two claims of one file in a group
+    assert sorted(seen) == sorted(out["folded"])            # every folded claim is cited, by id
+
+
+def test_every_claim_has_its_marks_and_a_contradicted_claim_is_marked_but_not_called_last(graph):
+    """F7.4 / A5. A contradiction between two real claims, both stand: the contradicted one carries the first
+    100 characters of the one that contradicts it and is not called last."""
+    store, dirs = graph
+    out = context.build(store, None, budget_tokens=200000, dirs=dirs)
+    assert set(out["marks"]) == {c["id"] for c in store.nodes("Claim")}
+    assert all(isinstance(v, list) for v in out["marks"].values())
+    decisions = [c for c in store.nodes("Claim") if c["attrs"]["statement_kind"] == "decision"
+                 and c["id"] in out["included"] and c["id"] not in out["called_last"]]
+    a, b = decisions[0], decisions[1]
+    edge = store.write([], [link("CONTRADICTS", b["id"], a["id"])], written_by="code:test")
+    again = context.build(store, None, budget_tokens=200000, dirs=dirs)
+    said = " ".join(b["attrs"]["text"].split())[:100]
+    assert any(f'contradicted by c:{b["id"].split(":", 1)[1]}: "{said}"' in m for m in again["marks"][a["id"]])
+    assert a["id"] not in again["called_last"]
+    assert any(said in l and l.count("contradicted by") for l in again["text"].splitlines())
+    _accounted(store, again)
+
+
+def test_the_head_names_the_manual_and_the_foot_names_what_was_read_to_where(graph):
+    """F7.2 / F7.3, on the real reads: the manual and the document count in the head; the foot names each
+    document read at an earlier wording with its last line, and counts the reasons and the checks by decision."""
+    store, dirs = graph
+    out = context.build(store, None, budget_tokens=6000, dirs=dirs)
+    text = out["text"]
+    assert "Manual of the agent program: Markets tools/README_AGENT_PROGRAM.md" in text
+    docs = {c["attrs"]["source"] for c in store.nodes("Claim")}
+    assert f"built from those {len(docs)} documents" in text
+    for t in store.nodes("Task"):
+        if t["id"].startswith("task:extract:") and t["attrs"]["state"] == "open":
+            name = t["attrs"]["source"].rsplit("/", 1)[-1]
+            assert (f"{name}: read to line {t['attrs']['last_line_with_a_claim']} of {t['attrs']['lines']}; "
+                    "the lines after are not in this text") in text
+    thrown = [t for t in store.nodes("Task") if t["id"].startswith("task:thrown-out:")]
+    for reason in {t["attrs"]["reason"] for t in thrown}:
+        n = sum(t["attrs"]["reason"] == reason for t in thrown)
+        assert f"{n} {reason}" in text
+    evals = store.nodes("Evaluation")
+    if evals:
+        assert f"{len(evals)} checks on record" in text
+
+
+def test_the_marks_of_checks_on_record_show_where_such_checks_exist():
+    """A claim with an Evaluation 'text against its lines v1' or 'said by v1' carries the mark; the checks are
+    being written by another builder, so this reads the saved graph and is skipped while none is there."""
+    root = data_root()
+    saved = GraphStore(root)
+    rubrics = [e for e in saved.nodes("Evaluation") if (e["attrs"].get("rubric") or "").startswith(("text against its lines v1", "said by v1"))]
+    if not rubrics:
+        pytest.skip("markets-data holds no Evaluation 'text against its lines v1' or 'said by v1' yet")
+    out = context.build(saved, None, budget_tokens=6000, dirs=extract.repo_dirs(root, None, None))
+    for ev in rubrics:
+        for e in saved.edges("EVALUATES"):
+            if e["src"] == ev["id"] and e["dst"] in out["marks"]:
+                want = ("not on its lines" if ev["attrs"]["rubric"].startswith("text") else "his name is not on its lines")
+                assert any(want in m for m in out["marks"][e["dst"]])

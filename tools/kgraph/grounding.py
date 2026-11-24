@@ -5,9 +5,22 @@ evidence is needed, in the plan's own shape:
 
     {"decision": "revise", "claim": ..., "reason": ..., "required_evidence": [...]}
 
-Where nothing is missing, "decision" is null and the result says what was checked, what was observed
-and what remains open. There is no verdict word and no score: a claim whose path is there is not
-called proven, and two claims that contradict each other both stay (the contradiction is listed).
+A claim that is not a reading has three outcomes: null (the link is there and the words were read again
+and stand, at their lines or moved: the result says which, with the new line), "unread" (the link is there
+but the words could not be read again here: no local checkout, or a file on another branch) and "revise"
+(a link or the words are missing). A claim that cites cells of a graph node (a swarm claim) has its quote
+read again from that node's pinned cells in the graph, never by opening the workbook as text. A reading
+is held up only by a DERIVED_FROM link to a claim that itself stands, or to a CalcOutput, a Metric, an
+Evaluation, a DipoleEvent or a Peak; a link to anything else (an AgentRun, a Source, an Entity) does not
+hold it up, and the result says so.
+
+A sentence that is not a node (`text`) never returns null: with candidates it returns "read" (a reviewer
+must read whether a candidate means the sentence); with none, or only candidates tied to the tastytrade
+platform or with a later claim set over them, it returns "revise" with what is needed. Words are matched
+as whole words, never as parts of words.
+
+There is no verdict word and no score: a claim whose path is there is not called proven, and two claims
+that contradict each other both stay (the contradiction is listed).
 
 One implementation, three callers (plan 4c and 4a-bis): the reviewer agent, the check register of
 Codex's verifier plan (a check kept with `record` is an Evaluation node with the register's fields),
@@ -53,12 +66,17 @@ def _norm(s: str) -> str:
     return _ws.sub(" ", s).strip()
 
 
-def _result(target: dict, checked, observed, open_, paths, required, reason, adverse=(), superseded_by=()) -> dict:
+HOLDS_A_READING_UP = ("CalcOutput", "Metric", "Evaluation", "DipoleEvent", "Peak")
+
+
+def _result(target: dict, checked, observed, open_, paths, required, reason, adverse=(), superseded_by=(),
+            decision=None) -> dict:
+    decision = decision or ("revise" if required else None)
     return {
-        "decision": "revise" if required else None,
+        "decision": decision,
         "claim": {"id": target["id"], "rev": target["rev"], "type": target["type"],
                   "text": target["attrs"].get("text") or target["attrs"].get("name")},
-        "reason": reason if required else None,
+        "reason": reason if decision else None,
         "required_evidence": list(required),
         "what_was_checked": list(checked),
         "what_was_observed": list(observed),
@@ -72,6 +90,19 @@ def _result(target: dict, checked, observed, open_, paths, required, reason, adv
 def _quote_now(store: GraphStore, claim: dict, dirs: dict | None) -> tuple[str, str | None]:
     """('stands' | 'moved' | 'gone' | 'not read', a sentence saying what was seen)."""
     a = claim["attrs"]
+    if a.get("cited_node"):
+        # a claim that cites cells of a graph node: read again from that node's pinned cells, in the graph
+        node = store.node(a["cited_node"])
+        if node is None or "pinned" not in node["attrs"]:
+            return "not read", f"the node {a['cited_node']} with its pinned cells is not in the graph: the cells were not read again"
+        cols = [c["column"] for c in (a.get("cited_cells") or [])]
+        pinned = node["attrs"]["pinned"]
+        if not cols or any(c not in pinned for c in cols):
+            return "gone", f"the cited columns {cols} are not all among the pinned cells of {a['cited_node']}"
+        now_ = "; ".join(f"{c}={json.dumps(pinned[c], ensure_ascii=False)}" for c in cols)
+        if now_ == a["quote"]:
+            return "stands", f"the quoted cells stand in the pinned cells of {a['cited_node']} ({now_})"
+        return "gone", f"the pinned cells of {a['cited_node']} now read {now_}, not {a['quote']}"
     src = store.node(a["source"])
     if src is None:
         return "not read", f"the source {a['source']} is not a node of the graph"
@@ -86,6 +117,9 @@ def _quote_now(store: GraphStore, claim: dict, dirs: dict | None) -> tuple[str, 
     span = a["line_end"] - a["line_start"] + 1
     for i in range(len(lines)):
         if quote in _norm(" ".join(lines[i:i + span + 1])):
+            # the window is one line wider than the span: the words start at the last window that holds them
+            while i + 1 < len(lines) and quote in _norm(" ".join(lines[i + 1:i + span + 2])):
+                i += 1
             return "moved", f"the quoted words stand in {path}, now at line {i + 1} (read at lines {a['line_start']}-{a['line_end']})"
     return "gone", f"the quoted words are no longer in {path}"
 
@@ -98,6 +132,7 @@ def check_claim(store: GraphStore, claim_id: str, dirs: dict | None = None, _dep
     _seen = (_seen or set()) | {claim_id}
     tied = platform_scope.members(store)
     checked, observed, open_, paths, required, reason = [], [], [], [], [], None
+    unread = []                          # what could not be read again here
     into = [e for e in store.edges() if e["dst"] == claim_id]
     out = [e for e in store.edges() if e["src"] == claim_id]
     own_source = a.get("source")
@@ -115,6 +150,7 @@ def check_claim(store: GraphStore, claim_id: str, dirs: dict | None = None, _dep
                                 "or a later claim that takes this one's place (a SUPERSEDES link)")
             elif state == "not read":
                 open_.append(said)
+                unread.append(said)
             if state in ("stands", "moved", "not read") and not a["inference"]:
                 paths.append([sup[0]["id"]])
         else:
@@ -124,8 +160,10 @@ def check_claim(store: GraphStore, claim_id: str, dirs: dict | None = None, _dep
             required.append(f"a SUPPORTS link from {where} (lines {a.get('line_start')}-{a.get('line_end')}) to this claim")
 
     if a["inference"]:
-        # A reading is not held up by the place it is written down. It needs something it rests on.
-        checked.append("for a reading: a DERIVED_FROM link to a claim, a calc output, a figure or a check it rests on")
+        # A reading is not held up by the place it is written down. It needs something it rests on: a claim
+        # that itself stands, or a calc output, a figure, a check, a dipole or a peak.
+        checked.append("for a reading: a DERIVED_FROM link to a claim that stands, a calc output, a figure, a check, "
+                       "a dipole or a peak it rests on")
         rests = [e for e in out if e["type"] == "DERIVED_FROM"]
         rests += [e for e in into if e["type"] == "SUPPORTS" and e["src"] != own_source]
         good = []
@@ -141,15 +179,21 @@ def check_claim(store: GraphStore, claim_id: str, dirs: dict | None = None, _dep
                 sub = check_claim(store, other, dirs, _depth + 1, _seen)
                 if other in tied:
                     observed.append(f"it rests on {other}, which is tied to a tastytrade platform issue: that is not taken as what it rests on")
-                elif sub["decision"] is None:
+                elif sub["decision"] in (None, "unread"):
                     good += [[e["id"]] + p for p in sub["supporting_paths"]] or [[e["id"]]]
+                    if sub["decision"] == "unread":
+                        unread.append(f"{other}: its words were not read again here")
                 else:
                     observed.append(f"it rests on {other}, which itself lacks a path: {sub['reason']}")
-            else:
+            elif node["type"] in HOLDS_A_READING_UP:
                 good.append([e["id"]])
+            else:
+                observed.append(f"it is tied to {other} ({node['type']}), which does not hold a reading up: "
+                                "it says where something was made, not what the reading rests on")
         if good:
             paths += good
-            observed.append(f"the reading rests on {len(good)} path(s) that reach a source, a calc output or a check")
+            observed.append(f"the reading rests on {len(good)} path(s) that reach a claim that stands, a calc output, "
+                            "a figure, a check, a dipole or a peak")
         elif not required:
             reason = ("the document marks this as a reading (an inference); nothing in the graph shows what it "
                       "rests on")
@@ -170,7 +214,11 @@ def check_claim(store: GraphStore, claim_id: str, dirs: dict | None = None, _dep
     if superseded:
         observed.append("a later claim says otherwise: " + ", ".join(superseded) + " (nothing is replaced: this one stays, "
                         "marked, and is called last)")
-    return _result(claim, checked, observed, open_, paths, required, reason, adverse, superseded)
+    decision = None
+    if not required and unread:
+        decision = "unread"
+        reason = "the link is there but the words could not be read again here: " + "; ".join(unread)
+    return _result(claim, checked, observed, open_, paths, required, reason, adverse, superseded, decision)
 
 
 def check_node(store: GraphStore, node_id: str, dirs: dict | None = None) -> dict:
@@ -195,17 +243,29 @@ def check_node(store: GraphStore, node_id: str, dirs: dict | None = None) -> dic
         required.append(f"a DERIVED_FROM link from {node_id} to the claim or finding it rests on "
                         "(for a rule: the measurement or the decision the rule was written from)")
     tied = platform_scope.members(store)
+    unread_rest = []
     for e in rests:
         sub = check_claim(store, e["dst"], dirs)
         if e["dst"] in tied:
             reason = reason or f"it rests on {e['dst']}, which is tied to a tastytrade platform issue (parked by Greg)"
             required.append("a finding that does not come from the tastytrade sandbox or its thin feed")
-        elif sub["decision"] is None:
+        elif sub["decision"] in (None, "unread"):
             paths += [[e["id"]] + p for p in sub["supporting_paths"]] or [[e["id"]]]
+            if sub["decision"] == "unread":
+                unread_rest.append(e["dst"])
         else:
             reason = reason or f"it rests on {e['dst']}, which itself lacks a path: {sub['reason']}"
             required += sub["required_evidence"]
+    if not required and unread_rest:
+        return _result(node, checked, observed, open_, paths, required,
+                       "the links are there but the words of " + ", ".join(unread_rest) + " could not be read again here",
+                       decision="unread")
     return _result(node, checked, observed, open_, paths, required, reason)
+
+
+def _word_set(text: str) -> set[str]:
+    """The words of a text as whole tokens, as `_tokens` writes them (a word is never found inside another)."""
+    return {w.lower().strip(".-/") for w in _word.findall(text)}
 
 
 def _tokens(text: str) -> tuple[list[str], list[str]]:
@@ -230,9 +290,9 @@ def check_text(store: GraphStore, text: str, dirs: dict | None = None, top: int 
         a = c["attrs"]
         body = (a["text"] + " " + (a.get("quote") or ""))
         have_n = set(n.replace(",", "") for n in _num.findall(body))
-        low = body.lower()
+        have_w = _word_set(body)
         n_hit = [n for n in numbers if n in have_n]
-        w_hit = [w for w in words if w in low]
+        w_hit = [w for w in words if w in have_w]
         if numbers and len(n_hit) < len(numbers):
             continue
         if len(w_hit) < max(1, (len(words) + 1) // 2):
@@ -243,20 +303,30 @@ def check_text(store: GraphStore, text: str, dirs: dict | None = None, top: int 
                       "said_by": a.get("said_by"), "inference": a["inference"],
                       "numbers_carried": n_hit, "words_carried": w_hit, "superseded": c["id"] in superseded,
                       "platform_issue": c["id"] in tied})
-    cands.sort(key=lambda x: (x["platform_issue"], -len(x["words_carried"]), x["superseded"], x["inference"], x["claim"]))
+    cands.sort(key=lambda x: (x["platform_issue"], x["superseded"], -len(x["words_carried"]), x["inference"], x["claim"]))
     target = {"id": "text:" + sha(text), "rev": 0, "type": "text", "attrs": {"text": text}}
     observed, open_, required, reason = [], [], [], None
-    if cands and all(c["platform_issue"] for c in cands):
-        observed.append(f"{len(cands)} claim(s) carry it, and every one is tied to a tastytrade platform issue")
-        reason = ("the only claims that carry it are tied to a tastytrade platform issue (the sandbox or its thin "
-                  "feed), which Greg parked: they are not taken as evidence for anything new")
-        required.append("evidence that does not come from the tastytrade sandbox or its thin feed")
-    elif cands:
-        observed.append(f"{len(cands)} claim(s) carry every number of the sentence and at least half of its words")
-        open_.append("whether a candidate means what the sentence says is for the reviewer to read: the code "
-                     "matched numbers and words only")
-        if all(c["inference"] for c in cands):
+    usable = [c for c in cands if not c["platform_issue"] and not c["superseded"]]
+    decision = None
+    if usable:
+        decision = "read"
+        observed.append(f"{len(cands)} claim(s) carry every number of the sentence and at least half of its words as whole words")
+        reason = ("a reviewer must read whether a candidate means what the sentence says: the code matched numbers "
+                  "and whole words only, and that is not the meaning")
+        open_.append("whether a candidate means what the sentence says is for the reviewer to read")
+        if all(c["inference"] for c in usable):
             open_.append("every candidate is itself marked as a reading")
+    elif cands:
+        n_plat = sum(c["platform_issue"] for c in cands)
+        n_sup = sum(c["superseded"] and not c["platform_issue"] for c in cands)
+        observed.append(f"{len(cands)} claim(s) carry it: {n_plat} tied to a tastytrade platform issue, {n_sup} with a later "
+                        "claim set over it (they stay in the graph and are listed)")
+        reason = ("the only claims that carry it are tied to a tastytrade platform issue (the sandbox or its thin "
+                  "feed, which Greg parked) or have a later claim set over them: they are not taken as evidence")
+        if n_plat:
+            required.append("evidence that does not come from the tastytrade sandbox or its thin feed")
+        if n_sup:
+            required.append("a claim that states it and has no later claim set over it")
     else:
         have_all = set()
         for c in store.nodes("Claim"):
@@ -269,7 +339,9 @@ def check_text(store: GraphStore, text: str, dirs: dict | None = None, top: int 
             required.append("a source line that states " + ", ".join(numbers) + " together, about: " + ", ".join(words[:8]))
         if not numbers:
             required.append("a source line that states it, about: " + ", ".join(words[:8]))
-    res = _result(target, checked, observed, open_, [], required, reason)
+    if decision is None:
+        decision = "revise"
+    res = _result(target, checked, observed, open_, [], required, reason, decision=decision)
     res["supporting_candidates"] = cands[:top]
     res["candidates_not_shown"] = max(0, len(cands) - top)
     return res
@@ -282,8 +354,11 @@ def record(store: GraphStore, result: dict, reviewer: str, run: str | None) -> s
     if store.node(target["id"]) is None:
         raise ValueError("only a check of a node of the graph is kept; a sentence is checked, then registered as a claim")
     node = store.node(target["id"])
-    eid = "eval:" + sha([target["id"], target["rev"], RUBRIC, result["decision"], result["required_evidence"],
-                         result["what_was_observed"]])
+    # two reviewers' checks of one thing are two nodes: neither revises the other (the reviewer and the
+    # method are part of the id, with the target, its revision, the rubric and what was observed)
+    method = "tools.kgraph.grounding"
+    eid = "eval:" + sha([target["id"], target["rev"], RUBRIC, reviewer, method, result["decision"],
+                         result["required_evidence"], result["what_was_observed"]])
     attrs = {
         "rubric": RUBRIC,
         "what_was_checked": result["what_was_checked"],
@@ -293,7 +368,7 @@ def record(store: GraphStore, result: dict, reviewer: str, run: str | None) -> s
         "required_evidence": result["required_evidence"],
         "supporting_paths": result["supporting_paths"], "adverse": result["adverse"],
         # the check register's fields (Codex's verifier plan, section 5)
-        "check_type": "deterministic", "method": "tools.kgraph.grounding", "method_version": code_stamp("tools.kgraph.grounding"),
+        "check_type": "deterministic", "method": method, "method_version": code_stamp("tools.kgraph.grounding"),
         "claim_revision": target["rev"], "input_hash": node["content_sha"], "location": "tools/kgraph/grounding.py",
         "scope": "the graph as it stood when the check ran, and the local checkouts",
         "expected_observation": "a supporting path, and the quoted words standing in the file",
@@ -314,12 +389,12 @@ def check_all(store: GraphStore, dirs: dict | None = None) -> dict:
     for c in store.nodes("Claim"):
         n += 1
         r = check_claim(store, c["id"], dirs)
-        if r["decision"]:
+        if r["decision"] == "revise":
             need.append(r)
     rules = [e for e in store.nodes("Entity") if e["attrs"].get("entity_kind") == "rule version"]
     for rv in rules:
         r = check_node(store, rv["id"], dirs)
-        if r["decision"]:
+        if r["decision"] == "revise":
             need.append(r)
     return {"claims_checked": n, "rule_versions_checked": len(rules), "need_evidence": need}
 

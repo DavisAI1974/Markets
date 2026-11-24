@@ -33,10 +33,12 @@ figures:                          # EVERY figure listed is read after each run a
   #   parse: {kind: json, key: result.count}   # json: dotted key into the JSON printed on the last stdout line
 
 run:
-  command: "python3 -m pytest tests/tasty_runner -q -p no:cacheprovider"   # run in the worktree
+  command: "python3 -m pytest tests/tasty_runner -q -p no:cacheprovider"   # run in the worktree. It must ONLY
+                                  # READ AND PRINT: see "What the guard covers" below the front matter.
   cwd: "."                        # where to run it, relative to the repo root
   timeout_s: 120                  # longer than this is a crash
-  env: {}                         # extra environment variables for the command
+  env: {}                         # extra environment variables for the command; each trial records the
+                                  # command and these variables' NAMES (not their values)
 
 budget:                           # the plan's per-run budget. null = no limit set.
   max_trials: 5                   # proposed trials (the baseline, trial 0, is not counted). Harness-enforced.
@@ -74,3 +76,11 @@ record:
 
 Free notes below the front matter are kept with the file and not read by the harness: why this loop
 exists, who chose the metric and when.
+
+What the guard covers, and what it does not. The guard covers what a proposer changes inside the worktree:
+every file git lists as changed or new, and every file git ignores that is new or changed since the proposer
+was called (an ignored file is read by the run command like any other, so it counts as a change outside
+`mutable` and the trial is recorded as crash, "touched <file>", and not run). The guard does not cover what
+the run command itself does elsewhere: a command that writes outside the worktree (through an environment
+variable, an absolute path, `gh workflow run`) is neither checked nor undone. A control file's command must
+therefore only read and print.

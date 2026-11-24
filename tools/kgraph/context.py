@@ -7,22 +7,30 @@
 NOTHING IS REPLACED (Greg, 2026-11-24; the paper: "every superseded object remains addressable",
 "prioritize recent verified claims", "include conflicts and uncertainty"). No claim is left out because a
 later one exists or because it is parked. A claim that has something against it is MARKED with what
-stands against it and CALLED LAST, so under a budget it is the first to fall, and a larger budget shows it.
+stands against it. A claim with a later claim set over it (SUPERSEDES) and a claim firmly marked as
+belonging to the tastytrade platform are CALLED LAST, so under a budget they are the first to fall, and a
+larger budget shows them. A claim that a claim contradicts (CONTRADICTS) is marked, with the first 100
+characters of the claim that contradicts it, and is NOT called last: both stand, as the paper says
+("include conflicts and uncertainty"). A claim a check on record has marked (its text carries a figure that is
+not on its lines; given as Greg's but his name is not on its lines) carries that mark too.
 
 What it does (plan, stage 5a):
   1. with a task: finds the things the task names (entities, by name or by a name merged into them),
      and walks one or two hops over the links to the claims about them. Without a task: every claim.
-  2. folds claims that carry the same words in two files (Greg's sentence copied from the decisions
-     file into a handoff) into one line that cites every file.
+  2. folds a claim into another's line only when one quote holds the other (at least FOLD_WORDS words),
+     the two are of two DIFFERENT files, and they have the same statement kind and the same speaker. No
+     chain through a third claim: a group is one standing claim plus the claims folded directly into it,
+     and never holds two claims of one file. The line cites each folded claim by file:line and by id.
   3. marks a claim that has something against it: a later claim says otherwise (a SUPERSEDES link), a
      claim contradicts it (both stand), it is parked as a tastytrade platform issue, or it names that
-     platform (nothing new may rest on it).
+     platform (nothing new may rest on it); and the marks of the checks on record.
   4. writes the claims by kind, those with nothing against them first and newest first, within the
      token budget, each line with its claim id, its file and line, who said it and when, so any line
      can be followed back and checked.
   5. says at the end what is NOT in the text: how many claims fell under the budget (and of which
-     kind), how many have something against them, which documents have not been read into claims yet,
-     and how many checks on record ask for evidence. Nothing is left out in silence: the returned
+     kind), how many have something against them, which documents have not been read into claims yet
+     (and, of each one read at an earlier wording, to which line), why claims were not believed (each
+     reason counted), and the checks on record by decision. Nothing is left out in silence: the returned
      lists place every claim of the graph in exactly one of included, folded, cut, not_reached.
 
 Tokens are estimated at 4 characters a token (no tokenizer is called here); the text says so.
@@ -176,6 +184,8 @@ def build(store: GraphStore, task: str | None, budget_tokens: int, hops: int = 1
     called_last = sorted(set(over) | parked)
 
     def standing(cid: str) -> int:
+        # called last: a later claim set over it, or firmly marked as the tastytrade platform's.
+        # A contradicted claim is marked, not called last (both stand).
         return 1 if (cid in over or cid in parked) else 0
 
     entities, hop_of, how = [], {}, "every claim of the graph (a session start)"
@@ -187,52 +197,95 @@ def build(store: GraphStore, task: str | None, budget_tokens: int, hops: int = 1
         reached = list(live)
     not_reached = sorted(set(live) - set(reached))
 
-    # Fold claims that carry the same words in two FILES (the newest stands for them): one quote holds
-    # the other, word for word, and the shorter is at least FOLD_WORDS words. Inside one file nothing
-    # is folded: two claims that quote overlapping words of one document are two claims.
+    # Fold claims that carry the same words in two FILES. One quote holds the other, word for word, the
+    # shorter is at least FOLD_WORDS words, the two files differ, and they have the same statement kind and
+    # the same speaker. No chain: the claim that stands takes in the claims folded DIRECTLY into it, and a
+    # group never holds two claims of one file.
     quotes = {c: _strip(live[c]["attrs"].get("quote") or "") for c in reached}
-    parent = {c: c for c in reached}
 
-    def root(c: str) -> str:
-        while parent[c] != c:
-            parent[c] = parent[parent[c]]
-            c = parent[c]
-        return c
+    def foldable(x: str, y: str) -> bool:
+        ax, ay = live[x]["attrs"], live[y]["attrs"]
+        if ax.get("source") == ay.get("source"):
+            return False
+        if ax["statement_kind"] != ay["statement_kind"] or ax.get("said_by") != ay.get("said_by"):
+            return False
+        qx, qy = quotes[x], quotes[y]
+        if len(qx.split()) < FOLD_WORDS or len(qy.split()) < FOLD_WORDS:
+            return False
+        return qx in qy or qy in qx
 
-    long_enough = [c for c in reached if len(quotes[c].split()) >= FOLD_WORDS]
-    long_enough.sort(key=lambda c: len(quotes[c]))
-    for i, short in enumerate(long_enough):
-        for other in long_enough[i + 1:]:
-            if live[short]["attrs"].get("source") != live[other]["attrs"].get("source") and quotes[short] in quotes[other]:
-                parent[root(short)] = root(other)
-    groups: dict[str, list[str]] = {}
-    for cid in reached:
-        groups.setdefault(root(cid), []).append(cid)
-    stands_for, folded = {}, []
-    for ids in groups.values():
-        ids.sort(key=lambda c: clock.key(live[c]), reverse=True)
-        ids.sort(key=standing)                              # one with nothing against it stands for the group
-        stands_for[ids[0]] = ids[1:]
-        folded += ids[1:]
+    order = sorted(reached, key=lambda c: clock.key(live[c]), reverse=True)
+    order.sort(key=standing)                                # one with nothing against it stands first
+    stands_for, folded, taken = {}, [], set()
+    for head in order:
+        if head in taken:
+            continue
+        taken.add(head)
+        files = {live[head]["attrs"].get("source")}
+        mine = []
+        for other in order:
+            if other in taken or live[other]["attrs"].get("source") in files or not foldable(head, other):
+                continue
+            mine.append(other)
+            taken.add(other)
+            files.add(live[other]["attrs"].get("source"))
+        stands_for[head] = mine
+        folded += mine
+
+    # the marks each claim carries (every claim of the graph)
+    evals_of: dict[str, list[dict]] = {}
+    for e in store.edges("EVALUATES"):
+        ev = store.node(e["src"])
+        if ev is not None and ev["type"] == "Evaluation" and e["dst"] in claims:
+            evals_of.setdefault(e["dst"], []).append(ev)
+
+    def _figures(ev: dict) -> str:
+        seen = ev["attrs"].get("what_was_observed") or []
+        seen = [seen] if isinstance(seen, str) else seen
+        figs = list(dict.fromkeys(m for t in seen for m in re.findall(r"\d[\d,]*(?:\.\d+)?", str(t))))
+        return ", ".join(figs) if figs else "; ".join(str(t) for t in seen)[:160]
+
+    marks: dict[str, list[str]] = {}
+    for cid, c in claims.items():
+        m = []
+        if c["attrs"]["inference"]:
+            m.append("a reading, not a measurement")
+        if cid in over:
+            m.append("a later claim says otherwise: " + ", ".join("c:" + o.split(":", 1)[1] for o in over[cid]))
+        for o in against.get(cid, []):
+            said = _ws.sub(" ", claims[o]["attrs"]["text"]).strip()[:100] if o in claims else "(not a claim of this graph)"
+            m.append(f"contradicted by c:{o.split(':', 1)[1]}: \"{said}\"; both stand")
+        if cid in parked:
+            m.append("parked: a tastytrade platform issue")
+        elif cid in ties:
+            m.append("names the tastytrade platform: nothing new may rest on it")
+        for ev in evals_of.get(cid, []):
+            rub = ev["attrs"].get("rubric") or ""
+            if rub.startswith("text against its lines v1"):
+                m.append(f"its text carries a figure that is not on its lines: {_figures(ev)}")
+            elif rub.startswith("said by v1"):
+                m.append("given as Greg's; his name is not on its lines")
+        marks[cid] = list(dict.fromkeys(m))
+
+    def where_of(cid: str) -> str:
+        a = live[cid]["attrs"]
+        src = a.get("source") or ""
+        return f"{src.rsplit('/', 1)[-1]}:{a.get('line_start')}" if src else "no source line"
 
     def line(cid: str) -> str:
         a = live[cid]["attrs"]
-        src = a.get("source") or ""
-        where = f"{src.rsplit('/', 1)[-1]}:{a.get('line_start')}" if src else "no source line"
         also = ""
         if stands_for.get(cid):
-            also = " | also " + ", ".join(
-                f"{live[o]['attrs']['source'].rsplit('/', 1)[-1]}:{live[o]['attrs']['line_start']}" for o in stands_for[cid])
-        mark = "(a reading, not a measurement) " if a["inference"] else ""
-        if cid in over:
-            mark += "(a later claim says otherwise: " + ", ".join("c:" + o.split(":", 1)[1] for o in over[cid]) + ") "
-        if cid in against:
-            mark += "(contradicted by " + ", ".join("c:" + o.split(":", 1)[1] for o in against[cid]) + "; both stand) "
-        if cid in parked:
-            mark += "(parked: a tastytrade platform issue) "
-        elif cid in ties:
-            mark += "(names the tastytrade platform: nothing new may rest on it) "
-        return (f"- {mark}{_ws.sub(' ', a['text']).strip()} [c:{cid.split(':', 1)[1]} | {where} | "
+            own = _ws.sub(" ", a["text"]).strip()
+
+            def folded_line(o: str) -> str:
+                t = _ws.sub(" ", live[o]["attrs"]["text"]).strip()
+                said = f' "{t}"' if t != own else ""          # a folded claim worded otherwise keeps its own wording here
+                return (f"also {where_of(o)} (c:{o.split(':', 1)[1]})" + said
+                        + "".join(f" ({m})" for m in marks[o] if m != "a reading, not a measurement"))
+            also = " | " + ", ".join(folded_line(o) for o in stands_for[cid])
+        mark = "".join(f"({m}) " for m in marks[cid])
+        return (f"- {mark}{_ws.sub(' ', a['text']).strip()} [c:{cid.split(':', 1)[1]} | {where_of(cid)} | "
                 f"{a.get('said_by') or '-'} | {a.get('said_on') or '-'}{also}]")
 
     by_section = []
@@ -248,12 +301,15 @@ def build(store: GraphStore, task: str | None, budget_tokens: int, hops: int = 1
     not_read = [t["attrs"] for t in store.nodes("Task") if t["attrs"]["state"] == "not_extracted"]
     changed = [t["attrs"] for t in store.nodes("Task") if t["id"].startswith("task:extract:") and t["attrs"]["state"] == "open"]
     thrown = [t for t in store.nodes("Task") if t["id"].startswith("task:thrown-out:")]
-    asks = [e for e in store.nodes("Evaluation") if e["attrs"].get("decision") == "revise"]
+    evaluations = store.nodes("Evaluation")
+    asks = [e for e in evaluations if e["attrs"].get("decision") == "revise"]
     docs = {c["attrs"].get("source") for c in claims.values() if c["attrs"].get("source")}
 
     head = [
         "# Session context, built from the knowledge graph",
-        f"Built {now()} by {code_stamp('tools.kgraph.context')} from {len(claims)} claims read out of {len(docs)} documents.",
+        f"Built {now()} by {code_stamp('tools.kgraph.context')} from {len(claims)} claims read out of {len(docs)} documents "
+        f"(this text is built from those {len(docs)} documents and no others).",
+        "Manual of the agent program: Markets tools/README_AGENT_PROGRAM.md.",
         f"Scope: {how}." + (f" Task: {task}" if task else ""),
         f"Budget {budget_tokens} tokens, estimated at {CHARS_PER_TOKEN} characters a token (no tokenizer was called).",
         "A line reads: what is claimed [c:<claim id> | file:line | who | when]. A claim can be followed back "
@@ -282,11 +338,24 @@ def build(store: GraphStore, task: str | None, budget_tokens: int, hops: int = 1
             out.append(f"- {len(not_read)} documents ({lines_left} lines) have not been read into claims; "
                        f"{len(changed)} were read at an earlier wording and have changed since. "
                        "`python3 -m tools.kgraph.extract coverage` lists them.")
+        for t in sorted(changed, key=lambda t: t.get("source") or ""):
+            out.append(f"  - {(t.get('source') or '?').rsplit('/', 1)[-1]}: read to line "
+                       f"{t.get('last_line_with_a_claim')} of {t.get('lines')}; the lines after are not in this text")
         if thrown:
-            out.append(f"- {len(thrown)} claims a reader returned were not believed (their quote was not in the file); "
-                       "they are kept as Task lines.")
-        if asks:
-            out.append(f"- {len(asks)} checks on record ask for evidence (`python3 -m tools.kgraph.grounding all`).")
+            why: dict[str, int] = {}
+            for t in thrown:
+                r = t["attrs"].get("reason") or "no reason on the Task line"
+                why[r] = why.get(r, 0) + 1
+            out.append(f"- {len(thrown)} claims a reader returned were not believed as they are; they are kept as Task "
+                       "lines. By reason: " + "; ".join(f"{n} {r}" for r, n in sorted(why.items(), key=lambda x: (-x[1], x[0]))) + ".")
+        if evaluations:
+            by_dec: dict[str, int] = {}
+            for e in evaluations:
+                d = e["attrs"].get("decision") or "no decision"
+                by_dec[d] = by_dec.get(d, 0) + 1
+            out.append(f"- {len(evaluations)} checks on record; {len(asks)} of them ask for evidence (decision \"revise\"). "
+                       "By decision: " + ", ".join(f"{n} {d}" for d, n in sorted(by_dec.items())) + ". "
+                       "(`python3 -m tools.kgraph.grounding all`).")
         return out
 
     budget_chars = budget_tokens * CHARS_PER_TOKEN
@@ -329,7 +398,7 @@ def build(store: GraphStore, task: str | None, budget_tokens: int, hops: int = 1
     return {"text": text, "tokens_estimated": estimate_tokens(text), "budget_tokens": budget_tokens,
             "task": task, "hops": hops, "entities": entities, "reached": sorted(reached),
             "included": included, "folded": sorted(folded), "cut": cut,
-            "cut_by_kind": cut_by_kind, "not_reached": not_reached, "called_last": called_last,
+            "cut_by_kind": cut_by_kind, "not_reached": not_reached, "called_last": called_last, "marks": marks,
             "documents_not_read": len(not_read), "claims_in_graph": len(claims)}
 
 
@@ -352,9 +421,9 @@ def main(argv=None) -> int:
     else:
         sys.stdout.write(out["text"])
     if a.cut_list:
-        Path(a.cut_list).write_text(json.dumps({k: out[k] for k in ("cut", "cut_by_kind", "folded", "not_reached", "called_last")},
+        Path(a.cut_list).write_text(json.dumps({k: out[k] for k in ("cut", "cut_by_kind", "folded", "not_reached", "called_last", "marks")},
                                                indent=1) + "\n", encoding="utf-8")
-    print(json.dumps({k: (len(v) if isinstance(v, list) else v) for k, v in out.items() if k != "text"}), file=sys.stderr)
+    print(json.dumps({k: (len(v) if isinstance(v, (list, dict)) else v) for k, v in out.items() if k != "text"}), file=sys.stderr)
     return 0
 
 

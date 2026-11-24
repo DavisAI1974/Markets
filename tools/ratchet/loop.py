@@ -9,12 +9,26 @@ Trial 0 is the baseline run of the repository's own HEAD, without any change.
 
 It runs only where it is called: no workflow is dispatched, no pod or cloud service is touched.
 
+WHAT THE GUARD COVERS, AND WHAT IT DOES NOT. The guard covers what a PROPOSER changes inside the worktree:
+every file git lists as changed or new, and every file git IGNORES that is new or changed since the proposer
+was called (an ignored file is read by the run command like any other, so it counts as a change outside
+`mutable`: the trial is not run and is recorded as crash, "touched <file>"). Ignored files are cleaned from
+the worktree between trials too. The guard does NOT cover what the RUN COMMAND itself does elsewhere: a command
+that writes outside the worktree (through an environment variable, an absolute path, `gh workflow run`) is
+neither checked nor undone. A control file's command must therefore only read and print. Each trial records the
+command and the NAMES of the environment variables the control file sets (never their values) so the claim can
+be checked.
+A proposer that raises (any exception) ends that trial as a recorded crash with the exception's text, the
+worktree goes back to the last kept commit, and the report is always returned (and written to `escalate_file`
+when one is named and there is an escalation).
+
   python3 -m tools.ratchet.loop --program program.md --replay <commit> [<commit> ...] --scratch DIR
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import platform
@@ -74,7 +88,7 @@ class ReplayCommits:
             detail = (r.stderr.strip() or r.stdout.strip()).splitlines()
             git(worktree, "cherry-pick", "--quit", check=False)
             git(worktree, "reset", "-q", "--hard", "HEAD")
-            git(worktree, "clean", "-fdq")
+            git(worktree, "clean", "-fdqx")
             raise ProposalFailed(f"commit {sha[:10]} did not apply here: {detail[0] if detail else ''}",
                                  hypothesis=f"replay of {sha[:10]}: {subject}")
         return {"hypothesis": f"replay of {sha[:10]}: {subject}", "agent_run": None, "usage": None}
@@ -96,10 +110,30 @@ def changed_files(worktree) -> list[str]:
     return files
 
 
-def guard(program: Program, files: list[str]):
-    """-> (protected files touched, files outside mutable)."""
-    prot = [f for f in files if any(glob_match(g, f) for g in program.protected)]
+def ignored_state(worktree) -> dict:
+    """Every file git ignores in the worktree -> the hash of its content (the guard's view of ignored files)."""
+    out = git(worktree, "ls-files", "--others", "--ignored", "--exclude-standard", "-z")
+    state = {}
+    for rel in filter(None, out.split("\0")):
+        f = Path(worktree) / rel
+        try:
+            state[rel] = hashlib.sha256(f.read_bytes()).hexdigest() if f.is_file() else "not a file"
+        except OSError as e:
+            state[rel] = f"unreadable: {e}"
+    return state
+
+
+def ignored_changes(before: dict, after: dict) -> list[str]:
+    """The ignored files that are new or changed since `before` (a file that was removed is a change too)."""
+    return sorted(f for f in set(before) | set(after) if before.get(f) != after.get(f))
+
+
+def guard(program: Program, files: list[str], ignored: list[str] = ()):
+    """-> (protected files touched, files outside mutable). A new or changed ignored file is outside
+    `mutable` whatever its name, unless it is protected (then it is reported as protected)."""
+    prot = [f for f in list(files) + list(ignored) if any(glob_match(g, f) for g in program.protected)]
     outside = [f for f in files if f not in prot and not any(glob_match(g, f) for g in program.mutable)]
+    outside += [f for f in ignored if f not in prot and f not in outside]
     return prot, outside
 
 
@@ -182,7 +216,8 @@ def run_loop(program_path, proposer, *, scratch, data_root=None, exp_dir=None) -
     ref = lambda n: f"refs/ratchet/{program.loop}/trial-{n}"
     bud = program.budget
     env_base = {"run_command": program.command, "repo": repo.name, "python": platform.python_version(),
-                "cwd": program.cwd}
+                "cwd": program.cwd, "env_names": sorted(program.env),
+                "guard": "covers what a proposer changes in the worktree (ignored files too), not what the run command does elsewhere"}
 
     trials, kept, reverted, crashed, recorded = [], [], [], [], []
     history, escalations = [], []
@@ -194,12 +229,12 @@ def run_loop(program_path, proposer, *, scratch, data_root=None, exp_dir=None) -
     streak = no_keep = proposed = 0
     stopped = None
 
-    def push(n, hypothesis, status, parent, commit, figs, runtime, note, agent_run, attempts=1):
+    def push(n, hypothesis, status, parent, commit, figs, runtime, note, agent_run, attempts=()):
         metrics = [{"name": f.name, "value": figs[f.name], "unit": f.unit, "note": None}
                    for f in program.figures if f.name in figs]
         tid = dag.push(hypothesis=hypothesis, status=status, parent=parent, agent_run=agent_run,
                        change={"repo": repo.name, "commit": commit}, metrics=metrics, runtime_s=runtime,
-                       environment=dict(env_base, attempts=attempts), loop=program.loop, note=note,
+                       environment=dict(env_base, attempts=list(attempts)), loop=program.loop, note=note,
                        written_by=stamp)
         state["graph_writes"] += 1
         row = {"n": n, "id": tid, "commit": commit, "status": status, "figures": dict(figs),
@@ -210,30 +245,40 @@ def run_loop(program_path, proposer, *, scratch, data_root=None, exp_dir=None) -
         return tid
 
     def execute(n):
-        """Run the command (with retries on a crash) -> (figs, note, runtime, attempts); note set = crash."""
+        """Run the command (with retries on a crash) -> (figs, note, runtime, attempts). attempts is a list,
+        one entry an attempt: its exit code, whether it timed out, what was parsed (and what was not) and
+        its own note. note set = crash; a crashed trial keeps the figures that were parsed (the last
+        attempt's) and the note of every attempt."""
         left = int(bud["max_retries"] or 0)
-        attempts, note, figs, dt = 0, None, {}, 0.0
+        attempts, figs, dt = [], {}, 0.0
         with (logs / f"trial-{n}.log").open("w", encoding="utf-8") as log:
             while True:
-                attempts += 1
-                log.write(f"=== attempt {attempts}: {program.command}\n")
+                log.write(f"=== attempt {len(attempts) + 1}: {program.command}\n")
                 code, timed_out, out, err, dt = _run_once(program, wt, log)
                 figs, bad = parse_figures(program, out, err)
                 if timed_out:
-                    note = f"crash: timeout after {program.timeout_s}s"
+                    one = f"crash: timeout after {program.timeout_s}s"
                 elif code != 0:
-                    note = f"crash: exit code {code}"
+                    one = f"crash: exit code {code}"
                 elif bad:
-                    note = f"crash: could not parse figure {', '.join(bad)}"
+                    one = f"crash: could not parse figure {', '.join(bad)}"
                 else:
-                    note = None
-                if note is None or left <= 0:
+                    one = None
+                attempts.append({"attempt": len(attempts) + 1, "exit_code": code, "timed_out": timed_out,
+                                 "parsed": dict(figs), "not_parsed": list(bad), "note": one,
+                                 "runtime_s": round(dt, 3)})
+                if one is None or left <= 0:
                     break
                 left -= 1
                 state["retries"] += 1
-        if note:
-            figs = {}
-        return figs, (note + f" (log {logs / f'trial-{n}.log'})" if note else None), dt, attempts
+        notes = [x["note"] for x in attempts if x["note"]]
+        if not attempts[-1]["note"]:
+            notes = []                                  # the last attempt ran well: no crash
+        if not notes:
+            return figs, None, dt, attempts
+        text = notes[0] if len(attempts) == 1 else "; ".join(
+            f"{x['note']} (attempt {x['attempt']})" if x["note"] else f"attempt {x['attempt']} ran" for x in attempts)
+        return figs, text + f" (log {logs / f'trial-{n}.log'})", dt, attempts
 
     def add_usage(u):
         nonlocal usage_from
@@ -269,94 +314,116 @@ def run_loop(program_path, proposer, *, scratch, data_root=None, exp_dir=None) -
             no_keep += 1
         return status
 
-    # trial 0: the baseline, the repository's own HEAD
-    figs, note, dt, attempts = execute(0)
-    git(wt, "reset", "-q", "--hard", "HEAD")
-    git(wt, "clean", "-fdq")
-    anchor["n"] = 0
-    st = settle(0, f"baseline: {repo.name} at {head[:10]}, no change", head, figs, note, dt, None, attempts, None)
-    git(wt, "update-ref", ref(0), head)
-    streak = 1 if st == "crash" else 0
-    if st == "crash":
-        stopped = "baseline run crashed: no figure to compare trials against"
-        escalations.append({"condition": "baseline crashed", "detail": note})
-    no_keep = 0
+    def _restore():
+        """The worktree back to the last kept commit, ignored files cleaned too."""
+        git(wt, "reset", "-q", "--hard", anchor["commit"], check=False)
+        git(wt, "clean", "-fdqx", check=False)
 
-    while stopped is None:
-        # stop and budget checks, before a trial is started
-        if program.stop_after_trials is not None and proposed >= program.stop_after_trials:
-            stopped = f"stop.after_trials reached ({proposed})"
-            break
-        if program.stop_after_trials_without_a_keep is not None and program.metric_direction \
-                and no_keep >= program.stop_after_trials_without_a_keep:
-            stopped = f"stop.after_trials_without_a_keep reached ({no_keep})"
-            break
-        over = None
-        if bud["max_trials"] is not None and proposed >= bud["max_trials"]:
-            over = f"max_trials ({bud['max_trials']}) used"
-        elif bud["max_wall_clock_s"] is not None and time.monotonic() - t_start >= bud["max_wall_clock_s"]:
-            over = f"max_wall_clock_s ({bud['max_wall_clock_s']}) used"
-        elif bud["max_graph_writes"] is not None and state["graph_writes"] >= bud["max_graph_writes"]:
-            over = f"max_graph_writes ({bud['max_graph_writes']}) used"
-        else:
-            for k, bk in USAGE_BUDGET.items():
-                if bud[bk] is not None and usage[k] is not None and usage[k] >= bud[bk]:
-                    over = f"{bk} ({bud[bk]}) used, as the proposer reported"
-        if over:
-            stopped = f"budget exhausted: {over}"
-            escalations.append({"condition": "budget exhausted", "detail": over})
-            break
+    try:
+        # trial 0: the baseline, the repository's own HEAD
+        figs, note, dt, attempts = execute(0)
+        git(wt, "reset", "-q", "--hard", "HEAD")
+        git(wt, "clean", "-fdqx")
+        anchor["n"] = 0
+        st = settle(0, f"baseline: {repo.name} at {head[:10]}, no change", head, figs, note, dt, None, attempts, None)
+        git(wt, "update-ref", ref(0), head)
+        streak = 1 if st == "crash" else 0
+        if st == "crash":
+            stopped = "baseline run crashed: no figure to compare trials against"
+            escalations.append({"condition": "baseline crashed", "detail": note})
+        no_keep = 0
 
-        n = proposed + 1
-        try:
-            prop = proposer(wt, n, [dict(h) for h in history])
-        except ProposalFailed as e:
-            prop = {"hypothesis": e.hypothesis or f"proposal {n}", "agent_run": None, "usage": None}
-            failed = str(e)
-        else:
-            failed = None
-        if prop is None:
-            stopped = "the proposer has nothing more to try"
-            break
-        proposed += 1
-        add_usage(prop.get("usage"))
-        hyp, agent_run = prop["hypothesis"], prop.get("agent_run")
-        parent = anchor["id"]
-
-        if failed:
-            streak += 1
-            push(n, hyp, "crash", parent, anchor["commit"], {}, None, f"crash: {failed}", agent_run)
-        else:
-            files = changed_files(wt)
-            if not files:
-                streak += 1
-                push(n, hyp, "crash", parent, anchor["commit"], {}, None,
-                     "crash: the proposer made no change", agent_run)
+        while stopped is None:
+            # stop and budget checks, before a trial is started
+            if program.stop_after_trials is not None and proposed >= program.stop_after_trials:
+                stopped = f"stop.after_trials reached ({proposed})"
+                break
+            if program.stop_after_trials_without_a_keep is not None and program.metric_direction \
+                    and no_keep >= program.stop_after_trials_without_a_keep:
+                stopped = f"stop.after_trials_without_a_keep reached ({no_keep})"
+                break
+            over = None
+            if bud["max_trials"] is not None and proposed >= bud["max_trials"]:
+                over = f"max_trials ({bud['max_trials']}) used"
+            elif bud["max_wall_clock_s"] is not None and time.monotonic() - t_start >= bud["max_wall_clock_s"]:
+                over = f"max_wall_clock_s ({bud['max_wall_clock_s']}) used"
+            elif bud["max_graph_writes"] is not None and state["graph_writes"] >= bud["max_graph_writes"]:
+                over = f"max_graph_writes ({bud['max_graph_writes']}) used"
             else:
-                git(wt, "add", "-A")
-                git(wt, *IDENTITY, "commit", "-q", "--no-verify", "-m", hyp)
-                commit = git(wt, "rev-parse", "HEAD").strip()
-                git(wt, "update-ref", ref(n), commit)
-                prot, outside = guard(program, files)
-                if prot or outside:
-                    touched = prot + outside
+                for k, bk in USAGE_BUDGET.items():
+                    if bud[bk] is not None and usage[k] is not None and usage[k] >= bud[bk]:
+                        over = f"{bk} ({bud[bk]}) used, as the proposer reported"
+            if over:
+                stopped = f"budget exhausted: {over}"
+                escalations.append({"condition": "budget exhausted", "detail": over})
+                break
+
+            n = proposed + 1
+            ign_before = ignored_state(wt)
+            try:
+                prop = proposer(wt, n, [dict(h) for h in history])
+            except ProposalFailed as e:
+                prop = {"hypothesis": e.hypothesis or f"proposal {n}", "agent_run": None, "usage": None}
+                failed = str(e)
+            except Exception as e:                    # any other exception ends THIS trial as a recorded crash
+                prop = {"hypothesis": f"proposal {n}", "agent_run": None, "usage": None}
+                failed = f"the proposer raised {type(e).__name__}: {e}"
+                _restore()
+            else:
+                failed = None
+            if prop is None:
+                stopped = "the proposer has nothing more to try"
+                break
+            proposed += 1
+            add_usage(prop.get("usage"))
+            hyp, agent_run = prop["hypothesis"], prop.get("agent_run")
+            parent = anchor["id"]
+
+            if failed:
+                streak += 1
+                push(n, hyp, "crash", parent, anchor["commit"], {}, None, f"crash: {failed}", agent_run)
+                _restore()
+            else:
+                files = changed_files(wt)
+                ign = ignored_changes(ign_before, ignored_state(wt))
+                if not files and not ign:
                     streak += 1
-                    push(n, hyp, "crash", parent, commit, {}, None, "touched " + ", ".join(touched), agent_run)
-                    git(wt, "reset", "-q", "--hard", anchor["commit"])
-                    no_keep += 1
-                    if prot:
-                        escalations.append({"condition": "a protected file was touched",
-                                            "detail": f"trial {n} touched {', '.join(prot)}"})
-                        stopped = f"escalated: a protected file was touched ({', '.join(prot)})"
+                    push(n, hyp, "crash", parent, anchor["commit"], {}, None,
+                         "crash: the proposer made no change", agent_run)
                 else:
-                    figs, note, dt, attempts = execute(n)
-                    git(wt, "reset", "-q", "--hard", "HEAD")
-                    git(wt, "clean", "-fdq")
-                    st = settle(n, hyp, commit, figs, note, dt, agent_run, attempts, parent)
-                    streak = streak + 1 if st == "crash" else 0
-        if stopped is None and streak >= program.max_consecutive_crashes:
-            stopped = f"escalated: {streak} crashed trials in a row (max_consecutive_crashes)"
-            escalations.append({"condition": "max_consecutive_crashes reached", "detail": f"{streak} in a row"})
+                    if files:
+                        git(wt, "add", "-A")
+                        git(wt, *IDENTITY, "commit", "-q", "--no-verify", "-m", hyp)
+                        commit = git(wt, "rev-parse", "HEAD").strip()
+                        git(wt, "update-ref", ref(n), commit)
+                    else:
+                        commit = anchor["commit"]           # only ignored files changed: nothing to commit
+                    prot, outside = guard(program, files, ign)
+                    if prot or outside:
+                        touched = prot + outside
+                        streak += 1
+                        push(n, hyp, "crash", parent, commit, {}, None, "touched " + ", ".join(touched), agent_run)
+                        _restore()
+                        no_keep += 1
+                        if prot:
+                            escalations.append({"condition": "a protected file was touched",
+                                                "detail": f"trial {n} touched {', '.join(prot)}"})
+                            stopped = f"escalated: a protected file was touched ({', '.join(prot)})"
+                    else:
+                        figs, note, dt, attempts = execute(n)
+                        git(wt, "reset", "-q", "--hard", "HEAD")
+                        git(wt, "clean", "-fdqx")
+                        st = settle(n, hyp, commit, figs, note, dt, agent_run, attempts, parent)
+                        streak = streak + 1 if st == "crash" else 0
+            if stopped is None and streak >= program.max_consecutive_crashes:
+                stopped = f"escalated: {streak} crashed trials in a row (max_consecutive_crashes)"
+                escalations.append({"condition": "max_consecutive_crashes reached", "detail": f"{streak} in a row"})
+
+
+    except Exception as e:                             # the report is always returned
+        stopped = f"the loop itself stopped: {type(e).__name__}: {e}"
+        escalations.append({"condition": "the loop stopped on an exception", "detail": f"{type(e).__name__}: {e}"})
+        _restore()
 
     unresolved = list(proposer.unresolved()) if hasattr(proposer, "unresolved") else []
     used = {"trials": proposed, "wall_clock_s": round(time.monotonic() - t_start, 3),
