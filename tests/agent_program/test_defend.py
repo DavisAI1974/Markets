@@ -19,7 +19,7 @@ from tools.kgraph import defend, grounding, schema
 from tools.kgraph.extract import repo_dirs
 from tools.kgraph.store import GraphStore
 
-from .realrecords import WORK, data_root
+from .realrecords import PAPER, WORK, data_root
 
 CLAIM_ID = "claim:70038adffed2"
 PROPOSER, REVIEWER, REVIEWER2, SCOUT = "run:0002", "run:0003", "run:0005", "run:0001"
@@ -240,7 +240,7 @@ def test_the_brief_holds_the_claim_and_grounds_and_not_the_proposers_reasoning(w
     cid = _reg(world, "briefed", reasoning_files=["notes/proposer-notes.md"], inference=False)["claim"]
     b = defend.brief(s, cid)
     for k in ("EXACT-CLAIM-TEXT", "SCOPE-TEXT", "BOUNDARIES-TEXT", "HYPOTHESIS-TEXT", world["spec"], world["commit"],
-              s.node(CLAIM_ID)["attrs"]["text"], CITED_QUOTE, "Quoted lines said by Claude", world["sha"],
+              s.node(CLAIM_ID)["attrs"]["text"], CITED_QUOTE, "said by Claude as the proposer states; code does not check who said it", world["sha"],
               "notes/proposer-notes.md", "defend show"):
         assert k in b, k
     assert "Greg's words" not in b
@@ -257,13 +257,29 @@ def test_the_brief_holds_the_claim_and_grounds_and_not_the_proposers_reasoning(w
     assert out.read_text(encoding="utf-8") == b
 
 
-def test_a_cited_line_said_by_greg_is_labelled_so_and_an_outcome_seen_is_said(world):
+CLAUDE_MD_QUOTE = "standing rules (Greg, 2026-09-16) -- MEMORY, read before touching Granite"
+
+
+def _claude_md_ground(said_by):
+    return {"kind": "cited", "repo": "Markets", "path": "CLAUDE.md", "line_start": 32, "line_end": 32,
+            "quote": CLAUDE_MD_QUOTE, "said_by": said_by}
+
+
+def test_who_said_a_cited_line_is_the_proposers_word_and_code_says_so(world):
     s = world["store"]
-    rest = [dict(g, said_by="Greg") if g["kind"] == "cited" else g for g in _claim(world)["rests_on"]]
+    rest = [g for g in _claim(world)["rests_on"] if g["kind"] != "cited"] + [_claude_md_ground("Greg"), _claim(world)["rests_on"][2]]
     cid = _reg(world, "greg-seen", rests_on=rest, name="gs.json",
                outcome_visibility={"outcome_seen": True, "what": "SEEN-TEXT the four trade days were studied first"})["claim"]
+    by_path = {g["path"]: g for g in s.node(cid)["attrs"]["rests_on"] if g["kind"] == "cited"}
+    assert by_path["CLAUDE.md"]["said_by_named_in_lines"] is True       # line 32 of CLAUDE.md reads "(Greg, 2026-09-16)"
+    assert by_path[HANDOFF]["said_by_named_in_lines"] is False          # line 3 of the handoff does not hold "Claude"
     line = "registered after an outcome was seen: SEEN-TEXT the four trade days were studied first"
-    assert "Greg's words, markets-data:" in defend.brief(s, cid) and line in defend.brief(s, cid) and line in defend.show(s, cid)
+    g = by_path["CLAUDE.md"]
+    for text in (defend.brief(s, cid), defend.show(s, cid)):
+        assert "Greg's words" not in text and line in text
+        for k in ("CLAUDE.md", g["commit"], g["sha256"], "said by Greg as the proposer states; code does not check who said it"):
+            assert k in text, k
+        assert "appears in the cited lines: true" in text and "appears in the cited lines: false" in text
 
 
 def test_a_complete_challenge_is_an_evaluation_tied_to_the_claim(world):
@@ -322,14 +338,115 @@ def test_who_may_challenge(world):
 
 def test_verdict_labels_are_refused_and_ordinary_words_are_not(world):
     cid = _reg(world, "labels")["claim"]
-    for text in ("the claim is SUPPORTED_WITHIN_SCOPE", "REFUTED_WITH_EVIDENCE here", "it is inconclusive", "a verdict follows",
-                 "the check passed", "it failed", "pass/fail", "proven", "disproven", "approved", "rejected"):
+    # the plan's six labels, anywhere in a sentence, in any letter case, with underscores or spaces
+    for text in ("the claim is SUPPORTED_WITHIN_SCOPE", "REFUTED_WITH_EVIDENCE here", "it is inconclusive",
+                 "supported within scope, said the note", "so it Needs More Evidence", "blocked_input_scope", "Superseded retained"):
         with pytest.raises(schema.Refused, match=r"what_remains_open.*carries the word"):
             _challenge(world, cid, what_remains_open=[text])
-    with pytest.raises(schema.Refused, match=r"mechanism.*carries the word 'rejected'"):
-        _reg(world, "labels2", mechanism="the rule was rejected by the book")
+    # a field whose WHOLE value is one plain form
+    for text in ("verdict", "passed", "FAILED", "pass", "fail", "pass/fail", "proven", "Disproven", "approved", "rejected"):
+        with pytest.raises(schema.Refused, match=r"what_remains_open.*carries the word"):
+            _challenge(world, cid, what_remains_open=[text])
+    with pytest.raises(schema.Refused, match=r"mechanism.*carries the word"):
+        _reg(world, "labels3", mechanism="rejected")
+    # an ordinary sentence or a file name that holds one of the plain words is accepted
     honest = "the statement is true on the stored lines, it holds there, false elsewhere; ok"
     assert _challenge(world, cid, what_remains_open=[honest], name="honest.json")["new"] >= 1
+    for i, text in enumerate(("orders rejected by the exchange appear", "after the settle window passed", "a verdict follows",
+                              "the check passed", "it failed", "the runs that failed to start are logged")):
+        assert _challenge(world, cid, what_remains_open=[text], name=f"ord{i}.json")["new"] >= 1
+    assert _challenge(world, cid, what_i_opened=["out/verdict.json"], name="fn.json")["new"] >= 1
+    assert _reg(world, "labels2", mechanism="the rule was rejected by the book")["new"] >= 1
+
+
+def test_a_reviewer_who_made_a_ground_of_a_ground_is_refused(world):
+    far = _reg(world, "far-ground", run=REVIEWER, name="fg.json")["claim"]
+    mid = _reg(world, "mid-ground", name="mg.json", rests_on=_claim(world)["rests_on"] + [{"kind": "claim", "id": far}])["claim"]
+    top = _reg(world, "top-claim", name="tp.json", rests_on=_claim(world)["rests_on"] + [{"kind": "claim", "id": mid}])["claim"]
+    with pytest.raises(schema.Refused, match="made the ground claim"):
+        _challenge(world, top, run=REVIEWER, name="far.json")
+    assert _challenge(world, top, run=REVIEWER2, name="far2.json")["new"] >= 1
+
+
+def test_the_role_must_be_exactly_reviewer(world):
+    s = world["store"]
+    near = [n["id"] for n in s.nodes("AgentRun") if n["attrs"].get("role", "").strip().lower() != "reviewer"
+            and "reviewer" in n["attrs"].get("role", "").lower()]
+    if not near:
+        pytest.skip("no real run in this graph holds a role that only contains the word reviewer")
+    cid = _reg(world, "exact-role")["claim"]
+    with pytest.raises(schema.Refused, match="role"):
+        _challenge(world, cid, run=near[0], name="near.json")
+
+
+def test_the_brief_is_sealed_to_what_the_code_builds(world):
+    s = world["store"]
+    cid = _reg(world, "sealed", reasoning_files=["notes/proposer-notes.md"])["claim"]
+    rev = s.node(cid)["rev"]
+    forged = world["tmp"] / "forged-brief.md"
+    forged.write_text(f"# Challenge brief for {cid} (revision {rev})\n\nmechanism: {MECH}\n", encoding="utf-8")
+    with pytest.raises(schema.Refused, match="not the brief"):
+        defend.challenge(s, cid, _w(world, _chal(), "sealed-c.json"), REVIEWER, forged)
+    real = _brief_file(world, cid)
+    padded = world["tmp"] / "padded-brief.md"
+    padded.write_bytes(real.read_bytes() + b"\nmechanism: " + MECH.encode() + b"\n")
+    with pytest.raises(schema.Refused, match="not the brief"):
+        defend.challenge(s, cid, _w(world, _chal(), "sealed-c.json"), REVIEWER, padded)
+    r = defend.challenge(s, cid, _w(world, _chal(), "sealed-c.json"), REVIEWER, real)
+    assert s.node(r["evaluation"])["attrs"]["brief_sha256"] == hashlib.sha256(defend.brief(s, cid).encode("utf-8")).hexdigest()
+    b = defend.brief(s, cid)
+    assert "notes/proposer-notes.md" in b and "printed in full" in b and "thing claimed about" in b
+
+
+def test_an_artifact_listed_among_the_reasoning_files_is_refused(world):
+    with pytest.raises(schema.Refused, match="reasoning_files"):
+        _reg(world, "art-is-reasoning", reasoning_files=["notes/x.md", "paper_platform/rules/CL01.json"])
+    assert world["store"].node("claim:reg-" + defend.sha("art-is-reasoning")) is None
+
+
+def test_a_revision_that_changes_the_falsifiers_says_so_everywhere(world):
+    s = world["store"]
+    cid = _reg(world, "fchange", name="fc1.json")["claim"]
+    assert "falsifiers_changed_from_revision" not in s.node(cid)["attrs"]
+    new_f = [{"observation": "FALS2-TEXT a different observation", "record": "the decider's stored decisions"}]
+    r = _reg(world, "fchange", falsifiers=new_f, name="fc2.json")
+    c = s.node(cid)
+    assert r["revised"] == 1 and c["rev"] == 2 and c["attrs"]["falsifiers_changed_from_revision"] == 1
+    words = "the falsifiers were changed in this revision from those of revision 1"
+    assert words in defend.brief(s, cid) and words in defend.show(s, cid)
+    assert "FALS2-TEXT" not in defend.brief(s, cid)                       # the text itself stays out of the brief
+    assert any(cid in l and words in l for l in defend.undefended(s))
+    again = _reg(world, "fchange", falsifiers=new_f, name="fc2.json")      # the same revised file, again: nothing new
+    assert again["new"] == 0 and again["revised"] == 0 and s.node(cid)["rev"] == 2
+    assert s.node(cid)["attrs"]["falsifiers_changed_from_revision"] == 1
+    _reg(world, "fchange", falsifiers=new_f, scope="SCOPE-TEXT changed after", name="fc3.json")
+    assert "falsifiers_changed_from_revision" not in s.node(cid)["attrs"]  # revision 3 did not change them
+
+
+def test_a_revision_leaves_standing_a_link_another_run_wrote_into_the_claim(world):
+    s = world["store"]
+    cid = _reg(world, "others-link", name="ol1.json")["claim"]
+    other_src = f"src:markets-data:{PAPER}/agent-runs.jsonl"      # a real Source of the graph that is not one of the claim's grounds
+    assert s.node(other_src) and other_src not in [g.get("source") for g in s.node(cid)["attrs"]["rests_on"]]
+    mine = defend.link("SUPPORTS", other_src, cid)
+    s.write([], [mine], written_by=REVIEWER)
+    only_rule = [g for g in _claim(world)["rests_on"] if g["kind"] == "rule"]
+    r = _reg(world, "others-link", rests_on=only_rule, name="ol2.json")      # the proposer drops two of its own grounds
+    live = {e["id"] for e in s.edges()}
+    assert r["withdrawn"] and mine["id"] in live and mine["id"] not in r["withdrawn"]
+    assert not any(e["id"] == mine["id"] and e["attrs"].get("withdrawn") for e in s.edges(withdrawn=True) if e["id"] == mine["id"] and e["attrs"].get("withdrawn"))
+
+
+def test_an_inference_that_names_nothing_it_rests_on_is_refused(world):
+    with pytest.raises(schema.Refused, match=r"rests_on.*inference"):
+        _reg(world, "inf-empty", inference=True, inference_reason="INFERENCE-TEXT a reading", rests_on=[])
+    assert world["store"].node("claim:reg-" + defend.sha("inf-empty")) is None
+
+
+def test_a_claim_carries_no_dead_unlinked_grounds_field(world):
+    cid = _reg(world, "t1")["claim"]
+    assert "unlinked_grounds" not in world["store"].node(cid)["attrs"]
+    assert "NO LINK" not in defend.show(world["store"], cid)
 
 
 def test_the_store_checks_no_worse_after_the_writes(world):
