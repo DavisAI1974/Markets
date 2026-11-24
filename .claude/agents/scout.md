@@ -22,6 +22,11 @@ plan workbook) and return structured findings in the graph schema the caller sup
 Claim per finding, each with its source path, commit id and line range. A finding that is an
 interpretation in the source is marked inference. Return JSON only.
 
+The brief is made by code (stage 4b): `python3 -m tools.kgraph.extract prompt --doc <repo>:<path>
+--out brief.txt` puts the numbered text and the rules in one file; you read that file and return the
+JSON it asks for. Code checks every quote against the file before a claim is written, so copy quotes
+character for character.
+
 ## What you never do
 
 - Never edit, write, commit or run anything. The caller writes graph updates.

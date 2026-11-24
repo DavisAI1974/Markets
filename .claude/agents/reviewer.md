@@ -31,6 +31,11 @@ For any claim in a plan, report or synthesis, look for its supporting path in th
 graph (markets-data `graph/`). When a path is missing, return:
 `{"decision": "revise", "claim": ..., "reason": ..., "required_evidence": [...]}`.
 
+The check is built (stage 4c): from the Markets checkout run
+`python3 -m tools.kgraph.grounding claim <claim id>`, `... text "<the sentence>"` (a sentence that is
+not a node yet: it lists the claims that carry its numbers and names; whether one MEANS what the
+sentence says is yours to read), `... node <id>` (a rule version) or `... all`. It returns that shape.
+
 ## On a repeated failure
 
 Find the root cause before proposing a fix (stale mock, wrong branch tip, fixture drift, a

@@ -20,6 +20,15 @@ The main session does not grep or bulk-read files itself when the scout can. Int
 results stays in the main session and with Greg. Codex review and Greg's merge authority are
 unchanged.
 
+## The agent program (built 2026-11-24, twenty-first session; on the session's branch, not on the trunk)
+
+Stages 2 to 8 of the graph adoption plan are built in `tools/` (`exp_dag.py`, `kgraph/`, `ratchet/`,
+`swarm/`, `token_test/`); their records are in markets-data `graph/` and `experiments/`. The manual is
+`tools/README_AGENT_PROGRAM.md`. A session starts from the graph, not from the handoff pile:
+`python3 -m tools.kgraph.context --budget 6000` (add `--task "<the task>"` for the claims about what
+the task names). Still on Greg's go, each with its budget: a run of the swarm, a run of the token
+test, switching Frankie's input, dispatching a loop, reading the documents not read yet, any paper run.
+
 ## FRANKIE / BOSS standing rules (Greg, 2026-09-16) -- MEMORY, read before touching Granite or the native context
 
 - **The Granite 4,096-token context is RETIRED. Remove `4096` from ALL Granite-related code**: the `service_context` /
