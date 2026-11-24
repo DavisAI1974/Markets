@@ -23,6 +23,7 @@ worktree goes back to the last kept commit, and the report is always returned (a
 when one is named and there is an escalation).
 
   python3 -m tools.ratchet.loop --program program.md --replay <commit> [<commit> ...] --scratch DIR
+  python3 -m tools.ratchet.loop --program program.md --mailbox DIR --scratch DIR   (an agent proposes each change)
 """
 
 from __future__ import annotations
@@ -229,12 +230,15 @@ def run_loop(program_path, proposer, *, scratch, data_root=None, exp_dir=None) -
     streak = no_keep = proposed = 0
     stopped = None
 
-    def push(n, hypothesis, status, parent, commit, figs, runtime, note, agent_run, attempts=()):
+    def push(n, hypothesis, status, parent, commit, figs, runtime, note, agent_run, attempts=(), proposal=None):
         metrics = [{"name": f.name, "value": figs[f.name], "unit": f.unit, "note": None}
                    for f in program.figures if f.name in figs]
+        env = dict(env_base, attempts=list(attempts))
+        if proposal is not None:                        # only a proposer that states one (replay states none)
+            env["proposal"] = proposal
         tid = dag.push(hypothesis=hypothesis, status=status, parent=parent, agent_run=agent_run,
                        change={"repo": repo.name, "commit": commit}, metrics=metrics, runtime_s=runtime,
-                       environment=dict(env_base, attempts=list(attempts)), loop=program.loop, note=note,
+                       environment=env, loop=program.loop, note=note,
                        written_by=stamp)
         state["graph_writes"] += 1
         row = {"n": n, "id": tid, "commit": commit, "status": status, "figures": dict(figs),
@@ -289,7 +293,7 @@ def run_loop(program_path, proposer, *, scratch, data_root=None, exp_dir=None) -
             if isinstance(v, (int, float)) and not isinstance(v, bool):
                 usage[k] = (usage[k] or 0) + v
 
-    def settle(n, hypothesis, commit, figs, note, dt, agent_run, attempts, parent_for_record):
+    def settle(n, hypothesis, commit, figs, note, dt, agent_run, attempts, parent_for_record, proposal=None):
         """Decide and push a trial that was run; moves the branch. Returns the status."""
         nonlocal anchor, no_keep
         metric = program.metric_name
@@ -304,7 +308,7 @@ def run_loop(program_path, proposer, *, scratch, data_root=None, exp_dir=None) -
             note = (f"figure {metric} was {figs[metric]}, the best kept is {anchor['value']} "
                     f"(trial {anchor['n']}, {anchor['id']})")
         parent = parent_for_record
-        tid = push(n, hypothesis, status, parent, commit, figs, dt, note, agent_run, attempts)
+        tid = push(n, hypothesis, status, parent, commit, figs, dt, note, agent_run, attempts, proposal)
         if status in ("kept", "recorded"):
             anchor = {"id": tid, "n": n, "commit": commit, "value": figs.get(metric)}
             no_keep = 0
@@ -377,6 +381,7 @@ def run_loop(program_path, proposer, *, scratch, data_root=None, exp_dir=None) -
             proposed += 1
             add_usage(prop.get("usage"))
             hyp, agent_run = prop["hypothesis"], prop.get("agent_run")
+            proposal = prop.get("proposal")
             parent = anchor["id"]
 
             if failed:
@@ -389,7 +394,7 @@ def run_loop(program_path, proposer, *, scratch, data_root=None, exp_dir=None) -
                 if not files and not ign:
                     streak += 1
                     push(n, hyp, "crash", parent, anchor["commit"], {}, None,
-                         "crash: the proposer made no change", agent_run)
+                         "crash: the proposer made no change", agent_run, proposal=proposal)
                 else:
                     if files:
                         git(wt, "add", "-A")
@@ -402,7 +407,8 @@ def run_loop(program_path, proposer, *, scratch, data_root=None, exp_dir=None) -
                     if prot or outside:
                         touched = prot + outside
                         streak += 1
-                        push(n, hyp, "crash", parent, commit, {}, None, "touched " + ", ".join(touched), agent_run)
+                        push(n, hyp, "crash", parent, commit, {}, None, "touched " + ", ".join(touched), agent_run,
+                             proposal=proposal)
                         _restore()
                         no_keep += 1
                         if prot:
@@ -413,7 +419,7 @@ def run_loop(program_path, proposer, *, scratch, data_root=None, exp_dir=None) -
                         figs, note, dt, attempts = execute(n)
                         git(wt, "reset", "-q", "--hard", "HEAD")
                         git(wt, "clean", "-fdqx")
-                        st = settle(n, hyp, commit, figs, note, dt, agent_run, attempts, parent)
+                        st = settle(n, hyp, commit, figs, note, dt, agent_run, attempts, parent, proposal)
                         streak = streak + 1 if st == "crash" else 0
             if stopped is None and streak >= program.max_consecutive_crashes:
                 stopped = f"escalated: {streak} crashed trials in a row (max_consecutive_crashes)"
@@ -452,14 +458,27 @@ def run_loop(program_path, proposer, *, scratch, data_root=None, exp_dir=None) -
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--program", required=True)
-    ap.add_argument("--replay", nargs="+", required=True, help="existing commits to apply, one per trial")
+    how = ap.add_mutually_exclusive_group(required=True)
+    how.add_argument("--replay", nargs="+", help="existing commits to apply, one per trial")
+    how.add_argument("--mailbox", help="a folder for the handshake with an agent that proposes each change "
+                                       "(see tools/ratchet/proposer.py)")
+    ap.add_argument("--proposal-timeout-s", type=float, default=3600.0,
+                    help="how long a trial waits for answer.json and usage.json (mailbox only)")
+    ap.add_argument("--context-budget", type=int, default=6000, help="tokens of graph context in each brief (mailbox only)")
+    ap.add_argument("--graph-dir", help="a folder for the graph store (checks only)")
     ap.add_argument("--scratch", required=True)
     ap.add_argument("--data", help="markets-data checkout")
     ap.add_argument("--exp-dir", help="a folder for the experiment record (checks only)")
     a = ap.parse_args(argv)
     program = load(a.program)
     repo = Path(program.repo) if Path(program.repo).is_absolute() else Path(a.program).resolve().parent / program.repo
-    rep = run_loop(program, ReplayCommits(repo, a.replay), scratch=a.scratch, data_root=a.data, exp_dir=a.exp_dir)
+    if a.replay:
+        proposer = ReplayCommits(repo, a.replay)
+    else:
+        from tools.ratchet.proposer import MailboxProposer
+        proposer = MailboxProposer(a.mailbox, program, data_root=a.data, graph_dir=a.graph_dir,
+                                   context_budget=a.context_budget, timeout_s=a.proposal_timeout_s)
+    rep = run_loop(program, proposer, scratch=a.scratch, data_root=a.data, exp_dir=a.exp_dir)
     print(json.dumps(rep, indent=1, ensure_ascii=False))
     return 0
 
