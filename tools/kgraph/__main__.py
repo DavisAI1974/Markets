@@ -20,7 +20,9 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
     store = GraphStore(a.data, graph_dir=a.graph_dir)
     if a.verb == "check":
-        breaches = store.check_all()
+        from . import platform_scope
+        from .extract import repo_dirs
+        breaches = store.check_all() + platform_scope.pending(store, repo_dirs(store.data_root, None, None))
         print("\n".join(breaches) if breaches else "no breach")
         return 1 if breaches else 0
     if a.verb == "counts":

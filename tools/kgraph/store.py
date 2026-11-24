@@ -24,6 +24,9 @@ from pathlib import Path
 from . import schema
 
 GRAPH_DIR = "graph"
+# What can "rest on" something: a thing that states or decides. A record linked to a record (an order
+# to the file it was read from) is not resting on it in that sense.
+RESTING_TYPES = ("Claim", "Entity", "Evaluation")
 
 
 def markets_data_root(explicit: str | os.PathLike | None = None) -> Path:
@@ -154,14 +157,18 @@ class GraphStore:
         # tastytrade platform issue). A link that is already standing is not a new tie.
         closed = self.closed_scope_members()
         if closed:
+            kinds = {n["id"]: n["type"] for n in nodes}
             for e in edges:
                 rested = self._rested_on(e)
+                if rested not in closed or e["attrs"].get("withdrawn"):
+                    continue
+                resting = e["dst"] if rested == e["src"] else e["src"]
+                kind = kinds.get(resting) or (self._nodes[resting][-1]["type"] if resting in self._nodes else None)
                 standing = self._edges.get(e["id"])
-                if rested in closed and not e["attrs"].get("withdrawn") and not (
-                        standing and not standing[-1]["attrs"].get("withdrawn")):
+                if kind in RESTING_TYPES and not (standing and not standing[-1]["attrs"].get("withdrawn")):
                     raise schema.Refused(
-                        f"{e['type']} {e['src']} -> {e['dst']}: {rested} is tied to {closed[rested]}; "
-                        "nothing new may rest on it (it is kept, and can be untied with its reason)")
+                        f"{e['type']} {e['src']} -> {e['dst']}: {rested} is in the scope \"{closed[rested]}\"; "
+                        "nothing new may rest on it (it is kept and marked; a mark is lifted only with its reason)")
         # A line that names where it came from (`source`) names a node of the graph, whatever its type.
         for n in nodes:
             src = n["attrs"].get("source")
@@ -200,16 +207,17 @@ class GraphStore:
 
     @staticmethod
     def _rested_on(edge: dict) -> str | None:
-        """The end of a link that the other end rests on, for the links that mean "rests on"."""
-        if edge["type"] in ("DERIVED_FROM", "DEPENDS_ON"):
+        """The end of a link that the other end rests on, for the links that mean "rests on" or "is a
+        later wording of"."""
+        if edge["type"] in ("DERIVED_FROM", "DEPENDS_ON", "REVISES"):
             return edge["dst"]
         if edge["type"] == "SUPPORTS":
             return edge["src"]
         return None
 
     def closed_scope_members(self) -> dict[str, str]:
-        """claim id -> the scope's name, for every claim that is a member of a closed scope (an Entity
-        with entity_kind "scope" and closed true). Nothing new may rest on such a claim."""
+        """node id -> the scope's name, for everything that is a member of a closed scope (an Entity with
+        entity_kind "scope" and closed true). Nothing new may rest on a member; the member itself stays."""
         self._load_lines()
         scopes = {l[-1]["id"]: l[-1]["attrs"].get("name", l[-1]["id"]) for l in self._nodes.values()
                   if l[-1]["type"] == "Entity" and l[-1]["attrs"].get("entity_kind") == "scope" and l[-1]["attrs"].get("closed")}
@@ -281,9 +289,10 @@ class GraphStore:
         closed = self.closed_scope_members()
         for e in self.edges():
             rested = self._rested_on(e)
-            if rested in closed and self._nodes.get(rested, [{}])[-1].get("type") == "Claim" \
-                    and self._nodes.get(e["dst"] if rested == e["src"] else e["src"], [{}])[-1].get("type") != "Source":
-                out.append(f"{e['type']} {e['id']}: it rests on {rested}, which is tied to {closed[rested]}")
+            if rested in closed:
+                resting = e["dst"] if rested == e["src"] else e["src"]
+                if self._nodes.get(resting, [{}])[-1].get("type") in RESTING_TYPES:
+                    out.append(f"{e['type']} {e['id']}: {resting} rests on {rested}, which is in the scope \"{closed[rested]}\"")
         for e in self.edges("SUPERSEDES"):
             if e["dst"] not in self._nodes:
                 out.append(f"SUPERSEDES {e['id']}: the superseded {e['dst']} is no longer addressable")

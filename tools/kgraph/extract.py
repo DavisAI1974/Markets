@@ -276,16 +276,16 @@ def load_result(store: GraphStore, dirs: dict[str, Path], result: dict, run: str
         for e in edges:
             euniq[e["id"]] = e
         store.write(list(uniq.values()), list(euniq.values()), written_by=by)
+        # Greg, 2026-11-24: no new claim is tied to a tastytrade platform issue. What belongs to the
+        # platform is marked here, piece by piece as it is loaded, so that nothing made later can rest on it.
+        from . import platform_scope
+        report["marked_as_tastytrade_platform"] = report.get("marked_as_tastytrade_platform", 0) + platform_scope.mark(store, dirs)["new"]
         written = sum(1 for nd in uniq.values() if nd["type"] == "Claim")
         report["pieces"] += 1
         report["claims_written"] += written
         report["thrown_out"] += thrown
         report["per_piece"].append({"piece": piece["piece"], "claims_written": written, "thrown_out": thrown,
                                     "second_claims_on_the_same_quote": same_quote})
-    # Greg, 2026-11-24: no new claim is tied to a tastytrade platform issue. A claim that names the
-    # platform is marked here, as it is loaded, so that nothing made later can rest on it.
-    from . import platform_scope
-    report["tied_to_a_tastytrade_platform_issue"] = platform_scope.mark(store, dirs)["new"]
     return report
 
 

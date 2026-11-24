@@ -187,4 +187,7 @@ def load_refute_result(store: GraphStore, result: dict, run: str) -> dict:
         rep["evaluations_written"] += 1
         rep["evaluations"].append({"claim": claim["id"], "evaluation": eid, "counter_statement": counter_id})
     store.write(nodes, edges, written_by=stamp)
+    # every path that writes a claim marks what belongs to the tastytrade platform (Greg, 2026-11-24)
+    from tools.kgraph import platform_scope
+    platform_scope.mark(store, None)
     return rep

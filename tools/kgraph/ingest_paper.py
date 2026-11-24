@@ -388,6 +388,10 @@ def paper(store: GraphStore, platform_dir: str | None = None) -> dict:
         nodes += _fresh(store, order_nodes) + fnodes
         edges += fedges
         rep["write"] = store.write(nodes, edges, written_by=by)
+    # Greg, 2026-11-24: nothing new is tied to a tastytrade platform issue. The runs' own orders, fills and
+    # files were made on the sandbox and its feed: they are marked, so that nothing new can rest on them.
+    from . import platform_scope
+    platform_scope.mark(store, None)
     return report
 
 

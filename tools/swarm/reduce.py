@@ -232,6 +232,9 @@ def load_worker_result(store: GraphStore, result: dict, run: str, *, cutoff: flo
         report["sent_to_review" if node["attrs"]["review"] == SENT else "held_under_the_cutoff"] += 1
         report["claims"].append({"k": prep["k"], "id": cid, "review": node["attrs"]["review"]})
     store.write(nodes, edges, written_by=code_stamp("tools.swarm.reduce"))
+    # every path that writes a claim marks what belongs to the tastytrade platform (Greg, 2026-11-24)
+    from tools.kgraph import platform_scope
+    platform_scope.mark(store, None)
     return report
 
 

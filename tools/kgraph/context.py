@@ -172,7 +172,7 @@ def build(store: GraphStore, task: str | None, budget_tokens: int, hops: int = 1
         if e["dst"] in claims:
             against.setdefault(e["dst"], []).append(e["src"])
     ties = platform_scope.ties(store)
-    parked = {c for c, t in ties.items() if t["rule"] == "the running list" and c in claims}
+    parked = {c for c, t in ties.items() if t["rule"] not in platform_scope.PROVISIONAL and c in claims}
     called_last = sorted(set(over) | parked)
 
     def standing(cid: str) -> int:
