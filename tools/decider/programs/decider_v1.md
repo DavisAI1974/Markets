@@ -54,7 +54,9 @@ see below.
   reversal side (-0.20); the mirror threshold would be invented.
 - **Skipping on what other rules did at the same instant** (many rules fire together on the same quote). No
   source says a crowd is a ground.
-- **Exhaustion collapse** (flow moving toward balance). The packet gives one 20-second reading per dipole event,
-  not a series, so no collapse can be read without a number I do not have.
+- **Exhaustion collapse** (flow moving toward balance). The packet does carry two readings per dipole event
+  (20 seconds before and after its birth second), so a comparison without a number is possible; I did not write
+  it because the research states the collapse on a line over time, and these two readings are a second apart
+  while the newest event can be minutes old. It is a candidate for the next version.
 - **Any use of trades closed earlier** (their fill prices are in the packet). Using them would be reading
   outcomes, with no rule text or claim behind a threshold.
