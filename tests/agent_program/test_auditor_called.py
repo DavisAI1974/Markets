@@ -33,17 +33,31 @@ def _lines(root, at=None):
     return [json.loads(x) for x in text.splitlines() if x.strip()]
 
 
+def _agent(d):
+    return d.get("agent_type") or (str(d.get("role", "")).lower().split() or [""])[0].strip(",.;:()")
+
+
 def _expected(lines):
-    """From the auditor lines only: (all runs, auditor runs, cleared, record_only)."""
+    """From the lines only: (all runs, auditor runs, cleared, record_only). A run is an auditor's run by its
+    NEWEST line; what it names is the union over its lines; a name counts when one of its lines has an
+    audit_report with a commit."""
     runs = {d["run"] for d in lines}
-    auditors = {d["run"] for d in lines if "audits" in d}
+    newest = {d["run"]: d for d in lines}          # later lines overwrite: the newest line of each run
+    auditors = {r for r, d in newest.items() if _agent(d) == AUDITOR}
     cleared, rec_only = set(), set()
     reported = {d["run"] for d in lines if d.get("audit_report", {}).get("commit")}
     for d in lines:
-        if "audits" in d and d["run"] in reported:
-            cleared |= set(d["audits"])
+        if d["run"] in auditors and d["run"] in reported:
+            cleared |= set(d.get("audits", []))
             rec_only |= set(d.get("record_only", []))
     return runs, auditors, cleared, rec_only
+
+
+def _no_report(lines):
+    """Auditor runs (by newest line) none of whose lines names an audit_report with a commit."""
+    _, auditors, _, _ = _expected(lines)
+    reported = {d["run"] for d in lines if d.get("audit_report", {}).get("commit")}
+    return auditors - reported
 
 
 def _tokens_have_row(text, n):
@@ -62,11 +76,11 @@ def test_real_record_as_it_stands_each_run_in_exactly_one_place():
     places = [set(rep.with_row), set(rep.record_only), set(rep.not_audited), set(rep.auditors)]
     assert sum(len(p) for p in places) == len(set().union(*places)) == len(runs)
     assert set().union(*places) == runs
-    assert set(rep.auditors) == auditors == {111, 116, 120}
+    assert set(rep.auditors) == auditors
     assert set(rep.record_only) == (cleared & rec_only) - auditors
     assert set(rep.with_row) == (cleared - rec_only) - auditors
     assert set(rep.not_audited) == runs - auditors - cleared
-    assert 119 in rep.not_audited and 120 not in rep.not_audited
+    assert set(rep.no_report) == _no_report(_lines(root))
 
 
 def test_real_record_as_it_stands_names_no_run_whose_row_is_missing():
@@ -80,8 +94,25 @@ def test_real_record_as_it_stands_names_no_run_whose_row_is_missing():
     assert ac.analyse(root).notes == {}
 
 
+def test_at_9bfef60_runs_118_119_121_are_not_audited_and_auditor_runs_are_111_116_120():
+    root = data_root()
+    _git_show(root, "9bfef60", RUNS)
+    rep = ac.analyse(root, at="9bfef60")
+    assert max(rep.lines) == 121
+    assert set(rep.not_audited) == {118, 119, 121}
+    assert set(rep.auditors) == {111, 116, 120} and rep.no_report == []
+    assert ac.main(["--data", str(root), "--at", "9bfef60"]) == 1
+
+
+def test_at_d75eff9_runs_118_119_121_have_their_own_row_and_run_125_is_not_audited():
+    root = data_root()
+    rep = ac.analyse(root, at="d75eff9")
+    assert {118, 119, 121} <= set(rep.with_row) and 125 in rep.not_audited
+    assert not {118, 119, 121} & set(rep.not_audited)
+
+
 def test_run_107_has_its_own_row_and_run_50_is_audited_from_the_record_alone():
-    rep = ac.analyse(data_root())
+    rep = ac.analyse(data_root(), at="9bfef60")
     assert 107 in rep.with_row and 107 not in rep.record_only
     assert 50 in rep.record_only and 50 not in rep.with_row
 
@@ -91,8 +122,13 @@ def test_whole_token_run_11_is_not_run_110():
     a116 = _git_show(root, "932f38f", f"{PAPER}/audits-20261124/AUDIT_RUN_116.md")
     assert re.search(r"^## Run 110 ", a116, re.M) and not re.search(r"^## Run 11\b", a116, re.M)
     assert ac.has_row(a116, 110) and not ac.has_row(a116, 11)
-    assert not ac.has_row(a116, 1) and not ac.has_row("see r110 and run 110", 11)
-    assert ac.has_row("L113 r107 reviewer | x", 107) and not ac.has_row("L113 r107 reviewer | x", 10)
+    assert not ac.has_row(a116, 1)
+    # real lines, read with git: a row of the first report and a heading of the second
+    a111 = _git_show(root, "1f27fc7", f"{PAPER}/audits-20261124/AUDIT_RUN_111.md")
+    row = next(x for x in a111.splitlines() if x.startswith("L113 r107 reviewer |"))
+    head = next(x for x in a116.splitlines() if x.startswith("## Run 110 (builder,"))
+    assert ac.has_row(row, 107) and not ac.has_row(row, 10) and not ac.has_row(row, 1)
+    assert ac.has_row(head, 110) and not ac.has_row(head, 11) and not ac.has_row(head, 1)
 
 
 def test_at_2a2d229_run_117_is_not_audited():
@@ -126,6 +162,27 @@ def test_at_1f27fc7_run_111_names_1_to_109_without_a_report_so_none_is_cleared()
     rep = ac.analyse(root, at="1f27fc7")
     assert set(range(1, 110)) <= set(rep.not_audited)
     assert rep.with_row == [] and rep.record_only == []
+    assert rep.no_report == [111]
+
+
+def test_command_at_1f27fc7_exits_1_and_says_run_111_names_no_report(capsys):
+    root = data_root()
+    _git_show(root, "1f27fc7", RUNS)
+    assert ac.main(["--data", str(root), "--at", "1f27fc7"]) == 1
+    out = capsys.readouterr().out
+    sec4 = out.split("(4) THE AUDITOR'S OWN RUNS")[1].split("(5)")[0]
+    assert re.search(r"^run 111 \|.*names no report", sec4, re.M)
+
+
+def test_an_auditor_run_is_so_by_its_newest_line_and_no_report_follows_the_record():
+    # the record as it stands and at fixed commits: the auditor runs and the no-report runs follow the lines
+    root = data_root()
+    for at in (None, "9bfef60", "c0d4ff1", "2a2d229", "1f27fc7", "d75eff9"):
+        lines = _lines(root, at)
+        rep = ac.analyse(root, at=at)
+        assert set(rep.auditors) == _expected(lines)[1], at
+        assert set(rep.no_report) == _no_report(lines), at
+    assert ac.analyse(root, at="c0d4ff1").no_report == [111, 116, 120]
 
 
 def test_at_3317d7e_report_named_without_a_commit_clears_nothing():
@@ -148,43 +205,67 @@ def _unaudited_now(root):
     return runs - auditors - cleared
 
 
-def test_command_on_the_real_record_prints_the_four_lists_and_fails_while_one_run_is_unaudited(capsys):
+def test_command_on_the_real_record_prints_the_lists_and_exits_as_the_record_says(capsys):
     root = data_root()
+    lines = _lines(root)
     unaudited = _unaudited_now(root)
     code = ac.main(["--data", str(root)])
     out = capsys.readouterr().out
-    assert code == (1 if unaudited else 0) == 1
+    assert code == (1 if unaudited or _no_report(lines) else 0)
+    assert out.splitlines()[0] == f"data: {root}"
     for head in ("(1) NOT AUDITED", "(2) AUDITED FROM THE RECORD ALONE", "(3) OUTSIDE THE ROSTER",
                  "(4) THE AUDITOR'S OWN RUNS"):
         assert head in out
     section1 = out.split("(2) AUDITED FROM THE RECORD ALONE")[0]
-    assert all(re.search(rf"^run {n} \|", section1, re.M) for n in unaudited)
-    assert "run 119 |" in section1 and "run 120 |" not in section1
-    # the limit told and the figure reached, as the run's own plan file and newest line hold them
-    line119 = re.search(r"^run 119 \|.*$", section1, re.M).group(0)
-    plan = json.loads((root / PAPER / "run-plans" / "run-0119.json").read_text())
-    assert f"max_tokens={plan['max_tokens']}" in line119
-    newest = [d for d in _lines(root) if d["run"] == 119][-1]
-    assert f"tool_calls={newest['tool_calls']}" in line119 and newest["model"] in line119
-    # an auditor's own runs are never in list (1); outside-roster runs carry their role
-    assert "run 111 |" not in section1
-    assert "main session" in out
+    assert sorted(int(x) for x in re.findall(r"^run (\d+) \|", section1, re.M)) == sorted(unaudited)
+    auditors = _expected(lines)[1]
+    assert not any(re.search(rf"^run {n} \|", section1, re.M) for n in auditors)
+    for n in sorted(unaudited)[:1]:
+        # the limit told and the figure reached, as the run's own plan file and newest line hold them
+        line_n = re.search(rf"^run {n} \|.*$", section1, re.M).group(0)
+        plan_file = root / PAPER / "run-plans" / f"run-{n:04d}.json"
+        if plan_file.exists():
+            assert f"max_tokens={json.loads(plan_file.read_text())['max_tokens']}" in line_n
+        newest = [d for d in lines if d["run"] == n][-1]
+        assert f"tool_calls={newest['tool_calls']}" in line_n and newest["model"] in line_n
+    if any(str(d.get("role", "")).startswith("main session") for d in lines):
+        assert "main session" in out
     assert re.search(r"^COUNTS runs=\d+ not_audited=%d " % len(unaudited), out, re.M)
+    sec4 = out.split("(4) THE AUDITOR'S OWN RUNS")[1].split("(5)")[0]
+    for n in _no_report(lines):
+        assert re.search(rf"^run {n} \|.*names no report", sec4, re.M)
 
 
-def test_ticket_03b_and_02_follow_the_record_and_01_fails_on_its_unaudited_run(capsys):
+def test_every_ticket_as_the_record_stands_exits_as_its_runs_stand(capsys):
     root = data_root()
-    tix, unaudited = _ticket_runs(root), _unaudited_now(root)
-    for tid in ("03b", "02", "01"):
-        bad = unaudited & set(tix[tid])
+    tix = _ticket_runs(root)
+    runs, auditors, cleared, _ = _expected(_lines(root))
+    unaudited = runs - auditors - cleared
+    for tid, listed in tix.items():
+        if tid == "note":
+            continue
+        bad = {n for n in listed if n not in runs or n in unaudited}
         code = ac.main(["--data", str(root), "--ticket", tid])
         out = capsys.readouterr().out
         assert code == (1 if bad else 0), tid
-        assert all(re.search(rf"^run {n} \|", out, re.M) for n in tix[tid])
+        assert all(re.search(rf"^run {n} \|", out, re.M) for n in listed)
         for n in bad:
             assert f"run {n}" in out and "NOT AUDITED" in out
-    assert not (unaudited & set(tix["03b"])) and not (unaudited & set(tix["02"]))
-    assert 119 in tix["01"] and 119 in unaudited
+
+
+def test_tickets_03b_and_02_at_9cea759_and_03b_at_c0d4ff1(capsys):
+    root = data_root()
+    tix = json.loads(_git_show(root, "9cea759", f"{PAPER}/tickets-44-20261124/TICKET_RUNS.json"))
+    assert tix["03b"] == [111, 116, 120, 121] and 118 in tix["02"]
+    runs, auditors, cleared, _ = _expected(_lines(root, "9cea759"))
+    for tid in ("03b", "02"):
+        bad = {n for n in tix[tid] if n not in runs or n in (runs - auditors - cleared)}
+        code = ac.main(["--data", str(root), "--at", "9cea759", "--ticket", tid])
+        capsys.readouterr()
+        assert code == (1 if bad else 0), tid
+    old = json.loads(_git_show(root, "c0d4ff1", f"{PAPER}/tickets-44-20261124/TICKET_RUNS.json"))
+    assert old["03b"] == [111, 116, 120]
+    assert ac.main(["--data", str(root), "--at", "c0d4ff1", "--ticket", "03b"]) == 0
 
 
 def test_ticket_with_no_entry_exits_1_and_says_why(capsys):
@@ -210,26 +291,52 @@ def test_ticket_at_a_commit_reads_the_file_and_the_record_as_they_were(capsys):
 
 # ---- a row is a line that STARTS with the run; a plan with no line in the record is listed ----
 
-def _starts_with_run(line, n):
-    first = re.sub(r"^[#\s]*(L\d+\s+)?", "", line)
-    return any(re.match(rf"{p}{n}(?!\d)", first) for p in ("[Rr]un ", "r"))
-
-
-def test_a_mention_inside_another_runs_block_is_not_a_row_in_audit_run_120():
+def test_an_indented_mention_inside_another_runs_block_is_not_a_row_in_audit_run_120():
     root = data_root()
     text = _git_show(root, "3317d7e", f"{PAPER}/audits-20261124/AUDIT_RUN_120.md")
     lines = text.splitlines()
-    mentioned = {int(x) for ln in lines for x in re.findall(r"(?:[Rr]un |\br)(\d+)", ln)}
-    no_block = sorted(n for n in mentioned if not any(_starts_with_run(ln, n) for ln in lines))
-    assert no_block, "AUDIT_RUN_120.md no longer mentions a run it has no block for"
-    for n in no_block:
-        assert not ac.has_row(text, n), n
-    assert {112, 113, 109} <= set(no_block)
+    # facts read from the real report: headings for 114, 115 and 117 only
+    assert [x for x in lines if re.match(r"^#+ +[Rr]un \d+", x)] == [
+        x for x in lines if x.startswith(("## Run 114 ", "## Run 115 ", "## Run 117 "))]
     for n in (114, 115, 117):
-        assert ac.has_row(text, n) and any(_starts_with_run(ln, n) for ln in lines)
-    assert not ac.has_row("compared against run 110 here", 110)
-    assert ac.has_row("## Run 110 (builder, x)", 110) and ac.has_row("run 110: x", 110)
-    assert ac.has_row("r110 x", 110) and ac.has_row("L113 r107 reviewer | x", 107)
+        assert ac.has_row(text, n), n
+    for n in (107, 109, 110, 112, 113):
+        assert not ac.has_row(text, n), n
+    # the two real indented prose lines, alone
+    l71, l120 = lines[70], lines[119]
+    assert l71.startswith("   Run 110 has no harness total") and l120.startswith("   Run 107 was a re-read")
+    assert not ac.has_row(l71, 110) and not ac.has_row(l120, 107)
+
+
+def test_the_other_reports_have_exactly_the_rows_they_hold():
+    root = data_root()
+    a116 = _git_show(root, "932f38f", f"{PAPER}/audits-20261124/AUDIT_RUN_116.md")
+    assert [n for n in range(100, 121) if ac.has_row(a116, n)] == [110, 112, 113]
+    a111 = _git_show(root, "1f27fc7", f"{PAPER}/audits-20261124/AUDIT_RUN_111.md")
+    assert all(ac.has_row(a111, n) for n in range(1, 110))
+    assert all(re.search(rf"^L\d+ r{n} ", a111, re.M) for n in range(1, 110))
+
+
+# ---- --data is used or refused, never another checkout; the first line names what was read ----
+
+def test_data_on_a_folder_with_no_run_record_is_refused_and_names_the_folder(tmp_path, capsys, monkeypatch):
+    root = data_root()
+    monkeypatch.setenv("MARKETS_DATA", str(root))         # a real checkout is within reach; it must not be read
+    assert ac.main(["--data", str(tmp_path)]) == 2
+    cap = capsys.readouterr()
+    assert str(tmp_path) in cap.err and "agent-runs.jsonl" in cap.err
+    assert "COUNTS" not in cap.out and "NOT AUDITED" not in cap.out
+    assert ac.main(["--data", str(tmp_path), "--ticket", "03b"]) == 2
+    assert str(tmp_path) in capsys.readouterr().err
+
+
+def test_first_line_names_the_folder_and_with_at_the_commit(capsys):
+    root = data_root()
+    _git_show(root, "2a2d229", RUNS)
+    ac.main(["--data", str(root), "--at", "2a2d229"])
+    assert capsys.readouterr().out.splitlines()[0] == f"data: {root} at 2a2d229"
+    ac.main(["--data", str(root), "--at", "9cea759", "--ticket", "03b"])
+    assert capsys.readouterr().out.splitlines()[0] == f"data: {root} at 9cea759"
 
 
 def test_plans_with_no_line_in_the_record_are_listed_exactly(capsys):
@@ -237,14 +344,15 @@ def test_plans_with_no_line_in_the_record_are_listed_exactly(capsys):
     recorded = {d["run"] for d in _lines(root)}
     planned = {int(p.stem.split("-")[1]) for p in (root / PAPER / "run-plans").glob("run-*.json")}
     expect = sorted(planned - recorded)
-    assert expect, "every plan has a line now; this check needs a plan with no line"
     rep = ac.analyse(root)
     assert rep.planned_no_line == expect
     ac.main(["--data", str(root)])
     out = capsys.readouterr().out
     sec = out.split("(5) A PLAN FILE AND NO LINE IN THE RECORD")[1]
     assert "in flight" in sec.splitlines()[0]
-    assert [int(x) for x in re.findall(r"^run (\d+) \|", sec, re.M)] == expect
+    assert [int(x) for x in re.findall(r"^run (\d+) \|", sec.split("COUNTS")[0], re.M)] == expect
+    if not expect:
+        return
     plan = json.loads((root / PAPER / "run-plans" / f"run-{expect[0]:04d}.json").read_text())
     assert plan["agent"] in sec and f"max_tool_calls={plan['max_tool_calls']}" in sec
     assert plan["task"].split()[0] in sec

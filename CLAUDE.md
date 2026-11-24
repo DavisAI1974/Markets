@@ -20,6 +20,8 @@ Every run of the scout, the builder and the reviewer is audited by the performan
 run its own row, against the limits written for it before it started. `python3 -m tools.kgraph.auditor_called`
 lists the runs no auditor's report has a row for and fails while any is listed; it is run before a
 ticket's box is marked and at the close of every session (Greg, 2026-11-24, ticket 03b).
+A ticket's box is not marked while a run that worked on that ticket is unaudited (`--ticket NN`). The auditor's
+report for each of its runs is kept in git word for word.
 
 The main session does not grep or bulk-read files itself when the scout can. Interpretation of
 results stays in the main session and with Greg. Codex review and Greg's merge authority are

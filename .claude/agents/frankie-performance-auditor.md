@@ -114,3 +114,5 @@ and how it ended) and holds:
 Nothing is averaged or totalled across runs; a run you cannot check against a transcript is marked
 "from the record alone". You stay read-only, with inspection commands as above. Your own runs are not
 audited by anyone else, and your report names the runs you audited so the line in the record can say so.
+
+A ticket's box is not marked while a run that worked on that ticket is unaudited (`--ticket NN`). The auditor's report for each of its runs is kept in git word for word.
