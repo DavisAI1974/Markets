@@ -8,40 +8,58 @@ tools/kgraph/schema.py; this module fills them. It adds no node type, no edge ty
 
   python3 -m tools.kgraph.defend register --claim-file <claim.json> --run run:NNNN
   python3 -m tools.kgraph.defend challenge-brief --claim <claim id> --out <brief.md>
-  python3 -m tools.kgraph.defend challenge --claim <claim id> --file <challenge.json> --run run:NNNN
-  python3 -m tools.kgraph.defend show --claim <claim id>
+  python3 -m tools.kgraph.defend challenge --claim <claim id> --file <challenge.json> --brief <brief.md> --run run:NNNN
+  python3 -m tools.kgraph.defend show --claim <claim id>      (the proposer's side: never given to the reviewer)
   python3 -m tools.kgraph.defend undefended
 
 Every command takes [--data <markets-data>] [--graph-dir <scratch graph>]. The real graph is written only
 when --graph-dir is left out.
 
-CLAIM FILE (JSON object). Required, each refused by name when missing or empty:
-  claim_key        a short stable name the proposer gives the claim; the same key with a changed file is the
-                   claim's next revision, the same file twice writes nothing
+CLAIM FILE (JSON object). Every key is checked; an unknown key is refused by name, never dropped. The whole
+file is kept on the claim (attr claim_file) beside the fields lifted out of it.
+  claim_key        stable name; same key + changed file = the claim's next revision, same file = nothing new.
+                   Only the run that first registered the claim may revise it.
   hypothesis, exact_claim, scope, mechanism                      plain text
-  alternatives     list of text, at least one (alternative explanations)
-  falsifiers       list, at least one; each {"observation": ..., "record": ...} (what observation in which
-                   record would count against the claim), written beforehand
-  code_commit      git sha of the code the claim is about; artifact_path and artifact_sha256 (64 hex)
-  outcome_visibility   plain statement of what outcome, if any, the proposer had seen
-  inference        true or false; inference_reason (text) when true
-  rests_on         list of grounds (see below); at least one when inference is false (the first "greg" one
-                   becomes the claim's source)
-Optional: boundaries, statement_kind (one of schema.STATEMENT_KINDS, default "state"), source_event_ids,
-  data_manifest_hashes, event_time, knowledge_time.
-Grounds: {"kind": "claim", "id": "<Claim id of the graph>"}
-         {"kind": "rule", "rule_id": "CL01", "commit": "<sha in paper-trading-platform>"}  (the text of
-              paper_platform/rules/<rule_id>.json at that commit)
-         {"kind": "greg", "repo": "markets-data", "path": ..., "line_start": N, "line_end": M, "quote": ...}
-              (the quote stands in those lines of the file in the checkout)
+  alternatives     list of text, at least one
+  falsifiers       list, at least one, each {"observation", "record"}, written beforehand
+  artifact_repo    Markets | markets-data | paper-trading-platform; artifact_path; code_commit; artifact_sha256.
+                   The commit is resolved in that repository's checkout and the sha256 is compared with the file
+                   at that commit; a commit that does not exist or a differing hash is refused naming both.
+  data_manifest_hashes   a list of {"what", "sha256"} or {"none": "<why no data bears on this claim yet>"}
+  outcome_visibility     {"outcome_seen": true|false, "what": "<what the proposer had seen of any outcome>"};
+                   true is kept and said ("registered after an outcome was seen: ..."), never refused
+  inference        true or false; inference_reason when true. A claim that rests on a rule's text or a cited
+                   line has a source and is not an inference unless it says so.
+  rests_on         list of grounds:
+                   {"kind":"claim","id":<Claim of the graph>}                      -> DERIVED_FROM
+                   {"kind":"rule","rule_id","commit","quote"}  the rule file paper_platform/rules/<id>.json
+                        at that commit (a Source node is made or found) and words of it  -> SUPPORTS
+                   {"kind":"cited","repo","path","line_start","line_end","quote","said_by"}  a quoted line of
+                        a named file (said_by stored; the file's sha256 and the commit it was read at are
+                        stored; a Source node is made or found)                    -> SUPPORTS
+                   A quote is at least six whole words in a row on those lines (extract.check_claim /
+                   locate_quote). A claim that is not an inference needs a rule or cited ground; the first
+                   is its source, quote and lines.
+Optional: boundaries, statement_kind, proposer, source_event_ids, event_time, knowledge_time,
+  reasoning_files (companion files the reviewer must not open before its challenge is written).
+When register refuses it writes a Task node (not a Claim) holding the file, the reason, the run and the time.
 
-CHALLENGE FILE (JSON object). Required, each refused by name when missing or empty:
-  alternatives     list of text, at least one competing explanation
-  falsifiers       list of text or {"observation", "record"}, at least one
-  distinguishing_observation   the exact observation that tells the claim and the competing explanation apart
-  what_was_checked, what_was_observed, what_remains_open     text or list of text
-  objections       list (every objection; may be empty)
-No status, verdict, decision or result field may carry a verdict word.
+CHALLENGE FILE (JSON object), with --brief (the brief file the reviewer was given; its sha256 is stored):
+  alternatives (at least one), falsifiers (at least one), distinguishing_observation, what_was_checked,
+  what_was_observed, what_remains_open, objections (list, may be empty), saw_proposer_reasoning (true|false),
+  what_i_opened (list). The whole file is kept on the Evaluation.
+
+Independence, as far as code can hold it: the reviewer run is an AgentRun whose role names a reviewer, is not the
+run that registered any revision, and is not the extracted_by or proposer of any ground claim. What code CANNOT
+see: the same agent under two run numbers; the main session writing both files; whether the reviewer opened
+what it was told not to (it says so in the file, stored as given).
+
+Verdict words: every stored free-text field of a claim and of a challenge is checked, as whole words, for the
+verifier plan's own labels (SUPPORTED_WITHIN_SCOPE, REFUTED_WITH_EVIDENCE, INCONCLUSIVE, NEEDS_MORE_EVIDENCE,
+BLOCKED_INPUT_SCOPE, SUPERSEDED_RETAINED) and their plain forms (verdict, passed, failed, pass/fail, proven,
+disproven, approved, rejected). Ordinary words such as true, false, holds, ok are not refused. A quoted line
+(key "quote") is a file's words, not the writer's, and is not checked.
+Not settled here: a REVISES edge on a revision, a CONTRADICTS edge from an objection (plan 4a-bis; goes to Greg).
 """
 
 from __future__ import annotations
@@ -53,28 +71,31 @@ import re
 import sys
 from pathlib import Path
 
+import subprocess
+
 from . import schema
-from .extract import repo_dirs
-from .sources import code_stamp, git, link
-from .store import GraphStore, sha
+from .extract import MIN_QUOTE_WORDS, check_claim as quote_check, repo_dirs
+from .sources import REPOS, code_stamp, git, link, source_id, source_node
+from .store import GraphStore, now, sha
 
 REGISTRATION = "claim registration v1"
 RUBRIC = ("independent challenge v1: a reviewer who was not given the proposer's reasoning gives at least one "
           "competing explanation, one falsifier and the observation that distinguishes them")
 RULES_DIR = "paper_platform/rules"
-VERDICT_WORDS = {
-    "supported", "refuted", "proven", "proved", "pass", "passed", "passes", "fail", "failed", "fails",
-    "confirmed", "rejected", "approved", "verified", "valid", "invalid", "true", "false", "correct",
-    "incorrect", "inconclusive", "accepted", "holds", "falsified", "sound", "unsound", "ok",
-}
-STATUS_KEYS = ("status", "verdict", "decision", "result", "outcome", "grade", "conclusion", "finding")
-_ws = re.compile(r"\s+")
+ARTIFACT_REPOS = ("Markets", "markets-data", "paper-trading-platform")
+LABELS = ("SUPPORTED_WITHIN_SCOPE", "REFUTED_WITH_EVIDENCE", "INCONCLUSIVE", "NEEDS_MORE_EVIDENCE",
+          "BLOCKED_INPUT_SCOPE", "SUPERSEDED_RETAINED", "verdict", "passed", "failed", "pass/fail", "pass or fail",
+          "proven", "disproven", "approved", "rejected")
+_label_re = re.compile(r"(?<![A-Za-z0-9_])(" + "|".join(re.escape(x) for x in LABELS) + r")(?![A-Za-z0-9_])", re.I)
+CLAIM_KEYS = {
+    "claim_key", "hypothesis", "exact_claim", "scope", "mechanism", "alternatives", "falsifiers", "artifact_repo",
+    "artifact_path", "code_commit", "artifact_sha256", "data_manifest_hashes", "outcome_visibility", "inference",
+    "inference_reason", "rests_on", "boundaries", "statement_kind", "proposer", "source_event_ids", "event_time",
+    "knowledge_time", "reasoning_files"}
+CHALLENGE_KEYS = {"alternatives", "falsifiers", "distinguishing_observation", "what_was_checked", "what_was_observed",
+                  "what_remains_open", "objections", "saw_proposer_reasoning", "what_i_opened"}
 _hex = re.compile(r"^[0-9a-f]{7,40}$")
 _hex64 = re.compile(r"^[0-9a-f]{64}$")
-
-
-def _norm(s: str) -> str:
-    return _ws.sub(" ", s).strip()
 
 
 def _text(d: dict, key: str, where: str) -> str:
@@ -84,20 +105,26 @@ def _text(d: dict, key: str, where: str) -> str:
     return v.strip()
 
 
-def _items(d: dict, key: str, where: str, *, shape: str = "text") -> list:
+def _list_of_text(d: dict, key: str, where: str, *, at_least_one=True) -> list:
     v = d.get(key)
-    if isinstance(v, str) and v.strip() and shape == "text":
+    if isinstance(v, str) and v.strip():
         v = [v]
-    if not isinstance(v, list) or not v:
+    if not isinstance(v, list) or (at_least_one and not v):
         raise schema.Refused(f"{where}: {key} needs at least one entry")
+    if not all(isinstance(x, str) and x.strip() for x in v):
+        raise schema.Refused(f"{where}: {key} has an entry that is not text")
+    return [x.strip() for x in v]
+
+
+def _falsifiers(d: dict, where: str) -> list:
+    v = d.get("falsifiers")
+    if not isinstance(v, list) or not v:
+        raise schema.Refused(f"{where}: falsifiers needs at least one entry")
     out = []
-    for x in v:
-        if isinstance(x, str) and x.strip():
-            out.append(x.strip())
-        elif isinstance(x, dict) and shape in ("text", "falsifier") and x.get("observation"):
-            out.append(x)
-        else:
-            raise schema.Refused(f"{where}: {key} has an empty or malformed entry: {str(x)[:80]}")
+    for f in v:
+        if not (isinstance(f, dict) and str(f.get("observation", "")).strip() and str(f.get("record", "")).strip()):
+            raise schema.Refused(f"{where}: falsifiers entry needs both observation (what) and record (in which record): {str(f)[:80]}")
+        out.append({"observation": f["observation"].strip(), "record": f["record"].strip()})
     return out
 
 
@@ -111,137 +138,268 @@ def _load_json(path) -> dict:
     return d
 
 
-def _agent_run(store: GraphStore, run: str) -> None:
+def _unknown(d: dict, allowed: set, where: str) -> None:
+    extra = sorted(set(d) - allowed)
+    if extra:
+        raise schema.Refused(f"{where}: unknown key {', '.join(extra)} (it is refused, not dropped)")
+
+
+def _labels(obj, where: str, path: str = "") -> None:
+    """Refuse a verifier-plan label (or its plain form) as a whole word in any stored free text."""
+    if isinstance(obj, str):
+        m = _label_re.search(obj)
+        if m:
+            raise schema.Refused(f"{where}: {path or 'text'} carries the word {m.group(1)!r}; say what was checked, "
+                                 "observed and open instead")
+    elif isinstance(obj, dict):
+        for k, v in obj.items():
+            if k != "quote":
+                _labels(v, where, f"{path}.{k}" if path else k)
+    elif isinstance(obj, list):
+        for i, v in enumerate(obj):
+            _labels(v, where, f"{path}[{i}]")
+
+
+def _agent_run(store: GraphStore, run: str) -> dict:
     n = store.node(run) if run else None
     if not (run and run.startswith("run:") and n and n["type"] == "AgentRun"):
         raise schema.Refused(f"run: {run!r} is not an AgentRun of the graph (record the run first)")
+    return n
 
 
-def _falsifiers(d: dict, where: str) -> list:
-    out = []
-    for f in _items(d, "falsifiers", where, shape="falsifier"):
-        if isinstance(f, dict):
-            if not (str(f.get("observation", "")).strip() and str(f.get("record", "")).strip()):
-                raise schema.Refused(f"{where}: falsifiers entry needs both observation and record: {str(f)[:80]}")
-            out.append({"observation": f["observation"].strip(), "record": f["record"].strip()})
-        else:
-            out.append({"observation": f, "record": ""} if where == "challenge" else _bad_falsifier(f, where))
-    return out
+def _blob(repo_dir, commit: str, path: str) -> bytes:
+    r = subprocess.run(["git", "-C", str(repo_dir), "show", f"{commit}:{path}"], capture_output=True)
+    if r.returncode != 0:
+        raise RuntimeError(f"{path} is not in {repo_dir} at {commit}")
+    return r.stdout
 
 
-def _bad_falsifier(f, where):
-    raise schema.Refused(f"{where}: falsifiers entry must say what observation in which record: {str(f)[:80]}")
+def _source_at(store: GraphStore, dirs: dict, repo: str, path: str, commit: str, raw: bytes) -> tuple[str, dict | None]:
+    """The Source node of repo:path as it stood at `commit`: the graph's own node when its sha256 matches,
+    else the checkout's current node when that is the same bytes, else a node for that commit alone."""
+    h = hashlib.sha256(raw).hexdigest()
+    std = source_id(repo, path)
+    n = store.node(std)
+    if n and n["attrs"].get("sha256") == h:
+        return std, None
+    try:
+        wn = source_node(repo, dirs[repo], path)
+        if wn["attrs"]["sha256"] == h:
+            return std, wn
+    except (RuntimeError, OSError, KeyError):
+        pass
+    attrs = {"kind": "file", "repo": REPOS.get(repo, repo), "path": path, "commit": commit, "bytes": len(raw), "sha256": h,
+             "lines": raw.count(b"\n")}
+    return source_id(repo, path, commit[:10]), {"id": source_id(repo, path, commit[:10]), "type": "Source", "attrs": attrs}
 
 
-# ---- the grounds ------------------------------------------------------------------------------------
-def _read_ground(store: GraphStore, dirs: dict, g: dict) -> dict:
-    """Resolve one ground to its full text, or refuse naming rests_on. Read again every time."""
-    where = "rests_on"
+def _lines(raw: bytes) -> list[str]:
+    return raw.decode("utf-8", errors="replace").splitlines()
+
+
+def _check_quote(quote: str, lines: list[str], a: int, b: int, where: str) -> None:
+    why = quote_check({"line_start": a, "line_end": b, "quote": quote, "text": "x", "statement_kind": "state",
+                       "inference": False}, lines, 1, len(lines))
+    if why:
+        raise schema.Refused(f"{where}: {why}")
+
+
+def _ground(store: GraphStore, dirs: dict, g, i: int) -> dict:
+    """Resolve one ground, or refuse naming rests_on[i]."""
+    where = f"rests_on[{i}]"
     if not isinstance(g, dict) or "kind" not in g:
-        raise schema.Refused(f"{where}: a ground is an object with a kind (claim, rule or greg): {str(g)[:80]}")
+        raise schema.Refused(f"{where}: a ground is an object with a kind (claim, rule or cited): {str(g)[:80]}")
     k = g["kind"]
     if k == "claim":
         c = store.node(str(g.get("id")))
         if not c or c["type"] != "Claim":
             raise schema.Refused(f"{where}: {g.get('id')!r} is not a Claim of the graph")
-        a = c["attrs"]
-        src = store.node(a["source"]) if a.get("source") else None
-        return {"kind": k, "id": c["id"], "text": a.get("exact_claim") or a["text"], "source": a.get("source"),
-                "path": src["attrs"]["path"] if src else None, "line_start": a.get("line_start"),
-                "line_end": a.get("line_end"), "quote": a.get("quote"), "inference": a["inference"]}
+        return {"kind": k, "id": c["id"]}
     if k == "rule":
-        plat = dirs.get("paper-trading-platform")
-        rid, commit = str(g.get("rule_id", "")), str(g.get("commit", ""))
+        plat, rid, commit = dirs.get("paper-trading-platform"), str(g.get("rule_id", "")), str(g.get("commit", ""))
         if not rid or not _hex.match(commit) or plat is None:
-            raise schema.Refused(f"{where}: a rule ground needs rule_id and commit, and a platform checkout")
+            raise schema.Refused(f"{where}: a rule ground needs rule_id, a commit sha and a platform checkout")
+        path = f"{RULES_DIR}/{rid}.json"
         try:
-            raw = git(plat, "show", f"{commit}:{RULES_DIR}/{rid}.json")
-            spec = json.loads(raw)["specification"]
-            full = git(plat, "rev-parse", commit)
+            full = git(plat, "rev-parse", "--verify", commit + "^{commit}")
+            raw = _blob(plat, full, path)
+            json.loads(raw)["specification"]
         except (RuntimeError, ValueError, KeyError) as e:
-            raise schema.Refused(f"{where}: no text of rule {rid} at commit {commit} in the platform checkout ({e})") from e
-        return {"kind": k, "rule_id": rid, "commit": full, "text": spec, "path": f"{RULES_DIR}/{rid}.json"}
-    if k == "greg":
-        repo, path = str(g.get("repo", "")), str(g.get("path", ""))
+            raise schema.Refused(f"{where}: rule {rid} has no text at commit {commit} in the platform checkout ({e})") from e
+        lines, quote = _lines(raw), str(g.get("quote", ""))
+        a, b = _span(quote, lines, where)
+        sid, node = _source_at(store, dirs, "paper-trading-platform", path, full, raw)
+        return {"kind": k, "rule_id": rid, "commit": full, "path": path, "line_start": a, "line_end": b, "quote": quote,
+                "sha256": hashlib.sha256(raw).hexdigest(), "source": sid, "_node": node}
+    if k == "cited":
+        repo, path, said = str(g.get("repo", "")), str(g.get("path", "")), str(g.get("said_by", "")).strip()
         try:
             a, b, quote = int(g["line_start"]), int(g["line_end"]), str(g["quote"])
         except (KeyError, ValueError, TypeError) as e:
-            raise schema.Refused(f"{where}: a greg ground needs repo, path, line_start, line_end, quote") from e
-        p = dirs[repo] / path if repo in dirs else None
-        if p is None or not p.is_file():
+            raise schema.Refused(f"{where}: a cited ground needs repo, path, line_start, line_end, quote") from e
+        if not said:
+            raise schema.Refused(f"{where}: said_by is missing (who said the quoted words)")
+        if repo not in dirs or not (dirs[repo] / path).is_file():
             raise schema.Refused(f"{where}: {repo}:{path} is not a file of a local checkout")
-        lines = p.read_text(encoding="utf-8", errors="replace").splitlines()
-        if not quote.strip() or a < 1 or b < a or not _norm(quote) in _norm(" ".join(lines[a - 1:b])):
-            raise schema.Refused(f"{where}: the quoted line does not stand in {path} lines {a}-{b}")
-        return {"kind": k, "repo": repo, "path": path, "line_start": a, "line_end": b, "quote": quote,
-                "text": "\n".join(lines[a - 1:b])}
-    raise schema.Refused(f"{where}: unknown ground kind {k!r}")
+        try:
+            commit = git(dirs[repo], "log", "-1", "--format=%H", "--", path)
+            raw = _blob(dirs[repo], commit, path)
+        except RuntimeError as e:
+            raise schema.Refused(f"{where}: {path} is not committed in {repo} ({e})") from e
+        _check_quote(quote, _lines(raw), a, b, where)
+        sid, node = _source_at(store, dirs, repo, path, commit, raw)
+        return {"kind": k, "repo": repo, "path": path, "line_start": a, "line_end": b, "quote": quote, "said_by": said,
+                "commit": commit, "sha256": hashlib.sha256(raw).hexdigest(), "source": sid, "_node": node}
+    raise schema.Refused(f"{where}: unknown ground kind {k!r} (claim, rule or cited)")
+
+
+def _span(quote: str, lines: list[str], where: str) -> tuple[int, int]:
+    from .extract import locate_quote
+    _check_quote(quote, lines, 1, len(lines), where)
+    return locate_quote(quote, lines, 1, len(lines))
+
+
+def _verify_artifact(dirs: dict, repo: str, commit: str, path: str, want: str) -> str:
+    if repo not in ARTIFACT_REPOS or repo not in dirs:
+        raise schema.Refused(f"artifact_repo: {repo!r} is not one of {ARTIFACT_REPOS} with a local checkout")
+    try:
+        full = git(dirs[repo], "rev-parse", "--verify", commit + "^{commit}")
+    except RuntimeError:
+        raise schema.Refused(f"code_commit: {commit} does not exist in the {repo} checkout") from None
+    try:
+        got = hashlib.sha256(_blob(dirs[repo], full, path)).hexdigest()
+    except RuntimeError:
+        raise schema.Refused(f"artifact_path: {path} is not in {repo} at {full}") from None
+    if got != want:
+        raise schema.Refused(f"artifact_sha256: the claim says {want}, the file {path} at {full} hashes to {got}")
+    return full
+
+
+def _outcome(d: dict) -> dict:
+    v = d.get("outcome_visibility")
+    if (not isinstance(v, dict) or not isinstance(v.get("outcome_seen"), bool)
+            or not isinstance(v.get("what"), str) or not v["what"].strip() or set(v) - {"outcome_seen", "what"}):
+        raise schema.Refused('claim file: outcome_visibility must be {"outcome_seen": true|false, "what": "<text>"}')
+    return {"outcome_seen": v["outcome_seen"], "what": v["what"].strip()}
+
+
+def _manifest(d: dict) -> list:
+    v = d.get("data_manifest_hashes")
+    ok = (isinstance(v, dict) and set(v) == {"none"} and isinstance(v["none"], str) and v["none"].strip()) or (
+        isinstance(v, list) and v and all(isinstance(x, dict) and set(x) == {"what", "sha256"} and str(x["what"]).strip()
+                                         and isinstance(x["sha256"], str) and _hex64.match(x["sha256"]) for x in v))
+    if not ok:
+        raise schema.Refused('claim file: data_manifest_hashes must be a list of {"what","sha256"} or {"none": "<why>"}')
+    return [v] if isinstance(v, dict) else v
 
 
 # ---- register ----------------------------------------------------------------------------------------
 def register(store: GraphStore, claim_file, run: str, dirs: dict | None = None) -> dict:
+    try:
+        return _register(store, claim_file, run, dirs or repo_dirs(store.data_root, None, None))
+    except schema.Refused as e:
+        _retain(store, claim_file, run, str(e))
+        raise
+
+
+def _retain(store: GraphStore, claim_file, run: str, reason: str) -> None:
+    """A refused registration is kept as a Task (never a Claim): never a silent exclusion."""
+    try:
+        raw = Path(claim_file).read_text(encoding="utf-8", errors="replace")
+        try:
+            content = json.loads(raw)
+        except json.JSONDecodeError:
+            content = raw
+    except OSError:
+        content = "(the file could not be read)"
+    stamp = now()
+    tid = "task:defend-refused-" + sha([str(run), content, reason, stamp])
+    attrs = {"text": f"not admissible for a check: {reason}; retained", "state": "blocked", "claim_file": content,
+             "reason": reason, "run": str(run), "refused_at": stamp}
+    ok = store.node(run) and store.node(run)["type"] == "AgentRun" if run else False
+    try:
+        store.write([{"id": tid, "type": "Task", "attrs": attrs}], [],
+                    written_by=run if ok else code_stamp("tools.kgraph.defend"))
+    except Exception:
+        pass
+
+
+def _register(store: GraphStore, claim_file, run: str, dirs: dict) -> dict:
     d = _load_json(claim_file)
-    dirs = dirs or repo_dirs(store.data_root, None, None)
     _agent_run(store, run)
     w = "claim file"
+    _unknown(d, CLAIM_KEYS, w)
     key = _text(d, "claim_key", w)
     hypothesis, exact = _text(d, "hypothesis", w), _text(d, "exact_claim", w)
     scope, mechanism = _text(d, "scope", w), _text(d, "mechanism", w)
-    alternatives = _items(d, "alternatives", w)
-    falsifiers = _falsifiers(d, w)
-    visibility = _text(d, "outcome_visibility", w)
+    alternatives, falsifiers = _list_of_text(d, "alternatives", w), _falsifiers(d, w)
+    visibility, manifest = _outcome(d), _manifest(d)
     code_commit, art_path = _text(d, "code_commit", w), _text(d, "artifact_path", w)
-    art_sha = _text(d, "artifact_sha256", w)
+    art_repo, art_sha = _text(d, "artifact_repo", w), _text(d, "artifact_sha256", w)
     if not _hex.match(code_commit):
         raise schema.Refused(f"{w}: code_commit is not a git sha")
     if not _hex64.match(art_sha):
         raise schema.Refused(f"{w}: artifact_sha256 is not a sha256")
     if not isinstance(d.get("inference"), bool):
         raise schema.Refused(f"{w}: inference must be true or false")
-    if d["inference"]:
-        reason = _text(d, "inference_reason", w)
-    grounds = d.get("rests_on", [])
-    if not isinstance(grounds, list):
-        raise schema.Refused(f"{w}: rests_on is not a list")
-    resolved = [_read_ground(store, dirs, g) for g in grounds]
+    reason = _text(d, "inference_reason", w) if d["inference"] else None
+    opt = {}
+    for k_, t in (("boundaries", str), ("proposer", str), ("event_time", str), ("knowledge_time", str)):
+        if k_ in d:
+            if not isinstance(d[k_], t) or not d[k_].strip():
+                raise schema.Refused(f"{w}: {k_} must be non-empty text")
+            opt[k_] = d[k_].strip()
+    for k_ in ("source_event_ids", "reasoning_files"):
+        if k_ in d:
+            opt[k_] = _list_of_text(d, k_, w)
     kind = d.get("statement_kind", "state")
+    if kind not in schema.STATEMENT_KINDS:
+        raise schema.Refused(f"{w}: statement_kind {kind!r} is not one of {schema.STATEMENT_KINDS}")
+    if not isinstance(d.get("rests_on", []), list):
+        raise schema.Refused(f"{w}: rests_on is not a list")
+    _labels({k_: v for k_, v in d.items() if k_ not in ("claim_key",)}, w)
+    full_commit = _verify_artifact(dirs, art_repo, code_commit, art_path, art_sha)
+    grounds = [_ground(store, dirs, g, i) for i, g in enumerate(d.get("rests_on", []))]
     cid = "claim:reg-" + sha(key)
+    prev = store.history(cid)
+    if prev and prev[0]["attrs"].get("proposer_run") != run:
+        raise schema.Refused(f"run: {run} did not register {cid}; only {prev[0]['attrs'].get('proposer_run')} may revise it")
+    sources = [g for g in grounds if g["kind"] in ("rule", "cited")]
     attrs = {
         "text": exact, "statement_kind": kind, "inference": d["inference"], "registration": REGISTRATION,
-        "claim_key": key, "proposer": str(d.get("proposer") or store.node(run)["attrs"].get("role")),
-        "proposer_run": run, "hypothesis": hypothesis, "exact_claim": exact, "scope": scope,
-        "boundaries": d.get("boundaries", ""), "mechanism": mechanism, "alternatives": alternatives,
-        "falsifiers": falsifiers, "code_commit": code_commit, "artifact_path": art_path,
-        "artifact_sha256": art_sha, "outcome_visibility": visibility,
-        "rests_on": [{k: v for k, v in g.items() if k != "text"} if g["kind"] != "claim" else {"kind": "claim", "id": g["id"]}
-                     for g in resolved],
+        "claim_key": key, "proposer": opt.pop("proposer", None) or store.node(run)["attrs"].get("role"),
+        "proposer_run": run, "hypothesis": hypothesis, "exact_claim": exact, "scope": scope, "mechanism": mechanism,
+        "alternatives": alternatives, "falsifiers": falsifiers, "code_commit": full_commit, "artifact_repo": art_repo,
+        "artifact_path": art_path, "artifact_sha256": art_sha, "outcome_visibility": visibility,
+        "data_manifest_hashes": manifest, "unlinked_grounds": [], "claim_file": d,
+        "rests_on": [{k_: v for k_, v in g.items() if k_ != "_node"} for g in grounds],
     }
-    for opt in ("source_event_ids", "data_manifest_hashes", "event_time", "knowledge_time"):
-        if opt in d:
-            attrs[opt] = d[opt]
-    if d["inference"]:
+    attrs.update(opt)
+    if reason:
         attrs["inference_reason"] = reason
-    edges = [link("PRODUCED", run, cid)]
-    if not d["inference"]:
-        greg = next((g for g in resolved if g["kind"] == "greg"), None)
-        src = f"src:{greg['repo']}:{greg['path']}" if greg else None
-        if not src or not store.node(src):
-            raise schema.Refused(f"{w}: rests_on: a claim that is not an inference needs a greg ground whose file "
-                                 "is a Source of the graph")
-        attrs.update(source=src, line_start=greg["line_start"], line_end=greg["line_end"], quote=greg["quote"])
-        edges.append(link("SUPPORTS", src, cid))
-    for g in resolved:
+    nodes, edges = [], [link("PRODUCED", run, cid)]
+    for g in grounds:
         if g["kind"] == "claim":
-            edges.append(link("DEPENDS_ON", cid, g["id"]))
-        elif g["kind"] == "rule":
-            rv = store.node(f"rulever:{g['rule_id']}@{g['commit'][:10]}")
-            if rv:
-                edges.append(link("DEPENDS_ON", cid, rv["id"]))
-        else:
-            s = store.node(f"src:{g['repo']}:{g['path']}")
-            if s and s["id"] != attrs.get("source"):
-                edges.append(link("DEPENDS_ON", cid, s["id"]))
-    res = store.write([{"id": cid, "type": "Claim", "attrs": attrs}], edges, written_by=run)
+            edges.append(link("DERIVED_FROM", cid, g["id"]))
+        elif g.get("_node") is not None and not any(n["id"] == g["_node"]["id"] for n in nodes):
+            nodes.append(g["_node"])
+        if g["kind"] != "claim":
+            edges.append(link("SUPPORTS", g["source"], cid))
+    if not d["inference"]:
+        if not sources:
+            raise schema.Refused(f"{w}: rests_on: a claim that is not an inference rests on a rule's text or a cited "
+                                 "line (its source); none is given")
+        s0 = sources[0]
+        attrs.update(source=s0["source"], line_start=s0["line_start"], line_end=s0["line_end"], quote=s0["quote"])
+    nodes.append({"id": cid, "type": "Claim", "attrs": attrs})
+    res = store.write(nodes, edges, written_by=run)
+    new_ids = {e["id"] for e in edges}
+    res["withdrawn"] = []
+    for e in store.edges():
+        mine = (e["type"] == "DERIVED_FROM" and e["src"] == cid) or (e["type"] == "SUPPORTS" and e["dst"] == cid)
+        if mine and e["id"] not in new_ids:
+            store.withdraw_edge(e["id"], reason=f"a ground dropped by revision {store.node(cid)['rev']} of {cid}", written_by=run)
+            res["withdrawn"].append(e["id"])
     res["claim"] = cid
     return res
 
@@ -254,91 +412,127 @@ def _registered(store: GraphStore, claim_id: str) -> dict:
     return c
 
 
+def _saidline(g: dict) -> str:
+    who = g["said_by"]
+    if who.strip().lower() in ("greg", "greg davis"):
+        return f"Greg's words, {g['repo']}:{g['path']} lines {g['line_start']}-{g['line_end']} (commit {g['commit']})"
+    return f"Quoted lines said by {who}, {g['repo']}:{g['path']} lines {g['line_start']}-{g['line_end']} (commit {g['commit']})"
+
+
+def _outcome_line(a: dict) -> str | None:
+    v = a["outcome_visibility"]
+    return f"registered after an outcome was seen: {v['what']}" if v["outcome_seen"] else None
+
+
 def brief(store: GraphStore, claim_id: str, dirs: dict | None = None) -> str:
     c = _registered(store, claim_id)
     a = c["attrs"]
     dirs = dirs or repo_dirs(store.data_root, None, None)
-    grounds = []
-    for g in a["rests_on"]:
-        g = dict(g)
-        if g["kind"] == "rule":
-            g["commit"] = g["commit"]
-        grounds.append(_read_ground(store, dirs, g))
+    art = _blob(dirs[a["artifact_repo"]], a["code_commit"], a["artifact_path"]).decode("utf-8", errors="replace")
     out = [f"# Challenge brief for {claim_id} (revision {c['rev']})", "",
-           "You are the independent reviewer. You were not given the proposer's reasoning and you are not to ask "
-           "for it. Below are the claim, where it applies and the evidence admitted for it, in full.", "",
-           "## The exact claim", "", a["exact_claim"], "", "## Scope and boundaries", "", f"Scope: {a['scope']}"]
+           "You are the independent reviewer. You were not given the proposer's mechanism, alternatives, falsifiers "
+           "or reasons, and you are not to look for them. Below are the claim, its plain-language hypothesis, where it "
+           "applies, the artifact it is about and the evidence admitted for it, in full.", "",
+           "## The hypothesis, in plain words", "", a["hypothesis"], "", "## The exact claim", "", a["exact_claim"], "",
+           "## Scope and boundaries", "", f"Scope: {a['scope']}"]
     if a.get("boundaries"):
         out.append(f"Boundaries: {a['boundaries']}")
-    out += ["", "## The artifact the claim is about", "", f"- path: {a['artifact_path']}",
+    ol = _outcome_line(a)
+    if ol:
+        out += ["", ol]
+    out += ["", "## The artifact the claim is about", "", f"- repository: {a['artifact_repo']}", f"- path: {a['artifact_path']}",
             f"- code commit: {a['code_commit']}", f"- sha256: {a['artifact_sha256']}", "",
+            "The artifact as committed, in full:", "", "```", art, "```", ""]
+    if a.get("reasoning_files"):
+        out += ["Do NOT open these companion files before your challenge is written (they may hold the proposer's "
+                "reasoning): " + ", ".join(a["reasoning_files"]), ""]
+    out += ["Do NOT run `defend show` on this claim before your challenge is written.", "",
             "## The admissible evidence, in full", ""]
-    if not grounds:
+    if not a["rests_on"]:
         out.append("(none: the claim names no ground)")
-    for i, g in enumerate(grounds, 1):
+    for i, g in enumerate(a["rests_on"], 1):
         if g["kind"] == "claim":
-            where = f"{g['path']} lines {g['line_start']}-{g['line_end']}" if g["path"] else "no source line (marked an inference)"
-            out += [f"### {i}. Claim of the graph {g['id']} ({where})", "", g["text"]]
-            if g.get("quote"):
-                out += ["", f"Quoted from the file: {g['quote']}"]
+            n = store.node(g["id"])
+            ga = n["attrs"]
+            src = store.node(ga["source"]) if ga.get("source") else None
+            where = (f"{src['attrs']['path']} lines {ga['line_start']}-{ga['line_end']}" if src
+                     else "no source line (marked an inference)")
+            out += [f"### {i}. Claim of the graph {g['id']} ({where})", "", ga.get("exact_claim") or ga["text"]]
+            if ga.get("quote"):
+                out += ["", f"Quoted from the file: {ga['quote']}"]
         elif g["kind"] == "rule":
-            out += [f"### {i}. Rule {g['rule_id']} at commit {g['commit']} ({g['path']})", "", g["text"]]
+            spec = json.loads(_blob(dirs["paper-trading-platform"], g["commit"], g["path"]))["specification"]
+            out += [f"### {i}. Rule {g['rule_id']} at commit {g['commit']} ({g['path']})", "", spec, "",
+                    f"The words relied on: {g['quote']}"]
         else:
-            out += [f"### {i}. Greg's words, {g['repo']}:{g['path']} lines {g['line_start']}-{g['line_end']}", "", g["text"]]
+            lines = _lines(_blob(dirs[g["repo"]], g["commit"], g["path"]))
+            out += [f"### {i}. {_saidline(g)}", "", "\n".join(lines[g["line_start"] - 1:g["line_end"]])]
         out.append("")
-    out += ["## What to hand back", "",
-            "One JSON object, nothing else, with these fields:", "",
+    out += ["## What to hand back", "", "One JSON object, nothing else, with these fields:", "",
             "```json", json.dumps({
                 "alternatives": ["at least one competing explanation of what the evidence shows"],
                 "falsifiers": [{"observation": "at least one observation that would count against the claim",
                                 "record": "in which record it would be looked for"}],
                 "distinguishing_observation": "the exact observation that would tell the claim and the competing explanation apart",
-                "what_was_checked": ["what you checked"],
-                "what_was_observed": ["what you observed"],
+                "what_was_checked": ["what you checked"], "what_was_observed": ["what you observed"],
                 "what_remains_open": ["what remains open"],
-                "objections": ["every objection you have, each its own entry"]}, indent=2), "```", "",
+                "objections": ["every objection you have, each its own entry"],
+                "saw_proposer_reasoning": "true or false: did you see the proposer's reasoning before writing this",
+                "what_i_opened": ["every file or record you opened"]}, indent=2), "```", "",
             "No verdict word and no pass or fail framing anywhere in it: say what was checked, what was observed "
             "and what remains open. Do not average, rank or score anything.", ""]
     return "\n".join(out)
 
 
 # ---- challenge ---------------------------------------------------------------------------------------
-def _no_verdict(d: dict) -> None:
-    for k in STATUS_KEYS:
-        if k in d:
-            words = set(re.findall(r"[a-z]+", json.dumps(d[k]).lower())) & VERDICT_WORDS
-            if words:
-                raise schema.Refused(f"challenge file: {k} carries a verdict word ({', '.join(sorted(words))}); "
-                                     "say what was checked, observed and open instead")
+def _independent(store: GraphStore, claim_id: str, run: str) -> None:
+    node = _agent_run(store, run)
+    role = str(node["attrs"].get("role", ""))
+    authors = {l["attrs"].get("proposer_run") for l in store.history(claim_id)}
+    if run in authors:
+        raise schema.Refused(f"run: {run} is the run that registered {claim_id}; the proposer must not be its sole verifier")
+    for g in store.node(claim_id)["attrs"]["rests_on"]:
+        if g["kind"] == "claim":
+            ga = store.node(g["id"])["attrs"]
+            if run in (ga.get("extracted_by"), ga.get("proposer_run"), ga.get("proposer")):
+                raise schema.Refused(f"run: {run} made the ground claim {g['id']}; a reviewer must not have authored what the claim rests on")
+    if "reviewer" not in role.lower():
+        raise schema.Refused(f"run: {run} has the role {role!r}; the challenge is made by a run whose role names a reviewer")
 
 
-def challenge(store: GraphStore, claim_id: str, challenge_file, run: str) -> dict:
+def challenge(store: GraphStore, claim_id: str, challenge_file, run: str, brief_file=None) -> dict:
     c = _registered(store, claim_id)
     d = _load_json(challenge_file)
-    _agent_run(store, run)
-    _no_verdict(d)
+    _independent(store, claim_id, run)
     w = "challenge file"
-    proposers = {l["attrs"].get("proposer_run") for l in store.history(claim_id)}
-    if run in proposers:
-        raise schema.Refused(f"run: {run} is the run that registered {claim_id}; the proposer must not be its sole verifier")
-    alts = _items(d, "alternatives", w)
-    fals = _falsifiers(d, "challenge")
+    if not brief_file or not Path(brief_file).is_file():
+        raise schema.Refused("brief: the brief file the reviewer was given is required (--brief)")
+    brief_raw = Path(brief_file).read_bytes()
+    if f"# Challenge brief for {claim_id} (revision {c['rev']})".encode() not in brief_raw:
+        raise schema.Refused(f"brief: the file is not the brief of {claim_id} at revision {c['rev']}")
+    _unknown(d, CHALLENGE_KEYS, w)
+    alts, fals = _list_of_text(d, "alternatives", w), _falsifiers(d, w)
     dist = _text(d, "distinguishing_observation", w)
-    checked, observed = _items(d, "what_was_checked", w), _items(d, "what_was_observed", w)
-    open_ = _items(d, "what_remains_open", w)
+    checked, observed = _list_of_text(d, "what_was_checked", w), _list_of_text(d, "what_was_observed", w)
+    open_ = _list_of_text(d, "what_remains_open", w)
     if not isinstance(d.get("objections"), list):
         raise schema.Refused(f"{w}: objections is missing (a list; empty if there are none)")
+    if not isinstance(d.get("saw_proposer_reasoning"), bool):
+        raise schema.Refused(f"{w}: saw_proposer_reasoning must be true or false")
+    opened = _list_of_text(d, "what_i_opened", w, at_least_one=False)
+    _labels(d, w)
     raw = Path(challenge_file).read_bytes()
-    eid = "eval:" + sha([claim_id, c["rev"], RUBRIC, run, hashlib.sha256(raw).hexdigest()])
-    a = c["attrs"]
+    fh, bh = hashlib.sha256(raw).hexdigest(), hashlib.sha256(brief_raw).hexdigest()
+    eid = "eval:" + sha([claim_id, c["rev"], RUBRIC, run, fh, bh])
     attrs = {
         "rubric": RUBRIC, "what_was_checked": checked, "what_was_observed": observed, "what_remains_open": open_,
         "check_type": "independent challenge", "method": "tools.kgraph.defend challenge",
         "method_version": code_stamp("tools.kgraph.defend"), "claim_revision": c["rev"],
-        "input_hash": c["content_sha"], "location": "tools/kgraph/defend.py", "scope": a["scope"],
-        "expected_observation": dist, "reproducibility": f"the challenge file, sha256 {hashlib.sha256(raw).hexdigest()}",
-        "exceptions": d["objections"], "reviewer": run,
-        "alternatives": alts, "falsifiers": fals, "distinguishing_observation": dist, "objections": d["objections"],
+        "input_hash": c["content_sha"], "location": "tools/kgraph/defend.py", "scope": c["attrs"]["scope"],
+        "expected_observation": dist, "reproducibility": f"the challenge file, sha256 {fh}; the brief, sha256 {bh}",
+        "exceptions": d["objections"], "reviewer": run, "alternatives": alts, "falsifiers": fals,
+        "distinguishing_observation": dist, "objections": d["objections"], "brief_sha256": bh,
+        "saw_proposer_reasoning": d["saw_proposer_reasoning"], "what_i_opened": opened, "challenge_file": d,
     }
     edges = [link("EVALUATES", eid, claim_id), link("PRODUCED", run, eid)]
     res = store.write([{"id": eid, "type": "Evaluation", "attrs": attrs}], edges, written_by=run)
@@ -356,17 +550,28 @@ def show(store: GraphStore, claim_id: str) -> str:
     a = c["attrs"]
     out = [f"{claim_id}  revision {c['rev']}  (registered by {a['proposer_run']})"]
     for k in ("proposer", "hypothesis", "exact_claim", "scope", "boundaries", "mechanism", "alternatives", "falsifiers",
-              "code_commit", "artifact_path", "artifact_sha256", "outcome_visibility", "inference", "inference_reason",
-              "source_event_ids", "data_manifest_hashes", "event_time", "knowledge_time"):
+              "artifact_repo", "artifact_path", "code_commit", "artifact_sha256", "data_manifest_hashes",
+              "outcome_visibility", "inference", "inference_reason", "source_event_ids", "event_time", "knowledge_time",
+              "reasoning_files"):
         if k in a:
-            out.append(f"{k}: {json.dumps(a[k], ensure_ascii=False) if not isinstance(a[k], str) else a[k]}")
+            out.append(f"{k}: {a[k] if isinstance(a[k], str) else json.dumps(a[k], ensure_ascii=False)}")
+    ol = _outcome_line(a)
+    if ol:
+        out.append(ol)
+    out.append("every revision's falsifiers, with the time each was written:")
+    for l in store.history(claim_id):
+        out.append(f"  revision {l['rev']}, written {l['written_at']} by {l['written_by']}: "
+                   f"{json.dumps(l['attrs']['falsifiers'], ensure_ascii=False)}")
     out.append("rests on:")
     out += [f"  {json.dumps(g, ensure_ascii=False)}" for g in a["rests_on"]] or ["  nothing"]
+    for u in a.get("unlinked_grounds", []):
+        out.append(f"  NO LINK for a ground: {json.dumps(u, ensure_ascii=False)}")
     ch = challenges_of(store, claim_id)
     out.append("challenges on record:")
     for e in ch:
         ea = e["attrs"]
-        out += [f"  {e['id']}  by {ea['reviewer']}  at claim revision {ea['claim_revision']}",
+        out += [f"  {e['id']}  by {ea['reviewer']}  at claim revision {ea['claim_revision']}  (brief sha256 {ea['brief_sha256']}; "
+                f"saw the proposer's reasoning: {ea['saw_proposer_reasoning']}; opened: {json.dumps(ea['what_i_opened'])})",
                 f"    alternatives: {json.dumps(ea['alternatives'], ensure_ascii=False)}",
                 f"    falsifiers: {json.dumps(ea['falsifiers'], ensure_ascii=False)}",
                 f"    distinguishing observation: {ea['distinguishing_observation']}",
@@ -398,13 +603,8 @@ def undefended(store: GraphStore) -> list[str]:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("verb", choices=("register", "challenge-brief", "challenge", "show", "undefended"))
-    ap.add_argument("--claim-file")
-    ap.add_argument("--claim")
-    ap.add_argument("--file")
-    ap.add_argument("--out")
-    ap.add_argument("--run")
-    ap.add_argument("--data")
-    ap.add_argument("--graph-dir")
+    for f in ("--claim-file", "--claim", "--file", "--brief", "--out", "--run", "--data", "--graph-dir"):
+        ap.add_argument(f)
     a = ap.parse_args(argv)
     store = GraphStore(a.data, graph_dir=a.graph_dir)
     try:
@@ -414,7 +614,7 @@ def main(argv=None) -> int:
             Path(a.out).write_text(brief(store, a.claim), encoding="utf-8")
             print(f"wrote {a.out}")
         elif a.verb == "challenge":
-            print(json.dumps(challenge(store, a.claim, a.file, a.run)))
+            print(json.dumps(challenge(store, a.claim, a.file, a.run, a.brief)))
         elif a.verb == "show":
             print(show(store, a.claim))
         else:
