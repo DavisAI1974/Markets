@@ -206,6 +206,19 @@ def test_a_renamed_file_is_listed_under_its_new_path(capsys):
     assert not [ln for ln in out if ln.startswith(old + " |")]
 
 
+def test_graph_manifest_entries_still_match_as_written_where_the_joined_path_does_not_exist(capsys):
+    # markets-data 7bdf323: `git show 7bdf323:graph/MANIFEST.json` holds 26 entries in "files", each "path" a string
+    # written from the root ("graph/edges/..." and so on); `git ls-tree -r 7bdf323 --name-only | grep '^graph/graph/'`
+    # gives nothing, so the joined reading names no file and the as-written reading is the one that counts.
+    root = _root()
+    _needs(root, "7bdf323", "624710b")
+    code, out = _run(capsys, root, "624710b..7bdf323")
+    assert code == 0
+    rows = [ln for ln in out if "graph/MANIFEST.json: " in ln and "(path as written)" in ln and ln.startswith("graph/")]
+    assert len(rows) == 26
+    assert not [ln for ln in out if "names the same path in another folder" in ln and "graph/MANIFEST.json" in ln]
+
+
 # ---- CASES THE REAL HISTORY DOES NOT HOLD ----
 # Each is a real file's text with exactly the named thing changed, committed into a scratch git repo
 # (tmp_path, never markets-data). Real texts come from markets-data 42614ca.
@@ -376,3 +389,40 @@ def test_a_read_that_failed_is_not_a_file_that_is_gone(capsys, tmp_path):
     assert "cannot read experiments/trials.jsonl at" in out[-1] and "could not be read" in out[-1]
     assert len([ln for ln in out if ln.startswith("cannot read")]) == 1
     assert not any(ln.startswith("COUNTS") for ln in out)
+
+
+def test_when_both_readings_name_a_file_the_entry_means_the_one_in_the_manifests_folder(capsys, tmp_path):
+    # markets-data 7bdf323: paper-rules/20261109/FILE_MANIFEST.json holds {"path": "tasks/plan.md", "bytes": 3284, ...};
+    # `git cat-file -s` gives tasks/plan.md 3283 bytes and paper-rules/20261109/tasks/plan.md 3284 bytes.
+    # change: the text of that manifest is committed unchanged into a scratch repo, with the real tasks/plan.md and the
+    # real paper-rules/20261109/tasks/plan.md, both added in the one commit (the real root file came in a root commit)
+    root = _root()
+    _needs(root, "7bdf323")
+    repo = tmp_path / "scratch"
+    repo.mkdir()
+    _git(repo, "init", "-q")
+    _git(repo, "config", "user.email", "x@example.invalid")
+    _git(repo, "config", "user.name", "x")
+    (repo / "README.md").write_text("scratch\n")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "base")
+    for src, dst in (("tasks/plan.md", "tasks/plan.md"),
+                     ("paper-rules/20261109/tasks/plan.md", "paper-rules/20261109/tasks/plan.md"),
+                     ("paper-rules/20261109/FILE_MANIFEST.json", "paper-rules/20261109/FILE_MANIFEST.json")):
+        blob = subprocess.run(["git", "-C", str(root), "show", f"7bdf323:{src}"], capture_output=True, check=True).stdout
+        (repo / dst).parent.mkdir(parents=True, exist_ok=True)
+        (repo / dst).write_bytes(blob)
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "add")
+    _, out = _run(capsys, repo, "HEAD~1..HEAD")
+    nested = [ln for ln in out if ln.startswith("paper-rules/20261109/tasks/plan.md |")][0]
+    assert "bytes at B 3284" in nested
+    assert "paper-rules/20261109/FILE_MANIFEST.json: bytes equal, sha256 equal (path relative to the manifest's folder)" in nested
+    top = [ln for ln in out if ln.startswith("tasks/plan.md |")][0]
+    assert "bytes at B 3283" in top
+    assert "bytes equal" not in top and "bytes not equal" not in top
+    assert "names the same path in another folder" in top
+    assert "paper-rules/20261109/FILE_MANIFEST.json" in top and "paper-rules/20261109/tasks/plan.md" in top
+    assert "not counted as its entry" in top
+    c = _counts(out)
+    assert (c["added"], c["with_entry"], c["no_entry"]) == ("3", "1", "2")

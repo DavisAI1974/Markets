@@ -181,7 +181,7 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         if blob is None:
             gone += 1
-        held, folders = [], []
+        held, folders, passed = [], [], []
         for m, ents in read.items():
             for e in ents:
                 if not isinstance(e, dict):
@@ -191,7 +191,14 @@ def main(argv: list[str] | None = None) -> int:
                     v = e.get(k)
                     if not isinstance(v, str):
                         continue
-                    for full, how in _spellings(m, v):
+                    spell = _spellings(m, v)
+                    if not v.endswith("/") and len(spell) == 2 and spell[1][0] in names:
+                        # both readings name a file: the entry means the one in the manifest's folder
+                        if spell[0][0] == p:
+                            passed.append(f"{m}: a manifest names the same path in another folder, its entry "
+                                          f"\"{v}\" is the file {spell[1][0]}; not counted as its entry")
+                        spell = spell[1:]
+                    for full, how in spell:
                         if v.endswith("/"):
                             if full != "" and p.startswith(full) and how not in folder_hows:
                                 folder_hows.append(how)
@@ -213,6 +220,8 @@ def main(argv: list[str] | None = None) -> int:
         else:
             no_entry += 1
             tail = "no manifest holds an entry for it"
+        if passed:
+            tail += " | " + " | ".join(passed)
         print(f"{p} | {where} | {tail}")
     print(f"COUNTS added={len(added)} with_entry={with_entry} no_entry={no_entry} "
           f"under_a_folder_entry={under_folder} gone_at_B={gone} "
