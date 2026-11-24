@@ -198,7 +198,7 @@ def watch(data, run: str, *, ref=None, platform=None, graph_dir=None, exp_dir=No
         while True:
             if fetch:
                 target = ref or candidate_refs(run)[0]
-                ipf._git(store.data_root, "fetch", "--depth", "1000000", "origin", f"+refs/heads/paper-runs/{run}:{target}")
+                ipf._git(store.data_root, "fetch", "--no-tags", "origin", f"+refs/heads/paper-runs/{run}:{target}")
             try:
                 tip = resolve_commit(store.data_root, run, ref=ref)
             except RuntimeError as e:
