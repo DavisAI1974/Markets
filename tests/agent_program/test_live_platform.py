@@ -118,7 +118,8 @@ def test_first_middle_last_packets_pass_and_a_later_row_fails_naming_it(pk_env):
         assert "open_profit" not in p["text"].split("NOT IN THIS PACKET")[0]
         print(f"\npacket seq {s}: {p['tokens_estimated']} tokens, lines {len(p['lines'])}, cut {p['cut']}")
     p = sp.build(rows, opens[len(opens) // 2], 6000, store=store, platform_dir=plat)
-    later = next(r for r in rows if r["sequence"] > p["sequence"] and r["kind"] == "paper order")
+    later = next(r for r in rows if r["sequence"] > p["sequence"] and r["kind"] == "paper order"
+                 and r["received"] > p["moment_ns"])
     bad = copy.deepcopy(p)
     ln = sp.row_line(later, R0)
     ln["section"] = "other_rules"

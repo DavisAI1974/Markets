@@ -80,7 +80,7 @@ HEADINGS = {
     "other_rules": "EARLIER ROWS OF THIS RUN FOR THE OTHER RULES, NEWEST FIRST:",
 }
 ROW_FIELDS = {
-    "signal": ("rule", "action", "side", "reason", "trade_id", "bid", "ask", "received"),
+    "signal": ("rule", "action", "side", "reason", "conditions", "trade_id", "bid", "ask", "received"),
     "paper order": ("rule", "action", "order_side", "quantity", "placement", "limit_price", "trade_id",
                     "order_id", "bid", "ask", "received"),
     "fill": ("rule", "action", "side", "quantity", "fill_price", "liquidity", "trade_id", "fill_id",
@@ -119,7 +119,9 @@ def known_at(row: dict):
 
 
 def _fmt(row: dict, fields) -> str:
-    return "; ".join(f"{k}={row[k]}" for k in fields if k in row and row[k] is not None)
+    def one(v):
+        return json.dumps(v, sort_keys=True, ensure_ascii=False) if isinstance(v, (dict, list)) else v
+    return "; ".join(f"{k}={one(row[k])}" for k in fields if k in row and row[k] is not None)
 
 
 def row_line(row: dict, run: str) -> dict:
@@ -167,9 +169,9 @@ _CACHE: dict = {}
 
 def _cached(store, key, fn):
     k = (id(store), key)
-    if k not in _CACHE:
-        _CACHE[k] = fn()
-    return _CACHE[k]
+    if k not in _CACHE or _CACHE[k][0] is not store:     # the store is held, so its id is not reused
+        _CACHE[k] = (store, fn())
+    return _CACHE[k][1]
 
 
 def _day_dipoles(store, day):
@@ -306,7 +308,7 @@ def build(journal_rows, sequence, budget, *, store, platform_dir=None, trials=No
             out.append(f"- the rule's text: {why_no_rule}.")
         out.append(f"- every other run of the same tape: {len(others)} runs hold "
                    f"{sum(v['orders'] for v in others.values())} orders and {sum(v['fills'] for v in others.values())} "
-                   "fills of this stretch, its future.")
+                   "fills of this stretch, which may hold its future.")
         out.append(f"- peaks: {_peaks_of(store, day)} of this trade day; the graph does not hold the time a peak "
                    "became known.")
         out.append(f"- claims: {claims_out} are out (their source files were written after the moment, or the date "
