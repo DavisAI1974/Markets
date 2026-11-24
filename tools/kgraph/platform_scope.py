@@ -153,6 +153,8 @@ def _due(store: GraphStore, dirs: dict | None) -> list[tuple[dict, str, str]]:
         if store.history(edge_id("MEMBER_OF", n["id"], SCOPE_ID, "")):     # marked already, or marked and lifted
             continue
         a = n["attrs"]
+        if n["type"] in ("Order", "Fill") and a.get("platform") == "own paper platform":
+            continue        # a record of Greg's own paper platform (tools.kgraph.ingest_platform), not the tastytrade sandbox
         if n["type"] in ("Order", "Fill"):
             out.append((n, RULE_RECORD, f"an {n['type'].lower()} of the paper run {a.get('run')} on the tastytrade "
                                          "sandbox; nothing of it is scored"))
