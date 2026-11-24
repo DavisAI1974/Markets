@@ -400,7 +400,7 @@ def resolve_state_id(state, id_):
 def state_layer_of(state, id_):
     """The layer name an id of a state row belongs to, or None."""
     if resolve_state_id(state, id_):
-        return id_[6:].partition("/")[0]
+        return "state." + id_[6:].partition("/")[0]
     return None
 
 
@@ -477,6 +477,61 @@ def planes_named(store, day, platform_dir):
                 out.append((name, None, "named in a rule text's READS; no file of this trade day is in the graph or the checkout"))
     return out
 
+
+AFTERWARDS_NOTICE = ("nothing in this file may be given to a decider at the instant it decides; it is for learning after "
+                     "the fact")
+
+
+def afterwards_layers(store, day, moment, planes=()):
+    """What ROOT stores for the trade day that is AFTER the moment or became known only after it, for learning after the
+    fact (Greg, 2026-11-24). NEVER read into a brief, NEVER passed to a decider's `decide`: it is written beside a
+    question and nowhere else. Each row has its own id (all start `afterwards:`, so none can pass as an id of a packet)
+    and its time where the store holds one. `planes` is `planes_named`'s list: a stored plane's rows later than the
+    moment cannot be split here while its parquet is not in the checkout, and each is named with that reason."""
+    of_day, _ = _day_dipoles(store, day)
+    cells = {"AFTERWARDS": [], "HELD_BACK": []}
+    for n in of_day:
+        pinned = n["attrs"]["pinned"]
+        for group, cols in (("AFTERWARDS", dp.AFTERWARDS), ("HELD_BACK", dp.HELD_BACK)):
+            for c in cols:
+                if c in pinned:
+                    cells[group].append({"id": f"afterwards:dipole:{n['id']}/{c}", "column": c, "value": pinned[c],
+                                         "event": n["id"], "event_known_at_ns": dp._known_ns(n), "why": cols[c]})
+    later = [{"id": f"afterwards:dipole:{n['id']}", "known_at_ns": dp._known_ns(n), "pinned": n["attrs"]["pinned"]}
+             for n in of_day if not (dp._known_ns(n) < moment and dp._birth_ns(n) + dp.NS_PER_SECOND <= moment)]
+    peaks = [{"id": f"afterwards:{n['id']}", "high_eastern": n["attrs"]["high_eastern"], "known_at_ns": None,
+              "pinned": n["attrs"]["pinned"],
+              "why": "the graph holds the time of a peak's high, not when it became known"}
+             for n in store.nodes("Peak") if n["attrs"].get("trade_day") == day]
+    return {"known_only_afterwards": True, "notice": AFTERWARDS_NOTICE, "trade_day": day, "moment_ns": moment,
+            "dipole_cells_afterwards_columns": cells["AFTERWARDS"], "dipole_cells_held_back_columns": cells["HELD_BACK"],
+            "dipole_events_made_known_at_or_after_the_moment": later, "peaks": peaks,
+            "stored_planes_rows_later_than_the_moment_not_split": [
+                {"layer": n, "rows": r, "reason": w} for n, r, w in planes]}
+
+
+def afterwards_check(doc, moment) -> list[str]:
+    """Every breach of the afterwards file's own rule; empty when none: it says so, and holds only after-the-fact
+    columns, events not yet known at the moment, and Peaks."""
+    out = []
+    if doc.get("known_only_afterwards") is not True or doc.get("notice") != AFTERWARDS_NOTICE:
+        out.append("the file does not open with known_only_afterwards and its notice")
+    if doc.get("moment_ns") != moment:
+        out.append("the file is of another moment")
+    for key, groups in (("dipole_cells_afterwards_columns", dp.AFTERWARDS), ("dipole_cells_held_back_columns", dp.HELD_BACK)):
+        for r in doc.get(key, []):
+            if r["column"] not in groups:
+                out.append(f"{r['id']}: column {r['column']} is not of the group {key}")
+    for r in doc.get("dipole_events_made_known_at_or_after_the_moment", []):
+        if r["known_at_ns"] < moment and r["pinned"].get("native_birth_ns") is not None and \
+                int(r["pinned"]["native_birth_ns"]) + dp.NS_PER_SECOND <= moment:
+            out.append(f"{r['id']}: was known before the moment, so it is not an after-the-fact row")
+    for key in ("dipole_cells_afterwards_columns", "dipole_cells_held_back_columns",
+                "dipole_events_made_known_at_or_after_the_moment", "peaks"):
+        for r in doc.get(key, []):
+            if not str(r.get("id", "")).startswith("afterwards:"):
+                out.append(f"{r.get('id')}: an id of this file must start with afterwards:")
+    return out
 
 def q_line(row: dict) -> dict:
     """One earlier question row of the run: the two lines it carried, known at its own tape time."""
@@ -625,6 +680,13 @@ def build(journal_rows, sequence, budget, *, store, platform_dir=None, trials=No
             groups = {}
             for name, rows, why in planes:
                 groups.setdefault(why, []).append(f"{name}" + (f" ({rows} rows)" if rows else ""))
+            aw = afterwards_layers(store, day, moment)
+            out.append("- kept apart for learning after the fact, and never given to a decider: "
+                       f"{len(aw['dipole_cells_afterwards_columns'])} AFTERWARDS cells and "
+                       f"{len(aw['dipole_cells_held_back_columns'])} HELD_BACK cells of the trade day's dipole events, "
+                       f"{len(aw['dipole_events_made_known_at_or_after_the_moment'])} dipole events made known at or after the "
+                       f"moment, {len(aw['peaks'])} peaks; the rows of each stored plane later than the moment are not split "
+                       "(the plane is not in the checkout, see below).")
             out.append(f"- ROOT's stored planes of trade day {day}: none is placed in this packet, each for the reason "
                        "given and none read:")
             for why, names in groups.items():

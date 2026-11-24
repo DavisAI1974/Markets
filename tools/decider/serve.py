@@ -279,6 +279,10 @@ class Server:
         if pk.get("state") is not None:
             write_json(box / "state.json", pk["state"])
         if pk.get("layers"):
+            # the after-the-fact layers, for learning only: never in the brief, never in `pk`, never an id of a decision
+            write_whole(box / "afterwards_layers.json", json.dumps(
+                sp.afterwards_layers(self.store, pk["trade_day"], pk["moment_ns"],
+                                     sp.planes_named(self.store, pk["trade_day"], self.platform)), sort_keys=True) + "\n")
             write_json(box / "layers.json", {n: {k: v for k, v in l.items() if k != "in_text"}
                                              for n, l in pk["layers"].items() if "rows" in l})
 
