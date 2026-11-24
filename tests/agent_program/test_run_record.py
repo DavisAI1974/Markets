@@ -306,36 +306,43 @@ def test_missing_names_runs_with_a_plan_or_kept_transcript_and_no_line(scratch, 
     assert f"plan or kept transcript with no line {n};" in [l for l in out.splitlines() if l.startswith("COUNTS")][0]
 
 
-def test_missing_with_live_counts_on_the_record_as_it_was_at_7de89a4(tmp_path, capsys):
+def _show(commit, rel):
+    r = subprocess.run(["git", "-C", str(data_root()), "show", f"{commit}:{rel}"], capture_output=True)
+    if r.returncode != 0:
+        pytest.skip(f"markets-data has no {rel} at {commit}")
+    return r.stdout
+
+
+def test_missing_with_live_counts_on_the_record_as_it_was_at_5af204d1(tmp_path, capsys):
+    # The record, plans and kept transcripts as they were at markets-data commit 5af204d1 (2026-11-24T17:37:07Z).
+    # The live folder holds two real transcripts, each a byte-for-byte copy:
+    #   run 157's, kept at 5af204d1 (its sidecar there carries tie_note "the brief names no run ...": its brief opens
+    #     "You are scout run 157", which the code's reading of a brief does not take for a run), and
+    #   run 162's, NOT kept at 5af204d1 (first kept by f350c321, 2026-11-24T17:40:13Z; its brief opens
+    #     "You are the scout, agent run 162"), and run 162 has no line in the record at 5af204d1.
+    # The expected figures are literals read with these commands (M=/home/user/markets-data, P=PAPER):
+    #   git -C $M show 5af204d1:$P/transcripts/run-0157.json | jq .tie_note        -> the "names no run" note
+    #   git -C $M ls-tree --name-only 5af204d1 -- $P/transcripts/run-0162.jsonl.gz | wc -l           -> 0
+    #   git -C $M show 5af204d1:$P/agent-runs.jsonl | jq -c 'select(.run==162)' | wc -l               -> 0
+    #   git -C $M log --diff-filter=A --format=%h -- $P/transcripts/run-0162.jsonl.gz                  -> f350c321
+    #   git -C $M show f350c321:$P/transcripts/run-0162.jsonl.gz | zcat | head -1 | jq -r .message.content
+    #                                                                       -> "You are the scout, agent run 162 ..."
+    # so: 2 live transcripts, 1 names one run (162), 1 names none (157), 1 with no line (162), 1 not kept (162).
     data_root()
+    commit, later = "5af204d1", "f350c321"
     d, live_dir = tmp_path / "d", tmp_path / "live"
-    _record_as_of("7de89a4", d, PAPER)
+    _record_as_of(commit, d, PAPER)
     live_dir.mkdir()
-    k = d / PAPER / "transcripts"
-    gzs = sorted(k.glob("run-*.jsonl.gz"))
-    assert gzs
-    # which run each transcript is comes from the kept sidecars at that commit (their own `run` and `agent_id`),
-    # never from reading the briefs again
-    runs = []
-    for g in gzs:
-        side = json.loads((k / (g.name[:-9] + ".json")).read_text())
-        raw = gzip.decompress(g.read_bytes())
-        assert json.loads(raw.decode().splitlines()[0])["agentId"] == side["agent_id"]
-        (live_dir / g.name[:-3]).write_bytes(raw)
-        runs.append(side["run"])
-    lined = {json.loads(l)["run"] for l in (d / PAPER / "agent-runs.jsonl").read_text().splitlines() if l.strip()}
+    rel = PAPER + "/transcripts/run-"
+    assert json.loads(_show(commit, rel + "0157.json"))["tie_note"].startswith("the brief names no run")
+    assert not (d / PAPER / "transcripts" / "run-0162.jsonl.gz").exists()
+    (live_dir / "agent-a9e48461f5f4f0068.jsonl").write_bytes(gzip.decompress(_show(commit, rel + "0157.jsonl.gz")))
+    (live_dir / "agent-run162.jsonl").write_bytes(gzip.decompress(_show(later, rel + "0162.jsonl.gz")))
     assert main(["missing", "--data", str(d), "--live", str(live_dir)]) == 0
     counts = [l for l in capsys.readouterr().out.splitlines() if l.startswith("COUNTS")][0]
-    n = len(runs)
-    # read by another route than the code's: each kept sidecar at that commit carries a tie_note exactly when its
-    # brief names no run, and a live file is kept when its sha256 is in a sidecar (hashed here, not counted by the code)
-    sides = [json.loads(q.read_text()) for q in sorted(k.glob("run-*.json"))]
-    none_n = sum(1 for sd in sides if sd.get("tie_note"))
-    not_kept = sum(1 for g in gzs if hashlib.sha256(gzip.decompress(g.read_bytes())).hexdigest()
-                   not in {sd["sha256"] for sd in sides})
-    assert f"live transcripts {n}, of which {n - none_n} name one run and {none_n} name none" in counts
-    assert f"live transcripts with no line {len(set(runs) - lined)}," in counts
-    assert f"live transcripts not kept {not_kept};" in counts
+    assert "live transcripts 2, of which 1 name one run and 1 name none" in counts
+    assert "live transcripts with no line 1," in counts
+    assert "live transcripts not kept 1;" in counts
 
 
 def test_missing_names_a_live_transcript_that_names_no_run_and_two_that_name_one(paper, tmp_path, capsys):
