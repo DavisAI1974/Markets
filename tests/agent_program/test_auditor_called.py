@@ -1,7 +1,8 @@
 """Ticket 03b: every run of the other agents has an auditor's report with its own row.
 
 Real records only: the run record, the auditor's reports and TICKET_RUNS.json of a markets-data checkout,
-as they stand and as they were at named commits (read with git, no checkout). No made-up run line.
+as they stand and as they were at named commits (read with git, no checkout). Every check above the last
+section rests on real lines only; the last section says exactly what it changes in a real line.
 Expected values are derived below from the record's auditor lines in a few independent lines, never by
 calling the code under test.
 """
@@ -44,12 +45,17 @@ def _expected(lines):
     runs = {d["run"] for d in lines}
     newest = {d["run"]: d for d in lines}          # later lines overwrite: the newest line of each run
     auditors = {r for r, d in newest.items() if _agent(d) == AUDITOR}
-    cleared, rec_only = set(), set()
     reported = {d["run"] for d in lines if d.get("audit_report", {}).get("commit")}
-    for d in lines:
-        if d["run"] in auditors and d["run"] in reported:
-            cleared |= set(d.get("audits", []))
-            rec_only |= set(d.get("record_only", []))
+    says = {}       # run -> one entry per clearing auditor run: does that auditor list it as record-only?
+    for a in sorted(auditors & reported):
+        mine = [d for d in lines if d["run"] == a]
+        names = {n for d in mine for n in d.get("audits", [])}
+        rec = {n for d in mine for n in d.get("record_only", [])}
+        for n in names:
+            says.setdefault(n, []).append(n in rec)
+    cleared = set(says)
+    # record-only only when EVERY auditor that clears the run lists it as record-only
+    rec_only = {n for n, v in says.items() if all(v)}
     return runs, auditors, cleared, rec_only
 
 
@@ -244,13 +250,13 @@ def test_every_ticket_as_the_record_stands_exits_as_its_runs_stand(capsys):
     for tid, listed in tix.items():
         if tid == "note":
             continue
-        bad = {n for n in listed if n not in runs or n in unaudited}
+        bad = {n for n in listed if n not in runs or n in unaudited or n in _no_report(_lines(root))}
         code = ac.main(["--data", str(root), "--ticket", tid])
         out = capsys.readouterr().out
         assert code == (1 if bad else 0), tid
         assert all(re.search(rf"^run {n} \|", out, re.M) for n in listed)
         for n in bad:
-            assert f"run {n}" in out and "NOT AUDITED" in out
+            assert f"run {n}" in out and ("NOT AUDITED" in out or "names no report" in out)
 
 
 def test_tickets_03b_and_02_at_9cea759_and_03b_at_c0d4ff1(capsys):
@@ -259,13 +265,18 @@ def test_tickets_03b_and_02_at_9cea759_and_03b_at_c0d4ff1(capsys):
     assert tix["03b"] == [111, 116, 120, 121] and 118 in tix["02"]
     runs, auditors, cleared, _ = _expected(_lines(root, "9cea759"))
     for tid in ("03b", "02"):
-        bad = {n for n in tix[tid] if n not in runs or n in (runs - auditors - cleared)}
+        bad = {n for n in tix[tid] if n not in runs or n in (runs - auditors - cleared)
+               or n in _no_report(_lines(root, "9cea759"))}
         code = ac.main(["--data", str(root), "--at", "9cea759", "--ticket", tid])
         capsys.readouterr()
         assert code == (1 if bad else 0), tid
     old = json.loads(_git_show(root, "c0d4ff1", f"{PAPER}/tickets-44-20261124/TICKET_RUNS.json"))
     assert old["03b"] == [111, 116, 120]
-    assert ac.main(["--data", str(root), "--at", "c0d4ff1", "--ticket", "03b"]) == 0
+    # EXPECTATION CHANGED (second read, point 4): 111, 116 and 120 named no report there, and an auditor's run
+    # that names no report fails its ticket ("the auditor's report for each of its runs is kept in git")
+    assert ac.main(["--data", str(root), "--at", "c0d4ff1", "--ticket", "03b"]) == 1
+    out = capsys.readouterr().out
+    assert all(re.search(rf"^run {n} \|.*names no report", out, re.M) for n in (111, 116, 120))
 
 
 def test_ticket_with_no_entry_exits_1_and_says_why(capsys):
@@ -284,7 +295,8 @@ def test_ticket_at_a_commit_reads_the_file_and_the_record_as_they_were(capsys):
     for tid, listed in tix.items():
         if tid == "note":
             continue
-        bad = {n for n in listed if n not in runs or n in (runs - auditors - cleared)}
+        # EXPECTATION CHANGED (second read, point 4): an auditor's run that names no report also fails its ticket
+        bad = {n for n in listed if n not in runs or n in (runs - auditors - cleared) or n in _no_report(lines)}
         assert ac.main(["--data", str(root), "--at", at, "--ticket", tid]) == (1 if bad else 0), tid
         capsys.readouterr()
 
@@ -368,3 +380,122 @@ def test_plans_with_no_line_at_b96fc54_read_the_folder_as_it_was():
     planned = {int(re.search(r"run-(\d+)\.json", x).group(1)) for x in r.stdout.split()}
     recorded = {d["run"] for d in _lines(root, at)}
     assert ac.analyse(root, at=at).planned_no_line == sorted(planned - recorded)
+
+
+# ---- the second read: reports are the auditor's own; heading of list (3); a missing commit ----
+
+def test_on_the_real_record_every_auditors_report_is_its_own_by_its_first_line():
+    root = data_root()
+    seen = 0
+    for d in _lines(root):
+        ar = d.get("audit_report") or {}
+        if _agent(d) == AUDITOR and ar.get("commit"):
+            first = _git_show(root, ar["commit"], ar["path"]).splitlines()[0]
+            assert re.match(rf"# Performance auditor run {d['run']}[ (]", first), (d["run"], first)
+            seen += 1
+    assert seen >= 4
+    assert ac.analyse(root).no_report == sorted(_no_report(_lines(root)))
+
+
+def test_list_3_heading_says_a_general_agent_handed_a_roles_file_is_listed_with_its_role(capsys):
+    root = data_root()
+    ac.main(["--data", str(root), "--at", "9bfef60"])
+    out = capsys.readouterr().out
+    assert "a general agent handed a role's file is listed here, with its role" in out.split("(4)")[0].split("(3)")[1].splitlines()[0]
+
+
+def test_an_at_that_is_not_a_commit_of_that_repository_says_so(capsys):
+    root = data_root()
+    assert ac.main(["--data", str(root), "--at", "0123abc"]) == 2
+    err = capsys.readouterr().err
+    assert "0123abc" in err and "not in that repository" in err and str(root) in err
+
+
+# ======================================================================================================
+# CASES THE REAL RECORD DOES NOT HOLD: each is the real record at a named commit, copied to a scratch
+# folder, plus a REAL line of that record with exactly the field(s) named here changed. Nothing here is
+# a real run. How: `git clone --shared --no-checkout` of the markets-data checkout under tmp_path, with
+# the record file written over it; chosen because the code reads every report with git from the folder
+# given to --data, and a shared clone holds every real report commit. The real checkout is never written.
+# ======================================================================================================
+
+def _scratch(tmp_path, root, lines):
+    dest = tmp_path / "copy"
+    subprocess.run(["git", "clone", "-q", "--shared", "--no-checkout", str(root), str(dest)], check=True)
+    f = dest / RUNS
+    f.parent.mkdir(parents=True, exist_ok=True)
+    f.write_text("".join(json.dumps(d) + "\n" for d in lines), encoding="utf-8")
+    return dest
+
+
+def _newest(lines, run):
+    return [d for d in lines if d["run"] == run][-1]
+
+
+def test_case_m1_an_auditor_run_whose_newest_line_says_builder_is_checked_like_a_builder(tmp_path, capsys):
+    # CHANGED: run 120's newest real line re-appended with agent_type and role = "builder"
+    root = data_root()
+    base = _lines(root, "d75eff9")
+    line = dict(_newest(base, 120), agent_type="builder", role="builder")
+    lines = base + [line]
+    copy = _scratch(tmp_path, root, lines)
+    rep = ac.analyse(copy)
+    others = {n for a in (111, 116, 124) for d in base if d["run"] == a for n in d.get("audits", [])}
+    named_by_120 = {n for d in base if d["run"] == 120 for n in d.get("audits", [])}
+    assert 120 not in rep.auditors and 120 in rep.not_audited      # nobody else names 120
+    assert (named_by_120 - others) and (named_by_120 - others) <= set(rep.not_audited)
+    assert ac.main(["--data", str(copy)]) == 1
+    out = capsys.readouterr().out
+    assert ("run 120 was an auditor's run by an earlier line and is not by its newest: "
+            "the audits it named are not counted") in out
+    assert re.search(r"^run 120 \| builder \|", out.split("(2) AUDITED")[0], re.M)
+
+
+def test_case_m2_a_run_that_names_no_report_fails_the_command_though_every_other_run_is_audited(tmp_path, capsys):
+    # CHANGED: nothing in a line. The record is cut to runs up to 109, run 111's two real lines (the first
+    # names audits 1 to 109 and no report; the newest names the report) and run 116's FIRST real line,
+    # which names no report. Expected from the rule: exit 1 only because run 116 names no report.
+    root = data_root()
+    base = _lines(root, "d75eff9")
+    first116 = [d for d in base if d["run"] == 116][0]
+    assert "audit_report" not in first116
+    lines = [d for d in base if d["run"] <= 109] + [d for d in base if d["run"] == 111] + [first116]
+    copy = _scratch(tmp_path, root, lines)
+    rep = ac.analyse(copy)
+    assert rep.not_audited == [] and rep.no_report == [116]
+    assert ac.main(["--data", str(copy)]) == 1
+    assert re.search(r"^run 116 \|.*names no report", capsys.readouterr().out, re.M)
+
+
+def test_case_m4_and_m5_a_name_without_a_row_in_the_report_clears_nothing(tmp_path, capsys):
+    # CHANGED: run 116's newest real line, audits = its own + [118, 50]. Its real report has no row for 118
+    # or 50. 118 is unaudited at 9bfef60 and stays so, with the note. 50 is record-only for run 111 and stays
+    # record-only (116 does not clear it). No real report holds a row for a run another report holds, so
+    # the half "a second auditor whose report DOES hold a row for 50" cannot be built from real reports.
+    root = data_root()
+    base = _lines(root, "9bfef60")
+    l116 = _newest(base, 116)
+    assert not ac.has_row(_git_show(root, l116["audit_report"]["commit"], l116["audit_report"]["path"]), 118)
+    copy = _scratch(tmp_path, root, base + [dict(l116, audits=list(l116["audits"]) + [118, 50])])
+    rep = ac.analyse(copy)
+    assert 118 in rep.not_audited and "no row for run 118" in rep.notes[118]
+    assert 50 in rep.record_only and 50 not in rep.with_row
+    assert 50 in rep.notes and "no row for run 50" in rep.notes[50]
+
+
+def test_case_g2b_a_report_that_is_another_auditors_is_no_report_of_its_own(tmp_path, capsys):
+    # CHANGED: run 121's newest real line (a builder's) at 9bfef60 gets agent_type and role = the auditor's
+    # type, audit_report = run 133's real report (path and commit), audits = [118]
+    root = data_root()
+    l133 = [d for d in _lines(root) if d["run"] == 133 and d.get("audit_report", {}).get("commit")]
+    if not l133:
+        pytest.skip("run 133 has no line naming its report in this checkout")
+    base = _lines(root, "9bfef60")
+    line = dict(_newest(base, 121), agent_type=AUDITOR, role=AUDITOR, audit_report=l133[-1]["audit_report"], audits=[118])
+    copy = _scratch(tmp_path, root, base + [line])
+    rep = ac.analyse(copy)
+    assert 121 in rep.no_report and 118 in rep.not_audited
+    assert "another run's" in rep.notes[118]
+    assert ac.main(["--data", str(copy)]) == 1
+    assert re.search(r"^run 121 \|.*names no report.*the report it names is another run's",
+                     capsys.readouterr().out, re.M)
