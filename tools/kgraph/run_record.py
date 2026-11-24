@@ -232,8 +232,10 @@ def cmd_append(a):
     _compare_with_line(f, a.run, base)
     if not (a.outcome or "").strip():
         raise Refused("the outcome is empty")
-    if a.outside_roster and a.agent_type and a.agent_type != a.outside_roster:
-        raise Refused("exactly one of --agent-type and --outside-roster is taken; both were given and differ")
+    if a.outside_roster is not None and a.agent_type is not None:
+        raise Refused("exactly one of --agent-type and --outside-roster is taken; both were given")
+    if a.outside_roster is not None and not a.outside_roster.strip():
+        raise Refused("--outside-roster needs the words for what the agent was; it was given empty")
     if a.role not in ROLES:
         raise Refused(f"role {a.role!r} is not one of {', '.join(ROLES)}")
     if a.outside_roster:

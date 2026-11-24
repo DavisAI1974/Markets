@@ -10,6 +10,7 @@ as numbers and never recomputed with the code under test.
 
 import copy
 import gzip
+import hashlib
 import json
 import re
 import shutil
@@ -326,9 +327,15 @@ def test_missing_with_live_counts_on_the_record_as_it_was_at_7de89a4(tmp_path, c
     assert main(["missing", "--data", str(d), "--live", str(live_dir)]) == 0
     counts = [l for l in capsys.readouterr().out.splitlines() if l.startswith("COUNTS")][0]
     n = len(runs)
-    assert f"live transcripts {n}, of which {n} name one run and 0 name none" in counts
+    # read by another route than the code's: each kept sidecar at that commit carries a tie_note exactly when its
+    # brief names no run, and a live file is kept when its sha256 is in a sidecar (hashed here, not counted by the code)
+    sides = [json.loads(q.read_text()) for q in sorted(k.glob("run-*.json"))]
+    none_n = sum(1 for sd in sides if sd.get("tie_note"))
+    not_kept = sum(1 for g in gzs if hashlib.sha256(gzip.decompress(g.read_bytes())).hexdigest()
+                   not in {sd["sha256"] for sd in sides})
+    assert f"live transcripts {n}, of which {n - none_n} name one run and {none_n} name none" in counts
     assert f"live transcripts with no line {len(set(runs) - lined)}," in counts
-    assert f"live transcripts not kept 0;" in counts
+    assert f"live transcripts not kept {not_kept};" in counts
 
 
 def test_missing_names_a_live_transcript_that_names_no_run_and_two_that_name_one(paper, tmp_path, capsys):
@@ -416,6 +423,9 @@ def test_a_transcript_that_is_run_108s_own_agrees_with_its_line_and_run_107s_doe
     rec = scratch / PAPER / "agent-runs.jsonl"
     # the real line of run 108 holds an exact-looking haiku model and 604,479 input tokens (read from the record)
     line108 = _newest(rec, 108)
+    before = rec.read_text()
+    assert main(_append_args(scratch, t107, 108, "--corrects", "x")) == 2  # run 107's transcript is not run 108's
+    assert "108" in capsys.readouterr().err and rec.read_text() == before
     assert main(_append_args(scratch, t108, 108, "--corrects", "x")) == 0
     after = _newest(rec, 108)
     assert after["input_tokens"] >= line108["input_tokens"] and after["agent_id"] == "ae63f020e27f3aa06"
@@ -433,6 +443,41 @@ def test_outside_the_roster_the_agent_type_is_the_text_given(scratch, capsys):
     assert main(_append_args(scratch, t, 107, "--corrects", "z", "--role", "reviewer", "--agent-type", "wizard")) == 2
     assert main(_append_args(scratch, t, 107, "--corrects", "w", "--role", "reviewer")) == 0
     assert _newest(rec, 107)["agent_type"] == "reviewer"
+
+
+def test_run_108s_kept_transcript_is_accepted_and_run_107s_offered_as_108_is_refused(tmp_path, paper, capsys):
+    # the record as it was at 04d8a0f (run 108's line holds claude-haiku-5-5, no agent id), the kept files of runs 107, 108
+    d = tmp_path / "data"
+    (d / PAPER).mkdir(parents=True)
+    (d / PAPER / "agent-runs.jsonl").write_bytes(subprocess.run(
+        ["git", "-C", str(data_root()), "show", f"04d8a0f:{PAPER}/agent-runs.jsonl"], capture_output=True, check=True).stdout)
+    rec = d / PAPER / "agent-runs.jsonl"
+    before = rec.read_text()
+    assert main(_append_args(d, paper / "transcripts/run-0107.jsonl.gz", 108, "--corrects", "x")) == 2
+    err = capsys.readouterr().err
+    assert "run 108's line holds model" in err and rec.read_text() == before
+    assert main(_append_args(d, paper / "transcripts/run-0108.jsonl.gz", 108, "--corrects", "x")) == 0
+    assert _newest(rec, 108)["agent_id"] == "ae63f020e27f3aa06"
+
+
+def test_agent_type_and_outside_roster_together_are_refused_whatever_their_values(scratch, paper, capsys):
+    t = paper / "transcripts/run-0117.jsonl.gz"
+    rec = scratch / PAPER / "agent-runs.jsonl"
+    before = rec.read_text()
+    for x, y in (("builder", "builder"), ("wizard", "wizard"), ("builder", "wizard")):
+        assert main(_append_args(scratch, t, 117, "--corrects", "x", "--role", "reviewer", "--agent-type", x, "--outside-roster", y)) == 2
+        assert "exactly one" in capsys.readouterr().err
+    assert rec.read_text() == before
+
+
+def test_an_empty_outside_roster_is_refused_with_what_it_needs(scratch, paper, capsys):
+    t = paper / "transcripts/run-0117.jsonl.gz"
+    rec = scratch / PAPER / "agent-runs.jsonl"
+    before = rec.read_text()
+    for empty in ("", "  "):
+        assert main(_append_args(scratch, t, 117, "--corrects", "x", "--role", "reviewer", "--outside-roster", empty)) == 2
+        assert "needs the words for what the agent was" in capsys.readouterr().err
+    assert rec.read_text() == before
 
 
 # ---------------------------------------------------------------------------------------------------------
@@ -632,3 +677,66 @@ def test_trap_a_short_text_inside_the_hand_backs_own_message_does_not_displace_t
     after = out.read_text()
     after = after[after.index("## The message its last hand-back points at"):]
     assert _real_pointed_at_opening() in after
+
+
+def _agent_id_scratch(tmp_path, paper):
+    """The record at 04d8a0f (no line holds run 157's agent id), no plans, and run 157's real kept sidecar and bytes."""
+    d = tmp_path / "data"
+    (d / PAPER / "transcripts").mkdir(parents=True)
+    (d / PAPER / "agent-runs.jsonl").write_bytes(subprocess.run(
+        ["git", "-C", str(data_root()), "show", f"04d8a0f:{PAPER}/agent-runs.jsonl"], capture_output=True, check=True).stdout)
+    side = json.loads((paper / "transcripts/run-0157.json").read_text())
+    assert side["tie_note"] and not any(side["agent_id"] in l for l in (d / PAPER / "agent-runs.jsonl").read_text().splitlines())
+    return d, side
+
+
+def test_trap_the_same_bytes_under_another_run_are_refused_on_the_sha_alone(tmp_path, paper, capsys):
+    # change: run 157's real kept sidecar (its brief names no run) has its agent_id removed, so the agent-id refusals do
+    # not fire and the sha refusal is the only one left; the same real bytes are offered as run 9001, which has no line
+    d, side = _agent_id_scratch(tmp_path, paper)
+    del side["agent_id"]
+    (d / PAPER / "transcripts/run-0157.json").write_text(json.dumps(side))
+    t = paper / "transcripts/run-0157.jsonl.gz"
+    aid = json.loads((paper / "transcripts/run-0157.json").read_text())["agent_id"]
+    assert _keep(d, 9001, t, aid=aid) == 2
+    err = capsys.readouterr().err
+    assert f"these bytes (sha256 {side['sha256']}) are already kept as run 157, not run 9001" in err
+    assert not (d / PAPER / "transcripts/run-9001.jsonl.gz").exists()
+
+
+def test_the_same_agent_id_under_another_run_is_refused_on_its_kept_sidecar_alone(tmp_path, paper, capsys):
+    # real sidecar, no change: run 157's own kept sidecar holds the agent id; the bytes offered as run 9001
+    d, side = _agent_id_scratch(tmp_path, paper)
+    shutil.copy(paper / "transcripts/run-0157.json", d / PAPER / "transcripts")
+    assert _keep(d, 9001, paper / "transcripts/run-0157.jsonl.gz", aid=side["agent_id"]) == 2
+    err = capsys.readouterr().err
+    assert f"agent id {side['agent_id']} is already on record for run 157 (its kept sidecar), not run 9001" in err
+    assert "these bytes" not in err
+
+
+def test_trap_the_same_agent_id_under_another_run_is_refused_on_its_line_alone(tmp_path, paper, capsys):
+    # change: run 116's real line in the record at 04d8a0f gains agent_id = run 157's real agent id; nothing else
+    d, side = _agent_id_scratch(tmp_path, paper)
+    rec = d / PAPER / "agent-runs.jsonl"
+    lines = [json.loads(l) for l in rec.read_text().splitlines() if l.strip()]
+    mine = [x for x in lines if x["run"] == 116][-1]
+    mine["agent_id"] = side["agent_id"]
+    rec.write_text("".join(json.dumps(x) + "\n" for x in lines if x is not mine) + json.dumps(mine) + "\n")
+    assert _keep(d, 9001, paper / "transcripts/run-0157.jsonl.gz", aid=side["agent_id"]) == 2
+    assert f"agent id {side['agent_id']} is already on record for run 116 (its line), not run 9001" in capsys.readouterr().err
+
+
+def test_trap_a_line_whose_model_replies_differs_from_its_kept_transcript_is_named(scratch, paper, capsys):
+    # change: run 154's real newest line (model_replies 10, the same as its kept transcript: unchanged, `missing` names no
+    # difference for it, asserted first) has its model_replies raised by one to 11; nothing else is touched
+    shutil.copytree(paper / "transcripts", scratch / PAPER / "transcripts")
+    rec = scratch / PAPER / "agent-runs.jsonl"
+    d = _newest(rec, 154)
+    assert d["model_replies"] == 10
+    assert main(["missing", "--data", str(scratch)]) == 0
+    assert not [l for l in capsys.readouterr().out.splitlines() if l.startswith("DIFFERS run 154") and "model_replies" in l]
+    d["model_replies"] = 11
+    rec.write_text("".join(l + "\n" for l in rec.read_text().splitlines() if l.strip() and json.loads(l)["run"] != 154) + json.dumps(d) + "\n")
+    assert main(["missing", "--data", str(scratch)]) == 0
+    mine = [l for l in capsys.readouterr().out.splitlines() if l.startswith("DIFFERS run 154")]
+    assert any("model_replies: line 11, transcript 10" in l for l in mine)
