@@ -150,17 +150,18 @@ class GraphStore:
             for end in (e["src"], e["dst"]):
                 if end not in batch_ids and end not in self._nodes:
                     raise schema.Refused(f"edge {e['id']} ({e['type']}): {end} is not a node of the graph")
+        # A line that names where it came from (`source`) names a node of the graph, whatever its type.
+        for n in nodes:
+            src = n["attrs"].get("source")
+            if src is not None and src not in batch_ids and src not in self._nodes:
+                raise schema.Refused(f"{n['type']} {n['id']}: its source {src} is not a node of the graph")
         # write rule 1, the link side: a claim that is not an inference is tied to its source by a
         # SUPPORTS link from that source, in this batch or already standing.
         supported = {e["dst"] for e in edges if e["type"] == "SUPPORTS"}
         supported |= {e["dst"] for e in self.edges("SUPPORTS")}
         for n in nodes:
-            if n["type"] == "Claim" and not n["attrs"]["inference"]:
-                src = n["attrs"]["source"]
-                if src not in batch_ids and src not in self._nodes:
-                    raise schema.Refused(f"Claim {n['id']}: its source {src} is not a node of the graph")
-                if n["id"] not in supported:
-                    raise schema.Refused(f"Claim {n['id']}: no SUPPORTS link from its source")
+            if n["type"] == "Claim" and not n["attrs"]["inference"] and n["id"] not in supported:
+                raise schema.Refused(f"Claim {n['id']}: no SUPPORTS link from its source")
 
         stamp, result, to_write = now(), {"new": 0, "revised": 0, "unchanged": 0}, {}
         for kind, items, table in (("nodes", nodes, self._nodes), ("edges", edges, self._edges)):
@@ -234,11 +235,11 @@ class GraphStore:
             except schema.Refused as e:
                 out.append(str(e))
                 continue
-            if n["type"] == "Claim" and not n["attrs"]["inference"]:
-                if n["attrs"]["source"] not in self._nodes:
-                    out.append(f"Claim {n['id']}: its source is not in the graph")
-                if n["id"] not in supported:
-                    out.append(f"Claim {n['id']}: no SUPPORTS link from its source")
+            src = n["attrs"].get("source")
+            if src is not None and src not in self._nodes:
+                out.append(f"{n['type']} {n['id']}: its source {src} is not in the graph")
+            if n["type"] == "Claim" and not n["attrs"]["inference"] and n["id"] not in supported:
+                out.append(f"Claim {n['id']}: no SUPPORTS link from its source")
             if [l["rev"] for l in lines] != list(range(1, len(lines) + 1)):
                 out.append(f"{n['type']} {n['id']}: revisions are not 1..{len(lines)} in order")
         for lines in self._edges.values():
