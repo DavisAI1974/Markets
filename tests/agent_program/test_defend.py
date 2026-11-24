@@ -434,7 +434,31 @@ def test_a_revision_leaves_standing_a_link_another_run_wrote_into_the_claim(worl
     r = _reg(world, "others-link", rests_on=only_rule, name="ol2.json")      # the proposer drops two of its own grounds
     live = {e["id"] for e in s.edges()}
     assert r["withdrawn"] and mine["id"] in live and mine["id"] not in r["withdrawn"]
-    assert not any(e["id"] == mine["id"] and e["attrs"].get("withdrawn") for e in s.edges(withdrawn=True) if e["id"] == mine["id"] and e["attrs"].get("withdrawn"))
+    assert len(s.history(mine["id"])) == 1 and not s.history(mine["id"])[0]["attrs"].get("withdrawn")
+
+
+def _item(world, **over):
+    d = {"what": "the text of rule CL01", "sha256": world["sha"], "repo": "paper-trading-platform",
+         "path": "paper_platform/rules/CL01.json", "commit": world["commit"]}
+    d.update(over)
+    return d
+
+
+def test_a_data_manifest_item_is_checked_against_the_file_at_its_commit(world):
+    s = world["store"]
+    ok = _reg(world, "man-ok", data_manifest_hashes=[_item(world)], name="man1.json")["claim"]
+    assert s.node(ok)["attrs"]["data_manifest_hashes"] == [_item(world)]
+    with pytest.raises(schema.Refused, match=r"data_manifest_hashes.*" + "a" * 64 + r".*" + world["sha"]):
+        _reg(world, "man-bad", data_manifest_hashes=[_item(world, sha256="a" * 64)], name="man2.json")
+    with pytest.raises(schema.Refused, match="data_manifest_hashes.*commit"):
+        _reg(world, "man-bad", data_manifest_hashes=[_item(world, commit="0" * 40)], name="man3.json")
+    with pytest.raises(schema.Refused, match="data_manifest_hashes.*path"):
+        _reg(world, "man-bad", data_manifest_hashes=[_item(world, path="paper_platform/rules/NOPE.json")], name="man4.json")
+    with pytest.raises(schema.Refused, match="data_manifest_hashes.*repo"):
+        _reg(world, "man-bad", data_manifest_hashes=[_item(world, repo="nowhere")], name="man5.json")
+    with pytest.raises(schema.Refused, match="data_manifest_hashes"):
+        _reg(world, "man-bad", data_manifest_hashes=[{"what": "x", "sha256": world["sha"]}], name="man6.json")
+    assert world["store"].node("claim:reg-" + defend.sha("man-bad")) is None
 
 
 def test_an_inference_that_names_nothing_it_rests_on_is_refused(world):

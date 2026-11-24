@@ -292,14 +292,31 @@ def _outcome(d: dict) -> dict:
     return {"outcome_seen": v["outcome_seen"], "what": v["what"].strip()}
 
 
-def _manifest(d: dict) -> list:
+def _manifest(d: dict, dirs: dict) -> list:
+    """Each item names a file at a commit in one of the checkouts; the sha256 is compared with that file, as the artifact is."""
     v = d.get("data_manifest_hashes")
-    ok = (isinstance(v, dict) and set(v) == {"none"} and isinstance(v["none"], str) and v["none"].strip()) or (
-        isinstance(v, list) and v and all(isinstance(x, dict) and set(x) == {"what", "sha256"} and str(x["what"]).strip()
-                                         and isinstance(x["sha256"], str) and _hex64.match(x["sha256"]) for x in v))
-    if not ok:
-        raise schema.Refused('claim file: data_manifest_hashes must be a list of {"what","sha256"} or {"none": "<why>"}')
-    return [v] if isinstance(v, dict) else v
+    if isinstance(v, dict) and set(v) == {"none"} and isinstance(v["none"], str) and v["none"].strip():
+        return [v]
+    keys = {"what", "sha256", "repo", "path", "commit"}
+    if not (isinstance(v, list) and v and all(isinstance(x, dict) and set(x) == keys and all(
+            isinstance(x[k], str) and x[k].strip() for k in keys) and _hex64.match(x["sha256"]) for x in v)):
+        raise schema.Refused('claim file: data_manifest_hashes must be a list of {"what","sha256","repo","path","commit"} '
+                             'or {"none": "<why>"}')
+    for i, x in enumerate(v):
+        where = f"data_manifest_hashes[{i}]"
+        if x["repo"] not in dirs:
+            raise schema.Refused(f"{where}: repo {x['repo']!r} has no local checkout")
+        try:
+            full = git(dirs[x["repo"]], "rev-parse", "--verify", x["commit"] + "^{commit}")
+        except RuntimeError:
+            raise schema.Refused(f"{where}: commit {x['commit']} does not exist in the {x['repo']} checkout") from None
+        try:
+            got = hashlib.sha256(_blob(dirs[x["repo"]], full, x["path"])).hexdigest()
+        except RuntimeError:
+            raise schema.Refused(f"{where}: path {x['path']} is not in {x['repo']} at {full}") from None
+        if got != x["sha256"]:
+            raise schema.Refused(f"{where}: the claim says {x['sha256']}, the file {x['path']} at {full} hashes to {got}")
+    return v
 
 
 # ---- register ----------------------------------------------------------------------------------------
@@ -342,7 +359,7 @@ def _register(store: GraphStore, claim_file, run: str, dirs: dict) -> dict:
     hypothesis, exact = _text(d, "hypothesis", w), _text(d, "exact_claim", w)
     scope, mechanism = _text(d, "scope", w), _text(d, "mechanism", w)
     alternatives, falsifiers = _list_of_text(d, "alternatives", w), _falsifiers(d, w)
-    visibility, manifest = _outcome(d), _manifest(d)
+    visibility, manifest = _outcome(d), _manifest(d, dirs)
     code_commit, art_path = _text(d, "code_commit", w), _text(d, "artifact_path", w)
     art_repo, art_sha = _text(d, "artifact_repo", w), _text(d, "artifact_sha256", w)
     if not _hex.match(code_commit):
@@ -414,8 +431,16 @@ def _register(store: GraphStore, claim_file, run: str, dirs: dict) -> dict:
     res = store.write(nodes, edges, written_by=run)
     new_ids = {e["id"] for e in edges}
     res["withdrawn"] = []
+    # only the links an earlier revision's registration of THIS claim wrote (its grounds, written by the proposer's run);
+    # a link another run wrote into the claim is left standing
+    wrote = set()
+    for l in prev:
+        for g in l["attrs"].get("rests_on", []):
+            wrote.add(link("DERIVED_FROM", cid, g["id"])["id"] if g["kind"] == "claim"
+                      else link("SUPPORTS", g["source"], cid)["id"])
     for e in store.edges():
-        mine = (e["type"] == "DERIVED_FROM" and e["src"] == cid) or (e["type"] == "SUPPORTS" and e["dst"] == cid)
+        mine = ((e["type"] == "DERIVED_FROM" and e["src"] == cid) or (e["type"] == "SUPPORTS" and e["dst"] == cid)) \
+            and e["id"] in wrote and store.history(e["id"])[0]["written_by"] == run
         if mine and e["id"] not in new_ids:
             store.withdraw_edge(e["id"], reason=f"a ground dropped by revision {store.node(cid)['rev']} of {cid}", written_by=run)
             res["withdrawn"].append(e["id"])
