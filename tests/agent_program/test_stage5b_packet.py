@@ -46,37 +46,91 @@ def test_a_packet_holds_the_event_and_only_what_was_known_before_it(graph, sheet
     assert packet.leakage_check(graph, out) == []
     later = [n for n, k, _ in sheet if k >= known and n != name]
     assert later and not any(n in out["text"] for n in later)             # no later event, by name
-    # the event's own cells are the workbook's, for the columns that are known at its moment
+    # the event's own cells are the workbook's, for the columns that are shown
     line = next(l for l in out["text"].splitlines() if l.startswith(f"dipole:{name} "))
-    for col in ("native_birth_ns", "native_magnitude", "trades_in_birth_second", "our_flow_bought_20s_before"):
+    for col in ("native_birth_ns", "trades_in_birth_second", "our_flow_bought_20s_before", "our_flow_bought_20s_after"):
         assert f"{col}={row[col]}" in line
+    assert "native_magnitude" not in line and "native_polarity" not in line
 
 
-def test_what_could_only_be_known_afterwards_is_never_in_a_packet(graph, sheet):
+def test_every_real_column_is_in_exactly_one_group_and_only_the_shown_ones_are_shown(graph, sheet):
     name, known, row = sheet[100]
     out = packet.build_packet(graph, f"dipole:{name}", budget_tokens=200000)
-    after = [c for c in row if c.endswith("_after") or c.startswith("seconds_to_") or c == "render"]
-    assert sorted(after) == sorted(out["hidden_columns"]) and len(after) == 6
-    body = out["text"].split("NOT IN THIS PACKET")[0]
-    assert not any(c in body for c in after)
-    shown = set(re.findall(r"(\w+)=", body))
-    assert shown <= set(packet.KNOWN_AT_THE_MOMENT)                         # an allow-list: a new column is hidden until listed
-    assert set(row) == set(packet.KNOWN_AT_THE_MOMENT) | set(after)         # every real column is placed on one side
+    groups = (set(packet.SHOWN), set(packet.HELD_BACK), set(packet.AFTERWARDS))
+    assert set(row) == groups[0] | groups[1] | groups[2]                    # every real column is placed
+    assert not (groups[0] & groups[1]) and not (groups[0] & groups[2]) and not (groups[1] & groups[2])
+    assert out["unplaced_columns"] == []
+    # held back until Greg says: Native's five values written on the closing line, and the column made from the polarity
+    assert set(out["held_back_columns"]) == {"native_polarity", "native_magnitude", "native_threshold",
+                                             "native_baseline", "native_prominence", "our_flow_on_native_side_after"}
+    assert set(out["after_columns"]) == {"seconds_to_dipole_after", "render"}
+    body, foot = out["text"].split("NOT IN THIS PACKET")
+    assert not any(c in body for c in out["hidden_columns"])
+    assert set(re.findall(r"(\w+)=", body)) <= set(packet.SHOWN)             # an allow-list
+    assert "held back until Greg says which reading governs" in foot
+    assert all(c in foot for c in out["hidden_columns"])                    # each hidden column is named, none silently
+
+
+def test_the_birth_second_has_ended_before_an_event_is_made_known_on_all_four_trade_days(graph):
+    """What the birth-second columns and the flow at the end of the birth second rest on: the birth second is
+    over before the event's moment. Read from the birth time, a different column from the moment."""
+    events = graph.nodes("DipoleEvent")
+    assert {n["attrs"]["trade_day"] for n in events} == {"2023-10-02", "2023-10-03", "2023-10-17", "2023-10-18"}
+    gaps = [int(n["attrs"]["pinned"]["native_known_second_ns"]) - int(n["attrs"]["pinned"]["native_birth_ns"]) for n in events]
+    assert len(gaps) == 3178 and min(gaps) >= packet.NS_PER_SECOND
+    # the gap column: on these four trade days the dipole before by birth was always made known first, so the
+    # guard that withholds the column has no real case to show; the count that says so is asserted here
+    late = 0
+    for day in {n["attrs"]["trade_day"] for n in events}:
+        before = packet._before_by_birth([n for n in events if n["attrs"]["trade_day"] == day])
+        late += sum(1 for n in events if n["attrs"]["trade_day"] == day
+                    and not packet._gap_is_known(n, before, int(n["attrs"]["pinned"]["native_known_second_ns"])))
+    assert late == 0
 
 
 def test_the_packet_does_not_change_when_the_future_is_taken_away(graph, sheet, tmp_path):
-    """The leakage gate, as invariance: the packet of an event built from the whole trade day equals
-    the packet built from a graph that holds nothing made known at or after the event's moment."""
-    name, known, _ = sheet[100]
+    """The leakage gate, as invariance, with the future taken away by another route than the packet's own:
+    the second graph has lost every event BORN at or after the anchor's moment (birth time, not the moment
+    column the packet filters on) and every column that is not shown. Events born before the moment and made
+    known after it are still in that graph; the packet must leave them out by itself."""
+    name, known = next((n, k) for n, k, r in sheet[100:]
+                       if any(int(r2["native_birth_ns"]) < k <= k2 and n2 != n for n2, k2, r2 in sheet))
     whole = packet.build_packet(graph, f"dipole:{name}", budget_tokens=200000)
     past = GraphStore(graph.data_root, graph_dir=tmp_path / "graph")
     keep = [n for n in graph.nodes("DipoleEvent")
-            if n["attrs"]["trade_day"] == DAY and (int(n["attrs"]["pinned"]["native_known_second_ns"]) < known or n["id"] == f"dipole:{name}")]
+            if n["attrs"]["trade_day"] == DAY and int(n["attrs"]["pinned"]["native_birth_ns"]) < known]
+    born_before_known_after = [n["id"] for n in keep
+                               if int(n["attrs"]["pinned"]["native_known_second_ns"]) >= known and n["id"] != f"dipole:{name}"]
+    assert born_before_known_after                       # a real case of the detection lag stays in the cut graph
+    stripped = []
+    for n in keep:
+        attrs = dict(n["attrs"], pinned={c: v for c, v in n["attrs"]["pinned"].items() if c in packet.SHOWN})
+        stripped.append({"id": n["id"], "type": n["type"], "attrs": attrs})
     src = graph.node(keep[0]["attrs"]["source"])
-    past.write([{k: n[k] for k in ("id", "type", "attrs")} for n in [src, *graph.nodes("TradeDay"), *keep]],
+    past.write([{k: n[k] for k in ("id", "type", "attrs")} for n in [src, *graph.nodes("TradeDay")]] + stripped,
                written_by="code:test")
     assert len(past.nodes("DipoleEvent")) < len([n for n in graph.nodes("DipoleEvent") if n["attrs"]["trade_day"] == DAY])
-    assert packet.build_packet(past, f"dipole:{name}", budget_tokens=200000)["text"] == whole["text"]
+    cut = packet.build_packet(past, f"dipole:{name}", budget_tokens=200000)
+    body = lambda t: t.split("NOT IN THIS PACKET")[0]
+    assert body(cut["text"]) == body(whole["text"])      # the same events and the same cells; the foot names columns the cut graph never held
+    assert not any(i.split(":", 1)[1] in whole["text"] for i in born_before_known_after)
+
+
+def test_the_check_catches_a_later_cell_put_under_a_shown_name(graph, sheet):
+    """leakage_check reads the packet's text against the graph. Here the check itself changes one built
+    packet's text, putting the event's real `seconds_to_dipole_after` cell under the shown name
+    `seconds_since_dipole_before`; nothing of the record is changed."""
+    name, known, row = next(x for x in sheet[100:] if x[2]["seconds_to_dipole_after"] != x[2]["seconds_since_dipole_before"])
+    out = packet.build_packet(graph, f"dipole:{name}", budget_tokens=200000)
+    real, later = f"seconds_since_dipole_before={row['seconds_since_dipole_before']}", f"seconds_since_dipole_before={row['seconds_to_dipole_after']}"
+    line = next(l for l in out["text"].splitlines() if l.startswith(f"dipole:{name} "))
+    assert real in line
+    tampered = dict(out, text=out["text"].replace(line, line.replace(real, later), 1))
+    found = packet.leakage_check(graph, tampered)
+    assert len(found) == 1 and "is not that event's stored cell" in found[0] and f"dipole:{name}" in found[0]
+    # a held-back column written onto a line is caught by its name
+    extra = dict(out, text=out["text"].replace(line, line + f"; native_polarity={row['native_polarity']}", 1))
+    assert any("native_polarity" in b for b in packet.leakage_check(graph, extra))
 
 
 def test_a_budget_cuts_the_oldest_events_first_and_says_so(graph, sheet):

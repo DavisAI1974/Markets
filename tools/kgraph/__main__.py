@@ -18,11 +18,12 @@ def main(argv=None) -> int:
     ap.add_argument("--data")
     ap.add_argument("--graph-dir")
     a = ap.parse_args(argv)
-    store = GraphStore(a.data, graph_dir=a.graph_dir)
+    store = GraphStore(a.data, graph_dir=a.graph_dir, tolerant=(a.verb == "check"))
     if a.verb == "check":
         from . import platform_scope
         from .extract import repo_dirs
-        breaches = store.check_all() + platform_scope.pending(store, repo_dirs(store.data_root, None, None))
+        from .resolve import double_merges
+        breaches = store.check_all() + [f"surface form with two standing merges: {x}" for x in double_merges(store)] + platform_scope.pending(store, repo_dirs(store.data_root, None, None))
         print("\n".join(breaches) if breaches else "no breach")
         return 1 if breaches else 0
     if a.verb == "counts":

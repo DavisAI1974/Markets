@@ -77,11 +77,19 @@ def test_the_resolvers_real_merges_are_checked_held_under_the_cutoff_and_can_be_
     resolve.apply_rules(store, dirs)
     merges = json.loads((root / MERGES).read_text(encoding="utf-8"))["merges"]
     out = resolve.apply(store, merges, "run:0025", min_confidence=0.9)
-    assert (out["applied"], out["under_the_cutoff"]) == (11, 22) and out["applied"] + out["under_the_cutoff"] + len(out["not_placed"]) == len(merges)
+    # Loaded again by the loader as it is now (a quote of 6 words at least, whole words), some of the real
+    # reads' claims are thrown out and kept as Task lines; a merge whose name was only named by such a claim
+    # has no node here. Those are the merges left unplaced, each one's name stands in the real graph
+    # (whose claims were written before the rule), and with them the real counts hold: 11 applied, 22 held.
+    assert out["under_the_cutoff"] == 22 and out["applied"] + len(out["not_placed"]) == 11
+    assert out["applied"] + out["under_the_cutoff"] + len(out["not_placed"]) == len(merges)
+    real_graph = GraphStore(root)
+    for n in out["not_placed"]:
+        assert store.node(n["merge"]["from"]) is None and real_graph.node(n["merge"]["from"]) is not None
     held = [t["attrs"] for t in store.nodes("Task") if t["id"].startswith("task:merge-held:")]
-    assert len(held) == len(merges) - 11 and all(h["returned"] in merges for h in held)       # each one kept as it came
+    assert len(held) == out["under_the_cutoff"] + len(out["not_placed"]) and all(h["returned"] in merges for h in held)       # each one kept as it came
     done = [e for e in store.edges("RESOLVED_TO") if e["attrs"]["method"] == "model"]
-    assert len(done) == 11 and all(e["attrs"]["confidence"] >= 0.9 and e["attrs"]["evidence"] for e in done)
+    assert len(done) == out["applied"] and all(e["attrs"]["confidence"] >= 0.9 and e["attrs"]["evidence"] for e in done)
     one = done[0]
     assert resolve.canonical(store, one["src"]) == resolve.canonical(store, one["dst"])
     assert one["attrs"]["alias"] in resolve.aliases(store, one["dst"])
@@ -108,3 +116,20 @@ def test_the_resolvers_brief_lists_only_what_is_still_unmerged(graph):
     surface = {n["id"] for n in store.nodes("Entity") if n["attrs"]["entity_kind"] == "named in a document"}
     assert set(listed) == surface - merged and len(listed) == len(set(listed))
     assert not any(l.startswith("scope:") or l.startswith("rulever:") for l in brief.splitlines())   # not names to merge
+
+
+def test_a_surface_form_with_two_standing_merges_is_listed_and_canonical_says_which_it_followed(graph):
+    store, dirs = graph
+    resolve.apply_rules(store, dirs)
+    assert resolve.double_merges(store) == []                  # none today, on the real merges of this read
+    notes = []
+    one = store.edges("RESOLVED_TO")[0]
+    assert resolve.canonical(store, one["src"], notes) == resolve.canonical(store, one["src"]) and notes == []
+    # The positive case needs a surface form that two merges point away from; no real record holds one
+    # (the real graph has none), and a second merge would have to be made up: skipped, with the reason.
+    real = GraphStore(store.data_root)
+    if resolve.double_merges(real):
+        for line in resolve.double_merges(real):
+            assert "standing merges, to" in line
+    else:
+        pytest.skip("no surface form of the real graph has two standing merges; the case is not made up")

@@ -50,13 +50,41 @@ def clean(name: str) -> str:
     return name.strip().strip("`'\"").strip()
 
 
-def canonical(store: GraphStore, node_id: str) -> str:
-    """Follow the merges that stand from a node to the entry it means (itself when unmerged)."""
-    out = {e["src"]: e["dst"] for e in store.edges("RESOLVED_TO")}
+def _standing_merges(store: GraphStore) -> dict[str, list[dict]]:
+    """surface form -> its standing RESOLVED_TO links, the earliest written first."""
+    by: dict[str, list[dict]] = {}
+    for e in store.edges("RESOLVED_TO"):
+        by.setdefault(e["src"], []).append(e)
+    for v in by.values():
+        v.sort(key=lambda e: (e["written_at"], e["id"]))
+    return by
+
+
+def double_merges(store: GraphStore) -> list[str]:
+    """One line for each surface form that has two or more standing merges (to different entries or
+    through different links): the check lists them; none is withdrawn or chosen away by code."""
+    out = []
+    for src, links in sorted(_standing_merges(store).items()):
+        if len(links) > 1:
+            out.append(f"{src}: {len(links)} standing merges, to " + "; ".join(
+                f"{e['dst']} ({e['attrs'].get('rule', e['attrs'].get('evidence', ''))}, written {e['written_at']})"
+                for e in links))
+    return out
+
+
+def canonical(store: GraphStore, node_id: str, notes: list | None = None) -> str:
+    """Follow the merges that stand from a node to the entry it means (itself when unmerged). When a
+    surface form has two standing merges the EARLIEST written one is followed, and `notes` (when given)
+    says so and names the ones not followed; `kgraph check` lists every such form."""
+    by = _standing_merges(store)
     seen = set()
-    while node_id in out and node_id not in seen:
+    while node_id in by and node_id not in seen:
         seen.add(node_id)
-        node_id = out[node_id]
+        links = by[node_id]
+        if len(links) > 1 and notes is not None:
+            notes.append(f"{node_id} has {len(links)} standing merges: followed {links[0]['dst']} (the earliest written); "
+                         "not followed: " + ", ".join(e["dst"] for e in links[1:]))
+        node_id = links[0]["dst"]
     return node_id
 
 

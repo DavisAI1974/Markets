@@ -53,7 +53,13 @@ def now() -> str:
     return _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def _read(path: Path) -> list[dict]:
+PENDING = ".pending-write.json"
+
+
+def _read(path: Path, skipped: list | None = None) -> list[dict]:
+    """The lines of one file. A line that is not JSON raises with the file and the line number; given a
+    `skipped` list (a tolerant load) it is left out of the result and listed there instead, so the
+    check can still run and say which line it is."""
     if not path.exists():
         return []
     out = []
@@ -64,16 +70,24 @@ def _read(path: Path) -> list[dict]:
                 try:
                     out.append(json.loads(line))
                 except json.JSONDecodeError as e:
-                    raise ValueError(f"{path}:{n}: not a JSON line ({e})") from e
+                    msg = f"{path}:{n}: not a JSON line ({e})"
+                    if skipped is None:
+                        raise ValueError(msg) from e
+                    skipped.append(msg)
     return out
 
 
 class GraphStore:
-    def __init__(self, data_root: str | os.PathLike | None = None, graph_dir: str | os.PathLike | None = None):
+    def __init__(self, data_root: str | os.PathLike | None = None, graph_dir: str | os.PathLike | None = None,
+                 tolerant: bool = False):
         """`graph_dir` is for checks only: a scratch folder to write to while sources are still read
-        from the real checkout. Left out, the graph is markets-data `graph/`."""
+        from the real checkout. Left out, the graph is markets-data `graph/`.
+        `tolerant=True` loads past a line that is not JSON (it is listed in `skipped_lines` and reported
+        by `check_all`) so the check can run on a file with a line cut part way."""
         self.data_root = markets_data_root(data_root)
         self.dir = Path(graph_dir) if graph_dir else self.data_root / GRAPH_DIR
+        self.tolerant = tolerant
+        self.skipped_lines: list[str] = []
         self._nodes: dict[str, list[dict]] | None = None   # id -> every line, oldest first
         self._edges: dict[str, list[dict]] | None = None
 
@@ -86,7 +100,7 @@ class GraphStore:
             d = self.dir / sub
             if d.is_dir():
                 for p in sorted(d.glob("*.jsonl")):
-                    for line in _read(p):
+                    for line in _read(p, self.skipped_lines if self.tolerant else None):
                         into.setdefault(line["id"], []).append(line)
         for into in (self._nodes, self._edges):
             for lines in into.values():
@@ -182,28 +196,60 @@ class GraphStore:
             if n["type"] == "Claim" and not n["attrs"]["inference"] and n["id"] not in supported:
                 raise schema.Refused(f"Claim {n['id']}: no SUPPORTS link from its source")
 
+        if self.is_real_graph() and written_by.endswith("+uncommitted"):
+            raise schema.Refused(
+                f"{written_by}: code with uncommitted changes does not write into the real graph "
+                f"({self.dir}); commit the code first, so the writer of every line can be read back")
         stamp, result, to_write = now(), {"new": 0, "revised": 0, "unchanged": 0}, {}
+        staged: dict[str, list[dict]] = {}           # id -> lines of this batch, not yet in the tables
         for kind, items, table in (("nodes", nodes, self._nodes), ("edges", edges, self._edges)):
             for item in items:
                 body = {k: item[k] for k in ("id", "type", "src", "dst", "attrs") if k in item}
                 content = sha(body, 16)
-                prev = table.get(item["id"])
+                prev = list(table.get(item["id"]) or []) + staged.get(item["id"], [])
                 if prev and prev[-1]["content_sha"] == content:
                     result["unchanged"] += 1
                     continue
+                revs = [l["rev"] for l in prev]
+                if len(set(revs)) != len(revs):
+                    raise schema.Refused(
+                        f"{item['type']} {item['id']}: two lines carry the same rev (two writers' lines merged); "
+                        "no further revision is added until that is resolved (nothing is deleted by code: "
+                        "see `kgraph check`)")
                 line = dict(body, rev=(prev[-1]["rev"] + 1 if prev else 1), content_sha=content,
                             written_by=written_by, written_at=stamp)
                 result["revised" if prev else "new"] += 1
-                table.setdefault(item["id"], []).append(line)
+                staged.setdefault(item["id"], []).append(line)
                 to_write.setdefault(self.dir / kind / f"{item['type']}.jsonl", []).append(line)
-        for path, lines in to_write.items():
+        if not to_write:
+            return result
+        pend = self.dir / PENDING
+        if pend.exists():
+            raise schema.Refused(f"{pend} is left over from a write that did not finish: look at it with "
+                                 "`kgraph check` and settle it before writing more")
+        text = {path: [json.dumps(l, ensure_ascii=False, sort_keys=True) for l in lines]
+                for path, lines in to_write.items()}
+        pend.parent.mkdir(parents=True, exist_ok=True)
+        pend.write_text(json.dumps({"written_by": written_by, "written_at": stamp,
+                                    "files": {self._rel(p): t for p, t in text.items()}},
+                                   ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
+        for path, lines in text.items():
             path.parent.mkdir(parents=True, exist_ok=True)
             with path.open("a", encoding="utf-8") as f:
-                for line in lines:
-                    f.write(json.dumps(line, ensure_ascii=False, sort_keys=True) + "\n")
-        if to_write:
-            self.write_manifest()
+                f.write("".join(l + "\n" for l in lines))
+                f.flush()
+                os.fsync(f.fileno())
+        self.write_manifest()
+        pend.unlink()
+        for table, kind in ((self._nodes, "nodes"), (self._edges, "edges")):
+            for path, lines in to_write.items():
+                if path.parent.name == kind:
+                    for line in lines:
+                        table.setdefault(line["id"], []).append(line)
         return result
+
+    def is_real_graph(self) -> bool:
+        return Path(self.dir).resolve() == (self.data_root / GRAPH_DIR).resolve()
 
     @staticmethod
     def _rested_on(edge: dict) -> str | None:
@@ -261,11 +307,58 @@ class GraphStore:
         except ValueError:
             return str(p)
 
+    def _pending_and_manifest_breaches(self) -> list[str]:
+        """A write that did not finish (a leftover pending file, and which of its lines are not in the
+        files) and every place MANIFEST.json disagrees with the files."""
+        out = []
+        pend = self.dir / PENDING
+        if pend.exists():
+            try:
+                body = json.loads(pend.read_text(encoding="utf-8"))
+            except json.JSONDecodeError as e:
+                body = None
+                out.append(f"{pend}: left over from a write that did not finish, and it is not readable ({e})")
+            if body is not None:
+                for rel, lines in sorted(body.get("files", {}).items()):
+                    p = Path(rel) if Path(rel).is_absolute() else self.data_root / rel
+                    have = set()
+                    if p.exists():
+                        have = {l.strip() for l in p.read_text(encoding="utf-8").splitlines()}
+                    missing = [l for l in lines if l not in have]
+                    out.append(f"{pend.name}: left over from a write by {body.get('written_by')} that did not "
+                               f"finish; {rel}: {len(missing)} of its {len(lines)} lines are missing from the file"
+                               + ("".join(f" ({json.loads(l)['id']} rev {json.loads(l)['rev']})" for l in missing[:5])))
+        mf = self.dir / "MANIFEST.json"
+        if mf.exists():
+            m = json.loads(mf.read_text(encoding="utf-8"))
+            listed = set()
+            for f in m.get("files", []):
+                p = Path(f["path"]) if Path(f["path"]).is_absolute() else self.data_root / f["path"]
+                listed.add(p.resolve())
+                if not p.exists():
+                    out.append(f"MANIFEST.json lists {f['path']}, which is not there")
+                    continue
+                raw = p.read_bytes()
+                if hashlib.sha256(raw).hexdigest() != f.get("sha256"):
+                    out.append(f"MANIFEST.json: {f['path']} sha256 differs from the file")
+                nl = raw.count(b"\n")
+                if nl != f.get("lines"):
+                    out.append(f"MANIFEST.json: {f['path']} has {nl} lines, the manifest says {f.get('lines')}")
+                if len(raw) != f.get("bytes"):
+                    out.append(f"MANIFEST.json: {f['path']} has {len(raw)} bytes, the manifest says {f.get('bytes')}")
+            for p in sorted(self.dir.glob("*/*.jsonl")):
+                if p.resolve() not in listed:
+                    out.append(f"MANIFEST.json does not list {self._rel(p)}")
+        elif any(self.dir.glob("*/*.jsonl")):
+            out.append("MANIFEST.json is missing")
+        return out
+
     # ---- the four write rules, over the whole graph ----------------------------------------------
     def check_all(self) -> list[str]:
         """Every breach of a write rule in the stored graph, one line each. Empty when there is none."""
         self._load_lines()
-        out = []
+        out = list(self.skipped_lines)
+        out += self._pending_and_manifest_breaches()
         supported = {e["dst"]: e for e in self.edges("SUPPORTS")}
         for lines in self._nodes.values():
             n = lines[-1]

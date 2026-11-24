@@ -179,3 +179,32 @@ def test_renders_one_node_per_tracked_png_or_html(store):
     n = store.node(f"render:{tracked[0]}")["attrs"]
     assert n["bytes"] == (root / tracked[0]).stat().st_size and len(n["sha256"]) == 64 and n["commit"]
     _again(det.renders, store)
+
+
+def test_what_a_loader_could_not_place_is_kept_in_the_graph_as_an_open_task(store):
+    """A manifest with no list of files, a CALC file whose name does not fit, a COUNT file with no main file.
+    Real records only: where the real checkout holds no such case, that part is skipped with the reason."""
+    root = store.data_root
+    res = det.manifests(store)
+    tasks = {t["id"]: t["attrs"] for t in store.nodes("Task") if t["id"].startswith("task:manifest-not-listed:")}
+    assert len(tasks) == len(res["not_listed"])
+    assert all(a["state"] == "open" and a["reason"] for a in tasks.values())
+    for m in res["not_listed"]:
+        assert any(m in a["text"] for a in tasks.values())
+    _again(det.manifests, store)                                   # not twice
+    _need_refs(root)
+    r = det.rootrows(store)
+    kept = [t["attrs"] for t in store.nodes("Task") if t["attrs"].get("left_out_by") == det.WRITER]
+    assert len(kept) >= len(r["not_made"])
+    assert all(any(n.split(" ")[0].split(":", 1)[1] in k["text"] for k in kept) for n in r["not_made"])
+    if not tasks and not r["not_made"]:
+        pytest.skip("the real checkout holds no manifest without a list and no CALC file left out: no case to read")
+
+
+def test_one_source_is_not_flipped_between_two_kinds_by_two_writers(store):
+    from tools.kgraph.sources import source_node
+    det.dipoles(store)
+    wb = source_node("markets-data", store.data_root, det.WORKBOOK)
+    assert store.node(wb["id"])["attrs"]["kind"] == "workbook"
+    assert store.write([wb], written_by="code:test@x")["unchanged"] == 1       # the other writer (resolve) says the same kind
+    assert len(store.history(wb["id"])) == 1

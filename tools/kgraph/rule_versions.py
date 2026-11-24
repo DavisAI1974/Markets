@@ -27,7 +27,7 @@ from tools.exp_dag import ExpDag
 from . import grounding
 from .extract import repo_dirs
 from .sources import REPOS, code_stamp, commit_node, git, link
-from .store import GraphStore
+from .store import GraphStore, sha
 
 RULE_FILES = ("tasty/paper/rules_cl.py", "tasty/paper/rules_cx.py")
 REPO = "paper-trading-platform"
@@ -68,6 +68,17 @@ def load(dag: ExpDag, store: GraphStore, platform_dir) -> dict:
             edges.append(link("DERIVED_FROM", rv["id"], f"commit:{REPO}:{version[:10]}", key="rule version in force",
                               what="the commit that last changed the rule files before the run's own code commit",
                               found_by="git log -1 <run commit> -- " + " ".join(RULE_FILES)))
+    # What could not be placed is kept in the graph too (open, with the reason), not only in the report.
+    for run in runs:
+        c = run["change"]["commit"]
+        if in_force.get(c) is None:
+            reason = (f"the code commit {c} of the paper run {run['id']} is not in this checkout of "
+                      f"{REPOS[REPO]}, so the rule version it ran under cannot be found and its rule versions "
+                      "are not tied to a commit")
+            nodes[f"task:run-commit-not-in-checkout:{sha([run['id'], c])}"] = {
+                "id": f"task:run-commit-not-in-checkout:{sha([run['id'], c])}", "type": "Task",
+                "attrs": {"text": reason, "state": "open", "reason": reason, "trial": run["id"],
+                          "code_commit": c, "left_out_by": "tools.kgraph.rule_versions"}}
     graph = store.write(list(nodes.values()), edges, written_by=by)
     if len(dag.lines()) != before:
         dag.rebuild()

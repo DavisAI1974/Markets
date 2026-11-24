@@ -67,7 +67,7 @@ def test_counts_of_run_2_and_the_closeout(made):
     assert len(c["unplaced"]["cancel that could not be put on an order"]) == 1
     for oid in revised:
         n_ = store.node(oid)
-        assert n_["rev"] == 2
+        assert n_["rev"] == 1          # built across all the run folders first: written once, in its final wording
         assert n_["attrs"]["statuses_seen"][-1]["status"] == "Cancel Requested"
         assert len(n_["attrs"]["statuses_seen"]) > 1
 
@@ -149,3 +149,27 @@ def test_a_second_run_adds_nothing(made):
         assert r["write"]["new"] == 0 and r["write"]["revised"] == 0, (f, r["write"])
     after = GraphStore(root, graph_dir=store.dir)
     assert after.counts() == before and after.check_all() == []
+
+
+def test_a_return_to_an_earlier_wording_is_the_next_revision(tmp_path):
+    """The real graph holds Orders that went from one wording to another (a close-out's cancel, rev 1 then
+    rev 2). Their real lines are copied into a scratch graph, and the real first wording is written again:
+    the store (no `_fresh` any more) keeps it as rev 3, and all three lines stay. Built from real lines;
+    nothing is invented."""
+    root = data_root()
+    real = GraphStore(root)
+    two = next((h for h in (real.history(n["id"]) for n in real.nodes("Order"))
+                if len(h) == 2 and h[0]["attrs"] != h[1]["attrs"]), None)
+    if two is None:
+        pytest.skip("no Order of the real graph has two different wordings")
+    scratch = GraphStore(root, graph_dir=tmp_path / "graph")
+    (scratch.dir / "nodes").mkdir(parents=True)
+    for name, lines in (("Order", two), ("Source", real.history(two[0]["attrs"]["source"]))):
+        (scratch.dir / "nodes" / f"{name}.jsonl").write_text(
+            "".join(json.dumps(l, ensure_ascii=False, sort_keys=True) + "\n" for l in lines), encoding="utf-8")
+    scratch = GraphStore(root, graph_dir=tmp_path / "graph")
+    res = scratch.write([{"id": two[0]["id"], "type": "Order", "attrs": two[0]["attrs"]}],
+                        written_by="code:test@checked")
+    assert res["revised"] == 1
+    h = scratch.history(two[0]["id"])
+    assert [l["rev"] for l in h] == [1, 2, 3] and h[2]["attrs"] == two[0]["attrs"] and h[1]["attrs"] == two[1]["attrs"]

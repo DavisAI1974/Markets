@@ -249,17 +249,6 @@ def _fill_nodes(folder: str, src: dict, orders: dict, market: dict, market_src: 
     return nodes, edges, miss
 
 
-def _fresh(store: GraphStore, nodes: list) -> list:
-    """Leave out a node that already stood in this wording at some revision (a later revision, such as
-    a cancel added by the close-out, must not be written over by its own earlier wording)."""
-    out = []
-    for n in nodes:
-        if any(h["attrs"] == n["attrs"] for h in store.history(n["id"])):
-            continue
-        out.append(n)
-    return out
-
-
 def _cancel_requests(lines: list, broker_id) -> list:
     """The DELETE calls of the close-out aimed at one order, as stored."""
     out, req = [], None
@@ -300,6 +289,11 @@ def paper(store: GraphStore, platform_dir: str | None = None) -> dict:
             market_src = source_id("markets-data", market_rel)
     built: dict = {}      # broker order id -> (order id, attrs): what a later cancel revises
     report: dict = {}
+    # Every folder is built first (a close-out's cancels are added to the orders of an EARLIER run), then
+    # each node is written once, in its final wording: a second call writes nothing, and a real change,
+    # a return to an earlier wording included, is the next revision.
+    batches: list = []    # (folder name, rep, nodes, edges)
+    order_node_of: dict = {}
     for folder in folders:
         name = folder.name
         sources = {f.name: source_node("markets-data", root, str(f.relative_to(root)))
@@ -310,7 +304,7 @@ def paper(store: GraphStore, platform_dir: str | None = None) -> dict:
         report[name] = rep
         if "orders.jsonl" not in src:
             rep["unplaced"]["no orders.jsonl in the folder"] = sorted(src)
-            store.write(nodes, edges, written_by=by)
+            batches.append((name, rep, nodes, edges))
             continue
         commit = None
         if (folder / "receipt.json").exists():
@@ -340,6 +334,7 @@ def paper(store: GraphStore, platform_dir: str | None = None) -> dict:
         for oid, o in orders.items():
             a = o["attrs"]
             order_nodes.append(_order_node(oid, a))
+            order_node_of[oid] = order_nodes[-1]
             edges.append(link("DERIVED_FROM", oid, src["orders.jsonl"], key=f"line {a['intent_line']}", line=a["intent_line"]))
             if a.get("rule_version"):
                 edges.append(link("PLACED_BY", oid, a["rule_version"]))
@@ -381,12 +376,14 @@ def paper(store: GraphStore, platform_dir: str | None = None) -> dict:
                 {"status": x["answer"]["data"]["status"], "via": "answer to the cancel (close-out)", "line": n,
                  "source": src["orders.jsonl"], "run": name}],
                 cancel_http=_cancel_requests(lines, bid), cancel_line=n, cancel_source=src["orders.jsonl"])
-            order_nodes.append(_order_node(oid, a2))
+            order_node_of[oid]["attrs"] = a2          # the same node, in the batch of the run that made it
             built[bid] = (oid, a2)
             rep.setdefault("orders_revised_by_cancel", []).append(oid)
         rep["unplaced"].update(_probes(folder))
-        nodes += _fresh(store, order_nodes) + fnodes
+        nodes += order_nodes + fnodes
         edges += fedges
+        batches.append((name, rep, nodes, edges))
+    for name, rep, nodes, edges in batches:
         rep["write"] = store.write(nodes, edges, written_by=by)
     # Greg, 2026-11-24: nothing new is tied to a tastytrade platform issue. The runs' own orders, fills and
     # files were made on the sandbox and its feed: they are marked, so that nothing new can rest on them.

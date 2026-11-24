@@ -59,7 +59,9 @@ def test_a_claim_read_from_a_document_is_marked_as_it_is_loaded(graph):
     assert gregs and rules and not set(gregs) & set(tied)
     # a standing rule is never marked for its words; only a line the running list itself parks is
     assert [r for r in rules if r not in tied] and all(tied[r]["rule"] == "the running list" for r in rules if r in tied)
-    assert _claim(store, "sandbox-only issues are parked")["id"] in gregs
+    # handoff W line 65, Greg's words (the four-word quote of the same words in another read is no longer
+    # taken: a quote now needs six words)
+    assert _claim(store, "Do not build around thin data. Sandbox-only issues are parked.")["id"] in gregs
     for t in tied.values():
         assert t["why"] and t["rule"] in ("the running list", "its own words")
     assert platform_scope.mark(store, dirs)["new"] == 0       # marking twice marks nothing twice
@@ -184,7 +186,7 @@ def test_the_grounding_check_does_not_take_a_tied_claim_as_evidence(graph):
     assert any("tastytrade platform" in o for o in one["what_was_observed"])
     # a sentence the list carries that is not about the platform is still found (list A2)
     ok = grounding.check_text(store, "CL14, CL17, CL05, CL06 and CL16 made 235 of the 327 trades.", dirs)
-    assert ok["decision"] is None and any(not c["platform_issue"] for c in ok["supporting_candidates"])
+    assert ok["decision"] == "read" and any(not c["platform_issue"] for c in ok["supporting_candidates"])   # candidates to read, never nothing
 
 
 def test_the_session_context_drops_nothing_it_marks_tied_claims_and_calls_the_parked_ones_last(graph):

@@ -20,7 +20,8 @@ import subprocess
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from .sources import REPOS, code_stamp, commit_node, last_commit, link, source_id, source_node
+from .sources import REPOS, code_stamp, commit_node, kind_of, last_commit, link, listed_node, source_id, source_node
+from .store import sha
 from .store import GraphStore
 
 WRITER = "tools.kgraph.ingest_det"
@@ -85,6 +86,16 @@ def _listed_path(root: Path, manifest_rel: str, e: dict) -> tuple[str | None, bo
     return (named[0] if named else None), False
 
 
+def _task_id(kind: str, what: str) -> str:
+    return "task:" + kind + ":" + sha([kind, what])
+
+
+def _task(kind: str, what: str, source: str, text: str) -> dict:
+    """What a loader could not place, kept in the graph (open) with the reason: not only in a report."""
+    return {"id": _task_id(kind, what), "type": "Task", "attrs": {
+        "text": text, "state": "open", "reason": text, "source": source, "left_out_by": WRITER}}
+
+
 def manifests(store: GraphStore) -> dict:
     """One Source for each manifest and one for each FILE it lists; one MEMBER_OF link for each ENTRY.
 
@@ -96,12 +107,15 @@ def manifests(store: GraphStore) -> dict:
     root = store.data_root
     nodes, edges, not_listed, per, files = {}, [], [], {}, {}
     for mrel, key in MANIFESTS:
-        msrc = source_node("markets-data", root, mrel, kind="manifest")
+        msrc = source_node("markets-data", root, mrel)
         nodes[msrc["id"]] = msrc
         j = json.loads((root / mrel).read_text(encoding="utf-8"))
         entries = j if key is None else j.get(key)
         if not isinstance(entries, list) or not all(isinstance(e, dict) for e in entries):
             not_listed.append(mrel)
+            nodes[_task_id("manifest-not-listed", mrel)] = _task(
+                "manifest-not-listed", mrel, msrc["id"],
+                f"{mrel} has no list of files under {key!r}, so the files it names are not in the graph.")
             continue
         per[mrel] = len(entries)
         for i, e in enumerate(entries):
@@ -117,15 +131,14 @@ def manifests(store: GraphStore) -> dict:
                 if listed:
                     on_link["manifest_sha256_is_the_files"] = listed == nodes[nid]["attrs"]["sha256"]
             elif nid not in nodes:
-                attrs = {"kind": "listed_file_not_in_checkout", "repo": REPO, "path": p}
-                for k in ("bytes", "sha256", "utc_day"):
-                    if k in e:
-                        attrs[k] = e[k]
-                nodes[nid] = {"id": nid, "type": "Source", "attrs": attrs}
+                nodes[nid] = listed_node("markets-data", p, {k: e[k] for k in ("bytes", "sha256", "utc_day") if k in e})
             if "utc_day" in e:
                 nodes[nid]["attrs"].setdefault("utc_day", e["utc_day"])
             files.setdefault(nid, []).append(mrel)
             edges.append(link("MEMBER_OF", nid, msrc["id"], key=str(i), **on_link))
+    for nid, nd in nodes.items():
+        if nd["type"] == "Task":
+            edges.append(link("DEPENDS_ON", nid, nd["attrs"]["source"]))
     res = store.write(list(nodes.values()), edges, written_by=_stamp())
     res.update(entries_per_manifest=per, not_listed=not_listed,
                files_listed_more_than_once={k: v for k, v in files.items() if len(v) > 1})
@@ -154,24 +167,35 @@ def rootrows(store: GraphStore) -> dict:
         nodes.append(cnode)
         names = _gitb(root, "ls-tree", "-r", "--name-only", ref).decode().splitlines()
         wanted = ["RECEIPT.json"] + sorted(n for n in names if re.fullmatch(r"CALC-.+\.json", n))
-        left_out += [f"{branch}:{n}" for n in names if n.startswith("CALC") and n not in wanted]
+        for n in names:
+            if n.startswith("CALC") and n not in wanted:
+                left_out.append(f"{branch}:{n}")
+                tk = _task("calc-name-does-not-fit", f"{branch}:{n}", cnode["id"],
+                           f"{n} on {branch} is not made into a CalcOutput: its name does not fit CALC-<calc>.json.")
+                nodes.append(tk); edges.append(link("DEPENDS_ON", tk["id"], cnode["id"]))
         srcs, calcs = {}, {}
         for n in wanted:
             raw = _gitb(root, "show", f"{ref}:{n}")
             sid = source_id("markets-data", n, branch)
             nodes.append({"id": sid, "type": "Source", "attrs": {
-                "kind": "file", "repo": REPO, "path": n, "commit": cnode["attrs"]["sha"], "branch": branch,
+                "kind": kind_of(n), "repo": REPO, "path": n, "commit": cnode["attrs"]["sha"], "branch": branch,
                 "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}})
             srcs[n] = (sid, raw)
         for n in wanted[1:]:
             m = re.fullmatch(rf"CALC-(.+?)(-COUNT)?-{ds}\.json", n)
             if not m:
                 left_out.append(f"{branch}:{n} (name does not fit CALC-<calc>-<day>.json)")
+                tk = _task("calc-name-does-not-fit", f"{branch}:{n}", srcs[n][0],
+                           f"{n} on {branch} is not made into a CalcOutput: its name does not fit CALC-<calc>-<day>.json.")
+                nodes.append(tk); edges.append(link("DEPENDS_ON", tk["id"], srcs[n][0]))
                 continue
             calcs.setdefault(m.group(1), {})["count" if m.group(2) else "main"] = n
         for calc, parts in sorted(calcs.items()):
             if "main" not in parts:
                 left_out.append(f"{branch}: {parts['count']} has no CALC-{calc}-{ds}.json to attach to")
+                tk = _task("count-without-main", f"{branch}:{parts['count']}", srcs[parts["count"]][0],
+                           f"{parts['count']} on {branch} is not made into a CalcOutput: there is no CALC-{calc}-{ds}.json to attach it to.")
+                nodes.append(tk); edges.append(link("DEPENDS_ON", tk["id"], srcs[parts["count"]][0]))
                 continue
             j = json.loads(srcs[parts["main"]][1])
             cid = f"calc:{calc}:{d}"
@@ -217,7 +241,7 @@ def _from_workbook(store: GraphStore, prefix: str, make) -> dict:
     under `pinned`. Where it came from is on the line itself (source, sheet, row); the one link is
     PINNED_AT its trade day. Two rows that would share an id are both kept."""
     root, total, dup = store.data_root, {"new": 0, "revised": 0, "unchanged": 0}, []
-    wsrc = source_node("markets-data", root, WORKBOOK, kind="workbook")
+    wsrc = source_node("markets-data", root, WORKBOOK)
     for ws, d in _sheets(root, prefix):
         nodes, edges, seen = [wsrc, *_tradeday_nodes()], [], set()
         for r, row in _sheet_rows(ws):

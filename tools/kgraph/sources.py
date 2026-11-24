@@ -50,7 +50,31 @@ def last_commit(repo_dir, rel_path: str) -> str | None:
     return out or None
 
 
-def source_node(repo: str, repo_dir, rel_path: str, *, kind: str = "file", extra: dict | None = None) -> dict:
+NOT_IN_CHECKOUT = "listed_file_not_in_checkout"
+
+
+def kind_of(rel_path: str, in_checkout: bool = True) -> str:
+    """The one place that decides a Source's `kind` from its path, so two writers can never flip one
+    Source back and forth: a name starting "MANIFEST" or ending "MANIFEST.json" is a manifest, ".xlsx" a
+    workbook, any other file "file"; a listed file that is not in the checkout keeps its own kind."""
+    if not in_checkout:
+        return NOT_IN_CHECKOUT
+    name = rel_path.rsplit("/", 1)[-1]
+    if name.startswith("MANIFEST") or name.endswith("MANIFEST.json"):
+        return "manifest"
+    if name.endswith(".xlsx"):
+        return "workbook"
+    return "file"
+
+
+def listed_node(repo: str, rel_path: str, extra: dict | None = None) -> dict:
+    """The Source node of a file a manifest lists that this checkout does not hold."""
+    attrs = {"kind": kind_of(rel_path, False), "repo": REPOS.get(repo, repo), "path": rel_path}
+    attrs.update(extra or {})
+    return {"id": source_id(repo, rel_path), "type": "Source", "attrs": attrs}
+
+
+def source_node(repo: str, repo_dir, rel_path: str, *, extra: dict | None = None) -> dict:
     """The Source node of one file as it stands in the checkout. Refuses a file with uncommitted
     changes: a source is always a committed wording."""
     p = Path(repo_dir) / rel_path
@@ -60,6 +84,7 @@ def source_node(repo: str, repo_dir, rel_path: str, *, kind: str = "file", extra
         raise RuntimeError(f"{rel_path} is not committed in {repo}: commit it before it is a source")
     if git(repo_dir, "status", "--porcelain", "--", rel_path):
         raise RuntimeError(f"{rel_path} has uncommitted changes in {repo}: commit it before it is a source")
+    kind = kind_of(rel_path)
     attrs = {"kind": kind, "repo": REPOS.get(repo, repo), "path": rel_path, "commit": commit,
              "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
     if kind == "file" and not rel_path.endswith((".xlsx", ".parquet", ".gz", ".zst", ".npz", ".sqlite")):
