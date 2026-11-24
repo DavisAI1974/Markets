@@ -274,7 +274,9 @@ def _when(store: GraphStore, claim: dict, dirs: dict | None) -> tuple:
     """(the date the lines give or the file's name gives, the time of the commit it was read at)."""
     a = claim["attrs"]
     src = a.get("source") or ""
-    m = re.search(r"(20\d{6})", src)
+    # The date in the file's OWN name: a folder's date is the folder's, not the document's
+    # (`family-research-20261022/` once made a claim of 2026-11-24 read as 2026-10-22).
+    m = re.search(r"(20\d{6})", src.rsplit("/", 1)[-1])
     day = a.get("said_on") or (f"{m.group(1)[:4]}-{m.group(1)[4:6]}-{m.group(1)[6:]}" if m else "")
     stamp = 0
     repo = src.split(":", 2)[1] if src.count(":") >= 2 else None
