@@ -671,6 +671,29 @@ def test_a_plane_row_one_after_the_moment_fails_the_check_and_is_no_id(world, pl
     assert any("counts" in b for b in sp.leakage_check(bad2, store=world["store"], planes=planes))
 
 
+def test_a_real_row_within_256_ns_after_a_real_moment_is_not_placed(world, planes):
+    """Times are whole nanoseconds. A stored row of calc-resting-facts that became known at T (read from its own instant
+    columns, as Python integers, not from the layer's `known`) is not placed at a moment of T-k for k = 1 to 255: as
+    float64 the two numbers at about 1.7e18 can compare equal (the spacing there is 256 ns)."""
+    pk = _build_p(world, planes, _stand_in_question(world, world["picks"][1]))
+    key = "calc-resting-facts"
+    lay = sp.plane_layer(planes, pk["plane_source"]["commit"], key, pk["plane_source"]["layers"][key]["paths"])
+    nxt = pk["plane_ids"][key]["count"]                      # the layer's real next row: known after the moment
+    row = lay.table.slice(nxt, 1).to_pylist()[0]
+    t = max(int(row[c]) for c in lay.instants if row[c] is not None)
+    assert t > pk["moment_ns"]
+    for k in (1, 100, 255):
+        moment = t - k
+        assert not bool(lay.placed_mask(moment)[nxt]), f"row {nxt} known at {t} is placed at the moment {moment} ({k} ns before it)"
+        assert t not in {int(x) for x in lay.known[lay.placed_mask(moment)]}, (t, moment)
+        one = sp.plane_state(planes, pk["trade_day"], moment)["layers"][key]
+        assert one["count"] <= nxt and sp.plane_id(key, nxt) not in {
+            r["id"] for r in sp.plane_since(planes, pk["trade_day"], None, moment, {"commit": pk["plane_source"]["commit"],
+                                                                                    "layers": {key: one}})[key]}, (t, moment)
+        # and the instant itself is placed
+    assert bool(lay.placed_mask(t)[nxt])
+
+
 def test_the_door_writes_planes_afterwards_references_and_one_decision_per_line(world, planes, tmp_path):
     mb = tmp_path / "mb"
     qs = {s: _stand_in_question(world, s) for s in world["picks"]}
