@@ -306,3 +306,24 @@ def test_apply_refuses_a_pair_whose_later_claim_is_not_of_the_read(scratch, caps
     assert not [e for e in GraphStore(root, graph_dir=g).edges("SUPERSEDES") if e["src"] == OTHER_READ_CLAIM]
     task = GraphStore(root, graph_dir=g).node(res["task"])
     assert (task["attrs"]["pairs_applied"], task["attrs"]["pairs_refused"]) == (0, 1)
+
+
+# ==== POINT 3: status COUNTS CLAIM BY CLAIM ====
+def test_a_claim_added_under_the_read_after_its_task_is_not_yet_while_the_reads_other_claims_are_through(scratch, capsys, tmp_path):
+    root, g = scratch
+    pf = tmp_path / "none.json"
+    pf.write_text(json.dumps({"pairs": []}), encoding="utf-8")
+    run_cmd(consolidate, root, g, "apply", "--read", SMALL_READ, "--pairs", str(pf), "--run", APPLIER)
+    capsys.readouterr()
+    store = GraphStore(root, graph_dir=g)
+    real = store.node("claim:2689fd7e52d1")
+    assert real["attrs"]["extracted_by"] == SMALL_READ
+    # change: a copy of this real claim with a new id, still of the read run:0023, added after that read's task was written
+    added = {"id": "claim:ffffffffffff", "type": "Claim", "attrs": dict(real["attrs"])}
+    supports = {"id": "e:ffffffffffff", "type": "SUPPORTS", "src": real["attrs"]["source"], "dst": added["id"], "attrs": {}}
+    store.write([added], [supports], written_by="code:test")
+    reads, counts, out = status(root, g, capsys)
+    line = re.search(r"^" + SMALL_READ + r" \| claims=(\d+) \| (.*?) \|", out, re.M)
+    assert line[1] == "151" and "150 through the step" in line[2] and "1 not yet" in line[2]
+    assert counts["through_the_step"] == 150 and counts["not_yet"] == counts["claims"] - 150
+    assert counts["reads_not_yet"] == counts["reads"] - len([r for r in reads if reads[r][1] == "through the step"])

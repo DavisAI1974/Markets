@@ -194,7 +194,7 @@ def apply(store: GraphStore, read: str, pairs: list, run: str, dirs: dict | None
     task = {"id": tid, "type": "Task", "attrs": {
         "text": (f"The claims of {read} have been through the consolidation step: {len(cands)} candidate pairs in its brief, "
                  f"{len(applied)} pairs applied, {len(refused)} refused, applied by {run}."),
-        "state": "done", "read": read, "applied_by": run, "claims": len(added), "candidate_pairs": len(cands),
+        "state": "done", "read": read, "applied_by": run, "claims": len(added), "claim_ids": sorted(added), "candidate_pairs": len(cands),
         "pairs_applied": len(applied), "pairs_refused": len(refused), "refused": refused}}
     edges = [link("PRODUCED", run, tid)] if run.startswith("run:") else []
     store.write([task], edges, written_by=run if run.startswith("run:") else code_stamp("tools.kgraph.consolidate"))
@@ -203,14 +203,20 @@ def apply(store: GraphStore, read: str, pairs: list, run: str, dirs: dict | None
 
 
 def status(store: GraphStore) -> tuple[list[str], dict]:
-    done = {n["attrs"].get("read"): n["id"] for n in store.nodes("Task") if n["id"].startswith(TASK_PREFIX)}
+    """Claim by claim: the Task of a read names the claims it covered (`claim_ids`); a claim of the read that the Task does not
+    name is "not yet", whatever else the read holds."""
+    done = {n["attrs"].get("read"): n for n in store.nodes("Task") if n["id"].startswith(TASK_PREFIX)}
     by = reads_of(store)
     lines, through, nread = [], 0, 0
     for read in sorted(by, key=lambda r: (r is None, r or "")):
-        ok = read in done
-        through += len(by[read]) if ok else 0
-        nread += 0 if ok else 1
-        lines.append(f"{read} | claims={len(by[read])} | {'through the step' if ok else 'not yet'} | task={done.get(read, 'none')}")
+        task = done.get(read)
+        named = set(task["attrs"].get("claim_ids") or by[read]) if task else set()   # a Task from before `claim_ids` covered the claims it counted
+        n_through = sum(1 for c in by[read] if c in named)
+        n_not = len(by[read]) - n_through
+        through += n_through
+        nread += 1 if n_not else 0
+        state = "through the step" if not n_not else ("not yet" if not n_through else f"{n_through} through the step, {n_not} not yet")
+        lines.append(f"{read} | claims={len(by[read])} | {state} | task={task['id'] if task else 'none'}")
     total = sum(len(v) for v in by.values())
     lines.append(f"COUNTS claims={total} through_the_step={through} not_yet={total - through} reads={len(by)} reads_not_yet={nread}")
     return lines, {"claims": total, "through_the_step": through}
