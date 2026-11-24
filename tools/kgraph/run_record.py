@@ -10,10 +10,19 @@ a model; every figure is read from the transcript file, never typed in or estima
         [--code-commit C] [--corrects "..."] [--agent-type T]
   python3 -m tools.kgraph.run_record report  --transcript <file> --out <path> --title "..."
   python3 -m tools.kgraph.run_record keep    --data <markets-data> --run N --transcript <file>
-  python3 -m tools.kgraph.run_record missing --data <markets-data>
+  python3 -m tools.kgraph.run_record missing --data <markets-data> [--live <folder of transcripts>]
 
 `--data` names exactly the folder given; if it holds no agent-runs.jsonl the verb refuses (it never
 falls through to another checkout). Only `append` and `keep` write, and only new files or a new line.
+
+WHICH RUN A TRANSCRIPT IS: the number in the brief's opening, "agent run N" (any letter case) within its first
+200 characters, where a brief that begins "You are the <agent>, agent run N" is run N's own even if it names
+another run after that. Otherwise two different numbers there, or none, mean it names no run and `append` and `keep` refuse it;
+a run named later in the brief does not count. `report` keeps every hand-back and drops nothing. `keep` never
+writes over a kept file. A correcting line keeps the earlier line's `tokens_reported` unless it is given again.
+
+TWO WALL CLOCKS EXIST: lines of the earlier session took the harness's own duration; `append` writes the
+transcript's first-to-last timestamps. `missing` does not name a difference within 1,000 ms, and names more.
 
 WHAT CODE CANNOT HOLD: the runs of earlier sessions (1 to 106) cannot be filled from this machine;
 their transcripts were never kept. That is why `keep` exists: from now on a run's transcript is saved
@@ -62,7 +71,14 @@ def figures_of(raw: bytes) -> dict:
     if lines:
         c = (lines[0].get("message") or {}).get("content")
         brief = c if isinstance(c, str) else json.dumps(c)
-    m = re.search(r"agent run (\d+)", brief)
+    # the run is the number in the brief's OPENING: "agent run N" (any letter case) in its first 200
+    # characters; two different numbers there, or none, mean the transcript names no run
+    opening = {int(x) for x in re.findall(r"agent run (\d+)", brief[:200], re.I)}
+    # a brief that begins "You are the <agent>, agent run N" is that run's own, even when its first 200
+    # characters name another run after that (run 135's brief names runs 131 and 123 there)
+    own = re.match(r"\s*You are the [^,.\n]{1,60}, agent run (\d+)", brief, re.I)
+    if own:
+        opening = {int(own.group(1))}
     usage, models, texts, hand_backs, others, subs = {}, [], [], [], set(), set()
     seen_use, stamps = set(), []
     for d in lines:
@@ -102,7 +118,7 @@ def figures_of(raw: bytes) -> dict:
     wall = round((last - first).total_seconds() * 1000) if first else None
     iso = lambda t: t.isoformat().replace("+00:00", "Z") if t else None
     return {
-        "run_named_in_brief": int(m.group(1)) if m else None, "models": models,
+        "run_named_in_brief": next(iter(opening)) if len(opening) == 1 else None, "models": models,
         "input_tokens_fresh": fresh, "input_tokens_cache_written": written,
         "input_tokens_cache_read": read, "output_tokens": out,
         "input_tokens": fresh + written + read, "model_replies": len(usage),
@@ -126,7 +142,7 @@ def _paper(data: str) -> Path:
 def _check_brief(f: dict, run: int):
     named = f["run_named_in_brief"]
     if named != run:
-        raise Refused(f"the transcript's brief names {'no run' if named is None else 'agent run ' + str(named)}, not run {run}")
+        raise Refused(f"the transcript's brief names {'no run (none, or two different ones, in its opening)' if named is None else 'agent run ' + str(named)}, not run {run}")
 
 
 def _records(base: Path) -> list:
@@ -151,6 +167,13 @@ def cmd_append(a):
         raise Refused(f"run {a.run} already has a line; give --corrects to write its next revision")
     plan_path = base / "run-plans" / f"run-{a.run:04d}.json"
     plan = json.loads(plan_path.read_text(encoding="utf-8")) if plan_path.exists() else None
+    earlier = next((r for r in reversed(_records(base)) if r["run"] == a.run), None) if a.corrects else None
+    if a.tokens_reported is None and earlier and earlier.get("tokens_reported") is not None:
+        tokens_reported, tokens_note = earlier["tokens_reported"], earlier.get("tokens_note")
+    else:
+        tokens_reported = a.tokens_reported
+        tokens_note = ("the harness's total for the run when it ended (input and output together)" if a.tokens_reported is not None
+                       else "the harness's total was not given")
     line = {"run": a.run, "session": (plan or {}).get("session") or (f["_lines"][0].get("sessionId") if f["_lines"] else None),
             "stage": a.stage, "role": a.role,
             "model": f["models"][0] if len(f["models"]) == 1 else "+".join(f["models"]),
@@ -158,13 +181,14 @@ def cmd_append(a):
     if plan:
         line["plan"] = f"run-plans/run-{a.run:04d}.json"
     line.update({
-        "tokens_reported": a.tokens_reported,
-        "tokens_note": "the harness's total for the run when it ended (input and output together)" if a.tokens_reported is not None else "the harness's total was not given",
+        "tokens_reported": tokens_reported, "tokens_note": tokens_note,
         "input_tokens": f["input_tokens"], "input_tokens_fresh": f["input_tokens_fresh"],
         "input_tokens_cache_written": f["input_tokens_cache_written"],
         "input_tokens_cache_read": f["input_tokens_cache_read"], "output_tokens": f["output_tokens"],
         "token_split_note": "read from the run's own transcript: the sum of every model reply's usage record, each reply counted once",
-        "model_replies": f["model_replies"], "tool_calls": f["tool_calls"], "wall_clock_ms": f["wall_clock_ms"]})
+        "model_replies": f["model_replies"], "tool_calls": f["tool_calls"], "wall_clock_ms": f["wall_clock_ms"],
+        "started_at": f["first"], "ended_at": f["last"], "hand_backs": f["hand_backs"],
+        "sub_agent_calls": f["sub_agent_calls"]})
     if plan:
         line["budget_tokens"] = plan.get("max_tokens")
         line["budget_note"] = f"limits written before it started in run-plans/run-{a.run:04d}.json"
@@ -187,13 +211,17 @@ def cmd_report(a):
     parts = [f"# {a.title}", "",
              "Everything below this line is the agent's own report, word for word; nothing below it is the main session's.", ""]
     longest = max(texts, key=len, default="")
-    if hb and not (len(hb[-1]) < 600 and len(longest) > len(hb[-1])):
-        parts += ["\n\n".join(hb)]
-    elif longest:
-        parts += ["The agent's last hand-back is under 600 characters and only points to its message above, so its longest text item stands in its place.", "", longest]
-    else:
-        raise Refused("the transcript holds no hand-back and no text")
-    Path(a.out).write_text("\n".join(parts) + "\n", encoding="utf-8")
+    for k, h in enumerate(hb, 1):
+        parts += [f"## Hand-back {k} of {len(hb)}", "", h, ""]
+    if hb and len(hb[-1]) < 600 and len(longest) > len(hb[-1]):
+        parts += ["## The message its last hand-back points at", "",
+                  "The last hand-back is under 600 characters; the agent's longest message follows, nothing above is dropped.", "", longest, ""]
+    elif not hb and longest:
+        parts += ["## No hand-back: its longest message", "", longest, ""]
+    elif not hb:
+        parts += ["## No hand-back", "",
+                  f"This run made no hand-back and wrote no text; it made {f['model_replies']} model replies and {f['tool_calls']} tool calls.", ""]
+    Path(a.out).write_text("\n".join(parts), encoding="utf-8")
     print(f"wrote {a.out}")
 
 
@@ -205,14 +233,24 @@ def cmd_keep(a):
     d = base / "transcripts"
     gz, js = d / f"run-{a.run:04d}.jsonl.gz", d / f"run-{a.run:04d}.json"
     sha = hashlib.sha256(raw).hexdigest()
-    if js.exists():
-        old = json.loads(js.read_text(encoding="utf-8"))
-        if old.get("sha256") != sha:
-            raise Refused(f"run {a.run} already has a kept transcript with another sha256 ({old.get('sha256')}); nothing rewritten")
-        print(f"run {a.run}: the same bytes are already kept; nothing new")
-        return
-    d.mkdir(parents=True, exist_ok=True)
-    gz.write_bytes(gzip.compress(raw, mtime=0))
+    if gz.exists():
+        # nothing kept is ever written over
+        kept = hashlib.sha256(gzip.decompress(gz.read_bytes())).hexdigest()
+        if kept != sha:
+            raise Refused(f"run {a.run} already has a kept transcript with another sha256 ({kept}); nothing rewritten")
+        if js.exists():
+            print(f"run {a.run}: the same bytes are already kept; nothing new")
+            return
+        said = "the same bytes were already kept without a sidecar; sidecar written"
+    else:
+        if js.exists():
+            old = json.loads(js.read_text(encoding="utf-8"))
+            if old.get("sha256") != sha:
+                raise Refused(f"run {a.run} already has a kept record with another sha256 ({old.get('sha256')}); nothing rewritten")
+            raise Refused(f"run {a.run} has a sidecar and no gz; nothing rewritten, look at it by hand")
+        d.mkdir(parents=True, exist_ok=True)
+        gz.write_bytes(gzip.compress(raw, mtime=0))
+        said = f"kept {gz} and {js}"
     first = f["_lines"][0] if f["_lines"] else {}
     plan_path = base / "run-plans" / f"run-{a.run:04d}.json"
     plan = json.loads(plan_path.read_text(encoding="utf-8")) if plan_path.exists() else {}
@@ -220,7 +258,40 @@ def cmd_keep(a):
             "bytes": len(raw), "lines": len(f["_lines"]), "sha256": sha,
             "kept_from": "the session's own sub-agent transcript folder; the gzip holds the file byte for byte"}
     js.write_text(json.dumps(meta, indent=1) + "\n", encoding="utf-8")
-    print(f"kept {gz} and {js}")
+    print(said)
+
+
+WALL_CLOCK_TOLERANCE_MS = 1000
+COMPARED = ("input_tokens", "input_tokens_fresh", "input_tokens_cache_written", "input_tokens_cache_read",
+            "output_tokens", "tool_calls", "model_replies", "wall_clock_ms")
+
+
+def _differences(r: dict, f: dict) -> list:
+    """Each figure of the line that differs from the transcript's, both values shown."""
+    out = []
+    for k in COMPARED:
+        mine, theirs = r.get(k), f[k]
+        if k == "model_replies":
+            if mine is None:
+                out.append(f"model_replies: the line holds none, transcript {theirs}")
+            elif mine != theirs:
+                out.append(f"model_replies: line {mine}, transcript {theirs}")
+        elif mine is None or theirs is None:
+            continue
+        elif k == "wall_clock_ms":
+            if abs(mine - theirs) > WALL_CLOCK_TOLERANCE_MS:
+                out.append(f"wall_clock_ms: line {mine}, transcript {theirs}")
+        elif mine != theirs:
+            out.append(f"{k}: line {mine}, transcript {theirs}")
+    if isinstance(r.get("model"), str) and f["models"] and r["model"] not in f["models"]:
+        out.append(f"model: line {r['model']}, transcript {'+'.join(f['models'])}")
+    return out
+
+
+def _numbered(folder: Path, pattern: str, regex: str) -> set:
+    if not folder.is_dir():
+        return set()
+    return {int(m.group(1)) for p in folder.glob(pattern) if (m := re.fullmatch(regex, p.name))}
 
 
 def cmd_missing(a):
@@ -228,6 +299,20 @@ def cmd_missing(a):
     newest = {}
     for r in _records(base):
         newest[r["run"]] = r
+    kept_runs = _numbered(base / "transcripts", "run-*.jsonl.gz", r"run-(\d+)\.jsonl\.gz")
+    plan_runs = _numbered(base / "run-plans", "run-*.json", r"run-(\d+)\.json")
+    live = {}
+    live_unnamed = 0
+    if a.live:
+        folder = Path(a.live)
+        if not folder.is_dir():
+            raise Refused(f"--live {folder} is not a folder")
+        for p in sorted(folder.glob("*.jsonl*"), key=lambda q: q.stat().st_mtime):
+            f = figures_of(_read_bytes(p))
+            if f["run_named_in_brief"] is None:
+                live_unnamed += 1
+            else:
+                live[f["run_named_in_brief"]] = (p, f)
     lacks_n = {"model": 0, "input_tokens": 0, "output_tokens": 0, "wall_clock": 0, "outcome": 0}
     with_t = lacking_any = fillable = no_t_lacking = 0
     for run in sorted(newest):
@@ -243,7 +328,7 @@ def cmd_missing(a):
             lack.append("wall_clock")
         if not (isinstance(r.get("outcome"), str) and r["outcome"].strip()):
             lack.append("outcome")
-        kept = (base / "transcripts" / f"run-{run:04d}.jsonl.gz").exists()
+        kept = run in kept_runs
         for k in lack:
             lacks_n[k] += 1
         with_t += kept
@@ -255,9 +340,32 @@ def cmd_missing(a):
                 no_t_lacking += 1
         t = "a kept transcript exists that could fill it" if kept and lack else ("kept transcript exists" if kept else "no transcript kept; stays as it is")
         print(f"run {run} | lacks: {', '.join(lack) if lack else 'nothing'} | {t}")
+    no_line = sorted((plan_runs | kept_runs) - set(newest))
+    for run in no_line:
+        what = " and ".join(x for x, ok in (("plan", run in plan_runs), ("kept transcript", run in kept_runs)) if ok)
+        print(f"NO LINE run {run} | has a {what} and no line in agent-runs.jsonl")
+    live_no_line = sorted(set(live) - set(newest))
+    for run in live_no_line:
+        print(f"NO LINE run {run} | live transcript {live[run][0].name} names it and the record has no line")
+    live_not_kept = sorted(set(live) - kept_runs)
+    for run in live_not_kept:
+        print(f"NOT KEPT run {run} | live transcript {live[run][0].name} is not kept yet")
+    differing = 0
+    for run in sorted(newest):
+        if run in kept_runs:
+            f = figures_of(_read_bytes(base / "transcripts" / f"run-{run:04d}.jsonl.gz"))
+        elif run in live:
+            f = live[run][1]
+        else:
+            continue
+        for d in _differences(newest[run], f):
+            print(f"DIFFERS run {run} | {d}")
+            differing += 1
     print(f"COUNTS: runs {len(newest)}; lacking exact model {lacks_n['model']}; lacking input tokens {lacks_n['input_tokens']}; "
           f"lacking output tokens {lacks_n['output_tokens']}; lacking wall clock {lacks_n['wall_clock']}; lacking outcome {lacks_n['outcome']}; "
-          f"with a kept transcript {with_t}; lacking something {lacking_any}, of which a kept transcript could fill {fillable} and none kept {no_t_lacking}")
+          f"with a kept transcript {with_t}; lacking something {lacking_any}, of which a kept transcript could fill {fillable} and none kept {no_t_lacking}; "
+          f"plan or kept transcript with no line {len(no_line)}; live transcripts {len(live)} (naming no single run {live_unnamed}), "
+          f"live transcripts with no line {len(live_no_line)}, live transcripts not kept {len(live_not_kept)}; figures that differ {differing}")
 
 
 def main(argv=None) -> int:
@@ -277,7 +385,8 @@ def main(argv=None) -> int:
     s = sub.add_parser("keep")
     s.add_argument("--data", required=True); s.add_argument("--run", type=int, required=True)
     s.add_argument("--transcript", required=True); s.set_defaults(fn=cmd_keep)
-    s = sub.add_parser("missing"); s.add_argument("--data", required=True); s.set_defaults(fn=cmd_missing)
+    s = sub.add_parser("missing"); s.add_argument("--data", required=True); s.add_argument("--live")
+    s.set_defaults(fn=cmd_missing)
     a = p.parse_args(argv)
     try:
         a.fn(a)
