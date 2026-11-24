@@ -15,3 +15,4 @@ Folder life of one question: question.json -> brief.md + packet.json -> decision
 - Programs (`--program`): see programs/README.md. Fenced by a fresh isolated interpreter with empty env and folder; not a sandbox.
 - The leak-breach check hands `serve.build_packet` a packet with a later row through that one seam (monkeypatch);
   `leakage_check` itself is untouched.
+- 2026-11-24: replay_questions.py: a decider over a finished run's real opening signals, same door (serve.Server), no engine; NOT a trial (a skip changes nothing that follows); last line is counts only.
