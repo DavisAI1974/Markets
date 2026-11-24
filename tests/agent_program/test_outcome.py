@@ -151,3 +151,55 @@ def test_releases_lists_everyone_but_shows_paths_only_to_a_run_that_passes(world
     assert outcome.main(base + ["--run", REVIEWER]) == 0
     t = capsys.readouterr().out
     assert JOURNAL in t and w["commit"] in t and REVIEWER in t
+
+
+# ---- part B: what the brief says, who may `show`, and the flag on a challenge --------------------------------
+def dmain(w, verb, cid, *extra):
+    return defend.main([verb, "--claim", cid, "--data", str(w["root"]), "--graph-dir", str(w["graph"]), *extra])
+
+
+def test_the_brief_says_only_that_an_outcome_was_or_was_not_seen(world):
+    w = world
+    seen = S["cid2"] = reg(w, "condition-2")        # a real claim file whose proposer states an outcome WAS seen
+    what = json.loads((w["root"] / CLAIMS / "condition-2.json").read_text())["outcome_visibility"]["what"]
+    s = fresh(w)
+    b = defend.brief(s, seen)
+    assert "proposer states that an outcome had been seen before registration" in b
+    assert "the reviewer is not given what was seen" in b
+    assert what[:60] not in b and "registered after an outcome was seen" not in b
+    unseen = reg(w, "inference-1")
+    if not json.loads((w["root"] / CLAIMS / "inference-1.json").read_text())["outcome_visibility"]["outcome_seen"]:
+        assert "had not been seen" in defend.brief(s, unseen)
+    assert JOURNAL not in defend.brief(s, S["cid"])         # no released record path is in the brief of the released claim
+    assert what[:60] in defend.show(s, seen)                 # the proposer's side keeps the whole sentence
+
+
+def test_show_refuses_a_reviewer_without_its_own_challenge(world, capsys):
+    w, cid = world, S["cid2"]
+    assert dmain(w, "show", cid, "--run", REVIEWER2) == 2
+    capsys.readouterr()
+    kept = [t for t in fresh(w).nodes("Task") if t["attrs"].get("verb") == "show" and t["attrs"].get("claim") == cid]
+    assert len(kept) == 1 and kept[0]["attrs"]["run"] == REVIEWER2
+    assert dmain(w, "show", cid, "--run", PROPOSER) == 0           # the proposer needs no challenge to read its own side
+    assert "mechanism" in capsys.readouterr().out
+    assert dmain(w, "show", cid) == 0
+    assert "no run was named" in capsys.readouterr().out.splitlines()[0]
+    chal(w, cid, REVIEWER)
+    assert dmain(w, "show", cid, "--run", REVIEWER) == 0
+    assert "mechanism" in capsys.readouterr().out
+    assert dmain(w, "show", cid, "--run", REVIEWER2) == 2           # still no challenge of its own
+
+
+def test_a_challenge_records_whether_an_outcome_was_on_record_before_it(world, capsys):
+    w, cid = world, S["cid"]
+    s = fresh(w)
+    flag = lambda ev: s.node(ev)["attrs"]["outcome_on_record_before_challenge"]
+    assert flag(S["ev1"]) is False          # run:0003 challenged revision 1 before any release to it
+    assert flag(S["ev2"]) is True           # it challenged revision 2 after the release under revision 1
+    ev3 = chal(w, cid, REVIEWER2)
+    assert fresh(w).node(ev3)["attrs"]["outcome_on_record_before_challenge"] is False   # nothing was ever released to run:0005
+    again = chal(w, cid, REVIEWER)          # the same challenge again is the same id: the flag of the first is kept
+    assert again == S["ev2"] and fresh(w).node(again)["attrs"]["outcome_on_record_before_challenge"] is True
+    assert dmain(w, "show", cid, "--run", REVIEWER) == 0
+    out = capsys.readouterr().out
+    assert out.count("outcome_on_record_before_challenge: ") == 3

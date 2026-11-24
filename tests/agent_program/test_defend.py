@@ -284,8 +284,12 @@ def test_who_said_a_cited_line_is_the_proposers_word_and_code_says_so(world):
     assert by_path[HANDOFF]["said_by_named_in_lines"] is False          # line 3 of the handoff does not hold "Claude"
     line = "registered after an outcome was seen: SEEN-TEXT the four trade days were studied first"
     g = by_path["CLAUDE.md"]
+    # ticket 04: the brief no longer carries what the proposer saw (only that an outcome was seen); `show` keeps the sentence
+    assert line not in defend.brief(s, cid) and "SEEN-TEXT" not in defend.brief(s, cid)
+    assert "an outcome had been seen before registration; the reviewer is not given what was seen" in defend.brief(s, cid)
+    assert line in defend.show(s, cid)
     for text in (defend.brief(s, cid), defend.show(s, cid)):
-        assert "Greg's words" not in text and line in text
+        assert "Greg's words" not in text
         for k in ("CLAUDE.md", g["commit"], g["sha256"], "said by Greg as the proposer states; code does not check who said it"):
             assert k in text, k
         assert "appears in the cited lines: true" in text and "appears in the cited lines: false" in text

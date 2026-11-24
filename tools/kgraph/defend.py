@@ -564,8 +564,11 @@ def _falsifiers_line(a: dict) -> str | None:
     return "; ".join(parts) or None
 
 
-def _outcome_line(a: dict) -> str | None:
+def _outcome_line(a: dict, reviewer: bool = False) -> str | None:
     v = a["outcome_visibility"]
+    if reviewer:        # the brief: what the proposer saw is the proposer's side (ticket 04); only whether it saw one
+        return ("The proposer states that an outcome had " + ("" if v["outcome_seen"] else "not ")
+                + "been seen before registration; the reviewer is not given what was seen.")
     return f"registered after an outcome was seen: {v['what']}" if v["outcome_seen"] else None
 
 
@@ -582,9 +585,7 @@ def brief(store: GraphStore, claim_id: str, dirs: dict | None = None) -> str:
            "## Scope and boundaries", "", f"Scope: {a['scope']}"]
     if a.get("boundaries"):
         out.append(f"Boundaries: {a['boundaries']}")
-    ol = _outcome_line(a)
-    if ol:
-        out += ["", ol]
+    out += ["", _outcome_line(a, reviewer=True)]
     fl = _falsifiers_line(a)
     if fl:
         out += ["", "Note: " + fl + " (what they say is not in this brief)."]
@@ -725,6 +726,12 @@ def _challenge(store: GraphStore, claim_id: str, challenge_file, run: str, brief
         "distinguishing_observation": dist, "objections": d["objections"], "brief_sha256": bh,
         "saw_proposer_reasoning": d["saw_proposer_reasoning"], "what_i_opened": opened, "challenge_file": d,
     }
+    from . import outcome        # (here, not at the top: outcome.py imports this module)
+    prior = store.node(eid)      # the same challenge again is the same node: the flag it was first written with stands
+    if prior is None:
+        attrs["outcome_on_record_before_challenge"] = outcome.outcome_on_record(store, claim_id, run)
+    elif "outcome_on_record_before_challenge" in prior["attrs"]:
+        attrs["outcome_on_record_before_challenge"] = prior["attrs"]["outcome_on_record_before_challenge"]
     edges = [link("EVALUATES", eid, claim_id), link("PRODUCED", run, eid)]
     res = store.write([{"id": eid, "type": "Evaluation", "attrs": attrs}], edges, written_by=run)
     res["evaluation"] = eid
@@ -736,10 +743,19 @@ def challenges_of(store: GraphStore, claim_id: str) -> list[dict]:
             if e and e["attrs"].get("rubric") == RUBRIC]
 
 
-def show(store: GraphStore, claim_id: str) -> str:
+def show(store: GraphStore, claim_id: str, run: str | None = None) -> str:
+    from . import outcome        # (here, not at the top: outcome.py imports this module)
+    try:
+        outcome.check_show(store, claim_id, run)
+    except NotRetained:
+        raise
+    except schema.Refused as e:
+        _retain(store, "show", run, str(e), {"claim": claim_id})
+        raise
     c = _registered(store, claim_id)
     a = c["attrs"]
-    out = [f"{claim_id}  revision {c['rev']}  (registered by {a['proposer_run']})"]
+    out = [f"{claim_id}  revision {c['rev']}  (registered by {a['proposer_run']})"
+           + (f"  (shown to {run})" if run else "  (no run was named)")]
     for k in ("proposer", "hypothesis", "exact_claim", "scope", "boundaries", "mechanism", "alternatives", "falsifiers",
               "artifact_repo", "artifact_path", "code_commit", "artifact_sha256", "data_manifest_hashes",
               "outcome_visibility", "inference", "inference_reason", "source_event_ids", "event_time", "knowledge_time",
@@ -774,6 +790,7 @@ def show(store: GraphStore, claim_id: str) -> str:
         ea = e["attrs"]
         out += [f"  {e['id']}  by {ea['reviewer']}  at claim revision {ea['claim_revision']}  (brief sha256 {ea['brief_sha256']}; "
                 f"saw the proposer's reasoning: {ea['saw_proposer_reasoning']}; opened: {json.dumps(ea['what_i_opened'])})",
+                f"    outcome_on_record_before_challenge: {ea.get('outcome_on_record_before_challenge', 'not recorded (an earlier challenge)')}",
                 f"    alternatives: {json.dumps(ea['alternatives'], ensure_ascii=False)}",
                 f"    falsifiers: {json.dumps(ea['falsifiers'], ensure_ascii=False)}",
                 f"    distinguishing observation: {ea['distinguishing_observation']}",
@@ -819,7 +836,7 @@ def main(argv=None) -> int:
         elif a.verb == "challenge":
             print(json.dumps(challenge(store, a.claim, a.file, a.run, a.brief)))
         elif a.verb == "show":
-            print(show(store, a.claim))
+            print(show(store, a.claim, a.run))
         else:
             print("\n".join(undefended(store)))
     except NotRetained as e:
