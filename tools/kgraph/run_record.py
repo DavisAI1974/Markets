@@ -5,17 +5,24 @@ tokens, wall clock and outcome, so token use is measured per run and not estimat
 a model; every figure is read from the transcript file, never typed in or estimated.
 
   python3 -m tools.kgraph.run_record figures --transcript <file.jsonl|.jsonl.gz>
-  python3 -m tools.kgraph.run_record append  --data <markets-data> --run N --transcript <file> --role R
+  python3 -m tools.kgraph.run_record append  --data <markets-data> --run N --transcript <file> --agent-id ID --role R
         --stage "..." --task "..." --outcome "..." [--tokens-reported K] [--tickets a,b]
         [--code-commit C] [--corrects "..."] [--agent-type T]
   python3 -m tools.kgraph.run_record report  --transcript <file> --out <path> --title "..."
-  python3 -m tools.kgraph.run_record keep    --data <markets-data> --run N --transcript <file>
+  python3 -m tools.kgraph.run_record keep    --data <markets-data> --run N --transcript <file> --agent-id ID
   python3 -m tools.kgraph.run_record missing --data <markets-data> [--live <folder of transcripts>]
 
 `--data` names exactly the folder given; if it holds no agent-runs.jsonl the verb refuses (it never
 falls through to another checkout). Only `append` and `keep` write, and only new files or a new line.
 
-WHICH RUN A TRANSCRIPT IS: the number in the brief's opening, "agent run N" (any letter case) within its first
+THE TIE OF A TRANSCRIPT TO A RUN: `append` and `keep` need `--agent-id`, the id the main session was given when it
+started the agent. Every line of the transcript that carries `agentId` must hold it, else both refuse. When the
+brief names a run it must be the `--run`; when it names none (runs 107 and 108 were general agents) the agent id
+alone ties it and the line and sidecar say so. A run whose line, plan or kept sidecar already holds another
+agent id refuses this one. THE LIMIT: where nothing on record names the run's agent id, the tie rests on the main
+session passing the id it was given at launch; code cannot check that.
+
+WHICH RUN A BRIEF NAMES: the number in the brief's opening, "agent run N" (any letter case) within its first
 200 characters, where a brief that begins "You are the <agent>, agent run N" is run N's own even if it names
 another run after that. Otherwise two different numbers there, or none, mean it names no run and `append` and `keep` refuse it;
 a run named later in the brief does not count. `report` keeps every hand-back and drops nothing. `keep` never
@@ -80,10 +87,12 @@ def figures_of(raw: bytes) -> dict:
     if own:
         opening = {int(own.group(1))}
     usage, models, texts, hand_backs, others, subs = {}, [], [], [], set(), set()
-    seen_use, stamps = set(), []
+    seen_use, stamps, agent_ids, last_text, text_before_hb = set(), [], set(), "", ""
     for d in lines:
         if d.get("timestamp"):
             stamps.append(_ts(d["timestamp"]))
+        if d.get("agentId"):
+            agent_ids.add(d["agentId"])
         msg = d.get("message") or {}
         if msg.get("role") != "assistant":
             continue
@@ -97,12 +106,15 @@ def figures_of(raw: bytes) -> dict:
                 continue
             if it.get("type") == "text":
                 texts.append(it.get("text", ""))
+                if it.get("text", "").strip():
+                    last_text = it["text"]
             elif it.get("type") == "tool_use":
                 uid = it.get("id") or json.dumps(it, sort_keys=True)
                 if uid in seen_use:
                     continue
                 seen_use.add(uid)
                 if it.get("name") == HAND_BACK:
+                    text_before_hb = last_text  # the agent's last text message before its last hand-back
                     inp = it.get("input") or {}
                     hand_backs.append(inp.get("message") if isinstance(inp.get("message"), str)
                                       else max((v for v in inp.values() if isinstance(v, str)), key=len, default=""))
@@ -118,13 +130,15 @@ def figures_of(raw: bytes) -> dict:
     wall = round((last - first).total_seconds() * 1000) if first else None
     iso = lambda t: t.isoformat().replace("+00:00", "Z") if t else None
     return {
-        "run_named_in_brief": next(iter(opening)) if len(opening) == 1 else None, "models": models,
+        "run_named_in_brief": next(iter(opening)) if len(opening) == 1 else None,
+        "brief_run_numbers": sorted(opening),
+        "agent_id": next(iter(agent_ids)) if len(agent_ids) == 1 else None, "agent_ids": sorted(agent_ids), "models": models,
         "input_tokens_fresh": fresh, "input_tokens_cache_written": written,
         "input_tokens_cache_read": read, "output_tokens": out,
         "input_tokens": fresh + written + read, "model_replies": len(usage),
         "tool_calls": len(others), "hand_backs": len(hand_backs), "sub_agent_calls": len(subs),
         "first": iso(first), "last": iso(last), "wall_clock_ms": wall,
-        "_hand_backs": hand_backs, "_texts": texts, "_lines": lines,
+        "_hand_backs": hand_backs, "_text_before_last_hand_back": text_before_hb, "_texts": texts, "_lines": lines,
     }
 
 
@@ -139,10 +153,31 @@ def _paper(data: str) -> Path:
     return base
 
 
-def _check_brief(f: dict, run: int):
-    named = f["run_named_in_brief"]
-    if named != run:
-        raise Refused(f"the transcript's brief names {'no run (none, or two different ones, in its opening)' if named is None else 'agent run ' + str(named)}, not run {run}")
+NO_RUN_NOTE = "the brief names no run: tied by the agent id given at launch"
+
+
+def _tie(f: dict, run: int, agent_id: str, base: Path) -> str | None:
+    """The transcript is run N's if its lines' agentId is the id given at launch and its brief does not name
+    another run. Returns the tie note when the brief names no run (the agent id alone ties it)."""
+    if f["agent_ids"] != [agent_id]:
+        raise Refused(f"the transcript's lines carry agentId {f['agent_ids'] or 'none'}, not the --agent-id given ({agent_id})")
+    nums = f["brief_run_numbers"]
+    if len(nums) > 1:
+        raise Refused(f"the transcript's brief names two different runs in its opening ({nums}); it cannot be tied to run {run}")
+    if nums and nums[0] != run:
+        raise Refused(f"the transcript's brief names agent run {nums[0]}, not run {run}")
+    known = set()
+    for r in _records(base):
+        if r["run"] == run and r.get("agent_id"):
+            known.add(r["agent_id"])
+    for p in (base / "run-plans" / f"run-{run:04d}.json", base / "transcripts" / f"run-{run:04d}.json"):
+        if p.exists():
+            v = json.loads(p.read_text(encoding="utf-8")).get("agent_id")
+            if v:
+                known.add(v)
+    if known and known != {agent_id}:
+        raise Refused(f"run {run} is recorded with another agent id ({', '.join(sorted(known))}), not {agent_id}")
+    return None if nums else NO_RUN_NOTE
 
 
 def _records(base: Path) -> list:
@@ -156,7 +191,7 @@ def cmd_figures(a):
 def cmd_append(a):
     base = _paper(a.data)
     f = figures_of(_read_bytes(a.transcript))
-    _check_brief(f, a.run)
+    tie_note = _tie(f, a.run, a.agent_id, base)
     if not (a.outcome or "").strip():
         raise Refused("the outcome is empty")
     agent_type = a.agent_type or a.role
@@ -174,7 +209,7 @@ def cmd_append(a):
         tokens_reported = a.tokens_reported
         tokens_note = ("the harness's total for the run when it ended (input and output together)" if a.tokens_reported is not None
                        else "the harness's total was not given")
-    line = {"run": a.run, "session": (plan or {}).get("session") or (f["_lines"][0].get("sessionId") if f["_lines"] else None),
+    line = {"run": a.run, "agent_id": a.agent_id, "session": (plan or {}).get("session") or (f["_lines"][0].get("sessionId") if f["_lines"] else None),
             "stage": a.stage, "role": a.role,
             "model": f["models"][0] if len(f["models"]) == 1 else "+".join(f["models"]),
             "task": a.task}
@@ -192,6 +227,8 @@ def cmd_append(a):
     if plan:
         line["budget_tokens"] = plan.get("max_tokens")
         line["budget_note"] = f"limits written before it started in run-plans/run-{a.run:04d}.json"
+    if tie_note:
+        line["tie_note"] = tie_note
     line["outcome"] = a.outcome
     line["agent_type"] = agent_type
     if a.code_commit:
@@ -213,9 +250,10 @@ def cmd_report(a):
     longest = max(texts, key=len, default="")
     for k, h in enumerate(hb, 1):
         parts += [f"## Hand-back {k} of {len(hb)}", "", h, ""]
-    if hb and len(hb[-1]) < 600 and len(longest) > len(hb[-1]):
+    above = f["_text_before_last_hand_back"]
+    if hb and len(hb[-1]) < 600 and len(above) > len(hb[-1]):
         parts += ["## The message its last hand-back points at", "",
-                  "The last hand-back is under 600 characters; the agent's longest message follows, nothing above is dropped.", "", longest, ""]
+                  "The last hand-back is under 600 characters; the agent's last text message before it follows, nothing above is dropped.", "", above, ""]
     elif not hb and longest:
         parts += ["## No hand-back: its longest message", "", longest, ""]
     elif not hb:
@@ -229,7 +267,7 @@ def cmd_keep(a):
     base = _paper(a.data)
     raw = _read_bytes(a.transcript)
     f = figures_of(raw)
-    _check_brief(f, a.run)
+    tie_note = _tie(f, a.run, a.agent_id, base)
     d = base / "transcripts"
     gz, js = d / f"run-{a.run:04d}.jsonl.gz", d / f"run-{a.run:04d}.json"
     sha = hashlib.sha256(raw).hexdigest()
@@ -254,9 +292,11 @@ def cmd_keep(a):
     first = f["_lines"][0] if f["_lines"] else {}
     plan_path = base / "run-plans" / f"run-{a.run:04d}.json"
     plan = json.loads(plan_path.read_text(encoding="utf-8")) if plan_path.exists() else {}
-    meta = {"run": a.run, "agent_id": first.get("agentId"), "session": plan.get("session") or first.get("sessionId"),
+    meta = {"run": a.run, "agent_id": a.agent_id, "session": plan.get("session") or first.get("sessionId"),
             "bytes": len(raw), "lines": len(f["_lines"]), "sha256": sha,
             "kept_from": "the session's own sub-agent transcript folder; the gzip holds the file byte for byte"}
+    if tie_note:
+        meta["tie_note"] = tie_note
     js.write_text(json.dumps(meta, indent=1) + "\n", encoding="utf-8")
     print(said)
 
@@ -301,8 +341,8 @@ def cmd_missing(a):
         newest[r["run"]] = r
     kept_runs = _numbered(base / "transcripts", "run-*.jsonl.gz", r"run-(\d+)\.jsonl\.gz")
     plan_runs = _numbered(base / "run-plans", "run-*.json", r"run-(\d+)\.json")
-    live = {}
-    live_unnamed = 0
+    live = {}  # run -> [(path, figures)]
+    unnamed = []
     if a.live:
         folder = Path(a.live)
         if not folder.is_dir():
@@ -310,11 +350,26 @@ def cmd_missing(a):
         for p in sorted(folder.glob("*.jsonl*"), key=lambda q: q.stat().st_mtime):
             f = figures_of(_read_bytes(p))
             if f["run_named_in_brief"] is None:
-                live_unnamed += 1
+                unnamed.append((p, f))
             else:
-                live[f["run_named_in_brief"]] = (p, f)
+                live.setdefault(f["run_named_in_brief"], []).append((p, f))
+    for p, f in unnamed:
+        print(f"UNNAMED live {p.name} | agentId {f['agent_id'] or f['agent_ids'] or 'none'} | its brief names no single run")
+    for run, got in sorted(live.items()):
+        if len(got) > 1:
+            print(f"DUPLICATE live run {run} | {len(got)} files name it: {', '.join(p.name for p, _ in got)}; none is taken")
+
+    def transcript_of(run):
+        if run in kept_runs:
+            return figures_of(_read_bytes(base / "transcripts" / f"run-{run:04d}.jsonl.gz"))
+        if run in live and len(live[run]) == 1:
+            return live[run][0][1]
+        return None
+
     lacks_n = {"model": 0, "input_tokens": 0, "output_tokens": 0, "wall_clock": 0, "outcome": 0}
     with_t = lacking_any = fillable = no_t_lacking = 0
+    agreeing = differing_complete = complete_no_t = 0
+    diffs = {}
     for run in sorted(newest):
         r = newest[run]
         lack = []
@@ -329,6 +384,8 @@ def cmd_missing(a):
         if not (isinstance(r.get("outcome"), str) and r["outcome"].strip()):
             lack.append("outcome")
         kept = run in kept_runs
+        tf = transcript_of(run)
+        diffs[run] = _differences(r, tf) if tf else []
         for k in lack:
             lacks_n[k] += 1
         with_t += kept
@@ -338,34 +395,39 @@ def cmd_missing(a):
                 fillable += 1
             else:
                 no_t_lacking += 1
+        else:
+            if tf is None:
+                complete_no_t += 1
+            elif diffs[run]:
+                differing_complete += 1
+            else:
+                agreeing += 1
         t = "a kept transcript exists that could fill it" if kept and lack else ("kept transcript exists" if kept else "no transcript kept; stays as it is")
-        print(f"run {run} | lacks: {', '.join(lack) if lack else 'nothing'} | {t}")
+        dif = f" | differs: {', '.join(x.split(':')[0] for x in diffs[run])}" if diffs[run] and not lack else ""
+        print(f"run {run} | lacks: {', '.join(lack) if lack else 'nothing'}{dif} | {t}")
     no_line = sorted((plan_runs | kept_runs) - set(newest))
     for run in no_line:
         what = " and ".join(x for x, ok in (("plan", run in plan_runs), ("kept transcript", run in kept_runs)) if ok)
         print(f"NO LINE run {run} | has a {what} and no line in agent-runs.jsonl")
     live_no_line = sorted(set(live) - set(newest))
     for run in live_no_line:
-        print(f"NO LINE run {run} | live transcript {live[run][0].name} names it and the record has no line")
+        print(f"NO LINE run {run} | live transcript {', '.join(p.name for p, _ in live[run])} names it and the record has no line")
     live_not_kept = sorted(set(live) - kept_runs)
     for run in live_not_kept:
-        print(f"NOT KEPT run {run} | live transcript {live[run][0].name} is not kept yet")
+        print(f"NOT KEPT run {run} | live transcript {', '.join(p.name for p, _ in live[run])} is not kept yet")
     differing = 0
     for run in sorted(newest):
-        if run in kept_runs:
-            f = figures_of(_read_bytes(base / "transcripts" / f"run-{run:04d}.jsonl.gz"))
-        elif run in live:
-            f = live[run][1]
-        else:
-            continue
-        for d in _differences(newest[run], f):
+        for d in diffs[run]:
             print(f"DIFFERS run {run} | {d}")
             differing += 1
     print(f"COUNTS: runs {len(newest)}; lacking exact model {lacks_n['model']}; lacking input tokens {lacks_n['input_tokens']}; "
           f"lacking output tokens {lacks_n['output_tokens']}; lacking wall clock {lacks_n['wall_clock']}; lacking outcome {lacks_n['outcome']}; "
           f"with a kept transcript {with_t}; lacking something {lacking_any}, of which a kept transcript could fill {fillable} and none kept {no_t_lacking}; "
-          f"plan or kept transcript with no line {len(no_line)}; live transcripts {len(live)} (naming no single run {live_unnamed}), "
-          f"live transcripts with no line {len(live_no_line)}, live transcripts not kept {len(live_not_kept)}; figures that differ {differing}")
+          f"complete and agreeing with a kept or live transcript: {agreeing}; complete, a figure differs: {differing_complete}; "
+          f"complete, no transcript to compare: {complete_no_t}; "
+          f"plan or kept transcript with no line {len(no_line)}; live transcripts {sum(len(v) for v in live.values())} "
+          f"(naming no single run {len(unnamed)}), live transcripts with no line {len(live_no_line)}, "
+          f"live transcripts not kept {len(live_not_kept)}; figures that differ {differing}")
 
 
 def main(argv=None) -> int:
@@ -375,7 +437,7 @@ def main(argv=None) -> int:
     s = sub.add_parser("append")
     s.add_argument("--data", required=True); s.add_argument("--run", type=int, required=True)
     s.add_argument("--transcript", required=True); s.add_argument("--role", required=True)
-    s.add_argument("--stage", required=True); s.add_argument("--task", required=True)
+    s.add_argument("--agent-id", required=True); s.add_argument("--stage", required=True); s.add_argument("--task", required=True)
     s.add_argument("--outcome", required=True); s.add_argument("--tokens-reported", type=int)
     s.add_argument("--tickets"); s.add_argument("--code-commit"); s.add_argument("--corrects")
     s.add_argument("--agent-type"); s.set_defaults(fn=cmd_append)
@@ -384,7 +446,7 @@ def main(argv=None) -> int:
     s.add_argument("--title", required=True); s.set_defaults(fn=cmd_report)
     s = sub.add_parser("keep")
     s.add_argument("--data", required=True); s.add_argument("--run", type=int, required=True)
-    s.add_argument("--transcript", required=True); s.set_defaults(fn=cmd_keep)
+    s.add_argument("--transcript", required=True); s.add_argument("--agent-id", required=True); s.set_defaults(fn=cmd_keep)
     s = sub.add_parser("missing"); s.add_argument("--data", required=True); s.add_argument("--live")
     s.set_defaults(fn=cmd_missing)
     a = p.parse_args(argv)
