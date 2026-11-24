@@ -168,7 +168,7 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
   exhaustion, are strategy inputs. "Observation and verification only" still holds for the program's own trades,
   its price and result figures and its fee marks.
   AMENDED AGAIN 2026-11-23 (Greg: "Yes to all four", the second of four points put to him on the paper runner):
-  the paper runner (`strategies/paper/`) may CALL the two line functions `crypto_ng.tick.reads` and
+  the paper runner (`tasty/paper/` in `DavisAI1974/paper-trading-platform`) may CALL the two line functions `crypto_ng.tick.reads` and
   `crypto_ng.tick.line` exactly as they are, so the live lines are the same formula and not a reinvention. Nothing
   else of the package is imported, and nothing of it is copied. Record: markets-data
   `paper-trading-20261123/RUNNER_PLAN_20261123.md`, point G2.
