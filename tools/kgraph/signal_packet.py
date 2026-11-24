@@ -615,6 +615,10 @@ class PlaneLayer:
         return {c: one(r[c]) for c in self.columns}
 
 
+RECEIPT_WHY = ("a receipt or a picture of the build (a .json, .log, .md or .png file, or a render), not rows: named by its "
+               "path, not read")
+
+
 def plane_catalog(src: PlaneSource, day: str):
     """(commit, {layer key: [paths]}, [receipt/picture paths]) of the trade day's branch, or (None, {}, [])."""
     commit = src.commit(day)
@@ -670,7 +674,9 @@ def plane_state(src: PlaneSource, day: str, moment: int):
             continue
         lay = plane_layer(src, commit, key, paths)
         if lay is None:
-            not_placed.append((key, None, "not a parquet file of rows (Native's own episode lines, kept as recorded)"))
+            not_placed.append((key, None, "not a parquet file of rows (" + ", ".join(sorted({
+                p.rsplit("/", 1)[-1].split(".", 1)[-1] if "." in p.rsplit("/", 1)[-1] else "no extension" for p in paths}))
+                + "): kept as recorded, not read"))
             continue
         if not lay.has_time:
             what = ("keyed by its position on the tape, and " if "position_on_tape" in lay.columns else "") + (
@@ -692,7 +698,7 @@ def plane_state(src: PlaneSource, day: str, moment: int):
             info["newest"] = int(top)
             info["newest_known_at_ns"] = int(lay.known[top])
         layers[key] = info
-    return {"commit": commit, "layers": layers, "not_placed": not_placed, "receipts": len(other),
+    return {"commit": commit, "layers": layers, "not_placed": not_placed, "receipts": len(other), "receipt_paths": sorted(other),
             "n_layers_in_tree": len(groups)}
 
 
@@ -800,6 +806,9 @@ def plane_afterwards(src, day, moment, ps):
     for key, rows, why in ps["not_placed"]:
         out[key] = {"id_prefix": f"afterwards:plane:{key}:", "rows_after": rows, "row_numbers": None, "row_range": None,
                     "first_known_at_ns": None, "why_not_placed": why, "source": {"commit": ps["commit"]}}
+    for p in ps["receipt_paths"]:        # each receipt and picture of the branch, by its path
+        out[p] = {"id_prefix": f"afterwards:plane:{p}:", "rows_after": None, "row_numbers": None, "row_range": None,
+                  "first_known_at_ns": None, "why_not_placed": RECEIPT_WHY, "source": {"commit": ps["commit"], "path": p}}
     return out
 
 
@@ -952,6 +961,7 @@ def build(journal_rows, sequence, budget, *, store, platform_dir=None, trials=No
             # every calculation and read the graph names for the trade day is placed or named: a name that is neither a
             # placed layer nor already named above is named here with its own reason (a .parquet file is always named)
             have = set(ps["layers"]) | {x[0] for x in plane_out}
+            plane_out += [(p, None, RECEIPT_WHY) for p in ps["receipt_paths"]]
             plane_out += [x for x in planes_named(store, day, platform_dir) if x[0].endswith(".parquet") or x[0] not in have]
         else:
             plane_out = planes_named(store, day, platform_dir)
@@ -1031,6 +1041,12 @@ def build(journal_rows, sequence, budget, *, store, platform_dir=None, trials=No
             groups = {}
             for name, rows, why in plane_out:
                 groups.setdefault(why, []).append(f"{name}" + (f" ({rows} rows)" if rows else ""))
+            if RECEIPT_WHY in groups:      # each path once: its folder said once, then each file name of that folder
+                by_dir = {}
+                for pth in groups[RECEIPT_WHY]:
+                    d, _, f = pth.rpartition("/")
+                    by_dir.setdefault(d, []).append(f)
+                groups[RECEIPT_WHY] = [(d + "/" if d else "") + "{" + ", ".join(fs) + "}" for d, fs in by_dir.items()]
             if "aw" not in aw_cache:
                 aw_cache["aw"] = afterwards_layers(store, day, moment)
             aw = aw_cache["aw"]

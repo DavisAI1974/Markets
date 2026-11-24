@@ -623,7 +623,9 @@ def test_stored_planes_hold_only_rows_known_by_the_moment_and_every_layer_of_the
         named = {p["layer"] for p in pk["planes_not_placed"]}
         assert placed | named >= EXPECTED_ROOT_LAYERS and not placed & named
         foot = "\n".join(pk["foot"])
-        assert all(n in foot for n in named)
+        # a layer is in the foot by its name; a receipt or picture by its folder (said once, then "{") and its file name
+        assert all((n in foot) if "/" not in n else (n.rpartition("/")[0] + "/{" in foot and n.rpartition("/")[2] in foot)
+                   for n in named)
         assert {"crypto-ng-tick-lean-60s", "research-humps", "calc-quote_runs-facts", "calc-resting-facts",
                 "calc-leg_peaks-facts"} <= placed
         assert "calc-research_columns" in named          # 784,130 of its 820,670 rows hold no instant
@@ -782,6 +784,60 @@ def test_a_calculation_the_graph_names_with_nothing_written_is_named_in_the_list
     pk = sp.build(world["rows"], q["sequence"], PLANES_BUDGET, store=store, platform_dir=world["plat"], question=q, planes=planes)
     named = {x["layer"] for x in pk["planes_not_placed"]}
     assert "calc-no_file_of_its_own_20231002" in named, sorted(named)
+
+
+def test_every_receipt_and_picture_of_the_branch_is_named_by_its_path_in_the_foot_and_in_the_afterwards_file(world, planes):
+    day = "2023-10-02"
+    commit, _, other = sp.plane_catalog(planes, day)
+    assert len(other) > 100 and any(p.endswith(".png") or "-render-" in p for p in other) and any(p.endswith(".json") for p in other)
+    q = _stand_in_question(world, world["picks"][0])
+    pk = _build_p(world, planes, q)
+    named = {x["layer"] for x in pk["planes_not_placed"]}
+    assert not [p for p in other if p not in named], [p for p in other if p not in named][:5]
+    # in the foot each folder is said once and then each file name of it, each in the folder's braces
+    assert not [p for p in other if p.rpartition("/")[2] not in pk["text"] or (p.rpartition("/")[0] + "/{") not in pk["text"]][:5]
+    ps = sp.plane_state(planes, day, pk["moment_ns"])
+    after = sp.plane_afterwards(planes, day, pk["moment_ns"], ps)
+    assert not [p for p in other if p not in after], [p for p in other if p not in after][:5]
+    assert sp.afterwards_check(sp.afterwards_layers(world["store"], day, pk["moment_ns"], plane_after=after), pk["moment_ns"]) == []
+
+
+# ---- the one separated section: a real record with exactly one thing changed ---------------------------------------------
+class _SourceWithOneFileRenamed:
+    """The real planes source of 2023-10-02."""
+    # change: one real path of the layer calc-book_totals, "calc-book_totals-20231002.parquet" (any path of it that ends
+    # .parquet), is listed under the same name ending ".csv" instead; blob() hands back the real bytes of the real path;
+    # nothing else differs
+    def __init__(self, src):
+        self._s, self.git_dir = src, src.git_dir
+        self._back = {}
+
+    def commit(self, day):
+        return self._s.commit(day)
+
+    def names(self, commit):
+        out = []
+        for p in self._s.names(commit):
+            if sp.plane_key(p) == "calc-book_totals" and p.endswith(".parquet"):
+                self._back[p[:-8] + ".csv"] = p
+                p = p[:-8] + ".csv"
+            out.append(p)
+        return out
+
+    def blob(self, commit, path):
+        return self._s.blob(commit, self._back.get(path, path))
+
+
+def test_the_reason_a_layer_is_not_a_parquet_file_is_given_only_to_a_layer_that_is_not_one(world, planes):
+    src = _SourceWithOneFileRenamed(planes)
+    ps = sp.plane_state(src, "2023-10-02", _stand_in_question(world, world["picks"][0])["tape_received_ns"])
+    mine = [(k, r) for k, _, r in ps["not_placed"] if "book_totals" in k]
+    assert mine, "the renamed layer is not named at all"
+    for k, r in mine:
+        assert "Native" not in r and "episode" not in r, (k, r)
+    for k, _, r in ps["not_placed"]:
+        if "Native's own episode lines" in r:
+            assert k.startswith("native-episodes"), (k, r)
 
 
 def test_the_door_writes_planes_afterwards_references_and_one_decision_per_line(world, planes, tmp_path):
