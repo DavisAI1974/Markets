@@ -5,8 +5,17 @@ run's own journal AS IT STOOD BEFORE that signal.
         --journal <events.jsonl> [--start <start.json>]) --sequence <journal sequence of an opening signal>
         --budget <tokens> [--platform <paper-trading-platform checkout>] [--graph-dir D] [--json]
   python3 -m tools.kgraph.signal_packet ... --all-opens --out <file>      one line a signal, nothing else
-  build(journal_rows, sequence, budget, *, store, platform_dir) -> {"text", "tokens_estimated", "lines",
-        "cut", "not_in_packet", "moment_ns", "sha256", ...}
+  build(journal_rows, sequence, budget, *, store, platform_dir, question=None) -> {"text", "tokens_estimated",
+        "lines", "cut", "not_in_packet", "moment_ns", "sha256", ...}
+
+WITH A QUESTION (the platform's own question.json for this signal, Greg 2026-11-24: "all of data depth back in"):
+the packet also holds `state` (the question's state, whole and unchanged), `flow_lines` (the question's `lines`: the
+dipole and exhaustion lines, each value and width in seconds; named flow_lines because `lines` is the packet's own list
+of text lines) and `exchange_ns`, and its text gains two sections BEFORE the signal's: "the data at the signal" and
+"the two lines at this run's earlier signals". Every `state:` line is known at the signal's own tick; every `q:` line
+at its own earlier tape time. The real shape of a real state is not known until one pass of the tape has been taken:
+everything here reads the shape the platform's code and its own checks describe, and a name that is not there is
+counted in the foot, never made up. Without a question the packet is exactly what it was.
 
 The journal comes from one of two places by one small reader (`journal_from_branch`, `journal_from_file`):
 a run's record branch at a commit (default the tip), or a local `events.jsonl` as it stands (a trial keeps its
@@ -87,6 +96,20 @@ ROW_FIELDS = {
              "bid", "ask", "fill_received_ns"),
 }
 LEFT_OUT = ("open_profit", "highest_open_profit")
+
+# The two sections a question adds, in the order they stand in the text (before the signal's own).
+QUESTION_SECTIONS = ("data_at_signal", "earlier_q", "state_layers")
+HEADINGS["data_at_signal"] = ("THE DATA AT THE SIGNAL (the engine's own values at the signal's tick; prices and sizes are the "
+                     "tape's integer units as stored; nothing derived):")
+HEADINGS["earlier_q"] = "THE TWO LINES AT THIS RUN'S EARLIER SIGNALS, NEWEST FIRST:"
+HEADINGS["state_layers"] = ("THE REST OF THE STATE, LAYER BY LAYER (each layer: its name, how many lines it holds in all, "
+                            "its head; the whole of every layer is in state.json beside this brief):")
+# ENGINEERING CHOICE, not a finding: the part of the room left for the variable sections (after the fixed head, signal,
+# rule and foot) that the two question sections may use between them. The rest goes to the journal's sections.
+STATE_SHARE = 0.5
+ROW_CHARS = 400          # a state row longer than this is split into its parts; a scalar longer is cut and says so
+LEG_NAMES = ("leg_number", "direction", "first_trade_position", "start_price", "furthest_price", "steps")
+LEFT_OUT_NAMES_SHOWN = 20
 
 
 # ---- the journal, from one of two places ------------------------------------------------------------------
@@ -220,13 +243,263 @@ def _peaks_of(store, day):
     return _cached(store, ("peaks", day), lambda: sum(1 for n in store.nodes("Peak") if n["attrs"].get("trade_day") == day))
 
 
+
+# ---- the data at the signal (only when a question is given) --------------------------------------------------
+
+def _v(x):
+    """A value as given, in one piece of text."""
+    return "null" if x is None else json.dumps(x, sort_keys=True, ensure_ascii=False)
+
+
+def _g(d, *path):
+    for k in path:
+        if not isinstance(d, dict) or k not in d:
+            return None
+        d = d[k]
+    return d
+
+
+def state_sha256(state) -> str:
+    """The platform's own digest of a state: canonical JSON, sorted keys, no spaces (session.py `_ask_decider`)."""
+    return hashlib.sha256(json.dumps(state, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
+def _flow_text(name, question, state):
+    """One flow line as given: its value and width from the question's `lines`, else from the tick; the bought and
+    sold sizes behind it from the inputs' own flow when the state has them."""
+    ln = _g(question, "lines", name)
+    tick = _g(state, "inputs", "tick") or {}
+    flow = _g(state, "inputs", "strategy_inputs", name) or {}
+    if isinstance(ln, dict):
+        value, width = ln.get("value"), ln.get("width_s")
+    else:
+        value = tick.get(name) if isinstance(tick, dict) else None
+        w = flow.get("width") if isinstance(flow, dict) else None
+        width = w // NS if isinstance(w, int) else None
+    parts = [f"value={'empty' if value is None else _v(value)}", f"width_s={_v(width)}"]
+    size = flow.get("size") if isinstance(flow, dict) else None
+    if isinstance(size, list) and len(size) == 2:
+        parts += [f"bought={_v(size[0])}", f"sold={_v(size[1])}"]
+    return f"{name}; " + "; ".join(parts)
+
+
+def _fact_name(i, fact, taken):
+    base = f"{fact.get('quote')}:{fact.get('fact')}".replace(" ", "_") if isinstance(fact, dict) and (
+        fact.get("quote") is not None or fact.get("fact") is not None) else f"no_name_{i}"
+    name, n = base, 1
+    while name in taken:
+        n += 1
+        name = f"{base}#{n}"
+    taken.add(name)
+    return name
+
+
+def state_lines(question, moment):
+    """(lines in priority order, {"book_bid": n, "book_ask": n, "left_out": [...]}) from a question's state."""
+    state = question.get("state")
+    out = []
+
+    def add(src, body):
+        out.append({"section": "data_at_signal", "text": f"{src} | {body}", "source": src, "sequence": None, "run": None,
+                    "known_at_ns": moment, "basis": "the signal's own tick", "row_kind": "state"})
+    tick = _g(state, "inputs", "tick") or {}
+    tick = tick if isinstance(tick, dict) else {}
+    add("state:dipole", _flow_text("dipole", question, state))
+    add("state:exhaustion", _flow_text("exhaustion", question, state))
+    add("state:tick", "; ".join(f"{k}={_v(tick.get(k))}" for k in ("bid", "ask", "trade", "price", "aggressor",
+                                                                     "settlement") if k in tick))
+    add("state:before", "; ".join(f"{k}={_v(tick.get(k))}" for k in ("dipole_before", "exhaustion_before",
+                                                                      "exhaustion_prior_read") if k in tick))
+    taken = set()
+    for i, fact in enumerate(tick.get("quote_facts") or []):
+        body = "; ".join(f"{k}={_v(v)}" for k, v in sorted(fact.items())) if isinstance(fact, dict) else _v(fact)
+        add(f"state:fact:{_fact_name(i, fact, taken)}", body)
+    leg = tick.get("leg")
+    if isinstance(leg, list) and len(leg) == len(LEG_NAMES):
+        add("state:leg", "; ".join(f"{n}={_v(x)}" for n, x in zip(LEG_NAMES, leg)))
+    elif "leg" in tick:
+        add("state:leg", f"leg={_v(leg)}")
+    book = state.get("book") if isinstance(state, dict) else None
+    sides = {s: (book.get(s) if isinstance(book, dict) and isinstance(book.get(s), list) else []) for s in ("bid", "ask")}
+    for level in range(max(len(sides["bid"]), len(sides["ask"]))):
+        for s in ("bid", "ask"):
+            if level < len(sides[s]):
+                lv = sides[s][level]
+                lv = lv if isinstance(lv, dict) else {}
+                add(f"state:book:{s}:{level + 1}", f"side={s}; level={level + 1}; price={_v(lv.get('price'))}; "
+                    f"size={_v(lv.get('size'))}; orders={_v(lv.get('orders'))}")
+    left = state.get("left_out") if isinstance(state, dict) and isinstance(state.get("left_out"), list) else []
+    return out, {"book_bid": len(sides["bid"]), "book_ask": len(sides["ask"]), "book_given": book is not None,
+                 "left_out": [x.get("name") if isinstance(x, dict) else x for x in left]}
+
+
+def state_layer_list(state):
+    """[(layer name, value)] by the state's own top-level and second-level keys, so a layer the platform adds later
+    is passed through and listed without a change here. A top-level dict whose values are all dicts or lists is
+    split by its second-level keys; anything else is one layer."""
+    out = []
+    for k1, v in state.items():
+        if isinstance(v, dict) and v and all(isinstance(x, (dict, list)) for x in v.values()):
+            out += [(f"{k1}.{k2}", x) for k2, x in v.items()]
+        else:
+            out.append((k1, v))
+    return out
+
+
+def _leaves(v, path=""):
+    """(path, value) rows of a layer: scalars, and any list or dict short enough to read as one row; a longer one is
+    split into its parts. Lazy, so a count never holds the rows."""
+    if isinstance(v, (dict, list)) and v:
+        if len(json.dumps(v, sort_keys=True, ensure_ascii=False)) <= ROW_CHARS:
+            yield path, v
+        elif isinstance(v, dict):
+            for k, x in v.items():
+                yield from _leaves(x, f"{path}.{k}" if path else str(k))
+        else:
+            for i, x in enumerate(v):
+                yield from _leaves(x, f"{path}[{i}]")
+    else:
+        yield path, v
+
+
+def state_row_id(layer, path):
+    return f"state.{layer}/{path}"
+
+
+def state_row_text(layer, path, value):
+    t = json.dumps(value, sort_keys=True, ensure_ascii=False)
+    if len(t) > ROW_CHARS:
+        t = t[:ROW_CHARS] + f"... ({len(t) - ROW_CHARS} more characters, whole in state.json)"
+    return f"{state_row_id(layer, path)} | {t}"
+
+
+def resolve_state_id(state, id_):
+    """True when `id_` (state.<layer>/<path>) names a row that is in the state."""
+    import re
+    if not isinstance(id_, str) or not id_.startswith("state.") or "/" not in id_ or not isinstance(state, dict):
+        return False
+    layer, _, path = id_[6:].partition("/")
+    cur = state
+    for k in layer.split("."):
+        if not isinstance(cur, dict) or k not in cur:
+            return False
+        cur = cur[k]
+    for m in re.finditer(r"\.?([^.\[\]]+)|\[(\d+)\]", path):
+        if m.group(2) is not None:
+            i = int(m.group(2))
+            if not isinstance(cur, list) or i >= len(cur):
+                return False
+            cur = cur[i]
+        else:
+            if not isinstance(cur, dict) or m.group(1) not in cur:
+                return False
+            cur = cur[m.group(1)]
+    return True
+
+
+def state_layer_of(state, id_):
+    """The layer name an id of a state row belongs to, or None."""
+    if resolve_state_id(state, id_):
+        return id_[6:].partition("/")[0]
+    return None
+
+
+class PacketIds:
+    """Every id a decision may name: the explicit rows of every layer, shown in the text or not, and every row of the
+    state by its address. `in` asks the whole packet, not the text."""
+
+    def __init__(self, layer_of: dict, state=None):
+        self.layer_of, self.state = dict(layer_of), state
+
+    def __contains__(self, id_):
+        return id_ in self.layer_of or resolve_state_id(self.state, id_)
+
+    def layer(self, id_):
+        return self.layer_of.get(id_) or state_layer_of(self.state, id_)
+
+
+def layer_of_map(pk) -> dict:
+    """id -> layer name for every explicit row of a built packet (text lines and the layers' whole rows)."""
+    out = {l["source"]: l.get("layer") or l["section"] for l in pk["lines"]}
+    for name, lay in (pk.get("layers") or {}).items():
+        for r in lay.get("rows", []):
+            out.setdefault(r["source"], name)
+    return out
+
+
+PLANE_FILE_REASONS = (
+    ("peaks-by-place", "built on Peaks: Peaks stay out (the graph holds the time of a peak's high, not when it became known)"),
+    ("old-defs-on-peaks", "built on Peaks: Peaks stay out (the time a peak became known is not held)"),
+    ("peak-lives", "built on Peaks: Peaks stay out (the time a peak became known is not held)"),
+    ("flow-60s-before-and-after", "holds the flow AFTER each event, an AFTERWARDS column (what happened after)"),
+)
+
+
+def planes_named(store, day, platform_dir):
+    """Every stored layer of the trade day that this packet does not hold, each with its reason: [(layer, rows, reason)].
+    Nothing is read from a file; the graph's CalcOutput nodes, the file names under markets-data and the READS of the
+    rule texts are listed. Where a layer's rows have a time it cannot be verified here, no time is guessed."""
+    out, calcs, columns = [], set(), set()
+    for n in store.nodes("CalcOutput"):
+        a = n["attrs"]
+        if a.get("trade_day") != day:
+            continue
+        calcs.add(a["calc"])
+        columns |= set(a.get("columns") or [])
+        out.append((f"calc-{a['calc']}", (a.get("receipt") or {}).get("rows"),
+                    f"stored per tick (every row carries its tick's position and time); its parquet parts are on branch "
+                    f"{a.get('branch')} of markets-data, which is not in the checkout: not read, no row placed"))
+    ymd = day.replace("-", "")
+    root = Path(store.data_root)
+    for f in sorted(root.glob(f"tasks/**/research-union-current/**/*{ymd}*.parquet")):
+        why = next((r for k, r in PLANE_FILE_REASONS if f.name.startswith(k)), None) or \
+            "a research file of the trade day whose rows carry no known-at time this packet can verify: not read, no time guessed"
+        out.append((f.name, None, why))
+    if platform_dir:
+        import re
+        reads = set()
+        for f in sorted(Path(platform_dir).glob("paper_platform/rules/*.json")):
+            try:
+                spec = json.loads(f.read_text(encoding="utf-8")).get("specification", "")
+            except (OSError, ValueError):
+                continue
+            for line in spec.split("\n"):
+                if line.lstrip().startswith("- READS"):
+                    reads |= set(re.findall(r"`([^`]+)`", line))
+        have = {n for n, _, _ in out}
+        for name in sorted(reads):
+            base = name[5:].split("-facts")[0] if name.startswith("calc-") else name
+            if name in have or base in calcs or f"calc-{base}" in have:
+                continue
+            if name in columns or name in ("exhaustion_20s", "dipole_60s"):
+                out.append((name, None, "a column of calc-research_columns (stored per tick, parquet not in the checkout): not read"))
+            else:
+                out.append((name, None, "named in a rule text's READS; no file of this trade day is in the graph or the checkout"))
+    return out
+
+
+def q_line(row: dict) -> dict:
+    """One earlier question row of the run: the two lines it carried, known at its own tape time."""
+    seq = row.get("signal_sequence")
+    lines = row.get("lines") if isinstance(row.get("lines"), dict) else None
+
+    def one(name):
+        ln = lines.get(name) if lines else None
+        return "not given" if not isinstance(ln, dict) else ("empty" if ln.get("value") is None else _v(ln["value"]))
+    src = f"q:{seq}"
+    return {"section": "earlier_q", "source": src, "sequence": seq, "run": row.get("run"),
+            "known_at_ns": row.get("received"), "basis": "tape receive time", "row_kind": "question",
+            "text": f"{src} | rule={row.get('rule')}; side={row.get('side')}; dipole={one('dipole')}; "
+                    f"exhaustion={one('exhaustion')}"}
+
+
 # ---- build ----------------------------------------------------------------------------------------------
 
 def _digits(n):  # a number's width, for the reserved size of the foot
     return len(str(n))
 
 
-def build(journal_rows, sequence, budget, *, store, platform_dir=None, trials=None) -> dict:
+def build(journal_rows, sequence, budget, *, store, platform_dir=None, trials=None, question=None) -> dict:
     budget_chars = budget * dp.CHARS_PER_TOKEN
     prior = [r for r in journal_rows if r["sequence"] < sequence]          # nothing at or after is read
     sig = next((r for r in journal_rows if r["sequence"] == sequence), None)
@@ -236,7 +509,9 @@ def build(journal_rows, sequence, budget, *, store, platform_dir=None, trials=No
     day = trade_day_of(moment)
     first_recorded = min((r["recorded_ns"] for r in prior + [sig] if r.get("recorded_ns") is not None), default=None)
 
-    lines = {s: [] for s in SECTIONS}
+    sections = (QUESTION_SECTIONS + SECTIONS) if question is not None else SECTIONS
+    variable = (QUESTION_SECTIONS + VARIABLE) if question is not None else VARIABLE
+    lines = {s: [] for s in sections}
     sl = row_line(sig, run)
     sl.update(section="signal")
     lines["signal"].append(sl)
@@ -259,6 +534,23 @@ def build(journal_rows, sequence, budget, *, store, platform_dir=None, trials=No
         sec = "same_rule" if r.get("rule") == rule else "other_rules"
         ln["section"] = sec
         cand[sec].append(ln)
+    q_meta, q_later, slayers, planes = None, 0, [], []
+    if question is not None:
+        st = question.get("state")
+        cand["data_at_signal"], q_meta = state_lines(question, moment) if isinstance(st, dict) else ([], None)
+        cand["earlier_q"] = []
+        for r in sorted((r for r in prior if r["kind"] == "question"), key=lambda r: (r.get("received") or 0,
+                                                                                  r["sequence"]), reverse=True):
+            if r.get("received") is not None and r["received"] <= moment and r.get("signal_sequence") is not None \
+                    and r["signal_sequence"] < sequence:
+                cand["earlier_q"].append(q_line(r))
+            else:
+                q_later += 1
+        if isinstance(st, dict):
+            for name, value in state_layer_list(st):
+                slayers.append({"name": f"state.{name}", "key": name, "value": value,
+                                "count": sum(1 for _ in _leaves(value))})
+        planes = planes_named(store, day, platform_dir)
     # closed trades
     trades = {}
     for r in sorted(known, key=lambda r: r["sequence"]):
@@ -303,7 +595,42 @@ def build(journal_rows, sequence, budget, *, store, platform_dir=None, trials=No
 
     def foot(cut: dict) -> list[str]:
         out = ["NOT IN THIS PACKET:"]
-        out.append("- cut for want of budget (the oldest first): " + ", ".join(f"{k} {cut[k]}" for k in VARIABLE) + ".")
+        out.append("- cut for want of budget (the oldest first): " + ", ".join(f"{k} {cut[k]}" for k in variable) + ".")
+        if question is not None:
+            if q_meta is None:
+                out.append("- the data at the signal: the question carried no state, so none is shown; the "
+                           "platform said: " + _v(question.get("state_left_out")) + ".")
+            else:
+                shown = [l["source"] for l in lines["data_at_signal"]]
+                nb = {s: sum(1 for x in shown if x.startswith(f"state:book:{s}:")) for s in ("bid", "ask")}
+                out.append(f"- book levels not shown in the text (cut for want of budget): bid "
+                           f"{cut.get('book_bid', q_meta['book_bid'] - nb['bid'])} of {q_meta['book_bid']}, ask "
+                           f"{cut.get('book_ask', q_meta['book_ask'] - nb['ask'])} of {q_meta['book_ask']}; all of them, "
+                           "with the queue at each level, are in state.json"
+                           + ("." if q_meta["book_given"] else "; the platform gave no book at this tick."))
+                names = [str(n) for n in q_meta["left_out"]]
+                out.append(f"- named by the platform as left out of the state ({len(names)}): "
+                           + ", ".join(names[:LEFT_OUT_NAMES_SHOWN])
+                           + (f" and {len(names) - LEFT_OUT_NAMES_SHOWN} more" if len(names) > LEFT_OUT_NAMES_SHOWN else "")
+                           + ".")
+            parts = []
+            for s in sections:
+                if s == "state_layers":
+                    continue
+                n = len(cand[s]) if s in cand else len(lines[s])
+                parts.append(f"{s} {n - cut.get(s, 0)} of {n}")
+            out.append("- layers held whole in layers.json (lines shown here of lines in all): " + ", ".join(parts)
+                       + ". The state's own layers are listed above with their counts; their whole is in state.json.")
+            out.append(f"- earlier question rows of this run with no usable time or later than the moment: {q_later}.")
+            groups = {}
+            for name, rows, why in planes:
+                groups.setdefault(why, []).append(f"{name}" + (f" ({rows} rows)" if rows else ""))
+            out.append(f"- ROOT's stored planes of trade day {day}: none is placed in this packet, each for the reason "
+                       "given and none read:")
+            for why, names in groups.items():
+                out.append(f"  - {why}: " + ", ".join(names) + ".")
+            out.append("- from the planes, never in a packet whatever the file: AFTERWARDS columns (what happened after "
+                       "an event) and the HELD_BACK columns named below, and every Peak (counted above).")
         if not rl:
             out.append(f"- the rule's text: {why_no_rule}.")
         out.append(f"- every other run of the same tape: {len(others)} runs hold "
@@ -332,27 +659,109 @@ def build(journal_rows, sequence, budget, *, store, platform_dir=None, trials=No
     fixed = list(head)
     for s in ("signal", "rule"):
         fixed += [HEADINGS[s]] + [l["text"] for l in lines[s]]
-    for s in VARIABLE:
+    for s in variable:
         fixed.append(HEADINGS[s])
-    fixed += foot({k: len(cand[k]) for k in VARIABLE})
+    layered = question is not None
+    forced = {}
+    if layered:
+        # no layer is reduced to nothing: the first line of each (the dipole and the exhaustion line of the data at
+        # the signal) are in the text before any share is given out
+        for s in variable:
+            if s != "state_layers" and cand[s]:
+                forced[s] = 2 if s == "data_at_signal" else 1
+                lines[s] += cand[s][:forced[s]]
+                fixed += [l["text"] for l in lines[s]]
+        gens = []
+        for L in slayers:
+            known = {"known_at_ns": moment, "basis": "the signal's own tick", "row_kind": "state",
+                     "sequence": None, "run": None, "section": "state_layers", "layer": L["name"]}
+            hdr = dict(known, source=f"layer:{L['name']}",
+                       text=f"layer:{L['name']} | {L['count']} lines in all; the head is shown here and the whole is in "
+                            f"state.json under {' > '.join(L['key'].split('.'))}")
+            it = _leaves(L["value"])
+            first = next(it, None)
+            lines["state_layers"].append(hdr)
+            fixed.append(hdr["text"])
+            rows = []
+            if first is not None:
+                ln = dict(known, source=state_row_id(L["key"], first[0]),
+                          text=state_row_text(L["key"], first[0], first[1]))
+                lines["state_layers"].append(ln)
+                fixed.append(ln["text"])
+            gens.append((L, it, known))
+    full = {k: len(cand[k]) for k in variable if k != "state_layers"}
+    full["state_layers"] = sum(max(L["count"] - 1, 0) for L in slayers)
+    if q_meta is not None:
+        full.update(book_bid=q_meta["book_bid"], book_ask=q_meta["book_ask"])
+    fixed += foot(full)
     left = budget_chars - len("\n".join(fixed)) - 2
     if left < 0:
         raise ValueError(f"budget {budget} tokens is below the fixed part of the packet ({-left} characters short)")
     cut = {}
-    for i, s in enumerate(VARIABLE):
-        share = left // (len(VARIABLE) - i)
+
+    def fill(s, share):
         used = 0
-        for ln in cand[s]:
+        for ln in cand[s][len(lines[s]):]:
             if used + len(ln["text"]) + 1 > share:
                 break
             lines[s].append(ln)
             used += len(ln["text"]) + 1
         cut[s] = len(cand[s]) - len(lines[s])
-        left -= used
+        return used
+
+    def fill_state_layers(share):
+        used, shown_rows = 0, 0
+        for i, (L, it, known) in enumerate(gens):
+            mine = (share - used) // (len(gens) - i)
+            got = 0
+            for path, value in it:
+                ln = dict(known, source=state_row_id(L["key"], path), text=state_row_text(L["key"], path, value))
+                if got + len(ln["text"]) + 1 > mine:
+                    break
+                lines["state_layers"].append(ln)
+                got += len(ln["text"]) + 1
+            used += got
+        shown = sum(1 for l in lines["state_layers"] if not l["source"].startswith("layer:"))
+        cut["state_layers"] = sum(L["count"] for L in slayers) - shown
+        return used
+    if layered:
+        room = int(left * STATE_SHARE)
+        for i, s in enumerate(QUESTION_SECTIONS):
+            used = fill_state_layers(room // (len(QUESTION_SECTIONS) - i)) if s == "state_layers" else \
+                fill(s, room // (len(QUESTION_SECTIONS) - i))
+            room -= used
+            left -= used
+        if q_meta is not None:
+            for s in ("bid", "ask"):
+                cut[f"book_{s}"] = q_meta[f"book_{s}"] - sum(1 for l in lines["data_at_signal"]
+                                                              if l["source"].startswith(f"state:book:{s}:"))
+    for i, s in enumerate(VARIABLE):
+        left -= fill(s, left // (len(VARIABLE) - i))
+    if layered:     # each state layer's head stands under its own header
+        order = {L["name"]: i for i, L in enumerate(slayers)}
+        lines["state_layers"].sort(key=lambda l: order[l["layer"]])
     pk = {"path": PATH_NAME, "run": run, "sequence": sequence, "rule": rule, "trade_day": day,
-          "moment_ns": moment, "budget_tokens": budget, "head": head, "lines": [l for s in SECTIONS for l in lines[s]],
+          "moment_ns": moment, "budget_tokens": budget, "head": head, "lines": [l for s in sections for l in lines[s]],
           "foot": foot(cut), "cut": cut,
-          "lines_in": {s: len(lines[s]) for s in SECTIONS}}
+          "lines_in": {s: len(lines[s]) for s in sections}}
+    if question is not None:
+        state = question.get("state")
+        pk["sections"] = list(sections)
+        pk["state"], pk["flow_lines"], pk["exchange_ns"] = state, question.get("lines"), question.get("exchange_ns")
+        layers = {}
+        for s in sections:
+            if s == "state_layers":
+                continue
+            rows = cand[s] if s in cand else lines[s]
+            layers[s] = {"count": len(rows), "in_text": len(lines[s]), "where": "layers.json", "rows": rows}
+        for L in slayers:
+            shown = sum(1 for l in lines["state_layers"] if l.get("layer") == L["name"] and not l["source"].startswith("layer:"))
+            layers[L["name"]] = {"count": L["count"], "in_text": shown, "where": "state.json"}
+        pk["layers"] = layers
+        pk["planes_not_placed"] = [{"layer": n, "rows": r, "reason": w} for n, r, w in planes]
+        pk["question_state"] = {"sequence": question.get("sequence"), "tape_received_ns": question.get("tape_received_ns"),
+                                "state_known_at_tape_ns": _g(state, "known_at_tape_ns"),
+                                "state_sha256": None if state is None else state_sha256(state)}
     pk["text"] = render(pk)
     pk["tokens_estimated"] = dp.estimate_tokens(pk["text"])
     pk["sha256"] = hashlib.sha256(pk["text"].encode("utf-8")).hexdigest()
@@ -362,7 +771,7 @@ def build(journal_rows, sequence, budget, *, store, platform_dir=None, trials=No
 
 def render(pk: dict) -> str:
     out = list(pk["head"])
-    for s in SECTIONS:
+    for s in pk.get("sections", SECTIONS):
         out.append(HEADINGS[s])
         out += [l["text"] for l in pk["lines"] if l["section"] == s]
     return "\n".join(out + pk["foot"]) + "\n"
@@ -376,10 +785,32 @@ def leakage_check(pk: dict, *, store=None, journal_rows=None) -> list[str]:
     if pk["text"] != render(pk):
         out.append("the packet's text is not what its lines and foot render to")
     by_seq = {r["sequence"]: r for r in (journal_rows or [])}
-    for ln in pk["lines"]:
+    allowed = pk.get("sections", SECTIONS)
+    qs = pk.get("question_state")
+    if qs is not None:
+        for what, t in (("the state's known_at_tape_ns", qs.get("state_known_at_tape_ns")),
+                        ("the question's tape_received_ns", qs.get("tape_received_ns"))):
+            if qs.get("state_sha256") is None and what.startswith("the state"):
+                continue
+            if t != moment:
+                out.append(f"{what} is {t}, not the signal's moment {moment}: the state is from another tick "
+                           f"(state known at {qs.get('state_known_at_tape_ns')}, question received at "
+                           f"{qs.get('tape_received_ns')}, signal at {moment})")
+        if qs.get("sequence") != seq:
+            out.append(f"the question is sequence {qs.get('sequence')}, not the signal's {seq}")
+    for name, lay in (pk.get("layers") or {}).items():
+        if lay.get("where") not in ("layers.json", "state.json"):
+            out.append(f"layer {name}: no place is named for the rest of it")
+        if lay.get("in_text", 0) > lay.get("count", 0):
+            out.append(f"layer {name}: more lines in the text than it holds")
+    seen = {(l.get("section"), l.get("source")) for l in pk["lines"]}
+    every = list(pk["lines"]) + [r for lay in (pk.get("layers") or {}).values() for r in lay.get("rows", [])
+                                 if (r.get("section"), r.get("source")) not in seen]
+    by_q = {r.get("signal_sequence"): r for r in (journal_rows or []) if r.get("kind") == "question"}
+    for ln in every:
         who = ln.get("source")
         sec = ln.get("section")
-        if sec not in SECTIONS:
+        if sec not in allowed:
             out.append(f"{who}: section {sec!r} is not one of the packet's")
             continue
         if ln.get("basis") == "fixed before the run began":
@@ -397,6 +828,17 @@ def leakage_check(pk: dict, *, store=None, journal_rows=None) -> list[str]:
                 out.append(f"{who}: the signal's own known-at {k} is not the moment {moment}")
         elif k > moment:
             out.append(f"{who}: known at {k}, after the moment {moment}")
+        if sec in ("data_at_signal", "state_layers"):
+            if k != moment:
+                out.append(f"{who}: a line of the state is known at {k}, not the signal's own tick {moment}")
+            continue
+        if sec == "earlier_q":
+            if ln.get("sequence") is None or ln["sequence"] >= seq:
+                out.append(f"{who}: the earlier signal {ln.get('sequence')} is not below the signal's {seq}")
+            row = by_q.get(ln.get("sequence"))
+            if journal_rows and row is not None and (q_line(row)["text"] != ln["text"] or row.get("received") != k):
+                out.append(f"{who}: the line is not its journal question row's lines")
+            continue
         if sec == "dipoles":
             if store is not None:
                 node = store.node(who)

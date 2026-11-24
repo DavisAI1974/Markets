@@ -68,9 +68,29 @@ def run_program(path, packet, timeout_s):
         return None, "the program returned something that is not JSON"
 
 
-def build_packet(rows, sequence, budget, store, platform_dir):
-    """The one place a packet is built. A check swaps this to hand over a packet made to breach."""
-    return sp.build(rows, sequence, budget, store=store, platform_dir=platform_dir)
+def build_packet(rows, sequence, budget, store, platform_dir, question=None):
+    """The one place a packet is built. A check swaps this to hand over a packet made to breach. The whole question
+    (its `state`, `lines` and `exchange_ns` too) goes to the build."""
+    return sp.build(rows, sequence, budget, store=store, platform_dir=platform_dir, question=question)
+
+
+def question_facts(q, rows):
+    """What a decisions.jsonl line says of the data a question carried: whether it had a state, its sha256 (the
+    platform's own canonical digest), whether the journal's question row says the same, the book levels, the two lines.
+    Per question; nothing is added across questions."""
+    state = q.get("state")
+    given = isinstance(state, dict)
+    sha = sp.state_sha256(state) if given else None
+    row = next((r for r in rows or [] if r.get("kind") == "question" and r.get("signal_sequence") == q.get("sequence")),
+               None)
+    book = state.get("book") if given else None
+    lines = q.get("lines") if isinstance(q.get("lines"), dict) else {}
+    val = lambda n: (lines.get(n) or {}).get("value") if isinstance(lines.get(n), dict) else None
+    return {"state_given": given, "state_sha256": sha,
+            "state_matches_journal": None if not (given and row and row.get("state_sha256")) else row["state_sha256"] == sha,
+            "book_levels_bid": len(book["bid"]) if isinstance(book, dict) and isinstance(book.get("bid"), list) else None,
+            "book_levels_ask": len(book["ask"]) if isinstance(book, dict) and isinstance(book.get("ask"), list) else None,
+            "dipole": val("dipole"), "exhaustion": val("exhaustion")}
 
 
 def write_whole(path: Path, text: str):
@@ -105,6 +125,8 @@ tape and wants to open a trade. Say take or skip.
 THE RULES YOU DECIDE UNDER
 - Decide from the packet below alone. Nothing else is given and nothing else counts.
 - Every reason names the lines of the packet it rests on, by their ids (the text before the first " | " of a line).
+  Any id of any layer may be named, shown in the text below or not: the whole of every layer is beside this brief, in
+  state.json (the engine's state at the signal) and layers.json (every other layer), each row with its id.
 - Say skip when the packet gives no ground to take.
 - The hold rule in force is "hold until the trade gives back 20% of its highest open profit". It is not yours to change.
 - There is no trade cost and no mid price in this decision; the packet shows bid and ask side by side as stored.
@@ -125,7 +147,19 @@ at least one id, every id one that stands in the packet.
 
 
 def ids_of(pk):
-    return [l["source"] for l in pk["lines"]]
+    """Every explicit id of the packet, shown in the text or not (the state's own rows are addressed, see PacketIds)."""
+    return sorted(sp.layer_of_map(pk))
+
+
+def layer_counts(pk):
+    """{layer name: how many lines or rows it held}: the layers of a packet built with a question; else the sections."""
+    if pk.get("layers"):
+        return {n: l["count"] for n, l in pk["layers"].items()}
+    return {s: sum(1 for l in pk["lines"] if l["section"] == s) for s in sp.SECTIONS}
+
+
+def packet_ids(pk):
+    return sp.PacketIds(sp.layer_of_map(pk), pk.get("state"))
 
 
 def make_brief(q, pk, box: Path):
@@ -152,7 +186,7 @@ def validate_decision(d, ids):
         return "rests_on names no line of the packet"
     if not all(isinstance(r, str) for r in rests):
         return "rests_on holds something that is not an id"
-    unknown = [r for r in rests if r not in ids]
+    unknown = [r for r in rests if r not in ids]       # `ids` holds the WHOLE packet (see PacketIds), not the text
     if unknown:
         return "rests_on names ids that are not in the packet: " + ", ".join(unknown)
     return None
@@ -178,7 +212,7 @@ class Server:
         return c[1]
 
     # -- one log line a question
-    def log(self, box, q, pk, answer, source, reason, rests_on=None):
+    def log(self, box, q, pk, answer, source, reason, rests_on=None, ids=None):
         qmtime = (box / "question.json").stat().st_mtime_ns
         line = {"sequence": q["sequence"], "rule": q.get("rule"), "side": q.get("side"), "trade_id": q.get("trade_id"),
                 "tape_received_ns": q.get("tape_received_ns"),
@@ -189,6 +223,15 @@ class Server:
                 "action": answer["action"], "why": answer["why"], "rests_on": rests_on, "by": answer["by"],
                 "wall_ms_question_to_decision": round((self.clock_ns() - qmtime) / 1e6, 3),
                 "answered_by": source, "skip_reason": reason, "program_sha256": self.program_sha}
+        try:
+            jrows = self.rows(q["journal"]) if isinstance(q.get("journal"), str) else None
+        except OSError:
+            jrows = None
+        line.update(question_facts(q, jrows))
+        # per decision line only: which layers the packet held and which layer each id the decision rests on is in.
+        # Recorded so that a later choice to drop a layer can be made from the runs' own record; no total, no ranking.
+        line["layers_in_packet"] = pk.get("layers_in_packet") if pk else None
+        line["rests_on_layers"] = {i: ids.layer(i) for i in rests_on} if (rests_on and ids is not None) else None
         with open(self.mailbox / "decisions.jsonl", "a", encoding="utf8") as f:
             f.write(json.dumps(line, sort_keys=True) + "\n")
 
@@ -201,7 +244,7 @@ class Server:
     def refuse(self, box, q, pk, what):
         if pk:
             pk = {"sha256": pk["sha256"], "tokens_estimated": pk["tokens_estimated"], "lines_in": len(pk["lines"]),
-                  "lines_cut": sum(pk["cut"].values())}
+                  "lines_cut": sum(pk["cut"].values()), "layers_in_packet": layer_counts(pk)}
         write_json(box / "refused.json", {"sequence": q["sequence"], "breach": what})
         why = f"the packet failed its own leak check: {'; '.join(what)}"
         self.log(box, q, pk, self.answer(box, q, "skip", why, pk), "this code", why)
@@ -213,31 +256,46 @@ class Server:
         pk = None
         try:
             rows = self.rows(q["journal"])
-            pk = build_packet(rows, q["sequence"], self.budget, self.store, self.platform)
+            pk = build_packet(rows, q["sequence"], self.budget, self.store, self.platform, question=q)
             breach = sp.leakage_check(pk, store=self.store, journal_rows=rows)
+            if question_facts(q, rows)["state_matches_journal"] is False:
+                breach.append("the question's state is not the state its journal row's state_sha256 names")
         except (OSError, ValueError, KeyError) as e:
             return self.refuse(box, q, None, [f"the packet could not be built: {type(e).__name__}: {e}"])
         if breach:
             return self.refuse(box, q, pk, breach)
         if self.program:
             return self.by_program(box, q, pk)
+        self.write_layers(box, pk)
         write_json(box / "packet.json", {"sha256": pk["sha256"], "tokens_estimated": pk["tokens_estimated"],
-                                         "ids": ids_of(pk), "lines_in": len(pk["lines"]),
+                                         "ids": ids_of(pk), "layer_of": sp.layer_of_map(pk),
+                                         "layers_in_packet": layer_counts(pk), "lines_in": len(pk["lines"]),
                                          "lines_cut": sum(pk["cut"].values())})
         write_whole(box / "brief.md", make_brief(q, pk, box))
 
+    def write_layers(self, box, pk):
+        """The whole of every layer beside the brief: state.json (the question's state, whole) and layers.json (every
+        other layer, whole, each row with its id). Nothing is dropped; the text is the head of each."""
+        if pk.get("state") is not None:
+            write_json(box / "state.json", pk["state"])
+        if pk.get("layers"):
+            write_json(box / "layers.json", {n: {k: v for k, v in l.items() if k != "in_text"}
+                                             for n, l in pk["layers"].items() if "rows" in l})
+
     def by_program(self, box, q, pk):
         meta = {"sha256": pk["sha256"], "tokens_estimated": pk["tokens_estimated"], "lines_in": len(pk["lines"]),
-                "lines_cut": sum(pk["cut"].values())}
+                "lines_cut": sum(pk["cut"].values()), "layers_in_packet": layer_counts(pk)}
+        self.write_layers(box, pk)
+        ids = packet_ids(pk)
         d, reason = run_program(self.program, pk, self.program_timeout_s)
         if reason is None:
-            reason = validate_decision(d, ids_of(pk))
+            reason = validate_decision(d, ids)
         if reason:
             why = f"the decider's answer was not valid: {reason}"
             self.log(box, q, meta, self.answer(box, q, "skip", why, meta), "this code", why)
             return
         a = self.answer(box, q, d["action"], d["why"].strip(), meta)
-        self.log(box, q, meta, a, "the program", None, rests_on=d["rests_on"])
+        self.log(box, q, meta, a, "the program", None, rests_on=d["rests_on"], ids=ids)
 
     def settle(self, box):
         q, _ = read_json(box / "question.json")
@@ -246,14 +304,16 @@ class Server:
         if bad:
             return                                          # maybe half written; the next pass reads it again
         pk = meta
-        reason = validate_decision(d, meta["ids"])
+        state, _ = read_json(box / "state.json")
+        ids = sp.PacketIds(meta.get("layer_of") or {i: None for i in meta["ids"]}, state)
+        reason = validate_decision(d, ids)
         if reason:
             write_json(box / "decision.rejected.json", {"reason": reason, "decision": d})
             why = f"the decider's answer was not valid: {reason}"
             self.log(box, q, pk, self.answer(box, q, "skip", why, pk), "this code", why)
             return
         a = self.answer(box, q, d["action"], d["why"].strip(), pk)
-        self.log(box, q, pk, a, "the decider", None, rests_on=d["rests_on"])
+        self.log(box, q, pk, a, "the decider", None, rests_on=d["rests_on"], ids=ids)
 
     def once(self):
         """One pass: briefs for new questions, answers for new decisions. Returns the number of files it settled."""

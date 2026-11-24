@@ -1,5 +1,6 @@
 """Runs one decider program on the packet given on stdin; prints its decision as JSON. Started by serve in isolated
-mode (python -I) with an empty environment in an empty folder: it imports nothing of Markets."""
+mode (python -I) with an empty environment in an empty folder: it imports nothing of Markets. The packet it passes on
+is whole: `state` (the engine's state at the signal), `flow_lines`, `exchange_ns` and `layers` too, as structure."""
 import importlib.util
 import json
 import sys
