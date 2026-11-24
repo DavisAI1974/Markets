@@ -54,17 +54,32 @@ CHARS_PER_TOKEN = 4
 HUB_LIMIT = 40          # a second hop does not pass through a name carried by more claims than this
 FOLD_WORDS = 8          # two files carry "the same words" when one quote holds the other and it is this long
 
-# section title, the statement kinds in it, its share of the budget (declared; what a section does
-# not use passes to the next one)
+# section title and the statement kinds in it
 SECTIONS = (
-    ("WHAT GREG DECIDED (newest first)", ("decision",), 0.25),
-    ("RULES THAT STAND", ("rule",), 0.15),
-    ("WHERE THINGS STAND", ("state", "measurement"), 0.30),
-    ("PLANNED, NOT DONE", ("plan",), 0.10),
-    ("OPEN, NOT ANSWERED", ("open_question",), 0.10),
-    ("SLIPS, SO THEY ARE NOT MADE AGAIN", ("slip",), 0.05),
-    ("WORDS AND WHAT THEY MEAN", ("definition",), 0.05),
+    ("WHAT GREG DECIDED (newest first)", ("decision",)),
+    ("RULES THAT STAND", ("rule",)),
+    ("WHERE THINGS STAND", ("state", "measurement")),
+    ("PLANNED, NOT DONE", ("plan",)),
+    ("OPEN, NOT ANSWERED", ("open_question",)),
+    ("SLIPS, SO THEY ARE NOT MADE AGAIN", ("slip",)),
+    ("WORDS AND WHAT THEY MEAN", ("definition",)),
 )
+# The share of the budget each section may take, so that one section cannot crowd the others out. These
+# numbers are an engineering choice made so that a session start shows something of every section; they are
+# not a measure of anything and say nothing about how much each kind matters. RULES THAT STAND is the
+# largest because a standing rule is what a new session most needs and cannot work out for itself. A section
+# that does not use its share (it has fewer lines than the share holds) gives the rest to the sections that
+# still have lines, in the proportion of their shares.
+SECTION_SHARES = {
+    "RULES THAT STAND": 0.40,
+    "WHERE THINGS STAND": 0.20,
+    "WHAT GREG DECIDED (newest first)": 0.15,
+    "PLANNED, NOT DONE": 0.08,
+    "OPEN, NOT ANSWERED": 0.07,
+    "SLIPS, SO THEY ARE NOT MADE AGAIN": 0.05,
+    "WORDS AND WHAT THEY MEAN": 0.05,
+}
+COMMON_SHARE = 0.10     # with a task: a word of the task held by more than this share of all claims is left out of the by-words fill
 _ws = re.compile(r"\s+")
 _word = re.compile(r"[A-Za-z][A-Za-z0-9_/.\-]{3,}")
 
@@ -83,8 +98,9 @@ def _strip(s: str) -> str:
 
 
 def _doc_date(path: str) -> str:
-    m = re.search(r"(20\d{6})([A-Z])?", path)
-    return (m.group(1)[:4] + "-" + m.group(1)[4:6] + "-" + m.group(1)[6:] + (m.group(2) or "")) if m else ""
+    """The date in the file's own name (a folder's date is the folder's, not the document's)."""
+    m = re.search(r"(20\d{6})([A-Z]*)", path.rsplit("/", 1)[-1])
+    return (m.group(1)[:4] + "-" + m.group(1)[4:6] + "-" + m.group(1)[6:] + m.group(2)) if m else ""
 
 
 class _Clock:
@@ -110,8 +126,8 @@ class _Clock:
     def key(self, claim: dict):
         a = claim["attrs"]
         src = a.get("source") or ""
-        return (a.get("said_on") or _doc_date(src)[:10], self.commit_date(src) if src else "", _doc_date(src),
-                a.get("line_start") or 0)
+        return (a.get("said_on") or _doc_date(src)[:10] or (self.commit_date(src)[:10] if src else ""),
+                self.commit_date(src) if src else "", _doc_date(src), a.get("line_start") or 0)
 
 
 def _task_entities(store: GraphStore, task: str) -> list[str]:
@@ -197,6 +213,36 @@ def build(store: GraphStore, task: str | None, budget_tokens: int, hops: int = 1
         reached = list(live)
     not_reached = sorted(set(live) - set(reached))
 
+    # With a task: the claims the named things do not reach, whose own text holds the task's words (whole words,
+    # the commonest left out). They only fill budget the reached claims leave unused, each marked "by words".
+    by_words_pool: set[str] = set()
+    shown_extra: list[str] = []                  # the by-words claims that are in the text
+    by_words_order: list[str] = []
+    if task:
+        def tokens(t: str) -> set[str]:
+            return {w.strip(".-/").lower() for w in _word.findall(t)} - {""}
+        held = {c: tokens(live[c]["attrs"]["text"]) for c in live}
+        df: dict[str, int] = {}
+        for ws in held.values():
+            for w in ws:
+                df[w] = df.get(w, 0) + 1
+        usable = {w for w in tokens(task) if df.get(w, 0) <= COMMON_SHARE * max(1, len(live))}
+        for c in not_reached:
+            if held[c] & usable:
+                by_words_pool.add(c)
+        by_words_order = sorted(by_words_pool, key=lambda c: clock.key(live[c]), reverse=True)
+        by_words_order.sort(key=lambda c: live[c]["attrs"]["statement_kind"] != "rule")      # rules first, newest first
+
+    # what each claim names, for the "earlier" mark of WHERE THINGS STAND
+    named: dict[str, set[str]] = {}
+    carried: dict[str, int] = {}
+    for e in store.edges("MENTIONS"):
+        if e["src"] in claims:
+            thing = canonical(store, e["dst"])
+            if thing not in named.setdefault(e["src"], set()):
+                named[e["src"]].add(thing)
+                carried[thing] = carried.get(thing, 0) + 1
+
     # Fold claims that carry the same words in two FILES. One quote holds the other, word for word, the
     # shorter is at least FOLD_WORDS words, the two files differ, and they have the same statement kind and
     # the same speaker. No chain: the claim that stands takes in the claims folded DIRECTLY into it, and a
@@ -272,7 +318,35 @@ def build(store: GraphStore, task: str | None, budget_tokens: int, hops: int = 1
         src = a.get("source") or ""
         return f"{src.rsplit('/', 1)[-1]}:{a.get('line_start')}" if src else "no source line"
 
-    def line(cid: str) -> str:
+    # A rule is RESTATED in a document when a rule claim of that document holds the same words (one quote or text
+    # holds the other, at least FOLD_WORDS words), whoever said it. The count orders a reader's text; it ranks nothing.
+    rule_words = {c: (_strip(live[c]["attrs"].get("quote") or ""), _strip(live[c]["attrs"]["text"]))
+                  for c in reached if live[c]["attrs"]["statement_kind"] == "rule"}
+    restated_in: dict[str, set[str]] = {}
+    for h in stands_for:
+        if h not in rule_words:
+            continue
+        docs_ = {live[h]["attrs"].get("source")} | {live[o]["attrs"].get("source") for o in stands_for[h]}
+        mine = [w for w in rule_words[h] if len(w.split()) >= FOLD_WORDS]
+        for o, ows in rule_words.items():
+            src_o = live[o]["attrs"].get("source")
+            if o == h or src_o in docs_:
+                continue
+            if any(a_ in b_ or b_ in a_ for a_ in mine for b_ in ows if len(b_.split()) >= FOLD_WORDS):
+                docs_.add(src_o)
+        restated_in[h] = docs_
+
+    def when_of(cid: str) -> str:
+        """The date the claim carries; else the date of the commit its source file was read at, marked as the
+        document's date; else the date in the file's name."""
+        a = live[cid]["attrs"]
+        if a.get("said_on"):
+            return str(a["said_on"])
+        src = a.get("source") or ""
+        d = (clock.commit_date(src) if src else "")[:10] or _doc_date(src)[:10]
+        return f"doc {d}" if d else "doc, date not known"
+
+    def line(cid: str, earlier: bool = False) -> str:
         a = live[cid]["attrs"]
         also = ""
         if stands_for.get(cid):
@@ -285,13 +359,25 @@ def build(store: GraphStore, task: str | None, budget_tokens: int, hops: int = 1
                         + "".join(f" ({m})" for m in marks[o] if m != "a reading, not a measurement"))
             also = " | " + ", ".join(folded_line(o) for o in stands_for[cid])
         mark = "".join(f"({m}) " for m in marks[cid])
-        return (f"- {mark}{_ws.sub(' ', a['text']).strip()} [c:{cid.split(':', 1)[1]} | {where_of(cid)} | "
-                f"{a.get('said_by') or '-'} | {a.get('said_on') or '-'}{also}]")
+        if earlier:
+            mark += "(earlier; a later line names the same thing) "
+        if cid in by_words_pool:
+            mark += "(by words) "
+        restated = (f" (restated in {len(restated_in[cid])} documents)"
+                    if len(restated_in.get(cid, ())) > 1 else "")
+        return (f"- {mark}{_ws.sub(' ', a['text']).strip()}{restated} [c:{cid.split(':', 1)[1]} | {where_of(cid)} | "
+                f"{a.get('said_by') or '-'} | {when_of(cid)}{also}]")
 
     by_section = []
-    for title, kinds, share in SECTIONS:
+    for title, kinds in SECTIONS:
+        share = SECTION_SHARES[title]
         ids = [c for c in stands_for if live[c]["attrs"]["statement_kind"] in kinds]
         ids.sort(key=lambda c: clock.key(live[c]), reverse=True)
+        if kinds == ("rule",):
+            # a rule restated in more documents comes first (a rule every handoff repeats stands), then newest
+            # first; at the same count the rules given as Greg's come first. An order for a reader, not a ranking.
+            ids.sort(key=lambda c: live[c]["attrs"].get("said_by") != "Greg")
+            ids.sort(key=lambda c: -len(restated_in.get(c, ())))
         ids.sort(key=lambda c: hop_of.get(c, 1))            # what the task names first, then the second hop
         if kinds == ("decision",):
             ids.sort(key=lambda c: live[c]["attrs"].get("said_by") != "Greg")     # his own decisions first
@@ -325,8 +411,12 @@ def build(store: GraphStore, task: str | None, budget_tokens: int, hops: int = 1
         out.append(f"- {len(cut_ids)} claims are not shown for want of budget"
                    + (": " + ", ".join(f"{v} {k}" for k, v in sorted(kinds.items())) if kinds else "")
                    + ". A larger budget or a task brings them.")
-        if not_reached:
-            out.append(f"- {len(not_reached)} claims are about things the task does not name (not reached in {hops} hop(s)).")
+        unseen = [c for c in not_reached if c not in shown_extra]
+        if shown_extra:
+            out.append(f"- {len(shown_extra)} claims are shown only because their own text holds the task's words "
+                       "(marked \"by words\"); the named things do not reach them.")
+        if unseen:
+            out.append(f"- {len(unseen)} claims are about things the task does not name (not reached in {hops} hop(s)).")
         if called_last or ties:
             out.append(f"- {len(called_last)} claims have something against them ({len(over)} with a later claim that says "
                        f"otherwise, {len(parked)} parked as tastytrade platform issues). Nothing is removed: each is marked "
@@ -361,26 +451,48 @@ def build(store: GraphStore, task: str | None, budget_tokens: int, hops: int = 1
     budget_chars = budget_tokens * CHARS_PER_TOKEN
     fixed = len("\n".join(head)) + len("\n".join(foot(list(stands_for)))) + 120
     room = max(0, budget_chars - fixed - sum(len(s[0]) + 6 for s in by_section))
-    carry = 0.0
-    for sec in by_section:                       # first pass: each section its share, the unused passed on
-        allow, used = sec[1] * room + carry, 0
-        while sec[2] and used + len(line(sec[2][0])) + 1 <= allow:
+    cost = lambda cid: len(line(cid)) + 1
+
+    def take(sec, quota) -> int:
+        used = 0
+        while sec[2] and used + cost(sec[2][0]) <= quota:
             cid = sec[2].pop(0)
             sec[3].append(cid)
-            used += len(line(cid)) + 1
-        carry = allow - used
-    left = carry
-    for sec in by_section:                       # second pass: what is still free, in section order
-        while sec[2] and len(line(sec[2][0])) + 1 <= left:
-            cid = sec[2].pop(0)
-            sec[3].append(cid)
-            left -= len(line(cid)) + 1
+            used += cost(cid)
+        return used
+
+    left = room
+    while left > 0:                              # each section with lines its share of what is left; the rest passes on
+        active = [s for s in by_section if s[2]]
+        if not active:
+            break
+        total = sum(s[1] for s in active)
+        before = left
+        for sec in active:
+            left -= take(sec, before * sec[1] / total)
+        if left == before:
+            break
+    for sec in by_section:                       # what is still free, in section order
+        left -= take(sec, left)
+
+    def earlier_ones(chosen: list[str]) -> set[str]:
+        """Two shown claims of WHERE THINGS STAND that name the same thing and carry different dates: the older
+        one is marked. Nothing is hidden. A name carried by more than HUB_LIMIT claims of the graph is no help."""
+        dates = {c: (when_of(c).replace("doc ", "")[:10]) for c in chosen}
+        latest: dict[str, str] = {}
+        for c in chosen:
+            for t in named.get(c, ()):
+                if carried.get(t, 0) <= HUB_LIMIT and dates[c][:1].isdigit():
+                    latest[t] = max(latest.get(t, ""), dates[c])
+        return {c for c in chosen if dates[c][:1].isdigit()
+                and any(carried.get(t, 0) <= HUB_LIMIT and latest.get(t, "") > dates[c] for t in named.get(c, ()))}
 
     def render() -> tuple[str, list[str], list[str]]:
         body, included = list(head), []
         for title, _, _, chosen in by_section:
             if chosen:
-                body += ["", f"## {title}"] + [line(c) for c in chosen]
+                old = earlier_ones(chosen) if title == "WHERE THINGS STAND" else set()
+                body += ["", f"## {title}"] + [line(c, c in old) for c in chosen]
                 included += chosen
         cut = [c for sec in by_section for c in sec[2]]
         return "\n".join(body + foot(cut)) + "\n", included, cut
@@ -388,8 +500,51 @@ def build(store: GraphStore, task: str | None, budget_tokens: int, hops: int = 1
     text, included, cut = render()
     while estimate_tokens(text) > budget_tokens and any(sec[3] for sec in by_section):
         sec = max((s for s in by_section if s[3]), key=lambda s: len(s[3]))      # trim the longest section's last line
-        sec[2].insert(0, sec[3].pop())
+        removed = sec[3].pop()
+        if removed in shown_extra:
+            shown_extra.remove(removed)
+        else:
+            sec[2].insert(0, removed)
         text, included, cut = render()
+
+    def section_of(cid: str):
+        kind = live[cid]["attrs"]["statement_kind"]
+        return next(s for (title, kinds), s in zip(SECTIONS, by_section) if kind in kinds)
+
+    # fill what the real text still leaves free, by real renders: first the claims cut for want of room (a
+    # round of the sections), then, with a task, the claims "by words"
+    def fill(candidates, from_cut: bool, patience: int = 40):
+        nonlocal text, included, cut
+        misses, blocked = 0, set()
+        for cid in candidates:
+            if misses >= patience or estimate_tokens(text) >= budget_tokens:
+                break
+            sec = section_of(cid)
+            if from_cut and sec[0] in blocked:       # a section's lines go in their order: none after one that did not fit
+                continue
+            if from_cut:
+                sec[2].remove(cid)
+            sec[3].append(cid)
+            if not from_cut:
+                shown_extra.append(cid)               # before the render: the foot counts it as shown
+            t2, i2, c2 = render()
+            if estimate_tokens(t2) <= budget_tokens:
+                text, included, cut = t2, i2, c2
+                misses = 0
+            else:
+                sec[3].pop()
+                if not from_cut:
+                    shown_extra.pop()
+                if from_cut:
+                    sec[2].insert(0, cid)
+                    blocked.add(sec[0])
+                misses += 1
+
+    if estimate_tokens(text) < budget_tokens:
+        fill([c for sec in by_section for c in list(sec[2])[:60]], True)
+    if by_words_pool and estimate_tokens(text) < budget_tokens:
+        fill(by_words_order, False)
+    not_reached = [c for c in not_reached if c not in shown_extra]
 
     cut_by_kind: dict[str, int] = {}
     for c in cut:
@@ -397,7 +552,7 @@ def build(store: GraphStore, task: str | None, budget_tokens: int, hops: int = 1
         cut_by_kind[k] = cut_by_kind.get(k, 0) + 1
     return {"text": text, "tokens_estimated": estimate_tokens(text), "budget_tokens": budget_tokens,
             "task": task, "hops": hops, "entities": entities, "reached": sorted(reached),
-            "included": included, "folded": sorted(folded), "cut": cut,
+            "included": included, "folded": sorted(folded), "cut": cut, "by_words": sorted(shown_extra),
             "cut_by_kind": cut_by_kind, "not_reached": not_reached, "called_last": called_last, "marks": marks,
             "documents_not_read": len(not_read), "claims_in_graph": len(claims)}
 
