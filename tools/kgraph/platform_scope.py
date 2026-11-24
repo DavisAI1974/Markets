@@ -23,8 +23,8 @@ Who marks (each link says which):
                                 feed, a stand-in, a print with no side, a refusal or a server error.
                                 It is the cheap signal that holds until an evaluator has read the
                                 claim; the evaluator can confirm it or lift it, with its reason.
-Never marked: anything Greg said (his decisions about the platform are not platform issues) and any
-standing rule.
+Never marked: anything Greg said (his decisions about the platform are not platform issues). A standing
+rule is not marked by its words or by an evaluator; only a line the running list itself parks is.
 
 Lifting a mark: a provisional one is lifted by an evaluator's answer (`apply`). Any other is lifted
 only with Greg's own words (`untie --greg "<his words>"`), which are kept on the line. A mark that was
@@ -159,11 +159,13 @@ def _due(store: GraphStore, dirs: dict | None) -> list[tuple[dict, str, str]]:
         elif n["type"] == "Source":
             if any(part in "/" + a.get("path", "") for part in RUN_RECORDS):
                 out.append((n, RULE_RECORD, "a file of a run on the tastytrade sandbox"))
-        elif not exempt(n):
+        elif a.get("said_by") != "Greg":
+            # A line the running list itself parks is marked whatever kind of sentence the reader called it
+            # (the list is Greg's own parking of it). Beyond the list, a standing rule is never marked.
             by_line = by_line_at(a.get("source_commit")) if a.get("source") == LIST_SOURCE else {}
             if a.get("line_start") in by_line:
                 out.append((n, RULE_LIST, by_line[a["line_start"]]))
-            else:
+            elif not exempt(n):
                 found = sorted({m.group(1).lower() for m in WORDS.finditer(a["text"] + " " + (a.get("quote") or ""))})
                 if found:
                     out.append((n, RULE_WORDS, "it names: " + ", ".join(found) + " (provisional, until an evaluator has read it)"))

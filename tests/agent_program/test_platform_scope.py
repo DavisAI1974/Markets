@@ -51,12 +51,14 @@ def test_a_claim_read_from_a_document_is_marked_as_it_is_loaded(graph):
     assert tied[_claim(store, "5WY79188 is short 13 lots")["id"]]["rule"] == "its own words"
     # a rule that has nothing to do with the platform
     assert _claim(store, "A trade day is 6 pm Eastern")["id"] not in tied
-    # Greg's own words are never marked, whatever their kind, and no standing rule is; both really occur here
+    # Greg's own words are never marked, whatever their kind; both kinds of claim really occur here
     claims = {c["id"]: c["attrs"] for c in store.nodes("Claim")}
     names_it = lambda a: bool(platform_scope.WORDS.search(a["text"] + " " + a["quote"]))
     gregs = [i for i, a in claims.items() if a.get("said_by") == "Greg" and names_it(a)]
     rules = [i for i, a in claims.items() if a["statement_kind"] == "rule" and names_it(a)]
-    assert gregs and rules and not (set(gregs) | set(rules)) & set(tied)
+    assert gregs and rules and not set(gregs) & set(tied)
+    # a standing rule is never marked for its words; only a line the running list itself parks is
+    assert [r for r in rules if r not in tied] and all(tied[r]["rule"] == "the running list" for r in rules if r in tied)
     assert _claim(store, "sandbox-only issues are parked")["id"] in gregs
     for t in tied.values():
         assert t["why"] and t["rule"] in ("the running list", "its own words")
