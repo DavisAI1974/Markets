@@ -273,7 +273,9 @@ class Server:
             return self.refuse(box, q, pk, breach)
         if self.program:
             return self.by_program(box, q, pk)
-        self.write_layers(box, pk)
+        breach = self.write_layers(box, pk)
+        if breach:
+            return self.refuse(box, q, pk, breach)
         write_json(box / "packet.json", {"sha256": pk["sha256"], "tokens_estimated": pk["tokens_estimated"],
                                          "ids": ids_of(pk), "layer_of": sp.layer_of_map(pk),
                                          "plane_ids": pk.get("plane_ids"),
@@ -281,15 +283,17 @@ class Server:
                                          "lines_cut": sum(pk["cut"].values())})
         write_whole(box / "brief.md", make_brief(q, pk, box))
 
-    def earlier_planes_file(self, box, moment):
-        """(path, its doc) of the planes_since.json of the latest earlier question of this mailbox, or (None, None)."""
+    def earlier_planes_file(self, box, moment, day, commit):
+        """(path, its doc) of the planes_since.json of the latest earlier question of this mailbox of the same trade day
+        and the same source commit, or (None, None)."""
         best = (None, None, -1)
         for p in question_folders(self.mailbox):
             f = p / "planes_since.json"
             if p == box or not f.exists():
                 continue
             doc, bad = read_json(f)
-            if not bad and isinstance(doc, dict) and isinstance(doc.get("moment_ns"), int) and best[2] < doc["moment_ns"] < moment:
+            if not bad and isinstance(doc, dict) and isinstance(doc.get("moment_ns"), int) and best[2] < doc["moment_ns"] < moment \
+                    and doc.get("trade_day") == day and (doc.get("source") or {}).get("commit") == commit:
                 best = (f, doc, doc["moment_ns"])
         return best[0], best[1]
 
@@ -297,36 +301,45 @@ class Server:
         """The whole of every layer beside the brief: state.json (the question's state, whole), layers.json (every
         other layer, whole, each row with its id; a stored plane by its count) and planes_since.json (the plane rows made
         known since the previous question, its earlier files named). Nothing is dropped; the text is the head of each.
-        Beside them afterwards_layers.json, for learning only."""
+        Beside them afterwards_layers.json, for learning only. Returns the breaches of the two files' own checks
+        (planes_since.json, the afterwards file); empty when none."""
+        breach = []
         if pk.get("state") is not None:
             write_json(box / "state.json", pk["state"])
         if pk.get("layers"):
             plane_after = None
             if pk.get("plane_source") and self.planes is not None:
                 ps = sp.plane_state(self.planes, pk["trade_day"], pk["moment_ns"])
-                prev_file, prev = self.earlier_planes_file(box, pk["moment_ns"])
+                prev_file, prev = self.earlier_planes_file(box, pk["moment_ns"], pk["trade_day"], ps["commit"])
                 earlier = [] if prev is None else list(prev.get("earlier_files") or []) + [
                     os.path.relpath(prev_file, box)]
-                write_json(box / "planes_since.json", {
+                since_doc = {
                     "moment_ns": pk["moment_ns"], "trade_day": pk["trade_day"],
                     "since_moment_ns": None if prev is None else prev["moment_ns"], "earlier_files": earlier,
                     "source": {"commit": ps["commit"], "layers": {k: i["sha256"] for k, i in ps["layers"].items()}},
                     "layers": sp.plane_since(self.planes, pk["trade_day"], None if prev is None else prev["moment_ns"],
-                                             pk["moment_ns"], ps)})
+                                             pk["moment_ns"], ps)}
+                write_json(box / "planes_since.json", since_doc)
+                breach += [f"planes_since.json: {b}" for b in sp.plane_since_check(
+                    since_doc, pk["moment_ns"], self.planes, pk["plane_source"])]
                 plane_after = sp.plane_afterwards(self.planes, pk["trade_day"], pk["moment_ns"], ps)
             # the after-the-fact layers, for learning only: never in the brief, never in `pk`, never an id of a decision
-            write_whole(box / "afterwards_layers.json", json.dumps(
-                sp.afterwards_layers(self.store, pk["trade_day"], pk["moment_ns"],
-                                     sp.planes_named(self.store, pk["trade_day"], self.platform),
-                                     plane_after=plane_after), sort_keys=True) + "\n")
+            after_doc = sp.afterwards_layers(self.store, pk["trade_day"], pk["moment_ns"],
+                                             sp.planes_named(self.store, pk["trade_day"], self.platform),
+                                             plane_after=plane_after)
+            write_whole(box / "afterwards_layers.json", json.dumps(after_doc, sort_keys=True) + "\n")
+            breach += [f"afterwards_layers.json: {b}" for b in sp.afterwards_check(after_doc, pk["moment_ns"])]
             write_json(box / "layers.json", {n: {k: v for k, v in l.items() if k != "in_text"}
                                              for n, l in pk["layers"].items()
                                              if "rows" in l or l.get("where") == "planes_since.json"})
+        return breach
 
     def by_program(self, box, q, pk):
         meta = {"sha256": pk["sha256"], "tokens_estimated": pk["tokens_estimated"], "lines_in": len(pk["lines"]),
                 "lines_cut": sum(pk["cut"].values()), "layers_in_packet": layer_counts(pk)}
-        self.write_layers(box, pk)
+        breach = self.write_layers(box, pk)
+        if breach:
+            return self.refuse(box, q, pk, breach)
         ids = packet_ids(pk)
         handed = {k: v for k, v in pk.items() if k not in ("plane_ids", "plane_source")}   # counts and heads only
         d, reason = run_program(self.program, handed, self.program_timeout_s)

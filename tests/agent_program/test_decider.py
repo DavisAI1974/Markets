@@ -3,6 +3,7 @@ its record branch (git show into a scratch folder). No engine, no tape, no model
 not market data; everything else here is the real journal. markets-data is only read."""
 
 import json
+import shutil
 import subprocess
 import sys
 import threading
@@ -838,6 +839,64 @@ def test_the_reason_a_layer_is_not_a_parquet_file_is_given_only_to_a_layer_that_
     for k, _, r in ps["not_placed"]:
         if "Native's own episode lines" in r:
             assert k.startswith("native-episodes"), (k, r)
+
+
+# ---- the one separated section: a real record with exactly one thing changed ---------------------------------------------
+def test_the_door_refuses_a_question_whose_planes_since_file_breaks_its_own_check(world, planes, tmp_path, monkeypatch):
+    # change: the first row of the first layer of the real planes_since.json is set to be known at the moment plus 1 ns
+    # (a real row, one number changed); nothing else
+    real = sp.plane_since
+
+    def since(src, day, prev, moment, ps):
+        res = real(src, day, prev, moment, ps)
+        k = next(k for k, v in res.items() if v)
+        res[k][0] = dict(res[k][0], known_at_ns=moment + 1)
+        return res
+    monkeypatch.setattr(sp, "plane_since", since)
+    q = _stand_in_question(world, world["picks"][1])
+    mb = tmp_path / "mb"
+    box = _scratch_question(mb, q)
+    serve.Server(mb, world["root"], world["plat"], PLANES_BUDGET, "run:0090", planes=planes).once()
+    refused = json.loads((box / "refused.json").read_text())
+    assert any("after the moment" in b for b in refused["breach"]), refused
+    assert json.loads((box / "answer.json").read_text())["action"] == "skip" and not (box / "brief.md").exists()
+
+
+def test_the_door_refuses_a_question_whose_afterwards_file_breaks_its_own_check(world, planes, tmp_path, monkeypatch):
+    # change: the real afterwards file's moment_ns is set to the moment plus 1; nothing else
+    real = sp.afterwards_layers
+    monkeypatch.setattr(sp, "afterwards_layers", lambda *a, **k: dict(real(*a, **k), moment_ns=a[2] + 1))
+    q = _stand_in_question(world, world["picks"][1])
+    mb = tmp_path / "mb"
+    box = _scratch_question(mb, q)
+    serve.Server(mb, world["root"], world["plat"], PLANES_BUDGET, "run:0090", planes=planes).once()
+    refused = json.loads((box / "refused.json").read_text())
+    assert any("another moment" in b for b in refused["breach"]), refused
+    assert not (box / "brief.md").exists()
+
+
+def test_an_earlier_planes_since_file_is_taken_only_of_the_same_trade_day_and_source_commit(world, planes, tmp_path):
+    a, b = world["picks"][0], world["picks"][1]
+    mb = tmp_path / "mb"
+    ba = _scratch_question(mb, _stand_in_question(world, a))
+    srv = serve.Server(mb, world["root"], world["plat"], PLANES_BUDGET, "run:0090", planes=planes)
+    srv.once()
+    f = ba / "planes_since.json"
+    doc = json.loads(f.read_text())
+    # change: the source commit written in the earlier question's real planes_since.json is set to forty zeros
+    doc["source"] = dict(doc["source"], commit="0" * 40)
+    f.write_text(json.dumps(doc))
+    bb = _scratch_question(mb, _stand_in_question(world, b))
+    srv.once()
+    assert json.loads((bb / "planes_since.json").read_text())["since_moment_ns"] is None
+    # change: instead the trade day written in it is another one, and the commit is the real one again
+    doc["source"] = dict(doc["source"], commit=json.loads((bb / "planes_since.json").read_text())["source"]["commit"])
+    doc["trade_day"] = "2023-10-03"
+    f.write_text(json.dumps(doc))
+    shutil.rmtree(bb)
+    bb = _scratch_question(mb, _stand_in_question(world, b))
+    srv.once()
+    assert json.loads((bb / "planes_since.json").read_text())["since_moment_ns"] is None
 
 
 def test_the_door_writes_planes_afterwards_references_and_one_decision_per_line(world, planes, tmp_path):
