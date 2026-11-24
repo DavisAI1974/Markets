@@ -12,6 +12,14 @@ The agent is told its limits in its brief, counts for itself and stops (runs 117
 exactly at their tool-call limit); `check` shows afterwards whether it did. `write` and `brief` only write
 the plan and the words; `check` writes nothing.
 
+The graph-writes count holds the lines of graph/nodes/*.jsonl and graph/edges/*.jsonl whose `written_by` is
+`run:NNNN` (the run). It does not hold lines a code stamp wrote for a run (`made_by`), and not the files of
+graph/reads, graph/merges and graph/evaluations.
+
+A plan counts as written before the run only if it is in git: `check` compares the file it reads with the file's
+bytes at the commit that added it, and a plan that is not in git, was changed after it was added, or was
+committed after the run's first line fails (exit 1).
+
 `--data` is used exactly as given or refused; it never falls through to another checkout. Exit codes:
 0 done, 1 `check` found a PASSED limit / a late plan / no plan, 2 refused.
 """
@@ -20,6 +28,7 @@ from __future__ import annotations
 
 import argparse
 import gzip
+import hashlib
 import json
 import subprocess
 import sys
@@ -33,6 +42,7 @@ ROSTER = ("scout", "builder", "reviewer", "frankie-performance-auditor")
 IS_GRAPH = "writes into the real graph of markets-data; a write into a scratch copy is not counted"
 IS_TOKENS = ("the harness's total for the run when it ends (input and output together); "
              "the transcript's sum is recorded beside it")
+MIN_ONE = ("max_model_calls", "max_tokens", "max_wall_clock_s", "max_concurrent_workers")
 ON_LIMIT = "the run stops and returns what is done, what is open and why it stopped"
 UNITS = {"max_model_calls": "model calls", "max_sub_agents": "sub-agents",
          "max_concurrent_workers": "concurrent workers", "max_tool_calls": "tool calls",
@@ -76,17 +86,26 @@ def _plan_path(paper, run):
 # ---- write ------------------------------------------------------------------------------------------
 def _write(a):
     root, paper = _paper(a.data)
+    if a.run < 1:
+        raise Refused(f"run number {a.run} is below 1")
     missing = [k for k in BUDGET_KEYS if getattr(a, k) is None]
     if missing:
         raise Refused("missing limit(s): " + ", ".join(missing))
     neg = [k for k in BUDGET_KEYS if getattr(a, k) < 0]
     if neg:
         raise Refused("negative limit(s): " + ", ".join(neg))
+    zero = [k for k in MIN_ONE if getattr(a, k) < 1]
+    if zero:
+        raise Refused("limit(s) below 1 (a run makes at least one model call, and has tokens, time and a worker): "
+                      + ", ".join(zero))
     if a.agent not in ROSTER:
         raise Refused(f"agent {a.agent!r} is not in the roster {ROSTER}")
     path = _plan_path(paper, a.run)
     if path.exists():
         raise Refused(f"a plan file already exists for run {a.run}: {path}; a plan is never rewritten")
+    if _git_history(root, path):
+        raise Refused(f"the plan path of run {a.run} is in git history ({path}) though the file is gone; "
+                      "a plan is never written twice")
     if any(_num(d.get("run")) == a.run or _num(d.get("corrects")) == a.run for d in _lines(paper)):
         raise Refused(f"run {a.run} already has a line in the record; the plan comes before the run")
     session = a.session
@@ -127,8 +146,7 @@ def _brief(a):
           f"Tokens are {plan.get('max_tokens_is', 'the total for the run')}; graph writes are "
           f"{plan.get('max_graph_writes_is', 'writes into the real graph')}. "
           f"COUNT your own tool calls as you go and report the true count. "
-          f"On reaching a limit, {plan.get('on_reaching_a_limit', ON_LIMIT)}: stop, and return what is done, "
-          f"what is open and why you stopped.")
+          f"On reaching any limit: {plan.get('on_reaching_a_limit', ON_LIMIT)}.")
     return 0
 
 
@@ -178,25 +196,42 @@ def _graph_writes(root, run):
     return n
 
 
-def _plan_commit_time(root, path):
+def _rel(root, path):
     try:
-        rel = Path(path).resolve().relative_to(root.resolve())
+        return Path(path).resolve().relative_to(root.resolve())
     except ValueError:
         return None
-    r = subprocess.run(["git", "-C", str(root), "log", "--diff-filter=A", "--format=%cI", "--", str(rel)],
+
+
+def _git_history(root, path):
+    rel = _rel(root, path)
+    if rel is None:
+        return False
+    r = subprocess.run(["git", "-C", str(root), "log", "--oneline", "--", str(rel)], capture_output=True, text=True)
+    return r.returncode == 0 and bool(r.stdout.strip())
+
+
+def _git_state(root, path):
+    """('outside'|'not_in_git'|'changed'|'unchanged', commit time, sha256 now, sha256 at the add commit)."""
+    rel = _rel(root, path)
+    if rel is None:
+        return "outside", None, None, None
+    r = subprocess.run(["git", "-C", str(root), "log", "--diff-filter=A", "--format=%H %cI", "--", str(rel)],
                        capture_output=True, text=True)
-    out = [x for x in r.stdout.split() if x]
-    return datetime.fromisoformat(out[-1]) if r.returncode == 0 and out else None
+    rows = [x.split() for x in r.stdout.splitlines() if x.strip()] if r.returncode == 0 else []
+    if not rows:
+        return "not_in_git", None, None, None
+    h, when = rows[-1]
+    then = subprocess.run(["git", "-C", str(root), "show", f"{h}:{rel}"], capture_output=True).stdout
+    now = Path(path).read_bytes()
+    sn, st = hashlib.sha256(now).hexdigest(), hashlib.sha256(then).hexdigest()
+    return ("unchanged" if sn == st else "changed"), datetime.fromisoformat(when), sn, st
 
 
 def _check(a):
     root, paper = _paper(a.data)
     print(f"reading: {root}")
     plan, path = _load_plan(paper, a)
-    if plan is None:
-        print(f"run {a.run} has no plan file at {path}: its limits were not written before it started")
-        return 1
-    print(f"plan: {path}")
     tpath = Path(a.transcript) if a.transcript else paper / "transcripts" / f"run-{a.run:04d}.jsonl.gz"
     tr = _read_transcript(tpath) if tpath.exists() else None
     line = _newest(paper, a.run)
@@ -218,7 +253,7 @@ def _check(a):
     if line and line.get("tokens_reported") is not None:
         fig["max_tokens"] = line["tokens_reported"]
     else:
-        why["max_tokens"] = "the harness's total (tokens_reported) is not on the run's line"
+        why["max_tokens"] = "no harness total on the run's line: this limit cannot be shown kept"
     why["max_concurrent_workers"] = "not in a transcript"
     why["max_retries"] = "not in a transcript"
     gw = _graph_writes(root, a.run)
@@ -226,33 +261,57 @@ def _check(a):
         why["max_graph_writes"] = "no graph/nodes or graph/edges here"
     else:
         fig["max_graph_writes"] = gw
-    bad = False
+    bad, unmeasured = False, 0
     for k in BUDGET_KEYS:
-        lim = plan[k]
+        lim = plan[k] if plan else None
         f = fig.get(k)
+        lead = f"{k}: plan {lim}, " if plan else f"{k}: no plan, "
         if f is None:
-            print(f"{k}: plan {lim}, reached -, cannot be measured here ({why.get(k, 'no figure')})")
-            continue
-        f = round(f, 1) if isinstance(f, float) else f
-        if f > lim:
-            bad = True
-            print(f"{k}: plan {lim}, reached {f}, PASSED")
+            unmeasured += 1
+            print(f"{lead}reached -, cannot be measured here ({why.get(k, 'no figure')})")
         else:
-            print(f"{k}: plan {lim}, reached {f}, kept" + (" (at the limit, not passed)" if f == lim else ""))
+            f = round(f, 1) if isinstance(f, float) else f
+            if not plan:
+                print(f"{lead}reached {f}")
+            elif f > lim:
+                bad = True
+                print(f"{lead}reached {f}, PASSED")
+            else:
+                print(f"{lead}reached {f}, kept" + (" (at the limit, not passed)" if f == lim else ""))
+        if k == "max_tokens" and plan:
+            print("max_tokens is: " + plan.get("max_tokens_is", "the plan holds no max_tokens_is"))
     if tr:
         i, cw, cr, o = tr["tokens"]
         print(f"transcript tokens: input fresh {i}, cache written {cw}, cache read {cr}, output {o}")
-    if tr and tr["first"]:
-        t = _plan_commit_time(root, path)
-        if t is None:
-            print("plan in git: not measured (plan file not in this checkout's git history)")
-        elif t <= tr["first"]:
-            print(f"plan in git: committed {t.isoformat()} before the run began {tr['first'].isoformat()}")
+    print(f"limits that could not be measured: {unmeasured} of {len(BUDGET_KEYS)}")
+    if plan is None:
+        print(f"run {a.run} has no plan file at {path}: its limits were not written before it started")
+        return 1
+    print(f"plan: {path}")
+    state, when, sn, st = _git_state(root, path)
+    start = tr["first"] if tr and tr["first"] else None
+    if start is None and line and line.get("started_at"):
+        start = datetime.fromisoformat(str(line["started_at"]).replace("Z", "+00:00"))
+    if state == "outside":
+        print("plan in git: not measured for a paired plan (the plan file is outside the data root)")
+    elif state == "not_in_git":
+        bad = True
+        print("plan in git: the plan file is not in git: a limit that is not in git before the run is not a "
+              "written limit")
+    else:
+        if state == "changed":
+            bad = True
+            print(f"plan in git: the plan was changed after it was written: sha256 of the file read {sn}, "
+                  f"sha256 at the add commit {st}")
+        else:
+            print(f"plan in git: unchanged since it was added (sha256 {sn})")
+        if start is None:
+            print("git order: not measured: the run's line holds no start time and no transcript is kept")
+        elif when.astimezone(start.tzinfo) <= start:
+            print(f"git order: committed {when.isoformat()} before the run began {start.isoformat()}")
         else:
             bad = True
-            print(f"plan in git: committed {t.isoformat()} AFTER the run began {tr['first'].isoformat()}")
-    else:
-        print("plan in git: not measured (no transcript)")
+            print(f"git order: committed {when.isoformat()} AFTER the run began {start.isoformat()}")
     return 1 if bad else 0
 
 

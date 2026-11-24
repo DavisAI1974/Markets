@@ -5,6 +5,11 @@
 Writes nothing anywhere. Reads the run record, the auditor's reports and TICKET_RUNS.json of a
 markets-data checkout (the record and the ticket file as they stand, or at --at read with git; a
 report always at the commit its own `audit_report` names). Nothing is averaged or summed across runs.
+
+One rule the real record cannot show yet: a run is "audited from the record alone" only when EVERY auditor
+that clears it lists it so; if one of them gives it its own row, it is audited with its own row. No real run
+has a row in two reports, so no check holds this rule. The first real event that will is a later auditor's
+report giving its own row to a run among 1 to 106.
 """
 
 from __future__ import annotations
@@ -35,6 +40,24 @@ def has_row(text: str, n: int) -> bool:
     return any(p.search(ln) for ln in text.splitlines() for p in pats)
 
 
+ANOTHER = "the report it names is another run's"
+
+
+def first_line_problem(first: str, arun: int) -> str | None:
+    """None when the report's first line begins `# Performance auditor run N` (N = the auditor's own run) followed
+    by a space, `(`, `:` or the end of the line. A digit after N (run 13 against 133) is not N. A byte-order mark
+    or leading spaces are not accepted."""
+    if re.match(rf"# Performance auditor run {arun}(?:[ (:]|$)", first):
+        return None
+    if re.match(r"# Performance auditor run [0-9]+(?:[ (:]|$)", first):
+        return ANOTHER
+    m = re.match(rf"# Performance auditor run {arun}(?![0-9])", first)
+    if m and len(first) > m.end():
+        return (f"after `# Performance auditor run {arun}` its first line holds {first[m.end()]!r}, "
+                "where a space, `(`, `:` or the end of the line is expected")
+    return f"its first line does not begin with `# Performance auditor run {arun}`"
+
+
 def agent_of(d: dict) -> str:
     """agent_type when the line has it, else the first word of role (lower-cased, punctuation stripped)."""
     if d.get("agent_type"):
@@ -62,7 +85,7 @@ class Report:
     record_only: list = field(default_factory=list)
     not_audited: list = field(default_factory=list)
     auditors: dict = field(default_factory=dict)    # run -> the report(s) its lines name
-    no_report: list = field(default_factory=list)   # auditor runs whose lines name no report of their own with a commit
+    no_report: list = field(default_factory=list)   # auditor runs that name no report that can be read at its commit and is its own
     no_report_why: dict = field(default_factory=dict)  # run -> a reason beyond "names no report"
     demoted: list = field(default_factory=list)     # runs with an older auditor line and a newest line of another agent
     outside: dict = field(default_factory=dict)     # run -> agent/role
@@ -87,6 +110,7 @@ def analyse(root, at: str | None = None) -> Report:
             d = json.loads(raw)
             rep.lines.setdefault(d["run"], []).append(d)
     # what each auditor run names: the UNION over all its lines
+    why_not: dict[int, list] = {}      # run -> every auditor's reason for not clearing it
     cleared: dict[int, list] = {}      # run -> [(auditor run, in its record_only)]
     for arun, ls in rep.lines.items():
         if agent_of(ls[-1]) != AUDITOR:      # an auditor's run is so by its NEWEST line only
@@ -94,39 +118,50 @@ def analyse(root, at: str | None = None) -> Report:
                 rep.demoted.append(arun)
             continue
         reports = [d["audit_report"] for d in ls if d.get("audit_report")]
-        rep.auditors[arun] = [f"{r.get('path')}@{r.get('commit')}" for r in reports]
-        own_first = re.compile(rf"# Performance auditor run {arun}[ (]")   # a report is that auditor's own
-        foreign = False
-        if not any(r.get("commit") for r in reports):
-            rep.no_report.append(arun)
         names = sorted({n for d in ls for n in d.get("audits", [])})
         rec_only = {n for d in ls for n in d.get("record_only", [])}
-        texts, why = [], None
+        texts, reasons, marks = [], [], []
         if not reports:
-            why = f"auditor run {arun}: no line has an audit_report"
+            reasons.append("no line has an audit_report")
+        seen = set()
         for r in reports:
+            label = f"{r.get('path')}@{r.get('commit')}"
+            if label in seen:                 # each distinct (path, commit) once, however many lines name it
+                continue
+            seen.add(label)
             if not r.get("commit"):
-                why = f"auditor run {arun}: audit_report names {r.get('path')} but no commit"
+                reasons.append(f"audit_report names {r.get('path')} but no commit named")
+                marks.append(f"{label} (no commit named)")
+                continue
+            t = _git(root, r["commit"], r["path"])
+            if t is None:
+                reasons.append(f"report not readable at {r['commit']}")
+                marks.append(f"{label} (not readable at {r['commit']})")
+                continue
+            problem = first_line_problem(t.splitlines()[0] if t.strip() else "", arun)
+            if problem:
+                reasons.append(problem)
+                marks.append(f"{label} (another run's, not counted)" if problem == ANOTHER
+                             else f"{label} (not its own, not counted)")
             else:
-                t = _git(root, r["commit"], r["path"])
-                if t is None:
-                    why = f"auditor run {arun}: report not readable at {r['commit']}"
-                elif own_first.match(t.splitlines()[0] if t else ""):
-                    texts.append(t)
-                else:
-                    foreign = True
-                    why = f"auditor run {arun}: the report it names is another run's"
-        if foreign and not texts and arun not in rep.no_report:
+                texts.append(t)
+                marks.append(f"{label} (its own)")
+        rep.auditors[arun] = marks
+        if not texts:                         # a run counts as naming a report only if a readable, own one exists
             rep.no_report.append(arun)
-        if foreign and arun in rep.no_report:
-            rep.no_report_why[arun] = "the report it names is another run's"
+            rep.no_report_why[arun] = "; ".join(reasons)
         for n in names:
             if texts and any(has_row(t, n) for t in texts):
                 cleared.setdefault(n, []).append((arun, n in rec_only))
+            elif texts:
+                why_not.setdefault(n, []).append(f"auditor run {arun}: its own report has no row for run {n}")
             else:
-                rep.notes[n] = why or f"auditor run {arun}: its report has no row for run {n}"
+                why_not.setdefault(n, []).append(
+                    f"auditor run {arun} names no readable report of its own ({'; '.join(reasons)})")
     for run in sorted(rep.lines):
         agent = agent_of(rep.newest(run))
+        if run in why_not and run not in cleared and run not in rep.auditors:   # a note only for a run left NOT audited
+            rep.notes[run] = "; ".join(why_not[run])
         if run in rep.auditors:
             rep.stand[run] = "an auditor's own run" + (" that names no report" if run in rep.no_report else "")
         elif run in cleared:
@@ -194,9 +229,8 @@ def _print_lists(rep: Report) -> None:
         print(_row(rep, n, f" | audited: {'no' if n in rep.not_audited else 'yes'}"))
     print("(4) THE AUDITOR'S OWN RUNS: no other run audits them")
     for n in sorted(rep.auditors):
-        print(_row(rep, n, " | names no report" + (f" ({rep.no_report_why[n]})" if n in rep.no_report_why else "")
-             if n in rep.no_report
-             else f" | report: {', '.join(rep.auditors[n])}"))
+        print(_row(rep, n, (" | names no report" + (f" ({rep.no_report_why[n]})" if rep.no_report_why.get(n) else "")
+              if n in rep.no_report else "") + (f" | report: {', '.join(rep.auditors[n])}" if rep.auditors[n] else "")))
     print("(5) A PLAN FILE AND NO LINE IN THE RECORD (this alone does not fail: a run still in flight has no line yet)")
     for n in rep.planned_no_line:
         p = json.loads(read(rep.root, f"{PAPER}/run-plans/run-{n:04d}.json", rep.at))
@@ -217,16 +251,13 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
     from tools.kgraph.store import markets_data_root
 
-    if a.data:
-        root = Path(a.data)         # never falls through to another checkout
-        if read(root, RUNS, a.at) is None:
-            import sys
-            print(f"refused: --data {root} has no run record {RUNS}" + (f" at {a.at}" if a.at else "")
-                  + (f"; {a.at} is not in that repository" if a.at and _commit_missing(root, a.at) else ""),
-                  file=sys.stderr)
-            return 2
-    else:
-        root = markets_data_root()
+    root = Path(a.data) if a.data else markets_data_root()    # --data never falls through to another checkout
+    if read(root, RUNS, a.at) is None:
+        import sys
+        print(f"refused: {'--data ' if a.data else ''}{root} has no run record {RUNS}" + (f" at {a.at}" if a.at else "")
+              + (f"; {a.at} is not in that repository" if a.at and _commit_missing(root, a.at) else ""),
+              file=sys.stderr)
+        return 2
     print(f"data: {root}" + (f" at {a.at}" if a.at else ""))
     rep = analyse(root, a.at)
     for n in rep.demoted:
