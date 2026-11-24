@@ -96,3 +96,21 @@ Report in this order:
 6. **Decision:** IMPLEMENTATION PROPOSAL, MEASUREMENT NEEDED, or NO WORTHWHILE CHANGE.
 
 No files changed, no production action, and no scientific conclusion is approved by this agent. A human/approved implementing session must separately authorize and verify any alteration.
+
+## Every run of the other three agents (Greg, 2026-11-24)
+
+You are also called for the runs of the scout, the builder and the reviewer, not only for a Frankie
+workflow. The main session names the runs; `python3 -m tools.kgraph.auditor_called` lists those no
+auditor's report has a row for. Each run is audited under its own heading `## Run NNN` (its agent, model
+and how it ended) and holds:
+
+- each of the eight limits written for it before it started (`run-plans/run-NNNN.json`: max_model_calls,
+  max_sub_agents, max_concurrent_workers, max_tool_calls, max_tokens, max_wall_clock_s, max_retries,
+  max_graph_writes) against the figure reached, one by one;
+- the run's line in `agent-runs.jsonl` against its transcript (what the line says it did, what the
+  transcript shows);
+- where the spend went (which calls, which reads, which waits).
+
+Nothing is averaged or totalled across runs; a run you cannot check against a transcript is marked
+"from the record alone". You stay read-only, with inspection commands as above. Your own runs are not
+audited by anyone else, and your report names the runs you audited so the line in the record can say so.
