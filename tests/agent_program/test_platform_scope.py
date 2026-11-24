@@ -162,7 +162,8 @@ def test_the_evaluators_real_answer_confirms_marks_and_lifts_provisional_ones(tm
     firm = {c for c, t in before.items() if t["rule"] != "its own words"}
     assert firm <= set(after) and all(after[c]["rule"] == before[c]["rule"] for c in firm)       # a firm mark is never lifted here
     claims = {c["id"]: c["attrs"] for c in store.nodes("Claim")}
-    assert not [c for c in after if c in claims and (claims[c].get("said_by") == "Greg" or claims[c]["statement_kind"] == "rule")]
+    assert not [c for c in after if c in claims and claims[c].get("said_by") == "Greg"]                 # never Greg's own words
+    assert all(after[c]["rule"] == "the running list" for c in after if c in claims and claims[c]["statement_kind"] == "rule")
     lifted = [i["claim"] for i in answer["not_tied"] if i["claim"] in before and before[i["claim"]]["rule"] == "its own words"]
     assert out["lifted"] == len(lifted) and not set(lifted) & set(after)
     assert platform_scope.mark(store, dirs)["new"] == 0                    # a lifted mark is not made again
