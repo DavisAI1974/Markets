@@ -92,6 +92,14 @@ Tokens are estimated at 4 characters a token.
    `python3 -m tools.kgraph.extract load --result graph/reads/<file> --run run:00NN`
 5. `python3 -m tools.kgraph.extract coverage` and `python3 -m tools.kgraph check` (the loader marks what belongs
    to the tastytrade platform as it loads; `check` lists anything left unmarked)
+6. Consolidation (ticket 46), the last step of every read: `python3 -m tools.kgraph.consolidate brief --read run:00NN
+   --out brief.txt` (the candidate pairs for that read's claims only: each against the earlier claims that mention
+   the same thing; none cut), give `brief.txt` to a reader (it returns `{"pairs": [...]}`; an empty list is a real
+   answer), keep the answer under `graph/reads/`, then `python3 -m tools.kgraph.consolidate apply --read run:00NN
+   --pairs graph/reads/<file> --run run:00MM`. Each pair is its own later-over-earlier link and can be taken back with
+   `python3 -m tools.kgraph.resolve undo --edge <id> --reason ... --run run:00MM` (nothing is deleted). A read is NOT
+   finished until `python3 -m tools.kgraph.consolidate status` shows it "through the step" (its COUNTS line gives
+   the claims through the step and the claims not yet).
 
 ## Connected to Greg's own paper platform (stages 7d and 7f, for the platform that makes the runs now)
 

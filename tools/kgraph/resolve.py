@@ -262,10 +262,12 @@ def apply(store: GraphStore, merges: list[dict], run: str, min_confidence: float
 
 
 def undo(store: GraphStore, edge: str, reason: str, run: str) -> dict:
-    """Take one merge back. The link's earlier line stays; the surface form stands on its own again."""
+    """Take one merge, or one later-over-earlier (SUPERSEDES) link, back. The link's earlier line stays, marked
+    withdrawn with its reason and the run; the surface form stands on its own again / the earlier claim stands unmarked.
+    Any other kind of link is refused."""
     last = (store.history(edge) or [None])[-1]
-    if last is None or last["type"] != "RESOLVED_TO":
-        raise schema.Refused(f"{edge} is not a merge of the graph")
+    if last is None or last["type"] not in ("RESOLVED_TO", "SUPERSEDES"):
+        raise schema.Refused(f"{edge} is not a merge or a later-over-earlier link of the graph")
     return store.withdraw_edge(edge, reason=f"{reason} (undone by {run})", written_by=code_stamp("tools.kgraph.resolve"))
 
 
@@ -359,7 +361,7 @@ def main(argv=None) -> int:
     p.add_argument("--old", required=True)
     p.add_argument("--why", required=True)
     p.add_argument("--run", required=True)
-    p = sub.add_parser("undo")
+    p = sub.add_parser("undo", help="take back one merge (RESOLVED_TO) or one later-over-earlier link (SUPERSEDES); nothing is deleted")
     p.add_argument("--edge", required=True)
     p.add_argument("--reason", required=True)
     p.add_argument("--run", required=True)
