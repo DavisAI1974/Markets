@@ -262,8 +262,8 @@ class Server:
         pk = None
         try:
             rows = self.rows(q["journal"])
-            pk = build_packet(rows, q["sequence"], self.budget, self.store, self.platform, question=q,
-                              planes=self.planes)
+            extra = {} if self.planes is None else {"planes": self.planes}      # the seam a check swaps takes no planes
+            pk = build_packet(rows, q["sequence"], self.budget, self.store, self.platform, question=q, **extra)
             breach = sp.leakage_check(pk, store=self.store, journal_rows=rows, planes=self.planes)
             if question_facts(q, rows)["state_matches_journal"] is False:
                 breach.append("the question's state is not the state its journal row's state_sha256 names")

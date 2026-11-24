@@ -940,7 +940,8 @@ def build(journal_rows, sequence, budget, *, store, platform_dir=None, trials=No
             raise ValueError(f"the planes source holds no record branch root-rows-{day.replace('-', '')}")
         if ps is not None:
             cand["planes"] = plane_lines(planes, day, moment, ps)
-            plane_out = list(ps["not_placed"]) + reads_unmatched(platform_dir, ps)
+            plane_out = list(ps["not_placed"]) + reads_unmatched(platform_dir, ps) + [
+                x for x in planes_named(store, day, platform_dir) if x[0].endswith(".parquet")]
         else:
             plane_out = planes_named(store, day, platform_dir)
     # closed trades
@@ -1027,11 +1028,11 @@ def build(journal_rows, sequence, budget, *, store, platform_dir=None, trials=No
                        f"{len(aw['dipole_cells_held_back_columns'])} HELD_BACK cells of the trade day's dipole events, "
                        f"{len(aw['dipole_events_made_known_at_or_after_the_moment'])} dipole events made known at or after the "
                        f"moment, {len(aw['peaks'])} peaks; " + (
-                           "the rows of each stored plane later than the moment are in afterwards_layers.json by reference "
-                           "(commit, file, sha256, row numbers), with the plane columns kept out by rule." if ps else
+                           "the rows of each stored plane later than the moment are kept in the afterwards file for learning, "
+                           "by reference, with the plane columns kept out by rule." if ps else
                            "the rows of each stored plane later than the moment are not split (no planes source was given)."))
             if ps:
-                out.append(f"- ROOT's stored planes of trade day {day}, record branch commit {ps['commit'][:10]}: "
+                out.append(f"- ROOT's stored planes of trade day {day}: "
                            f"{len(ps['layers'])} layers are placed above, one line each (a row is placed when every instant "
                            "it holds is at or before the moment). Rows at or before the moment of each layer, and the rows "
                            "after it kept for learning only: " + ", ".join(

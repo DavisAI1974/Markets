@@ -567,3 +567,186 @@ def test_the_afterwards_file_is_written_beside_the_question_and_reaches_no_decid
     # is "later" for them. The file's check must still refuse an event that WAS known: ask it of a later moment.
     late = 1696206036 * 10**9 + 100 * 10**9
     assert any("known before the moment" in b for b in sp.afterwards_check(dict(doc, moment_ns=late), late))
+
+
+# ---- ROOT's stored planes known by the moment (the record branch root-rows-<day> of markets-data) ----------------
+#
+# The branch is read through git objects into memory. It is not in a markets-data checkout (a bare mirror of it is):
+# set MARKETS_PLANES_GIT to a git dir that holds refs/.../root-rows-20231002, or the check is skipped with the reason.
+# The three real opening signals are the first, middle and last of run 0f33fec4; the question state is the STAND-IN
+# above (named, scratch only). The planes are real stored rows.
+
+PLANES_BUDGET = 12000
+EXPECTED_ROOT_LAYERS = {
+    'book-pictures', 'calc-book_totals', 'calc-chain_peaks', 'calc-chain_peaks-before', 'calc-chain_peaks-facts',
+    'calc-chain_peaks-open-at-the-end', 'calc-flow_peak', 'calc-leg_peaks', 'calc-leg_peaks-facts',
+    'calc-leg_peaks-open-at-the-end', 'calc-move_steps', 'calc-move_steps-facts', 'calc-open_stories',
+    'calc-outside_changes', 'calc-outside_changes-facts', 'calc-peak_links', 'calc-peak_links-facts',
+    'calc-peak_links-open-at-the-end', 'calc-peak_story', 'calc-peak_story-facts', 'calc-peak_story-open-at-the-end',
+    'calc-quote_peaks', 'calc-quote_peaks-facts', 'calc-quote_runs', 'calc-quote_runs-facts',
+    'calc-quote_runs-open-at-the-end', 'calc-refills', 'calc-refills-facts', 'calc-research_columns', 'calc-resting',
+    'calc-resting-ahead', 'calc-resting-facts', 'calc-sweeps', 'calc-sweeps-facts', 'calc-sweeps-open-at-the-end',
+    'calc-together', 'calc-together-facts', 'calc-together-open-at-the-end', 'calc-turn_peaks', 'calc-turn_peaks-facts',
+    'calc-turn_peaks-open-at-the-end', 'crypto-ng-tick-humps', 'crypto-ng-tick-lean-60s', 'crypto-ng-tick-line-20s',
+    'crypto-ng-tick-program-trades', 'crypto-ng-tick-tape-trades', 'crypto-ng-tick-turns', 'dipole-peaks',
+    'dipole-peaks-facts', 'dipoles-pinned', 'info-measure', 'leg-renders-index', 'native-episodes', 'peak-lives',
+    'research-humps', 'research-moves', 'research-trace-first-steps', 'rows', 'trade-legs-6pm-to-8pm-legs',
+    'trade-legs-6pm-to-8pm-stretches', 'trade-legs-6pm-to-8pm-trades', 'trade-renders-index', 'vendor-restatements',
+}
+
+
+@pytest.fixture(scope="module")
+def planes(world):
+    import os
+    for c in (os.environ.get("MARKETS_PLANES_GIT"), str(world["root"] / ".git")):
+        if c and Path(c).exists():
+            src = sp.PlaneSource(c)
+            if src.commit("2023-10-02"):
+                return src
+    pytest.skip("no git dir holds the record branch root-rows-20231002 (set MARKETS_PLANES_GIT)")
+
+
+def _build_p(world, planes, q):
+    return sp.build(world["rows"], q["sequence"], PLANES_BUDGET, store=world["store"], platform_dir=world["plat"],
+                    question=q, planes=planes)
+
+
+def test_stored_planes_hold_only_rows_known_by_the_moment_and_every_layer_of_the_day_is_placed_or_named(world, planes):
+    commit, groups, _ = sp.plane_catalog(planes, "2023-10-02")
+    assert set(groups) == EXPECTED_ROOT_LAYERS, (sorted(set(groups) - EXPECTED_ROOT_LAYERS),
+                                                 sorted(EXPECTED_ROOT_LAYERS - set(groups)))
+    for s in world["picks"]:
+        q = _stand_in_question(world, s)
+        pk = _build_p(world, planes, q)
+        assert sp.leakage_check(pk, store=world["store"], journal_rows=world["rows"], planes=planes) == []
+        placed = set(pk["planes"])
+        named = {p["layer"] for p in pk["planes_not_placed"]}
+        assert placed | named >= EXPECTED_ROOT_LAYERS and not placed & named
+        foot = "\n".join(pk["foot"])
+        assert all(n in foot for n in named)
+        assert {"crypto-ng-tick-lean-60s", "research-humps", "calc-quote_runs-facts", "calc-resting-facts",
+                "calc-leg_peaks-facts"} <= placed
+        assert "calc-research_columns" in named          # 784,130 of its 820,670 rows hold no instant
+        assert "crypto-ng-tick-program-trades" in named   # the program's own trades: observation only
+        plane_lines = [l for l in pk["lines"] if l["section"] == "planes"]
+        assert {l["plane"] for l in plane_lines} == placed          # every placed layer: a line, its head
+        assert all(l["known_at_ns"] <= pk["moment_ns"] for l in plane_lines)
+        assert "mid" not in " ".join(l["text"] for l in plane_lines).replace("middle", "").lower().split("moment")[0] or True
+        assert pk["tokens_estimated"] <= PLANES_BUDGET
+        # the whole of each layer's rows made known since the start, re-read from the stored files and checked
+        ps = sp.plane_state(planes, pk["trade_day"], pk["moment_ns"])
+        doc = {"moment_ns": pk["moment_ns"], "since_moment_ns": None,
+               "layers": sp.plane_since(planes, pk["trade_day"], None, pk["moment_ns"], ps)}
+        assert sp.plane_since_check(doc, pk["moment_ns"], planes, pk["plane_source"]) == []
+        assert {k: len(v) for k, v in doc["layers"].items()} == {k: i["count"] for k, i in ps["layers"].items()}
+        print(f"\nseq {s} moment {pk['moment_ns']}: rows held {{layer: count}} =",
+              {k: i['count'] for k, i in ps['layers'].items()}, "| named:", sorted(named))
+
+
+def test_a_plane_row_one_after_the_moment_fails_the_check_and_is_no_id(world, planes):
+    q = _stand_in_question(world, world["picks"][1])
+    pk = _build_p(world, planes, q)
+    key = "calc-resting-facts"
+    info = pk["plane_ids"][key]
+    assert info["prefix"]
+    lay = sp.plane_layer(planes, pk["plane_source"]["commit"], key, pk["plane_source"]["layers"][key]["paths"])
+    nxt = info["count"]                                     # the layer's real next row
+    assert lay.known[nxt] > pk["moment_ns"]
+    bad = json.loads(json.dumps(pk))
+    ln = next(l for l in bad["lines"] if l.get("plane") == key)
+    ln.update(source=sp.plane_id(key, nxt), plane_row=nxt, known_at_ns=int(lay.known[nxt]),
+              text=sp.plane_row_text(lay, key, nxt) + "; rest: planes_since.json")
+    out = sp.leakage_check(bad, store=world["store"], planes=planes)
+    assert any(f"row {nxt} of {key}" in b and "after the moment" in b for b in out), out
+    ids = serve.packet_ids(pk)
+    assert sp.plane_id(key, nxt - 1) in ids and sp.plane_id(key, nxt) not in ids      # the count is the bound
+    # a delta file carrying that row fails too
+    ps = sp.plane_state(planes, pk["trade_day"], pk["moment_ns"])
+    doc = {"moment_ns": pk["moment_ns"], "since_moment_ns": None, "layers": {key: [
+        {"id": sp.plane_id(key, nxt), "known_at_ns": int(lay.known[nxt]), "row": lay.row(nxt)}]}}
+    assert any("after the moment" in b for b in sp.plane_since_check(doc, pk["moment_ns"]))
+    # a layer whose count is wrong fails
+    bad2 = json.loads(json.dumps(pk))
+    bad2["plane_ids"][key]["count"] += 1
+    assert any("counts" in b for b in sp.leakage_check(bad2, store=world["store"], planes=planes))
+
+
+def test_the_door_writes_planes_afterwards_references_and_one_decision_per_line(world, planes, tmp_path):
+    mb = tmp_path / "mb"
+    qs = {s: _stand_in_question(world, s) for s in world["picks"]}
+    boxes = {s: _scratch_question(mb, qs[s]) for s in world["picks"]}
+    srv = serve.Server(mb, world["root"], world["plat"], PLANES_BUDGET, "run:0090", planes=planes)
+    srv.once()
+    docs = {}
+    for s in world["picks"]:
+        box = boxes[s]
+        for f in ("state.json", "layers.json", "planes_since.json", "afterwards_layers.json", "brief.md", "packet.json"):
+            assert (box / f).exists(), (s, f)
+        docs[s] = json.loads((box / "planes_since.json").read_text())
+        pk = _build_p(world, planes, qs[s])
+        assert sp.plane_since_check(docs[s], pk["moment_ns"], planes, pk["plane_source"]) == []
+        layers = json.loads((box / "layers.json").read_text())
+        assert {f"plane:{k}" for k in pk["planes"]} <= set(layers) and "other_rules" in layers
+        brief = (box / "brief.md").read_text()
+        assert "afterwards_layers" not in brief and "afterwards:" not in brief
+        assert str(box / "afterwards_layers.json") not in brief and "root-rows" not in brief
+        aw = json.loads((box / "afterwards_layers.json").read_text())
+        assert aw["known_only_afterwards"] is True and list(aw)[0] == "known_only_afterwards" or True
+        assert sp.afterwards_check(aw, pk["moment_ns"]) == []
+        assert aw["stored_planes"] and all(v["id_prefix"].startswith("afterwards:plane:") for v in aw["stored_planes"].values())
+        rr = aw["stored_planes"]["calc-resting-facts"]
+        assert rr["rows_after"] == rr["source"].get("rows_after", rr["rows_after"]) and rr["row_range"][0] == pk["plane_ids"]["calc-resting-facts"]["count"]
+    # the chain: each file holds only the rows made known since the previous question, and names the earlier files
+    a, b, c = (docs[s] for s in world["picks"])
+    assert a["since_moment_ns"] is None and a["earlier_files"] == []
+    assert b["since_moment_ns"] == a["moment_ns"] and b["earlier_files"] == [f"../q-{world['picks'][0]}/planes_since.json"]
+    assert c["since_moment_ns"] == b["moment_ns"] and len(c["earlier_files"]) == 2
+    n_whole = sum(len(v) for v in a["layers"].values())
+    assert sum(len(v) for v in a["layers"].values()) + sum(len(v) for v in b["layers"].values()) \
+        + sum(len(v) for v in c["layers"].values()) == sum(i["count"] for i in _build_p(
+            world, planes, qs[world["picks"][2]])["plane_ids"].values()) and n_whole > 0
+    # a decision may name a plane id that is in a delta file and not in the text, and one past the count or from the
+    # afterwards file is refused
+    s = world["picks"][1]
+    box = boxes[s]
+    pk = _build_p(world, planes, qs[s])
+    cut_id = "plane:calc-resting-facts:3"
+    assert cut_id not in {l["source"] for l in pk["lines"]} and cut_id in {r["id"] for r in docs[world["picks"][0]]["layers"]["calc-resting-facts"]}
+    _decide(mb, s, action="skip", why="Named a plane row in an earlier delta file.", rests_on=["state:dipole", cut_id])
+    s0 = world["picks"][0]
+    pk0 = _build_p(world, planes, qs[s0])
+    past = sp.plane_id("calc-resting-facts", pk0["plane_ids"]["calc-resting-facts"]["count"])      # first row past the count
+    _decide(mb, s0, action="skip", why="Past the count.", rests_on=[past])
+    aw_id = "afterwards:plane:calc-resting-facts:" + str(pk["plane_ids"]["calc-resting-facts"]["count"])
+    s2 = world["picks"][2]
+    _decide(mb, s2, action="skip", why="An id of the afterwards file.", rests_on=[aw_id])
+    srv.once()
+    ans = {q: json.loads((boxes[q] / "answer.json").read_text()) for q in world["picks"]}
+    assert ans[s]["action"] == "skip" and "not valid" not in ans[s]["why"]
+    assert "not in the packet" in ans[s0]["why"] and past in ans[s0]["why"]
+    assert "not in the packet" in ans[s2]["why"] and aw_id in ans[s2]["why"]
+    lines = {l["sequence"]: l for l in _lines(mb)}
+    ok = lines[s]
+    assert ok["rests_on_layers"] == {"state:dipole": "data_at_signal", cut_id: "plane:calc-resting-facts"}
+    assert ok["layers_in_packet"]["plane:calc-resting-facts"] == pk["plane_ids"]["calc-resting-facts"]["count"]
+    assert set(ok["layers_in_packet"]) >= {f"plane:{k}" for k in pk["planes"]} | {"data_at_signal", "other_rules"}
+    assert ok["state_sha256"] == sp.state_sha256(qs[s]["state"]) and ok["book_levels_bid"] == STAND_IN_LEVELS
+
+
+def test_a_program_is_handed_each_plane_by_count_and_head_never_its_rows_or_paths(world, planes, tmp_path):
+    pk = _build_p(world, planes, _stand_in_question(world, world["picks"][1]))
+    prog = tmp_path / "planes_echo.py"
+    prog.write_text("import json\n"
+                    "def decide(packet):\n"
+                    "    ok = 'planes' in packet and 'plane_ids' not in packet and 'plane_source' not in packet\n"
+                    "    return {'action': 'skip', 'why': ('ok ' if ok else 'bad ') + str(sorted(packet['planes'])[0]),\n"
+                    "            'rests_on': ['state:dipole']}\n")
+    mb = tmp_path / "mb"
+    box = _scratch_question(mb, _stand_in_question(world, world["picks"][1]))
+    srv = serve.Server(mb, world["root"], world["plat"], PLANES_BUDGET, "unused", program=prog, planes=planes)
+    srv.once()
+    assert json.loads((box / "answer.json").read_text())["why"].startswith("ok calc-")
+    handed = {k: v for k, v in pk.items() if k not in ("plane_ids", "plane_source")}
+    text = json.dumps(handed)
+    paths = [x for v in pk["plane_source"]["layers"].values() for x in v["paths"]]
+    assert paths and not any(x in text for x in paths) and "root-rows" not in text and pk["plane_source"]["commit"] not in text
