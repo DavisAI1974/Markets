@@ -16,3 +16,4 @@ Folder life of one question: question.json -> brief.md + packet.json -> decision
 - The leak-breach check hands `serve.build_packet` a packet with a later row through that one seam (monkeypatch);
   `leakage_check` itself is untouched.
 - 2026-11-24: replay_questions.py: a decider over a finished run's real opening signals, same door (serve.Server), no engine; NOT a trial (a skip changes nothing that follows); last line is counts only.
+- 2026-11-24: trial_with_decider.py: one command for a platform trial with a written decider program (door + trial + decisions.jsonl copied beside the kept files); only --dry has been run, never a trial.
