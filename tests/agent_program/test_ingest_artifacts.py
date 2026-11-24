@@ -347,16 +347,33 @@ def test_at_a_small_budget_the_branch_lines_stay_and_the_file_lines_go(world):
     assert not [l for l in lines if l.startswith("- tools/")]
     assert any("9 control files and decider programs are not shown" in l and "never cut" in l for l in lines)
     assert lines[-1].endswith("check each with git before trusting it.")
+    _held_to_a_tenth_or_says_it_is_not(lines, 1000)
+    assert any("branch lines are kept whole" in l for l in lines)       # four branch lines are over a tenth of 1,000 tokens
+
+
+def _held_to_a_tenth_or_says_it_is_not(lines, budget):
+    """At every budget the block is within a tenth of it, or one line says the branch lines are kept whole and
+    take more than their share, with the two figures: the characters of the lines never cut (the header, the
+    four branch lines, the note on what is not shown and the closing lines) and the tenth in characters. Then no file line is shown."""
+    limit = int(budget * context.CHARS_PER_TOKEN * 0.10)
+    said = [l for l in lines if "branch lines are kept whole" in l]
+    if sum(len(l) + 1 for l in lines) <= limit:
+        assert not said, budget
+        return
+    kept = [l for l in lines if l not in said]
+    kept_chars = sum(len(l) + 1 for l in kept)
+    assert len(said) == 1 and "more than their share" in said[0], budget
+    assert f"take {kept_chars} characters" in said[0] and f"{limit} characters" in said[0], (budget, said)
+    assert kept_chars > limit and not [l for l in lines if l.startswith("- tools/")], budget
 
 
 def test_current_versions_block_is_held_to_a_tenth_and_says_what_it_cut(world):
-    for budget in (1500, 2000, 2500, 3000):
+    for budget in (1000, 1500, 1800, 2000, 2300, 2500, 3000):
         lines = ingest_artifacts.current_versions_lines(world["store"], budget)
         files = [l for l in lines if l.startswith("- tools/")]
-        assert any("not shown for want of budget" in l for l in lines), budget
+        assert any("not shown for want of budget" in l for l in lines)
         assert len(files) < 9
-        if files:
-            assert sum(len(l) + 1 for l in lines) <= budget * context.CHARS_PER_TOKEN * 0.10
+        _held_to_a_tenth_or_says_it_is_not(lines, budget)
     full = ingest_artifacts.current_versions_lines(world["store"], 400000)
     assert not any("not shown" in l for l in full)
     assert any("decider_v1.py" in l and "04f4378" in l and "run:0087" in l for l in full)

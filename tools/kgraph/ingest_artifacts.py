@@ -374,6 +374,12 @@ def current_versions_lines(store: GraphStore, budget_tokens: int) -> list[str]:
     hidden = len(files) - shown
     note = [f"- {hidden} control files and decider programs are not shown for want of budget "
             "(the branch lines and the closing sentence are never cut)"] if hidden else []
+    # where the lines that are never cut (the branch lines, the note on what is not shown, the closing lines)
+    # are over a tenth of the budget by themselves, the block says so, with the two figures
+    kept_chars = sum(len(l) + 1 for l in top + files[:shown] + note + tail)
+    if kept_chars > limit:
+        note.append(f"- the branch lines are kept whole and, with the closing lines, take {kept_chars} characters, "
+                    f"more than their share of {limit} characters (a tenth of the budget of {budget_tokens} tokens)")
     return top + files[:shown] + note + tail
 
 
