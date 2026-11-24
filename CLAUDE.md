@@ -296,6 +296,16 @@ SessionStart hook. `using-agent-skills` is the router. Proven on Codex; Greg: "a
   full `/spec -> /ship` lifecycle on NEW work only.
 - **One router only.** Do not stack a second skill framework (Superpowers, Pocock) as an active
   router — they collide on command names and routing. Borrow individual skills a la carte.
+- **The Pocock skills are registered as a second PLUGIN (Greg, 2026-11-24: "#run mattpocock-skills"; "Those
+  skills should be in your library"; "It's a directive").** `mattpocock/skills`, pinned at tag `v1.3.2`, by
+  `.claude/settings.json` (`extraKnownMarketplaces` + `enabledPlugins`), never vendored. They load under the
+  prefix `mattpocock-skills:`, so none takes the name of a skill already here. Used for the ticket build:
+  `implement` (with `tdd` and `code-review`) group by group, `writing-for-agents` for briefs and
+  `to-questionnaire` for what the plans leave to Greg by name. The plugin ships 27 skills; `chief-of-staff` is
+  NOT one of them (it sits in that repository's `skills/in-progress/` folder) and is read from the repository
+  when used. Its own router (`ask-matt`) runs only when a person calls it. The research rules above are untouched
+  by it: where a Pocock skill's example makes up its own inputs, a check here still reads real records.
+  On the session's branch `ccr-144315dd-pta2ze`; it reaches the trunk only on Greg's word.
 
 ## Branch & data discipline (READ — recurring trap)
 

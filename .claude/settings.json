@@ -70,11 +70,19 @@
         "source": "directory",
         "path": "."
       }
+    },
+    "mattpocock": {
+      "source": {
+        "source": "github",
+        "repo": "mattpocock/skills",
+        "ref": "v1.3.2"
+      }
     }
   },
   "enabledPlugins": {
     "agent-skills@addy-agent-skills": true,
-    "davisai-github@davisai": true
+    "davisai-github@davisai": true,
+    "mattpocock-skills@mattpocock": true
   },
   "enabledMcpjsonServers": [
     "codebase-memory-mcp"
