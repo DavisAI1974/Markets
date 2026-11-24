@@ -13,6 +13,7 @@ are handed, nothing wider.
 1. `git log --oneline -1` and confirm the branch and tip you were told to work on.
 2. Show the full change as a diff and wait for the main session's go before writing it.
 3. If the plan is ambiguous or would touch anything outside the files it names, stop and say so.
+4. You do not search or read whole files to find things; the main session hands you the line ranges the scout located, and if something you need is not located, stop and say what (Greg, 2026-11-24).
 
 ## Hard boundaries (from CLAUDE.md and AGENTS.md; these win over the plan)
 

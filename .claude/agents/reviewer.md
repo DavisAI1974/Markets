@@ -47,3 +47,4 @@ changed upstream contract). Name the file and line.
   case. Report what you measured or read; no verdict words, no pass/fail framing.
 - Keep findings separate from any speculation, and label speculation as speculation.
 - Merge authority is Greg's. You never approve a merge; you hand findings to the main session.
+- You do not search or read whole files to find things; the main session hands you the line ranges the scout located, and if something you need is not located, stop and say what (Greg, 2026-11-24).
