@@ -655,6 +655,75 @@ def test_the_graphs_source_hash_is_said_when_it_differs_from_the_bytes_read(worl
         assert not any(rg["source"] in l and "differ" in l for l in defend.show(s, rule).splitlines())
 
 
+def _artifacts(s, cid):
+    return sorted((n for n in s.nodes("Artifact") if n["attrs"].get("claim") == cid), key=lambda n: n["attrs"]["version"])
+
+
+def _edges_of(s, etype, ids):
+    return [e for e in s.edges(etype, withdrawn=True) if e["src"] in ids or e["dst"] in ids]
+
+
+def test_a_first_registration_leaves_one_artifact_for_its_claim_file_and_no_revises_link(world):
+    s = world["store"]
+    f = _w(world, _claim(world, "art-first"), "af1.json")
+    cid = defend.register(s, f, PROPOSER)["claim"]
+    arts = _artifacts(s, cid)
+    assert len(arts) == 1
+    a = arts[0]
+    assert a["id"] == f"artifact:claim-file:{cid[len('claim:'):]}:r1" and a["type"] == "Artifact"
+    assert [a["attrs"][k] for k in ("version", "authoring_run")] == [1, PROPOSER]
+    assert a["attrs"]["repo"] == "none: read from outside a repository" and a["attrs"]["path"] == str(f)
+    assert a["attrs"]["sha256"] == hashlib.sha256(f.read_bytes()).hexdigest()
+    assert a["attrs"]["claim"] == cid and a["attrs"]["claim_file"] == _claim(world, "art-first")
+    live = {(e["type"], e["src"], e["dst"]) for e in s.edges()}
+    assert ("PRODUCED", PROPOSER, a["id"]) in live and ("MENTIONS", a["id"], cid) in live
+    assert _edges_of(s, "REVISES", {a["id"]}) == []
+    assert defend.show(s, cid).count(a["id"]) >= 1 and a["attrs"]["sha256"] in defend.show(s, cid)
+
+
+def test_the_repository_of_a_claim_file_is_the_checkout_it_sits_under(world):
+    dirs = repo_dirs(world["root"], None, None)
+    rule = dirs["paper-trading-platform"] / "paper_platform/rules/CL01.json"          # a real file of a real checkout
+    assert defend._where_filed(rule, dirs) == ("paper-trading-platform", "paper_platform/rules/CL01.json")
+    assert defend._where_filed(world["root"] / HANDOFF, dirs) == ("markets-data", HANDOFF)
+    assert defend._where_filed(world["tmp"] / "x.json", dirs) == ("none: read from outside a repository", str(world["tmp"] / "x.json"))
+
+
+def test_a_revision_is_a_revises_link_between_claim_files_and_the_chain_reads_3_2_1(world):
+    s = world["store"]
+    cid = _reg(world, "chain", name="ch1.json")["claim"]
+    _reg(world, "chain", scope="SCOPE-TEXT second wording", name="ch2.json")
+    arts = _artifacts(s, cid)
+    ids = {a["id"] for a in arts}
+    assert [a["attrs"]["version"] for a in arts] == [1, 2] and len(ids) == 2
+    rev = [e for e in _edges_of(s, "REVISES", ids)]
+    assert [(e["src"], e["dst"]) for e in rev] == [(arts[1]["id"], arts[0]["id"])]
+    assert len([n for n in s.nodes("Claim") if n["id"] == cid]) == 1 and s.node(cid)["rev"] == 2
+    _reg(world, "chain", scope="SCOPE-TEXT third wording", name="ch3.json")
+    arts = _artifacts(s, cid)
+    assert [a["attrs"]["version"] for a in arts] == [1, 2, 3] and len(arts) == len(s.history(cid))
+    rev = {e["src"]: e["dst"] for e in _edges_of(s, "REVISES", {a["id"] for a in arts})}
+    assert rev == {arts[2]["id"]: arts[1]["id"], arts[1]["id"]: arts[0]["id"]}
+    assert len([n for n in s.nodes("Claim") if n["attrs"].get("claim_key") == "chain"]) == 1
+    shown = defend.show(s, cid)
+    assert f"{arts[2]['id']}" in shown and f"revises {arts[1]['id']}" in shown and f"revises {arts[0]['id']}" in shown
+    assert "revises nothing" in shown and all(a["attrs"]["sha256"] in shown for a in arts)
+    assert all(a["attrs"]["authoring_run"] in shown for a in arts)
+    after = sorted(GraphStore(world["root"], graph_dir=world["graph"], tolerant=True).check_all())
+    assert [b for b in after if b not in world["before"]] == []
+
+
+def test_the_same_claim_file_again_writes_no_artifact_and_no_link(world):
+    s = world["store"]
+    cid = _reg(world, "again", name="ag1.json")["claim"]
+    n_art, n_edges = len(s.nodes("Artifact")), len(s.edges(withdrawn=True))
+    again = _reg(world, "again", name="ag1.json")
+    other_path = _reg(world, "again", name="ag2.json")                 # the same wording from another path
+    assert again["new"] == 0 and other_path["new"] == 0 and other_path["revised"] == 0
+    assert len(s.nodes("Artifact")) == n_art and len(s.edges(withdrawn=True)) == n_edges
+    assert len(_artifacts(s, cid)) == len(s.history(cid)) == 1
+
+
 def test_the_store_checks_no_worse_after_the_writes(world):
     after = sorted(GraphStore(world["root"], graph_dir=world["graph"], tolerant=True).check_all())
     assert [b for b in after if b not in world["before"]] == []

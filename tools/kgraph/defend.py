@@ -66,6 +66,10 @@ and a field whose WHOLE value is one plain form (verdict, passed, failed, pass, 
 approved, rejected). An ordinary sentence or a file name that holds a plain word ("orders rejected by the exchange
 appear", "out/verdict.json") is accepted. A quoted line (key "quote") is a file's words, not the writer's, and is
 not checked.
+A revision is a REVISES link, never a second Claim: every registration, the first too, also writes one Artifact node
+for its claim file (id artifact:claim-file:<claim id without "claim:">:r<N>; repo, path, version N, authoring_run, sha256,
+claim, the whole file), with PRODUCED (run to Artifact) and MENTIONS (Artifact to Claim) in the same write, and on
+revision N >= 2 REVISES from the Artifact of revision N to that of N-1. The same file again writes none of them.
 An objection in a challenge stays on the challenge's record; a CONTRADICTS link is written only by a check after a
 trial (tickets 05 and 06, not built here).
 """
@@ -402,6 +406,21 @@ def _own_edge(store: GraphStore, etype: str, src: str, dst: str, run: str, **att
     return link(etype, src, dst, key=_own_key(run), **attrs) if h and h[0]["written_by"] != run else plain
 
 
+NO_REPO = "none: read from outside a repository"
+
+
+def _where_filed(claim_file, dirs: dict) -> tuple[str, str]:
+    """(repository, path) of a claim file: the checkout it sits under and its path in it, else NO_REPO and the path as given."""
+    p = Path(claim_file).resolve()
+    for name in ARTIFACT_REPOS:
+        if dirs.get(name):
+            try:
+                return name, p.relative_to(Path(dirs[name]).resolve()).as_posix()
+            except ValueError:
+                pass
+    return NO_REPO, str(claim_file)
+
+
 def _register(store: GraphStore, claim_file, run: str, dirs: dict) -> dict:
     d = _load_json(claim_file)
     _agent_run(store, run)
@@ -484,7 +503,21 @@ def _register(store: GraphStore, claim_file, run: str, dirs: dict) -> dict:
         s0 = sources[0]
         attrs.update(source=s0["source"], line_start=s0["line_start"], line_end=s0["line_end"], quote=s0["quote"],
                     source_commit=s0["commit"], source_sha256=s0["sha256"])
-    nodes.append({"id": cid, "type": "Claim", "attrs": attrs})
+    claim_node = {"id": cid, "type": "Claim", "attrs": attrs}
+    nodes.append(claim_node)
+    # A revision is a REVISES link, never a second Claim: the claim file of each revision is an Artifact. Decided before
+    # the write whether the claim gets a new line at all (the store's own content hash); when it does not, nothing is added.
+    if not (prev and prev[-1]["content_sha"] == sha({k_: claim_node[k_] for k_ in ("id", "type", "attrs")}, 16)):
+        n = prev[-1]["rev"] + 1 if prev else 1
+        aid = f"artifact:claim-file:{cid[len('claim:'):]}:r{n}"
+        repo_name, rel = _where_filed(claim_file, dirs)
+        nodes.append({"id": aid, "type": "Artifact", "attrs": {
+            "repo": repo_name, "path": rel, "version": n, "authoring_run": run,
+            "sha256": hashlib.sha256(Path(claim_file).read_bytes()).hexdigest(), "claim": cid, "claim_file": d}})
+        edges += [link("PRODUCED", run, aid), link("MENTIONS", aid, cid)]
+        before = f"artifact:claim-file:{cid[len('claim:'):]}:r{n - 1}"
+        if n >= 2 and store.node(before):          # (a claim registered before the claim files were kept has no earlier Artifact)
+            edges.append(link("REVISES", aid, before))
     res = store.write(nodes, edges, written_by=run)
     new_ids = {e["id"] for e in edges}
     res["withdrawn"] = []
@@ -720,6 +753,13 @@ def show(store: GraphStore, claim_id: str) -> str:
         out.append(f"falsifiers_changed_from_revision: {a['falsifiers_changed_from_revision']}")
     if _falsifiers_line(a):
         out.append(_falsifiers_line(a))
+    out.append("the claim file of each revision (an Artifact; a revision REVISES the one before it):")
+    arts = sorted((n for n in store.nodes("Artifact") if n["attrs"].get("claim") == claim_id), key=lambda n: n["attrs"]["version"])
+    revises = {e["src"]: e["dst"] for e in store.edges("REVISES")}
+    out += [f"  {n['id']}  sha256 {n['attrs']['sha256']}  authoring run {n['attrs']['authoring_run']}  "
+            + (f"revises {revises[n['id']]}" if n["id"] in revises else "revises nothing (the first claim file)") for n in arts]
+    if not arts:
+        out.append("  none")
     out.append("every revision's falsifiers, with the time each was written:")
     for l in store.history(claim_id):
         out.append(f"  revision {l['rev']}, written {l['written_at']} by {l['written_by']}: "
