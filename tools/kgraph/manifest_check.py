@@ -123,7 +123,7 @@ def _spellings(manifest: str, raw: str) -> list[tuple[str, str]]:
 
 
 def _is_path_entry(e) -> bool:
-    return isinstance(e, dict) and any(k in e for k in PATH_KEYS)
+    return isinstance(e, dict) and any(isinstance(e.get(k), str) for k in PATH_KEYS)
 
 
 def _manifests_not_path_read(read: dict[str, list]) -> list[str]:
@@ -138,6 +138,9 @@ def _manifests_not_path_read(read: dict[str, list]) -> list[str]:
                 f"\"markets_data_path\"; the keys those entries carry: {', '.join(keys) if keys else 'none'}")
         if not_objects:
             line += f"; {not_objects} of them are not objects"
+        not_strings = sum(1 for e in bad if isinstance(e, dict) and any(k in e for k in PATH_KEYS))
+        if not_strings:
+            line += f"; {not_strings} of them hold a path key that is not a string"
         lines.append(line + "; those keys are not read as paths")
     return lines
 

@@ -219,6 +219,16 @@ def test_graph_manifest_entries_still_match_as_written_where_the_joined_path_doe
     assert not [ln for ln in out if "names the same path in another folder" in ln and "graph/MANIFEST.json" in ln]
 
 
+def test_root_manifest_at_7bdf323_is_read_for_all_its_entries(capsys):
+    # markets-data 7bdf323: `git show 7bdf323:MANIFEST.json` holds 58 entries under "entries"; 8 have "markets_data_path"
+    # null and "path" a string; none lacks a string path key. Those 8 are read by "path": no line names this manifest.
+    root = _root()
+    _needs(root, "7bdf323", "557a3b0")
+    code, out = _run(capsys, root, "557a3b0..7bdf323")
+    assert code == 0
+    assert not [ln for ln in out if ln.startswith("manifest MANIFEST.json: ")]
+
+
 # ---- CASES THE REAL HISTORY DOES NOT HOLD ----
 # Each is a real file's text with exactly the named thing changed, committed into a scratch git repo
 # (tmp_path, never markets-data). Real texts come from markets-data 42614ca.
@@ -426,3 +436,31 @@ def test_when_both_readings_name_a_file_the_entry_means_the_one_in_the_manifests
     assert "not counted as its entry" in top
     c = _counts(out)
     assert (c["added"], c["with_entry"], c["no_entry"]) == ("3", "1", "2")
+
+
+def test_path_key_holding_null_is_named_with_the_entries_that_carry_no_path(capsys, tmp_path):
+    # change: the trials.jsonl entry's "path": "experiments/trials.jsonl" -> "path": null (nothing else)
+    root = _root()
+    repo = _scratch(tmp_path, root, _manifest_with(root, TRIALS_PATH, '"path": null'))
+    _, out = _run(capsys, repo, "HEAD~1..HEAD")
+    line = [ln for ln in out if ln.startswith("manifest experiments/MANIFEST.json: ")]
+    assert len(line) == 1
+    assert ": 1 of 2 entries carry neither" in line[0]
+    assert "the keys those entries carry: bytes, path, sha256, source;" in line[0]
+    assert "1 of them hold a path key that is not a string" in line[0]
+    row = [ln for ln in out if ln.startswith("experiments/trials.jsonl |")][0]
+    assert "no manifest holds an entry for it" in row
+    assert _counts(out)["manifests_with_entries_not_read"] == "1"
+
+
+def test_null_path_key_with_a_string_sibling_path_key_is_read_by_the_sibling(capsys, tmp_path):
+    # change: the trials.jsonl entry's "path": "experiments/trials.jsonl" -> "path": null, "markets_data_path":
+    # "experiments/trials.jsonl" (the root manifest's own shape for 8 entries, with the two keys the other way round)
+    root = _root()
+    repo = _scratch(tmp_path, root, _manifest_with(
+        root, TRIALS_PATH, '"path": null, "markets_data_path": "experiments/trials.jsonl"'))
+    _, out = _run(capsys, repo, "HEAD~1..HEAD")
+    assert not [ln for ln in out if ln.startswith("manifest experiments/MANIFEST.json: ")]
+    row = [ln for ln in out if ln.startswith("experiments/trials.jsonl |")][0]
+    assert "experiments/MANIFEST.json: bytes equal, sha256 equal (path as written)" in row
+    assert _counts(out)["manifests_with_entries_not_read"] == "0"
