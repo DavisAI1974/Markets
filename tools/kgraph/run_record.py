@@ -7,7 +7,7 @@ a model; every figure is read from the transcript file, never typed in or estima
   python3 -m tools.kgraph.run_record figures --transcript <file.jsonl|.jsonl.gz>
   python3 -m tools.kgraph.run_record append  --data <markets-data> --run N --transcript <file> --agent-id ID --role R
         --stage "..." --task "..." --outcome "..." [--tokens-reported K] [--tickets a,b]
-        [--code-commit C] [--corrects "..."] [--agent-type T]
+        [--code-commit C] [--corrects "..."] [--agent-type T | --outside-roster "what it was"]
   python3 -m tools.kgraph.run_record report  --transcript <file> --out <path> --title "..."
   python3 -m tools.kgraph.run_record keep    --data <markets-data> --run N --transcript <file> --agent-id ID
   python3 -m tools.kgraph.run_record missing --data <markets-data> [--live <folder of transcripts>]
@@ -87,7 +87,7 @@ def figures_of(raw: bytes) -> dict:
     if own:
         opening = {int(own.group(1))}
     usage, models, texts, hand_backs, others, subs = {}, [], [], [], set(), set()
-    seen_use, stamps, agent_ids, last_text, text_before_hb = set(), [], set(), "", ""
+    seen_use, stamps, agent_ids, text_before_hb, earlier_texts = set(), [], set(), "", []
     for d in lines:
         if d.get("timestamp"):
             stamps.append(_ts(d["timestamp"]))
@@ -106,18 +106,20 @@ def figures_of(raw: bytes) -> dict:
                 continue
             if it.get("type") == "text":
                 texts.append(it.get("text", ""))
-                if it.get("text", "").strip():
-                    last_text = it["text"]
+                earlier_texts.append((mid, it.get("text", "")))
             elif it.get("type") == "tool_use":
                 uid = it.get("id") or json.dumps(it, sort_keys=True)
                 if uid in seen_use:
                     continue
                 seen_use.add(uid)
                 if it.get("name") == HAND_BACK:
-                    text_before_hb = last_text  # the agent's last text message before its last hand-back
                     inp = it.get("input") or {}
                     hand_backs.append(inp.get("message") if isinstance(inp.get("message"), str)
                                       else max((v for v in inp.values() if isinstance(v, str)), key=len, default=""))
+                    # the message a short hand-back points at: the LAST text before it that is longer than the
+                    # hand-back (not the longest). A short text in the hand-back's own reply is not longer than it,
+                    # so it displaces nothing; in run 124 the real message is in the hand-back's own reply.
+                    text_before_hb = next((t for _m, t in reversed(earlier_texts) if len(t) > len(hand_backs[-1])), "")
                 else:
                     others.add(uid)
                     if it.get("name") in SUB_AGENT:
@@ -138,7 +140,7 @@ def figures_of(raw: bytes) -> dict:
         "input_tokens": fresh + written + read, "model_replies": len(usage),
         "tool_calls": len(others), "hand_backs": len(hand_backs), "sub_agent_calls": len(subs),
         "first": iso(first), "last": iso(last), "wall_clock_ms": wall,
-        "_hand_backs": hand_backs, "_text_before_last_hand_back": text_before_hb, "_texts": texts, "_lines": lines,
+        "_sha256": hashlib.sha256(raw).hexdigest(), "_hand_backs": hand_backs, "_text_before_last_hand_back": text_before_hb, "_texts": texts, "_lines": lines,
     }
 
 
@@ -177,7 +179,42 @@ def _tie(f: dict, run: int, agent_id: str, base: Path) -> str | None:
                 known.add(v)
     if known and known != {agent_id}:
         raise Refused(f"run {run} is recorded with another agent id ({', '.join(sorted(known))}), not {agent_id}")
+    # one transcript is one run's: the id or the bytes may not already be on record for ANOTHER run
+    newest = {}
+    for r in _records(base):
+        newest[r["run"]] = r
+    for r, line in newest.items():
+        if r != run and line.get("agent_id") == agent_id:
+            raise Refused(f"agent id {agent_id} is already on record for run {r} (its line), not run {run}")
+    for folder, pat, what in ((base / "run-plans", r"run-(\d+)\.json", "plan"), (base / "transcripts", r"run-(\d+)\.json", "kept sidecar")):
+        if folder.is_dir():
+            for q in sorted(folder.glob("run-*.json")):
+                m = re.fullmatch(pat, q.name)
+                if not m or int(m.group(1)) == run:
+                    continue
+                d = json.loads(q.read_text(encoding="utf-8"))
+                if d.get("agent_id") == agent_id:
+                    raise Refused(f"agent id {agent_id} is already on record for run {int(m.group(1))} (its {what}), not run {run}")
+                if what == "kept sidecar" and d.get("sha256") == f["_sha256"]:
+                    raise Refused(f"these bytes (sha256 {f['_sha256']}) are already kept as run {int(m.group(1))}, not run {run}")
     return None if nums else NO_RUN_NOTE
+
+
+def _compare_with_line(f: dict, run: int, base: Path):
+    """A run that already has a line: the transcript must hold that line's exact model, and its input and output
+    tokens must each be no lower (a run that was sent back has grown; it never shrinks)."""
+    line = None
+    for r in _records(base):
+        if r["run"] == run:
+            line = r
+    if not line:
+        return
+    m = line.get("model")
+    if isinstance(m, str) and m.startswith("claude-") and not set(m.split("+")) <= set(f["models"]):
+        raise Refused(f"run {run}'s line holds model {m}, the transcript's models are {'+'.join(f['models'])}")
+    for k in ("input_tokens", "output_tokens"):
+        if line.get(k) is not None and f[k] < line[k]:
+            raise Refused(f"run {run}'s line holds {k} {line[k]}, the transcript holds {f[k]}, which is lower; a run never shrinks")
 
 
 def _records(base: Path) -> list:
@@ -192,12 +229,19 @@ def cmd_append(a):
     base = _paper(a.data)
     f = figures_of(_read_bytes(a.transcript))
     tie_note = _tie(f, a.run, a.agent_id, base)
+    _compare_with_line(f, a.run, base)
     if not (a.outcome or "").strip():
         raise Refused("the outcome is empty")
-    agent_type = a.agent_type or a.role
-    for what, v in (("role", a.role), ("agent type", agent_type)):
-        if v not in ROLES:
-            raise Refused(f"{what} {v!r} is not one of {', '.join(ROLES)}")
+    if a.outside_roster and a.agent_type and a.agent_type != a.outside_roster:
+        raise Refused("exactly one of --agent-type and --outside-roster is taken; both were given and differ")
+    if a.role not in ROLES:
+        raise Refused(f"role {a.role!r} is not one of {', '.join(ROLES)}")
+    if a.outside_roster:
+        agent_type = a.outside_roster  # what the agent was, as given
+    else:
+        agent_type = a.agent_type or a.role
+        if agent_type not in ROLES:
+            raise Refused(f"agent type {agent_type!r} is not one of {', '.join(ROLES)}")
     if any(r["run"] == a.run for r in _records(base)) and not a.corrects:
         raise Refused(f"run {a.run} already has a line; give --corrects to write its next revision")
     plan_path = base / "run-plans" / f"run-{a.run:04d}.json"
@@ -268,6 +312,7 @@ def cmd_keep(a):
     raw = _read_bytes(a.transcript)
     f = figures_of(raw)
     tie_note = _tie(f, a.run, a.agent_id, base)
+    _compare_with_line(f, a.run, base)
     d = base / "transcripts"
     gz, js = d / f"run-{a.run:04d}.jsonl.gz", d / f"run-{a.run:04d}.json"
     sha = hashlib.sha256(raw).hexdigest()
@@ -425,8 +470,8 @@ def cmd_missing(a):
           f"with a kept transcript {with_t}; lacking something {lacking_any}, of which a kept transcript could fill {fillable} and none kept {no_t_lacking}; "
           f"complete and agreeing with a kept or live transcript: {agreeing}; complete, a figure differs: {differing_complete}; "
           f"complete, no transcript to compare: {complete_no_t}; "
-          f"plan or kept transcript with no line {len(no_line)}; live transcripts {sum(len(v) for v in live.values())} "
-          f"(naming no single run {len(unnamed)}), live transcripts with no line {len(live_no_line)}, "
+          f"plan or kept transcript with no line {len(no_line)}; live transcripts {sum(len(v) for v in live.values()) + len(unnamed)}, "
+          f"of which {sum(len(v) for v in live.values())} name one run and {len(unnamed)} name none, live transcripts with no line {len(live_no_line)}, "
           f"live transcripts not kept {len(live_not_kept)}; figures that differ {differing}")
 
 
@@ -440,7 +485,7 @@ def main(argv=None) -> int:
     s.add_argument("--agent-id", required=True); s.add_argument("--stage", required=True); s.add_argument("--task", required=True)
     s.add_argument("--outcome", required=True); s.add_argument("--tokens-reported", type=int)
     s.add_argument("--tickets"); s.add_argument("--code-commit"); s.add_argument("--corrects")
-    s.add_argument("--agent-type"); s.set_defaults(fn=cmd_append)
+    s.add_argument("--agent-type"); s.add_argument("--outside-roster"); s.set_defaults(fn=cmd_append)
     s = sub.add_parser("report")
     s.add_argument("--transcript", required=True); s.add_argument("--out", required=True)
     s.add_argument("--title", required=True); s.set_defaults(fn=cmd_report)
