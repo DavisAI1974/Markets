@@ -1,0 +1,186 @@
+{
+  "$schema_version": "1.0.0",
+  "operator_id": "operator_orchestrator",
+  "operator_name": "Operator Orchestrator",
+  "description": "Executes pipeline templates. Loads stage definitions, resolves operator versions via lineage tracker, applies configurations from task_meta_learner, runs stages in order, manages closed-loop iteration with termination conditions, logs execution traces, and routes telemetry to control plane operators. Executes plans but does not make them.",
+  "visibility": "internal",
+  "maturity": "experimental",
+  "execution_class": "runtime",
+  "operator_type": "atomic",
+  "tags": [
+    "orchestration",
+    "execution",
+    "pipeline",
+    "infrastructure"
+  ],
+  "owner": {
+    "team": "DavisAI Core",
+    "maintainer": "Greg Davis"
+  },
+  "inputs": [
+    {
+      "name": "pipeline_id",
+      "type": "string",
+      "required": true,
+      "description": "Pipeline template to execute"
+    },
+    {
+      "name": "task_config",
+      "type": "object",
+      "required": false,
+      "description": "Per-operator config from task_meta_learner"
+    },
+    {
+      "name": "data_sources",
+      "type": "object",
+      "required": true,
+      "description": "Map of source_id -> data"
+    },
+    {
+      "name": "query",
+      "type": "object",
+      "required": true,
+      "description": "Discovery query: candidate operator or spectral target"
+    },
+    {
+      "name": "termination_config",
+      "type": "object",
+      "required": false,
+      "description": "Closed-loop termination conditions"
+    },
+    {
+      "name": "trace_level",
+      "type": "enum(minimal|standard|verbose)",
+      "required": false,
+      "description": "Default: standard"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "run_id",
+      "type": "string",
+      "description": "Unique execution identifier"
+    },
+    {
+      "name": "result",
+      "type": "object",
+      "description": "Operator coefficients, evidence state, discovery flag"
+    },
+    {
+      "name": "execution_trace",
+      "type": "object",
+      "description": "Per-stage timing, I/O, status, errors"
+    },
+    {
+      "name": "telemetry_routed",
+      "type": "object",
+      "description": "Telemetry delivery confirmation to control plane"
+    },
+    {
+      "name": "discovery_recorded",
+      "type": "boolean",
+      "description": "Whether discovery was persisted"
+    }
+  ],
+  "dependencies": [
+    {
+      "operator_id": "operator_lineage_tracker",
+      "required": true,
+      "reason": "Resolves best operator version per pipeline slot"
+    },
+    {
+      "operator_id": "task_meta_learner",
+      "required": false,
+      "reason": "Provides task-specific configuration"
+    },
+    {
+      "operator_id": "pipeline_performance_optimizer",
+      "required": false,
+      "reason": "Provides optimized scheduling and resource allocation"
+    }
+  ],
+  "capabilities": [
+    "pipeline_execution",
+    "trace_logging",
+    "telemetry_routing",
+    "closed_loop_management",
+    "version_resolution"
+  ],
+  "constraints": {
+    "max_latency_ms": 60000,
+    "max_cost_usd": 1.0,
+    "deterministic": false,
+    "supports_batch": false,
+    "supports_streaming": false,
+    "parallel_safe": false
+  },
+  "runtime": {
+    "invocation_mode": "sync",
+    "retry_policy": {
+      "max_retries": 1,
+      "backoff_strategy": "exponential"
+    },
+    "timeout_ms": 300000
+  },
+  "telemetry": {
+    "emits": [
+      "run_started",
+      "stage_completed",
+      "loop_iteration",
+      "run_completed",
+      "discovery_recorded"
+    ],
+    "stores_execution_trace": true,
+    "stores_metrics": true
+  },
+  "evaluation": {
+    "primary_metrics": [
+      "end_to_end_success_rate",
+      "discovery_rate"
+    ],
+    "secondary_metrics": [
+      "total_wall_time_ms",
+      "loop_iterations"
+    ],
+    "benchmarkable": true
+  },
+  "governance": {
+    "promotion_eligible": false,
+    "exposed_as_mcp_tool": false,
+    "approval_required": false
+  },
+  "registry": {
+    "indexed": true,
+    "embedding_enabled": true,
+    "searchable_fields": [
+      "operator_id",
+      "operator_name",
+      "description",
+      "tags",
+      "capabilities",
+      "inputs.type",
+      "outputs.type"
+    ]
+  },
+  "lineage": {
+    "parent_operator_id": null,
+    "derived_from": [],
+    "version": "2.0.0"
+  },
+  "artifacts": {
+    "manifest_path": "registry/manifests/operator_orchestrator.v2.json",
+    "implementation_path": "refrag-core/operators/operator_orchestrator.py",
+    "test_path": "tests/unit/test_operator_orchestrator.py",
+    "benchmark_path": "benchmarks/operator_orchestrator_bench.py",
+    "docs_path": "docs/operators/operator_orchestrator.md"
+  },
+  "status": {
+    "active": true,
+    "deprecated": false,
+    "replacement_operator_id": null
+  },
+  "domain": "infrastructure",
+  "examples": [
+    "Execute od_spectral_retrieval_pipeline, 10 stages, 3 closed-loop iterations, terminate on posterior convergence"
+  ]
+}

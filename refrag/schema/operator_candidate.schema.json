@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://davisai.local/schemas/operator_candidate.schema.json",
+  "title": "ReFRAG OperatorCandidate",
+  "description": "A candidate operator used as a 'query' against the spectral index. In text-mode refrag the query is a text string; in OD mode it is a candidate operator whose spectral signature is matched against data regions to find where it is most testable/falsifiable. Mirrors the OperatorCandidate dataclass at adapters/od_refrag_adapter.py:75.",
+  "type": "object",
+  "required": [
+    "operator_id",
+    "spectral_signature"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "operator_id": {
+      "type": "string",
+      "description": "Unique snake_case identifier for the candidate operator.",
+      "pattern": "^[a-zA-Z0-9_]+$"
+    },
+    "spectral_signature": {
+      "type": "array",
+      "description": "Dense vector projected into the same space as chunk embeddings (length must equal d_enc of the encoder in use).",
+      "items": {
+        "type": "number"
+      }
+    },
+    "coefficients": {
+      "type": "object",
+      "description": "Named scalar coefficients describing the candidate operator (e.g. 'lambda': 500.0). Empty by default.",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "source_domain": {
+      "type": "string",
+      "description": "Domain tag for cross-domain transfer detection (e.g. 'quantum', 'markets', 'turbulence'). Empty string if not tagged."
+    }
+  }
+}

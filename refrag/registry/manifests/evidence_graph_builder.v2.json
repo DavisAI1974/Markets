@@ -1,0 +1,175 @@
+{
+  "$schema_version": "1.0.0",
+  "operator_id": "evidence_graph_builder",
+  "operator_name": "Evidence Graph Builder",
+  "description": "Constructs and reasons over directed evidence graphs. V2 adds GATv2 (Graph Attention Network v2) with typed edge attention for confidence propagation, computing principled posterior probabilities over operator validity from accumulated evidence.",
+  "visibility": "internal",
+  "maturity": "experimental",
+  "execution_class": "runtime",
+  "operator_type": "atomic",
+  "tags": [
+    "evidence",
+    "graph",
+    "GNN",
+    "graph-attention",
+    "knowledge",
+    "operator-discovery"
+  ],
+  "owner": {
+    "team": "DavisAI Core",
+    "maintainer": "Greg Davis"
+  },
+  "inputs": [
+    {
+      "name": "evidence_items",
+      "type": "array<object>",
+      "required": true,
+      "description": "Chunks, operator outputs, validation results"
+    },
+    {
+      "name": "graph_id",
+      "type": "string",
+      "required": true,
+      "description": "For cross-run accumulation"
+    },
+    {
+      "name": "reasoning_mode",
+      "type": "enum(static|gnn_propagation|gnn_with_edge_inference)",
+      "required": false,
+      "description": "Default: gnn_with_edge_inference"
+    },
+    {
+      "name": "n_message_passes",
+      "type": "integer",
+      "required": false,
+      "description": "GNN iterations. Default: 4"
+    },
+    {
+      "name": "merge_strategy",
+      "type": "enum(append|replace|merge_dedup)",
+      "required": false,
+      "description": "Default: append"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "graph",
+      "type": "object",
+      "description": "Nodes with GNN embeddings and typed weighted edges"
+    },
+    {
+      "name": "clusters",
+      "type": "array<object>",
+      "description": "Mutually supporting evidence groups"
+    },
+    {
+      "name": "contradictions",
+      "type": "array<object>",
+      "description": "Conflicting evidence with GNN strength"
+    },
+    {
+      "name": "operator_validity_posterior",
+      "type": "object",
+      "description": "Aggregate posterior over operator validity"
+    },
+    {
+      "name": "inferred_edges",
+      "type": "array<object>",
+      "description": "Edge classifier predictions (gnn_with_edge_inference)"
+    }
+  ],
+  "dependencies": [
+    {
+      "operator_id": "spectral_chunk_encode",
+      "required": true,
+      "reason": "Evidence items include chunk embeddings"
+    },
+    {
+      "operator_id": "operator_decoder",
+      "required": true,
+      "reason": "Operator outputs are evidence nodes"
+    }
+  ],
+  "capabilities": [
+    "evidence_accumulation",
+    "graph_reasoning",
+    "confidence_propagation",
+    "contradiction_detection"
+  ],
+  "constraints": {
+    "max_latency_ms": 5000,
+    "max_cost_usd": 0.05,
+    "deterministic": false,
+    "supports_batch": false,
+    "supports_streaming": false,
+    "parallel_safe": false
+  },
+  "runtime": {
+    "invocation_mode": "sync",
+    "retry_policy": {
+      "max_retries": 1,
+      "backoff_strategy": "fixed"
+    },
+    "timeout_ms": 15000
+  },
+  "telemetry": {
+    "emits": [
+      "nodes_added",
+      "edges_inferred",
+      "validity_posterior",
+      "contradictions_found"
+    ],
+    "stores_execution_trace": true,
+    "stores_metrics": true
+  },
+  "evaluation": {
+    "primary_metrics": [
+      "posterior_calibration",
+      "edge_inference_accuracy"
+    ],
+    "secondary_metrics": [
+      "graph_density",
+      "wall_time_ms"
+    ],
+    "benchmarkable": true
+  },
+  "governance": {
+    "promotion_eligible": true,
+    "exposed_as_mcp_tool": false,
+    "approval_required": false
+  },
+  "registry": {
+    "indexed": true,
+    "embedding_enabled": true,
+    "searchable_fields": [
+      "operator_id",
+      "operator_name",
+      "description",
+      "tags",
+      "capabilities",
+      "inputs.type",
+      "outputs.type"
+    ]
+  },
+  "lineage": {
+    "parent_operator_id": null,
+    "derived_from": [],
+    "version": "2.0.0"
+  },
+  "artifacts": {
+    "manifest_path": "registry/manifests/evidence_graph_builder.v2.json",
+    "implementation_path": "refrag-core/operators/evidence_graph_builder.py",
+    "test_path": "tests/unit/test_evidence_graph_builder.py",
+    "benchmark_path": "benchmarks/evidence_graph_builder_bench.py",
+    "docs_path": "docs/operators/evidence_graph_builder.md"
+  },
+  "status": {
+    "active": true,
+    "deprecated": false,
+    "replacement_operator_id": null
+  },
+  "domain": "operator-discovery",
+  "examples": [
+    "Build evidence graph from 1000 spin-boson recoveries, compute aggregate operator validity posterior"
+  ]
+}

@@ -1,0 +1,187 @@
+{
+  "$schema_version": "1.0.0",
+  "operator_id": "spectral_chunker",
+  "operator_name": "Spectral Chunker",
+  "description": "Window-based segmentation of raw numerical data into overlapping chunks aligned to dynamical regime boundaries. V2 uses PELT (Pruned Exact Linear Time) change-point detection for adaptive windowing that aligns chunk boundaries to natural transitions in the data, preventing operator signatures from being split across chunks.",
+  "visibility": "internal",
+  "maturity": "experimental",
+  "execution_class": "runtime",
+  "operator_type": "atomic",
+  "tags": [
+    "spectral",
+    "chunking",
+    "preprocessing",
+    "PELT",
+    "adaptive",
+    "operator-discovery"
+  ],
+  "owner": {
+    "team": "DavisAI Core",
+    "maintainer": "Greg Davis"
+  },
+  "inputs": [
+    {
+      "name": "source_id",
+      "type": "string",
+      "required": true,
+      "description": "Identifier for the data source"
+    },
+    {
+      "name": "data",
+      "type": "array<float>",
+      "required": true,
+      "description": "Raw numerical data to segment"
+    },
+    {
+      "name": "chunking_mode",
+      "type": "enum(fixed|adaptive|hybrid)",
+      "required": false,
+      "description": "Segmentation strategy. Default: hybrid"
+    },
+    {
+      "name": "window_size",
+      "type": "integer",
+      "required": false,
+      "description": "Max window size in samples. Default: 256"
+    },
+    {
+      "name": "stride",
+      "type": "integer",
+      "required": false,
+      "description": "Step between windows (fixed mode). Default: 128"
+    },
+    {
+      "name": "min_variance",
+      "type": "float",
+      "required": false,
+      "description": "Low-information threshold. Default: 1e-8"
+    },
+    {
+      "name": "sample_rate",
+      "type": "float",
+      "required": false,
+      "description": "Data sample rate in Hz. Default: 1.0"
+    },
+    {
+      "name": "pelt_penalty",
+      "type": "enum(bic|aic|manual)",
+      "required": false,
+      "description": "PELT penalty function. Default: bic"
+    },
+    {
+      "name": "min_segment_length",
+      "type": "integer",
+      "required": false,
+      "description": "Minimum PELT segment length. Default: 32"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "chunks",
+      "type": "array<SpectralChunk>",
+      "description": "Windowed data segments with deterministic IDs"
+    },
+    {
+      "name": "change_points",
+      "type": "array<integer>",
+      "description": "Detected change-point indices (adaptive/hybrid mode)"
+    },
+    {
+      "name": "segmentation_quality",
+      "type": "float",
+      "description": "BIC score of segmentation quality"
+    }
+  ],
+  "dependencies": [],
+  "capabilities": [
+    "data_segmentation",
+    "change_point_detection",
+    "adaptive_windowing"
+  ],
+  "constraints": {
+    "max_latency_ms": 500,
+    "max_cost_usd": 0.001,
+    "deterministic": true,
+    "supports_batch": true,
+    "supports_streaming": false,
+    "parallel_safe": true
+  },
+  "runtime": {
+    "invocation_mode": "sync",
+    "retry_policy": {
+      "max_retries": 0,
+      "backoff_strategy": "none"
+    },
+    "timeout_ms": 5000
+  },
+  "telemetry": {
+    "emits": [
+      "chunks_produced",
+      "change_points_detected",
+      "segmentation_quality"
+    ],
+    "stores_execution_trace": true,
+    "stores_metrics": true
+  },
+  "evaluation": {
+    "primary_metrics": [
+      "segmentation_quality",
+      "chunk_count"
+    ],
+    "secondary_metrics": [
+      "wall_time_ms",
+      "variance_distribution"
+    ],
+    "benchmarkable": true
+  },
+  "governance": {
+    "promotion_eligible": false,
+    "exposed_as_mcp_tool": false,
+    "approval_required": false
+  },
+  "registry": {
+    "indexed": true,
+    "embedding_enabled": true,
+    "searchable_fields": [
+      "operator_id",
+      "operator_name",
+      "description",
+      "tags",
+      "capabilities",
+      "inputs.type",
+      "outputs.type"
+    ]
+  },
+  "lineage": {
+    "parent_operator_id": null,
+    "derived_from": [
+      "refrag.chunking.chunk_tokens"
+    ],
+    "version": "2.0.0"
+  },
+  "artifacts": {
+    "manifest_path": "registry/manifests/spectral_chunker.v2.json",
+    "implementation_path": "refrag-core/operators/spectral_chunker.py",
+    "test_path": "tests/unit/test_spectral_chunker.py",
+    "benchmark_path": "benchmarks/spectral_chunker_bench.py",
+    "docs_path": "docs/operators/spectral_chunker.md"
+  },
+  "status": {
+    "active": true,
+    "deprecated": false,
+    "replacement_operator_id": null
+  },
+  "domain": "operator-discovery",
+  "examples": [
+    "Segment 1000 spin-boson .npy files into adaptive windows aligned to dynamical regime transitions",
+    "Hybrid mode subdivides long Markovian segments into fixed 256-sample windows while keeping short non-Markovian bursts as single chunks"
+  ],
+  "training_contract": {
+    "pelt": {
+      "type": "PELT change-point detection",
+      "cost_function": "Normal mean+variance change",
+      "exact": true,
+      "complexity": "O(n) with pruning"
+    }
+  }
+}

@@ -1,0 +1,151 @@
+{
+  "$schema_version": "1.0.0",
+  "operator_id": "retrieval_policy_learner",
+  "operator_name": "Retrieval Policy Learner",
+  "description": "Learns optimal retrieval mode selection via PPO with delayed reward from downstream operator recovery success. V2 adds ICM (Intrinsic Curiosity Module) to prevent mode collapse and contextual bandits for cold start.",
+  "visibility": "internal",
+  "maturity": "experimental",
+  "execution_class": "runtime",
+  "operator_type": "atomic",
+  "tags": [
+    "policy",
+    "reinforcement-learning",
+    "PPO",
+    "contextual-bandits",
+    "retrieval"
+  ],
+  "owner": {
+    "team": "DavisAI Core",
+    "maintainer": "Greg Davis"
+  },
+  "inputs": [
+    {
+      "name": "task_features",
+      "type": "object",
+      "required": true,
+      "description": "Query embedding, domain, data type, history"
+    },
+    {
+      "name": "available_modes",
+      "type": "array<string>",
+      "required": true,
+      "description": "Retrieval modes to choose from"
+    },
+    {
+      "name": "reward_signal",
+      "type": "enum(evidence_quality|confidence_score|operator_recovery_success|uncertainty_reduction|composite)",
+      "required": false,
+      "description": "Default: composite"
+    },
+    {
+      "name": "policy_mode",
+      "type": "enum(contextual_bandit|ppo|ppo_with_curiosity)",
+      "required": false,
+      "description": "Default: ppo"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "selected_mode",
+      "type": "string",
+      "description": "Chosen retrieval mode"
+    },
+    {
+      "name": "policy_confidence",
+      "type": "float",
+      "description": "Selection confidence"
+    },
+    {
+      "name": "action_probabilities",
+      "type": "object",
+      "description": "Full distribution over modes"
+    },
+    {
+      "name": "value_estimate",
+      "type": "float",
+      "description": "Expected future reward"
+    }
+  ],
+  "dependencies": [],
+  "capabilities": [
+    "retrieval_mode_selection",
+    "policy_optimization",
+    "adaptive_retrieval"
+  ],
+  "constraints": {
+    "max_latency_ms": 100,
+    "max_cost_usd": 0.001,
+    "deterministic": false,
+    "supports_batch": false,
+    "supports_streaming": false,
+    "parallel_safe": true
+  },
+  "runtime": {
+    "invocation_mode": "sync",
+    "retry_policy": {
+      "max_retries": 0,
+      "backoff_strategy": "none"
+    },
+    "timeout_ms": 1000
+  },
+  "telemetry": {
+    "emits": [
+      "mode_selected",
+      "policy_confidence",
+      "curiosity_bonus"
+    ],
+    "stores_execution_trace": true,
+    "stores_metrics": true
+  },
+  "evaluation": {
+    "primary_metrics": [
+      "downstream_recovery_success_rate",
+      "mode_selection_accuracy"
+    ],
+    "secondary_metrics": [
+      "exploration_rate"
+    ],
+    "benchmarkable": true
+  },
+  "governance": {
+    "promotion_eligible": false,
+    "exposed_as_mcp_tool": false,
+    "approval_required": false
+  },
+  "registry": {
+    "indexed": true,
+    "embedding_enabled": true,
+    "searchable_fields": [
+      "operator_id",
+      "operator_name",
+      "description",
+      "tags",
+      "capabilities",
+      "inputs.type",
+      "outputs.type"
+    ]
+  },
+  "lineage": {
+    "parent_operator_id": null,
+    "derived_from": [
+      "refrag.selector.SimilaritySelector"
+    ],
+    "version": "2.0.0"
+  },
+  "artifacts": {
+    "manifest_path": "registry/manifests/retrieval_policy_learner.v2.json",
+    "implementation_path": "refrag-core/operators/retrieval_policy_learner.py",
+    "test_path": "tests/unit/test_retrieval_policy_learner.py",
+    "benchmark_path": "benchmarks/retrieval_policy_learner_bench.py",
+    "docs_path": "docs/operators/retrieval_policy_learner.md"
+  },
+  "status": {
+    "active": true,
+    "deprecated": false,
+    "replacement_operator_id": null
+  },
+  "domain": "operator-discovery",
+  "examples": [
+    "PPO learns hybrid retrieval with high semantic weight produces best recoveries for quantum data"
+  ]
+}

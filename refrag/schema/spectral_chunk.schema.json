@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://davisai.local/schemas/spectral_chunk.schema.json",
+  "title": "ReFRAG SpectralChunk",
+  "description": "One windowed segment of raw numerical data produced by spectral_chunker and consumed by spectral_chunk_encode. Mirrors the SpectralChunk dataclass at adapters/od_refrag_adapter.py:42. The chunk_id is deterministic: sha256(f'{source_id}:{window_start}:{window_end}')[:16].",
+  "type": "object",
+  "required": [
+    "chunk_id",
+    "source_id",
+    "window_start",
+    "window_end",
+    "values"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "chunk_id": {
+      "type": "string",
+      "description": "Deterministic 16-char hex ID. Computed as sha256(f'{source_id}:{window_start}:{window_end}').hexdigest()[:16].",
+      "pattern": "^[0-9a-f]{16}$"
+    },
+    "source_id": {
+      "type": "string",
+      "description": "Identifier for the originating data source (e.g. 'spin-boson-0042.npy')."
+    },
+    "window_start": {
+      "type": "integer",
+      "description": "Inclusive start index of this window in the source data array.",
+      "minimum": 0
+    },
+    "window_end": {
+      "type": "integer",
+      "description": "Exclusive end index of this window in the source data array. Must satisfy window_end > window_start.",
+      "minimum": 1
+    },
+    "values": {
+      "type": "array",
+      "description": "Raw numerical values within the window. Length must equal window_end - window_start.",
+      "items": {
+        "type": "number"
+      }
+    },
+    "sample_rate": {
+      "type": "number",
+      "description": "Data sample rate in Hz. Default 1.0 if omitted.",
+      "exclusiveMinimum": 0,
+      "default": 1.0
+    }
+  }
+}

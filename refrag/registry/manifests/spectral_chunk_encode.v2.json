@@ -1,0 +1,161 @@
+{
+  "$schema_version": "1.0.0",
+  "operator_id": "spectral_chunk_encode",
+  "operator_name": "Spectral Chunk Encoder",
+  "description": "Encodes raw numerical data chunks into spectral feature vectors. V2 dual-mode: deterministic hand-crafted features (mean, std, spectral energy, entropy, peak frequency, centroid + FFT coefficients) plus contrastive learned embeddings (SimCLR with 1D ResNet-18) that place chunks from successful operator recoveries close together in latent space.",
+  "visibility": "internal",
+  "maturity": "experimental",
+  "execution_class": "runtime",
+  "operator_type": "atomic",
+  "tags": [
+    "spectral",
+    "encoding",
+    "contrastive-learning",
+    "representation-learning",
+    "operator-discovery"
+  ],
+  "owner": {
+    "team": "DavisAI Core",
+    "maintainer": "Greg Davis"
+  },
+  "inputs": [
+    {
+      "name": "chunks",
+      "type": "array<SpectralChunk>",
+      "required": true,
+      "description": "Windowed data segments"
+    },
+    {
+      "name": "d_enc",
+      "type": "integer",
+      "required": false,
+      "description": "Embedding dimension. Default: 128"
+    },
+    {
+      "name": "encoder_mode",
+      "type": "enum(deterministic|contrastive|ensemble)",
+      "required": false,
+      "description": "Encoding strategy. Default: ensemble"
+    },
+    {
+      "name": "contrastive_checkpoint",
+      "type": "string",
+      "required": false,
+      "description": "Path to trained contrastive weights. Default: latest"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "embeddings",
+      "type": "array<array<float>>",
+      "description": "d_enc-dimensional spectral feature vectors"
+    },
+    {
+      "name": "embedding_uncertainty",
+      "type": "array<float>",
+      "description": "Per-chunk confidence from MC dropout (contrastive/ensemble mode)"
+    }
+  ],
+  "dependencies": [
+    {
+      "operator_id": "spectral_chunker",
+      "required": true,
+      "reason": "Provides windowed data segments as input"
+    }
+  ],
+  "capabilities": [
+    "spectral_feature_extraction",
+    "contrastive_encoding",
+    "uncertainty_estimation"
+  ],
+  "constraints": {
+    "max_latency_ms": 1000,
+    "max_cost_usd": 0.01,
+    "deterministic": false,
+    "supports_batch": true,
+    "supports_streaming": false,
+    "parallel_safe": true
+  },
+  "runtime": {
+    "invocation_mode": "sync",
+    "retry_policy": {
+      "max_retries": 1,
+      "backoff_strategy": "fixed"
+    },
+    "timeout_ms": 10000
+  },
+  "telemetry": {
+    "emits": [
+      "embeddings_produced",
+      "encoder_mode_used",
+      "embedding_uncertainty_mean"
+    ],
+    "stores_execution_trace": true,
+    "stores_metrics": true
+  },
+  "evaluation": {
+    "primary_metrics": [
+      "downstream_recovery_accuracy",
+      "embedding_separability"
+    ],
+    "secondary_metrics": [
+      "wall_time_ms",
+      "gpu_utilization"
+    ],
+    "benchmarkable": true
+  },
+  "governance": {
+    "promotion_eligible": false,
+    "exposed_as_mcp_tool": false,
+    "approval_required": false
+  },
+  "registry": {
+    "indexed": true,
+    "embedding_enabled": true,
+    "searchable_fields": [
+      "operator_id",
+      "operator_name",
+      "description",
+      "tags",
+      "capabilities",
+      "inputs.type",
+      "outputs.type"
+    ]
+  },
+  "lineage": {
+    "parent_operator_id": null,
+    "derived_from": [
+      "refrag.encoder.SimpleChunkEncoder"
+    ],
+    "version": "2.0.0"
+  },
+  "artifacts": {
+    "manifest_path": "registry/manifests/spectral_chunk_encode.v2.json",
+    "implementation_path": "refrag-core/operators/spectral_chunk_encode.py",
+    "test_path": "tests/unit/test_spectral_chunk_encode.py",
+    "benchmark_path": "benchmarks/spectral_chunk_encode_bench.py",
+    "docs_path": "docs/operators/spectral_chunk_encode.md"
+  },
+  "status": {
+    "active": true,
+    "deprecated": false,
+    "replacement_operator_id": null
+  },
+  "domain": "operator-discovery",
+  "examples": [
+    "Encode spin-boson windows using ensemble mode with contrastive path trained on 1000/1000 QD3SET-1 recoveries",
+    "Fall back to deterministic mode for new domain with no prior discovery history"
+  ],
+  "training_contract": {
+    "contrastive": {
+      "framework": "SimCLR",
+      "backbone": "1D ResNet-18",
+      "loss": "NT-Xent",
+      "temperature": 0.07,
+      "positive_pairs": "Windows from same successful operator recovery",
+      "negative_pairs": "Windows from failed recoveries or different operator classes",
+      "min_training_discoveries": 50,
+      "retraining_trigger": "20% growth in discoveries"
+    }
+  }
+}
