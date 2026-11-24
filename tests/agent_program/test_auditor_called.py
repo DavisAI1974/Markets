@@ -206,3 +206,57 @@ def test_ticket_at_a_commit_reads_the_file_and_the_record_as_they_were(capsys):
         bad = {n for n in listed if n not in runs or n in (runs - auditors - cleared)}
         assert ac.main(["--data", str(root), "--at", at, "--ticket", tid]) == (1 if bad else 0), tid
         capsys.readouterr()
+
+
+# ---- a row is a line that STARTS with the run; a plan with no line in the record is listed ----
+
+def _starts_with_run(line, n):
+    first = re.sub(r"^[#\s]*(L\d+\s+)?", "", line)
+    return any(re.match(rf"{p}{n}(?!\d)", first) for p in ("[Rr]un ", "r"))
+
+
+def test_a_mention_inside_another_runs_block_is_not_a_row_in_audit_run_120():
+    root = data_root()
+    text = _git_show(root, "3317d7e", f"{PAPER}/audits-20261124/AUDIT_RUN_120.md")
+    lines = text.splitlines()
+    mentioned = {int(x) for ln in lines for x in re.findall(r"(?:[Rr]un |\br)(\d+)", ln)}
+    no_block = sorted(n for n in mentioned if not any(_starts_with_run(ln, n) for ln in lines))
+    assert no_block, "AUDIT_RUN_120.md no longer mentions a run it has no block for"
+    for n in no_block:
+        assert not ac.has_row(text, n), n
+    assert {112, 113, 109} <= set(no_block)
+    for n in (114, 115, 117):
+        assert ac.has_row(text, n) and any(_starts_with_run(ln, n) for ln in lines)
+    assert not ac.has_row("compared against run 110 here", 110)
+    assert ac.has_row("## Run 110 (builder, x)", 110) and ac.has_row("run 110: x", 110)
+    assert ac.has_row("r110 x", 110) and ac.has_row("L113 r107 reviewer | x", 107)
+
+
+def test_plans_with_no_line_in_the_record_are_listed_exactly(capsys):
+    root = data_root()
+    recorded = {d["run"] for d in _lines(root)}
+    planned = {int(p.stem.split("-")[1]) for p in (root / PAPER / "run-plans").glob("run-*.json")}
+    expect = sorted(planned - recorded)
+    assert expect, "every plan has a line now; this check needs a plan with no line"
+    rep = ac.analyse(root)
+    assert rep.planned_no_line == expect
+    ac.main(["--data", str(root)])
+    out = capsys.readouterr().out
+    sec = out.split("(5) A PLAN FILE AND NO LINE IN THE RECORD")[1]
+    assert "in flight" in sec.splitlines()[0]
+    assert [int(x) for x in re.findall(r"^run (\d+) \|", sec, re.M)] == expect
+    plan = json.loads((root / PAPER / "run-plans" / f"run-{expect[0]:04d}.json").read_text())
+    assert plan["agent"] in sec and f"max_tool_calls={plan['max_tool_calls']}" in sec
+    assert plan["task"].split()[0] in sec
+
+
+def test_plans_with_no_line_at_b96fc54_read_the_folder_as_it_was():
+    root = data_root()
+    at = "b96fc54"
+    r = subprocess.run(["git", "-C", str(root), "ls-tree", "--name-only", f"{at}:{PAPER}/run-plans/"],
+                       capture_output=True, text=True)
+    if r.returncode:
+        pytest.skip("no run-plans folder at b96fc54")
+    planned = {int(re.search(r"run-(\d+)\.json", x).group(1)) for x in r.stdout.split()}
+    recorded = {d["run"] for d in _lines(root, at)}
+    assert ac.analyse(root, at=at).planned_no_line == sorted(planned - recorded)

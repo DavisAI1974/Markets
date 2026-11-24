@@ -26,8 +26,9 @@ LIMIT_KEYS = ("max_model_calls", "max_sub_agents", "max_concurrent_workers", "ma
 
 
 def has_row(text: str, n: int) -> bool:
-    """A line of the report names run n as `run N`, `Run N` or `rN`, as a whole token."""
-    pat = re.compile(rf"(?<![A-Za-z0-9])(?:[Rr]un\s+|r){n}(?![0-9])")
+    """The run's OWN row: a line of the report STARTS with `run N`, `Run N` or `rN` as a whole token,
+    after leading `#` marks and spaces or the `L<digits> ` prefix. A mention in the middle of a line is not a row."""
+    pat = re.compile(rf"^[#\s]*(?:L\d+\s+)?(?:[Rr]un\s+|r){n}(?![0-9])")
     return any(pat.search(ln) for ln in text.splitlines())
 
 
@@ -59,6 +60,7 @@ class Report:
     not_audited: list = field(default_factory=list)
     auditors: dict = field(default_factory=dict)    # run -> the report(s) its lines name
     outside: dict = field(default_factory=dict)     # run -> agent/role
+    planned_no_line: list = field(default_factory=list)  # runs with a plan file and no line
     notes: dict = field(default_factory=dict)       # run -> why a named run is not cleared
     stand: dict = field(default_factory=dict)       # run -> where it stands
     root: Path | None = None
@@ -120,8 +122,19 @@ def analyse(root, at: str | None = None) -> Report:
             rep.stand[run] = "NOT AUDITED" + (f" ({rep.notes[run]})" if run in rep.notes else "")
         if agent not in ROSTER:
             rep.outside[run] = str(rep.newest(run).get("role", agent))
-    rep.auditors = {k: v for k, v in rep.auditors.items()}
+    rep.planned_no_line = sorted(n for n in _plan_numbers(root, at) if n not in rep.lines)
     return rep
+
+
+def _plan_numbers(root: Path, at: str | None) -> list:
+    folder = f"{PAPER}/run-plans"
+    if at:
+        r = subprocess.run(["git", "-C", str(root), "ls-tree", "--name-only", f"{at}:{folder}/"],
+                           capture_output=True, text=True)
+        names = r.stdout.split() if r.returncode == 0 else []
+    else:
+        names = [p.name for p in (root / folder).glob("run-*.json")] if (root / folder).is_dir() else []
+    return [int(m.group(1)) for x in names if (m := re.search(r"run-(\d+)\.json$", x))]
 
 
 def _limit(rep: Report, run: int) -> str:
@@ -157,9 +170,14 @@ def _print_lists(rep: Report) -> None:
     print("(4) THE AUDITOR'S OWN RUNS: no other run audits them")
     for n in sorted(rep.auditors):
         print(_row(rep, n, f" | report: {', '.join(rep.auditors[n]) or 'none named'}"))
+    print("(5) A PLAN FILE AND NO LINE IN THE RECORD (this alone does not fail: a run still in flight has no line yet)")
+    for n in rep.planned_no_line:
+        p = json.loads(read(rep.root, f"{PAPER}/run-plans/run-{n:04d}.json", rep.at))
+        task = " ".join(str(p.get("task", "")).split()[:12])
+        print(f"run {n} | {p.get('agent')} | {task} | " + " ".join(f"{k}={p[k]}" for k in LIMIT_KEYS if k in p))
     print(f"COUNTS runs={len(rep.lines)} not_audited={len(rep.not_audited)} "
           f"record_only={len(rep.record_only)} with_own_row={len(rep.with_row)} "
-          f"outside_roster={len(rep.outside)} auditor_runs={len(rep.auditors)}")
+          f"outside_roster={len(rep.outside)} auditor_runs={len(rep.auditors)} plan_no_line={len(rep.planned_no_line)}")
 
 
 def main(argv=None) -> int:
