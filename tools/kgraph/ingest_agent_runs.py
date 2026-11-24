@@ -7,8 +7,10 @@ Reads, in markets-data tasks/family-research-20261022/research-union-current/pap
   agent-runs.jsonl                one AgentRun node for each line, tied to the file and its line
   live-runs/<run>/receipt.json    one trial for each run folder, with the figures its receipt counts
 
-The harness reports one token figure for a run (input and output together). It is stored as
-`tokens_reported`; `input_tokens` and `output_tokens` stay empty because they were never given.
+The harness reports one token figure for a run (input and output together); it is stored as `tokens_reported`.
+Lines written from run 107 on also carry input_tokens and output_tokens, read from the run's own transcript
+(tools/kgraph/run_record.py). Earlier lines hold the harness's one total only: their input and output stay
+empty because they were never given.
 """
 
 from __future__ import annotations
