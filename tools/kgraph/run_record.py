@@ -210,7 +210,8 @@ def _compare_with_line(f: dict, run: int, base: Path):
     if not line:
         return
     m = line.get("model")
-    if isinstance(m, str) and m.startswith("claude-") and not set(m.split("+")) <= set(f["models"]):
+    # a transcript with no model reply holds no model to contradict the line's
+    if f["models"] and isinstance(m, str) and m.startswith("claude-") and not set(m.split("+")) <= set(f["models"]):
         raise Refused(f"run {run}'s line holds model {m}, the transcript's models are {'+'.join(f['models'])}")
     for k in ("input_tokens", "output_tokens"):
         if line.get(k) is not None and f[k] < line[k]:
@@ -248,6 +249,18 @@ def cmd_append(a):
         raise Refused(f"run {a.run} already has a line; give --corrects to write its next revision")
     plan_path = base / "run-plans" / f"run-{a.run:04d}.json"
     plan = json.loads(plan_path.read_text(encoding="utf-8")) if plan_path.exists() else None
+    # the recorder never writes an empty model: a transcript with no model reply (a run stopped before its first
+    # reply) takes the model its plan names, with a note saying so; with no plan for the run it refuses
+    model_note = None
+    if f["models"]:
+        model = f["models"][0] if len(f["models"]) == 1 else "+".join(f["models"])
+    else:
+        model = (plan or {}).get("model")
+        if not (isinstance(model, str) and model.strip()):
+            raise Refused(f"run {a.run}'s transcript holds no model reply and the run has no plan naming a model, "
+                          "so the line would have an empty model")
+        model_note = ("the transcript holds no model reply (the run stopped before its first reply), so this is the "
+                      f"model run-plans/run-{a.run:04d}.json names, the plan's and not one read from a reply")
     earlier = next((r for r in reversed(_records(base)) if r["run"] == a.run), None) if a.corrects else None
     if a.tokens_reported is None and earlier and earlier.get("tokens_reported") is not None:
         tokens_reported, tokens_note = earlier["tokens_reported"], earlier.get("tokens_note")
@@ -257,8 +270,10 @@ def cmd_append(a):
                        else "the harness's total was not given")
     line = {"run": a.run, "agent_id": a.agent_id, "session": (plan or {}).get("session") or (f["_lines"][0].get("sessionId") if f["_lines"] else None),
             "stage": a.stage, "role": a.role,
-            "model": f["models"][0] if len(f["models"]) == 1 else "+".join(f["models"]),
+            "model": model,
             "task": a.task}
+    if model_note:
+        line["model_note"] = model_note
     if plan:
         line["plan"] = f"run-plans/run-{a.run:04d}.json"
     line.update({

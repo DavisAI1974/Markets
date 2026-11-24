@@ -735,7 +735,8 @@ def test_trap_the_same_agent_id_under_another_run_is_refused_on_its_line_alone(t
 
 def test_trap_a_line_whose_model_replies_differs_from_its_kept_transcript_is_named(scratch, paper, capsys):
     # change: run 154's real newest line (model_replies 10, the same as its kept transcript: unchanged, `missing` names no
-    # difference for it, asserted first) has its model_replies raised by one to 11; nothing else is touched
+    # difference for it, asserted first) has its model_replies raised by one to 11; the record is rewritten with every
+    # other line kept (the older run-154 line included) and the edited newest line written last
     shutil.copytree(paper / "transcripts", scratch / PAPER / "transcripts")
     rec = scratch / PAPER / "agent-runs.jsonl"
     d = _newest(rec, 154)
@@ -743,7 +744,39 @@ def test_trap_a_line_whose_model_replies_differs_from_its_kept_transcript_is_nam
     assert main(["missing", "--data", str(scratch)]) == 0
     assert not [l for l in capsys.readouterr().out.splitlines() if l.startswith("DIFFERS run 154") and "model_replies" in l]
     d["model_replies"] = 11
-    rec.write_text("".join(l + "\n" for l in rec.read_text().splitlines() if l.strip() and json.loads(l)["run"] != 154) + json.dumps(d) + "\n")
+    kept = [l for l in rec.read_text().splitlines() if l.strip()]
+    at = max(i for i, l in enumerate(kept) if json.loads(l)["run"] == 154)  # the newest run-154 line is the one edited
+    older = [l for i, l in enumerate(kept) if i != at]
+    assert sum(json.loads(l)["run"] == 154 for l in older) == 1  # the older run-154 line stays
+    rec.write_text("".join(l + "\n" for l in older) + json.dumps(d) + "\n")
     assert main(["missing", "--data", str(scratch)]) == 0
     mine = [l for l in capsys.readouterr().out.splitlines() if l.startswith("DIFFERS run 154")]
     assert any("model_replies: line 11, transcript 10" in l for l in mine)
+
+
+def test_append_of_a_run_stopped_before_its_first_reply_writes_the_plans_model_and_says_so(scratch, paper, capsys):
+    # real: run 179's kept transcript (12 lines, no model reply; its own line was once written with an empty model,
+    # which stopped the graph's loader: "AgentRun run:0179: missing model") and its plan (model claude-sonnet-5-5)
+    # change: none to a real record's lines; the scratch copy of the record gets one more line for run 179 (--corrects)
+    t = paper / "transcripts/run-0179.jsonl.gz"
+    assert json.loads(gzip.decompress(t.read_bytes()).decode().splitlines()[0])["agentId"] == "a5652df7593c7c86d"
+    assert main(["figures", "--transcript", str(t)]) == 0
+    assert json.loads(capsys.readouterr().out)["models"] == []
+    plan_model = json.loads((paper / "run-plans/run-0179.json").read_text())["model"]
+    assert plan_model == "claude-sonnet-5-5"
+    rec = scratch / PAPER / "agent-runs.jsonl"
+    assert main(_append_args(scratch, t, 179, "--corrects", "the first line of run 179") + []) == 0
+    new = _newest(rec, 179)
+    assert new["model"] == plan_model
+    assert "plan" in new["model_note"] and "no model reply" in new["model_note"]
+    assert new["model_replies"] == 0
+
+
+def test_append_of_a_transcript_with_no_model_reply_and_no_plan_is_refused(scratch, paper, capsys):
+    # change: the scratch copy of run-plans loses run 179's plan file; the record is untouched
+    t = paper / "transcripts/run-0179.jsonl.gz"
+    (scratch / PAPER / "run-plans/run-0179.json").unlink()
+    before = (scratch / PAPER / "agent-runs.jsonl").read_text()
+    assert main(_append_args(scratch, t, 179, "--corrects", "x")) == 2
+    assert "no model reply" in capsys.readouterr().err
+    assert (scratch / PAPER / "agent-runs.jsonl").read_text() == before
