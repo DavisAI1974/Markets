@@ -26,10 +26,13 @@ LIMIT_KEYS = ("max_model_calls", "max_sub_agents", "max_concurrent_workers", "ma
 
 
 def has_row(text: str, n: int) -> bool:
-    """The run's OWN row: a line of the report STARTS with `run N`, `Run N` or `rN` as a whole token,
-    after leading `#` marks and spaces or the `L<digits> ` prefix. A mention in the middle of a line is not a row."""
-    pat = re.compile(rf"^[#\s]*(?:L\d+\s+)?(?:[Rr]un\s+|r){n}(?![0-9])")
-    return any(pat.search(ln) for ln in text.splitlines())
+    """The run's OWN row is one of exactly these, at column 0 (no leading space, so an indented line inside
+    another run's block is not a row): a markdown heading (`#` marks, one space, `Run N` or `run N`); the
+    first report's form `L<digits> rN `; or `rN` / `Run N` followed by a space, a colon, `(` or the line's end."""
+    pats = (re.compile(rf"^#+ [Rr]un {n}(?![0-9])"),
+            re.compile(rf"^L[0-9]+ r{n} "),
+            re.compile(rf"^(?:r|Run ){n}(?: |:|\(|$)"))
+    return any(p.search(ln) for ln in text.splitlines() for p in pats)
 
 
 def agent_of(d: dict) -> str:
@@ -59,6 +62,7 @@ class Report:
     record_only: list = field(default_factory=list)
     not_audited: list = field(default_factory=list)
     auditors: dict = field(default_factory=dict)    # run -> the report(s) its lines name
+    no_report: list = field(default_factory=list)   # auditor runs whose lines name no audit_report with a commit
     outside: dict = field(default_factory=dict)     # run -> agent/role
     planned_no_line: list = field(default_factory=list)  # runs with a plan file and no line
     notes: dict = field(default_factory=dict)       # run -> why a named run is not cleared
@@ -83,10 +87,12 @@ def analyse(root, at: str | None = None) -> Report:
     # what each auditor run names: the UNION over all its lines
     cleared: dict[int, list] = {}      # run -> [(auditor run, in its record_only)]
     for arun, ls in rep.lines.items():
-        if not any(agent_of(d) == AUDITOR for d in ls):
+        if agent_of(ls[-1]) != AUDITOR:      # an auditor's run is so by its NEWEST line only
             continue
         reports = [d["audit_report"] for d in ls if d.get("audit_report")]
         rep.auditors[arun] = [f"{r.get('path')}@{r.get('commit')}" for r in reports]
+        if not any(r.get("commit") for r in reports):
+            rep.no_report.append(arun)
         names = sorted({n for d in ls for n in d.get("audits", [])})
         rec_only = {n for d in ls for n in d.get("record_only", [])}
         texts, why = [], None
@@ -169,7 +175,8 @@ def _print_lists(rep: Report) -> None:
         print(_row(rep, n, f" | audited: {'no' if n in rep.not_audited else 'yes'}"))
     print("(4) THE AUDITOR'S OWN RUNS: no other run audits them")
     for n in sorted(rep.auditors):
-        print(_row(rep, n, f" | report: {', '.join(rep.auditors[n]) or 'none named'}"))
+        print(_row(rep, n, " | names no report" if n in rep.no_report
+             else f" | report: {', '.join(rep.auditors[n])}"))
     print("(5) A PLAN FILE AND NO LINE IN THE RECORD (this alone does not fail: a run still in flight has no line yet)")
     for n in rep.planned_no_line:
         p = json.loads(read(rep.root, f"{PAPER}/run-plans/run-{n:04d}.json", rep.at))
@@ -177,24 +184,32 @@ def _print_lists(rep: Report) -> None:
         print(f"run {n} | {p.get('agent')} | {task} | " + " ".join(f"{k}={p[k]}" for k in LIMIT_KEYS if k in p))
     print(f"COUNTS runs={len(rep.lines)} not_audited={len(rep.not_audited)} "
           f"record_only={len(rep.record_only)} with_own_row={len(rep.with_row)} "
-          f"outside_roster={len(rep.outside)} auditor_runs={len(rep.auditors)} plan_no_line={len(rep.planned_no_line)}")
+          f"outside_roster={len(rep.outside)} auditor_runs={len(rep.auditors)} no_report={len(rep.no_report)} plan_no_line={len(rep.planned_no_line)}")
 
 
 def main(argv=None) -> int:
     import argparse
 
     ap = argparse.ArgumentParser(prog="python3 -m tools.kgraph.auditor_called", description=__doc__.split("\n\n")[0])
-    ap.add_argument("--data", help="markets-data checkout (default: MARKETS_DATA or the checkout beside Markets)")
+    ap.add_argument("--data", help="markets-data checkout, used as given or refused (default: MARKETS_DATA or the checkout beside Markets)")
     ap.add_argument("--ticket", help="a ticket id from TICKET_RUNS.json, for example 03b")
     ap.add_argument("--at", help="read the record and the ticket file as they were at this markets-data commit")
     a = ap.parse_args(argv)
     from tools.kgraph.store import markets_data_root
 
-    root = markets_data_root(a.data)
+    if a.data:
+        root = Path(a.data)         # never falls through to another checkout
+        if read(root, RUNS, a.at) is None:
+            import sys
+            print(f"refused: --data {root} has no run record {RUNS}" + (f" at {a.at}" if a.at else ""), file=sys.stderr)
+            return 2
+    else:
+        root = markets_data_root()
+    print(f"data: {root}" + (f" at {a.at}" if a.at else ""))
     rep = analyse(root, a.at)
     if not a.ticket:
         _print_lists(rep)
-        return 1 if rep.not_audited else 0
+        return 1 if rep.not_audited or rep.no_report else 0
     raw = read(root, TICKETS, a.at)
     if raw is None:
         print(f"ticket {a.ticket}: no ticket file {TICKETS}" + (f" at {a.at}" if a.at else ""))

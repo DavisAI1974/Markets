@@ -260,8 +260,17 @@ def test_the_brief_holds_the_claim_and_grounds_and_not_the_proposers_reasoning(w
 CLAUDE_MD_QUOTE = "standing rules (Greg, 2026-09-16) -- MEMORY, read before touching Granite"
 
 
+def _claude_md_line():
+    # run 122: the line was a fixed 32, which no longer holds in the committed CLAUDE.md (lines were added above it);
+    # the line is now found in the same committed file the registration reads, by the same quote
+    d = repo_dirs(data_root(), None, None)["Markets"]
+    c = subprocess.run(["git", "-C", str(d), "log", "-1", "--format=%H", "--", "CLAUDE.md"], capture_output=True, text=True).stdout.strip()
+    lines = subprocess.run(["git", "-C", str(d), "show", f"{c}:CLAUDE.md"], capture_output=True, text=True).stdout.splitlines()
+    return [i for i, l in enumerate(lines, 1) if CLAUDE_MD_QUOTE in l][0]
+
+
 def _claude_md_ground(said_by):
-    return {"kind": "cited", "repo": "Markets", "path": "CLAUDE.md", "line_start": 32, "line_end": 32,
+    return {"kind": "cited", "repo": "Markets", "path": "CLAUDE.md", "line_start": _claude_md_line(), "line_end": _claude_md_line(),
             "quote": CLAUDE_MD_QUOTE, "said_by": said_by}
 
 
@@ -271,7 +280,7 @@ def test_who_said_a_cited_line_is_the_proposers_word_and_code_says_so(world):
     cid = _reg(world, "greg-seen", rests_on=rest, name="gs.json",
                outcome_visibility={"outcome_seen": True, "what": "SEEN-TEXT the four trade days were studied first"})["claim"]
     by_path = {g["path"]: g for g in s.node(cid)["attrs"]["rests_on"] if g["kind"] == "cited"}
-    assert by_path["CLAUDE.md"]["said_by_named_in_lines"] is True       # line 32 of CLAUDE.md reads "(Greg, 2026-09-16)"
+    assert by_path["CLAUDE.md"]["said_by_named_in_lines"] is True       # that line of CLAUDE.md reads "(Greg, 2026-09-16)"
     assert by_path[HANDOFF]["said_by_named_in_lines"] is False          # line 3 of the handoff does not hold "Claude"
     line = "registered after an outcome was seen: SEEN-TEXT the four trade days were studied first"
     g = by_path["CLAUDE.md"]
@@ -368,15 +377,19 @@ def test_a_reviewer_who_made_a_ground_of_a_ground_is_refused(world):
     assert _challenge(world, top, run=REVIEWER2, name="far2.json")["new"] >= 1
 
 
-def test_the_role_must_be_exactly_reviewer(world):
+def test_the_agent_must_be_a_reviewer_by_type_or_by_the_first_word_of_its_role(world):
+    # CHANGED in run 122 (point 5): was test_the_role_must_be_exactly_reviewer, which refused the ten real reviewer
+    # runs whose role reads "reviewer (read-only)". No real AgentRun has an agent_type, and no real role only
+    # CONTAINS the word without starting with it, so the type branch and the contains-only case have no real run.
     s = world["store"]
-    near = [n["id"] for n in s.nodes("AgentRun") if n["attrs"].get("role", "").strip().lower() != "reviewer"
-            and "reviewer" in n["attrs"].get("role", "").lower()]
-    if not near:
-        pytest.skip("no real run in this graph holds a role that only contains the word reviewer")
-    cid = _reg(world, "exact-role")["claim"]
-    with pytest.raises(schema.Refused, match="role"):
-        _challenge(world, cid, run=near[0], name="near.json")
+    cid = _reg(world, "first-word-role")["claim"]
+    assert s.node("run:0054")["attrs"]["role"] == "reviewer (read-only)"
+    assert _challenge(world, cid, run="run:0054", name="fw.json")["new"] >= 1
+    builders = [n["id"] for n in s.nodes("AgentRun") if n["attrs"].get("role", "").startswith(("builder (as the", "builder, as the"))]
+    assert len(builders) >= 2
+    for b in builders:
+        with pytest.raises(schema.Refused, match="role"):
+            _challenge(world, cid, run=b, name="fwb.json")
 
 
 def test_the_brief_is_sealed_to_what_the_code_builds(world):
@@ -419,8 +432,21 @@ def test_a_revision_that_changes_the_falsifiers_says_so_everywhere(world):
     again = _reg(world, "fchange", falsifiers=new_f, name="fc2.json")      # the same revised file, again: nothing new
     assert again["new"] == 0 and again["revised"] == 0 and s.node(cid)["rev"] == 2
     assert s.node(cid)["attrs"]["falsifiers_changed_from_revision"] == 1
+    assert s.node(cid)["attrs"]["falsifiers_changed_at_revisions"] == [2]
     _reg(world, "fchange", falsifiers=new_f, scope="SCOPE-TEXT changed after", name="fc3.json")
-    assert "falsifiers_changed_from_revision" not in s.node(cid)["attrs"]  # revision 3 did not change them
+    # CHANGED in run 122 (point 2): this line used to assert that the mark disappears at revision 3 (the old
+    # single-revision mark still does). It now asserts the mark STAYS, as a list of the revisions where the
+    # falsifiers differed from the revision before, and is said in plain words in the brief, show and undefended.
+    assert s.node(cid)["attrs"]["falsifiers_changed_at_revisions"] == [2]
+    kept = "the falsifiers differed from the revision before at revision 2"
+    assert kept in defend.brief(s, cid) and kept in defend.show(s, cid)
+    assert any(cid in l and kept in l for l in defend.undefended(s))
+    other_f = [{"observation": "FALS3-TEXT yet another observation", "record": "the decider's stored decisions"}]
+    _reg(world, "fchange", falsifiers=other_f, scope="SCOPE-TEXT changed after", name="fc4.json")
+    assert s.node(cid)["attrs"]["falsifiers_changed_at_revisions"] == [2, 4] and s.node(cid)["rev"] == 4
+    assert "at revisions 2, 4" in defend.show(s, cid)
+    _reg(world, "fchange", falsifiers=other_f, scope="SCOPE-TEXT changed after the fourth", name="fc5.json")
+    assert s.node(cid)["attrs"]["falsifiers_changed_at_revisions"] == [2, 4]       # carried to every later revision
 
 
 def test_a_revision_leaves_standing_a_link_another_run_wrote_into_the_claim(world):
@@ -517,6 +543,8 @@ def test_a_refusal_that_cannot_be_written_says_both_reasons_and_exits_3(world, c
 
 
 def test_registration_never_writes_a_new_revision_of_an_existing_source(world):
+    # NOTE (reviewer, run 118): this check relies on the REAL drift of src:Markets:.claude/agents/scout.md (the graph's
+    # node holds older bytes than the committed file). It goes red if the graph is ever re-read; that is accepted.
     s = world["store"]
     sid = "src:Markets:.claude/agents/scout.md"          # a real Source of the graph; the committed file has changed since
     before = s.history(sid)
@@ -547,6 +575,153 @@ def test_a_claim_carries_no_dead_unlinked_grounds_field(world):
     cid = _reg(world, "t1")["claim"]
     assert "unlinked_grounds" not in world["store"].node(cid)["attrs"]
     assert "NO LINK" not in defend.show(world["store"], cid)
+
+
+def test_the_said_by_flag_needs_every_word_as_a_whole_word(world):
+    line3 = (world["root"] / HANDOFF).read_text(encoding="utf-8").splitlines()[2]
+    assert "e" in line3.lower()                      # the letter is inside words of the real line (the old test was true)
+    cited = lambda who: dict(_claim(world)["rests_on"][2], said_by=who)
+    rule = [g for g in _claim(world)["rests_on"] if g["kind"] == "rule"]
+    cid = _reg(world, "said-flag", rests_on=rule + [cited("e"), _claude_md_ground("Greg"), _claude_md_ground("Greg 2026-09-16"),
+                                                    _claude_md_ground("Greg Nobody")], name="sf.json")["claim"]
+    flags = [(g["said_by"], g["said_by_named_in_lines"]) for g in world["store"].node(cid)["attrs"]["rests_on"] if g["kind"] == "cited"]
+    assert flags == [("e", False), ("Greg", True), ("Greg 2026-09-16", True), ("Greg Nobody", False)]
+
+
+def test_a_data_hash_commit_is_stored_resolved_to_its_full_sha(world):
+    cid = _reg(world, "man-short", data_manifest_hashes=[_item(world, commit=world["commit"][:10])], name="ms.json")["claim"]
+    a = world["store"].node(cid)["attrs"]
+    assert a["data_manifest_hashes"][0]["commit"] == world["commit"] and len(world["commit"]) == 40
+    assert a["claim_file"]["data_manifest_hashes"][0]["commit"] == world["commit"][:10]       # the file stays as typed
+
+
+def test_a_brief_path_that_is_not_a_file_is_named(world):
+    cid = _reg(world, "no-brief-file")["claim"]
+    gone = world["tmp"] / "nowhere-brief.md"
+    with pytest.raises(schema.Refused) as e:
+        defend.challenge(world["store"], cid, _w(world, _chal(), "nb.json"), REVIEWER, gone)
+    assert str(gone) in str(e.value) and "is not there" in str(e.value) and "required" not in str(e.value)
+
+
+@pytest.mark.parametrize("text", ["supported-within-scope", "Supported  within scope", "refuted-with-evidence",
+                                  "needs  more  evidence", "BLOCKED-INPUT-SCOPE", "superseded - retained", "supported   within-scope"])
+def test_verdict_labels_are_refused_with_hyphens_or_wider_gaps(world, text):
+    cid = _reg(world, "labels-gap")["claim"]
+    with pytest.raises(schema.Refused, match=r"what_remains_open.*carries the word"):
+        _challenge(world, cid, what_remains_open=[text])
+    assert "evaluation" in _challenge(world, cid, what_remains_open=["a narrow scope; the in-scope check passed"], name="gapok.json")
+
+
+def test_a_proposer_never_writes_a_line_of_another_runs_link(world):
+    s = world["store"]
+    rule_src = [g for g in s.node(_reg(world, "edge-base")["claim"])["attrs"]["rests_on"] if g["kind"] == "rule"][0]["source"]
+    full = _claim(world)["rests_on"]
+    cid = _reg(world, "own-edge", rests_on=[full[0], full[2]], name="oe1.json")["claim"]
+    plain = defend.link("SUPPORTS", rule_src, cid)
+    s.write([], [plain], written_by=REVIEWER)                   # another run holds the link from the same Source
+    live = lambda: {e["id"] for e in s.edges()}
+    _reg(world, "own-edge", rests_on=full, name="oe2.json")      # the proposer now adds the rule ground
+    own = [e for e in s.edges("SUPPORTS") if e["src"] == rule_src and e["dst"] == cid and e["id"] != plain["id"]]
+    assert len(own) == 1 and own[0]["attrs"]["commit"] and own[0]["attrs"]["sha256"]
+    assert [l["written_by"] for l in s.history(own[0]["id"])] == [PROPOSER]
+    assert [l["written_by"] for l in s.history(plain["id"])] == [REVIEWER]
+    _reg(world, "own-edge", rests_on=full, scope="SCOPE-TEXT changed for the edge test", name="oe3.json")
+    assert len(s.history(plain["id"])) == 1                                              # a revision does not touch it
+    r = _reg(world, "own-edge", rests_on=[full[0], full[2]], scope="SCOPE-TEXT changed for the edge test", name="oe4.json")
+    assert own[0]["id"] in r["withdrawn"] and plain["id"] not in r["withdrawn"]          # the proposer drops ITS edge only
+    assert own[0]["id"] not in live() and plain["id"] in live()
+    assert len(s.history(plain["id"])) == 1 and not s.history(plain["id"])[0]["attrs"].get("withdrawn")
+    assert s.history(plain["id"])[0]["written_by"] == REVIEWER
+
+
+def test_the_graphs_source_hash_is_said_when_it_differs_from_the_bytes_read(world):
+    # relies on the real drift of src:Markets:.claude/agents/scout.md, like the check on existing Sources above
+    s = world["store"]
+    sid = "src:Markets:.claude/agents/scout.md"
+    cited = {"kind": "cited", "repo": "Markets", "path": ".claude/agents/scout.md", "line_start": 8, "line_end": 8,
+             "quote": "You are the scout for DavisAI Markets", "said_by": "Claude"}
+    cid = _reg(world, "source-hash", rests_on=[cited], name="sh.json")["claim"]
+    a = s.node(cid)["attrs"]
+    g = a["rests_on"][0]
+    assert a["source_commit"] == g["commit"] and a["source_sha256"] == g["sha256"]
+    node_sha = s.node(sid)["attrs"]["sha256"]
+    assert g["source_node_sha256"] == node_sha and node_sha != g["sha256"]
+    for text in (defend.brief(s, cid), defend.show(s, cid)):
+        said = [l for l in text.splitlines() if node_sha in l and "differ" in l]
+        assert said and all(g["sha256"] in l and sid in l for l in said)
+    rule = _reg(world, "source-hash-rule", name="shr.json")["claim"]            # a Source made by this write holds the same bytes
+    rg = [g for g in s.node(rule)["attrs"]["rests_on"] if g["kind"] == "rule"][0]
+    if s.node(rg["source"])["attrs"]["sha256"] == rg["sha256"]:
+        assert not any(rg["source"] in l and "differ" in l for l in defend.show(s, rule).splitlines())
+
+
+def _artifacts(s, cid):
+    return sorted((n for n in s.nodes("Artifact") if n["attrs"].get("claim") == cid), key=lambda n: n["attrs"]["version"])
+
+
+def _edges_of(s, etype, ids):
+    return [e for e in s.edges(etype, withdrawn=True) if e["src"] in ids or e["dst"] in ids]
+
+
+def test_a_first_registration_leaves_one_artifact_for_its_claim_file_and_no_revises_link(world):
+    s = world["store"]
+    f = _w(world, _claim(world, "art-first"), "af1.json")
+    cid = defend.register(s, f, PROPOSER)["claim"]
+    arts = _artifacts(s, cid)
+    assert len(arts) == 1
+    a = arts[0]
+    assert a["id"] == f"artifact:claim-file:{cid[len('claim:'):]}:r1" and a["type"] == "Artifact"
+    assert [a["attrs"][k] for k in ("version", "authoring_run")] == [1, PROPOSER]
+    assert a["attrs"]["repo"] == "none: read from outside a repository" and a["attrs"]["path"] == str(f)
+    assert a["attrs"]["sha256"] == hashlib.sha256(f.read_bytes()).hexdigest()
+    assert a["attrs"]["claim"] == cid and a["attrs"]["claim_file"] == _claim(world, "art-first")
+    live = {(e["type"], e["src"], e["dst"]) for e in s.edges()}
+    assert ("PRODUCED", PROPOSER, a["id"]) in live and ("MENTIONS", a["id"], cid) in live
+    assert _edges_of(s, "REVISES", {a["id"]}) == []
+    assert defend.show(s, cid).count(a["id"]) >= 1 and a["attrs"]["sha256"] in defend.show(s, cid)
+
+
+def test_the_repository_of_a_claim_file_is_the_checkout_it_sits_under(world):
+    dirs = repo_dirs(world["root"], None, None)
+    rule = dirs["paper-trading-platform"] / "paper_platform/rules/CL01.json"          # a real file of a real checkout
+    assert defend._where_filed(rule, dirs) == ("paper-trading-platform", "paper_platform/rules/CL01.json")
+    assert defend._where_filed(world["root"] / HANDOFF, dirs) == ("markets-data", HANDOFF)
+    assert defend._where_filed(world["tmp"] / "x.json", dirs) == ("none: read from outside a repository", str(world["tmp"] / "x.json"))
+
+
+def test_a_revision_is_a_revises_link_between_claim_files_and_the_chain_reads_3_2_1(world):
+    s = world["store"]
+    cid = _reg(world, "chain", name="ch1.json")["claim"]
+    _reg(world, "chain", scope="SCOPE-TEXT second wording", name="ch2.json")
+    arts = _artifacts(s, cid)
+    ids = {a["id"] for a in arts}
+    assert [a["attrs"]["version"] for a in arts] == [1, 2] and len(ids) == 2
+    rev = [e for e in _edges_of(s, "REVISES", ids)]
+    assert [(e["src"], e["dst"]) for e in rev] == [(arts[1]["id"], arts[0]["id"])]
+    assert len([n for n in s.nodes("Claim") if n["id"] == cid]) == 1 and s.node(cid)["rev"] == 2
+    _reg(world, "chain", scope="SCOPE-TEXT third wording", name="ch3.json")
+    arts = _artifacts(s, cid)
+    assert [a["attrs"]["version"] for a in arts] == [1, 2, 3] and len(arts) == len(s.history(cid))
+    rev = {e["src"]: e["dst"] for e in _edges_of(s, "REVISES", {a["id"] for a in arts})}
+    assert rev == {arts[2]["id"]: arts[1]["id"], arts[1]["id"]: arts[0]["id"]}
+    assert len([n for n in s.nodes("Claim") if n["attrs"].get("claim_key") == "chain"]) == 1
+    shown = defend.show(s, cid)
+    assert f"{arts[2]['id']}" in shown and f"revises {arts[1]['id']}" in shown and f"revises {arts[0]['id']}" in shown
+    assert "revises nothing" in shown and all(a["attrs"]["sha256"] in shown for a in arts)
+    assert all(a["attrs"]["authoring_run"] in shown for a in arts)
+    after = sorted(GraphStore(world["root"], graph_dir=world["graph"], tolerant=True).check_all())
+    assert [b for b in after if b not in world["before"]] == []
+
+
+def test_the_same_claim_file_again_writes_no_artifact_and_no_link(world):
+    s = world["store"]
+    cid = _reg(world, "again", name="ag1.json")["claim"]
+    n_art, n_edges = len(s.nodes("Artifact")), len(s.edges(withdrawn=True))
+    again = _reg(world, "again", name="ag1.json")
+    other_path = _reg(world, "again", name="ag2.json")                 # the same wording from another path
+    assert again["new"] == 0 and other_path["new"] == 0 and other_path["revised"] == 0
+    assert len(s.nodes("Artifact")) == n_art and len(s.edges(withdrawn=True)) == n_edges
+    assert len(_artifacts(s, cid)) == len(s.history(cid)) == 1
 
 
 def test_the_store_checks_no_worse_after_the_writes(world):
