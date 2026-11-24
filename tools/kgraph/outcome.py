@@ -16,9 +16,11 @@ be kept). Each record is `repo:path@commit` (repo = the first colon, commit = af
 that checkout). The commit is resolved to its full id and the sha256 is taken from the bytes at that commit, as the
 artifact check of `defend register` does. Only then is ONE Task written (state done, text "outcome records handed to <run>
 for <claim> revision <N>"; the claim, its revision, the run, each record's repo, path, full commit, sha256 and bytes, the ids
-of the challenges on record at that moment, the time; MENTIONS from the Task to the Claim, PRODUCED from the run to the
+of the challenges of THAT revision on record at that moment, the time; MENTIONS from the Task to the Claim, PRODUCED from the run to the
 Task), and only after the Task is written are the files copied to <out>/<repo>/<path>, byte for byte; an existing file is
-never overwritten. `releases` says who was handed the outcome and when, for every caller; the record paths and hashes
+never overwritten. `--out` inside a data checkout (markets-data, Markets, the platform) is refused, naming the checkout. A
+second release of the same claim revision to the same run writes no second Task: it says the release already on record (its
+Task id) and exits 0. `releases` says who was handed the outcome and when, for every caller; the record paths and hashes
 only to a run that passes the rule.
 
 WHAT THIS DOES NOT HOLD. An agent with a file tool can open a record it was not handed, and the graph's own files, directly:
@@ -106,9 +108,12 @@ def outcome_on_record(store: GraphStore, claim_id: str, run: str) -> bool:
 
 def check_show(store: GraphStore, claim_id: str, run: str | None) -> None:
     """`defend show` prints the proposer's mechanism, alternatives and falsifiers: a reviewer without its own challenge
-    of the current revision is refused. Every other run (the proposer included) may read it, challenges or not."""
+    of the current revision is refused. Every other run (the proposer included) may read it, challenges or not.
+    A read that names no run is refused: who reads the proposer's side must be on record (`--run`)."""
     if run is None:
-        return
+        raise schema.Refused(f"run: a run must be named (--run run:NNNN) to read {claim_id} with `show`; it prints the "
+                             "proposer's mechanism, alternatives and falsifiers, and nothing of the claim is printed "
+                             "for a read that names no run")
     node = defend._agent_run(store, run)
     c = defend._registered(store, claim_id)
     if _agent_is_reviewer(node) and not own_current_challenge(store, claim_id, run):
@@ -136,6 +141,19 @@ def release(store: GraphStore, claim_id: str, run: str, specs: list[str], out, d
         raise
 
 
+def _checkout_holding(out, dirs: dict):
+    """(name, folder) of the data checkout `out` lies in (the markets-data checkout of the store, the platform, this
+    Markets checkout, any other in `dirs`), or None. A hand-over must never land inside a checkout that is committed."""
+    here = Path(__file__).resolve().parents[2]
+    where = Path(out).resolve()
+    places = {**{k: Path(v) for k, v in dirs.items()}, "Markets": here}
+    for name, d in sorted(places.items()):
+        d = d.resolve()
+        if where == d or d in where.parents:
+            return name, d
+    return None
+
+
 def _release(store, claim_id, run, specs, out, dirs):
     c = defend._registered(store, claim_id)
     ok, why = may_see_outcome(store, claim_id, run)
@@ -144,6 +162,15 @@ def _release(store, claim_id, run, specs, out, dirs):
     if not specs:
         raise schema.Refused("record: none given (--record <repo>:<path>@<commit>)")
     dirs = dirs or repo_dirs(store.data_root, None, None)
+    inside = _checkout_holding(out, {**dirs, "markets-data": store.data_root})
+    if inside:
+        raise schema.Refused(f"out: {out} is inside the {inside[0]} checkout ({inside[1]}); a hand-over goes to a folder "
+                             "outside every data checkout")
+    done = [r for r in releases_of(store, claim_id) if r["attrs"].get("run") == run and r["attrs"].get("claim_revision") == c["rev"]]
+    if done:
+        return {"already_on_record": done[0]["id"],
+                "said": f"release already on record: {done[0]['id']} ({claim_id} revision {c['rev']} handed to {run} at "
+                        f"{done[0]['attrs']['released_at']}); nothing was written"}
     recs, blobs = [], []
     for spec in specs:
         repo, path, ref = _parse(spec)
@@ -164,7 +191,7 @@ def _release(store, claim_id, run, specs, out, dirs):
         if t.exists():
             raise schema.Refused(f"out: {t} already exists; a handed-over file is never rewritten")
     stamp = now()
-    chs = sorted(e["id"] for e in defend.challenges_of(store, claim_id))
+    chs = sorted(e["id"] for e in current_challenges(store, claim_id))     # of the released revision only
     tid = "task:outcome-release-" + sha([claim_id, c["rev"], run, recs, chs, stamp])
     attrs = {"text": f"outcome records handed to {run} for {claim_id} revision {c['rev']}", "state": "done",
              "outcome_release": True, "claim": claim_id, "claim_revision": c["rev"], "run": run, "records": recs,
@@ -204,7 +231,8 @@ def main(argv=None) -> int:
     store = GraphStore(a.data, graph_dir=a.graph_dir)
     try:
         if a.verb == "release":
-            print(json.dumps(release(store, a.claim, a.run, a.record, a.out)))
+            res = release(store, a.claim, a.run, a.record, a.out)
+            print(res["said"] if "already_on_record" in res else json.dumps(res))
         else:
             print(describe(store, a.claim, a.run))
     except defend.NotRetained as e:
