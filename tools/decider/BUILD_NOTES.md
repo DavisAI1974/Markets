@@ -18,3 +18,4 @@ Folder life of one question: question.json -> brief.md + packet.json -> decision
 - 2026-11-24: replay_questions.py: a decider over a finished run's real opening signals, same door (serve.Server), no engine; NOT a trial (a skip changes nothing that follows); last line is counts only.
 - 2026-11-24: trial_with_decider.py: one command for a platform trial with a written decider program (door + trial + decisions.jsonl copied beside the kept files); only --dry has been run, never a trial.
 - 2026-11-24: file_proposer.py (MailboxFileProposer: proposed.py + answer.json, refuses what does not compile, has no decide, is identical, imports outside the standard library or names open/os/etc; a read of the code, not a sandbox); control-file field proposer.kind plan|file, default plan.
+- 2026-11-24: programs/loop_decider.py (takes every signal) and ratchet/programs/platform_decider.md written; ready check run, nothing started; loop NOT run.
