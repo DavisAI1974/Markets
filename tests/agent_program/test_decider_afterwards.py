@@ -147,7 +147,7 @@ def test_skipped_trade_has_no_result_and_says_so(world):
 
 def test_brief_one_line_a_decision_and_nothing_added(world):
     out = world["d"] / "brief.md"
-    aw.main(["brief", "--afterwards", str(world["out"]), "--budget", "1000000", "--out", str(out)])
+    aw.main(["brief", "--afterwards", str(world["out"]), "--budget", "1000000", "--rests-on-none", "the journal of run 0f33fec4 was made with no decider plugged in and bears on no registered claim", "--out", str(out)])
     text = out.read_text().splitlines()
     body = [t for t in text if t.startswith("sequence ")]
     assert len(body) == 217 and len(text) == 217 + 2
@@ -159,7 +159,7 @@ def test_brief_one_line_a_decision_and_nothing_added(world):
 
 def test_brief_budget_shows_the_head_and_names_the_rest(world):
     out = world["d"] / "brief_small.md"
-    aw.main(["brief", "--afterwards", str(world["out"]), "--budget", "600", "--out", str(out)])
+    aw.main(["brief", "--afterwards", str(world["out"]), "--budget", "600", "--rests-on-none", "the journal of run 0f33fec4 was made with no decider plugged in and bears on no registered claim", "--out", str(out)])
     text = out.read_text().splitlines()
     body = [t for t in text if t.startswith("sequence ")]
     assert 0 < len(body) < 217
