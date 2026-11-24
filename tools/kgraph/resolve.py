@@ -302,6 +302,10 @@ def supersede(store: GraphStore, new_id: str, old_id: str, why: str, run: str, d
     maker = store.node(run)
     if not (run.startswith("code:") or (maker and maker["type"] == "AgentRun")):
         raise schema.Refused(f"{run} is not an AgentRun of the graph: record the run first")
+    for standing in store.edges("SUPERSEDES"):
+        if standing["src"] == old_id and standing["dst"] == new_id:
+            raise schema.Refused(f"{old_id} already stands over {new_id} by the link {standing['id']}: a pair and its reverse are "
+                                 "never both applied (take that link back with `resolve undo` first)")
     a, b = _when(store, new, dirs), _when(store, old, dirs)
     if a[0] and b[0] and a < b:
         raise schema.Refused(f"{new_id} was made earlier than {old_id} ({a[0]} against {b[0]}): only a later claim takes "

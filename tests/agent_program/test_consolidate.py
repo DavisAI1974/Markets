@@ -14,6 +14,7 @@ import shutil
 import pytest
 
 from tools.kgraph import consolidate, resolve, schema
+from tools.kgraph.extract import repo_dirs
 from tools.kgraph.store import GraphStore
 
 from .realrecords import data_root
@@ -62,8 +63,8 @@ def brief_pairs(text):
     """The pairs of a brief: (later id, later date, earlier id, earlier date, [shared entity ids], section)."""
     out, section = [], None
     for blk in re.split(r"\n(?=### pair )", text)[1:]:
-        later = re.search(r"^later: (claim:\w+) \| (\S+) \|", blk, re.M)
-        earlier = re.search(r"^earlier: (claim:\w+) \| (\S+) \|", blk, re.M)
+        later = re.search(r"^(?:later|one): (claim:\w+) \| (\S+) \|", blk, re.M)
+        earlier = re.search(r"^(?:earlier|other): (claim:\w+) \| (\S+) \|", blk, re.M)
         shared = re.findall(r" \[([^\[\]]+)\](?:; |$)", re.search(r"^shared: (.*)$", blk, re.M).group(1))
         out.append((later[1], later[2], earlier[1], earlier[2], shared))
     return out
@@ -123,6 +124,7 @@ def test_a_brief_names_only_the_reads_claims_and_every_pair_shares_an_entity_wit
             b = days[o["id"]]
             if (a and b and b <= a) or not (a and b):
                 want.add((cid, o["id"]))
+    want = {(x, y) for (x, y) in want if not (y in added and (y, x) in want and y < x)}   # a pair of the same read both ways is listed once
     assert seen == want
     n_added, n_with, n_pairs = counts_line(printed, READ)
     assert n_added == len(added) == 256 and n_pairs == len(pairs) and n_with == len({p[0] for p in pairs})
@@ -142,8 +144,8 @@ def test_before_any_apply_every_claim_of_a_real_read_is_not_yet_and_after_apply_
     take_back_hand_links(root, g, pairs, capsys)
     run_cmd(consolidate, root, g, "brief", "--read", READ, "--out", str(tmp_path / "b.txt"))
     n_pairs = counts_line(capsys.readouterr().out, READ)[2]
-    in_brief = {(p[0], p[2]) for p in brief_pairs((tmp_path / "b.txt").read_text(encoding="utf-8"))}
-    shares = [x for x in pairs if (x["new"], x["old"]) in in_brief]
+    in_brief = {frozenset((p[0], p[2])) for p in brief_pairs((tmp_path / "b.txt").read_text(encoding="utf-8"))}   # a pair of the same read is listed once, either way round
+    shares = [x for x in pairs if frozenset((x["new"], x["old"])) in in_brief]
     assert len(shares) == 3                                                 # the other 6 of the hand pass share no Entity with their earlier claim: the brief cannot reach them
     pf = tmp_path / "pairs.json"
     pf.write_text(json.dumps({"pairs": pairs}), encoding="utf-8")
@@ -226,7 +228,7 @@ def test_a_pair_supersede_refuses_is_printed_and_counted_never_dropped_and_a_sec
     # change: the real pair of run 96 with its two claims turned the other way round (the earlier set over the later)
     turned = {"new": real["old"], "old": real["new"], "why": "the earlier claim set over the later one"}
     pf = tmp_path / "pairs.json"
-    pf.write_text(json.dumps({"pairs": [real, turned]}), encoding="utf-8")
+    pf.write_text(json.dumps({"pairs": [turned, real]}), encoding="utf-8")   # turned first: no link stands yet, so the date is what refuses it
     assert run_cmd(consolidate, root, g, "apply", "--read", SMALL_READ, "--pairs", str(pf), "--run", APPLIER) == 0
     res = json.loads(capsys.readouterr().out)
     assert len(res["applied"]) == 1 and len(res["refused"]) == 1
@@ -253,3 +255,35 @@ def test_a_claim_added_after_the_last_pass_is_listed_as_not_yet(scratch, capsys,
     assert reads["run:0099"] == (1, "not yet") and reads[SMALL_READ] == (150, "through the step")
     assert counts["through_the_step"] == 150 and counts["not_yet"] == counts["claims"] - 150
     assert counts["reads_not_yet"] == counts["reads"] - 1
+
+
+# ==== TICKET 46, THE REVIEWER'S READ (run 202), POINT 1: A PAIR AND ITS REVERSE ARE NEVER BOTH APPLIED ====
+SAME_FILE_LATER, SAME_FILE_EARLIER = "claim:01bf69899b10", "claim:a33d8b40772c"   # ROOT_GAMEPLAN_DECISIONS.md:6143 and :6048, same date, same commit, both of run:0022
+
+
+def test_a_pair_and_its_reverse_are_never_both_applied(scratch, capsys, tmp_path):
+    root, g = scratch
+    dirs = repo_dirs(root, None, None)
+    first = resolve.supersede(GraphStore(root, graph_dir=g), SAME_FILE_LATER, SAME_FILE_EARLIER, "line 6143 settles line 6048", "code:test", dirs)
+    with pytest.raises(schema.Refused, match=re.escape(first)):
+        resolve.supersede(GraphStore(root, graph_dir=g), SAME_FILE_EARLIER, SAME_FILE_LATER, "the turned pair", "code:test", dirs)
+    # and through apply: the reverse is printed with the refusal and counted
+    pf = tmp_path / "pairs.json"
+    pf.write_text(json.dumps({"pairs": [{"new": SAME_FILE_EARLIER, "old": SAME_FILE_LATER, "why": "the turned pair"}]}), encoding="utf-8")
+    assert run_cmd(consolidate, root, g, "apply", "--read", READ, "--pairs", str(pf), "--run", APPLIER) == 0
+    res = json.loads(capsys.readouterr().out)
+    assert res["applied"] == [] and len(res["refused"]) == 1 and first in res["refused"][0]["refusal"]
+    standing = {(e["src"], e["dst"]) for e in GraphStore(root, graph_dir=g).edges("SUPERSEDES")}
+    assert (SAME_FILE_LATER, SAME_FILE_EARLIER) in standing and (SAME_FILE_EARLIER, SAME_FILE_LATER) not in standing
+
+
+def test_the_brief_lists_a_pair_of_the_same_read_once_not_both_ways(scratch, capsys, tmp_path):
+    root, g = scratch
+    out_file = tmp_path / "brief.txt"
+    run_cmd(consolidate, root, g, "brief", "--read", READ, "--out", str(out_file))
+    text = out_file.read_text(encoding="utf-8")
+    pairs = brief_pairs(text)
+    ids = [(p[0], p[2]) for p in pairs]
+    assert len(set(ids)) == len(ids) and not any((e, l) in set(ids) for l, e in ids)
+    assert "order not settled by date: the reader says which is later, from the words" in text
+    assert any(re.search(r"^one: " + re.escape(l), text, re.M) for l, e in ids)

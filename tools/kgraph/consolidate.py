@@ -58,7 +58,8 @@ Return JSON only, no words around it: {{"pairs": [{{"new": "<claim id of the lat
 Use the claim ids exactly as printed (they start with claim:). Work through every pair to the last one.
 
 Each claim line is: claim id | date | file:line | kind | said by | the claim.
-{n_pairs} pairs ({n_earlier} where the earlier claim has an earlier date, {n_same} where both have the same date, {n_undated} where a claim has no date), {n_with} of the {n_claims} claims have at least one.
+A pair marked "order not settled by date: the reader says which is later, from the words" has two claims of this same read; it is listed ONCE. Say which of the two is later and return that one direction only: never both.
+{n_pairs} pairs ({n_earlier} where the earlier claim has an earlier date, {n_same} where both have the same date, {n_undated} where a claim has no date, {n_order} listed once with the order not settled by date), {n_with} of the {n_claims} claims have at least one.
 """
 
 
@@ -117,7 +118,17 @@ def candidates(store: GraphStore, read: str) -> tuple[list[str], list[tuple]]:
             else:
                 kind = "undated"                              # no date says which is later: listed, not cut
             pairs.append((cid, other, sorted(shared[other]), kind))
-    return added, pairs
+    # Two claims of the SAME read that are candidates for each other are one pair, listed once (the lower id first): no date
+    # says which is later, the reader does, from the words. A pair and its reverse are never both applied (resolve.supersede).
+    have = {(p[0], p[1]) for p in pairs}
+    once = []
+    for p in pairs:
+        if (p[1], p[0]) in have:
+            if p[0] > p[1]:
+                continue
+            p = (p[0], p[1], p[2], "order")
+        once.append(p)
+    return added, once
 
 
 def _line(store: GraphStore, cid: str) -> str:
@@ -133,18 +144,23 @@ def brief(store: GraphStore, read: str, run_hint: str = "") -> tuple[str, dict]:
     added, pairs = candidates(store, read)
     if not added:
         raise schema.Refused(f"no claim of the graph names {read} in extracted_by")
-    n = {k: sum(1 for p in pairs if p[3] == k) for k in ("earlier", "same", "undated")}
+    n = {k: sum(1 for p in pairs if p[3] == k) for k in ("earlier", "same", "undated", "order")}
     stats = {"claims_added": len(added), "claims_with_a_candidate": len({p[0] for p in pairs}), "pairs": len(pairs), **n}
     text = BRIEF.format(run=run_hint or "run:????", read=read, n_claims=len(added), n_pairs=len(pairs), n_earlier=n["earlier"],
-                        n_same=n["same"], n_undated=n["undated"], n_with=stats["claims_with_a_candidate"])
+                        n_same=n["same"], n_undated=n["undated"], n_order=n["order"], n_with=stats["claims_with_a_candidate"])
     body = []
     for kind, title in (("earlier", "PAIRS WHERE THE EARLIER CLAIM HAS AN EARLIER DATE"),
                         ("same", "PAIRS WHERE BOTH CLAIMS HAVE THE SAME DATE (the later handoff letter, or the higher line of the decisions file, is the later)"),
-                        ("undated", "PAIRS WHERE A CLAIM HAS NO DATE")):
+                        ("undated", "PAIRS WHERE A CLAIM HAS NO DATE"),
+                        ("order", "PAIRS OF TWO CLAIMS OF THIS READ, ORDER NOT SETTLED BY DATE (listed once: the reader says which is later, from the words)")):
         body.append(f"\n## {title}\n")
         for i, (new, old, ents, _) in enumerate(p for p in pairs if p[3] == kind):
             names = "; ".join(f"{store.node(e)['attrs'].get('name', e)} [{e}]" for e in ents)
-            body.append(f"### pair {i + 1}\nlater: {_line(store, new)}\nearlier: {_line(store, old)}\nshared: {names}\n")
+            if kind == "order":
+                body.append(f"### pair {i + 1}\norder not settled by date: the reader says which is later, from the words\n"
+                            f"one: {_line(store, new)}\nother: {_line(store, old)}\nshared: {names}\n")
+            else:
+                body.append(f"### pair {i + 1}\nlater: {_line(store, new)}\nearlier: {_line(store, old)}\nshared: {names}\n")
     return text + "\n".join(body), stats
 
 
@@ -217,7 +233,7 @@ def main(argv=None) -> int:
         Path(a.out).write_text(text, encoding="utf-8")
         print(f"{a.out}: {len(text.splitlines())} lines")
         print(f"{a.read}: claims_added={st['claims_added']} claims_with_a_candidate={st['claims_with_a_candidate']} "
-              f"pairs={st['pairs']} (earlier_date={st['earlier']} same_date={st['same']} undated={st['undated']})")
+              f"pairs={st['pairs']} (earlier_date={st['earlier']} same_date={st['same']} undated={st['undated']} order_not_settled={st['order']})")
     elif a.verb == "apply":
         raw = Path(a.pairs).read_text(encoding="utf-8")
         pairs = json.loads(raw[raw.find("{"):raw.rfind("}") + 1])["pairs"]
