@@ -12,7 +12,10 @@ model call and reads nothing but the saved graph.
 budget) and without a plan that passes `check`. When it runs: the workers, at most `max_concurrent_workers`
 at a time, each call recorded as an AgentRun; the budget enforced as it goes (on exhaustion it stops and
 returns the completed events, the unresolved events and the reason); then the reducer (code), the refute
-wave on the claims sent to review, and the synthesis. No check of this repository exercises `go`.
+wave on the claims sent to review, and the synthesis. One event's failure in the reduce or refute step
+(an exception, a refused answer) is recorded for that event in `unresolved` with its reason, and the run goes
+on with the others. No check of this repository exercises the command `go` beyond its refusals; the check of
+`run_plan` uses real answers put in files for the FileCaller.
 """
 
 from __future__ import annotations
@@ -242,6 +245,9 @@ def run_plan(plan: P.RunPlan, caller, store: GraphStore) -> dict:
         except schema.Refused as e:
             unresolved[ev] = f"the answer was refused: {e}"
             return
+        except Exception as e:              # one event's reduce step never stops the others
+            unresolved[ev] = f"the reduce step raised {type(e).__name__}: {e}"
+            return
         completed.append(ev)
         runs.setdefault("reports", {})[ev] = {k: v for k, v in rep.items() if k not in ("claims", "thrown")}
 
@@ -261,7 +267,7 @@ def run_plan(plan: P.RunPlan, caller, store: GraphStore) -> dict:
                 s, u = F.build_refute_brief_parts(store, ids)
                 rjobs.append({"key": ev, "model": plan.models["refute"], "system": s, "user": u,
                               "schema": F.REFUTE_SCHEMA, "effort": plan.efforts["refute"],
-                              "max_out": plan.max_output_tokens["refute"]})
+                              "max_out": plan.max_output_tokens["refute"], "claim_ids": ids})
 
         def refute_done(job, out):
             rid = _record_run(store, plan, "swarm refuter", f"try to contradict the claims of {job['key']}",
@@ -272,10 +278,12 @@ def run_plan(plan: P.RunPlan, caller, store: GraphStore) -> dict:
                 unresolved.setdefault("refute:" + job["key"], why)
                 return
             try:
-                F.load_refute_result(store, j, rid)
+                F.load_refute_result(store, j, rid, job["claim_ids"])
                 refuted.append(job["key"])
             except schema.Refused as e:
                 unresolved["refute:" + job["key"]] = f"the answer was refused: {e}"
+            except Exception as e:          # one event's refute step never stops the others
+                unresolved["refute:" + job["key"]] = f"the refute step raised {type(e).__name__}: {e}"
 
         rnever, rstop = _fan_out(rjobs, caller, budget, int(plan.budget["max_concurrent_workers"]), refute_done)
         for j in rnever:

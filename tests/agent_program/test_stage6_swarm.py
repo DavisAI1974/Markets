@@ -1,15 +1,23 @@
 """Stage 6, the swarm: what a worker reads, the reducer, the refute wave, the plan and the command line.
 
-Real records only. The expected values are counted here by another route than the code's: openpyxl on the
-saved workbook ROOT_dipoles_pinned.xlsx. No model is called: the two real reads (one worker's answer and one
-refuter's answer for the real event dipole:dip-19632-1696206142, written by hand by the builder session to
-check the loaders on real output) are read from markets-data graph/reads/ (until the main session copies them
-there, from the builder's scratch folder). Writes go to pytest tmp folders, never into markets-data.
+Real records only, no made-up request string, figure, model id or answer. The expected values are counted
+here by another route than the code's: openpyxl on the saved workbook ROOT_dipoles_pinned.xlsx. No model is
+called. The AgentRun is the real run:0029, loaded into the scratch graph by tools.kgraph.ingest_agent_runs
+from the real agent-runs.jsonl. The reads are the real records, read ONLY from markets-data graph/reads/
+(SWARM_READS_DIR points a developer's run at another folder; nothing sets it for the saved checks):
+  swarm-worker-v2-dip-19632-1696206142.json   one worker reading the real brief of the real event, under
+                                              the column=value contract (read by hand, not a run of the swarm)
+  swarm-refute-v2-dip-19632-1696206142.json   one refuter reading the claims that answer sent to review
+  swarm-worker-dip-19632-1696206142.json      the first worker read, written before the contract: the real
+                                              record of the old contract, which the loader now refuses in part
+A check never alters a real answer: refusals are checked by setting real things against each other (a real
+answer against another real event's cells). Where no real record exists the check is skipped, with the reason.
+Writes go to pytest tmp folders, never into markets-data.
 """
 
-import copy
 import io
 import json
+import os
 import re
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
@@ -17,6 +25,7 @@ from pathlib import Path
 import openpyxl
 import pytest
 
+from tools.kgraph import ingest_agent_runs
 from tools.kgraph.store import GraphStore, markets_data_root
 from tools.swarm import layers as L
 from tools.swarm import model as M
@@ -26,18 +35,15 @@ from tools.swarm import refute as F
 from tools.swarm import run as RUN
 
 DAYS = ("2023-10-02", "2023-10-03", "2023-10-17", "2023-10-18")
+DAY = "2023-10-02"
 XLSX = ("tasks/family-research-20261022/research-union-current/root-redesign-20261116/"
         "ROOT_dipoles_pinned.xlsx")
 SRC = "src:markets-data:" + XLSX
 EVENT = "dipole:dip-19632-1696206142"
-WORKER_FILE = "swarm-worker-dip-19632-1696206142.json"
-REFUTE_FILE = "swarm-refute-dip-19632-1696206142.json"
-SCRATCH_READS = Path("/tmp/claude-0/-home-user/0512b4e2-4481-5302-b8a2-d9cee9a3e96b/scratchpad/reads")
-RUN_ID = "run:0029"
-RUN_NODE = {"id": RUN_ID, "type": "AgentRun", "attrs": {
-    "role": "builder", "model": "sonnet",
-    "task": "one real worker read and one real refute read of dip-19632-1696206142, to check the swarm's loaders",
-    "outcome": "returned"}}
+WORKER_FILE = "swarm-worker-v2-dip-19632-1696206142.json"
+REFUTE_FILE = "swarm-refute-v2-dip-19632-1696206142.json"
+OLD_WORKER_FILE = "swarm-worker-dip-19632-1696206142.json"
+RUN_ID = "run:0029"                 # a real line of the real agent-runs.jsonl (the builder run that wrote the loaders)
 
 
 @pytest.fixture(scope="module")
@@ -68,11 +74,13 @@ def book(root):
     return out
 
 
-def _read(root, name):
-    for p in (root / "graph" / "reads" / name, SCRATCH_READS / name):
-        if p.exists():
-            return json.loads(p.read_text(encoding="utf-8"))
-    pytest.skip(f"{name} is in neither markets-data graph/reads/ nor the builder's scratch folder")
+def _read(root, name, committed_only=False):
+    folder = None if committed_only else os.environ.get("SWARM_READS_DIR")
+    folder = Path(folder) if folder else root / "graph" / "reads"
+    p = folder / name
+    if not p.exists():
+        pytest.skip(f"{name} is not in {folder}: the real read is not there yet, and none is made up")
+    return json.loads(p.read_text(encoding="utf-8"))
 
 
 @pytest.fixture(scope="module")
@@ -85,19 +93,25 @@ def refute_read(root):
     return _read(root, REFUTE_FILE)
 
 
+@pytest.fixture(scope="module")
+def old_worker_read(root):
+    return _read(root, OLD_WORKER_FILE, committed_only=True)
+
+
 def _slim(n):
     return {"id": n["id"], "type": n["type"], "attrs": n["attrs"]}
 
 
 def scratch(real, root, tmp_path, day="2023-10-02", name="g"):
     """A scratch graph (in a pytest tmp folder) holding the real nodes of one trade day (a copy of what the
-    saved graph holds: the TradeDay, the workbook Source, every dipole and peak) and the check's AgentRun."""
+    saved graph holds: the TradeDay, the workbook Source, every dipole and peak) and the real AgentRuns."""
     sc = GraphStore(root, graph_dir=tmp_path / name)
     nodes = [_slim(real.node("tradeday:" + day)), _slim(real.node(SRC))]
     nodes += [_slim(n) for n in real.nodes("DipoleEvent") if n["attrs"]["trade_day"] == day]
     nodes += [_slim(n) for n in real.nodes("Peak") if n["attrs"]["trade_day"] == day]
     sc.write(nodes, [], written_by="code:test_stage6_swarm")
-    sc.write([RUN_NODE], [], written_by="code:test_stage6_swarm")
+    ingest_agent_runs.agent_runs(sc)               # the real agent-runs.jsonl, so run:0029 is the real node
+    assert sc.node(RUN_ID)["type"] == "AgentRun"
     return sc
 
 
@@ -251,32 +265,57 @@ def test_go_refuses_without_gregs_go_and_without_a_plan_that_passes(root, tmp_pa
         P.check(base)
 
 
-def test_what_is_sent_to_the_model(root):
-    kw = M.request_kwargs("claude-haiku-5-5", "s", "u", 100, "low", L.ANSWER_SCHEMA)
-    assert "betas" not in kw and "fallbacks" not in kw and kw["output_config"]["effort"] == "low"
-    assert kw["output_config"]["format"]["type"] == "json_schema"
-    kw = M.request_kwargs("claude-sonnet-5-5", "s", "u", 100, "medium")
-    assert kw["betas"] == [M.FALLBACK_BETA] and kw["fallbacks"] == "default"
-    for k in ("temperature", "top_p", "thinking", "tool_choice"):
-        assert k not in kw
-    assert kw["messages"] == [{"role": "user", "content": "u"}]      # no prefill
+def _real_plan(root, tmp_path):
+    out = tmp_path / "real-plan.json"
+    rc, so, se = _cli(["--data-root", str(root), "plan", "--trade-day", DAY, "--events", EVENT,
+                       "--cutoff", "0.7", "--budget-tokens", "100000", "--out", str(out)])
+    assert rc == 0, se
+    return json.loads(out.read_text(encoding="utf-8"))
+
+
+def test_what_is_sent_to_the_model(real, root, tmp_path):
+    """The real worker brief of the real event, the real model ids of model.py, the efforts and the output
+    ceilings of a real plan."""
+    plan = _real_plan(root, tmp_path)
+    ws, wu = L.build_brief_parts(L.event_layers(real, EVENT))
+    mt, ef = plan["max_output_tokens"]["worker"], plan["efforts"]["worker"]
+    kw = M.request_kwargs(M.WORKER_MODEL, ws, wu, mt, ef, L.ANSWER_SCHEMA)
+    assert kw["model"] == M.WORKER_MODEL and kw["system"] == ws and kw["max_tokens"] == mt
+    assert "betas" not in kw and "fallbacks" not in kw and kw["output_config"]["effort"] == ef
+    assert kw["output_config"]["format"] == {"type": "json_schema", "schema": L.ANSWER_SCHEMA}
+    assert kw["messages"] == [{"role": "user", "content": wu}]                    # no prefill
+    for model in M.MODELS:
+        kw = M.request_kwargs(model, ws, wu, mt, plan["efforts"]["refute"])
+        assert kw["model"] == model and kw["messages"] == [{"role": "user", "content": wu}]
+        for k in ("temperature", "top_p", "thinking", "tool_choice"):
+            assert k not in kw
+        if model != M.WORKER_MODEL:
+            assert kw["betas"] == [M.FALLBACK_BETA] and kw["fallbacks"] == "default"
+    # the model that run:0029 is recorded with is the alias "sonnet", not an exact id: refused
+    alias = real.node(RUN_ID)["attrs"]["model"]
+    assert alias not in M.MODELS
     with pytest.raises(ValueError):
-        M.request_kwargs("claude-haiku-5-5-20260101", "s", "u", 1, "low")      # exact ids, no date suffix
+        M.request_kwargs(alias, ws, wu, mt, ef)
     with pytest.raises(ValueError):
-        M.request_kwargs("claude-haiku-5-5", "s", "u", 1, "fast")
+        M.request_kwargs(M.WORKER_MODEL, ws, wu, mt, M.REFUTE_MODEL)           # a model id is not an effort
     import inspect
     assert not [n for n in dir(M) if "fake" in n.lower() or "mock" in n.lower()]      # no caller makes up an answer
     assert {"AnthropicCaller", "FileCaller"} <= {n for n, o in vars(M).items() if inspect.isclass(o)}
 
 
-def test_file_caller_hands_back_what_a_session_agent_put_there(worker_read, tmp_path):
+def test_file_caller_hands_back_what_a_session_agent_put_there(real, root, worker_read, tmp_path):
+    plan = _real_plan(root, tmp_path)
+    ws, wu = L.build_brief_parts(L.event_layers(real, EVENT))
+    mt, ef = plan["max_output_tokens"]["worker"], plan["efforts"]["worker"]
     fc = M.FileCaller(tmp_path / "f", poll_s=0.01, timeout_s=0.3)
-    cid = M.FileCaller.call_id("claude-haiku-5-5", "sys", "usr")
+    cid = M.FileCaller.call_id(M.WORKER_MODEL, ws, wu)
+    assert cid != M.FileCaller.call_id(M.REFUTE_MODEL, ws, wu)                  # the model is part of the id
     with pytest.raises(M.ModelCallFailed):                    # nothing there: it waits, then says so
-        fc.call("claude-haiku-5-5", "sys", "usr", 100, "low")
-    assert (tmp_path / "f" / f"{cid}.brief.txt").exists()
+        fc.call(M.WORKER_MODEL, ws, wu, mt, ef)
+    brief = (tmp_path / "f" / f"{cid}.brief.txt").read_text(encoding="utf-8")
+    assert ws in brief and wu in brief and M.WORKER_MODEL in brief
     (tmp_path / "f" / f"{cid}.result.json").write_text(json.dumps(worker_read), encoding="utf-8")
-    r = fc.call("claude-haiku-5-5", "sys", "usr", 100, "low")
+    r = fc.call(M.WORKER_MODEL, ws, wu, mt, ef)
     assert json.loads(r["text"]) == worker_read and r["stop_reason"] == "end_turn"
     assert set(r["usage"]) == set(M.USAGE_KEYS) and r["usage"]["input_tokens"] is None     # a session agent reports none
 
@@ -311,12 +350,17 @@ def test_every_returned_claim_is_written_or_kept_as_thrown_out(real, root, book,
         assert a["quote"] == quote
         assert a["sheet"] == node["attrs"]["sheet"] and a["line_start"] == a["line_end"] == node["attrs"]["row"]
         assert a["source"] == SRC and a["extracted_by"] == RUN_ID and a["about"] == EVENT
+        # which wording of the workbook it was read from
+        assert a["source_commit"] == sc.node(SRC)["attrs"]["commit"] and a["source_commit"]
+        assert a["cited_node_rev"] == node["rev"] == 1
         # one node only: the cited cells all belong to one sheet row
         assert len({x["n"] for x in a["cited_cells"]}) == len(a["cited_cells"])
     # inferences have no source of their own, and rest on claims of the answer
     infer = [c for c in claims if c["attrs"]["inference"]]
     assert infer and all("source" not in c["attrs"] for c in infer)
-    derived = [e for e in sc.edges("DERIVED_FROM")]
+    assert all(c["attrs"]["source_commit"] == sc.node(SRC)["attrs"]["commit"] and c["attrs"]["cited_node_rev"] is None
+               for c in infer)
+    derived = [e for e in sc.edges("DERIVED_FROM") if e["src"].startswith("claim:")]   # the runs' own links are not claims'
     assert {e["src"] for e in derived} == {c["id"] for c in infer}
     assert all(sc.node(e["dst"])["type"] == "Claim" for e in derived)
     # links: SUPPORTS from the workbook for each plain claim, MENTIONS the event, PRODUCED from the run
@@ -355,34 +399,75 @@ def test_the_cutoff_splits_sent_to_review_and_held_with_none_lost(real, root, wo
     assert len(held) == sum(1 for c in worker_read["claims"] if c["confidence"] < 0.7) >= 1
 
 
-def test_a_real_claim_set_against_the_wrong_real_cells_is_thrown_out(real, root, worker_read, tmp_path):
-    """Real words and real cells only; no figure is invented. The text of one real claim is set against the
-    cells another real claim cites, so the figure it states is not the value of a cell it cites."""
+def test_a_real_answer_set_against_another_real_events_cells_is_thrown_out_whole(real, root, worker_read, tmp_path):
+    """Two real things set against each other, neither altered: the real answer for EVENT (only its `event`
+    field names the other event) against the cells of the last dipole of the same trade day. Its claims cite
+    cells whose values are not its figures, so every claim is kept as thrown out with a reason, none written."""
+    other = L.event_ids(real, DAY)[-1]
+    assert other != EVENT
     sc = scratch(real, root, tmp_path)
-    alt = copy.deepcopy(worker_read)
-    c2 = next(c for c in alt["claims"] if "0.1461538461538462" in c["text"])
-    other = next(c for c in alt["claims"] if not c.get("inference") and c is not c2
-                 and set(c["cells"]) != set(c2["cells"]) and "0.1461538461538462" not in c["text"])
-    c2["cells"] = list(other["cells"])
-    rep = R.load_worker_result(sc, alt, RUN_ID, cutoff=0.7)
-    assert rep["thrown_out"] >= 1 and any("0.1461538461538462" in t["reason"] for t in rep["thrown"])
-    assert all(c["attrs"]["text"] != c2["text"] for c in sc.nodes("Claim"))
-    assert rep["thrown_out"] + rep["claims_written"] == len(alt["claims"])           # none lost
-    # a claim that cites cells of two nodes is thrown out as a non-inference
-    alt = copy.deepcopy(worker_read)
-    alt["claims"][0]["cells"] = [1, 26]
-    rep = R.load_worker_result(scratch(real, root, tmp_path, name="g3"), alt, RUN_ID)
-    assert rep["thrown_out"] >= 1 and "one node only" in rep["thrown"][0]["reason"]
-    # a claim resting on a claim that was thrown out is thrown out too (it rests on nothing written)
-    assert any("not an earlier claim of this answer that was written" in t["reason"] for t in rep["thrown"])
-    # a cell number one past the last cell of the event's own brief
-    alt = copy.deepcopy(worker_read)
-    alt["claims"][1]["cells"] = [len(L.cells(L.event_layers(sc, EVENT))) + 1]
-    rep = R.load_worker_result(scratch(real, root, tmp_path, name="g4"), alt, RUN_ID)
-    assert "not a cell of this event's brief" in rep["thrown"][0]["reason"]
+    ctx = R.event_context(sc, other)
+    # the per-claim check, directly: each claim of the answer, a pair or a cell that is not the other event's
+    for c in worker_read["claims"]:
+        why, prep = R.prepare_claim(ctx, c, {})
+        assert why and prep is None, c["k"]
+    rep = R.load_worker_result(sc, {**worker_read, "event": other}, RUN_ID, cutoff=0.7)
+    n = len(worker_read["claims"])
+    assert rep["returned"] == n and rep["thrown_out"] == n and rep["claims_written"] == 0
+    assert all(t["reason"] for t in rep["thrown"]) and not sc.nodes("Claim")
+    # nothing returned is lost: each thrown claim is a Task line holding the claim as it came, with its reason
+    tasks = [t for t in sc.nodes("Task") if t["attrs"]["state"] == "blocked"]
+    assert len(tasks) == n
+    assert sorted(json.dumps(t["attrs"]["returned"], sort_keys=True) for t in tasks) == \
+        sorted(json.dumps(c, sort_keys=True) for c in worker_read["claims"])
+    assert all(t["attrs"]["reason"] and t["attrs"]["about"] == other for t in tasks)
     # a run that is not an AgentRun of the graph is refused
     with pytest.raises(Exception, match="AgentRun"):
         R.load_worker_result(scratch(real, root, tmp_path, name="g6"), worker_read, "run:nothing")
+
+
+def test_the_first_real_read_of_the_old_contract_is_refused_where_it_holds_a_bare_number(real, root, old_worker_read, tmp_path):
+    """The saved worker read of the first run was written before the column=value contract. It is the real
+    record of the old contract; the loader now throws out the claims that hold a number outside a pair."""
+    sc = scratch(real, root, tmp_path)
+    returned = old_worker_read["claims"]
+    rep = R.load_worker_result(sc, old_worker_read, RUN_ID, cutoff=0.7)
+    assert rep["returned"] == len(returned) and rep["claims_written"] + rep["thrown_out"] == len(returned)
+    assert rep["thrown_out"] >= 1
+    for t in rep["thrown"]:
+        assert t["reason"]
+    outside = [t for t in rep["thrown"] if "outside a column=value pair" in t["reason"]]
+    assert outside, "no claim of the old read was refused for a number outside a pair"
+    # a claim of the old read that holds no figure at all is still taken
+    written_ks = {c["k"] for c in rep["claims"]}
+    for c in returned:
+        if c["k"] in written_ks:
+            assert not re.search(r"\d", re.sub(r"[\w:]*dipole[\w:\-]*|[a-z]+_[a-z0-9_]+", "", c["text"]))
+    tasks = [t for t in sc.nodes("Task") if t["attrs"]["state"] == "blocked"]
+    assert len(tasks) == rep["thrown_out"] and len(sc.nodes("Claim")) == rep["claims_written"]
+
+
+def test_the_refused_words_and_the_number_words_are_in_the_lists_greg_decided(root):
+    """The lists as decided (2026-11-24), checked as code constants, not on a made-up sentence."""
+    banned = ("total sum sums mean average averaged median most least largest smallest highest lowest biggest best "
+              "worst better worse good bad strong stronger strongest weak weaker weakest winner loser win loss rank "
+              "ranked top bottom mid midpoint middle net profit fee fees cost costs correct incorrect right wrong "
+              "accurate inaccurate agrees pass fail refuted confirmed proven proves").split()
+    for w in banned:
+        assert R.banned_word(w) == w and R.banned_word(w.upper()) == w.upper(), w
+    for w in "first last before after earlier later".split():       # order in time stays allowed
+        assert R.banned_word(w) is None, w
+    numwords = ("zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen "
+                "sixteen seventeen eighteen nineteen twenty thirty forty fifty sixty seventy eighty ninety hundred "
+                "thousand million half double twice thrice dozen none").split()
+    for w in numwords:
+        assert R.number_word(w) == w and R.number_word(w.title()) == w.title(), w
+    # a name that holds a word is not the word
+    assert R.number_word("our_flow_fully_one_sided_after") is None
+    assert R.banned_word("bought_minus_sold_at_high") is None
+    # "1,000" is one number with its separator, never split
+    assert R.parse_text("1,000", [])["strays"] == ["1,000"]
+    assert R.value_matches("1,000", 1000) and not R.value_matches("1,000", 1)
 
 
 def test_a_label_in_a_real_answer_is_thrown_out(worker_read):
@@ -417,7 +502,7 @@ def test_refute_loader_one_evaluation_for_each_check(real, root, worker_read, re
     ids = set(R.review_set(sc, [EVENT], 0.7))
     checks = refute_read["checks"]
     assert {c["claim"] for c in checks} == ids                      # the refuter looked at each claim sent to review
-    rep = F.load_refute_result(sc, refute_read, RUN_ID)
+    rep = F.load_refute_result(sc, refute_read, RUN_ID, R.review_set(sc, [EVENT], 0.7))
     evs = sc.nodes("Evaluation")
     assert rep["returned"] == len(checks) and rep["evaluations_written"] + rep["thrown_out"] == len(checks)
     assert rep["thrown_out"] == 0 and len(evs) == len(checks)
@@ -446,7 +531,7 @@ def test_a_contradiction_is_a_claim_of_its_own_with_a_contradicts_link(real, roo
         pytest.skip("the one real refute answer on record contradicts nothing, so the CONTRADICTS path has no real "
                     "record to be checked on; no answer is made up for it")
     sc = _loaded(real, root, worker_read, tmp_path)
-    rep = F.load_refute_result(sc, refute_read, RUN_ID)
+    rep = F.load_refute_result(sc, refute_read, RUN_ID, R.review_set(sc, [EVENT], 0.7))
     cx = sc.edges("CONTRADICTS")
     assert len(cx) == rep["counter_statements_written"] <= len(real_ones)
     for e in cx:
@@ -454,9 +539,46 @@ def test_a_contradiction_is_a_claim_of_its_own_with_a_contradicts_link(real, roo
     assert sc.check_all() == []
 
 
+def test_a_check_for_a_claim_not_in_the_brief_is_kept_as_a_task_and_the_others_go_on(real, root, worker_read, refute_read, tmp_path):
+    """Real things set against each other: the real refute answer, loaded with a brief that holds all its claims
+    but one. The check of the claim that was not in the brief is kept with its reason; the rest are written."""
+    sc = _loaded(real, root, worker_read, tmp_path)
+    ids = R.review_set(sc, [EVENT], 0.7)
+    left_out = ids[0]
+    rep = F.load_refute_result(sc, refute_read, RUN_ID, [i for i in ids if i != left_out])
+    assert rep["thrown_out"] == 1 and rep["evaluations_written"] == len(refute_read["checks"]) - 1
+    assert "not in the brief" in rep["thrown"][0]
+    assert not [e for e in sc.edges("EVALUATES") if e["dst"] == left_out]
+    task = [t for t in sc.nodes("Task") if t["attrs"]["state"] == "blocked" and t["attrs"]["returned"]["claim"] == left_out]
+    assert len(task) == 1 and "not in the brief" in task[0]["attrs"]["reason"]
+    assert sc.node(left_out)["type"] == "Claim"                       # the claim stays
+
+
+def test_one_check_that_raises_does_not_stop_the_others(real, root, worker_read, refute_read, tmp_path, monkeypatch):
+    """The real refute answer, loaded while the event's cells fail to load for the first check only."""
+    sc = _loaded(real, root, worker_read, tmp_path)
+    ids = R.review_set(sc, [EVENT], 0.7)
+    orig, calls = R.event_context, []
+
+    def flaky(store, event_id):
+        calls.append(event_id)
+        if len(calls) == 1:
+            raise RuntimeError("the cells of this event could not be read")
+        return orig(store, event_id)
+    monkeypatch.setattr(R, "event_context", flaky)
+    rep = F.load_refute_result(sc, refute_read, RUN_ID, ids)
+    assert rep["thrown_out"] == 1 and rep["evaluations_written"] == len(refute_read["checks"]) - 1
+    assert "RuntimeError" in rep["thrown"][0] and "could not be read" in rep["thrown"][0]
+
+
+def test_a_check_for_a_document_claim_is_kept_as_a_task():
+    pytest.skip("no real refute answer names a document claim (a claim without `about`), so the refusal has no real "
+                "record to be checked on; no check is made up for it")
+
+
 def test_synthesis_names_only_that_events_claims(real, root, worker_read, refute_read, tmp_path):
     sc = _loaded(real, root, worker_read, tmp_path)
-    F.load_refute_result(sc, refute_read, RUN_ID)
+    F.load_refute_result(sc, refute_read, RUN_ID, R.review_set(sc, [EVENT], 0.7))
     other = "dipole:dip-19632-1696206187"
     text = R.synthesis(sc, [EVENT, other])
     blocks = text.split("== ")
@@ -483,7 +605,7 @@ def test_synthesis_names_only_that_events_claims(real, root, worker_read, refute
 
 def test_no_verdict_word_and_no_pooled_figure_on_any_node_or_link(real, root, worker_read, refute_read, tmp_path):
     sc = _loaded(real, root, worker_read, tmp_path)
-    F.load_refute_result(sc, refute_read, RUN_ID)
+    F.load_refute_result(sc, refute_read, RUN_ID, R.review_set(sc, [EVENT], 0.7))
     assert sc.check_all() == []
     verdict = re.compile(r"\b(pass|passed|fail|failed|refuted|confirmed|verdict|winner|loser|strong|weak|best|worst)\b", re.I)
     pooled = re.compile(r"\b(average|averaged|mean|median|total|pooled|rank|ranked|rate)\b", re.I)
@@ -520,7 +642,7 @@ def test_a_run_over_files_holds_its_budget_and_records_each_call(real, root, wor
     res = RUN.run_plan(plan, M.FileCaller(folder, poll_s=0.01, timeout_s=2), sc)
     assert res["completed_events"] == [EVENT] and res["unresolved"] == {} and res["stopped_because"] is None
     assert res["refute_wave_events"] == [EVENT] and len(sc.nodes("Evaluation")) == len(refute_read["checks"])
-    runs = [n for n in sc.nodes("AgentRun") if n["id"] != RUN_ID]
+    runs = [n for n in sc.nodes("AgentRun") if n["attrs"].get("plan")]      # the real runs of the record carry no plan
     assert {r["attrs"]["role"] for r in runs} == {"swarm worker", "swarm refuter"} and len(runs) == 2
     for r in runs:
         a = r["attrs"]
@@ -548,3 +670,42 @@ def test_a_run_over_files_holds_its_budget_and_records_each_call(real, root, wor
     plan3.greg_go = ""
     with pytest.raises(P.PlanRefused):
         RUN.run_plan(plan3, M.FileCaller(folder), sc3)
+
+
+def test_one_events_reduce_or_refute_failure_is_recorded_for_that_event_and_the_run_goes_on(
+        real, root, worker_read, refute_read, tmp_path, monkeypatch):
+    """The real answers in files; the reducer or the refute loader made to raise (the code, not the answers,
+    is changed). The event is recorded as unresolved with the reason, and the run returns its result."""
+    sc = scratch(real, root, tmp_path, name="run")
+    probe = _loaded(real, root, worker_read, tmp_path, name="probe")
+    ids = R.review_set(probe, [EVENT], 0.7)
+    ws, wu = L.build_brief_parts(L.event_layers(sc, EVENT))
+    rs, ru = F.build_refute_brief_parts(probe, ids)
+    folder = tmp_path / "files"
+    folder.mkdir()
+    (folder / (M.FileCaller.call_id(M.WORKER_MODEL, ws, wu) + ".result.json")).write_text(json.dumps(worker_read))
+    (folder / (M.FileCaller.call_id(M.REFUTE_MODEL, rs, ru) + ".result.json")).write_text(json.dumps(refute_read))
+    budget = {"max_model_calls": 2, "max_sub_agents": 2, "max_concurrent_workers": 1, "max_tool_calls": 0,
+              "max_tokens": 200000, "max_wall_clock_s": 300, "max_retries": 0, "max_graph_writes": 1000}
+    plan = P.make_plan(sc, name="check-fail", workload="one real event, from files", events=[EVENT], cutoff=0.7, budget=budget)
+    plan.greg_go = "the check's own words, not Greg's: nothing is dispatched"
+    # the refute step raises
+    orig = F.load_refute_result
+
+    def boom(*a, **k):
+        raise RuntimeError("the refute step fell over")
+    monkeypatch.setattr(F, "load_refute_result", boom)
+    res = RUN.run_plan(plan, M.FileCaller(folder, poll_s=0.01, timeout_s=2), sc)
+    assert res["completed_events"] == [EVENT] and res["refute_wave_events"] == []
+    assert "RuntimeError" in res["unresolved"]["refute:" + EVENT] and "fell over" in res["unresolved"]["refute:" + EVENT]
+    monkeypatch.setattr(F, "load_refute_result", orig)
+    # the reduce step raises
+    sc2 = scratch(real, root, tmp_path, name="run2")
+
+    def boom2(*a, **k):
+        raise RuntimeError("the reduce step fell over")
+    monkeypatch.setattr(R, "load_worker_result", boom2)
+    plan2 = P.make_plan(sc2, name="check-fail-2", workload="w", events=[EVENT], cutoff=0.7, budget=budget)
+    plan2.greg_go = plan.greg_go
+    res2 = RUN.run_plan(plan2, M.FileCaller(folder, poll_s=0.01, timeout_s=2), sc2)
+    assert res2["completed_events"] == [] and "RuntimeError" in res2["unresolved"][EVENT]

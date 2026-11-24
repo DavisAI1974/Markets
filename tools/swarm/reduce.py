@@ -1,5 +1,15 @@
 """The reducer (defined before any fan-out): what a worker returned becomes claims only where the
-cells it cites are the event's own cells and every number it writes is a number of those cells.
+cells it cites are the event's own cells and every figure it writes is tied to its column.
+
+The contract of a worker's text (Greg's decision, 2026-11-24; reviewer findings F3.1, F3.2, F3.3, F3.4):
+every figure is written as a pair `column=value`, copied from a cell. A claim that is not an inference is
+taken only if each pair equals a cell it cites (the same column of the same node, the same value, numbers
+compared as numbers) and its text holds no number outside such pairs. An inference is taken only if each
+pair is a pair of a claim it rests on and it holds no number outside pairs. A number written as a word
+(one, twice, half, dozen ...) is refused; "1,000" is read as one number with its separators. A list of
+words that rank, add up, grade or label is refused, as whole words in any letter case, in a worker's text
+and in a refuter's "why". A claim stores which wording of the workbook it was read from (`source_commit`,
+`cited_node_rev`).
 
 A claim that passes becomes a Claim node tied to the workbook by a SUPPORTS link (or, for an inference,
 to the claims it rests on by DERIVED_FROM links). A claim that fails is NOT written as a claim: it is
@@ -14,6 +24,7 @@ only decides which claims are SENT TO REVIEW; a claim under it is written and ke
 
 from __future__ import annotations
 
+import json
 import re
 from decimal import Decimal, InvalidOperation
 
@@ -29,12 +40,35 @@ SENT = "sent to review"
 HELD = "held under the cutoff {cutoff}"
 
 # labels and statistics a worker may not write (the brief says so; the loader enforces it), and the
-# status words the graph never carries.
-BANNED = ("winner", "loser", "strong", "weak", "strongest", "weakest", "best", "worst", "average", "averaged",
-          "median", "rank", "ranked", "pass", "passed", "fail", "failed", "refuted", "confirmed", "mid price")
-_banned_re = re.compile(r"\b(" + "|".join(re.escape(b) for b in BANNED) + r")\b", re.I)
+# status words the graph never carries. first / last / before / after / earlier / later stay allowed:
+# they are order in time.
+BANNED = ("total", "sum", "sums", "mean", "average", "averaged", "median", "most", "least", "largest", "smallest",
+          "highest", "lowest", "biggest", "best", "worst", "better", "worse", "good", "bad", "strong", "stronger",
+          "strongest", "weak", "weaker", "weakest", "winner", "loser", "win", "loss", "rank", "ranked", "top",
+          "bottom", "mid", "midpoint", "middle", "net", "profit", "fee", "fees", "cost", "costs", "correct",
+          "incorrect", "right", "wrong", "accurate", "inaccurate", "agrees", "pass", "passed", "fail", "failed",
+          "refuted", "confirmed", "proven", "proves", "mid price")
+_banned_re = re.compile(r"\b(" + "|".join(re.escape(b) for b in sorted(BANNED, key=len, reverse=True)) + r")\b", re.I)
 
-_NUM = re.compile(r"(?<![\w.])-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?")
+# a number written as a word
+NUMBER_WORDS = ("zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven",
+                "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen",
+                "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety", "hundred",
+                "hundreds", "thousand", "thousands", "million", "millions", "billion", "half", "halves",
+                "double", "doubled", "twice", "thrice", "dozen", "dozens", "none")
+_numword_re = re.compile(r"\b(" + "|".join(NUMBER_WORDS) + r")\b", re.I)
+
+# a number: digits with thousands separators ("1,000" is one number), or a plain decimal / exponent number
+_NUM = re.compile(r"(?<![\w.])-?(?:\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)")
+
+# `column=value`: the value is a JSON string, a date (with its time), a number, or a bare word (null, true,
+# false, sell ...)
+_VALUE = (r'"(?:[^"\\]|\\.)*"'
+          r'|\d{4}-\d{2}-\d{2}(?: \d{2}:\d{2}:\d{2}(?:\.\d+)?)?'
+          r'|-?\d{1,3}(?:,\d{3})+(?:\.\d+)?'
+          r'|-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?'
+          r'|[A-Za-z_][\w:\-]*')
+_PAIR = re.compile(r"(?<![\w])([A-Za-z_][A-Za-z0-9_]*)=(" + _VALUE + ")")
 
 
 def banned_word(text: str) -> str | None:
@@ -42,18 +76,68 @@ def banned_word(text: str) -> str | None:
     return m.group(1) if m else None
 
 
+def number_word(text: str) -> str | None:
+    m = _numword_re.search(text)
+    return m.group(1) if m else None
+
+
+def parse_text(text: str, names=()) -> dict:
+    """What a text writes: its `column=value` pairs [(column, raw value)], and what is left over once the
+    pairs and the names of columns and nodes are taken out: numbers written outside a pair, and number
+    words. Column names and node ids carry digits that are part of a name, not a figure."""
+    pairs = [(m.group(1), m.group(2)) for m in _PAIR.finditer(text)]
+    rest = _PAIR.sub(" ", text)
+    for name in sorted({n for n in names if n}, key=len, reverse=True):
+        rest = rest.replace(name, " ")
+    return {"pairs": pairs, "strays": _NUM.findall(rest), "words": [m.group(1) for m in _numword_re.finditer(rest)]}
+
+
 def numbers(text: str, names=()) -> list[Decimal]:
-    """The numbers written in a text. Column names and node ids named in the text are taken out first:
-    their digits are part of a name, not a figure."""
+    """The numbers written in a text (pairs included), names taken out first."""
     for name in sorted({n for n in names if n}, key=len, reverse=True):
         text = text.replace(name, " ")
     out = []
     for tok in _NUM.findall(text):
         try:
-            out.append(Decimal(tok))
+            out.append(Decimal(tok.replace(",", "")))
         except InvalidOperation:       # cannot happen for the pattern; kept so nothing is silently skipped
             raise ValueError(f"not a number: {tok!r}")
     return out
+
+
+def value_matches(raw: str, value) -> bool:
+    """Is the written value `raw` the stored `value`? Numbers are compared as numbers, a string as the
+    string (bare, or in JSON quotes), null / true / false as JSON writes them."""
+    if value is None:
+        return raw == "null"
+    if isinstance(value, bool):
+        return raw == ("true" if value else "false")
+    if isinstance(value, (int, float)):
+        try:
+            return Decimal(raw.replace(",", "")) == Decimal(json.dumps(value))
+        except InvalidOperation:
+            return False
+    if isinstance(value, str):
+        if raw.startswith('"'):
+            try:
+                return json.loads(raw) == value
+            except json.JSONDecodeError:
+                return False
+        return raw == value
+    return False
+
+
+def _check_pairs(pairs, cells_allowed: list[dict], who: str) -> str | None:
+    """A reason when a pair is not a cell of `cells_allowed`, else None."""
+    for col, raw in pairs:
+        same = [c for c in cells_allowed if c["column"] == col]
+        if any(value_matches(raw, c["value"]) for c in same):
+            continue
+        if same:
+            return (f"the pair {col}={raw} is not what {who} hold: the cell stores " +
+                    " or ".join(f"{col}={L.render(c['value'])}" for c in same))
+        return f"the pair {col}={raw} names a column that {who} do not hold"
+    return None
 
 
 def cell_numbers(cell: dict) -> set[Decimal]:
@@ -96,12 +180,18 @@ def prepare_claim(ctx: dict, c: dict, written: dict, *, need_confidence: bool = 
     w = banned_word(text)
     if w:
         return f"the text carries the word {w!r}: a worker states what the cells say, with no label or statistic", None
+    parsed = parse_text(text, ctx["names"])
+    if parsed["words"]:
+        return (f"the text writes a number as the word {parsed['words'][0]!r}: every figure is written as a "
+                "column=value pair copied from a cell"), None
+    if parsed["strays"]:
+        return (f"the number {parsed['strays'][0]} is written outside a column=value pair: every figure is "
+                "written as a pair copied from a cell"), None
     cites, rests = c.get("cells") or [], c.get("rests_on") or []
     if not isinstance(cites, list) or not isinstance(rests, list):
         return "cells and rests_on must be lists", None
     if k in written:
         return f"k {k} was already used in this answer", None
-    name_scan = ctx["names"]
     if inference:
         if cites:
             return "an inference cites no cells; it lists the earlier claims it rests on", None
@@ -113,10 +203,10 @@ def prepare_claim(ctx: dict, c: dict, written: dict, *, need_confidence: bool = 
                 return f"rests_on {r!r} is not an earlier claim of this answer that was written", None
             have |= written[r]["cells"]
             ids.append(written[r]["id"])
-        allowed = set().union(*(cell_numbers(ctx["by_n"][n]) for n in have))
-        for num in numbers(text, name_scan):
-            if num not in allowed:
-                return f"the number {num} in the text is not a number of the cells the claims it rests on cite", None
+        why = _check_pairs(parsed["pairs"], [ctx["by_n"][n] for n in sorted(have)],
+                           "the cells of the claims it rests on")
+        if why:
+            return why, None
         return None, {"k": k, "inference": True, "cells": sorted(have), "rests_ids": ids, "node": None}
     if rests:
         return "a claim that is not an inference rests on no claim; it cites cells", None
@@ -131,10 +221,9 @@ def prepare_claim(ctx: dict, c: dict, written: dict, *, need_confidence: bool = 
     if len(nodes) != 1:
         return "a claim that is not an inference cites cells of one node only; this one cites " + ", ".join(sorted(nodes)), None
     got = sorted({g["n"]: g for g in got}.values(), key=lambda g: g["n"])
-    allowed = set().union(*(cell_numbers(g) for g in got))
-    for num in numbers(text, name_scan):
-        if num not in allowed:
-            return f"the number {num} in the text is not the value of a cell it cites", None
+    why = _check_pairs(parsed["pairs"], got, "the cells it cites")
+    if why:
+        return why, None
     return None, {"k": k, "inference": False, "cells": [g["n"] for g in got], "rests_ids": [],
                   "node": got[0]["node"], "got": got}
 
@@ -153,6 +242,11 @@ def claim_nodes(store: GraphStore, ctx: dict, prep: dict, c: dict, run: str, cut
              "confidence": conf, "claim_k": prep["k"], "about": event_id,
              "trade_day": ev["attrs"]["trade_day"], "cells": prep["cells"], "extracted_by": run,
              "proposer": run}
+    # which wording of the workbook it was read from: the Source node's commit, and the revision of the
+    # node whose cells it cites (an inference cites no cells: it has none)
+    src_node = store.node(sid)
+    attrs["source_commit"] = src_node["attrs"].get("commit") if src_node else None
+    attrs["cited_node_rev"] = None
     if cutoff is None:
         attrs["review"] = SENT
     else:
@@ -170,6 +264,7 @@ def claim_nodes(store: GraphStore, ctx: dict, prep: dict, c: dict, run: str, cut
         # the node and the event are in the id, because "native_polarity=1" stands on many rows and a
         # peak sits in the span of several events
         cid = claim_id(sid, f"{event_id}|{prep['node']}|{quote}{salt}", c["text"])
+        attrs["cited_node_rev"] = node["rev"]
         attrs.update(source=node["attrs"]["source"], sheet=node["attrs"]["sheet"],
                      line_start=node["attrs"]["row"], line_end=node["attrs"]["row"], quote=quote,
                      cited_node=prep["node"], cited_cells=[

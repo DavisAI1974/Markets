@@ -39,20 +39,36 @@ Each claim has exactly these fields:
 - "rests_on": the k of earlier claims an inference stands on (a list; empty for a claim that is not one).
 - "confidence": a number from 0 to 1, how sure you are that the sentence is right.
 
+HOW A FIGURE IS WRITTEN. Every figure in a claim's "text" is written as a pair `column=value`: the exact stored
+column name, an equals sign, and the value copied exactly as the cell line shows it after its "=" (a number as it is,
+a text value with its double quotes, null, true, false). The text holds NO number outside such pairs, and no number
+written as a word (not "one", "zero", "twice", "half", "dozen"); a date or a time is a value of a cell, so it is
+written as the pair too, in full, with its quotes. Example, read from the cells of dipole:dip-19632-1696206142:
+  "dipole:dip-19632-1696206142 stores native_baseline=0.1461538461538462 and native_prominence=0.8538461538461538."
+  "dipole:dip-19632-1696206142 stores born_eastern="2023-10-01 20:22:22" and native_polarity=1."
+  "peak:2023-10-02:15006 stores peak_side="sell" and story_ended_by="came back"."
+  "dipole:dip-19632-1696206142 stores first_position_in_birth_second=null."
+Write native_baseline=0.1461538461538462, never 0.146 and never "about a seventh". (These lines are examples of the
+form, from one real event; write only what the cells of YOUR event store.)
+
 Rules (a claim that breaks one is thrown out by code and kept as a note; it is not believed):
-1. A claim that is NOT an inference cites cells of ONE node only (one row of one sheet). Every number in its
-   text is copied exactly as the cell stores it (a cell value of 0.1461538461538462 is written
-   0.1461538461538462, not 0.146) and is the value of one of the cells it cites. Write a column by its exact
-   stored name. Never write the cell numbers n in a text.
+1. A claim that is NOT an inference cites cells of ONE node only (one row of one sheet). Every `column=value`
+   pair in its text is one of the cells it cites: the same column, the same value. Never write the cell
+   numbers n in a text.
 2. A sentence that combines several nodes (the event and a neighbour, the event and a peak), or reads a
    meaning into the cells, is an INFERENCE. It cites no cells; it lists in "rests_on" the earlier claims of
-   this answer it stands on, and every number in its text is a number of the cells those claims cite.
-3. No averages, sums, counts, ranks or differences made by you, and no labels such as winner, loser, strong,
-   weak, best, worst. A figure the cells do not store is not written.
+   this answer it stands on, and every `column=value` pair in its text is a pair of one of those claims
+   (copy the pair from the claim; write the pair again for each node you name, in the order of the claims).
+3. No averages, sums, counts, ranks or differences made by you, and none of these words (in any letter case):
+   total, sum, mean, average, median, most, least, largest, smallest, highest, lowest, biggest, best, worst,
+   better, worse, good, bad, strong, stronger, strongest, weak, weaker, weakest, winner, loser, win, loss,
+   rank, ranked, top, bottom, mid, midpoint, middle, net, profit, fee, cost, correct, incorrect, right,
+   wrong, accurate, inaccurate, agrees, pass, fail, refuted, confirmed, proven, proves. A figure the cells
+   do not store is not written. (first, last, before, after, earlier, later are fine: they are order in time.)
 4. No trade, fee, price target or execution idea. The numbers are gross stored figures.
 5. Say it when you are less sure: give a confidence under 0.7 for a sentence you are not sure of.
 6. Write between 6 and 12 claims, one fact each. A cell with the value null is a stored null; you may say
-   so (the sentence names the column and says no value is stored).
+   so by writing the pair (`first_position_in_birth_second=null`).
 """
 
 ANSWER_SCHEMA = {
