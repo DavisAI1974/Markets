@@ -18,7 +18,7 @@ the stopped run's notes. Paths are on that branch; line numbers are those of tha
 | conversation id | NOT recorded. `request.json` `attempt` = `<request_id>:<name>` (S:2482, S:2494): the request_id part is used | `binding.attempt_id` = the controller's `request.request_id` (C:124) |
 | who started it (`started_by`) | NOT RECORDED | NOT RECORDED |
 | purpose / role | NOT recorded as a purpose. `request.json` `name` (S:2494) and `outcome.json` `name` (S:2556): the job name | NOT RECORDED (no name; the folder is the critic spool, S:5258 `critic-spool/*/outcome.json`) |
-| input (prompt) tokens | `result.json` `usage.prompt_tokens` (raw service result written at S:2530). `outcome.json` `usage` exists ONLY when the completion was unparseable (S:2573) and `output-incomplete.json` `usage` when output ran out (S:2567). So a normal call's tokens are in `result.json`, not `outcome.json`. Also `request.json` `estimated_input_tokens` (S:2495) and `outcome.json` `estimated_input_tokens` (S:2533) = an estimate, not a count | `outcome.json` `body_base64` decoded -> `usage.prompt_tokens` (written C:237-238). `dispatch.json` `admission.input_tokens` is the admission estimate (C:136, C:138) |
+| input (prompt) tokens | `result.json` `usage.prompt_tokens` (raw service result written at S:2530). `outcome.json` `usage` is set at S:2572-2575 (`_parse`, S:2555), after the try/except, for EVERY HTTP-200 result (normal, incomplete and unparseable alike); only the non-200 branch (S:2557-2560) returns without it. `output-incomplete.json` `usage` is also written when output ran out (S:2567). The reader still takes `result.json` first (the raw service result) and `outcome.json` second. Also `request.json` `estimated_input_tokens` (S:2495) and `outcome.json` `estimated_input_tokens` (S:2533) = an estimate, not a count | `outcome.json` `body_base64` decoded -> `usage.prompt_tokens` (written C:237-238). `dispatch.json` `admission.input_tokens` is the admission estimate (C:136, C:138) |
 | output (completion) tokens | `result.json` `usage.completion_tokens` (same as above) | decoded `body_base64` -> `usage.completion_tokens` |
 | wall clock | `outcome.json` `seconds` = `time.time() - started` (S:2532). Starts at THIS invocation of `boss` (S:2501), so a resumed job restarts it; a failed job (S:2537) has none | NOT RECORDED |
 | start time | NOT RECORDED. Nearest: `observations.jsonl` `at` (S:2553, written by `_observe`, first line at `accepted` S:2509: after the start) | NOT RECORDED. Nearest: decoded body `created` (provider's time the response was made: the END of the call). The `observation-*.json` files (C:146) hold `binding` and `phase` only, no time |
@@ -36,7 +36,9 @@ NEITHER. Wall clock is recorded by the box writer only (and restarts on resume).
 - `started_by`, `started_at` are `not_recorded` on every call; they are never filled.
 - A call is assigned to a trade day by the nearest recorded time marker, and the line says which one:
   `first_observation_at` (box) or the provider's `created` (spool). A box marker is later than the start, a spool
-  marker is the end of the call, so a call near 18:00 or 17:00 ET can land on the wrong side. This is said, not fixed.
+  marker is the end of the call, so a call near 18:00 or 17:00 ET can land on the wrong side. This is said, not fixed. The marker places the call; it is not the call's start.
+- A trade day is 18:00 ET the evening before to 17:00 ET on the date, Monday to Friday. A marker from Friday 17:00 ET to Sunday 18:00 ET is listed under `outside_any_trade_day`; 17:00 to 18:00 ET Monday to Thursday is `halt`.
+- A folder whose request.json or dispatch.json cannot be read is listed under `unreadable` with its path and reason; a folder that reads but is not a Granite record is under `not_a_granite_record`.
 - A call without a marker is listed apart (`no_start_time`), never dropped.
 
 ## Purposes (call names) Granite's code gives

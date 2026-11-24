@@ -15,9 +15,24 @@ Neither writer saves a START time, an initiator or a purpose. So `started_at` an
            observations.jsonl (`first_observation_at`, taken after the job was accepted: later than the start)
   spool:   the provider's `created` (when the response was made: the END of the call; there is no name)
 A call belongs to the trade day its recorded time marker falls in, and the line says which marker did that
-(`trade_day_assigned_by`). With strict_start=True no call is assigned (none has a start time): all are
-listed apart. A call with no time marker at all is listed apart (`no_start_time`), never dropped. A marker
-inside the daily halt (17:00 to 18:00 ET) belongs to neither trade day and is listed apart (`halt`).
+(`trade_day_assigned_by`). THE MARKER PLACES THE CALL AND IT IS NOT THE CALL'S START: a box marker is the
+first line of observations.jsonl (after the job was accepted, so later than the start), a spool marker is the
+provider's `created` (the END of the call). A call near 17:00 or 18:00 ET can therefore land on the other side
+of a boundary; that is said, not fixed.
+With strict_start=True no call is assigned (none has a start time): all are listed apart. A call with no time
+marker at all is listed apart (`no_start_time`), never dropped.
+
+A trade day is 18:00 ET the evening before to 17:00 ET on the named date, Monday to Friday (the real boundaries of
+the four trade days of the plan are in the graph: GraphStore(...).nodes("TradeDay")). So:
+  Sunday 18:00 ET to Monday 17:00 ET   trade day Monday (and so on to Friday 17:00 ET)
+  17:00 to 18:00 ET, Monday to Thursday  the daily halt: neither trade day, listed apart (`halt`)
+  Friday 17:00 ET to Sunday 18:00 ET   no trade day: listed apart (`outside_any_trade_day`), never under a Saturday
+
+NEVER DROPPED holds for every folder under the receipts folder: a folder that holds a request.json or a
+dispatch.json is read, and if either cannot be read it is listed under `unreadable` with its path and the reason;
+one that reads but is not a Granite record, and a folder with neither file and no sub-folder, is listed under
+`not_a_granite_record` with its path and reason. A folder with sub-folders and no file of its own is a container.
+Every line carries `job_path`.
 
 `seconds` of a box job restarts when a job is resumed; a failed job has neither `seconds` nor `usage`.
 session-receipts.json is NOT a baseline source: it leaves out the write-* calls by construction.
@@ -44,10 +59,14 @@ class CallList(list):
     no_start_time: list
     halt: list
     other_days: list
+    outside_any_trade_day: list
+    unreadable: list
+    not_a_granite_record: list
 
     def __init__(self, *a):
         super().__init__(*a)
         self.reason, self.no_start_time, self.halt, self.other_days = None, [], [], []
+        self.outside_any_trade_day, self.unreadable, self.not_a_granite_record = [], [], []
 
 
 def _load(path: Path):
@@ -55,6 +74,14 @@ def _load(path: Path):
         return json.loads(path.read_bytes())
     except Exception:
         return None
+
+
+def _load_why(path: Path):
+    """(parsed, None) or (None, the reason it could not be read)."""
+    try:
+        return json.loads(path.read_bytes()), None
+    except Exception as e:
+        return None, f"{path.name}: {type(e).__name__}: {e}"
 
 
 def _line_of(path: Path, needle: str) -> int:
@@ -68,12 +95,20 @@ def _line_of(path: Path, needle: str) -> int:
 
 
 def trade_day_of(epoch: float):
-    """('day', 'YYYY-MM-DD') | ('halt', None). 18:00 ET the evening before to 17:00 ET on the date."""
+    """('day', 'YYYY-MM-DD') | ('halt', None) | ('outside', None).
+
+    18:00 ET the evening before to 17:00 ET on the date, Monday to Friday. 17:00 to 18:00 ET Monday to Thursday is
+    the halt. From Friday 17:00 ET to Sunday 18:00 ET there is no trade day ('outside'); Sunday 18:00 ET on is
+    trade day Monday. `epoch` is the marker (it places a call; it is not the call's start).
+    """
     t = dt.datetime.fromtimestamp(epoch, ET)
+    wd = t.weekday()                       # Monday 0 .. Sunday 6
     if t.hour >= 18:
-        return "day", (t.date() + dt.timedelta(days=1)).isoformat()
+        return ("outside", None) if wd in (4, 5) else ("day", (t.date() + dt.timedelta(days=1)).isoformat())
     if t.hour == 17:
-        return "halt", None
+        return ("halt", None) if wd < 4 else ("outside", None)
+    if wd in (5, 6):
+        return "outside", None
     return "day", t.date().isoformat()
 
 
@@ -87,8 +122,9 @@ def _spool_result(out: dict):
 def _call_box(d: Path, req: dict, out: dict | None, observations: Path) -> dict:
     out = out or {}
     # The tokens: the raw service result is saved as result.json (frankie_box_boss_session.py:2530) and holds the
-    # vLLM `usage`. outcome.json carries `usage` only when the completion could not be parsed (:2573). So read
-    # result.json first and outcome.json second.
+    # vLLM `usage`. outcome.json carries `usage` for every HTTP-200 result (:2572-2575, set after the try/except,
+    # so normal, incomplete and unparseable alike); only the non-200 branch (:2557-2560) returns without it.
+    # Read result.json first and outcome.json second.
     raw = _load(d / "result.json") if (d / "result.json").exists() else None
     raw = raw if isinstance(raw, dict) else {}
     usage = raw.get("usage") or out.get("usage") or {}
@@ -102,7 +138,7 @@ def _call_box(d: Path, req: dict, out: dict | None, observations: Path) -> dict:
             except Exception:
                 continue
     call = {
-        "writer": "box_job", "call_id": req.get("job_id") or d.name, "job_directory": d.name,
+        "writer": "box_job", "call_id": req.get("job_id") or d.name, "job_directory": d.name, "job_path": str(d),
         "conversation_id": (req.get("attempt") or "").split(":", 1)[0] or None,
         "conversation_id_basis": "request_id part of request.json attempt (no conversation id is recorded)",
         "started_by": None, "purpose": req.get("name"),
@@ -132,6 +168,7 @@ def _call_spool(d: Path, dispatch: dict, req: dict, out: dict | None) -> dict:
     created = result.get("created")
     return {
         "writer": "critic_spool", "call_id": binding.get("job_id") or d.name, "job_directory": d.name,
+        "job_path": str(d),
         "conversation_id": binding.get("attempt_id"), "conversation_id_basis": "attempt_id in dispatch.json binding",
         "started_by": None, "purpose": None,
         "purpose_basis": "the spool writer records no job name; the folder is the shadow critic's spool",
@@ -158,38 +195,66 @@ def _finish(call: dict) -> dict:
     return call
 
 
-def scan(receipts_dir) -> tuple[list[dict], str | None]:
-    """Every Granite call under the folder, no day filter. Returns (calls, reason when none)."""
+def scan_all(receipts_dir) -> tuple[list[dict], str | None, list[dict], list[dict]]:
+    """Every Granite call under the folder, no day filter, and every folder that could not be made a call.
+
+    Returns (calls, reason when none, unreadable, not_a_granite_record). Every folder that holds a request.json or a
+    dispatch.json, and every folder with no file of its own and no sub-folder, is in exactly one of the three lists.
+    """
     root = Path(receipts_dir)
     if not root.is_dir():
-        return [], f"receipts folder does not exist: {root}"
-    calls = []
+        return [], f"receipts folder does not exist: {root}", [], []
+    calls, unreadable, not_rec = [], [], []
     for cur, dirs, files in os.walk(root):
         dirs.sort()
         d = Path(cur)
-        if "request.json" not in files:
+        if "request.json" not in files and "dispatch.json" not in files:
+            if not dirs and d != root:
+                not_rec.append({"path": str(d), "reason": "no request.json and no dispatch.json, and no sub-folder"})
             continue
-        req = _load(d / "request.json")
-        if not isinstance(req, dict):
-            continue
+        req = disp = None
+        bad = []
+        if "request.json" in files:
+            req, why = _load_why(d / "request.json")
+            if why:
+                bad.append(why)
+        else:
+            bad.append("request.json: not present")
         out = _load(d / "outcome.json") if "outcome.json" in files else None
-        if req.get("schema") == BOX_REQ:
+        if "dispatch.json" in files:
+            disp, why = _load_why(d / "dispatch.json")
+            if why:
+                bad.append(why)
+        if req is not None and not isinstance(req, dict):
+            bad.append("request.json: not a JSON object")
+        if disp is not None and not isinstance(disp, dict):
+            bad.append("dispatch.json: not a JSON object")
+        if isinstance(req, dict) and req.get("schema") == BOX_REQ and not bad:
             calls.append(_finish(_call_box(d, req, out, d / "observations.jsonl")))
-        elif "dispatch.json" in files:
-            dispatch = _load(d / "dispatch.json") or {}
-            if (dispatch.get("binding") or {}).get("schema") == SPOOL:
-                calls.append(_finish(_call_spool(d, dispatch, req, out)))
+        elif bad:
+            unreadable.append({"path": str(d), "reason": "; ".join(bad)})
+        elif isinstance(disp, dict) and (disp.get("binding") or {}).get("schema") == SPOOL:
+            calls.append(_finish(_call_spool(d, disp, req, out)))
+        else:
+            not_rec.append({"path": str(d), "reason": "files read, but neither the box job schema nor the critic spool binding schema"})
     if not calls:
-        return [], f"no Granite job record (box job or critic spool) found under {root}"
+        return [], f"no Granite job record (box job or critic spool) found under {root}", unreadable, not_rec
     calls.sort(key=lambda c: (c["time_marker"] is None, c["time_marker"] or 0, c["call_id"]))
-    return calls, None
+    return calls, None, unreadable, not_rec
+
+
+def scan(receipts_dir) -> tuple[list[dict], str | None]:
+    """Every Granite call under the folder, no day filter. Returns (calls, reason when none)."""
+    c, r, _, _ = scan_all(receipts_dir)
+    return c, r
 
 
 def read_calls(receipts_dir, trade_day: str, *, strict_start: bool = False) -> CallList:
     """The Granite calls of one trade day (`YYYY-MM-DD`), in the receipts' own order (time marker, then id)."""
-    calls, reason = scan(receipts_dir)
+    calls, reason, unreadable, not_rec = scan_all(receipts_dir)
     out = CallList()
     out.reason = reason
+    out.unreadable, out.not_a_granite_record = unreadable, not_rec
     for c in calls:
         c = dict(c)
         if c["time_marker"] is None:
@@ -207,6 +272,10 @@ def read_calls(receipts_dir, trade_day: str, *, strict_start: bool = False) -> C
         if kind == "halt":
             c["set_apart_because"] = "time marker inside the 17:00 to 18:00 ET halt: belongs to neither trade day"
             out.halt.append(c)
+        elif kind == "outside":
+            c["set_apart_because"] = ("time marker from Friday 17:00 ET to Sunday 18:00 ET: "
+                                      "belongs to no trade day")
+            out.outside_any_trade_day.append(c)
         elif day == trade_day:
             c["trade_day"] = day
             out.append(c)
@@ -217,7 +286,10 @@ def read_calls(receipts_dir, trade_day: str, *, strict_start: bool = False) -> C
     if calls and not out and out.reason is None:
         out.reason = (f"{len(calls)} Granite call(s) found, none assigned to trade day {trade_day}: "
                       f"{len(out.no_start_time)} without a usable start time, {len(out.halt)} in the halt, "
+                      f"{len(out.outside_any_trade_day)} outside any trade day, "
                       f"{len(out.other_days)} in other trade days")
+    if not calls and out.reason is not None and (unreadable or not_rec):
+        out.reason += f" ({len(unreadable)} unreadable folder(s), {len(not_rec)} not a Granite record)"
     return out
 
 

@@ -1,8 +1,17 @@
 """The price table as data. Each entry says where it was read and when. Dollars per million tokens.
 
-Source of every figure below: the Claude API reference price table, cached 2026-11-03 (the
-claude-api skill bundled with Claude Code 2.1.331). Where that table gives no figure the rule used is
-named in the entry. A `--prices <file>` argument (load_prices) replaces the whole table.
+Source of every figure below: the claude-api skill files bundled with Claude Code 2.1.331 (they hold the
+figures in prose, not in a table; read 2026-11-03 and re-read 2026-11-24):
+  shared/models.md          the lines for Claude Sonnet 5.5 ($2 / $10 per MTok, cache reads $0.10) and Claude
+                            Haiku 5.5 ($0.10 / $0.50 for a prompt of 100K tokens or fewer, $0.50 / $2.50 above)
+  shared/prompt-caching.md  cache write 1.25 times the input price at the 5-minute lifetime; a cache read about
+                            0.1 times ("differs by model": models.md gives Sonnet 5.5 its own figure, Haiku 5.5
+                            has none, so the 0.1 rule below is used for Haiku)
+  shared/cost-optimization.md  section 2.5: a batch is 50% off every token in the request
+Where the files give no figure the rule used is named in the entry. A `--prices <file>` argument (load_prices)
+replaces the whole table. The check in tests/agent_program/test_stage8_token_test.py reads the Sonnet 5.5 and
+Haiku 5.5 figures out of the TEXT of shared/models.md when that folder is present, so the table is not checked
+against itself.
 
 The cost is the API's price for the tokens. It is a compute cost of the token test; it is not a trade
 cost and enters no market calculation.
@@ -18,7 +27,8 @@ SONNET = "claude-sonnet-5-5"
 HAIKU = "claude-haiku-5-5"
 
 READ_ON = "2026-11-03"
-SOURCE = "Claude API reference price table, cached 2026-11-03"
+SOURCE = ("claude-api skill bundled with Claude Code 2.1.331: shared/models.md (model prices), "
+          "shared/prompt-caching.md (cache write 1.25x, read ~0.1x), shared/cost-optimization.md (batch half)")
 
 PRICES = {
     "schema": "markets.token_test.prices.v1",
