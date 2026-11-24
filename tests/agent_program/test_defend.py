@@ -284,8 +284,12 @@ def test_who_said_a_cited_line_is_the_proposers_word_and_code_says_so(world):
     assert by_path[HANDOFF]["said_by_named_in_lines"] is False          # line 3 of the handoff does not hold "Claude"
     line = "registered after an outcome was seen: SEEN-TEXT the four trade days were studied first"
     g = by_path["CLAUDE.md"]
+    # ticket 04: the brief no longer carries what the proposer saw (only that an outcome was seen); `show` keeps the sentence
+    assert line not in defend.brief(s, cid) and "SEEN-TEXT" not in defend.brief(s, cid)
+    assert "an outcome had been seen before registration; the reviewer is not given what was seen" in defend.brief(s, cid)
+    assert line in defend.show(s, cid)
     for text in (defend.brief(s, cid), defend.show(s, cid)):
-        assert "Greg's words" not in text and line in text
+        assert "Greg's words" not in text
         for k in ("CLAUDE.md", g["commit"], g["sha256"], "said by Greg as the proposer states; code does not check who said it"):
             assert k in text, k
         assert "appears in the cited lines: true" in text and "appears in the cited lines: false" in text
@@ -348,10 +352,16 @@ def test_who_may_challenge(world):
 def test_verdict_labels_are_refused_and_ordinary_words_are_not(world):
     cid = _reg(world, "labels")["claim"]
     # the plan's six labels, anywhere in a sentence, in any letter case, with underscores or spaces
-    for text in ("the claim is SUPPORTED_WITHIN_SCOPE", "REFUTED_WITH_EVIDENCE here", "it is inconclusive",
-                 "supported within scope, said the note", "so it Needs More Evidence", "blocked_input_scope", "Superseded retained"):
+    # (changed 2026-11-24, run 147: UPPER CASE anywhere, or a WHOLE value in any case; the three lower or mixed case
+    # sentences "it is inconclusive", "supported within scope, said the note", "so it Needs More Evidence" now move to accepted)
+    for text in ("the claim is SUPPORTED_WITHIN_SCOPE", "REFUTED_WITH_EVIDENCE here", "blocked_input_scope", "Superseded retained",
+                 "it is INCONCLUSIVE", "SUPPORTED WITHIN SCOPE, said the note", "so it NEEDS  MORE  EVIDENCE", "see BLOCKED-INPUT-SCOPE here",
+                 "inconclusive", "Needs More Evidence"):
         with pytest.raises(schema.Refused, match=r"what_remains_open.*carries the word"):
             _challenge(world, cid, what_remains_open=[text])
+    for i, text in enumerate(("it is inconclusive whether it held", "supported within scope, said the note",
+                              "so it Needs More Evidence before trial", "a refuted-with-evidence reading is not made here")):
+        assert _challenge(world, cid, what_remains_open=[text], name=f"lowsent{i}.json")["new"] >= 1
     # a field whose WHOLE value is one plain form
     for text in ("verdict", "passed", "FAILED", "pass", "fail", "pass/fail", "proven", "Disproven", "approved", "rejected"):
         with pytest.raises(schema.Refused, match=r"what_remains_open.*carries the word"):
@@ -727,3 +737,122 @@ def test_the_same_claim_file_again_writes_no_artifact_and_no_link(world):
 def test_the_store_checks_no_worse_after_the_writes(world):
     after = sorted(GraphStore(world["root"], graph_dir=world["graph"], tolerant=True).check_all())
     assert [b for b in after if b not in world["before"]] == []
+
+
+# ---- the points of the fourth read (run 147) ---------------------------------------------------------------
+MARKETS_COMMIT = "68d65a6"
+OLD_QUOTE = "reversal, temporally stable, consistent 6/7 cells."
+
+
+def _cited_at_commit(world, **over):
+    g = {"kind": "cited", "repo": "Markets", "path": "CLAUDE.md", "line_start": 381, "line_end": 382,
+         "quote": OLD_QUOTE, "said_by": "Claude"}
+    g.update(over)
+    return [_claim(world)["rests_on"][0], g]
+
+
+def test_a_cited_line_can_name_the_commit_it_was_read_at(world):
+    s = world["store"]
+    r = _reg(world, "cited-commit", rests_on=_cited_at_commit(world, commit=MARKETS_COMMIT), name="cc1.json")
+    full = subprocess.run(["git", "rev-parse", MARKETS_COMMIT], capture_output=True, text=True,
+                          cwd=str(defend.repo_dirs(world["root"], None, None)["Markets"])).stdout.strip()
+    g = [x for x in s.node(r["claim"])["attrs"]["rests_on"] if x["kind"] == "cited"][0]
+    assert g["commit"] == full and len(full) == 40 and g["commit_named"] is True and g["sha256"]
+    with pytest.raises(schema.Refused, match=r"rests_on\[1\]"):                    # no commit: the head's lines 381-382 hold other words
+        _reg(world, "cited-nocommit", rests_on=_cited_at_commit(world), name="cc2.json")
+    with pytest.raises(schema.Refused, match=r"deadbeefdeadbeef.*does not exist"):
+        _reg(world, "cited-nosuch", rests_on=_cited_at_commit(world, commit="deadbeefdeadbeef"), name="cc3.json")
+
+
+def test_a_cited_line_without_a_commit_says_it_was_read_at_the_files_last_commit(world):
+    cid = _reg(world, "cited-said")["claim"]
+    g = [x for x in world["store"].node(cid)["attrs"]["rests_on"] if x["kind"] == "cited"][0]
+    note = f"read at the file's last commit when registered: {g['commit'][:7]}"
+    assert note in defend.show(world["store"], cid) and note in defend.brief(world["store"], cid)
+    cid2 = _reg(world, "cited-said2", rests_on=_cited_at_commit(world, commit=MARKETS_COMMIT), name="cs2.json")["claim"]
+    assert "read at the file's last commit when registered" not in defend.show(world["store"], cid2)
+
+
+def test_a_proposer_never_writes_over_another_runs_newest_line_of_a_link(world):
+    s = world["store"]
+    full = _claim(world)["rests_on"]
+    cid = _reg(world, "own-newest", rests_on=[full[0], full[1]], name="on1.json")["claim"]
+    rule_src = [g for g in s.node(cid)["attrs"]["rests_on"] if g["kind"] == "rule"][0]["source"]
+    plain = defend.link("SUPPORTS", rule_src, cid)
+    assert [l["written_by"] for l in s.history(plain["id"])] == [PROPOSER]
+    s.write([], [defend.link("SUPPORTS", rule_src, cid, note="NOTE-TEXT written by the second run")], written_by=REVIEWER)
+    _reg(world, "own-newest", rests_on=[full[0], full[1]], scope="SCOPE-TEXT revised for the newest-line test", name="on2.json")
+    h = s.history(plain["id"])
+    assert [l["written_by"] for l in h] == [PROPOSER, REVIEWER] and h[-1]["attrs"].get("note") == "NOTE-TEXT written by the second run"
+    own = [e for e in s.edges("SUPPORTS") if e["src"] == rule_src and e["dst"] == cid and e["id"] != plain["id"]]
+    assert len(own) == 1 and [l["written_by"] for l in s.history(own[0]["id"])] == [PROPOSER]
+
+
+def test_a_proposer_dropping_a_ground_never_withdraws_a_link_whose_newest_line_is_another_runs(world):
+    s = world["store"]
+    full = _claim(world)["rests_on"]
+    cid = _reg(world, "own-drop", rests_on=[full[0], full[1], full[2]], name="od1.json")["claim"]
+    rule_src = [g for g in s.node(cid)["attrs"]["rests_on"] if g["kind"] == "rule"][0]["source"]
+    plain = defend.link("SUPPORTS", rule_src, cid)
+    s.write([], [defend.link("SUPPORTS", rule_src, cid, note="NOTE-TEXT second run's newest line")], written_by=REVIEWER)
+    r = _reg(world, "own-drop", rests_on=[full[0], full[2]], scope="SCOPE-TEXT revised, the rule ground dropped", name="od2.json")
+    assert plain["id"] not in r["withdrawn"] and plain["id"] in {e["id"] for e in s.edges()}
+    assert s.history(plain["id"])[-1]["written_by"] == REVIEWER and not s.history(plain["id"])[-1]["attrs"].get("withdrawn")
+
+
+def test_the_same_claim_file_again_writes_nothing_whatever_changed_elsewhere_in_the_graph(world):
+    s = world["store"]
+    r1 = _reg(world, "elsewhere", name="el1.json")
+    cid = r1["claim"]
+    g = [x for x in s.node(cid)["attrs"]["rests_on"] if x["kind"] == "rule"][0]
+    src = s.node(g["source"])
+    attrs = dict(src["attrs"], sha256=world["sha"] if src["attrs"].get("sha256") != world["sha"] else hashlib.sha256(b"").hexdigest())
+    s.write([{"id": src["id"], "type": src["type"], "attrs": attrs}], [], written_by=REVIEWER)   # a Source node re-read elsewhere
+    n_art, n_rev, rev = len(_artifacts(s, cid)), len(s.edges("REVISES", withdrawn=True)), s.node(cid)["rev"]
+    all_art = len(s.nodes("Artifact"))
+    again = _reg(world, "elsewhere", name="el1.json")
+    assert again["new"] == 0 and again["revised"] == 0 and "nothing written" in again["note"]
+    assert s.node(cid)["rev"] == rev and len(_artifacts(s, cid)) == n_art and len(s.nodes("Artifact")) == all_art
+    assert len(s.edges("REVISES", withdrawn=True)) == n_rev
+    p = world["tmp"] / "el2.json"                                     # same content, other bytes
+    p.write_text(json.dumps(_claim(world, "elsewhere"), indent=2), encoding="utf-8")
+    other = defend.register(s, p, PROPOSER)
+    assert other["new"] == 0 and other["revised"] == 0
+    assert f"the same claim, other bytes (sha256 {hashlib.sha256(p.read_bytes()).hexdigest()}): nothing written" in other["note"]
+    assert s.node(cid)["rev"] == rev and len(s.nodes("Artifact")) == all_art
+
+
+def test_a_claim_file_given_by_a_relative_path_is_stored_as_its_resolved_absolute_path(world, monkeypatch):
+    monkeypatch.chdir(world["tmp"])
+    (world["tmp"] / "rel.json").write_text(json.dumps(_claim(world, "relpath")), encoding="utf-8")
+    cid = defend.register(world["store"], "rel.json", PROPOSER)["claim"]
+    a = _artifacts(world["store"], cid)[0]["attrs"]
+    assert a["repo"] == defend.NO_REPO and a["path"] == str((world["tmp"] / "rel.json").resolve())
+
+
+def test_show_says_when_the_earlier_claim_file_was_never_kept_by_the_older_code(world):
+    import importlib.util
+    src = subprocess.run(["git", "show", "c832307:tools/kgraph/defend.py"], capture_output=True, text=True,
+                         cwd=str(defend.repo_dirs(world["root"], None, None)["Markets"]))
+    assert src.returncode == 0 and "claim-file" not in src.stdout.replace("--claim-file", "")
+    p = world["tmp"] / "defend_c832307.py"
+    p.write_text(src.stdout, encoding="utf-8")
+    spec = importlib.util.spec_from_file_location("tools.kgraph._defend_c832307", p)
+    old = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(old)
+    s = world["store"]
+    cid = old.register(s, _w(world, _claim(world, "oldcode"), "old1.json"), PROPOSER)["claim"]
+    assert _artifacts(s, cid) == []                                   # the older code kept no claim file
+    _reg(world, "oldcode", scope="SCOPE-TEXT revised by the present code", name="old2.json")
+    shown = defend.show(s, cid)
+    assert "the claim file of revision 1 is not on record (it was registered before claim files were kept)" in shown
+    assert "revises nothing (the first claim file)" not in shown
+    _reg(world, "oldcode", scope="SCOPE-TEXT revised again", name="old3.json")
+    assert "revises artifact:claim-file" in defend.show(s, cid)
+
+
+@pytest.mark.parametrize("text", ["see SUPPORTED-WITHIN-SCOPE here", "a SUPPORTED   WITHIN SCOPE reading", "it is NEEDS_MORE_EVIDENCE"])
+def test_an_upper_case_label_inside_a_sentence_is_refused_with_any_gap(world, text):
+    cid = _reg(world, "labels-up")["claim"]
+    with pytest.raises(schema.Refused, match=r"what_remains_open.*carries the word"):
+        _challenge(world, cid, what_remains_open=[text])

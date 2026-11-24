@@ -40,6 +40,7 @@ import time
 from pathlib import Path
 
 from tools.kgraph import context as kcontext
+from tools.kgraph import defend, outcome
 from tools.kgraph import grounding
 from tools.ratchet.loop import ProposalFailed
 from tools.ratchet.proposer import MailboxProposer, WORKING_NOTE
@@ -100,9 +101,35 @@ class MailboxFileProposer(MailboxProposer):
         self.file_rel = self.plan_rel                      # the one mutable file, here a program
 
     # ---- the records the last trial kept, as paths ---------------------------------------------------
-    def kept_records(self) -> list[str]:
+    def held(self, h: dict) -> list[str]:
+        """The reasons the records of one earlier trial (a history row) are held back: one for each claim it rested on
+        that is a REGISTERED claim (`defend register`) with no independent challenge of its current revision on record
+        (tools/kgraph/outcome.py, the rule, no run named). A claim of the graph that is not registered holds nothing back."""
+        store, out = self.store(), []
+        for cid in h.get("rests_on") or []:
+            n = store.node(cid)
+            if n and n["type"] == "Claim" and n["attrs"].get("registration") == defend.REGISTRATION:
+                ok, why = outcome.may_see_outcome(store, cid)
+                if not ok:
+                    out.append(why)
+        return out
+
+    def _rests_notes(self, h: dict) -> list[str]:
+        if "rests_on" not in h:
+            return ["no record of what it rested on"]
+        store, out = self.store(), []
+        for cid in h["rests_on"] or []:
+            n = store.node(cid)
+            if not (n and n["type"] == "Claim" and n["attrs"].get("registration") == defend.REGISTRATION):
+                out.append(f"{cid}: not a registered claim: no rule applies")
+        return out
+
+    def kept_records(self, history=()) -> list[str]:
         """Paths of the run folders a trial kept, if the control file's command keeps them (`--keep <folder>`).
-        Each is named, in the order it was made; nothing in them is read or summed here."""
+        Each is named, in the order it was made; nothing in them is read or summed here. The folder of a trial that
+        is held (`held`) is named as held with its reason, without its path. The folder made i-th is taken to be
+        trial n == i of `history` (a guess by modification time, as the line says); a folder with no row is not held."""
+        held = {h["n"]: self.held(h) for h in history}
         try:
             toks = shlex.split(self.program.command)
         except ValueError:
@@ -115,6 +142,10 @@ class MailboxFileProposer(MailboxProposer):
         runs = sorted((p for p in keep.iterdir() if p.is_dir()), key=lambda p: (p.stat().st_mtime_ns, p.name))
         out = []
         for i, r in enumerate(runs):
+            if held.get(i):
+                out.append(f"- the folder made by trial {i} (if the folders were made one a trial, in order) is held: "
+                           + "; ".join(held[i]))
+                continue
             files = [f.name for f in sorted(r.iterdir()) if f.name in ("events.jsonl", "trades.jsonl", "decisions.jsonl")]
             out.append(f"- the folder made by trial {i} (if the folders were made one a trial, in order): {r} holds "
                        f"{', '.join(files) or 'none of events.jsonl, trades.jsonl, decisions.jsonl'}")
@@ -139,9 +170,13 @@ class MailboxFileProposer(MailboxProposer):
         if not history:
             L.append("(none yet)")
         for h in history:
+            reasons = self.held(h)
+            if reasons:                    # nothing of the trial but its number and why its records are held back
+                L.append(f"- trial {h['n']}: held: " + "; ".join(reasons))
+                continue
             figs = ", ".join(f"{k}={v}" for k, v in h["figures"].items()) or "no figures"
             L.append(f"- trial {h['n']}: status {h['status']}; hypothesis: {h['hypothesis']}; figures: {figs}; "
-                     f"note: {h['note'] or 'none'}")
+                     f"note: {h['note'] or 'none'}" + "".join(f"; {x}" for x in self._rests_notes(h)))
         L += ["", "The figures are counts of what each trial wrote, not results. Nothing is totalled, averaged, "
               "ranked or called good or bad here."]
         if p.metric_direction is None:
@@ -149,7 +184,7 @@ class MailboxFileProposer(MailboxProposer):
         else:
             L.append(f"The loop keeps or reverts by `{p.metric_name}` ({p.metric_direction}).")
         L.append(f"The runs of 2026-11-24 are not scored ({WORKING_NOTE}).")
-        kept = self.kept_records()
+        kept = self.kept_records(history)
         if kept:
             L += ["", "## Records the earlier trials kept (paths to read; each trade is its own line in trades.jsonl)", ""] + kept
         L += ["", f"## Session context from the graph (about {ctx['tokens_estimated']} tokens of {self.context_budget})", "",

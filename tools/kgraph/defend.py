@@ -34,9 +34,13 @@ file is kept on the claim (attr claim_file) beside the fields lifted out of it.
                    {"kind":"claim","id":<Claim of the graph>}                      -> DERIVED_FROM
                    {"kind":"rule","rule_id","commit","quote"}  the rule file paper_platform/rules/<id>.json
                         at that commit (a Source node is made or found) and words of it  -> SUPPORTS
-                   {"kind":"cited","repo","path","line_start","line_end","quote","said_by"}  a quoted line of
-                        a named file (said_by stored; the file's sha256 and the commit it was read at are
+                   {"kind":"cited","repo","path","line_start","line_end","quote","said_by"[,"commit"]}  a quoted
+                        line of a named file (said_by stored; the file's sha256 and the commit it was read at are
                         stored; a Source node is made or found)                    -> SUPPORTS
+                        With "commit" the file is read at that commit (resolved to its full sha; one that does not
+                        exist is refused, named) and the quote is checked on those lines AT THAT COMMIT; without it, at
+                        the file's last commit, and the brief and show say so ("read at the file's last commit when
+                        registered: <sha7>").
                    A quote is at least six whole words in a row on those lines (extract.check_claim /
                    locate_quote). A claim that is not an inference needs a rule or cited ground; the first
                    is its source, quote and lines.
@@ -61,15 +65,19 @@ stand in the lines); whether the artifact itself carries reasoning; data that is
 
 Verdict words: every stored free-text field of a claim and of a challenge is checked. Refused: the verifier plan's
 own six labels (SUPPORTED_WITHIN_SCOPE, REFUTED_WITH_EVIDENCE, INCONCLUSIVE, NEEDS_MORE_EVIDENCE,
-BLOCKED_INPUT_SCOPE, SUPERSEDED_RETAINED) anywhere, as whole words, in any letter case, with underscores or spaces;
-and a field whose WHOLE value is one plain form (verdict, passed, failed, pass, fail, pass/fail, proven, disproven,
+BLOCKED_INPUT_SCOPE, SUPERSEDED_RETAINED) anywhere as whole words WRITTEN IN UPPER CASE, with an underscore, spaces or
+hyphens between the words, and a field whose WHOLE value is a label (any letter case, same gaps); and a field whose
+WHOLE value is one plain form (verdict, passed, failed, pass, fail, pass/fail, proven, disproven,
 approved, rejected). An ordinary sentence or a file name that holds a plain word ("orders rejected by the exchange
 appear", "out/verdict.json") is accepted. A quoted line (key "quote") is a file's words, not the writer's, and is
 not checked.
 A revision is a REVISES link, never a second Claim: every registration, the first too, also writes one Artifact node
 for its claim file (id artifact:claim-file:<claim id without "claim:">:r<N>; repo, path, version N, authoring_run, sha256,
 claim, the whole file), with PRODUCED (run to Artifact) and MENTIONS (Artifact to Claim) in the same write, and on
-revision N >= 2 REVISES from the Artifact of revision N to that of N-1. The same file again writes none of them.
+revision N >= 2 REVISES from the Artifact of revision N to that of N-1. The same claim file again (its content equal to the
+one kept on the claim's current revision) writes none of them, whatever changed elsewhere in the graph (a Source node
+re-read, say); it is decided on the file before anything is resolved, and a re-serialised file (same content, other
+bytes) is said so in the result.
 An objection in a challenge stays on the challenge's record; a CONTRADICTS link is written only by a check after a
 trial (tickets 05 and 06, not built here).
 """
@@ -101,7 +109,8 @@ LABELS = ("SUPPORTED_WITHIN_SCOPE", "REFUTED_WITH_EVIDENCE", "INCONCLUSIVE", "NE
           "BLOCKED_INPUT_SCOPE", "SUPERSEDED_RETAINED")
 PLAIN_FORMS = ("verdict", "passed", "failed", "pass", "fail", "pass/fail", "proven", "disproven", "approved", "rejected")
 _label_re = re.compile(r"(?<![A-Za-z0-9_])(" + "|".join(re.escape(x).replace("_", r"[_\s\-]+") for x in LABELS)
-                       + r")(?![A-Za-z0-9_])", re.I)
+                       + r")(?![A-Za-z0-9_])")          # UPPER CASE only: the labels' own form; a sentence in lower case is prose
+_GAP = re.compile(r"[_\s\-]+")
 CLAIM_KEYS = {
     "claim_key", "hypothesis", "exact_claim", "scope", "mechanism", "alternatives", "falsifiers", "artifact_repo",
     "artifact_path", "code_commit", "artifact_sha256", "data_manifest_hashes", "outcome_visibility", "inference",
@@ -163,7 +172,8 @@ def _labels(obj, where: str, path: str = "") -> None:
     """Refuse a verifier-plan label (or its plain form) as a whole word in any stored free text."""
     if isinstance(obj, str):
         m = _label_re.search(obj)
-        word = m.group(1) if m else (obj.strip() if obj.strip().lower() in PLAIN_FORMS else None)
+        whole = _GAP.sub("_", obj.strip()).upper() in LABELS       # a field's whole value, in any letter case
+        word = m.group(1) if m else (obj.strip() if whole or obj.strip().lower() in PLAIN_FORMS else None)
         if word:
             raise schema.Refused(f"{where}: {path or 'text'} carries the word {word!r}; say what was checked, "
                                  "observed and open instead")
@@ -257,18 +267,28 @@ def _ground(store: GraphStore, dirs: dict, g, i: int) -> dict:
             raise schema.Refused(f"{where}: a cited ground needs repo, path, line_start, line_end, quote") from e
         if not said:
             raise schema.Refused(f"{where}: said_by is missing (who said the quoted words)")
-        if repo not in dirs or not (dirs[repo] / path).is_file():
+        named = "commit" in g
+        if repo not in dirs or not (named or (dirs[repo] / path).is_file()):
             raise schema.Refused(f"{where}: {repo}:{path} is not a file of a local checkout")
         try:
-            commit = git(dirs[repo], "log", "-1", "--format=%H", "--", path)
+            if named:
+                want = str(g["commit"])
+                if not _hex.match(want):
+                    raise RuntimeError(f"commit {want} is not a git sha")
+                try:
+                    commit = git(dirs[repo], "rev-parse", "--verify", want + "^{commit}")
+                except RuntimeError:
+                    raise schema.Refused(f"{where}: commit {want} does not exist in the {repo} checkout") from None
+            else:
+                commit = git(dirs[repo], "log", "-1", "--format=%H", "--", path)
             raw = _blob(dirs[repo], commit, path)
         except RuntimeError as e:
             raise schema.Refused(f"{where}: {path} is not committed in {repo} ({e})") from e
         _check_quote(quote, _lines(raw), a, b, where)
-        named = _named_in(said, "\n".join(_lines(raw)[a - 1:b]))
+        said_named = _named_in(said, "\n".join(_lines(raw)[a - 1:b]))
         sid, node = _source_at(store, dirs, repo, path, commit, raw)
         return {"kind": k, "repo": repo, "path": path, "line_start": a, "line_end": b, "quote": quote, "said_by": said,
-                "said_by_named_in_lines": named,
+                "said_by_named_in_lines": said_named, "commit_named": named,
                 "commit": commit, "sha256": hashlib.sha256(raw).hexdigest(), "source": sid,
                 "source_node_sha256": _node_sha(store, sid, node), "_node": node}
     raise schema.Refused(f"{where}: unknown ground kind {k!r} (claim, rule or cited)")
@@ -292,6 +312,13 @@ def _src_note(g: dict) -> str | None:
         return None
     return (f"The graph's Source node {g['source']} holds sha256 {held}, which differs from the sha256 {g['sha256']} of the "
             f"file bytes (commit {g['commit']}) the quote was checked against.")
+
+
+def _read_note(g: dict) -> str | None:
+    """A cited ground without a named commit was read at the file's last commit when registered (a missing flag, an older claim, says the same)."""
+    if g["kind"] != "cited" or g.get("commit_named"):
+        return None
+    return f"read at the file's last commit when registered: {g['commit'][:7]}"
 
 
 def _span(quote: str, lines: list[str], where: str) -> tuple[int, int]:
@@ -399,18 +426,18 @@ def _own_key(run: str) -> str:
 
 
 def _own_edge(store: GraphStore, etype: str, src: str, dst: str, run: str, **attrs) -> dict:
-    """The proposer's ground is its OWN edge. When another run already holds the link of that id, the proposer's goes
-    beside it under its own key, so a line of another run's link is never written and never withdrawn by the proposer."""
+    """The proposer's ground is its OWN edge. When the NEWEST line of the link of that id is another run's, the proposer's goes
+    beside it under its own key, so a line of another run's link is never written over and never withdrawn by the proposer."""
     plain = link(etype, src, dst, **attrs)
     h = store.history(plain["id"])
-    return link(etype, src, dst, key=_own_key(run), **attrs) if h and h[0]["written_by"] != run else plain
+    return link(etype, src, dst, key=_own_key(run), **attrs) if h and h[-1]["written_by"] != run else plain
 
 
 NO_REPO = "none: read from outside a repository"
 
 
 def _where_filed(claim_file, dirs: dict) -> tuple[str, str]:
-    """(repository, path) of a claim file: the checkout it sits under and its path in it, else NO_REPO and the path as given."""
+    """(repository, path) of a claim file: the checkout it sits under and its path in it, else NO_REPO and the resolved absolute path."""
     p = Path(claim_file).resolve()
     for name in ARTIFACT_REPOS:
         if dirs.get(name):
@@ -418,7 +445,7 @@ def _where_filed(claim_file, dirs: dict) -> tuple[str, str]:
                 return name, p.relative_to(Path(dirs[name]).resolve()).as_posix()
             except ValueError:
                 pass
-    return NO_REPO, str(claim_file)
+    return NO_REPO, str(p)
 
 
 def _register(store: GraphStore, claim_file, run: str, dirs: dict) -> dict:
@@ -427,6 +454,17 @@ def _register(store: GraphStore, claim_file, run: str, dirs: dict) -> dict:
     w = "claim file"
     _unknown(d, CLAIM_KEYS, w)
     key = _text(d, "claim_key", w)
+    cid = "claim:reg-" + sha(key)
+    prev = store.history(cid)
+    if prev and prev[0]["attrs"].get("proposer_run") != run:
+        raise schema.Refused(f"run: {run} did not register {cid}; only {prev[0]['attrs'].get('proposer_run')} may revise it")
+    if prev and prev[-1]["attrs"].get("claim_file") == d:      # the same claim file again: nothing is resolved, nothing written
+        kept = store.node(f"artifact:claim-file:{cid[len('claim:'):]}:r{prev[-1]['rev']}")
+        have = hashlib.sha256(Path(claim_file).read_bytes()).hexdigest()
+        other = kept and kept["attrs"].get("sha256") != have
+        return {"new": 0, "revised": 0, "withdrawn": [], "claim": cid,
+                "note": (f"the same claim, other bytes (sha256 {have}): nothing written" if other
+                         else "the same claim file: nothing written")}
     hypothesis, exact = _text(d, "hypothesis", w), _text(d, "exact_claim", w)
     scope, mechanism = _text(d, "scope", w), _text(d, "mechanism", w)
     alternatives, falsifiers = _list_of_text(d, "alternatives", w), _falsifiers(d, w)
@@ -462,10 +500,6 @@ def _register(store: GraphStore, claim_file, run: str, dirs: dict) -> dict:
     grounds = [_ground(store, dirs, g, i) for i, g in enumerate(d.get("rests_on", []))]
     if d["inference"] and not grounds:
         raise schema.Refused(f"{w}: rests_on: an inference names what it is inferred from; rests_on is empty")
-    cid = "claim:reg-" + sha(key)
-    prev = store.history(cid)
-    if prev and prev[0]["attrs"].get("proposer_run") != run:
-        raise schema.Refused(f"run: {run} did not register {cid}; only {prev[0]['attrs'].get('proposer_run')} may revise it")
     sources = [g for g in grounds if g["kind"] in ("rule", "cited")]
     attrs = {
         "text": exact, "statement_kind": kind, "inference": d["inference"], "registration": REGISTRATION,
@@ -478,10 +512,7 @@ def _register(store: GraphStore, claim_file, run: str, dirs: dict) -> dict:
     }
     attrs.update(opt)
     changed_at = list(prev[-1]["attrs"].get("falsifiers_changed_at_revisions", [])) if prev else []
-    if prev and prev[-1]["attrs"].get("claim_file") == d:      # the same file again: nothing new, so the flag is carried
-        if "falsifiers_changed_from_revision" in prev[-1]["attrs"]:
-            attrs["falsifiers_changed_from_revision"] = prev[-1]["attrs"]["falsifiers_changed_from_revision"]
-    elif prev and prev[-1]["attrs"]["falsifiers"] != falsifiers:
+    if prev and prev[-1]["attrs"]["falsifiers"] != falsifiers:
         attrs["falsifiers_changed_from_revision"] = prev[-1]["rev"]
         changed_at.append(prev[-1]["rev"] + 1)                  # the revision at which they differed from the one before
     if changed_at:                                             # kept on every later revision
@@ -531,7 +562,7 @@ def _register(store: GraphStore, claim_file, run: str, dirs: dict) -> dict:
                           else link("SUPPORTS", g["source"], cid, key=key)["id"])
     for e in store.edges():
         mine = ((e["type"] == "DERIVED_FROM" and e["src"] == cid) or (e["type"] == "SUPPORTS" and e["dst"] == cid)) \
-            and e["id"] in wrote and store.history(e["id"])[0]["written_by"] == run
+            and e["id"] in wrote and store.history(e["id"])[-1]["written_by"] == run
         if mine and e["id"] not in new_ids:
             store.withdraw_edge(e["id"], reason=f"a ground dropped by revision {store.node(cid)['rev']} of {cid}", written_by=run)
             res["withdrawn"].append(e["id"])
@@ -564,8 +595,11 @@ def _falsifiers_line(a: dict) -> str | None:
     return "; ".join(parts) or None
 
 
-def _outcome_line(a: dict) -> str | None:
+def _outcome_line(a: dict, reviewer: bool = False) -> str | None:
     v = a["outcome_visibility"]
+    if reviewer:        # the brief: what the proposer saw is the proposer's side (ticket 04); only whether it saw one
+        return ("The proposer states that an outcome had " + ("" if v["outcome_seen"] else "not ")
+                + "been seen before registration; the reviewer is not given what was seen.")
     return f"registered after an outcome was seen: {v['what']}" if v["outcome_seen"] else None
 
 
@@ -582,9 +616,7 @@ def brief(store: GraphStore, claim_id: str, dirs: dict | None = None) -> str:
            "## Scope and boundaries", "", f"Scope: {a['scope']}"]
     if a.get("boundaries"):
         out.append(f"Boundaries: {a['boundaries']}")
-    ol = _outcome_line(a)
-    if ol:
-        out += ["", ol]
+    out += ["", _outcome_line(a, reviewer=True)]
     fl = _falsifiers_line(a)
     if fl:
         out += ["", "Note: " + fl + " (what they say is not in this brief)."]
@@ -615,7 +647,7 @@ def brief(store: GraphStore, claim_id: str, dirs: dict | None = None) -> str:
         else:
             lines = _lines(_blob(dirs[g["repo"]], g["commit"], g["path"]))
             out += [f"### {i}. {_saidline(g)}", "", "\n".join(lines[g["line_start"] - 1:g["line_end"]])] + (
-                ["", _src_note(g)] if _src_note(g) else [])
+                ["", _read_note(g) + "."] if _read_note(g) else []) + (["", _src_note(g)] if _src_note(g) else [])
         out.append("")
     out += ["## What to hand back", "", "One JSON object, nothing else, with these fields:", "",
             "```json", json.dumps({
@@ -725,6 +757,12 @@ def _challenge(store: GraphStore, claim_id: str, challenge_file, run: str, brief
         "distinguishing_observation": dist, "objections": d["objections"], "brief_sha256": bh,
         "saw_proposer_reasoning": d["saw_proposer_reasoning"], "what_i_opened": opened, "challenge_file": d,
     }
+    from . import outcome        # (here, not at the top: outcome.py imports this module)
+    prior = store.node(eid)      # the same challenge again is the same node: the flag it was first written with stands
+    if prior is None:
+        attrs["outcome_on_record_before_challenge"] = outcome.outcome_on_record(store, claim_id, run)
+    elif "outcome_on_record_before_challenge" in prior["attrs"]:
+        attrs["outcome_on_record_before_challenge"] = prior["attrs"]["outcome_on_record_before_challenge"]
     edges = [link("EVALUATES", eid, claim_id), link("PRODUCED", run, eid)]
     res = store.write([{"id": eid, "type": "Evaluation", "attrs": attrs}], edges, written_by=run)
     res["evaluation"] = eid
@@ -736,10 +774,19 @@ def challenges_of(store: GraphStore, claim_id: str) -> list[dict]:
             if e and e["attrs"].get("rubric") == RUBRIC]
 
 
-def show(store: GraphStore, claim_id: str) -> str:
+def show(store: GraphStore, claim_id: str, run: str | None = None) -> str:
+    from . import outcome        # (here, not at the top: outcome.py imports this module)
+    try:
+        outcome.check_show(store, claim_id, run)
+    except NotRetained:
+        raise
+    except schema.Refused as e:
+        _retain(store, "show", run, str(e), {"claim": claim_id})
+        raise
     c = _registered(store, claim_id)
     a = c["attrs"]
-    out = [f"{claim_id}  revision {c['rev']}  (registered by {a['proposer_run']})"]
+    out = [f"{claim_id}  revision {c['rev']}  (registered by {a['proposer_run']})"
+           + (f"  (shown to {run})" if run else "  (no run was named)")]
     for k in ("proposer", "hypothesis", "exact_claim", "scope", "boundaries", "mechanism", "alternatives", "falsifiers",
               "artifact_repo", "artifact_path", "code_commit", "artifact_sha256", "data_manifest_hashes",
               "outcome_visibility", "inference", "inference_reason", "source_event_ids", "event_time", "knowledge_time",
@@ -757,7 +804,10 @@ def show(store: GraphStore, claim_id: str) -> str:
     arts = sorted((n for n in store.nodes("Artifact") if n["attrs"].get("claim") == claim_id), key=lambda n: n["attrs"]["version"])
     revises = {e["src"]: e["dst"] for e in store.edges("REVISES")}
     out += [f"  {n['id']}  sha256 {n['attrs']['sha256']}  authoring run {n['attrs']['authoring_run']}  "
-            + (f"revises {revises[n['id']]}" if n["id"] in revises else "revises nothing (the first claim file)") for n in arts]
+            + (f"revises {revises[n['id']]}" if n["id"] in revises
+               else "revises nothing (the first claim file)" if n["attrs"]["version"] < 2
+               else f"the claim file of revision {n['attrs']['version'] - 1} is not on record "
+                    "(it was registered before claim files were kept)") for n in arts]
     if not arts:
         out.append("  none")
     out.append("every revision's falsifiers, with the time each was written:")
@@ -767,6 +817,7 @@ def show(store: GraphStore, claim_id: str) -> str:
     out.append("rests on:")
     out += [f"  {json.dumps(g, ensure_ascii=False)}" for g in a["rests_on"]] or ["  nothing"]
     out += [f"  {_saidline(g)}" for g in a["rests_on"] if g["kind"] == "cited"]
+    out += [f"  {_read_note(g)}" for g in a["rests_on"] if _read_note(g)]
     out += [f"  {_src_note(g)}" for g in a["rests_on"] if _src_note(g)]
     ch = challenges_of(store, claim_id)
     out.append("challenges on record:")
@@ -774,6 +825,7 @@ def show(store: GraphStore, claim_id: str) -> str:
         ea = e["attrs"]
         out += [f"  {e['id']}  by {ea['reviewer']}  at claim revision {ea['claim_revision']}  (brief sha256 {ea['brief_sha256']}; "
                 f"saw the proposer's reasoning: {ea['saw_proposer_reasoning']}; opened: {json.dumps(ea['what_i_opened'])})",
+                f"    outcome_on_record_before_challenge: {ea.get('outcome_on_record_before_challenge', 'not recorded (an earlier challenge)')}",
                 f"    alternatives: {json.dumps(ea['alternatives'], ensure_ascii=False)}",
                 f"    falsifiers: {json.dumps(ea['falsifiers'], ensure_ascii=False)}",
                 f"    distinguishing observation: {ea['distinguishing_observation']}",
@@ -819,7 +871,7 @@ def main(argv=None) -> int:
         elif a.verb == "challenge":
             print(json.dumps(challenge(store, a.claim, a.file, a.run, a.brief)))
         elif a.verb == "show":
-            print(show(store, a.claim))
+            print(show(store, a.claim, a.run))
         else:
             print("\n".join(undefended(store)))
     except NotRetained as e:

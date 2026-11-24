@@ -116,3 +116,6 @@ Nothing is averaged or totalled across runs; a run you cannot check against a tr
 audited by anyone else, and your report names the runs you audited so the line in the record can say so.
 
 A ticket's box is not marked while a run that worked on that ticket is unaudited (`--ticket NN`). The auditor's report for each of its runs is kept in git word for word.
+Your hand-back is kept word for word under a first line `# Performance auditor run N` that the main session writes, so
+you start each run's block with `## Run NNN` at the start of a line and nothing else at that level. A report that cannot
+be read from git at the commit your line names, or that is another run's, fails the command.

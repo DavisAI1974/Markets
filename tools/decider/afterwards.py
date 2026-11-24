@@ -255,11 +255,13 @@ def brief_line(l):
     return text
 
 
-def make_brief(path, budget):
+def make_brief(path, budget, note=None):
     lines = [json.loads(t) for t in Path(path).read_text(encoding="utf-8").splitlines() if t.strip()][1:]
     head = ("What happened after each decision (for writing the next decider; known only afterwards, never for a "
             "decision at its own instant). Each decision is its own line, oldest first, prices in the tape's own "
             "units, bid and ask each by itself.")
+    if note:
+        head += " " + note
     cost = lambda t: (len(t) + 1 + 3) // 4
     foot = lambda shown: f"Shown: {shown} of {len(lines)} decisions, oldest first; every line is in {path}."
     used, shown = cost(head) + cost(foot(len(lines))), []
@@ -279,8 +281,31 @@ def main(argv=None) -> int:
         ap.add_argument("--afterwards", required=True)
         ap.add_argument("--budget", type=int, required=True, help="tokens")
         ap.add_argument("--out", required=True)
+        ap.add_argument("--claim", action="append", default=[],
+                        help="a registered claim the afterwards file bears on (repeatable); the brief is written only "
+                             "while each passes the rule of tools/kgraph/outcome.py")
+        ap.add_argument("--rests-on-none", help="why the afterwards file bears on no registered claim; given INSTEAD of --claim")
+        ap.add_argument("--data")
+        ap.add_argument("--graph-dir")
         a = ap.parse_args(argv[1:])
-        Path(a.out).write_text(make_brief(a.afterwards, a.budget), encoding="utf-8")
+        why = (a.rests_on_none or "").strip()
+        if bool(a.claim) == bool(why):
+            print("refused: give --claim <id> (one or more) or --rests-on-none \"<why>\", one of the two", file=sys.stderr)
+            return 2
+        if a.claim:
+            from tools.kgraph import outcome
+            from tools.kgraph.store import GraphStore
+            store = GraphStore(a.data, graph_dir=a.graph_dir)
+            for cid in a.claim:
+                ok, reason = outcome.may_see_outcome(store, cid)
+                if not ok:
+                    print(f"refused: {cid} does not pass the rule: {reason}", file=sys.stderr)
+                    return 2
+            note = ("Written for the claim" + ("s " if len(a.claim) > 1 else " ") + ", ".join(a.claim)
+                    + ", each with an independent challenge of its current revision on record.")
+        else:
+            note = f"Bears on no registered claim: {why}"
+        Path(a.out).write_text(make_brief(a.afterwards, a.budget, note), encoding="utf-8")
         return 0
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--journal")

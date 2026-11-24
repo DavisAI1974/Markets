@@ -22,6 +22,9 @@ lists the runs no auditor's report has a row for and fails while any is listed; 
 ticket's box is marked and at the close of every session (Greg, 2026-11-24, ticket 03b).
 A ticket's box is not marked while a run that worked on that ticket is unaudited (`--ticket NN`). The auditor's
 report for each of its runs is kept in git word for word.
+The report's first line begins `# Performance auditor run N` and each audited run has its own heading `## Run NNN` at the
+start of a line; an auditor's run whose report cannot be read from git at the commit its line names, or is another
+run's, fails the command.
 
 The main session does not grep or bulk-read files itself when the scout can. Interpretation of
 results stays in the main session and with Greg. Codex review and Greg's merge authority are
