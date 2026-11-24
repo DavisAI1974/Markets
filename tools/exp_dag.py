@@ -138,7 +138,12 @@ class ExpDag:
         return sorted((l for l in self.lines() if l["id"] == tid), key=lambda l: l["rev"])
 
     def log(self) -> list[dict]:
-        return sorted(self.latest().values(), key=lambda l: (self.fetch(l["id"])[0]["written_at"], l["id"]))
+        """Every trial as it stands now, in the order the trials were first pushed (the order of the
+        record's own lines: two trials written in one second keep their order)."""
+        first: dict[str, int] = {}
+        for n, l in enumerate(self.lines()):
+            first.setdefault(l["id"], n)
+        return sorted(self.latest().values(), key=lambda l: first[l["id"]])
 
     def children(self, tid: str) -> list[dict]:
         return [l for l in self.log() if l["parent"] == tid]
