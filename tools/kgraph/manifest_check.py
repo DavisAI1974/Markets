@@ -5,9 +5,18 @@
 For the commits after A up to B it prints one line for every file added by any commit of the range:
 its path, whether it still exists at B, its bytes at B, and either each manifest holding an entry for it
 (with whether the entry's bytes and sha256 equal the file's at B, compared only where the entry carries
-them) or the words that no manifest holds an entry for it. The manifests are the files at B whose name
-holds "manifest" (any case) and ends ".json", each read with `git show B:<path>`. A manifest whose shape
-is not read is named. Nothing is written. It gives no verdict.
+them, and which way the entry's path matched) or the words that no manifest holds an entry for it.
+The manifests are the files at B whose name holds "manifest" (any case) and ends ".json", each read with
+`git show B:<path>`. A manifest whose shape is not read is named. Nothing is written. It gives no verdict.
+
+An entry's path is read two ways, after a leading "./" is dropped: as written, from the repository's root
+("path as written"); and joined to the folder the manifest sits in ("path relative to the manifest's
+folder"). An entry whose path ends with "/" names a folder and is not an entry for a file: a file under it
+is printed with the words that the manifest names its folder and is counted apart (under_a_folder_entry).
+Entries that are not objects, or carry neither "path" nor "markets_data_path", are named for each manifest
+(how many of how many, and the keys they do carry); those keys are not read as paths.
+A file is gone at B when `git ls-tree` at B does not list it; any other failure of `git show` ends the
+command with exit 2 and a sentence naming the path.
 """
 
 from __future__ import annotations
@@ -21,6 +30,8 @@ from pathlib import Path
 
 LIST_KEYS = ("entries", "files")
 PATH_KEYS = ("path", "markets_data_path")
+AS_WRITTEN = "path as written"
+RELATIVE = "path relative to the manifest's folder"
 
 
 class Unreadable(Exception):
@@ -34,9 +45,18 @@ def _git(data: Path, *args: str) -> bytes:
     return r.stdout
 
 
-def _blob(data: Path, commit: str, path: str) -> bytes | None:
+def _blob(data: Path, commit: str, path: str) -> bytes:
+    """The file's bytes at commit. The caller knows the path is listed at commit; a failure here is a failed read."""
     r = subprocess.run(["git", "-C", str(data), "show", f"{commit}:{path}"], capture_output=True)
-    return r.stdout if r.returncode == 0 else None
+    if r.returncode:
+        raise Unreadable(f"the file {path} is listed at {commit} but could not be read: "
+                         + r.stderr.decode("utf-8", "replace").strip())
+    return r.stdout
+
+
+def _tree(data: Path, b: str) -> set[str]:
+    names = _git(data, "ls-tree", "-r", "-z", "--name-only", b).decode("utf-8", "surrogateescape").split("\0")
+    return {n for n in names if n}
 
 
 def _entries(doc) -> list | None:
@@ -49,17 +69,16 @@ def _entries(doc) -> list | None:
     return None
 
 
-def _manifests(data: Path, b: str) -> tuple[dict[str, list], list[str]]:
+def _manifests(data: Path, b: str, names: set[str]) -> tuple[dict[str, list], list[str]]:
     read: dict[str, list] = {}
     not_read: list[str] = []
-    names = _git(data, "ls-tree", "-r", "-z", "--name-only", b).decode("utf-8", "surrogateescape").split("\0")
-    for p in sorted(n for n in names if n):
+    for p in sorted(names):
         base = p.rsplit("/", 1)[-1].lower()
         if "manifest" not in base or not base.endswith(".json"):
             continue
         raw = _blob(data, b, p)
         try:
-            ents = _entries(json.loads(raw)) if raw is not None else None
+            ents = _entries(json.loads(raw))
         except ValueError:
             ents = None
         if ents is None:
@@ -91,6 +110,38 @@ def _compare(entry: dict, blob: bytes) -> str:
     return ", ".join(parts)
 
 
+def _spellings(manifest: str, raw: str) -> list[tuple[str, str]]:
+    """The two readings of an entry's path: (path from the repository's root, how it was read)."""
+    while raw.startswith("./"):
+        raw = raw[2:]
+    folder = manifest.rsplit("/", 1)[0] if "/" in manifest else ""
+    out = [(raw, AS_WRITTEN)]
+    joined = f"{folder}/{raw}" if folder else raw
+    if joined != raw:
+        out.append((joined, RELATIVE))
+    return out
+
+
+def _is_path_entry(e) -> bool:
+    return isinstance(e, dict) and any(k in e for k in PATH_KEYS)
+
+
+def _manifests_not_path_read(read: dict[str, list]) -> list[str]:
+    lines = []
+    for m, ents in read.items():
+        bad = [e for e in ents if not _is_path_entry(e)]
+        if not bad:
+            continue
+        keys = sorted({k for e in bad if isinstance(e, dict) for k in e})
+        not_objects = sum(1 for e in bad if not isinstance(e, dict))
+        line = (f"manifest {m}: {len(bad)} of {len(ents)} entries carry neither \"path\" nor "
+                f"\"markets_data_path\"; the keys those entries carry: {', '.join(keys) if keys else 'none'}")
+        if not_objects:
+            line += f"; {not_objects} of them are not objects"
+        lines.append(line + "; those keys are not read as paths")
+    return lines
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="which files added in a markets-data range have a manifest entry")
     ap.add_argument("--data", required=True, help="a markets-data checkout")
@@ -110,32 +161,63 @@ def main(argv: list[str] | None = None) -> int:
         _git(data, "rev-parse", "--verify", lo + "^{commit}")
         b = _git(data, "rev-parse", "--verify", hi + "^{commit}").decode().strip()
         added = _added(data, lo, hi)
-        read, not_read = _manifests(data, b)
+        names = _tree(data, b)
+        read, not_read = _manifests(data, b, names)
     except Unreadable as e:
         print(f"cannot read the range {a.rng} in {data}: {e}")
         return 2
     for p in not_read:
         print(f"manifest {p}: its shape was not read")
-    with_entry = no_entry = gone = 0
+    unread = _manifests_not_path_read(read)
+    for line in unread:
+        print(line)
+    with_entry = no_entry = under_folder = gone = 0
     for p in added:
-        blob = _blob(data, b, p)
+        try:
+            exists = p in names
+            blob = _blob(data, b, p) if exists else None
+        except Unreadable as e:
+            print(f"cannot read {p} at {b} in {data}: {e}")
+            return 2
         if blob is None:
             gone += 1
-        held = []
+        held, folders = [], []
         for m, ents in read.items():
             for e in ents:
-                if isinstance(e, dict) and any(e.get(k) == p for k in PATH_KEYS):
-                    held.append(f"{m}: " + (_compare(e, blob) if blob is not None else "file gone at B, nothing compared"))
+                if not isinstance(e, dict):
+                    continue
+                file_hows, folder_hows = [], []
+                for k in PATH_KEYS:
+                    v = e.get(k)
+                    if not isinstance(v, str):
+                        continue
+                    for full, how in _spellings(m, v):
+                        if v.endswith("/"):
+                            if full != "" and p.startswith(full) and how not in folder_hows:
+                                folder_hows.append(how)
+                        elif full == p and how not in file_hows:
+                            file_hows.append(how)
+                if file_hows:
+                    what = _compare(e, blob) if blob is not None else "file gone at B, nothing compared"
+                    held.append(f"{m}: {what} ({' and '.join(file_hows)})")
+                elif folder_hows:
+                    folders.append(f"{m}: this manifest names its folder in an entry "
+                                   f"({' and '.join(folder_hows)}), not this file")
         where = "gone at B | bytes at B none" if blob is None else f"exists at B | bytes at B {len(blob)}"
         if held:
             with_entry += 1
             tail = " | ".join(held)
+        elif folders:
+            under_folder += 1
+            tail = " | ".join(folders)
         else:
             no_entry += 1
             tail = "no manifest holds an entry for it"
         print(f"{p} | {where} | {tail}")
-    print(f"COUNTS added={len(added)} with_entry={with_entry} no_entry={no_entry} gone_at_B={gone} "
-          f"manifests_read={len(read)} manifests_shape_not_read={len(not_read)}")
+    print(f"COUNTS added={len(added)} with_entry={with_entry} no_entry={no_entry} "
+          f"under_a_folder_entry={under_folder} gone_at_B={gone} "
+          f"manifests_read={len(read)} manifests_shape_not_read={len(not_read)} "
+          f"manifests_with_entries_not_read={len(unread)}")
     return 0
 
 
