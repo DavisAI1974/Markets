@@ -306,36 +306,43 @@ def test_missing_names_runs_with_a_plan_or_kept_transcript_and_no_line(scratch, 
     assert f"plan or kept transcript with no line {n};" in [l for l in out.splitlines() if l.startswith("COUNTS")][0]
 
 
-def test_missing_with_live_counts_on_the_record_as_it_was_at_7de89a4(tmp_path, capsys):
+def _show(commit, rel):
+    r = subprocess.run(["git", "-C", str(data_root()), "show", f"{commit}:{rel}"], capture_output=True)
+    if r.returncode != 0:
+        pytest.skip(f"markets-data has no {rel} at {commit}")
+    return r.stdout
+
+
+def test_missing_with_live_counts_on_the_record_as_it_was_at_5af204d1(tmp_path, capsys):
+    # The record, plans and kept transcripts as they were at markets-data commit 5af204d1 (2026-11-24T17:37:07Z).
+    # The live folder holds two real transcripts, each a byte-for-byte copy:
+    #   run 157's, kept at 5af204d1 (its sidecar there carries tie_note "the brief names no run ...": its brief opens
+    #     "You are scout run 157", which the code's reading of a brief does not take for a run), and
+    #   run 162's, NOT kept at 5af204d1 (first kept by f350c321, 2026-11-24T17:40:13Z; its brief opens
+    #     "You are the scout, agent run 162"), and run 162 has no line in the record at 5af204d1.
+    # The expected figures are literals read with these commands (M=/home/user/markets-data, P=PAPER):
+    #   git -C $M show 5af204d1:$P/transcripts/run-0157.json | jq .tie_note        -> the "names no run" note
+    #   git -C $M ls-tree --name-only 5af204d1 -- $P/transcripts/run-0162.jsonl.gz | wc -l           -> 0
+    #   git -C $M show 5af204d1:$P/agent-runs.jsonl | jq -c 'select(.run==162)' | wc -l               -> 0
+    #   git -C $M log --diff-filter=A --format=%h -- $P/transcripts/run-0162.jsonl.gz                  -> f350c321
+    #   git -C $M show f350c321:$P/transcripts/run-0162.jsonl.gz | zcat | head -1 | jq -r .message.content
+    #                                                                       -> "You are the scout, agent run 162 ..."
+    # so: 2 live transcripts, 1 names one run (162), 1 names none (157), 1 with no line (162), 1 not kept (162).
     data_root()
+    commit, later = "5af204d1", "f350c321"
     d, live_dir = tmp_path / "d", tmp_path / "live"
-    _record_as_of("7de89a4", d, PAPER)
+    _record_as_of(commit, d, PAPER)
     live_dir.mkdir()
-    k = d / PAPER / "transcripts"
-    gzs = sorted(k.glob("run-*.jsonl.gz"))
-    assert gzs
-    # which run each transcript is comes from the kept sidecars at that commit (their own `run` and `agent_id`),
-    # never from reading the briefs again
-    runs = []
-    for g in gzs:
-        side = json.loads((k / (g.name[:-9] + ".json")).read_text())
-        raw = gzip.decompress(g.read_bytes())
-        assert json.loads(raw.decode().splitlines()[0])["agentId"] == side["agent_id"]
-        (live_dir / g.name[:-3]).write_bytes(raw)
-        runs.append(side["run"])
-    lined = {json.loads(l)["run"] for l in (d / PAPER / "agent-runs.jsonl").read_text().splitlines() if l.strip()}
+    rel = PAPER + "/transcripts/run-"
+    assert json.loads(_show(commit, rel + "0157.json"))["tie_note"].startswith("the brief names no run")
+    assert not (d / PAPER / "transcripts" / "run-0162.jsonl.gz").exists()
+    (live_dir / "agent-a9e48461f5f4f0068.jsonl").write_bytes(gzip.decompress(_show(commit, rel + "0157.jsonl.gz")))
+    (live_dir / "agent-run162.jsonl").write_bytes(gzip.decompress(_show(later, rel + "0162.jsonl.gz")))
     assert main(["missing", "--data", str(d), "--live", str(live_dir)]) == 0
     counts = [l for l in capsys.readouterr().out.splitlines() if l.startswith("COUNTS")][0]
-    n = len(runs)
-    # read by another route than the code's: each kept sidecar at that commit carries a tie_note exactly when its
-    # brief names no run, and a live file is kept when its sha256 is in a sidecar (hashed here, not counted by the code)
-    sides = [json.loads(q.read_text()) for q in sorted(k.glob("run-*.json"))]
-    none_n = sum(1 for sd in sides if sd.get("tie_note"))
-    not_kept = sum(1 for g in gzs if hashlib.sha256(gzip.decompress(g.read_bytes())).hexdigest()
-                   not in {sd["sha256"] for sd in sides})
-    assert f"live transcripts {n}, of which {n - none_n} name one run and {none_n} name none" in counts
-    assert f"live transcripts with no line {len(set(runs) - lined)}," in counts
-    assert f"live transcripts not kept {not_kept};" in counts
+    assert "live transcripts 2, of which 1 name one run and 1 name none" in counts
+    assert "live transcripts with no line 1," in counts
+    assert "live transcripts not kept 1;" in counts
 
 
 def test_missing_names_a_live_transcript_that_names_no_run_and_two_that_name_one(paper, tmp_path, capsys):
@@ -728,7 +735,8 @@ def test_trap_the_same_agent_id_under_another_run_is_refused_on_its_line_alone(t
 
 def test_trap_a_line_whose_model_replies_differs_from_its_kept_transcript_is_named(scratch, paper, capsys):
     # change: run 154's real newest line (model_replies 10, the same as its kept transcript: unchanged, `missing` names no
-    # difference for it, asserted first) has its model_replies raised by one to 11; nothing else is touched
+    # difference for it, asserted first) has its model_replies raised by one to 11; the record is rewritten with every
+    # other line kept (the older run-154 line included) and the edited newest line written last
     shutil.copytree(paper / "transcripts", scratch / PAPER / "transcripts")
     rec = scratch / PAPER / "agent-runs.jsonl"
     d = _newest(rec, 154)
@@ -736,7 +744,39 @@ def test_trap_a_line_whose_model_replies_differs_from_its_kept_transcript_is_nam
     assert main(["missing", "--data", str(scratch)]) == 0
     assert not [l for l in capsys.readouterr().out.splitlines() if l.startswith("DIFFERS run 154") and "model_replies" in l]
     d["model_replies"] = 11
-    rec.write_text("".join(l + "\n" for l in rec.read_text().splitlines() if l.strip() and json.loads(l)["run"] != 154) + json.dumps(d) + "\n")
+    kept = [l for l in rec.read_text().splitlines() if l.strip()]
+    at = max(i for i, l in enumerate(kept) if json.loads(l)["run"] == 154)  # the newest run-154 line is the one edited
+    older = [l for i, l in enumerate(kept) if i != at]
+    assert sum(json.loads(l)["run"] == 154 for l in older) == 1  # the older run-154 line stays
+    rec.write_text("".join(l + "\n" for l in older) + json.dumps(d) + "\n")
     assert main(["missing", "--data", str(scratch)]) == 0
     mine = [l for l in capsys.readouterr().out.splitlines() if l.startswith("DIFFERS run 154")]
     assert any("model_replies: line 11, transcript 10" in l for l in mine)
+
+
+def test_append_of_a_run_stopped_before_its_first_reply_writes_the_plans_model_and_says_so(scratch, paper, capsys):
+    # real: run 179's kept transcript (12 lines, no model reply; its own line was once written with an empty model,
+    # which stopped the graph's loader: "AgentRun run:0179: missing model") and its plan (model claude-sonnet-5-5)
+    # change: none to a real record's lines; the scratch copy of the record gets one more line for run 179 (--corrects)
+    t = paper / "transcripts/run-0179.jsonl.gz"
+    assert json.loads(gzip.decompress(t.read_bytes()).decode().splitlines()[0])["agentId"] == "a5652df7593c7c86d"
+    assert main(["figures", "--transcript", str(t)]) == 0
+    assert json.loads(capsys.readouterr().out)["models"] == []
+    plan_model = json.loads((paper / "run-plans/run-0179.json").read_text())["model"]
+    assert plan_model == "claude-sonnet-5-5"
+    rec = scratch / PAPER / "agent-runs.jsonl"
+    assert main(_append_args(scratch, t, 179, "--corrects", "the first line of run 179") + []) == 0
+    new = _newest(rec, 179)
+    assert new["model"] == plan_model
+    assert "plan" in new["model_note"] and "no model reply" in new["model_note"]
+    assert new["model_replies"] == 0
+
+
+def test_append_of_a_transcript_with_no_model_reply_and_no_plan_is_refused(scratch, paper, capsys):
+    # change: the scratch copy of run-plans loses run 179's plan file; the record is untouched
+    t = paper / "transcripts/run-0179.jsonl.gz"
+    (scratch / PAPER / "run-plans/run-0179.json").unlink()
+    before = (scratch / PAPER / "agent-runs.jsonl").read_text()
+    assert main(_append_args(scratch, t, 179, "--corrects", "x")) == 2
+    assert "no model reply" in capsys.readouterr().err
+    assert (scratch / PAPER / "agent-runs.jsonl").read_text() == before

@@ -4,9 +4,11 @@ later-over-earlier link, and the date fault that must not return.
 
 Every check works on a scratch copy of the REAL graph of the markets-data checkout (the nodes and links
 only, copied to a scratch folder); nothing is written into markets-data and no claim is made up. The one
-case the real graph does not hold sits apart at the foot of the file."""
+case the real graph does not hold (a refusal, a claim added after the last pass) sits apart at the foot of
+the file."""
 
 import json
+import re
 import shutil
 
 import pytest
@@ -22,7 +24,9 @@ NEW_1124 = "claim:eeeda142ddb2"      # NEXT_SESSION_HANDOFF_20261124X.md line 4:
 OLD_1123 = "claim:69e43c1bcaf7"      # NEXT_SESSION_HANDOFF_20261123U.md line 3: file date 2026-11-23, same folder
 FOLDER_DATE, FILE_DATES = "20261022", ("20261124", "20261123")
 READ = "run:0022"                   # a real read of the graph (256 claims); 9 of the 32 hand-made links of run 96 rest on it
+SMALL_READ = "run:0023"             # a real read; 1 of the hand-made links rests on it
 APPLIER = "run:0096"                # a real AgentRun of the graph
+HAND_PAIRS = "graph/reads/run-0096-consolidate-pairs.json"
 
 
 @pytest.fixture()
@@ -35,6 +39,144 @@ def scratch(tmp_path):
 
 def run_cmd(mod, root, g, *argv):
     return mod.main(["--data", str(root), "--graph-dir", str(g), *argv])
+
+
+def hand_pairs(root, read):
+    p = root / HAND_PAIRS
+    if not p.exists():
+        pytest.skip(f"{HAND_PAIRS} is not in this markets-data checkout")
+    store = GraphStore(root)
+    return [x for x in json.loads(p.read_text(encoding="utf-8"))["pairs"] if store.node(x["new"])["attrs"]["extracted_by"] == read]
+
+
+def take_back_hand_links(root, g, pairs, capsys):
+    """Take back, on the scratch copy, the real links of run 96 that rest on the chosen read, so the pass can be made again."""
+    store = GraphStore(root, graph_dir=g)
+    by = {(e["src"], e["dst"]): e["id"] for e in store.edges("SUPERSEDES")}
+    for x in pairs:
+        run_cmd(resolve, root, g, "undo", "--edge", by[(x["new"], x["old"])], "--reason", "the pass is made again on a scratch copy", "--run", APPLIER)
+    capsys.readouterr()
+
+
+def brief_pairs(text):
+    """The pairs of a brief: (later id, later date, earlier id, earlier date, [shared entity ids], section)."""
+    out, section = [], None
+    for blk in re.split(r"\n(?=### pair )", text)[1:]:
+        later = re.search(r"^later: (claim:\w+) \| (\S+) \|", blk, re.M)
+        earlier = re.search(r"^earlier: (claim:\w+) \| (\S+) \|", blk, re.M)
+        shared = re.findall(r" \[([^\[\]]+)\](?:; |$)", re.search(r"^shared: (.*)$", blk, re.M).group(1))
+        out.append((later[1], later[2], earlier[1], earlier[2], shared))
+    return out
+
+
+def counts_line(out, read):
+    m = re.search(rf"{read}: claims_added=(\d+) claims_with_a_candidate=(\d+) pairs=(\d+)", out)
+    return tuple(int(x) for x in m.groups())
+
+
+def status(root, g, capsys):
+    assert run_cmd(consolidate, root, g, "status") == 0
+    out = capsys.readouterr().out
+    reads = {}
+    for m in re.finditer(r"^(run:\w+) \| claims=(\d+) \| (through the step|not yet)", out, re.M):
+        reads[m[1]] = (int(m[2]), m[3])
+    c = dict(re.findall(r"(\w+)=(\d+)", out.strip().splitlines()[-1]))
+    assert out.strip().splitlines()[-1].startswith("COUNTS ")
+    return reads, {k: int(v) for k, v in c.items()}, out
+
+
+def test_a_brief_names_only_the_reads_claims_and_every_pair_shares_an_entity_with_the_earlier_dated_earlier(scratch, capsys, tmp_path):
+    root, g = scratch
+    out_file = tmp_path / "brief.txt"
+    assert run_cmd(consolidate, root, g, "brief", "--read", READ, "--out", str(out_file)) == 0
+    printed = capsys.readouterr().out
+    store = GraphStore(root, graph_dir=g)
+    added = {n["id"] for n in store.nodes("Claim") if n["attrs"].get("extracted_by") == READ}
+    pairs = brief_pairs(out_file.read_text(encoding="utf-8"))
+    ment, canon = {}, {}
+    for e in store.edges("MENTIONS"):
+        if e["dst"] not in canon:
+            canon[e["dst"]] = resolve.canonical(store, e["dst"])
+        ment.setdefault(e["src"], set()).add(canon[e["dst"]])
+    standing = {(e["src"], e["dst"]) for e in store.edges("SUPERSEDES")} | {(e["dst"], e["src"]) for e in store.edges("SUPERSEDES")}
+    assert pairs
+    seen = set()
+    for later, ldate, earlier, edate, shared in pairs:
+        assert later in added and earlier != later                          # the later side is the read's claim, only
+        assert shared and set(shared) <= ment[later] & ment[earlier]       # they share a mentioned Entity
+        assert (later, earlier) not in standing and (later, earlier) not in seen
+        seen.add((later, earlier))
+        if ldate != "undated" and edate != "undated":                      # the earlier is dated earlier
+            assert edate <= ldate                                          # earlier date, or the same date (the reader orders those)
+            assert resolve._when(store, store.node(earlier), None)[0] == edate and resolve._when(store, store.node(later), None)[0] == ldate
+        else:                                                              # a claim with no date cannot be placed by one: it is listed, not cut
+            assert "undated" in (ldate, edate)
+    # every candidate is in the brief: the same rule worked out apart, claim by claim
+    want = set()
+    all_claims = store.nodes("Claim")
+    days = {o["id"]: resolve._when(store, o, None)[0] for o in all_claims}
+    for cid in added:
+        a = days[cid]
+        for o in all_claims:
+            if o["id"] == cid or (cid, o["id"]) in standing or not (ment.get(cid, set()) & ment.get(o["id"], set())):
+                continue
+            b = days[o["id"]]
+            if (a and b and b <= a) or not (a and b):
+                want.add((cid, o["id"]))
+    assert seen == want
+    n_added, n_with, n_pairs = counts_line(printed, READ)
+    assert n_added == len(added) == 256 and n_pairs == len(pairs) and n_with == len({p[0] for p in pairs})
+
+
+def test_before_any_apply_every_claim_of_a_real_read_is_not_yet_and_after_apply_the_read_is_through_the_step(scratch, capsys, tmp_path):
+    root, g = scratch
+    reads, counts, _ = status(root, g, capsys)
+    assert reads[READ] == (256, "not yet")
+    assert all(v[1] == "not yet" for v in reads.values())                  # the hand pass of run 96 left no Task: not yet is what is so
+    store = GraphStore(root, graph_dir=g)
+    assert counts == {"claims": len(store.nodes("Claim")), "through_the_step": 0, "not_yet": len(store.nodes("Claim")),
+                      "reads": len(reads), "reads_not_yet": len(reads)}
+    # the pass is made again on the real pairs of run 96 that rest on this read
+    pairs = hand_pairs(root, READ)
+    assert len(pairs) == 9
+    take_back_hand_links(root, g, pairs, capsys)
+    run_cmd(consolidate, root, g, "brief", "--read", READ, "--out", str(tmp_path / "b.txt"))
+    n_pairs = counts_line(capsys.readouterr().out, READ)[2]
+    in_brief = {(p[0], p[2]) for p in brief_pairs((tmp_path / "b.txt").read_text(encoding="utf-8"))}
+    shares = [x for x in pairs if (x["new"], x["old"]) in in_brief]
+    assert len(shares) == 3                                                 # the other 6 of the hand pass share no Entity with their earlier claim: the brief cannot reach them
+    pf = tmp_path / "pairs.json"
+    pf.write_text(json.dumps({"pairs": pairs}), encoding="utf-8")
+    assert run_cmd(consolidate, root, g, "apply", "--read", READ, "--pairs", str(pf), "--run", APPLIER) == 0
+    res = json.loads(capsys.readouterr().out)
+    assert len(res["applied"]) == 9 and res["refused"] == [] and res["candidate_pairs"] == n_pairs
+    store = GraphStore(root, graph_dir=g)
+    for x in pairs:
+        assert any(e["src"] == x["new"] and e["dst"] == x["old"] and e["attrs"]["why"] == x["why"] and e["attrs"]["made_by"] == APPLIER
+                   for e in store.edges("SUPERSEDES"))
+    task = store.node(res["task"])
+    assert task["type"] == "Task" and task["attrs"]["state"] == "done"
+    assert (task["attrs"]["read"], task["attrs"]["applied_by"], task["attrs"]["candidate_pairs"]) == (READ, APPLIER, n_pairs)
+    assert (task["attrs"]["pairs_applied"], task["attrs"]["pairs_refused"]) == (9, 0)
+    assert store.check_all() == []
+    reads, counts, out = status(root, g, capsys)
+    assert reads[READ] == (256, "through the step") and sum(1 for v in reads.values() if v[1] == "not yet") == len(reads) - 1
+    assert counts["through_the_step"] == 256 and counts["not_yet"] == counts["claims"] - 256
+    assert counts["reads_not_yet"] == counts["reads"] - 1
+
+
+def test_an_empty_pairs_file_is_a_real_answer_and_the_read_is_through_the_step(scratch, capsys, tmp_path):
+    root, g = scratch
+    pf = tmp_path / "none.json"
+    pf.write_text(json.dumps({"pairs": []}), encoding="utf-8")
+    before = len(GraphStore(root, graph_dir=g).edges("SUPERSEDES"))
+    assert run_cmd(consolidate, root, g, "apply", "--read", SMALL_READ, "--pairs", str(pf), "--run", APPLIER) == 0
+    res = json.loads(capsys.readouterr().out)
+    assert res["applied"] == [] and res["refused"] == []
+    store = GraphStore(root, graph_dir=g)
+    assert len(store.edges("SUPERSEDES")) == before
+    reads, counts, _ = status(root, g, capsys)
+    assert reads[SMALL_READ] == (150, "through the step") and counts["through_the_step"] == 150
 
 
 def test_undo_takes_back_a_later_over_earlier_link_and_it_stays_on_record_as_withdrawn(scratch, capsys):
@@ -73,3 +215,41 @@ def test_the_date_fault_cannot_return_supersede_reads_the_files_date_not_the_fol
     # and the wrong way round is refused for its dates, so the dates really are compared
     with pytest.raises(schema.Refused, match="2026-11-23 against 2026-11-24"):
         resolve.supersede(store, OLD_1123, NEW_1124, "date check", "code:test")
+
+
+# ==== CASES THE REAL GRAPH DOES NOT HOLD (each a real node or line with exactly the named thing changed) ====
+
+def test_a_pair_supersede_refuses_is_printed_and_counted_never_dropped_and_a_second_apply_is_refused(scratch, capsys, tmp_path):
+    root, g = scratch
+    real = hand_pairs(root, SMALL_READ)[0]
+    take_back_hand_links(root, g, [real], capsys)
+    # change: the real pair of run 96 with its two claims turned the other way round (the earlier set over the later)
+    turned = {"new": real["old"], "old": real["new"], "why": "the earlier claim set over the later one"}
+    pf = tmp_path / "pairs.json"
+    pf.write_text(json.dumps({"pairs": [real, turned]}), encoding="utf-8")
+    assert run_cmd(consolidate, root, g, "apply", "--read", SMALL_READ, "--pairs", str(pf), "--run", APPLIER) == 0
+    res = json.loads(capsys.readouterr().out)
+    assert len(res["applied"]) == 1 and len(res["refused"]) == 1
+    assert res["refused"][0]["new"] == turned["new"] and "was made earlier than" in res["refused"][0]["refusal"]
+    task = GraphStore(root, graph_dir=g).node(res["task"])
+    assert (task["attrs"]["pairs_applied"], task["attrs"]["pairs_refused"]) == (1, 1)
+    with pytest.raises(schema.Refused, match="already been through the step"):
+        consolidate.apply(GraphStore(root, graph_dir=g), SMALL_READ, [real], APPLIER)
+
+
+def test_a_claim_added_after_the_last_pass_is_listed_as_not_yet(scratch, capsys, tmp_path):
+    root, g = scratch
+    pf = tmp_path / "none.json"
+    pf.write_text(json.dumps({"pairs": []}), encoding="utf-8")
+    run_cmd(consolidate, root, g, "apply", "--read", SMALL_READ, "--pairs", str(pf), "--run", APPLIER)
+    capsys.readouterr()
+    store = GraphStore(root, graph_dir=g)
+    real = store.node("claim:eeeda142ddb2")
+    # change: a copy of this real claim with a new id and `extracted_by` a read made after the pass ("run:0099")
+    added = {"id": "claim:ffffffffffff", "type": "Claim", "attrs": dict(real["attrs"], extracted_by="run:0099")}
+    supports = {"id": "e:ffffffffffff", "type": "SUPPORTS", "src": real["attrs"]["source"], "dst": added["id"], "attrs": {}}   # as its source's link to the real claim
+    store.write([added], [supports], written_by="code:test")
+    reads, counts, out = status(root, g, capsys)
+    assert reads["run:0099"] == (1, "not yet") and reads[SMALL_READ] == (150, "through the step")
+    assert counts["through_the_step"] == 150 and counts["not_yet"] == counts["claims"] - 150
+    assert counts["reads_not_yet"] == counts["reads"] - 1

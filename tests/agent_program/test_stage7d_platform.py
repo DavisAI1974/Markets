@@ -4,6 +4,7 @@ cannot be fetched is skipped with the reason. Writes go to a scratch graph and a
 Nothing is scored: no result figure, no mid, no cost."""
 
 import json
+import subprocess
 
 import pytest
 
@@ -141,3 +142,48 @@ def test_no_mid_no_cost_no_result_figure(made):
     assert bad == [], bad
     assert "open_profit" not in keys and "highest_open_profit" not in keys
     assert store.check_all() == []
+
+
+# ---- the fetch of a run's branch leaves the checkout whole (real records, a scratch copy) -------------
+
+BRANCH = "ccr-144315dd-pta2ze"
+
+
+def _g(cwd, *args):
+    r = subprocess.run(["git", "-C", str(cwd), *args], capture_output=True, text=True)
+    assert r.returncode == 0, f"git {' '.join(args)}: {r.stderr}"
+    return r.stdout.strip()
+
+
+@pytest.fixture(scope="module")
+def scratch_checkout(tmp_path_factory):
+    """A copy of the real data checkout's working branch (about 1 GB, made once) whose origin holds the real run branch.
+    The real checkout keeps its run branches under refs/remotes/paper-runs/, the form `ensure_run` reads, not under
+    refs/heads/; so the origin of the copy is a bare scratch repository that carries the real branch of the run as
+    refs/heads/paper-runs/<run>, fetched whole from the real checkout. Nothing is written into the real checkout."""
+    real = data_root()
+    src = f"refs/remotes/paper-runs/{RUNS[0]}"
+    if subprocess.run(["git", "-C", str(real), "rev-parse", "--verify", "-q", src], capture_output=True).returncode:
+        pytest.skip(f"the real checkout holds no {src}")
+    base = tmp_path_factory.mktemp("scratch_checkout")
+    origin = base / "origin.git"
+    _g(base, "init", "-q", "--bare", str(origin))
+    _g(origin, "fetch", "-q", "--no-tags", f"file://{real}", f"+{src}:refs/heads/paper-runs/{RUNS[0]}")
+    copy = base / "checkout"
+    r = subprocess.run(["git", "clone", "-q", "--no-hardlinks", "--single-branch", "--branch", BRANCH,
+                        f"file://{real}", str(copy)], capture_output=True, text=True)
+    if r.returncode:
+        pytest.skip(f"the scratch copy of {BRANCH} cannot be made: {r.stderr.strip()}")
+    _g(copy, "remote", "set-url", "origin", f"file://{origin}")
+    return copy
+
+
+def test_fetching_a_real_run_branch_leaves_the_checkout_not_shallow(scratch_checkout):
+    copy = scratch_checkout
+    assert _g(copy, "rev-parse", "--is-shallow-repository") == "false"
+    ref = ipf.run_ref(RUNS[0])
+    assert subprocess.run(["git", "-C", str(copy), "rev-parse", "--verify", "-q", ref], capture_output=True).returncode
+    ipf.ensure_run(copy, RUNS[0])
+    assert _g(copy, "rev-parse", "--verify", ref)
+    assert _g(copy, "rev-parse", "--is-shallow-repository") == "false"
+    assert not (copy / ".git" / "shallow").exists()
