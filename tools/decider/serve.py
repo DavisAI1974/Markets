@@ -1,0 +1,236 @@
+"""Watch a platform mailbox, hand each question to an agent as a brief, turn the agent's decision into the answer.
+
+  python3 -m tools.decider.serve --mailbox <folder> --data <markets-data> --platform <checkout> --budget <tokens>
+        --by <agent run> [--graph-dir D] [--poll-s N] [--max-wall-clock-s N] [--once]
+
+A question folder `q-<sequence>/` moves through these files, each written whole (temp name, then rename):
+  question.json (platform) -> brief.md + packet.json (here) -> decision.json (the agent) -> answer.json (here).
+  A packet that fails its own leak check, or cannot be built, gets refused.json and a skip answer.
+  A decision that is not valid is kept as decision.rejected.json and answered skip.
+One line a question goes to <mailbox>/decisions.jsonl. Nothing is added up across lines.
+No model is called here; no network; nothing is read from the tape.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import sys
+import time
+from pathlib import Path
+
+from tools.kgraph import signal_packet as sp
+from tools.kgraph.store import GraphStore
+
+BY_DEFAULT = "decider"
+
+
+def build_packet(rows, sequence, budget, store, platform_dir):
+    """The one place a packet is built. A check swaps this to hand over a packet made to breach."""
+    return sp.build(rows, sequence, budget, store=store, platform_dir=platform_dir)
+
+
+def write_whole(path: Path, text: str):
+    tmp = path.with_name(path.name + ".part")
+    tmp.write_text(text, encoding="utf8")
+    os.replace(tmp, path)
+
+
+def write_json(path: Path, obj):
+    write_whole(path, json.dumps(obj, sort_keys=True, indent=2) + "\n")
+
+
+def read_json(path: Path):
+    try:
+        return json.loads(path.read_text(encoding="utf8")), None
+    except (OSError, ValueError) as e:
+        return None, f"not readable: {type(e).__name__}"
+
+
+def question_folders(mailbox: Path):
+    found = []
+    for p in mailbox.glob("q-*"):
+        m = re.fullmatch(r"q-(\d+)", p.name)
+        if m and p.is_dir() and (p / "question.json").exists():
+            found.append((int(m.group(1)), p))
+    return [p for _, p in sorted(found)]
+
+
+BRIEF = """You are the decider for one paper trade on Greg's own paper-trading platform. A rule has fired on the stored
+tape and wants to open a trade. Say take or skip.
+
+THE RULES YOU DECIDE UNDER
+- Decide from the packet below alone. Nothing else is given and nothing else counts.
+- Every reason names the lines of the packet it rests on, by their ids (the text before the first " | " of a line).
+- Say skip when the packet gives no ground to take.
+- The hold rule in force is "hold until the trade gives back 20% of its highest open profit". It is not yours to change.
+- There is no trade cost and no mid price in this decision; the packet shows bid and ask side by side as stored.
+
+THE QUESTION
+signal journal sequence {sequence}; rule {rule}; side {side}; trade_id {trade_id}.
+
+THE PACKET ({tokens} tokens estimated at 4 characters a token; sha256 {sha})
+----- packet begins -----
+{packet}----- packet ends -----
+
+HOW TO REPLY
+Write q-{sequence}/decision.json in the mailbox ({box}) as one JSON object:
+  {{"action": "take" | "skip", "why": "<one sentence>", "rests_on": ["<id of a packet line>", ...]}}
+at least one id, every id one that stands in the packet.
+(Or: python3 -m tools.decider.answer --mailbox {mailbox} --sequence {sequence} --action take|skip --why "<one sentence>" --rests-on <id> ...)
+"""
+
+
+def ids_of(pk):
+    return [l["source"] for l in pk["lines"]]
+
+
+def make_brief(q, pk, box: Path):
+    return BRIEF.format(sequence=q["sequence"], rule=q.get("rule"), side=q.get("side"), trade_id=q.get("trade_id"),
+                        tokens=pk["tokens_estimated"], sha=pk["sha256"], packet=pk["text"], box=box,
+                        mailbox=box.parent)
+
+
+def validate_decision(d, ids):
+    """The reason a decision is not valid, or None."""
+    if not isinstance(d, dict):
+        return "the decision is not one JSON object"
+    if d.keys() - {"action", "why", "rests_on"}:
+        return "unknown field: " + ", ".join(sorted(d.keys() - {"action", "why", "rests_on"}))
+    if d.get("action") not in ("take", "skip"):
+        return "action is not take or skip"
+    why = d.get("why")
+    if not isinstance(why, str) or not why.strip():
+        return "why is missing or empty"
+    if "\n" in why.strip():
+        return "why is more than one line"
+    rests = d.get("rests_on")
+    if not isinstance(rests, list) or not rests:
+        return "rests_on names no line of the packet"
+    if not all(isinstance(r, str) for r in rests):
+        return "rests_on holds something that is not an id"
+    unknown = [r for r in rests if r not in ids]
+    if unknown:
+        return "rests_on names ids that are not in the packet: " + ", ".join(unknown)
+    return None
+
+
+class Server:
+    def __init__(self, mailbox, data, platform, budget, by, graph_dir=None, clock_ns=time.time_ns):
+        self.mailbox, self.budget, self.by, self.platform = Path(mailbox), budget, by, platform
+        self.store = GraphStore(data, graph_dir=graph_dir)
+        self.clock_ns = clock_ns
+        self.journals = {}                       # path -> (size, rows)
+
+    def rows(self, path):
+        size = os.stat(path).st_size
+        c = self.journals.get(path)
+        if c is None or c[0] != size:
+            c = (size, sp.journal_from_file(path))
+            self.journals[path] = c
+        return c[1]
+
+    # -- one log line a question
+    def log(self, box, q, pk, answer, source, reason, rests_on=None):
+        qmtime = (box / "question.json").stat().st_mtime_ns
+        line = {"sequence": q["sequence"], "rule": q.get("rule"), "side": q.get("side"), "trade_id": q.get("trade_id"),
+                "tape_received_ns": q.get("tape_received_ns"),
+                "packet_sha256": pk["sha256"] if pk else None,
+                "packet_tokens_estimated_chars_div_4": pk["tokens_estimated"] if pk else None,
+                "lines_in": pk["lines_in"] if pk else None,
+                "lines_cut": pk["lines_cut"] if pk else None,
+                "action": answer["action"], "why": answer["why"], "rests_on": rests_on, "by": answer["by"],
+                "wall_ms_question_to_decision": round((self.clock_ns() - qmtime) / 1e6, 3),
+                "answered_by": source, "skip_reason": reason}
+        with open(self.mailbox / "decisions.jsonl", "a", encoding="utf8") as f:
+            f.write(json.dumps(line, sort_keys=True) + "\n")
+
+    def answer(self, box, q, action, why, pk):
+        a = {"id": f"decision-{q['sequence']}", "action": action, "asked_at_sequence": q["sequence"], "by": self.by,
+             "why": why, "packet": {"sha256": pk["sha256"], "tokens": pk["tokens_estimated"]} if pk else None}
+        write_json(box / "answer.json", a)
+        return a
+
+    def refuse(self, box, q, pk, what):
+        if pk:
+            pk = {"sha256": pk["sha256"], "tokens_estimated": pk["tokens_estimated"], "lines_in": len(pk["lines"]),
+                  "lines_cut": sum(pk["cut"].values())}
+        write_json(box / "refused.json", {"sequence": q["sequence"], "breach": what})
+        why = f"the packet failed its own leak check: {'; '.join(what)}"
+        self.log(box, q, pk, self.answer(box, q, "skip", why, pk), "this code", why)
+
+    def brief(self, box):
+        q, bad = read_json(box / "question.json")
+        if bad or not isinstance(q, dict) or type(q.get("sequence")) is not int or not isinstance(q.get("journal"), str):
+            return                                         # not whole yet, or not a question; left alone
+        pk = None
+        try:
+            rows = self.rows(q["journal"])
+            pk = build_packet(rows, q["sequence"], self.budget, self.store, self.platform)
+            breach = sp.leakage_check(pk, store=self.store, journal_rows=rows)
+        except (OSError, ValueError, KeyError) as e:
+            return self.refuse(box, q, None, [f"the packet could not be built: {type(e).__name__}: {e}"])
+        if breach:
+            return self.refuse(box, q, pk, breach)
+        write_json(box / "packet.json", {"sha256": pk["sha256"], "tokens_estimated": pk["tokens_estimated"],
+                                         "ids": ids_of(pk), "lines_in": len(pk["lines"]),
+                                         "lines_cut": sum(pk["cut"].values())})
+        write_whole(box / "brief.md", make_brief(q, pk, box))
+
+    def settle(self, box):
+        q, _ = read_json(box / "question.json")
+        meta, _ = read_json(box / "packet.json")
+        d, bad = read_json(box / "decision.json")
+        if bad:
+            return                                          # maybe half written; the next pass reads it again
+        pk = meta
+        reason = validate_decision(d, meta["ids"])
+        if reason:
+            write_json(box / "decision.rejected.json", {"reason": reason, "decision": d})
+            why = f"the decider's answer was not valid: {reason}"
+            self.log(box, q, pk, self.answer(box, q, "skip", why, pk), "this code", why)
+            return
+        a = self.answer(box, q, d["action"], d["why"].strip(), pk)
+        self.log(box, q, pk, a, "the decider", None, rests_on=d["rests_on"])
+
+    def once(self):
+        """One pass: briefs for new questions, answers for new decisions. Returns the number of files it settled."""
+        n = 0
+        for box in question_folders(self.mailbox):
+            if (box / "answer.json").exists():
+                continue
+            if not (box / "brief.md").exists() and not (box / "refused.json").exists():
+                self.brief(box)
+                n += 1
+            if (box / "brief.md").exists() and (box / "decision.json").exists() and not (box / "answer.json").exists():
+                self.settle(box)
+                n += 1
+        return n
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    ap.add_argument("--mailbox", required=True)
+    ap.add_argument("--data", required=True)
+    ap.add_argument("--platform", required=True)
+    ap.add_argument("--budget", type=int, required=True, help="packet tokens")
+    ap.add_argument("--by", required=True)
+    ap.add_argument("--graph-dir")
+    ap.add_argument("--poll-s", type=float, default=1.0)
+    ap.add_argument("--max-wall-clock-s", type=float)
+    ap.add_argument("--once", action="store_true")
+    a = ap.parse_args(argv)
+    srv = Server(a.mailbox, a.data, a.platform, a.budget, a.by, a.graph_dir)
+    srv.mailbox.mkdir(parents=True, exist_ok=True)
+    stop = None if a.max_wall_clock_s is None else time.monotonic() + a.max_wall_clock_s
+    while True:
+        srv.once()
+        if a.once or (stop is not None and time.monotonic() >= stop):
+            return 0
+        time.sleep(a.poll_s)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
