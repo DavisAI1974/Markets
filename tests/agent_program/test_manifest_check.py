@@ -56,7 +56,8 @@ def test_d70527a_five_run_plans_added_no_manifest_holds_them(capsys):
     assert code == 0
     c = _counts(out)
     assert (c["added"], c["with_entry"], c["no_entry"], c["gone_at_B"]) == ("5", "0", "5", "0")
-    assert c["manifests_read"] == "14" and c["manifests_shape_not_read"] == "0"
+    assert c["manifests_read"] == "13" and c["manifests_shape_not_read"] == "1"
+    assert "manifest paper-rules/20261109/machine/PAPER_UNIVERSE_MANIFEST.json: its shape was not read" in out
     for n in range(157, 162):
         p = f"{PAPER}/run-plans/run-{n:04d}.json"
         rows = [ln for ln in out if ln.startswith(p + " |")]
