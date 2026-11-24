@@ -123,7 +123,7 @@ def _spellings(manifest: str, raw: str) -> list[tuple[str, str]]:
 
 
 def _is_path_entry(e) -> bool:
-    return isinstance(e, dict) and any(k in e for k in PATH_KEYS)
+    return isinstance(e, dict) and any(isinstance(e.get(k), str) for k in PATH_KEYS)
 
 
 def _manifests_not_path_read(read: dict[str, list]) -> list[str]:
@@ -138,6 +138,9 @@ def _manifests_not_path_read(read: dict[str, list]) -> list[str]:
                 f"\"markets_data_path\"; the keys those entries carry: {', '.join(keys) if keys else 'none'}")
         if not_objects:
             line += f"; {not_objects} of them are not objects"
+        not_strings = sum(1 for e in bad if isinstance(e, dict) and any(k in e for k in PATH_KEYS))
+        if not_strings:
+            line += f"; {not_strings} of them hold a path key that is not a string"
         lines.append(line + "; those keys are not read as paths")
     return lines
 
@@ -181,7 +184,7 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         if blob is None:
             gone += 1
-        held, folders = [], []
+        held, folders, passed = [], [], []
         for m, ents in read.items():
             for e in ents:
                 if not isinstance(e, dict):
@@ -191,7 +194,14 @@ def main(argv: list[str] | None = None) -> int:
                     v = e.get(k)
                     if not isinstance(v, str):
                         continue
-                    for full, how in _spellings(m, v):
+                    spell = _spellings(m, v)
+                    if not v.endswith("/") and len(spell) == 2 and spell[1][0] in names:
+                        # both readings name a file: the entry means the one in the manifest's folder
+                        if spell[0][0] == p:
+                            passed.append(f"{m}: a manifest names the same path in another folder, its entry "
+                                          f"\"{v}\" is the file {spell[1][0]}; not counted as its entry")
+                        spell = spell[1:]
+                    for full, how in spell:
                         if v.endswith("/"):
                             if full != "" and p.startswith(full) and how not in folder_hows:
                                 folder_hows.append(how)
@@ -213,6 +223,8 @@ def main(argv: list[str] | None = None) -> int:
         else:
             no_entry += 1
             tail = "no manifest holds an entry for it"
+        if passed:
+            tail += " | " + " | ".join(passed)
         print(f"{p} | {where} | {tail}")
     print(f"COUNTS added={len(added)} with_entry={with_entry} no_entry={no_entry} "
           f"under_a_folder_entry={under_folder} gone_at_B={gone} "

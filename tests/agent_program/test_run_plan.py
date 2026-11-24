@@ -447,6 +447,8 @@ def _plan_line_and_transcript_repo(tmp_path):
 
 
 def test_a_plan_file_given_with_plan_that_does_not_exist_is_refused_with_its_name(tmp_path, capsys):
+    # change: none to a real record. The case is a --plan path that does not exist (tmp_path/nope.json); the copy of
+    # run 117's plan, line and transcript is only what `_repo` builds, and no real line or plan is altered
     d = _repo(tmp_path)
     nope = tmp_path / "nope.json"
     rc = run_plan.main(["check", "--data", str(d), "--run", "117", "--plan", str(nope)])
@@ -500,7 +502,8 @@ def _three_commits(tmp_path):
 
 
 def test_a_shallow_clone_says_the_add_time_is_not_measured_and_is_exit_3(tmp_path, capsys):
-    # change: a real shallow clone (depth 1) of a repository whose plan was added at 13:08:54, before the run
+    # change: a real shallow clone (depth 1) of a repository whose plan was added at 13:08:54, before the run; and,
+    # after that, the clone's copy of the plan has max_tool_calls set to 999 (an edit that is not committed)
     src = _three_commits(tmp_path)
     clone = tmp_path / "shallow"
     subprocess.run(["git", "clone", "-q", "--depth", "1", f"file://{src}", str(clone)], check=True,
@@ -518,12 +521,71 @@ def test_a_shallow_clone_says_the_add_time_is_not_measured_and_is_exit_3(tmp_pat
 
 
 def test_a_grafted_history_says_the_add_time_is_not_measured_and_is_exit_3(tmp_path, capsys):
-    # change: git replace --graft makes the newest commit (14:00) a root commit, so it reads as the plan's add
+    # change: git replace --graft makes the newest commit (14:00) a root commit, so it reads as the plan's add;
+    # after that, the copy of the plan has max_tool_calls set to 999 (an edit that is not committed)
     d = _three_commits(tmp_path)
     _git(d, "replace", "--graft", "HEAD")
     rc = run_plan.main(["check", "--data", str(d), "--run", "117"])
     out = capsys.readouterr().out
     assert "is grafted, so the time the plan was added is not known" in out
+    assert "AFTER the run began" not in out
+    assert rc == 3
+    f = d / PAPER / "run-plans" / "run-0117.json"
+    plan = json.loads(f.read_text())
+    plan["max_tool_calls"] = 999  # something else already exit 1
+    f.write_text(json.dumps(plan, indent=1) + "\n")
+    rc = run_plan.main(["check", "--data", str(d), "--run", "117"])
+    assert "changed after it was written" in capsys.readouterr().out
+    assert rc == 1
+
+
+def test_a_grafted_history_made_with_info_grafts_is_not_measured_and_is_exit_3(tmp_path, capsys):
+    # git 2.43.0 on this machine still reads <GIT_DIR>/info/grafts (it prints a deprecation hint and shows the
+    # grafted commit as a root), so that branch of the code is kept and held here.
+    # change: the file .git/info/grafts names the newest commit (14:00) with no parent, so it is a root commit and
+    # reads as the plan's add
+    d = _three_commits(tmp_path)
+    head = subprocess.run(["git", "-C", str(d), "rev-parse", "HEAD"], capture_output=True, text=True,
+                          check=True).stdout.strip()
+    (d / ".git" / "info").mkdir(exist_ok=True)
+    (d / ".git" / "info" / "grafts").write_text(head + "\n")
+    assert subprocess.run(["git", "-C", str(d), "for-each-ref", "refs/replace"], capture_output=True,
+                          text=True).stdout.strip() == ""
+    rc = run_plan.main(["check", "--data", str(d), "--run", "117"])
+    out = capsys.readouterr().out
+    assert "is grafted, so the time the plan was added is not known" in out
+    assert rc == 3
+
+
+def _late_plan_clone(tmp_path, depth):
+    # change: the plan of run 117 is added at 14:00, AFTER the run began (13:10:23); a base commit (13:00) holds the
+    # line and the transcript and a later commit (14:30) follows; the check runs in a real clone of that history
+    src = _plan_line_and_transcript_repo(tmp_path)
+    _git(src, "add", PAPER + "/run-plans/run-0117.json")
+    _git(src, "commit", "-q", "-m", "late plan", when="2026-11-24T14:00:00+00:00")
+    (src / "other.txt").write_text("later")
+    _git(src, "add", "other.txt")
+    _git(src, "commit", "-q", "-m", "later", when="2026-11-24T14:30:00+00:00")
+    clone = tmp_path / f"clone{depth}"
+    subprocess.run(["git", "clone", "-q", "--depth", str(depth), f"file://{src}", str(clone)], check=True,
+                   capture_output=True)
+    return clone
+
+
+def test_a_late_plan_in_a_shallow_clone_past_its_add_is_exit_1(tmp_path, capsys):
+    clone = _late_plan_clone(tmp_path, 3)  # sees 14:30, 14:00 (the add) and 13:00 (the boundary)
+    rc = run_plan.main(["check", "--data", str(clone), "--run", "117"])
+    out = capsys.readouterr().out
+    assert "AFTER the run began" in out
+    assert "not measured: the history" not in out
+    assert rc == 1
+
+
+def test_a_late_plan_whose_add_is_the_shallow_boundary_is_not_measured_and_is_exit_3(tmp_path, capsys):
+    clone = _late_plan_clone(tmp_path, 1)  # sees only 14:30, which reads as the add
+    rc = run_plan.main(["check", "--data", str(clone), "--run", "117"])
+    out = capsys.readouterr().out
+    assert "is shallow, so the time the plan was added is not known" in out
     assert "AFTER the run began" not in out
     assert rc == 3
 
@@ -534,6 +596,41 @@ def test_a_started_at_that_is_a_date_with_no_time_is_not_measured_and_is_exit_3(
     _git(d, "add", "-A")
     _git(d, "commit", "-q", "-m", "early", when="2026-11-24T13:08:54+00:00")
     (d / PAPER / "agent-runs.jsonl").write_text(json.dumps(_line_117({"started_at": "2026-11-24"})) + "\n")
+    rc = run_plan.main(["check", "--data", str(d), "--run", "117"])
+    out = capsys.readouterr().out
+    assert "a date with no time of day (2026-11-24)" in out
+    assert "AFTER the run began" not in out
+    assert rc == 3
+
+
+def _date_only(tmp_path, when):
+    # change: the copy of run 117's real line has started_at "2026-11-24" (a date, no time of day); the plan is
+    # committed at `when`; the span of 2026-11-24 on the clock is 2026-11-23T10:00Z to 2026-11-25T12:00Z
+    d = _repo(tmp_path, transcript=False)
+    _git(d, "add", "-A")
+    _git(d, "commit", "-q", "-m", "plan", when=when)
+    (d / PAPER / "agent-runs.jsonl").write_text(json.dumps(_line_117({"started_at": "2026-11-24"})) + "\n")
+    return d
+
+
+def test_a_date_only_start_with_the_plan_added_after_the_dates_span_is_exit_1(tmp_path, capsys):
+    d = _date_only(tmp_path, "2026-11-25T13:00:00+00:00")
+    rc = run_plan.main(["check", "--data", str(d), "--run", "117"])
+    out = capsys.readouterr().out
+    assert "AFTER the run began" in out
+    assert rc == 1
+
+
+def test_a_date_only_start_with_the_plan_added_before_the_dates_span_is_exit_0(tmp_path, capsys):
+    d = _date_only(tmp_path, "2026-11-23T09:00:00+00:00")
+    rc = run_plan.main(["check", "--data", str(d), "--run", "117"])
+    out = capsys.readouterr().out
+    assert "before the run began" in out and "AFTER" not in out
+    assert rc == 0
+
+
+def test_a_date_only_start_with_the_plan_added_inside_the_dates_span_is_not_measured_and_is_exit_3(tmp_path, capsys):
+    d = _date_only(tmp_path, "2026-11-24T20:00:00+00:00")
     rc = run_plan.main(["check", "--data", str(d), "--run", "117"])
     out = capsys.readouterr().out
     assert "a date with no time of day (2026-11-24)" in out
