@@ -53,18 +53,20 @@ figures:                          # the figures() of paper_platform/trial.py: co
     unit: trades
     parse: {kind: json, key: figures.trades_closed_by_an_administrative_fill}
 run:
-  command: "python3 -m paper_platform.trial --data ../markets-data --trade-day 2023-10-02 --plan paper_platform/execution_plans/loop-trial.json --from-minute 30 --minutes 30"
-  cwd: "."                        # the last stdout line is one JSON object {"figures": {...}, ...}
+  command: "python3 -m paper_platform.trial --data \"$MARKETS_DATA\" --trade-day 2023-10-02 --plan paper_platform/execution_plans/loop-trial.json --from-minute 30 --minutes 30"
+  cwd: "."                        # the loop is started with MARKETS_DATA set to the markets-data checkout (the run
+                                  # directory is inside the loop's scratch worktree, where no ../markets-data exists)
+                                  # the last stdout line is one JSON object {"figures": {...}, ...}
   timeout_s: 1800                 # the builder's value, Greg's to change
   env: {}
 budget:                           # every value below is the builder's plain small value, Greg's to change
   max_trials: 3
   max_wall_clock_s: 7200
-  max_model_calls: null
-  max_sub_agents: null
+  max_model_calls: 45             # the session's plain small values for the proposer: one proposing agent a trial,
+  max_sub_agents: 3               # 100,000 tokens a proposal by the harness's total. Greg's to change. The loop checks
+  max_tokens: 300000              # them before each trial from what the main session reported, so the last trial can
+  max_tool_calls: null            # pass a limit by its own use.
   max_concurrent_workers: 1
-  max_tool_calls: null
-  max_tokens: null
   max_retries: 0
   max_graph_writes: 20
 crash:
@@ -87,7 +89,16 @@ Greg, 2026-11-24: "Do the simple exit until we do more research and find better 
 Greg, 2026-11-24: "that is our hold strategy. Hold until we give 20% back"
 
 What is not decided: the figure the loop keeps or reverts by. `direction` is null, so every trial is recorded and none is kept or
-reverted. The seven figures are counts of what the platform wrote; none is a result. The budget and timeout values are the builder's,
+reverted. The seven figures are counts of what the platform wrote; none is a result. The timeout and the budget values are the builder's,
 not Greg's. The mutable file `paper_platform/execution_plans/loop-trial.json` does not exist in the platform checkout yet: the first
 trial's plan is made from a committed plan before the loop is dispatched (Greg's go). The runs of 2026-11-24 are recorded with
 `python3 -m tools.kgraph.ingest_platform` and are not scored (Greg: "Don't use score since we didn't use anything we wanted scored").
+
+How it is started, with an agent proposing each change (NOT RUN; every trial, trial 0 included, is an engine run, so it needs Greg's go):
+
+    MARKETS_DATA=/path/to/markets-data python3 -m tools.ratchet.ready --program tools/ratchet/programs/platform_exit.md --data "$MARKETS_DATA"
+    MARKETS_DATA=/path/to/markets-data python3 -m tools.ratchet.loop --program tools/ratchet/programs/platform_exit.md \
+        --mailbox <mailbox folder> --scratch <fresh scratch folder> --data "$MARKETS_DATA"
+
+The first only reports. In the second, each trial waits for answer.json and usage.json in `<mailbox>/trial-<n>/`; see the manual,
+"The loop with an agent proposing each change". This control file has never been run.
