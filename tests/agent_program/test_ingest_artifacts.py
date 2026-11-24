@@ -163,8 +163,48 @@ def test_authoring_run_from_a_field_in_the_real_record(world):
     assert got["authoring_run"] == "run:0114" and got["authoring_basis"].startswith("field")
 
 
+def _expected_basis(root, runs_text, sha):
+    """From the raw record text and git alone (not from ingest_artifacts): 'main' when the commit's own
+    message ends with the Claude-Session line of a session of the record and its committer time is from that
+    session's first start to its latest ended_at (latest started_at where no line has one), or later while no
+    later session has a line; otherwise 'outside'."""
+    lines = [json.loads(l) for l in runs_text.splitlines() if l.strip()]
+    msg = git(root, "log", "-1", "--format=%B", sha)
+    ids = re.findall(r"Claude-Session:\s*\S*?(session_[A-Za-z0-9]+)", msg)
+    if not ids:
+        return "outside"
+    sid = ids[-1]
+    def when(x):
+        return ingest_artifacts._time(x)
+    sess = {}
+    for d in lines:
+        if d.get("session"):
+            sess.setdefault(d["session"], []).append(d)
+    if sid not in sess:
+        return "outside"
+    def start_of(k):
+        st = [when(d.get("started_at")) for d in sess[k] if when(d.get("started_at"))]
+        if st:
+            return min(st)
+        own = [when(git(root, "log", "-1", "--format=%cI", h)) for h in
+               git(root, "log", "--format=%H", f"--grep={k}").split()]
+        return min(own) if own else None
+    starts = {k: start_of(k) for k in sess}
+    st = starts[sid]
+    t = when(git(root, "log", "-1", "--format=%cI", sha))
+    ends = [when(d.get("ended_at")) for d in sess[sid] if when(d.get("ended_at"))]
+    sts = [when(d.get("started_at")) for d in sess[sid] if when(d.get("started_at"))]
+    if sts:
+        end = max(ends or sts)
+    else:
+        own = [when(git(root, "log", "-1", "--format=%cI", h)) for h in git(root, "log", "--format=%H", f"--grep={sid}").split()]
+        end = max(own)
+    later = any(v and v > st for k, v in starts.items() if k != sid)
+    return "main" if st <= t and (t <= end or not later) else "outside"
+
+
 def test_the_main_sessions_commits_and_those_outside_the_runs_hold_against_git(world):
-    sessions_in_record = {d.get("session") for _, d in world["snap"]["runs"].values()}
+    runs_text = (world["root"] / RUNS_FILE).read_text(encoding="utf-8")
     seen = {"main": 0, "outside": 0}
     for a in [n["attrs"] for n in world["store"].nodes("Artifact")]:
         if a["repo"] != "DavisAI1974/markets-data" or "authoring_basis" not in a:
@@ -173,13 +213,48 @@ def test_the_main_sessions_commits_and_those_outside_the_runs_hold_against_git(w
         ids = re.findall(r"Claude-Session:\s*\S*?(session_[A-Za-z0-9]+)", msg)
         tag = a["authoring_basis"].split(":")[0]
         if tag == "the main session's commits":
-            assert ids and a["authoring_run"] == f"the main session of {ids[-1]}" and ids[-1] in sessions_in_record, a["path"]
+            assert ids and a["authoring_run"] == f"the main session of {ids[-1]}", a["path"]
+            assert _expected_basis(world["root"], runs_text, a["version"]) == "main", a["path"]
             seen["main"] += 1
         elif tag == "outside the agent runs":
-            assert not ids or ids[-1] not in sessions_in_record, a["path"]
+            assert _expected_basis(world["root"], runs_text, a["version"]) == "outside", a["path"]
             assert a["git_author"] == git("/home/user/markets-data", "log", "-1", "--format=%an", a["version"])
             seen["outside"] += 1
     assert seen["main"] + seen["outside"] > 0
+    # the run plans of 0180 to 0185 (committed 2026-11-24T17:46:24Z, inside the span of session_017eY1WSS3...,
+    # which runs from 17:30:40Z) were made by the main session: they are no longer "outside the agent runs".
+    # Plans 0157 to 0161 were committed at 17:28:54Z, before the session's first start: they stay outside.
+    for n in (180, 181, 182, 183, 184, 185, 186, 187, 188, 189):
+        a = _node(world, "markets-data", f"{ingest_artifacts.PAPER_REL}/run-plans/run-{n:04d}.json")
+        if a:
+            assert not a["attrs"]["authoring_basis"].startswith("outside the agent runs"), n
+
+
+EARLIER_RECORD = "b0c1f81"      # a markets-data commit: the record as it stood there, read with git
+
+
+def test_the_same_rule_holds_on_the_record_read_at_an_earlier_commit(world):
+    root = world["root"]
+    full = git(root, "rev-parse", EARLIER_RECORD)
+    assert full
+    runs_text = git(root, "show", f"{full}:{RUNS_FILE}")
+    snap = ingest_artifacts.read_snapshot(root, {"markets-data": str(root)}, data_rev=full)
+    assert snap["runs"] == {k: v for k, v in ingest_artifacts.run_lines(root, full).items()}
+    shas = git(root, "log", full, "--format=%H", "--", f"{ingest_artifacts.PAPER_REL}/run-plans").split()
+    assert len(shas) > 30
+    mdlog = {}
+    got = {"main": 0, "outside": 0}
+    for sha in shas:
+        info = {sha: {"author": git(root, "log", "-1", "--format=%an", sha), "time": git(root, "log", "-1", "--format=%cI", sha),
+                      "session": (re.findall(r"Claude-Session:\s*\S*?(session_[A-Za-z0-9]+)",
+                                             git(root, "log", "-1", "--format=%B", sha)) or [None])[-1]}}
+        who = ingest_artifacts.authorship("markets-data", sha, snap["runs"], info, snap["sessions"])
+        tag = ingest_artifacts._tag(who["authoring_basis"])
+        if tag in ("the main session's commits", "outside the agent runs"):
+            want = "main" if tag.startswith("the main") else "outside"
+            assert _expected_basis(root, runs_text, sha) == want, sha
+            got[want] += 1
+    assert got["main"] > 0 and got["outside"] >= 0
 
 
 def test_metric_of_run_0114_tool_calls(world):
