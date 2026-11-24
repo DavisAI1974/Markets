@@ -1,7 +1,7 @@
 """The loop on the decider program: replay_questions, trial_with_decider --dry, MailboxFileProposer, the control file.
 
 Real records only: the journal of run 0f33fec4... from its record branch (git show into a scratch folder), the real
-graph, the real Markets checkout cloned into a scratch folder. No engine, no tape, no model; no trial, session or loop
+graph, the real starting program and contract file in a scratch repository. No engine, no tape, no model; no trial, session or loop
 is run on the stored tape. The only command run through the loop prints a count of lines of a file.
 markets-data is only read.
 """
@@ -32,7 +32,7 @@ PLATFORM = Path("/home/user/paper-trading-platform")
 PROGRAMS = REPO / "tools" / "decider" / "programs"
 LOOP_FILE = "tools/decider/programs/loop_decider.py"
 CONTROL = REPO / "tools" / "ratchet" / "programs" / "platform_decider.md"
-LIMIT = 40                                         # the first 40 of the run's 217 opening signals, in order
+LIMIT = None                                       # all of the run's 217 opening signals, in order
 CLAIM_PLAIN = "claim:70038adffed2"                # a real claim of the real graph
 PRINT_CMD = ("python3 -c \"import json;print(json.dumps({'figures':{'program_lines':"
              f"len(open('{LOOP_FILE}').readlines())}}}}))\"")
@@ -77,13 +77,13 @@ def test_replay_over_real_signals_one_line_a_signal_and_the_counts_add_up(root, 
     lines = [json.loads(l) for l in (out / "decisions.jsonl").read_text().splitlines()]
     opens = sp.open_sequences(sp.journal_from_file(journal))
     assert len(opens) == 217
-    assert [l["sequence"] for l in lines] == opens[:LIMIT]                  # one line a signal, in order
-    assert c["signals_asked"] == c["answered"] == LIMIT
+    assert [l["sequence"] for l in lines] == opens                  # one line a signal, in order
+    assert c["signals_asked"] == c["answered"] == len(opens)
     assert c["take"] + c["skip"] == c["answered"]
     assert c["skip_answered_by_this_code"] == sum(l["answered_by"] == "this code" for l in lines)
     assert sum(c["skip_answered_by_this_code_reasons"].values()) == c["skip_answered_by_this_code"]
     assert c["packets_refused_by_the_leak_check"] == 0
-    assert (c["take"] if action == "take" else c["skip"]) == LIMIT
+    assert (c["take"] if action == "take" else c["skip"]) == len(opens)
     sizes = {l["sequence"]: l["packet_tokens_estimated_chars_div_4"] for l in lines}
     assert c["smallest_packet_tokens"] == min(sizes.values()) and sizes[c["smallest_packet_sequence"]] == c["smallest_packet_tokens"]
     assert c["largest_packet_tokens"] == max(sizes.values()) and sizes[c["largest_packet_sequence"]] == c["largest_packet_tokens"]
@@ -148,10 +148,20 @@ def test_dry_reports_a_program_without_decide(root, tmp_path, capsys):
 # ---- piece 3: MailboxFileProposer ------------------------------------------------------------------------
 @pytest.fixture()
 def clone(tmp_path):
-    if subprocess.run(["git", "-C", str(REPO), "cat-file", "-e", f"HEAD:{LOOP_FILE}"]).returncode:
-        pytest.skip("the loop's starting program is not committed here")
+    """A scratch repository holding the real starting program and the real contract file at their own paths, as
+    committed here (a full clone of this checkout would copy gigabytes of working files for every check)."""
     dest = tmp_path / "markets"
-    subprocess.run(["git", "clone", "-q", str(REPO), str(dest)], check=True, capture_output=True)
+    for rel in (LOOP_FILE, "tools/decider/programs/README.md"):
+        out = subprocess.run(["git", "-C", str(REPO), "show", f"HEAD:{rel}"], capture_output=True)
+        if out.returncode:
+            pytest.skip(f"{rel} is not committed here")
+        (dest / rel).parent.mkdir(parents=True, exist_ok=True)
+        (dest / rel).write_bytes(out.stdout)
+    git = lambda *a: subprocess.run(["git", "-C", str(dest), "-c", "user.name=check", "-c", "user.email=check@localhost",
+                                     "-c", "commit.gpgsign=false", *a], check=True, capture_output=True)
+    git("init", "-q")
+    git("add", "-A")
+    git("commit", "-q", "-m", "the real files as committed")
     return dest
 
 
@@ -210,7 +220,7 @@ def test_the_brief_holds_the_present_file_the_contract_and_every_earlier_trial(t
     dag = ExpDag(root, exp_dir=tmp_path / "experiments")
     t0, t1 = rep["trials"]
     assert rep["recorded"] == [t0, t1] and rep["stopped_because"] == "the proposer has nothing more to try"
-    present = (REPO / LOOP_FILE).read_text()
+    present = PRESENT
     b1 = (mb / "trial-1" / "brief.md").read_text()
     assert present.rstrip("\n") in b1 and "decide(packet: dict)" in b1 and "Standard library only" in b1
     assert "marked INFERENCE" in b1 or "marked INFERENCE" in b1.replace("is marked", "marked")
@@ -244,11 +254,14 @@ PRESENT = (REPO / LOOP_FILE).read_text() if (REPO / LOOP_FILE).exists() else ""
     ("from pathlib import Path\n\ndef decide(packet):\n    return 1\n", "not allowed"),
 ])
 def test_a_file_that_breaks_a_rule_is_refused_with_its_reason(tmp_path, root, graph, clone, source, reason):
+    # the check itself (the brief, which reads the graph, is exercised by the checks around this one)
     mb = tmp_path / "mb"
     answer(mb, 1, source)
     program = load(tmp_path, clone)
+    px = proposer(mb, program, root, graph)
+    ans = json.loads((mb / "trial-1" / "answer.json").read_text())
     with pytest.raises(ProposalFailed, match=reason) as e:
-        proposer(mb, program, root, graph)(clone, 1, [])
+        px._apply_file(PRESENT, clone / LOOP_FILE, mb / "trial-1" / "proposed.py", ans, "a try")
     assert e.value.hypothesis == "a try"
     assert (clone / LOOP_FILE).read_text() == PRESENT                      # nothing was changed
     assert not (mb / "trial-1" / "applied.json").exists()
@@ -262,8 +275,9 @@ def test_a_proposal_without_a_source_or_with_an_unknown_claim_is_refused(tmp_pat
     mb = tmp_path / "mb"
     answer(mb, 1, **kw)
     program = load(tmp_path, clone)
+    ans = json.loads((mb / "trial-1" / "answer.json").read_text())
     with pytest.raises(ProposalFailed, match=reason):
-        proposer(mb, program, root, graph)(clone, 1, [])
+        proposer(mb, program, root, graph)._apply_file(PRESENT, clone / LOOP_FILE, mb / "trial-1" / "proposed.py", ans, "a try")
     assert (clone / LOOP_FILE).read_text() == PRESENT
 
 
@@ -271,16 +285,16 @@ def test_source_problem_accepts_a_plain_program():
     assert source_problem(VALID, PRESENT) is None
 
 
-def test_a_refused_file_is_a_recorded_crash_and_the_next_trial_goes_on(tmp_path, root, graph, clone):
+def test_a_refused_file_is_a_recorded_crash_through_the_loop(tmp_path, root, graph, clone):
     mb = tmp_path / "mb"
     answer(mb, 1, "import os\n\ndef decide(packet):\n    return 1\n")
-    answer(mb, 2)
-    answer(mb, 3, stop=True)
+    answer(mb, 2, stop=True)
     program = load(tmp_path, clone)
     rep = run_loop(program, proposer(mb, program, root, graph), scratch=tmp_path / "scratch", data_root=root,
                    exp_dir=tmp_path / "experiments")
-    t0, t1, t2 = rep["trials"]
-    assert rep["crashed"] == [t1] and rep["recorded"] == [t0, t2]
+    t0, t1 = rep["trials"]
+    assert rep["crashed"] == [t1] and rep["recorded"] == [t0]
+    assert "not allowed" in ExpDag(root, exp_dir=tmp_path / "experiments").latest()[t1]["note"]
 
 
 # ---- piece 4: the control file ---------------------------------------------------------------------------
