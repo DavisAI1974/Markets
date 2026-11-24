@@ -1,0 +1,17 @@
+# tools/decider build notes
+
+Platform side (read 2026-11-24, `paper_platform/answers.py`, `session.py _ask_decider`):
+- question.json keys: sequence, rule, side, trade_id, tape_received_ns, journal (path of the run's events.jsonl).
+- answer.json keys accepted: id, action, rule, trade_id, by, packet {sha256, tokens}, asked_at_sequence, not_before_tape_ns, why.
+  A take/skip needs `by` and a whole `asked_at_sequence`; `id` is optional but we write `decision-<sequence>`.
+
+Folder life of one question: question.json -> brief.md + packet.json -> decision.json -> answer.json
+(or refused.json / decision.rejected.json, answered skip). One line a question in decisions.jsonl.
+
+- `serve` rebuilds nothing after a brief: ids and counts are kept in packet.json so a restart can still validate.
+- The packet's `rests_on` ids are the `source` of each packet line (the text before the first " | ").
+- A journal that cannot be read, or a signal row not in it, is refused (answered skip) rather than waited on.
+- Wall time is question.json's file time to the moment this code settles; recorded only.
+- Programs (`--program`): see programs/README.md. Fenced by a fresh isolated interpreter with empty env and folder; not a sandbox.
+- The leak-breach check hands `serve.build_packet` a packet with a later row through that one seam (monkeypatch);
+  `leakage_check` itself is untouched.

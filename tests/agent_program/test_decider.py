@@ -170,7 +170,7 @@ def test_a_breaching_packet_is_refused_and_answered_skip(world, tmp_path, monkey
 
 KEYS = {"sequence", "rule", "side", "trade_id", "tape_received_ns", "packet_sha256",
         "packet_tokens_estimated_chars_div_4", "lines_in", "lines_cut", "action", "why", "rests_on", "by",
-        "wall_ms_question_to_decision", "answered_by", "skip_reason"}
+        "wall_ms_question_to_decision", "answered_by", "skip_reason", "program_sha256"}
 
 
 def test_one_line_a_question_and_a_second_pass_writes_nothing_new(world, tmp_path):
@@ -207,3 +207,64 @@ def test_next_and_answer_round_trip(world, tmp_path, capsys):
     assert json.loads((mb / f"q-{first}" / "answer.json").read_text())["action"] == "skip"
     assert next_cmd.main(["--mailbox", str(mb)]) == 0
     assert f"signal journal sequence {world['picks'][1]};" in capsys.readouterr().out
+
+
+# ---- piece 4: a decider program, the same door ------------------------------------------------------------
+
+import hashlib
+
+REPO = Path(__file__).resolve().parents[2]
+SKIP_ALL = REPO / "tools" / "decider" / "programs" / "skip_all.py"
+
+
+def _program_server(world, mb, path, timeout=5.0):
+    return serve.Server(mb, world["root"], world["plat"], BUDGET, "unused", program=path, program_timeout_s=timeout)
+
+
+def test_skip_all_answers_three_real_questions_through_the_same_door(world, tmp_path):
+    mb = _mailbox(world, tmp_path)
+    srv = _program_server(world, mb, SKIP_ALL)
+    srv.once()
+    lines = _lines(mb)
+    assert [l["sequence"] for l in lines] == world["picks"]
+    sha = hashlib.sha256(SKIP_ALL.read_bytes()).hexdigest()
+    for l in lines:
+        assert set(l) == KEYS and l["action"] == "skip" and l["answered_by"] == "the program"
+        assert l["program_sha256"] == sha and l["by"].startswith("program:skip_all.py@")
+        a = json.loads((mb / f"q-{l['sequence']}" / "answer.json").read_text())
+        assert a["action"] == "skip" and a["by"] == l["by"] and a["why"] == "no decider logic has been written yet"
+        assert l["rests_on"][0].startswith(("journal#", "rule:"))
+    assert srv.once() == 0
+
+
+@pytest.mark.parametrize("name,body,reason", [
+    ("raises", "def decide(packet):\n    raise RuntimeError('boom')\n", "raised"),
+    ("sleeps", "import time\ndef decide(packet):\n    time.sleep(30)\n", "longer than"),
+    ("badid", "def decide(packet):\n    return {'action': 'take', 'why': 'Because.', 'rests_on': ['nope#1']}\n",
+     "not in the packet"),
+])
+def test_a_bad_program_is_answered_skip_with_the_reason(world, tmp_path, name, body, reason):
+    prog = tmp_path / f"{name}.py"
+    prog.write_text(body)
+    s = world["picks"][0]
+    mb = _mailbox(world, tmp_path, [s])
+    _program_server(world, mb, prog, timeout=1.5).once()
+    a = json.loads((mb / f"q-{s}" / "answer.json").read_text())
+    assert a["action"] == "skip" and a["why"].startswith("the decider's answer was not valid: ") and reason in a["why"]
+    line, = _lines(mb)
+    assert line["answered_by"] == "this code" and line["by"].endswith("@uncommitted")
+
+
+def test_the_program_is_handed_the_packet_and_nothing_a_path_or_a_store_can_come_from(world, tmp_path):
+    prog = tmp_path / "echo.py"
+    prog.write_text("import json, os, sys\n"
+                    "def decide(packet):\n"
+                    "    assert set(os.environ) <= {'LC_CTYPE'} and not os.listdir('.') and 'tools' not in sys.modules\n"
+                    "    return {'action': 'skip', 'why': 'Echo.', 'rests_on': [packet['lines'][0]['source']]}\n")
+    s = world["picks"][0]
+    pk = sp.build(world["rows"], s, BUDGET, store=world["store"], platform_dir=world["plat"])
+    got, reason = serve.run_program(prog, pk, 5)
+    assert reason is None and got["action"] == "skip"
+    assert pk["path"] == "signal_v1"                     # the packet's own name, not a place on disk
+    assert not any(w in k for k in pk for w in ("store", "journal", "dir", "platform", "file")), sorted(pk)
+    assert "/home/" not in json.dumps(pk) and "markets-data" not in json.dumps(pk)

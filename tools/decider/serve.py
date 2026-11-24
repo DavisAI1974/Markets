@@ -16,7 +16,9 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import hashlib
 import re
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -24,7 +26,46 @@ from pathlib import Path
 from tools.kgraph import signal_packet as sp
 from tools.kgraph.store import GraphStore
 
-BY_DEFAULT = "decider"
+RUNNER = Path(__file__).with_name("_run_program.py")
+
+
+def program_identity(path):
+    """(by, sha256) of a decider program file: its name, the commit of that file or "uncommitted", and its bytes' hash."""
+    path = Path(path).resolve()
+    sha = hashlib.sha256(path.read_bytes()).hexdigest()
+    commit = "uncommitted"
+    try:
+        run = lambda *a: subprocess.run(["git", "-C", str(path.parent), *a], capture_output=True, text=True, timeout=20)
+        tracked = run("ls-files", "--error-unmatch", path.name)
+        dirty = run("status", "--porcelain", "--", path.name)
+        last = run("log", "-1", "--format=%H", "--", path.name)
+        if tracked.returncode == 0 and not dirty.stdout.strip() and last.stdout.strip():
+            commit = last.stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return f"program:{path.name}@{commit}", sha
+
+
+def run_program(path, packet, timeout_s):
+    """(decision, None) or (None, reason). The program gets the packet as JSON on stdin and nothing else: a fresh
+    interpreter in isolated mode (no script folder, no current folder, no user site, no PYTHON* variables) that
+    runs in an empty scratch folder with an empty environment. NOT a sandbox: a program that opens a file by its
+    absolute path can still read it, so a program is read before it is committed."""
+    import tempfile
+    with tempfile.TemporaryDirectory() as empty:
+        try:
+            r = subprocess.run([sys.executable, "-I", str(RUNNER), str(Path(path).resolve())],
+                               input=json.dumps(packet), capture_output=True, text=True, timeout=timeout_s,
+                               cwd=empty, env={})
+        except subprocess.TimeoutExpired:
+            return None, f"the program took longer than {timeout_s} seconds"
+    if r.returncode != 0:
+        last = (r.stderr.strip().splitlines() or ["no message"])[-1]
+        return None, f"the program raised: {last[:300]}"
+    try:
+        return json.loads(r.stdout), None
+    except ValueError:
+        return None, "the program returned something that is not JSON"
 
 
 def build_packet(rows, sequence, budget, store, platform_dir):
@@ -118,8 +159,12 @@ def validate_decision(d, ids):
 
 
 class Server:
-    def __init__(self, mailbox, data, platform, budget, by, graph_dir=None, clock_ns=time.time_ns):
+    def __init__(self, mailbox, data, platform, budget, by, graph_dir=None, clock_ns=time.time_ns,
+                 program=None, program_timeout_s=5.0):
         self.mailbox, self.budget, self.by, self.platform = Path(mailbox), budget, by, platform
+        self.program, self.program_timeout_s, self.program_sha = program, program_timeout_s, None
+        if program:
+            self.by, self.program_sha = program_identity(program)
         self.store = GraphStore(data, graph_dir=graph_dir)
         self.clock_ns = clock_ns
         self.journals = {}                       # path -> (size, rows)
@@ -143,7 +188,7 @@ class Server:
                 "lines_cut": pk["lines_cut"] if pk else None,
                 "action": answer["action"], "why": answer["why"], "rests_on": rests_on, "by": answer["by"],
                 "wall_ms_question_to_decision": round((self.clock_ns() - qmtime) / 1e6, 3),
-                "answered_by": source, "skip_reason": reason}
+                "answered_by": source, "skip_reason": reason, "program_sha256": self.program_sha}
         with open(self.mailbox / "decisions.jsonl", "a", encoding="utf8") as f:
             f.write(json.dumps(line, sort_keys=True) + "\n")
 
@@ -174,10 +219,25 @@ class Server:
             return self.refuse(box, q, None, [f"the packet could not be built: {type(e).__name__}: {e}"])
         if breach:
             return self.refuse(box, q, pk, breach)
+        if self.program:
+            return self.by_program(box, q, pk)
         write_json(box / "packet.json", {"sha256": pk["sha256"], "tokens_estimated": pk["tokens_estimated"],
                                          "ids": ids_of(pk), "lines_in": len(pk["lines"]),
                                          "lines_cut": sum(pk["cut"].values())})
         write_whole(box / "brief.md", make_brief(q, pk, box))
+
+    def by_program(self, box, q, pk):
+        meta = {"sha256": pk["sha256"], "tokens_estimated": pk["tokens_estimated"], "lines_in": len(pk["lines"]),
+                "lines_cut": sum(pk["cut"].values())}
+        d, reason = run_program(self.program, pk, self.program_timeout_s)
+        if reason is None:
+            reason = validate_decision(d, ids_of(pk))
+        if reason:
+            why = f"the decider's answer was not valid: {reason}"
+            self.log(box, q, meta, self.answer(box, q, "skip", why, meta), "this code", why)
+            return
+        a = self.answer(box, q, d["action"], d["why"].strip(), meta)
+        self.log(box, q, meta, a, "the program", None, rests_on=d["rests_on"])
 
     def settle(self, box):
         q, _ = read_json(box / "question.json")
@@ -220,9 +280,12 @@ def main(argv=None):
     ap.add_argument("--graph-dir")
     ap.add_argument("--poll-s", type=float, default=1.0)
     ap.add_argument("--max-wall-clock-s", type=float)
+    ap.add_argument("--program", help="a decider program file: answers each question by its decide(), no model, no wait")
+    ap.add_argument("--program-timeout-s", type=float, default=5.0)
     ap.add_argument("--once", action="store_true")
     a = ap.parse_args(argv)
-    srv = Server(a.mailbox, a.data, a.platform, a.budget, a.by, a.graph_dir)
+    srv = Server(a.mailbox, a.data, a.platform, a.budget, a.by, a.graph_dir, program=a.program,
+                 program_timeout_s=a.program_timeout_s)
     srv.mailbox.mkdir(parents=True, exist_ok=True)
     stop = None if a.max_wall_clock_s is None else time.monotonic() + a.max_wall_clock_s
     while True:
