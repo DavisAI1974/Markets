@@ -572,14 +572,22 @@ class PlaneLayer:
         self.instants, known = [], None
         for c in names:
             col = self.table.column(c)
-            if str(col.type) not in ("int64", "double"):
+            kind = str(col.type)
+            if kind == "int64":                        # whole nanoseconds, exact: never through a float
+                valid = col.is_valid().to_numpy(zero_copy_only=False)
+                a = col.fill_null(-1).to_numpy()
+            elif kind == "double":
+                f = col.to_numpy(zero_copy_only=False)
+                valid = ~np.isnan(f)
+                a = np.where(valid, f, -1.0).astype(np.int64)
+            else:
                 continue
-            a = col.to_numpy(zero_copy_only=False).astype("float64")
-            v = a[~np.isnan(a)]
+            v = a[valid]
             if len(v) and v.min() >= EPOCH_LO and v.max() < EPOCH_HI:
                 self.instants.append(c)
-                known = a if known is None else np.fmax(known, a)
-        self.known = None if known is None else np.nan_to_num(known, nan=-1.0)
+                a = np.where(valid, a, -1)
+                known = a if known is None else np.maximum(known, a)
+        self.known = known                              # int64 nanoseconds; -1 where no instant is held
         self.has_time = known is not None
         self.out_columns = [c for c in names if any(x in c for x in PLANE_COLUMNS_OUT)]
         self.columns = [c for c in names if c not in self.out_columns]
@@ -587,7 +595,7 @@ class PlaneLayer:
         self.has_time = self.has_time and self.no_time_rows == 0     # a layer is placed only when EVERY row has a time
 
     def placed_mask(self, moment):
-        return (self.known >= 0) & (self.known <= moment)
+        return (self.known >= 0) & (self.known <= int(moment))
 
     def row(self, i):
         import math
@@ -647,7 +655,7 @@ def plane_layer(src, commit, key, paths):
 
 def plane_state(src: PlaneSource, day: str, moment: int):
     """What the planes hold for one moment: {"commit", "layers": {key: info}, "not_placed": [(key, rows, reason)],
-    "receipts": n}. Each placed layer's info: count (rows placed), of (rows in the file), prefix (the placed rows are
+    "receipts": n}. Each placed layer's info: count (rows placed), prefix (the placed rows are
     rows 0..count-1), rows (the placed row numbers when they are not a prefix), newest (the row of latest known-at),
     the sha256 of the layer's bytes and the paths. Nothing here is a number made from rows."""
     import numpy as np
@@ -675,7 +683,7 @@ def plane_state(src: PlaneSource, day: str, moment: int):
         count = int(mask.sum())
         head = int(np.argmin(mask)) if count < lay.n else lay.n
         prefix = not mask[head:].any()
-        info = {"count": count, "of": lay.n, "prefix": prefix, "sha256": lay.sha256, "paths": paths,
+        info = {"count": count, "prefix": prefix, "sha256": lay.sha256, "paths": paths,
                 "instants": lay.instants, "columns_out": lay.out_columns, "not_read": lay.not_read, "no_time_rows": lay.no_time_rows,
                 "rows": None if prefix else [int(i) for i in np.nonzero(mask)[0]]}
         if count:
@@ -729,7 +737,7 @@ def plane_lines(src, day, moment, ps):
             out.append({"section": "planes", "source": f"plane:{key}", "sequence": None, "run": None,
                         "known_at_ns": moment, "basis": "no row of this layer at or before the moment", "row_kind": "plane",
                         "layer": f"plane:{key}", "plane": key, "plane_row": None,
-                        "text": f"plane:{key} | 0 rows at or before the moment ({info['of']} later, kept for learning only)"})
+                        "text": f"plane:{key} | 0 rows at or before the moment"})
             continue
         lay = plane_layer(src, ps["commit"], key, info["paths"])
         n = info["newest"]
@@ -940,8 +948,11 @@ def build(journal_rows, sequence, budget, *, store, platform_dir=None, trials=No
             raise ValueError(f"the planes source holds no record branch root-rows-{day.replace('-', '')}")
         if ps is not None:
             cand["planes"] = plane_lines(planes, day, moment, ps)
-            plane_out = list(ps["not_placed"]) + reads_unmatched(platform_dir, ps) + [
-                x for x in planes_named(store, day, platform_dir) if x[0].endswith(".parquet")]
+            plane_out = list(ps["not_placed"]) + reads_unmatched(platform_dir, ps)
+            # every calculation and read the graph names for the trade day is placed or named: a name that is neither a
+            # placed layer nor already named above is named here with its own reason (a .parquet file is always named)
+            have = set(ps["layers"]) | {x[0] for x in plane_out}
+            plane_out += [x for x in planes_named(store, day, platform_dir) if x[0].endswith(".parquet") or x[0] not in have]
         else:
             plane_out = planes_named(store, day, platform_dir)
     # closed trades
@@ -1034,9 +1045,8 @@ def build(journal_rows, sequence, budget, *, store, platform_dir=None, trials=No
             if ps:
                 out.append(f"- ROOT's stored planes of trade day {day}: "
                            f"{len(ps['layers'])} layers are placed above, one line each (a row is placed when every instant "
-                           "it holds is at or before the moment). Rows at or before the moment of each layer, and the rows "
-                           "after it kept for learning only: " + ", ".join(
-                               f"{k} {i['count']} of {i['of']}" for k, i in ps["layers"].items()) + ". The rows made known "
+                           "it holds is at or before the moment). Rows at or before the moment of each layer: " + ", ".join(
+                               f"{k} {i['count']}" for k, i in ps["layers"].items()) + ". The rows made known "
                            "since the previous question are in planes_since.json (its earlier files are named in it); a "
                            "decision may name any id plane:<layer>:<row number> below the layer's count. Columns of the "
                            "stored rows not copied: " + (", ".join(f"{k} {len(i['not_read'])} columns (kept in git, pinned by sha256)"
@@ -1181,8 +1191,8 @@ def build(journal_rows, sequence, budget, *, store, platform_dir=None, trials=No
         if ps is not None:
             for key, info in ps["layers"].items():
                 layers[f"plane:{key}"] = {"count": info["count"], "in_text": 1 if info["count"] else 0, "where": "planes_since.json",
-                                          "of_in_the_stored_file": info["of"], "ids": f"plane:{key}:<row number below count>"}
-            pk["planes"] = {k: {"count": i["count"], "of": i["of"]} for k, i in ps["layers"].items()}
+                                          "ids": f"plane:{key}:<row number below count>"}
+            pk["planes"] = {k: {"count": i["count"]} for k, i in ps["layers"].items()}
             pk["plane_ids"] = {k: {"count": i["count"], "prefix": i["prefix"], "rows": i["rows"]}
                                for k, i in ps["layers"].items()}
             pk["plane_source"] = {"commit": ps["commit"], "layers": {k: {"paths": i["paths"], "sha256": i["sha256"]}

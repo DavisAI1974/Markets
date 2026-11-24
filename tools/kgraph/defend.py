@@ -786,7 +786,7 @@ def show(store: GraphStore, claim_id: str, run: str | None = None) -> str:
     c = _registered(store, claim_id)
     a = c["attrs"]
     out = [f"{claim_id}  revision {c['rev']}  (registered by {a['proposer_run']})"
-           + (f"  (shown to {run})" if run else "  (no run was named)")]
+           + f"  (shown to {run})"]
     for k in ("proposer", "hypothesis", "exact_claim", "scope", "boundaries", "mechanism", "alternatives", "falsifiers",
               "artifact_repo", "artifact_path", "code_commit", "artifact_sha256", "data_manifest_hashes",
               "outcome_visibility", "inference", "inference_reason", "source_event_ids", "event_time", "knowledge_time",

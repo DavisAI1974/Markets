@@ -671,6 +671,119 @@ def test_a_plane_row_one_after_the_moment_fails_the_check_and_is_no_id(world, pl
     assert any("counts" in b for b in sp.leakage_check(bad2, store=world["store"], planes=planes))
 
 
+def test_a_real_row_within_256_ns_after_a_real_moment_is_not_placed(world, planes):
+    """Times are whole nanoseconds. A stored row of calc-resting-facts that became known at T (read from its own instant
+    columns, as Python integers, not from the layer's `known`) is not placed at a moment of T-k for k = 1 to 255: as
+    float64 the two numbers at about 1.7e18 can compare equal (the spacing there is 256 ns)."""
+    pk = _build_p(world, planes, _stand_in_question(world, world["picks"][1]))
+    key = "calc-resting-facts"
+    lay = sp.plane_layer(planes, pk["plane_source"]["commit"], key, pk["plane_source"]["layers"][key]["paths"])
+    nxt = pk["plane_ids"][key]["count"]                      # the layer's real next row: known after the moment
+    row = lay.table.slice(nxt, 1).to_pylist()[0]
+    t = max(int(row[c]) for c in lay.instants if row[c] is not None)
+    assert t > pk["moment_ns"]
+    for k in (1, 100, 255):
+        moment = t - k
+        assert not bool(lay.placed_mask(moment)[nxt]), f"row {nxt} known at {t} is placed at the moment {moment} ({k} ns before it)"
+        assert t not in {int(x) for x in lay.known[lay.placed_mask(moment)]}, (t, moment)
+        one = sp.plane_state(planes, pk["trade_day"], moment)["layers"][key]
+        assert one["count"] <= nxt and sp.plane_id(key, nxt) not in {
+            r["id"] for r in sp.plane_since(planes, pk["trade_day"], None, moment, {"commit": pk["plane_source"]["commit"],
+                                                                                    "layers": {key: one}})[key]}, (t, moment)
+        # and the instant itself is placed
+    assert bool(lay.placed_mask(t)[nxt])
+
+
+def _keys_of(o):
+    if isinstance(o, dict):
+        for k, v in o.items():
+            yield k
+            yield from _keys_of(v)
+    elif isinstance(o, list):
+        for v in o:
+            yield from _keys_of(v)
+
+
+def test_no_text_or_file_a_decider_is_handed_carries_the_whole_day_row_count_of_a_placed_layer(world, planes, tmp_path):
+    """A decider is told how many rows of a layer are placed, never how many are still to come. The count of the stored
+    file for the whole trade day stays in the afterwards file (as rows_after, for learning only)."""
+    import re as _re
+    s = world["picks"][1]
+    q = _stand_in_question(world, s)
+    pk = _build_p(world, planes, q)
+    mb = tmp_path / "mb"
+    box = _scratch_question(mb, q)
+    serve.Server(mb, world["root"], world["plat"], PLANES_BUDGET, "run:0090", planes=planes).once()
+    handed_to_a_program = {k: v for k, v in pk.items() if k not in ("plane_ids", "plane_source")}
+    texts = {"program packet": json.dumps(handed_to_a_program, sort_keys=True), "packet text": pk["text"]}
+    docs = {}
+    for f in box.iterdir():
+        if f.is_file() and f.name != "question.json":
+            texts[f.name] = f.read_text()
+            if f.suffix == ".json":
+                docs[f.name] = json.loads(texts[f.name])
+    docs["program packet"] = handed_to_a_program
+    for name, d in docs.items():
+        bad = {k for k in _keys_of(d) if k in ("of", "of_in_the_stored_file")}
+        assert not bad, (name, bad)
+    big = 0
+    for key, info in pk["plane_ids"].items():
+        lay = sp.plane_layer(planes, pk["plane_source"]["commit"], key, pk["plane_source"]["layers"][key]["paths"])
+        for name, t in texts.items():
+            assert not _re.search(rf"\b{info['count']} of {lay.n}\b|\({lay.n} later|\bof {lay.n}\b", t), (name, key, lay.n)
+            if lay.n >= 100000 and name in ("brief.md", "packet text", "program packet", "layers.json", "packet.json"):
+                big += 1
+                # a layer with no placeable row is named with its own row count (point 4's list); that is not a placed layer's
+                # whole-day count, so those mentions are taken out before looking for the number
+                tt = _re.sub(r"\(\d+ rows\)|\d+ of its \d+ rows", "", t)
+                tt = _re.sub(r'"planes_not_placed": \[.*?\]', "", tt, flags=_re.S)
+                m = _re.search(rf"(?<![\d.:]){lay.n}(?![\d])", tt)
+                assert not m, (name, key, lay.n, tt[max(0, m.start() - 150):m.end() + 60])
+    assert big > 0         # the check did look at layers of 100,000 rows or more
+
+
+def test_every_calculation_and_read_the_graph_names_for_the_trade_day_is_placed_or_named(world, planes):
+    """Each CalcOutput of the trade day in the graph, and each name of a rule text's READS, is a placed layer or is named in
+    the list of what is not placed: none is missing from both."""
+    day = "2023-10-02"
+    calcs = [f"calc-{n['attrs']['calc']}" for n in world["store"].nodes("CalcOutput") if n["attrs"].get("trade_day") == day]
+    reads = [n for n, _, _ in sp.planes_named(world["store"], day, world["plat"]) if not n.endswith(".parquet")]
+    assert calcs and reads
+    for s in world["picks"]:
+        pk = _build_p(world, planes, _stand_in_question(world, s))
+        have = set(pk["plane_ids"]) | {x["layer"] for x in pk["planes_not_placed"]}
+        missing = sorted(set(calcs + reads) - have)
+        assert not missing, (s, missing)
+
+
+# ---- the one separated section: a real record with exactly one thing changed ---------------------------------------------
+class _StoreWithOneMoreCalc:
+    """The real graph store, whose CalcOutput nodes of the trade day also hold a copy of a real one."""
+    # change: the copy of a real CalcOutput node of 2023-10-02 has attrs["calc"] set to "no_file_of_its_own_20231002" (a
+    # calculation the graph names for the trade day with nothing written on the record branch); no other attribute differs
+    def __init__(self, store):
+        self._s = store
+
+    def __getattr__(self, name):
+        return getattr(self._s, name)
+
+    def nodes(self, *a, **k):
+        out = list(self._s.nodes(*a, **k))
+        if a and a[0] == "CalcOutput":
+            real = next(n for n in out if n["attrs"].get("trade_day") == "2023-10-02")
+            out.append({**real, "attrs": {**real["attrs"], "calc": "no_file_of_its_own_20231002"}})
+        return out
+
+
+def test_a_calculation_the_graph_names_with_nothing_written_is_named_in_the_list_of_what_is_not_placed(world, planes):
+    day = "2023-10-02"
+    store = _StoreWithOneMoreCalc(world["store"])
+    q = _stand_in_question(world, world["picks"][0])
+    pk = sp.build(world["rows"], q["sequence"], PLANES_BUDGET, store=store, platform_dir=world["plat"], question=q, planes=planes)
+    named = {x["layer"] for x in pk["planes_not_placed"]}
+    assert "calc-no_file_of_its_own_20231002" in named, sorted(named)
+
+
 def test_the_door_writes_planes_afterwards_references_and_one_decision_per_line(world, planes, tmp_path):
     mb = tmp_path / "mb"
     qs = {s: _stand_in_question(world, s) for s in world["picks"]}
