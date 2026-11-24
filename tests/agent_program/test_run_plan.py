@@ -40,6 +40,12 @@ def _scratch(tmp_path):
     return dst
 
 
+def _next_unused(d):
+    nums = [int(re.search(r"(\d+)", p.name).group(1)) for p in (d / PAPER / "run-plans").glob("run-*.json")]
+    nums += [int(json.loads(l)["run"]) for l in (d / PAPER / "agent-runs.jsonl").read_text().splitlines()]
+    return max(nums) + 1
+
+
 def _base(run, agent="builder"):
     args = ["--run", str(run), "--agent", agent, "--model", "claude-sonnet-5-5", "--task", "a check"]
     for k in BUDGET_KEYS:
@@ -192,14 +198,15 @@ def test_brief_says_the_stop_sentence_once(capsys):
 
 def test_write_refuses_run_below_one_and_limits_below_one(tmp_path, capsys):
     d = _scratch(tmp_path)
+    n = _next_unused(d)
     assert run_plan.main(["write", "--data", str(d)] + _base(0)) == 2
     assert "run number" in capsys.readouterr().err
     for key in ("max_model_calls", "max_tokens", "max_wall_clock_s", "max_concurrent_workers"):
-        args = _base(140)
+        args = _base(n)
         args[args.index("--" + key.replace("_", "-")) + 1] = "0"
         assert run_plan.main(["write", "--data", str(d)] + args) == 2, key
         assert key in capsys.readouterr().err
-    args = _base(140)
+    args = _base(n)
     for key in ("max_sub_agents", "max_tool_calls", "max_retries", "max_graph_writes"):
         args[args.index("--" + key.replace("_", "-")) + 1] = "0"
     assert run_plan.main(["write", "--data", str(d)] + args) == 0
