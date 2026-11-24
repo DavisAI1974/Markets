@@ -53,10 +53,15 @@ def agent_runs(store: GraphStore) -> dict:
                 attrs.setdefault(k, v)
             nid = run_id(d["run"])
             if nid in seen:
-                # two sessions wrote the same run number: one id would stand for two runs
-                raise ValueError(f"{RUNS_FILE}: lines {seen[nid]} and {line_no} both say run {d['run']}; "
-                                 "renumber the later one before it is loaded")
-            seen[nid] = line_no
+                first_line, first_session = seen[nid]
+                # a line that says what it corrects, from the same session, is the run's NEXT REVISION:
+                # the earlier line stays on record (a changed line is its next revision). Anything else
+                # means one id would stand for two runs.
+                same_session = d.get("session") is not None and d.get("session") == first_session
+                if not ("corrects" in d and same_session):
+                    raise ValueError(f"{RUNS_FILE}: lines {first_line} and {line_no} both say run {d['run']}; "
+                                     "renumber the later one before it is loaded")
+            seen[nid] = (line_no, d.get("session"))
             nodes.append({"id": nid, "type": "AgentRun", "attrs": attrs})
             edges.append(link("DERIVED_FROM", nid, src["id"], line=line_no))
     return store.write(nodes, edges, written_by=code_stamp("tools.kgraph.ingest_agent_runs"))
