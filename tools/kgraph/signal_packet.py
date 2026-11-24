@@ -655,7 +655,7 @@ def plane_layer(src, commit, key, paths):
 
 def plane_state(src: PlaneSource, day: str, moment: int):
     """What the planes hold for one moment: {"commit", "layers": {key: info}, "not_placed": [(key, rows, reason)],
-    "receipts": n}. Each placed layer's info: count (rows placed), of (rows in the file), prefix (the placed rows are
+    "receipts": n}. Each placed layer's info: count (rows placed), prefix (the placed rows are
     rows 0..count-1), rows (the placed row numbers when they are not a prefix), newest (the row of latest known-at),
     the sha256 of the layer's bytes and the paths. Nothing here is a number made from rows."""
     import numpy as np
@@ -683,7 +683,7 @@ def plane_state(src: PlaneSource, day: str, moment: int):
         count = int(mask.sum())
         head = int(np.argmin(mask)) if count < lay.n else lay.n
         prefix = not mask[head:].any()
-        info = {"count": count, "of": lay.n, "prefix": prefix, "sha256": lay.sha256, "paths": paths,
+        info = {"count": count, "prefix": prefix, "sha256": lay.sha256, "paths": paths,
                 "instants": lay.instants, "columns_out": lay.out_columns, "not_read": lay.not_read, "no_time_rows": lay.no_time_rows,
                 "rows": None if prefix else [int(i) for i in np.nonzero(mask)[0]]}
         if count:
@@ -737,7 +737,7 @@ def plane_lines(src, day, moment, ps):
             out.append({"section": "planes", "source": f"plane:{key}", "sequence": None, "run": None,
                         "known_at_ns": moment, "basis": "no row of this layer at or before the moment", "row_kind": "plane",
                         "layer": f"plane:{key}", "plane": key, "plane_row": None,
-                        "text": f"plane:{key} | 0 rows at or before the moment ({info['of']} later, kept for learning only)"})
+                        "text": f"plane:{key} | 0 rows at or before the moment"})
             continue
         lay = plane_layer(src, ps["commit"], key, info["paths"])
         n = info["newest"]
@@ -1042,9 +1042,8 @@ def build(journal_rows, sequence, budget, *, store, platform_dir=None, trials=No
             if ps:
                 out.append(f"- ROOT's stored planes of trade day {day}: "
                            f"{len(ps['layers'])} layers are placed above, one line each (a row is placed when every instant "
-                           "it holds is at or before the moment). Rows at or before the moment of each layer, and the rows "
-                           "after it kept for learning only: " + ", ".join(
-                               f"{k} {i['count']} of {i['of']}" for k, i in ps["layers"].items()) + ". The rows made known "
+                           "it holds is at or before the moment). Rows at or before the moment of each layer: " + ", ".join(
+                               f"{k} {i['count']}" for k, i in ps["layers"].items()) + ". The rows made known "
                            "since the previous question are in planes_since.json (its earlier files are named in it); a "
                            "decision may name any id plane:<layer>:<row number> below the layer's count. Columns of the "
                            "stored rows not copied: " + (", ".join(f"{k} {len(i['not_read'])} columns (kept in git, pinned by sha256)"
@@ -1189,8 +1188,8 @@ def build(journal_rows, sequence, budget, *, store, platform_dir=None, trials=No
         if ps is not None:
             for key, info in ps["layers"].items():
                 layers[f"plane:{key}"] = {"count": info["count"], "in_text": 1 if info["count"] else 0, "where": "planes_since.json",
-                                          "of_in_the_stored_file": info["of"], "ids": f"plane:{key}:<row number below count>"}
-            pk["planes"] = {k: {"count": i["count"], "of": i["of"]} for k, i in ps["layers"].items()}
+                                          "ids": f"plane:{key}:<row number below count>"}
+            pk["planes"] = {k: {"count": i["count"]} for k, i in ps["layers"].items()}
             pk["plane_ids"] = {k: {"count": i["count"], "prefix": i["prefix"], "rows": i["rows"]}
                                for k, i in ps["layers"].items()}
             pk["plane_source"] = {"commit": ps["commit"], "layers": {k: {"paths": i["paths"], "sha256": i["sha256"]}

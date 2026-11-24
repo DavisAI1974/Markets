@@ -694,6 +694,54 @@ def test_a_real_row_within_256_ns_after_a_real_moment_is_not_placed(world, plane
     assert bool(lay.placed_mask(t)[nxt])
 
 
+def _keys_of(o):
+    if isinstance(o, dict):
+        for k, v in o.items():
+            yield k
+            yield from _keys_of(v)
+    elif isinstance(o, list):
+        for v in o:
+            yield from _keys_of(v)
+
+
+def test_no_text_or_file_a_decider_is_handed_carries_the_whole_day_row_count_of_a_placed_layer(world, planes, tmp_path):
+    """A decider is told how many rows of a layer are placed, never how many are still to come. The count of the stored
+    file for the whole trade day stays in the afterwards file (as rows_after, for learning only)."""
+    import re as _re
+    s = world["picks"][1]
+    q = _stand_in_question(world, s)
+    pk = _build_p(world, planes, q)
+    mb = tmp_path / "mb"
+    box = _scratch_question(mb, q)
+    serve.Server(mb, world["root"], world["plat"], PLANES_BUDGET, "run:0090", planes=planes).once()
+    handed_to_a_program = {k: v for k, v in pk.items() if k not in ("plane_ids", "plane_source")}
+    texts = {"program packet": json.dumps(handed_to_a_program, sort_keys=True), "packet text": pk["text"]}
+    docs = {}
+    for f in box.iterdir():
+        if f.is_file() and f.name != "question.json":
+            texts[f.name] = f.read_text()
+            if f.suffix == ".json":
+                docs[f.name] = json.loads(texts[f.name])
+    docs["program packet"] = handed_to_a_program
+    for name, d in docs.items():
+        bad = {k for k in _keys_of(d) if k in ("of", "of_in_the_stored_file")}
+        assert not bad, (name, bad)
+    big = 0
+    for key, info in pk["plane_ids"].items():
+        lay = sp.plane_layer(planes, pk["plane_source"]["commit"], key, pk["plane_source"]["layers"][key]["paths"])
+        for name, t in texts.items():
+            assert not _re.search(rf"\b{info['count']} of {lay.n}\b|\({lay.n} later|\bof {lay.n}\b", t), (name, key, lay.n)
+            if lay.n >= 100000 and name in ("brief.md", "packet text", "program packet", "layers.json", "packet.json"):
+                big += 1
+                # a layer with no placeable row is named with its own row count (point 4's list); that is not a placed layer's
+                # whole-day count, so those mentions are taken out before looking for the number
+                tt = _re.sub(r"\(\d+ rows\)|\d+ of its \d+ rows", "", t)
+                tt = _re.sub(r'"planes_not_placed": \[.*?\]', "", tt, flags=_re.S)
+                m = _re.search(rf"(?<![\d.:]){lay.n}(?![\d])", tt)
+                assert not m, (name, key, lay.n, tt[max(0, m.start() - 150):m.end() + 60])
+    assert big > 0         # the check did look at layers of 100,000 rows or more
+
+
 def test_the_door_writes_planes_afterwards_references_and_one_decision_per_line(world, planes, tmp_path):
     mb = tmp_path / "mb"
     qs = {s: _stand_in_question(world, s) for s in world["picks"]}
