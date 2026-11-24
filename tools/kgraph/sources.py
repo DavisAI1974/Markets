@@ -1,8 +1,10 @@
-"""Source and Commit nodes: the file a thing was read from, at the commit that last changed it.
+"""Source and Commit nodes: the file a thing was read from.
 
-A Source id names the repository, the path and that commit, so a claim tied to a file is tied to the
-exact wording it was read from. When the file changes, the next read makes a new Source and the old
-one stays (a SUPERSEDES link is written by whoever reads the new one).
+One file, one id: `src:<repo>:<path>`. The node carries the commit that last changed the file, its
+bytes and its sha256. When the file changes, the node is written again as its next revision and the
+earlier revision stays in the graph, so nothing that pointed at the file is orphaned or doubled.
+What was read at which wording is kept on the reader's own line (a claim stores `source_commit`, its
+lines and its quote), and the quote can be checked against the file again at any time.
 """
 
 from __future__ import annotations
@@ -63,7 +65,12 @@ def source_node(repo: str, repo_dir, rel_path: str, *, kind: str = "file", extra
     if kind == "file" and not rel_path.endswith((".xlsx", ".parquet", ".gz", ".zst", ".npz", ".sqlite")):
         attrs["lines"] = raw.count(b"\n")
     attrs.update(extra or {})
-    return {"id": f"src:{repo}:{rel_path}@{commit[:10]}", "type": "Source", "attrs": attrs}
+    return {"id": source_id(repo, rel_path), "type": "Source", "attrs": attrs}
+
+
+def source_id(repo: str, rel_path: str, branch: str | None = None) -> str:
+    """`src:<repo>:<path>`, or `src:<repo>@<branch>:<path>` for a file that lives on another branch."""
+    return f"src:{repo}@{branch}:{rel_path}" if branch else f"src:{repo}:{rel_path}"
 
 
 def commit_node(repo: str, repo_dir, sha: str) -> dict:

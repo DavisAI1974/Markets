@@ -87,7 +87,7 @@ class GraphStore:
                         into.setdefault(line["id"], []).append(line)
         for into in (self._nodes, self._edges):
             for lines in into.values():
-                lines.sort(key=lambda x: x["rev"])
+                lines.sort(key=lambda x: (x["rev"], x["written_at"], x["content_sha"]))
 
     def node(self, node_id: str) -> dict | None:
         self._load_lines()

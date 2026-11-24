@@ -4,6 +4,7 @@ against the real records they were read from. Writes go to a scratch graph, neve
 import json
 import re
 import subprocess
+from pathlib import Path
 
 import openpyxl
 import pytest
@@ -48,37 +49,38 @@ def test_tradedays(store):
     _again(det.tradedays, store)
 
 
-def test_manifests_one_node_per_entry(store):
+def test_manifests_one_link_per_entry_and_one_node_per_file(store):
     root = store.data_root
     res = det.manifests(store)
-    listed = [n for n in store.nodes("Source") if n["attrs"]["kind"] == "listed_file"]
-    expected = 0
-    for rel, key in det.MANIFESTS:
-        j = json.loads((root / rel).read_text(encoding="utf-8"))
-        n = len(j if key is None else j[key])
-        assert res["entries_per_manifest"][rel] == n
-        expected += n
-    assert len(listed) == expected and not res["not_listed"]
-    ids = {n["id"] for n in listed}
-    assert all(d in ids for d in res["duplicate_ids_renumbered"])
-    members = store.edges("MEMBER_OF")
-    assert len(members) == expected
-    # one real entry comes back whole, as stored, and a UTC clock day stays a UTC clock day
-    first = json.loads((root / "MANIFEST.json").read_text(encoding="utf-8"))["entries"][0]
-    node = next(n for n in listed if n["attrs"]["manifest_index"] == 0 and n["attrs"]["manifest"].startswith("src:markets-data:MANIFEST.json@"))
-    assert node["attrs"]["entry"] == first
-    assert node["attrs"]["utc_day"] == first["utc_day"] and "trade_day" not in node["attrs"]
-    # where a listed file is in the checkout, the node's path is that file (counted here by another route)
+    expected, files, there = 0, set(), set()
     for rel, key in det.MANIFESTS:
         j = json.loads((root / rel).read_text(encoding="utf-8"))
         entries = j if key is None else j[key]
-        there = 0
-        for e in entries:
+        assert res["entries_per_manifest"][rel] == len(entries)
+        expected += len(entries)
+        for e in entries:                       # counted here by another route than the code's
             names = [e[f] for f in ("path", "markets_data_path", "file", "stored") if isinstance(e.get(f), str)]
-            there += any((root / n).is_file() or (root / rel).parent.joinpath(n).is_file() for n in names)
-        mine = [n for n in listed if n["attrs"]["manifest"].startswith(f"src:markets-data:{rel}@")]
-        assert sum(n["attrs"]["present_in_checkout"] for n in mine) == there
-        assert all((root / n["attrs"]["path"]).is_file() for n in mine if n["attrs"]["present_in_checkout"])
+            real = [str(c) for n in names for c in (Path(n), Path(rel).parent / n) if (root / c).is_file()]
+            files.add(real[0] if real else names[0])
+            if real:
+                there.add(real[0])
+    members = store.edges("MEMBER_OF")
+    assert len(members) == expected and not res["not_listed"]              # no entry dropped
+    listed = {e["src"] for e in members}
+    assert listed == {f"src:markets-data:{f}" for f in files}              # one node for one file
+    kinds = {n["id"]: n["attrs"]["kind"] for n in store.nodes("Source")}
+    assert {i for i in listed if kinds[i] != "listed_file_not_in_checkout"} == {f"src:markets-data:{f}" for f in there}
+    # a file two manifests list is one node with a link from each
+    twice = res["files_listed_more_than_once"]
+    assert twice and all(len([e for e in members if e["src"] == nid]) == len(ms) for nid, ms in twice.items())
+    # one real entry comes back whole on its link, and a UTC clock day stays a UTC clock day
+    first = json.loads((root / "MANIFEST.json").read_text(encoding="utf-8"))["entries"][0]
+    edge = next(e for e in members if e["dst"] == "src:markets-data:MANIFEST.json" and e["attrs"]["manifest_index"] == 0)
+    assert edge["attrs"]["entry"] == first
+    node = store.node(edge["src"])["attrs"]
+    assert node["utc_day"] == first["utc_day"] and "trade_day" not in node
+    # where the manifest gives the file's sha256, the link says whether it is the file's (it is, for the tape)
+    assert edge["attrs"]["manifest_sha256_is_the_files"] is True and node["sha256"] == first["sha256"]
     _again(det.manifests, store)
 
 
@@ -98,7 +100,8 @@ def test_rootrows_one_calc_output_per_calc_file(store):
     assert len(store.nodes("CalcOutput")) == n_calc
     assert len(store.edges("PRODUCED")) == n_calc and len(store.nodes("Commit")) == 4
     # every CALC json (counts files too) and each RECEIPT.json is a Source on its branch
-    assert len([s for s in store.nodes("Source") if s["attrs"].get("branch")]) == n_json + 4
+    on_branch = [s for s in store.nodes("Source") if s["attrs"].get("branch")]
+    assert len(on_branch) == n_json + 4 and all(s["id"].startswith("src:markets-data@root-rows-") for s in on_branch)
     assert len(store.edges("DERIVED_FROM")) == n_json
     # spot check: the stored receipt comes back unchanged except for the column descriptions
     raw = json.loads(_git(root, "show", f"{det.branch_ref('2023-10-02')}:CALC-sweeps-20231002.json"))

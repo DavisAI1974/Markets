@@ -2,6 +2,7 @@
 on real lines of the handoff."""
 
 import json
+import subprocess
 
 import pytest
 
@@ -24,7 +25,7 @@ def real_claim(store):
     src = source_node("markets-data", store.data_root, HANDOFF)
     lines = (store.data_root / HANDOFF).read_text(encoding="utf-8").splitlines()
     n = next(i for i, l in enumerate(lines, 1) if "NO PAPER RUN until they are finished" in l)
-    claim = {"id": "claim:check-" + src["id"][-10:], "type": "Claim", "attrs": {
+    claim = {"id": "claim:check-handoff-x", "type": "Claim", "attrs": {
         "text": "No paper run is made until the steps of the agent program are finished.",
         "statement_kind": "decision", "inference": False, "said_by": "Greg",
         "source": src["id"], "line_start": n, "line_end": n, "quote": lines[n - 1].strip()}}
@@ -43,7 +44,25 @@ def test_one_agent_run_node_for_each_line_of_the_record(store):
         assert (a["model"], a["role"], a["tokens_reported"]) == (d["model"], d["role"], d["tokens_reported"])
         assert a["input_tokens"] is None and a["output_tokens"] is None    # never given, so never filled in
     assert store.check_all() == []
-    assert ingest_agent_runs.agent_runs(store)["new"] == 0                 # a second load adds nothing
+    again = ingest_agent_runs.agent_runs(store)
+    assert again["new"] == 0 and again["revised"] == 0                     # a second load adds nothing
+
+
+def test_a_record_that_grows_does_not_rewrite_the_runs_already_loaded(store):
+    """One file, one id. The agent-run record is added to every session: when it changes, its own
+    Source line is revised and the runs loaded from it stay as they are (checked with the two real
+    commits that last changed the file)."""
+    ingest_agent_runs.agent_runs(store)
+    src = source_node("markets-data", store.data_root, f"{PAPER}/agent-runs.jsonl")
+    log = subprocess.run(["git", "-C", str(store.data_root), "log", "-2", "--format=%H", "--", f"{PAPER}/agent-runs.jsonl"],
+                         capture_output=True, text=True, check=True).stdout.split()
+    assert src["attrs"]["commit"] == log[0] and len(log) == 2 and "@" not in src["id"]
+    earlier = {**src, "attrs": {**src["attrs"], "commit": log[1]}}          # the file's Source as of its earlier commit
+    runs_before = {n["id"]: n["rev"] for n in store.nodes("AgentRun")}
+    r = store.write([earlier], written_by="code:test")
+    assert r == {"new": 0, "revised": 1, "unchanged": 0}
+    assert {n["id"]: n["rev"] for n in store.nodes("AgentRun")} == runs_before
+    assert [h["attrs"]["commit"] for h in store.history(src["id"])] == [log[0], log[1]]
 
 
 def test_rule_1_a_claim_has_a_source_or_is_marked_an_inference(store):

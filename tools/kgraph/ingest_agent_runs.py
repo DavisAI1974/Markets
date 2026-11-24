@@ -33,7 +33,7 @@ def run_id(n: int) -> str:
 def agent_runs(store: GraphStore) -> dict:
     root = store.data_root
     src = source_node("markets-data", root, RUNS_FILE)
-    nodes, edges = [src], []
+    nodes, edges, seen = [src], [], {}
     with (root / RUNS_FILE).open(encoding="utf-8") as f:
         for line_no, raw in enumerate(f, 1):
             if not raw.strip():
@@ -52,6 +52,11 @@ def agent_runs(store: GraphStore) -> dict:
             for k, v in d.items():
                 attrs.setdefault(k, v)
             nid = run_id(d["run"])
+            if nid in seen:
+                # two sessions wrote the same run number: one id would stand for two runs
+                raise ValueError(f"{RUNS_FILE}: lines {seen[nid]} and {line_no} both say run {d['run']}; "
+                                 "renumber the later one before it is loaded")
+            seen[nid] = line_no
             nodes.append({"id": nid, "type": "AgentRun", "attrs": attrs})
             edges.append(link("DERIVED_FROM", nid, src["id"], line=line_no))
     return store.write(nodes, edges, written_by=code_stamp("tools.kgraph.ingest_agent_runs"))

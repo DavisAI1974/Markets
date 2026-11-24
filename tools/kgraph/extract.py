@@ -134,7 +134,7 @@ def build_brief(store: GraphStore, dirs: dict[str, Path], docs: list[str]) -> tu
         src = source_node(repo, dirs[repo], rel)
         lines = (dirs[repo] / rel).read_text(encoding="utf-8").splitlines()
         for a, b in pieces(lines):
-            pid = f"{src['id']}#L{a}-L{b}"
+            pid = f"{src['id']}@{src['attrs']['commit'][:10]}#L{a}-L{b}"   # the wording it was cut from
             listing.append({"piece": pid, "source": src, "repo": repo, "path": rel, "first": a, "last": b})
             body.append(f"\n===== PIECE {pid} =====\n(document {rel}, lines {a} to {b})\n")
             body.extend(f"{n}| {lines[n - 1]}" for n in range(a, b + 1))
@@ -149,8 +149,11 @@ def _norm(s: str) -> str:
     return _ws.sub(" ", s).strip()
 
 
-def claim_id(source_id: str, a: int, b: int, quote: str) -> str:
-    return "claim:" + sha([source_id, a, b, _norm(quote)])
+def claim_id(source_id: str, quote: str, text: str | None = None) -> str:
+    """One statement of one document, one id: the document and the quoted words. Line numbers are
+    left out so the id holds when lines are added above it. Two different claims resting on the same
+    quoted words are told apart by their text (the second and later ones only)."""
+    return "claim:" + sha([source_id, _norm(quote)] + ([_norm(text)] if text else []))
 
 
 def entity_id(name: str) -> str:
@@ -187,16 +190,18 @@ def load_result(store: GraphStore, dirs: dict[str, Path], result: dict, run: str
     by = code_stamp("tools.kgraph.extract")
     report = {"pieces": 0, "claims_written": 0, "thrown_out": 0, "entities": 0, "per_piece": []}
     for piece in result.get("pieces", []):
-        m = re.fullmatch(r"(src:([^:]+):(.+)@[0-9a-f]+)#L(\d+)-L(\d+)", str(piece.get("piece", "")))
+        m = re.fullmatch(r"(src:([^:@]+):(.+))@([0-9a-f]{10})#L(\d+)-L(\d+)", str(piece.get("piece", "")))
         if not m:
             raise schema.Refused(f"a returned piece has no usable id: {str(piece.get('piece'))[:80]}")
-        sid, repo, rel, first, last = m.group(1), m.group(2), m.group(3), int(m.group(4)), int(m.group(5))
+        sid, repo, rel, cut_at = m.group(1), m.group(2), m.group(3), m.group(4)
+        first, last = int(m.group(5)), int(m.group(6))
         src = source_node(repo, dirs[repo], rel)
-        if src["id"] != sid:
-            raise schema.Refused(f"{rel} has changed since the brief was made ({sid} then, {src['id']} now)")
+        if src["attrs"]["commit"][:10] != cut_at:
+            raise schema.Refused(f"{rel} has changed since the brief was made (commit {cut_at} then, "
+                                 f"{src['attrs']['commit'][:10]} now): make the brief again")
         lines = (dirs[repo] / rel).read_text(encoding="utf-8").splitlines()
-        nodes, edges, thrown = [src], [], 0
-        seen_ent = set()
+        nodes, edges, thrown, same_quote = [src], [], 0, 0
+        seen_ent, claim_ids = set(), {}
         for n, c in enumerate(piece.get("claims", [])):
             why = check_claim(c, lines, first, last)
             if why:
@@ -208,10 +213,15 @@ def load_result(store: GraphStore, dirs: dict[str, Path], result: dict, run: str
                 edges.append(link("PRODUCED", run, tid))
                 continue
             a, b = int(c["line_start"]), int(c["line_end"])
-            cid = claim_id(sid, a, b, c["quote"])
+            cid = claim_id(sid, c["quote"])
+            if cid in claim_ids and claim_ids[cid] != _norm(c["text"]):
+                cid = claim_id(sid, c["quote"], c["text"])      # the same words carry a second claim
+                same_quote += 1
+            claim_ids[cid] = _norm(c["text"])
             attrs = {"text": c["text"], "statement_kind": c["statement_kind"], "inference": c["inference"],
                      "said_by": c.get("said_by"), "said_on": c.get("said_on"),
-                     "source": sid, "line_start": a, "line_end": b, "quote": c["quote"],
+                     "source": sid, "source_commit": src["attrs"]["commit"],
+                     "line_start": a, "line_end": b, "quote": c["quote"],
                      "proposer": c.get("said_by"), "knowledge_time": c.get("said_on"),
                      "extracted_by": run}
             nodes.append({"id": cid, "type": "Claim", "attrs": attrs})
@@ -239,7 +249,8 @@ def load_result(store: GraphStore, dirs: dict[str, Path], result: dict, run: str
         report["pieces"] += 1
         report["claims_written"] += written
         report["thrown_out"] += thrown
-        report["per_piece"].append({"piece": piece["piece"], "claims_written": written, "thrown_out": thrown})
+        report["per_piece"].append({"piece": piece["piece"], "claims_written": written, "thrown_out": thrown,
+                                    "second_claims_on_the_same_quote": same_quote})
     return report
 
 
@@ -249,9 +260,10 @@ def coverage(store: GraphStore, dirs: dict[str, Path]) -> dict:
     by = code_stamp("tools.kgraph.extract")
     claims_by_source: dict[str, list[dict]] = {}
     for c in store.nodes("Claim"):
-        if not c["attrs"]["inference"] or c["attrs"].get("source"):
-            claims_by_source.setdefault(c["attrs"].get("source"), []).append(c)
-    nodes, edges, out = [], [], {"read": 0, "not_read": 0, "lines_read": 0, "lines_not_read": 0, "documents": []}
+        if c["attrs"].get("source"):
+            claims_by_source.setdefault(c["attrs"]["source"], []).append(c)
+    nodes, edges = [], []
+    out = {"read": 0, "changed_since_read": 0, "not_read": 0, "lines_read": 0, "lines_not_read": 0, "documents": []}
     for d in documents(dirs):
         try:
             src = source_node(d["repo"], dirs[d["repo"]], d["path"])
@@ -259,15 +271,26 @@ def coverage(store: GraphStore, dirs: dict[str, Path]) -> dict:
             out["documents"].append({**d, "state": "not a committed file", "why": str(e)})
             continue
         cl = claims_by_source.get(src["id"], [])
-        state = "done" if cl else "not_extracted"
-        text = (f"{d['path']} ({d['repo']}, {d['lines']} lines): {len(cl)} claims read from it."
-                if cl else f"{d['path']} ({d['repo']}, {d['lines']} lines) has not been read into claims yet.")
+        read_at = sorted({c["attrs"].get("source_commit") for c in cl if c["attrs"].get("source_commit")})
+        now_at = src["attrs"]["commit"]
+        last_line = max((c["attrs"]["line_end"] for c in cl), default=0)
+        if not cl:
+            state, bucket = "not_extracted", "not_read"
+            text = f"{d['path']} ({d['repo']}, {d['lines']} lines) has not been read into claims yet."
+        elif now_at in read_at:
+            state, bucket = "done", "read"
+            text = f"{d['path']} ({d['repo']}, {d['lines']} lines): {len(cl)} claims read from it as it stands now."
+        else:
+            state, bucket = "open", "changed_since_read"
+            text = (f"{d['path']} ({d['repo']}, {d['lines']} lines): {len(cl)} claims were read from an earlier "
+                    f"wording (up to line {last_line}); the file has changed since and the new lines are not read.")
         tid = f"task:extract:{d['repo']}:{d['path']}"
         nodes += [src, {"id": tid, "type": "Task", "attrs": {
-            "text": text, "state": state, "source": src["id"], "lines": d["lines"], "claims": len(cl)}}]
+            "text": text, "state": state, "source": src["id"], "lines": d["lines"], "claims": len(cl),
+            "read_at_commits": read_at, "file_now_at_commit": now_at, "last_line_with_a_claim": last_line}}]
         edges.append(link("DEPENDS_ON", tid, src["id"]))
-        out["read" if cl else "not_read"] += 1
-        out["lines_read" if cl else "lines_not_read"] += d["lines"]
+        out[bucket] += 1
+        out["lines_read" if state == "done" else "lines_not_read"] += d["lines"]
         out["documents"].append({**d, "state": state, "claims": len(cl)})
     store.write(nodes, edges, written_by=by)
     return out

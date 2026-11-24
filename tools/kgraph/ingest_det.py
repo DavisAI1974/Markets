@@ -20,7 +20,7 @@ import subprocess
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from .sources import REPOS, code_stamp, commit_node, last_commit, link, source_node
+from .sources import REPOS, code_stamp, commit_node, last_commit, link, source_id, source_node
 from .store import GraphStore
 
 WRITER = "tools.kgraph.ingest_det"
@@ -86,15 +86,18 @@ def _listed_path(root: Path, manifest_rel: str, e: dict) -> tuple[str | None, bo
 
 
 def manifests(store: GraphStore) -> dict:
-    """One Source for each manifest and one for each file it lists. The entry is kept whole, as
-    stored, under `entry`; bytes, sha256 and utc_day are also lifted beside it unchanged. A UTC clock
-    day stays `utc_day`: it is never turned into a trade day."""
+    """One Source for each manifest and one for each FILE it lists; one MEMBER_OF link for each ENTRY.
+
+    A file listed by two manifests is one node with two links. What a manifest says of the file (the
+    whole entry, as stored) is on the link, so two manifests never overwrite each other. Where the
+    file is in the checkout its node is the file's own Source (bytes and sha256 read from the file),
+    and the link says whether the manifest's sha256 is the file's. A UTC clock day stays `utc_day`.
+    """
     root = store.data_root
-    nodes, edges, dup, not_listed, per = [], [], [], [], {}
-    seen: set[str] = set()
+    nodes, edges, not_listed, per, files = {}, [], [], {}, {}
     for mrel, key in MANIFESTS:
         msrc = source_node("markets-data", root, mrel, kind="manifest")
-        nodes.append(msrc)
+        nodes[msrc["id"]] = msrc
         j = json.loads((root / mrel).read_text(encoding="utf-8"))
         entries = j if key is None else j.get(key)
         if not isinstance(entries, list) or not all(isinstance(e, dict) for e in entries):
@@ -105,22 +108,27 @@ def manifests(store: GraphStore) -> dict:
             p, there = _listed_path(root, mrel, e)
             if p is None:
                 p = f"{mrel}#entry{i}"
-            digest = next((e[k] for k in ("sha256", "stored_sha256", "sha256_uncompressed") if e.get(k)), None)
-            nid = (f"src:markets-data:{p}#sha256:{digest[:12]}" if digest
-                   else f"src:markets-data:{p}#listed-in:{msrc['id']}")
-            if nid in seen:
-                nid = f"{nid}#n{i}"
-                dup.append(nid)
-            seen.add(nid)
-            attrs = {"kind": "listed_file", "repo": REPO, "path": p, "present_in_checkout": there,
-                     "manifest": msrc["id"], "manifest_index": i, "entry": e}
-            for k in ("bytes", "sha256", "utc_day"):
-                if k in e:
-                    attrs[k] = e[k]
-            nodes.append({"id": nid, "type": "Source", "attrs": attrs})
-            edges.append(link("MEMBER_OF", nid, msrc["id"], key=str(i)))
-    res = store.write(nodes, edges, written_by=_stamp())
-    res.update(entries_per_manifest=per, not_listed=not_listed, duplicate_ids_renumbered=dup)
+            nid = source_id("markets-data", p)
+            on_link = {"manifest_index": i, "entry": e}
+            if there:
+                if nid not in nodes:
+                    nodes[nid] = source_node("markets-data", root, p)
+                listed = e.get("sha256") or e.get("stored_sha256")
+                if listed:
+                    on_link["manifest_sha256_is_the_files"] = listed == nodes[nid]["attrs"]["sha256"]
+            elif nid not in nodes:
+                attrs = {"kind": "listed_file_not_in_checkout", "repo": REPO, "path": p}
+                for k in ("bytes", "sha256", "utc_day"):
+                    if k in e:
+                        attrs[k] = e[k]
+                nodes[nid] = {"id": nid, "type": "Source", "attrs": attrs}
+            if "utc_day" in e:
+                nodes[nid]["attrs"].setdefault("utc_day", e["utc_day"])
+            files.setdefault(nid, []).append(mrel)
+            edges.append(link("MEMBER_OF", nid, msrc["id"], key=str(i), **on_link))
+    res = store.write(list(nodes.values()), edges, written_by=_stamp())
+    res.update(entries_per_manifest=per, not_listed=not_listed,
+               files_listed_more_than_once={k: v for k, v in files.items() if len(v) > 1})
     return res
 
 
@@ -143,7 +151,6 @@ def rootrows(store: GraphStore) -> dict:
         ds, ref = d.replace("-", ""), branch_ref(d)
         branch = f"root-rows-{ds}"
         cnode = commit_node("markets-data", root, ref)
-        tip10 = cnode["attrs"]["sha"][:10]
         nodes.append(cnode)
         names = _gitb(root, "ls-tree", "-r", "--name-only", ref).decode().splitlines()
         wanted = ["RECEIPT.json"] + sorted(n for n in names if re.fullmatch(r"CALC-.+\.json", n))
@@ -151,7 +158,7 @@ def rootrows(store: GraphStore) -> dict:
         srcs, calcs = {}, {}
         for n in wanted:
             raw = _gitb(root, "show", f"{ref}:{n}")
-            sid = f"src:markets-data:{branch}:{n}@{tip10}"
+            sid = source_id("markets-data", n, branch)
             nodes.append({"id": sid, "type": "Source", "attrs": {
                 "kind": "file", "repo": REPO, "path": n, "commit": cnode["attrs"]["sha"], "branch": branch,
                 "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}})
