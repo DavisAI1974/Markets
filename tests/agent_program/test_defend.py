@@ -461,6 +461,82 @@ def test_a_data_manifest_item_is_checked_against_the_file_at_its_commit(world):
     assert world["store"].node("claim:reg-" + defend.sha("man-bad")) is None
 
 
+def _cli(world, verb, *args):
+    return defend.main([verb, *args, "--data", str(world["root"]), "--graph-dir", str(world["graph"])])
+
+
+def _fresh_tasks(world):
+    return GraphStore(world["root"], graph_dir=world["graph"]).nodes("Task")
+
+
+def test_a_refused_challenge_leaves_a_task_and_no_evaluation(world, capsys):
+    s = world["store"]
+    cid = _reg(world, "chal-refused")["claim"]
+    n0, e0 = len(s.nodes("Task")), len(s.nodes("Evaluation"))
+    with pytest.raises(schema.Refused, match="sole verifier"):
+        _challenge(world, cid, run=PROPOSER, name="cr.json")
+    assert len(s.nodes("Task")) == n0 + 1 and len(s.nodes("Evaluation")) == e0
+    t = [t for t in s.nodes("Task") if t["attrs"].get("claim") == cid and t["attrs"].get("verb") == "challenge"][0]["attrs"]
+    assert "sole verifier" in t["reason"] and t["run"] == PROPOSER and t["challenge_file"]["alternatives"] and t["refused_at"]
+    assert t["text"].startswith("not admissible for a check: ") and t["state"] == "blocked"
+    # the same through the command line: exit code 2, and the refusal was retained
+    n1 = len(_fresh_tasks(world))
+    assert _cli(world, "challenge", "--claim", cid, "--file", str(_w(world, _chal(), "cr2.json")), "--run", PROPOSER,
+                "--brief", str(_brief_file(world, cid))) == 2
+    assert "sole verifier" in capsys.readouterr().err and len(_fresh_tasks(world)) == n1 + 1
+
+
+def test_a_refused_challenge_brief_leaves_a_task(world, capsys):
+    n0 = len(_fresh_tasks(world))
+    out = world["tmp"] / "nobrief.md"
+    assert _cli(world, "challenge-brief", "--claim", "claim:does-not-exist", "--out", str(out), "--run", REVIEWER) == 2
+    fresh = _fresh_tasks(world)
+    assert len(fresh) == n0 + 1 and not out.exists()
+    t = [t for t in fresh if t["attrs"].get("verb") == "challenge-brief"][0]["attrs"]
+    assert t["claim"] == "claim:does-not-exist" and "registered" in t["reason"] and t["run"] == REVIEWER
+
+
+def test_a_refusal_that_cannot_be_written_says_both_reasons_and_exits_3(world, capsys, monkeypatch):
+    f = _w(world, _claim(world, "unwritable", mechanism=""), "uw.json")
+    n0 = len(_fresh_tasks(world))
+    assert _cli(world, "register", "--claim-file", str(f), "--run", PROPOSER) == 2          # retained: exit code 2
+    assert len(_fresh_tasks(world)) == n0 + 1
+    capsys.readouterr()
+    orig = GraphStore.write
+
+    def failing(self, nodes, edges, **kw):
+        if any(n["type"] == "Task" for n in nodes):
+            raise schema.Refused("PENDING-FILE-LEFT-OVER the graph will not take this write")
+        return orig(self, nodes, edges, **kw)
+    monkeypatch.setattr(GraphStore, "write", failing)
+    assert _cli(world, "register", "--claim-file", str(f), "--run", PROPOSER) == 3
+    err = capsys.readouterr().err
+    assert "mechanism" in err and "PENDING-FILE-LEFT-OVER" in err
+    monkeypatch.undo()
+    assert len(_fresh_tasks(world)) == n0 + 1          # nothing was written the second time
+
+
+def test_registration_never_writes_a_new_revision_of_an_existing_source(world):
+    s = world["store"]
+    sid = "src:Markets:.claude/agents/scout.md"          # a real Source of the graph; the committed file has changed since
+    before = s.history(sid)
+    cited = {"kind": "cited", "repo": "Markets", "path": ".claude/agents/scout.md", "line_start": 8, "line_end": 8,
+             "quote": "You are the scout for DavisAI Markets", "said_by": "Claude"}
+    now_bytes = subprocess.run(["git", "-C", str(repo_dirs(world["root"], None, None)["Markets"]), "show",
+                                "HEAD:.claude/agents/scout.md"], capture_output=True).stdout
+    assert before and before[-1]["attrs"]["sha256"] != hashlib.sha256(now_bytes).hexdigest()       # the condition holds
+    rule = [g for g in _claim(world)["rests_on"] if g["kind"] == "rule"]
+    cid = _reg(world, "source-stays", rests_on=rule + [cited], name="ss.json")["claim"]
+    assert s.history(sid) == before                      # the existing Source is left exactly as it was
+    g = [g for g in s.node(cid)["attrs"]["rests_on"] if g["kind"] == "cited"][0]
+    assert g["sha256"] == hashlib.sha256(now_bytes).hexdigest() and g["commit"] and g["source"] == sid
+    e = [e for e in s.edges("SUPPORTS") if e["src"] == sid and e["dst"] == cid][0]
+    assert e["attrs"]["commit"] == g["commit"] and e["attrs"]["sha256"] == g["sha256"]
+    r = [g for g in s.node(cid)["attrs"]["rests_on"] if g["kind"] == "rule"][0]
+    er = [e for e in s.edges("SUPPORTS") if e["src"] == r["source"] and e["dst"] == cid][0]
+    assert er["attrs"]["commit"] == r["commit"] and er["attrs"]["sha256"] == r["sha256"]
+
+
 def test_an_inference_that_names_nothing_it_rests_on_is_refused(world):
     with pytest.raises(schema.Refused, match=r"rests_on.*inference"):
         _reg(world, "inf-empty", inference=True, inference_reason="INFERENCE-TEXT a reading", rests_on=[])

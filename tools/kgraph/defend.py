@@ -182,12 +182,13 @@ def _blob(repo_dir, commit: str, path: str) -> bytes:
 
 
 def _source_at(store: GraphStore, dirs: dict, repo: str, path: str, commit: str, raw: bytes) -> tuple[str, dict | None]:
-    """The Source node of repo:path as it stood at `commit`: the graph's own node when its sha256 matches,
-    else the checkout's current node when that is the same bytes, else a node for that commit alone."""
+    """The Source node of repo:path for `commit`. A Source that already exists in the graph is NEVER written again
+    (other claims point at it, with their own lines), whatever its sha256: the commit and sha256 the ground was read
+    at are stored on the ground and on its edge. Only when the graph has none: the checkout's current node when that
+    is the same bytes, else a node for that commit alone."""
     h = hashlib.sha256(raw).hexdigest()
     std = source_id(repo, path)
-    n = store.node(std)
-    if n and n["attrs"].get("sha256") == h:
+    if store.node(std):
         return std, None
     try:
         wn = source_node(repo, dirs[repo], path)
@@ -320,34 +321,44 @@ def _manifest(d: dict, dirs: dict) -> list:
 
 
 # ---- register ----------------------------------------------------------------------------------------
+class NotRetained(schema.Refused):
+    """A refusal that could not be written to the graph either; the message carries both reasons (exit code 3)."""
+
+
+def _content_of(path):
+    try:
+        raw = Path(path).read_text(encoding="utf-8", errors="replace")
+    except (OSError, TypeError):
+        return "(the file could not be read)"
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        return raw
+
+
 def register(store: GraphStore, claim_file, run: str, dirs: dict | None = None) -> dict:
     try:
         return _register(store, claim_file, run, dirs or repo_dirs(store.data_root, None, None))
+    except NotRetained:
+        raise
     except schema.Refused as e:
-        _retain(store, claim_file, run, str(e))
+        _retain(store, "register", run, str(e), {"claim_file": _content_of(claim_file)})
         raise
 
 
-def _retain(store: GraphStore, claim_file, run: str, reason: str) -> None:
-    """A refused registration is kept as a Task (never a Claim): never a silent exclusion."""
-    try:
-        raw = Path(claim_file).read_text(encoding="utf-8", errors="replace")
-        try:
-            content = json.loads(raw)
-        except json.JSONDecodeError:
-            content = raw
-    except OSError:
-        content = "(the file could not be read)"
+def _retain(store: GraphStore, verb: str, run, reason: str, extra: dict) -> None:
+    """A refusal is kept as a Task (never a Claim, never an Evaluation): never a silent exclusion. When it cannot be
+    written, the refusal is raised again as NotRetained with both reasons, and the command exits 3."""
     stamp = now()
-    tid = "task:defend-refused-" + sha([str(run), content, reason, stamp])
-    attrs = {"text": f"not admissible for a check: {reason}; retained", "state": "blocked", "claim_file": content,
-             "reason": reason, "run": str(run), "refused_at": stamp}
-    ok = store.node(run) and store.node(run)["type"] == "AgentRun" if run else False
+    tid = f"task:defend-refused-{verb}-" + sha([verb, str(run), extra, reason, stamp])
+    attrs = {"text": f"not admissible for a check: {reason}; retained", "state": "blocked", "verb": verb,
+             "reason": reason, "run": str(run), "refused_at": stamp, **extra}
     try:
+        ok = bool(run) and store.node(run) and store.node(run)["type"] == "AgentRun"
         store.write([{"id": tid, "type": "Task", "attrs": attrs}], [],
                     written_by=run if ok else code_stamp("tools.kgraph.defend"))
-    except Exception:
-        pass
+    except Exception as e:
+        raise NotRetained(f"{reason}; and the refusal could not be kept in the graph either: {e}") from None
 
 
 def _register(store: GraphStore, claim_file, run: str, dirs: dict) -> dict:
@@ -420,7 +431,7 @@ def _register(store: GraphStore, claim_file, run: str, dirs: dict) -> dict:
         elif g.get("_node") is not None and not any(n["id"] == g["_node"]["id"] for n in nodes):
             nodes.append(g["_node"])
         if g["kind"] != "claim":
-            edges.append(link("SUPPORTS", g["source"], cid))
+            edges.append(link("SUPPORTS", g["source"], cid, commit=g["commit"], sha256=g["sha256"]))
     if not d["inference"]:
         if not sources:
             raise schema.Refused(f"{w}: rests_on: a claim that is not an inference rests on a rule's text or a cited "
@@ -561,6 +572,33 @@ def _independent(store: GraphStore, claim_id: str, run: str) -> None:
 
 
 def challenge(store: GraphStore, claim_id: str, challenge_file, run: str, brief_file=None, dirs: dict | None = None) -> dict:
+    try:
+        return _challenge(store, claim_id, challenge_file, run, brief_file, dirs)
+    except NotRetained:
+        raise
+    except schema.Refused as e:
+        extra = {"claim": claim_id, "challenge_file": _content_of(challenge_file), "brief_file": str(brief_file)}
+        try:
+            extra["brief_file_sha256"] = hashlib.sha256(Path(brief_file).read_bytes()).hexdigest()
+        except (OSError, TypeError):
+            pass
+        _retain(store, "challenge", run, str(e), extra)
+        raise
+
+
+def challenge_brief(store: GraphStore, claim_id: str, out, run=None, dirs: dict | None = None) -> str:
+    try:
+        text = brief(store, claim_id, dirs)
+    except NotRetained:
+        raise
+    except schema.Refused as e:
+        _retain(store, "challenge-brief", run, str(e), {"claim": claim_id})
+        raise
+    Path(out).write_text(text, encoding="utf-8")
+    return text
+
+
+def _challenge(store: GraphStore, claim_id: str, challenge_file, run: str, brief_file=None, dirs: dict | None = None) -> dict:
     c = _registered(store, claim_id)
     d = _load_json(challenge_file)
     _independent(store, claim_id, run)
@@ -675,7 +713,7 @@ def main(argv=None) -> int:
         if a.verb == "register":
             print(json.dumps(register(store, a.claim_file, a.run)))
         elif a.verb == "challenge-brief":
-            Path(a.out).write_text(brief(store, a.claim), encoding="utf-8")
+            challenge_brief(store, a.claim, a.out, a.run)
             print(f"wrote {a.out}")
         elif a.verb == "challenge":
             print(json.dumps(challenge(store, a.claim, a.file, a.run, a.brief)))
@@ -683,6 +721,9 @@ def main(argv=None) -> int:
             print(show(store, a.claim))
         else:
             print("\n".join(undefended(store)))
+    except NotRetained as e:
+        print(f"refused, and NOT retained: {e}", file=sys.stderr)
+        return 3
     except schema.Refused as e:
         print(f"refused: {e}", file=sys.stderr)
         return 2
