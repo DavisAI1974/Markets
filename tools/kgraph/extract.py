@@ -27,7 +27,7 @@ import sys
 from pathlib import Path
 
 from . import schema
-from .sources import code_stamp, link, source_node
+from .sources import code_stamp, git, link, source_node
 from .store import GraphStore, sha
 
 WORK = "tasks/family-research-20261022/research-union-current"
@@ -158,6 +158,15 @@ def build_brief(store: GraphStore, dirs: dict[str, Path], docs: list[str]) -> tu
 _ws = re.compile(r"\s+")
 
 
+def git_text(repo_dir, commit: str, rel: str) -> str:
+    """A file as it stood at one commit (not stripped: every line as written)."""
+    import subprocess
+    r = subprocess.run(["git", "-C", str(repo_dir), "show", f"{commit}:{rel}"], capture_output=True)
+    if r.returncode != 0:
+        raise RuntimeError(r.stderr.decode(errors="replace").strip())
+    return r.stdout.decode("utf-8")
+
+
 def _norm(s: str) -> str:
     return _ws.sub(" ", s).strip()
 
@@ -209,10 +218,19 @@ def load_result(store: GraphStore, dirs: dict[str, Path], result: dict, run: str
         sid, repo, rel, cut_at = m.group(1), m.group(2), m.group(3), m.group(4)
         first, last = int(m.group(5)), int(m.group(6))
         src = source_node(repo, dirs[repo], rel)
-        if src["attrs"]["commit"][:10] != cut_at:
-            raise schema.Refused(f"{rel} has changed since the brief was made (commit {cut_at} then, "
-                                 f"{src['attrs']['commit'][:10]} now): make the brief again")
-        lines = (dirs[repo] / rel).read_text(encoding="utf-8").splitlines()
+        read_at = src["attrs"]["commit"]
+        if read_at[:10] == cut_at:
+            lines = (dirs[repo] / rel).read_text(encoding="utf-8").splitlines()
+        else:
+            # The file has changed since the brief was cut (the decisions file is added to all the
+            # time). The read is checked against the file AS IT STOOD when it was cut, and each claim
+            # says which wording it was read from. The grounding check reads the words again later.
+            try:
+                read_at = git(dirs[repo], "rev-parse", "--verify", "-q", cut_at + "^{commit}")
+                lines = git_text(dirs[repo], read_at, rel).splitlines()
+            except RuntimeError:
+                raise schema.Refused(f"the brief of {rel} was cut at commit {cut_at}, which this checkout of {repo} "
+                                     "does not have: make the brief again")
         nodes, edges, thrown, same_quote = [src], [], 0, 0
         seen_ent, claim_ids = set(), {}
         for n, c in enumerate(piece.get("claims", [])):
@@ -233,7 +251,7 @@ def load_result(store: GraphStore, dirs: dict[str, Path], result: dict, run: str
             claim_ids[cid] = _norm(c["text"])
             attrs = {"text": c["text"], "statement_kind": c["statement_kind"], "inference": c["inference"],
                      "said_by": c.get("said_by"), "said_on": c.get("said_on"),
-                     "source": sid, "source_commit": src["attrs"]["commit"],
+                     "source": sid, "source_commit": read_at,
                      "line_start": a, "line_end": b, "quote": c["quote"],
                      "proposer": c.get("said_by"), "knowledge_time": c.get("said_on"),
                      "extracted_by": run}
@@ -264,6 +282,10 @@ def load_result(store: GraphStore, dirs: dict[str, Path], result: dict, run: str
         report["thrown_out"] += thrown
         report["per_piece"].append({"piece": piece["piece"], "claims_written": written, "thrown_out": thrown,
                                     "second_claims_on_the_same_quote": same_quote})
+    # Greg, 2026-11-24: no new claim is tied to a tastytrade platform issue. A claim that names the
+    # platform is marked here, as it is loaded, so that nothing made later can rest on it.
+    from . import platform_scope
+    report["tied_to_a_tastytrade_platform_issue"] = platform_scope.mark(store, dirs)["new"]
     return report
 
 

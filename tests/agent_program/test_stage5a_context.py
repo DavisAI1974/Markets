@@ -29,11 +29,7 @@ def graph(tmp_path_factory):
     for run, rel in READS.items():
         if not (root / rel).exists():
             pytest.skip(f"{rel} is not in this markets-data checkout")
-        try:
-            extract.load_result(store, dirs, json.loads((root / rel).read_text(encoding="utf-8")), run)
-        except Exception as e:                      # the decisions file is added to every session
-            if "has changed since the brief" not in str(e):
-                raise
+        extract.load_result(store, dirs, json.loads((root / rel).read_text(encoding="utf-8")), run)
     return store, dirs
 
 
@@ -44,7 +40,8 @@ def _cited(text):
 def _accounted(store, out):
     """Every claim of the graph is in exactly one place."""
     all_ids = {c["id"] for c in store.nodes("Claim")}
-    placed = [set(out["included"]), set(out["folded"]), set(out["superseded"]), set(out["cut"]), set(out["not_reached"])]
+    placed = [set(out["included"]), set(out["folded"]), set(out["superseded"]), set(out["cut"]), set(out["not_reached"]),
+              set(out["platform"])]
     assert set().union(*placed) == all_ids
     assert sum(len(p) for p in placed) == len(all_ids)          # and in one place only
 

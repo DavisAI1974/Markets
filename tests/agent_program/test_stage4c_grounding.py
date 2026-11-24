@@ -96,18 +96,18 @@ def test_a_sentence_is_looked_up_by_its_own_numbers_and_names(graph):
     top = store.node(r["supporting_candidates"][0]["claim"])["attrs"]
     assert "32 strategies, 26 checks passing" in top["quote"]
     assert r["supporting_candidates"][0]["where"].endswith("NEXT_SESSION_HANDOFF_20261124X.md:94")
-    # the running list's figure is not in the graph until the running list is read
-    sentence = "141 of 440 prints have no side."      # the running list, line 56: "(9 of 107, then 141 of 440)"
+    # a figure of the running list (its line A2) is not in the graph until the running list is read
+    sentence = "CL14, CL17, CL05, CL06 and CL16 made 235 of the 327 trades."
     before = grounding.check_text(store, sentence, dirs)
     assert before["decision"] == "revise"
-    assert any("141" in e for e in before["required_evidence"]) and any("440" in e for e in before["required_evidence"])
+    assert any("235" in e for e in before["required_evidence"]) and any("327" in e for e in before["required_evidence"])
     _load(store, dirs, READ_LIST)
     after = grounding.check_text(store, sentence, dirs)
     assert after["decision"] is None
-    assert any(c["where"] == "tasty/RUNNING_LIST.md:56" for c in after["supporting_candidates"])
+    assert any(c["where"].startswith("tasty/RUNNING_LIST.md:") and not c["platform_issue"] for c in after["supporting_candidates"])
     # two real figures that no one claim of this graph carries together are asked for, not waved through
     # (the decisions file: "CL14 opens 23 times on the 10-minute recording"; it is not read into this graph)
-    more = grounding.check_text(store, "141 of 440 prints have no side, and CL14 opens 23 times on the 10-minute recording.", dirs)
+    more = grounding.check_text(store, "CL14, CL17, CL05, CL06 and CL16 made 235 of the 327 trades, and CL14 opens 23 times.", dirs)
     assert more["decision"] == "revise" and any("23" in e for e in more["required_evidence"])
 
 

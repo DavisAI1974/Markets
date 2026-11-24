@@ -38,6 +38,13 @@ MERGE_TARGET_TYPES = ("Entity", "Source", "Commit", "DipoleEvent", "Peak", "Trad
                       "AgentRun", "Family", "Chain", "Render", "Artifact")
 
 
+SURFACE = "named in a document"      # the Entities that are surface forms; a scope or a rule version is not one
+
+
+def surface_forms(store: GraphStore) -> list[dict]:
+    return [e for e in store.nodes("Entity") if e["attrs"].get("entity_kind") == SURFACE]
+
+
 def clean(name: str) -> str:
     return name.strip().strip("`'\"").strip()
 
@@ -83,7 +90,7 @@ def rule_merges(store: GraphStore, dirs: dict[str, Path]) -> tuple[list[dict], l
     tracked = _tracked(dirs)
     merged = {e["src"] for e in store.edges("RESOLVED_TO")}
     merges, new_nodes, unplaced = [], {}, []
-    for ent in store.nodes("Entity"):
+    for ent in surface_forms(store):
         if ent["id"] in merged:
             continue
         name = clean(ent["attrs"]["name"])
@@ -154,7 +161,7 @@ def _find(store: GraphStore, ref: str) -> str | None:
     if store.node(ref):
         return ref
     want = clean(ref).lower()
-    hits = [n["id"] for n in store.nodes("Entity") if clean(n["attrs"]["name"]).lower() == want]
+    hits = [n["id"] for n in surface_forms(store) if clean(n["attrs"]["name"]).lower() == want]
     return hits[0] if len(hits) == 1 else None
 
 
@@ -183,8 +190,8 @@ def apply(store: GraphStore, merges: list[dict], run: str, min_confidence: float
         why = None
         if src is None or dst is None:
             why = "one of its ends is not a node of the graph (or the name fits more than one Entity)"
-        elif store.node(src)["type"] != "Entity":
-            why = "only a surface form (an Entity) is merged into something"
+        elif store.node(src)["type"] != "Entity" or store.node(src)["attrs"].get("entity_kind") != SURFACE:
+            why = "only a surface form (a name lifted from a document) is merged into something"
         elif store.node(dst)["type"] not in MERGE_TARGET_TYPES:
             why = f"a name is not merged into a {store.node(dst)['type']}"
         elif not isinstance(conf, (int, float)) or not 0 <= conf <= 1 or not evidence:
@@ -255,7 +262,7 @@ def candidates(store: GraphStore) -> str:
     for e in store.edges("MENTIONS"):
         by_ent.setdefault(e["dst"], []).append(e["src"])
     rows = []
-    for ent in sorted(store.nodes("Entity"), key=lambda n: n["attrs"]["name"].lower()):
+    for ent in sorted(surface_forms(store), key=lambda n: n["attrs"]["name"].lower()):
         if ent["id"] in merged:
             continue
         claims = by_ent.get(ent["id"], [])

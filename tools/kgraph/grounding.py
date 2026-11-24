@@ -31,6 +31,7 @@ import re
 import sys
 from pathlib import Path
 
+from . import platform_scope
 from .extract import repo_dirs
 from .resolve import canonical
 from .sources import code_stamp, link
@@ -95,6 +96,7 @@ def check_claim(store: GraphStore, claim_id: str, dirs: dict | None = None, _dep
         raise ValueError(f"{claim_id} is not a claim of the graph")
     a = claim["attrs"]
     _seen = (_seen or set()) | {claim_id}
+    tied = platform_scope.members(store)
     checked, observed, open_, paths, required, reason = [], [], [], [], [], None
     into = [e for e in store.edges() if e["dst"] == claim_id]
     out = [e for e in store.edges() if e["src"] == claim_id]
@@ -137,7 +139,9 @@ def check_claim(store: GraphStore, claim_id: str, dirs: dict | None = None, _dep
                     open_.append(f"{other} was not followed further (a ring, or {MAX_DEPTH} steps deep)")
                     continue
                 sub = check_claim(store, other, dirs, _depth + 1, _seen)
-                if sub["decision"] is None:
+                if other in tied:
+                    observed.append(f"it rests on {other}, which is tied to a tastytrade platform issue: that is not taken as what it rests on")
+                elif sub["decision"] is None:
                     good += [[e["id"]] + p for p in sub["supporting_paths"]] or [[e["id"]]]
                 else:
                     observed.append(f"it rests on {other}, which itself lacks a path: {sub['reason']}")
@@ -154,6 +158,10 @@ def check_claim(store: GraphStore, claim_id: str, dirs: dict | None = None, _dep
             if a.get("said_by"):
                 open_.append(f"it is {a['said_by']}'s reading; whether Greg struck it or let it stand is not in the graph")
 
+    tie = platform_scope.ties(store).get(claim_id)
+    if tie:
+        checked.append("whether the claim is tied to a tastytrade platform issue (parked by Greg)")
+        observed.append(f"it is tied to a tastytrade platform issue ({tie['why']}): it is kept, and nothing new may rest on it")
     adverse = [e["id"] for e in into + out if e["type"] == "CONTRADICTS"]
     if adverse:
         checked.append("CONTRADICTS links")
@@ -185,9 +193,13 @@ def check_node(store: GraphStore, node_id: str, dirs: dict | None = None) -> dic
         reason = f"nothing in the graph says which claim or finding {name} rests on"
         required.append(f"a DERIVED_FROM link from {node_id} to the claim or finding it rests on "
                         "(for a rule: the measurement or the decision the rule was written from)")
+    tied = platform_scope.members(store)
     for e in rests:
         sub = check_claim(store, e["dst"], dirs)
-        if sub["decision"] is None:
+        if e["dst"] in tied:
+            reason = reason or f"it rests on {e['dst']}, which is tied to a tastytrade platform issue (parked by Greg)"
+            required.append("a finding that does not come from the tastytrade sandbox or its thin feed")
+        elif sub["decision"] is None:
             paths += [[e["id"]] + p for p in sub["supporting_paths"]] or [[e["id"]]]
         else:
             reason = reason or f"it rests on {e['dst']}, which itself lacks a path: {sub['reason']}"
@@ -211,6 +223,7 @@ def check_text(store: GraphStore, text: str, dirs: dict | None = None, top: int 
     checked = ["claims of the graph that carry every number of the sentence",
                "claims of the graph that carry the sentence's own words and names"]
     superseded = {e["dst"] for e in store.edges("SUPERSEDES")}
+    tied = platform_scope.members(store)
     cands = []
     for c in store.nodes("Claim"):
         a = c["attrs"]
@@ -227,11 +240,17 @@ def check_text(store: GraphStore, text: str, dirs: dict | None = None, top: int 
         cands.append({"claim": c["id"], "text": a["text"], "quote": a.get("quote"),
                       "where": f"{src['attrs']['path']}:{a['line_start']}" if src else "an inference with no source line",
                       "said_by": a.get("said_by"), "inference": a["inference"],
-                      "numbers_carried": n_hit, "words_carried": w_hit, "superseded": c["id"] in superseded})
-    cands.sort(key=lambda x: (-len(x["words_carried"]), x["superseded"], x["inference"], x["claim"]))
+                      "numbers_carried": n_hit, "words_carried": w_hit, "superseded": c["id"] in superseded,
+                      "platform_issue": c["id"] in tied})
+    cands.sort(key=lambda x: (x["platform_issue"], -len(x["words_carried"]), x["superseded"], x["inference"], x["claim"]))
     target = {"id": "text:" + sha(text), "rev": 0, "type": "text", "attrs": {"text": text}}
     observed, open_, required, reason = [], [], [], None
-    if cands:
+    if cands and all(c["platform_issue"] for c in cands):
+        observed.append(f"{len(cands)} claim(s) carry it, and every one is tied to a tastytrade platform issue")
+        reason = ("the only claims that carry it are tied to a tastytrade platform issue (the sandbox or its thin "
+                  "feed), which Greg parked: they are not taken as evidence for anything new")
+        required.append("evidence that does not come from the tastytrade sandbox or its thin feed")
+    elif cands:
         observed.append(f"{len(cands)} claim(s) carry every number of the sentence and at least half of its words")
         open_.append("whether a candidate means what the sentence says is for the reviewer to read: the code "
                      "matched numbers and words only")

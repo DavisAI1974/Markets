@@ -3,6 +3,7 @@ file. Checked on the real read of handoff X kept in markets-data graph/reads/ an
 
 import json
 import re
+import subprocess
 
 import pytest
 
@@ -81,9 +82,38 @@ def test_a_read_needs_its_run_and_the_file_as_it_was_cut(loaded):
         extract.load_result(store, dirs, result, "run:9999")
     stale = json.loads(json.dumps(result))
     stale["pieces"][0]["piece"] = re.sub(r"@[0-9a-f]{10}#", "@0000000000#", stale["pieces"][0]["piece"])
-    with pytest.raises(schema.Refused, match="has changed since the brief"):
+    with pytest.raises(schema.Refused, match="does not have"):          # a commit that never was
         extract.load_result(store, dirs, stale, RUN)
     assert store.nodes("Claim") == []
+
+
+def test_a_read_of_a_file_that_has_since_grown_is_checked_against_the_file_as_it_was_read(tmp_path):
+    """The decisions file is added to all the time. A read cut at an earlier commit still loads: each
+    quote is checked against the file as it stood at that commit, and each claim says which."""
+    root = data_root()
+    rel = "graph/reads/run-0022-ROOT_GAMEPLAN_DECISIONS_L5853-L6152.json"
+    if not (root / rel).exists():
+        pytest.skip(f"{rel} is not in this markets-data checkout")
+    store = GraphStore(root, graph_dir=tmp_path / "graph")
+    ingest_agent_runs.agent_runs(store)
+    dirs = extract.repo_dirs(root, None, None)
+    result = json.loads((root / rel).read_text(encoding="utf-8"))
+    cut = re.search(r"@([0-9a-f]{10})#", result["pieces"][0]["piece"]).group(1)
+    path = f"{WORK}/root-redesign-20261116/ROOT_GAMEPLAN_DECISIONS.md"
+    now = subprocess.run(["git", "-C", str(root), "log", "-1", "--format=%H", "--", path],
+                         capture_output=True, text=True, check=True).stdout.strip()
+    if now.startswith(cut):
+        pytest.skip("the decisions file has not changed since this read was made")
+    then = subprocess.run(["git", "-C", str(root), "show", f"{cut}:{path}"], capture_output=True, text=True, check=True).stdout.splitlines()
+    returned = [c for p in result["pieces"] for c in p["claims"]]
+    stood = [c for c in returned
+             if len(" ".join(c.get("quote", "").split()).split()) >= 4
+             and " ".join(c["quote"].split()) in " ".join(" ".join(then[c["line_start"] - 1:c["line_end"]]).split())]
+    report = extract.load_result(store, dirs, result, "run:0022")
+    claims = store.nodes("Claim")
+    assert report["claims_written"] == len(claims) == len(stood)
+    assert {c["attrs"]["source_commit"][:10] for c in claims} == {cut}                  # each says which wording it was read from
+    assert store.node(claims[0]["attrs"]["source"])["attrs"]["commit"] == now          # the file's own line says where it stands now
 
 
 def test_coverage_says_which_documents_are_read_and_which_are_not(loaded):

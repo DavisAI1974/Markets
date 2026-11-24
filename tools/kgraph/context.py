@@ -16,7 +16,9 @@ What it does (plan, stage 5a):
      kind), how many were superseded or folded, which documents have not been read into claims yet,
      and how many checks on record ask for evidence. Nothing is left out in silence: the returned
      lists place every claim of the graph in exactly one of included, folded, superseded, cut,
-     not_reached.
+     not_reached, platform.
+  6. leaves out the claims tied to a tastytrade platform issue that the running list parks (Greg,
+     2026-11-24), says how many, and marks the ones that only name the platform.
 
 Tokens are estimated at 4 characters a token (no tokenizer is called here); the text says so.
 """
@@ -29,6 +31,7 @@ import re
 import sys
 from pathlib import Path
 
+from . import platform_scope
 from .extract import repo_dirs
 from .resolve import canonical, clean
 from .sources import code_stamp, git
@@ -102,6 +105,8 @@ def _task_entities(store: GraphStore, task: str) -> list[str]:
     """The Entities the task names, by their name as written (whole phrase, any letter case)."""
     hits = []
     for e in store.nodes("Entity"):
+        if e["attrs"].get("entity_kind") == "scope":
+            continue
         name = clean(e["attrs"]["name"])
         if len(name) < 3:
             continue
@@ -147,11 +152,17 @@ def _reach(store: GraphStore, claims: dict, task: str, hops: int) -> tuple[list[
     return ents, sorted(hop1), sorted(hop2), how
 
 
-def build(store: GraphStore, task: str | None, budget_tokens: int, hops: int = 1, dirs: dict | None = None) -> dict:
+def build(store: GraphStore, task: str | None, budget_tokens: int, hops: int = 1, dirs: dict | None = None,
+          with_platform_issues: bool = False) -> dict:
     clock = _Clock(store, dirs)
     claims = {c["id"]: c for c in store.nodes("Claim")}
     superseded = sorted({e["dst"] for e in store.edges("SUPERSEDES") if e["dst"] in claims})
-    live = {k: v for k, v in claims.items() if k not in set(superseded)}
+    # Claims tied to a tastytrade platform issue (parked by Greg): those the running list parks are left
+    # out unless asked for; those that only name the platform are shown, marked.
+    ties = platform_scope.ties(store)
+    platform = [] if with_platform_issues else sorted(
+        c for c, t in ties.items() if t["rule"] == "the running list" and c in claims and c not in set(superseded))
+    live = {k: v for k, v in claims.items() if k not in set(superseded) and k not in set(platform)}
 
     entities, hop_of, how = [], {}, "every claim of the graph (a session start)"
     if task:
@@ -198,6 +209,8 @@ def build(store: GraphStore, task: str | None, budget_tokens: int, hops: int = 1
             also = " | also " + ", ".join(
                 f"{live[o]['attrs']['source'].rsplit('/', 1)[-1]}:{live[o]['attrs']['line_start']}" for o in stands_for[cid])
         mark = "(a reading, not a measurement) " if a["inference"] else ""
+        if cid in ties:
+            mark += "(tasty platform: nothing new may rest on it) "
         return (f"- {mark}{_ws.sub(' ', a['text']).strip()} [c:{cid.split(':', 1)[1]} | {where} | "
                 f"{a.get('said_by') or '-'} | {a.get('said_on') or '-'}{also}]")
 
@@ -236,6 +249,11 @@ def build(store: GraphStore, task: str | None, budget_tokens: int, hops: int = 1
                    + ". A larger budget or a task brings them.")
         if not_reached:
             out.append(f"- {len(not_reached)} claims are about things the task does not name (not reached in {hops} hop(s)).")
+        shown_tied = len([c for c in ties if c in live])
+        if platform or shown_tied:
+            out.append(f"- {len(platform)} claims tied to tastytrade platform issues are left out (the lines the running "
+                       f"list parks; Greg, 2026-11-24); --with-platform-issues shows them. {shown_tied} more that name "
+                       "the platform are in scope, marked.")
         out.append(f"- {len(superseded)} superseded claim(s) left out (a later claim took their place); "
                    f"{len(folded)} folded into a line that carries the same quoted words.")
         if not_read or changed:
@@ -290,7 +308,7 @@ def build(store: GraphStore, task: str | None, budget_tokens: int, hops: int = 1
     return {"text": text, "tokens_estimated": estimate_tokens(text), "budget_tokens": budget_tokens,
             "task": task, "hops": hops, "entities": entities, "reached": sorted(reached),
             "included": included, "folded": sorted(folded), "superseded": superseded, "cut": cut,
-            "cut_by_kind": cut_by_kind, "not_reached": not_reached,
+            "cut_by_kind": cut_by_kind, "not_reached": not_reached, "platform": platform,
             "documents_not_read": len(not_read), "claims_in_graph": len(claims)}
 
 
@@ -305,15 +323,18 @@ def main(argv=None) -> int:
     ap.add_argument("--hops", type=int, default=1, choices=(1, 2))
     ap.add_argument("--out")
     ap.add_argument("--cut-list", help="write the ids of every claim not in the text, by why, to this file")
+    ap.add_argument("--with-platform-issues", action="store_true",
+                    help="also show the claims tied to tastytrade platform issues that the running list parks")
     a = ap.parse_args(argv)
     store = GraphStore(a.data, graph_dir=a.graph_dir)
-    out = build(store, a.task, a.budget, a.hops, repo_dirs(store.data_root, a.markets, a.platform))
+    out = build(store, a.task, a.budget, a.hops, repo_dirs(store.data_root, a.markets, a.platform),
+                with_platform_issues=a.with_platform_issues)
     if a.out:
         Path(a.out).write_text(out["text"], encoding="utf-8")
     else:
         sys.stdout.write(out["text"])
     if a.cut_list:
-        Path(a.cut_list).write_text(json.dumps({k: out[k] for k in ("cut", "cut_by_kind", "folded", "superseded", "not_reached")},
+        Path(a.cut_list).write_text(json.dumps({k: out[k] for k in ("cut", "cut_by_kind", "folded", "superseded", "not_reached", "platform")},
                                                indent=1) + "\n", encoding="utf-8")
     print(json.dumps({k: (len(v) if isinstance(v, list) else v) for k, v in out.items() if k != "text"}), file=sys.stderr)
     return 0

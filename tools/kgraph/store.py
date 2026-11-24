@@ -150,6 +150,18 @@ class GraphStore:
             for end in (e["src"], e["dst"]):
                 if end not in batch_ids and end not in self._nodes:
                     raise schema.Refused(f"edge {e['id']} ({e['type']}): {end} is not a node of the graph")
+        # Nothing new may rest on a claim in a closed scope (Greg, 2026-11-24: no new claim is tied to a
+        # tastytrade platform issue). A link that is already standing is not a new tie.
+        closed = self.closed_scope_members()
+        if closed:
+            for e in edges:
+                rested = self._rested_on(e)
+                standing = self._edges.get(e["id"])
+                if rested in closed and not e["attrs"].get("withdrawn") and not (
+                        standing and not standing[-1]["attrs"].get("withdrawn")):
+                    raise schema.Refused(
+                        f"{e['type']} {e['src']} -> {e['dst']}: {rested} is tied to {closed[rested]}; "
+                        "nothing new may rest on it (it is kept, and can be untied with its reason)")
         # A line that names where it came from (`source`) names a node of the graph, whatever its type.
         for n in nodes:
             src = n["attrs"].get("source")
@@ -185,6 +197,25 @@ class GraphStore:
         if to_write:
             self.write_manifest()
         return result
+
+    @staticmethod
+    def _rested_on(edge: dict) -> str | None:
+        """The end of a link that the other end rests on, for the links that mean "rests on"."""
+        if edge["type"] in ("DERIVED_FROM", "DEPENDS_ON"):
+            return edge["dst"]
+        if edge["type"] == "SUPPORTS":
+            return edge["src"]
+        return None
+
+    def closed_scope_members(self) -> dict[str, str]:
+        """claim id -> the scope's name, for every claim that is a member of a closed scope (an Entity
+        with entity_kind "scope" and closed true). Nothing new may rest on such a claim."""
+        self._load_lines()
+        scopes = {l[-1]["id"]: l[-1]["attrs"].get("name", l[-1]["id"]) for l in self._nodes.values()
+                  if l[-1]["type"] == "Entity" and l[-1]["attrs"].get("entity_kind") == "scope" and l[-1]["attrs"].get("closed")}
+        if not scopes:
+            return {}
+        return {e["src"]: scopes[e["dst"]] for e in self.edges("MEMBER_OF") if e["dst"] in scopes}
 
     def withdraw_edge(self, edge_id_: str, *, reason: str, written_by: str) -> dict:
         """Take a link back without losing it: a new line marked withdrawn, the old one kept."""
@@ -247,6 +278,12 @@ class GraphStore:
             for end in (e["src"], e["dst"]):
                 if end not in self._nodes:
                     out.append(f"edge {e['id']} ({e['type']}): {end} is not a node")
+        closed = self.closed_scope_members()
+        for e in self.edges():
+            rested = self._rested_on(e)
+            if rested in closed and self._nodes.get(rested, [{}])[-1].get("type") == "Claim" \
+                    and self._nodes.get(e["dst"] if rested == e["src"] else e["src"], [{}])[-1].get("type") != "Source":
+                out.append(f"{e['type']} {e['id']}: it rests on {rested}, which is tied to {closed[rested]}")
         for e in self.edges("SUPERSEDES"):
             if e["dst"] not in self._nodes:
                 out.append(f"SUPERSEDES {e['id']}: the superseded {e['dst']} is no longer addressable")

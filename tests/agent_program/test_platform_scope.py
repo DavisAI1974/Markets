@@ -1,0 +1,131 @@
+"""Greg, 2026-11-24: "Make sure any nee claims aren't tied to tasty platdorm issues". What the tastytrade
+sandbox does and what its thin feed lacks are parked, so nothing new may rest on a claim about them.
+Checked on the real reads of handoff X and the running list."""
+
+import json
+import re
+
+import pytest
+
+from tools.kgraph import context, extract, grounding, ingest_agent_runs, ingest_paper, platform_scope, schema
+from tools.kgraph.sources import link
+from tools.kgraph.store import GraphStore
+
+from .realrecords import data_root
+
+READS = {"run:0018": "graph/reads/run-0018-NEXT_SESSION_HANDOFF_20261124X.json",
+         "run:0023": "graph/reads/run-0023-RUNNING_LIST.json"}
+LIST = "tasty/RUNNING_LIST.md"
+
+
+@pytest.fixture()
+def graph(tmp_path):
+    root = data_root()
+    store = GraphStore(root, graph_dir=tmp_path / "graph")
+    ingest_agent_runs.agent_runs(store)
+    dirs = extract.repo_dirs(root, None, None)
+    if "paper-trading-platform" not in dirs:
+        pytest.skip("no paper-trading-platform checkout beside Markets")
+    for run, rel in READS.items():
+        if not (root / rel).exists():
+            pytest.skip(f"{rel} is not in this markets-data checkout")
+        extract.load_result(store, dirs, json.loads((root / rel).read_text(encoding="utf-8")), run)
+    return store, dirs
+
+
+def _claim(store, words):
+    return next(c for c in store.nodes("Claim") if words in c["attrs"]["quote"])
+
+
+def test_a_claim_read_from_a_document_is_tied_as_it_is_loaded(graph):
+    store, dirs = graph
+    tied = platform_scope.members(store)
+    assert tied                                             # the loader ties them: no separate step to forget
+    # the feed's own fault (running list, section B): "A THIRD OF THE PRINTS HAVE NO SIDE (9 of 107, then 141 of 440)"
+    assert _claim(store, "141 of 440")["id"] in tied
+    # the sandbox account left short (handoff X line 96)
+    assert _claim(store, "5WY79188 is short 13 lots")["id"] in tied
+    # Greg's own decision to park them is his decision, not a platform issue
+    parked = _claim(store, "sandbox-only issues are parked")
+    assert parked["attrs"]["said_by"] == "Greg" and parked["id"] not in tied
+    # a rule that has nothing to do with the platform
+    assert _claim(store, "A trade day is 6 pm Eastern")["id"] not in tied
+    # every tie says why, in words a person can check against the claim
+    for e in store.edges("MEMBER_OF"):
+        if e["dst"] == platform_scope.SCOPE_ID:
+            assert e["attrs"]["why"] and e["attrs"]["rule"] in ("its own words", "the running list")
+    assert platform_scope.mark(store, dirs)["new"] == 0       # marking twice ties nothing twice
+
+
+def test_the_parked_lines_are_read_from_the_running_list_itself(graph):
+    store, dirs = graph
+    text = (dirs["paper-trading-platform"] / LIST).read_text(encoding="utf-8")
+    # the list's own words (C22): "... dropped when the sandbox is left behind: C5 (...), C8 ..., C20 ..."
+    assert platform_scope.parked_items(text) == {"C5", "C8", "C9", "C19", "C10", "C18", "C11", "C13", "C14", "C15", "C20"}
+    lines = text.splitlines()
+    start = next(i for i, l in enumerate(lines, 1) if l.startswith("14. ") and "STUCK SHORT 13 LOTS" in l)
+    end = next(i for i, l in enumerate(lines, 1) if i > start and re.match(r"\d+\. ", l)) - 1
+    tied = platform_scope.members(store)
+    in_c14 = [c for c in store.nodes("Claim") if c["attrs"]["source"].endswith(LIST) and start <= c["attrs"]["line_start"] <= end]
+    assert in_c14 and all(c["id"] in tied for c in in_c14)
+    # a line that is "still ours, whatever the feed or the broker" (C2) is not tied by the list
+    c2 = [c for c in store.nodes("Claim") if "worked out again from all the trades at every print" in c["attrs"]["quote"]]
+    assert c2 and not any(e["attrs"]["rule"] == "the running list" for e in store.edges("MEMBER_OF")
+                          if e["src"] == c2[0]["id"] and e["dst"] == platform_scope.SCOPE_ID)
+
+
+def test_nothing_new_may_rest_on_a_tied_claim(graph):
+    store, dirs = graph
+    tied_claim = _claim(store, "141 of 440")
+    free_claim = _claim(store, "A trade day is 6 pm Eastern")
+    new = {"id": "claim:check-new-reading", "type": "Claim", "attrs": {
+        "text": "A reading made in this check, to see what it may rest on.", "statement_kind": "state", "inference": True}}
+    with pytest.raises(schema.Refused, match="tastytrade platform"):
+        store.write([new], [link("DERIVED_FROM", new["id"], tied_claim["id"])], written_by="code:test")
+    assert store.node(new["id"]) is None                                      # refused whole: nothing written
+    store.write([new], [link("DERIVED_FROM", new["id"], free_claim["id"])], written_by="code:test")
+    # a rule version may not be tied to one either (plan 7a: the findings a rule rests on)
+    ingest_paper.paper(store, str(dirs["paper-trading-platform"]))
+    rv = next(n for n in store.nodes("Entity") if n["attrs"].get("entity_kind") == "rule version")
+    with pytest.raises(schema.Refused, match="tastytrade platform"):
+        store.write([], [link("DERIVED_FROM", rv["id"], tied_claim["id"])], written_by="code:test")
+    assert store.check_all() == []
+    # a tie can be taken back by a person, with the reason kept; then the link is allowed
+    platform_scope.untie(store, tied_claim["id"], reason="check of untie only", by="code:test")
+    assert tied_claim["id"] not in platform_scope.members(store)
+    store.write([], [link("DERIVED_FROM", rv["id"], tied_claim["id"])], written_by="code:test")
+
+
+def test_the_grounding_check_does_not_take_a_tied_claim_as_evidence(graph):
+    store, dirs = graph
+    r = grounding.check_text(store, "141 of 440 prints have no side.", dirs)
+    assert r["decision"] == "revise" and "tastytrade platform" in r["reason"]
+    assert any("does not come from the tastytrade" in e for e in r["required_evidence"])
+    assert r["supporting_candidates"] and all(c["platform_issue"] for c in r["supporting_candidates"])   # shown, and said to be tied
+    one = grounding.check_claim(store, _claim(store, "141 of 440")["id"], dirs)
+    assert any("tastytrade platform" in o for o in one["what_was_observed"])
+    # a sentence the list carries that is not about the platform is still found (list A2)
+    ok = grounding.check_text(store, "CL14, CL17, CL05, CL06 and CL16 made 235 of the 327 trades.", dirs)
+    assert ok["decision"] is None and any(not c["platform_issue"] for c in ok["supporting_candidates"])
+
+
+def test_the_session_context_leaves_the_parked_lines_out_and_marks_the_rest(graph):
+    store, dirs = graph
+    ties = platform_scope.ties(store)
+    by_list = {c for c, t in ties.items() if t["rule"] == "the running list"}
+    by_words = set(ties) - by_list
+    assert by_list and by_words
+    out = context.build(store, None, budget_tokens=200000, dirs=dirs)
+    assert set(out["platform"]) == by_list and not set(out["included"]) & by_list
+    assert f"{len(by_list)} claims tied to tastytrade platform issues are left out" in out["text"]
+    # a claim that only names the platform is shown, and the reader is told nothing new may rest on it
+    shown = by_words & set(out["included"])
+    assert shown
+    for cid in list(shown)[:10]:
+        line = next(l for l in out["text"].splitlines() if f"c:{cid.split(':', 1)[1]}" in l)
+        assert "(tasty platform: nothing new may rest on it)" in line
+    assert "Sandbox-only issues are parked" in out["text"]                    # Greg's own decision is shown, unmarked
+    allc = {c["id"] for c in store.nodes("Claim")}
+    assert set().union(out["included"], out["folded"], out["superseded"], out["cut"], out["not_reached"], out["platform"]) == allc
+    asked = context.build(store, None, budget_tokens=200000, dirs=dirs, with_platform_issues=True)
+    assert asked["platform"] == [] and by_list <= set(asked["included"]) | set(asked["folded"])

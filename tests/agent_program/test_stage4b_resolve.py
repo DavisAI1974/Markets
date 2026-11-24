@@ -93,4 +93,6 @@ def test_the_resolvers_brief_lists_only_what_is_still_unmerged(graph):
     brief = resolve.candidates(store)
     merged = {e["src"] for e in store.edges("RESOLVED_TO")}
     listed = [l.split(" | ")[0] for l in brief.splitlines() if l.startswith("entity:")]
-    assert set(listed) == {n["id"] for n in store.nodes("Entity")} - merged and len(listed) == len(set(listed))
+    surface = {n["id"] for n in store.nodes("Entity") if n["attrs"]["entity_kind"] == "named in a document"}
+    assert set(listed) == surface - merged and len(listed) == len(set(listed))
+    assert not any(l.startswith("scope:") or l.startswith("rulever:") for l in brief.splitlines())   # not names to merge
