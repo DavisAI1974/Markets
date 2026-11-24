@@ -242,7 +242,8 @@ def run_loop(program_path, proposer, *, scratch, data_root=None, exp_dir=None) -
                        written_by=stamp)
         state["graph_writes"] += 1
         row = {"n": n, "id": tid, "commit": commit, "status": status, "figures": dict(figs),
-               "note": note, "hypothesis": hypothesis, "parent": parent, "runtime_s": runtime}
+               "note": note, "hypothesis": hypothesis, "parent": parent, "runtime_s": runtime,
+               "rests_on": list((proposal or {}).get("rests_on") or [])}
         history.append(row)
         trials.append(tid)
         {"kept": kept, "reverted": reverted, "crash": crashed, "recorded": recorded}[status].append(tid)

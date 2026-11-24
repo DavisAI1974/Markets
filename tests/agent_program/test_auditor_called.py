@@ -411,11 +411,58 @@ def test_an_at_that_is_not_a_commit_of_that_repository_says_so(capsys):
     assert "0123abc" in err and "not in that repository" in err and str(root) in err
 
 
+def test_first_line_after_the_number_may_be_a_space_paren_colon_or_the_end_only():
+    root = data_root()
+    r = _report_of(root, 133)
+    first = _git_show(root, r["commit"], r["path"]).splitlines()[0]       # the real first line of run 133's report
+    assert first.startswith("# Performance auditor run 133 (")
+    stem = first.split(" (")[0]
+    assert ac.first_line_problem(first, 133) is None
+    assert ac.first_line_problem(stem, 133) is None and ac.first_line_problem(stem + ": x", 133) is None
+    assert ac.first_line_problem(stem + " x", 133) is None
+    assert ac.first_line_problem(first, 13) == ac.ANOTHER
+    assert ac.first_line_problem(stem + "4", 133) != None
+    assert "does not begin with" in ac.first_line_problem("\ufeff" + first, 133)
+    assert "does not begin with" in ac.first_line_problem(" " + first, 133)
+
+
+def test_an_at_that_is_not_a_commit_without_data_is_refused_too(capsys, monkeypatch):
+    root = data_root()
+    monkeypatch.setenv("MARKETS_DATA", str(root))
+    assert ac.main(["--at", "0123abc"]) == 2
+    err = capsys.readouterr().err
+    assert "0123abc" in err and "not in that repository" in err
+
+
+def test_first_line_with_the_right_number_and_a_tab_full_stop_or_hyphen_says_what_is_so():
+    root = data_root()
+    r = _report_of(root, 133)
+    first = _git_show(root, r["commit"], r["path"]).splitlines()[0]       # the real first line of run 133's report
+    stem = first.split(" (")[0]
+    for ch in ("\t", ".", "-"):
+        problem = ac.first_line_problem(stem + ch + "x", 133)
+        assert f"after `# Performance auditor run 133` its first line holds {ch!r}, where a space, `(`, `:` or the end of the line is expected" == problem
+    assert "does not begin with" in ac.first_line_problem(" " + first, 133)
+
+
+def test_list_4_prints_each_distinct_report_once_run_124_at_7c3d2af(capsys):
+    # run 124's first line names its report with no commit, its second names it at a commit: two distinct entries
+    root = data_root()
+    _git_show(root, "7c3d2af", RUNS)
+    lines124 = [d for d in _lines(root, "7c3d2af") if d["run"] == 124]
+    assert len({(d["audit_report"]["path"], d["audit_report"].get("commit")) for d in lines124 if "audit_report" in d}) == 2
+    ac.main(["--data", str(root), "--at", "7c3d2af"])
+    row = re.search(r"^run 124 \|.*$", capsys.readouterr().out.split("(4)")[1], re.M).group(0)
+    assert row.count("AUDIT_RUN_124.md@") == 2
+    assert row.count("AUDIT_RUN_124.md@None (no commit named)") == 1 and row.count("(its own)") == 1
+
+
 # ======================================================================================================
 # CASES THE REAL RECORD DOES NOT HOLD: each is the real record at a named commit, cut or with real lines
 # re-appended, copied to a scratch folder, with exactly the field(s) named in the case's own comment
 # changed. Nothing here is a real run. How: `git clone --shared --no-checkout` of the markets-data checkout under tmp_path, with
-# the record file written over it; chosen because the code reads every report with git from the folder
+# the record file written over it (and, for a case that is run with --ticket, a TICKET_RUNS.json that
+# `_scratch(tickets=...)` writes: {"03b": [run]}, naming the run the case is about); chosen because the code reads every report with git from the folder
 # given to --data, and a shared clone holds every real report commit. The real checkout is never written.
 # ======================================================================================================
 
@@ -492,7 +539,8 @@ def test_case_m4_and_m5_a_name_without_a_row_in_the_report_clears_nothing(tmp_pa
     rep = ac.analyse(copy)
     assert 118 in rep.not_audited and "no row for run 118" in rep.notes[118]
     assert 50 in rep.record_only and 50 not in rep.with_row
-    assert 50 in rep.notes and "no row for run 50" in rep.notes[50]
+    # EXPECTATION CHANGED (fourth read, point 2): a note is kept only for a run left NOT audited; 50 is audited
+    assert 50 not in rep.notes
 
 
 def test_case_g2b_a_report_that_is_another_auditors_is_no_report_of_its_own(tmp_path, capsys):
@@ -523,21 +571,6 @@ def test_case_n3_a_report_whose_first_line_holds_the_number_inside_a_longer_one_
     assert run in rep.no_report and "another run's" in rep.no_report_why[run]
     assert ac.main(["--data", str(copy)]) == 1
     assert re.search(rf"^run {run} \|.*names no report.*another run's, not counted", capsys.readouterr().out, re.M)
-
-
-def test_first_line_after_the_number_may_be_a_space_paren_colon_or_the_end_only():
-    root = data_root()
-    r = _report_of(root, 133)
-    first = _git_show(root, r["commit"], r["path"]).splitlines()[0]       # the real first line of run 133's report
-    assert first.startswith("# Performance auditor run 133 (")
-    stem = first.split(" (")[0]
-    assert ac.first_line_problem(first, 133) is None
-    assert ac.first_line_problem(stem, 133) is None and ac.first_line_problem(stem + ": x", 133) is None
-    assert ac.first_line_problem(stem + " x", 133) is None
-    assert ac.first_line_problem(first, 13) == ac.ANOTHER
-    assert ac.first_line_problem(stem + "4", 133) != None
-    assert "does not begin with" in ac.first_line_problem("\ufeff" + first, 133)
-    assert "does not begin with" in ac.first_line_problem(" " + first, 133)
 
 
 def test_case_a_report_that_cannot_be_read_at_its_commit_is_no_report_and_fails_plain_and_ticket(tmp_path, capsys):
@@ -573,9 +606,3 @@ def test_case_each_named_run_gets_the_reason_true_of_it_and_list_4_marks_each_re
     assert "AUDIT_RUN_116.md@" in out116 and "(its own)" in out116 and "(another run's, not counted)" in out116
 
 
-def test_an_at_that_is_not_a_commit_without_data_is_refused_too(capsys, monkeypatch):
-    root = data_root()
-    monkeypatch.setenv("MARKETS_DATA", str(root))
-    assert ac.main(["--at", "0123abc"]) == 2
-    err = capsys.readouterr().err
-    assert "0123abc" in err and "not in that repository" in err

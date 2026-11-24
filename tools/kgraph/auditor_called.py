@@ -51,6 +51,10 @@ def first_line_problem(first: str, arun: int) -> str | None:
         return None
     if re.match(r"# Performance auditor run [0-9]+(?:[ (:]|$)", first):
         return ANOTHER
+    m = re.match(rf"# Performance auditor run {arun}(?![0-9])", first)
+    if m and len(first) > m.end():
+        return (f"after `# Performance auditor run {arun}` its first line holds {first[m.end()]!r}, "
+                "where a space, `(`, `:` or the end of the line is expected")
     return f"its first line does not begin with `# Performance auditor run {arun}`"
 
 
@@ -81,7 +85,7 @@ class Report:
     record_only: list = field(default_factory=list)
     not_audited: list = field(default_factory=list)
     auditors: dict = field(default_factory=dict)    # run -> the report(s) its lines name
-    no_report: list = field(default_factory=list)   # auditor runs whose lines name no report of their own with a commit
+    no_report: list = field(default_factory=list)   # auditor runs that name no report that can be read at its commit and is its own
     no_report_why: dict = field(default_factory=dict)  # run -> a reason beyond "names no report"
     demoted: list = field(default_factory=list)     # runs with an older auditor line and a newest line of another agent
     outside: dict = field(default_factory=dict)     # run -> agent/role
@@ -106,6 +110,7 @@ def analyse(root, at: str | None = None) -> Report:
             d = json.loads(raw)
             rep.lines.setdefault(d["run"], []).append(d)
     # what each auditor run names: the UNION over all its lines
+    why_not: dict[int, list] = {}      # run -> every auditor's reason for not clearing it
     cleared: dict[int, list] = {}      # run -> [(auditor run, in its record_only)]
     for arun, ls in rep.lines.items():
         if agent_of(ls[-1]) != AUDITOR:      # an auditor's run is so by its NEWEST line only
@@ -118,8 +123,12 @@ def analyse(root, at: str | None = None) -> Report:
         texts, reasons, marks = [], [], []
         if not reports:
             reasons.append("no line has an audit_report")
+        seen = set()
         for r in reports:
             label = f"{r.get('path')}@{r.get('commit')}"
+            if label in seen:                 # each distinct (path, commit) once, however many lines name it
+                continue
+            seen.add(label)
             if not r.get("commit"):
                 reasons.append(f"audit_report names {r.get('path')} but no commit named")
                 marks.append(f"{label} (no commit named)")
@@ -145,11 +154,14 @@ def analyse(root, at: str | None = None) -> Report:
             if texts and any(has_row(t, n) for t in texts):
                 cleared.setdefault(n, []).append((arun, n in rec_only))
             elif texts:
-                rep.notes[n] = f"auditor run {arun}: its own report has no row for run {n}"
+                why_not.setdefault(n, []).append(f"auditor run {arun}: its own report has no row for run {n}")
             else:
-                rep.notes[n] = f"auditor run {arun} names no readable report of its own ({'; '.join(reasons)})"
+                why_not.setdefault(n, []).append(
+                    f"auditor run {arun} names no readable report of its own ({'; '.join(reasons)})")
     for run in sorted(rep.lines):
         agent = agent_of(rep.newest(run))
+        if run in why_not and run not in cleared and run not in rep.auditors:   # a note only for a run left NOT audited
+            rep.notes[run] = "; ".join(why_not[run])
         if run in rep.auditors:
             rep.stand[run] = "an auditor's own run" + (" that names no report" if run in rep.no_report else "")
         elif run in cleared:

@@ -151,3 +151,126 @@ def test_releases_lists_everyone_but_shows_paths_only_to_a_run_that_passes(world
     assert outcome.main(base + ["--run", REVIEWER]) == 0
     t = capsys.readouterr().out
     assert JOURNAL in t and w["commit"] in t and REVIEWER in t
+
+
+# ---- part B: what the brief says, who may `show`, and the flag on a challenge --------------------------------
+def dmain(w, verb, cid, *extra):
+    return defend.main([verb, "--claim", cid, "--data", str(w["root"]), "--graph-dir", str(w["graph"]), *extra])
+
+
+def test_the_brief_says_only_that_an_outcome_was_or_was_not_seen(world):
+    w = world
+    seen = S["cid2"] = reg(w, "condition-2")        # a real claim file whose proposer states an outcome WAS seen
+    what = json.loads((w["root"] / CLAIMS / "condition-2.json").read_text())["outcome_visibility"]["what"]
+    s = fresh(w)
+    b = defend.brief(s, seen)
+    assert "proposer states that an outcome had been seen before registration" in b
+    assert "the reviewer is not given what was seen" in b
+    assert what[:60] not in b and "registered after an outcome was seen" not in b
+    unseen = reg(w, "inference-1")
+    if not json.loads((w["root"] / CLAIMS / "inference-1.json").read_text())["outcome_visibility"]["outcome_seen"]:
+        assert "had not been seen" in defend.brief(s, unseen)
+    assert JOURNAL not in defend.brief(s, S["cid"])         # no released record path is in the brief of the released claim
+    assert what[:60] in defend.show(s, seen)                 # the proposer's side keeps the whole sentence
+
+
+def test_show_refuses_a_reviewer_without_its_own_challenge(world, capsys):
+    w, cid = world, S["cid2"]
+    assert dmain(w, "show", cid, "--run", REVIEWER2) == 2
+    capsys.readouterr()
+    kept = [t for t in fresh(w).nodes("Task") if t["attrs"].get("verb") == "show" and t["attrs"].get("claim") == cid]
+    assert len(kept) == 1 and kept[0]["attrs"]["run"] == REVIEWER2
+    assert dmain(w, "show", cid, "--run", PROPOSER) == 0           # the proposer needs no challenge to read its own side
+    assert "mechanism" in capsys.readouterr().out
+    assert dmain(w, "show", cid) == 0
+    assert "no run was named" in capsys.readouterr().out.splitlines()[0]
+    chal(w, cid, REVIEWER)
+    assert dmain(w, "show", cid, "--run", REVIEWER) == 0
+    assert "mechanism" in capsys.readouterr().out
+    assert dmain(w, "show", cid, "--run", REVIEWER2) == 2           # still no challenge of its own
+
+
+def test_a_challenge_records_whether_an_outcome_was_on_record_before_it(world, capsys):
+    w, cid = world, S["cid"]
+    s = fresh(w)
+    flag = lambda ev: s.node(ev)["attrs"]["outcome_on_record_before_challenge"]
+    assert flag(S["ev1"]) is False          # run:0003 challenged revision 1 before any release to it
+    assert flag(S["ev2"]) is True           # it challenged revision 2 after the release under revision 1
+    ev3 = chal(w, cid, REVIEWER2)
+    assert fresh(w).node(ev3)["attrs"]["outcome_on_record_before_challenge"] is False   # nothing was ever released to run:0005
+    again = chal(w, cid, REVIEWER)          # the same challenge again is the same id: the flag of the first is kept
+    assert again == S["ev2"] and fresh(w).node(again)["attrs"]["outcome_on_record_before_challenge"] is True
+    assert dmain(w, "show", cid, "--run", REVIEWER) == 0
+    out = capsys.readouterr().out
+    assert out.count("outcome_on_record_before_challenge: ") == 3
+
+
+# ---- part C: the code that hands records over today goes through the rule -------------------------------------
+from tools.decider import afterwards as aw          # noqa: E402
+from tools.kgraph.signal_packet import journal_from_file     # noqa: E402,F401
+from .test_decider_loop import LOOP_FILE, PRINT_CMD, REPO, clone, load, proposer   # noqa: E402,F401  (clone is a fixture)
+
+UNREGISTERED = "claim:70038adffed2"        # a real claim of the graph that was never registered with `defend register`
+
+
+def _rows(w, cid):
+    """History rows in loop.py's own shape. The figure is the real line count of the real program file; the hypotheses
+    and the note are this test's own words."""
+    lines = len((REPO / LOOP_FILE).read_text().splitlines())
+    row = lambda n, rests: {"n": n, "id": f"trial:{n}", "commit": w["commit"], "status": "recorded", "figures": {"program_lines": lines},
+                            "note": f"NOTE-{n}", "hypothesis": f"HYPOTHESIS-{n}", "parent": None, "runtime_s": 1.0, **rests}
+    old = row(2, {})
+    return [row(0, {"rests_on": [S["cid3"]]}), row(1, {"rests_on": [UNREGISTERED]}), old]
+
+
+def test_the_file_proposer_holds_a_trial_that_rests_on_an_unchallenged_claim(world, tmp_path, clone):
+    w = world
+    S["cid3"] = reg(w, "inference-2")
+    keep = tmp_path / "keep"
+    for i in (0, 1, 2):                      # real copies of one real journal, one folder a trial, in order
+        (keep / f"r{i}").mkdir(parents=True)
+        (keep / f"r{i}" / "events.jsonl").write_bytes(w["raw"])
+    program = load(tmp_path, clone, run={"command": PRINT_CMD + f" --keep {keep}", "cwd": ".", "timeout_s": 60, "env": {}})
+    p = proposer(tmp_path / "mb", program, w["root"], w["graph"])
+    hist = _rows(w, S["cid3"])
+    text, _ = p.brief("def decide(packet):\n    return 1\n", hist, 3, clone)
+    line = lambda t, n: next(l for l in t.splitlines() if l.startswith(f"- trial {n}:"))
+    held = line(text, 0)
+    assert held.startswith("- trial 0: held: ") and S["cid3"] in held and "revision 1" in held
+    for k in ("HYPOTHESIS-0", "NOTE-0", "program_lines=", "status"):
+        assert k not in held
+    assert "HYPOTHESIS-1" in line(text, 1) and "program_lines=" in line(text, 1)
+    assert "not a registered claim: no rule applies" in line(text, 1) and UNREGISTERED in line(text, 1)
+    assert "HYPOTHESIS-2" in line(text, 2) and "no record of what it rested on" in line(text, 2)
+    kept = p.kept_records(hist)
+    assert len(kept) == 3 and "trial 0" in kept[0] and "held" in kept[0] and str(keep / "r0") not in kept[0]
+    assert S["cid3"] in kept[0] and all(str(keep / f"r{i}") in kept[i] for i in (1, 2))
+    chal(w, S["cid3"], REVIEWER)             # the challenge is on record: the trial prints as before
+    p = proposer(tmp_path / "mb", program, w["root"], w["graph"])
+    text, _ = p.brief("def decide(packet):\n    return 1\n", hist, 3, clone)
+    assert "HYPOTHESIS-0" in line(text, 0) and "held" not in line(text, 0) and "program_lines=" in line(text, 0)
+    assert all(str(keep / f"r{i}") in k for i, k in enumerate(p.kept_records(hist)))
+    assert p.held({"n": 9, "rests_on": []}) == [] and p.held({"n": 9}) == []
+
+
+def test_afterwards_brief_goes_through_the_rule(world, tmp_path, capsys):
+    w = world
+    cid = reg(w, "inference-3")
+    journal = tmp_path / "events.jsonl"
+    journal.write_bytes(w["raw"])             # the real feed-only journal; it may hold few or no decision lines
+    after = tmp_path / "afterwards.jsonl"
+    assert aw.main(["--journal", str(journal), "--out", str(after)]) == 0
+    base = ["brief", "--afterwards", str(after), "--budget", "100000", "--data", str(w["root"]), "--graph-dir", str(w["graph"])]
+    out = tmp_path / "b1.md"
+    assert aw.main(base + ["--out", str(out), "--claim", cid]) == 2 and not out.exists()
+    assert cid in capsys.readouterr().err
+    chal(w, cid, REVIEWER)
+    assert aw.main(base + ["--out", str(out), "--claim", cid]) == 0 and out.exists()
+    assert cid in out.read_text().splitlines()[0]
+    why = "the journal bears on no registered claim, it was made with no decider plugged in"
+    out2 = tmp_path / "b2.md"
+    assert aw.main(base + ["--out", str(out2), "--rests-on-none", why]) == 0
+    assert why in out2.read_text().splitlines()[0]
+    out3 = tmp_path / "b3.md"
+    assert aw.main(base + ["--out", str(out3)]) == 2 and not out3.exists()
+    assert aw.main(base + ["--out", str(out3), "--claim", cid, "--rests-on-none", why]) == 2 and not out3.exists()
