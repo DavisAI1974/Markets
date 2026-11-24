@@ -16,6 +16,15 @@ The graph-writes count holds the lines of graph/nodes/*.jsonl and graph/edges/*.
 `run:NNNN` (the run). It does not hold lines a code stamp wrote for a run (`made_by`), and not the files of
 graph/reads, graph/merges and graph/evaluations.
 
+PAIRED CHECKS: whenever `check` is given `--plan`, the plan read is one given by hand, not the run's own plan in
+git. The first line printed says so, the git state and the git order are not measured, and the exit code is 3,
+so it can never be read as the run's own check ending well. The limit lines are printed as always.
+
+Git order: it rests on the committer time of the commit that added the plan file (found with `git log
+--diff-merges=first-parent --diff-filter=A`, so a plan added inside a merge commit is found), and a rebase
+moves that time. A plan that was renamed or moved has the rename's time as its add time, which is right for the
+rule: a plan is written once under its own name and never moved.
+
 A plan counts as written before the run only if it is in git: `check` compares the file it reads with the file's
 bytes at the commit that added it, and a plan that is not in git, was changed after it was added, or was
 committed after the run's first line fails (exit 1).
@@ -32,7 +41,7 @@ import hashlib
 import json
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from tools.swarm.plan import BUDGET_KEYS
@@ -75,8 +84,13 @@ def _num(v):
 
 
 def _newest(paper, run):
-    mine = [d for d in _lines(paper) if _num(d.get("run")) == run or _num(d.get("corrects")) == run]
+    mine = _of_run(paper, run)
     return mine[-1] if mine else None
+
+
+def _of_run(paper, run):
+    # a line belongs to a run by its `run` number; what `corrects` holds (a sentence in the real record) is not read
+    return [d for d in _lines(paper) if _num(d.get("run")) == run]
 
 
 def _plan_path(paper, run):
@@ -103,6 +117,8 @@ def _write(a):
     path = _plan_path(paper, a.run)
     if path.exists():
         raise Refused(f"a plan file already exists for run {a.run}: {path}; a plan is never rewritten")
+    if not _is_repo(root):
+        raise Refused(f"{root} is not a git repository: a plan is written only where it can be committed")
     if _git_history(root, path):
         raise Refused(f"the plan path of run {a.run} is in git history ({path}) though the file is gone; "
                       "a plan is never written twice")
@@ -203,6 +219,11 @@ def _rel(root, path):
         return None
 
 
+def _is_repo(root):
+    r = subprocess.run(["git", "-C", str(root), "rev-parse", "--is-inside-work-tree"], capture_output=True, text=True)
+    return r.returncode == 0 and r.stdout.strip() == "true"
+
+
 def _git_history(root, path):
     rel = _rel(root, path)
     if rel is None:
@@ -212,16 +233,17 @@ def _git_history(root, path):
 
 
 def _git_state(root, path):
-    """('outside'|'not_in_git'|'changed'|'unchanged', commit time, sha256 now, sha256 at the add commit)."""
+    """('outside'|'tracked_no_add'|'not_in_git'|'changed'|'unchanged', commit time, sha256 now, sha256 at the add commit)."""
     rel = _rel(root, path)
     if rel is None:
         return "outside", None, None, None
-    r = subprocess.run(["git", "-C", str(root), "log", "--diff-filter=A", "--format=%H %cI", "--", str(rel)],
-                       capture_output=True, text=True)
-    rows = [x.split() for x in r.stdout.splitlines() if x.strip()] if r.returncode == 0 else []
+    r = subprocess.run(["git", "-C", str(root), "log", "--diff-merges=first-parent", "--diff-filter=A",
+                        "--name-only", "--format=COMMIT %H %cI", "--", str(rel)], capture_output=True, text=True)
+    rows = [x.split()[1:] for x in r.stdout.splitlines() if x.startswith("COMMIT ")] if r.returncode == 0 else []
     if not rows:
-        return "not_in_git", None, None, None
-    h, when = rows[-1]
+        t = subprocess.run(["git", "-C", str(root), "ls-files", "--error-unmatch", str(rel)], capture_output=True)
+        return ("tracked_no_add" if t.returncode == 0 else "not_in_git"), None, None, None
+    h, when = min(rows, key=lambda x: datetime.fromisoformat(x[1]))
     then = subprocess.run(["git", "-C", str(root), "show", f"{h}:{rel}"], capture_output=True).stdout
     now = Path(path).read_bytes()
     sn, st = hashlib.sha256(now).hexdigest(), hashlib.sha256(then).hexdigest()
@@ -230,6 +252,9 @@ def _git_state(root, path):
 
 def _check(a):
     root, paper = _paper(a.data)
+    if a.plan:
+        print(f"PAIRED CHECK: the plan read is {a.plan}, given by hand; "
+              f"this is not a check of run {a.run} against its own plan in git")
     print(f"reading: {root}")
     plan, path = _load_plan(paper, a)
     tpath = Path(a.transcript) if a.transcript else paper / "transcripts" / f"run-{a.run:04d}.jsonl.gz"
@@ -280,6 +305,11 @@ def _check(a):
                 print(f"{lead}reached {f}, kept" + (" (at the limit, not passed)" if f == lim else ""))
         if k == "max_tokens" and plan:
             print("max_tokens is: " + plan.get("max_tokens_is", "the plan holds no max_tokens_is"))
+        if k == "max_tokens" and f is None:
+            earlier = [d["tokens_reported"] for d in _of_run(paper, a.run)[:-1] if d.get("tokens_reported") is not None]
+            if earlier:
+                print(f"an earlier line of this run holds a harness total of {earlier[-1]}; "
+                      "the newest line holds none")
     if tr:
         i, cw, cr, o = tr["tokens"]
         print(f"transcript tokens: input fresh {i}, cache written {cw}, cache read {cr}, output {o}")
@@ -288,16 +318,19 @@ def _check(a):
         print(f"run {a.run} has no plan file at {path}: its limits were not written before it started")
         return 1
     print(f"plan: {path}")
+    if a.plan:
+        print("plan in git: not measured: a paired plan is not the run's own plan in git")
+        print("git order: not measured: a paired plan")
+        return 3
     state, when, sn, st = _git_state(root, path)
-    start = tr["first"] if tr and tr["first"] else None
-    if start is None and line and line.get("started_at"):
-        start = datetime.fromisoformat(str(line["started_at"]).replace("Z", "+00:00"))
-    if state == "outside":
-        print("plan in git: not measured for a paired plan (the plan file is outside the data root)")
-    elif state == "not_in_git":
+    start, start_msg, start_note = _start(tr, line)
+    if state == "not_in_git":
         bad = True
         print("plan in git: the plan file is not in git: a limit that is not in git before the run is not a "
               "written limit")
+    elif state == "tracked_no_add":
+        bad = True
+        print("plan in git: tracked, and the commit that added it could not be found")
     else:
         if state == "changed":
             bad = True
@@ -305,14 +338,35 @@ def _check(a):
                   f"sha256 at the add commit {st}")
         else:
             print(f"plan in git: unchanged since it was added (sha256 {sn})")
+        if start_note:
+            print(f"git order: {start_note}")
         if start is None:
-            print("git order: not measured: the run's line holds no start time and no transcript is kept")
+            print("git order: " + (start_msg or "not measured: the run's line holds no start time and no "
+                                   "transcript is kept"))
         elif when.astimezone(start.tzinfo) <= start:
             print(f"git order: committed {when.isoformat()} before the run began {start.isoformat()}")
         else:
             bad = True
             print(f"git order: committed {when.isoformat()} AFTER the run began {start.isoformat()}")
     return 1 if bad else 0
+
+
+def _start(tr, line):
+    """(start, message, note): the transcript's first line, else the line's started_at read as ISO time."""
+    if tr and tr["first"]:
+        return tr["first"], None, None
+    v = line.get("started_at") if line else None
+    if v is None or v == "":
+        return None, None, None
+    try:
+        if not isinstance(v, str):
+            raise ValueError
+        t = datetime.fromisoformat(v.replace("Z", "+00:00"))
+    except ValueError:
+        return None, f"not measured: the run's line holds a start time that cannot be read ({v})", None
+    if t.tzinfo is None:
+        return t.replace(tzinfo=timezone.utc), None, "read as UTC: the line names no zone"
+    return t, None, None
 
 
 def main(argv=None):

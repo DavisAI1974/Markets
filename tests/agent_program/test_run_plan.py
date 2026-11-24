@@ -37,6 +37,7 @@ def _scratch(tmp_path):
     (dst / PAPER).mkdir(parents=True)
     shutil.copytree(root / PAPER / "run-plans", dst / PAPER / "run-plans")
     shutil.copy(root / PAPER / "agent-runs.jsonl", dst / PAPER / "agent-runs.jsonl")
+    subprocess.run(["git", "-C", str(dst), "init", "-q"], check=True)
     return dst
 
 
@@ -84,12 +85,16 @@ def test_check_109_has_no_plan(capsys):
 
 
 def test_check_passed_branch_paired_plan(capsys):
+    # real pair: run 117's real transcript with run 116's real plan file (25 tool calls), given by hand
     root = data_root()
     plan116 = root / PAPER / "run-plans" / "run-0116.json"
     rc = run_plan.main(["check", "--data", str(root), "--run", "117", "--plan", str(plan116)])
-    lim = _limits(capsys.readouterr().out)
-    assert lim["max_tool_calls"][:3] == ("25", "30", "PASSED")
-    assert rc == 1
+    out = capsys.readouterr().out
+    assert out.splitlines()[0] == (f"PAIRED CHECK: the plan read is {plan116}, given by hand; "
+                                   "this is not a check of run 117 against its own plan in git")
+    assert _limits(out)["max_tool_calls"][:3] == ("25", "30", "PASSED")
+    assert "git order: not measured" in out and "plan in git: not measured" in out
+    assert rc == 3
 
 
 def test_write_refusals_and_a_new_plan(tmp_path, capsys):
@@ -214,9 +219,12 @@ def test_write_refuses_run_below_one_and_limits_below_one(tmp_path, capsys):
 
 # ---- CASES THE REAL RECORD DOES NOT HOLD: each uses real files of the record in a scratch git repository;
 # ---- only what is named here is the scratch's own
-# Scratch's own: the git repository, the commit dates, the one edited copy of a plan, the one uncommitted plan,
-# and (for the start-time case) a copy of run 117's real line with a start time added. Real: run-0117.json,
-# run 117's kept transcript and run 117's line.
+# Scratch's own: the git repository and its commit dates; the merge commit that adds a plan; the one edited copy
+# of a plan (max_tool_calls 999); the plan copy with max_tokens_is deleted; the one uncommitted plan; the copy of
+# run 117's real line with a start time added or left off (and the two bad start times); the record emptied in the
+# git-history case; the plan given through --plan (a copy of run 117's own plan, edited, or run 116's real plan);
+# the folder that is not a git repository. Real: run-0117.json, run 117's kept transcript and line, run-0116.json,
+# and for run 128 the record as it was at markets-data 04d8a0f (read with git).
 FIRST = "2026-11-24T13:10:23.610000+00:00"  # the first line of run 117's real kept transcript
 
 
@@ -286,17 +294,6 @@ def test_plan_not_in_git_is_exit_1(tmp_path, capsys):
     assert rc == 1
 
 
-def test_paired_plan_outside_the_data_root_is_allowed_and_git_order_not_measured(tmp_path, capsys):
-    d = _repo(tmp_path)
-    _git(d, "add", "-A")
-    _git(d, "commit", "-q", "-m", "x", when="2026-11-24T13:08:54+00:00")
-    out_plan = tmp_path / "outside.json"
-    shutil.copy(data_root() / PAPER / "run-plans" / "run-0117.json", out_plan)
-    rc = run_plan.main(["check", "--data", str(d), "--run", "117", "--plan", str(out_plan)])
-    assert "not measured for a paired plan" in capsys.readouterr().out
-    assert rc == 0
-
-
 def _line_117(extra):
     root = data_root()
     last = [json.loads(l) for l in (root / PAPER / "agent-runs.jsonl").read_text().splitlines()
@@ -348,3 +345,82 @@ def test_plan_without_max_tokens_is_says_so(tmp_path, capsys):
     _git(d, "commit", "-q", "-m", "add", when="2026-11-24T13:08:54+00:00")
     run_plan.main(["check", "--data", str(d), "--run", "117"])
     assert "the plan holds no max_tokens_is" in capsys.readouterr().out
+
+
+def test_paired_check_of_an_edited_copy_of_the_runs_own_plan_is_exit_3_not_0(tmp_path, capsys):
+    d = _repo(tmp_path)
+    _git(d, "add", "-A")
+    _git(d, "commit", "-q", "-m", "x", when="2026-11-24T13:08:54+00:00")
+    plan = json.loads((data_root() / PAPER / "run-plans" / "run-0117.json").read_text())
+    plan["max_tool_calls"] = 999
+    out_plan = tmp_path / "edited.json"
+    out_plan.write_text(json.dumps(plan))
+    rc = run_plan.main(["check", "--data", str(d), "--run", "117", "--plan", str(out_plan)])
+    out = capsys.readouterr().out
+    assert out.startswith("PAIRED CHECK: the plan read is ")
+    assert _limits(out)["max_tool_calls"][:3] == ("999", "30", "kept")
+    assert rc == 3
+
+
+def test_plan_added_inside_a_merge_commit_is_found(tmp_path, capsys):
+    d = _repo(tmp_path)
+    _git(d, "add", PAPER + "/agent-runs.jsonl", PAPER + "/transcripts")
+    _git(d, "commit", "-q", "-m", "base", when="2026-11-24T13:00:00+00:00")
+    _git(d, "checkout", "-q", "-b", "side")
+    (d / "other.txt").write_text("side")
+    _git(d, "add", "other.txt")
+    _git(d, "commit", "-q", "-m", "side", when="2026-11-24T13:01:00+00:00")
+    _git(d, "checkout", "-q", "-")
+    (d / "main.txt").write_text("main")
+    _git(d, "add", "main.txt")
+    _git(d, "commit", "-q", "-m", "main", when="2026-11-24T13:02:00+00:00")
+    _git(d, "merge", "-q", "--no-commit", "--no-ff", "side")
+    _git(d, "add", PAPER + "/run-plans/run-0117.json")
+    _git(d, "commit", "-q", "-m", "merge that adds the plan", when="2026-11-24T13:08:54+00:00")
+    rc = run_plan.main(["check", "--data", str(d), "--run", "117"])
+    out = capsys.readouterr().out
+    assert "the plan file is not in git" not in out
+    assert "unchanged since it was added" in out and "before the run began" in out
+    assert rc == 0
+
+
+def test_start_time_forms_without_a_transcript(tmp_path, capsys):
+    d = _repo(tmp_path, transcript=False)
+    _git(d, "add", "-A")
+    _git(d, "commit", "-q", "-m", "early", when="2026-11-24T13:08:54+00:00")
+    rec = d / PAPER / "agent-runs.jsonl"
+    for value, want, rc_want in (
+            ("2026-11-24T13:10:23.610000Z", "before the run began", 0),
+            ("2026-11-24T13:10:23.610000", "read as UTC: the line names no zone", 0),
+            (1795000000, "not measured: the run's line holds a start time that cannot be read (1795000000)", 0),
+            ("yesterday", "not measured: the run's line holds a start time that cannot be read (yesterday)", 0)):
+        rec.write_text(json.dumps(_line_117({"started_at": value})) + "\n")
+        assert run_plan.main(["check", "--data", str(d), "--run", "117"]) == rc_want
+        out = capsys.readouterr().out
+        assert want in out, value
+    rec.write_text(json.dumps(_line_117({"started_at": "2026-11-24T13:00:00"})) + "\n")
+    assert run_plan.main(["check", "--data", str(d), "--run", "117"]) == 1  # no zone, read as UTC: committed after
+
+
+def test_an_earlier_line_with_a_harness_total_is_named(tmp_path, capsys):
+    # real: run 128's two lines as the record was at markets-data 04d8a0f (first line 52,854, correcting line none)
+    root = data_root()
+    d = tmp_path / "m"
+    (d / PAPER / "run-plans").mkdir(parents=True)
+    shutil.copy(root / PAPER / "run-plans" / "run-0128.json", d / PAPER / "run-plans")
+    rec = subprocess.run(["git", "-C", str(root), "show", f"04d8a0f:{PAPER}/agent-runs.jsonl"],
+                         capture_output=True, text=True, check=True).stdout
+    (d / PAPER / "agent-runs.jsonl").write_text(rec)
+    run_plan.main(["check", "--data", str(d), "--run", "128"])
+    out = capsys.readouterr().out
+    assert "an earlier line of this run holds a harness total of 52854; the newest line holds none" in out
+    assert "no harness total on the run's line: this limit cannot be shown kept" in out
+
+
+def test_write_into_a_folder_that_is_not_a_git_repository_is_refused(tmp_path, capsys):
+    d = tmp_path / "plain"
+    (d / PAPER / "run-plans").mkdir(parents=True)
+    shutil.copy(data_root() / PAPER / "agent-runs.jsonl", d / PAPER)
+    rc = run_plan.main(["write", "--data", str(d), "--session", "s"] + _base(900))
+    assert rc == 2 and "not a git repository" in capsys.readouterr().err
+    assert not list((d / PAPER / "run-plans").iterdir())

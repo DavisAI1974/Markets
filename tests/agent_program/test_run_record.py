@@ -310,24 +310,25 @@ def test_missing_with_live_counts_on_the_record_as_it_was_at_7de89a4(tmp_path, c
     d, live_dir = tmp_path / "d", tmp_path / "live"
     _record_as_of("7de89a4", d, PAPER)
     live_dir.mkdir()
-    gzs = sorted((d / PAPER / "transcripts").glob("run-*.jsonl.gz"))
+    k = d / PAPER / "transcripts"
+    gzs = sorted(k.glob("run-*.jsonl.gz"))
     assert gzs
+    # which run each transcript is comes from the kept sidecars at that commit (their own `run` and `agent_id`),
+    # never from reading the briefs again
+    runs = []
     for g in gzs:
-        (live_dir / g.name[:-3]).write_bytes(gzip.decompress(g.read_bytes()))
+        side = json.loads((k / (g.name[:-9] + ".json")).read_text())
+        raw = gzip.decompress(g.read_bytes())
+        assert json.loads(raw.decode().splitlines()[0])["agentId"] == side["agent_id"]
+        (live_dir / g.name[:-3]).write_bytes(raw)
+        runs.append(side["run"])
     lined = {json.loads(l)["run"] for l in (d / PAPER / "agent-runs.jsonl").read_text().splitlines() if l.strip()}
-    named = []
-    for g in live_dir.glob("*.jsonl"):
-        brief = json.loads(g.read_text().splitlines()[0])["message"]["content"]
-        own = re.match(r"\s*You are the [^,.\n]{1,60}, agent run (\d+)", brief, re.I)
-        nums = {int(own.group(1))} if own else {int(x) for x in re.findall(r"agent run (\d+)", brief[:200], re.I)}
-        named.append(next(iter(nums)) if len(nums) == 1 else None)
-    runs = [r for r in named if r is not None]
-    kept = {int(re.search(r"run-(\d+)", g.name).group(1)) for g in gzs}
     assert main(["missing", "--data", str(d), "--live", str(live_dir)]) == 0
     counts = [l for l in capsys.readouterr().out.splitlines() if l.startswith("COUNTS")][0]
-    assert f"live transcripts {len(runs)} (naming no single run {named.count(None)})" in counts
+    n = len(runs)
+    assert f"live transcripts {n}, of which {n} name one run and 0 name none" in counts
     assert f"live transcripts with no line {len(set(runs) - lined)}," in counts
-    assert f"live transcripts not kept {len(set(runs) - kept)};" in counts
+    assert f"live transcripts not kept 0;" in counts
 
 
 def test_missing_names_a_live_transcript_that_names_no_run_and_two_that_name_one(paper, tmp_path, capsys):
@@ -401,6 +402,39 @@ def test_a_brief_that_names_no_run_is_tied_by_the_agent_id_alone(scratch, capsys
     assert line["agent_id"] == "a374a5827c8bc7cc6" and line["tie_note"] == side["tie_note"]
 
 
+def test_one_transcript_is_one_runs_not_two(scratch, capsys):
+    t = live("a374a5827c8bc7cc6")  # run 107's real transcript
+    assert _keep(scratch, 107, t) == 0
+    capsys.readouterr()
+    assert _keep(scratch, 108, t) == 2 and "run 107" in capsys.readouterr().err
+    assert main(_append_args(scratch, t, 108, "--corrects", "x")) == 2 and "run 107" in capsys.readouterr().err
+    assert not (scratch / PAPER / "transcripts/run-0108.jsonl.gz").exists()
+
+
+def test_a_transcript_that_is_run_108s_own_agrees_with_its_line_and_run_107s_does_not(scratch, capsys):
+    t107, t108 = live("a374a5827c8bc7cc6"), live("ae63f020e27f3aa06")
+    rec = scratch / PAPER / "agent-runs.jsonl"
+    # the real line of run 108 holds an exact-looking haiku model and 604,479 input tokens (read from the record)
+    line108 = _newest(rec, 108)
+    assert main(_append_args(scratch, t108, 108, "--corrects", "x")) == 0
+    after = _newest(rec, 108)
+    assert after["input_tokens"] >= line108["input_tokens"] and after["agent_id"] == "ae63f020e27f3aa06"
+
+
+def test_outside_the_roster_the_agent_type_is_the_text_given(scratch, capsys):
+    t = live("a374a5827c8bc7cc6")
+    what = "general-purpose, handed .claude/agents/reviewer.md as its instructions"
+    rec = scratch / PAPER / "agent-runs.jsonl"
+    assert main(_append_args(scratch, t, 107, "--corrects", "x", "--role", "reviewer", "--outside-roster", what)) == 0
+    line = _newest(rec, 107)
+    assert line["agent_type"] == what and line["role"] == "reviewer"
+    assert main(_append_args(scratch, t, 107, "--corrects", "y", "--role", "reviewer", "--outside-roster", what, "--agent-type", "builder")) == 2
+    assert "exactly one" in capsys.readouterr().err
+    assert main(_append_args(scratch, t, 107, "--corrects", "z", "--role", "reviewer", "--agent-type", "wizard")) == 2
+    assert main(_append_args(scratch, t, 107, "--corrects", "w", "--role", "reviewer")) == 0
+    assert _newest(rec, 107)["agent_type"] == "reviewer"
+
+
 # ---------------------------------------------------------------------------------------------------------
 # CASES THE REAL RECORD DOES NOT HOLD: each uses a real transcript or a real line of the record with exactly
 # the change named in the case's own comment
@@ -417,6 +451,8 @@ def _changed_first_line(src, dest, sentence):
 
 
 def test_trap_a_sentence_naming_another_run_in_front_of_the_brief(scratch, tmp_path, capsys):
+    # change: run 119's real transcript with ONE short sentence, "This note is about agent run 117.", put in front
+    # of its brief (so two different runs are named in its opening); nothing else
     changed = _changed_first_line(live_for_run(119), tmp_path / "t119.jsonl", "This note is about agent run 117.")
     rec = scratch / PAPER / "agent-runs.jsonl"
     before = rec.read_text()
@@ -431,6 +467,8 @@ def test_trap_a_sentence_naming_another_run_in_front_of_the_brief(scratch, tmp_p
 
 
 def test_trap_a_real_hand_back_followed_by_a_short_one_drops_nothing(paper, tmp_path):
+    # change: run 117's real transcript gains ONE more line at its end: a copy of its last hand-back line with a new
+    # message id and tool_use id, its hand-back message replaced by "Short one." and its text item replaced by "x"
     lines = gzip.decompress((paper / "transcripts/run-0117.jsonl.gz").read_bytes()).decode().splitlines()
     last = max(i for i, l in enumerate(lines) if "SubagentHandback" in l and json.loads(l).get("message", {}).get("role") == "assistant")
     d = copy.deepcopy(json.loads(lines[last]))
@@ -452,6 +490,8 @@ def test_trap_a_real_hand_back_followed_by_a_short_one_drops_nothing(paper, tmp_
 
 
 def test_trap_a_line_whose_figures_differ_from_its_kept_transcript_is_named(scratch, paper, capsys):
+    # change: run 117's real line in the record copy gets output_tokens 18000 (real 18234), its wall clock raised by
+    # 500 ms (then by 5,500 ms in all) and its model_replies removed; its kept transcript is not touched
     shutil.copytree(paper / "transcripts", scratch / PAPER / "transcripts")
     rec = scratch / PAPER / "agent-runs.jsonl"
     d = _newest(rec, 117)
@@ -472,7 +512,8 @@ def test_trap_a_line_whose_figures_differ_from_its_kept_transcript_is_named(scra
 
 
 def test_trap_a_long_sentence_in_front_of_run_119s_brief_is_tied_only_by_the_agent_id(scratch, tmp_path, capsys):
-    # change: run 119's real transcript with ONE sentence of over 200 characters, naming no run, in front of its brief
+    # change: run 119's real transcript with ONE sentence of over 200 characters, naming no run, in front of its brief;
+    # and, in one part, run 136's real plan in the record copy gains an agent_id of another agent
     sentence = ("This sentence is longer than two hundred characters and says nothing about which run follows, " * 3).strip()
     assert len(sentence) > 200
     changed = _changed_first_line(live_for_run(119), tmp_path / "t.jsonl", sentence)
@@ -484,8 +525,7 @@ def test_trap_a_long_sentence_in_front_of_run_119s_brief_is_tied_only_by_the_age
     if not plan.exists():
         pytest.skip("this record has no plan for run 136")
     d = json.loads(plan.read_text())
-    assert _keep(scratch, 136, changed, aid=id119) == 0  # nothing on record names run 136's agent id: accepted, the limit
-    shutil.rmtree(scratch / PAPER / "transcripts")
+    assert "agent_id" not in d
     d["agent_id"] = "a0000000000000000"
     plan.write_text(json.dumps(d))
     assert _keep(scratch, 136, changed, aid=id119) == 2
@@ -493,13 +533,102 @@ def test_trap_a_long_sentence_in_front_of_run_119s_brief_is_tied_only_by_the_age
     assert main(_append_args(scratch, changed, 136, "--corrects", "x", aid=id119)) == 2
     assert "another agent id" in capsys.readouterr().err
     assert not (scratch / PAPER / "transcripts").exists()
+    # with nothing on record naming run 136's agent id the tie rests on the id given: accepted (the stated limit) ...
+    del d["agent_id"]
+    plan.write_text(json.dumps(d))
+    assert _keep(scratch, 119, changed, aid=id119) == 0  # run 119's own
+    capsys.readouterr()
+    # ... but one transcript is one run's: the same transcript as run 136 is refused, naming run 119
+    assert _keep(scratch, 136, changed, aid=id119) == 2
+    assert "run 119" in capsys.readouterr().err
 
 
 def test_trap_a_run_whose_line_holds_another_agent_id_refuses_this_one(scratch, tmp_path, capsys):
-    # change: run 107's real transcript with every agentId replaced by another id
+    # change: run 107's real transcript with every agentId replaced by another id ("aother0000000000"); nothing else
     t = live("a374a5827c8bc7cc6")
     assert main(_append_args(scratch, t, 107, "--corrects", "x")) == 0  # the line now holds the real id
     other = tmp_path / "other.jsonl"
     other.write_text(t.read_text().replace("a374a5827c8bc7cc6", "aother0000000000"), encoding="utf-8")
     assert main(_append_args(scratch, other, 107, "--corrects", "y")) == 2
     assert "another agent id" in capsys.readouterr().err
+
+
+def test_trap_a_line_already_on_record_is_compared_with_the_transcript(scratch, tmp_path, capsys):
+    # change: run 107's real transcript with every agentId replaced by a fresh id ("afresh0000000000"), given as run 108,
+    # whose own real line holds another model and fewer tokens
+    t = live("a374a5827c8bc7cc6")
+    fresh = tmp_path / "fresh.jsonl"
+    fresh.write_text(t.read_text().replace("a374a5827c8bc7cc6", "afresh0000000000"), encoding="utf-8")
+    rec = scratch / PAPER / "agent-runs.jsonl"
+    before = rec.read_text()
+    assert main(_append_args(scratch, fresh, 108, "--corrects", "x")) == 2
+    err = capsys.readouterr().err
+    assert "model" in err or "input_tokens" in err
+    assert rec.read_text() == before
+    assert _keep(scratch, 108, fresh) == 2 and not (scratch / PAPER / "transcripts").exists()
+
+
+def test_trap_a_line_with_more_tokens_than_its_transcript_refuses_a_correction(scratch, paper, capsys):
+    # change: run 117's real line in the record copy gets input_tokens raised by 1 (a run that was sent back has grown,
+    # it never shrinks, so the transcript's lower figure is refused); a second change raises output_tokens by 1 instead
+    t = paper / "transcripts/run-0117.jsonl.gz"
+    rec = scratch / PAPER / "agent-runs.jsonl"
+    for key in ("input_tokens", "output_tokens"):
+        d = _newest(rec, 117)
+        d[key] += 1
+        rec.write_text(rec.read_text() + json.dumps(d) + "\n")
+        before = rec.read_text()
+        assert main(_append_args(scratch, t, 117, "--corrects", "x")) == 2
+        err = capsys.readouterr().err
+        assert key in err and str(d[key]) in err and str(d[key] - 1) in err
+        assert rec.read_text() == before
+        d[key] -= 2  # a line BELOW the transcript's figure is fine
+        rec.write_text(rec.read_text() + json.dumps(d) + "\n")
+        assert main(_append_args(scratch, t, 117, "--corrects", "ok")) == 0
+        assert _newest(rec, 117)[key] == d[key] + 1
+
+
+def _add_before_the_long_message(src, dest, hand_back_inner_text=None, earlier_longer=None):
+    lines = Path(src).read_text(encoding="utf-8").splitlines()
+    if earlier_longer:
+        i = next(k for k, l in enumerate(lines) if '"text"' in l and len(l) > 11210 and json.loads(l).get("message", {}).get("role") == "assistant")
+        d = copy.deepcopy(json.loads(lines[i]))
+        d["message"]["id"] = "msg_earlier_longer_added_by_the_check"
+        d["message"]["content"] = [{"type": "text", "text": earlier_longer}]
+        lines.insert(i, json.dumps(d))
+    if hand_back_inner_text:
+        i = max(k for k, l in enumerate(lines) if "SubagentHandback" in l and json.loads(l).get("message", {}).get("role") == "assistant")
+        d = json.loads(lines[i])
+        d["message"]["content"].insert(0, {"type": "text", "text": hand_back_inner_text})
+        lines[i] = json.dumps(d)
+    dest.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return dest
+
+
+def _real_pointed_at_opening():
+    texts = [it["text"] for l in live("a7418ae8600f3ea3d").read_text().splitlines() for it in (json.loads(l).get("message", {}).get("content") or [])
+             if isinstance(it, dict) and it.get("type") == "text"]
+    return next(t for t in texts if len(t) == 11210)[:60]
+
+
+def test_trap_the_pointed_at_message_is_the_last_one_not_the_longest(tmp_path):
+    # change: run 124's real transcript gains ONE more assistant line, with a new message id, holding a text item of
+    # 12,000 characters (LONGER than the real 11,210-character message), put in an earlier reply before it
+    src = live("a7418ae8600f3ea3d")
+    changed = _add_before_the_long_message(src, tmp_path / "t.jsonl", earlier_longer="EARLIER AND LONGER. " * 600)
+    out = tmp_path / "r.md"
+    assert main(["report", "--transcript", str(changed), "--out", str(out), "--title", "T"]) == 0
+    after = out.read_text()
+    after = after[after.index("## The message its last hand-back points at"):]
+    assert _real_pointed_at_opening() in after and "EARLIER AND LONGER." not in after
+
+
+def test_trap_a_short_text_inside_the_hand_backs_own_message_does_not_displace_the_real_one(tmp_path):
+    # change: run 124's real transcript, the line holding its hand-back gets ONE text item, "Handing back now.", put in
+    # front of the hand-back's tool_use inside the same message (the same message id)
+    changed = _add_before_the_long_message(live("a7418ae8600f3ea3d"), tmp_path / "t.jsonl", hand_back_inner_text="Handing back now.")
+    out = tmp_path / "r.md"
+    assert main(["report", "--transcript", str(changed), "--out", str(out), "--title", "T"]) == 0
+    after = out.read_text()
+    after = after[after.index("## The message its last hand-back points at"):]
+    assert _real_pointed_at_opening() in after
