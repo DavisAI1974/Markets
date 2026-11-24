@@ -20,7 +20,7 @@ With a question the packet also holds, as structure (the same whole values the p
 - `packet["flow_lines"]`: `{"dipole": {"value", "width_s"}, "exhaustion": {"value", "width_s"}}` and `packet["exchange_ns"]`.
 - `packet["layers"]`: every layer by name with its `count` and where the whole of it is (`state.json`, `layers.json`,
   `planes_since.json`). Journal layers carry their `rows` (each with its id); ROOT's stored planes (`plane:<layer>`) are
-  handed by count only, with their head line in `packet["lines"]` and `packet["planes"]` ({layer: {count, of}}): the
+  handed by count only, with their head line in `packet["lines"]` and `packet["planes"]` ({layer: {count}}: how many rows of the layer are placed at the moment, never how many are still to come): the
   rows of a plane are NOT parsed over stdin (a day's worth is megabytes and the program has a timeout), and the stored
   files' paths and hashes are not handed over.
 - `packet["lines"]`: every line with its `source` id and `known_at_ns` (never after `packet["moment_ns"]`).
