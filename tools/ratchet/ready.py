@@ -117,8 +117,10 @@ def check(program_path, data=None, mailbox=None, scratch=None) -> dict:
         tokens = program.command.split()
     run_dir = Path(os.path.normpath(run_dir_pattern))
     wt = Path(os.path.normpath(f"{scratch or '<scratch>'}/{program.loop}/worktree"))
-    for tok in tokens:
+    for i, tok in enumerate(tokens):
         if tok.startswith("-") and "=" not in tok:
+            continue
+        if i > 0 and tokens[i - 1] == "-c":      # the program text of `python3 -c "..."` is code, not a path
             continue
         val = tok.split("=", 1)[1] if tok.startswith("-") else tok
         val = _expand(val, env)

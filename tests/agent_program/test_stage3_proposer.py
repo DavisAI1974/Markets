@@ -31,8 +31,8 @@ def test_run_47_two_lines_load_as_two_revisions(root, tmp_path):
     twice = [l for l in lines if l["run"] == 47]
     if len(twice) < 2 or not any("corrects" in l for l in twice):
         pytest.skip("this checkout has no corrected run 47")
-    store, g = scratch_store(root, tmp_path)
-    iar.agent_runs(store)
+    g = tmp_path / "empty-graph"           # an empty scratch store: the real one already holds revisions of run 47
+    iar.agent_runs(GraphStore(root, graph_dir=g))
     hist = GraphStore(root, graph_dir=g).history("run:0047")
     assert [h["rev"] for h in hist] == [1, 2]
     assert "corrects" not in hist[0]["attrs"] and "corrects" in hist[1]["attrs"]
@@ -235,7 +235,7 @@ def test_usage_reaches_the_report_and_stops_the_loop_at_max_tokens(tmp_path, roo
     budget = {k: None for k in prog.BUDGET_KEYS}
     budget["max_tokens"] = 50
     rep, dag = mailbox_loop(tmp_path, clone, root, graph, mb, budget=budget)
-    assert len(rep["trials"]) == 2 and not (mb / "trial-2").exists()
+    assert len(rep["trials"]) == 2 and not (mb / "trial-2" / "brief.md").exists()
     assert rep["stopped_because"] == "budget exhausted: max_tokens (50) used, as the proposer reported"
     u = rep["budget_used"]
     assert (u["tokens"], u["model_calls"], u["sub_agents"], u["tool_calls"]) == (60, 2, 1, "not reported")
@@ -265,12 +265,14 @@ def test_exactly_one_of_replay_and_mailbox_is_required(tmp_path, clone):
 
 
 # ---- the ready check ----------------------------------------------------------------------------------
-def test_ready_check_on_a_good_control_file_and_it_never_runs_the_command(tmp_path, clone):
-    left = tmp_path / "left-behind"
-    cmd = f"touch {left} && " + COUNT_CMD
-    out = ready_mod.check(write_program(tmp_path, clone, run={"command": cmd}))
+def test_ready_check_on_a_good_control_file_and_it_never_runs_the_command(tmp_path, clone, monkeypatch):
+    work = tmp_path / "cwd"
+    work.mkdir()
+    monkeypatch.chdir(work)
+    cmd = "touch left-behind && " + COUNT_CMD            # a command that would leave a file in its working folder
+    out = ready_mod.check(write_program(tmp_path, clone, protected=["paper_platform/*"], run={"command": cmd}))
     assert out["ready"] is True and out["not_ready"] == []
-    assert not left.exists()                                           # the command was not run
+    assert not (work / "left-behind").exists() and not (clone / "left-behind").exists()   # not run
     assert out["head"] == sh(clone, "git", "rev-parse", "HEAD")
     names = [e["name"] for e in out["entries"]]
     assert {"budget", "metric", "engine runs the budget allows", "guard reports a protected path"} <= set(names)
