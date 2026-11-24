@@ -475,7 +475,10 @@ def main(argv=None) -> int:
     if a.replay:
         proposer = ReplayCommits(repo, a.replay)
     else:
-        from tools.ratchet.proposer import MailboxProposer
+        if program.proposer_kind == "file":
+            from tools.ratchet.file_proposer import MailboxFileProposer as MailboxProposer
+        else:
+            from tools.ratchet.proposer import MailboxProposer
         proposer = MailboxProposer(a.mailbox, program, data_root=a.data, graph_dir=a.graph_dir,
                                    context_budget=a.context_budget, timeout_s=a.proposal_timeout_s)
     rep = run_loop(program, proposer, scratch=a.scratch, data_root=a.data, exp_dir=a.exp_dir)

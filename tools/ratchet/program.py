@@ -55,6 +55,7 @@ class Program:
     data_root: str | None
     path: Path | None = None
     notes: str = ""
+    proposer_kind: str = "plan"       # plan | file: what a proposer changes (one plan value, or one whole program file)
 
     def figure(self, name):
         return next(f for f in self.figures if f.name == name)
@@ -95,7 +96,7 @@ def parse(text: str, path: Path | None = None) -> Program:
     except yaml.YAMLError as e:
         raise ProgramError(f"front matter: not valid YAML ({e})")
     d = _fields(d, "", ("loop", "repo", "mutable", "protected", "metric", "figures", "run", "budget",
-                        "crash", "stop"), ("keep", "escalate", "escalate_file", "record"))
+                        "crash", "stop"), ("keep", "escalate", "escalate_file", "record", "proposer"))
     if not isinstance(d["loop"], str) or not re.fullmatch(r"[A-Za-z0-9._-]+", d["loop"]):
         raise ProgramError("loop: a name of letters, digits, . _ - only (it names the branch)")
     if not isinstance(d["repo"], str) or not d["repo"]:
@@ -157,6 +158,9 @@ def parse(text: str, path: Path | None = None) -> Program:
     esc = d.get("escalate") or []
     _list_of_str(esc, "escalate")
     rec = _fields(d.get("record") or {}, "record", (), ("data_root",))
+    prop = _fields(d.get("proposer") or {"kind": "plan"}, "proposer", ("kind",))
+    if prop["kind"] not in ("plan", "file"):
+        raise ProgramError("proposer.kind: plan or file")
     return Program(
         loop=d["loop"], repo=d["repo"], mutable=mutable, protected=protected, metric_name=met["name"],
         metric_direction=met["direction"], metric_unit=met.get("unit"), figures=figures,
@@ -167,7 +171,7 @@ def parse(text: str, path: Path | None = None) -> Program:
         stop_after_trials_without_a_keep=_count(stop["after_trials_without_a_keep"],
                                                 "stop.after_trials_without_a_keep"),
         escalate=esc, escalate_file=d.get("escalate_file"), data_root=rec.get("data_root"),
-        path=path, notes=m.group(2))
+        path=path, notes=m.group(2), proposer_kind=prop["kind"])
 
 
 def load(path) -> Program:
