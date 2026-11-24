@@ -94,9 +94,10 @@ def pieces(lines: list[str], max_lines: int = MAX_PIECE_LINES) -> list[tuple[int
     return out
 
 
-BRIEF_HEAD = """You are the SCOUT of DavisAI Markets in EXTRACTION MODE. You turn a document into claims for the
-knowledge graph. You locate and copy; you do not judge, sum up, rank or interpret. Use NO tools: the text
-is below, every line numbered as `<line number>| <text>`. Return JSON only, no words around it.
+BRIEF_HEAD = """You are the READER of DavisAI Markets in EXTRACTION MODE (the scout's extraction mode of the plan).
+You turn a document into claims for the knowledge graph. You locate and copy; you do not judge, sum up,
+rank or interpret. The text is below, every line numbered as `<line number>| <text>`; you need no other
+file. Return JSON only, no words around it.
 
 For each document piece return every claim it makes. A CLAIM is one statement that stands on its own:
 one decision, one measured figure, one state of a thing, one rule, one open question, one slip, one plan,
@@ -131,9 +132,21 @@ def build_brief(store: GraphStore, dirs: dict[str, Path], docs: list[str]) -> tu
     body, listing = [BRIEF_HEAD], []
     for spec in docs:
         repo, rel = spec.split(":", 1)
+        only = None
+        m = re.fullmatch(r"(.+)#L(\d+)-L(\d+)", rel)          # "<path>#L<first>-L<last>": only those lines
+        if m:
+            rel, only = m.group(1), (int(m.group(2)), int(m.group(3)))
         src = source_node(repo, dirs[repo], rel)
         lines = (dirs[repo] / rel).read_text(encoding="utf-8").splitlines()
-        for a, b in pieces(lines):
+        cuts = pieces(lines)
+        if only:
+            # whole entries only: the range is widened to the entry boundaries it falls in
+            starts = [i for i, l in enumerate(lines, 1) if i == 1 or l.startswith("#") or l.startswith("- ")]
+            first = max(x for x in starts if x <= only[0])
+            last = min([x - 1 for x in starts if x > only[1]] + [len(lines)])
+            sub = pieces(lines[first - 1:last])
+            cuts = [(a + first - 1, b + first - 1) for a, b in sub]
+        for a, b in cuts:
             pid = f"{src['id']}@{src['attrs']['commit'][:10]}#L{a}-L{b}"   # the wording it was cut from
             listing.append({"piece": pid, "source": src, "repo": repo, "path": rel, "first": a, "last": b})
             body.append(f"\n===== PIECE {pid} =====\n(document {rel}, lines {a} to {b})\n")
