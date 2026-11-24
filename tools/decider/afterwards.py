@@ -285,17 +285,32 @@ def main(argv=None) -> int:
                         help="a registered claim the afterwards file bears on (repeatable); the brief is written only "
                              "while each passes the rule of tools/kgraph/outcome.py")
         ap.add_argument("--rests-on-none", help="why the afterwards file bears on no registered claim; given INSTEAD of --claim")
+        ap.add_argument("--run", help="the run that writes the brief; needed with --rests-on-none, so the reason is kept on record "
+                                      "as one Task in the graph")
         ap.add_argument("--data")
         ap.add_argument("--graph-dir")
         a = ap.parse_args(argv[1:])
         why = (a.rests_on_none or "").strip()
-        if bool(a.claim) == bool(why):
-            print("refused: give --claim <id> (one or more) or --rests-on-none \"<why>\", one of the two", file=sys.stderr)
+        from tools.kgraph import defend, outcome, schema
+        from tools.kgraph.sources import link
+        from tools.kgraph.store import GraphStore, now, sha
+        store = GraphStore(a.data, graph_dir=a.graph_dir)
+
+        def refuse(reason, extra):
+            """A refusal is kept as a Task the way `outcome` keeps one (defend._retain); exit 2, or 3 when it could not be kept."""
+            print(f"refused: {reason}", file=sys.stderr)
+            try:
+                defend._retain(store, "afterwards-brief", a.run, reason, extra)
+            except defend.NotRetained as e:
+                print(f"refused, and NOT retained: {e}", file=sys.stderr)
+                return 3
             return 2
+        given = {"claims": list(a.claim), "rests_on_none": why or None, "out": str(a.out)}
+        if bool(a.claim) == bool(why):
+            return refuse("give --claim <id> (one or more) or --rests-on-none \"<why>\", one of the two", given)
+        if why and not a.run:
+            return refuse("--run: --rests-on-none needs the run that writes the brief (--run run:NNNN), so the reason is on record", given)
         if a.claim:
-            from tools.kgraph import outcome
-            from tools.kgraph.store import GraphStore
-            store = GraphStore(a.data, graph_dir=a.graph_dir)
             for cid in a.claim:
                 ok, reason = outcome.may_see_outcome(store, cid)
                 if not ok:
@@ -305,6 +320,22 @@ def main(argv=None) -> int:
                     + ", each with an independent challenge of its current revision on record.")
         else:
             note = f"Bears on no registered claim: {why}"
+            text = make_brief(a.afterwards, a.budget, note)
+            try:                                    # the reason is on record first, as ONE Task (the store `outcome release` writes with)
+                defend._agent_run(store, a.run)
+                stamp = now()
+                tid = "task:afterwards-brief-" + sha(["rests-on-none", why, a.run, str(Path(a.out).resolve()), stamp])
+                store.write([{"id": tid, "type": "Task", "attrs": {
+                    "text": f"afterwards brief written by {a.run} bearing on no registered claim: {why}", "state": "done",
+                    "afterwards_brief": True, "rests_on_none": why, "run": a.run, "brief_path": str(Path(a.out).resolve()),
+                    "written_at": stamp}}], [link("PRODUCED", a.run, tid)], written_by=a.run)
+            except schema.Refused as e:
+                return refuse(str(e), given)
+            except Exception as e:
+                print(f"refused, and NOT retained: the reason could not be kept in the graph: {e}", file=sys.stderr)
+                return 3
+            Path(a.out).write_text(text, encoding="utf-8")
+            return 0
         Path(a.out).write_text(make_brief(a.afterwards, a.budget, note), encoding="utf-8")
         return 0
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])

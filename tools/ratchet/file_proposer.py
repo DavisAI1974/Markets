@@ -42,7 +42,7 @@ from pathlib import Path
 from tools.kgraph import context as kcontext
 from tools.kgraph import defend, outcome
 from tools.kgraph import grounding
-from tools.ratchet.loop import ProposalFailed
+from tools.ratchet.loop import TRIAL_ID_FILE, ProposalFailed, keep_folder
 from tools.ratchet.proposer import MailboxProposer, WORKING_NOTE
 
 TASK = ("a decider program: the one file that answers take or skip at each opening signal of Greg's own paper "
@@ -126,28 +126,34 @@ class MailboxFileProposer(MailboxProposer):
 
     def kept_records(self, history=()) -> list[str]:
         """Paths of the run folders a trial kept, if the control file's command keeps them (`--keep <folder>`).
-        Each is named, in the order it was made; nothing in them is read or summed here. The folder of a trial that
-        is held (`held`) is named as held with its reason, without its path. The folder made i-th is taken to be
-        trial n == i of `history` (a guess by modification time, as the line says); a folder with no row is not held."""
-        held = {h["n"]: self.held(h) for h in history}
-        try:
-            toks = shlex.split(self.program.command)
-        except ValueError:
+        A folder is tied to its trial by the trial's own id, which the loop wrote inside it (`trial-id`) when it
+        recorded the trial; the id is looked up in `history`. Nothing is guessed by order or by time: a folder that
+        carries no id, or an id that no row of `history` has, is named as not matched to a trial, with no path (it may
+        be a held trial's). The folder of a trial that is held (`held`) is named as held with its reason, without
+        its path. Nothing in a folder is read or summed here."""
+        rows = {h["id"]: h for h in history if h.get("id")}
+        keep = keep_folder(self.program.command)
+        if keep is None or not keep.is_dir():
             return []
-        if "--keep" not in toks or toks.index("--keep") + 1 >= len(toks):
-            return []
-        keep = Path(os.path.expandvars(toks[toks.index("--keep") + 1]))
-        if not keep.is_dir():
-            return []
-        runs = sorted((p for p in keep.iterdir() if p.is_dir()), key=lambda p: (p.stat().st_mtime_ns, p.name))
         out = []
-        for i, r in enumerate(runs):
-            if held.get(i):
-                out.append(f"- the folder made by trial {i} (if the folders were made one a trial, in order) is held: "
-                           + "; ".join(held[i]))
+        for r in sorted((p for p in keep.iterdir() if p.is_dir()), key=lambda p: p.name):
+            tid = None
+            try:
+                tid = json.loads((r / TRIAL_ID_FILE).read_text(encoding="utf-8"))["id"]
+            except (OSError, ValueError, KeyError, TypeError):
+                tid = None
+            h = rows.get(tid) if isinstance(tid, str) else None
+            if h is None:
+                out.append("- a folder in the kept records is not matched to a trial ("
+                           + ("it carries no trial id" if tid is None else f"its trial id {tid} is in no row of the earlier trials")
+                           + "): its path is not given")
+                continue
+            reasons = self.held(h)
+            if reasons:
+                out.append(f"- the folder made by trial {h['n']} is held: " + "; ".join(reasons))
                 continue
             files = [f.name for f in sorted(r.iterdir()) if f.name in ("events.jsonl", "trades.jsonl", "decisions.jsonl")]
-            out.append(f"- the folder made by trial {i} (if the folders were made one a trial, in order): {r} holds "
+            out.append(f"- the folder made by trial {h['n']}: {r} holds "
                        f"{', '.join(files) or 'none of events.jsonl, trades.jsonl, decisions.jsonl'}")
         return out
 
@@ -254,12 +260,12 @@ class MailboxFileProposer(MailboxProposer):
                                  "source or is marked an inference)", hyp)
         problem = source_problem(new, present)
         if problem:
-            raise ProposalFailed(problem, hyp)
+            raise ProposalFailed(problem, hyp, rests_on)
         store = self.store()
         for cid in rests_on:
             node = store.node(cid)
             if node is None or node["type"] != "Claim":
-                raise ProposalFailed(f"{cid} is not a claim of the graph", hyp)
+                raise ProposalFailed(f"{cid} is not a claim of the graph", hyp, rests_on)
         path.write_bytes(raw)
         grounded = []
         for cid in rests_on:

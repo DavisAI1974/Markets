@@ -572,14 +572,22 @@ class PlaneLayer:
         self.instants, known = [], None
         for c in names:
             col = self.table.column(c)
-            if str(col.type) not in ("int64", "double"):
+            kind = str(col.type)
+            if kind == "int64":                        # whole nanoseconds, exact: never through a float
+                valid = col.is_valid().to_numpy(zero_copy_only=False)
+                a = col.fill_null(-1).to_numpy()
+            elif kind == "double":
+                f = col.to_numpy(zero_copy_only=False)
+                valid = ~np.isnan(f)
+                a = np.where(valid, f, -1.0).astype(np.int64)
+            else:
                 continue
-            a = col.to_numpy(zero_copy_only=False).astype("float64")
-            v = a[~np.isnan(a)]
+            v = a[valid]
             if len(v) and v.min() >= EPOCH_LO and v.max() < EPOCH_HI:
                 self.instants.append(c)
-                known = a if known is None else np.fmax(known, a)
-        self.known = None if known is None else np.nan_to_num(known, nan=-1.0)
+                a = np.where(valid, a, -1)
+                known = a if known is None else np.maximum(known, a)
+        self.known = known                              # int64 nanoseconds; -1 where no instant is held
         self.has_time = known is not None
         self.out_columns = [c for c in names if any(x in c for x in PLANE_COLUMNS_OUT)]
         self.columns = [c for c in names if c not in self.out_columns]
@@ -587,7 +595,7 @@ class PlaneLayer:
         self.has_time = self.has_time and self.no_time_rows == 0     # a layer is placed only when EVERY row has a time
 
     def placed_mask(self, moment):
-        return (self.known >= 0) & (self.known <= moment)
+        return (self.known >= 0) & (self.known <= int(moment))
 
     def row(self, i):
         import math
