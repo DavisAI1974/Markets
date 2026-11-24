@@ -90,3 +90,25 @@ Tokens are estimated at 4 characters a token.
    `python3 -m tools.kgraph.extract load --result graph/reads/<file> --run run:00NN`
 5. `python3 -m tools.kgraph.extract coverage` and `python3 -m tools.kgraph check` (the loader marks what belongs
    to the tastytrade platform as it loads; `check` lists anything left unmarked)
+
+## Connected to Greg's own paper platform (stages 7d and 7f, for the platform that makes the runs now)
+
+Two things, both reading records only (git; no run of the platform, no model, no order). Nothing here is scored
+(Greg, 2026-11-24: "Don't use score since we didn't use anything we wanted scored").
+
+- **The loader** `tools/kgraph/ingest_platform.py`. A platform run is its own markets-data branch
+  `paper-runs/<run id>`. `python3 -m tools.kgraph.ingest_platform --data <markets-data> --run <id> [--run <id> ...]
+  [--platform <platform checkout>] [--graph-dir <scratch>] [--exp-dir <scratch>]` puts each `paper order` row
+  (`porder:<order id>`) and each `fill` row (`pfill:<run id>:<journal sequence>`) into the graph, with the rule version
+  of its (rule, rule commit) (`rulever:platform:<rule>@<commit10>`, DERIVED_FROM its Commit and pointing at the row's
+  `finding` URL as a Source) and Fill -> Order -> rule version links; and each run with a `receipt.json` as one trial of
+  the experiment record, key `platform-run:<run id>`, status `recorded`, carrying counts of what the run wrote and no
+  result figure. A run with no receipt is refused. A second load writes nothing new. Prices are as stored; no mid,
+  no cost; open_profit and highest_open_profit are not copied.
+- **The loop's control file** `tools/ratchet/programs/platform_exit.md`: the loop on the platform checkout beside
+  Markets; the one mutable file is `paper_platform/execution_plans/loop-trial.json`; the run command is the platform's
+  `python3 -m paper_platform.trial ...`; its seven figures are read from the last stdout line. `metric.direction` is
+  null (Greg has not chosen the figure the loop keeps or reverts by), so every trial is recorded and none kept or
+  reverted. Not run: dispatching the loop needs Greg's go.
+
+Checks: `tests/agent_program/test_stage7d_platform.py` (real run records only).
