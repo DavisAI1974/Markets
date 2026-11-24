@@ -15,6 +15,7 @@ from .realrecords import WORK, data_root
 READ = "graph/reads/run-0018-NEXT_SESSION_HANDOFF_20261124X.json"
 HANDOFF = f"{WORK}/NEXT_SESSION_HANDOFF_20261124X.md"
 RUN = "run:0018"
+READ_W = "graph/reads/run-0021-NEXT_SESSION_HANDOFF_20261124W.json"
 
 
 @pytest.fixture()
@@ -63,16 +64,23 @@ def test_every_returned_claim_is_written_or_kept_as_thrown_out(loaded):
 
 
 def test_a_claim_whose_quote_is_not_in_the_file_is_not_believed(loaded):
+    """Real words only: nothing is invented to make a claim fail. Claims really read from handoff W are
+    set against handoff X, which does not hold their words, and a real claim of X against other lines of X."""
     store, dirs, result = loaded
+    if not (store.data_root / READ_W).exists():
+        pytest.skip(f"{READ_W} is not in this markets-data checkout")
+    lines = (store.data_root / HANDOFF).read_text(encoding="utf-8").splitlines()
+    whole = " ".join(" ".join(lines).split())
+    of_w = json.loads((store.data_root / READ_W).read_text(encoding="utf-8"))["pieces"][0]["claims"]
     real = result["pieces"][0]["claims"][0]
-    wrong_words = {**real, "quote": real["quote"].replace("replaces", "follows")}       # one word changed
-    wrong_lines = {**real, "line_start": 60, "line_end": 60}                           # real quote, wrong lines
-    outside = {**real, "line_start": 500, "line_end": 501}                             # lines the piece does not have
-    bad = {"pieces": [{"piece": result["pieces"][0]["piece"], "claims": [real, wrong_words, wrong_lines, outside]}]}
+    not_these_words = next(c for c in of_w if c["line_end"] <= len(lines) and " ".join(c["quote"].split()) not in whole)
+    wrong_lines = {**real, "line_start": 60, "line_end": 60}                           # real quote of X, other lines of X
+    outside = next(c for c in of_w if c["line_start"] > len(lines))                    # lines the piece does not have
+    bad = {"pieces": [{"piece": result["pieces"][0]["piece"], "claims": [real, not_these_words, wrong_lines, outside]}]}
     report = extract.load_result(store, dirs, bad, RUN)
     assert report["claims_written"] == 1 and report["thrown_out"] == 3
     kept = [t["attrs"] for t in store.nodes("Task") if t["attrs"]["state"] == "blocked"]
-    assert len(kept) == 3 and all(k["returned"] in (wrong_words, wrong_lines, outside) for k in kept)
+    assert len(kept) == 3 and all(k["returned"] in (not_these_words, wrong_lines, outside) for k in kept)
     assert sorted(bool(re.search("word for word|outside the piece", k["reason"])) for k in kept) == [True] * 3
 
 

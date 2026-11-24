@@ -59,14 +59,19 @@ def test_a_missing_path_says_what_evidence_is_needed(graph):
     assert set(r) >= {"decision", "claim", "reason", "required_evidence"}        # the plan's own shape
 
 
-def test_words_no_longer_in_the_file_are_reported(graph):
+def test_words_that_are_not_in_the_file_are_reported(graph):
+    """What the check says when a claim's quoted words are not in its file (as after a rewording). Real
+    words only: a claim really read from handoff W is set against handoff X, which does not hold them."""
     store, dirs = graph
+    lines = (store.data_root / f"{WORK}/NEXT_SESSION_HANDOFF_20261124X.md").read_text(encoding="utf-8").splitlines()
+    whole = " ".join(" ".join(lines).split())
+    of_w = json.loads((store.data_root / READ_W[1]).read_text(encoding="utf-8"))["pieces"][0]["claims"]
+    w = next(c for c in of_w if c["line_end"] <= len(lines) and " ".join(c["quote"].split()) not in whole)
     real = next(n for n in store.nodes("Claim") if "32 strategies" in n["attrs"]["quote"])
-    # the same claim as it would stand if the file had since been reworded: one word of its quote differs
-    stale = {"id": "claim:check-reworded", "type": "Claim",
-             "attrs": {**real["attrs"], "quote": real["attrs"]["quote"].replace("32 strategies", "31 strategies")}}
-    store.write([stale], [link("SUPPORTS", real["attrs"]["source"], stale["id"])], written_by="code:test")
-    r = grounding.check_claim(store, stale["id"], dirs)
+    elsewhere = {"id": "claim:check-words-not-in-this-file", "type": "Claim", "attrs": {
+        **real["attrs"], "text": w["text"], "quote": w["quote"], "line_start": w["line_start"], "line_end": w["line_end"]}}
+    store.write([elsewhere], [link("SUPPORTS", real["attrs"]["source"], elsewhere["id"])], written_by="code:test")
+    r = grounding.check_claim(store, elsewhere["id"], dirs)
     assert r["decision"] == "revise" and "no longer" in r["reason"]
     assert any("current wording" in e for e in r["required_evidence"])
 

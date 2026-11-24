@@ -7,7 +7,7 @@ import re
 
 import pytest
 
-from tools.kgraph import context, extract, ingest_agent_runs
+from tools.kgraph import context, extract, grounding, ingest_agent_runs, resolve, schema
 from tools.kgraph.sources import link
 from tools.kgraph.store import GraphStore
 
@@ -100,17 +100,24 @@ def test_a_superseded_claim_is_left_out_and_still_addressable(graph):
     store, dirs = graph
     old = next(c for c in store.nodes("Claim") if "markets-data has no `graph/` folder" in c["attrs"]["quote"])
     new = next(c for c in store.nodes("Claim")
-               if "STAGES 2 AND 4a BUILT" in c["attrs"]["quote"] or "stages 2 and 4a" in c["attrs"]["text"].lower()
+               if ("STAGES 2 AND 4a BUILT" in c["attrs"]["quote"] or "stages 2 and 4a" in c["attrs"]["text"].lower())
                and "built" in c["attrs"]["text"].lower() and c["attrs"]["source"].endswith("ROOT_GAMEPLAN_DECISIONS.md"))
     before = context.build(store, None, budget_tokens=60000, dirs=dirs)
     assert old["id"] in before["included"] + before["folded"]
-    store.write([], [link("SUPERSEDES", new["id"], old["id"], note="the layout was built later the same day")],
-                written_by="code:test")
+    with pytest.raises(schema.Refused, match="says why"):
+        resolve.supersede(store, new["id"], old["id"], why="", run="run:0018")
+    with pytest.raises(schema.Refused, match="later"):                       # the earlier cannot take the later's place
+        resolve.supersede(store, old["id"], new["id"], why="the wrong way round", run="run:0018", dirs=dirs)
+    edge = resolve.supersede(store, new["id"], old["id"], why="the layout was built later the same day", run="run:0018", dirs=dirs)
     after = context.build(store, None, budget_tokens=60000, dirs=dirs)
     assert old["id"] in after["superseded"] and old["id"] not in after["included"]
     assert store.node(old["id"]) is not None and "1 superseded" in after["text"]
     _accounted(store, after)
-    store.withdraw_edge(store.edges("SUPERSEDES")[0]["id"], reason="check only", written_by="code:test")
+    # the grounding check of the earlier claim says a later one took its place
+    seen = grounding.check_claim(store, old["id"], dirs)
+    assert any(new["id"] in o for o in seen["what_was_observed"])
+    store.withdraw_edge(edge, reason="check only", written_by="code:test")
+    assert old["id"] not in context.build(store, None, budget_tokens=60000, dirs=dirs)["superseded"]
 
 
 def test_the_same_words_said_in_two_files_make_one_line_that_cites_both(graph):

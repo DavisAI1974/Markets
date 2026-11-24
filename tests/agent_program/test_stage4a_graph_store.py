@@ -74,10 +74,12 @@ def test_rule_1_a_claim_has_a_source_or_is_marked_an_inference(store):
         store.write([no_source], written_by="code:test")
     assert store.nodes() == []                                             # a refused batch writes nothing
     store.write([src, claim], [link("SUPPORTS", src["id"], claim["id"])], written_by="code:test")
-    inference = {"id": "claim:check-inf", "type": "Claim", "attrs": {
-        "text": "The handoff's order of stages is the one Greg wants followed.", "statement_kind": "state",
-        "inference": True}}
-    store.write([inference], [link("DERIVED_FROM", inference["id"], claim["id"])], written_by="code:test")
+    # a statement its document marks as a reading (a real one, from the read of handoff W) needs no source line
+    read_w = store.data_root / "graph/reads/run-0021-NEXT_SESSION_HANDOFF_20261124W.json"
+    if read_w.exists():
+        r = next(c for c in json.loads(read_w.read_text(encoding="utf-8"))["pieces"][0]["claims"] if c["inference"])
+        store.write([{"id": "claim:check-inf", "type": "Claim", "attrs": {
+            "text": r["text"], "statement_kind": r["statement_kind"], "inference": True}}], written_by="code:test")
     assert store.check_all() == []
 
 

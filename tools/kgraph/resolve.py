@@ -18,6 +18,7 @@ Two makers of merges:
   python3 -m tools.kgraph.resolve candidates --out brief.txt # the resolver's brief: what is still unmerged
   python3 -m tools.kgraph.resolve apply --merges m.json --run run:0025 [--min-confidence 0.9]
   python3 -m tools.kgraph.resolve undo --edge e:... --reason "..." --run run:0025
+  python3 -m tools.kgraph.resolve supersede --new claim:... --old claim:... --why "..." --run run:0025
 """
 
 from __future__ import annotations
@@ -240,6 +241,44 @@ def undo(store: GraphStore, edge: str, reason: str, run: str) -> dict:
     return store.withdraw_edge(edge, reason=f"{reason} (undone by {run})", written_by=code_stamp("tools.kgraph.resolve"))
 
 
+# ---- a later claim takes the place of an earlier one -------------------------------------------
+def _when(store: GraphStore, claim: dict, dirs: dict | None) -> tuple:
+    """(the date the lines give or the file's name gives, the time of the commit it was read at)."""
+    a = claim["attrs"]
+    src = a.get("source") or ""
+    m = re.search(r"(20\d{6})", src)
+    day = a.get("said_on") or (f"{m.group(1)[:4]}-{m.group(1)[4:6]}-{m.group(1)[6:]}" if m else "")
+    stamp = 0
+    repo = src.split(":", 2)[1] if src.count(":") >= 2 else None
+    if dirs and repo in dirs and a.get("source_commit"):
+        try:
+            stamp = int(git(dirs[repo], "log", "-1", "--format=%ct", a["source_commit"]))
+        except (RuntimeError, ValueError):
+            stamp = 0
+    return (day, stamp)
+
+
+def supersede(store: GraphStore, new_id: str, old_id: str, why: str, run: str, dirs: dict | None = None) -> str:
+    """Write that a later claim takes the place of an earlier one (a SUPERSEDES link). The earlier
+    claim stays in the graph and stays addressable; the session context stops showing it and the
+    grounding check says a later one took its place. The link can be taken back like any other."""
+    new, old = store.node(new_id), store.node(old_id)
+    if not new or not old or new["type"] != "Claim" or old["type"] != "Claim":
+        raise schema.Refused("both ends of a SUPERSEDES link are claims of the graph")
+    if not why or not why.strip():
+        raise schema.Refused("a SUPERSEDES link says why the later claim takes the earlier one's place")
+    maker = store.node(run)
+    if not (run.startswith("code:") or (maker and maker["type"] == "AgentRun")):
+        raise schema.Refused(f"{run} is not an AgentRun of the graph: record the run first")
+    a, b = _when(store, new, dirs), _when(store, old, dirs)
+    if a[0] and b[0] and a < b:
+        raise schema.Refused(f"{new_id} was made earlier than {old_id} ({a[0]} against {b[0]}): only a later claim takes "
+                             "the place of an earlier one")
+    e = link("SUPERSEDES", new_id, old_id, why=why, made_by=run)
+    store.write([], [e], written_by=run if run.startswith("run:") else code_stamp("tools.kgraph.resolve"))
+    return e["id"]
+
+
 # ---- the resolver's brief ----------------------------------------------------------------------
 BRIEF = """You are the RESOLVER of DavisAI Markets (stage 4b of the graph adoption plan). Below is every name the
 readers lifted from the documents that is not merged yet, one a line: `<id> | <name as written> | <how many
@@ -285,6 +324,11 @@ def main(argv=None) -> int:
     p.add_argument("--merges", required=True)
     p.add_argument("--run", required=True)
     p.add_argument("--min-confidence", type=float, default=0.9)
+    p = sub.add_parser("supersede")
+    p.add_argument("--new", required=True)
+    p.add_argument("--old", required=True)
+    p.add_argument("--why", required=True)
+    p.add_argument("--run", required=True)
     p = sub.add_parser("undo")
     p.add_argument("--edge", required=True)
     p.add_argument("--reason", required=True)
@@ -302,6 +346,8 @@ def main(argv=None) -> int:
         raw = Path(a.merges).read_text(encoding="utf-8")
         merges = json.loads(raw[raw.find("{"):raw.rfind("}") + 1])["merges"]
         print(json.dumps(apply(store, merges, a.run, a.min_confidence), indent=1, ensure_ascii=False))
+    elif a.verb == "supersede":
+        print(supersede(store, a.new, a.old, a.why, a.run, dirs))
     elif a.verb == "undo":
         print(json.dumps(undo(store, a.edge, a.reason, a.run)))
     return 0

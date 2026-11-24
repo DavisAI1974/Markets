@@ -80,25 +80,25 @@ def test_the_parked_lines_are_read_from_the_running_list_itself(graph):
 
 
 def test_nothing_new_may_rest_on_a_tied_claim(graph):
+    """The links tried here are relations the record itself states, not invented ones: CL16 was written
+    for the print with no side (decisions file, 2026-11-24), and the list's own reading "if many are
+    unmarked buys ..." rests on its count of prints with no side."""
     store, dirs = graph
-    tied_claim = _claim(store, "141 of 440")
-    free_claim = _claim(store, "A trade day is 6 pm Eastern")
-    new = {"id": "claim:check-new-reading", "type": "Claim", "attrs": {
-        "text": "A reading made in this check, to see what it may rest on.", "statement_kind": "state", "inference": True}}
-    with pytest.raises(schema.Refused, match="tastytrade platform"):
-        store.write([new], [link("DERIVED_FROM", new["id"], tied_claim["id"])], written_by="code:test")
-    assert store.node(new["id"]) is None                                      # refused whole: nothing written
-    store.write([new], [link("DERIVED_FROM", new["id"], free_claim["id"])], written_by="code:test")
-    # a rule version may not be tied to one either (plan 7a: the findings a rule rests on)
+    no_side = _claim(store, "141 of 440")                                  # the feed's fault, tied
     ingest_paper.paper(store, str(dirs["paper-trading-platform"]))
-    rv = next(n for n in store.nodes("Entity") if n["attrs"].get("entity_kind") == "rule version")
-    with pytest.raises(schema.Refused, match="tastytrade platform"):
-        store.write([], [link("DERIVED_FROM", rv["id"], tied_claim["id"])], written_by="code:test")
-    assert store.check_all() == []
+    cl16 = next(n for n in store.nodes("Entity") if n["attrs"].get("entity_kind") == "rule version" and n["attrs"]["strategy"] == "CL16")
+    with pytest.raises(schema.Refused, match="tastytrade platform"):       # a rule version may not rest on it
+        store.write([], [link("DERIVED_FROM", cl16["id"], no_side["id"])], written_by="code:test")
+    reading = next(c for c in store.nodes("Claim") if c["attrs"]["inference"] and c["attrs"]["source"].endswith(LIST)
+                   and 56 <= c["attrs"]["line_start"] <= 61)
+    with pytest.raises(schema.Refused, match="tastytrade platform"):       # nor may a reading
+        store.write([], [link("DERIVED_FROM", reading["id"], no_side["id"])], written_by="code:test")
+    assert not [e for e in store.edges("DERIVED_FROM") if e["dst"] == no_side["id"]] and store.check_all() == []
     # a tie can be taken back by a person, with the reason kept; then the link is allowed
-    platform_scope.untie(store, tied_claim["id"], reason="check of untie only", by="code:test")
-    assert tied_claim["id"] not in platform_scope.members(store)
-    store.write([], [link("DERIVED_FROM", rv["id"], tied_claim["id"])], written_by="code:test")
+    platform_scope.untie(store, no_side["id"], reason="check of untie only", by="code:test")
+    assert no_side["id"] not in platform_scope.members(store)
+    store.write([], [link("DERIVED_FROM", cl16["id"], no_side["id"])], written_by="code:test")
+    assert platform_scope.mark(store, dirs)["new"] == 0                    # a tie a person took back is not made again
 
 
 def test_the_grounding_check_does_not_take_a_tied_claim_as_evidence(graph):

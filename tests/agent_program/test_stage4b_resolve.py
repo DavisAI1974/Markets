@@ -57,32 +57,44 @@ def test_the_exact_rules_merge_a_name_into_the_one_thing_it_names(graph):
     assert resolve.apply_rules(store, dirs)["merged"] == 0                 # nothing is merged twice
 
 
-def test_a_resolvers_merge_is_checked_held_under_the_cutoff_and_can_be_undone(graph):
-    store, dirs = graph
-    names = {n["attrs"]["name"]: n["id"] for n in store.nodes("Entity")}
-    merges = [
-        # two surface forms handoff X really uses for one thing
-        {"from": "handoffs", "to": "handoff", "evidence": "the plural of the same word in the same file", "confidence": 0.95},
-        {"from": "aws-* agent files", "to": ".claude/agents/aws-*.md", "evidence": "line 61 calls the files of line 26 by this name", "confidence": 0.93},
-        {"from": "plan", "to": "graph adoption plan", "evidence": "in handoff X 'the plan' is the graph adoption plan", "confidence": 0.7},
-        {"from": "handoff", "to": "handoffs", "evidence": "would close a ring with the first", "confidence": 0.99},
-        {"from": "no such name", "to": "handoff", "evidence": "x", "confidence": 0.99},
-        {"from": "scout", "to": "builder", "evidence": "", "confidence": 0.99},
-    ]
-    out = resolve.apply(store, merges, RUN, min_confidence=0.9)
-    assert out["applied"] == 2 and out["under_the_cutoff"] == 1 and len(out["not_placed"]) == 3
-    assert resolve.canonical(store, names["handoffs"]) == names["handoff"]
-    assert resolve.aliases(store, names[".claude/agents/aws-*.md"]) == ["aws-* agent files"]
-    assert resolve.canonical(store, names["plan"]) == names["plan"]        # under the cutoff: not applied
+READS_OF_RUN_25 = ("run:0018", "run:0021", "run:0022", "run:0023", "run:0024")     # what was in the graph when the resolver read it
+MERGES = "graph/merges/run-0025-merges.json"
+
+
+def test_the_resolvers_real_merges_are_checked_held_under_the_cutoff_and_can_be_undone(tmp_path):
+    """The resolver's own answer as it came back (run 25), on the reads it was made from. The counts are
+    the ones written in the decisions file when it was applied: 11 at 0.9 or above, 22 held under."""
+    root = data_root()
+    if not (root / MERGES).exists():
+        pytest.skip(f"{MERGES} is not in this markets-data checkout")
+    store = GraphStore(root, graph_dir=tmp_path / "graph")
+    ingest_agent_runs.agent_runs(store)
+    dirs = extract.repo_dirs(root, None, None)
+    for f in sorted((root / "graph/reads").glob("run-*.json")):
+        run = "run:" + f.name.split("-")[1]
+        if run in READS_OF_RUN_25:
+            extract.load_result(store, dirs, json.loads(f.read_text(encoding="utf-8")), run)
+    resolve.apply_rules(store, dirs)
+    merges = json.loads((root / MERGES).read_text(encoding="utf-8"))["merges"]
+    out = resolve.apply(store, merges, "run:0025", min_confidence=0.9)
+    assert (out["applied"], out["under_the_cutoff"]) == (11, 22) and out["applied"] + out["under_the_cutoff"] + len(out["not_placed"]) == len(merges)
     held = [t["attrs"] for t in store.nodes("Task") if t["id"].startswith("task:merge-held:")]
-    assert len(held) == 4 and sorted(h["state"] for h in held) == ["blocked", "blocked", "blocked", "open"]
-    assert {json.dumps(h["returned"], sort_keys=True) for h in held} == {json.dumps(m, sort_keys=True) for m in merges[2:]}
+    assert len(held) == len(merges) - 11 and all(h["returned"] in merges for h in held)       # each one kept as it came
+    done = [e for e in store.edges("RESOLVED_TO") if e["attrs"]["method"] == "model"]
+    assert len(done) == 11 and all(e["attrs"]["confidence"] >= 0.9 and e["attrs"]["evidence"] for e in done)
+    one = done[0]
+    assert resolve.canonical(store, one["src"]) == resolve.canonical(store, one["dst"])
+    assert one["attrs"]["alias"] in resolve.aliases(store, one["dst"])
+    # the same merge the other way round would close a ring; one with its evidence taken off is not applied
+    real = next(m for m in merges if resolve._find(store, m["from"]) == one["src"])
+    again = resolve.apply(store, [{**real, "from": real["to"], "to": real["from"]},
+                                  {k: v for k, v in real.items() if k != "evidence"}], "run:0025")
+    assert again["applied"] == 0 and len(again["not_placed"]) == 2
     # undone: the link is taken back by a new line, the earlier line stays, the name stands alone again
-    edge = next(e for e in store.edges("RESOLVED_TO") if e["src"] == names["handoffs"])
-    resolve.undo(store, edge["id"], "check of undo only", RUN)
-    assert resolve.canonical(store, names["handoffs"]) == names["handoffs"]
-    assert [h["attrs"].get("withdrawn", False) for h in store.history(edge["id"])] == [False, True]
-    assert store.node(names["handoffs"]) is not None and store.check_all() == []
+    resolve.undo(store, one["id"], "check of undo only", "run:0025")
+    assert resolve.canonical(store, one["src"]) == one["src"]
+    assert [h["attrs"].get("withdrawn", False) for h in store.history(one["id"])] == [False, True]
+    assert store.node(one["src"]) is not None and store.check_all() == []
     with pytest.raises(schema.Refused):
         resolve.apply(store, merges[:1], "run:9999")
 
