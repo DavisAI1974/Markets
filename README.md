@@ -20,6 +20,20 @@ The copied decoder explicitly describes itself as a deterministic stub: prefill 
 
 The adapter supports post-hoc trade windows and `--pre-entry-minutes`; the gate requests the 30-minute pre-entry window with window_size=192 and stride=16. Original absolute Windows paths are preserved. To use another location, configure or adjust paths in your own working copy; no originals were changed here.
 
+## Digital operator implementation match
+
+Identification is based on the numerical transformation: a data window passes through spectral encoding, retrieval, and coefficient decoding to produce the digital operator vector. Operator titles and filenames alone are not the evidence.
+
+The complete `OperatorDecoder` class was compared structurally using Python's AST (`ast.dump(..., include_attributes=False)`) in these three locations:
+
+- `E:\refrag\adapters\od_refrag_adapter.py`
+- `E:\sentinal\Factory--claude-check-dispatch-git-status-auNbx\refrag\adapters\od_refrag_adapter.py`
+- `F:\markets-od-refrag-handoff\refrag\adapters\od_refrag_adapter.py`
+
+All three class implementations match. The SHA-256 of their shared AST representation is `25e2a7cc0dc5e58d11faaa1a46cf66f8502f18981cd2311fcb14ce37e96025d5`. This comparison covers the coefficient-producing class; the surrounding runtime wrappers have version differences in uncertainty metadata. Only comparison notes were added: no SENTINEL source or knowledge files were copied.
+
+The missing `_markets_combined_info_flow_kfold.py` helper belongs to the separate gate and centroid-exporter scripts. It is not imported by the adapter-to-coefficient generation path, which passed the synthetic 128-coefficient checks described below.
+
 ## Known missing original dependency
 
 `_markets_gate_v2.py` and `_markets_dipole_export_centroids_v2.py` import `_markets_combined_info_flow_kfold.py`. That original module was not found in the requested source trees, local operator-discovery folders, SENTINEL, or searched backups/drives. No substitute was invented. Those two modules need that file to import successfully; their original source is still included verbatim. The ReFRAG coefficient-generation dependency closure itself is present.
