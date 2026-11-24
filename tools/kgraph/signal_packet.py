@@ -67,6 +67,7 @@ import argparse
 import datetime as dt
 import hashlib
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -476,6 +477,291 @@ def planes_named(store, day, platform_dir):
             else:
                 out.append((name, None, "named in a rule text's READS; no file of this trade day is in the graph or the checkout"))
     return out
+
+
+# ---- ROOT's stored planes, read from the record branch of the trade day -----------------------------------------
+# One layer is one stored file (its parts together). A row is PLACED when every epoch-nanosecond instant it holds is at
+# or before the signal's own tape time: its known-at time is the latest of them (the fact files carry their own
+# `known_received_time_ns`, the spans carry their end). Instants are told from durations by magnitude, never by name.
+# A layer whose rows hold no instant cannot be placed and is named in the foot with that reason; no time is guessed.
+# SIZE (measured, see the report): the day's placed rows are about a million; a question's folder holds only the rows
+# made known since the previous question's moment (`planes_since.json`, chain named in it), the day stored once.
+
+EPOCH_LO, EPOCH_HI = 10**18, 25 * 10**17
+PLANE_ROW_CHARS = 150
+PLANE_NOT_PLACED = (
+    ("book-pictures", "one picture of the whole book at each trade message: the rows carry the position of the picture "
+                      "and the times of the orders in it, no time of the picture; the book at the signal's own tick is "
+                      "state.book"),
+    ("dipoles-pinned", "Native's dipoles with columns made after each one (the 20-second flow right after the birth "
+                       "second): carried by the dipoles section through packet.py's SHOWN, HELD_BACK and AFTERWARDS "
+                       "groups, never raw"),
+    ("dipole-peaks-facts", "Native's dipole facts (recognised time, terminal phase, outcome): the dipoles section's "
+                           "columns by packet.py's SHOWN, HELD_BACK and AFTERWARDS groups, never raw"),
+    ("native-episodes", "Native's own episode lines (recognition and outcome): the dipoles section's columns by "
+                        "packet.py's SHOWN, HELD_BACK and AFTERWARDS groups, never raw"),
+    ("crypto-ng-tick-program-trades", "the crypto and ng program's own trades, prices and maker marks: observation and "
+                                      "verification only (CLAUDE.md, Greg 2026-11-23), not a strategy input unless he says"),
+    ("crypto-ng-tick-turns", "a turn's rows carry no end time, so whether it was still going at the moment cannot be "
+                             "known, and its `program_trade` and `what_became_of_it` are outcomes"),
+    ("trade-renders", "pictures of the program's own trades: observation and verification only"),
+)
+# A layer of hundreds of fields on every tick (the stored rows: 408 fields, 820,670 ticks) is read through these columns
+# only, the tape's own fields; its other columns are named in the foot as not copied (the file stays in git, pinned by
+# sha256, and the afterwards file references it).
+PLANE_PROJECT = {"rows": ("position_on_tape", "exchange_time_ns", "received_time_ns", "action", "side", "price", "size",
+                          "order_number", "flags", "row_label")}
+PLANE_COLUMNS_OUT = ("program_trade", "starts_program", "ends_program")
+PLANE_RECEIPTS = (".json", ".log", ".md", ".png")
+
+
+def plane_key(path: str) -> str:
+    base = path.rsplit("/", 1)[-1]
+    base = re.sub(r"\.(parquet|jsonl\.gz)$", "", base)
+    base = re.sub(r"-part\d+$", "", base)
+    return re.sub(r"-20\d{6}", "", base)
+
+
+class PlaneSource:
+    """A git dir that holds the record branch `root-rows-<yyyymmdd>` of markets-data (a checkout's own .git, or a bare
+    mirror of the branch). Nothing is written to it; a blob is read through `git show` into memory."""
+
+    def __init__(self, git_dir):
+        self.git_dir = str(git_dir)
+
+    def _git(self, *a):
+        return subprocess.run(["git", "--git-dir", self.git_dir, *a], capture_output=True)
+
+    def commit(self, day):
+        ymd = day.replace("-", "")
+        for ref in (f"refs/remotes/origin/root-rows-{ymd}", f"refs/heads/root-rows-{ymd}", f"root-rows-{ymd}"):
+            r = self._git("rev-parse", "--verify", "-q", ref + "^{commit}")
+            if r.returncode == 0:
+                return r.stdout.decode().strip()
+        return None
+
+    def names(self, commit):
+        return self._git("ls-tree", "-r", "--name-only", commit).stdout.decode().splitlines()
+
+    def blob(self, commit, path):
+        r = self._git("show", f"{commit}:{path}")
+        if r.returncode:
+            raise OSError(f"{path} is not readable at {commit[:10]}")
+        return r.stdout
+
+
+_PLANES: dict = {}
+
+
+class PlaneLayer:
+    """One layer of the trade day read whole into memory: rows in stored order, each with its known-at time."""
+
+    def __init__(self, key, paths, tables, sha, mode, not_read=()):
+        import numpy as np
+        import pyarrow as pa
+        self.key, self.paths, self.sha256, self.mode, self.not_read = key, paths, sha, mode, list(not_read)
+        self.table = pa.concat_tables(tables) if len(tables) > 1 else tables[0]
+        self.n = self.table.num_rows
+        names = self.table.schema.names
+        self.instants, known = [], None
+        for c in names:
+            col = self.table.column(c)
+            if str(col.type) not in ("int64", "double"):
+                continue
+            a = col.to_numpy(zero_copy_only=False).astype("float64")
+            v = a[~np.isnan(a)]
+            if len(v) and v.min() >= EPOCH_LO and v.max() < EPOCH_HI:
+                self.instants.append(c)
+                known = a if known is None else np.fmax(known, a)
+        self.known = None if known is None else np.nan_to_num(known, nan=-1.0)
+        self.has_time = known is not None
+        self.out_columns = [c for c in names if any(x in c for x in PLANE_COLUMNS_OUT)]
+        self.columns = [c for c in names if c not in self.out_columns]
+        self.no_time_rows = int((self.known < 0).sum()) if self.has_time else self.n
+        self.has_time = self.has_time and self.no_time_rows == 0     # a layer is placed only when EVERY row has a time
+
+    def placed_mask(self, moment):
+        return (self.known >= 0) & (self.known <= moment)
+
+    def row(self, i):
+        import math
+        r = self.table.slice(i, 1).to_pylist()[0]
+        out = {c: r[c] for c in self.columns}
+        return {k: (None if isinstance(v, float) and math.isnan(v) else v) for k, v in out.items()}
+
+
+def plane_catalog(src: PlaneSource, day: str):
+    """(commit, {layer key: [paths]}, [receipt/picture paths]) of the trade day's branch, or (None, {}, [])."""
+    commit = src.commit(day)
+    if commit is None:
+        return None, {}, []
+    groups, other = {}, []
+    for p in src.names(commit):
+        if p.endswith(PLANE_RECEIPTS) or "/dipole-render-" in p or "/leg-render-" in p:
+            other.append(p)
+            continue
+        groups.setdefault(plane_key(p), []).append(p)
+    return commit, {k: sorted(v) for k, v in groups.items()}, other
+
+
+def plane_layer(src, commit, key, paths):
+    """The layer read once and kept; None for a layer named out by rule (never read)."""
+    ck = (src.git_dir, commit, key)
+    if ck in _PLANES:
+        return _PLANES[ck]
+    import hashlib as h
+    import pyarrow.parquet as pq
+    import io
+    tables, digest, skipped = [], h.sha256(), set()
+    for p in paths:
+        if not p.endswith(".parquet"):
+            _PLANES[ck] = None
+            return None
+        raw = src.blob(commit, p)
+        digest.update(p.encode() + h.sha256(raw).digest())
+        want = PLANE_PROJECT.get(key)
+        f = pq.ParquetFile(io.BytesIO(raw))
+        if want:
+            skipped |= {c for c in f.schema_arrow.names if c not in want}
+        tables.append(f.read(columns=list(want)) if want else f.read())
+    _PLANES[ck] = PlaneLayer(key, paths, tables, digest.hexdigest(), "rows", sorted(skipped))
+    return _PLANES[ck]
+
+
+def plane_state(src: PlaneSource, day: str, moment: int):
+    """What the planes hold for one moment: {"commit", "layers": {key: info}, "not_placed": [(key, rows, reason)],
+    "receipts": n}. Each placed layer's info: count (rows placed), of (rows in the file), prefix (the placed rows are
+    rows 0..count-1), rows (the placed row numbers when they are not a prefix), newest (the row of latest known-at),
+    the sha256 of the layer's bytes and the paths. Nothing here is a number made from rows."""
+    import numpy as np
+    commit, groups, other = plane_catalog(src, day)
+    if commit is None:
+        return None
+    layers, not_placed = {}, []
+    for key, paths in sorted(groups.items()):
+        why = next((r for k, r in PLANE_NOT_PLACED if key.startswith(k)), None)
+        if why:
+            not_placed.append((key, None, why))
+            continue
+        lay = plane_layer(src, commit, key, paths)
+        if lay is None:
+            not_placed.append((key, None, "not a parquet file of rows (Native's own episode lines, kept as recorded)"))
+            continue
+        if not lay.has_time:
+            what = ("keyed by its position on the tape, and " if "position_on_tape" in lay.columns else "") + (
+                "no row holds an instant" if lay.no_time_rows == lay.n else
+                f"{lay.no_time_rows} of its {lay.n} rows hold no instant (an instant is set on some rows only)")
+            not_placed.append((key, lay.n, f"{what}: the rows carry no time of their own, so none can be placed and no "
+                                           "time is guessed; kept whole in the afterwards file's references"))
+            continue
+        mask = lay.placed_mask(moment)
+        count = int(mask.sum())
+        head = int(np.argmin(mask)) if count < lay.n else lay.n
+        prefix = not mask[head:].any()
+        info = {"count": count, "of": lay.n, "prefix": prefix, "sha256": lay.sha256, "paths": paths,
+                "instants": lay.instants, "columns_out": lay.out_columns, "no_time_rows": lay.no_time_rows,
+                "rows": None if prefix else [int(i) for i in np.nonzero(mask)[0]]}
+        if count:
+            idx = np.nonzero(mask)[0]
+            top = idx[np.lexsort((idx, lay.known[idx]))[-1]]
+            info["newest"] = int(top)
+            info["newest_known_at_ns"] = int(lay.known[top])
+        layers[key] = info
+    return {"commit": commit, "layers": layers, "not_placed": not_placed, "receipts": len(other),
+            "n_layers_in_tree": len(groups)}
+
+
+def plane_id(key, n):
+    return f"plane:{key}:{n}"
+
+
+def plane_row_text(lay, key, n):
+    row = lay.row(n)
+    t = "; ".join(f"{k}={_v(v)}" for k, v in row.items() if v is not None)
+    if len(t) > PLANE_ROW_CHARS:
+        t = t[:PLANE_ROW_CHARS] + f"... ({len(t) - PLANE_ROW_CHARS} more characters, whole in planes_since.json)"
+    return f"{plane_id(key, n)} | {t}"
+
+
+def plane_lines(src, day, moment, ps):
+    """One text line a placed layer, newest known row first shown: id, how many rows it holds in all at the moment, the
+    head, and where the rest is. Known at the row's own time."""
+    out = []
+    for key, info in ps["layers"].items():
+        if not info["count"]:
+            out.append({"section": "planes", "source": f"plane:{key}", "sequence": None, "run": None,
+                        "known_at_ns": moment, "basis": "no row of this layer at or before the moment", "row_kind": "plane",
+                        "layer": f"plane:{key}", "plane": key, "plane_row": None,
+                        "text": f"plane:{key} | 0 of {info['of']} rows at or before the moment; the rest is later and is in "
+                                "the afterwards file for learning"})
+            continue
+        lay = plane_layer(src, ps["commit"], key, info["paths"])
+        n = info["newest"]
+        body = plane_row_text(lay, key, n).split(" | ", 1)[1]
+        out.append({"section": "planes", "source": plane_id(key, n), "sequence": None, "run": None,
+                    "known_at_ns": info["newest_known_at_ns"], "basis": "the row's own latest instant",
+                    "row_kind": "plane", "layer": f"plane:{key}", "plane": key, "plane_row": n,
+                    "text": f"{plane_id(key, n)} | layer {key}: {info['count']} rows in all at or before the moment (ids "
+                            f"plane:{key}:0 up; newest known shown, cut like the rest); the rows since the previous "
+                            f"question are in planes_since.json; {body}"})
+    return out
+
+
+def plane_id_ok(planes, id_):
+    """True when `id_` is `plane:<layer>:<n>` and row n is one of the placed rows of that layer at the moment."""
+    if not isinstance(id_, str) or not id_.startswith("plane:") or not planes:
+        return False
+    m = re.fullmatch(r"plane:(.+):(\d+)", id_)
+    if not m or m.group(1) not in planes:
+        return False
+    info, n = planes[m.group(1)], int(m.group(2))
+    return n < info["count"] if info.get("prefix") else n in set(info.get("rows") or ())
+
+
+def plane_since(src, day, prev_moment, moment, ps, only=None):
+    """{layer key: [{"id", "known_at_ns", "row"}]}: the placed rows made known after `prev_moment` and at or before
+    `moment` (all of them when prev_moment is None). The one function that writes plane rows to a question's folder."""
+    import numpy as np
+    out = {}
+    for key, info in ps["layers"].items():
+        if only and key not in only:
+            continue
+        lay = plane_layer(src, ps["commit"], key, info["paths"])
+        mask = lay.placed_mask(moment)
+        if prev_moment is not None:
+            mask &= lay.known > prev_moment
+        idx = np.nonzero(mask)[0]
+        idx = idx[np.lexsort((idx, lay.known[idx]))]
+        out[key] = [{"id": plane_id(key, int(i)), "known_at_ns": int(lay.known[i]), "row": lay.row(int(i))} for i in idx]
+    return out
+
+
+def plane_afterwards(src, day, moment, ps):
+    """For the afterwards file: per layer the rows later than the moment (or not yet known whole), by reference to the
+    stored file (commit, paths, sha256) and by row number, each id `afterwards:plane:<layer>:<n>`; per-tick files and
+    the layers named out by rule are listed whole by reference. No decider reads this."""
+    import numpy as np
+    out = {}
+    for key, info in ps["layers"].items():
+        lay = plane_layer(src, ps["commit"], key, info["paths"])
+        mask = lay.placed_mask(moment)
+        after = np.nonzero(~mask)[0]
+        rng = bool(len(after)) and _is_range(after)
+        out[key] = {"id_prefix": f"afterwards:plane:{key}:", "rows_after": int(len(after)),
+                    "row_numbers": None if (rng or not len(after)) else [int(i) for i in after],
+                    "row_range": [int(after[0]), int(after[-1]) + 1] if rng else None,
+                    "first_known_at_ns": int(lay.known[after].min()) if len(after) and (lay.known[after] >= 0).any() else None,
+                    "columns_not_copied": lay.not_read,
+                    "source": {"commit": ps["commit"], "paths": info["paths"], "sha256": info["sha256"]},
+                    "columns_out_by_rule": info["columns_out"]}
+    for key, rows, why in ps["not_placed"]:
+        out[key] = {"id_prefix": f"afterwards:plane:{key}:", "rows_after": rows, "row_numbers": None, "row_range": None,
+                    "first_known_at_ns": None, "why_not_placed": why, "source": {"commit": ps["commit"]}}
+    return out
+
+
+def _is_range(a):
+    return len(a) and int(a[-1]) - int(a[0]) + 1 == len(a)
 
 
 AFTERWARDS_NOTICE = ("nothing in this file may be given to a decider at the instant it decides; it is for learning after "
