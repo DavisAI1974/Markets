@@ -103,6 +103,8 @@ QUESTION_SECTIONS = ("data_at_signal", "earlier_q", "state_layers")
 HEADINGS["data_at_signal"] = ("THE DATA AT THE SIGNAL (the engine's own values at the signal's tick; prices and sizes are the "
                      "tape's integer units as stored; nothing derived):")
 HEADINGS["earlier_q"] = "THE TWO LINES AT THIS RUN'S EARLIER SIGNALS, NEWEST FIRST:"
+HEADINGS["planes"] = ("ROOT'S STORED PLANES KNOWN BY THE MOMENT, ONE LAYER A LINE (its newest row known at the moment; how many rows "
+                      "it holds at or before the moment; the rows since the previous question are in planes_since.json):")
 HEADINGS["state_layers"] = ("THE REST OF THE STATE, LAYER BY LAYER (each layer: its name, how many lines it holds in all, "
                             "its head; the whole of every layer is in state.json beside this brief):")
 # ENGINEERING CHOICE, not a finding: the part of the room left for the variable sections (after the fixed head, signal,
@@ -409,13 +411,15 @@ class PacketIds:
     """Every id a decision may name: the explicit rows of every layer, shown in the text or not, and every row of the
     state by its address. `in` asks the whole packet, not the text."""
 
-    def __init__(self, layer_of: dict, state=None):
-        self.layer_of, self.state = dict(layer_of), state
+    def __init__(self, layer_of: dict, state=None, planes=None):
+        self.layer_of, self.state, self.planes = dict(layer_of), state, planes or {}
 
     def __contains__(self, id_):
-        return id_ in self.layer_of or resolve_state_id(self.state, id_)
+        return id_ in self.layer_of or resolve_state_id(self.state, id_) or plane_id_ok(self.planes, id_)
 
     def layer(self, id_):
+        if plane_id_ok(self.planes, id_) and id_ not in self.layer_of:
+            return "plane:" + id_[6:].rsplit(":", 1)[0]
         return self.layer_of.get(id_) or state_layer_of(self.state, id_)
 
 
@@ -488,7 +492,7 @@ def planes_named(store, day, platform_dir):
 # made known since the previous question's moment (`planes_since.json`, chain named in it), the day stored once.
 
 EPOCH_LO, EPOCH_HI = 10**18, 25 * 10**17
-PLANE_ROW_CHARS = 150
+PLANE_ROW_CHARS = 110
 PLANE_NOT_PLACED = (
     ("book-pictures", "one picture of the whole book at each trade message: the rows carry the position of the picture "
                       "and the times of the orders in it, no time of the picture; the book at the signal's own tick is "
@@ -505,6 +509,8 @@ PLANE_NOT_PLACED = (
     ("crypto-ng-tick-turns", "a turn's rows carry no end time, so whether it was still going at the moment cannot be "
                              "known, and its `program_trade` and `what_became_of_it` are outcomes"),
     ("trade-renders", "pictures of the program's own trades: observation and verification only"),
+    ("trade-legs-6pm-to-8pm-legs", "a whole leg, whose rows carry the time of its first and last trade but not the time "
+                                   "the leg was known to have ended (a leg ends when the price turns)"),
 )
 # A layer of hundreds of fields on every tick (the stored rows: 408 fields, 820,670 ticks) is read through these columns
 # only, the tape's own fields; its other columns are named in the foot as not copied (the file stays in git, pinned by
@@ -586,8 +592,19 @@ class PlaneLayer:
     def row(self, i):
         import math
         r = self.table.slice(i, 1).to_pylist()[0]
-        out = {c: r[c] for c in self.columns}
-        return {k: (None if isinstance(v, float) and math.isnan(v) else v) for k, v in out.items()}
+        def one(v):
+            if isinstance(v, float) and math.isnan(v):
+                return None                 # a stored not-a-number is written as the empty cell it stands for
+            if isinstance(v, (dt.datetime, dt.date)):
+                return v.isoformat()
+            if isinstance(v, (bytes, bytearray)):
+                return v.hex()
+            if isinstance(v, (list, tuple)):
+                return [one(x) for x in v]
+            if isinstance(v, dict):
+                return {str(k): one(x) for k, x in v.items()}
+            return v if isinstance(v, (int, float, str, bool)) or v is None else str(v)
+        return {c: one(r[c]) for c in self.columns}
 
 
 def plane_catalog(src: PlaneSource, day: str):
@@ -659,7 +676,7 @@ def plane_state(src: PlaneSource, day: str, moment: int):
         head = int(np.argmin(mask)) if count < lay.n else lay.n
         prefix = not mask[head:].any()
         info = {"count": count, "of": lay.n, "prefix": prefix, "sha256": lay.sha256, "paths": paths,
-                "instants": lay.instants, "columns_out": lay.out_columns, "no_time_rows": lay.no_time_rows,
+                "instants": lay.instants, "columns_out": lay.out_columns, "not_read": lay.not_read, "no_time_rows": lay.no_time_rows,
                 "rows": None if prefix else [int(i) for i in np.nonzero(mask)[0]]}
         if count:
             idx = np.nonzero(mask)[0]
@@ -669,6 +686,26 @@ def plane_state(src: PlaneSource, day: str, moment: int):
         layers[key] = info
     return {"commit": commit, "layers": layers, "not_placed": not_placed, "receipts": len(other),
             "n_layers_in_tree": len(groups)}
+
+
+def reads_unmatched(platform_dir, ps):
+    """[(name, None, reason)] for every name a rule text's READS line gives that is no layer of the branch (each layer
+    of the branch is already placed or named)."""
+    if not platform_dir:
+        return []
+    have = set(ps["layers"]) | {k for k, _, _ in ps["not_placed"]}
+    reads = set()
+    for f in sorted(Path(platform_dir).glob("paper_platform/rules/*.json")):
+        try:
+            spec = json.loads(f.read_text(encoding="utf-8")).get("specification", "")
+        except (OSError, ValueError):
+            continue
+        for line in spec.split("\n"):
+            if line.lstrip().startswith("- READS"):
+                reads |= set(re.findall(r"`([^`]+)`", line))
+    return [(n, None, "named in a rule text's READS and not a layer of the trade day's record branch (a column of a "
+                      "layer, or a name with no file of its own): nothing to place")
+            for n in sorted(reads) if n not in have]
 
 
 def plane_id(key, n):
@@ -692,8 +729,7 @@ def plane_lines(src, day, moment, ps):
             out.append({"section": "planes", "source": f"plane:{key}", "sequence": None, "run": None,
                         "known_at_ns": moment, "basis": "no row of this layer at or before the moment", "row_kind": "plane",
                         "layer": f"plane:{key}", "plane": key, "plane_row": None,
-                        "text": f"plane:{key} | 0 of {info['of']} rows at or before the moment; the rest is later and is in "
-                                "the afterwards file for learning"})
+                        "text": f"plane:{key} | 0 rows at or before the moment ({info['of']} later, kept for learning only)"})
             continue
         lay = plane_layer(src, ps["commit"], key, info["paths"])
         n = info["newest"]
@@ -701,9 +737,8 @@ def plane_lines(src, day, moment, ps):
         out.append({"section": "planes", "source": plane_id(key, n), "sequence": None, "run": None,
                     "known_at_ns": info["newest_known_at_ns"], "basis": "the row's own latest instant",
                     "row_kind": "plane", "layer": f"plane:{key}", "plane": key, "plane_row": n,
-                    "text": f"{plane_id(key, n)} | layer {key}: {info['count']} rows in all at or before the moment (ids "
-                            f"plane:{key}:0 up; newest known shown, cut like the rest); the rows since the previous "
-                            f"question are in planes_since.json; {body}"})
+                    "text": f"{plane_id(key, n)} | {info['count']} rows at or before the moment, ids plane:{key}:0 up; "
+                            f"newest: {body}; rest: planes_since.json"})
     return out
 
 
@@ -768,7 +803,7 @@ AFTERWARDS_NOTICE = ("nothing in this file may be given to a decider at the inst
                      "the fact")
 
 
-def afterwards_layers(store, day, moment, planes=()):
+def afterwards_layers(store, day, moment, planes=(), plane_after=None):
     """What ROOT stores for the trade day that is AFTER the moment or became known only after it, for learning after the
     fact (Greg, 2026-11-24). NEVER read into a brief, NEVER passed to a decider's `decide`: it is written beside a
     question and nowhere else. Each row has its own id (all start `afterwards:`, so none can pass as an id of a packet)
@@ -793,7 +828,8 @@ def afterwards_layers(store, day, moment, planes=()):
             "dipole_cells_afterwards_columns": cells["AFTERWARDS"], "dipole_cells_held_back_columns": cells["HELD_BACK"],
             "dipole_events_made_known_at_or_after_the_moment": later, "peaks": peaks,
             "stored_planes_rows_later_than_the_moment_not_split": [
-                {"layer": n, "rows": r, "reason": w} for n, r, w in planes]}
+                {"layer": n, "rows": r, "reason": w} for n, r, w in planes],
+            "stored_planes": plane_after or {}}
 
 
 def afterwards_check(doc, moment) -> list[str]:
@@ -812,6 +848,11 @@ def afterwards_check(doc, moment) -> list[str]:
         if r["known_at_ns"] < moment and r["pinned"].get("native_birth_ns") is not None and \
                 int(r["pinned"]["native_birth_ns"]) + dp.NS_PER_SECOND <= moment:
             out.append(f"{r['id']}: was known before the moment, so it is not an after-the-fact row")
+    for name, lay in (doc.get("stored_planes") or {}).items():
+        if not str(lay.get("id_prefix", "")).startswith("afterwards:plane:"):
+            out.append(f"{name}: the plane's ids must start with afterwards:plane:")
+        if lay.get("rows_after") is not None and not isinstance(lay.get("rows_after"), int):
+            out.append(f"{name}: rows_after is not a count")
     for key in ("dipole_cells_afterwards_columns", "dipole_cells_held_back_columns",
                 "dipole_events_made_known_at_or_after_the_moment", "peaks"):
         for r in doc.get(key, []):
@@ -840,7 +881,7 @@ def _digits(n):  # a number's width, for the reserved size of the foot
     return len(str(n))
 
 
-def build(journal_rows, sequence, budget, *, store, platform_dir=None, trials=None, question=None) -> dict:
+def build(journal_rows, sequence, budget, *, store, platform_dir=None, trials=None, question=None, planes=None) -> dict:
     budget_chars = budget * dp.CHARS_PER_TOKEN
     prior = [r for r in journal_rows if r["sequence"] < sequence]          # nothing at or after is read
     sig = next((r for r in journal_rows if r["sequence"] == sequence), None)
@@ -850,8 +891,10 @@ def build(journal_rows, sequence, budget, *, store, platform_dir=None, trials=No
     day = trade_day_of(moment)
     first_recorded = min((r["recorded_ns"] for r in prior + [sig] if r.get("recorded_ns") is not None), default=None)
 
-    sections = (QUESTION_SECTIONS + SECTIONS) if question is not None else SECTIONS
-    variable = (QUESTION_SECTIONS + VARIABLE) if question is not None else VARIABLE
+    use_planes = question is not None and planes is not None      # `planes`: a PlaneSource (the branch of the trade day)
+    qsections = QUESTION_SECTIONS + (("planes",) if use_planes else ())
+    sections = (qsections + SECTIONS) if question is not None else SECTIONS
+    variable = (qsections + VARIABLE) if question is not None else VARIABLE
     lines = {s: [] for s in sections}
     sl = row_line(sig, run)
     sl.update(section="signal")
@@ -875,7 +918,7 @@ def build(journal_rows, sequence, budget, *, store, platform_dir=None, trials=No
         sec = "same_rule" if r.get("rule") == rule else "other_rules"
         ln["section"] = sec
         cand[sec].append(ln)
-    q_meta, q_later, slayers, planes = None, 0, [], []
+    q_meta, q_later, slayers, plane_out, ps = None, 0, [], [], None
     if question is not None:
         st = question.get("state")
         cand["data_at_signal"], q_meta = state_lines(question, moment) if isinstance(st, dict) else ([], None)
@@ -891,7 +934,15 @@ def build(journal_rows, sequence, budget, *, store, platform_dir=None, trials=No
             for name, value in state_layer_list(st):
                 slayers.append({"name": f"state.{name}", "key": name, "value": value,
                                 "count": sum(1 for _ in _leaves(value))})
-        planes = planes_named(store, day, platform_dir)
+        ps = plane_state(planes, day, moment) if use_planes else None
+        if use_planes and ps is None:
+            use_planes = False
+            raise ValueError(f"the planes source holds no record branch root-rows-{day.replace('-', '')}")
+        if ps is not None:
+            cand["planes"] = plane_lines(planes, day, moment, ps)
+            plane_out = list(ps["not_placed"]) + reads_unmatched(platform_dir, ps)
+        else:
+            plane_out = planes_named(store, day, platform_dir)
     # closed trades
     trades = {}
     for r in sorted(known, key=lambda r: r["sequence"]):
@@ -934,6 +985,8 @@ def build(journal_rows, sequence, budget, *, store, platform_dir=None, trials=No
     on_tape = sum(1 for t in tl if (t.get("environment") or {}).get("trade_day") == day)
     no_day = sum(1 for t in tl if not (t.get("environment") or {}).get("trade_day"))
 
+    aw_cache = {}
+
     def foot(cut: dict) -> list[str]:
         out = ["NOT IN THIS PACKET:"]
         out.append("- cut for want of budget (the oldest first): " + ", ".join(f"{k} {cut[k]}" for k in variable) + ".")
@@ -956,7 +1009,7 @@ def build(journal_rows, sequence, budget, *, store, platform_dir=None, trials=No
                            + ".")
             parts = []
             for s in sections:
-                if s == "state_layers":
+                if s in ("state_layers", "planes"):
                     continue
                 n = len(cand[s]) if s in cand else len(lines[s])
                 parts.append(f"{s} {n - cut.get(s, 0)} of {n}")
@@ -964,17 +1017,34 @@ def build(journal_rows, sequence, budget, *, store, platform_dir=None, trials=No
                        + ". The state's own layers are listed above with their counts; their whole is in state.json.")
             out.append(f"- earlier question rows of this run with no usable time or later than the moment: {q_later}.")
             groups = {}
-            for name, rows, why in planes:
+            for name, rows, why in plane_out:
                 groups.setdefault(why, []).append(f"{name}" + (f" ({rows} rows)" if rows else ""))
-            aw = afterwards_layers(store, day, moment)
+            if "aw" not in aw_cache:
+                aw_cache["aw"] = afterwards_layers(store, day, moment)
+            aw = aw_cache["aw"]
             out.append("- kept apart for learning after the fact, and never given to a decider: "
                        f"{len(aw['dipole_cells_afterwards_columns'])} AFTERWARDS cells and "
                        f"{len(aw['dipole_cells_held_back_columns'])} HELD_BACK cells of the trade day's dipole events, "
                        f"{len(aw['dipole_events_made_known_at_or_after_the_moment'])} dipole events made known at or after the "
-                       f"moment, {len(aw['peaks'])} peaks; the rows of each stored plane later than the moment are not split "
-                       "(the plane is not in the checkout, see below).")
-            out.append(f"- ROOT's stored planes of trade day {day}: none is placed in this packet, each for the reason "
-                       "given and none read:")
+                       f"moment, {len(aw['peaks'])} peaks; " + (
+                           "the rows of each stored plane later than the moment are in afterwards_layers.json by reference "
+                           "(commit, file, sha256, row numbers), with the plane columns kept out by rule." if ps else
+                           "the rows of each stored plane later than the moment are not split (no planes source was given)."))
+            if ps:
+                out.append(f"- ROOT's stored planes of trade day {day}, record branch commit {ps['commit'][:10]}: "
+                           f"{len(ps['layers'])} layers are placed above, one line each (a row is placed when every instant "
+                           "it holds is at or before the moment). Rows at or before the moment of each layer, and the rows "
+                           "after it kept for learning only: " + ", ".join(
+                               f"{k} {i['count']} of {i['of']}" for k, i in ps["layers"].items()) + ". The rows made known "
+                           "since the previous question are in planes_since.json (its earlier files are named in it); a "
+                           "decision may name any id plane:<layer>:<row number> below the layer's count. Columns of the "
+                           "stored rows not copied: " + (", ".join(f"{k} {len(i['not_read'])} columns (kept in git, pinned by sha256)"
+                                                          for k, i in ps["layers"].items() if i["not_read"]) or "none") + ".")
+                out.append(f"- not placed, each for its reason ({len(plane_out)}); the whole of each is in the afterwards "
+                           "file by reference, and none is read into this packet:")
+            else:
+                out.append(f"- ROOT's stored planes of trade day {day}: none is placed in this packet, each for the reason "
+                           "given and none read:")
             for why, names in groups.items():
                 out.append(f"  - {why}: " + ", ".join(names) + ".")
             out.append("- from the planes, never in a packet whatever the file: AFTERWARDS columns (what happened after "
@@ -1016,7 +1086,7 @@ def build(journal_rows, sequence, budget, *, store, platform_dir=None, trials=No
         # the signal) are in the text before any share is given out
         for s in variable:
             if s != "state_layers" and cand[s]:
-                forced[s] = 2 if s == "data_at_signal" else 1
+                forced[s] = len(cand[s]) if s == "planes" else 2 if s == "data_at_signal" else 1
                 lines[s] += cand[s][:forced[s]]
                 fixed += [l["text"] for l in lines[s]]
         gens = []
@@ -1039,13 +1109,15 @@ def build(journal_rows, sequence, budget, *, store, platform_dir=None, trials=No
             gens.append((L, it, known))
     full = {k: len(cand[k]) for k in variable if k != "state_layers"}
     full["state_layers"] = sum(max(L["count"] - 1, 0) for L in slayers)
+    if use_planes:
+        full["planes"] = 0
     if q_meta is not None:
         full.update(book_bid=q_meta["book_bid"], book_ask=q_meta["book_ask"])
     fixed += foot(full)
     left = budget_chars - len("\n".join(fixed)) - 2
     if left < 0:
         raise ValueError(f"budget {budget} tokens is below the fixed part of the packet ({-left} characters short)")
-    cut = {}
+    cut = {"planes": 0} if use_planes else {}
 
     def fill(s, share):
         used = 0
@@ -1098,15 +1170,24 @@ def build(journal_rows, sequence, budget, *, store, platform_dir=None, trials=No
         pk["state"], pk["flow_lines"], pk["exchange_ns"] = state, question.get("lines"), question.get("exchange_ns")
         layers = {}
         for s in sections:
-            if s == "state_layers":
+            if s in ("state_layers", "planes"):
                 continue
             rows = cand[s] if s in cand else lines[s]
             layers[s] = {"count": len(rows), "in_text": len(lines[s]), "where": "layers.json", "rows": rows}
         for L in slayers:
             shown = sum(1 for l in lines["state_layers"] if l.get("layer") == L["name"] and not l["source"].startswith("layer:"))
             layers[L["name"]] = {"count": L["count"], "in_text": shown, "where": "state.json"}
+        if ps is not None:
+            for key, info in ps["layers"].items():
+                layers[f"plane:{key}"] = {"count": info["count"], "in_text": 1 if info["count"] else 0, "where": "planes_since.json",
+                                          "of_in_the_stored_file": info["of"], "ids": f"plane:{key}:<row number below count>"}
+            pk["planes"] = {k: {"count": i["count"], "of": i["of"]} for k, i in ps["layers"].items()}
+            pk["plane_ids"] = {k: {"count": i["count"], "prefix": i["prefix"], "rows": i["rows"]}
+                               for k, i in ps["layers"].items()}
+            pk["plane_source"] = {"commit": ps["commit"], "layers": {k: {"paths": i["paths"], "sha256": i["sha256"]}
+                                                                     for k, i in ps["layers"].items()}}
         pk["layers"] = layers
-        pk["planes_not_placed"] = [{"layer": n, "rows": r, "reason": w} for n, r, w in planes]
+        pk["planes_not_placed"] = [{"layer": n, "rows": r, "reason": w} for n, r, w in plane_out]
         pk["question_state"] = {"sequence": question.get("sequence"), "tape_received_ns": question.get("tape_received_ns"),
                                 "state_known_at_tape_ns": _g(state, "known_at_tape_ns"),
                                 "state_sha256": None if state is None else state_sha256(state)}
@@ -1127,7 +1208,70 @@ def render(pk: dict) -> str:
 
 # ---- the check ------------------------------------------------------------------------------------------
 
-def leakage_check(pk: dict, *, store=None, journal_rows=None) -> list[str]:
+def plane_leak(pk, src) -> list[str]:
+    """Breaches in the planes of a packet, read again from the stored files: every plane line is one placed row, its
+    text is that row's, every instant the row holds is at or before the moment, and the layer's count is the number of
+    its rows known at or before the moment (so the layer's real next row is later)."""
+    out, moment = [], pk["moment_ns"]
+    day = pk["trade_day"]
+    source = pk.get("plane_source") or {}
+    for ln in (l for l in pk["lines"] if l.get("section") == "planes"):
+        key, n = ln["plane"], ln["plane_row"]
+        info = (pk.get("plane_ids") or {}).get(key)
+        if info is None or key not in source.get("layers", {}):
+            out.append(f"{ln['source']}: a plane the packet does not list")
+            continue
+        lay = plane_layer(src, source["commit"], key, source["layers"][key]["paths"])
+        if lay.sha256 != source["layers"][key]["sha256"]:
+            out.append(f"{key}: the stored file is not the one the packet was built on")
+        real = int(((lay.known >= 0) & (lay.known <= moment)).sum())
+        if real != info["count"]:
+            out.append(f"{key}: the packet counts {info['count']} placed rows, the stored file has {real} at or before {moment}")
+        if n is None:
+            continue
+        if not (0 <= n < lay.n) or not (0 <= lay.known[n] <= moment):
+            out.append(f"{ln['source']}: row {n} of {key} is known at {lay.known[n] if 0 <= n < lay.n else None}, after the "
+                       f"moment {moment}")
+            continue
+        late = [c for c, v in lay.row(n).items() if isinstance(v, (int, float)) and EPOCH_LO <= v < EPOCH_HI and v > moment]
+        if late:
+            out.append(f"{ln['source']}: holds an instant after the moment in {', '.join(late)}")
+        if plane_row_text(lay, key, n).split(" | ", 1)[1] not in ln["text"]:
+            out.append(f"{ln['source']}: the line is not that stored row")
+        if ln["known_at_ns"] != int(lay.known[n]):
+            out.append(f"{ln['source']}: known-at {ln['known_at_ns']} is not the row's own {int(lay.known[n])}")
+    return out
+
+
+def plane_since_check(doc, moment, src=None, source=None) -> list[str]:
+    """Breaches of a planes_since.json: every row at or before the moment (its known-at and every instant it holds),
+    its id the layer's own row number; with the source, the row is re-read and equal."""
+    out = []
+    if doc.get("moment_ns") != moment:
+        out.append("planes_since.json is of another moment")
+    prev = doc.get("since_moment_ns")
+    for key, rows in (doc.get("layers") or {}).items():
+        for r in rows:
+            who = r.get("id")
+            if r.get("known_at_ns") is None or r["known_at_ns"] > moment:
+                out.append(f"{who}: known at {r.get('known_at_ns')}, after the moment {moment}")
+            if prev is not None and r.get("known_at_ns") is not None and r["known_at_ns"] <= prev:
+                out.append(f"{who}: known at {r['known_at_ns']}, not after the previous question's moment {prev}")
+            late = [c for c, v in (r.get("row") or {}).items()
+                    if isinstance(v, (int, float)) and EPOCH_LO <= v < EPOCH_HI and v > moment]
+            if late:
+                out.append(f"{who}: holds an instant after the moment in {', '.join(late)}")
+            m = re.fullmatch(r"plane:(.+):(\d+)", str(who))
+            if not m or m.group(1) != key:
+                out.append(f"{who}: not an id of layer {key}")
+            elif src is not None and source is not None and key in source["layers"]:
+                lay = plane_layer(src, source["commit"], key, source["layers"][key]["paths"])
+                if lay.row(int(m.group(2))) != r["row"] or int(lay.known[int(m.group(2))]) != r["known_at_ns"]:
+                    out.append(f"{who}: not the stored row")
+    return out
+
+
+def leakage_check(pk: dict, *, store=None, journal_rows=None, planes=None) -> list[str]:
     """Every breach of the rule in a built packet, one line each; empty when there is none."""
     out, moment, seq, run = [], pk["moment_ns"], pk["sequence"], pk["run"]
     if pk["text"] != render(pk):
@@ -1147,7 +1291,7 @@ def leakage_check(pk: dict, *, store=None, journal_rows=None) -> list[str]:
         if qs.get("sequence") != seq:
             out.append(f"the question is sequence {qs.get('sequence')}, not the signal's {seq}")
     for name, lay in (pk.get("layers") or {}).items():
-        if lay.get("where") not in ("layers.json", "state.json"):
+        if lay.get("where") not in ("layers.json", "state.json", "planes_since.json"):
             out.append(f"layer {name}: no place is named for the rest of it")
         if lay.get("in_text", 0) > lay.get("count", 0):
             out.append(f"layer {name}: more lines in the text than it holds")
@@ -1155,6 +1299,8 @@ def leakage_check(pk: dict, *, store=None, journal_rows=None) -> list[str]:
     every = list(pk["lines"]) + [r for lay in (pk.get("layers") or {}).values() for r in lay.get("rows", [])
                                  if (r.get("section"), r.get("source")) not in seen]
     by_q = {r.get("signal_sequence"): r for r in (journal_rows or []) if r.get("kind") == "question"}
+    if planes is not None and pk.get("plane_source"):
+        out += plane_leak(pk, planes)
     for ln in every:
         who = ln.get("source")
         sec = ln.get("section")
@@ -1176,6 +1322,8 @@ def leakage_check(pk: dict, *, store=None, journal_rows=None) -> list[str]:
                 out.append(f"{who}: the signal's own known-at {k} is not the moment {moment}")
         elif k > moment:
             out.append(f"{who}: known at {k}, after the moment {moment}")
+        if sec == "planes":
+            continue
         if sec in ("data_at_signal", "state_layers"):
             if k != moment:
                 out.append(f"{who}: a line of the state is known at {k}, not the signal's own tick {moment}")

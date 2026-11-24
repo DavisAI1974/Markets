@@ -68,10 +68,13 @@ def run_program(path, packet, timeout_s):
         return None, "the program returned something that is not JSON"
 
 
-def build_packet(rows, sequence, budget, store, platform_dir, question=None):
+def build_packet(rows, sequence, budget, store, platform_dir, question=None, planes=None):
     """The one place a packet is built. A check swaps this to hand over a packet made to breach. The whole question
-    (its `state`, `lines` and `exchange_ns` too) goes to the build."""
-    return sp.build(rows, sequence, budget, store=store, platform_dir=platform_dir, question=question)
+    (its `state`, `lines` and `exchange_ns` too) goes to the build; `planes` is the PlaneSource of ROOT's stored planes
+    (None: no plane is read and each is named in the foot)."""
+    if planes is None:
+        return sp.build(rows, sequence, budget, store=store, platform_dir=platform_dir, question=question)
+    return sp.build(rows, sequence, budget, store=store, platform_dir=platform_dir, question=question, planes=planes)
 
 
 def question_facts(q, rows):
@@ -126,7 +129,9 @@ THE RULES YOU DECIDE UNDER
 - Decide from the packet below alone. Nothing else is given and nothing else counts.
 - Every reason names the lines of the packet it rests on, by their ids (the text before the first " | " of a line).
   Any id of any layer may be named, shown in the text below or not: the whole of every layer is beside this brief, in
-  state.json (the engine's state at the signal) and layers.json (every other layer), each row with its id.
+  state.json (the engine's state at the signal), layers.json (every other layer) and planes_since.json (the rows of
+  ROOT's stored planes made known since the previous question; its earlier files are named in it), each row with its id.
+  A stored-plane row is named plane:<layer>:<row number>, any number below the layer's count in the text.
 - Say skip when the packet gives no ground to take.
 - The hold rule in force is "hold until the trade gives back 20% of its highest open profit". It is not yours to change.
 - There is no trade cost and no mid price in this decision; the packet shows bid and ask side by side as stored.
@@ -159,7 +164,7 @@ def layer_counts(pk):
 
 
 def packet_ids(pk):
-    return sp.PacketIds(sp.layer_of_map(pk), pk.get("state"))
+    return sp.PacketIds(sp.layer_of_map(pk), pk.get("state"), pk.get("plane_ids"))
 
 
 def make_brief(q, pk, box: Path):
@@ -194,12 +199,13 @@ def validate_decision(d, ids):
 
 class Server:
     def __init__(self, mailbox, data, platform, budget, by, graph_dir=None, clock_ns=time.time_ns,
-                 program=None, program_timeout_s=5.0):
+                 program=None, program_timeout_s=5.0, planes=None):
         self.mailbox, self.budget, self.by, self.platform = Path(mailbox), budget, by, platform
         self.program, self.program_timeout_s, self.program_sha = program, program_timeout_s, None
         if program:
             self.by, self.program_sha = program_identity(program)
         self.store = GraphStore(data, graph_dir=graph_dir)
+        self.planes = None if planes is None else (planes if isinstance(planes, sp.PlaneSource) else sp.PlaneSource(planes))
         self.clock_ns = clock_ns
         self.journals = {}                       # path -> (size, rows)
 
@@ -256,8 +262,9 @@ class Server:
         pk = None
         try:
             rows = self.rows(q["journal"])
-            pk = build_packet(rows, q["sequence"], self.budget, self.store, self.platform, question=q)
-            breach = sp.leakage_check(pk, store=self.store, journal_rows=rows)
+            pk = build_packet(rows, q["sequence"], self.budget, self.store, self.platform, question=q,
+                              planes=self.planes)
+            breach = sp.leakage_check(pk, store=self.store, journal_rows=rows, planes=self.planes)
             if question_facts(q, rows)["state_matches_journal"] is False:
                 breach.append("the question's state is not the state its journal row's state_sha256 names")
         except (OSError, ValueError, KeyError) as e:
@@ -269,29 +276,60 @@ class Server:
         self.write_layers(box, pk)
         write_json(box / "packet.json", {"sha256": pk["sha256"], "tokens_estimated": pk["tokens_estimated"],
                                          "ids": ids_of(pk), "layer_of": sp.layer_of_map(pk),
+                                         "plane_ids": pk.get("plane_ids"),
                                          "layers_in_packet": layer_counts(pk), "lines_in": len(pk["lines"]),
                                          "lines_cut": sum(pk["cut"].values())})
         write_whole(box / "brief.md", make_brief(q, pk, box))
 
+    def earlier_planes_file(self, box, moment):
+        """(path, its doc) of the planes_since.json of the latest earlier question of this mailbox, or (None, None)."""
+        best = (None, None, -1)
+        for p in question_folders(self.mailbox):
+            f = p / "planes_since.json"
+            if p == box or not f.exists():
+                continue
+            doc, bad = read_json(f)
+            if not bad and isinstance(doc, dict) and isinstance(doc.get("moment_ns"), int) and best[2] < doc["moment_ns"] < moment:
+                best = (f, doc, doc["moment_ns"])
+        return best[0], best[1]
+
     def write_layers(self, box, pk):
-        """The whole of every layer beside the brief: state.json (the question's state, whole) and layers.json (every
-        other layer, whole, each row with its id). Nothing is dropped; the text is the head of each."""
+        """The whole of every layer beside the brief: state.json (the question's state, whole), layers.json (every
+        other layer, whole, each row with its id; a stored plane by its count) and planes_since.json (the plane rows made
+        known since the previous question, its earlier files named). Nothing is dropped; the text is the head of each.
+        Beside them afterwards_layers.json, for learning only."""
         if pk.get("state") is not None:
             write_json(box / "state.json", pk["state"])
         if pk.get("layers"):
+            plane_after = None
+            if pk.get("plane_source") and self.planes is not None:
+                ps = sp.plane_state(self.planes, pk["trade_day"], pk["moment_ns"])
+                prev_file, prev = self.earlier_planes_file(box, pk["moment_ns"])
+                earlier = [] if prev is None else list(prev.get("earlier_files") or []) + [
+                    os.path.relpath(prev_file, box)]
+                write_json(box / "planes_since.json", {
+                    "moment_ns": pk["moment_ns"], "trade_day": pk["trade_day"],
+                    "since_moment_ns": None if prev is None else prev["moment_ns"], "earlier_files": earlier,
+                    "source": {"commit": ps["commit"], "layers": {k: i["sha256"] for k, i in ps["layers"].items()}},
+                    "layers": sp.plane_since(self.planes, pk["trade_day"], None if prev is None else prev["moment_ns"],
+                                             pk["moment_ns"], ps)})
+                plane_after = sp.plane_afterwards(self.planes, pk["trade_day"], pk["moment_ns"], ps)
             # the after-the-fact layers, for learning only: never in the brief, never in `pk`, never an id of a decision
             write_whole(box / "afterwards_layers.json", json.dumps(
                 sp.afterwards_layers(self.store, pk["trade_day"], pk["moment_ns"],
-                                     sp.planes_named(self.store, pk["trade_day"], self.platform)), sort_keys=True) + "\n")
+                                     sp.planes_named(self.store, pk["trade_day"], self.platform),
+                                     plane_after=plane_after), sort_keys=True) + "\n")
             write_json(box / "layers.json", {n: {k: v for k, v in l.items() if k != "in_text"}
-                                             for n, l in pk["layers"].items() if "rows" in l})
+                                             for n, l in pk["layers"].items()
+                                             if "rows" in l or l.get("where") == "planes_since.json"})
 
     def by_program(self, box, q, pk):
         meta = {"sha256": pk["sha256"], "tokens_estimated": pk["tokens_estimated"], "lines_in": len(pk["lines"]),
                 "lines_cut": sum(pk["cut"].values()), "layers_in_packet": layer_counts(pk)}
         self.write_layers(box, pk)
         ids = packet_ids(pk)
-        d, reason = run_program(self.program, pk, self.program_timeout_s)
+        handed = {k: v for k, v in pk.items() if k not in ("plane_ids", "plane_source")}   # counts and heads only
+        d, reason = run_program(self.program, handed, self.program_timeout_s)
         if reason is None:
             reason = validate_decision(d, ids)
         if reason:
@@ -309,7 +347,7 @@ class Server:
             return                                          # maybe half written; the next pass reads it again
         pk = meta
         state, _ = read_json(box / "state.json")
-        ids = sp.PacketIds(meta.get("layer_of") or {i: None for i in meta["ids"]}, state)
+        ids = sp.PacketIds(meta.get("layer_of") or {i: None for i in meta["ids"]}, state, meta.get("plane_ids"))
         reason = validate_decision(d, ids)
         if reason:
             write_json(box / "decision.rejected.json", {"reason": reason, "decision": d})
@@ -346,10 +384,12 @@ def main(argv=None):
     ap.add_argument("--max-wall-clock-s", type=float)
     ap.add_argument("--program", help="a decider program file: answers each question by its decide(), no model, no wait")
     ap.add_argument("--program-timeout-s", type=float, default=5.0)
+    ap.add_argument("--planes-git", help="a git dir holding the record branch root-rows-<yyyymmdd> of markets-data "
+                                         "(ROOT's stored planes); without it each plane is named in the foot")
     ap.add_argument("--once", action="store_true")
     a = ap.parse_args(argv)
     srv = Server(a.mailbox, a.data, a.platform, a.budget, a.by, a.graph_dir, program=a.program,
-                 program_timeout_s=a.program_timeout_s)
+                 program_timeout_s=a.program_timeout_s, planes=a.planes_git)
     srv.mailbox.mkdir(parents=True, exist_ok=True)
     stop = None if a.max_wall_clock_s is None else time.monotonic() + a.max_wall_clock_s
     while True:
