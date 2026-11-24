@@ -238,8 +238,10 @@ class MailboxProposer:
             rests_on = []
         if not isinstance(rests_on, list) or not all(isinstance(c, str) for c in rests_on):
             raise ProposalFailed("`rests_on` must be a list of claim ids", hyp)
-        if inference is not None and not (isinstance(inference, str) and inference.strip()):
+        if inference is not None and not isinstance(inference, str):
             raise ProposalFailed("`inference` must be null or a sentence", hyp)
+        if isinstance(inference, str) and not inference.strip():
+            inference = None                           # a blank sentence states nothing
         if not rests_on and not inference:
             raise ProposalFailed("no source: `rests_on` is empty and `inference` is empty (every proposal has a "
                                  "source or is marked an inference)", hyp)
