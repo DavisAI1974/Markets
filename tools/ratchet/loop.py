@@ -34,6 +34,7 @@ import json
 import os
 import platform
 import re
+import shlex
 import signal
 import subprocess
 import sys
@@ -53,9 +54,24 @@ IDENTITY = ["-c", "user.name=ratchet loop", "-c", "user.email=ratchet-loop@local
 
 
 class ProposalFailed(RuntimeError):
-    def __init__(self, message, hypothesis=None):
+    def __init__(self, message, hypothesis=None, rests_on=None):
         super().__init__(message)
         self.hypothesis = hypothesis
+        self.rests_on = list(rests_on or [])       # the claims the refused hand-in said it rested on, kept on the row
+
+
+TRIAL_ID_FILE = "trial-id"        # written into a folder the trial's command kept, with the trial's own id
+
+
+def keep_folder(command: str):
+    """The folder the control file's command keeps its run folders in (`--keep <folder>`), or None."""
+    try:
+        toks = shlex.split(command)
+    except ValueError:
+        return None
+    if "--keep" not in toks or toks.index("--keep") + 1 >= len(toks):
+        return None
+    return Path(os.path.expandvars(toks[toks.index("--keep") + 1]))
 
 
 def git(cwd, *args, check=True) -> str:
@@ -230,7 +246,22 @@ def run_loop(program_path, proposer, *, scratch, data_root=None, exp_dir=None) -
     streak = no_keep = proposed = 0
     stopped = None
 
-    def push(n, hypothesis, status, parent, commit, figs, runtime, note, agent_run, attempts=(), proposal=None):
+    keep_dir = keep_folder(program.command)
+    known_folders = {p.name for p in keep_dir.iterdir() if p.is_dir()} if keep_dir and keep_dir.is_dir() else set()
+
+    def tag_new_folders(tid, n):
+        """A folder that the command made since the last trial was recorded is tied to THIS trial by its own id, written
+        inside it. A folder that was there before the loop started, or is not tagged, is never matched by order."""
+        if not (keep_dir and keep_dir.is_dir()):
+            return
+        for p in sorted(keep_dir.iterdir()):
+            if p.is_dir() and p.name not in known_folders:
+                known_folders.add(p.name)
+                with (p / TRIAL_ID_FILE).open("x", encoding="utf-8") as f:
+                    f.write(json.dumps({"id": tid, "n": n}) + "\n")
+
+    def push(n, hypothesis, status, parent, commit, figs, runtime, note, agent_run, attempts=(), proposal=None,
+             rests_on=None):
         metrics = [{"name": f.name, "value": figs[f.name], "unit": f.unit, "note": None}
                    for f in program.figures if f.name in figs]
         env = dict(env_base, attempts=list(attempts))
@@ -241,9 +272,10 @@ def run_loop(program_path, proposer, *, scratch, data_root=None, exp_dir=None) -
                        environment=env, loop=program.loop, note=note,
                        written_by=stamp)
         state["graph_writes"] += 1
+        tag_new_folders(tid, n)
         row = {"n": n, "id": tid, "commit": commit, "status": status, "figures": dict(figs),
                "note": note, "hypothesis": hypothesis, "parent": parent, "runtime_s": runtime,
-               "rests_on": list((proposal or {}).get("rests_on") or [])}
+               "rests_on": list((proposal or {}).get("rests_on") or rests_on or [])}
         history.append(row)
         trials.append(tid)
         {"kept": kept, "reverted": reverted, "crash": crashed, "recorded": recorded}[status].append(tid)
@@ -368,7 +400,8 @@ def run_loop(program_path, proposer, *, scratch, data_root=None, exp_dir=None) -
             try:
                 prop = proposer(wt, n, [dict(h) for h in history])
             except ProposalFailed as e:
-                prop = {"hypothesis": e.hypothesis or f"proposal {n}", "agent_run": None, "usage": None}
+                prop = {"hypothesis": e.hypothesis or f"proposal {n}", "agent_run": None, "usage": None,
+                        "refused_rests_on": e.rests_on}
                 failed = str(e)
             except Exception as e:                    # any other exception ends THIS trial as a recorded crash
                 prop = {"hypothesis": f"proposal {n}", "agent_run": None, "usage": None}
@@ -387,7 +420,8 @@ def run_loop(program_path, proposer, *, scratch, data_root=None, exp_dir=None) -
 
             if failed:
                 streak += 1
-                push(n, hyp, "crash", parent, anchor["commit"], {}, None, f"crash: {failed}", agent_run)
+                push(n, hyp, "crash", parent, anchor["commit"], {}, None, f"crash: {failed}", agent_run,
+                     rests_on=prop.get("refused_rests_on"))
                 _restore()
             else:
                 files = changed_files(wt)

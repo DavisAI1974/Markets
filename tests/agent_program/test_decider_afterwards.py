@@ -7,6 +7,7 @@ Real values, a thin series; no price is invented. Its expected figures are worke
 """
 
 import json
+import shutil
 import subprocess
 
 import pytest
@@ -29,6 +30,8 @@ def world(tmp_path_factory):
     if r.returncode:
         pytest.skip(f"no record branch for {R0} in {root}")
     d = tmp_path_factory.mktemp("aw")
+    graph = d / "graph"                      # a scratch copy: `--rests-on-none` writes its Task (markets-data is only read)
+    shutil.copytree(root / "graph", graph)
     journal = d / "events.jsonl"
     journal.write_bytes(r.stdout)
     rows = sp.journal_from_file(journal)
@@ -42,7 +45,7 @@ def world(tmp_path_factory):
     plain = d / "plain.jsonl"
     aw.main(["--journal", str(journal), "--out", str(plain)])
     lines = [json.loads(t) for t in out.read_text().splitlines()]
-    return dict(rows=rows, d=d, journal=journal, quotes=quotes, qrows=qrows, out=out, plain=plain,
+    return dict(root=root, graph=graph, rows=rows, d=d, journal=journal, quotes=quotes, qrows=qrows, out=out, plain=plain,
                 header=lines[0], lines=lines[1:])
 
 
@@ -147,7 +150,7 @@ def test_skipped_trade_has_no_result_and_says_so(world):
 
 def test_brief_one_line_a_decision_and_nothing_added(world):
     out = world["d"] / "brief.md"
-    aw.main(["brief", "--afterwards", str(world["out"]), "--budget", "1000000", "--rests-on-none", "the journal of run 0f33fec4 was made with no decider plugged in and bears on no registered claim", "--out", str(out)])
+    aw.main(["brief", "--afterwards", str(world["out"]), "--budget", "1000000", "--rests-on-none", "the journal of run 0f33fec4 was made with no decider plugged in and bears on no registered claim", "--run", "run:0002", "--data", str(world["root"]), "--graph-dir", str(world["graph"]), "--out", str(out)])
     text = out.read_text().splitlines()
     body = [t for t in text if t.startswith("sequence ")]
     assert len(body) == 217 and len(text) == 217 + 2
@@ -159,7 +162,7 @@ def test_brief_one_line_a_decision_and_nothing_added(world):
 
 def test_brief_budget_shows_the_head_and_names_the_rest(world):
     out = world["d"] / "brief_small.md"
-    aw.main(["brief", "--afterwards", str(world["out"]), "--budget", "600", "--rests-on-none", "the journal of run 0f33fec4 was made with no decider plugged in and bears on no registered claim", "--out", str(out)])
+    aw.main(["brief", "--afterwards", str(world["out"]), "--budget", "600", "--rests-on-none", "the journal of run 0f33fec4 was made with no decider plugged in and bears on no registered claim", "--run", "run:0002", "--data", str(world["root"]), "--graph-dir", str(world["graph"]), "--out", str(out)])
     text = out.read_text().splitlines()
     body = [t for t in text if t.startswith("sequence ")]
     assert 0 < len(body) < 217

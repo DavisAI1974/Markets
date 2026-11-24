@@ -32,6 +32,7 @@ import hashlib
 import json
 import os
 import re
+import subprocess
 from pathlib import Path
 
 from .extract import repo_dirs
@@ -91,14 +92,21 @@ SESSION_RE = re.compile(r"Claude-Session:\s*\S*?(session_[A-Za-z0-9]+)")
 HEX_RE = re.compile(r"(?<![0-9A-Za-z])([0-9a-f]{7,40})(?![0-9A-Za-z])")
 
 
-def run_lines(data_root) -> dict:
-    """run number -> (line number, the run's NEWEST line). The newest line of a run stands."""
+def run_lines(data_root, rev=None) -> dict:
+    """run number -> (line number, the run's NEWEST line). The newest line of a run stands.
+    With `rev`, the record as markets-data held it at that commit, read with git."""
     out = {}
-    with (Path(data_root) / RUNS_FILE).open(encoding="utf-8") as f:
-        for n, raw in enumerate(f, 1):
-            if raw.strip():
-                d = json.loads(raw)
-                out[d["run"]] = (n, d)
+    if rev:
+        text = subprocess.run(["git", "-C", str(data_root), "show", f"{rev}:{RUNS_FILE}"],
+                              capture_output=True, text=True, check=True).stdout
+        lines = text.splitlines()
+    else:
+        with (Path(data_root) / RUNS_FILE).open(encoding="utf-8") as f:
+            lines = f.read().splitlines()
+    for n, raw in enumerate(lines, 1):
+        if raw.strip():
+            d = json.loads(raw)
+            out[d["run"]] = (n, d)
     return out
 
 
@@ -163,7 +171,8 @@ def authorship(repo: str, sha: str, runs: dict, info: dict, sessions: dict) -> d
     c = info.get(sha) or {}
     sid, span = c.get("session"), sessions.get(c.get("session"))
     when = _time(c.get("time"))
-    if repo == "markets-data" and sid and span and when and span["start"] <= when <= span["end"]:
+    if (repo == "markets-data" and sid and span and when
+            and span["start"] <= when and (when <= span["end"] or span["open"])):
         return {"authoring_run": f"the main session of {sid}",
                 "authoring_basis": f"the main session's commits: no run names the commit; its message carries that "
                                    f"session's Claude-Session line and its committer time {c['time']} lies inside the "
@@ -178,14 +187,16 @@ def _tag(basis: str) -> str:
     return basis.split(":", 1)[0]
 
 
-def read_snapshot(data_root, dirs: dict) -> dict:
+def read_snapshot(data_root, dirs: dict, data_rev=None) -> dict:
     """Everything the ingest reads, read once: the run record, each checkout's branch and head, the
-    files' last commits and the commits' details. `ingest` writes from this and from nothing else."""
-    runs = run_lines(data_root)
+    files' last commits and the commits' details. `ingest` writes from this and from nothing else.
+    With `data_rev` (a markets-data commit) the run record and the commit messages the sessions are
+    found from are those at that commit, read with git, so the result does not move as lines are added."""
+    runs = run_lines(data_root, data_rev)
     snap = {"read_at": now(), "runs": runs, "files": [], "heads": [], "skipped": [], "info": {}, "commits": {}}
     mdlog = {}
     if "markets-data" in dirs:
-        for chunk in git(dirs["markets-data"], "log", "--format=%H%x00%cI%x00%B%x01").split("\x01"):
+        for chunk in git(dirs["markets-data"], "log", data_rev or "HEAD", "--format=%H%x00%cI%x00%B%x01").split("\x01"):
             if chunk.strip():
                 h, t, m = chunk.strip().split("\x00", 2)
                 found = SESSION_RE.findall(m)
@@ -196,13 +207,21 @@ def read_snapshot(data_root, dirs: dict) -> dict:
             groups.setdefault(d["session"], []).append(d)
     sessions = {}
     for sid, lines in groups.items():
-        ts = [t for t in (_time(d.get("started_at")) for d in lines) if t]
-        how = "the earliest and latest started_at of the session's lines in agent-runs.jsonl"
-        if not ts:
+        starts = [t for t in (_time(d.get("started_at")) for d in lines) if t]
+        ends = [t for t in (_time(d.get("ended_at")) for d in lines) if t]
+        how = ("the earliest started_at to the latest ended_at (the latest started_at where no line carries an "
+               "ended_at) of the session's lines in agent-runs.jsonl")
+        if starts:
+            ts = starts + (ends or [])
+        else:
             ts = [t for t in (_time(v[0]) for v in mdlog.values() if v[1] == sid) if t]
             how = "the first and last markets-data commits whose message ends with the session's Claude-Session line"
         if ts:
             sessions[sid] = {"start": min(ts), "end": max(ts), "how": how}
+    for sid, sp in sessions.items():      # a session whose span no later session's start follows stays open
+        sp["open"] = not any(o["start"] > sp["start"] for k, o in sessions.items() if k != sid)
+        if sp["open"]:
+            sp["how"] += "; no later session has a line, so a commit of its own after the span is still its own"
     snap["sessions"] = sessions
 
     def info(repo, sha):
