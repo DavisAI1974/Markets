@@ -29,8 +29,17 @@ A plan counts as written before the run only if it is in git: `check` compares t
 bytes at the commit that added it, and a plan that is not in git, was changed after it was added, or was
 committed after the run's first line fails (exit 1).
 
+A `--plan` file that does not exist is refused (exit 2) with a sentence that names the file and says it does not
+exist; that sentence says nothing about whether the run's limits were written.
+
+The order is NOT MEASURED, and `check` says so in a plain sentence and exits 3 (unless something else is already
+exit 1), when the history of the data checkout is shallow or grafted (the commit that is the boundary of the
+history would read as the add, so the time the plan was added is not known), and when the line's `started_at`
+is a date with no time of day.
+
 `--data` is used exactly as given or refused; it never falls through to another checkout. Exit codes:
-0 done, 1 `check` found a PASSED limit / a late plan / no plan, 2 refused.
+0 done, 1 `check` found a PASSED limit / a late plan / no plan, 2 refused (a `--plan` file that does not exist
+among the causes), 3 `check` could not measure the order or was paired.
 """
 
 from __future__ import annotations
@@ -39,6 +48,7 @@ import argparse
 import gzip
 import hashlib
 import json
+import re
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -250,8 +260,22 @@ def _git_state(root, path):
     return ("unchanged" if sn == st else "changed"), datetime.fromisoformat(when), sn, st
 
 
+def _history_cut(root):
+    """'shallow', 'grafted' or None: the history of `root` ends in a boundary that is not the real first commit."""
+    def git(*x):
+        return subprocess.run(["git", "-C", str(root), *x], capture_output=True, text=True)
+    if git("rev-parse", "--is-shallow-repository").stdout.strip() == "true":
+        return "shallow"
+    graft = git("rev-parse", "--git-path", "info/grafts").stdout.strip()
+    if git("for-each-ref", "refs/replace").stdout.strip() or (graft and (Path(root) / graft).exists()):
+        return "grafted"
+    return None
+
+
 def _check(a):
     root, paper = _paper(a.data)
+    if a.plan and not Path(a.plan).exists():
+        raise Refused(f"the plan file {a.plan} does not exist")
     if a.plan:
         print(f"PAIRED CHECK: the plan read is {a.plan}, given by hand; "
               f"this is not a check of run {a.run} against its own plan in git")
@@ -323,14 +347,16 @@ def _check(a):
         print("git order: not measured: a paired plan")
         return 3
     state, when, sn, st = _git_state(root, path)
-    start, start_msg, start_note = _start(tr, line)
+    start, start_msg, start_note, no_time = _start(tr, line)
+    cut = _history_cut(root)
+    order_unmeasured = False
     if state == "not_in_git":
         bad = True
         print("plan in git: the plan file is not in git: a limit that is not in git before the run is not a "
               "written limit")
     elif state == "tracked_no_add":
         bad = True
-        print("plan in git: tracked, and the commit that added it could not be found")
+        print("plan in git: the file is in the index and no commit has added it")
     else:
         if state == "changed":
             bad = True
@@ -340,7 +366,14 @@ def _check(a):
             print(f"plan in git: unchanged since it was added (sha256 {sn})")
         if start_note:
             print(f"git order: {start_note}")
-        if start is None:
+        if cut:
+            order_unmeasured = True
+            print(f"git order: not measured: the history of {root} is {cut}, so the time the plan was added "
+                  "is not known (the boundary commit would read as the add)")
+        elif no_time:
+            order_unmeasured = True
+            print("git order: " + start_msg)
+        elif start is None:
             print("git order: " + (start_msg or "not measured: the run's line holds no start time and no "
                                    "transcript is kept"))
         elif when.astimezone(start.tzinfo) <= start:
@@ -348,25 +381,30 @@ def _check(a):
         else:
             bad = True
             print(f"git order: committed {when.isoformat()} AFTER the run began {start.isoformat()}")
-    return 1 if bad else 0
+    if bad:
+        return 1
+    return 3 if order_unmeasured else 0
 
 
 def _start(tr, line):
-    """(start, message, note): the transcript's first line, else the line's started_at read as ISO time."""
+    """(start, message, note, date_only): the transcript's first line, else the line's started_at read as ISO time."""
     if tr and tr["first"]:
-        return tr["first"], None, None
+        return tr["first"], None, None, False
     v = line.get("started_at") if line else None
     if v is None or v == "":
-        return None, None, None
+        return None, None, None, False
     try:
         if not isinstance(v, str):
             raise ValueError
         t = datetime.fromisoformat(v.replace("Z", "+00:00"))
     except ValueError:
-        return None, f"not measured: the run's line holds a start time that cannot be read ({v})", None
+        return None, f"not measured: the run's line holds a start time that cannot be read ({v})", None, False
+    if re.fullmatch(r"\d{4}-?\d\d-?\d\d", v.strip()):
+        return None, (f"not measured: the run's line holds a start time that is a date with no time of day ({v}), "
+                      "so whether the plan came before the run is not known"), None, True
     if t.tzinfo is None:
-        return t.replace(tzinfo=timezone.utc), None, "read as UTC: the line names no zone"
-    return t, None, None
+        return t.replace(tzinfo=timezone.utc), None, "read as UTC: the line names no zone", False
+    return t, None, None, False
 
 
 def main(argv=None):
