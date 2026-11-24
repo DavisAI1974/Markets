@@ -40,6 +40,8 @@ Tokens are estimated at 4 characters a token.
 | 4b. Reading documents into claims | `extract.py` | `plan`, `prompt --doc <repo>:<path>[#L<a>-L<b>] --out brief.txt`, `load --result returned.json --run run:00NN`, `coverage` |
 | 4b. Merging names | `resolve.py` | `rules`, `candidates --out brief.txt`, `apply --merges m.json --run run:00NN`, `undo --edge e:... --reason ... --run ...` |
 | 4c. The grounding check | `grounding.py` | `claim <id>`, `text "<sentence>"`, `node <id>`, `all [--record]` |
+| The platform rule (Greg, 2026-11-24) | `platform_scope.py` | `mark`, `list`, `brief --out brief.txt` (for an evaluator), `apply --result answer.json --run run:00NN`, `untie --node <id> --greg "<his words>" --by run:00NN` |
+| A later claim set over an earlier one (nothing is replaced) | `resolve.py` | `supersede --new <id> --old <id> --why "..." --run run:00NN` |
 | 5a. Session context | `context.py` | above |
 | 5b. Frankie's packet from the graph | `packet.py` | `python3 -m tools.kgraph.packet --event dipole:<id> --budget 4000 [--json]` |
 | 6. The swarm | `tools/swarm/` | `python3 -m tools.swarm.run plan ...` (no model call), `go ...` (needs his go) |
@@ -65,6 +67,20 @@ Tokens are estimated at 4 characters a token.
 - Checks read real records (`tests/agent_program/`, skipped with the reason when a checkout is missing):
   `python3 -m pytest tests/agent_program -q`.
 
+## What a run would cost, from what was measured (nothing here is run without Greg's go)
+
+- The swarm (stage 6): `python3 -m tools.swarm.run plan --trade-day <day>` builds every worker's brief and counts
+  it. Counted 2026-11-24, input only, at 4 characters a token: 741 events and 3,308,656 tokens for 2023-10-02; 833
+  and 3,749,461 for 2023-10-03; 741 and 3,171,041 for 2023-10-17; 863 and 3,306,466 for 2023-10-18. The run also
+  reserves 8,000 output tokens a call, and the refute wave comes on top. It needs a model API credential; none
+  is set in a cloud session.
+- The token test (stage 8): Granite's own code records a call's prompt, output and token counts
+  (`tools/token_test/GRANITE_RECEIPT_FIELDS.md`). One real per-call record is in git (Markets branch
+  `ccr-d2f8f826-iefeah-frankie`, a critic call of 92,428 prompt tokens and 119 completion tokens). A whole trade
+  day's calls are on the Linux box, which is AWS and off limits, so a whole-day replay cannot be made from git.
+- A read of one document into claims: the harness reported 68,474 to 112,121 tokens for a read by the builder on
+  Sonnet (171 to 379 lines) and 165,778 and 167,042 for a read by a general agent on Haiku (138 and 160 lines).
+
 ## A new reader's run, step by step (stage 4b)
 
 1. `python3 -m tools.kgraph.extract prompt --doc markets-data:<path> --out brief.txt`
@@ -72,4 +88,5 @@ Tokens are estimated at 4 characters a token.
 3. Add the run to `paper-trading-20261123/agent-runs.jsonl`, keep the JSON under `graph/reads/`, commit.
 4. `python3 -m tools.kgraph.ingest_agent_runs`, then
    `python3 -m tools.kgraph.extract load --result graph/reads/<file> --run run:00NN`
-5. `python3 -m tools.kgraph.extract coverage` and `python3 -m tools.kgraph check`
+5. `python3 -m tools.kgraph.extract coverage` and `python3 -m tools.kgraph check` (the loader marks what belongs
+   to the tastytrade platform as it loads; `check` lists anything left unmarked)
