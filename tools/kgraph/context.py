@@ -46,6 +46,7 @@ from pathlib import Path
 
 from . import platform_scope
 from .extract import repo_dirs
+from .ingest_artifacts import current_versions_lines
 from .resolve import canonical, clean
 from .sources import code_stamp, git
 from .store import GraphStore, now
@@ -401,6 +402,9 @@ def build(store: GraphStore, task: str | None, budget_tokens: int, hops: int = 1
         "A line reads: what is claimed [c:<claim id> | file:line | who | when]. A claim can be followed back "
         "to its file, and `python3 -m tools.kgraph.grounding claim claim:<id>` checks it.",
     ]
+
+    # CURRENT VERSIONS (ticket 25): from the Artifact nodes only; part of the fixed head, so counted in `fixed`
+    head += current_versions_lines(store, budget_tokens)
 
     def foot(cut_ids: list[str]) -> list[str]:
         kinds: dict[str, int] = {}

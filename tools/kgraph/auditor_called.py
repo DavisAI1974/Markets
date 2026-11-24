@@ -62,7 +62,9 @@ class Report:
     record_only: list = field(default_factory=list)
     not_audited: list = field(default_factory=list)
     auditors: dict = field(default_factory=dict)    # run -> the report(s) its lines name
-    no_report: list = field(default_factory=list)   # auditor runs whose lines name no audit_report with a commit
+    no_report: list = field(default_factory=list)   # auditor runs whose lines name no report of their own with a commit
+    no_report_why: dict = field(default_factory=dict)  # run -> a reason beyond "names no report"
+    demoted: list = field(default_factory=list)     # runs with an older auditor line and a newest line of another agent
     outside: dict = field(default_factory=dict)     # run -> agent/role
     planned_no_line: list = field(default_factory=list)  # runs with a plan file and no line
     notes: dict = field(default_factory=dict)       # run -> why a named run is not cleared
@@ -88,9 +90,13 @@ def analyse(root, at: str | None = None) -> Report:
     cleared: dict[int, list] = {}      # run -> [(auditor run, in its record_only)]
     for arun, ls in rep.lines.items():
         if agent_of(ls[-1]) != AUDITOR:      # an auditor's run is so by its NEWEST line only
+            if any(agent_of(d) == AUDITOR for d in ls):
+                rep.demoted.append(arun)
             continue
         reports = [d["audit_report"] for d in ls if d.get("audit_report")]
         rep.auditors[arun] = [f"{r.get('path')}@{r.get('commit')}" for r in reports]
+        own_first = re.compile(rf"# Performance auditor run {arun}[ (]")   # a report is that auditor's own
+        foreign = False
         if not any(r.get("commit") for r in reports):
             rep.no_report.append(arun)
         names = sorted({n for d in ls for n in d.get("audits", [])})
@@ -105,8 +111,15 @@ def analyse(root, at: str | None = None) -> Report:
                 t = _git(root, r["commit"], r["path"])
                 if t is None:
                     why = f"auditor run {arun}: report not readable at {r['commit']}"
-                else:
+                elif own_first.match(t.splitlines()[0] if t else ""):
                     texts.append(t)
+                else:
+                    foreign = True
+                    why = f"auditor run {arun}: the report it names is another run's"
+        if foreign and not texts and arun not in rep.no_report:
+            rep.no_report.append(arun)
+        if foreign and arun in rep.no_report:
+            rep.no_report_why[arun] = "the report it names is another run's"
         for n in names:
             if texts and any(has_row(t, n) for t in texts):
                 cleared.setdefault(n, []).append((arun, n in rec_only))
@@ -115,7 +128,7 @@ def analyse(root, at: str | None = None) -> Report:
     for run in sorted(rep.lines):
         agent = agent_of(rep.newest(run))
         if run in rep.auditors:
-            rep.stand[run] = "an auditor's own run"
+            rep.stand[run] = "an auditor's own run" + (" that names no report" if run in rep.no_report else "")
         elif run in cleared:
             if all(ro for _, ro in cleared[run]):
                 rep.record_only.append(run)
@@ -130,6 +143,11 @@ def analyse(root, at: str | None = None) -> Report:
             rep.outside[run] = str(rep.newest(run).get("role", agent))
     rep.planned_no_line = sorted(n for n in _plan_numbers(root, at) if n not in rep.lines)
     return rep
+
+
+def _commit_missing(root: Path, at: str) -> bool:
+    return subprocess.run(["git", "-C", str(root), "cat-file", "-e", f"{at}^{{commit}}"],
+                          capture_output=True).returncode != 0
 
 
 def _plan_numbers(root: Path, at: str | None) -> list:
@@ -170,12 +188,14 @@ def _print_lists(rep: Report) -> None:
     print("(2) AUDITED FROM THE RECORD ALONE: only an auditor's record_only list names the run")
     for n in rep.record_only:
         print(_row(rep, n))
-    print("(3) OUTSIDE THE ROSTER (scout, builder, reviewer, frankie-performance-auditor)")
+    print("(3) OUTSIDE THE ROSTER (scout, builder, reviewer, frankie-performance-auditor); "
+          "a general agent handed a role's file is listed here, with its role")
     for n in sorted(rep.outside):
         print(_row(rep, n, f" | audited: {'no' if n in rep.not_audited else 'yes'}"))
     print("(4) THE AUDITOR'S OWN RUNS: no other run audits them")
     for n in sorted(rep.auditors):
-        print(_row(rep, n, " | names no report" if n in rep.no_report
+        print(_row(rep, n, " | names no report" + (f" ({rep.no_report_why[n]})" if n in rep.no_report_why else "")
+             if n in rep.no_report
              else f" | report: {', '.join(rep.auditors[n])}"))
     print("(5) A PLAN FILE AND NO LINE IN THE RECORD (this alone does not fail: a run still in flight has no line yet)")
     for n in rep.planned_no_line:
@@ -201,12 +221,17 @@ def main(argv=None) -> int:
         root = Path(a.data)         # never falls through to another checkout
         if read(root, RUNS, a.at) is None:
             import sys
-            print(f"refused: --data {root} has no run record {RUNS}" + (f" at {a.at}" if a.at else ""), file=sys.stderr)
+            print(f"refused: --data {root} has no run record {RUNS}" + (f" at {a.at}" if a.at else "")
+                  + (f"; {a.at} is not in that repository" if a.at and _commit_missing(root, a.at) else ""),
+                  file=sys.stderr)
             return 2
     else:
         root = markets_data_root()
     print(f"data: {root}" + (f" at {a.at}" if a.at else ""))
     rep = analyse(root, a.at)
+    for n in rep.demoted:
+        print(f"run {n} was an auditor's run by an earlier line and is not by its newest: "
+              "the audits it named are not counted")
     if not a.ticket:
         _print_lists(rep)
         return 1 if rep.not_audited or rep.no_report else 0
@@ -226,7 +251,7 @@ def main(argv=None) -> int:
             code = 1
             continue
         print(_row(rep, n, f" | stands: {rep.stand[n]}"))
-        code = 1 if n in rep.not_audited else code
+        code = 1 if n in rep.not_audited or n in rep.no_report else code
     return code
 
 
