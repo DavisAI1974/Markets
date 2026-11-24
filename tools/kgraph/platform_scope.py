@@ -115,9 +115,22 @@ def _exempt(claim: dict) -> bool:
 def mark(store: GraphStore, dirs: dict | None) -> dict:
     """Tie every claim that should be tied and is not. A tie a person took back is not made again."""
     by = code_stamp("tools.kgraph.platform_scope")
-    by_line: dict[int, str] = {}
-    if dirs and LIST_REPO in dirs and (Path(dirs[LIST_REPO]) / LIST_PATH).is_file():
-        by_line = parked_lines((Path(dirs[LIST_REPO]) / LIST_PATH).read_text(encoding="utf-8"))
+    repo_dir = Path(dirs[LIST_REPO]) if dirs and LIST_REPO in dirs else None
+    at_commit: dict[str, dict[int, str]] = {}
+
+    def by_line_at(commit: str | None) -> dict[int, str]:
+        """The parked lines of the list AS IT STOOD at the commit a claim was read from: a claim's line
+        numbers are that wording's, and the list is added to, so today's line numbers would be wrong."""
+        if repo_dir is None or not commit:
+            return {}
+        if commit not in at_commit:
+            try:
+                from .extract import git_text
+                at_commit[commit] = parked_lines(git_text(repo_dir, commit, LIST_PATH))
+            except RuntimeError:
+                at_commit[commit] = {}
+        return at_commit[commit]
+
     edges, counts = [], {"the running list": 0, "its own words": 0}
     for c in store.nodes("Claim"):
         if _exempt(c):
@@ -127,7 +140,8 @@ def mark(store: GraphStore, dirs: dict | None) -> dict:
             continue
         a = c["attrs"]
         rule = why = None
-        if a.get("source") == LIST_SOURCE and a.get("line_start") in by_line:
+        by_line = by_line_at(a.get("source_commit")) if a.get("source") == LIST_SOURCE else {}
+        if a.get("line_start") in by_line:
             rule, why = "the running list", by_line[a["line_start"]]
         else:
             found = sorted({m.group(1).lower() for m in WORDS.finditer(a["text"] + " " + (a.get("quote") or ""))})
@@ -138,7 +152,7 @@ def mark(store: GraphStore, dirs: dict | None) -> dict:
             edges.append(link("MEMBER_OF", c["id"], SCOPE_ID, rule=rule, why=why))
     res = store.write([scope_node()], edges, written_by=by)
     return {"new": len(edges), "by_rule": counts, "tied_now": len(members(store)), "written": res,
-            "running_list_read": bool(by_line)}
+            "running_list_read_at_commits": sorted(c[:10] for c, v in at_commit.items() if v)}
 
 
 def untie(store: GraphStore, claim_id: str, reason: str, by: str) -> dict:

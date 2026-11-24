@@ -4,6 +4,7 @@ Checked on the real reads of handoff X and the running list."""
 
 import json
 import re
+import subprocess
 
 import pytest
 
@@ -59,7 +60,11 @@ def test_a_claim_read_from_a_document_is_tied_as_it_is_loaded(graph):
 
 def test_the_parked_lines_are_read_from_the_running_list_itself(graph):
     store, dirs = graph
-    text = (dirs["paper-trading-platform"] / LIST).read_text(encoding="utf-8")
+    # the list as it stood at the commit the read was made from (the list is added to; a claim's line
+    # numbers are that wording's)
+    read_at = next(c["attrs"]["source_commit"] for c in store.nodes("Claim") if c["attrs"]["source"].endswith(LIST))
+    text = subprocess.run(["git", "-C", str(dirs["paper-trading-platform"]), "show", f"{read_at}:{LIST}"],
+                          capture_output=True, text=True, check=True).stdout
     # the list's own words (C22): "... dropped when the sandbox is left behind: C5 (...), C8 ..., C20 ..."
     assert platform_scope.parked_items(text) == {"C5", "C8", "C9", "C19", "C10", "C18", "C11", "C13", "C14", "C15", "C20"}
     lines = text.splitlines()
