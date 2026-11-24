@@ -948,8 +948,11 @@ def build(journal_rows, sequence, budget, *, store, platform_dir=None, trials=No
             raise ValueError(f"the planes source holds no record branch root-rows-{day.replace('-', '')}")
         if ps is not None:
             cand["planes"] = plane_lines(planes, day, moment, ps)
-            plane_out = list(ps["not_placed"]) + reads_unmatched(platform_dir, ps) + [
-                x for x in planes_named(store, day, platform_dir) if x[0].endswith(".parquet")]
+            plane_out = list(ps["not_placed"]) + reads_unmatched(platform_dir, ps)
+            # every calculation and read the graph names for the trade day is placed or named: a name that is neither a
+            # placed layer nor already named above is named here with its own reason (a .parquet file is always named)
+            have = set(ps["layers"]) | {x[0] for x in plane_out}
+            plane_out += [x for x in planes_named(store, day, platform_dir) if x[0].endswith(".parquet") or x[0] not in have]
         else:
             plane_out = planes_named(store, day, platform_dir)
     # closed trades

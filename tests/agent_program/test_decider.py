@@ -742,6 +742,48 @@ def test_no_text_or_file_a_decider_is_handed_carries_the_whole_day_row_count_of_
     assert big > 0         # the check did look at layers of 100,000 rows or more
 
 
+def test_every_calculation_and_read_the_graph_names_for_the_trade_day_is_placed_or_named(world, planes):
+    """Each CalcOutput of the trade day in the graph, and each name of a rule text's READS, is a placed layer or is named in
+    the list of what is not placed: none is missing from both."""
+    day = "2023-10-02"
+    calcs = [f"calc-{n['attrs']['calc']}" for n in world["store"].nodes("CalcOutput") if n["attrs"].get("trade_day") == day]
+    reads = [n for n, _, _ in sp.planes_named(world["store"], day, world["plat"]) if not n.endswith(".parquet")]
+    assert calcs and reads
+    for s in world["picks"]:
+        pk = _build_p(world, planes, _stand_in_question(world, s))
+        have = set(pk["plane_ids"]) | {x["layer"] for x in pk["planes_not_placed"]}
+        missing = sorted(set(calcs + reads) - have)
+        assert not missing, (s, missing)
+
+
+# ---- the one separated section: a real record with exactly one thing changed ---------------------------------------------
+class _StoreWithOneMoreCalc:
+    """The real graph store, whose CalcOutput nodes of the trade day also hold a copy of a real one."""
+    # change: the copy of a real CalcOutput node of 2023-10-02 has attrs["calc"] set to "no_file_of_its_own_20231002" (a
+    # calculation the graph names for the trade day with nothing written on the record branch); no other attribute differs
+    def __init__(self, store):
+        self._s = store
+
+    def __getattr__(self, name):
+        return getattr(self._s, name)
+
+    def nodes(self, *a, **k):
+        out = list(self._s.nodes(*a, **k))
+        if a and a[0] == "CalcOutput":
+            real = next(n for n in out if n["attrs"].get("trade_day") == "2023-10-02")
+            out.append({**real, "attrs": {**real["attrs"], "calc": "no_file_of_its_own_20231002"}})
+        return out
+
+
+def test_a_calculation_the_graph_names_with_nothing_written_is_named_in_the_list_of_what_is_not_placed(world, planes):
+    day = "2023-10-02"
+    store = _StoreWithOneMoreCalc(world["store"])
+    q = _stand_in_question(world, world["picks"][0])
+    pk = sp.build(world["rows"], q["sequence"], PLANES_BUDGET, store=store, platform_dir=world["plat"], question=q, planes=planes)
+    named = {x["layer"] for x in pk["planes_not_placed"]}
+    assert "calc-no_file_of_its_own_20231002" in named, sorted(named)
+
+
 def test_the_door_writes_planes_afterwards_references_and_one_decision_per_line(world, planes, tmp_path):
     mb = tmp_path / "mb"
     qs = {s: _stand_in_question(world, s) for s in world["picks"]}
