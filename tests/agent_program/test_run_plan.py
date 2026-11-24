@@ -24,6 +24,13 @@ from tools.swarm.plan import BUDGET_KEYS
 
 from .realrecords import PAPER, data_root
 
+def _real_rc():
+    """0, or 3 where the real markets-data checkout is itself shallow: `check` then says the order is not measured."""
+    r = subprocess.run(["git", "-C", str(data_root()), "rev-parse", "--is-shallow-repository"],
+                       capture_output=True, text=True)
+    return 3 if r.stdout.strip() == "true" else 0
+
+
 LINE = re.compile(r"^(max_\w+): plan (\S+), reached (\S+), (.*)$")
 
 
@@ -67,15 +74,18 @@ def test_check_117_kept_at_the_limit(capsys):
     assert lim["max_concurrent_workers"][2].startswith("cannot be measured")
     assert "PASSED" not in out
     assert str(root) in out
-    assert "before the run began" in out
-    assert rc == 0
+    if _real_rc() == 0:
+        assert "before the run began" in out
+    else:
+        assert "is shallow, so the time the plan was added is not known" in out
+    assert rc == _real_rc()
 
 
 def test_check_116_four_of_25(capsys):
     rc = run_plan.main(["check", "--data", str(data_root()), "--run", "116"])
     lim = _limits(capsys.readouterr().out)
     assert lim["max_tool_calls"][:2] == ("25", "4")
-    assert rc == 0
+    assert rc == _real_rc()
 
 
 def test_check_109_has_no_plan(capsys):
@@ -175,7 +185,7 @@ def test_check_116_no_harness_total_is_said_and_the_plans_own_sentence_is_read(c
     assert plan["max_tokens_is"] in out
     assert "transcript tokens: input fresh" in out
     assert "limits that could not be measured: 3 of 8" in out
-    assert rc == 0
+    assert rc == _real_rc()
 
 
 def test_every_real_plan_is_unchanged_since_it_was_added(capsys):
@@ -223,7 +233,10 @@ def test_write_refuses_run_below_one_and_limits_below_one(tmp_path, capsys):
 # of a plan (max_tool_calls 999); the plan copy with max_tokens_is deleted; the one uncommitted plan; the copy of
 # run 117's real line with a start time added or left off (and the two bad start times); the record emptied in the
 # git-history case; the plan given through --plan (a copy of run 117's own plan, edited, or run 116's real plan);
-# the folder that is not a git repository. Real: run-0117.json, run 117's kept transcript and line, run-0116.json,
+# the folder that is not a git repository; the files other.txt and main.txt (the two commits that make the merge
+# commit's two sides) and the scratch's copy of run 128's real plan, run-0128.json (the one real file copied into a
+# folder with no git); the scratch repositories of the earliest-add case (side branch and merge), the staged and never
+# committed plan, the shallow clone and the grafted copy, and the date-only start time. Real: run-0117.json, run 117's kept transcript and line, run-0116.json,
 # and for run 128 the record as it was at markets-data 04d8a0f (read with git).
 FIRST = "2026-11-24T13:10:23.610000+00:00"  # the first line of run 117's real kept transcript
 
@@ -424,3 +437,105 @@ def test_write_into_a_folder_that_is_not_a_git_repository_is_refused(tmp_path, c
     rc = run_plan.main(["write", "--data", str(d), "--session", "s"] + _base(900))
     assert rc == 2 and "not a git repository" in capsys.readouterr().err
     assert not list((d / PAPER / "run-plans").iterdir())
+
+
+def _plan_line_and_transcript_repo(tmp_path):
+    d = _repo(tmp_path)
+    _git(d, "add", PAPER + "/agent-runs.jsonl", PAPER + "/transcripts")
+    _git(d, "commit", "-q", "-m", "base", when="2026-11-24T13:00:00+00:00")
+    return d
+
+
+def test_a_plan_file_given_with_plan_that_does_not_exist_is_refused_with_its_name(tmp_path, capsys):
+    d = _repo(tmp_path)
+    nope = tmp_path / "nope.json"
+    rc = run_plan.main(["check", "--data", str(d), "--run", "117", "--plan", str(nope)])
+    cap = capsys.readouterr()
+    assert rc == 2
+    assert str(nope) in cap.err and "does not exist" in cap.err
+    assert "limits were not written" not in cap.err + cap.out
+
+
+def test_two_commits_that_add_the_plan_the_earliest_is_the_add(tmp_path, capsys):
+    # change: the plan is added on a side branch (13:05) and again, as far as first-parent history shows, by the
+    # merge (13:20); the run began 13:10:23, so the earliest add is before it and the newest would be after it
+    d = _plan_line_and_transcript_repo(tmp_path)
+    _git(d, "checkout", "-q", "-b", "side")
+    _git(d, "add", PAPER + "/run-plans/run-0117.json")
+    _git(d, "commit", "-q", "-m", "side adds the plan", when="2026-11-24T13:05:00+00:00")
+    _git(d, "checkout", "-q", "-")
+    (d / "main.txt").write_text("main")
+    _git(d, "add", "main.txt")
+    _git(d, "commit", "-q", "-m", "main", when="2026-11-24T13:06:00+00:00")
+    _git(d, "merge", "-q", "--no-ff", "-m", "merge", "side", when="2026-11-24T13:20:00+00:00")
+    log = subprocess.run(["git", "-C", str(d), "log", "--diff-merges=first-parent", "--diff-filter=A", "--name-only",
+                          "--format=COMMIT %cI", "--", PAPER + "/run-plans/run-0117.json"],
+                         capture_output=True, text=True, check=True).stdout
+    assert log.count("COMMIT ") == 2  # git itself lists both as adds
+    rc = run_plan.main(["check", "--data", str(d), "--run", "117"])
+    out = capsys.readouterr().out
+    assert "committed 2026-11-24T13:05:00+00:00 before the run began" in out
+    assert rc == 0
+
+
+def test_a_plan_staged_and_never_committed_is_tracked_without_an_add(tmp_path, capsys):
+    # change: git add with no commit that holds the plan
+    d = _repo(tmp_path)
+    _git(d, "add", "-A")
+    rc = run_plan.main(["check", "--data", str(d), "--run", "117"])
+    out = capsys.readouterr().out
+    assert "plan in git: the file is in the index and no commit has added it" in out
+    assert "the plan file is not in git" not in out
+    assert rc == 1
+
+
+def _three_commits(tmp_path):
+    d = _plan_line_and_transcript_repo(tmp_path)
+    _git(d, "add", PAPER + "/run-plans/run-0117.json")
+    _git(d, "commit", "-q", "-m", "plan", when="2026-11-24T13:08:54+00:00")
+    (d / "other.txt").write_text("later")
+    _git(d, "add", "other.txt")
+    _git(d, "commit", "-q", "-m", "later", when="2026-11-24T14:00:00+00:00")
+    return d
+
+
+def test_a_shallow_clone_says_the_add_time_is_not_measured_and_is_exit_3(tmp_path, capsys):
+    # change: a real shallow clone (depth 1) of a repository whose plan was added at 13:08:54, before the run
+    src = _three_commits(tmp_path)
+    clone = tmp_path / "shallow"
+    subprocess.run(["git", "clone", "-q", "--depth", "1", f"file://{src}", str(clone)], check=True,
+                   capture_output=True)
+    rc = run_plan.main(["check", "--data", str(clone), "--run", "117"])
+    out = capsys.readouterr().out
+    assert "is shallow, so the time the plan was added is not known" in out
+    assert "AFTER the run began" not in out
+    assert rc == 3
+    f = clone / PAPER / "run-plans" / "run-0117.json"
+    plan = json.loads(f.read_text())
+    plan["max_tool_calls"] = 999  # something else already exit 1
+    f.write_text(json.dumps(plan, indent=1) + "\n")
+    assert run_plan.main(["check", "--data", str(clone), "--run", "117"]) == 1
+
+
+def test_a_grafted_history_says_the_add_time_is_not_measured_and_is_exit_3(tmp_path, capsys):
+    # change: git replace --graft makes the newest commit (14:00) a root commit, so it reads as the plan's add
+    d = _three_commits(tmp_path)
+    _git(d, "replace", "--graft", "HEAD")
+    rc = run_plan.main(["check", "--data", str(d), "--run", "117"])
+    out = capsys.readouterr().out
+    assert "is grafted, so the time the plan was added is not known" in out
+    assert "AFTER the run began" not in out
+    assert rc == 3
+
+
+def test_a_started_at_that_is_a_date_with_no_time_is_not_measured_and_is_exit_3(tmp_path, capsys):
+    # change: the copy of run 117's real line has started_at "2026-11-24" (a date, no time of day)
+    d = _repo(tmp_path, transcript=False)
+    _git(d, "add", "-A")
+    _git(d, "commit", "-q", "-m", "early", when="2026-11-24T13:08:54+00:00")
+    (d / PAPER / "agent-runs.jsonl").write_text(json.dumps(_line_117({"started_at": "2026-11-24"})) + "\n")
+    rc = run_plan.main(["check", "--data", str(d), "--run", "117"])
+    out = capsys.readouterr().out
+    assert "a date with no time of day (2026-11-24)" in out
+    assert "AFTER the run began" not in out
+    assert rc == 3
