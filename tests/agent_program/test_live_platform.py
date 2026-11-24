@@ -185,3 +185,111 @@ def test_a_packet_from_a_local_journal_file_equals_the_one_from_the_branch(pk_en
                             "--platform", plat]) == 0
         outs.append(buf.getvalue())
     assert outs[0] == outs[1] and outs[0]
+
+
+# ---- what a decider is given, against the Excel daily sheets (Greg, 2026-11-24) ------------------------------------
+#
+# "We should compare that against the excel daily sheets or just one day. They should have same columns on each day."
+# The daily sheets in the checkout: ROOT_dipoles_pinned.xlsx (one sheet a trade day for each of three kinds, the four
+# trade days) and ROOT_short_stretch_20231002_0900.xlsx (one day of the stored rows, 408 columns, "COLUMNS" sheet beside
+# it). Headers only are read. Every column of the 2023-10-02 sheets is in exactly one place: (a) in the packet at the
+# signal's moment, (b) in afterwards_layers.json, (c) not placed, with the reason. A column added to a workbook later
+# fails the check until someone places it.
+
+WORK = "tasks/family-research-20261022/research-union-current/root-redesign-20261116"
+PINNED = f"{WORK}/ROOT_dipoles_pinned.xlsx"
+STRETCH = f"{WORK}/ROOT_short_stretch_20231002_0900.xlsx"
+DAYS = ("2023-10-02", "2023-10-03", "2023-10-17", "2023-10-18")
+
+
+def _headers(path, sheet):
+    openpyxl = pytest.importorskip("openpyxl")
+    wb = openpyxl.load_workbook(path, read_only=True)
+    try:
+        return list(next(wb[sheet].iter_rows(min_row=1, max_row=1, values_only=True)))
+    finally:
+        wb.close()
+
+
+def _workbook(root, rel):
+    p = root / rel
+    if not p.exists():
+        pytest.skip(f"the workbook {rel} is not in the checkout {root}")
+    return p
+
+
+def test_the_four_days_carry_the_same_columns_in_the_same_order_on_every_kind_of_sheet():
+    root = _root()
+    p = _workbook(root, PINNED)
+    for kind in ("dipoles", "peaks", "crypto and ng"):
+        first = _headers(p, f"{kind} {DAYS[0]}")
+        for day in DAYS[1:]:
+            assert _headers(p, f"{kind} {day}") == first, f"{kind}: {day} differs from {DAYS[0]}"
+
+
+def _crypto_ng_reason():
+    from tools.kgraph import signal_packet as sp
+    return next(r for k, r in sp.PLANE_NOT_PLACED if k == "crypto-ng-tick-program-trades")
+
+
+def test_every_column_of_the_2023_10_02_daily_sheets_is_placed_in_one_of_three_places():
+    from tools.kgraph import packet as dp, signal_packet as sp
+    root = _root()
+    pinned, stretch = _workbook(root, PINNED), _workbook(root, STRETCH)
+    store = GraphStore(root)
+    placed = {}                                                    # (sheet, column) -> (place, reason)
+
+    def put(sheet, col, place, why):
+        assert (sheet, col) not in placed, f"{sheet}.{col} is placed twice"
+        placed[(sheet, col)] = (place, why)
+
+    # dipoles: packet.py's own groups. SHOWN is in the packet (dipoles section, known at the event's known second);
+    # HELD_BACK and AFTERWARDS are in afterwards_layers.json (dipole_cells_held_back_columns / _afterwards_columns).
+    for c in _headers(pinned, "dipoles 2023-10-02"):
+        if c in dp.SHOWN:
+            put("dipoles", c, "a", "dipoles section, known at the event's native known second")
+        elif c in dp.HELD_BACK:
+            put("dipoles", c, "b", "held back: " + dp.HELD_BACK[c])
+        elif c in dp.AFTERWARDS:
+            put("dipoles", c, "b", "after the event: " + dp.AFTERWARDS[c])
+        else:
+            put("dipoles", c, "c", "a column the code has no group for")
+    # peaks: every Peak is after-the-fact (the graph holds the time of a peak's high, not when it became known); the
+    # five columns are the cells of the Peak nodes' `pinned`, which the afterwards file carries whole.
+    peak_cells = set()
+    for n in store.nodes("Peak"):
+        if n["attrs"].get("trade_day") == "2023-10-02":
+            peak_cells |= set(n["attrs"]["pinned"])
+    for c in _headers(pinned, "peaks 2023-10-02"):
+        if c in peak_cells:
+            put("peaks", c, "b", "a Peak: the graph holds the time of a peak's high, not when it became known")
+        else:
+            put("peaks", c, "c", "not a cell of any Peak node of the trade day")
+    # the crypto and ng program's own trades: observation and verification only (CLAUDE.md), kept out of both
+    for c in _headers(pinned, "crypto and ng 2023-10-02"):
+        put("crypto and ng", c, "c", _crypto_ng_reason())
+    # the stored rows of the day: the packet's `rows` layer is read through PLANE_PROJECT (the tape's own fields, each
+    # row placed by its own latest instant); the other columns are NOT copied (size), named in the foot
+    sheet_cols = _headers(stretch, "2023-10-02")
+    mine = set(sp.PLANE_PROJECT["rows"])
+    assert mine <= set(sheet_cols), sorted(mine - set(sheet_cols))
+    for c in sheet_cols:
+        if c in mine:
+            put("rows", c, "a", "plane:rows:<n>, placed by the row's own latest instant (received_time_ns)")
+        else:
+            put("rows", c, "c", "stored per tick and known at the tick, but not copied into a question's files: 408 fields "
+                                "by 820,670 ticks (about 1 GB held in memory for the 85 fields of sections A to E, 323 "
+                                "outside-data fields beside); named in the foot, kept in git pinned by sha256")
+    # the equality that makes a new column fail: the day's columns as sets, against the placed list
+    day_columns = ({("dipoles", c) for c in _headers(pinned, "dipoles 2023-10-02")}
+                   | {("peaks", c) for c in _headers(pinned, "peaks 2023-10-02")}
+                   | {("crypto and ng", c) for c in _headers(pinned, "crypto and ng 2023-10-02")}
+                   | {("rows", c) for c in sheet_cols})
+    assert set(placed) == day_columns
+    # the dipole sheet's columns: every one has a group, none falls to "no group"
+    assert not [k for k, (pl, w) in placed.items() if k[0] in ("dipoles", "peaks") and pl == "c"]
+    counts = {pl: sum(1 for v in placed.values() if v[0] == pl) for pl in "abc"}
+    per_sheet = {s: {pl: sum(1 for k, v in placed.items() if k[0] == s and v[0] == pl) for pl in "abc"}
+                 for s in ("dipoles", "peaks", "crypto and ng", "rows")}
+    print("\ncolumn placement of the 2023-10-02 daily sheets:", counts, per_sheet)
+    assert counts["a"] + counts["b"] + counts["c"] == len(day_columns)
