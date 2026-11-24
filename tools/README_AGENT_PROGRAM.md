@@ -64,6 +64,8 @@ Tokens are estimated at 4 characters a token.
 - No mid price is ever stored (`schema.check_node` refuses it). No trade cost enters anything.
 - Nothing is averaged, pooled, ranked or labelled. Each trial, claim, order and fill is its own line.
 - A reverted or crashed trial, a claim under a cutoff and a merge under a cutoff are all kept.
+- A line of `agent-runs.jsonl` that carries `corrects` is that run's next revision (same session, same run number);
+  the earlier line stays on record.
 - Checks read real records (`tests/agent_program/`, skipped with the reason when a checkout is missing):
   `python3 -m pytest tests/agent_program -q`.
 
@@ -112,3 +114,36 @@ Two things, both reading records only (git; no run of the platform, no model, no
   reverted. Not run: dispatching the loop needs Greg's go.
 
 Checks: `tests/agent_program/test_stage7d_platform.py` (real run records only).
+
+## The loop with an agent proposing each change
+
+For the main session. Python cannot call an agent, so each trial is a handshake in a mailbox folder
+(`tools/ratchet/proposer.py`). One change a trial: one value under `exit` or one rule's entry in `rules` of
+`paper_platform/execution_plans/loop-trial.json`. Nothing here is run by reading it.
+
+1. The ready check, which starts nothing and never runs the control file's command:
+   `MARKETS_DATA=<markets-data> python3 -m tools.ratchet.ready --program tools/ratchet/programs/platform_exit.md --data <markets-data> [--mailbox DIR] [--scratch DIR]`.
+   Every entry that is not ready is said with its reason; fix those before step 2.
+2. The start command. NEEDS GREG'S GO: trial 0 (the baseline) and every trial after it is an engine run on the stored tape.
+   `MARKETS_DATA=<markets-data> python3 -m tools.ratchet.loop --program tools/ratchet/programs/platform_exit.md --mailbox <mailbox dir> --scratch <scratch dir> [--proposal-timeout-s N] [--context-budget N]`.
+   (`--data`, `--graph-dir` and `--exp-dir` point the graph and the experiment record elsewhere; use scratch copies for checks.)
+3. For each trial `n`, the loop writes `<mailbox>/trial-<n>/brief.md` and waits. The main session:
+   a. reads `brief.md` (the task, the one mutable file, the plan as it stands, every earlier trial as its own line, the
+      graph context with claim ids, the answer contract);
+   b. hands it to the builder agent, which writes `<mailbox>/trial-<n>/answer.json`: `hypothesis`, `change`
+      (`path`, one `value`), `rests_on` (claim ids) and `inference` (null, or why no claim supports it), or
+      `{"stop": true, "reason": "..."}` to end the loop;
+   c. writes `<mailbox>/trial-<n>/usage.json` from the harness's own report of the agent's run, never from the agent:
+      `agent_run` (like `run:0053`), `model_calls`, `tokens`, `tool_calls`, `sub_agents` (a number or null);
+   d. adds that run to `paper-trading-20261123/agent-runs.jsonl` in markets-data.
+   Without `usage.json` in time the trial is a recorded crash and the loop goes on.
+4. A proposal with two values, a path outside `exit` and `rules.<rule id>`, an unknown rule or claim id, or no source
+   and no stated inference is refused with the reason, and the trial is recorded as a crash. A grounding decision of
+   "revise" on a claim is reported and never a reason to refuse.
+5. Where things land: `<mailbox>/trial-<n>/applied.json` (path, old and new value, sources, the grounding decision of
+   each claim); the same under `proposal` in the trial's `environment` in the experiment record; the loop's report
+   (JSON on stdout: trials, statuses, `budget_used` with the usage reported so far, why it stopped); the logs in
+   `<scratch>/<loop>/logs/`, the worktree in `<scratch>/<loop>/worktree`, each trial's commit at
+   `refs/ratchet/<loop>/trial-<n>`.
+
+Checks: `tests/agent_program/test_stage3_proposer.py` (real records; its run command only prints, no engine).
