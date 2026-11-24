@@ -180,8 +180,13 @@ def apply(store: GraphStore, read: str, pairs: list, run: str, dirs: dict | None
         raise schema.Refused(f"{read} has already been through the step ({tid}); take a link back with "
                              "`resolve undo` rather than applying a second answer")
     applied, refused = [], []
+    own = set(added)
     for p in pairs:
         try:
+            if not isinstance(p, dict) or p.get("new") not in own:
+                made_by = (store.node(p.get("new")) or {}).get("attrs", {}).get("extracted_by") if isinstance(p, dict) else None
+                raise schema.Refused(f"the later claim {p.get('new') if isinstance(p, dict) else p!r} is not one of the claims of {read} "
+                                     f"(its extracted_by is {made_by}): apply takes only the pairs whose later claim the read added")
             applied.append({"new": p["new"], "old": p["old"], "edge": resolve.supersede(store, p["new"], p["old"], p.get("why", ""), run, dirs)})
         except (schema.Refused, KeyError, TypeError) as e:
             refused.append({"new": p.get("new") if isinstance(p, dict) else None, "old": p.get("old") if isinstance(p, dict) else None,

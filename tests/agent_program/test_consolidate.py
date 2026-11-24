@@ -228,11 +228,11 @@ def test_a_pair_supersede_refuses_is_printed_and_counted_never_dropped_and_a_sec
     # change: the real pair of run 96 with its two claims turned the other way round (the earlier set over the later)
     turned = {"new": real["old"], "old": real["new"], "why": "the earlier claim set over the later one"}
     pf = tmp_path / "pairs.json"
-    pf.write_text(json.dumps({"pairs": [turned, real]}), encoding="utf-8")   # turned first: no link stands yet, so the date is what refuses it
+    pf.write_text(json.dumps({"pairs": [turned, real]}), encoding="utf-8")   # turned first: refused as not of the read, printed and counted
     assert run_cmd(consolidate, root, g, "apply", "--read", SMALL_READ, "--pairs", str(pf), "--run", APPLIER) == 0
     res = json.loads(capsys.readouterr().out)
     assert len(res["applied"]) == 1 and len(res["refused"]) == 1
-    assert res["refused"][0]["new"] == turned["new"] and "was made earlier than" in res["refused"][0]["refusal"]
+    assert res["refused"][0]["new"] == turned["new"] and "is not one of the claims of" in res["refused"][0]["refusal"]   # the turned pair's later claim is of run:0032, not of the read: refused by point 2 of ticket 46; the date refusal itself is held by the check of OLD_1123 over NEW_1124 above
     task = GraphStore(root, graph_dir=g).node(res["task"])
     assert (task["attrs"]["pairs_applied"], task["attrs"]["pairs_refused"]) == (1, 1)
     with pytest.raises(schema.Refused, match="already been through the step"):
@@ -287,3 +287,22 @@ def test_the_brief_lists_a_pair_of_the_same_read_once_not_both_ways(scratch, cap
     assert len(set(ids)) == len(ids) and not any((e, l) in set(ids) for l, e in ids)
     assert "order not settled by date: the reader says which is later, from the words" in text
     assert any(re.search(r"^one: " + re.escape(l), text, re.M) for l, e in ids)
+
+
+# ==== POINT 2: apply TAKES ONLY PAIRS WHOSE LATER CLAIM IS ONE OF THE READ'S OWN ====
+OTHER_READ_CLAIM = "claim:6c0b6129f869"   # a real claim of run:0092 (ROOT_GAMEPLAN_DECISIONS.md), offered below with --read run:0022
+
+
+def test_apply_refuses_a_pair_whose_later_claim_is_not_of_the_read(scratch, capsys, tmp_path):
+    root, g = scratch
+    store = GraphStore(root, graph_dir=g)
+    assert store.node(OTHER_READ_CLAIM)["attrs"]["extracted_by"] == "run:0092" and store.node(SAME_FILE_EARLIER)["attrs"]["extracted_by"] == READ
+    pf = tmp_path / "pairs.json"
+    pf.write_text(json.dumps({"pairs": [{"new": OTHER_READ_CLAIM, "old": SAME_FILE_EARLIER, "why": "a pair of run:0092 offered with the read run:0022"}]}), encoding="utf-8")
+    assert run_cmd(consolidate, root, g, "apply", "--read", READ, "--pairs", str(pf), "--run", APPLIER) == 0
+    res = json.loads(capsys.readouterr().out)
+    assert res["applied"] == [] and len(res["refused"]) == 1
+    assert "run:0092" in res["refused"][0]["refusal"] and READ in res["refused"][0]["refusal"]
+    assert not [e for e in GraphStore(root, graph_dir=g).edges("SUPERSEDES") if e["src"] == OTHER_READ_CLAIM]
+    task = GraphStore(root, graph_dir=g).node(res["task"])
+    assert (task["attrs"]["pairs_applied"], task["attrs"]["pairs_refused"]) == (0, 1)
