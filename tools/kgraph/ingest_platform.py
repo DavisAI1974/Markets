@@ -83,12 +83,12 @@ def _git(repo, *args, text=True):
 
 
 def ensure_run(data, run: str) -> str:
-    """The commit of the run's branch; fetched (depth 1) when the checkout does not hold it yet."""
+    """The commit of the run's branch; fetched whole (no depth limit, no tags) when the checkout does not hold it yet."""
     ref = run_ref(run)
     try:
         return _git(data, "rev-parse", "--verify", ref).strip()
     except RuntimeError:
-        _git(data, "fetch", "--depth", "1", "origin", f"+refs/heads/paper-runs/{run}:{ref}")
+        _git(data, "fetch", "--no-tags", "origin", f"+refs/heads/paper-runs/{run}:{ref}")
         return _git(data, "rev-parse", "--verify", ref).strip()
 
 
