@@ -15,8 +15,8 @@ python3 -m tools.kgraph.context --budget 4000 --task "<the task>"   # the claims
 ```
 
 Every line ends with its claim id, its file and line, who said it and when. The last section says what
-is NOT in the text (cut for the budget, superseded, documents not read yet). Tokens are estimated at 4
-characters a token.
+is NOT in the text (what fell under the budget, what has something against it, documents not read yet).
+Tokens are estimated at 4 characters a token.
 
 ## What needs Greg's go (nothing below is run by building it)
 
@@ -49,6 +49,10 @@ characters a token.
 
 ## The rules the code holds itself to
 
+- NOTHING IS REPLACED (Greg, 2026-11-24). A trial that did not improve, a claim a later claim speaks against,
+  a rule version, a merge taken back: each stays on record with what was found about it. What does not hold up
+  is marked or scored and is called last or not called; it is never dropped because something later exists.
+- No new claim is tied to a tastytrade platform issue (Greg, 2026-11-24): `tools/kgraph/platform_scope.py`.
 - The record is lines, only ever added to. A changed line is its next revision; a link taken back is a
   new line marked withdrawn. `python3 -m tools.kgraph check` lists every breach of a write rule.
 - A claim has a source or is marked as an inference. A claim read by a model is written only when its

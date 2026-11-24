@@ -47,7 +47,7 @@ EDGE_TYPES = {
     "PRODUCED": "src (a run, a commit) made dst",
     "EVALUATES": "src (an evaluation) checks dst",
     "REVISES": "src is a later wording of dst",
-    "SUPERSEDES": "src takes the place of dst; dst stays addressable",
+    "SUPERSEDES": "src is a later claim set over dst; nothing is replaced: dst stays, marked, and is called last",
     "DEPENDS_ON": "src needs dst",
     "PARENT_OF": "src is the parent of dst",
     "RESOLVED_TO": "src (a surface form) is merged into dst (the canonical entry); reversible",

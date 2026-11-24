@@ -4,21 +4,26 @@
   python3 -m tools.kgraph.context --budget 4000 --task "<what the session is to do>" [--hops 2]
       [--out context.md] [--cut-list cut.json]
 
+NOTHING IS REPLACED (Greg, 2026-11-24; the paper: "every superseded object remains addressable",
+"prioritize recent verified claims", "include conflicts and uncertainty"). No claim is left out because a
+later one exists or because it is parked. A claim that has something against it is MARKED with what
+stands against it and CALLED LAST, so under a budget it is the first to fall, and a larger budget shows it.
+
 What it does (plan, stage 5a):
   1. with a task: finds the things the task names (entities, by name or by a name merged into them),
      and walks one or two hops over the links to the claims about them. Without a task: every claim.
-  2. leaves out a claim a later claim has taken the place of (SUPERSEDES); it stays in the graph.
-  3. folds claims that carry the same words in two files (Greg's sentence copied from the decisions
+  2. folds claims that carry the same words in two files (Greg's sentence copied from the decisions
      file into a handoff) into one line that cites every file.
-  4. writes the claims by kind, newest first, within the token budget, each line with its claim id,
-     its file and line, who said it and when, so any line can be followed back and checked.
-  5. says at the end what is NOT in the text: how many claims were cut for the budget (and of which
-     kind), how many were superseded or folded, which documents have not been read into claims yet,
+  3. marks a claim that has something against it: a later claim says otherwise (a SUPERSEDES link), a
+     claim contradicts it (both stand), it is parked as a tastytrade platform issue, or it names that
+     platform (nothing new may rest on it).
+  4. writes the claims by kind, those with nothing against them first and newest first, within the
+     token budget, each line with its claim id, its file and line, who said it and when, so any line
+     can be followed back and checked.
+  5. says at the end what is NOT in the text: how many claims fell under the budget (and of which
+     kind), how many have something against them, which documents have not been read into claims yet,
      and how many checks on record ask for evidence. Nothing is left out in silence: the returned
-     lists place every claim of the graph in exactly one of included, folded, superseded, cut,
-     not_reached, platform.
-  6. leaves out the claims tied to a tastytrade platform issue that the running list parks (Greg,
-     2026-11-24), says how many, and marks the ones that only name the platform.
+     lists place every claim of the graph in exactly one of included, folded, cut, not_reached.
 
 Tokens are estimated at 4 characters a token (no tokenizer is called here); the text says so.
 """
@@ -152,17 +157,26 @@ def _reach(store: GraphStore, claims: dict, task: str, hops: int) -> tuple[list[
     return ents, sorted(hop1), sorted(hop2), how
 
 
-def build(store: GraphStore, task: str | None, budget_tokens: int, hops: int = 1, dirs: dict | None = None,
-          with_platform_issues: bool = False) -> dict:
+def build(store: GraphStore, task: str | None, budget_tokens: int, hops: int = 1, dirs: dict | None = None) -> dict:
     clock = _Clock(store, dirs)
     claims = {c["id"]: c for c in store.nodes("Claim")}
-    superseded = sorted({e["dst"] for e in store.edges("SUPERSEDES") if e["dst"] in claims})
-    # Claims tied to a tastytrade platform issue (parked by Greg): those the running list parks are left
-    # out unless asked for; those that only name the platform are shown, marked.
+    live = claims
+    # NOTHING IS REPLACED (Greg, 2026-11-24). A claim that has something against it is marked with what
+    # stands against it and is called last; it is never left out because of a link.
+    over = {}                                    # claim -> the later claim(s) set over it
+    for e in store.edges("SUPERSEDES"):
+        if e["dst"] in claims:
+            over.setdefault(e["dst"], []).append(e["src"])
+    against = {}                                 # claim -> the claims that contradict it
+    for e in store.edges("CONTRADICTS"):
+        if e["dst"] in claims:
+            against.setdefault(e["dst"], []).append(e["src"])
     ties = platform_scope.ties(store)
-    platform = [] if with_platform_issues else sorted(
-        c for c, t in ties.items() if t["rule"] == "the running list" and c in claims and c not in set(superseded))
-    live = {k: v for k, v in claims.items() if k not in set(superseded) and k not in set(platform)}
+    parked = {c for c, t in ties.items() if t["rule"] == "the running list" and c in claims}
+    called_last = sorted(set(over) | parked)
+
+    def standing(cid: str) -> int:
+        return 1 if (cid in over or cid in parked) else 0
 
     entities, hop_of, how = [], {}, "every claim of the graph (a session start)"
     if task:
@@ -197,6 +211,7 @@ def build(store: GraphStore, task: str | None, budget_tokens: int, hops: int = 1
     stands_for, folded = {}, []
     for ids in groups.values():
         ids.sort(key=lambda c: clock.key(live[c]), reverse=True)
+        ids.sort(key=standing)                              # one with nothing against it stands for the group
         stands_for[ids[0]] = ids[1:]
         folded += ids[1:]
 
@@ -209,8 +224,14 @@ def build(store: GraphStore, task: str | None, budget_tokens: int, hops: int = 1
             also = " | also " + ", ".join(
                 f"{live[o]['attrs']['source'].rsplit('/', 1)[-1]}:{live[o]['attrs']['line_start']}" for o in stands_for[cid])
         mark = "(a reading, not a measurement) " if a["inference"] else ""
-        if cid in ties:
-            mark += "(tasty platform: nothing new may rest on it) "
+        if cid in over:
+            mark += "(a later claim says otherwise: " + ", ".join("c:" + o.split(":", 1)[1] for o in over[cid]) + ") "
+        if cid in against:
+            mark += "(contradicted by " + ", ".join("c:" + o.split(":", 1)[1] for o in against[cid]) + "; both stand) "
+        if cid in parked:
+            mark += "(parked: a tastytrade platform issue) "
+        elif cid in ties:
+            mark += "(names the tastytrade platform: nothing new may rest on it) "
         return (f"- {mark}{_ws.sub(' ', a['text']).strip()} [c:{cid.split(':', 1)[1]} | {where} | "
                 f"{a.get('said_by') or '-'} | {a.get('said_on') or '-'}{also}]")
 
@@ -221,6 +242,7 @@ def build(store: GraphStore, task: str | None, budget_tokens: int, hops: int = 1
         ids.sort(key=lambda c: hop_of.get(c, 1))            # what the task names first, then the second hop
         if kinds == ("decision",):
             ids.sort(key=lambda c: live[c]["attrs"].get("said_by") != "Greg")     # his own decisions first
+        ids.sort(key=standing)                               # a claim with something against it is called last
         by_section.append([title, share, ids, []])
 
     not_read = [t["attrs"] for t in store.nodes("Task") if t["attrs"]["state"] == "not_extracted"]
@@ -249,13 +271,12 @@ def build(store: GraphStore, task: str | None, budget_tokens: int, hops: int = 1
                    + ". A larger budget or a task brings them.")
         if not_reached:
             out.append(f"- {len(not_reached)} claims are about things the task does not name (not reached in {hops} hop(s)).")
-        shown_tied = len([c for c in ties if c in live])
-        if platform or shown_tied:
-            out.append(f"- {len(platform)} claims tied to tastytrade platform issues are left out (the lines the running "
-                       f"list parks; Greg, 2026-11-24); --with-platform-issues shows them. {shown_tied} more that name "
-                       "the platform are in scope, marked.")
-        out.append(f"- {len(superseded)} superseded claim(s) left out (a later claim took their place); "
-                   f"{len(folded)} folded into a line that carries the same quoted words.")
+        if called_last or ties:
+            out.append(f"- {len(called_last)} claims have something against them ({len(over)} with a later claim that says "
+                       f"otherwise, {len(parked)} parked as tastytrade platform issues). Nothing is removed: each is marked "
+                       "and called last, so it is the first to fall under the budget; a larger budget shows it. "
+                       f"{len([c for c in ties if c not in parked])} more only name the tastytrade platform and are marked.")
+        out.append(f"- {len(folded)} claims are folded into a line that carries the same words from another file (cited there).")
         if not_read or changed:
             lines_left = sum(t.get("lines") or 0 for t in not_read)
             out.append(f"- {len(not_read)} documents ({lines_left} lines) have not been read into claims; "
@@ -307,8 +328,8 @@ def build(store: GraphStore, task: str | None, budget_tokens: int, hops: int = 1
         cut_by_kind[k] = cut_by_kind.get(k, 0) + 1
     return {"text": text, "tokens_estimated": estimate_tokens(text), "budget_tokens": budget_tokens,
             "task": task, "hops": hops, "entities": entities, "reached": sorted(reached),
-            "included": included, "folded": sorted(folded), "superseded": superseded, "cut": cut,
-            "cut_by_kind": cut_by_kind, "not_reached": not_reached, "platform": platform,
+            "included": included, "folded": sorted(folded), "cut": cut,
+            "cut_by_kind": cut_by_kind, "not_reached": not_reached, "called_last": called_last,
             "documents_not_read": len(not_read), "claims_in_graph": len(claims)}
 
 
@@ -323,18 +344,15 @@ def main(argv=None) -> int:
     ap.add_argument("--hops", type=int, default=1, choices=(1, 2))
     ap.add_argument("--out")
     ap.add_argument("--cut-list", help="write the ids of every claim not in the text, by why, to this file")
-    ap.add_argument("--with-platform-issues", action="store_true",
-                    help="also show the claims tied to tastytrade platform issues that the running list parks")
     a = ap.parse_args(argv)
     store = GraphStore(a.data, graph_dir=a.graph_dir)
-    out = build(store, a.task, a.budget, a.hops, repo_dirs(store.data_root, a.markets, a.platform),
-                with_platform_issues=a.with_platform_issues)
+    out = build(store, a.task, a.budget, a.hops, repo_dirs(store.data_root, a.markets, a.platform))
     if a.out:
         Path(a.out).write_text(out["text"], encoding="utf-8")
     else:
         sys.stdout.write(out["text"])
     if a.cut_list:
-        Path(a.cut_list).write_text(json.dumps({k: out[k] for k in ("cut", "cut_by_kind", "folded", "superseded", "not_reached", "platform")},
+        Path(a.cut_list).write_text(json.dumps({k: out[k] for k in ("cut", "cut_by_kind", "folded", "not_reached", "called_last")},
                                                indent=1) + "\n", encoding="utf-8")
     print(json.dumps({k: (len(v) if isinstance(v, list) else v) for k, v in out.items() if k != "text"}), file=sys.stderr)
     return 0

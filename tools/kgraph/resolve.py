@@ -241,7 +241,7 @@ def undo(store: GraphStore, edge: str, reason: str, run: str) -> dict:
     return store.withdraw_edge(edge, reason=f"{reason} (undone by {run})", written_by=code_stamp("tools.kgraph.resolve"))
 
 
-# ---- a later claim takes the place of an earlier one -------------------------------------------
+# ---- a later claim set over an earlier one (nothing is replaced) --------------------------------
 def _when(store: GraphStore, claim: dict, dirs: dict | None) -> tuple:
     """(the date the lines give or the file's name gives, the time of the commit it was read at)."""
     a = claim["attrs"]
@@ -259,14 +259,14 @@ def _when(store: GraphStore, claim: dict, dirs: dict | None) -> tuple:
 
 
 def supersede(store: GraphStore, new_id: str, old_id: str, why: str, run: str, dirs: dict | None = None) -> str:
-    """Write that a later claim takes the place of an earlier one (a SUPERSEDES link). The earlier
-    claim stays in the graph and stays addressable; the session context stops showing it and the
-    grounding check says a later one took its place. The link can be taken back like any other."""
+    """Set a later claim over an earlier one (a SUPERSEDES link). NOTHING IS REPLACED: the earlier claim
+    stays in the graph and in reach; the session context marks it "a later claim says otherwise" and
+    calls it last, and the grounding check says so. The link can be taken back like any other."""
     new, old = store.node(new_id), store.node(old_id)
     if not new or not old or new["type"] != "Claim" or old["type"] != "Claim":
         raise schema.Refused("both ends of a SUPERSEDES link are claims of the graph")
     if not why or not why.strip():
-        raise schema.Refused("a SUPERSEDES link says why the later claim takes the earlier one's place")
+        raise schema.Refused("a SUPERSEDES link says why the later claim stands over the earlier one")
     maker = store.node(run)
     if not (run.startswith("code:") or (maker and maker["type"] == "AgentRun")):
         raise schema.Refused(f"{run} is not an AgentRun of the graph: record the run first")

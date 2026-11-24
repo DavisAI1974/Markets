@@ -34,14 +34,14 @@ def graph(tmp_path_factory):
 
 
 def _cited(text):
-    return set(re.findall(r"\bc:([0-9a-f]{12})\b", text))
+    """The claim each line is: the id in the line's own bracket (a mark may name another claim)."""
+    return set(re.findall(r"\[c:([0-9a-f]{12}) \|", text))
 
 
 def _accounted(store, out):
     """Every claim of the graph is in exactly one place."""
     all_ids = {c["id"] for c in store.nodes("Claim")}
-    placed = [set(out["included"]), set(out["folded"]), set(out["superseded"]), set(out["cut"]), set(out["not_reached"]),
-              set(out["platform"])]
+    placed = [set(out["included"]), set(out["folded"]), set(out["cut"]), set(out["not_reached"])]
     assert set().union(*placed) == all_ids
     assert sum(len(p) for p in placed) == len(all_ids)          # and in one place only
 
@@ -96,28 +96,42 @@ def test_a_task_brings_the_claims_about_the_things_it_names(graph):
     assert set(two["reached"]) > set(out["reached"])
 
 
-def test_a_superseded_claim_is_left_out_and_still_addressable(graph):
+def test_nothing_is_replaced_a_claim_with_a_later_one_over_it_is_marked_and_called_last(graph):
+    """Greg, 2026-11-24: nothing gets replaced; what does not hold up is scored so it is not called. A
+    claim with a later claim set over it stays in the text when the budget allows, marked, after every
+    claim of its kind that has nothing against it; under a small budget it is the first to fall."""
     store, dirs = graph
     old = next(c for c in store.nodes("Claim") if "markets-data has no `graph/` folder" in c["attrs"]["quote"])
     new = next(c for c in store.nodes("Claim")
                if ("STAGES 2 AND 4a BUILT" in c["attrs"]["quote"] or "stages 2 and 4a" in c["attrs"]["text"].lower())
                and "built" in c["attrs"]["text"].lower() and c["attrs"]["source"].endswith("ROOT_GAMEPLAN_DECISIONS.md"))
-    before = context.build(store, None, budget_tokens=60000, dirs=dirs)
-    assert old["id"] in before["included"] + before["folded"]
     with pytest.raises(schema.Refused, match="says why"):
         resolve.supersede(store, new["id"], old["id"], why="", run="run:0018")
-    with pytest.raises(schema.Refused, match="later"):                       # the earlier cannot take the later's place
+    with pytest.raises(schema.Refused, match="later"):                       # an earlier claim is not set over a later one
         resolve.supersede(store, old["id"], new["id"], why="the wrong way round", run="run:0018", dirs=dirs)
     edge = resolve.supersede(store, new["id"], old["id"], why="the layout was built later the same day", run="run:0018", dirs=dirs)
-    after = context.build(store, None, budget_tokens=60000, dirs=dirs)
-    assert old["id"] in after["superseded"] and old["id"] not in after["included"]
-    assert store.node(old["id"]) is not None and "1 superseded" in after["text"]
-    _accounted(store, after)
-    # the grounding check of the earlier claim says a later one took its place
+    big = context.build(store, None, budget_tokens=200000, dirs=dirs)
+    assert old["id"] in big["included"] and old["id"] in big["called_last"]              # still there: nothing is dropped
+    lines = big["text"].splitlines()
+    mine = next(i for i, l in enumerate(lines) if f"c:{old['id'].split(':', 1)[1]}" in l)
+    assert f"a later claim says otherwise: c:{new['id'].split(':', 1)[1]}" in lines[mine]
+    # it comes after every claim of its own section that has nothing against it
+    start = max(i for i in range(mine) if lines[i].startswith("## "))
+    end = next((i for i in range(mine + 1, len(lines)) if lines[i].startswith("## ")), len(lines))
+    after = [l for l in lines[mine + 1:end] if l.startswith("- ")]
+    assert all("says otherwise" in l or "parked" in l for l in after)
+    assert any(l.startswith("- ") and "says otherwise" not in l for l in lines[start:mine])
+    _accounted(store, big)
+    small = context.build(store, None, budget_tokens=3000, dirs=dirs)
+    assert old["id"] in small["cut"] and old["id"] in small["called_last"]              # first to fall, and said so
+    assert "1 claims have something against them" in small["text"]
+    _accounted(store, small)
+    # the grounding check of the earlier claim says a later one stands over it; the claim itself stays
     seen = grounding.check_claim(store, old["id"], dirs)
-    assert any(new["id"] in o for o in seen["what_was_observed"])
+    assert any(new["id"] in o and "says otherwise" in o for o in seen["what_was_observed"])
+    assert store.node(old["id"]) is not None
     store.withdraw_edge(edge, reason="check only", written_by="code:test")
-    assert old["id"] not in context.build(store, None, budget_tokens=60000, dirs=dirs)["superseded"]
+    assert old["id"] not in context.build(store, None, budget_tokens=60000, dirs=dirs)["called_last"]
 
 
 def test_the_same_words_said_in_two_files_make_one_line_that_cites_both(graph):

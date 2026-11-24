@@ -114,23 +114,28 @@ def test_the_grounding_check_does_not_take_a_tied_claim_as_evidence(graph):
     assert ok["decision"] is None and any(not c["platform_issue"] for c in ok["supporting_candidates"])
 
 
-def test_the_session_context_leaves_the_parked_lines_out_and_marks_the_rest(graph):
+def test_the_session_context_drops_nothing_it_marks_tied_claims_and_calls_the_parked_ones_last(graph):
+    """Greg, 2026-11-24: nothing gets replaced; what does not work is scored so it is not called."""
     store, dirs = graph
     ties = platform_scope.ties(store)
     by_list = {c for c, t in ties.items() if t["rule"] == "the running list"}
     by_words = set(ties) - by_list
     assert by_list and by_words
-    out = context.build(store, None, budget_tokens=200000, dirs=dirs)
-    assert set(out["platform"]) == by_list and not set(out["included"]) & by_list
-    assert f"{len(by_list)} claims tied to tastytrade platform issues are left out" in out["text"]
-    # a claim that only names the platform is shown, and the reader is told nothing new may rest on it
-    shown = by_words & set(out["included"])
-    assert shown
-    for cid in list(shown)[:10]:
-        line = next(l for l in out["text"].splitlines() if f"c:{cid.split(':', 1)[1]}" in l)
-        assert "(tasty platform: nothing new may rest on it)" in line
-    assert "Sandbox-only issues are parked" in out["text"]                    # Greg's own decision is shown, unmarked
+    out = context.build(store, None, budget_tokens=400000, dirs=dirs)
     allc = {c["id"] for c in store.nodes("Claim")}
-    assert set().union(out["included"], out["folded"], out["superseded"], out["cut"], out["not_reached"], out["platform"]) == allc
-    asked = context.build(store, None, budget_tokens=200000, dirs=dirs, with_platform_issues=True)
-    assert asked["platform"] == [] and by_list <= set(asked["included"]) | set(asked["folded"])
+    assert set().union(out["included"], out["folded"], out["cut"], out["not_reached"]) == allc and out["cut"] == []
+    assert by_list <= set(out["called_last"])
+    text = out["text"].splitlines()
+    for cid in list(by_list & set(out["included"]))[:10]:
+        line = next(l for l in text if f"c:{cid.split(':', 1)[1]}" in l)
+        assert "(parked: a tastytrade platform issue)" in line
+    for cid in list(by_words & set(out["included"]))[:10]:
+        line = next(l for l in text if f"c:{cid.split(':', 1)[1]}" in l)
+        assert "(names the tastytrade platform: nothing new may rest on it)" in line
+    assert "Sandbox-only issues are parked" in out["text"]                    # Greg's own decision is shown, unmarked
+    # under a real budget the parked lines are the first to fall: none is shown while an unmarked claim of its kind is cut
+    small = context.build(store, None, budget_tokens=6000, dirs=dirs)
+    kind = lambda c: store.node(c)["attrs"]["statement_kind"]
+    cut_plain = {kind(c) for c in small["cut"] if c not in small["called_last"]}
+    assert not [c for c in small["included"] if c in by_list and kind(c) in cut_plain]
+    assert f"{len(small['called_last'])} claims have something against them" in small["text"]

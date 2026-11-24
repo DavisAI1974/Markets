@@ -168,7 +168,8 @@ def check_claim(store: GraphStore, claim_id: str, dirs: dict | None = None, _dep
         open_.append(f"{len(adverse)} claim(s) contradict this one; both stand until someone decides")
     superseded = [e["src"] for e in into if e["type"] == "SUPERSEDES"]
     if superseded:
-        observed.append("a later claim takes its place: " + ", ".join(superseded) + " (this one stays addressable)")
+        observed.append("a later claim says otherwise: " + ", ".join(superseded) + " (nothing is replaced: this one stays, "
+                        "marked, and is called last)")
     return _result(claim, checked, observed, open_, paths, required, reason, adverse, superseded)
 
 
